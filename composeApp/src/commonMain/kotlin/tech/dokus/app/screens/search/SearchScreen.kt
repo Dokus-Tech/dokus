@@ -32,6 +32,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.TextRange
@@ -95,7 +97,7 @@ internal fun SearchScreen(
     snackbarHostState: SnackbarHostState,
     onQueryChange: (String) -> Unit,
     onScopeSelected: (UnifiedSearchScope) -> Unit,
-    onSuggestionClick: (String) -> Unit,
+    onSuggestionClick: (SearchSuggestion) -> Unit,
     onDocumentClick: (DocumentId) -> Unit,
     onContactClick: (ContactId) -> Unit,
     onTransactionClick: (CashflowEntryId) -> Unit,
@@ -104,6 +106,8 @@ internal fun SearchScreen(
 ) {
     val isLargeScreen = LocalScreenSize.current.isLarge
     val focusRequester = remember { FocusRequester() }
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
     val horizontalPadding = if (isLargeScreen) SearchHorizontalPaddingDesktop else SearchHorizontalPaddingMobile
     val response = state.response
     var textFieldValue by remember {
@@ -164,7 +168,12 @@ internal fun SearchScreen(
                 SuggestionsSection(
                     suggestions = state.suggestions,
                     isLoading = state.isLoading && !state.hasInitialized,
-                    onSuggestionClick = onSuggestionClick,
+                    isLargeScreen = isLargeScreen,
+                    onSuggestionClick = { suggestion ->
+                        focusManager.clearFocus()
+                        keyboardController?.hide()
+                        onSuggestionClick(suggestion)
+                    },
                     modifier = Modifier.fillMaxWidth()
                 )
             } else {
@@ -245,14 +254,6 @@ private fun SearchInputField(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    if (value.text.isNotBlank()) {
-                        Text(
-                            text = "esc",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                            modifier = Modifier.align(Alignment.CenterEnd)
-                        )
-                    }
                     innerTextField()
                 }
             }
@@ -310,7 +311,8 @@ private fun SearchScopeTabs(
 private fun SuggestionsSection(
     suggestions: List<SearchSuggestion>,
     isLoading: Boolean,
-    onSuggestionClick: (String) -> Unit,
+    isLargeScreen: Boolean,
+    onSuggestionClick: (SearchSuggestion) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
@@ -344,7 +346,7 @@ private fun SuggestionsSection(
                     SearchSimpleRow(
                         title = suggestion.label,
                         trailing = suggestion.countHint.takeIf { it > 0L }?.toString().orEmpty(),
-                        onClick = { onSuggestionClick(suggestion.label) }
+                        onClick = { onSuggestionClick(suggestion) }
                     )
                     if (index < suggestions.lastIndex) {
                         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
@@ -353,8 +355,10 @@ private fun SuggestionsSection(
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-        SearchKeyboardHint()
+        if (isLargeScreen) {
+            Spacer(modifier = Modifier.height(16.dp))
+            SearchKeyboardHint()
+        }
     }
 }
 
@@ -655,9 +659,9 @@ private fun previewResponse(query: String, scope: UnifiedSearchScope): UnifiedSe
         transactions = scopedTx,
         suggestions = listOf(
             SearchSuggestion(label = "KBC Bank", countHint = 4),
-            SearchSuggestion(label = "overdue invoices", countHint = 8),
             SearchSuggestion(label = "Tesla Belgium", countHint = 3),
             SearchSuggestion(label = "January", countHint = 5),
+            SearchSuggestion(label = "documents", countHint = 0),
         ),
         aggregates = SearchAggregates(
             transactionTotal = Money.fromDouble(1296.52),

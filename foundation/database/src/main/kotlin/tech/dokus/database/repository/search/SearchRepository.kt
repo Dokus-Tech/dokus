@@ -10,8 +10,8 @@ import org.jetbrains.exposed.v1.core.exists
 import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.like
 import org.jetbrains.exposed.v1.core.or
-import org.jetbrains.exposed.v1.jdbc.Query
 import org.jetbrains.exposed.v1.jdbc.andWhere
+import org.jetbrains.exposed.v1.jdbc.Query
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import tech.dokus.database.tables.cashflow.CashflowEntriesTable
@@ -31,11 +31,12 @@ import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.SearchAggregates
 import tech.dokus.domain.model.SearchContactHit
 import tech.dokus.domain.model.SearchCounts
 import tech.dokus.domain.model.SearchDocumentHit
-import tech.dokus.domain.model.SearchSuggestion
+import tech.dokus.domain.model.SearchPreset
 import tech.dokus.domain.model.SearchTransactionHit
 import tech.dokus.domain.model.UnifiedSearchResponse
 import tech.dokus.domain.model.UnifiedSearchScope
@@ -44,14 +45,16 @@ import tech.dokus.domain.utils.json
 import tech.dokus.foundation.backend.database.dbQuery
 import java.util.UUID
 
-private const val DefaultSuggestionLimit = 8
-
-class SearchRepository {
+class SearchRepository(
+    private val searchSuggestionRepository: SearchSuggestionRepository,
+) {
 
     suspend fun search(
         tenantId: TenantId,
+        userId: UserId,
         query: String,
         scope: UnifiedSearchScope,
+        preset: SearchPreset?,
         limit: Int,
         suggestionLimit: Int
     ): Result<UnifiedSearchResponse> = runCatching {
@@ -59,10 +62,32 @@ class SearchRepository {
         val effectiveLimit = limit.coerceIn(1, 100)
         val effectiveSuggestionLimit = suggestionLimit.coerceIn(1, 50)
 
-        if (normalizedQuery.isBlank()) {
-            val suggestions = suggestions(
+        if (preset != null) {
+            val presetResult = searchSuggestionRepository.presetSearch(
                 tenantId = tenantId,
-                limit = effectiveSuggestionLimit
+                preset = preset,
+                limit = effectiveLimit,
+            )
+            return@runCatching UnifiedSearchResponse(
+                query = normalizedQuery,
+                scope = UnifiedSearchScope.Transactions,
+                counts = SearchCounts(
+                    all = presetResult.count,
+                    documents = 0,
+                    contacts = 0,
+                    transactions = presetResult.count,
+                ),
+                transactions = presetResult.transactions,
+                suggestions = emptyList(),
+                aggregates = presetResult.aggregates,
+            )
+        }
+
+        if (normalizedQuery.isBlank()) {
+            val suggestions = searchSuggestionRepository.personalizedSuggestions(
+                tenantId = tenantId,
+                userId = userId,
+                limit = effectiveSuggestionLimit,
             )
             return@runCatching UnifiedSearchResponse(
                 query = "",
@@ -198,49 +223,8 @@ class SearchRepository {
         )
     }
 
-    private suspend fun suggestions(
-        tenantId: TenantId,
-        limit: Int = DefaultSuggestionLimit
-    ): List<SearchSuggestion> = dbQuery {
-        val tenantUuid = tenantId.asUuid()
-
-        val counterparties = CashflowEntriesTable
-            .join(
-                ContactsTable,
-                joinType = JoinType.LEFT,
-                onColumn = CashflowEntriesTable.counterpartyId,
-                otherColumn = ContactsTable.id,
-                additionalConstraint = {
-                    ContactsTable.tenantId eq CashflowEntriesTable.tenantId
-                }
-            )
-            .select(ContactsTable.name)
-            .where {
-                (CashflowEntriesTable.tenantId eq tenantUuid) and
-                    (CashflowEntriesTable.status inList SearchStatuses)
-            }
-            .mapNotNull { row -> row.getOrNull(ContactsTable.name) }
-            .groupingBy { it }
-            .eachCount()
-            .entries
-            .sortedByDescending { it.value }
-            .map { SearchSuggestion(label = it.key, countHint = it.value.toLong()) }
-
-        val defaultTerms = listOf(
-            SearchSuggestion(label = "overdue", countHint = 0),
-            SearchSuggestion(label = "paid", countHint = 0),
-            SearchSuggestion(label = "this month", countHint = 0),
-            SearchSuggestion(label = "documents", countHint = 0),
-            SearchSuggestion(label = "contacts", countHint = 0),
-        )
-
-        (counterparties + defaultTerms)
-            .distinctBy { it.label.lowercase() }
-            .take(limit)
-    }
-
     private fun documentQuery(tenantId: TenantId, pattern: String): Query {
-        val tenantUuid = tenantId.asUuid()
+        val tenantUuid = UUID.fromString(tenantId.toString())
 
         val invoiceExists = exists(
             InvoicesTable.select(InvoicesTable.id).where {
@@ -305,7 +289,7 @@ class SearchRepository {
     private fun contactQuery(tenantId: TenantId, pattern: String): Query {
         var query = ContactsTable
             .selectAll()
-            .where { ContactsTable.tenantId eq tenantId.asUuid() }
+            .where { ContactsTable.tenantId eq UUID.fromString(tenantId.toString()) }
 
         query = query.andWhere {
             (LowerCase(ContactsTable.name) like pattern) or
@@ -359,7 +343,7 @@ class SearchRepository {
             )
             .selectAll()
             .where {
-                (CashflowEntriesTable.tenantId eq tenantId.asUuid()) and
+                (CashflowEntriesTable.tenantId eq UUID.fromString(tenantId.toString())) and
                     (CashflowEntriesTable.status inList SearchStatuses)
             }
 
@@ -425,8 +409,6 @@ class SearchRepository {
             documentFilename = filename,
         )
     }
-
-    private fun TenantId.asUuid(): UUID = UUID.fromString(toString())
 
     private fun escapeLike(input: String): String {
         return input

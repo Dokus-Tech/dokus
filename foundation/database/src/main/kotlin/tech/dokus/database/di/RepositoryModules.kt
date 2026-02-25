@@ -38,6 +38,9 @@ import tech.dokus.database.repository.peppol.PeppolSettingsRepository
 import tech.dokus.database.repository.peppol.PeppolTransmissionRepository
 import tech.dokus.database.repository.processor.ProcessorIngestionRepository
 import tech.dokus.database.repository.search.SearchRepository
+import tech.dokus.database.repository.search.SearchPersonalizationQueries
+import tech.dokus.database.repository.search.SearchSignalRepository
+import tech.dokus.database.repository.search.SearchSuggestionRepository
 import tech.dokus.database.services.InvoiceNumberGenerator
 import tech.dokus.domain.repository.ChatRepository
 import tech.dokus.domain.repository.ChunkRepository
@@ -77,7 +80,10 @@ val repositoryModuleCashflow = module {
     single { CashflowEntriesRepository() }
     single { CashflowRepository(get(), get()) }
     single { DocumentLinkRepository() }
-    single { SearchRepository() }
+    single { SearchPersonalizationQueries() }
+    single { SearchSignalRepository() }
+    single { SearchSuggestionRepository(get(), get()) }
+    single { SearchRepository(get()) }
 }
 
 /**

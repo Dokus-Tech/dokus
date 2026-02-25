@@ -56,6 +56,8 @@ import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.aura.style.ThemeManager
 import tech.dokus.foundation.aura.style.ThemeManagerImpl
 
+private class DefaultFeatureFlagService : FeatureFlagService by FeatureFlagService.defaultsOnly
+
 internal val diModuleApp = module {
     // Server configuration management (bridges platform settings with domain types)
     singleOf(::ServerConfigManagerImpl) bind ServerConfigManager::class
@@ -145,7 +147,7 @@ internal val diModuleApp = module {
 
     singleOf(::CashflowInvoiceLookupDataSource) bind InvoiceLookupDataSource::class
     singleOf(::SearchRemoteDataSourceImpl) bind SearchRemoteDataSource::class
-    single<FeatureFlagService> { FeatureFlagService.defaultsOnly }
+    singleOf(::DefaultFeatureFlagService) bind FeatureFlagService::class
     singleOf(::NotificationRemoteDataSourceImpl) bind NotificationRemoteDataSource::class
     singleOf(::DefaultLocalDatabaseCleaner) bind LocalDatabaseCleaner::class
 }

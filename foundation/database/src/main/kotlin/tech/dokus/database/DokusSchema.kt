@@ -37,6 +37,7 @@ import tech.dokus.database.tables.payment.PaymentsTable
 import tech.dokus.database.tables.peppol.PeppolRegistrationTable
 import tech.dokus.database.tables.peppol.PeppolSettingsTable
 import tech.dokus.database.tables.peppol.PeppolTransmissionsTable
+import tech.dokus.database.tables.search.SearchSignalStatsTable
 import tech.dokus.foundation.backend.database.dbQuery
 import tech.dokus.foundation.backend.utils.loggerFor
 
@@ -105,6 +106,11 @@ object DokusSchema {
                 PaymentsTable,
                 BankConnectionsTable,
                 BankTransactionsTable,
+
+                // ----------------------------
+                // Search telemetry
+                // ----------------------------
+                SearchSignalStatsTable,
 
                 // ----------------------------
                 // Peppol (depends on invoices)

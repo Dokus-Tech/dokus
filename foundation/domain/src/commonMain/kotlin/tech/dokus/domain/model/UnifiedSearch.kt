@@ -20,6 +20,26 @@ enum class UnifiedSearchScope {
 }
 
 @Serializable
+enum class SearchPreset {
+    OverdueInvoices,
+    UpcomingPayments,
+}
+
+@Serializable
+enum class SearchSignalEventType {
+    QueryCommitted,
+    SuggestionSelected,
+    ResultOpened,
+}
+
+@Serializable
+enum class SearchResultEntityType {
+    Document,
+    Contact,
+    Transaction,
+}
+
+@Serializable
 data class SearchCounts(
     val all: Long = 0,
     val documents: Long = 0,
@@ -63,6 +83,9 @@ data class SearchTransactionHit(
 data class SearchSuggestion(
     val label: String,
     val countHint: Long = 0,
+    val actionQuery: String? = null,
+    val actionScope: UnifiedSearchScope? = null,
+    val actionPreset: SearchPreset? = null,
 )
 
 @Serializable
@@ -82,4 +105,14 @@ data class UnifiedSearchResponse(
     val transactions: List<SearchTransactionHit> = emptyList(),
     val suggestions: List<SearchSuggestion> = emptyList(),
     val aggregates: SearchAggregates = SearchAggregates(),
+)
+
+@Serializable
+data class SearchSignalEventRequest(
+    val eventType: SearchSignalEventType,
+    val query: String? = null,
+    val scope: UnifiedSearchScope? = null,
+    val suggestionLabel: String? = null,
+    val resultEntityType: SearchResultEntityType? = null,
+    val resultEntityId: String? = null,
 )

@@ -10,6 +10,7 @@ import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.SearchAggregates
+import tech.dokus.domain.model.SearchPreset
 import tech.dokus.domain.model.SearchSuggestion
 import tech.dokus.domain.model.UnifiedSearchResponse
 import tech.dokus.domain.model.UnifiedSearchScope
@@ -23,6 +24,8 @@ data class SearchState(
     val isLoading: Boolean = false,
     val hasInitialized: Boolean = false,
     val focusRequestId: Long = 0L,
+    val activePreset: SearchPreset? = null,
+    val lastCommittedQuery: String? = null,
 ) : MVIState {
     val counts = response?.counts
 
@@ -43,7 +46,7 @@ sealed interface SearchIntent : MVIIntent {
     data object ScreenAppeared : SearchIntent
     data class QueryChanged(val query: String) : SearchIntent
     data class ScopeChanged(val scope: UnifiedSearchScope) : SearchIntent
-    data class SuggestionSelected(val query: String) : SearchIntent
+    data class SuggestionSelected(val suggestion: SearchSuggestion) : SearchIntent
     data object Retry : SearchIntent
     data class FocusRequested(val requestId: Long) : SearchIntent
     data class OpenDocument(val documentId: DocumentId) : SearchIntent
