@@ -415,14 +415,13 @@ interface CashflowRemoteDataSource {
 
     /**
      * List documents with optional filtering.
-     * GET /api/v1/documents?documentStatus={documentStatus}&documentType={documentType}&ingestionStatus={ingestionStatus}&search={search}&page={page}&limit={limit}
+     * GET /api/v1/documents?documentStatus={documentStatus}&documentType={documentType}&ingestionStatus={ingestionStatus}&page={page}&limit={limit}
      *
      * Returns DocumentRecordDto envelope containing document, draft, and latest ingestion.
      *
      * @param documentStatus Filter by draft status (NeedsReview, Confirmed, Rejected)
      * @param documentType Filter by document type (Invoice, Expense)
      * @param ingestionStatus Filter by ingestion status (Queued, Processing, Succeeded, Failed)
-     * @param search Full-text search query
      * @param page Page number (0-indexed)
      * @param limit Items per page (max 100)
      */
@@ -431,7 +430,6 @@ interface CashflowRemoteDataSource {
         documentStatus: DocumentStatus? = null,
         documentType: DocumentType? = null,
         ingestionStatus: IngestionStatus? = null,
-        search: String? = null,
         page: Int = 0,
         limit: Int = 20
     ): Result<PaginatedResponse<DocumentRecordDto>>

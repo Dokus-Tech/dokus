@@ -47,6 +47,7 @@ import tech.dokus.features.auth.presentation.auth.model.WorkspaceWizardStep
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.background.WarpJumpEffect
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.extensions.dismissKeyboardOnTapOutside
 
 private const val ContentFadeOutDurationMs = 600
 private const val NavigationDelayMs = 100L
@@ -89,7 +90,9 @@ internal fun WorkspaceCreateScreen(
                 exit = fadeOut(animationSpec = tween(ContentFadeOutDurationMs)),
             ) {
                 if (wizardState != null) {
-                    OnboardingCenteredShell {
+                    OnboardingCenteredShell(
+                        modifier = Modifier.dismissKeyboardOnTapOutside()
+                    ) {
                         WorkspaceCreateContent(
                             wizardState = wizardState,
                             isSubmitting = isSubmitting,

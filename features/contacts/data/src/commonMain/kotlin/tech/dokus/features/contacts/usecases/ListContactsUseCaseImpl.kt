@@ -3,19 +3,36 @@ package tech.dokus.features.contacts.usecases
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.features.contacts.repository.ContactRemoteDataSource
+import tech.dokus.features.contacts.usecases.LookupContactsUseCase
 
 internal class ListContactsUseCaseImpl(
     private val remoteDataSource: ContactRemoteDataSource
 ) : ListContactsUseCase {
     override suspend fun invoke(
-        search: String?,
         isActive: Boolean?,
         limit: Int,
         offset: Int
     ): Result<List<ContactDto>> {
         // NOTE: peppolEnabled removed - PEPPOL status is in PeppolDirectoryCacheTable
         return remoteDataSource.listContacts(
-            search = search,
+            isActive = isActive,
+            limit = limit,
+            offset = offset
+        )
+    }
+}
+
+internal class LookupContactsUseCaseImpl(
+    private val remoteDataSource: ContactRemoteDataSource
+) : LookupContactsUseCase {
+    override suspend fun invoke(
+        query: String,
+        isActive: Boolean?,
+        limit: Int,
+        offset: Int
+    ): Result<List<ContactDto>> {
+        return remoteDataSource.lookupContacts(
+            query = query,
             isActive = isActive,
             limit = limit,
             offset = offset
@@ -56,14 +73,15 @@ internal class ListVendorsUseCaseImpl(
 }
 
 internal class FindContactsByNameUseCaseImpl(
-    private val remoteDataSource: ContactRemoteDataSource
+    private val lookupContacts: LookupContactsUseCase
 ) : FindContactsByNameUseCase {
     override suspend fun invoke(
         query: String,
         limit: Int
     ): Result<List<ContactDto>> {
-        return remoteDataSource.listContacts(
-            search = query,
+        return lookupContacts(
+            query = query,
+            isActive = true,
             limit = limit,
             offset = 0
         )
@@ -71,15 +89,16 @@ internal class FindContactsByNameUseCaseImpl(
 }
 
 internal class FindContactsByVatUseCaseImpl(
-    private val remoteDataSource: ContactRemoteDataSource
+    private val lookupContacts: LookupContactsUseCase
 ) : FindContactsByVatUseCase {
     override suspend fun invoke(
         vat: VatNumber,
         limit: Int
     ): Result<List<ContactDto>> {
         val normalizedVat = vat.normalized
-        return remoteDataSource.listContacts(
-            search = normalizedVat,
+        return lookupContacts(
+            query = normalizedVat,
+            isActive = true,
             limit = limit,
             offset = 0
         ).map { contacts ->

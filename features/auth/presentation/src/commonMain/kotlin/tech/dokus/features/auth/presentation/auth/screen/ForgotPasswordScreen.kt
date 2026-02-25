@@ -27,6 +27,7 @@ import tech.dokus.foundation.aura.components.fields.PTextFieldEmail
 import tech.dokus.foundation.aura.components.fields.PTextFieldEmailDefaults
 import tech.dokus.foundation.aura.components.text.SectionTitle
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.extensions.dismissKeyboardOnTapOutside
 
 @Composable
 internal fun ForgotPasswordScreen(
@@ -38,7 +39,10 @@ internal fun ForgotPasswordScreen(
     val isSubmitting = state is ForgotPasswordState.Submitting
     val canSubmit = state.email.isValid && !isSubmitting
 
-    OnboardingSplitShell(brandVariant = OnboardingBrandVariant.Alt) {
+    OnboardingSplitShell(
+        brandVariant = OnboardingBrandVariant.Alt,
+        modifier = Modifier.dismissKeyboardOnTapOutside()
+    ) {
         SectionTitle(
             text = stringResource(Res.string.auth_forgot_password_title),
             horizontalArrangement = Arrangement.Start,

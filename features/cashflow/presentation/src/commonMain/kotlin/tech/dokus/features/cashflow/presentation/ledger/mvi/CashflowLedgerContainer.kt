@@ -59,6 +59,7 @@ internal class CashflowLedgerContainer(
     private var paginationInfo = LocalPaginationInfo()
     private var currentFilters = CashflowFilters()
     private var loadJob: Job? = null
+    private var pendingHighlightEntryId: CashflowEntryId? = highlightEntryId
 
     override val store: Store<CashflowLedgerState, CashflowLedgerIntent, CashflowLedgerAction> =
         store(CashflowLedgerState.Loading) {
@@ -153,6 +154,22 @@ internal class CashflowLedgerContainer(
                     hasMorePages = response.hasMore
                 )
 
+                val resolvedHighlightId = pendingHighlightEntryId?.let { requestedEntryId ->
+                    if (loadedEntries.none { it.id == requestedEntryId }) {
+                        val highlightEntry = loadCashflowEntries(
+                            page = 0,
+                            pageSize = 1,
+                            entryId = requestedEntryId
+                        ).getOrNull()?.items?.firstOrNull()
+
+                        if (highlightEntry != null) {
+                            loadedEntries = (listOf(highlightEntry) + loadedEntries).distinctBy { it.id }
+                        }
+                    }
+                    requestedEntryId.takeIf { id -> loadedEntries.any { it.id == id } }
+                }
+                pendingHighlightEntryId = null
+
                 // Summary comes from server - display directly
                 val summary = CashflowSummary(
                     periodLabel = when (currentFilters.viewMode) {
@@ -166,12 +183,16 @@ internal class CashflowLedgerContainer(
                 )
 
                 updateState {
+                    val highlightedEntry = resolvedHighlightId?.let { id -> loadedEntries.find { it.id == id } }
                     CashflowLedgerState.Content(
                         entries = buildPaginationState(),
                         filters = currentFilters,
                         summary = summary,
                         balance = getMockBalanceIfEnabled(),
-                        highlightedEntryId = highlightEntryId
+                        highlightedEntryId = resolvedHighlightId,
+                        selectedEntryId = resolvedHighlightId,
+                        paymentFormState = highlightedEntry?.let { PaymentFormState.withAmount(it.remainingAmount) }
+                            ?: PaymentFormState(),
                     )
                 }
             } else {

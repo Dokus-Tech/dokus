@@ -1,0 +1,19 @@
+<resources>
+    <string name="search_subtitle">Find anything in your business</string>
+    <string name="search_input_placeholder">Search your business</string>
+    <string name="search_scope_all">All</string>
+    <string name="search_scope_documents">Documents</string>
+    <string name="search_scope_contacts">Contacts</string>
+    <string name="search_scope_transactions">Transactions</string>
+    <string name="search_section_documents">Documents</string>
+    <string name="search_section_contacts">Contacts</string>
+    <string name="search_section_transactions">Transactions</string>
+    <string name="search_suggestions_label">Suggestions</string>
+    <string name="search_no_results">No results found</string>
+    <string name="search_results_count">%1$d results</string>
+    <string name="search_documents_count">%1$d documents</string>
+    <string name="search_contacts_count">%1$d contacts</string>
+    <string name="search_transactions_count">%1$d transactions</string>
+    <string name="search_total">Total</string>
+    <string name="search_from_anywhere">from anywhere</string>
+</resources>

@@ -37,6 +37,7 @@ import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
 import tech.dokus.foundation.aura.components.text.SectionTitle
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.extensions.dismissKeyboardOnTapOutside
 
 @Suppress("UNUSED_PARAMETER")
 @Composable
@@ -45,7 +46,10 @@ internal fun ServerConnectionScreen(
     currentServer: ServerConfig?,
     onIntent: (ServerConnectionIntent) -> Unit,
 ) {
-    OnboardingSplitShell(brandVariant = OnboardingBrandVariant.Primary) {
+    OnboardingSplitShell(
+        brandVariant = OnboardingBrandVariant.Primary,
+        modifier = Modifier.dismissKeyboardOnTapOutside()
+    ) {
         SectionTitle(
             text = stringResource(Res.string.auth_onboarding_connect_server_title),
             horizontalArrangement = Arrangement.Start,

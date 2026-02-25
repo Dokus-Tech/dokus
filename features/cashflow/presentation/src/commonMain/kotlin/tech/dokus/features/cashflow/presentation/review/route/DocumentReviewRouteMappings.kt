@@ -21,11 +21,9 @@ internal fun CashFlowDestination.DocumentReviewSourceFilter.toListFilter(): Docu
 
 internal fun CashFlowDestination.DocumentReview.toRouteContextOrNull(): DocumentReviewRouteContext? {
     val sourceFilter = CashFlowDestination.DocumentReviewSourceFilter.fromToken(sourceFilter) ?: return null
-    val sourceSearch = sourceSearch?.trim()?.takeIf { it.isNotEmpty() }
     val sourceSort = CashFlowDestination.DocumentReviewSourceSort.fromToken(sourceSort)
     return DocumentReviewRouteContext(
         filter = sourceFilter,
-        search = sourceSearch,
         sort = sourceSort,
     )
 }

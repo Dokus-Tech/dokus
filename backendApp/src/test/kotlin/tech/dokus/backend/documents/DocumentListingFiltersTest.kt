@@ -171,7 +171,6 @@ class DocumentListingFiltersTest {
             documentStatus = null,
             documentType = null,
             ingestionStatus = null,
-            search = null,
             page = 0,
             limit = 100
         )
@@ -216,7 +215,6 @@ class DocumentListingFiltersTest {
             documentStatus = null,
             documentType = null,
             ingestionStatus = null,
-            search = null,
             page = 0,
             limit = 100
         )
@@ -245,7 +243,6 @@ class DocumentListingFiltersTest {
             documentStatus = null,
             documentType = null,
             ingestionStatus = IngestionStatus.Failed,
-            search = null,
             page = 0,
             limit = 10
         )
@@ -260,7 +257,6 @@ class DocumentListingFiltersTest {
             documentStatus = null,
             documentType = null,
             ingestionStatus = IngestionStatus.Failed,
-            search = null,
             page = 1,
             limit = 10
         )
@@ -274,7 +270,6 @@ class DocumentListingFiltersTest {
             documentStatus = null,
             documentType = null,
             ingestionStatus = IngestionStatus.Failed,
-            search = null,
             page = 2,
             limit = 10
         )

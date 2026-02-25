@@ -2,8 +2,6 @@
 
 package tech.dokus.features.cashflow.presentation.documents.mvi
 
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
@@ -25,7 +23,6 @@ internal typealias DocumentsCtx = PipelineContext<DocumentsState, DocumentsInten
  * Manages the document inbox with:
  * - Pagination
  * - Status filtering
- * - Search
  */
 internal class DocumentsContainer(
     private val loadDocumentRecords: LoadDocumentRecordsUseCase
@@ -33,12 +30,9 @@ internal class DocumentsContainer(
 
     private val logger = Logger.forClass<DocumentsContainer>()
 
-    private var searchJob: Job? = null
-
     private var loadedDocuments: List<DocumentRecordDto> = emptyList()
     private var paginationInfo = PaginationInfo()
     private var currentFilter: DocumentFilter = DocumentFilter.All
-    private var currentSearchQuery: String = ""
     private var needsAttentionCount: Int = 0
     private var confirmedCount: Int = 0
 
@@ -48,7 +42,6 @@ internal class DocumentsContainer(
                 when (intent) {
                     is DocumentsIntent.Refresh -> handleRefresh()
                     is DocumentsIntent.LoadMore -> handleLoadMore()
-                    is DocumentsIntent.UpdateSearchQuery -> handleUpdateSearchQuery(intent.query)
                     is DocumentsIntent.UpdateFilter -> handleUpdateFilter(intent.filter)
                     is DocumentsIntent.OpenDocument -> handleOpenDocument(intent.documentId)
                 }
@@ -56,7 +49,6 @@ internal class DocumentsContainer(
         }
 
     private suspend fun DocumentsCtx.handleRefresh() {
-        searchJob?.cancel()
         logger.d { "Refreshing documents" }
 
         loadedDocuments = emptyList()
@@ -70,7 +62,6 @@ internal class DocumentsContainer(
             page = 0,
             pageSize = PAGE_SIZE,
             filter = currentFilter.toListFilter(),
-            search = currentSearchQuery.takeIf { it.isNotEmpty() }
         ).fold(
             onSuccess = { response ->
                 loadedDocuments = response.items
@@ -83,7 +74,6 @@ internal class DocumentsContainer(
                     DocumentsState.Content(
                         documents = buildPaginationState(),
                         filter = currentFilter,
-                        searchQuery = currentSearchQuery,
                         needsAttentionCount = this@DocumentsContainer.needsAttentionCount,
                         confirmedCount = this@DocumentsContainer.confirmedCount
                     )
@@ -113,7 +103,6 @@ internal class DocumentsContainer(
                 page = nextPage,
                 pageSize = PAGE_SIZE,
                 filter = filter.toListFilter(),
-                search = searchQuery.takeIf { it.isNotEmpty() }
             ).fold(
                 onSuccess = { response ->
                     loadedDocuments = loadedDocuments + response.items
@@ -142,61 +131,10 @@ internal class DocumentsContainer(
         }
     }
 
-    private suspend fun DocumentsCtx.handleUpdateSearchQuery(query: String) {
-        val trimmed = query.trim()
-        currentSearchQuery = trimmed
-
-        withState<DocumentsState.Content, _> {
-            searchJob?.cancel()
-
-            loadedDocuments = emptyList()
-            paginationInfo = PaginationInfo()
-
-            updateState {
-                copy(
-                    searchQuery = trimmed,
-                    documents = PaginationState(pageSize = PAGE_SIZE)
-                )
-            }
-
-            searchJob = launch {
-                loadDocumentRecords(
-                    page = 0,
-                    pageSize = PAGE_SIZE,
-                    filter = currentFilter.toListFilter(),
-                    search = trimmed.takeIf { it.isNotEmpty() }
-                ).fold(
-                    onSuccess = { response ->
-                        loadedDocuments = response.items
-                        paginationInfo = paginationInfo.copy(
-                            currentPage = 0,
-                            isLoadingMore = false,
-                            hasMorePages = response.hasMore
-                        )
-                        updateState {
-                            copy(
-                                documents = buildPaginationState(),
-                                searchQuery = trimmed,
-                                filter = currentFilter,
-                                needsAttentionCount = this@DocumentsContainer.needsAttentionCount,
-                                confirmedCount = this@DocumentsContainer.confirmedCount
-                            )
-                        }
-                    },
-                    onFailure = { error ->
-                        logger.e(error) { "Failed to search documents" }
-                    }
-                )
-            }
-        }
-    }
-
     private suspend fun DocumentsCtx.handleUpdateFilter(filter: DocumentFilter) {
         currentFilter = filter
 
         withState<DocumentsState.Content, _> {
-            searchJob?.cancel()
-
             loadedDocuments = emptyList()
             paginationInfo = PaginationInfo()
 
@@ -213,7 +151,6 @@ internal class DocumentsContainer(
                 page = 0,
                 pageSize = PAGE_SIZE,
                 filter = filter.toListFilter(),
-                search = currentSearchQuery.takeIf { it.isNotEmpty() }
             ).fold(
                 onSuccess = { response ->
                     loadedDocuments = response.items
@@ -225,7 +162,6 @@ internal class DocumentsContainer(
                     updateState {
                         copy(
                             documents = buildPaginationState(),
-                            searchQuery = currentSearchQuery,
                             filter = filter,
                             needsAttentionCount = this@DocumentsContainer.needsAttentionCount,
                             confirmedCount = this@DocumentsContainer.confirmedCount
@@ -244,7 +180,6 @@ internal class DocumentsContainer(
             DocumentsAction.NavigateToDocumentReview(
                 documentId = documentId,
                 sourceFilter = currentFilter,
-                sourceSearch = currentSearchQuery.takeIf { it.isNotBlank() },
             )
         )
     }

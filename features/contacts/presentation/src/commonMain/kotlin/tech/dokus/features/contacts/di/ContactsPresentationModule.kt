@@ -55,7 +55,7 @@ val contactsPresentationModule = module {
         ContactFormContainer(
             contactId = params.contactId,
             getContact = get(),
-            listContacts = get(),
+            lookupContacts = get(),
             createContact = get(),
             updateContact = get(),
             deleteContact = get()
@@ -67,7 +67,7 @@ val contactsPresentationModule = module {
             sourceContact = params.sourceContact,
             sourceActivity = params.sourceActivity,
             preselectedTarget = params.preselectedTarget,
-            listContacts = get(),
+            lookupContacts = get(),
             mergeContacts = get()
         )
     }

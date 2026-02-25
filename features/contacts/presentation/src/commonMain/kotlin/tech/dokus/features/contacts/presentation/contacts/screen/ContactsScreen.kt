@@ -11,30 +11,19 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.contacts_add_contact
 import tech.dokus.aura.resources.contacts_select_contact
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.model.common.PaginationState
@@ -46,11 +35,9 @@ import tech.dokus.features.contacts.mvi.ContactsIntent
 import tech.dokus.features.contacts.mvi.ContactsState
 import tech.dokus.features.contacts.presentation.contacts.components.ContactsFiltersMobile
 import tech.dokus.features.contacts.presentation.contacts.components.ContactsHeaderActions
-import tech.dokus.features.contacts.presentation.contacts.components.ContactsHeaderSearch
 import tech.dokus.features.contacts.presentation.contacts.components.ContactsList
 import tech.dokus.features.contacts.presentation.contacts.route.ContactDetailsRoute
 import tech.dokus.foundation.app.state.DokusState
-import tech.dokus.foundation.aura.components.common.PTopAppBarSearchAction
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.local.isLarge
 
@@ -66,7 +53,7 @@ private val BottomPadding = 16.dp
  * The main contacts screen showing a list of contacts with master-detail layout.
  *
  * Desktop layout:
- * - Left panel (40%): Contacts list with search and filters
+ * - Left panel (40%): Contacts list and actions
  * - Right panel (60%): Contact details panel (updates when a contact is selected)
  *
  * Mobile layout:
@@ -86,48 +73,27 @@ internal fun ContactsScreen(
 
     // Extract state values from Content state (with defaults for Loading/Error)
     val contentState = state as? ContactsState.Content
-    val searchQuery = contentState?.searchQuery ?: ""
     val selectedContactId = contentState?.selectedContactId
     val sortOption = contentState?.sortOption ?: ContactSortOption.Default
     val roleFilter = contentState?.roleFilter ?: ContactRoleFilter.All
     val activeFilter = contentState?.activeFilter ?: ContactActiveFilter.All
 
-    // Search expansion state for mobile
-    var isSearchExpanded by rememberSaveable { mutableStateOf(isLargeScreen) }
-    val searchExpanded = isLargeScreen || isSearchExpanded
-
-    // Reset mobile search expansion when rotating to large screen (desktop)
-    LaunchedEffect(isLargeScreen) {
-        if (isLargeScreen) isSearchExpanded = false
-    }
-
     Scaffold(
         topBar = {
-            PTopAppBarSearchAction(
-                searchContent = {
-                    ContactsHeaderSearch(
-                        searchQuery = searchQuery,
-                        onSearchQueryChange = {
-                            onIntent(
-                                ContactsIntent.UpdateSearchQuery(
-                                    it
-                                )
-                            )
-                        },
-                        isSearchExpanded = searchExpanded,
-                        isLargeScreen = isLargeScreen,
-                        onExpandSearch = { isSearchExpanded = true }
-                    )
-                },
-                actions = {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = ContentPaddingHorizontal, vertical = 8.dp),
+                horizontalArrangement = Arrangement.End,
+            ) {
+                if (!isLargeScreen) {
                     ContactsHeaderActions(
                         onAddContactClick = {
-                            // Navigate to new CreateContactScreen (VAT-first flow)
                             onCreateContact()
                         }
                     )
                 }
-            )
+            }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background
@@ -147,7 +113,6 @@ internal fun ContactsScreen(
             DesktopContactsContent(
                 contactsState = contactsState,
                 selectedContactId = selectedContactId,
-                searchQuery = searchQuery,
                 contentPadding = contentPadding,
                 onContactClick = { contact ->
                     onSelectContact(contact)
@@ -156,7 +121,6 @@ internal fun ContactsScreen(
                 onAddContactClick = {
                     onCreateContact()
                 },
-                onSearchQueryChange = { onIntent(ContactsIntent.UpdateSearchQuery(it)) },
             )
         } else {
             // Mobile: Full-screen list
@@ -196,12 +160,10 @@ internal fun ContactsScreen(
 private fun DesktopContactsContent(
     contactsState: DokusState<PaginationState<ContactDto>>,
     selectedContactId: ContactId?,
-    searchQuery: String,
     contentPadding: PaddingValues,
     onContactClick: (ContactDto) -> Unit,
     onLoadMore: () -> Unit,
     onAddContactClick: () -> Unit,
-    onSearchQueryChange: (String) -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -217,31 +179,13 @@ private fun DesktopContactsContent(
         ) {
             Spacer(modifier = Modifier.height(SpacingDefault))
 
-            // Compact search + "+" button row
+            // Header actions
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.End,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                ContactsHeaderSearch(
-                    searchQuery = searchQuery,
-                    onSearchQueryChange = onSearchQueryChange,
-                    isSearchExpanded = true,
-                    isLargeScreen = true,
-                    onExpandSearch = {},
-                    modifier = Modifier.weight(1f),
-                )
-                IconButton(
-                    onClick = onAddContactClick,
-                    modifier = Modifier.size(32.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = stringResource(Res.string.contacts_add_contact),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
+                ContactsHeaderActions(onAddContactClick = onAddContactClick)
             }
 
             Spacer(modifier = Modifier.height(SpacingMedium))

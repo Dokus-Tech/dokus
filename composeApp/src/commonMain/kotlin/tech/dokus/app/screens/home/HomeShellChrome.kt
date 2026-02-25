@@ -17,9 +17,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -68,7 +65,6 @@ import tech.dokus.foundation.aura.components.AvatarShape
 import tech.dokus.foundation.aura.components.AvatarSize
 import tech.dokus.foundation.aura.components.CompanyAvatarImage
 import tech.dokus.foundation.aura.components.MonogramAvatar
-import tech.dokus.foundation.aura.components.common.PSearchFieldCompact
 import tech.dokus.foundation.aura.components.common.ShimmerBox
 import tech.dokus.foundation.aura.components.common.ShimmerLine
 import tech.dokus.foundation.aura.components.navigation.ProfilePopover
@@ -305,26 +301,11 @@ internal fun DesktopShellTopBar(
     topBarConfig: HomeShellTopBarConfig,
     modifier: Modifier = Modifier,
 ) {
-    val sizing = MaterialTheme.dokusSizing
     DesktopShellTopBarFrame(
         actions = topBarConfig.actions,
         modifier = modifier
     ) {
-        // Search or title slot
         when (val mode = topBarConfig.mode) {
-            is HomeShellTopBarMode.Search -> {
-                PSearchFieldCompact(
-                    value = mode.query,
-                    onValueChange = mode.onQueryChange,
-                    placeholder = mode.placeholder,
-                    onClear = mode.onClear,
-                    modifier = Modifier.widthIn(
-                        min = sizing.searchFieldMinWidth,
-                        max = sizing.searchFieldMaxWidth
-                    )
-                )
-            }
-
             is HomeShellTopBarMode.Title -> {
                 Column {
                     Text(
@@ -449,31 +430,6 @@ private fun shortMonthName(month: Month): String = when (month) {
 // =============================================================================
 // Previews
 // =============================================================================
-
-@Preview
-@Composable
-private fun DesktopShellTopBarSearchPreview(
-    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
-) {
-    TestWrapper(parameters) {
-        DesktopShellTopBar(
-            topBarConfig = HomeShellTopBarConfig(
-                mode = HomeShellTopBarMode.Search(
-                    query = "",
-                    placeholder = "Search documents",
-                    onQueryChange = {}
-                ),
-                actions = listOf(
-                    HomeShellTopBarAction.Icon(
-                        icon = Icons.Default.Upload,
-                        contentDescription = "Upload",
-                        onClick = {}
-                    )
-                )
-            )
-        )
-    }
-}
 
 @Preview
 @Composable

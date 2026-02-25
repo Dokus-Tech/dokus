@@ -106,7 +106,6 @@ internal fun Route.documentRecordRoutes() {
                 documentStatus = route.documentStatus,
                 documentType = route.documentType,
                 ingestionStatus = route.ingestionStatus,
-                search = route.search,
                 page = page,
                 limit = limit
             )

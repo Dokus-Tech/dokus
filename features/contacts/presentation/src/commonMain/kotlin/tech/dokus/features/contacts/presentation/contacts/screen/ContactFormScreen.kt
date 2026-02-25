@@ -47,6 +47,7 @@ import tech.dokus.foundation.aura.components.dialog.DokusDialog
 import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
 import tech.dokus.foundation.aura.components.text.SectionTitle
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.extensions.dismissKeyboardOnTapOutside
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
@@ -214,6 +215,7 @@ private fun MobileFormLayout(
         modifier = Modifier
             .fillMaxSize()
             .padding(contentPadding)
+            .dismissKeyboardOnTapOutside()
     ) {
         // Scrollable form content
         Column(

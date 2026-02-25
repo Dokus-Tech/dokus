@@ -240,9 +240,9 @@ class EmailTemplateRenderer(
         val safeSubject = escapeHtml(subject)
         val safeDetails = details.map(::escapeHtml)
         val detailsHtml = safeDetails.joinToString(separator = "<br><br>")
-        val preferencesUrl = absoluteUrl(config.notificationPreferencesPath)
         val safeCtaUrl = escapeHtml(ctaUrl)
         val safeCtaText = escapeHtml(ctaText)
+        val preferencesUrl = absoluteUrl(config.notificationPreferencesPath)
         val safePreferencesUrl = escapeHtml(preferencesUrl)
 
         val html = """

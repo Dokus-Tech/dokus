@@ -30,7 +30,7 @@ import tech.dokus.domain.model.contact.UpdateContactRequest
 import tech.dokus.features.contacts.usecases.CreateContactUseCase
 import tech.dokus.features.contacts.usecases.DeleteContactUseCase
 import tech.dokus.features.contacts.usecases.GetContactUseCase
-import tech.dokus.features.contacts.usecases.ListContactsUseCase
+import tech.dokus.features.contacts.usecases.LookupContactsUseCase
 import tech.dokus.features.contacts.usecases.UpdateContactUseCase
 import tech.dokus.features.contacts.mvi.extensions.toCreateRequest
 import tech.dokus.features.contacts.mvi.extensions.toFormData
@@ -65,7 +65,7 @@ private const val MinDuplicateNameLength = 3
 internal class ContactFormContainer(
     contactId: ContactId?,
     private val getContact: GetContactUseCase,
-    private val listContacts: ListContactsUseCase,
+    private val lookupContacts: LookupContactsUseCase,
     private val createContact: CreateContactUseCase,
     private val updateContact: UpdateContactUseCase,
     private val deleteContact: DeleteContactUseCase,
@@ -403,7 +403,11 @@ internal class ContactFormContainer(
 
             // Check by VAT number (highest confidence)
             if (form.vatNumber.value.isNotBlank()) {
-                listContacts(search = form.vatNumber.value, limit = DuplicateVatSearchLimit).fold(
+                lookupContacts(
+                    query = form.vatNumber.value,
+                    isActive = true,
+                    limit = DuplicateVatSearchLimit
+                ).fold(
                     onSuccess = { contacts ->
                         contacts
                             .filter { it.id != editingId && it.vatNumber?.value == form.vatNumber.value }
@@ -415,7 +419,11 @@ internal class ContactFormContainer(
 
             // Check by email (high confidence)
             if (form.email.value.isNotBlank() && form.email.value.contains("@")) {
-                listContacts(search = form.email.value, limit = DuplicateEmailSearchLimit).fold(
+                lookupContacts(
+                    query = form.email.value,
+                    isActive = true,
+                    limit = DuplicateEmailSearchLimit
+                ).fold(
                     onSuccess = { contacts ->
                         contacts
                             .filter {
@@ -431,7 +439,11 @@ internal class ContactFormContainer(
 
             // Check by name + country (medium confidence)
             if (form.name.value.length >= MinDuplicateNameLength && form.country.isNotBlank()) {
-                listContacts(search = form.name.value, limit = DuplicateNameSearchLimit).fold(
+                lookupContacts(
+                    query = form.name.value,
+                    isActive = true,
+                    limit = DuplicateNameSearchLimit
+                ).fold(
                     onSuccess = { contacts ->
                         contacts
                             .filter { it.id != editingId }
@@ -621,4 +633,3 @@ internal class ContactFormContainer(
         }
     }
 }
-

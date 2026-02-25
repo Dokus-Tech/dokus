@@ -7,6 +7,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
+import org.jetbrains.exposed.v1.core.LowerCase
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.like
@@ -117,7 +118,6 @@ class ContactRepository {
     suspend fun listContacts(
         tenantId: TenantId,
         isActive: Boolean? = null,
-        searchQuery: String? = null,
         limit: Int = 50,
         offset: Int = 0
     ): Result<PaginatedResponse<ContactDto>> = runCatching {
@@ -130,14 +130,6 @@ class ContactRepository {
             if (isActive != null) {
                 query = query.andWhere { ContactsTable.isActive eq isActive }
             }
-            // NOTE: peppolEnabled filter removed - PEPPOL status is now in PeppolDirectoryCacheTable
-            if (!searchQuery.isNullOrBlank()) {
-                query = query.andWhere {
-                    (ContactsTable.name like "%$searchQuery%") or
-                        (ContactsTable.email like "%$searchQuery%") or
-                        (ContactsTable.vatNumber like "%$searchQuery%")
-                }
-            }
 
             val total = query.count()
 
@@ -145,6 +137,53 @@ class ContactRepository {
                 .limit(limit + offset)
                 .map { row -> mapRowToContactDto(row) }
                 .drop(offset)
+
+            PaginatedResponse(
+                items = items,
+                total = total,
+                limit = limit,
+                offset = offset
+            )
+        }
+    }
+
+    suspend fun lookupContacts(
+        tenantId: TenantId,
+        query: String,
+        isActive: Boolean? = null,
+        limit: Int = 50,
+        offset: Int = 0
+    ): Result<PaginatedResponse<ContactDto>> = runCatching {
+        val normalizedQuery = query.trim().lowercase()
+            .replace("\\", "\\\\")
+            .replace("%", "\\%")
+            .replace("_", "\\_")
+        if (normalizedQuery.isEmpty()) {
+            return@runCatching PaginatedResponse(emptyList(), 0, limit, offset)
+        }
+
+        dbQuery {
+            var dbQuery = ContactsTable.selectAll().where {
+                ContactsTable.tenantId eq UUID.fromString(tenantId.toString())
+            }
+
+            if (isActive != null) {
+                dbQuery = dbQuery.andWhere { ContactsTable.isActive eq isActive }
+            }
+
+            dbQuery = dbQuery.andWhere {
+                (LowerCase(ContactsTable.name) like "%$normalizedQuery%") or
+                    (LowerCase(ContactsTable.email) like "%$normalizedQuery%") or
+                    (LowerCase(ContactsTable.vatNumber) like "%$normalizedQuery%") or
+                    (LowerCase(ContactsTable.companyNumber) like "%$normalizedQuery%")
+            }
+
+            val total = dbQuery.count()
+            val items = dbQuery
+                .orderBy(ContactsTable.name to SortOrder.ASC)
+                .limit(limit)
+                .offset(offset.toLong())
+                .map { row -> mapRowToContactDto(row) }
 
             PaginatedResponse(
                 items = items,
@@ -169,7 +208,7 @@ class ContactRepository {
     ): Result<PaginatedResponse<ContactDto>> = runCatching {
         // TODO: Proper implementation requires JOIN with InvoicesTable to find contacts with invoices
         // For now, delegate to listContacts
-        listContacts(tenantId, isActive, null, limit, offset).getOrThrow()
+        listContacts(tenantId, isActive, limit, offset).getOrThrow()
     }
 
     /**
@@ -186,7 +225,7 @@ class ContactRepository {
     ): Result<PaginatedResponse<ContactDto>> = runCatching {
         // TODO: Proper implementation requires JOIN with InvoicesTable/ExpensesTable
         // For now, delegate to listContacts
-        listContacts(tenantId, isActive, null, limit, offset).getOrThrow()
+        listContacts(tenantId, isActive, limit, offset).getOrThrow()
     }
 
     /**

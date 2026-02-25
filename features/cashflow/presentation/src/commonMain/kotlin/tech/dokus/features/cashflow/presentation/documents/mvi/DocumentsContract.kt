@@ -58,7 +58,6 @@ sealed interface DocumentsState : MVIState, DokusState<Nothing> {
      */
     data class Content(
         val documents: PaginationState<DocumentRecordDto>,
-        val searchQuery: String = "",
         val filter: DocumentFilter = DocumentFilter.All,
         val needsAttentionCount: Int = 0,
         val confirmedCount: Int = 0,
@@ -90,9 +89,6 @@ sealed interface DocumentsIntent : MVIIntent {
     /** Load next page of documents */
     data object LoadMore : DocumentsIntent
 
-    /** Update search query */
-    data class UpdateSearchQuery(val query: String) : DocumentsIntent
-
     /** Update document filter */
     data class UpdateFilter(val filter: DocumentFilter) : DocumentsIntent
 
@@ -111,7 +107,6 @@ sealed interface DocumentsAction : MVIAction {
     data class NavigateToDocumentReview(
         val documentId: DocumentId,
         val sourceFilter: DocumentFilter,
-        val sourceSearch: String?,
         val sourceSort: CashFlowDestination.DocumentReviewSourceSort =
             CashFlowDestination.DocumentReviewSourceSort.NewestFirst,
     ) : DocumentsAction

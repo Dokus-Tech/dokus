@@ -7,6 +7,12 @@ import tech.dokus.app.notifications.CashflowInvoiceLookupDataSource
 import tech.dokus.app.notifications.InvoiceLookupDataSource
 import tech.dokus.app.notifications.NotificationRemoteDataSource
 import tech.dokus.app.notifications.NotificationRemoteDataSourceImpl
+import tech.dokus.app.screens.search.SearchAction
+import tech.dokus.app.screens.search.SearchContainer
+import tech.dokus.app.screens.search.SearchIntent
+import tech.dokus.app.screens.search.SearchRemoteDataSource
+import tech.dokus.app.screens.search.SearchRemoteDataSourceImpl
+import tech.dokus.app.screens.search.SearchState
 import tech.dokus.app.infrastructure.ServerConfigManagerImpl
 import tech.dokus.app.local.DefaultLocalDatabaseCleaner
 import tech.dokus.app.share.ShareImportAction
@@ -50,6 +56,8 @@ import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.aura.style.ThemeManager
 import tech.dokus.foundation.aura.style.ThemeManagerImpl
 
+private class DefaultFeatureFlagService : FeatureFlagService by FeatureFlagService.defaultsOnly
+
 internal val diModuleApp = module {
     // Server configuration management (bridges platform settings with domain types)
     singleOf(::ServerConfigManagerImpl) bind ServerConfigManager::class
@@ -84,6 +92,11 @@ internal val diModuleApp = module {
             watchCurrentTenantUseCase = get(),
             watchCurrentUserUseCase = get(),
             logoutUseCase = get(),
+        )
+    }
+    container<SearchContainer, SearchState, SearchIntent, SearchAction> {
+        SearchContainer(
+            remoteDataSource = get()
         )
     }
     container<SettingsContainer, SettingsState, SettingsIntent, SettingsAction> {
@@ -133,7 +146,8 @@ internal val diModuleApp = module {
     }
 
     singleOf(::CashflowInvoiceLookupDataSource) bind InvoiceLookupDataSource::class
-    single<FeatureFlagService> { FeatureFlagService.defaultsOnly }
+    singleOf(::SearchRemoteDataSourceImpl) bind SearchRemoteDataSource::class
+    singleOf(::DefaultFeatureFlagService) bind FeatureFlagService::class
     singleOf(::NotificationRemoteDataSourceImpl) bind NotificationRemoteDataSource::class
     singleOf(::DefaultLocalDatabaseCleaner) bind LocalDatabaseCleaner::class
 }

@@ -26,7 +26,12 @@ data class NavSection(
 )
 
 /** Default shell top bar mode for a NavItem. null = no shell top bar. */
-enum class ShellTopBarDefault { Search, Title }
+enum class ShellTopBarDefault { Title }
+
+enum class DesktopNavPlacement {
+    Section,
+    PinnedTop,
+}
 
 @Immutable
 data class NavItem(
@@ -47,6 +52,10 @@ data class NavItem(
     val shellTopBar: ShellTopBarDefault? = null,
     /** Subtitle shown in the desktop shell top bar (e.g. "Financial overview") */
     val subtitleRes: StringResource? = null,
+    /** Desktop rail placement for this item. */
+    val desktopPlacement: DesktopNavPlacement = DesktopNavPlacement.Section,
+    /** Optional desktop shortcut hint badge (e.g. "⌘K"). */
+    val desktopShortcutHint: String? = null,
 )
 
 /**

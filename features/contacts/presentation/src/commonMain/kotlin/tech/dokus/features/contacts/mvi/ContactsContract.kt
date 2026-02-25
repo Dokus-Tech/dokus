@@ -30,7 +30,6 @@ import tech.dokus.foundation.aura.components.dropdown.FilterOption
  *
  * The Contacts screen displays a list of contacts with:
  * - Pagination for loading more contacts
- * - Search functionality
  * - Sort and filter options (role, active status, Peppol)
  * - Master-detail layout support (selectedContactId)
  * - Create contact form pane visibility (desktop)
@@ -91,7 +90,6 @@ sealed interface ContactsState : MVIState, DokusState<Nothing> {
      * Content state - contacts loaded and ready for display.
      *
      * @property contacts Paginated list of contacts
-     * @property searchQuery Current search filter
      * @property sortOption Current sort order
      * @property roleFilter Current role filter (All, Customers, Vendors)
      * @property activeFilter Current active status filter
@@ -101,7 +99,6 @@ sealed interface ContactsState : MVIState, DokusState<Nothing> {
      */
     data class Content(
         val contacts: PaginationState<ContactDto>,
-        val searchQuery: String = "",
         val sortOption: ContactSortOption = ContactSortOption.Default,
         val roleFilter: ContactRoleFilter = ContactRoleFilter.All,
         val activeFilter: ContactActiveFilter = ContactActiveFilter.All,
@@ -142,9 +139,6 @@ sealed interface ContactsIntent : MVIIntent {
     data object LoadMore : ContactsIntent
 
     // === Search & Filter ===
-
-    /** Update search query and filter contacts */
-    data class UpdateSearchQuery(val query: String) : ContactsIntent
 
     /** Update sort option */
     data class UpdateSortOption(val option: ContactSortOption) : ContactsIntent

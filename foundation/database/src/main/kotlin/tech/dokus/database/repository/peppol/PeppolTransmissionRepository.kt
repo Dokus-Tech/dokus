@@ -629,7 +629,10 @@ class PeppolTransmissionRepository {
             }
 
             PeppolTransmissionsTable.selectAll()
-                .where { PeppolTransmissionsTable.id eq UUID.fromString(transmissionId.toString()) }
+                .where {
+                    (PeppolTransmissionsTable.id eq UUID.fromString(transmissionId.toString())) and
+                        (PeppolTransmissionsTable.tenantId eq UUID.fromString(tenantId.toString()))
+                }
                 .map { it.toDto() }
                 .single()
         }

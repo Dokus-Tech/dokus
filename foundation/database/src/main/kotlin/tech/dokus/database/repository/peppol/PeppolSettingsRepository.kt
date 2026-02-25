@@ -123,7 +123,10 @@ class PeppolSettingsRepository {
     suspend fun getTenantIdByWebhookToken(token: String): Result<TenantId?> = runCatching {
         dbQuery {
             PeppolSettingsTable.selectAll()
-                .where { PeppolSettingsTable.webhookToken eq token }
+                .where {
+                    (PeppolSettingsTable.webhookToken eq token) and
+                        (PeppolSettingsTable.isEnabled eq true)
+                }
                 .map { TenantId.parse(it[PeppolSettingsTable.tenantId].toString()) }
                 .singleOrNull()
         }

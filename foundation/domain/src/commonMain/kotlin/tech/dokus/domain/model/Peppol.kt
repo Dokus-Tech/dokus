@@ -2,6 +2,7 @@ package tech.dokus.domain.model
 
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.PeppolDocumentType
 import tech.dokus.domain.enums.PeppolLookupSource
@@ -137,6 +138,12 @@ data class PeppolTransmissionDto(
     val senderPeppolId: PeppolId? = null,
     /** Error message if failed */
     val errorMessage: String? = null,
+    /** Raw request sent to Recommand (internal only, excluded from API serialization) */
+    @Transient
+    val rawRequest: String? = null,
+    /** Raw response from Recommand (internal only, excluded from API serialization) */
+    @Transient
+    val rawResponse: String? = null,
     /** Worker attempt count for outbound retries */
     val attemptCount: Int = 0,
     /** Next retry timestamp for retryable outbound errors */

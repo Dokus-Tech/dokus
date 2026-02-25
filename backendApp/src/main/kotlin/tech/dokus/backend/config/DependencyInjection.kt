@@ -43,6 +43,7 @@ import tech.dokus.backend.services.notifications.NotificationPreferencesService
 import tech.dokus.backend.services.notifications.NotificationService
 import tech.dokus.backend.services.pdf.PdfPreviewService
 import tech.dokus.backend.services.peppol.PeppolRecipientResolver
+import tech.dokus.backend.services.search.SearchService
 import tech.dokus.backend.worker.CashflowProjectionReconciliationWorker
 import tech.dokus.backend.worker.DocumentProcessingWorker
 import tech.dokus.backend.worker.PeppolOutboundReconciliationWorker
@@ -130,6 +131,7 @@ fun Application.configureDependencyInjection(appConfig: AppBaseConfig) {
             authModule(),
             cashflowModule(),
             contactsModule,
+            searchModule,
             documentProcessingModule(),
             aiModule()
         )
@@ -312,6 +314,10 @@ private val contactsModule = module {
     single { ContactService(get(), getOrNull()) }
     single { ContactNoteService(get()) }
     single { ContactMatchingService(get()) }
+}
+
+private val searchModule = module {
+    singleOf(::SearchService)
 }
 
 private fun documentProcessingModule() = module {

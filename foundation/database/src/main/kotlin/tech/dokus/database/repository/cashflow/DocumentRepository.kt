@@ -215,7 +215,6 @@ class DocumentRepository {
      * - documentStatus: Only applies when draft exists (documents without drafts pass this filter)
      * - documentType: Only applies when draft exists
      * - ingestionStatus: Filters by latest ingestion status
-     * - search: Filters by filename (ILIKE)
      *
      * CRITICAL: Must filter by tenantId.
      *
@@ -226,7 +225,6 @@ class DocumentRepository {
         documentStatus: DocumentStatus? = null,
         documentType: DocumentType? = null,
         ingestionStatus: IngestionStatus? = null,
-        search: String? = null,
         page: Int = 0,
         limit: Int = 20
     ): DocumentListPage<DocumentWithDraftAndIngestion> {
@@ -237,7 +235,6 @@ class DocumentRepository {
             documentStatus = documentStatus,
             documentType = documentType,
             ingestionStatus = ingestionStatus,
-            search = search,
             page = page,
             limit = limit
         )

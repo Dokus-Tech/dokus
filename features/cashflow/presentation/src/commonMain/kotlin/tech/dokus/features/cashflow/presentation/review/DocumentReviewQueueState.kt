@@ -7,7 +7,6 @@ import tech.dokus.navigation.destinations.CashFlowDestination
 @Immutable
 data class DocumentReviewRouteContext(
     val filter: CashFlowDestination.DocumentReviewSourceFilter,
-    val search: String?,
     val sort: CashFlowDestination.DocumentReviewSourceSort,
 )
 

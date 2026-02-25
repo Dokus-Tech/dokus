@@ -24,10 +24,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isCtrlPressed
+import androidx.compose.ui.input.key.isMetaPressed
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
@@ -39,10 +45,12 @@ import org.jetbrains.compose.resources.stringResource
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.app.allNavItems
+import tech.dokus.app.desktopPinnedItems
 import tech.dokus.app.homeNavigationProviders
 import tech.dokus.app.mobileTabConfigs
 import tech.dokus.app.navSectionsCombined
 import tech.dokus.app.navigation.HomeNavigationCommandBus
+import tech.dokus.app.navigation.SearchFocusRequestBus
 import tech.dokus.app.navigation.executeHomeNavigationCommand
 import tech.dokus.app.navigation.local.HomeNavControllerProvided
 import tech.dokus.app.screens.home.DesktopShellTopBar
@@ -57,7 +65,6 @@ import tech.dokus.app.viewmodel.HomeContainer
 import tech.dokus.app.viewmodel.HomeIntent
 import tech.dokus.app.viewmodel.HomeState
 import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.search_placeholder
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.User
@@ -106,17 +113,19 @@ internal fun HomeRoute(
     val homeNavProviders = remember(appModules) { appModules.homeNavigationProviders }
     val homeNavController = rememberNavController()
     val navSections = remember(appModules) { appModules.navSectionsCombined }
+    val desktopPinnedItems = remember(appModules) { appModules.desktopPinnedItems }
     val mobileTabs = remember(appModules) { appModules.mobileTabConfigs }
     val allNavItems = remember(appModules) { appModules.allNavItems }
     val sortedRoutes = remember(allNavItems) { buildSortedRoutes(allNavItems) }
-    val startDestination = remember(navSections) { navSections.first().items.first().destination }
+    val startDestination = remember(allNavItems) {
+        allNavItems.firstOrNull { it.id == "today" }?.destination
+            ?: allNavItems.first().destination
+    }
     val pendingHomeCommand by HomeNavigationCommandBus.pendingCommand.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     var pendingError by remember { mutableStateOf<DokusException?>(null) }
     val errorMessage = pendingError?.localized
     val isLargeScreen = LocalScreenSize.current.isLarge
-    var fallbackSearchQuery by rememberSaveable { mutableStateOf("") }
-    var isMobileSearchExpanded by rememberSaveable { mutableStateOf(isLargeScreen) }
     val registeredTopBarConfigs = remember { mutableStateMapOf<String, HomeShellTopBarConfig>() }
     val topBarHost = remember(allNavItems, sortedRoutes) {
         object : HomeShellTopBarHost {
@@ -138,10 +147,6 @@ internal fun HomeRoute(
             snackbarHostState.showSnackbar(errorMessage)
             pendingError = null
         }
-    }
-
-    LaunchedEffect(isLargeScreen) {
-        isMobileSearchExpanded = isLargeScreen
     }
 
     LaunchedEffect(pendingHomeCommand?.id, homeNavController) {
@@ -170,10 +175,6 @@ internal fun HomeRoute(
     val fallbackShellTopBarConfig = rememberFallbackShellTopBarConfig(
         normalizedRoute = normalizedRoute,
         allNavItems = allNavItems,
-        fallbackSearchQuery = fallbackSearchQuery,
-        onFallbackSearchQueryChange = { fallbackSearchQuery = it },
-        isMobileSearchExpanded = isMobileSearchExpanded,
-        onExpandSearch = { isMobileSearchExpanded = true }
     )
     val topBarConfig = resolveHomeShellTopBarConfig(
         route = currentRoute,
@@ -206,6 +207,7 @@ internal fun HomeRoute(
         mobileTabs = mobileTabs,
         selectedRoute = currentRoute,
         topBarConfig = topBarConfig,
+        desktopPinnedItems = desktopPinnedItems,
         tenantState = shellState.tenantState,
         profileData = profileData,
         isLoggingOut = shellState.isLoggingOut,
@@ -226,11 +228,21 @@ internal fun HomeRoute(
         onLogoutClick = { container.store.intent(HomeIntent.Logout) },
         onNavItemClick = { navItem ->
             homeNavController.navigateToTopLevelTab(navItem.destination)
+            if (navItem.destination == HomeDestination.Search) {
+                SearchFocusRequestBus.requestFocus()
+            }
         },
         onTabClick = { tab ->
             tab.destination?.let { destination ->
                 homeNavController.navigateToTopLevelTab(destination)
+                if (destination == HomeDestination.Search) {
+                    SearchFocusRequestBus.requestFocus()
+                }
             }
+        },
+        onSearchShortcut = {
+            homeNavController.navigateToTopLevelTab(HomeDestination.Search)
+            SearchFocusRequestBus.requestFocus()
         },
         content = navHostContent,
     )
@@ -242,6 +254,7 @@ internal fun HomeScreen(
     mobileTabs: List<MobileTabConfig>,
     selectedRoute: String?,
     topBarConfig: HomeShellTopBarConfig?,
+    desktopPinnedItems: List<NavItem>,
     tenantState: DokusState<Tenant>,
     profileData: HomeShellProfileData?,
     isLoggingOut: Boolean,
@@ -252,15 +265,30 @@ internal fun HomeScreen(
     onLogoutClick: () -> Unit,
     onNavItemClick: (NavItem) -> Unit,
     onTabClick: (MobileTabConfig) -> Unit,
+    onSearchShortcut: () -> Unit,
     content: @Composable () -> Unit,
 ) {
     val isLargeScreen = LocalScreenSize.current.isLarge
 
-    Surface {
+    Surface(
+        modifier = Modifier.onPreviewKeyEvent { keyEvent ->
+            if (
+                keyEvent.type == KeyEventType.KeyDown &&
+                keyEvent.key == Key.K &&
+                (keyEvent.isMetaPressed || keyEvent.isCtrlPressed)
+            ) {
+                onSearchShortcut()
+                true
+            } else {
+                false
+            }
+        }
+    ) {
         Box(modifier = Modifier.fillMaxSize()) {
             if (isLargeScreen) {
                 RailNavigationLayout(
                     navSections = navSections,
+                    pinnedItems = desktopPinnedItems,
                     selectedRoute = selectedRoute,
                     topBarConfig = topBarConfig,
                     tenantState = tenantState,
@@ -322,6 +350,7 @@ private fun HomeNavHost(
 @Composable
 private fun RailNavigationLayout(
     navSections: List<NavSection>,
+    pinnedItems: List<NavItem>,
     selectedRoute: String?,
     topBarConfig: HomeShellTopBarConfig?,
     tenantState: DokusState<Tenant>,
@@ -370,6 +399,7 @@ private fun RailNavigationLayout(
 
                     DokusNavigationRailSectioned(
                         sections = navSections,
+                        pinnedItems = pinnedItems,
                         expandedSections = expandedSections,
                         selectedRoute = selectedRoute,
                         settingsItem = null,
@@ -428,7 +458,7 @@ private fun RailNavigationLayout(
 }
 
 /** Routes where the shell header (Dokus + avatar) is shown. Other tabs provide their own top bar. */
-private val ShellHeaderRoutes = setOf("today", "documents", "cashflow", "more")
+private val ShellHeaderRoutes = setOf("today", "documents", "search", "cashflow", "more")
 
 internal fun dispatchProfileNavigation(
     isLargeScreen: Boolean,
@@ -516,27 +546,10 @@ private fun buildProfileData(
 private fun rememberFallbackShellTopBarConfig(
     normalizedRoute: String?,
     allNavItems: List<NavItem>,
-    fallbackSearchQuery: String,
-    onFallbackSearchQueryChange: (String) -> Unit,
-    isMobileSearchExpanded: Boolean,
-    onExpandSearch: () -> Unit,
 ): HomeShellTopBarConfig? {
     val navItem = allNavItems.find { it.destination.route == normalizedRoute } ?: return null
     val shellDefault = navItem.shellTopBar ?: return null
     return when (shellDefault) {
-        ShellTopBarDefault.Search -> {
-            HomeShellTopBarConfig(
-                mode = HomeShellTopBarMode.Search(
-                    query = fallbackSearchQuery,
-                    placeholder = stringResource(Res.string.search_placeholder),
-                    onQueryChange = onFallbackSearchQueryChange,
-                    onClear = { onFallbackSearchQueryChange("") },
-                    isSearchExpanded = isMobileSearchExpanded,
-                    onExpandSearch = onExpandSearch
-                )
-            )
-        }
-
         ShellTopBarDefault.Title -> {
             val subtitle = navItem.subtitleRes?.let { stringResource(it) }
             HomeShellTopBarConfig(
@@ -560,6 +573,7 @@ private fun HomeScreenPreview(
             mobileTabs = emptyList(),
             selectedRoute = null,
             topBarConfig = null,
+            desktopPinnedItems = emptyList(),
             tenantState = DokusState.loading(),
             profileData = null,
             isLoggingOut = false,
@@ -570,6 +584,7 @@ private fun HomeScreenPreview(
             onLogoutClick = {},
             onNavItemClick = {},
             onTabClick = {},
+            onSearchShortcut = {},
             content = {},
         )
     }

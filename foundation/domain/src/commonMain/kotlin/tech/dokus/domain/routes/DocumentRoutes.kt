@@ -53,7 +53,6 @@ class Documents {
         val documentStatus: DocumentStatus? = null,
         val documentType: DocumentType? = null,
         val ingestionStatus: IngestionStatus? = null,
-        val search: String? = null,
         val page: Int = 0,
         val limit: Int = 20
     )

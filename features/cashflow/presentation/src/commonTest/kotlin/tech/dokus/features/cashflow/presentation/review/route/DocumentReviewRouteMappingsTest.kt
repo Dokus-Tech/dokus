@@ -5,7 +5,6 @@ import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentFilter
 import tech.dokus.navigation.destinations.CashFlowDestination
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNull
 
 class DocumentReviewRouteMappingsTest {
 
@@ -42,15 +41,14 @@ class DocumentReviewRouteMappingsTest {
     fun `route context is absent when source filter is missing`() {
         val route = CashFlowDestination.DocumentReview(documentId = "doc-1")
 
-        assertNull(route.toRouteContextOrNull())
+        kotlin.test.assertNull(route.toRouteContextOrNull())
     }
 
     @Test
-    fun `route context normalizes blank search`() {
+    fun `route context keeps filter and sort`() {
         val route = CashFlowDestination.DocumentReview(
             documentId = "doc-1",
             sourceFilter = CashFlowDestination.DocumentReviewSourceFilter.All.token,
-            sourceSearch = "   ",
             sourceSort = CashFlowDestination.DocumentReviewSourceSort.NewestFirst.token,
         )
 
@@ -58,7 +56,6 @@ class DocumentReviewRouteMappingsTest {
 
         requireNotNull(context)
         assertEquals(CashFlowDestination.DocumentReviewSourceFilter.All, context.filter)
-        assertNull(context.search)
         assertEquals(CashFlowDestination.DocumentReviewSourceSort.NewestFirst, context.sort)
     }
 }

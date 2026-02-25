@@ -14,11 +14,24 @@ import kotlinx.serialization.Serializable
 @Serializable
 @Resource("/api/v1/contacts")
 class Contacts(
-    val search: String? = null,
     val active: Boolean? = null,
     val limit: Int = 50,
     val offset: Int = 0
 ) {
+    /**
+     * GET /api/v1/contacts/lookup
+     * Dedicated lookup endpoint for autocomplete, duplicate checks and merge target search.
+     */
+    @Serializable
+    @Resource("lookup")
+    class Lookup(
+        val parent: Contacts = Contacts(),
+        val query: String,
+        val active: Boolean? = null,
+        val limit: Int = 50,
+        val offset: Int = 0
+    )
+
     /**
      * GET /api/v1/contacts/customers - List customer contacts
      */

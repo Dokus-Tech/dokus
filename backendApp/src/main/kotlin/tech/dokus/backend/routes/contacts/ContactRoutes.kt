@@ -66,11 +66,39 @@ fun Route.contactRoutes() {
             val contacts = contactService.listContacts(
                 tenantId = tenantId,
                 isActive = route.active,
-                // NOTE: peppolEnabled filter removed - PEPPOL status is now in PeppolDirectoryCacheTable
-                searchQuery = route.search,
                 limit = route.limit,
                 offset = route.offset
             ).getOrElse { throw DokusException.InternalError("Failed to list contacts: ${it.message}") }
+
+            call.respond(HttpStatusCode.OK, contacts)
+        }
+
+        /**
+         * GET /api/v1/contacts/lookup
+         * Dedicated lookup endpoint for autocomplete, duplicate checks and merge target search.
+         */
+        get<Contacts.Lookup> { route ->
+            val tenantId = dokusPrincipal.requireTenantId()
+            val query = route.query.trim()
+            if (query.length < 2) {
+                throw DokusException.BadRequest("Query must contain at least 2 characters")
+            }
+            if (route.limit < 1 || route.limit > 200) {
+                throw DokusException.BadRequest("Limit must be between 1 and 200")
+            }
+            if (route.offset < 0) {
+                throw DokusException.BadRequest("Offset must be non-negative")
+            }
+
+            val contacts = contactService.lookupContacts(
+                tenantId = tenantId,
+                query = query,
+                isActive = route.active,
+                limit = route.limit,
+                offset = route.offset
+            ).getOrElse {
+                throw DokusException.InternalError("Failed to lookup contacts: ${it.message}")
+            }
 
             call.respond(HttpStatusCode.OK, contacts)
         }
