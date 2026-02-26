@@ -3,6 +3,7 @@ package tech.dokus.features.cashflow.presentation.cashflow.screen
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -564,6 +565,7 @@ private fun MobileCommandFooter(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .imePadding()
             .padding(12.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
