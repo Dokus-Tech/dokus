@@ -234,6 +234,8 @@ private fun DesktopInvoiceCreateContent(
             onIntent = onIntent
         )
 
+        DatesTermsEditor(formState = formState, onIntent = onIntent)
+
         Row(
             modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
             horizontalArrangement = Arrangement.End
@@ -346,39 +348,7 @@ private fun MobileInvoiceCreateContent(
             state = uiState,
             onIntent = onIntent
         ) {
-            InvoiceDatesSection(
-                issueDate = formState.issueDate,
-                dueDate = formState.dueDate,
-                onIssueDateClick = { onIntent(CreateInvoiceIntent.OpenIssueDatePicker) },
-                onDueDateClick = { onIntent(CreateInvoiceIntent.OpenDueDatePicker) }
-            )
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                FilterChip(
-                    selected = formState.dueDateMode == InvoiceDueDateMode.Terms,
-                    onClick = { onIntent(CreateInvoiceIntent.UpdateDueDateMode(InvoiceDueDateMode.Terms)) },
-                    label = { Text("Terms") }
-                )
-                FilterChip(
-                    selected = formState.dueDateMode == InvoiceDueDateMode.FixedDate,
-                    onClick = { onIntent(CreateInvoiceIntent.UpdateDueDateMode(InvoiceDueDateMode.FixedDate)) },
-                    label = { Text("Fixed date") }
-                )
-            }
-            PTextFieldStandard(
-                fieldName = "Payment terms (days)",
-                value = formState.paymentTermsDays.toString(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                onValueChange = { value ->
-                    val parsed = value.toIntOrNull()
-                    if (parsed != null) onIntent(CreateInvoiceIntent.UpdatePaymentTermsDays(parsed))
-                },
-                modifier = Modifier.fillMaxWidth()
-            )
+            DatesTermsEditor(formState = formState, onIntent = onIntent)
         }
 
         PButton(
@@ -535,6 +505,52 @@ private fun DeliveryOptionRow(
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.padding(start = 6.dp)
         )
+    }
+}
+
+@Composable
+private fun DatesTermsEditor(
+    formState: tech.dokus.features.cashflow.mvi.model.CreateInvoiceFormState,
+    onIntent: (CreateInvoiceIntent) -> Unit
+) {
+    DokusCard(
+        modifier = Modifier.fillMaxWidth(),
+        padding = DokusCardPadding.Default
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text("Dates & terms", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            InvoiceDatesSection(
+                issueDate = formState.issueDate,
+                dueDate = formState.dueDate,
+                onIssueDateClick = { onIntent(CreateInvoiceIntent.OpenIssueDatePicker) },
+                onDueDateClick = { onIntent(CreateInvoiceIntent.OpenDueDatePicker) }
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                FilterChip(
+                    selected = formState.dueDateMode == InvoiceDueDateMode.Terms,
+                    onClick = { onIntent(CreateInvoiceIntent.UpdateDueDateMode(InvoiceDueDateMode.Terms)) },
+                    label = { Text("Terms") }
+                )
+                FilterChip(
+                    selected = formState.dueDateMode == InvoiceDueDateMode.FixedDate,
+                    onClick = { onIntent(CreateInvoiceIntent.UpdateDueDateMode(InvoiceDueDateMode.FixedDate)) },
+                    label = { Text("Fixed date") }
+                )
+            }
+            PTextFieldStandard(
+                fieldName = "Payment terms (days)",
+                value = formState.paymentTermsDays.toString(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                onValueChange = { value ->
+                    val parsed = value.toIntOrNull()
+                    if (parsed != null) onIntent(CreateInvoiceIntent.UpdatePaymentTermsDays(parsed))
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
     }
 }
 

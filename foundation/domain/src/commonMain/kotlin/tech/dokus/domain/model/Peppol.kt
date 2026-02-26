@@ -290,4 +290,13 @@ data class PeppolStatusResponse(
     /** true if fetched via ?refresh=true this request */
     val refreshed: Boolean,
     val errorMessage: String? = null
-)
+) {
+    val isFound: Boolean get() = status == STATUS_FOUND
+
+    companion object {
+        const val STATUS_FOUND = "found"
+        const val STATUS_NOT_FOUND = "not_found"
+        const val STATUS_ERROR = "error"
+        const val STATUS_UNKNOWN = "unknown"
+    }
+}

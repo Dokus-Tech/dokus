@@ -82,6 +82,8 @@ internal class CreateInvoiceContainer(
                         }
                         val statusResult = getContactPeppolStatus(intent.contactId, intent.force)
                         updateInvoice { state ->
+                            // Guard: ignore stale result if client changed during the request
+                            if (state.formState.selectedClient?.id != intent.contactId) return@updateInvoice state
                             state.copy(
                                 formState = state.formState.copy(
                                     peppolStatus = statusResult.getOrNull(),
@@ -268,6 +270,8 @@ internal class CreateInvoiceContainer(
         getLatestInvoiceForContact(client.id).onSuccess { latest ->
             if (latest == null) return@onSuccess
             updateInvoice { state ->
+                // Guard: ignore stale result if user already switched to a different client
+                if (state.formState.selectedClient?.id != client.id) return@updateInvoice state
                 val formState = synchronizeDueDate(
                     state.formState.copy(
                         paymentTermsDays = latest.paymentTermsDays ?: state.formState.paymentTermsDays,
@@ -382,8 +386,10 @@ internal class CreateInvoiceContainer(
             it.copy(formState = it.formState.copy(isSaving = true, errors = emptyMap()))
         }
 
-        val draftDeliveryMethod = deliveryMethod ?: current.uiState.selectedDeliveryPreference
-        val request = current.formState.toCreateInvoiceRequest(draftDeliveryMethod)
+        // Persist the user's delivery preference for UX recall, but the actual
+        // delivery action is determined by `deliveryMethod` (null = draft, no delivery).
+        val persistedPreference = current.uiState.selectedDeliveryPreference
+        val request = current.formState.toCreateInvoiceRequest(persistedPreference)
         submitInvoiceWithDelivery(request, deliveryMethod).fold(
             onSuccess = { result ->
                 updateInvoice { it.copy(formState = it.formState.copy(isSaving = false)) }
@@ -399,6 +405,10 @@ internal class CreateInvoiceContainer(
                     is SubmitInvoiceWithDeliveryResult.PdfReady -> {
                         action(CreateInvoiceAction.OpenExternalUrl(result.downloadUrl))
                         action(CreateInvoiceAction.ShowSuccess("Invoice PDF is ready."))
+                        action(CreateInvoiceAction.NavigateToInvoice(result.invoiceId))
+                    }
+                    is SubmitInvoiceWithDeliveryResult.DeliveryFailed -> {
+                        action(CreateInvoiceAction.ShowError("Invoice saved but delivery failed: ${result.error}"))
                         action(CreateInvoiceAction.NavigateToInvoice(result.invoiceId))
                     }
                 }
@@ -462,7 +472,7 @@ internal class CreateInvoiceContainer(
             )
         }
 
-        return if (formState.peppolStatus?.status == "found") {
+        return if (formState.peppolStatus?.isFound == true) {
             DeliveryResolution(InvoiceResolvedAction.Peppol)
         } else {
             DeliveryResolution(

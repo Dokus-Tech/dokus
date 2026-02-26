@@ -45,7 +45,7 @@ internal fun CreateInvoiceFormState.toCreateInvoiceRequest(
         paymentTermsDays = paymentTermsDays,
         dueDateMode = dueDateMode,
         structuredCommunication = StructuredCommunication.from(structuredCommunication),
-        senderIban = Iban.from(senderIban),
+        senderIban = senderIban.takeIf { it.isNotBlank() }?.let { Iban.from(it) },
         senderBic = senderBic.trim()
             .uppercase()
             .takeIf { it.isNotBlank() }

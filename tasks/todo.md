@@ -4,69 +4,83 @@
 
 ### Critical (must fix before merge)
 
-- [ ] **1. Reinstate PEPPOL send guard**
-  - `PeppolRoutes.kt` — restore draft-status check for invoices without `documentId`
-  - Rule: extraction-linked → must be confirmed; manual outbound → only on explicit submit, not draft save
-  - Guard: `if (invoice.status == Draft && sourceDocumentId == null) throw PeppolSendRequiresConfirmedDocument`
+- [x] **1. Reinstate PEPPOL send guard**
+  - `PeppolRoutes.kt` — restored `else if (invoice.status == Draft)` branch
 
-- [ ] **2. Fix SaveDraft delivery method mismatch**
-  - `CreateInvoiceContainer.kt:383-386` — draft save currently sends user's delivery preference (e.g. Peppol) in the request body while the use case treats `null` as draft
-  - Fix: when `deliveryMethod` is null, pass `null` (or a safe default) to `toCreateInvoiceRequest()`, not the user's preference
-  - Separate concern: `preferredDeliveryMethod` (persisted for UX) vs `requestedAction` (what actually happens)
+- [x] **2. Fix SaveDraft delivery method mismatch**
+  - `CreateInvoiceContainer.kt` — clarified variable naming: `persistedPreference` (for DB) vs `deliveryMethod` (action control)
 
-- [ ] **3. Add retry story for delivery failures**
-  - `CashflowDocumentUseCaseImpls.kt` — when create succeeds but delivery fails, return structured error with `invoiceId`
-  - `SubmitInvoiceWithDeliveryResult` — add a `DeliveryFailed(invoiceId, error)` variant
-  - Container/UI — show retry option for delivery on existing invoice instead of generic error
+- [x] **3. Add retry story for delivery failures**
+  - Added `DeliveryFailed(invoiceId, error)` to `SubmitInvoiceWithDeliveryResult`
+  - Use case catches delivery failures separately, preserves the created invoice
+  - Container navigates to the existing invoice with error message for retry
 
-- [ ] **4. Fix PEPPOL status magic string**
-  - `CreateInvoiceContainer.kt:465` — replace `== "found"` with typed enum or constant
-  - Preferred: change `PeppolStatusResponse.status` to `PeppolLookupStatus` enum (already exists in codebase)
-  - Fallback: if unknown value arrives, show "status unknown, refresh" not silent PDF fallback
+- [x] **4. Fix PEPPOL status magic string**
+  - Added `isFound` property + string constants to `PeppolStatusResponse`
+  - Container uses `isFound` instead of `== "found"`
+  - Backend uses `STATUS_UNKNOWN` constant
 
 ### Medium (product-critical)
 
-- [ ] **5. Fix PDF line item truncation**
-  - `InvoicePdfService.kt:92-107` — implement multi-page rendering
-  - If not feasible now: hard-fail with clear error "too many line items" rather than silent truncation
+- [x] **5. Fix PDF line item truncation**
+  - Rewrote `InvoicePdfService` with `PdfWriter` helper that auto-creates new pages at bottom margin
+  - Also fixed font thread-safety (fonts now scoped per document)
 
-- [ ] **6. Fix contact lookup failure in PDF**
-  - `InvoiceRoutes.kt:171-174` — abort PDF generation if contact cannot be loaded
-  - Return user-safe error: "Couldn't load client details, please retry"
+- [x] **6. Fix contact lookup failure in PDF**
+  - PDF endpoint now fails fast if contact cannot be loaded
+  - Generic error messages returned to client (no internal detail leakage)
 
-- [ ] **7. Add dates/terms controls to desktop layout**
-  - `CreateInvoiceScreen.kt` — `DesktopInvoiceCreateContent` is missing `InvoiceDatesSection`, dueDateMode toggle, payment terms field
-  - Extract into a reusable `InvoiceDatesEditor` composable, add to desktop
+- [x] **7. Add dates/terms controls to desktop layout**
+  - Extracted `DatesTermsEditor` composable (date pickers, dueDateMode toggle, payment terms)
+  - Used by both desktop and mobile layouts
 
-- [ ] **8. Fix due date recompute on invoice update**
-  - `InvoiceRepository.kt:390-391` — `updateInvoice` doesn't recalculate dueDate when paymentTermsDays changes
-  - Apply same derivation logic as `createInvoice`
+- [x] **8. Fix due date recompute on invoice update**
+  - `updateInvoice` now derives effectiveDueDate from paymentTermsDays, matching createInvoice
 
 ### Medium (quality)
 
-- [ ] **9. Fix race condition in handleSelectClient**
-  - `CreateInvoiceContainer.kt:252-290` — guard `onSuccess` block to check selectedClient still matches
-  - Cancel previous job or ignore stale results
+- [x] **9. Fix race condition in handleSelectClient**
+  - Added stale-data guards in both latest invoice callback and PEPPOL status callback
+  - Checks `selectedClient?.id == client.id` before applying results
 
-- [ ] **10. Fix PDFBox font thread safety**
-  - `InvoicePdfService.kt:26-27` — move font instantiation inside `renderPdf`, scoped per document
+- [x] **10. Fix PDFBox font thread safety**
+  - Fixed as part of item 5 (fonts scoped per document)
 
-- [ ] **11. Fix internal error message leakage**
-  - `InvoiceRoutes.kt:167-181` — log detailed error server-side, return generic message to client
+- [x] **11. Fix internal error message leakage**
+  - Fixed as part of item 6 (generic messages to client)
 
 ### Low (schedule, don't block)
 
-- [ ] **12. Fix IBAN empty string handling in mapper**
-  - `CreateInvoiceRequestMapper.kt:48` — add `.takeIf { it.isNotBlank() }` guard like BIC already has
+- [x] **12. Fix IBAN empty string handling in mapper**
+  - Added `.takeIf { it.isNotBlank() }` guard matching BIC pattern
 
-- [ ] **13. Fix empty body POST content-type**
-  - `CashflowRemoteDataSourceImpl.kt:198` — remove `contentType(Json)` from bodyless POST
+- [x] **13. Fix empty body POST content-type**
+  - Removed `contentType(Json)` from bodyless PDF generation POST
 
 - [ ] **14. Hardcoded English strings → string resources**
   - `CreateInvoiceScreen.kt` — 30+ raw literals need `stringResource(Res.string.*)` calls
+  - Deferred: requires adding resource entries, can be phased
 
 - [ ] **15. Preview dialog placeholder**
   - Replace raw-values debug view with proper preview or remove button until ready
+  - Deferred: UX design decision needed
 
 ## Review
-(to be filled after completion)
+
+### Files modified (13 files)
+1. `PeppolRoutes.kt` — restored draft status guard
+2. `CreateInvoiceContainer.kt` — delivery mismatch fix, race condition guards, magic string removal, delivery failure handling
+3. `CashflowDocumentUseCases.kt` — added `DeliveryFailed` result variant
+4. `CashflowDocumentUseCaseImpls.kt` — separated delivery failure from create failure
+5. `Peppol.kt` — added `isFound`, string constants to `PeppolStatusResponse`
+6. `PeppolRecipientResolver.kt` — uses `STATUS_UNKNOWN` constant
+7. `InvoicePdfService.kt` — complete rewrite with multi-page support, per-document fonts
+8. `InvoiceRoutes.kt` — fail-fast contact lookup, generic error messages
+9. `CreateInvoiceScreen.kt` — extracted `DatesTermsEditor`, added to desktop layout
+10. `InvoiceRepository.kt` — due date derivation on update
+11. `CreateInvoiceRequestMapper.kt` — IBAN empty string guard
+12. `CashflowRemoteDataSourceImpl.kt` — removed unnecessary content-type header
+
+### Remaining items (deferred)
+- i18n (item 14): 30+ hardcoded English strings in CreateInvoiceScreen.kt
+- Preview dialog (item 15): placeholder debug view behind user-visible button

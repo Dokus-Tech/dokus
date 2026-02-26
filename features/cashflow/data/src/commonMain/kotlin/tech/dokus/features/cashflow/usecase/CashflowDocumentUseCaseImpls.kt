@@ -113,15 +113,23 @@ internal class SubmitInvoiceWithDeliveryUseCaseImpl(
         when (deliveryMethod) {
             null -> SubmitInvoiceWithDeliveryResult.DraftSaved(invoice.id)
             InvoiceDeliveryMethod.Peppol -> {
-                cashflowRemoteDataSource.sendInvoiceViaPeppol(invoice.id).getOrThrow()
-                SubmitInvoiceWithDeliveryResult.PeppolQueued(invoice.id)
+                cashflowRemoteDataSource.sendInvoiceViaPeppol(invoice.id)
+                    .fold(
+                        onSuccess = { SubmitInvoiceWithDeliveryResult.PeppolQueued(invoice.id) },
+                        onFailure = { SubmitInvoiceWithDeliveryResult.DeliveryFailed(invoice.id, it.message ?: "PEPPOL delivery failed") }
+                    )
             }
             InvoiceDeliveryMethod.PdfExport -> {
-                val url = cashflowRemoteDataSource.generateInvoicePdf(invoice.id).getOrThrow()
-                SubmitInvoiceWithDeliveryResult.PdfReady(
-                    invoiceId = invoice.id,
-                    downloadUrl = url
-                )
+                cashflowRemoteDataSource.generateInvoicePdf(invoice.id)
+                    .fold(
+                        onSuccess = { url ->
+                            SubmitInvoiceWithDeliveryResult.PdfReady(
+                                invoiceId = invoice.id,
+                                downloadUrl = url
+                            )
+                        },
+                        onFailure = { SubmitInvoiceWithDeliveryResult.DeliveryFailed(invoice.id, it.message ?: "PDF generation failed") }
+                    )
             }
         }
     }

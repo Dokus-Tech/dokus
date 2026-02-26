@@ -165,19 +165,20 @@ internal fun Route.invoiceRoutes() {
             val tenantId = dokusPrincipal.requireTenantId()
             val invoiceId = InvoiceId(Uuid.parse(route.parent.id))
             val invoice = invoiceService.getInvoice(invoiceId, tenantId)
-                .getOrElse { throw DokusException.InternalError("Failed to fetch invoice: ${it.message}") }
+                .getOrElse { throw DokusException.InternalError("Failed to fetch invoice") }
                 ?: throw DokusException.NotFound("Invoice not found")
 
             val contactName = contactRepository.getContact(invoice.contactId, tenantId)
-                .getOrNull()
+                .getOrElse { throw DokusException.InternalError("Failed to load client details for PDF generation") }
                 ?.name
                 ?.value
+                ?: throw DokusException.InternalError("Client details missing — cannot generate invoice PDF")
 
             val downloadUrl = invoicePdfService.generateAndUploadPdf(
                 invoice = invoice,
                 contactDisplayName = contactName
-            ).getOrElse { error ->
-                throw DokusException.InternalError("Failed to generate invoice PDF: ${error.message}")
+            ).getOrElse {
+                throw DokusException.InternalError("Failed to generate invoice PDF")
             }
 
             call.respond(HttpStatusCode.OK, InvoicePdfResponse(downloadUrl = downloadUrl))

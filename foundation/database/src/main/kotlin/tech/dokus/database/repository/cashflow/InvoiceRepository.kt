@@ -367,6 +367,12 @@ class InvoiceRepository(
                 throw IllegalArgumentException("Invoice not found or access denied")
             }
 
+            // Derive effective dates using the same logic as createInvoice
+            val today = Clock.System.now().toLocalDateTime(TimeZone.UTC).date
+            val effectiveIssueDate = request.issueDate ?: today
+            val effectiveDueDate = request.dueDate
+                ?: effectiveIssueDate.plus(DatePeriod(days = request.paymentTermsDays ?: 30))
+
             // Update invoice
             InvoicesTable.update({
                 (InvoicesTable.id eq UUID.fromString(invoiceId.toString())) and
@@ -387,8 +393,8 @@ class InvoiceRepository(
                 it[totalAmount] = request.items.sumOf { item ->
                     item.lineTotal.toDbDecimal() + item.vatAmount.toDbDecimal()
                 }
-                request.issueDate?.let { date -> it[issueDate] = date }
-                request.dueDate?.let { date -> it[dueDate] = date }
+                it[issueDate] = effectiveIssueDate
+                it[dueDate] = effectiveDueDate
                 it[notes] = request.notes
                 request.documentId?.let { docId ->
                     it[documentId] = UUID.fromString(docId.toString())

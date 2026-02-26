@@ -195,9 +195,8 @@ internal class CashflowRemoteDataSourceImpl(
     override suspend fun generateInvoicePdf(invoiceId: InvoiceId): Result<String> {
         return runCatching {
             val invoiceIdRoute = Invoices.Id(id = invoiceId.toString())
-            httpClient.post(Invoices.Id.Pdf(parent = invoiceIdRoute)) {
-                contentType(ContentType.Application.Json)
-            }.body<tech.dokus.domain.model.InvoicePdfResponse>().downloadUrl
+            httpClient.post(Invoices.Id.Pdf(parent = invoiceIdRoute))
+                .body<tech.dokus.domain.model.InvoicePdfResponse>().downloadUrl
         }
     }
 

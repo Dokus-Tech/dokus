@@ -47,6 +47,10 @@ sealed interface SubmitInvoiceWithDeliveryResult {
         val invoiceId: InvoiceId,
         val downloadUrl: String
     ) : SubmitInvoiceWithDeliveryResult
+    data class DeliveryFailed(
+        val invoiceId: InvoiceId,
+        val error: String
+    ) : SubmitInvoiceWithDeliveryResult
 }
 
 interface SubmitInvoiceWithDeliveryUseCase {

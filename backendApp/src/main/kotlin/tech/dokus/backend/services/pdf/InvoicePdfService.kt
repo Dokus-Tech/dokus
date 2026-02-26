@@ -23,8 +23,6 @@ class InvoicePdfService(
     private val documentStorageService: DocumentStorageService
 ) {
     private val logger = loggerFor()
-    private val bodyFont = PDType1Font(Standard14Fonts.FontName.HELVETICA)
-    private val headingFont = PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD)
 
     suspend fun generateAndUploadPdf(
         invoice: FinancialDocumentDto.InvoiceDto,
@@ -48,80 +46,61 @@ class InvoicePdfService(
         contactDisplayName: String?
     ): ByteArray {
         PDDocument().use { document ->
-            val page = PDPage(PDRectangle.A4)
-            document.addPage(page)
+            val bodyFont = PDType1Font(Standard14Fonts.FontName.HELVETICA)
+            val headingFont = PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD)
+            val writer = PdfWriter(document, bodyFont, headingFont)
 
-            PDPageContentStream(document, page).use { content ->
-                var cursorY = PdfTopMargin
+            writer.writeLine(headingFont, PdfHeadingSize, "Invoice ${invoice.invoiceNumber}")
+            writer.addSpacing()
+            writer.writeLine(bodyFont, PdfBodySize, "Issue date: ${invoice.issueDate}")
+            writer.writeLine(bodyFont, PdfBodySize, "Due date: ${invoice.dueDate}")
+            writer.writeLine(bodyFont, PdfBodySize, "Bill to: ${contactDisplayName ?: invoice.contactId}")
 
-                cursorY = writeLine(
-                    content = content,
-                    font = headingFont,
-                    fontSize = PdfHeadingSize,
-                    text = "Invoice ${invoice.invoiceNumber}",
-                    y = cursorY
-                )
+            invoice.senderIban?.let {
+                writer.writeLine(bodyFont, PdfBodySize, "Sender IBAN: ${it.value}")
+            }
+            invoice.senderBic?.let {
+                writer.writeLine(bodyFont, PdfBodySize, "Sender BIC: ${it.value}")
+            }
+            invoice.structuredCommunication?.let {
+                writer.writeLine(bodyFont, PdfBodySize, "Structured ref: ${it.value}")
+            }
 
-                cursorY -= PdfSectionSpacing
-                cursorY = writeLine(content, bodyFont, PdfBodySize, "Issue date: ${invoice.issueDate}", cursorY)
-                cursorY = writeLine(content, bodyFont, PdfBodySize, "Due date: ${invoice.dueDate}", cursorY)
-                cursorY = writeLine(
-                    content,
-                    bodyFont,
-                    PdfBodySize,
-                    "Bill to: ${contactDisplayName ?: invoice.contactId}",
-                    cursorY
-                )
+            writer.addSpacing()
+            writer.writeLine(headingFont, 12f, "Line items")
 
-                invoice.senderIban?.let {
-                    cursorY = writeLine(content, bodyFont, PdfBodySize, "Sender IBAN: ${it.value}", cursorY)
-                }
-                invoice.senderBic?.let {
-                    cursorY = writeLine(content, bodyFont, PdfBodySize, "Sender BIC: ${it.value}", cursorY)
-                }
-                invoice.structuredCommunication?.let {
-                    cursorY = writeLine(content, bodyFont, PdfBodySize, "Structured ref: ${it.value}", cursorY)
-                }
-
-                cursorY -= PdfSectionSpacing
-                cursorY = writeLine(content, headingFont, 12f, "Line items", cursorY)
-
-                if (invoice.items.isEmpty()) {
-                    cursorY = writeLine(content, bodyFont, PdfBodySize, "No line items", cursorY)
-                } else {
-                    invoice.items.forEach { item ->
-                        if (cursorY <= PdfBottomMargin) {
-                            return@forEach
-                        }
-                        val row = buildString {
-                            append(item.description.take(42))
-                            append(" | qty ")
-                            append(item.quantity)
-                            append(" | unit ")
-                            append(item.unitPrice)
-                            append(" | total ")
-                            append(item.lineTotal)
-                        }
-                        cursorY = writeLine(content, bodyFont, PdfBodySize, row, cursorY)
+            if (invoice.items.isEmpty()) {
+                writer.writeLine(bodyFont, PdfBodySize, "No line items")
+            } else {
+                invoice.items.forEach { item ->
+                    val row = buildString {
+                        append(item.description.take(42))
+                        append(" | qty ")
+                        append(item.quantity)
+                        append(" | unit ")
+                        append(item.unitPrice)
+                        append(" | total ")
+                        append(item.lineTotal)
                     }
-                }
-
-                cursorY -= PdfSectionSpacing
-                cursorY = writeLine(content, headingFont, 12f, "Totals", cursorY)
-                cursorY = writeLine(content, bodyFont, PdfBodySize, "Subtotal: ${invoice.subtotalAmount}", cursorY)
-                cursorY = writeLine(content, bodyFont, PdfBodySize, "VAT: ${invoice.vatAmount}", cursorY)
-                cursorY = writeLine(content, bodyFont, 11f, "Total: ${invoice.totalAmount}", cursorY)
-
-                invoice.notes?.takeIf { it.isNotBlank() }?.let { notes ->
-                    cursorY -= PdfSectionSpacing
-                    cursorY = writeLine(content, headingFont, 12f, "Notes", cursorY)
-                    notes.split("\n").forEach { line ->
-                        if (cursorY > PdfBottomMargin) {
-                            cursorY = writeLine(content, bodyFont, PdfBodySize, line.take(100), cursorY)
-                        }
-                    }
+                    writer.writeLine(bodyFont, PdfBodySize, row)
                 }
             }
+
+            writer.addSpacing()
+            writer.writeLine(headingFont, 12f, "Totals")
+            writer.writeLine(bodyFont, PdfBodySize, "Subtotal: ${invoice.subtotalAmount}")
+            writer.writeLine(bodyFont, PdfBodySize, "VAT: ${invoice.vatAmount}")
+            writer.writeLine(bodyFont, 11f, "Total: ${invoice.totalAmount}")
+
+            invoice.notes?.takeIf { it.isNotBlank() }?.let { notes ->
+                writer.addSpacing()
+                writer.writeLine(headingFont, 12f, "Notes")
+                notes.split("\n").forEach { line ->
+                    writer.writeLine(bodyFont, PdfBodySize, line.take(100))
+                }
+            }
+
+            writer.close()
 
             return ByteArrayOutputStream().use { output ->
                 document.save(output)
@@ -129,20 +108,42 @@ class InvoicePdfService(
             }
         }
     }
+}
 
-    private fun writeLine(
-        content: PDPageContentStream,
-        font: PDType1Font,
-        fontSize: Float,
-        text: String,
-        y: Float
-    ): Float {
-        content.beginText()
-        content.setFont(font, fontSize)
-        content.newLineAtOffset(PdfLeftMargin, y)
-        content.showText(safePdfText(text))
-        content.endText()
-        return y - PdfLineHeight
+private class PdfWriter(
+    private val document: PDDocument,
+    private val bodyFont: PDType1Font,
+    private val headingFont: PDType1Font
+) {
+    private var cursorY = PdfTopMargin
+    private var contentStream: PDPageContentStream = newPage()
+
+    fun writeLine(font: PDType1Font, fontSize: Float, text: String) {
+        if (cursorY <= PdfBottomMargin) {
+            contentStream.close()
+            contentStream = newPage()
+        }
+        contentStream.beginText()
+        contentStream.setFont(font, fontSize)
+        contentStream.newLineAtOffset(PdfLeftMargin, cursorY)
+        contentStream.showText(safePdfText(text))
+        contentStream.endText()
+        cursorY -= PdfLineHeight
+    }
+
+    fun addSpacing() {
+        cursorY -= PdfSectionSpacing
+    }
+
+    fun close() {
+        contentStream.close()
+    }
+
+    private fun newPage(): PDPageContentStream {
+        val page = PDPage(PDRectangle.A4)
+        document.addPage(page)
+        cursorY = PdfTopMargin
+        return PDPageContentStream(document, page)
     }
 
     private fun safePdfText(text: String): String {
