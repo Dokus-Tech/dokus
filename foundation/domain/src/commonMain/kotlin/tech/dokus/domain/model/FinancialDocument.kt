@@ -12,6 +12,8 @@ import tech.dokus.domain.enums.CreditNoteType
 import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.ExpenseCategory
+import tech.dokus.domain.enums.InvoiceDeliveryMethod
+import tech.dokus.domain.enums.InvoiceDueDateMode
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.enums.PaymentMethod
 import tech.dokus.domain.enums.PeppolStatus
@@ -24,6 +26,8 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.CreditNoteId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.ExpenseId
+import tech.dokus.domain.ids.Bic
+import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.InvoiceNumber
 import tech.dokus.domain.ids.PeppolId
@@ -31,6 +35,7 @@ import tech.dokus.domain.ids.ProFormaId
 import tech.dokus.domain.ids.PurchaseOrderId
 import tech.dokus.domain.ids.QuoteId
 import tech.dokus.domain.ids.RefundClaimId
+import tech.dokus.domain.ids.StructuredCommunication
 import tech.dokus.domain.ids.TenantId
 
 /**
@@ -72,6 +77,12 @@ sealed interface FinancialDocumentDto {
         val status: InvoiceStatus,
         override val currency: Currency = Currency.Eur,
         override val notes: String? = null,
+        val paymentTermsDays: Int? = null,
+        val dueDateMode: InvoiceDueDateMode = InvoiceDueDateMode.Terms,
+        val structuredCommunication: StructuredCommunication? = null,
+        val senderIban: Iban? = null,
+        val senderBic: Bic? = null,
+        val deliveryMethod: InvoiceDeliveryMethod = InvoiceDeliveryMethod.PdfExport,
         val termsAndConditions: String? = null,
         val items: List<InvoiceItemDto> = emptyList(),
         val peppolId: PeppolId? = null,

@@ -41,6 +41,7 @@ import tech.dokus.backend.services.documents.confirmation.InvoiceConfirmationSer
 import tech.dokus.backend.services.documents.confirmation.ReceiptConfirmationService
 import tech.dokus.backend.services.notifications.NotificationPreferencesService
 import tech.dokus.backend.services.notifications.NotificationService
+import tech.dokus.backend.services.pdf.InvoicePdfService
 import tech.dokus.backend.services.pdf.PdfPreviewService
 import tech.dokus.backend.services.peppol.PeppolRecipientResolver
 import tech.dokus.backend.services.search.SearchService
@@ -275,7 +276,8 @@ private fun cashflowModule() = module {
     single { DocumentTruthService(get(), get(), get(), get(), get(), get(), get()) }
     singleOf(::CashflowProjectionReconciliationWorker)
 
-    // PDF Preview
+    // PDF
+    single { InvoicePdfService(get()) }
     single { PdfPreviewService(get<ObjectStorage>(), get<DocumentStorageService>()) }
 
     // Peppol

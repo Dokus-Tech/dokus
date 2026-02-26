@@ -202,8 +202,6 @@ internal fun Route.peppolRoutes() {
                 if (!isConfirmed) {
                     throw DokusException.PeppolSendRequiresConfirmedDocument
                 }
-            } else if (invoice.status == InvoiceStatus.Draft) {
-                throw DokusException.PeppolSendRequiresConfirmedDocument
             }
 
             // Enqueue-only outbound flow.

@@ -17,6 +17,8 @@ import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.EntityType
 import tech.dokus.domain.enums.ExpenseCategory
 import tech.dokus.domain.enums.InvitationStatus
+import tech.dokus.domain.enums.InvoiceDeliveryMethod
+import tech.dokus.domain.enums.InvoiceDueDateMode
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.enums.Language
 import tech.dokus.domain.enums.PaymentMethod
@@ -36,6 +38,7 @@ import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.InvitationId
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.PaymentId
+import tech.dokus.domain.ids.StructuredCommunication
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.TransactionId
 import tech.dokus.domain.ids.UserId
@@ -314,6 +317,12 @@ data class CreateInvoiceRequest(
     val items: List<InvoiceItemDto>,
     val issueDate: LocalDate? = null,
     val dueDate: LocalDate? = null,
+    val paymentTermsDays: Int? = null,
+    val dueDateMode: InvoiceDueDateMode = InvoiceDueDateMode.Terms,
+    val structuredCommunication: StructuredCommunication? = null,
+    val senderIban: Iban? = null,
+    val senderBic: Bic? = null,
+    val deliveryMethod: InvoiceDeliveryMethod = InvoiceDeliveryMethod.PdfExport,
     val notes: String? = null,
     val documentId: DocumentId? = null,
     val subtotalAmount: Money? = null,
@@ -335,6 +344,11 @@ data class RecordPaymentRequest(
     val paymentMethod: PaymentMethod,
     val transactionId: TransactionId? = null,
     val notes: String? = null
+)
+
+@Serializable
+data class InvoicePdfResponse(
+    val downloadUrl: String
 )
 
 @Serializable

@@ -1,7 +1,4 @@
-@file:Suppress(
-    "TooManyFunctions", // Container handles invoice creation workflow
-    "MaxLineLength" // Complex function signatures
-)
+@file:Suppress("TooManyFunctions")
 
 package tech.dokus.features.cashflow.mvi
 
@@ -14,556 +11,502 @@ import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
-import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.reduce
-import tech.dokus.domain.exceptions.asDokusException
-import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.domain.enums.InvoiceDeliveryMethod
+import tech.dokus.domain.enums.InvoiceDueDateMode
+import tech.dokus.domain.validators.ValidateOgmUseCase
 import tech.dokus.features.auth.usecases.GetInvoiceNumberPreviewUseCase
+import tech.dokus.features.auth.usecases.GetTenantSettingsUseCase
 import tech.dokus.features.cashflow.mvi.model.CreateInvoiceFormState
 import tech.dokus.features.cashflow.mvi.model.CreateInvoiceUiState
 import tech.dokus.features.cashflow.mvi.model.DatePickerTarget
-import tech.dokus.features.cashflow.mvi.model.InvoiceCreationStep
+import tech.dokus.features.cashflow.mvi.model.DeliveryResolution
 import tech.dokus.features.cashflow.mvi.model.InvoiceLineItem
+import tech.dokus.features.cashflow.mvi.model.InvoiceResolvedAction
+import tech.dokus.features.cashflow.mvi.model.InvoiceSection
+import tech.dokus.features.cashflow.mvi.model.LatestInvoiceSuggestion
 import tech.dokus.features.cashflow.presentation.cashflow.model.mapper.toCreateInvoiceRequest
 import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.ValidateInvoiceUseCase
-import tech.dokus.features.cashflow.usecases.SubmitInvoiceUseCase
+import tech.dokus.features.cashflow.usecases.GetContactPeppolStatusUseCase
+import tech.dokus.features.cashflow.usecases.GetLatestInvoiceForContactUseCase
+import tech.dokus.features.cashflow.usecases.SubmitInvoiceWithDeliveryResult
+import tech.dokus.features.cashflow.usecases.SubmitInvoiceWithDeliveryUseCase
 import tech.dokus.foundation.platform.Logger
+import kotlin.math.absoluteValue
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-/** Default number of days from issue date to due date for new invoices */
-private const val DefaultPaymentTermDays = 30
+private const val MaxPaymentTermsDays = 365
 
 internal typealias CreateInvoiceCtx = PipelineContext<CreateInvoiceState, CreateInvoiceIntent, CreateInvoiceAction>
 
-/**
- * Container for creating a new invoice using FlowMVI.
- * Manages the multi-step invoice creation flow with form validation and submission.
- *
- * Features:
- * - Multi-step form (edit invoice → send options)
- * - Client selection with search filtering
- * - Line item management (add, remove, update)
- * - Date picker management
- * - Form validation with field-specific errors
- * - Invoice submission with error handling
- *
- * Use with Koin's `container<>` DSL for automatic ViewModel wrapping and lifecycle management.
- */
 internal class CreateInvoiceContainer(
     private val getInvoiceNumberPreview: GetInvoiceNumberPreviewUseCase,
+    private val getTenantSettings: GetTenantSettingsUseCase,
     private val validateInvoice: ValidateInvoiceUseCase,
-    private val submitInvoice: SubmitInvoiceUseCase,
+    private val submitInvoiceWithDelivery: SubmitInvoiceWithDeliveryUseCase,
+    private val getContactPeppolStatus: GetContactPeppolStatusUseCase,
+    private val getLatestInvoiceForContact: GetLatestInvoiceForContactUseCase,
 ) : Container<CreateInvoiceState, CreateInvoiceIntent, CreateInvoiceAction> {
 
     private val logger = Logger.forClass<CreateInvoiceContainer>()
 
-    @OptIn(ExperimentalTime::class)
     override val store: Store<CreateInvoiceState, CreateInvoiceIntent, CreateInvoiceAction> =
         store(createInitialState()) {
             reduce { intent ->
                 when (intent) {
-                    // Client Selection
-                    is CreateInvoiceIntent.OpenClientPanel -> handleOpenClientPanel()
-                    is CreateInvoiceIntent.CloseClientPanel -> handleCloseClientPanel()
-                    is CreateInvoiceIntent.UpdateClientSearchQuery -> handleUpdateClientSearchQuery(intent.query)
+                    is CreateInvoiceIntent.OpenClientPanel -> updateInvoice {
+                        it.copy(uiState = it.uiState.copy(isClientPanelOpen = true, clientSearchQuery = ""))
+                    }
+                    is CreateInvoiceIntent.CloseClientPanel -> updateInvoice {
+                        it.copy(uiState = it.uiState.copy(isClientPanelOpen = false, clientSearchQuery = ""))
+                    }
+                    is CreateInvoiceIntent.UpdateClientSearchQuery -> updateInvoice {
+                        it.copy(uiState = it.uiState.copy(clientSearchQuery = intent.query))
+                    }
                     is CreateInvoiceIntent.SelectClient -> handleSelectClient(intent.client)
-                    is CreateInvoiceIntent.ClearClient -> handleClearClient()
+                    is CreateInvoiceIntent.ClearClient -> updateInvoice {
+                        it.copy(
+                            formState = it.formState.copy(
+                                selectedClient = null,
+                                peppolStatus = null,
+                                peppolStatusLoading = false,
+                                errors = it.formState.errors - ValidateInvoiceUseCase.FIELD_CLIENT
+                            ),
+                            uiState = it.uiState.copy(latestInvoiceSuggestion = null)
+                        )
+                    }
+                    is CreateInvoiceIntent.RefreshPeppolStatus -> {
+                        updateInvoice {
+                            it.copy(formState = it.formState.copy(peppolStatusLoading = true))
+                        }
+                        val statusResult = getContactPeppolStatus(intent.contactId, intent.force)
+                        updateInvoice { state ->
+                            state.copy(
+                                formState = state.formState.copy(
+                                    peppolStatus = statusResult.getOrNull(),
+                                    peppolStatusLoading = false
+                                )
+                            )
+                        }
+                    }
 
-                    // Date Selection
-                    is CreateInvoiceIntent.OpenIssueDatePicker -> handleOpenIssueDatePicker()
-                    is CreateInvoiceIntent.OpenDueDatePicker -> handleOpenDueDatePicker()
-                    is CreateInvoiceIntent.CloseDatePicker -> handleCloseDatePicker()
+                    is CreateInvoiceIntent.OpenIssueDatePicker -> updateInvoice {
+                        it.copy(uiState = it.uiState.copy(isDatePickerOpen = DatePickerTarget.IssueDate))
+                    }
+                    is CreateInvoiceIntent.OpenDueDatePicker -> updateInvoice {
+                        it.copy(uiState = it.uiState.copy(isDatePickerOpen = DatePickerTarget.DueDate))
+                    }
+                    is CreateInvoiceIntent.CloseDatePicker -> updateInvoice {
+                        it.copy(uiState = it.uiState.copy(isDatePickerOpen = null))
+                    }
                     is CreateInvoiceIntent.SelectDate -> handleSelectDate(intent.date)
-                    is CreateInvoiceIntent.UpdateIssueDate -> handleUpdateIssueDate(intent.date)
-                    is CreateInvoiceIntent.UpdateDueDate -> handleUpdateDueDate(intent.date)
+                    is CreateInvoiceIntent.UpdateIssueDate -> updateInvoice { state ->
+                        state.copy(formState = synchronizeDueDate(state.formState.copy(issueDate = intent.date)))
+                    }
+                    is CreateInvoiceIntent.UpdateDueDate -> updateInvoice {
+                        it.copy(formState = it.formState.copy(dueDate = intent.date))
+                    }
+                    is CreateInvoiceIntent.UpdatePaymentTermsDays -> updateInvoice { state ->
+                        val clamped = intent.days.coerceIn(0, MaxPaymentTermsDays)
+                        state.copy(
+                            formState = synchronizeDueDate(
+                                state.formState.copy(paymentTermsDays = clamped)
+                            )
+                        )
+                    }
+                    is CreateInvoiceIntent.UpdateDueDateMode -> updateInvoice { state ->
+                        state.copy(
+                            formState = synchronizeDueDate(
+                                state.formState.copy(dueDateMode = intent.mode)
+                            )
+                        )
+                    }
 
-                    // Line Items
-                    is CreateInvoiceIntent.ExpandItem -> handleExpandItem(intent.itemId)
-                    is CreateInvoiceIntent.CollapseItem -> handleCollapseItem()
-                    is CreateInvoiceIntent.ToggleItemExpanded -> handleToggleItemExpanded(intent.itemId)
-                    is CreateInvoiceIntent.AddLineItem -> handleAddLineItem()
-                    is CreateInvoiceIntent.RemoveLineItem -> handleRemoveLineItem(intent.itemId)
-                    is CreateInvoiceIntent.UpdateItemDescription -> handleUpdateItemDescription(
-                        intent.itemId,
-                        intent.description
-                    )
-                    is CreateInvoiceIntent.UpdateItemQuantity -> handleUpdateItemQuantity(
-                        intent.itemId,
-                        intent.quantity
-                    )
-                    is CreateInvoiceIntent.UpdateItemUnitPrice -> handleUpdateItemUnitPrice(
-                        intent.itemId,
-                        intent.unitPrice
-                    )
-                    is CreateInvoiceIntent.UpdateItemVatRate -> handleUpdateItemVatRate(
-                        intent.itemId,
-                        intent.vatRatePercent
-                    )
+                    is CreateInvoiceIntent.ExpandItem -> updateInvoice {
+                        it.copy(uiState = it.uiState.copy(expandedItemId = intent.itemId))
+                    }
+                    is CreateInvoiceIntent.CollapseItem -> updateInvoice {
+                        it.copy(uiState = it.uiState.copy(expandedItemId = null))
+                    }
+                    is CreateInvoiceIntent.ToggleItemExpanded -> updateInvoice { state ->
+                        val newExpanded = if (state.uiState.expandedItemId == intent.itemId) null else intent.itemId
+                        state.copy(uiState = state.uiState.copy(expandedItemId = newExpanded))
+                    }
+                    is CreateInvoiceIntent.AddLineItem -> updateInvoice { state ->
+                        val newItem = InvoiceLineItem()
+                        state.copy(
+                            formState = state.formState.copy(items = state.formState.items + newItem),
+                            uiState = state.uiState.copy(expandedItemId = newItem.id)
+                        )
+                    }
+                    is CreateInvoiceIntent.RemoveLineItem -> updateInvoice { state ->
+                        val filtered = state.formState.items.filterNot { it.id == intent.itemId }
+                        val finalItems = if (filtered.isEmpty()) listOf(InvoiceLineItem()) else filtered
+                        val newExpanded = if (state.uiState.expandedItemId == intent.itemId) finalItems.first().id else state.uiState.expandedItemId
+                        state.copy(
+                            formState = state.formState.copy(
+                                items = finalItems,
+                                errors = state.formState.errors - ValidateInvoiceUseCase.FIELD_ITEMS
+                            ),
+                            uiState = state.uiState.copy(expandedItemId = newExpanded)
+                        )
+                    }
+                    is CreateInvoiceIntent.UpdateItemDescription -> updateLineItem(intent.itemId) {
+                        it.copy(description = intent.description)
+                    }
+                    is CreateInvoiceIntent.UpdateItemQuantity -> updateLineItem(intent.itemId) {
+                        it.copy(quantity = intent.quantity)
+                    }
+                    is CreateInvoiceIntent.UpdateItemUnitPrice -> updateLineItem(intent.itemId) {
+                        it.copy(unitPrice = intent.unitPrice)
+                    }
+                    is CreateInvoiceIntent.UpdateItemVatRate -> updateLineItem(intent.itemId) {
+                        it.copy(vatRatePercent = intent.vatRatePercent)
+                    }
+                    is CreateInvoiceIntent.ApplyLatestInvoiceLines -> updateInvoice { state ->
+                        val suggestion = state.uiState.latestInvoiceSuggestion ?: return@updateInvoice state
+                        val appliedLines = if (suggestion.lines.isEmpty()) {
+                            listOf(InvoiceLineItem())
+                        } else {
+                            suggestion.lines.map { it.copy(id = InvoiceLineItem().id) }
+                        }
+                        state.copy(
+                            formState = state.formState.copy(
+                                items = appliedLines,
+                                errors = state.formState.errors - ValidateInvoiceUseCase.FIELD_ITEMS
+                            ),
+                            uiState = state.uiState.copy(
+                                expandedItemId = appliedLines.firstOrNull()?.id,
+                                latestInvoiceSuggestion = null,
+                                suggestedSection = InvoiceSection.PaymentDelivery
+                            )
+                        )
+                    }
+                    is CreateInvoiceIntent.DismissLatestInvoiceSuggestion -> updateInvoice {
+                        it.copy(uiState = it.uiState.copy(latestInvoiceSuggestion = null))
+                    }
 
-                    // Notes
-                    is CreateInvoiceIntent.UpdateNotes -> handleUpdateNotes(intent.notes)
+                    is CreateInvoiceIntent.UpdateStructuredCommunication -> updateInvoice {
+                        it.copy(formState = it.formState.copy(structuredCommunication = intent.value))
+                    }
+                    is CreateInvoiceIntent.UpdateSenderIban -> updateInvoice {
+                        it.copy(formState = it.formState.copy(senderIban = intent.value))
+                    }
+                    is CreateInvoiceIntent.UpdateSenderBic -> updateInvoice {
+                        it.copy(formState = it.formState.copy(senderBic = intent.value))
+                    }
+                    is CreateInvoiceIntent.SelectDeliveryPreference -> updateInvoice {
+                        it.copy(uiState = it.uiState.copy(selectedDeliveryPreference = intent.method))
+                    }
+                    is CreateInvoiceIntent.UpdateNotes -> updateInvoice {
+                        it.copy(formState = it.formState.copy(notes = intent.notes))
+                    }
 
-                    // Delivery Options
-                    is CreateInvoiceIntent.SelectDeliveryMethod -> handleSelectDeliveryMethod(intent.method)
+                    is CreateInvoiceIntent.ToggleSection -> updateInvoice { state ->
+                        val expanded = state.uiState.expandedSections.toMutableSet()
+                        if (!expanded.add(intent.section)) expanded.remove(intent.section)
+                        state.copy(uiState = state.uiState.copy(expandedSections = expanded))
+                    }
+                    is CreateInvoiceIntent.ExpandSection -> updateInvoice { state ->
+                        state.copy(uiState = state.uiState.copy(expandedSections = state.uiState.expandedSections + intent.section))
+                    }
+                    is CreateInvoiceIntent.CollapseSection -> updateInvoice { state ->
+                        state.copy(uiState = state.uiState.copy(expandedSections = state.uiState.expandedSections - intent.section))
+                    }
 
-                    // Navigation
-                    is CreateInvoiceIntent.GoToSendOptions -> handleGoToSendOptions()
-                    is CreateInvoiceIntent.GoBackToEdit -> handleGoBackToEdit()
+                    is CreateInvoiceIntent.SetPreviewVisible -> updateInvoice {
+                        it.copy(uiState = it.uiState.copy(isPreviewVisible = intent.visible))
+                    }
+
+                    is CreateInvoiceIntent.SaveAsDraft -> submitInvoice(deliveryMethod = null)
+                    is CreateInvoiceIntent.SubmitWithResolvedDelivery -> {
+                        val current = snapshotState()
+                        val deliveryMethod = when (current.uiState.resolvedDeliveryAction.action) {
+                            InvoiceResolvedAction.Peppol -> InvoiceDeliveryMethod.Peppol
+                            InvoiceResolvedAction.PdfExport -> InvoiceDeliveryMethod.PdfExport
+                        }
+                        submitInvoice(deliveryMethod = deliveryMethod)
+                    }
+
                     is CreateInvoiceIntent.BackClicked -> action(CreateInvoiceAction.NavigateBack)
-
-                    // Form Actions
-                    is CreateInvoiceIntent.ValidateForm -> handleValidateForm()
-                    is CreateInvoiceIntent.SaveAsDraft -> handleSaveAsDraft()
-                    is CreateInvoiceIntent.ResetForm -> handleResetForm()
-                    is CreateInvoiceIntent.ReloadClients -> handleReloadClients()
+                    is CreateInvoiceIntent.ResetForm -> updateInvoice {
+                        val form = CreateInvoiceFormState.createInitial()
+                        it.copy(
+                            formState = form.copy(structuredCommunication = generateStructuredCommunication()),
+                            uiState = it.uiState.copy(
+                                expandedItemId = form.items.first().id,
+                                latestInvoiceSuggestion = null
+                            )
+                        )
+                    }
+                    is CreateInvoiceIntent.LoadDefaults -> loadDefaults()
                 }
             }
         }
 
     init {
-        // Load clients and invoice number preview on init
-        store.intent(CreateInvoiceIntent.ReloadClients)
+        store.intent(CreateInvoiceIntent.LoadDefaults)
     }
 
-    // === Client Selection Handlers ===
-
-    private suspend fun CreateInvoiceCtx.handleOpenClientPanel() {
-        updateEditingState { formState, uiState ->
-            formState to uiState.copy(isClientPanelOpen = true, clientSearchQuery = "")
+    private suspend fun CreateInvoiceCtx.handleSelectClient(client: tech.dokus.domain.model.contact.ContactDto) {
+        updateInvoice { state ->
+            state.copy(
+                formState = state.formState.copy(
+                    selectedClient = client,
+                    errors = state.formState.errors - ValidateInvoiceUseCase.FIELD_CLIENT
+                ),
+                uiState = state.uiState.copy(
+                    isClientPanelOpen = false,
+                    clientSearchQuery = "",
+                    suggestedSection = InvoiceSection.LineItems,
+                    latestInvoiceSuggestion = null
+                )
+            )
         }
-    }
 
-    private suspend fun CreateInvoiceCtx.handleCloseClientPanel() {
-        updateEditingState { formState, uiState ->
-            formState to uiState.copy(isClientPanelOpen = false, clientSearchQuery = "")
-        }
-    }
+        getLatestInvoiceForContact(client.id).onSuccess { latest ->
+            if (latest == null) return@onSuccess
+            updateInvoice { state ->
+                val formState = synchronizeDueDate(
+                    state.formState.copy(
+                        paymentTermsDays = latest.paymentTermsDays ?: state.formState.paymentTermsDays,
+                        dueDateMode = latest.dueDateMode,
+                        senderIban = latest.senderIban?.value.orEmpty().ifBlank { state.formState.senderIban },
+                        senderBic = latest.senderBic?.value.orEmpty().ifBlank { state.formState.senderBic }
+                    )
+                )
+                state.copy(
+                    formState = formState,
+                    uiState = state.uiState.copy(
+                        selectedDeliveryPreference = latest.deliveryMethod,
+                        latestInvoiceSuggestion = latest.toSuggestion()
+                    )
+                )
+            }
+        }.onFailure { logger.w { "Failed to load latest invoice defaults: ${it.message}" } }
 
-    private suspend fun CreateInvoiceCtx.handleUpdateClientSearchQuery(query: String) {
-        updateEditingState { formState, uiState ->
-            formState to uiState.copy(clientSearchQuery = query)
-        }
-    }
-
-    private suspend fun CreateInvoiceCtx.handleSelectClient(client: ContactDto) {
-        updateEditingState { formState, uiState ->
-            formState.copy(
-                selectedClient = client,
-                errors = formState.errors - "client"
-            ) to uiState.copy(isClientPanelOpen = false, clientSearchQuery = "")
-        }
-    }
-
-    private suspend fun CreateInvoiceCtx.handleClearClient() {
-        updateEditingState { formState, uiState ->
-            formState.copy(selectedClient = null) to uiState
-        }
-    }
-
-    // === Date Selection Handlers ===
-
-    private suspend fun CreateInvoiceCtx.handleOpenIssueDatePicker() {
-        updateEditingState { formState, uiState ->
-            formState to uiState.copy(isDatePickerOpen = DatePickerTarget.ISSUE_DATE)
-        }
-    }
-
-    private suspend fun CreateInvoiceCtx.handleOpenDueDatePicker() {
-        updateEditingState { formState, uiState ->
-            formState to uiState.copy(isDatePickerOpen = DatePickerTarget.DUE_DATE)
-        }
-    }
-
-    private suspend fun CreateInvoiceCtx.handleCloseDatePicker() {
-        updateEditingState { formState, uiState ->
-            formState to uiState.copy(isDatePickerOpen = null)
-        }
+        intent(CreateInvoiceIntent.RefreshPeppolStatus(contactId = client.id))
     }
 
     private suspend fun CreateInvoiceCtx.handleSelectDate(date: LocalDate) {
-        updateEditingState { formState, uiState ->
-            val newFormState = when (uiState.isDatePickerOpen) {
-                DatePickerTarget.ISSUE_DATE -> formState.copy(issueDate = date)
-                DatePickerTarget.DUE_DATE -> formState.copy(dueDate = date)
-                null -> formState
-            }
-            newFormState to uiState.copy(isDatePickerOpen = null)
-        }
-    }
-
-    private suspend fun CreateInvoiceCtx.handleUpdateIssueDate(date: LocalDate) {
-        updateEditingState { formState, uiState ->
-            formState.copy(issueDate = date) to uiState
-        }
-    }
-
-    private suspend fun CreateInvoiceCtx.handleUpdateDueDate(date: LocalDate) {
-        updateEditingState { formState, uiState ->
-            formState.copy(dueDate = date) to uiState
-        }
-    }
-
-    // === Line Item Handlers ===
-
-    private suspend fun CreateInvoiceCtx.handleExpandItem(itemId: String) {
-        updateEditingState { formState, uiState ->
-            formState to uiState.copy(expandedItemId = itemId)
-        }
-    }
-
-    private suspend fun CreateInvoiceCtx.handleCollapseItem() {
-        updateEditingState { formState, uiState ->
-            formState to uiState.copy(expandedItemId = null)
-        }
-    }
-
-    private suspend fun CreateInvoiceCtx.handleToggleItemExpanded(itemId: String) {
-        updateEditingState { formState, uiState ->
-            val newExpandedId = if (uiState.expandedItemId == itemId) null else itemId
-            formState to uiState.copy(expandedItemId = newExpandedId)
-        }
-    }
-
-    private suspend fun CreateInvoiceCtx.handleAddLineItem() {
-        updateEditingState { formState, uiState ->
-            val newItem = InvoiceLineItem()
-            formState.copy(items = formState.items + newItem) to uiState.copy(expandedItemId = newItem.id)
-        }
-    }
-
-    private suspend fun CreateInvoiceCtx.handleRemoveLineItem(itemId: String) {
-        updateEditingState { formState, uiState ->
-            val newItems = formState.items.filter { it.id != itemId }
-            val finalItems = if (newItems.isEmpty()) listOf(InvoiceLineItem()) else newItems
-            val newExpandedId = if (uiState.expandedItemId == itemId) {
-                finalItems.firstOrNull()?.id
-            } else {
-                uiState.expandedItemId
-            }
-            formState.copy(items = finalItems) to uiState.copy(expandedItemId = newExpandedId)
-        }
-    }
-
-    private suspend fun CreateInvoiceCtx.handleUpdateItemDescription(itemId: String, description: String) {
-        updateLineItem(itemId) { it.copy(description = description) }
-    }
-
-    private suspend fun CreateInvoiceCtx.handleUpdateItemQuantity(itemId: String, quantity: Double) {
-        updateLineItem(itemId) { it.copy(quantity = quantity) }
-    }
-
-    private suspend fun CreateInvoiceCtx.handleUpdateItemUnitPrice(itemId: String, unitPrice: String) {
-        updateLineItem(itemId) { it.copy(unitPrice = unitPrice) }
-    }
-
-    private suspend fun CreateInvoiceCtx.handleUpdateItemVatRate(itemId: String, vatRatePercent: Int) {
-        updateLineItem(itemId) { it.copy(vatRatePercent = vatRatePercent) }
-    }
-
-    private suspend fun CreateInvoiceCtx.updateLineItem(itemId: String, updater: (InvoiceLineItem) -> InvoiceLineItem) {
-        updateEditingState { formState, uiState ->
-            formState.copy(
-                items = formState.items.map { if (it.id == itemId) updater(it) else it },
-                errors = formState.errors - "items"
-            ) to uiState
-        }
-    }
-
-    // === Notes Handler ===
-
-    private suspend fun CreateInvoiceCtx.handleUpdateNotes(notes: String) {
-        updateEditingState { formState, uiState ->
-            formState.copy(notes = notes) to uiState
-        }
-    }
-
-    // === Delivery Options Handler ===
-
-    private suspend fun CreateInvoiceCtx.handleSelectDeliveryMethod(method: tech.dokus.features.cashflow.mvi.model.InvoiceDeliveryMethod) {
-        updateEditingState { formState, uiState ->
-            formState to uiState.copy(selectedDeliveryMethod = method)
-        }
-    }
-
-    // === Step Navigation Handlers ===
-
-    private suspend fun CreateInvoiceCtx.handleGoToSendOptions() {
-        updateEditingState { formState, uiState ->
-            formState to uiState.copy(currentStep = InvoiceCreationStep.SEND_OPTIONS)
-        }
-    }
-
-    private suspend fun CreateInvoiceCtx.handleGoBackToEdit() {
-        updateEditingState { formState, uiState ->
-            formState to uiState.copy(currentStep = InvoiceCreationStep.EDIT_INVOICE)
-        }
-    }
-
-    // === Form Action Handlers ===
-
-    private suspend fun CreateInvoiceCtx.handleValidateForm(): Boolean {
-        var isValid = false
-        withState<CreateInvoiceState.Editing, _> {
-            val result = validateInvoice(formState)
-            if (!result.isValid) {
-                updateState {
-                    copy(formState = formState.copy(errors = result.errors))
-                }
-                // Show first error as action
-                result.errors.values.firstOrNull()?.let { error ->
-                    action(CreateInvoiceAction.ShowValidationError(error))
-                }
-            } else {
-                updateState {
-                    copy(formState = formState.copy(errors = emptyMap()))
-                }
-                isValid = true
-            }
-        }
-        return isValid
-    }
-
-    private suspend fun CreateInvoiceCtx.handleSaveAsDraft() {
-        withState<CreateInvoiceState.Editing, _> {
-            // Validate first
-            val result = validateInvoice(formState)
-            if (!result.isValid) {
-                logger.w { "Form validation failed" }
-                updateState {
-                    copy(formState = formState.copy(errors = result.errors))
-                }
-                result.errors.values.firstOrNull()?.let { error ->
-                    action(CreateInvoiceAction.ShowValidationError(error))
-                }
-                return@withState
-            }
-
-            val currentFormState = formState
-            val currentUiState = uiState
-
-            // Transition to saving state
-            updateState {
-                CreateInvoiceState.Saving(
-                    formState = currentFormState.copy(isSaving = true),
-                    uiState = currentUiState
+        updateInvoice { state ->
+            when (state.uiState.isDatePickerOpen) {
+                DatePickerTarget.IssueDate -> state.copy(
+                    formState = synchronizeDueDate(state.formState.copy(issueDate = date)),
+                    uiState = state.uiState.copy(isDatePickerOpen = null)
                 )
-            }
-
-            logger.d { "Creating invoice for client: ${currentFormState.selectedClient?.name?.value}" }
-
-            submitInvoice(currentFormState.toCreateInvoiceRequest()).fold(
-                onSuccess = { invoice ->
-                    logger.i { "Invoice created: ${invoice.invoiceNumber}" }
-                    updateState {
-                        CreateInvoiceState.Success(
-                            formState = currentFormState.copy(isSaving = false),
-                            uiState = currentUiState,
-                            createdInvoiceId = invoice.id
-                        )
-                    }
-                    action(CreateInvoiceAction.ShowSuccess)
-                    action(CreateInvoiceAction.NavigateToInvoice(invoice.id))
-                },
-                onFailure = { error ->
-                    logger.e(error) { "Failed to create invoice" }
-                    val failureException = error.asDokusException
-                    updateState {
-                        CreateInvoiceState.Error(
-                            formState = currentFormState.copy(
-                                isSaving = false,
-                                errors = currentFormState.errors + ("general" to failureException)
-                            ),
-                            uiState = currentUiState,
-                            exception = failureException,
-                            retryHandler = { intent(CreateInvoiceIntent.SaveAsDraft) }
-                        )
-                    }
-                    action(CreateInvoiceAction.ShowError(failureException))
-                }
-            )
-        }
-
-        // Also handle retry from Error state
-        withState<CreateInvoiceState.Error, _> {
-            val currentFormState = formState
-            val currentUiState = uiState
-
-            // Transition back to saving
-            updateState {
-                CreateInvoiceState.Saving(
-                    formState = currentFormState.copy(isSaving = true),
-                    uiState = currentUiState
+                DatePickerTarget.DueDate -> state.copy(
+                    formState = state.formState.copy(dueDate = date),
+                    uiState = state.uiState.copy(isDatePickerOpen = null)
                 )
+                null -> state
             }
+        }
+    }
 
-            submitInvoice(currentFormState.toCreateInvoiceRequest()).fold(
-                onSuccess = { invoice ->
-                    logger.i { "Invoice created on retry: ${invoice.invoiceNumber}" }
-                    updateState {
-                        CreateInvoiceState.Success(
-                            formState = currentFormState.copy(isSaving = false),
-                            uiState = currentUiState,
-                            createdInvoiceId = invoice.id
-                        )
-                    }
-                    action(CreateInvoiceAction.ShowSuccess)
-                    action(CreateInvoiceAction.NavigateToInvoice(invoice.id))
-                },
-                onFailure = { error ->
-                    logger.e(error) { "Failed to create invoice on retry" }
-                    val failureException = error.asDokusException
-                    updateState {
-                        CreateInvoiceState.Error(
-                            formState = currentFormState.copy(
-                                isSaving = false,
-                                errors = currentFormState.errors + ("general" to failureException)
-                            ),
-                            uiState = currentUiState,
-                            exception = failureException,
-                            retryHandler = { intent(CreateInvoiceIntent.SaveAsDraft) }
-                        )
-                    }
-                    action(CreateInvoiceAction.ShowError(failureException))
-                }
+    private suspend fun CreateInvoiceCtx.updateLineItem(
+        itemId: String,
+        updater: (InvoiceLineItem) -> InvoiceLineItem
+    ) {
+        updateInvoice { state ->
+            state.copy(
+                formState = state.formState.copy(
+                    items = state.formState.items.map { if (it.id == itemId) updater(it) else it },
+                    errors = state.formState.errors - ValidateInvoiceUseCase.FIELD_ITEMS
+                )
             )
         }
     }
 
-    @OptIn(ExperimentalTime::class)
-    private suspend fun CreateInvoiceCtx.handleResetForm() {
-        val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
-        val firstItem = InvoiceLineItem()
-
-        updateState {
-            when (this) {
-                is CreateInvoiceState.Editing -> CreateInvoiceState.Editing(
-                    formState = CreateInvoiceFormState(
-                        issueDate = today,
-                        dueDate = today.plus(DefaultPaymentTermDays, DateTimeUnit.DAY),
-                        items = listOf(firstItem)
-                    ),
-                    uiState = CreateInvoiceUiState(expandedItemId = firstItem.id),
-                    clients = clients,
-                    clientsLoading = false,
-                    invoiceNumberPreview = invoiceNumberPreview
-                )
-                else -> createInitialState()
-            }
-        }
-
-        // Reload invoice number preview
-        loadInvoiceNumberPreview()
-    }
-
-    private suspend fun CreateInvoiceCtx.handleReloadClients() {
-        logger.d { "Loading contacts for invoice creation" }
-
-        updateState {
-            when (this) {
-                is CreateInvoiceState.Editing -> copy(clientsLoading = true)
-                else -> this
-            }
-        }
-
-        // Load invoice number preview in parallel
-        loadInvoiceNumberPreview()
-
-        // TODO: Replace with contacts data source when available
-        logger.w { "Contacts data source not yet implemented" }
-        updateState {
-            when (this) {
-                is CreateInvoiceState.Editing -> copy(clients = emptyList(), clientsLoading = false)
-                else -> this
-            }
-        }
-    }
-
-    // === Private Helpers ===
-
-    private suspend fun CreateInvoiceCtx.loadInvoiceNumberPreview() {
+    private suspend fun CreateInvoiceCtx.loadDefaults() {
         getInvoiceNumberPreview()
             .onSuccess { preview ->
-                updateState {
-                    when (this) {
-                        is CreateInvoiceState.Editing -> copy(invoiceNumberPreview = preview)
-                        else -> this
+                updateInvoice { it.copy(invoiceNumberPreview = preview) }
+            }
+            .onFailure { logger.w { "Could not load invoice number preview: ${it.message}" } }
+
+        getTenantSettings()
+            .onSuccess { settings ->
+                updateInvoice { state ->
+                    val withDefaults = synchronizeDueDate(
+                        state.formState.copy(
+                            paymentTermsDays = settings.defaultPaymentTerms,
+                            senderIban = settings.companyIban?.value.orEmpty(),
+                            senderBic = settings.companyBic?.value.orEmpty(),
+                            notes = state.formState.notes.ifBlank { settings.paymentTermsText.orEmpty() }
+                        )
+                    )
+                    state.copy(formState = withDefaults)
+                }
+            }
+            .onFailure { logger.w { "Could not load tenant defaults: ${it.message}" } }
+
+        updateInvoice { state ->
+            if (state.formState.structuredCommunication.isNotBlank()) {
+                state
+            } else {
+                state.copy(
+                    formState = state.formState.copy(
+                        structuredCommunication = generateStructuredCommunication()
+                    )
+                )
+            }
+        }
+    }
+
+    private suspend fun CreateInvoiceCtx.submitInvoice(deliveryMethod: InvoiceDeliveryMethod?) {
+        val current = snapshotState()
+        val validation = validateInvoice(current.formState)
+        if (!validation.isValid) {
+            val firstError = validation.errors.entries.firstOrNull()
+            val firstInvalidSection = sectionForError(firstError?.key)
+            updateInvoice { state ->
+                state.copy(
+                    formState = state.formState.copy(errors = validation.errors),
+                    uiState = state.uiState.copy(
+                        expandedSections = state.uiState.expandedSections + firstInvalidSection,
+                        suggestedSection = firstInvalidSection
+                    )
+                )
+            }
+            action(
+                CreateInvoiceAction.ShowValidationError(
+                    firstError?.value?.message ?: "Invoice is missing required fields."
+                )
+            )
+            return
+        }
+
+        updateInvoice {
+            it.copy(formState = it.formState.copy(isSaving = true, errors = emptyMap()))
+        }
+
+        val draftDeliveryMethod = deliveryMethod ?: current.uiState.selectedDeliveryPreference
+        val request = current.formState.toCreateInvoiceRequest(draftDeliveryMethod)
+        submitInvoiceWithDelivery(request, deliveryMethod).fold(
+            onSuccess = { result ->
+                updateInvoice { it.copy(formState = it.formState.copy(isSaving = false)) }
+                when (result) {
+                    is SubmitInvoiceWithDeliveryResult.DraftSaved -> {
+                        action(CreateInvoiceAction.ShowSuccess("Draft saved."))
+                        action(CreateInvoiceAction.NavigateToInvoice(result.invoiceId))
+                    }
+                    is SubmitInvoiceWithDeliveryResult.PeppolQueued -> {
+                        action(CreateInvoiceAction.ShowSuccess("Invoice queued for PEPPOL."))
+                        action(CreateInvoiceAction.NavigateToInvoice(result.invoiceId))
+                    }
+                    is SubmitInvoiceWithDeliveryResult.PdfReady -> {
+                        action(CreateInvoiceAction.OpenExternalUrl(result.downloadUrl))
+                        action(CreateInvoiceAction.ShowSuccess("Invoice PDF is ready."))
+                        action(CreateInvoiceAction.NavigateToInvoice(result.invoiceId))
                     }
                 }
+            },
+            onFailure = { error ->
+                updateInvoice {
+                    it.copy(formState = it.formState.copy(isSaving = false))
+                }
+                action(CreateInvoiceAction.ShowError(error.message ?: "Failed to submit invoice."))
             }
-            .onFailure { error ->
-                logger.w { "Could not load invoice number preview: ${error.message}" }
-            }
+        )
     }
 
-    /**
-     * Helper to update the Editing state's form and UI state.
-     * Handles state transitions from Error back to Editing.
-     */
-    private suspend fun CreateInvoiceCtx.updateEditingState(
-        update: (CreateInvoiceFormState, CreateInvoiceUiState) -> Pair<CreateInvoiceFormState, CreateInvoiceUiState>
+    private suspend fun CreateInvoiceCtx.updateInvoice(
+        transform: (CreateInvoiceState) -> CreateInvoiceState
     ) {
         updateState {
-            when (this) {
-                is CreateInvoiceState.Editing -> {
-                    val (newFormState, newUiState) = update(formState, uiState)
-                    copy(formState = newFormState, uiState = newUiState)
-                }
-                is CreateInvoiceState.Error -> {
-                    // Transition back to Editing when user makes changes
-                    val (newFormState, newUiState) = update(formState, uiState)
-                    CreateInvoiceState.Editing(
-                        formState = newFormState,
-                        uiState = newUiState,
-                        clients = emptyList(),
-                        clientsLoading = false,
-                        invoiceNumberPreview = null
-                    )
-                }
-                else -> this
-            }
+            val updated = transform(this)
+            updated.copy(
+                uiState = updated.uiState.copy(
+                    resolvedDeliveryAction = resolveDelivery(updated.formState, updated.uiState)
+                )
+            )
         }
     }
 
-    /**
-     * Filters clients based on search query.
-     * Call this from the UI to get filtered client list.
-     */
-    fun getFilteredClients(clients: List<ContactDto>, query: String): List<ContactDto> {
-        val trimmedQuery = query.trim().lowercase()
-        if (trimmedQuery.isBlank()) return clients
-        return clients.filter { client ->
-            client.name.value.lowercase().contains(trimmedQuery) ||
-                client.email?.value?.lowercase()?.contains(trimmedQuery) == true ||
-                client.vatNumber?.value?.lowercase()?.contains(trimmedQuery) == true
+    private suspend fun CreateInvoiceCtx.snapshotState(): CreateInvoiceState {
+        var snapshot: CreateInvoiceState? = null
+        withState { snapshot = this }
+        return requireNotNull(snapshot)
+    }
+
+    private fun sectionForError(field: String?): InvoiceSection {
+        return when (field) {
+            ValidateInvoiceUseCase.FIELD_CLIENT -> InvoiceSection.Client
+            ValidateInvoiceUseCase.FIELD_ITEMS -> InvoiceSection.LineItems
+            ValidateInvoiceUseCase.FIELD_DUE_DATE -> InvoiceSection.DatesTerms
+            else -> InvoiceSection.PaymentDelivery
         }
     }
 
-    /**
-     * Check if Peppol is available for the selected client.
-     * NOTE: PEPPOL availability is now resolved at send time via PeppolRecipientResolver.
-     * This always returns true when a client is selected.
-     */
-    fun isPeppolAvailable(formState: CreateInvoiceFormState): Boolean {
-        return formState.selectedClient != null
+    private fun resolveDelivery(
+        formState: CreateInvoiceFormState,
+        uiState: CreateInvoiceUiState
+    ): DeliveryResolution {
+        if (uiState.selectedDeliveryPreference == InvoiceDeliveryMethod.PdfExport) {
+            return DeliveryResolution(InvoiceResolvedAction.PdfExport)
+        }
+
+        if (formState.selectedClient == null) {
+            return DeliveryResolution(
+                action = InvoiceResolvedAction.PdfExport,
+                reason = "Select a client to enable PEPPOL."
+            )
+        }
+
+        if (formState.peppolStatusLoading) {
+            return DeliveryResolution(
+                action = InvoiceResolvedAction.PdfExport,
+                reason = "Checking PEPPOL availability."
+            )
+        }
+
+        return if (formState.peppolStatus?.status == "found") {
+            DeliveryResolution(InvoiceResolvedAction.Peppol)
+        } else {
+            DeliveryResolution(
+                action = InvoiceResolvedAction.PdfExport,
+                reason = formState.peppolStatus?.errorMessage
+                    ?: "Client is not PEPPOL-eligible."
+            )
+        }
     }
 
     @OptIn(ExperimentalTime::class)
-    private fun createInitialState(): CreateInvoiceState.Editing {
-        val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
-        val firstItem = InvoiceLineItem()
+    private fun synchronizeDueDate(formState: CreateInvoiceFormState): CreateInvoiceFormState {
+        if (formState.dueDateMode != InvoiceDueDateMode.Terms) return formState
 
-        return CreateInvoiceState.Editing(
-            formState = CreateInvoiceFormState(
-                issueDate = today,
-                dueDate = today.plus(DefaultPaymentTermDays, DateTimeUnit.DAY),
-                items = listOf(firstItem)
-            ),
-            uiState = CreateInvoiceUiState(
-                expandedItemId = firstItem.id
-            ),
-            clients = emptyList(),
-            clientsLoading = true,
+        val issueDate = formState.issueDate ?: Clock.System.todayIn(TimeZone.currentSystemDefault())
+        val dueDate = issueDate.plus(formState.paymentTermsDays, DateTimeUnit.DAY)
+        return formState.copy(issueDate = issueDate, dueDate = dueDate)
+    }
+
+    private fun generateStructuredCommunication(): String {
+        val base = Clock.System.now().toEpochMilliseconds().absoluteValue % 10_000_000_000L
+        return ValidateOgmUseCase.generate(base)
+    }
+
+    private fun tech.dokus.domain.model.FinancialDocumentDto.InvoiceDto.toSuggestion(): LatestInvoiceSuggestion? {
+        if (items.isEmpty()) return null
+        return LatestInvoiceSuggestion(
+            issueDate = issueDate,
+            lines = items.map { item ->
+                InvoiceLineItem(
+                    description = item.description,
+                    quantity = item.quantity,
+                    unitPrice = item.unitPrice.toDisplayString(),
+                    vatRatePercent = item.vatRate.basisPoints / 100
+                )
+            }
+        )
+    }
+
+    private fun createInitialState(): CreateInvoiceState {
+        val form = CreateInvoiceFormState.createInitial()
+        return CreateInvoiceState(
+            formState = form.copy(structuredCommunication = generateStructuredCommunication()),
+            uiState = CreateInvoiceUiState(expandedItemId = form.items.first().id),
             invoiceNumberPreview = null
         )
     }

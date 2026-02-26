@@ -48,12 +48,15 @@ import tech.dokus.features.cashflow.usecase.ResolveDocumentMatchReviewUseCaseImp
 import tech.dokus.features.cashflow.usecase.SendChatMessageUseCaseImpl
 import tech.dokus.features.cashflow.usecase.SendInvoiceViaPeppolUseCaseImpl
 import tech.dokus.features.cashflow.usecase.SubmitInvoiceUseCaseImpl
+import tech.dokus.features.cashflow.usecase.SubmitInvoiceWithDeliveryUseCaseImpl
 import tech.dokus.features.cashflow.usecase.UpdateDocumentDraftContactUseCaseImpl
 import tech.dokus.features.cashflow.usecase.UpdateDocumentDraftUseCaseImpl
 import tech.dokus.features.cashflow.usecase.UploadDocumentUseCaseImpl
 import tech.dokus.features.cashflow.usecase.ValidateInvoiceForPeppolUseCaseImpl
 import tech.dokus.features.cashflow.usecase.VerifyPeppolRecipientUseCaseImpl
 import tech.dokus.features.cashflow.usecase.WatchPendingDocumentsUseCaseImpl
+import tech.dokus.features.cashflow.usecase.GetContactPeppolStatusUseCaseImpl
+import tech.dokus.features.cashflow.usecase.GetLatestInvoiceForContactUseCaseImpl
 import tech.dokus.features.cashflow.usecase.EnablePeppolUseCaseImpl
 import tech.dokus.features.cashflow.usecase.EnablePeppolSendingOnlyUseCaseImpl
 import tech.dokus.features.cashflow.usecase.GetPeppolActivityUseCaseImpl
@@ -88,12 +91,15 @@ import tech.dokus.features.cashflow.usecases.ResolveDocumentMatchReviewUseCase
 import tech.dokus.features.cashflow.usecases.SendChatMessageUseCase
 import tech.dokus.features.cashflow.usecases.SendInvoiceViaPeppolUseCase
 import tech.dokus.features.cashflow.usecases.SubmitInvoiceUseCase
+import tech.dokus.features.cashflow.usecases.SubmitInvoiceWithDeliveryUseCase
 import tech.dokus.features.cashflow.usecases.UpdateDocumentDraftContactUseCase
 import tech.dokus.features.cashflow.usecases.UpdateDocumentDraftUseCase
 import tech.dokus.features.cashflow.usecases.UploadDocumentUseCase
 import tech.dokus.features.cashflow.usecases.ValidateInvoiceForPeppolUseCase
 import tech.dokus.features.cashflow.usecases.VerifyPeppolRecipientUseCase
 import tech.dokus.features.cashflow.usecases.WatchPendingDocumentsUseCase
+import tech.dokus.features.cashflow.usecases.GetContactPeppolStatusUseCase
+import tech.dokus.features.cashflow.usecases.GetLatestInvoiceForContactUseCase
 import tech.dokus.features.cashflow.usecases.EnablePeppolUseCase
 import tech.dokus.features.cashflow.usecases.EnablePeppolSendingOnlyUseCase
 import tech.dokus.features.cashflow.usecases.GetPeppolActivityUseCase
@@ -193,6 +199,9 @@ val cashflowNetworkModule = module {
     // Cashflow documents
     factory<WatchPendingDocumentsUseCase> { WatchPendingDocumentsUseCaseImpl(get()) }
     factory<SubmitInvoiceUseCase> { SubmitInvoiceUseCaseImpl(get()) }
+    factory<SubmitInvoiceWithDeliveryUseCase> { SubmitInvoiceWithDeliveryUseCaseImpl(get()) }
+    factory<GetLatestInvoiceForContactUseCase> { GetLatestInvoiceForContactUseCaseImpl(get()) }
+    factory<GetContactPeppolStatusUseCase> { GetContactPeppolStatusUseCaseImpl(get()) }
     // Document records (for DocumentsScreen)
     factory<LoadDocumentRecordsUseCase> { LoadDocumentRecordsUseCaseImpl(get()) }
 

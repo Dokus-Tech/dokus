@@ -54,6 +54,7 @@ import tech.dokus.domain.model.PeppolInboxPollResponse
 import tech.dokus.domain.model.PeppolRegistrationDto
 import tech.dokus.domain.model.PeppolRegistrationResponse
 import tech.dokus.domain.model.PeppolSettingsDto
+import tech.dokus.domain.model.PeppolStatusResponse
 import tech.dokus.domain.model.PeppolTransmissionDto
 import tech.dokus.domain.model.PeppolValidationResult
 import tech.dokus.domain.model.PeppolVerifyResponse
@@ -100,6 +101,7 @@ interface CashflowRemoteDataSource {
     suspend fun listInvoices(
         status: InvoiceStatus? = null,
         direction: DocumentDirection? = null,
+        contactId: ContactId? = null,
         fromDate: LocalDate? = null,
         toDate: LocalDate? = null,
         limit: Int = 50,
@@ -140,14 +142,19 @@ interface CashflowRemoteDataSource {
     suspend fun recordPayment(request: RecordPaymentRequest): Result<Unit>
 
     /**
-     * Send invoice via email
-     * POST /api/v1/invoices/{id}/emails
+     * Generate a PDF export for an invoice and return a download URL.
+     * POST /api/v1/invoices/{id}/pdf
      */
-    suspend fun sendInvoiceEmail(
-        invoiceId: InvoiceId,
-        recipientEmail: String? = null,
-        message: String? = null
-    ): Result<Unit>
+    suspend fun generateInvoicePdf(invoiceId: InvoiceId): Result<String>
+
+    /**
+     * Resolve PEPPOL status for a contact.
+     * GET /api/v1/contacts/{id}/peppol-status
+     */
+    suspend fun getContactPeppolStatus(
+        contactId: ContactId,
+        refresh: Boolean = false
+    ): Result<PeppolStatusResponse>
 
     // ============================================================================
     // EXPENSE MANAGEMENT
