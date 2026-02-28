@@ -56,15 +56,29 @@ internal fun CanonicalCenterPane(
         return
     }
 
-    val draft = when (val data = state.draftData) {
-        is InvoiceDraftData -> CanonicalDraft.Invoice(data)
-        is CreditNoteDraftData -> CanonicalDraft.CreditNote(data)
-        else -> null
-    } ?: return
-
     val counterparty = counterpartyInfo(state)
+
+    val invoiceDraft = state.draftData as? InvoiceDraftData
+    if (invoiceDraft != null) {
+        Box(
+            modifier = modifier.fillMaxSize(),
+            contentAlignment = Alignment.TopCenter
+        ) {
+            CanonicalInvoiceDocumentCard(
+                draft = invoiceDraft,
+                counterpartyName = counterparty.name ?: state.document.document.filename,
+                counterpartyAddress = counterparty.address,
+                modifier = Modifier
+                    .padding(vertical = Constraints.Spacing.large)
+                    .width(Constraints.DocumentDetail.previewMaxWidth)
+                    .heightIn(min = 560.dp)
+            )
+        }
+        return
+    }
+
+    val draft = (state.draftData as? CreditNoteDraftData)?.let(CanonicalDraft::CreditNote) ?: return
     val currencySign = draft.currencySign
-    val documentLabel = if (draft is CanonicalDraft.Invoice) "Invoice" else "Credit note"
     val documentNumber = draft.documentNumber ?: "\u2014"
     val totalAmount = draft.total ?: "\u2014"
 
@@ -112,7 +126,7 @@ internal fun CanonicalCenterPane(
                         }
                     }
                     Text(
-                        text = documentLabel.uppercase(),
+                        text = "CREDIT NOTE",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.textMuted,
                     )
@@ -141,13 +155,7 @@ internal fun CanonicalCenterPane(
                     horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.large),
                 ) {
                     CanonicalMetaCell("Issue", draft.issueDate ?: "\u2014")
-                    if (draft is CanonicalDraft.Invoice) {
-                        CanonicalMetaCell("Due", draft.dueDate ?: "\u2014")
-                    }
-                    CanonicalMetaCell(
-                        if (draft is CanonicalDraft.Invoice) "Invoice" else "Credit note",
-                        documentNumber
-                    )
+                    CanonicalMetaCell("Credit note", documentNumber)
                 }
 
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -369,20 +377,6 @@ private sealed interface CanonicalDraft {
     val bankDetails: String?
     val notes: String?
     val currencySign: String
-
-    data class Invoice(private val draft: InvoiceDraftData) : CanonicalDraft {
-        override val documentNumber: String? = draft.invoiceNumber
-        override val issueDate: String? = draft.issueDate?.toString()
-        val dueDate: String? = draft.dueDate?.toString()
-        override val subtotal: String? = draft.subtotalAmount?.toDisplayString()
-        override val vat: String? = draft.vatAmount?.toDisplayString()
-        override val total: String? = draft.totalAmount?.toDisplayString()
-        override val description: String? = draft.notes
-        override val lineItems: List<FinancialLineItem> = draft.lineItems
-        override val bankDetails: String? = draft.iban?.value
-        override val notes: String? = draft.notes
-        override val currencySign: String = draft.currency.displaySign
-    }
 
     data class CreditNote(private val draft: CreditNoteDraftData) : CanonicalDraft {
         override val documentNumber: String? = draft.creditNoteNumber

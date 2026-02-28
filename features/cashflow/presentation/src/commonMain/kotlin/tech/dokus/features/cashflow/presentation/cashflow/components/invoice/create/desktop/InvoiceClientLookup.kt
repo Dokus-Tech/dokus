@@ -59,11 +59,7 @@ internal fun InvoiceClientLookup(
                 outline = if (lookupState.query.isBlank()) PLookupFieldOutline.Dashed else PLookupFieldOutline.Solid,
                 isSelected = lookupState.query.isNotBlank(),
                 onFocusChanged = { focused ->
-                    onIntent(
-                        CreateInvoiceIntent.SetClientLookupExpanded(
-                            focused && lookupState.query.isNotBlank()
-                        )
-                    )
+                    onIntent(CreateInvoiceIntent.SetClientLookupExpanded(focused))
                 }
             )
 

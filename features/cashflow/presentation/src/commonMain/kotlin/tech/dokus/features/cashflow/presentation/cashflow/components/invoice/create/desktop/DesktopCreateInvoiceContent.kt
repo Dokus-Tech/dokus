@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -33,10 +32,11 @@ import tech.dokus.features.cashflow.mvi.CreateInvoiceIntent
 import tech.dokus.features.cashflow.mvi.CreateInvoiceState
 import tech.dokus.foundation.aura.components.PButton
 import tech.dokus.foundation.aura.components.PButtonVariant
+import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.constrains.limitWidthOperatorForm
 import tech.dokus.foundation.aura.style.textFaint
 import tech.dokus.foundation.aura.style.textMuted
 
-private val CanvasMaxWidth = 960.dp
 private val SectionSpacing = 26.dp
 private val TopSpacing = 34.dp
 private val FooterBottomPadding = 34.dp
@@ -54,13 +54,14 @@ internal fun DesktopCreateInvoiceContent(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .verticalScroll(rememberScrollState()),
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = Constraints.Shell.contentPaddingH),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Column(
             modifier = Modifier
+                .limitWidthOperatorForm()
                 .fillMaxWidth()
-                .widthIn(max = CanvasMaxWidth)
                 .padding(top = TopSpacing, bottom = FooterBottomPadding),
             verticalArrangement = Arrangement.spacedBy(SectionSpacing)
         ) {

@@ -128,6 +128,10 @@ object Constraints {
         val minWidth = DefaultDokusSizing.searchFieldMinWidth
         val maxWidth = DefaultDokusSizing.searchFieldMaxWidth
     }
+
+    object OperatorForm {
+        val maxWidth = DefaultDokusSizing.operatorFormMaxWidth
+    }
 }
 
 @Stable
@@ -136,6 +140,10 @@ fun Modifier.limitWidth(): Modifier = widthIn(max = Constraints.largeScreenWidth
 @Stable
 fun Modifier.limitWidthCenteredContent(): Modifier =
     widthIn(max = Constraints.centeredContentMaxWidth)
+
+@Stable
+fun Modifier.limitWidthOperatorForm(): Modifier =
+    widthIn(max = Constraints.OperatorForm.maxWidth)
 
 @Stable
 fun Modifier.withVerticalPadding(): Modifier =

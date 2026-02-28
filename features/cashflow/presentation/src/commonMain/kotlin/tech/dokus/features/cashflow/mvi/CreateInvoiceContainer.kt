@@ -42,6 +42,7 @@ import tech.dokus.features.cashflow.usecases.GetContactPeppolStatusUseCase
 import tech.dokus.features.cashflow.usecases.GetLatestInvoiceForContactUseCase
 import tech.dokus.features.cashflow.usecases.SubmitInvoiceWithDeliveryResult
 import tech.dokus.features.cashflow.usecases.SubmitInvoiceWithDeliveryUseCase
+import tech.dokus.features.contacts.usecases.ListContactsUseCase
 import tech.dokus.features.contacts.usecases.LookupContactsUseCase
 import tech.dokus.foundation.platform.Logger
 import kotlin.math.absoluteValue
@@ -59,6 +60,7 @@ internal class CreateInvoiceContainer(
     private val submitInvoiceWithDelivery: SubmitInvoiceWithDeliveryUseCase,
     private val getContactPeppolStatus: GetContactPeppolStatusUseCase,
     private val getLatestInvoiceForContact: GetLatestInvoiceForContactUseCase,
+    private val listContacts: ListContactsUseCase,
     private val lookupContacts: LookupContactsUseCase,
     private val searchCompanyUseCase: SearchCompanyUseCase,
 ) : Container<CreateInvoiceState, CreateInvoiceIntent, CreateInvoiceAction> {
@@ -71,15 +73,7 @@ internal class CreateInvoiceContainer(
             reduce { intent ->
                 when (intent) {
                     is CreateInvoiceIntent.UpdateClientLookupQuery -> handleUpdateClientLookupQuery(intent.query)
-                    is CreateInvoiceIntent.SetClientLookupExpanded -> updateInvoice { state ->
-                        state.copy(
-                            uiState = state.uiState.copy(
-                                clientLookupState = state.uiState.clientLookupState.copy(
-                                    isExpanded = intent.expanded
-                                )
-                            )
-                        )
-                    }
+                    is CreateInvoiceIntent.SetClientLookupExpanded -> handleSetClientLookupExpanded(intent.expanded)
                     is CreateInvoiceIntent.SelectClient -> handleSelectClient(intent.client)
                     is CreateInvoiceIntent.SelectExternalClientCandidate -> action(
                         CreateInvoiceAction.NavigateToCreateContact(
@@ -310,6 +304,7 @@ internal class CreateInvoiceContainer(
     private suspend fun CreateInvoiceCtx.handleUpdateClientLookupQuery(query: String) {
         val trimmed = query.trim()
         clientLookupJob?.cancel()
+        val wasExpanded = snapshotState().uiState.clientLookupState.isExpanded
 
         if (trimmed.isBlank()) {
             updateInvoice { state ->
@@ -317,22 +312,29 @@ internal class CreateInvoiceContainer(
                     uiState = state.uiState.copy(
                         clientLookupState = state.uiState.clientLookupState.copy(
                             query = "",
-                            isExpanded = false,
+                            isExpanded = wasExpanded,
                             localResults = emptyList(),
                             externalResults = emptyList(),
                             mergedSuggestions = emptyList(),
-                            isLocalLoading = false,
+                            isLocalLoading = wasExpanded,
                             isExternalLoading = false,
                             errorHint = null
                         )
                     )
                 )
             }
+            if (wasExpanded) {
+                clientLookupJob = launch {
+                    delay(CLIENT_LOOKUP_DEBOUNCE_MS)
+                    loadInitialLocalSuggestions(query = "")
+                }
+            }
             return
         }
 
         val lookupLocal = shouldLookupLocalClient(trimmed)
         val lookupExternal = shouldLookupExternalClient(trimmed)
+        val shouldLoadInitialLocal = !lookupLocal
 
         updateInvoice { state ->
             state.copy(
@@ -340,7 +342,7 @@ internal class CreateInvoiceContainer(
                     clientLookupState = state.uiState.clientLookupState.copy(
                         query = trimmed,
                         isExpanded = true,
-                        isLocalLoading = lookupLocal,
+                        isLocalLoading = shouldLoadInitialLocal || lookupLocal,
                         isExternalLoading = lookupExternal,
                         errorHint = null
                     )
@@ -348,22 +350,88 @@ internal class CreateInvoiceContainer(
             )
         }
 
-        if (!lookupLocal && !lookupExternal) {
-            updateInvoice { state ->
-                state.copy(
-                    uiState = state.uiState.copy(
-                        clientLookupState = state.uiState.clientLookupState.copy(
-                            mergedSuggestions = listOf(ClientSuggestion.CreateManual(trimmed))
-                        )
+        clientLookupJob = launch {
+            delay(CLIENT_LOOKUP_DEBOUNCE_MS)
+            if (shouldLoadInitialLocal) {
+                loadInitialLocalSuggestions(query = trimmed)
+            } else {
+                loadClientLookupSuggestions(trimmed)
+            }
+        }
+    }
+
+    private suspend fun CreateInvoiceCtx.handleSetClientLookupExpanded(expanded: Boolean) {
+        clientLookupJob?.cancel()
+        val query = snapshotState().uiState.clientLookupState.query
+
+        updateInvoice { state ->
+            state.copy(
+                uiState = state.uiState.copy(
+                    clientLookupState = state.uiState.clientLookupState.copy(
+                        isExpanded = expanded,
+                        isLocalLoading = expanded,
+                        isExternalLoading = expanded && query.isNotBlank() && shouldLookupExternalClient(query)
                     )
                 )
-            }
-            return
+            )
         }
+
+        if (!expanded) return
 
         clientLookupJob = launch {
             delay(CLIENT_LOOKUP_DEBOUNCE_MS)
-            loadClientLookupSuggestions(trimmed)
+            if (query.isBlank() || !shouldLookupLocalClient(query)) {
+                loadInitialLocalSuggestions(query = query)
+            } else {
+                loadClientLookupSuggestions(query = query)
+            }
+        }
+    }
+
+    private suspend fun CreateInvoiceCtx.loadInitialLocalSuggestions(query: String) {
+        val normalizedQuery = query.trim().lowercase()
+        val localResults = listContacts(
+            isActive = null,
+            limit = CLIENT_LOOKUP_LOCAL_LIMIT,
+            offset = 0
+        ).getOrElse { emptyList() }
+
+        val filteredLocalResults = if (normalizedQuery.isBlank()) {
+            localResults
+        } else {
+            localResults.filter { contact ->
+                contact.name.value.lowercase().contains(normalizedQuery) ||
+                    (contact.vatNumber?.normalized?.contains(normalizedQuery) == true) ||
+                    (contact.email?.value?.lowercase()?.contains(normalizedQuery) == true)
+            }
+        }
+
+        val suggestions = buildList {
+            filteredLocalResults.forEach { contact ->
+                add(ClientSuggestion.LocalContact(contact))
+            }
+            if (query.isNotBlank()) {
+                add(ClientSuggestion.CreateManual(query))
+            }
+        }
+
+        updateInvoice { state ->
+            if (state.uiState.clientLookupState.query != query || !state.uiState.clientLookupState.isExpanded) {
+                return@updateInvoice state
+            }
+            state.copy(
+                uiState = state.uiState.copy(
+                    clientLookupState = state.uiState.clientLookupState.copy(
+                        localResults = filteredLocalResults,
+                        externalResults = emptyList(),
+                        mergedSuggestions = suggestions,
+                        isExpanded = true,
+                        isLocalLoading = false,
+                        isExternalLoading = false,
+                        errorHint = null
+                    )
+                )
+            )
         }
     }
 
@@ -376,12 +444,12 @@ internal class CreateInvoiceContainer(
         val (localResults, externalResults, errorHint) = coroutineScope {
             val localDeferred = if (localEnabled) {
                 async {
-                        lookupContacts(
-                            query = query,
-                            isActive = true,
-                            limit = CLIENT_LOOKUP_LOCAL_LIMIT,
-                            offset = 0
-                        )
+                    lookupContacts(
+                        query = query,
+                        isActive = null,
+                        limit = CLIENT_LOOKUP_LOCAL_LIMIT,
+                        offset = 0
+                    )
                 }
             } else {
                 null

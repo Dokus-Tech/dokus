@@ -57,6 +57,7 @@ val cashflowViewModelModule = module {
             submitInvoiceWithDelivery = get(),
             getContactPeppolStatus = get(),
             getLatestInvoiceForContact = get(),
+            listContacts = get(),
             lookupContacts = get(),
             searchCompanyUseCase = get()
         )

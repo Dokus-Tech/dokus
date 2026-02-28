@@ -8,16 +8,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -25,9 +24,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import tech.dokus.domain.Money
+import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.InvoiceDeliveryMethod
 import tech.dokus.domain.enums.InvoiceDueDateMode
+import tech.dokus.domain.model.FinancialLineItem
+import tech.dokus.domain.model.InvoiceDraftData
+import tech.dokus.domain.model.PartyDraft
+import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.ids.Iban
 import tech.dokus.features.cashflow.mvi.CreateInvoiceIntent
 import tech.dokus.features.cashflow.mvi.CreateInvoiceState
 import tech.dokus.features.cashflow.mvi.model.ClientSuggestion
@@ -42,6 +50,7 @@ import tech.dokus.features.cashflow.presentation.cashflow.components.invoice.cre
 import tech.dokus.features.cashflow.presentation.cashflow.components.invoice.create.desktop.InvoiceClientLookup
 import tech.dokus.features.cashflow.presentation.cashflow.components.invoice.create.desktop.formatDate
 import tech.dokus.features.cashflow.presentation.cashflow.components.invoice.create.desktop.primaryActionLabel
+import tech.dokus.features.cashflow.presentation.review.components.CanonicalInvoiceDocumentCard
 import tech.dokus.foundation.aura.components.DokusCard
 import tech.dokus.foundation.aura.components.DokusCardPadding
 import tech.dokus.foundation.aura.components.PButton
@@ -50,6 +59,7 @@ import tech.dokus.foundation.aura.components.PDatePickerDialog
 import tech.dokus.foundation.aura.components.common.PSelectableCommandCard
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
 import tech.dokus.foundation.aura.components.layout.PCollapsibleSection
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
@@ -362,24 +372,37 @@ private fun InvoicePreviewDialog(
     state: CreateInvoiceState,
     onDismiss: () -> Unit
 ) {
-    AlertDialog(
+    val selectedClient = state.formState.selectedClient
+    Dialog(
         onDismissRequest = onDismiss,
-        title = { Text("Invoice preview") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(state.invoiceNumberPreview ?: "New invoice")
-                Text("Client: ${state.formState.selectedClient?.name?.value ?: "-"}")
-                Text("Issue date: ${formatDate(state.formState.issueDate)}")
-                Text("Due date: ${formatDate(state.formState.dueDate)}")
-                Text("Total: ${state.formState.total}")
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Close")
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp, vertical = 20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            CanonicalInvoiceDocumentCard(
+                draft = state.toInvoicePreviewDraft(),
+                counterpartyName = selectedClient?.name?.value ?: "Click to select a client",
+                counterpartyAddress = selectedClient?.toPreviewAddressLine(),
+                modifier = Modifier.width(Constraints.DocumentDetail.previewMaxWidth)
+            )
+
+            Row(
+                modifier = Modifier.width(Constraints.DocumentDetail.previewMaxWidth),
+                horizontalArrangement = Arrangement.End
+            ) {
+                PButton(
+                    text = "Close",
+                    variant = PButtonVariant.Outline,
+                    onClick = onDismiss
+                )
             }
         }
-    )
+    }
 }
 
 @Preview(name = "CreateInvoice Desktop Base", widthDp = 1200, heightDp = 1300)
@@ -480,15 +503,49 @@ private fun CreateInvoiceDesktopPdfPrimaryPreview(
     }
 }
 
+@Preview(name = "CreateInvoice Desktop Preview Dialog", widthDp = 1200, heightDp = 1300)
+@Composable
+private fun CreateInvoiceDesktopPreviewDialogPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        CreateInvoiceScreen(
+            state = createDesktopPreviewState(previewVisible = true),
+            snackbarHostState = SnackbarHostState(),
+            onIntent = {}
+        )
+    }
+}
+
+@Preview(name = "CreateInvoice Desktop Preview Dialog Empty Client", widthDp = 1200, heightDp = 1300)
+@Composable
+private fun CreateInvoiceDesktopPreviewDialogNoClientPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        CreateInvoiceScreen(
+            state = createDesktopPreviewState(
+                previewVisible = true,
+                clearSelectedClient = true
+            ),
+            snackbarHostState = SnackbarHostState(),
+            onIntent = {}
+        )
+    }
+}
+
 private fun createDesktopPreviewState(
     lookupQuery: String = "",
     lookupExpanded: Boolean = false,
     suggestions: List<ClientSuggestion> = emptyList(),
     selectedDelivery: InvoiceDeliveryMethod = InvoiceDeliveryMethod.Peppol,
-    resolvedAction: DeliveryResolution = DeliveryResolution(InvoiceResolvedAction.Peppol)
+    resolvedAction: DeliveryResolution = DeliveryResolution(InvoiceResolvedAction.Peppol),
+    previewVisible: Boolean = false,
+    clearSelectedClient: Boolean = false
 ): CreateInvoiceState {
     return CreateInvoiceState(
         formState = Mocks.sampleFormState.copy(
+            selectedClient = if (clearSelectedClient) null else Mocks.sampleFormState.selectedClient,
             notes = "Payment within 30 days of invoice date. Late payments incur interest at 8% per annum plus €40 recovery costs per Belgian law.",
             senderIban = "BE68 5390 0754 7034",
             senderBic = "TRIOBEBB",
@@ -503,8 +560,72 @@ private fun createDesktopPreviewState(
             senderCompanyName = "INVOID VISION",
             senderCompanyVat = "BE0777.887.045",
             selectedDeliveryPreference = selectedDelivery,
-            resolvedDeliveryAction = resolvedAction
+            resolvedDeliveryAction = resolvedAction,
+            isPreviewVisible = previewVisible
         ),
         invoiceNumberPreview = "INV-2026-0003"
     )
+}
+
+private fun CreateInvoiceState.toInvoicePreviewDraft(): InvoiceDraftData {
+    val lines = formState.items
+        .filterNot { it.isEmpty }
+        .map { line ->
+            FinancialLineItem(
+                description = line.description,
+                quantity = line.quantity.toLong().takeIf { it > 0L },
+                unitPrice = Money.fromDouble(line.unitPriceDouble).minor.takeIf { it > 0L },
+                vatRate = line.vatRatePercent,
+                netAmount = Money.fromDouble(line.lineTotalDouble).minor.takeIf { it > 0L }
+            )
+        }
+
+    val selectedClient = formState.selectedClient
+    val sellerVat = uiState.senderCompanyVat
+        ?.let(VatNumber::from)
+        ?.takeIf { it.isValid }
+
+    return InvoiceDraftData(
+        direction = DocumentDirection.Outbound,
+        invoiceNumber = invoiceNumberPreview,
+        issueDate = formState.issueDate,
+        dueDate = formState.dueDate,
+        subtotalAmount = Money.fromDouble(formState.items.sumOf { it.lineTotalDouble }),
+        vatAmount = Money.fromDouble(formState.items.sumOf { it.vatAmountDouble }),
+        totalAmount = Money.fromDouble(formState.items.sumOf { it.lineTotalDouble + it.vatAmountDouble }),
+        lineItems = lines,
+        iban = Iban.from(formState.senderIban),
+        notes = formState.notes.takeIf { it.isNotBlank() },
+        seller = PartyDraft(
+            name = uiState.senderCompanyName.takeIf { it.isNotBlank() },
+            vat = sellerVat
+        ),
+        buyer = selectedClient?.toPartyDraft() ?: PartyDraft()
+    )
+}
+
+private fun ContactDto.toPartyDraft(): PartyDraft {
+    return PartyDraft(
+        name = name.value,
+        vat = vatNumber,
+        email = email,
+        iban = iban,
+        streetLine1 = addressLine1,
+        streetLine2 = addressLine2,
+        postalCode = postalCode,
+        city = city,
+        country = country
+    )
+}
+
+private fun ContactDto.toPreviewAddressLine(): String? {
+    return listOfNotNull(
+        addressLine1?.takeIf { it.isNotBlank() },
+        addressLine2?.takeIf { it.isNotBlank() },
+        listOfNotNull(
+            postalCode?.takeIf { it.isNotBlank() },
+            city?.takeIf { it.isNotBlank() }
+        ).takeIf { it.isNotEmpty() }?.joinToString(" "),
+        country?.takeIf { it.isNotBlank() }
+    ).takeIf { it.isNotEmpty() }?.joinToString(", ")
 }
