@@ -54,7 +54,7 @@ class JwtGenerator(
     }
 
     private fun createAccessToken(claims: JwtClaims): String {
-        val builder = JWT.create()
+        return JWT.create()
             .withIssuer(claims.iss)
             .withAudience(claims.aud)
             .withSubject(claims.userId.value.toString())
@@ -62,21 +62,7 @@ class JwtGenerator(
             .withClaim(JwtClaims.CLAIM_EMAIL, claims.email)
             .withIssuedAt(Date.from(Instant.ofEpochSecond(claims.iat)))
             .withExpiresAt(Date.from(Instant.ofEpochSecond(claims.exp)))
-
-        claims.tenant?.let { tenant ->
-            builder
-                .withClaim(JwtClaims.CLAIM_TENANT_ID, tenant.tenantId.value.toString())
-                .withArrayClaim(
-                    JwtClaims.CLAIM_PERMISSIONS,
-                    tenant.permissions.map { it.name }.toTypedArray()
-                )
-                .withClaim(JwtClaims.CLAIM_SUBSCRIPTION_TIER, tenant.subscriptionTier.name)
-                .apply {
-                    tenant.role?.name?.let { withClaim(JwtClaims.CLAIM_ROLE, it) }
-                }
-        }
-
-        return builder.sign(algorithm)
+            .sign(algorithm)
     }
 
     private fun createRefreshToken(userId: UserId): String {

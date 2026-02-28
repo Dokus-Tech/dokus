@@ -38,6 +38,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 private val DefaultConnectTimeout: Duration = 3.seconds
+private const val TenantHeaderName = "X-Tenant-Id"
 
 fun HttpClientConfig<*>.withJsonContentNegotiation() {
     install(ContentNegotiation) {
@@ -152,6 +153,15 @@ fun HttpClientConfig<*>.withDynamicBearerAuth(tokenManager: TokenManager) {
 }
 
 /**
+ * Adds `X-Tenant-Id` header per-request when a tenant is selected for the session.
+ */
+fun HttpClientConfig<*>.withSelectedTenantHeader(tokenManager: TokenManager) {
+    install(TenantHeaderPlugin) {
+        this.tokenManager = tokenManager
+    }
+}
+
+/**
  * Retries once on 401 by attempting a token refresh.
  *
  * This is intentionally separate from [withResponseValidation] so we only force logout
@@ -199,6 +209,10 @@ private class DynamicBearerAuthConfig {
     lateinit var tokenManager: TokenManager
 }
 
+private class TenantHeaderConfig {
+    lateinit var tokenManager: TokenManager
+}
+
 private val DynamicBearerAuthPlugin = createClientPlugin(
     name = "DynamicBearerAuth",
     createConfiguration = ::DynamicBearerAuthConfig
@@ -212,6 +226,19 @@ private val DynamicBearerAuthPlugin = createClientPlugin(
         if (!token.isNullOrBlank()) {
             request.headers.append(HttpHeaders.Authorization, "Bearer $token")
         }
+    }
+}
+
+private val TenantHeaderPlugin = createClientPlugin(
+    name = "TenantHeader",
+    createConfiguration = ::TenantHeaderConfig
+) {
+    val tokenManager = pluginConfig.tokenManager
+
+    onRequest { request, _ ->
+        if (request.headers[TenantHeaderName] != null) return@onRequest
+        val tenantId = runCatching { tokenManager.getSelectedTenantId() }.getOrNull()
+        tenantId?.let { request.headers.append(TenantHeaderName, it.toString()) }
     }
 }
 

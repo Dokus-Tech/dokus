@@ -12,6 +12,6 @@ class GetCurrentTenantIdUseCaseImpl(
 ) : GetCurrentTenantIdUseCase {
 
     override suspend operator fun invoke(): TenantId? {
-        return tokenManager.getCurrentClaims()?.tenant?.tenantId
+        return tokenManager.getSelectedTenantId()
     }
 }

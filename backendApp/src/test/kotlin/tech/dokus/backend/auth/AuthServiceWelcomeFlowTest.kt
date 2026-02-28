@@ -28,6 +28,8 @@ import tech.dokus.domain.model.auth.LoginRequest
 import tech.dokus.domain.model.auth.LoginResponse
 import tech.dokus.domain.model.auth.RegisterRequest
 import tech.dokus.foundation.backend.security.JwtGenerator
+import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class AuthServiceWelcomeFlowTest {
@@ -79,6 +81,7 @@ class AuthServiceWelcomeFlowTest {
         }
 
         assertTrue(result.isSuccess)
+        assertNull(result.getOrNull()?.selectedTenantId)
         coVerify(exactly = 1) { userRepository.recordSuccessfulLogin(user.id, any()) }
         coVerify(exactly = 1) { emailVerificationService.sendVerificationEmail(user.id, user.email.value) }
         coVerify(exactly = 0) { welcomeEmailService.scheduleIfEligible(any(), any()) }
@@ -125,6 +128,7 @@ class AuthServiceWelcomeFlowTest {
         }
 
         assertTrue(result.isSuccess)
+        assertEquals(tenantId, result.getOrNull()?.selectedTenantId)
         coVerify(exactly = 1) { welcomeEmailService.scheduleIfEligible(user.id, tenantId) }
     }
 
@@ -178,6 +182,7 @@ class AuthServiceWelcomeFlowTest {
         }
 
         assertTrue(result.isSuccess)
+        assertEquals(tenantId, result.getOrNull()?.selectedTenantId)
         coVerify(exactly = 1) { welcomeEmailService.scheduleIfEligible(user.id, tenantId) }
     }
 

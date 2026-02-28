@@ -35,8 +35,8 @@ import tech.dokus.app.navSectionsCombined
 import tech.dokus.app.navigation.local.LocalRootNavController
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.coming_soon
-import tech.dokus.domain.asbtractions.TokenManager
 import tech.dokus.domain.enums.SubscriptionTier
+import tech.dokus.features.auth.usecases.GetCurrentTenantUseCase
 import tech.dokus.foundation.app.local.LocalAppModules
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.model.NavItem
@@ -51,7 +51,7 @@ import tech.dokus.navigation.navigateTo
 
 @Composable
 internal fun MoreRoute(
-    tokenManager: TokenManager = koinInject()
+    getCurrentTenantUseCase: GetCurrentTenantUseCase = koinInject()
 ) {
     val rootNavController = LocalRootNavController.current
     val appModules = LocalAppModules.current
@@ -59,8 +59,10 @@ internal fun MoreRoute(
 
     var userTier by remember { mutableStateOf(SubscriptionTier.Core) }
     LaunchedEffect(Unit) {
-        userTier =
-            tokenManager.getCurrentClaims()?.tenant?.subscriptionTier ?: SubscriptionTier.Core
+        userTier = getCurrentTenantUseCase()
+            .getOrNull()
+            ?.subscription
+            ?: SubscriptionTier.Core
     }
 
     val filteredSections = remember(navSections, userTier) {

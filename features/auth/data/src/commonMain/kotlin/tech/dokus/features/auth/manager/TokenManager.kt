@@ -95,10 +95,12 @@ class TokenManagerImpl(
             refreshToken = loginResponse.refreshToken,
             expiresIn = loginResponse.expiresIn
         )
-        jwtDecoder.decode(loginResponse.accessToken)
-            ?.tenant
-            ?.tenantId
-            ?.let { tokenStorage.saveLastSelectedTenantId(it) }
+        val selectedTenantId = loginResponse.selectedTenantId
+        if (selectedTenantId != null) {
+            tokenStorage.saveLastSelectedTenantId(selectedTenantId)
+        } else {
+            tokenStorage.clearLastSelectedTenantId()
+        }
         validateAndUpdateState(loginResponse.accessToken)
     }
 
@@ -137,6 +139,10 @@ class TokenManagerImpl(
         return tokenStorage.getRefreshToken()
     }
 
+    override suspend fun getSelectedTenantId(): TenantId? {
+        return tokenStorage.getLastSelectedTenantId()
+    }
+
     /**
      * Refreshes the access token using the refresh token.
      *
@@ -160,7 +166,7 @@ class TokenManagerImpl(
         val refreshCallback = onTokenRefreshNeeded ?: return null
 
         try {
-            val selectedTenantId = jwtDecoder.decode(currentToken)?.tenant?.tenantId
+            val selectedTenantId = tokenStorage.getLastSelectedTenantId()
             val response = refreshCallback(refreshToken, selectedTenantId)
             if (response != null) {
                 saveTokens(response)

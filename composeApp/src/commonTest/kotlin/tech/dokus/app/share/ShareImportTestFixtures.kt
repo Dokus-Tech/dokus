@@ -30,13 +30,16 @@ import tech.dokus.features.cashflow.usecases.UploadDocumentUseCase
 
 internal class FakeTokenManager(
     isAuthenticated: Boolean,
-    private val claims: JwtClaims? = null
+    private val claims: JwtClaims? = null,
+    private val selectedTenantId: TenantId? = claims?.tenant?.tenantId
 ) : TokenManager {
     override val isAuthenticated = MutableStateFlow(isAuthenticated)
 
     override suspend fun getValidAccessToken(): String? = null
 
     override suspend fun getRefreshToken(): String? = null
+
+    override suspend fun getSelectedTenantId(): TenantId? = selectedTenantId
 
     override suspend fun refreshToken(force: Boolean): String? = null
 

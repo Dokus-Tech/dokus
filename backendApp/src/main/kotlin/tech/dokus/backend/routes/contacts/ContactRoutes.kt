@@ -1,5 +1,7 @@
 package tech.dokus.backend.routes.contacts
 
+import tech.dokus.backend.security.requireTenantAccess
+
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.resources.delete
@@ -54,7 +56,7 @@ fun Route.contactRoutes() {
          * Query parameters are automatically extracted from the route class.
          */
         get<Contacts> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantAccess().tenantId
 
             if (route.limit < 1 || route.limit > 200) {
                 throw DokusException.BadRequest("Limit must be between 1 and 200")
@@ -78,7 +80,7 @@ fun Route.contactRoutes() {
          * Dedicated lookup endpoint for autocomplete, duplicate checks and merge target search.
          */
         get<Contacts.Lookup> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantAccess().tenantId
             val query = route.query.trim()
             if (query.length < 2) {
                 throw DokusException.BadRequest("Query must contain at least 2 characters")
@@ -108,7 +110,7 @@ fun Route.contactRoutes() {
          * Create a new contact.
          */
         post<Contacts> {
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantAccess().tenantId
             val request = call.receive<CreateContactRequest>()
 
             val contact = contactService.createContact(tenantId, request)
@@ -135,7 +137,7 @@ fun Route.contactRoutes() {
          * List customers only (ContactType.Customer or ContactType.Both).
          */
         get<Contacts.Customers> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantAccess().tenantId
 
             val contacts = contactService.listCustomers(tenantId, route.active, route.limit, route.offset)
                 .getOrElse { throw DokusException.InternalError("Failed to list customers: ${it.message}") }
@@ -148,7 +150,7 @@ fun Route.contactRoutes() {
          * List vendors only (ContactType.Vendor or ContactType.Both).
          */
         get<Contacts.Vendors> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantAccess().tenantId
 
             val contacts = contactService.listVendors(tenantId, route.active, route.limit, route.offset)
                 .getOrElse { throw DokusException.InternalError("Failed to list vendors: ${it.message}") }
@@ -161,7 +163,7 @@ fun Route.contactRoutes() {
          * Get contact statistics for dashboard.
          */
         get<Contacts.Summary> {
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantAccess().tenantId
 
             val stats = contactService.getContactStats(tenantId)
                 .getOrElse { throw DokusException.InternalError("Failed to get contact stats: ${it.message}") }
@@ -174,7 +176,7 @@ fun Route.contactRoutes() {
          * Get a contact by ID.
          */
         get<Contacts.Id> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantAccess().tenantId
             val contactId = ContactId.parse(route.id)
 
             val contact = contactService.getContact(contactId, tenantId)
@@ -189,7 +191,7 @@ fun Route.contactRoutes() {
          * Update a contact.
          */
         put<Contacts.Id> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantAccess().tenantId
             val contactId = ContactId.parse(route.id)
             val request = call.receive<UpdateContactRequest>()
 
@@ -204,7 +206,7 @@ fun Route.contactRoutes() {
          * Delete a contact.
          */
         delete<Contacts.Id> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantAccess().tenantId
             val contactId = ContactId.parse(route.id)
 
             contactService.deleteContact(contactId, tenantId)
@@ -223,7 +225,7 @@ fun Route.contactRoutes() {
          * Returns cached status by default, use ?refresh=true to force lookup.
          */
         get<Contacts.Id.PeppolStatus> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantAccess().tenantId
             val contactId = ContactId.parse(route.parent.id)
 
             val (resolution, refreshed) = peppolResolver.resolveRecipient(
@@ -253,7 +255,7 @@ fun Route.contactRoutes() {
          * Get activity summary for a contact (counts and totals of invoices, inbound invoices, expenses).
          */
         get<Contacts.Id.Activity> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantAccess().tenantId
             val contactId = ContactId.parse(route.parent.id)
 
             val activity = contactRepository.getContactActivitySummary(contactId, tenantId)
@@ -280,7 +282,7 @@ fun Route.contactRoutes() {
          * - Source is a system contact (Unknown / Unassigned): 400
          */
         post<Contacts.Id.MergeInto> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantAccess().tenantId
             val principal = dokusPrincipal
             val sourceContactId = ContactId.parse(route.parent.id)
             val targetContactId = ContactId.parse(route.targetId)
@@ -319,7 +321,7 @@ fun Route.contactRoutes() {
          * List notes for a contact.
          */
         get<Contacts.Id.Notes> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantAccess().tenantId
             val contactId = ContactId.parse(route.parent.id)
 
             val notes = contactNoteService.listNotes(contactId, tenantId, route.limit, route.offset)
@@ -333,7 +335,7 @@ fun Route.contactRoutes() {
          * Add a note to a contact.
          */
         post<Contacts.Id.Notes> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantAccess().tenantId
             val principal = dokusPrincipal
             val contactId = ContactId.parse(route.parent.id)
             val request = call.receive<CreateContactNoteRequest>()
@@ -354,7 +356,7 @@ fun Route.contactRoutes() {
          * Update a note.
          */
         put<Contacts.Id.Notes.ById> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantAccess().tenantId
             val noteId = ContactNoteId.parse(route.noteId)
             val request = call.receive<UpdateContactNoteRequest>()
 
@@ -369,7 +371,7 @@ fun Route.contactRoutes() {
          * Delete a note.
          */
         delete<Contacts.Id.Notes.ById> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantAccess().tenantId
             val noteId = ContactNoteId.parse(route.noteId)
 
             contactNoteService.deleteNote(noteId, tenantId)

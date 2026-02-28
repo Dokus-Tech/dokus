@@ -109,7 +109,6 @@ fun Route.authenticateJwt(
  * ```
  * get("/me") {
  *     val userId = dokusPrincipal.userId
- *     val tenantId = dokusPrincipal.requireTenantId()
  *     // ...
  * }
  * ```
@@ -123,7 +122,7 @@ val RoutingContext.dokusPrincipal: DokusPrincipal
  * Defaults to Viewer if no role is set.
  */
 val RoutingContext.userRole: UserRole
-    get() = dokusPrincipal.roles.firstOrNull()?.let { RolePermissions.roleFromString(it) }
+    get() = dokusPrincipal.globalRoles.firstOrNull()?.let { RolePermissions.roleFromString(it) }
         ?: UserRole.Viewer
 
 /**

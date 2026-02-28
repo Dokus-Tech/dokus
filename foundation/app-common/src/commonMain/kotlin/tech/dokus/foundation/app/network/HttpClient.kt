@@ -51,6 +51,7 @@ fun createDynamicAuthenticatedHttpClient(
     onAuthenticationFailed: suspend () -> Unit = {}
 ) = createDynamicBaseHttpClient(endpointProvider, connectionMonitor) {
     withDynamicBearerAuth(tokenManager)
+    withSelectedTenantHeader(tokenManager)
     withUnauthorizedRefreshRetry(
         tokenManager = tokenManager,
         onAuthenticationFailed = onAuthenticationFailed,

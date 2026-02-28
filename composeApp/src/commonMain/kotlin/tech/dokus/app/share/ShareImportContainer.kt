@@ -134,12 +134,12 @@ internal class ShareImportContainer(
             return workspaces.first()
         }
 
-        val claimsTenantId = runCatching { tokenManager.getCurrentClaims()?.tenant?.tenantId }
+        val selectedTenantId = runCatching { tokenManager.getSelectedTenantId() }
             .getOrNull()
         val lastSelectedTenantId = runCatching { getLastSelectedTenantIdUseCase() }
             .getOrNull()
 
-        val candidates = listOfNotNull(claimsTenantId, lastSelectedTenantId).distinct()
+        val candidates = listOfNotNull(selectedTenantId, lastSelectedTenantId).distinct()
         val resolved = candidates.firstNotNullOfOrNull { candidate ->
             workspaces.firstOrNull { it.id == candidate }
         }
@@ -173,7 +173,7 @@ internal class ShareImportContainer(
         }
 
         val sharedFiles = session.files
-        val currentTenantId = runCatching { tokenManager.getCurrentClaims()?.tenant?.tenantId }
+        val currentTenantId = runCatching { tokenManager.getSelectedTenantId() }
             .getOrNull()
 
         if (currentTenantId != workspace.id) {

@@ -1,5 +1,8 @@
 package tech.dokus.backend.routes.auth
 
+import tech.dokus.backend.security.requireRole
+import tech.dokus.backend.security.requireTenantAccess
+
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.resources.delete
@@ -11,6 +14,7 @@ import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
 import tech.dokus.backend.services.auth.TeamService
 import tech.dokus.domain.enums.InvitationStatus
+import tech.dokus.domain.enums.UserRole
 import tech.dokus.domain.ids.InvitationId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.CreateInvitationRequest
@@ -48,7 +52,7 @@ internal fun Route.teamRoutes() {
          */
         get<Team.Members> {
             val principal = dokusPrincipal
-            val tenantId = principal.requireTenantId()
+            val tenantId = requireTenantAccess().tenantId
 
             val members = teamService.listTeamMembers(tenantId)
             call.respond(HttpStatusCode.OK, members)
@@ -61,16 +65,7 @@ internal fun Route.teamRoutes() {
          */
         put<Team.Members.Id.Role> { route ->
             val principal = dokusPrincipal
-            val tenantId = principal.requireTenantId()
-
-            // Verify owner role
-            if (!teamService.verifyOwnerRole(principal.userId, tenantId)) {
-                call.respond(
-                    HttpStatusCode.Forbidden,
-                    "Only the workspace Owner can manage team members"
-                )
-                return@put
-            }
+            val tenantId = requireTenantAccess().requireRole(UserRole.Owner).tenantId
 
             val targetUserId = UserId(Uuid.parse(route.parent.userId))
             val request = call.receive<UpdateMemberRoleRequest>()
@@ -94,16 +89,7 @@ internal fun Route.teamRoutes() {
          */
         delete<Team.Members.Id> { route ->
             val principal = dokusPrincipal
-            val tenantId = principal.requireTenantId()
-
-            // Verify owner role
-            if (!teamService.verifyOwnerRole(principal.userId, tenantId)) {
-                call.respond(
-                    HttpStatusCode.Forbidden,
-                    "Only the workspace Owner can manage team members"
-                )
-                return@delete
-            }
+            val tenantId = requireTenantAccess().requireRole(UserRole.Owner).tenantId
 
             val targetUserId = UserId(Uuid.parse(route.userId))
 
@@ -130,16 +116,7 @@ internal fun Route.teamRoutes() {
          */
         put<Team.Owner> {
             val principal = dokusPrincipal
-            val tenantId = principal.requireTenantId()
-
-            // Verify owner role
-            if (!teamService.verifyOwnerRole(principal.userId, tenantId)) {
-                call.respond(
-                    HttpStatusCode.Forbidden,
-                    "Only the workspace Owner can transfer ownership"
-                )
-                return@put
-            }
+            val tenantId = requireTenantAccess().requireRole(UserRole.Owner).tenantId
 
             val request = call.receive<TransferOwnershipRequest>()
 
@@ -169,7 +146,7 @@ internal fun Route.teamRoutes() {
          */
         get<Team.Invitations> { route ->
             val principal = dokusPrincipal
-            val tenantId = principal.requireTenantId()
+            val tenantId = requireTenantAccess().tenantId
 
             val invitations = if (route.status == InvitationStatus.Pending) {
                 teamService.listPendingInvitations(tenantId)
@@ -188,16 +165,7 @@ internal fun Route.teamRoutes() {
          */
         post<Team.Invitations> {
             val principal = dokusPrincipal
-            val tenantId = principal.requireTenantId()
-
-            // Verify owner role
-            if (!teamService.verifyOwnerRole(principal.userId, tenantId)) {
-                call.respond(
-                    HttpStatusCode.Forbidden,
-                    "Only the workspace Owner can invite team members"
-                )
-                return@post
-            }
+            val tenantId = requireTenantAccess().requireRole(UserRole.Owner).tenantId
 
             val request = call.receive<CreateInvitationRequest>()
 
@@ -220,16 +188,7 @@ internal fun Route.teamRoutes() {
          */
         delete<Team.Invitations.Id> { route ->
             val principal = dokusPrincipal
-            val tenantId = principal.requireTenantId()
-
-            // Verify owner role
-            if (!teamService.verifyOwnerRole(principal.userId, tenantId)) {
-                call.respond(
-                    HttpStatusCode.Forbidden,
-                    "Only the workspace Owner can manage invitations"
-                )
-                return@delete
-            }
+            val tenantId = requireTenantAccess().requireRole(UserRole.Owner).tenantId
 
             val invitationId = InvitationId(Uuid.parse(route.id))
 

@@ -131,8 +131,7 @@ internal class RegisterContainer(
         registerAndLoginUseCase(email, password, firstName, lastName).fold(
             onSuccess = {
                 logger.i { "Registration successful, navigating to home" }
-                val claims = tokenManager.getCurrentClaims()
-                if (claims?.tenant == null) {
+                if (tokenManager.getSelectedTenantId() == null) {
                     action(RegisterAction.NavigateToWorkspaceSelect)
                 } else {
                     action(RegisterAction.NavigateToHome)

@@ -1,8 +1,6 @@
 package tech.dokus.foundation.backend.security
 
 import io.ktor.server.auth.Principal
-import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.auth.AuthenticationInfo
 
@@ -17,33 +15,26 @@ data class DokusPrincipal(
     val userId: UserId,
     val email: String,
     val name: String,
-    val tenantId: TenantId?,
-    val roles: Set<String>,
+    val globalRoles: Set<String> = emptySet(),
     val sessionJti: String? = null
 ) : Principal {
 
     /**
      * Check if the user has a specific role
      */
-    fun hasRole(role: String): Boolean = roles.contains(role)
+    fun hasRole(role: String): Boolean = globalRoles.contains(role)
 
     /**
      * Check if the user has any of the specified roles
      */
     fun hasAnyRole(vararg roles: String): Boolean =
-        roles.any { this.roles.contains(it) }
+        roles.any { this.globalRoles.contains(it) }
 
     /**
      * Check if the user has all of the specified roles
      */
     fun hasAllRoles(vararg roles: String): Boolean =
-        roles.all { this.roles.contains(it) }
-
-    /**
-     * Require tenant to be selected, throwing if not
-     */
-    fun requireTenantId(): TenantId =
-        tenantId ?: throw DokusException.BadRequest("Tenant context required but not selected")
+        roles.all { this.globalRoles.contains(it) }
 
     companion object {
         /**
@@ -54,8 +45,7 @@ data class DokusPrincipal(
                 userId = authInfo.userId,
                 email = authInfo.email,
                 name = authInfo.name,
-                tenantId = authInfo.tenantId,
-                roles = authInfo.roles,
+                globalRoles = authInfo.globalRoles,
                 sessionJti = authInfo.sessionJti
             )
         }

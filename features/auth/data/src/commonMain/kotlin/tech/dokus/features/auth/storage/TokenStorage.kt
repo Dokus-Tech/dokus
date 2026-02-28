@@ -116,4 +116,8 @@ class TokenStorage(
             ?: return null
         return runCatching { TenantId.parse(rawValue) }.getOrNull()
     }
+
+    suspend fun clearLastSelectedTenantId() {
+        secureStorage.remove(KEY_LAST_SELECTED_TENANT_ID)
+    }
 }

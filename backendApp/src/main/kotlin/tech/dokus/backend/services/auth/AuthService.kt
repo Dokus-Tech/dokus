@@ -97,7 +97,9 @@ class AuthService(
             tenant = selectedTenant
         )
 
-        val response = jwtGenerator.generateTokens(claims)
+        val response = jwtGenerator.generateTokens(claims).copy(
+            selectedTenantId = selectedTenant?.tenantId
+        )
 
         // Enforce concurrent session limit by revoking oldest session if needed
         val activeSessions = refreshTokenRepository.countActiveForUser(userId)
@@ -175,7 +177,9 @@ class AuthService(
             tenant = null
         )
 
-        val response = jwtGenerator.generateTokens(claims)
+        val response = jwtGenerator.generateTokens(claims).copy(
+            selectedTenantId = null
+        )
 
         refreshTokenRepository.saveRefreshToken(
             userId = userId,
@@ -261,7 +265,9 @@ class AuthService(
             tenant = selectedTenant
         )
 
-        val response = jwtGenerator.generateTokens(claims)
+        val response = jwtGenerator.generateTokens(claims).copy(
+            selectedTenantId = selectedTenant?.tenantId
+        )
 
         refreshTokenRepository.saveRefreshToken(
             userId = userId,
@@ -315,7 +321,9 @@ class AuthService(
             tenant = selectedTenant
         )
 
-        val response = jwtGenerator.generateTokens(claims)
+        val response = jwtGenerator.generateTokens(claims).copy(
+            selectedTenantId = selectedTenant.tenantId
+        )
 
         // Enforce concurrent session limit by revoking oldest session if needed
         val activeSessions = refreshTokenRepository.countActiveForUser(userId)

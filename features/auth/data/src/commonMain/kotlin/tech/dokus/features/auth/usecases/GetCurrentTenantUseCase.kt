@@ -43,19 +43,18 @@ class GetCurrentTenantUseCaseImpl(
      * @see GetCurrentTenantUseCase.invoke for the interface contract
      */
     override suspend operator fun invoke(): Result<Tenant?> {
-        val claims = tokenManager.getCurrentClaims()
-        val tenantScope = claims?.tenant
-        if (tenantScope == null) {
-            logger.d { "No tenant present in JWT claims" }
+        val selectedTenantId = tokenManager.getSelectedTenantId()
+        if (selectedTenantId == null) {
+            logger.d { "No selected tenant in local session state" }
             return Result.success(null)
         }
 
-        return tenantDataSource.getTenant(tenantScope.tenantId)
+        return tenantDataSource.getTenant(selectedTenantId)
             .onSuccess { tenant ->
-                logger.d { "Loaded current tenant ${tenant.legalName.value}" }
+                logger.d { "Loaded current tenant ${tenant.legalName.value} ($selectedTenantId)" }
             }
             .onFailure { error ->
-                logger.e(error) { "Failed to load current tenant from claims" }
+                logger.e(error) { "Failed to load current tenant ($selectedTenantId)" }
             }
             .map { it }
     }
