@@ -3,6 +3,7 @@ package tech.dokus.features.cashflow.presentation.cashflow.screen
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -64,6 +65,8 @@ import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
+
+private val PreviewDocumentMinHeight = 620.dp
 
 @Composable
 internal fun CreateInvoiceScreen(
@@ -384,23 +387,31 @@ private fun InvoicePreviewDialog(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            CanonicalInvoiceDocumentCard(
-                draft = state.toInvoicePreviewDraft(),
-                counterpartyName = selectedClient?.name?.value ?: "Click to select a client",
-                counterpartyAddress = selectedClient?.toPreviewAddressLine(),
-                modifier = Modifier.width(Constraints.DocumentDetail.previewMaxWidth)
-            )
-
             Row(
                 modifier = Modifier.width(Constraints.DocumentDetail.previewMaxWidth),
-                horizontalArrangement = Arrangement.End
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
+                Text(
+                    text = "Invoice preview",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
                 PButton(
                     text = "Close",
                     variant = PButtonVariant.Outline,
                     onClick = onDismiss
                 )
             }
+
+            CanonicalInvoiceDocumentCard(
+                draft = state.toInvoicePreviewDraft(),
+                counterpartyName = selectedClient?.name?.value ?: "Click to select a client",
+                counterpartyAddress = selectedClient?.toPreviewAddressLine(),
+                modifier = Modifier
+                    .width(Constraints.DocumentDetail.previewMaxWidth)
+                    .heightIn(min = PreviewDocumentMinHeight)
+            )
         }
     }
 }

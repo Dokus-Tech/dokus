@@ -70,7 +70,7 @@ data class DokusSizing(
     val navigationIndicatorHeight: Dp = 2.dp,
     val searchFieldMinWidth: Dp = 200.dp,
     val searchFieldMaxWidth: Dp = 360.dp,
-    val operatorFormMaxWidth: Dp = 960.dp,
+    val operatorFormMaxWidth: Dp = 820.dp,
 )
 
 @Immutable
