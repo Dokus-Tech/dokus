@@ -33,8 +33,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_close
 import tech.dokus.aura.resources.common_vat_value
@@ -43,11 +46,17 @@ import tech.dokus.aura.resources.invoice_contact_search_label
 import tech.dokus.aura.resources.invoice_contact_search_placeholder
 import tech.dokus.aura.resources.invoice_select_client
 import tech.dokus.aura.resources.invoice_selected_contact
+import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.features.contacts.presentation.contacts.components.ContactAutoFillData
 import tech.dokus.features.contacts.presentation.contacts.components.ContactAutocomplete
+import tech.dokus.features.contacts.usecases.FindContactsByNameUseCase
+import tech.dokus.features.contacts.usecases.FindContactsByVatUseCase
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 private const val PanelFadeDurationMs = 200
 private const val PanelSlideDurationMs = 300
@@ -66,7 +75,9 @@ fun ContactSelectionPanel(
     onSearchQueryChange: (String) -> Unit,
     onContactSelected: (ContactAutoFillData) -> Unit,
     onAddNewContact: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    findContactsByName: FindContactsByNameUseCase? = null,
+    findContactsByVat: FindContactsByVatUseCase? = null
 ) {
     Box(modifier = modifier.fillMaxSize()) {
         AnimatedVisibility(
@@ -150,7 +161,9 @@ fun ContactSelectionPanel(
                             onAddNewContact = onAddNewContact,
                             placeholder = stringResource(Res.string.invoice_contact_search_placeholder),
                             label = stringResource(Res.string.invoice_contact_search_label),
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            findContactsByName = findContactsByName ?: koinInject(),
+                            findContactsByVat = findContactsByVat ?: koinInject()
                         )
 
                         Spacer(modifier = Modifier.height(Constraints.Spacing.medium))
@@ -189,5 +202,29 @@ fun ContactSelectionPanel(
                 }
             }
         }
+    }
+}
+
+@Preview(name = "ContactSelectionPanel", widthDp = 1200, heightDp = 900)
+@Composable
+private fun ContactSelectionPanelPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        ContactSelectionPanel(
+            isVisible = true,
+            onDismiss = {},
+            selectedContact = Mocks.sampleClient,
+            searchQuery = "",
+            onSearchQueryChange = {},
+            onContactSelected = {},
+            onAddNewContact = {},
+            findContactsByName = object : FindContactsByNameUseCase {
+                override suspend fun invoke(query: String, limit: Int) = Result.success(emptyList<ContactDto>())
+            },
+            findContactsByVat = object : FindContactsByVatUseCase {
+                override suspend fun invoke(vat: VatNumber, limit: Int) = Result.success(emptyList<ContactDto>())
+            }
+        )
     }
 }

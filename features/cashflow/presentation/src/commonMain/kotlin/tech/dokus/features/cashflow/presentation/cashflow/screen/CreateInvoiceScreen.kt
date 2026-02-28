@@ -618,16 +618,129 @@ private fun primaryActionLabel(action: InvoiceResolvedAction): String {
     }
 }
 
-@Preview
+@Preview(name = "Invoice Footer Mobile", widthDp = 390, heightDp = 120)
 @Composable
-private fun CreateInvoiceScreenPreview(
+private fun MobileCommandFooterPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        MobileCommandFooter(
+            primaryLabel = "Send via PEPPOL",
+            isSaving = false,
+            onSaveDraft = {},
+            onPrimary = {}
+        )
+    }
+}
+
+@Preview(name = "Payment Delivery Editor", widthDp = 390, heightDp = 900)
+@Composable
+private fun PaymentDeliveryEditorPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        PaymentDeliveryEditor(
+            state = CreateInvoiceState(
+                formState = Mocks.sampleFormStateWithWarning,
+                uiState = Mocks.sampleUiState.copy(
+                    selectedDeliveryPreference = InvoiceDeliveryMethod.Peppol,
+                    resolvedDeliveryAction = tech.dokus.features.cashflow.mvi.model.DeliveryResolution(
+                        action = InvoiceResolvedAction.PdfExport,
+                        reason = "PEPPOL unavailable for selected client."
+                    )
+                )
+            ),
+            onIntent = {}
+        )
+    }
+}
+
+@Preview(name = "Dates Terms Editor", widthDp = 390, heightDp = 420)
+@Composable
+private fun DatesTermsEditorPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        DatesTermsEditor(
+            formState = Mocks.sampleFormState,
+            onIntent = {}
+        )
+    }
+}
+
+private val PreviewExpandedSections = setOf(
+    InvoiceSection.Client,
+    InvoiceSection.LineItems,
+    InvoiceSection.PaymentDelivery,
+    InvoiceSection.DatesTerms
+)
+
+@Preview(name = "CreateInvoice Mobile", widthDp = 390, heightDp = 1600)
+@Composable
+private fun CreateInvoiceScreenMobilePreview(
     @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
 ) {
     TestWrapper(parameters) {
         CreateInvoiceScreen(
             state = CreateInvoiceState(
-                formState = Mocks.emptyFormState,
-                uiState = Mocks.sampleUiState,
+                formState = Mocks.sampleFormState,
+                uiState = Mocks.sampleUiState.copy(
+                    expandedSections = PreviewExpandedSections,
+                    selectedDeliveryPreference = InvoiceDeliveryMethod.Peppol,
+                    resolvedDeliveryAction = tech.dokus.features.cashflow.mvi.model.DeliveryResolution(
+                        action = InvoiceResolvedAction.Peppol
+                    )
+                ),
+                invoiceNumberPreview = "INV-2026-0003"
+            ),
+            snackbarHostState = androidx.compose.material3.SnackbarHostState(),
+            onIntent = {},
+            onNavigateToCreateContact = {},
+        )
+    }
+}
+
+@Preview(name = "CreateInvoice Mobile Fallback", widthDp = 390, heightDp = 1600)
+@Composable
+private fun CreateInvoiceScreenMobileFallbackPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        CreateInvoiceScreen(
+            state = CreateInvoiceState(
+                formState = Mocks.sampleFormStateWithWarning,
+                uiState = Mocks.sampleUiState.copy(
+                    expandedSections = PreviewExpandedSections,
+                    selectedDeliveryPreference = InvoiceDeliveryMethod.Peppol,
+                    resolvedDeliveryAction = tech.dokus.features.cashflow.mvi.model.DeliveryResolution(
+                        action = InvoiceResolvedAction.PdfExport,
+                        reason = "PEPPOL unavailable for selected client."
+                    )
+                ),
+                invoiceNumberPreview = "INV-2026-0003"
+            ),
+            snackbarHostState = androidx.compose.material3.SnackbarHostState(),
+            onIntent = {},
+            onNavigateToCreateContact = {},
+        )
+    }
+}
+
+@Preview(name = "CreateInvoice Desktop", widthDp = 1200, heightDp = 1000)
+@Composable
+private fun CreateInvoiceScreenDesktopPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        CreateInvoiceScreen(
+            state = CreateInvoiceState(
+                formState = Mocks.sampleFormState,
+                uiState = Mocks.sampleUiState.copy(
+                    selectedDeliveryPreference = InvoiceDeliveryMethod.Peppol,
+                    resolvedDeliveryAction = tech.dokus.features.cashflow.mvi.model.DeliveryResolution(
+                        action = InvoiceResolvedAction.Peppol
+                    )
+                ),
                 invoiceNumberPreview = "INV-2026-0003"
             ),
             snackbarHostState = androidx.compose.material3.SnackbarHostState(),
