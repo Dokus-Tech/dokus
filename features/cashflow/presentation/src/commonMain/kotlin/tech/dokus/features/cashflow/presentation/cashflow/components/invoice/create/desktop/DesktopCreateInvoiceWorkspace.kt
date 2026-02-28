@@ -31,12 +31,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import tech.dokus.features.cashflow.mvi.CreateInvoiceIntent
 import tech.dokus.features.cashflow.mvi.CreateInvoiceState
-import tech.dokus.foundation.aura.components.PBackButton
 import tech.dokus.foundation.aura.components.background.AmbientBackground
 import tech.dokus.foundation.aura.components.chat.ChatMessageRole
 import tech.dokus.foundation.aura.components.chat.PAssistantMessageBubble
 import tech.dokus.foundation.aura.components.chat.PChatInputField
 import tech.dokus.foundation.aura.components.chat.PUserMessageBubble
+import tech.dokus.foundation.aura.components.common.PLeftPaneHeader
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.dokusEffects
 import tech.dokus.foundation.aura.style.dokusSpacing
@@ -130,26 +130,17 @@ private fun AssistantPaneTopBar(
     val effects = MaterialTheme.dokusEffects
 
     Column {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(
-                    horizontal = Constraints.Spacing.medium,
-                    vertical = Constraints.Spacing.small
-                ),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            PBackButton(
-                label = "Invoices",
-                onBackPress = onBackClick
-            )
-            Text(
-                text = invoiceNumber ?: "",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.textMuted
-            )
-        }
+        PLeftPaneHeader(
+            backLabel = "Invoices",
+            onBackClick = onBackClick,
+            trailing = {
+                Text(
+                    text = invoiceNumber ?: "",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.textMuted
+                )
+            }
+        )
         HorizontalDivider(color = effects.railTrackLine)
     }
 }

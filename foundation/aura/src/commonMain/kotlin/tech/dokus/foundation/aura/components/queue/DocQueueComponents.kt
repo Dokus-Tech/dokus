@@ -19,8 +19,6 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -30,6 +28,7 @@ import tech.dokus.aura.resources.a11y_back_to_all_documents
 import tech.dokus.aura.resources.document_queue_all_docs
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.components.common.PLeftPaneHeader
 import tech.dokus.foundation.aura.components.status.StatusDot
 import tech.dokus.foundation.aura.components.status.StatusDotType
 import tech.dokus.foundation.aura.constrains.Constraints
@@ -53,41 +52,21 @@ fun DocQueueHeader(
     modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(
-                horizontal = Constraints.Spacing.medium,
-                vertical = Constraints.Spacing.small,
-            ),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier.fillMaxWidth()
     ) {
         val backDescription = stringResource(Res.string.a11y_back_to_all_documents)
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall),
-            modifier = Modifier
-                .semantics { contentDescription = backDescription }
-                .clickable(onClick = onExit),
-        ) {
-            Text(
-                text = "\u2039",
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.primary,
-            )
-            Text(
-                text = stringResource(Res.string.document_queue_all_docs),
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.primary,
-            )
-        }
-        Text(
-            text = positionText,
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.textFaint,
+        PLeftPaneHeader(
+            backLabel = stringResource(Res.string.document_queue_all_docs),
+            onBackClick = onExit,
+            backContentDescription = backDescription,
+            trailing = {
+                Text(
+                    text = positionText,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.textFaint,
+                )
+            }
         )
     }
 }
