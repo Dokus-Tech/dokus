@@ -1,6 +1,6 @@
 package tech.dokus.backend.routes.payment
 
-import tech.dokus.backend.security.requireTenantAccess
+import tech.dokus.backend.security.requireTenantId
 
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.resources.get
@@ -25,7 +25,7 @@ fun Route.paymentRoutes() {
     authenticateJwt {
         // GET /api/v1/payments - List payments
         get<Payments> { route ->
-            val tenantId = requireTenantAccess().tenantId
+            val tenantId = requireTenantId()
             logger.info("Listing payments for tenant: $tenantId")
 
             // TODO: Implement payment listing
@@ -34,7 +34,7 @@ fun Route.paymentRoutes() {
 
         // GET /api/v1/payments/pending - List pending payments
         get<Payments.Pending> { route ->
-            val tenantId = requireTenantAccess().tenantId
+            val tenantId = requireTenantId()
             logger.info("Listing pending payments for tenant: $tenantId")
 
             // TODO: Implement pending payments listing
@@ -43,7 +43,7 @@ fun Route.paymentRoutes() {
 
         // GET /api/v1/payments/overdue - List overdue payments
         get<Payments.Overdue> { route ->
-            val tenantId = requireTenantAccess().tenantId
+            val tenantId = requireTenantId()
             logger.info("Listing overdue payments for tenant: $tenantId")
 
             // TODO: Implement overdue payments listing
@@ -52,7 +52,7 @@ fun Route.paymentRoutes() {
 
         // GET /api/v1/payments/{id} - Get payment by ID
         get<Payments.Id> { route ->
-            val tenantId = requireTenantAccess().tenantId
+            val tenantId = requireTenantId()
             logger.info("Getting payment ${route.id} for tenant: $tenantId")
 
             // TODO: Implement payment retrieval
@@ -61,7 +61,7 @@ fun Route.paymentRoutes() {
 
         // GET /api/v1/payments/{id}/refunds - List refunds for payment
         get<Payments.Id.Refunds> { route ->
-            val tenantId = requireTenantAccess().tenantId
+            val tenantId = requireTenantId()
             logger.info("Listing refunds for payment ${route.parent.id}, tenant: $tenantId")
 
             // TODO: Implement refunds listing

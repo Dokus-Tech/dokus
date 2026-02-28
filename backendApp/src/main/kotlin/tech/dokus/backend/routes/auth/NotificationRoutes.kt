@@ -1,6 +1,6 @@
 package tech.dokus.backend.routes.auth
 
-import tech.dokus.backend.security.requireTenantAccess
+import tech.dokus.backend.security.requireTenantId
 
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
@@ -27,7 +27,7 @@ internal fun Route.notificationRoutes() {
     authenticateJwt {
         get<Notifications> { route ->
             val principal = dokusPrincipal
-            val tenantId = requireTenantAccess().tenantId
+            val tenantId = requireTenantId()
 
             if (route.limit < 1 || route.limit > 200) {
                 throw DokusException.BadRequest("Limit must be between 1 and 200")
@@ -51,7 +51,7 @@ internal fun Route.notificationRoutes() {
 
         get<Notifications.UnreadCount> {
             val principal = dokusPrincipal
-            val tenantId = requireTenantAccess().tenantId
+            val tenantId = requireTenantId()
 
             val count = notificationService.unreadCount(
                 tenantId = tenantId,
@@ -63,7 +63,7 @@ internal fun Route.notificationRoutes() {
 
         patch<Notifications.MarkRead> { route ->
             val principal = dokusPrincipal
-            val tenantId = requireTenantAccess().tenantId
+            val tenantId = requireTenantId()
 
             notificationService.markRead(
                 tenantId = tenantId,
@@ -76,7 +76,7 @@ internal fun Route.notificationRoutes() {
 
         post<Notifications.MarkAllRead> {
             val principal = dokusPrincipal
-            val tenantId = requireTenantAccess().tenantId
+            val tenantId = requireTenantId()
 
             val updated = notificationService.markAllRead(
                 tenantId = tenantId,

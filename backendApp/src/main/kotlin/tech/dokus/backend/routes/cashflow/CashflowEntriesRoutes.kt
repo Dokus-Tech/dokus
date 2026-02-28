@@ -1,6 +1,6 @@
 package tech.dokus.backend.routes.cashflow
 
-import tech.dokus.backend.security.requireTenantAccess
+import tech.dokus.backend.security.requireTenantId
 
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
@@ -41,7 +41,7 @@ internal fun Route.cashflowEntriesRoutes() {
     authenticateJwt {
         // GET /api/v1/cashflow/entries - List cashflow entries with filters
         get<Cashflow.Entries> { route ->
-            val tenantId = requireTenantAccess().tenantId
+            val tenantId = requireTenantId()
 
             if (route.limit !in 1..MAX_PAGE_SIZE) {
                 throw DokusException.BadRequest("Limit must be between 1 and $MAX_PAGE_SIZE")
@@ -104,7 +104,7 @@ internal fun Route.cashflowEntriesRoutes() {
 
         // GET /api/v1/cashflow/entries/{id} - Get single entry
         get<Cashflow.Entries.Id> { route ->
-            val tenantId = requireTenantAccess().tenantId
+            val tenantId = requireTenantId()
             val entryId = try {
                 CashflowEntryId(Uuid.parse(route.id))
             } catch (_: Exception) {
@@ -120,7 +120,7 @@ internal fun Route.cashflowEntriesRoutes() {
 
         // POST /api/v1/cashflow/entries/{id}/payments - Record payment
         post<Cashflow.Entries.Id.Payments> { route ->
-            val tenantId = requireTenantAccess().tenantId
+            val tenantId = requireTenantId()
             val entryId = try {
                 CashflowEntryId(Uuid.parse(route.parent.id))
             } catch (_: Exception) {
@@ -147,7 +147,7 @@ internal fun Route.cashflowEntriesRoutes() {
 
         // POST /api/v1/cashflow/entries/{id}/cancel - Cancel entry
         post<Cashflow.Entries.Id.Cancel> { route ->
-            val tenantId = requireTenantAccess().tenantId
+            val tenantId = requireTenantId()
             val entryId = try {
                 CashflowEntryId(Uuid.parse(route.parent.id))
             } catch (_: Exception) {

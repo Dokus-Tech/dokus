@@ -61,6 +61,8 @@ fun TenantAccess.requireAnyRole(vararg requiredRoles: UserRole): TenantAccess {
 fun TenantAccess.hasPermission(permission: Permission): Boolean =
     roles.any { RolePermissions.hasPermission(it, permission) }
 
+suspend fun RoutingContext.requireTenantId(): TenantId = requireTenantAccess().tenantId
+
 suspend fun RoutingContext.requirePermission(permission: Permission) {
     val access = requireTenantAccess()
     if (!access.hasPermission(permission)) {

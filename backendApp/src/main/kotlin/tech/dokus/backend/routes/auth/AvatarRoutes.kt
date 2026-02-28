@@ -1,6 +1,6 @@
 package tech.dokus.backend.routes.auth
 
-import tech.dokus.backend.security.requireTenantAccess
+import tech.dokus.backend.security.requireTenantId
 
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.PartData
@@ -44,7 +44,7 @@ internal fun Route.avatarRoutes() {
          */
         post<Tenants.Avatar> {
             val principal = dokusPrincipal
-            val tenantId = requireTenantAccess().tenantId
+            val tenantId = requireTenantId()
 
             logger.info("Avatar upload request for tenant: $tenantId")
 
@@ -111,7 +111,7 @@ internal fun Route.avatarRoutes() {
          */
         get<Tenants.Avatar> {
             val principal = dokusPrincipal
-            val tenantId = requireTenantAccess().tenantId
+            val tenantId = requireTenantId()
 
             val storageKey = tenantRepository.getAvatarStorageKey(tenantId)
             if (storageKey == null) {
@@ -130,7 +130,7 @@ internal fun Route.avatarRoutes() {
          */
         delete<Tenants.Avatar> {
             val principal = dokusPrincipal
-            val tenantId = requireTenantAccess().tenantId
+            val tenantId = requireTenantId()
 
             val storageKey = tenantRepository.getAvatarStorageKey(tenantId)
             if (storageKey == null) {

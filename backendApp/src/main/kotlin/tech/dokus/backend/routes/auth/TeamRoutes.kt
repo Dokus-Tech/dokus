@@ -2,6 +2,7 @@ package tech.dokus.backend.routes.auth
 
 import tech.dokus.backend.security.requireRole
 import tech.dokus.backend.security.requireTenantAccess
+import tech.dokus.backend.security.requireTenantId
 
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
@@ -52,7 +53,7 @@ internal fun Route.teamRoutes() {
          */
         get<Team.Members> {
             val principal = dokusPrincipal
-            val tenantId = requireTenantAccess().tenantId
+            val tenantId = requireTenantId()
 
             val members = teamService.listTeamMembers(tenantId)
             call.respond(HttpStatusCode.OK, members)
@@ -146,7 +147,7 @@ internal fun Route.teamRoutes() {
          */
         get<Team.Invitations> { route ->
             val principal = dokusPrincipal
-            val tenantId = requireTenantAccess().tenantId
+            val tenantId = requireTenantId()
 
             val invitations = if (route.status == InvitationStatus.Pending) {
                 teamService.listPendingInvitations(tenantId)

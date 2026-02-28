@@ -1,6 +1,6 @@
 package tech.dokus.backend.routes.cashflow
 
-import tech.dokus.backend.security.requireTenantAccess
+import tech.dokus.backend.security.requireTenantId
 
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
@@ -79,7 +79,7 @@ internal fun Route.chatRoutes() {
          * Response: ChatResponse with AI-generated answer and citations
          */
         post("/api/v1/chat") {
-            val tenantId = requireTenantAccess().tenantId
+            val tenantId = requireTenantId()
             val userId = dokusPrincipal.userId
             val request = call.receive<ChatRequest>()
 
@@ -125,7 +125,7 @@ internal fun Route.chatRoutes() {
          * Response: ChatResponse with AI-generated answer and citations
          */
         post("/api/v1/documents/{id}/chat") {
-            val tenantId = requireTenantAccess().tenantId
+            val tenantId = requireTenantId()
             val userId = dokusPrincipal.userId
             val documentIdParam = call.parameters["id"]
                 ?: throw DokusException.BadRequest("Document ID is required")
@@ -187,7 +187,7 @@ internal fun Route.chatRoutes() {
          * Response: ChatSessionListResponse
          */
         get<Chat.Sessions> { route ->
-            val tenantId = requireTenantAccess().tenantId
+            val tenantId = requireTenantId()
             val limit = route.limit.coerceIn(1, 100)
 
             logger.debug(
@@ -232,7 +232,7 @@ internal fun Route.chatRoutes() {
          * Response: ChatHistoryResponse
          */
         get<Chat.Sessions.SessionId> { route ->
-            val tenantId = requireTenantAccess().tenantId
+            val tenantId = requireTenantId()
             val limit = route.limit.coerceIn(1, 100)
 
             logger.debug("Getting session history: tenant=$tenantId, session=${route.sessionId}")

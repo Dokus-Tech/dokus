@@ -1,6 +1,6 @@
 package tech.dokus.backend.routes.auth
 
-import tech.dokus.backend.security.requireTenantAccess
+import tech.dokus.backend.security.requireTenantId
 
 import io.ktor.http.*
 import io.ktor.server.request.*
@@ -119,7 +119,7 @@ internal fun Route.tenantRoutes() {
          */
         get<Tenants.Settings> {
             val principal = dokusPrincipal
-            val tenantId = requireTenantAccess().tenantId
+            val tenantId = requireTenantId()
             val settings = tenantRepository.getSettings(tenantId)
             call.respond(HttpStatusCode.OK, settings)
         }
@@ -129,7 +129,7 @@ internal fun Route.tenantRoutes() {
          * Preview the next invoice number without consuming it.
          */
         get<Tenants.InvoiceNumberPreview> {
-            val tenantId = requireTenantAccess().tenantId
+            val tenantId = requireTenantId()
             val preview = invoiceNumberGenerator.previewNextInvoiceNumber(tenantId).getOrElse {
                 throw DokusException.InternalError("Failed to generate invoice number preview")
             }
@@ -141,7 +141,7 @@ internal fun Route.tenantRoutes() {
          * Get company address for current tenant.
          */
         get<Tenants.Address> {
-            val tenantId = requireTenantAccess().tenantId
+            val tenantId = requireTenantId()
             val address = addressRepository.getCompanyAddress(tenantId)
             if (address == null) {
                 call.respond(
@@ -158,7 +158,7 @@ internal fun Route.tenantRoutes() {
          * Upsert company address for current tenant.
          */
         put<Tenants.Address> {
-            val tenantId = requireTenantAccess().tenantId
+            val tenantId = requireTenantId()
             val request = call.receive<UpsertTenantAddressRequest>()
             val address = addressRepository.upsertCompanyAddress(tenantId, request)
             call.respond(HttpStatusCode.OK, address)
@@ -170,7 +170,7 @@ internal fun Route.tenantRoutes() {
          */
         put<Tenants.Settings> {
             val principal = dokusPrincipal
-            val tenantId = requireTenantAccess().tenantId
+            val tenantId = requireTenantId()
 
             val settings = call.receive<TenantSettings>()
             if (settings.tenantId != tenantId) {

@@ -1,6 +1,6 @@
 package tech.dokus.backend.routes.cashflow
 
-import tech.dokus.backend.security.requireTenantAccess
+import tech.dokus.backend.security.requireTenantId
 
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.PartData
@@ -43,7 +43,7 @@ internal fun Route.documentUploadRoutes() {
 
     authenticateJwt {
         post<Documents.Upload> {
-            val tenantId = requireTenantAccess().tenantId
+            val tenantId = requireTenantId()
             logger.info("Document upload request from tenant: $tenantId")
 
             val payload = call.readUploadPayload()

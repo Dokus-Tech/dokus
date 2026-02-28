@@ -1,6 +1,6 @@
 package tech.dokus.backend.routes.cashflow
 
-import tech.dokus.backend.security.requireTenantAccess
+import tech.dokus.backend.security.requireTenantId
 
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
@@ -34,7 +34,7 @@ internal fun Route.expenseRoutes() {
     authenticateJwt {
         // GET /api/v1/expenses - List expenses with query params
         get<Expenses> { route ->
-            val tenantId = requireTenantAccess().tenantId
+            val tenantId = requireTenantId()
 
             if (route.limit < 1 || route.limit > 200) {
                 throw DokusException.BadRequest("Limit must be between 1 and 200")
@@ -57,7 +57,7 @@ internal fun Route.expenseRoutes() {
 
         // GET /api/v1/expenses/{id} - Get expense by ID
         get<Expenses.Id> { route ->
-            val tenantId = requireTenantAccess().tenantId
+            val tenantId = requireTenantId()
             val expenseId = ExpenseId(Uuid.parse(route.id))
 
             val expense = expenseService.getExpense(expenseId, tenantId)
@@ -69,7 +69,7 @@ internal fun Route.expenseRoutes() {
 
         // PUT /api/v1/expenses/{id} - Update expense
         put<Expenses.Id> { route ->
-            val tenantId = requireTenantAccess().tenantId
+            val tenantId = requireTenantId()
             val expenseId = ExpenseId(Uuid.parse(route.id))
             val request = call.receive<CreateExpenseRequest>()
 
@@ -81,7 +81,7 @@ internal fun Route.expenseRoutes() {
 
         // DELETE /api/v1/expenses/{id} - Delete expense
         delete<Expenses.Id> { route ->
-            val tenantId = requireTenantAccess().tenantId
+            val tenantId = requireTenantId()
             val expenseId = ExpenseId(Uuid.parse(route.id))
 
             expenseService.deleteExpense(expenseId, tenantId)
