@@ -58,6 +58,7 @@ import tech.dokus.foundation.aura.components.PButton
 import tech.dokus.foundation.aura.components.PButtonVariant
 import tech.dokus.foundation.aura.components.PDatePickerDialog
 import tech.dokus.foundation.aura.components.common.PSelectableCommandCard
+import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
 import tech.dokus.foundation.aura.components.layout.PCollapsibleSection
 import tech.dokus.foundation.aura.constrains.Constraints
@@ -78,6 +79,15 @@ internal fun CreateInvoiceScreen(
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
+        topBar = {
+            if (isLargeScreen) {
+                PTopAppBar(
+                    title = "New Invoice",
+                    navController = null,
+                    onBackClick = { onIntent(CreateInvoiceIntent.BackClicked) }
+                )
+            }
+        },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
             if (!isLargeScreen) {
