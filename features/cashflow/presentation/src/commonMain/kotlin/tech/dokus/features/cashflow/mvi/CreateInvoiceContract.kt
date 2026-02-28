@@ -12,6 +12,7 @@ import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.features.cashflow.mvi.model.CreateInvoiceFormState
 import tech.dokus.features.cashflow.mvi.model.CreateInvoiceUiState
+import tech.dokus.features.cashflow.mvi.model.ExternalClientCandidate
 import tech.dokus.features.cashflow.mvi.model.InvoiceSection
 
 @Immutable
@@ -24,10 +25,11 @@ data class CreateInvoiceState(
 @Immutable
 sealed interface CreateInvoiceIntent : MVIIntent {
     // Client
-    data object OpenClientPanel : CreateInvoiceIntent
-    data object CloseClientPanel : CreateInvoiceIntent
-    data class UpdateClientSearchQuery(val query: String) : CreateInvoiceIntent
+    data class UpdateClientLookupQuery(val query: String) : CreateInvoiceIntent
+    data class SetClientLookupExpanded(val expanded: Boolean) : CreateInvoiceIntent
     data class SelectClient(val client: ContactDto) : CreateInvoiceIntent
+    data class SelectExternalClientCandidate(val candidate: ExternalClientCandidate) : CreateInvoiceIntent
+    data class CreateClientManuallyFromQuery(val query: String) : CreateInvoiceIntent
     data object ClearClient : CreateInvoiceIntent
     data class RefreshPeppolStatus(val contactId: ContactId, val force: Boolean = false) : CreateInvoiceIntent
 
@@ -78,7 +80,12 @@ sealed interface CreateInvoiceIntent : MVIIntent {
 @Immutable
 sealed interface CreateInvoiceAction : MVIAction {
     data object NavigateBack : CreateInvoiceAction
-    data object NavigateToCreateContact : CreateInvoiceAction
+    data class NavigateToCreateContact(
+        val prefillCompanyName: String? = null,
+        val prefillVat: String? = null,
+        val prefillAddress: String? = null,
+        val origin: String? = null
+    ) : CreateInvoiceAction
     data class NavigateToInvoice(val invoiceId: InvoiceId) : CreateInvoiceAction
     data class ShowError(val message: String) : CreateInvoiceAction
     data class ShowValidationError(val message: String) : CreateInvoiceAction

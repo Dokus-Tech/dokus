@@ -8,6 +8,7 @@ import kotlinx.datetime.todayIn
 import tech.dokus.domain.enums.InvoiceDeliveryMethod
 import tech.dokus.domain.enums.InvoiceDueDateMode
 import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.PeppolStatusResponse
 import tech.dokus.domain.model.contact.ContactDto
 import kotlin.math.absoluteValue
@@ -50,17 +51,45 @@ data class LatestInvoiceSuggestion(
     val lines: List<InvoiceLineItem>
 )
 
+data class ExternalClientCandidate(
+    val name: String,
+    val vatNumber: VatNumber?,
+    val enterpriseNumber: String,
+    val prefillAddress: String? = null
+)
+
+sealed interface ClientSuggestion {
+    data class LocalContact(val contact: ContactDto) : ClientSuggestion
+    data class ExternalCompany(val candidate: ExternalClientCandidate) : ClientSuggestion
+    data class CreateManual(val query: String) : ClientSuggestion
+}
+
+data class ClientLookupState(
+    val query: String = "",
+    val isExpanded: Boolean = false,
+    val localResults: List<ContactDto> = emptyList(),
+    val externalResults: List<ExternalClientCandidate> = emptyList(),
+    val isLocalLoading: Boolean = false,
+    val isExternalLoading: Boolean = false,
+    val mergedSuggestions: List<ClientSuggestion> = emptyList(),
+    val errorHint: String? = null
+) {
+    val isLoading: Boolean
+        get() = isLocalLoading || isExternalLoading
+}
+
 data class CreateInvoiceUiState(
     val expandedItemId: String? = null,
-    val isClientPanelOpen: Boolean = false,
-    val clientSearchQuery: String = "",
+    val clientLookupState: ClientLookupState = ClientLookupState(),
+    val senderCompanyName: String = "INVOID VISION",
+    val senderCompanyVat: String? = null,
     val isDatePickerOpen: DatePickerTarget? = null,
     val expandedSections: Set<InvoiceSection> = setOf(InvoiceSection.Client),
     val suggestedSection: InvoiceSection? = null,
     val selectedDeliveryPreference: InvoiceDeliveryMethod = InvoiceDeliveryMethod.Peppol,
     val resolvedDeliveryAction: DeliveryResolution = DeliveryResolution(
         action = InvoiceResolvedAction.PdfExport,
-        reason = "Select a client to resolve PEPPOL availability."
+        reason = "Select a client to enable PEPPOL."
     ),
     val latestInvoiceSuggestion: LatestInvoiceSuggestion? = null,
     val isPreviewVisible: Boolean = false

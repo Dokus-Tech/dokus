@@ -56,7 +56,9 @@ val cashflowViewModelModule = module {
             validateInvoice = get(),
             submitInvoiceWithDelivery = get(),
             getContactPeppolStatus = get(),
-            getLatestInvoiceForContact = get()
+            getLatestInvoiceForContact = get(),
+            lookupContacts = get(),
+            searchCompanyUseCase = get()
         )
     }
     container<DocumentReviewContainer, DocumentReviewState, DocumentReviewIntent, DocumentReviewAction> { (initialDocumentId: DocumentId, routeContext: DocumentReviewRouteContext?) ->
