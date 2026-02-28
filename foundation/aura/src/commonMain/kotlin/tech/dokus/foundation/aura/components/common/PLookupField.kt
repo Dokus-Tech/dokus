@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,13 +20,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
@@ -45,6 +46,7 @@ private val HorizontalPadding = 14.dp
 private val BorderWidth = 1.dp
 private val FieldCornerRadius = 12.dp
 private val DashedPattern = floatArrayOf(10f, 8f)
+private val LookupFieldShape = RoundedCornerShape(FieldCornerRadius)
 
 enum class PLookupFieldOutline {
     Solid,
@@ -84,8 +86,9 @@ fun PLookupField(
         modifier = modifier
             .fillMaxWidth()
             .height(FieldHeight)
+            .clip(LookupFieldShape)
             .lookupBorder(color = borderColor, outline = outline)
-            .background(MaterialTheme.colorScheme.surface, MaterialTheme.shapes.small)
+            .background(MaterialTheme.colorScheme.surface, LookupFieldShape)
             .padding(horizontal = HorizontalPadding),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
@@ -130,9 +133,16 @@ private fun Modifier.lookupBorder(
 ): Modifier {
     return drawBehind {
         val strokeWidth = BorderWidth.toPx()
+        val inset = strokeWidth / 2f
+        val radius = FieldCornerRadius.toPx() - inset
         drawRoundRect(
             color = color,
-            cornerRadius = CornerRadius(FieldCornerRadius.toPx(), FieldCornerRadius.toPx()),
+            topLeft = androidx.compose.ui.geometry.Offset(inset, inset),
+            size = androidx.compose.ui.geometry.Size(
+                width = size.width - strokeWidth,
+                height = size.height - strokeWidth
+            ),
+            cornerRadius = CornerRadius(radius, radius),
             style = Stroke(
                 width = strokeWidth,
                 pathEffect = if (outline == PLookupFieldOutline.Dashed) {
