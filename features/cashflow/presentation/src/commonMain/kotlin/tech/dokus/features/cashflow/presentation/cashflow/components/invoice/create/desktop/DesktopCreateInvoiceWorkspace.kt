@@ -131,7 +131,7 @@ private fun AssistantPaneTopBar(
 
     Column {
         PLeftPaneHeader(
-            backLabel = "Invoices",
+            backLabel = "Cashflow",
             onBackClick = onBackClick,
             trailing = {
                 Text(

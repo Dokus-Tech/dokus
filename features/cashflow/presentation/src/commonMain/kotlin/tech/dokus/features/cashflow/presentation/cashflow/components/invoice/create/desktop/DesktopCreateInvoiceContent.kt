@@ -70,7 +70,12 @@ internal fun DesktopCreateInvoiceContent(
         ) {
             HeaderRow(
                 invoiceNumber = state.invoiceNumberPreview,
-                onPreview = { onIntent(CreateInvoiceIntent.SetPreviewVisible(true)) }
+                isPreviewEnabled = formState.selectedClient != null,
+                onPreview = {
+                    if (formState.selectedClient != null) {
+                        onIntent(CreateInvoiceIntent.SetPreviewVisible(true))
+                    }
+                }
             )
 
             PartiesAndDates(
@@ -140,6 +145,7 @@ internal fun DesktopCreateInvoiceContent(
 @Composable
 private fun HeaderRow(
     invoiceNumber: String?,
+    isPreviewEnabled: Boolean,
     onPreview: () -> Unit
 ) {
     Row(
@@ -167,6 +173,7 @@ private fun HeaderRow(
         PButton(
             text = stringResource(Res.string.invoice_preview),
             variant = PButtonVariant.Outline,
+            isEnabled = isPreviewEnabled,
             onClick = onPreview
         )
     }

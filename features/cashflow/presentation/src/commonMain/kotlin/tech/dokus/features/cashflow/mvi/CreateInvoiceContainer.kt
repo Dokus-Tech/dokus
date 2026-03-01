@@ -257,8 +257,10 @@ internal class CreateInvoiceContainer(
                         state.copy(uiState = state.uiState.copy(expandedSections = state.uiState.expandedSections - intent.section))
                     }
 
-                    is CreateInvoiceIntent.SetPreviewVisible -> updateInvoice {
-                        it.copy(uiState = it.uiState.copy(isPreviewVisible = intent.visible))
+                    is CreateInvoiceIntent.SetPreviewVisible -> updateInvoice { state ->
+                        val canOpenPreview = state.formState.selectedClient != null
+                        val visible = if (intent.visible) canOpenPreview else false
+                        state.copy(uiState = state.uiState.copy(isPreviewVisible = visible))
                     }
 
                     is CreateInvoiceIntent.SaveAsDraft -> submitInvoice(deliveryMethod = null)

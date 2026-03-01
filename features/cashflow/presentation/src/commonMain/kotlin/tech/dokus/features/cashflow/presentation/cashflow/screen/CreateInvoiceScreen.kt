@@ -1,15 +1,15 @@
 package tech.dokus.features.cashflow.presentation.cashflow.screen
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -57,10 +57,12 @@ import tech.dokus.features.cashflow.presentation.cashflow.components.invoice.cre
 import tech.dokus.features.cashflow.presentation.review.components.CanonicalInvoiceDocumentCard
 import tech.dokus.foundation.aura.components.DokusCard
 import tech.dokus.foundation.aura.components.DokusCardPadding
+import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.PButton
 import tech.dokus.foundation.aura.components.PButtonVariant
 import tech.dokus.foundation.aura.components.PDatePickerDialog
 import tech.dokus.foundation.aura.components.common.PSelectableCommandCard
+import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
 import tech.dokus.foundation.aura.components.layout.PCollapsibleSection
 import tech.dokus.foundation.aura.constrains.Constraints
@@ -69,7 +71,8 @@ import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
 
-private val PreviewDocumentMinHeight = 620.dp
+private val PreviewDialogMaxWidth = 620.dp
+private const val A4WidthToHeightRatio = 210f / 297f
 
 @Composable
 internal fun CreateInvoiceScreen(
@@ -383,39 +386,42 @@ private fun InvoicePreviewDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
-        Column(
+        DokusCardSurface(
             modifier = Modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
+                .widthIn(max = PreviewDialogMaxWidth)
                 .padding(horizontal = 24.dp, vertical = 20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Row(
-                modifier = Modifier.width(Constraints.DocumentDetail.previewMaxWidth),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = stringResource(Res.string.invoice_preview_title),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
+            Column(modifier = Modifier.fillMaxWidth()) {
+                PTopAppBar(
+                    title = stringResource(Res.string.invoice_preview_title),
+                    showBackButton = false,
+                    navController = null,
+                    actions = {
+                        PButton(
+                            text = stringResource(Res.string.button_close),
+                            variant = PButtonVariant.Outline,
+                            onClick = onDismiss
+                        )
+                    }
                 )
-                PButton(
-                    text = stringResource(Res.string.button_close),
-                    variant = PButtonVariant.Outline,
-                    onClick = onDismiss
-                )
-            }
 
-            CanonicalInvoiceDocumentCard(
-                draft = state.toInvoicePreviewDraft(),
-                counterpartyName = selectedClient?.name?.value ?: stringResource(Res.string.invoice_click_to_select_client),
-                counterpartyAddress = selectedClient?.toPreviewAddressLine(),
-                modifier = Modifier
-                    .width(Constraints.DocumentDetail.previewMaxWidth)
-                    .heightIn(min = PreviewDocumentMinHeight)
-            )
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp, vertical = 20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    CanonicalInvoiceDocumentCard(
+                        draft = state.toInvoicePreviewDraft(),
+                        counterpartyName = selectedClient?.name?.value ?: stringResource(Res.string.invoice_click_to_select_client),
+                        counterpartyAddress = selectedClient?.toPreviewAddressLine(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(A4WidthToHeightRatio)
+                    )
+                }
+            }
         }
     }
 }
