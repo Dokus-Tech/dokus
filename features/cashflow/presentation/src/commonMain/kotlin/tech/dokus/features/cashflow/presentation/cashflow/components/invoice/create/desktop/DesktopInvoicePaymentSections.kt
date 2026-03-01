@@ -63,7 +63,7 @@ internal fun PaymentSection(
                     color = MaterialTheme.colorScheme.textMuted
                 )
                 Text(
-                    text = "BIC: ${form.senderBic.ifBlank { "-" }}",
+                    text = stringResource(Res.string.invoice_bic_prefix, form.senderBic.ifBlank { "-" }),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.textFaint
                 )
@@ -236,9 +236,8 @@ private fun FlatInputField(
     }
 }
 
-internal fun primaryActionLabel(action: InvoiceResolvedAction): String {
-    return when (action) {
-        InvoiceResolvedAction.Peppol -> "Send via PEPPOL"
-        InvoiceResolvedAction.PdfExport -> "Export PDF"
+val InvoiceResolvedAction.localized: String
+    @Composable get() = when (this) {
+        InvoiceResolvedAction.Peppol -> stringResource(Res.string.invoice_send_via_peppol)
+        InvoiceResolvedAction.PdfExport -> stringResource(Res.string.invoice_export_pdf)
     }
-}

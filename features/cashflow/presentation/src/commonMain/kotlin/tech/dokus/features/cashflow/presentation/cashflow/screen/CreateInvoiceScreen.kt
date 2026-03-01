@@ -54,7 +54,7 @@ import tech.dokus.features.cashflow.presentation.cashflow.components.invoice.Moc
 import tech.dokus.features.cashflow.presentation.cashflow.components.invoice.create.desktop.DesktopCreateInvoiceWorkspace
 import tech.dokus.features.cashflow.presentation.cashflow.components.invoice.create.desktop.InvoiceClientLookup
 import tech.dokus.features.cashflow.presentation.cashflow.components.invoice.create.desktop.formatDate
-import tech.dokus.features.cashflow.presentation.cashflow.components.invoice.create.desktop.primaryActionLabel
+import tech.dokus.features.cashflow.presentation.cashflow.components.invoice.create.desktop.localized
 import tech.dokus.features.cashflow.presentation.review.components.CanonicalInvoiceDocumentCard
 import tech.dokus.foundation.aura.components.DokusCard
 import tech.dokus.foundation.aura.components.DokusCardPadding
@@ -89,7 +89,7 @@ internal fun CreateInvoiceScreen(
         bottomBar = {
             if (!isLargeScreen) {
                 MobileCommandFooter(
-                    primaryLabel = primaryActionLabel(state.uiState.resolvedDeliveryAction.action),
+                    primaryLabel = state.uiState.resolvedDeliveryAction.action.localized,
                     isSaving = state.formState.isSaving,
                     onSaveDraft = { onIntent(CreateInvoiceIntent.SaveAsDraft) },
                     onPrimary = { onIntent(CreateInvoiceIntent.SubmitWithResolvedDelivery) }
@@ -337,7 +337,7 @@ private fun AccordionSection(
             title = title,
             isExpanded = state.expandedSections.contains(section),
             onToggle = { onIntent(CreateInvoiceIntent.ToggleSection(section)) },
-            right = if (state.suggestedSection == section) "Suggested" else null
+            right = if (state.suggestedSection == section) stringResource(Res.string.invoice_section_suggested) else null
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 content()

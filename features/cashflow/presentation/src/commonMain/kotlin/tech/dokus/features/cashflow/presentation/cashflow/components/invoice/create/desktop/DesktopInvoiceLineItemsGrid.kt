@@ -229,7 +229,7 @@ private fun LineItemRow(
         ) {
             Icon(
                 imageVector = Icons.Default.Close,
-                contentDescription = "Remove line item",
+                contentDescription = stringResource(Res.string.invoice_remove_line_item),
                 tint = MaterialTheme.colorScheme.textMuted
             )
         }
@@ -335,7 +335,7 @@ private fun VatCell(
         )
         Icon(
             imageVector = Icons.Default.KeyboardArrowDown,
-            contentDescription = "Select VAT rate",
+            contentDescription = stringResource(Res.string.invoice_select_vat_rate),
             tint = MaterialTheme.colorScheme.textMuted
         )
 

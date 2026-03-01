@@ -131,7 +131,7 @@ internal fun DesktopCreateInvoiceContent(
                         onClick = { onIntent(CreateInvoiceIntent.SaveAsDraft) }
                     )
                     PButton(
-                        text = primaryActionLabel(uiState.resolvedDeliveryAction.action),
+                        text = uiState.resolvedDeliveryAction.action.localized,
                         isEnabled = !formState.isSaving,
                         isLoading = formState.isSaving,
                         onClick = { onIntent(CreateInvoiceIntent.SubmitWithResolvedDelivery) }
@@ -277,7 +277,7 @@ private fun DateInfoCell(
             )
             Icon(
                 imageVector = FeatherIcons.Calendar,
-                contentDescription = "Select date",
+                contentDescription = stringResource(Res.string.invoice_select_date),
                 tint = MaterialTheme.colorScheme.onSurface,
             )
         }
@@ -314,7 +314,7 @@ private fun TermsCell(
             )
             Icon(
                 imageVector = if (expanded) Icons.Default.ArrowDropUp else Icons.Default.ArrowDropDown,
-                contentDescription = "Payment terms"
+                contentDescription = stringResource(Res.string.invoice_payment_terms)
             )
         }
 
@@ -350,7 +350,7 @@ private fun ReuseSuggestionStrip(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = "Last invoice ($issueDate)",
+            text = stringResource(Res.string.invoice_last_invoice_date, issueDate),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.textMuted
         )

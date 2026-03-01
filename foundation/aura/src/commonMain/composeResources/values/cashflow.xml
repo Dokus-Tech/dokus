@@ -545,6 +545,12 @@
     <string name="button_reset">reset</string>
     <string name="button_dismiss">dismiss</string>
     <string name="button_preview">Preview</string>
+    <string name="invoice_last_invoice_date">Last invoice (%1$s)</string>
+    <string name="invoice_send_via_peppol">Send via PEPPOL</string>
+    <string name="invoice_export_pdf">Export PDF</string>
+    <string name="invoice_bic_prefix">BIC: %1$s</string>
+    <string name="invoice_section_suggested">Suggested</string>
+    <string name="invoice_payment_terms">Payment terms</string>
 
     <!-- Upload -->
     <string name="upload_select_or_drag">Drop files here or click to upload</string>
