@@ -174,14 +174,20 @@ internal fun Route.invoiceRoutes() {
                 ?.value
                 ?: throw DokusException.InternalError("Client details missing — cannot generate invoice PDF")
 
-            val downloadUrl = invoicePdfService.generateAndUploadPdf(
+            val uploadResult = invoicePdfService.generateAndUploadPdf(
                 invoice = invoice,
                 contactDisplayName = contactName
             ).getOrElse {
                 throw DokusException.InternalError("Failed to generate invoice PDF")
             }
 
-            call.respond(HttpStatusCode.OK, InvoicePdfResponse(downloadUrl = downloadUrl))
+            call.respond(
+                HttpStatusCode.OK,
+                InvoicePdfResponse(
+                    downloadUrl = uploadResult.url,
+                    storageKey = uploadResult.key
+                )
+            )
         }
     }
 }

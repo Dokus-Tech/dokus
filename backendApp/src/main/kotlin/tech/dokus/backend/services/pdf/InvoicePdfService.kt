@@ -8,6 +8,7 @@ import org.apache.pdfbox.pdmodel.font.PDType1Font
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.foundation.backend.storage.DocumentStorageService
+import tech.dokus.foundation.backend.storage.UploadResult
 import tech.dokus.foundation.backend.utils.loggerFor
 import java.io.ByteArrayOutputStream
 
@@ -26,24 +27,23 @@ class InvoicePdfService(
 
     suspend fun generateAndUploadPdf(
         invoice: FinancialDocumentDto.InvoiceDto,
-        contactDisplayName: String?
-    ): Result<String> = runCatching {
+        contactDisplayName: String
+    ): Result<UploadResult> = runCatching {
         val bytes = renderPdf(invoice, contactDisplayName)
-        val upload = documentStorageService.uploadDocument(
+        documentStorageService.uploadDocument(
             tenantId = invoice.tenantId,
             prefix = "invoice-pdf-exports",
             filename = "${invoice.invoiceNumber}.pdf",
             data = bytes,
             contentType = "application/pdf"
         )
-        upload.url
     }.onFailure { error ->
         logger.error("Failed to generate PDF for invoice {}", invoice.id, error)
     }
 
     private fun renderPdf(
         invoice: FinancialDocumentDto.InvoiceDto,
-        contactDisplayName: String?
+        contactDisplayName: String
     ): ByteArray {
         PDDocument().use { document ->
             val bodyFont = PDType1Font(Standard14Fonts.FontName.HELVETICA)
@@ -54,7 +54,7 @@ class InvoicePdfService(
             writer.addSpacing()
             writer.writeLine(bodyFont, PdfBodySize, "Issue date: ${invoice.issueDate}")
             writer.writeLine(bodyFont, PdfBodySize, "Due date: ${invoice.dueDate}")
-            writer.writeLine(bodyFont, PdfBodySize, "Bill to: ${contactDisplayName ?: invoice.contactId}")
+            writer.writeLine(bodyFont, PdfBodySize, "Bill to: $contactDisplayName")
 
             invoice.senderIban?.let {
                 writer.writeLine(bodyFont, PdfBodySize, "Sender IBAN: ${it.value}")
@@ -128,7 +128,7 @@ private class PdfWriter(
         contentStream.newLineAtOffset(PdfLeftMargin, cursorY)
         contentStream.showText(safePdfText(text))
         contentStream.endText()
-        cursorY -= PdfLineHeight
+        cursorY -= maxOf(PdfLineHeight, fontSize * 1.4f)
     }
 
     fun addSpacing() {

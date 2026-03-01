@@ -24,6 +24,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -40,6 +41,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import tech.dokus.features.cashflow.mvi.model.InvoiceLineItem
+import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.*
 import tech.dokus.foundation.aura.style.textFaint
 import tech.dokus.foundation.aura.style.textMuted
 import tech.dokus.foundation.aura.style.thText
@@ -71,20 +75,22 @@ internal fun InvoiceLineItemsGrid(
         HorizontalDivider(color = MaterialTheme.colorScheme.onSurface)
 
         items.forEach { item ->
-            LineItemRow(
-                item = item,
-                onEnter = onAddItem,
-                onRemove = { onRemoveItem(item.id) },
-                onDescription = { onDescription(item.id, it) },
-                onQuantity = { onQuantity(item.id, it) },
-                onUnitPrice = { onUnitPrice(item.id, it) },
-                onVatRate = { onVatRate(item.id, it) }
-            )
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            key(item.id) {
+                LineItemRow(
+                    item = item,
+                    onEnter = onAddItem,
+                    onRemove = { onRemoveItem(item.id) },
+                    onDescription = { onDescription(item.id, it) },
+                    onQuantity = { onQuantity(item.id, it) },
+                    onUnitPrice = { onUnitPrice(item.id, it) },
+                    onVatRate = { onVatRate(item.id, it) }
+                )
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            }
         }
 
         Text(
-            text = "+ Add line",
+            text = stringResource(Res.string.invoice_add_line),
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier
@@ -92,7 +98,7 @@ internal fun InvoiceLineItemsGrid(
                 .clickable(onClick = onAddItem)
         )
         Text(
-            text = "Enter = new \u00b7 Backspace empty = remove",
+            text = stringResource(Res.string.invoice_line_item_help),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.textFaint
         )
@@ -107,10 +113,10 @@ internal fun InvoiceLineItemsGrid(
                 modifier = Modifier.width(320.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                TotalsRow("Subtotal", subtotal)
-                TotalsRow("VAT 21%", vatAmount, labelMuted = true)
+                TotalsRow(stringResource(Res.string.invoice_subtotal), subtotal)
+                TotalsRow(stringResource(Res.string.invoice_vat), vatAmount, labelMuted = true)
                 HorizontalDivider(color = MaterialTheme.colorScheme.onSurface)
-                TotalsRow("Total", total, emphasized = true)
+                TotalsRow(stringResource(Res.string.invoice_total), total, emphasized = true)
             }
         }
     }
@@ -122,11 +128,11 @@ private fun LineItemsHeader() {
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        HeaderCell("DESCRIPTION", Modifier.weight(1f), TextAlign.Start)
-        HeaderCell("QTY", Modifier.width(QtyWidth), TextAlign.Center)
-        HeaderCell("PRICE", Modifier.width(PriceWidth), TextAlign.End)
-        HeaderCell("VAT", Modifier.width(VatWidth), TextAlign.Center)
-        HeaderCell("AMOUNT", Modifier.width(AmountWidth), TextAlign.End)
+        HeaderCell(stringResource(Res.string.invoice_description), Modifier.weight(1f), TextAlign.Start)
+        HeaderCell(stringResource(Res.string.invoice_qty), Modifier.width(QtyWidth), TextAlign.Center)
+        HeaderCell(stringResource(Res.string.invoice_price), Modifier.width(PriceWidth), TextAlign.End)
+        HeaderCell(stringResource(Res.string.invoice_vat), Modifier.width(VatWidth), TextAlign.Center)
+        HeaderCell(stringResource(Res.string.invoice_amount), Modifier.width(AmountWidth), TextAlign.End)
         Box(modifier = Modifier.width(RemoveWidth))
     }
 }
@@ -164,7 +170,7 @@ private fun LineItemRow(
     ) {
         PlainTextCell(
             value = item.description,
-            placeholder = "Start typing...",
+            placeholder = stringResource(Res.string.invoice_start_typing),
             modifier = Modifier.weight(1f),
             onEnter = onEnter,
             onBackspaceEmpty = {
@@ -223,7 +229,7 @@ private fun LineItemRow(
         ) {
             Icon(
                 imageVector = Icons.Default.Close,
-                contentDescription = null,
+                contentDescription = "Remove line item",
                 tint = MaterialTheme.colorScheme.textMuted
             )
         }
@@ -263,7 +269,9 @@ private fun PlainTextCell(
         BasicTextField(
             value = value,
             onValueChange = onValueChange,
-            textStyle = MaterialTheme.typography.bodyLarge.merge(TextStyle(textAlign = textAlign)),
+            textStyle = MaterialTheme.typography.bodyLarge.merge(
+                TextStyle(textAlign = textAlign, color = MaterialTheme.colorScheme.onSurface)
+            ),
             singleLine = true,
             cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
             modifier = Modifier
@@ -327,7 +335,7 @@ private fun VatCell(
         )
         Icon(
             imageVector = Icons.Default.KeyboardArrowDown,
-            contentDescription = null,
+            contentDescription = "Select VAT rate",
             tint = MaterialTheme.colorScheme.textMuted
         )
 

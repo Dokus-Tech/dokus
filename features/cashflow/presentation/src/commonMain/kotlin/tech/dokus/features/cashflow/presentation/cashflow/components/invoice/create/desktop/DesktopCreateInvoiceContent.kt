@@ -36,6 +36,9 @@ import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.constrains.limitWidthOperatorForm
 import tech.dokus.foundation.aura.style.textFaint
 import tech.dokus.foundation.aura.style.textMuted
+import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.*
 
 private val SectionSpacing = 26.dp
 private val TopSpacing = 34.dp
@@ -117,7 +120,7 @@ internal fun DesktopCreateInvoiceContent(
             ) {
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     PButton(
-                        text = "Save draft",
+                        text = stringResource(Res.string.invoice_save_as_draft),
                         variant = PButtonVariant.Outline,
                         isEnabled = !formState.isSaving,
                         onClick = { onIntent(CreateInvoiceIntent.SaveAsDraft) }
@@ -155,14 +158,14 @@ private fun HeaderRow(
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
-                text = "New Invoice",
+                text = stringResource(Res.string.invoice_new_title),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.textFaint
             )
         }
 
         PButton(
-            text = "preview",
+            text = stringResource(Res.string.invoice_preview),
             variant = PButtonVariant.Outline,
             onClick = onPreview
         )
@@ -187,7 +190,7 @@ private fun PartiesAndDates(
                 verticalArrangement = Arrangement.spacedBy(LabelSpacing)
             ) {
                 Text(
-                    text = "FROM",
+                    text = stringResource(Res.string.invoice_from_label),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.textMuted
                 )
@@ -215,7 +218,7 @@ private fun PartiesAndDates(
             horizontalArrangement = Arrangement.spacedBy(18.dp)
         ) {
             DateInfoCell(
-                label = "ISSUED",
+                label = stringResource(Res.string.invoice_issued_label),
                 value = formatDate(formState.issueDate),
                 onClick = { onIntent(CreateInvoiceIntent.OpenIssueDatePicker) },
                 modifier = Modifier.weight(1f)
@@ -226,7 +229,7 @@ private fun PartiesAndDates(
                 modifier = Modifier.weight(1f)
             )
             DateInfoCell(
-                label = "DUE",
+                label = stringResource(Res.string.invoice_due_label),
                 value = formatDate(formState.dueDate),
                 onClick = { onIntent(CreateInvoiceIntent.OpenDueDatePicker) },
                 modifier = Modifier.weight(1f)
@@ -264,7 +267,7 @@ private fun DateInfoCell(
             )
             Icon(
                 imageVector = FeatherIcons.Calendar,
-                contentDescription = null,
+                contentDescription = "Select date",
                 tint = MaterialTheme.colorScheme.onSurface,
             )
         }
@@ -285,7 +288,7 @@ private fun TermsCell(
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         Text(
-            text = "TERMS",
+            text = stringResource(Res.string.invoice_terms_label),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.textMuted
         )
@@ -295,20 +298,20 @@ private fun TermsCell(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Net $days",
+                text = stringResource(Res.string.invoice_net_days, days),
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.onSurface
             )
             Icon(
                 imageVector = if (expanded) Icons.Default.ArrowDropUp else Icons.Default.ArrowDropDown,
-                contentDescription = null
+                contentDescription = "Payment terms"
             )
         }
 
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             options.forEach { option ->
                 DropdownMenuItem(
-                    text = { Text("Net $option") },
+                    text = { Text(stringResource(Res.string.invoice_net_days, option)) },
                     onClick = {
                         onUpdate(option)
                         expanded = false
@@ -346,13 +349,13 @@ private fun ReuseSuggestionStrip(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Reuse lines",
+                text = stringResource(Res.string.invoice_reuse_lines),
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.clickable(onClick = onReuse)
             )
             Text(
-                text = "dismiss",
+                text = stringResource(Res.string.button_dismiss),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.textMuted,
                 modifier = Modifier.clickable(onClick = onDismiss)

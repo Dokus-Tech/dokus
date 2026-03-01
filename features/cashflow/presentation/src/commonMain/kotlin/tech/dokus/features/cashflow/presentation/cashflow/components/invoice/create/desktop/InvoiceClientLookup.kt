@@ -40,6 +40,9 @@ import tech.dokus.foundation.aura.components.common.PLookupDropdownSurface
 import tech.dokus.foundation.aura.components.common.PLookupField
 import tech.dokus.foundation.aura.components.common.PLookupFieldOutline
 import tech.dokus.foundation.aura.style.textMuted
+import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.*
 import kotlin.math.roundToInt
 
 private val HeaderSpacing = 8.dp
@@ -61,7 +64,7 @@ internal fun InvoiceClientLookup(
         verticalArrangement = Arrangement.spacedBy(HeaderSpacing)
     ) {
         Text(
-            text = "BILL TO",
+            text = stringResource(Res.string.invoice_bill_to_label),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.textMuted
         )
@@ -70,7 +73,7 @@ internal fun InvoiceClientLookup(
             PLookupField(
                 value = lookupState.query,
                 onValueChange = { onIntent(CreateInvoiceIntent.UpdateClientLookupQuery(it)) },
-                placeholder = "Name, VAT, or email...",
+                placeholder = stringResource(Res.string.invoice_client_lookup_hint),
                 outline = if (lookupState.query.isBlank()) PLookupFieldOutline.Dashed else PLookupFieldOutline.Solid,
                 isSelected = lookupState.query.isNotBlank(),
                 modifier = Modifier.onGloballyPositioned { coordinates ->
@@ -113,7 +116,7 @@ internal fun InvoiceClientLookup(
                             if (lookupState.isLoading) {
                                 item {
                                     Text(
-                                        text = "Searching...",
+                                        text = stringResource(Res.string.invoice_searching),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.textMuted,
                                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
@@ -153,8 +156,8 @@ internal fun InvoiceClientLookup(
 
                                     is ClientSuggestion.CreateManual -> {
                                         LookupSuggestionRow(
-                                            title = "Create manually",
-                                            subtitle = "Individuals, foreign, NGOs",
+                                            title = stringResource(Res.string.invoice_create_manually),
+                                            subtitle = stringResource(Res.string.invoice_create_manually_desc),
                                             leading = "+",
                                             cbeBadge = false,
                                             peppolEnabled = false,
@@ -240,7 +243,7 @@ private fun LookupSuggestionRow(
                 )
                 if (cbeBadge) {
                     Text(
-                        text = "CBE",
+                        text = stringResource(Res.string.invoice_cbe_badge),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.textMuted,
                         modifier = Modifier

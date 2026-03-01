@@ -348,7 +348,8 @@ data class RecordPaymentRequest(
 
 @Serializable
 data class InvoicePdfResponse(
-    val downloadUrl: String
+    val downloadUrl: String,
+    val storageKey: String? = null
 )
 
 @Serializable

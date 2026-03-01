@@ -20,6 +20,9 @@ import tech.dokus.domain.Money
 import tech.dokus.domain.model.FinancialLineItem
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.foundation.aura.components.DokusCardSurface
+import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.*
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.textMuted
 
@@ -74,27 +77,18 @@ internal fun CanonicalInvoiceDocumentCard(
                     }
                 }
                 Text(
-                    text = "INVOICE",
+                    text = stringResource(Res.string.invoice_label),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.textMuted,
                 )
             }
 
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(
-                    text = "$currencySign$total",
-                    style = MaterialTheme.typography.displaySmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-                draft.notes?.takeIf { it.isNotBlank() }?.let { description ->
-                    Text(
-                        text = description,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.textMuted,
-                    )
-                }
-            }
+            Text(
+                text = "$currencySign$total",
+                style = MaterialTheme.typography.displaySmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
@@ -102,9 +96,9 @@ internal fun CanonicalInvoiceDocumentCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.large),
             ) {
-                CanonicalInvoiceMetaCell("Issue", issueDate)
-                CanonicalInvoiceMetaCell("Due", dueDate)
-                CanonicalInvoiceMetaCell("Invoice", invoiceNumber)
+                CanonicalInvoiceMetaCell(stringResource(Res.string.invoice_issue), issueDate)
+                CanonicalInvoiceMetaCell(stringResource(Res.string.invoice_due), dueDate)
+                CanonicalInvoiceMetaCell(stringResource(Res.string.invoice_title), invoiceNumber)
             }
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -136,7 +130,7 @@ internal fun CanonicalInvoiceDocumentCard(
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
-                        text = "Notes",
+                        text = stringResource(Res.string.invoice_notes),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.textMuted,
                     )
@@ -186,13 +180,13 @@ private fun CanonicalInvoiceLineItems(
     ) {
         Row(modifier = Modifier.fillMaxWidth()) {
             Text(
-                text = "Description",
+                text = stringResource(Res.string.invoice_description),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.textMuted,
                 modifier = Modifier.weight(1f),
             )
             Text(
-                text = "Amount",
+                text = stringResource(Res.string.invoice_amount),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.textMuted,
                 textAlign = TextAlign.End,
@@ -202,7 +196,7 @@ private fun CanonicalInvoiceLineItems(
 
         if (lineItems.isEmpty()) {
             Text(
-                text = "No line items",
+                text = stringResource(Res.string.invoice_no_line_items),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.textMuted,
             )
@@ -241,8 +235,8 @@ private fun CanonicalInvoiceTotals(
         horizontalAlignment = Alignment.End,
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        CanonicalInvoiceTotalRow("Subtotal", subtotal, currencySign)
-        CanonicalInvoiceTotalRow("VAT", vat, currencySign)
+        CanonicalInvoiceTotalRow(stringResource(Res.string.invoice_subtotal), subtotal, currencySign)
+        CanonicalInvoiceTotalRow(stringResource(Res.string.invoice_vat), vat, currencySign)
         HorizontalDivider(
             modifier = Modifier.width(220.dp),
             color = MaterialTheme.colorScheme.onSurface
@@ -253,7 +247,7 @@ private fun CanonicalInvoiceTotals(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = "Total",
+                text = stringResource(Res.string.invoice_total),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
             )

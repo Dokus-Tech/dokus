@@ -126,7 +126,7 @@ internal class CreateInvoiceContainer(
                             if (state.formState.selectedClient?.id != intent.contactId) return@updateInvoice state
                             state.copy(
                                 formState = state.formState.copy(
-                                    peppolStatus = statusResult.getOrNull(),
+                                    peppolStatus = statusResult.getOrNull() ?: state.formState.peppolStatus,
                                     peppolStatusLoading = false
                                 )
                             )
@@ -614,6 +614,8 @@ internal class CreateInvoiceContainer(
     }
 
     private suspend fun CreateInvoiceCtx.loadDefaults() {
+        if (snapshotState().uiState.defaultsLoaded) return
+
         getInvoiceNumberPreview()
             .onSuccess { preview ->
                 updateInvoice { it.copy(invoiceNumberPreview = preview) }
@@ -644,7 +646,7 @@ internal class CreateInvoiceContainer(
             .onFailure { logger.w { "Could not load tenant defaults: ${it.message}" } }
 
         updateInvoice { state ->
-            if (state.formState.structuredCommunication.isNotBlank()) {
+            val updated = if (state.formState.structuredCommunication.isNotBlank()) {
                 state
             } else {
                 state.copy(
@@ -653,11 +655,14 @@ internal class CreateInvoiceContainer(
                     )
                 )
             }
+            updated.copy(uiState = updated.uiState.copy(defaultsLoaded = true))
         }
     }
 
     private suspend fun CreateInvoiceCtx.submitInvoice(deliveryMethod: InvoiceDeliveryMethod?) {
         val current = snapshotState()
+        if (current.formState.isSaving) return
+
         val validation = validateInvoice(current.formState)
         if (!validation.isValid) {
             val firstError = validation.errors.entries.firstOrNull()

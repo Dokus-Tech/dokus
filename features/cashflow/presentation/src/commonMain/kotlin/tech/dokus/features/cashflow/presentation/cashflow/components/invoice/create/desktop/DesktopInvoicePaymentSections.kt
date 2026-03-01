@@ -8,13 +8,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,6 +28,9 @@ import tech.dokus.domain.enums.InvoiceDeliveryMethod
 import tech.dokus.features.cashflow.mvi.CreateInvoiceIntent
 import tech.dokus.features.cashflow.mvi.CreateInvoiceState
 import tech.dokus.features.cashflow.mvi.model.InvoiceResolvedAction
+import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.*
 import tech.dokus.foundation.aura.components.common.PSelectableCommandCard
 import tech.dokus.foundation.aura.style.textFaint
 import tech.dokus.foundation.aura.style.textMuted
@@ -42,7 +43,7 @@ internal fun PaymentSection(
     val form = state.formState
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-        SectionLabel("PAYMENT")
+        SectionLabel(stringResource(Res.string.invoice_payment_label))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -52,9 +53,9 @@ internal fun PaymentSection(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                SectionLabel("BANK")
+                SectionLabel(stringResource(Res.string.invoice_bank_label))
                 BankSelectorField(
-                    value = if (form.senderIban.isBlank()) "Default bank account" else "Primary account"
+                    value = if (form.senderIban.isBlank()) stringResource(Res.string.invoice_bank_default) else stringResource(Res.string.invoice_bank_primary)
                 )
                 Text(
                     text = form.senderIban.ifBlank { "-" },
@@ -72,15 +73,15 @@ internal fun PaymentSection(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                SectionLabel("STRUCTURED REFERENCE")
+                SectionLabel(stringResource(Res.string.invoice_structured_reference_label))
                 FlatInputField(
                     value = form.structuredCommunication,
                     onValueChange = { onIntent(CreateInvoiceIntent.UpdateStructuredCommunication(it)) },
                     singleLine = true,
-                    placeholder = "+++000/000/000/00+++"
+                    placeholder = stringResource(Res.string.invoice_structured_reference_placeholder)
                 )
                 Text(
-                    text = "Belgian structured communication",
+                    text = stringResource(Res.string.invoice_belgian_structured_communication),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.textFaint
                 )
@@ -102,9 +103,9 @@ internal fun NoteSection(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            SectionLabel("NOTE")
+            SectionLabel(stringResource(Res.string.invoice_note_label))
             Text(
-                text = "reset",
+                text = stringResource(Res.string.button_reset),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.textFaint,
                 modifier = Modifier.clickable { onNote("") }
@@ -115,7 +116,7 @@ internal fun NoteSection(
             value = note,
             onValueChange = onNote,
             singleLine = false,
-            placeholder = "Payment terms...",
+            placeholder = stringResource(Res.string.invoice_payment_terms_placeholder),
             minHeight = 88.dp
         )
     }
@@ -133,16 +134,16 @@ internal fun DeliverySection(
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-        SectionLabel("DELIVERY")
+        SectionLabel(stringResource(Res.string.invoice_delivery_label))
 
         PSelectableCommandCard(
-            title = "Send via PEPPOL",
-            subtitle = "E-invoice to client's accounting system",
+            title = stringResource(Res.string.delivery_send_peppol),
+            subtitle = stringResource(Res.string.delivery_peppol_description),
             selected = uiState.selectedDeliveryPreference == InvoiceDeliveryMethod.Peppol,
             onClick = {
                 onIntent(CreateInvoiceIntent.SelectDeliveryPreference(InvoiceDeliveryMethod.Peppol))
             },
-            badge = "RECOMMENDED",
+            badge = stringResource(Res.string.invoice_recommended),
             reason = if (
                 uiState.selectedDeliveryPreference == InvoiceDeliveryMethod.Peppol &&
                     uiState.resolvedDeliveryAction.action == InvoiceResolvedAction.PdfExport
@@ -154,7 +155,7 @@ internal fun DeliverySection(
         )
 
         Text(
-            text = if (showOtherMethods) "\u203a Hide other methods" else "\u203a Other methods",
+            text = "\u203a " + if (showOtherMethods) stringResource(Res.string.invoice_hide_other_methods) else stringResource(Res.string.invoice_other_methods),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.textFaint,
             modifier = Modifier.clickable { showOtherMethods = !showOtherMethods }
@@ -162,8 +163,8 @@ internal fun DeliverySection(
 
         if (showOtherMethods) {
             PSelectableCommandCard(
-                title = "Export PDF",
-                subtitle = "Download invoice PDF",
+                title = stringResource(Res.string.delivery_export_pdf),
+                subtitle = stringResource(Res.string.delivery_pdf_description),
                 selected = uiState.selectedDeliveryPreference == InvoiceDeliveryMethod.PdfExport,
                 onClick = {
                     onIntent(CreateInvoiceIntent.SelectDeliveryPreference(InvoiceDeliveryMethod.PdfExport))
@@ -198,11 +199,6 @@ private fun BankSelectorField(value: String) {
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onSurface
         )
-        Icon(
-            imageVector = Icons.Default.KeyboardArrowDown,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurface
-        )
     }
 }
 
@@ -217,10 +213,10 @@ private fun FlatInputField(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(minHeight)
+            .heightIn(min = minHeight)
             .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(8.dp))
             .padding(horizontal = 12.dp, vertical = 10.dp),
-        contentAlignment = Alignment.CenterStart
+        contentAlignment = Alignment.TopStart
     ) {
         if (value.isBlank()) {
             Text(

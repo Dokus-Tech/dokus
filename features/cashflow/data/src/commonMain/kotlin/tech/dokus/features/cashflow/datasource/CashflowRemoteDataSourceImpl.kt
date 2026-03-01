@@ -621,8 +621,7 @@ internal class CashflowRemoteDataSourceImpl(
                         counterpartyIntent = counterpartyIntent
                     )
                 )
-            }
-            Unit
+            }.body<Unit>()
         }
     }
 

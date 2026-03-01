@@ -37,6 +37,9 @@ import tech.dokus.domain.model.PartyDraft
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.ids.Iban
+import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.*
 import tech.dokus.features.cashflow.mvi.CreateInvoiceIntent
 import tech.dokus.features.cashflow.mvi.CreateInvoiceState
 import tech.dokus.features.cashflow.mvi.model.ClientSuggestion
@@ -150,7 +153,7 @@ private fun MobileCreateInvoiceContent(
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         Text(
-            text = "New Invoice",
+            text = stringResource(Res.string.invoice_new_title),
             style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.SemiBold
         )
@@ -163,7 +166,7 @@ private fun MobileCreateInvoiceContent(
         }
 
         AccordionSection(
-            title = "Client",
+            title = stringResource(Res.string.invoice_client),
             section = InvoiceSection.Client,
             state = uiState,
             onIntent = onIntent
@@ -175,7 +178,7 @@ private fun MobileCreateInvoiceContent(
         }
 
         AccordionSection(
-            title = "Line items",
+            title = stringResource(Res.string.invoice_line_items),
             section = InvoiceSection.LineItems,
             state = uiState,
             onIntent = onIntent
@@ -193,31 +196,31 @@ private fun MobileCreateInvoiceContent(
         }
 
         AccordionSection(
-            title = "Payment & delivery",
+            title = stringResource(Res.string.invoice_payment_delivery),
             section = InvoiceSection.PaymentDelivery,
             state = uiState,
             onIntent = onIntent
         ) {
             PTextFieldStandard(
-                fieldName = "Bank account",
+                fieldName = stringResource(Res.string.invoice_bank_account),
                 value = formState.senderIban,
                 onValueChange = { onIntent(CreateInvoiceIntent.UpdateSenderIban(it)) },
                 modifier = Modifier.fillMaxWidth()
             )
             PTextFieldStandard(
-                fieldName = "BIC",
+                fieldName = stringResource(Res.string.invoice_bic),
                 value = formState.senderBic,
                 onValueChange = { onIntent(CreateInvoiceIntent.UpdateSenderBic(it)) },
                 modifier = Modifier.fillMaxWidth()
             )
             PTextFieldStandard(
-                fieldName = "Structured reference",
+                fieldName = stringResource(Res.string.invoice_structured_reference),
                 value = formState.structuredCommunication,
                 onValueChange = { onIntent(CreateInvoiceIntent.UpdateStructuredCommunication(it)) },
                 modifier = Modifier.fillMaxWidth()
             )
             PTextFieldStandard(
-                fieldName = "Note",
+                fieldName = stringResource(Res.string.invoice_note),
                 value = formState.notes,
                 onValueChange = { onIntent(CreateInvoiceIntent.UpdateNotes(it)) },
                 modifier = Modifier.fillMaxWidth(),
@@ -225,8 +228,8 @@ private fun MobileCreateInvoiceContent(
             )
 
             PSelectableCommandCard(
-                title = "PEPPOL",
-                subtitle = "E-invoice to client",
+                title = stringResource(Res.string.delivery_send_peppol),
+                subtitle = stringResource(Res.string.invoice_e_invoice_to_client),
                 selected = uiState.selectedDeliveryPreference == InvoiceDeliveryMethod.Peppol,
                 onClick = { onIntent(CreateInvoiceIntent.SelectDeliveryPreference(InvoiceDeliveryMethod.Peppol)) },
                 reason = if (
@@ -239,41 +242,41 @@ private fun MobileCreateInvoiceContent(
                 }
             )
             PSelectableCommandCard(
-                title = "PDF",
-                subtitle = "Download locally",
+                title = stringResource(Res.string.invoice_pdf_method),
+                subtitle = stringResource(Res.string.invoice_download_locally),
                 selected = uiState.selectedDeliveryPreference == InvoiceDeliveryMethod.PdfExport,
                 onClick = { onIntent(CreateInvoiceIntent.SelectDeliveryPreference(InvoiceDeliveryMethod.PdfExport)) }
             )
         }
 
         AccordionSection(
-            title = "Dates & terms",
+            title = stringResource(Res.string.invoice_dates_terms),
             section = InvoiceSection.DatesTerms,
             state = uiState,
             onIntent = onIntent
         ) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                DateLabel("Issue", formatDate(formState.issueDate)) {
+                DateLabel(stringResource(Res.string.invoice_issue), formatDate(formState.issueDate)) {
                     onIntent(CreateInvoiceIntent.OpenIssueDatePicker)
                 }
-                DateLabel("Due", formatDate(formState.dueDate)) {
+                DateLabel(stringResource(Res.string.invoice_due), formatDate(formState.dueDate)) {
                     onIntent(CreateInvoiceIntent.OpenDueDatePicker)
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 PButton(
-                    text = "Terms",
+                    text = stringResource(Res.string.invoice_terms),
                     variant = if (formState.dueDateMode == InvoiceDueDateMode.Terms) PButtonVariant.Default else PButtonVariant.Outline,
                     onClick = { onIntent(CreateInvoiceIntent.UpdateDueDateMode(InvoiceDueDateMode.Terms)) }
                 )
                 PButton(
-                    text = "Fixed date",
+                    text = stringResource(Res.string.invoice_fixed_date),
                     variant = if (formState.dueDateMode == InvoiceDueDateMode.FixedDate) PButtonVariant.Default else PButtonVariant.Outline,
                     onClick = { onIntent(CreateInvoiceIntent.UpdateDueDateMode(InvoiceDueDateMode.FixedDate)) }
                 )
             }
             PTextFieldStandard(
-                fieldName = "Payment terms (days)",
+                fieldName = stringResource(Res.string.invoice_payment_terms_days),
                 value = formState.paymentTermsDays.toString(),
                 onValueChange = {
                     it.toIntOrNull()?.let { days ->
@@ -285,7 +288,7 @@ private fun MobileCreateInvoiceContent(
         }
 
         PButton(
-            text = "Preview",
+            text = stringResource(Res.string.button_preview),
             variant = PButtonVariant.Outline,
             onClick = { onIntent(CreateInvoiceIntent.SetPreviewVisible(true)) },
             modifier = Modifier
@@ -354,7 +357,7 @@ private fun MobileCommandFooter(
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         PButton(
-            text = "Save draft",
+            text = stringResource(Res.string.invoice_save_as_draft),
             variant = PButtonVariant.Outline,
             isEnabled = !isSaving,
             onClick = onSaveDraft,
@@ -383,6 +386,7 @@ private fun InvoicePreviewDialog(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp, vertical = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -393,12 +397,12 @@ private fun InvoicePreviewDialog(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Invoice preview",
+                    text = stringResource(Res.string.invoice_preview_title),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 PButton(
-                    text = "Close",
+                    text = stringResource(Res.string.button_close),
                     variant = PButtonVariant.Outline,
                     onClick = onDismiss
                 )
@@ -406,7 +410,7 @@ private fun InvoicePreviewDialog(
 
             CanonicalInvoiceDocumentCard(
                 draft = state.toInvoicePreviewDraft(),
-                counterpartyName = selectedClient?.name?.value ?: "Click to select a client",
+                counterpartyName = selectedClient?.name?.value ?: stringResource(Res.string.invoice_click_to_select_client),
                 counterpartyAddress = selectedClient?.toPreviewAddressLine(),
                 modifier = Modifier
                     .width(Constraints.DocumentDetail.previewMaxWidth)
@@ -585,9 +589,9 @@ private fun CreateInvoiceState.toInvoicePreviewDraft(): InvoiceDraftData {
             FinancialLineItem(
                 description = line.description,
                 quantity = line.quantity.toLong().takeIf { it > 0L },
-                unitPrice = Money.fromDouble(line.unitPriceDouble).minor.takeIf { it > 0L },
+                unitPrice = line.unitPriceMoney.minor.takeIf { it > 0L },
                 vatRate = line.vatRatePercent,
-                netAmount = Money.fromDouble(line.lineTotalDouble).minor.takeIf { it > 0L }
+                netAmount = line.lineTotalMoney.minor.takeIf { it > 0L }
             )
         }
 
@@ -601,9 +605,9 @@ private fun CreateInvoiceState.toInvoicePreviewDraft(): InvoiceDraftData {
         invoiceNumber = invoiceNumberPreview,
         issueDate = formState.issueDate,
         dueDate = formState.dueDate,
-        subtotalAmount = Money.fromDouble(formState.items.sumOf { it.lineTotalDouble }),
-        vatAmount = Money.fromDouble(formState.items.sumOf { it.vatAmountDouble }),
-        totalAmount = Money.fromDouble(formState.items.sumOf { it.lineTotalDouble + it.vatAmountDouble }),
+        subtotalAmount = formState.subtotalMoney,
+        vatAmount = formState.vatAmountMoney,
+        totalAmount = formState.totalMoney,
         lineItems = lines,
         iban = Iban.from(formState.senderIban),
         notes = formState.notes.takeIf { it.isNotBlank() },
