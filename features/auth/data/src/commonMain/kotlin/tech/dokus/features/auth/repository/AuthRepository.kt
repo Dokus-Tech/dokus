@@ -185,7 +185,8 @@ class AuthRepository(
      * Get current user info.
      */
     override suspend fun getCurrentUser(): Result<User> {
-        return accountDataSource.getCurrentUser()
+        return accountDataSource.getAccountMe()
+            .map { it.user }
             .onFailure { error ->
                 logger.e(error) { "Failed to get current user" }
             }

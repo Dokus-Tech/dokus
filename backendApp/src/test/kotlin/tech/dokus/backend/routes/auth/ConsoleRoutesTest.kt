@@ -72,15 +72,12 @@ class ConsoleRoutesTest {
             membership(inactiveAccountantTenant, UserRole.Accountant, isActive = false)
         )
 
-        coEvery { tenantRepository.findById(accountantTenant) } returns tenant(
-            id = accountantTenant,
-            displayName = "ACME Accounting",
-            vatNumber = "BE0123456789"
-        )
-        coEvery { tenantRepository.findById(nonAccountantTenant) } returns tenant(
-            id = nonAccountantTenant,
-            displayName = "Ignored Workspace",
-            vatNumber = "BE9876543210"
+        coEvery { tenantRepository.findByIds(listOf(accountantTenant)) } returns listOf(
+            tenant(
+                id = accountantTenant,
+                displayName = "ACME Accounting",
+                vatNumber = "BE0123456789"
+            )
         )
 
         val response = authenticatedGet("/api/v1/console/clients")
@@ -92,17 +89,15 @@ class ConsoleRoutesTest {
         )
         assertEquals(1, payload.size)
         assertEquals(accountantTenant, payload.first().tenantId)
-        assertEquals("ACME Accounting", payload.first().companyName)
-        assertEquals("BE0123456789", payload.first().vatNumber)
+        assertEquals(DisplayName("ACME Accounting"), payload.first().companyName)
+        assertEquals(VatNumber("BE0123456789"), payload.first().vatNumber)
 
         coVerify(exactly = 1) { userRepository.getUserTenants(TEST_USER_ID) }
-        coVerify(exactly = 1) { tenantRepository.findById(accountantTenant) }
-        coVerify(exactly = 0) { tenantRepository.findById(nonAccountantTenant) }
-        coVerify(exactly = 0) { tenantRepository.findById(inactiveAccountantTenant) }
+        coVerify(exactly = 1) { tenantRepository.findByIds(listOf(accountantTenant)) }
     }
 
     @Test
-    fun `clients endpoint is non-tenant-scoped and works without tenant header`() = consoleRoutesTestApplication(
+    fun `clients endpoint returns exact payload without tenant header`() = consoleRoutesTestApplication(
         userRepository = mockk(),
         tenantRepository = mockk()
     ) { userRepository, tenantRepository ->
@@ -110,10 +105,12 @@ class ConsoleRoutesTest {
         coEvery { userRepository.getUserTenants(TEST_USER_ID) } returns listOf(
             membership(accountantTenant, UserRole.Accountant, isActive = true)
         )
-        coEvery { tenantRepository.findById(accountantTenant) } returns tenant(
-            id = accountantTenant,
-            displayName = "No Header LLC",
-            vatNumber = "BE1111222233"
+        coEvery { tenantRepository.findByIds(listOf(accountantTenant)) } returns listOf(
+            tenant(
+                id = accountantTenant,
+                displayName = "No Header LLC",
+                vatNumber = "BE1111222233"
+            )
         )
 
         val response = authenticatedGet("/api/v1/console/clients")
@@ -123,7 +120,20 @@ class ConsoleRoutesTest {
             ListSerializer(ConsoleClientSummary.serializer()),
             response.bodyAsText()
         )
-        assertTrue(payload.isNotEmpty())
+        assertEquals(1, payload.size)
+        assertEquals(accountantTenant, payload.first().tenantId)
+        assertEquals(DisplayName("No Header LLC"), payload.first().companyName)
+        assertEquals(VatNumber("BE1111222233"), payload.first().vatNumber)
+    }
+
+    @Test
+    fun `clients endpoint returns 401 without authentication`() = consoleRoutesTestApplication(
+        userRepository = mockk(),
+        tenantRepository = mockk()
+    ) { _, _ ->
+        val response = client.get("/api/v1/console/clients")
+
+        assertEquals(HttpStatusCode.Unauthorized, response.status)
     }
 
     private fun consoleRoutesTestApplication(

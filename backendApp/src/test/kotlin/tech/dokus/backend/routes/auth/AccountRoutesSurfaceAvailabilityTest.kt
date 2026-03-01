@@ -4,6 +4,7 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.junit.jupiter.api.Test
+import tech.dokus.backend.services.auth.SurfaceResolver
 import tech.dokus.domain.enums.UserRole
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
@@ -17,7 +18,7 @@ class AccountRoutesSurfaceAvailabilityTest {
 
     @Test
     fun `only non-accountant memberships enable workspace only`() {
-        val result = resolveSurfaceAvailability(
+        val result = SurfaceResolver.resolve(
             memberships = listOf(
                 membership(role = UserRole.Owner),
                 membership(role = UserRole.Admin)
@@ -31,7 +32,7 @@ class AccountRoutesSurfaceAvailabilityTest {
 
     @Test
     fun `only accountant memberships enable console only`() {
-        val result = resolveSurfaceAvailability(
+        val result = SurfaceResolver.resolve(
             memberships = listOf(
                 membership(role = UserRole.Accountant),
                 membership(role = UserRole.Accountant)
@@ -45,7 +46,7 @@ class AccountRoutesSurfaceAvailabilityTest {
 
     @Test
     fun `mixed memberships enable both and default to workspace`() {
-        val result = resolveSurfaceAvailability(
+        val result = SurfaceResolver.resolve(
             memberships = listOf(
                 membership(role = UserRole.Accountant),
                 membership(role = UserRole.Editor)
@@ -59,7 +60,7 @@ class AccountRoutesSurfaceAvailabilityTest {
 
     @Test
     fun `inactive memberships are ignored`() {
-        val result = resolveSurfaceAvailability(
+        val result = SurfaceResolver.resolve(
             memberships = listOf(
                 membership(role = UserRole.Accountant, isActive = false),
                 membership(role = UserRole.Editor, isActive = false)
@@ -73,7 +74,7 @@ class AccountRoutesSurfaceAvailabilityTest {
 
     @Test
     fun `empty memberships fallback to workspace default`() {
-        val result = resolveSurfaceAvailability(emptyList())
+        val result = SurfaceResolver.resolve(emptyList())
 
         assertEquals(false, result.canWorkspace)
         assertEquals(false, result.canConsole)

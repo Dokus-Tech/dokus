@@ -25,20 +25,28 @@ internal fun Route.consoleRoutes() {
         get<Console.Clients> {
             val principal = dokusPrincipal
 
-            val clients = buildList {
-                for (membership in userRepository.getUserTenants(principal.userId)) {
-                    if (!membership.isActive || membership.role != UserRole.Accountant) continue
+            val accountantTenantIds = userRepository.getUserTenants(principal.userId)
+                .filter { it.isActive && it.role == UserRole.Accountant }
+                .map { it.tenantId }
 
-                    val tenant = tenantRepository.findById(membership.tenantId) ?: continue
-                    add(
-                        ConsoleClientSummary(
-                            tenantId = tenant.id,
-                            companyName = tenant.displayName.value,
-                            vatNumber = tenant.vatNumber.value.takeIf { it.isNotBlank() }
-                        )
+            if (accountantTenantIds.isEmpty()) {
+                call.respond(HttpStatusCode.OK, emptyList<ConsoleClientSummary>())
+                return@get
+            }
+
+            val tenantsById = tenantRepository.findByIds(accountantTenantIds)
+                .associateBy { it.id }
+
+            val clients = accountantTenantIds
+                .mapNotNull { id -> tenantsById[id] }
+                .map { tenant ->
+                    ConsoleClientSummary(
+                        tenantId = tenant.id,
+                        companyName = tenant.displayName,
+                        vatNumber = tenant.vatNumber.takeIf { it.value.isNotBlank() }
                     )
                 }
-            }.sortedBy { it.companyName.lowercase() }
+                .sortedBy { it.companyName.value.lowercase() }
 
             call.respond(HttpStatusCode.OK, clients)
         }

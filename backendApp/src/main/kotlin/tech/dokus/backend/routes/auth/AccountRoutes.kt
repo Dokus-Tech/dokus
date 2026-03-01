@@ -16,17 +16,14 @@ import tech.dokus.backend.services.auth.AuthService
 import tech.dokus.backend.services.auth.SessionContext
 import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.domain.DeviceType
-import tech.dokus.domain.enums.UserRole
 import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.domain.model.TenantMembership
 import tech.dokus.domain.model.auth.ChangePasswordRequest
 import tech.dokus.domain.model.auth.DeactivateUserRequest
 import tech.dokus.domain.model.auth.LogoutRequest
 import tech.dokus.domain.model.auth.SelectTenantRequest
 import tech.dokus.domain.model.auth.UpdateProfileRequest
+import tech.dokus.backend.services.auth.SurfaceResolver
 import tech.dokus.domain.model.auth.AccountMeResponse
-import tech.dokus.domain.model.auth.AppSurface
-import tech.dokus.domain.model.auth.SurfaceAvailability
 import tech.dokus.domain.routes.Account
 import tech.dokus.foundation.backend.security.authenticateJwt
 import tech.dokus.foundation.backend.security.dokusPrincipal
@@ -54,7 +51,7 @@ internal fun Route.accountRoutes() {
             val user = userRepository.findById(principal.userId)
                 ?: throw DokusException.NotAuthenticated("User not found")
             val memberships = userRepository.getUserTenants(principal.userId)
-            val surface = resolveSurfaceAvailability(memberships)
+            val surface = SurfaceResolver.resolve(memberships)
 
             call.respond(
                 HttpStatusCode.OK,
@@ -184,21 +181,4 @@ internal fun Route.accountRoutes() {
             call.respond(HttpStatusCode.NoContent)
         }
     }
-}
-
-internal fun resolveSurfaceAvailability(memberships: List<TenantMembership>): SurfaceAvailability {
-    val activeMemberships = memberships.filter { it.isActive }
-    val canWorkspace = activeMemberships.any { it.role != UserRole.Accountant }
-    val canConsole = activeMemberships.any { it.role == UserRole.Accountant }
-    val defaultSurface = when {
-        canWorkspace -> AppSurface.Workspace
-        canConsole -> AppSurface.Console
-        else -> AppSurface.Workspace
-    }
-
-    return SurfaceAvailability(
-        canWorkspace = canWorkspace,
-        canConsole = canConsole,
-        defaultSurface = defaultSurface
-    )
 }

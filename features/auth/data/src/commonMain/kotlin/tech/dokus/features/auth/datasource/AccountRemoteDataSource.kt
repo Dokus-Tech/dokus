@@ -23,12 +23,6 @@ interface AccountRemoteDataSource {
     suspend fun getAccountMe(): Result<AccountMeResponse>
 
     /**
-     * Get the currently authenticated user.
-     * @return Result containing the User object
-     */
-    suspend fun getCurrentUser(): Result<User>
-
-    /**
      * Select/switch to a specific tenant.
      * @param tenantId The tenant to switch to
      * @return Result containing LoginResponse with tenant-scoped tokens

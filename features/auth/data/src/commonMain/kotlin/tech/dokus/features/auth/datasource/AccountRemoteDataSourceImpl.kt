@@ -37,10 +37,6 @@ internal class AccountRemoteDataSourceImpl(
         }
     }
 
-    override suspend fun getCurrentUser(): Result<User> {
-        return getAccountMe().map { it.user }
-    }
-
     override suspend fun selectTenant(tenantId: TenantId): Result<LoginResponse> {
         return runCatching {
             httpClient.put(Account.ActiveTenant()) {

@@ -2,7 +2,6 @@ package tech.dokus.domain.model.auth
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.User
 
 @Serializable
@@ -25,11 +24,4 @@ data class SurfaceAvailability(
 data class AccountMeResponse(
     val user: User,
     val surface: SurfaceAvailability
-)
-
-@Serializable
-data class ConsoleClientSummary(
-    val tenantId: TenantId,
-    val companyName: String,
-    val vatNumber: String? = null
 )

@@ -158,6 +158,24 @@ class AuthRepositoryTest {
         assertTrue(result.isSuccess)
         assertEquals(expectedPayload, result.getOrThrow())
     }
+
+    @Test
+    fun getAccountMeForwardsFailure() = runTest {
+        val tokenManager = FakeTokenManager()
+        val authManager = FakeAuthManager()
+        val error = RuntimeException("server error")
+        val account = FakeAccountRemoteDataSource().apply {
+            accountMeResult = Result.failure(error)
+        }
+        val identity = FakeIdentityRemoteDataSource()
+        val tenant = FakeTenantRemoteDataSource()
+        val repository = AuthRepository(tokenManager, authManager, account, identity, tenant)
+
+        val result = repository.getAccountMe()
+
+        assertTrue(result.isFailure)
+        assertEquals(error, result.exceptionOrNull())
+    }
 }
 
 private class FakeTokenManager : TokenManagerMutable {
@@ -219,8 +237,6 @@ private class FakeAccountRemoteDataSource : AccountRemoteDataSource {
     var accountMeResult: Result<AccountMeResponse> = Result.failure(IllegalStateException("not needed"))
 
     override suspend fun getAccountMe(): Result<AccountMeResponse> = accountMeResult
-
-    override suspend fun getCurrentUser(): Result<User> = getAccountMe().map { it.user }
 
     override suspend fun selectTenant(tenantId: TenantId): Result<LoginResponse> =
         Result.failure(IllegalStateException("not needed"))
