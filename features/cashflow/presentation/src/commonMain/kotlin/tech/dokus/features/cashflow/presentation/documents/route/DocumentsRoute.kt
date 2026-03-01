@@ -18,6 +18,7 @@ import org.jetbrains.compose.resources.stringResource
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.documents_back_to_clients
 import tech.dokus.aura.resources.documents_subtitle
 import tech.dokus.aura.resources.documents_upload
 import tech.dokus.aura.resources.nav_documents
@@ -37,11 +38,14 @@ import tech.dokus.foundation.app.network.ConnectionSnackbarEffect
 import tech.dokus.foundation.app.shell.HomeShellTopBarAction
 import tech.dokus.foundation.app.shell.HomeShellTopBarConfig
 import tech.dokus.foundation.app.shell.HomeShellTopBarMode
+import tech.dokus.foundation.app.shell.LocalUserAccessContext
 import tech.dokus.foundation.app.shell.RegisterHomeShellTopBar
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.navigation.destinations.CashFlowDestination
+import tech.dokus.navigation.destinations.HomeDestination
 import tech.dokus.navigation.local.LocalNavController
 import tech.dokus.navigation.navigateTo
+import tech.dokus.navigation.navigateToTopLevelTab
 
 private const val HOME_ROUTE_DOCUMENTS = "documents"
 
@@ -50,6 +54,9 @@ internal fun DocumentsRoute(
     documentsContainer: DocumentsContainer = container(),
     uploadContainer: AddDocumentContainer = container(),
 ) {
+    val accessContext = LocalUserAccessContext.current
+    val isAccountantReadOnly = accessContext.isAccountantReadOnly
+    val showBackToClients = accessContext.canConsole && isAccountantReadOnly
     val navController = LocalNavController.current
     val backStackEntry by navController.currentBackStackEntryAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -80,29 +87,56 @@ internal fun DocumentsRoute(
     val title = stringResource(Res.string.nav_documents)
     val subtitle = stringResource(Res.string.documents_subtitle)
     val uploadContentDescription = stringResource(Res.string.documents_upload)
+    val backToClientsLabel = stringResource(Res.string.documents_back_to_clients)
     val onUploadActionClick = remember {
         {
-            isUploadSidebarVisible = true
+            if (!isAccountantReadOnly) {
+                isUploadSidebarVisible = true
+            }
+        }
+    }
+    val onBackToClientsClick = remember(showBackToClients) {
+        {
+            if (showBackToClients) {
+                navController.navigateToTopLevelTab(HomeDestination.Accountant)
+            }
         }
     }
     val topBarConfig = remember(
         title,
         subtitle,
         uploadContentDescription,
-        onUploadActionClick
+        onUploadActionClick,
+        backToClientsLabel,
+        onBackToClientsClick,
+        isAccountantReadOnly,
+        showBackToClients,
     ) {
+        val actions = buildList {
+            if (!isAccountantReadOnly) {
+                add(
+                    HomeShellTopBarAction.Icon(
+                        icon = Icons.Default.Upload,
+                        contentDescription = uploadContentDescription,
+                        onClick = onUploadActionClick
+                    )
+                )
+            }
+            if (showBackToClients) {
+                add(
+                    HomeShellTopBarAction.Text(
+                        label = backToClientsLabel,
+                        onClick = onBackToClientsClick
+                    )
+                )
+            }
+        }
         HomeShellTopBarConfig(
             mode = HomeShellTopBarMode.Title(
                 title = title,
                 subtitle = subtitle
             ),
-            actions = listOf(
-                HomeShellTopBarAction.Icon(
-                    icon = Icons.Default.Upload,
-                    contentDescription = uploadContentDescription,
-                    onClick = onUploadActionClick
-                )
-            )
+            actions = actions,
         )
     }
     RegisterHomeShellTopBar(
@@ -132,52 +166,69 @@ internal fun DocumentsRoute(
     }
 
     // Refresh documents when an upload completes
-    LaunchedEffect(uploadedDocuments.size) {
-        if (uploadedDocuments.isNotEmpty()) {
+    LaunchedEffect(uploadedDocuments.size, isAccountantReadOnly) {
+        if (!isAccountantReadOnly && uploadedDocuments.isNotEmpty()) {
             documentsContainer.store.intent(DocumentsIntent.Refresh)
         }
+    }
+
+    val dropTargetModifier = if (!isAccountantReadOnly) {
+        Modifier.fileDropTarget(
+            onDragStateChange = { isDragging ->
+                if (isDragging) {
+                    isUploadSidebarVisible = true
+                }
+            },
+            onFilesDropped = { files ->
+                if (files.isNotEmpty()) {
+                    uploadContainer.provideUploadManager().enqueueFiles(files)
+                }
+            }
+        )
+    } else {
+        Modifier
     }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .fileDropTarget(
-                onDragStateChange = { isDragging ->
-                    if (isDragging) {
-                        isUploadSidebarVisible = true
-                    }
-                },
-                onFilesDropped = { files ->
-                    if (files.isNotEmpty()) {
-                        uploadContainer.provideUploadManager().enqueueFiles(files)
-                    }
-                }
-            )
+            .then(dropTargetModifier)
     ) {
         DocumentsScreen(
             state = state,
             snackbarHostState = snackbarHostState,
             onIntent = { documentsContainer.store.intent(it) },
-            onUploadClick = { isUploadSidebarVisible = true }
+            onUploadClick = {
+                if (!isAccountantReadOnly) {
+                    isUploadSidebarVisible = true
+                }
+            },
+            isUploadEnabled = !isAccountantReadOnly,
+            showBackToClients = showBackToClients,
+            onBackToClientsClick = onBackToClientsClick,
         )
 
         // Upload sidebar overlay
-        DocumentUploadSidebar(
-            isVisible = isUploadSidebarVisible,
-            onDismiss = { isUploadSidebarVisible = false },
-            tasks = uploadTasks,
-            documents = uploadedDocuments,
-            deletionHandles = deletionHandles,
-            uploadManager = uploadContainer.provideUploadManager(),
-            onShowQrCode = { isQrDialogVisible = true }
-        )
+        if (!isAccountantReadOnly) {
+            DocumentUploadSidebar(
+                isVisible = isUploadSidebarVisible,
+                onDismiss = { isUploadSidebarVisible = false },
+                tasks = uploadTasks,
+                documents = uploadedDocuments,
+                deletionHandles = deletionHandles,
+                uploadManager = uploadContainer.provideUploadManager(),
+                onShowQrCode = { isQrDialogVisible = true }
+            )
+        }
     }
 
     // QR code dialog for mobile app download
-    AppDownloadQrDialog(
-        isVisible = isQrDialogVisible,
-        onDismiss = { isQrDialogVisible = false }
-    )
+    if (!isAccountantReadOnly) {
+        AppDownloadQrDialog(
+            isVisible = isQrDialogVisible,
+            onDismiss = { isQrDialogVisible = false }
+        )
+    }
 }
 
 internal fun toDocumentReviewDestination(

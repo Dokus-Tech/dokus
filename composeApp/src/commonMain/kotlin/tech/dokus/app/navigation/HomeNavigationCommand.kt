@@ -8,6 +8,7 @@ import tech.dokus.navigation.navigateTo
 import tech.dokus.navigation.navigateToTopLevelTab
 
 internal sealed interface HomeNavigationCommand {
+    data object OpenConsoleClients : HomeNavigationCommand
     data object OpenDocuments : HomeNavigationCommand
     data class OpenDocumentReview(val documentId: String) : HomeNavigationCommand
 }
@@ -19,6 +20,9 @@ internal sealed interface HomeNavigationStep {
 
 internal fun resolveHomeNavigationSteps(command: HomeNavigationCommand): List<HomeNavigationStep> {
     return when (command) {
+        HomeNavigationCommand.OpenConsoleClients -> listOf(
+            HomeNavigationStep.TopLevelTab(HomeDestination.Accountant)
+        )
         HomeNavigationCommand.OpenDocuments -> listOf(
             HomeNavigationStep.TopLevelTab(HomeDestination.Documents)
         )

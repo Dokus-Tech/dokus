@@ -50,6 +50,7 @@ import tech.dokus.foundation.aura.style.textMuted
 internal fun ReviewContent(
     state: DocumentReviewState,
     isLargeScreen: Boolean,
+    isAccountantReadOnly: Boolean,
     contentPadding: PaddingValues,
     onIntent: (DocumentReviewIntent) -> Unit,
     onCorrectContact: (CounterpartyInfo) -> Unit,
@@ -68,12 +69,14 @@ internal fun ReviewContent(
             if (isLargeScreen) {
                 DesktopReviewContent(
                     state = state,
+                    isAccountantReadOnly = isAccountantReadOnly,
                     contentPadding = contentPadding,
                     onIntent = onIntent,
                 )
             } else {
                 MobileReviewContent(
                     state = state,
+                    isAccountantReadOnly = isAccountantReadOnly,
                     contentPadding = contentPadding,
                     onIntent = onIntent,
                     onBackClick = onBackClick,
@@ -180,6 +183,7 @@ private fun AwaitingExtractionContent(
 @Composable
 private fun DesktopReviewContent(
     state: DocumentReviewState.Content,
+    isAccountantReadOnly: Boolean,
     contentPadding: PaddingValues,
     onIntent: (DocumentReviewIntent) -> Unit,
 ) {
@@ -199,6 +203,7 @@ private fun DesktopReviewContent(
         )
         ReviewInspectorPane(
             state = state,
+            isAccountantReadOnly = isAccountantReadOnly,
             onIntent = onIntent,
             modifier = Modifier
                 .width(Constraints.DocumentDetail.inspectorWidth)
@@ -210,6 +215,7 @@ private fun DesktopReviewContent(
 @Composable
 private fun MobileReviewContent(
     state: DocumentReviewState.Content,
+    isAccountantReadOnly: Boolean,
     contentPadding: PaddingValues,
     onIntent: (DocumentReviewIntent) -> Unit,
     onBackClick: () -> Unit,
@@ -229,6 +235,7 @@ private fun MobileReviewContent(
 
     MobileCanonicalContent(
         state = state,
+        isAccountantReadOnly = isAccountantReadOnly,
         onIntent = onIntent,
         onBackClick = onBackClick,
         onOpenSource = onOpenSource,

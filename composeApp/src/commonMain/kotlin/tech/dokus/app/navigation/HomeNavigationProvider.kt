@@ -2,9 +2,9 @@ package tech.dokus.app.navigation
 
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
-import tech.dokus.app.screens.AccountantScreen
 import tech.dokus.app.screens.MoreRoute
 import tech.dokus.app.screens.UnderDevelopmentScreen
+import tech.dokus.app.screens.accountant.ConsoleClientsRoute
 import tech.dokus.app.screens.search.SearchRoute
 import tech.dokus.app.screens.settings.route.TeamSettingsRoute
 import tech.dokus.app.screens.settings.route.WorkspaceSettingsRoute
@@ -25,7 +25,7 @@ internal object HomeNavigationProvider : NavigationProvider {
             WorkspaceSettingsRoute()
         }
         composable<HomeDestination.Accountant> {
-            AccountantScreen()
+            ConsoleClientsRoute()
         }
         composable<HomeDestination.Search> {
             SearchRoute()

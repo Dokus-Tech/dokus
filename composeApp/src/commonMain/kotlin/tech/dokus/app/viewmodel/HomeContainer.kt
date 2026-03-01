@@ -11,6 +11,8 @@ import pro.respawn.flowmvi.plugins.init
 import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
+import tech.dokus.domain.model.auth.SurfaceAvailability
+import tech.dokus.features.auth.usecases.GetAccountMeUseCase
 import tech.dokus.features.auth.usecases.LogoutUseCase
 import tech.dokus.features.auth.usecases.WatchCurrentTenantUseCase
 import tech.dokus.features.auth.usecases.WatchCurrentUserUseCase
@@ -35,6 +37,7 @@ internal typealias HomeCtx = PipelineContext<HomeState, HomeIntent, HomeAction>
 internal class HomeContainer(
     private val watchCurrentTenantUseCase: WatchCurrentTenantUseCase,
     private val watchCurrentUserUseCase: WatchCurrentUserUseCase,
+    private val getAccountMeUseCase: GetAccountMeUseCase,
     private val logoutUseCase: LogoutUseCase,
 ) : Container<HomeState, HomeIntent, HomeAction> {
 
@@ -71,6 +74,7 @@ internal class HomeContainer(
                 )
             }
         }
+        refreshSurfaceAvailability()
         watchCurrentTenantUseCase.refresh()
         watchCurrentUserUseCase.refresh()
     }
@@ -187,11 +191,28 @@ internal class HomeContainer(
         }
     }
 
+    private suspend fun HomeCtx.refreshSurfaceAvailability() {
+        getAccountMeUseCase().fold(
+            onSuccess = { accountMe ->
+                withState<HomeState.Ready, _> {
+                    updateState { copy(surfaceAvailability = accountMe.surface) }
+                }
+            },
+            onFailure = { error ->
+                logger.w(error) { "Failed to load surface availability for home shell" }
+            }
+        )
+    }
+
     private suspend fun HomeCtx.shouldSuppressShellErrors(): Boolean {
         var suppress = false
         withState<HomeState.Ready, _> {
-            suppress = isLoggingOut
+            suppress = isLoggingOut || surfaceAvailability.isConsoleOnlySurface()
         }
         return suppress
+    }
+
+    private fun SurfaceAvailability?.isConsoleOnlySurface(): Boolean {
+        return this?.canConsole == true && !canWorkspace
     }
 }

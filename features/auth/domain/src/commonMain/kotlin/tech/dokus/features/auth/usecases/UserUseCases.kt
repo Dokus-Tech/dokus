@@ -6,6 +6,7 @@ import tech.dokus.domain.Password
 import tech.dokus.domain.ids.SessionId
 import tech.dokus.domain.model.User
 import tech.dokus.domain.model.auth.AccountMeResponse
+import tech.dokus.domain.model.auth.ConsoleClientSummary
 import tech.dokus.domain.model.auth.SessionDto
 
 /**
@@ -20,6 +21,13 @@ interface GetAccountMeUseCase {
  */
 interface GetCurrentUserUseCase {
     suspend operator fun invoke(): Result<User>
+}
+
+/**
+ * Use case for listing console clients for bookkeepers.
+ */
+interface ListConsoleClientsUseCase {
+    suspend operator fun invoke(): Result<List<ConsoleClientSummary>>
 }
 
 /**

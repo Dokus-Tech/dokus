@@ -126,6 +126,7 @@ internal fun MobileAmountHeroCard(state: DocumentReviewState.Content) {
 @Composable
 internal fun MobilePaymentStateCard(
     state: DocumentReviewState.Content,
+    isAccountantReadOnly: Boolean,
     onIntent: (DocumentReviewIntent) -> Unit,
 ) {
     val (title, subtitle) = when (state.financialStatus) {
@@ -212,18 +213,20 @@ internal fun MobilePaymentStateCard(
 
             when (state.financialStatus) {
                 ReviewFinancialStatus.Review -> {
-                    Button(
-                        onClick = { onIntent(DocumentReviewIntent.Confirm) },
-                        enabled = state.canConfirm,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text("Confirm document")
+                    if (!isAccountantReadOnly) {
+                        Button(
+                            onClick = { onIntent(DocumentReviewIntent.Confirm) },
+                            enabled = state.canConfirm,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text("Confirm document")
+                        }
                     }
                 }
 
                 ReviewFinancialStatus.Unpaid,
                 ReviewFinancialStatus.Overdue -> {
-                    if (state.canRecordPayment) {
+                    if (!isAccountantReadOnly && state.canRecordPayment) {
                         OutlinedButton(
                             onClick = { onIntent(DocumentReviewIntent.OpenPaymentSheet) },
                             modifier = Modifier.fillMaxWidth(),

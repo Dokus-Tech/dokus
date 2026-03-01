@@ -64,6 +64,13 @@
     <string name="nav_forecast">Forecast</string>
     <string name="nav_more">More</string>
     <string name="coming_soon">Coming soon</string>
+    <string name="console_clients_title">Clients</string>
+    <string name="console_clients_subtitle">Bookkeeper console</string>
+    <string name="console_clients_search_placeholder">Search by company or VAT</string>
+    <string name="console_clients_count">%1$d clients</string>
+    <string name="console_clients_empty">No clients found</string>
+    <string name="console_clients_column_company">Company</string>
+    <string name="console_clients_column_vat">VAT</string>
 
     <!-- Chat -->
     <string name="chat_title">AI Chat</string>

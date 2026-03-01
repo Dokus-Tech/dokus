@@ -19,6 +19,7 @@ import tech.dokus.domain.model.User
 import tech.dokus.domain.model.auth.ChangePasswordRequest
 import tech.dokus.domain.model.auth.DeactivateUserRequest
 import tech.dokus.domain.model.auth.AccountMeResponse
+import tech.dokus.domain.model.auth.ConsoleClientSummary
 import tech.dokus.domain.model.auth.LoginRequest
 import tech.dokus.domain.model.auth.LoginResponse
 import tech.dokus.domain.model.auth.LogoutRequest
@@ -178,6 +179,13 @@ class AuthRepository(
         return accountDataSource.getAccountMe()
             .onFailure { error ->
                 logger.e(error) { "Failed to get account bootstrap payload" }
+            }
+    }
+
+    override suspend fun listConsoleClients(): Result<List<ConsoleClientSummary>> {
+        return accountDataSource.listConsoleClients()
+            .onFailure { error ->
+                logger.e(error) { "Failed to list console clients" }
             }
     }
 

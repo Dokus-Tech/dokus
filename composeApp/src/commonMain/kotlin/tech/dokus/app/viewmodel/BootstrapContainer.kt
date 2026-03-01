@@ -5,9 +5,11 @@ import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.plugins.reduce
+import tech.dokus.app.navigation.HomeNavigationCommand
 import tech.dokus.domain.asbtractions.TokenManager
 import tech.dokus.domain.config.ServerConfigManager
 import tech.dokus.features.auth.AuthInitializer
+import tech.dokus.features.auth.usecases.GetAccountMeUseCase
 import tech.dokus.foundation.platform.Logger
 
 internal typealias BootstrapCtx = PipelineContext<BootstrapState, BootstrapIntent, BootstrapAction>
@@ -28,6 +30,7 @@ internal class BootstrapContainer(
     private val authInitializer: AuthInitializer,
     private val tokenManager: TokenManager,
     private val serverConfigManager: ServerConfigManager,
+    private val getAccountMeUseCase: GetAccountMeUseCase,
 ) : Container<BootstrapState, BootstrapIntent, BootstrapAction> {
 
     private val logger = Logger.forClass<BootstrapContainer>()
@@ -71,6 +74,18 @@ internal class BootstrapContainer(
             return
         }
 
+        val isConsoleOnlyUser = isConsoleOnlyUser()
+        if (isConsoleOnlyUser) {
+            completeAllSteps()
+            logger.i { "Bootstrap complete for console-only user, navigating to console clients" }
+            action(
+                BootstrapAction.NavigateToMain(
+                    initialHomeCommand = HomeNavigationCommand.OpenConsoleClients
+                )
+            )
+            return
+        }
+
         // Step 5: Check tenant selection
         if (needsTenantSelection()) {
             action(BootstrapAction.NavigateToTenantSelection)
@@ -80,7 +95,7 @@ internal class BootstrapContainer(
         // All checks passed, navigate to main
         completeAllSteps()
         logger.i { "Bootstrap complete, navigating to main" }
-        action(BootstrapAction.NavigateToMain)
+        action(BootstrapAction.NavigateToMain())
     }
 
     private suspend fun BootstrapCtx.updateStep(type: BootstrapStepType) {
@@ -123,5 +138,16 @@ internal class BootstrapContainer(
 
     private suspend fun needsTenantSelection(): Boolean {
         return tokenManager.getSelectedTenantId() == null
+    }
+
+    private suspend fun isConsoleOnlyUser(): Boolean {
+        return getAccountMeUseCase()
+            .map { surface ->
+                surface.surface.let { it.canConsole && !it.canWorkspace }
+            }
+            .getOrElse { error ->
+                logger.w(error) { "Failed to resolve surface flags during bootstrap; using fallback routing" }
+                false
+            }
     }
 }

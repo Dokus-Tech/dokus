@@ -7,6 +7,10 @@ import tech.dokus.app.notifications.CashflowInvoiceLookupDataSource
 import tech.dokus.app.notifications.InvoiceLookupDataSource
 import tech.dokus.app.notifications.NotificationRemoteDataSource
 import tech.dokus.app.notifications.NotificationRemoteDataSourceImpl
+import tech.dokus.app.screens.accountant.ConsoleClientsAction
+import tech.dokus.app.screens.accountant.ConsoleClientsContainer
+import tech.dokus.app.screens.accountant.ConsoleClientsIntent
+import tech.dokus.app.screens.accountant.ConsoleClientsState
 import tech.dokus.app.screens.search.SearchAction
 import tech.dokus.app.screens.search.SearchContainer
 import tech.dokus.app.screens.search.SearchIntent
@@ -77,6 +81,7 @@ internal val diModuleApp = module {
             authInitializer = get(),
             tokenManager = get(),
             serverConfigManager = get(),
+            getAccountMeUseCase = get(),
         )
     }
     container<TodayContainer, TodayState, TodayIntent, TodayAction> {
@@ -91,12 +96,19 @@ internal val diModuleApp = module {
         HomeContainer(
             watchCurrentTenantUseCase = get(),
             watchCurrentUserUseCase = get(),
+            getAccountMeUseCase = get(),
             logoutUseCase = get(),
         )
     }
     container<SearchContainer, SearchState, SearchIntent, SearchAction> {
         SearchContainer(
             remoteDataSource = get()
+        )
+    }
+    container<ConsoleClientsContainer, ConsoleClientsState, ConsoleClientsIntent, ConsoleClientsAction> {
+        ConsoleClientsContainer(
+            listConsoleClientsUseCase = get(),
+            selectTenantUseCase = get(),
         )
     }
     container<SettingsContainer, SettingsState, SettingsIntent, SettingsAction> {

@@ -25,6 +25,7 @@ import tech.dokus.foundation.aura.tooling.TestWrapper
 internal fun DocumentReviewScreen(
     state: DocumentReviewState,
     isLargeScreen: Boolean,
+    isAccountantReadOnly: Boolean,
     onIntent: (DocumentReviewIntent) -> Unit,
     onBackClick: () -> Unit,
     onOpenChat: () -> Unit,
@@ -42,6 +43,7 @@ internal fun DocumentReviewScreen(
                 ReviewTopBar(
                     state = state,
                     isLargeScreen = isLargeScreen,
+                    isAccountantReadOnly = isAccountantReadOnly,
                     onBackClick = onBackClick,
                     onChatClick = onOpenChat,
                     onConfirmClick = { onIntent(DocumentReviewIntent.Confirm) },
@@ -61,6 +63,7 @@ internal fun DocumentReviewScreen(
         ReviewContent(
             state = state,
             isLargeScreen = isLargeScreen,
+            isAccountantReadOnly = isAccountantReadOnly,
             contentPadding = contentPadding,
             onIntent = onIntent,
             onCorrectContact = onCorrectContact,
@@ -80,6 +83,7 @@ private fun DocumentReviewScreenPreview(
         DocumentReviewScreen(
             state = DocumentReviewState.Loading(),
             isLargeScreen = false,
+            isAccountantReadOnly = false,
             onIntent = {},
             onBackClick = {},
             onOpenChat = {},

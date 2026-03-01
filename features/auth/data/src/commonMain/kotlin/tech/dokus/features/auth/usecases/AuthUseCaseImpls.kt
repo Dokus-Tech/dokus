@@ -49,6 +49,12 @@ internal class GetCurrentUserUseCaseImpl(
     }
 }
 
+internal class ListConsoleClientsUseCaseImpl(
+    private val authGateway: AuthGateway
+) : ListConsoleClientsUseCase {
+    override suspend fun invoke() = authGateway.listConsoleClients()
+}
+
 internal class WatchCurrentUserUseCaseImpl(
     private val getCurrentUserUseCase: GetCurrentUserUseCase,
     private val tokenStorage: TokenStorage,

@@ -16,6 +16,7 @@ import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.UpsertTenantAddressRequest
 import tech.dokus.domain.model.User
 import tech.dokus.domain.model.auth.AccountMeResponse
+import tech.dokus.domain.model.auth.ConsoleClientSummary
 import tech.dokus.domain.model.auth.LoginRequest
 import tech.dokus.domain.model.auth.RegisterRequest
 import tech.dokus.domain.model.auth.SessionDto
@@ -48,6 +49,8 @@ interface AuthGateway {
     suspend fun hasFreelancerTenant(): Result<Boolean>
 
     suspend fun getAccountMe(): Result<AccountMeResponse>
+
+    suspend fun listConsoleClients(): Result<List<ConsoleClientSummary>>
 
     suspend fun getCurrentUser(): Result<User>
 

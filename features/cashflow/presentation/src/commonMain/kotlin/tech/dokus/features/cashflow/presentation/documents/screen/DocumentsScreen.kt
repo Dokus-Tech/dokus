@@ -30,6 +30,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.documents_back_to_clients
 import tech.dokus.aura.resources.documents_empty_title
 import tech.dokus.aura.resources.documents_empty_upload_cta
 import tech.dokus.aura.resources.documents_filter_no_match
@@ -49,7 +50,6 @@ import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsState
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.common.DokusLoaderSize
-import tech.dokus.foundation.aura.components.text.MobilePageTitle
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
@@ -61,6 +61,9 @@ internal fun DocumentsScreen(
     snackbarHostState: SnackbarHostState,
     onIntent: (DocumentsIntent) -> Unit,
     onUploadClick: () -> Unit,
+    isUploadEnabled: Boolean,
+    showBackToClients: Boolean,
+    onBackToClientsClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Scaffold(
@@ -92,7 +95,10 @@ internal fun DocumentsScreen(
                     DocumentsContent(
                         state = state,
                         onIntent = onIntent,
-                        onUploadClick = onUploadClick
+                        onUploadClick = onUploadClick,
+                        isUploadEnabled = isUploadEnabled,
+                        showBackToClients = showBackToClients,
+                        onBackToClientsClick = onBackToClientsClick,
                     )
                 }
             }
@@ -105,6 +111,9 @@ private fun DocumentsContent(
     state: DocumentsState.Content,
     onIntent: (DocumentsIntent) -> Unit,
     onUploadClick: () -> Unit,
+    isUploadEnabled: Boolean,
+    showBackToClients: Boolean,
+    onBackToClientsClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val listState = rememberLazyListState()
@@ -129,6 +138,15 @@ private fun DocumentsContent(
         modifier = modifier.fillMaxSize().padding(top = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
+        if (showBackToClients) {
+            OutlinedButton(
+                onClick = onBackToClientsClick,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            ) {
+                Text(stringResource(Res.string.documents_back_to_clients))
+            }
+        }
+
         // Filter tabs
         DocumentFilterButtons(
             currentFilter = state.filter,
@@ -146,16 +164,20 @@ private fun DocumentsContent(
                     title = stringResource(Res.string.documents_empty_title),
                     subtitle = stringResource(Res.string.documents_empty_upload_cta),
                     modifier = Modifier.fillMaxSize(),
-                    action = {
-                        OutlinedButton(onClick = onUploadClick) {
-                            Icon(
-                                imageVector = Icons.Default.Upload,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(stringResource(Res.string.documents_upload))
+                    action = if (isUploadEnabled) {
+                        {
+                            OutlinedButton(onClick = onUploadClick) {
+                                Icon(
+                                    imageVector = Icons.Default.Upload,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(stringResource(Res.string.documents_upload))
+                            }
                         }
+                    } else {
+                        null
                     }
                 )
             }
@@ -260,6 +282,9 @@ private fun DocumentsScreenPreview(
             snackbarHostState = remember { SnackbarHostState() },
             onIntent = {},
             onUploadClick = {},
+            isUploadEnabled = true,
+            showBackToClients = false,
+            onBackToClientsClick = {},
         )
     }
 }

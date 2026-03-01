@@ -9,6 +9,16 @@ import kotlin.test.assertIs
 class HomeDeepLinkCommandExecutionTest {
 
     @Test
+    fun `open console clients command resolves to accountant tab`() {
+        val steps = resolveHomeNavigationSteps(HomeNavigationCommand.OpenConsoleClients)
+
+        assertEquals(1, steps.size)
+
+        val tabStep = assertIs<HomeNavigationStep.TopLevelTab>(steps[0])
+        assertEquals(HomeDestination.Accountant, tabStep.destination)
+    }
+
+    @Test
     fun `open document review command resolves to documents tab then review route`() {
         val steps = resolveHomeNavigationSteps(
             HomeNavigationCommand.OpenDocumentReview(documentId = "doc-42")

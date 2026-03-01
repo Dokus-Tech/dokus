@@ -46,6 +46,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
+import tech.dokus.app.navigation.HomeNavigationCommandBus
 import tech.dokus.app.viewmodel.BootstrapAction
 import tech.dokus.app.viewmodel.BootstrapContainer
 import tech.dokus.app.viewmodel.BootstrapIntent
@@ -119,10 +120,11 @@ internal fun SplashRoute(
                 AuthDestination.PendingConfirmAccount
             )
             BootstrapAction.NavigateToTenantSelection -> navController.replace(AuthDestination.WorkspaceSelect)
-            BootstrapAction.NavigateToMain -> {
+            is BootstrapAction.NavigateToMain -> {
                 if (!mainNavigationScheduled) {
                     mainNavigationScheduled = true
                     scope.launch {
+                        action.initialHomeCommand?.let { HomeNavigationCommandBus.dispatch(it) }
                         delay(MainPathCompletionHold + PostBootstrapNavigationDelay)
                         navController.replace(CoreDestination.Home)
                     }

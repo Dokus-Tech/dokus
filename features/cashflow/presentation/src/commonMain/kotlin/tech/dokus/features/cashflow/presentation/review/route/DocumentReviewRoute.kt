@@ -45,6 +45,7 @@ import tech.dokus.features.cashflow.presentation.review.components.SourceEvidenc
 import tech.dokus.features.cashflow.presentation.review.screen.DocumentReviewScreen
 import tech.dokus.features.contacts.usecases.ListContactsUseCase
 import tech.dokus.foundation.app.mvi.container
+import tech.dokus.foundation.app.shell.LocalUserAccessContext
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.dialog.DokusDialog
 import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
@@ -70,6 +71,8 @@ internal fun DocumentReviewRoute(
     },
     listContacts: ListContactsUseCase = org.koin.compose.koinInject(),
 ) {
+    val accessContext = LocalUserAccessContext.current
+    val isAccountantReadOnly = accessContext.isAccountantReadOnly
     val navController = LocalNavController.current
     val backStackEntry by navController.currentBackStackEntryAsState()
     val initialDocumentId = remember(route.documentId) { DocumentId.parse(route.documentId) }
@@ -80,11 +83,16 @@ internal fun DocumentReviewRoute(
             ?.set(DOCUMENTS_REFRESH_REQUIRED_RESULT_KEY, true)
     }
 
+    fun dispatchIntent(intent: DocumentReviewIntent) {
+        if (isAccountantReadOnly && intent.isBlockedForAccountantReadOnly()) return
+        container.store.intent(intent)
+    }
+
     val pendingContactId = backStackEntry?.savedStateHandle?.get<String>(CONTACT_RESULT_KEY)
 
     LaunchedEffect(pendingContactId) {
         if (pendingContactId != null) {
-            container.store.intent(
+            dispatchIntent(
                 DocumentReviewIntent.ContactCreated(ContactId.parse(pendingContactId))
             )
             backStackEntry?.savedStateHandle?.remove<String>(CONTACT_RESULT_KEY)
@@ -161,7 +169,7 @@ internal fun DocumentReviewRoute(
         if (!shouldPoll) return@LaunchedEffect
         while (true) {
             delay(3_000L)
-            container.store.intent(DocumentReviewIntent.Refresh)
+            dispatchIntent(DocumentReviewIntent.Refresh)
         }
     }
 
@@ -190,12 +198,13 @@ internal fun DocumentReviewRoute(
         DocumentReviewScreen(
             state = state,
             isLargeScreen = isLargeScreen,
-            onIntent = { container.store.intent(it) },
+            isAccountantReadOnly = isAccountantReadOnly,
+            onIntent = { dispatchIntent(it) },
             onBackClick = {
                 markDocumentsRefreshRequired()
                 navController.popBackStack()
             },
-            onOpenChat = { container.store.intent(DocumentReviewIntent.OpenChat) },
+            onOpenChat = { dispatchIntent(DocumentReviewIntent.OpenChat) },
             onOpenSource = { sourceId ->
                 val activeDocumentId = (state as? DocumentReviewState.Content)
                     ?.documentId
@@ -210,10 +219,11 @@ internal fun DocumentReviewRoute(
             },
             onCorrectContact = { _ ->
                 // Open the contact sheet instead of navigating away
-                container.store.intent(DocumentReviewIntent.OpenContactSheet)
+                dispatchIntent(DocumentReviewIntent.OpenContactSheet)
             },
             onCreateContact = { counterparty ->
-                container.store.intent(DocumentReviewIntent.SetCounterpartyIntent(CounterpartyIntent.Pending))
+                if (isAccountantReadOnly) return@DocumentReviewScreen
+                dispatchIntent(DocumentReviewIntent.SetCounterpartyIntent(CounterpartyIntent.Pending))
                 navController.navigateTo(
                     ContactsDestination.CreateContact(
                         prefillCompanyName = counterparty.name,
@@ -242,13 +252,13 @@ internal fun DocumentReviewRoute(
                 isLoadingMore = queueState?.isLoadingMore == true,
                 onSelectDocument = { selectedDocumentIdCandidate ->
                     if (selectedDocumentIdCandidate != selectedDocumentId) {
-                        container.store.intent(
+                        dispatchIntent(
                             DocumentReviewIntent.SelectQueueDocument(selectedDocumentIdCandidate)
                         )
                     }
                 },
                 onLoadMore = {
-                    container.store.intent(DocumentReviewIntent.LoadMoreQueue)
+                    dispatchIntent(DocumentReviewIntent.LoadMoreQueue)
                 },
                 onExit = {
                     markDocumentsRefreshRequired()
@@ -264,23 +274,24 @@ internal fun DocumentReviewRoute(
     // Contact Edit Sheet
     contentState?.let { content ->
         ContactEditSheet(
-            isVisible = content.showContactSheet,
-            onDismiss = { container.store.intent(DocumentReviewIntent.CloseContactSheet) },
+            isVisible = content.showContactSheet && !isAccountantReadOnly,
+            onDismiss = { dispatchIntent(DocumentReviewIntent.CloseContactSheet) },
             suggestions = content.contactSuggestions,
             contactsState = contactsState,
             selectedContactId = content.selectedContactId,
             searchQuery = content.contactSheetSearchQuery,
             onSearchQueryChange = { query ->
-                container.store.intent(DocumentReviewIntent.UpdateContactSheetSearch(query))
+                dispatchIntent(DocumentReviewIntent.UpdateContactSheetSearch(query))
             },
             onSelectContact = { contactId ->
-                container.store.intent(DocumentReviewIntent.SelectContact(contactId))
-                container.store.intent(DocumentReviewIntent.CloseContactSheet)
+                dispatchIntent(DocumentReviewIntent.SelectContact(contactId))
+                dispatchIntent(DocumentReviewIntent.CloseContactSheet)
             },
             onCreateNewContact = {
                 // Close sheet and navigate to contact creation
-                container.store.intent(DocumentReviewIntent.CloseContactSheet)
-                container.store.intent(
+                if (isAccountantReadOnly) return@ContactEditSheet
+                dispatchIntent(DocumentReviewIntent.CloseContactSheet)
+                dispatchIntent(
                     DocumentReviewIntent.SetCounterpartyIntent(CounterpartyIntent.Pending)
                 )
                 val counterparty = tech.dokus.features.cashflow.presentation.review.models.counterpartyInfo(content)
@@ -308,7 +319,7 @@ internal fun DocumentReviewRoute(
                 text = stringResource(Res.string.action_confirm),
                 onClick = {
                     showDiscardDialog = false
-                    container.store.intent(DocumentReviewIntent.ConfirmDiscardChanges)
+                    dispatchIntent(DocumentReviewIntent.ConfirmDiscardChanges)
                 },
                 isDestructive = true,
             ),
@@ -321,39 +332,41 @@ internal fun DocumentReviewRoute(
 
     // Feedback dialog (correction-first "Something's wrong" flow)
     (state as? DocumentReviewState.Content)?.feedbackDialogState?.let { dialogState ->
+        if (isAccountantReadOnly) return@let
         FeedbackDialog(
             state = dialogState,
             onFeedbackChanged = { text ->
-                container.store.intent(DocumentReviewIntent.UpdateFeedbackText(text))
+                dispatchIntent(DocumentReviewIntent.UpdateFeedbackText(text))
             },
             onSubmit = {
-                container.store.intent(DocumentReviewIntent.SubmitFeedback)
+                dispatchIntent(DocumentReviewIntent.SubmitFeedback)
             },
             onRejectInstead = {
-                container.store.intent(DocumentReviewIntent.DismissFeedbackDialog)
-                container.store.intent(DocumentReviewIntent.ShowRejectDialog)
+                dispatchIntent(DocumentReviewIntent.DismissFeedbackDialog)
+                dispatchIntent(DocumentReviewIntent.ShowRejectDialog)
             },
             onDismiss = {
-                container.store.intent(DocumentReviewIntent.DismissFeedbackDialog)
+                dispatchIntent(DocumentReviewIntent.DismissFeedbackDialog)
             },
         )
     }
 
     // Reject document dialog (state-driven)
     (state as? DocumentReviewState.Content)?.rejectDialogState?.let { dialogState ->
+        if (isAccountantReadOnly) return@let
         RejectDocumentDialog(
             state = dialogState,
             onReasonSelected = { reason ->
-                container.store.intent(DocumentReviewIntent.SelectRejectReason(reason))
+                dispatchIntent(DocumentReviewIntent.SelectRejectReason(reason))
             },
             onNoteChanged = { note ->
-                container.store.intent(DocumentReviewIntent.UpdateRejectNote(note))
+                dispatchIntent(DocumentReviewIntent.UpdateRejectNote(note))
             },
             onConfirm = {
-                container.store.intent(DocumentReviewIntent.ConfirmReject)
+                dispatchIntent(DocumentReviewIntent.ConfirmReject)
             },
             onDismiss = {
-                container.store.intent(DocumentReviewIntent.DismissRejectDialog)
+                dispatchIntent(DocumentReviewIntent.DismissRejectDialog)
             },
         )
     }
@@ -364,15 +377,16 @@ internal fun DocumentReviewRoute(
         SourceEvidenceDialog(
             contentState = content,
             viewerState = viewerState,
-            onClose = { container.store.intent(DocumentReviewIntent.CloseSourceModal) },
+            onClose = { dispatchIntent(DocumentReviewIntent.CloseSourceModal) },
             onToggleTechnicalDetails = {
-                container.store.intent(DocumentReviewIntent.ToggleSourceTechnicalDetails)
+                dispatchIntent(DocumentReviewIntent.ToggleSourceTechnicalDetails)
             },
-            onRetry = { container.store.intent(DocumentReviewIntent.OpenSourceModal(viewerState.sourceId)) },
+            onRetry = { dispatchIntent(DocumentReviewIntent.OpenSourceModal(viewerState.sourceId)) },
         )
     }
 
     content?.paymentSheetState?.let { paymentState ->
+        if (isAccountantReadOnly) return@let
         val currencySign = when (val data = content.draftData) {
             is tech.dokus.domain.model.InvoiceDraftData -> data.currency.displaySign
             is tech.dokus.domain.model.CreditNoteDraftData -> data.currency.displaySign
@@ -382,15 +396,56 @@ internal fun DocumentReviewRoute(
             sheetState = paymentState,
             currencySign = currencySign,
             onAmountChange = { amount ->
-                container.store.intent(DocumentReviewIntent.UpdatePaymentAmountText(amount))
+                dispatchIntent(DocumentReviewIntent.UpdatePaymentAmountText(amount))
             },
             onNoteChange = { note ->
-                container.store.intent(DocumentReviewIntent.UpdatePaymentNote(note))
+                dispatchIntent(DocumentReviewIntent.UpdatePaymentNote(note))
             },
-            onSubmit = { container.store.intent(DocumentReviewIntent.SubmitPayment) },
-            onDismiss = { container.store.intent(DocumentReviewIntent.ClosePaymentSheet) },
+            onSubmit = { dispatchIntent(DocumentReviewIntent.SubmitPayment) },
+            onDismiss = { dispatchIntent(DocumentReviewIntent.ClosePaymentSheet) },
         )
     }
+}
+
+private fun DocumentReviewIntent.isBlockedForAccountantReadOnly(): Boolean = when (this) {
+    is DocumentReviewIntent.OpenPaymentSheet,
+    is DocumentReviewIntent.UpdatePaymentAmountText,
+    is DocumentReviewIntent.UpdatePaymentPaidAt,
+    is DocumentReviewIntent.UpdatePaymentNote,
+    is DocumentReviewIntent.SubmitPayment,
+    is DocumentReviewIntent.SelectContact,
+    is DocumentReviewIntent.AcceptSuggestedContact,
+    is DocumentReviewIntent.ClearSelectedContact,
+    is DocumentReviewIntent.ContactCreated,
+    is DocumentReviewIntent.SetCounterpartyIntent,
+    is DocumentReviewIntent.OpenContactSheet,
+    is DocumentReviewIntent.CloseContactSheet,
+    is DocumentReviewIntent.UpdateContactSheetSearch,
+    is DocumentReviewIntent.AddLineItem,
+    is DocumentReviewIntent.UpdateLineItem,
+    is DocumentReviewIntent.RemoveLineItem,
+    is DocumentReviewIntent.EnterEditMode,
+    is DocumentReviewIntent.CancelEditMode,
+    is DocumentReviewIntent.SaveDraft,
+    is DocumentReviewIntent.DiscardChanges,
+    is DocumentReviewIntent.ConfirmDiscardChanges,
+    is DocumentReviewIntent.Confirm,
+    is DocumentReviewIntent.ShowRejectDialog,
+    is DocumentReviewIntent.DismissRejectDialog,
+    is DocumentReviewIntent.SelectRejectReason,
+    is DocumentReviewIntent.UpdateRejectNote,
+    is DocumentReviewIntent.ConfirmReject,
+    is DocumentReviewIntent.ShowFeedbackDialog,
+    is DocumentReviewIntent.DismissFeedbackDialog,
+    is DocumentReviewIntent.UpdateFeedbackText,
+    is DocumentReviewIntent.SubmitFeedback,
+    is DocumentReviewIntent.RequestAmendment,
+    is DocumentReviewIntent.RetryAnalysis,
+    is DocumentReviewIntent.ResolvePossibleMatchSame,
+    is DocumentReviewIntent.ResolvePossibleMatchDifferent,
+    is DocumentReviewIntent.SelectDocumentType,
+    is DocumentReviewIntent.SelectDirection -> true
+    else -> false
 }
 
 private fun DocumentReviewState.queueStateOrNull(): DocumentReviewQueueState? = when (this) {

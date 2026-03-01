@@ -23,6 +23,10 @@ import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.User
+import tech.dokus.domain.model.auth.AccountMeResponse
+import tech.dokus.domain.model.auth.AppSurface
+import tech.dokus.domain.model.auth.SurfaceAvailability
+import tech.dokus.features.auth.usecases.GetAccountMeUseCase
 import tech.dokus.features.auth.usecases.LogoutUseCase
 import tech.dokus.features.auth.usecases.WatchCurrentTenantUseCase
 import tech.dokus.features.auth.usecases.WatchCurrentUserUseCase
@@ -46,6 +50,7 @@ class HomeContainerTest {
         val container = HomeContainer(
             watchCurrentTenantUseCase = tenantUseCase,
             watchCurrentUserUseCase = userUseCase,
+            getAccountMeUseCase = FakeGetAccountMeUseCase(),
             logoutUseCase = logoutUseCase
         )
 
@@ -71,6 +76,7 @@ class HomeContainerTest {
         val container = HomeContainer(
             watchCurrentTenantUseCase = tenantUseCase,
             watchCurrentUserUseCase = userUseCase,
+            getAccountMeUseCase = FakeGetAccountMeUseCase(),
             logoutUseCase = FakeLogoutUseCase()
         )
 
@@ -91,6 +97,7 @@ class HomeContainerTest {
         val container = HomeContainer(
             watchCurrentTenantUseCase = FakeWatchCurrentTenantUseCase(Result.success(sampleTenant())),
             watchCurrentUserUseCase = FakeWatchCurrentUserUseCase(Result.success(sampleUser())),
+            getAccountMeUseCase = FakeGetAccountMeUseCase(),
             logoutUseCase = logoutUseCase
         )
 
@@ -116,6 +123,7 @@ class HomeContainerTest {
         val container = HomeContainer(
             watchCurrentTenantUseCase = FakeWatchCurrentTenantUseCase(Result.success(null)),
             watchCurrentUserUseCase = FakeWatchCurrentUserUseCase(Result.success(sampleUser())),
+            getAccountMeUseCase = FakeGetAccountMeUseCase(),
             logoutUseCase = FakeLogoutUseCase { gate.await() }
         )
 
@@ -137,6 +145,7 @@ class HomeContainerTest {
         val container = HomeContainer(
             watchCurrentTenantUseCase = FakeWatchCurrentTenantUseCase(Result.success(sampleTenant())),
             watchCurrentUserUseCase = FakeWatchCurrentUserUseCase(Result.success(sampleUser())),
+            getAccountMeUseCase = FakeGetAccountMeUseCase(),
             logoutUseCase = logoutUseCase
         )
 
@@ -145,6 +154,43 @@ class HomeContainerTest {
             val ready = assertIs<HomeState.Ready>(states.value)
             assertFalse(ready.isLoggingOut)
             assertEquals(1, logoutUseCase.invocations)
+        }
+    }
+
+    @Test
+    fun `screen appeared ignores missing tenant for console-only surface`() = runTest {
+        val user = sampleUser()
+        val expectedSurface = SurfaceAvailability(
+            canWorkspace = false,
+            canConsole = true,
+            defaultSurface = AppSurface.Console
+        )
+        val tenantUseCase = FakeWatchCurrentTenantUseCase(Result.success(null))
+        val userUseCase = FakeWatchCurrentUserUseCase(Result.success(user))
+        val accountMeUseCase = FakeGetAccountMeUseCase(
+            Result.success(
+                AccountMeResponse(
+                    user = user,
+                    surface = expectedSurface
+                )
+            )
+        )
+        val container = HomeContainer(
+            watchCurrentTenantUseCase = tenantUseCase,
+            watchCurrentUserUseCase = userUseCase,
+            getAccountMeUseCase = accountMeUseCase,
+            logoutUseCase = FakeLogoutUseCase()
+        )
+
+        container.store.subscribeAndTest {
+            emit(HomeIntent.ScreenAppeared)
+            advanceUntilIdle()
+
+            val ready = assertIs<HomeState.Ready>(states.value)
+            assertEquals(expectedSurface, ready.surfaceAvailability)
+            assertIs<DokusState.Idle<Tenant>>(ready.tenantState)
+            val userState = assertIs<DokusState.Success<User>>(ready.userState)
+            assertEquals(user, userState.data)
         }
     }
 }
@@ -186,6 +232,21 @@ private class FakeLogoutUseCase(
         invocations += 1
         return block()
     }
+}
+
+private class FakeGetAccountMeUseCase(
+    private val result: Result<AccountMeResponse> = Result.success(
+        AccountMeResponse(
+            user = sampleUser(),
+            surface = SurfaceAvailability(
+                canWorkspace = true,
+                canConsole = false,
+                defaultSurface = AppSurface.Workspace
+            )
+        )
+    )
+) : GetAccountMeUseCase {
+    override suspend fun invoke(): Result<AccountMeResponse> = result
 }
 
 private fun sampleTenant(): Tenant = Tenant(

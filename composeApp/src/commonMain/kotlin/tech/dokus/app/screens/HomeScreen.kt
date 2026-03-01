@@ -47,7 +47,6 @@ import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.app.allNavItems
 import tech.dokus.app.desktopPinnedItems
 import tech.dokus.app.homeNavigationProviders
-import tech.dokus.app.mobileTabConfigs
 import tech.dokus.app.navSectionsCombined
 import tech.dokus.app.navigation.HomeNavigationCommandBus
 import tech.dokus.app.navigation.SearchFocusRequestBus
@@ -65,6 +64,9 @@ import tech.dokus.app.viewmodel.HomeContainer
 import tech.dokus.app.viewmodel.HomeIntent
 import tech.dokus.app.viewmodel.HomeState
 import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.more_horizontal
+import tech.dokus.aura.resources.nav_more
+import tech.dokus.domain.enums.UserRole
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.User
@@ -75,6 +77,8 @@ import tech.dokus.foundation.app.shell.HomeShellTopBarConfig
 import tech.dokus.foundation.app.shell.HomeShellTopBarHost
 import tech.dokus.foundation.app.shell.HomeShellTopBarMode
 import tech.dokus.foundation.app.shell.LocalHomeShellTopBarHost
+import tech.dokus.foundation.app.shell.LocalUserAccessContext
+import tech.dokus.foundation.app.shell.UserAccessContext
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.background.AmbientBackground
 import tech.dokus.foundation.aura.components.navigation.DokusNavigationBar
@@ -112,15 +116,10 @@ internal fun HomeRoute(
     val navController = LocalNavController.current
     val homeNavProviders = remember(appModules) { appModules.homeNavigationProviders }
     val homeNavController = rememberNavController()
+    val allNavItems = remember(appModules) { appModules.allNavItems }
     val navSections = remember(appModules) { appModules.navSectionsCombined }
     val desktopPinnedItems = remember(appModules) { appModules.desktopPinnedItems }
-    val mobileTabs = remember(appModules) { appModules.mobileTabConfigs }
-    val allNavItems = remember(appModules) { appModules.allNavItems }
     val sortedRoutes = remember(allNavItems) { buildSortedRoutes(allNavItems) }
-    val startDestination = remember(allNavItems) {
-        allNavItems.firstOrNull { it.id == "today" }?.destination
-            ?: allNavItems.first().destination
-    }
     val pendingHomeCommand by HomeNavigationCommandBus.pendingCommand.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     var pendingError by remember { mutableStateOf<DokusException?>(null) }
@@ -172,13 +171,56 @@ internal fun HomeRoute(
     val shellState = state as? HomeState.Ready ?: HomeState.Ready()
     val tenant = (shellState.tenantState as? DokusState.Success<Tenant>)?.data
     val user = (shellState.userState as? DokusState.Success<User>)?.data
+    val accessContext = remember(shellState.surfaceAvailability, tenant?.role) {
+        UserAccessContext(
+            canWorkspace = shellState.surfaceAvailability?.canWorkspace ?: true,
+            canConsole = shellState.surfaceAvailability?.canConsole ?: false,
+            currentTenantRole = tenant?.role
+        )
+    }
+    val visibleNavItems = remember(allNavItems, accessContext) {
+        filterHomeNavItems(
+            items = allNavItems,
+            accessContext = accessContext
+        )
+    }
+    val visibleNavIds = remember(visibleNavItems) { visibleNavItems.map { it.id }.toSet() }
+    val visibleNavSections = remember(navSections, visibleNavIds) {
+        navSections.mapNotNull { section ->
+            val filteredItems = section.items.filter { it.id in visibleNavIds }
+            if (filteredItems.isEmpty()) null else section.copy(items = filteredItems)
+        }
+    }
+    val visiblePinnedItems = remember(desktopPinnedItems, visibleNavIds) {
+        desktopPinnedItems.filter { it.id in visibleNavIds }
+    }
+    val mobileTabs = remember(visibleNavItems) {
+        visibleNavItems
+            .filter { it.mobileTabOrder != null }
+            .sortedBy { it.mobileTabOrder }
+            .map { tech.dokus.foundation.aura.model.MobileTabConfig(it.id, it.titleRes, it.iconRes, it.destination) } +
+            tech.dokus.foundation.aura.model.MobileTabConfig(
+                "more",
+                Res.string.nav_more,
+                Res.drawable.more_horizontal,
+                HomeDestination.More
+            )
+    }
+    val hasSearch = remember(visibleNavItems) {
+        visibleNavItems.any { it.destination == HomeDestination.Search }
+    }
+    val startDestination = remember(visibleNavItems, allNavItems) {
+        visibleNavItems.firstOrNull { it.id == "today" }?.destination
+            ?: visibleNavItems.firstOrNull()?.destination
+            ?: allNavItems.first().destination
+    }
     val fallbackShellTopBarConfig = rememberFallbackShellTopBarConfig(
         normalizedRoute = normalizedRoute,
-        allNavItems = allNavItems,
+        allNavItems = visibleNavItems,
     )
     val topBarConfig = resolveHomeShellTopBarConfig(
         route = currentRoute,
-        allNavItems = allNavItems,
+        allNavItems = visibleNavItems,
         sortedRoutes = sortedRoutes,
         registeredConfigs = registeredTopBarConfigs,
         fallback = { _, _ -> fallbackShellTopBarConfig }
@@ -192,6 +234,7 @@ internal fun HomeRoute(
         HomeNavControllerProvided(homeNavController) {
             CompositionLocalProvider(
                 LocalHomeShellTopBarHost provides topBarHost,
+                LocalUserAccessContext provides accessContext,
             ) {
                 HomeNavHost(
                     navHostController = homeNavController,
@@ -203,11 +246,11 @@ internal fun HomeRoute(
     }
 
     HomeScreen(
-        navSections = navSections,
+        navSections = visibleNavSections,
         mobileTabs = mobileTabs,
         selectedRoute = currentRoute,
         topBarConfig = topBarConfig,
-        desktopPinnedItems = desktopPinnedItems,
+        desktopPinnedItems = visiblePinnedItems,
         tenantState = shellState.tenantState,
         profileData = profileData,
         isLoggingOut = shellState.isLoggingOut,
@@ -241,8 +284,10 @@ internal fun HomeRoute(
             }
         },
         onSearchShortcut = {
-            homeNavController.navigateToTopLevelTab(HomeDestination.Search)
-            SearchFocusRequestBus.requestFocus()
+            if (hasSearch) {
+                homeNavController.navigateToTopLevelTab(HomeDestination.Search)
+                SearchFocusRequestBus.requestFocus()
+            }
         },
         content = navHostContent,
     )
@@ -459,6 +504,26 @@ private fun RailNavigationLayout(
 
 /** Routes where the shell header (Dokus + avatar) is shown. Other tabs provide their own top bar. */
 private val ShellHeaderRoutes = setOf("today", "documents", "search", "cashflow", "more")
+
+internal fun filterHomeNavItems(
+    items: List<NavItem>,
+    accessContext: UserAccessContext,
+): List<NavItem> {
+    return items.filter { item ->
+        when {
+            item.destination == HomeDestination.Accountant && !accessContext.canConsole -> false
+            accessContext.isConsoleOnlySurface -> item.destination in ConsoleOnlyDestinations
+            accessContext.currentTenantRole == UserRole.Accountant &&
+                item.destination == HomeDestination.Cashflow -> false
+            else -> true
+        }
+    }
+}
+
+private val ConsoleOnlyDestinations = setOf(
+    HomeDestination.Accountant,
+    HomeDestination.Documents,
+)
 
 internal fun dispatchProfileNavigation(
     isLargeScreen: Boolean,

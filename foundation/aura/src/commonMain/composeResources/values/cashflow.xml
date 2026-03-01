@@ -137,6 +137,7 @@
     <string name="documents_filter_failed">Failed</string>
     <string name="documents_filter_rejected">Rejected</string>
     <string name="documents_upload">Upload</string>
+    <string name="documents_back_to_clients">Back to clients</string>
     <string name="documents_view_details">View details</string>
     <string name="documents_table_document">Document</string>
     <string name="documents_table_status">Status</string>

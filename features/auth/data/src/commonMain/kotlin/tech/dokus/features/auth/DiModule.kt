@@ -77,6 +77,8 @@ import tech.dokus.features.auth.usecases.ListMyTenantsUseCase
 import tech.dokus.features.auth.usecases.ListMyTenantsUseCaseImpl
 import tech.dokus.features.auth.usecases.ListSessionsUseCase
 import tech.dokus.features.auth.usecases.ListSessionsUseCaseImpl
+import tech.dokus.features.auth.usecases.ListConsoleClientsUseCase
+import tech.dokus.features.auth.usecases.ListConsoleClientsUseCaseImpl
 import tech.dokus.features.auth.usecases.ListPendingInvitationsUseCase
 import tech.dokus.features.auth.usecases.ListPendingInvitationsUseCaseImpl
 import tech.dokus.features.auth.usecases.ListTeamMembersUseCase
@@ -181,6 +183,7 @@ val authDomainModule = module {
     singleOf(::ResendVerificationEmailUseCaseImpl) bind ResendVerificationEmailUseCase::class
     singleOf(::GetAccountMeUseCaseImpl) bind GetAccountMeUseCase::class
     singleOf(::GetCurrentUserUseCaseImpl) bind GetCurrentUserUseCase::class
+    singleOf(::ListConsoleClientsUseCaseImpl) bind ListConsoleClientsUseCase::class
     singleOf(::WatchCurrentUserUseCaseImpl) bind WatchCurrentUserUseCase::class
     singleOf(::UpdateProfileUseCaseImpl) bind UpdateProfileUseCase::class
     singleOf(::ChangePasswordUseCaseImpl) bind ChangePasswordUseCase::class

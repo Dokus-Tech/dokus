@@ -5,11 +5,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDateTime
+import tech.dokus.domain.DisplayName
 import tech.dokus.domain.Email
 import tech.dokus.domain.Password
 import tech.dokus.domain.ids.SessionId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
+import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.Address
 import tech.dokus.domain.model.AvatarUploadResponse
 import tech.dokus.domain.model.CreateTenantRequest
@@ -21,6 +23,7 @@ import tech.dokus.domain.model.auth.AccountMeResponse
 import tech.dokus.domain.model.auth.AppSurface
 import tech.dokus.domain.model.auth.AuthEvent
 import tech.dokus.domain.model.auth.ChangePasswordRequest
+import tech.dokus.domain.model.auth.ConsoleClientSummary
 import tech.dokus.domain.model.auth.LoginRequest
 import tech.dokus.domain.model.auth.LoginResponse
 import tech.dokus.domain.model.auth.LogoutRequest
@@ -176,6 +179,55 @@ class AuthRepositoryTest {
         assertTrue(result.isFailure)
         assertEquals(error, result.exceptionOrNull())
     }
+
+    @Test
+    fun listConsoleClientsDelegatesToAccountDataSource() = runTest {
+        val tokenManager = FakeTokenManager()
+        val authManager = FakeAuthManager()
+        val expectedClients = listOf(
+            ConsoleClientSummary(
+                tenantId = TenantId("00000000-0000-0000-0000-000000000222"),
+                companyName = DisplayName("Invoid BV"),
+                vatNumber = VatNumber("BE0792.140.667")
+            ),
+            ConsoleClientSummary(
+                tenantId = TenantId("00000000-0000-0000-0000-000000000333"),
+                companyName = DisplayName("PixelForge BV"),
+                vatNumber = null
+            ),
+        )
+        val account = FakeAccountRemoteDataSource().apply {
+            consoleClientsResult = Result.success(expectedClients)
+        }
+        val identity = FakeIdentityRemoteDataSource()
+        val tenant = FakeTenantRemoteDataSource()
+        val repository = AuthRepository(tokenManager, authManager, account, identity, tenant)
+
+        val result = repository.listConsoleClients()
+
+        assertTrue(account.listConsoleClientsCalled)
+        assertTrue(result.isSuccess)
+        assertEquals(expectedClients, result.getOrThrow())
+    }
+
+    @Test
+    fun listConsoleClientsForwardsFailure() = runTest {
+        val tokenManager = FakeTokenManager()
+        val authManager = FakeAuthManager()
+        val error = RuntimeException("console unavailable")
+        val account = FakeAccountRemoteDataSource().apply {
+            consoleClientsResult = Result.failure(error)
+        }
+        val identity = FakeIdentityRemoteDataSource()
+        val tenant = FakeTenantRemoteDataSource()
+        val repository = AuthRepository(tokenManager, authManager, account, identity, tenant)
+
+        val result = repository.listConsoleClients()
+
+        assertTrue(account.listConsoleClientsCalled)
+        assertTrue(result.isFailure)
+        assertEquals(error, result.exceptionOrNull())
+    }
 }
 
 private class FakeTokenManager : TokenManagerMutable {
@@ -234,9 +286,17 @@ private class FakeAccountRemoteDataSource : AccountRemoteDataSource {
     var revokeOtherSessionsCalled: Boolean = false
     var lastRevokedSessionId: SessionId? = null
     var lastChangePasswordRequest: ChangePasswordRequest? = null
+    var listConsoleClientsCalled: Boolean = false
     var accountMeResult: Result<AccountMeResponse> = Result.failure(IllegalStateException("not needed"))
+    var consoleClientsResult: Result<List<ConsoleClientSummary>> =
+        Result.failure(IllegalStateException("not needed"))
 
     override suspend fun getAccountMe(): Result<AccountMeResponse> = accountMeResult
+
+    override suspend fun listConsoleClients(): Result<List<ConsoleClientSummary>> {
+        listConsoleClientsCalled = true
+        return consoleClientsResult
+    }
 
     override suspend fun selectTenant(tenantId: TenantId): Result<LoginResponse> =
         Result.failure(IllegalStateException("not needed"))

@@ -31,6 +31,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
+import tech.dokus.app.allNavItems
 import tech.dokus.app.navSectionsCombined
 import tech.dokus.app.navigation.local.LocalRootNavController
 import tech.dokus.aura.resources.Res
@@ -38,6 +39,7 @@ import tech.dokus.aura.resources.coming_soon
 import tech.dokus.domain.enums.SubscriptionTier
 import tech.dokus.features.auth.usecases.GetCurrentTenantUseCase
 import tech.dokus.foundation.app.local.LocalAppModules
+import tech.dokus.foundation.app.shell.LocalUserAccessContext
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.model.NavItem
 import tech.dokus.foundation.aura.model.NavSection
@@ -56,6 +58,15 @@ internal fun MoreRoute(
     val rootNavController = LocalRootNavController.current
     val appModules = LocalAppModules.current
     val navSections = remember(appModules) { appModules.navSectionsCombined }
+    val allNavItems = remember(appModules) { appModules.allNavItems }
+    val accessContext = LocalUserAccessContext.current
+    val visibleNavItems = remember(allNavItems, accessContext) {
+        filterHomeNavItems(
+            items = allNavItems,
+            accessContext = accessContext
+        )
+    }
+    val visibleNavIds = remember(visibleNavItems) { visibleNavItems.map { it.id }.toSet() }
 
     var userTier by remember { mutableStateOf(SubscriptionTier.Core) }
     LaunchedEffect(Unit) {
@@ -65,10 +76,11 @@ internal fun MoreRoute(
             ?: SubscriptionTier.Core
     }
 
-    val filteredSections = remember(navSections, userTier) {
+    val filteredSections = remember(navSections, userTier, visibleNavIds) {
         navSections.mapNotNull { section ->
             val accessibleItems = section.items.filter { item ->
                 item.mobileTabOrder == null &&
+                        item.id in visibleNavIds &&
                         (item.requiredTier == null || SubscriptionTier.hasTomorrowAccess(userTier))
             }
             if (accessibleItems.isNotEmpty()) {

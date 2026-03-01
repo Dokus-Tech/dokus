@@ -5,6 +5,7 @@ import tech.dokus.domain.ids.SessionId
 import tech.dokus.domain.model.User
 import tech.dokus.domain.model.auth.AccountMeResponse
 import tech.dokus.domain.model.auth.ChangePasswordRequest
+import tech.dokus.domain.model.auth.ConsoleClientSummary
 import tech.dokus.domain.model.auth.DeactivateUserRequest
 import tech.dokus.domain.model.auth.LoginResponse
 import tech.dokus.domain.model.auth.LogoutRequest
@@ -21,6 +22,11 @@ interface AccountRemoteDataSource {
      * @return Result containing the session/bootstrap payload
      */
     suspend fun getAccountMe(): Result<AccountMeResponse>
+
+    /**
+     * List bookkeeper console clients accessible by the current account.
+     */
+    suspend fun listConsoleClients(): Result<List<ConsoleClientSummary>>
 
     /**
      * Select/switch to a specific tenant.

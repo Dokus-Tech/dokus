@@ -64,10 +64,11 @@ internal fun CounterpartyCard(
     onIntent: (DocumentReviewIntent) -> Unit,
     onCorrectContact: () -> Unit,
     onCreateContact: () -> Unit,
+    isAccountantReadOnly: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     val counterparty = tech.dokus.features.cashflow.presentation.review.models.counterpartyInfo(state)
-    val isReadOnly = state.isDocumentConfirmed || state.isDocumentRejected
+    val isReadOnly = isAccountantReadOnly || state.isDocumentConfirmed || state.isDocumentRejected
 
     Column(modifier = modifier.fillMaxWidth()) {
         // Subtle micro-label
@@ -113,29 +114,31 @@ internal fun CounterpartyCard(
             }
         }
 
-        when (val selection = state.contactSelectionState) {
-            is ContactSelectionState.Suggested -> {
-                SuggestedContactCard(
-                    name = selection.name,
-                    vatNumber = selection.vatNumber,
-                    onAccept = { onIntent(DocumentReviewIntent.AcceptSuggestedContact) },
-                    onChooseDifferent = onCorrectContact,
-                    modifier = Modifier.padding(top = Constraints.Spacing.small),
-                )
-            }
-            ContactSelectionState.NoContact -> {
-                if (hasExtractedData && state.selectedContactSnapshot == null) {
-                    PendingContactCard(
-                        name = counterparty.name,
-                        vatNumber = counterparty.vatNumber,
-                        iban = counterparty.iban,
-                        onLinkExisting = onCorrectContact,
-                        onCreateNew = onCreateContact,
+        if (!isReadOnly) {
+            when (val selection = state.contactSelectionState) {
+                is ContactSelectionState.Suggested -> {
+                    SuggestedContactCard(
+                        name = selection.name,
+                        vatNumber = selection.vatNumber,
+                        onAccept = { onIntent(DocumentReviewIntent.AcceptSuggestedContact) },
+                        onChooseDifferent = onCorrectContact,
                         modifier = Modifier.padding(top = Constraints.Spacing.small),
                     )
                 }
+                ContactSelectionState.NoContact -> {
+                    if (hasExtractedData && state.selectedContactSnapshot == null) {
+                        PendingContactCard(
+                            name = counterparty.name,
+                            vatNumber = counterparty.vatNumber,
+                            iban = counterparty.iban,
+                            onLinkExisting = onCorrectContact,
+                            onCreateNew = onCreateContact,
+                            modifier = Modifier.padding(top = Constraints.Spacing.small),
+                        )
+                    }
+                }
+                ContactSelectionState.Selected -> Unit
             }
-            ContactSelectionState.Selected -> Unit
         }
     }
 }
@@ -217,6 +220,7 @@ private fun PendingContactCard(
 @Composable
 internal fun InvoiceDetailsCard(
     state: DocumentReviewState.Content,
+    isAccountantReadOnly: Boolean = false,
     onIntent: (DocumentReviewIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -235,7 +239,7 @@ internal fun InvoiceDetailsCard(
             is InvoiceDraftData -> {
                 InvoiceDetailsFactDisplay(
                     direction = draft.direction,
-                    isReadOnly = state.isDocumentConfirmed || state.isDocumentRejected,
+                    isReadOnly = isAccountantReadOnly || state.isDocumentConfirmed || state.isDocumentRejected,
                     onDirectionSelected = { direction ->
                         onIntent(DocumentReviewIntent.SelectDirection(direction))
                     },
@@ -253,7 +257,7 @@ internal fun InvoiceDetailsCard(
             is CreditNoteDraftData -> {
                 CreditNoteDetailsFactDisplay(
                     direction = draft.direction,
-                    isReadOnly = state.isDocumentConfirmed || state.isDocumentRejected,
+                    isReadOnly = isAccountantReadOnly || state.isDocumentConfirmed || state.isDocumentRejected,
                     onDirectionSelected = { direction ->
                         onIntent(DocumentReviewIntent.SelectDirection(direction))
                     },
@@ -276,32 +280,34 @@ internal fun InvoiceDetailsCard(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
-                    ) {
-                        POutlinedButton(
-                            text = stringResource(Res.string.document_type_invoice),
-                            modifier = Modifier.weight(1f),
-                            onClick = { onIntent(DocumentReviewIntent.SelectDocumentType(DocumentType.Invoice)) },
-                        )
-                    }
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = Constraints.Spacing.small),
-                        horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
-                    ) {
-                        POutlinedButton(
-                            text = stringResource(Res.string.document_type_receipt),
-                            modifier = Modifier.weight(1f),
-                            onClick = { onIntent(DocumentReviewIntent.SelectDocumentType(DocumentType.Receipt)) },
-                        )
-                        POutlinedButton(
-                            text = stringResource(Res.string.document_type_credit_note),
-                            modifier = Modifier.weight(1f),
-                            onClick = { onIntent(DocumentReviewIntent.SelectDocumentType(DocumentType.CreditNote)) },
-                        )
+                    if (!isAccountantReadOnly) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
+                        ) {
+                            POutlinedButton(
+                                text = stringResource(Res.string.document_type_invoice),
+                                modifier = Modifier.weight(1f),
+                                onClick = { onIntent(DocumentReviewIntent.SelectDocumentType(DocumentType.Invoice)) },
+                            )
+                        }
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = Constraints.Spacing.small),
+                            horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
+                        ) {
+                            POutlinedButton(
+                                text = stringResource(Res.string.document_type_receipt),
+                                modifier = Modifier.weight(1f),
+                                onClick = { onIntent(DocumentReviewIntent.SelectDocumentType(DocumentType.Receipt)) },
+                            )
+                            POutlinedButton(
+                                text = stringResource(Res.string.document_type_credit_note),
+                                modifier = Modifier.weight(1f),
+                                onClick = { onIntent(DocumentReviewIntent.SelectDocumentType(DocumentType.CreditNote)) },
+                            )
+                        }
                     }
                 }
             }

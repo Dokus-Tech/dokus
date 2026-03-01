@@ -15,6 +15,7 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.User
 import tech.dokus.domain.model.auth.AccountMeResponse
 import tech.dokus.domain.model.auth.ChangePasswordRequest
+import tech.dokus.domain.model.auth.ConsoleClientSummary
 import tech.dokus.domain.model.auth.DeactivateUserRequest
 import tech.dokus.domain.model.auth.LoginResponse
 import tech.dokus.domain.model.auth.LogoutRequest
@@ -22,6 +23,7 @@ import tech.dokus.domain.model.auth.SelectTenantRequest
 import tech.dokus.domain.model.auth.SessionDto
 import tech.dokus.domain.model.auth.UpdateProfileRequest
 import tech.dokus.domain.routes.Account
+import tech.dokus.domain.routes.Console
 
 /**
  * HTTP implementation of AccountRemoteDataSource.
@@ -34,6 +36,12 @@ internal class AccountRemoteDataSourceImpl(
     override suspend fun getAccountMe(): Result<AccountMeResponse> {
         return runCatching {
             httpClient.get(Account.Me()).body()
+        }
+    }
+
+    override suspend fun listConsoleClients(): Result<List<ConsoleClientSummary>> {
+        return runCatching {
+            httpClient.get(Console.Clients()).body()
         }
     }
 
