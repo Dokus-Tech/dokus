@@ -22,7 +22,6 @@ import tech.dokus.domain.enums.InvoiceDeliveryMethod
 import tech.dokus.domain.enums.InvoiceDueDateMode
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.entity.EntityLookup
-import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.validators.ValidateOgmUseCase
 import tech.dokus.domain.usecases.SearchCompanyUseCase
 import tech.dokus.features.auth.usecases.GetCurrentTenantUseCase
@@ -634,36 +633,29 @@ internal class CreateInvoiceContainer(
         currentTenantResult.onFailure { logger.w { "Could not load current tenant: ${it.message}" } }
 
         val settings = tenantSettingsResult.getOrNull()
-        val currentTenant = currentTenantResult.getOrNull()
+        val currentTenant = requireNotNull(currentTenantResult.getOrNull()) {
+            "Current tenant must be available on Create Invoice screen."
+        }
 
-        if (settings != null || currentTenant != null) {
-            updateInvoice { state ->
-                val withDefaults = settings?.let { tenantSettings ->
-                    synchronizeDueDate(
-                        state.formState.copy(
-                            paymentTermsDays = tenantSettings.defaultPaymentTerms,
-                            senderIban = tenantSettings.companyIban?.value.orEmpty(),
-                            senderBic = tenantSettings.companyBic?.value.orEmpty(),
-                            notes = state.formState.notes.ifBlank { tenantSettings.paymentTermsText.orEmpty() }
-                        )
-                    )
-                } ?: state.formState
-
-                val (senderCompanyName, senderCompanyVat) = resolveSenderIdentity(
-                    settingsCompanyName = settings?.companyName,
-                    currentTenant = currentTenant,
-                    existingCompanyName = state.uiState.senderCompanyName,
-                    existingCompanyVat = state.uiState.senderCompanyVat
-                )
-
-                state.copy(
-                    formState = withDefaults,
-                    uiState = state.uiState.copy(
-                        senderCompanyName = senderCompanyName,
-                        senderCompanyVat = senderCompanyVat
+        updateInvoice { state ->
+            val withDefaults = settings?.let { tenantSettings ->
+                synchronizeDueDate(
+                    state.formState.copy(
+                        paymentTermsDays = tenantSettings.defaultPaymentTerms,
+                        senderIban = tenantSettings.companyIban?.value.orEmpty(),
+                        senderBic = tenantSettings.companyBic?.value.orEmpty(),
+                        notes = state.formState.notes.ifBlank { tenantSettings.paymentTermsText.orEmpty() }
                     )
                 )
-            }
+            } ?: state.formState
+
+            state.copy(
+                formState = withDefaults,
+                uiState = state.uiState.copy(
+                    senderCompanyName = currentTenant.legalName.value,
+                    senderCompanyVat = currentTenant.vatNumber.formatted
+                )
+            )
         }
 
         updateInvoice { state ->
@@ -843,24 +835,4 @@ internal class CreateInvoiceContainer(
             invoiceNumberPreview = null
         )
     }
-}
-
-internal fun resolveSenderIdentity(
-    settingsCompanyName: String?,
-    currentTenant: Tenant?,
-    existingCompanyName: String,
-    existingCompanyVat: String?
-): Pair<String, String?> {
-    val senderCompanyName = settingsCompanyName
-        ?.takeIf { it.isNotBlank() }
-        ?: currentTenant?.legalName?.value?.takeIf { it.isNotBlank() }
-        ?: existingCompanyName.takeIf { it.isNotBlank() }
-        ?: ""
-
-    val senderCompanyVat = currentTenant?.vatNumber
-        ?.formatted
-        ?.takeIf { it.isNotBlank() }
-        ?: existingCompanyVat?.takeIf { it.isNotBlank() }
-
-    return senderCompanyName to senderCompanyVat
 }
