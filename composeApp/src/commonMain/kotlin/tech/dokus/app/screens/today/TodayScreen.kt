@@ -12,8 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -62,6 +60,7 @@ import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.badges.SourceBadge
 import tech.dokus.foundation.aura.components.status.StatusDot
 import tech.dokus.foundation.aura.components.status.StatusDotType
@@ -321,21 +320,10 @@ private fun TodayAttentionCard(
                     )
                 }
             }
-            Button(
+            PPrimaryButton(
+                text = stringResource(Res.string.today_review_button),
                 onClick = onReviewClick,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                ),
-                shape = MaterialTheme.shapes.small,
-            ) {
-                Text(
-                    text = stringResource(Res.string.today_review_button),
-                    style = MaterialTheme.typography.labelMedium.copy(
-                        fontWeight = FontWeight.SemiBold,
-                    ),
-                )
-            }
+            )
         }
     }
 }
