@@ -155,7 +155,7 @@ internal fun Route.invoiceRoutes() {
 
         // POST /api/v1/invoices/{id}/emails - Send invoice via email
         post<Invoices.Id.Emails> { route ->
-            val tenantId = requireTenantId()
+            requireTenantId()
             val invoiceId = InvoiceId(Uuid.parse(route.parent.id))
             val request = call.receiveNullable<SendInvoiceEmailRequest>()
 

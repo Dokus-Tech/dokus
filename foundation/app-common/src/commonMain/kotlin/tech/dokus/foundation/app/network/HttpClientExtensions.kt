@@ -238,12 +238,17 @@ private val TenantHeaderPlugin = createClientPlugin(
     onRequest { request, _ ->
         if (request.headers[TenantHeaderName] != null) return@onRequest
         val tenantId = runCatching { tokenManager.getSelectedTenantId() }.getOrNull()
-        tenantId?.let { request.headers.append(TenantHeaderName, it.toString()) }
+        tenantId?.let {
+            request.headers.append(TenantHeaderName, it.toString())
+            request.attributes.put(TenantHeaderInjectedByPluginKey, true)
+        }
     }
 }
 
 private val UnauthorizedRefreshRetryAttemptKey =
     AttributeKey<Int>("UnauthorizedRefreshRetryAttempt")
+private val TenantHeaderInjectedByPluginKey =
+    AttributeKey<Boolean>("TenantHeaderInjectedByPlugin")
 
 private suspend fun Sender.executeWithUnauthorizedRefreshRetry(
     request: HttpRequestBuilder,
@@ -295,6 +300,21 @@ private suspend fun Sender.executeWithUnauthorizedRefreshRetry(
 
             request.headers.remove(HttpHeaders.Authorization)
             request.headers.append(HttpHeaders.Authorization, "Bearer $tokenForRetry")
+
+            // Refresh can change selected tenant context; recompute tenant header for retry.
+            val headerInjectedByPlugin = if (request.attributes.contains(TenantHeaderInjectedByPluginKey)) {
+                request.attributes[TenantHeaderInjectedByPluginKey]
+            } else {
+                false
+            }
+            if (headerInjectedByPlugin || request.headers[TenantHeaderName] == null) {
+                request.headers.remove(TenantHeaderName)
+                val tenantIdForRetry = runCatching { tokenManager.getSelectedTenantId() }.getOrNull()
+                tenantIdForRetry?.let {
+                    request.headers.append(TenantHeaderName, it.toString())
+                    request.attributes.put(TenantHeaderInjectedByPluginKey, true)
+                }
+            }
         }
     }
 }
