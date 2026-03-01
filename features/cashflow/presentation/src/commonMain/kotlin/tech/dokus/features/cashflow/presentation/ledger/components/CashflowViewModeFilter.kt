@@ -1,6 +1,5 @@
 package tech.dokus.features.cashflow.presentation.ledger.components
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -9,11 +8,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
@@ -28,12 +25,17 @@ import tech.dokus.aura.resources.cashflow_view_overdue
 import tech.dokus.aura.resources.cashflow_view_upcoming
 import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowViewMode
 import tech.dokus.features.cashflow.presentation.ledger.mvi.DirectionFilter
+import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.tabs.DokusTab
 import tech.dokus.foundation.aura.components.tabs.DokusTabs
 import tech.dokus.foundation.aura.style.redSoft
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
+
+private val FilterRowVerticalPadding = 8.dp
+private val FilterGroupSpacing = 14.dp
+private val RightClusterSpacing = 14.dp
 
 /**
  * View mode and direction filter for cashflow ledger.
@@ -53,15 +55,7 @@ internal fun CashflowViewModeFilter(
     onCreateInvoiceClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState())
-            .padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        // Period tabs
+    val periodTabs: @Composable () -> Unit = {
         DokusTabs(
             tabs = listOf(
                 DokusTab(
@@ -87,8 +81,9 @@ internal fun CashflowViewModeFilter(
                 onViewModeChange(mode)
             },
         )
+    }
 
-        // Direction tabs
+    val directionTabs: @Composable () -> Unit = {
         DokusTabs(
             tabs = listOf(
                 DokusTab(
@@ -110,20 +105,42 @@ internal fun CashflowViewModeFilter(
                 onDirectionChange(dir)
             },
         )
+    }
 
-        // Create invoice link (right-aligned)
-        if (onCreateInvoiceClick != null) {
+    if (onCreateInvoiceClick != null) {
+        Row(
+            modifier = modifier
+                .fillMaxWidth()
+                .padding(vertical = FilterRowVerticalPadding),
+            horizontalArrangement = Arrangement.spacedBy(FilterGroupSpacing),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            periodTabs()
+
             Spacer(modifier = Modifier.weight(1f))
-            Text(
-                text = stringResource(Res.string.cashflow_create_invoice),
-                style = MaterialTheme.typography.labelMedium.copy(
-                    fontWeight = FontWeight.SemiBold,
-                ),
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier
-                    .clickable(onClick = onCreateInvoiceClick)
-                    .padding(vertical = 4.dp),
-            )
+
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(RightClusterSpacing),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                directionTabs()
+                PPrimaryButton(
+                    text = "+ ${stringResource(Res.string.cashflow_create_invoice)}",
+                    onClick = onCreateInvoiceClick
+                )
+            }
+        }
+    } else {
+        Row(
+            modifier = modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
+                .padding(vertical = FilterRowVerticalPadding),
+            horizontalArrangement = Arrangement.spacedBy(FilterGroupSpacing),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            periodTabs()
+            directionTabs()
         }
     }
 }
@@ -143,6 +160,24 @@ private fun CashflowViewModeFilterPreview(
             direction = DirectionFilter.All,
             onViewModeChange = {},
             onDirectionChange = {}
+        )
+    }
+}
+
+@Preview(widthDp = 1600)
+@Composable
+private fun CashflowViewModeFilterWithCreateButtonPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        CashflowViewModeFilter(
+            viewMode = CashflowViewMode.Overdue,
+            direction = DirectionFilter.All,
+            upcomingCount = 1,
+            overdueCount = 8,
+            onViewModeChange = {},
+            onDirectionChange = {},
+            onCreateInvoiceClick = {}
         )
     }
 }

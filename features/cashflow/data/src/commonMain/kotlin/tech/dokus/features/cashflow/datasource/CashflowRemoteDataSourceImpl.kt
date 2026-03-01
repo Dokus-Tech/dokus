@@ -68,6 +68,7 @@ import tech.dokus.domain.model.PeppolInboxPollResponse
 import tech.dokus.domain.model.PeppolRegistrationDto
 import tech.dokus.domain.model.PeppolRegistrationResponse
 import tech.dokus.domain.model.PeppolSettingsDto
+import tech.dokus.domain.model.PeppolStatusResponse
 import tech.dokus.domain.model.PeppolTransmissionDto
 import tech.dokus.domain.model.PeppolValidationResult
 import tech.dokus.domain.model.PeppolVerifyResponse
@@ -82,6 +83,7 @@ import tech.dokus.domain.model.UpdateDraftResponse
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.routes.Attachments
 import tech.dokus.domain.routes.Cashflow
+import tech.dokus.domain.routes.Contacts
 import tech.dokus.domain.routes.Documents
 import tech.dokus.domain.routes.Expenses
 import tech.dokus.domain.routes.Invoices
@@ -122,6 +124,7 @@ internal class CashflowRemoteDataSourceImpl(
     override suspend fun listInvoices(
         status: InvoiceStatus?,
         direction: DocumentDirection?,
+        contactId: ContactId?,
         fromDate: LocalDate?,
         toDate: LocalDate?,
         limit: Int,
@@ -132,6 +135,7 @@ internal class CashflowRemoteDataSourceImpl(
                 Invoices(
                     status = status,
                     direction = direction,
+                    contactId = contactId?.toString(),
                     fromDate = fromDate,
                     toDate = toDate,
                     limit = limit,
@@ -188,22 +192,26 @@ internal class CashflowRemoteDataSourceImpl(
         }
     }
 
-    override suspend fun sendInvoiceEmail(
-        invoiceId: InvoiceId,
-        recipientEmail: String?,
-        message: String?
-    ): Result<Unit> {
+    override suspend fun generateInvoicePdf(invoiceId: InvoiceId): Result<String> {
         return runCatching {
             val invoiceIdRoute = Invoices.Id(id = invoiceId.toString())
-            httpClient.post(Invoices.Id.Emails(parent = invoiceIdRoute)) {
-                contentType(ContentType.Application.Json)
-                setBody(
-                    mapOf(
-                        "recipientEmail" to recipientEmail,
-                        "message" to message
-                    )
+            httpClient.post(Invoices.Id.Pdf(parent = invoiceIdRoute))
+                .body<tech.dokus.domain.model.InvoicePdfResponse>().downloadUrl
+        }
+    }
+
+    override suspend fun getContactPeppolStatus(
+        contactId: ContactId,
+        refresh: Boolean
+    ): Result<PeppolStatusResponse> {
+        return runCatching {
+            val contactIdRoute = Contacts.Id(id = contactId.toString())
+            httpClient.get(
+                Contacts.Id.PeppolStatus(
+                    parent = contactIdRoute,
+                    refresh = refresh
                 )
-            }.body()
+            ).body()
         }
     }
 
@@ -613,8 +621,7 @@ internal class CashflowRemoteDataSourceImpl(
                         counterpartyIntent = counterpartyIntent
                     )
                 )
-            }
-            Unit
+            }.body<Unit>()
         }
     }
 

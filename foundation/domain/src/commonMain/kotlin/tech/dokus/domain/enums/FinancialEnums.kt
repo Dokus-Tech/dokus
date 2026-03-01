@@ -283,6 +283,24 @@ enum class InvoiceStatus(override val dbValue: String) : DbEnum {
 }
 
 @Serializable
+enum class InvoiceDueDateMode(override val dbValue: String) : DbEnum {
+    @SerialName("TERMS")
+    Terms("TERMS"),
+
+    @SerialName("FIXED_DATE")
+    FixedDate("FIXED_DATE")
+}
+
+@Serializable
+enum class InvoiceDeliveryMethod(override val dbValue: String) : DbEnum {
+    @SerialName("PEPPOL")
+    Peppol("PEPPOL"),
+
+    @SerialName("PDF_EXPORT")
+    PdfExport("PDF_EXPORT")
+}
+
+@Serializable
 enum class Currency(
     override val dbValue: String,
     val displayName: String,

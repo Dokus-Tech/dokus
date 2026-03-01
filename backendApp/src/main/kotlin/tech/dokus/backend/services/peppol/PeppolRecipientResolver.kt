@@ -242,7 +242,7 @@ class PeppolRecipientResolver(
     fun toStatusResponse(resolution: PeppolResolution?, refreshed: Boolean): PeppolStatusResponse {
         return if (resolution == null) {
             PeppolStatusResponse(
-                status = "unknown",
+                status = PeppolStatusResponse.STATUS_UNKNOWN,
                 participantId = null,
                 supportedDocTypes = emptyList(),
                 source = null,

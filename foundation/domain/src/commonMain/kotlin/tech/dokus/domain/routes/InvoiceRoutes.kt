@@ -18,6 +18,7 @@ import tech.dokus.domain.enums.InvoiceStatus
 class Invoices(
     val status: InvoiceStatus? = null,
     val direction: DocumentDirection? = null,
+    val contactId: String? = null,
     val fromDate: LocalDate? = null,
     val toDate: LocalDate? = null,
     val limit: Int = 50,
@@ -60,13 +61,12 @@ class Invoices(
         class Payments(val parent: Id)
 
         /**
-         * GET/POST /api/v1/invoices/{id}/emails
-         * GET - List sent emails for this invoice
-         * POST - Send invoice via email (creates email delivery record)
+         * POST /api/v1/invoices/{id}/pdf
+         * Generate and upload a PDF export, returning a download URL.
          */
         @Serializable
-        @Resource("emails")
-        class Emails(val parent: Id)
+        @Resource("pdf")
+        class Pdf(val parent: Id)
 
         /**
          * GET/POST /api/v1/invoices/{id}/attachments

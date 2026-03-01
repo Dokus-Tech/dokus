@@ -8,6 +8,7 @@ import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.InvoiceStatus
+import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.CreateInvoiceRequest
@@ -62,6 +63,7 @@ class InvoiceService(
         tenantId: TenantId,
         status: InvoiceStatus? = null,
         direction: DocumentDirection? = null,
+        contactId: ContactId? = null,
         fromDate: LocalDate? = null,
         toDate: LocalDate? = null,
         limit: Int = 50,
@@ -74,9 +76,26 @@ class InvoiceService(
             limit,
             offset
         )
-        return invoiceRepository.listInvoices(tenantId, status, direction, fromDate, toDate, limit, offset)
+        return invoiceRepository.listInvoices(
+            tenantId = tenantId,
+            status = status,
+            direction = direction,
+            contactId = contactId,
+            fromDate = fromDate,
+            toDate = toDate,
+            limit = limit,
+            offset = offset
+        )
             .onSuccess { logger.debug("Retrieved ${it.items.size} invoices (total=${it.total})") }
             .onFailure { logger.error("Failed to list invoices for tenant: $tenantId", it) }
+    }
+
+    suspend fun getLatestInvoiceForContact(
+        tenantId: TenantId,
+        contactId: ContactId
+    ): Result<FinancialDocumentDto.InvoiceDto?> {
+        return invoiceRepository.getLatestInvoiceForContact(tenantId, contactId)
+            .onFailure { logger.error("Failed to get latest invoice for contact: $contactId", it) }
     }
 
     /**

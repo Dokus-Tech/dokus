@@ -1,14 +1,16 @@
 package tech.dokus.features.cashflow.presentation.cashflow.model.mapper
 
-import tech.dokus.domain.Money
-import tech.dokus.domain.VatRate
+import tech.dokus.domain.enums.InvoiceDeliveryMethod
+import tech.dokus.domain.ids.Bic
+import tech.dokus.domain.ids.Iban
+import tech.dokus.domain.ids.StructuredCommunication
 import tech.dokus.domain.model.CreateInvoiceRequest
 import tech.dokus.domain.model.InvoiceItemDto
 import tech.dokus.features.cashflow.mvi.model.CreateInvoiceFormState
 
-private const val VatRateMultiplier = 100
-
-internal fun CreateInvoiceFormState.toCreateInvoiceRequest(): CreateInvoiceRequest {
+internal fun CreateInvoiceFormState.toCreateInvoiceRequest(
+    deliveryMethod: InvoiceDeliveryMethod
+): CreateInvoiceRequest {
     val client = requireNotNull(selectedClient) {
         "Client must be selected before submitting invoice"
     }
@@ -27,15 +29,24 @@ internal fun CreateInvoiceFormState.toCreateInvoiceRequest(): CreateInvoiceReque
                 InvoiceItemDto(
                     description = item.description,
                     quantity = item.quantity,
-                    unitPrice = Money.fromDouble(item.unitPriceDouble),
-                    vatRate = VatRate(item.vatRatePercent * VatRateMultiplier),
-                    lineTotal = Money.fromDouble(item.lineTotalDouble),
-                    vatAmount = Money.fromDouble(item.vatAmountDouble),
+                    unitPrice = item.unitPriceMoney,
+                    vatRate = item.vatRate,
+                    lineTotal = item.lineTotalMoney,
+                    vatAmount = item.vatAmountMoney,
                     sortOrder = index
                 )
             },
         issueDate = issueDate,
         dueDate = dueDate,
+        paymentTermsDays = paymentTermsDays,
+        dueDateMode = dueDateMode,
+        structuredCommunication = StructuredCommunication.from(structuredCommunication),
+        senderIban = senderIban.takeIf { it.isNotBlank() }?.let { Iban.from(it) },
+        senderBic = senderBic.trim()
+            .uppercase()
+            .takeIf { it.isNotBlank() }
+            ?.let(::Bic),
+        deliveryMethod = deliveryMethod,
         notes = notes.takeIf { it.isNotBlank() }
     )
 }

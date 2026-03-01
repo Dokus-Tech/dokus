@@ -5,13 +5,20 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onStart
+import tech.dokus.domain.enums.DocumentDirection
+import tech.dokus.domain.enums.InvoiceDeliveryMethod
+import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.model.CreateInvoiceRequest
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.features.cashflow.datasource.CashflowRemoteDataSource
+import tech.dokus.features.cashflow.usecases.GetContactPeppolStatusUseCase
+import tech.dokus.features.cashflow.usecases.GetLatestInvoiceForContactUseCase
 import tech.dokus.features.cashflow.usecases.SubmitInvoiceUseCase
+import tech.dokus.features.cashflow.usecases.SubmitInvoiceWithDeliveryResult
+import tech.dokus.features.cashflow.usecases.SubmitInvoiceWithDeliveryUseCase
 import tech.dokus.features.cashflow.usecases.WatchPendingDocumentsUseCase
 import tech.dokus.foundation.app.state.DokusState
 
@@ -69,5 +76,61 @@ internal class SubmitInvoiceUseCaseImpl(
         request: CreateInvoiceRequest
     ): Result<FinancialDocumentDto.InvoiceDto> {
         return cashflowRemoteDataSource.createInvoice(request)
+    }
+}
+
+internal class GetLatestInvoiceForContactUseCaseImpl(
+    private val cashflowRemoteDataSource: CashflowRemoteDataSource
+) : GetLatestInvoiceForContactUseCase {
+    override suspend fun invoke(contactId: ContactId): Result<FinancialDocumentDto.InvoiceDto?> {
+        return cashflowRemoteDataSource.listInvoices(
+            direction = DocumentDirection.Outbound,
+            contactId = contactId,
+            limit = 1,
+            offset = 0
+        ).map { it.items.firstOrNull() }
+    }
+}
+
+internal class GetContactPeppolStatusUseCaseImpl(
+    private val cashflowRemoteDataSource: CashflowRemoteDataSource
+) : GetContactPeppolStatusUseCase {
+    override suspend fun invoke(
+        contactId: ContactId,
+        refresh: Boolean
+    ) = cashflowRemoteDataSource.getContactPeppolStatus(contactId, refresh)
+}
+
+internal class SubmitInvoiceWithDeliveryUseCaseImpl(
+    private val cashflowRemoteDataSource: CashflowRemoteDataSource
+) : SubmitInvoiceWithDeliveryUseCase {
+    override suspend fun invoke(
+        request: CreateInvoiceRequest,
+        deliveryMethod: InvoiceDeliveryMethod?
+    ): Result<SubmitInvoiceWithDeliveryResult> = runCatching {
+        val invoice = cashflowRemoteDataSource.createInvoice(request).getOrThrow()
+
+        when (deliveryMethod) {
+            null -> SubmitInvoiceWithDeliveryResult.DraftSaved(invoice.id)
+            InvoiceDeliveryMethod.Peppol -> {
+                cashflowRemoteDataSource.sendInvoiceViaPeppol(invoice.id)
+                    .fold(
+                        onSuccess = { SubmitInvoiceWithDeliveryResult.PeppolQueued(invoice.id) },
+                        onFailure = { SubmitInvoiceWithDeliveryResult.DeliveryFailed(invoice.id, it.message ?: "PEPPOL delivery failed") }
+                    )
+            }
+            InvoiceDeliveryMethod.PdfExport -> {
+                cashflowRemoteDataSource.generateInvoicePdf(invoice.id)
+                    .fold(
+                        onSuccess = { url ->
+                            SubmitInvoiceWithDeliveryResult.PdfReady(
+                                invoiceId = invoice.id,
+                                downloadUrl = url
+                            )
+                        },
+                        onFailure = { SubmitInvoiceWithDeliveryResult.DeliveryFailed(invoice.id, it.message ?: "PDF generation failed") }
+                    )
+            }
+        }
     }
 }

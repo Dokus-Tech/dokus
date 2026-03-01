@@ -10,6 +10,8 @@ import tech.dokus.database.tables.contacts.ContactsTable
 import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.DocumentDirection
+import tech.dokus.domain.enums.InvoiceDeliveryMethod
+import tech.dokus.domain.enums.InvoiceDueDateMode
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.enums.PaymentMethod
 import tech.dokus.domain.enums.PeppolStatus
@@ -55,6 +57,12 @@ object InvoicesTable : UUIDTable("invoices") {
 
     // Optional fields
     val notes = text("notes").nullable()
+    val paymentTermsDays = integer("payment_terms_days").default(30)
+    val dueDateMode = dbEnumeration<InvoiceDueDateMode>("due_date_mode").default(InvoiceDueDateMode.Terms)
+    val structuredCommunication = varchar("structured_communication", 32).nullable()
+    val senderIban = varchar("sender_iban", 34).nullable()
+    val senderBic = varchar("sender_bic", 11).nullable()
+    val deliveryMethod = dbEnumeration<InvoiceDeliveryMethod>("delivery_method").default(InvoiceDeliveryMethod.PdfExport)
     val termsAndConditions = text("terms_and_conditions").nullable()
 
     // Peppol e-invoicing (Belgium 2026 mandate)
@@ -80,6 +88,7 @@ object InvoicesTable : UUIDTable("invoices") {
         index(false, tenantId, status)
         index(false, tenantId, direction)
         index(false, tenantId, contactId)
+        index(false, tenantId, contactId, issueDate)
         // Per-tenant uniqueness for invoice numbers
         uniqueIndex(tenantId, invoiceNumber)
         // Idempotent document confirmation: only one invoice per document per tenant

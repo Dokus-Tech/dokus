@@ -13,17 +13,19 @@ import io.ktor.server.resources.put
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
+import tech.dokus.backend.services.pdf.InvoicePdfService
+import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.backend.services.cashflow.InvoiceService
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.model.CreateInvoiceRequest
-import tech.dokus.domain.model.InvoiceItemDto
+import tech.dokus.domain.model.InvoicePdfResponse
 import tech.dokus.domain.model.RecordPaymentRequest
 import tech.dokus.domain.routes.Invoices
 import tech.dokus.foundation.backend.security.authenticateJwt
-import tech.dokus.foundation.backend.security.dokusPrincipal
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -36,6 +38,8 @@ import kotlin.uuid.Uuid
 @OptIn(ExperimentalUuidApi::class)
 internal fun Route.invoiceRoutes() {
     val invoiceService by inject<InvoiceService>()
+    val invoicePdfService by inject<InvoicePdfService>()
+    val contactRepository by inject<ContactRepository>()
 
     authenticateJwt {
         // GET /api/v1/invoices - List invoices with query params
@@ -53,6 +57,10 @@ internal fun Route.invoiceRoutes() {
                 tenantId = tenantId,
                 status = route.status,
                 direction = route.direction,
+                contactId = route.contactId?.let { rawId ->
+                    runCatching { ContactId.parse(rawId) }
+                        .getOrElse { throw DokusException.BadRequest("Invalid contactId query parameter") }
+                },
                 fromDate = route.fromDate,
                 toDate = route.toDate,
                 limit = route.limit,
@@ -153,14 +161,34 @@ internal fun Route.invoiceRoutes() {
             call.respond(HttpStatusCode.NoContent)
         }
 
-        // POST /api/v1/invoices/{id}/emails - Send invoice via email
-        post<Invoices.Id.Emails> { route ->
-            requireTenantId()
+        // POST /api/v1/invoices/{id}/pdf - Generate PDF export and return download URL
+        post<Invoices.Id.Pdf> { route ->
+            val tenantId = requireTenantId()
             val invoiceId = InvoiceId(Uuid.parse(route.parent.id))
-            val request = call.receiveNullable<SendInvoiceEmailRequest>()
+            val invoice = invoiceService.getInvoice(invoiceId, tenantId)
+                .getOrElse { throw DokusException.InternalError("Failed to fetch invoice") }
+                ?: throw DokusException.NotFound("Invoice not found")
 
-            // TODO: Implement email sending via EmailService when available
-            throw DokusException.InternalError("Email sending not yet implemented")
+            val contactName = contactRepository.getContact(invoice.contactId, tenantId)
+                .getOrElse { throw DokusException.InternalError("Failed to load client details for PDF generation") }
+                ?.name
+                ?.value
+                ?: throw DokusException.InternalError("Client details missing — cannot generate invoice PDF")
+
+            val uploadResult = invoicePdfService.generateAndUploadPdf(
+                invoice = invoice,
+                contactDisplayName = contactName
+            ).getOrElse {
+                throw DokusException.InternalError("Failed to generate invoice PDF")
+            }
+
+            call.respond(
+                HttpStatusCode.OK,
+                InvoicePdfResponse(
+                    downloadUrl = uploadResult.url,
+                    storageKey = uploadResult.key
+                )
+            )
         }
     }
 }
@@ -168,12 +196,3 @@ internal fun Route.invoiceRoutes() {
 // Request DTOs
 @kotlinx.serialization.Serializable
 private data class InvoiceStatusRequest(val status: InvoiceStatus)
-
-@kotlinx.serialization.Serializable
-private data class SendInvoiceEmailRequest(
-    val recipientEmail: String? = null,
-    val message: String? = null
-)
-
-@kotlinx.serialization.Serializable
-private data class CalculateTotalsRequest(val items: List<InvoiceItemDto>)

@@ -5,168 +5,176 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
 import kotlinx.datetime.todayIn
+import tech.dokus.domain.Money
+import tech.dokus.domain.VatRate
+import tech.dokus.domain.enums.InvoiceDeliveryMethod
+import tech.dokus.domain.enums.InvoiceDueDateMode
 import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.model.PeppolStatusResponse
 import tech.dokus.domain.model.contact.ContactDto
-import kotlin.math.absoluteValue
 import kotlin.math.round
 import kotlin.random.Random
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-// Invoice defaults
 private const val DefaultDueDateOffsetDays = 30
 private const val DefaultQuantity = 1.0
 private const val DefaultVatRatePercent = 21
+private const val VatRateMultiplier = 100
 
-// Money formatting
-private const val CentsMultiplier = 100
-private const val RoundingOffset = 0.5
-private const val DecimalPadLength = 2
-
-// ============================================================================
-// DELIVERY METHOD
-// ============================================================================
-
-/**
- * Available delivery methods for sending invoices.
- */
-enum class InvoiceDeliveryMethod {
-    PDF_EXPORT,
-    PEPPOL,
-    EMAIL
+enum class DatePickerTarget {
+    IssueDate,
+    DueDate
 }
 
-// ============================================================================
-// UI STATE
-// ============================================================================
+enum class InvoiceSection {
+    Client,
+    LineItems,
+    PaymentDelivery,
+    DatesTerms
+}
 
-/**
- * UI state for the interactive invoice editor.
- * Separate from form data to keep concerns isolated.
- */
-data class CreateInvoiceUiState(
-    val expandedItemId: String? = null,
-    val isClientPanelOpen: Boolean = false,
-    val clientSearchQuery: String = "",
-    val selectedDeliveryMethod: InvoiceDeliveryMethod = InvoiceDeliveryMethod.PDF_EXPORT,
-    val isDatePickerOpen: DatePickerTarget? = null,
-    val currentStep: InvoiceCreationStep = InvoiceCreationStep.EDIT_INVOICE
+enum class InvoiceResolvedAction {
+    Peppol,
+    PdfExport
+}
+
+data class DeliveryResolution(
+    val action: InvoiceResolvedAction,
+    val reason: String? = null
 )
 
-/**
- * Which date picker is currently open.
- */
-enum class DatePickerTarget {
-    ISSUE_DATE,
-    DUE_DATE
+data class LatestInvoiceSuggestion(
+    val issueDate: LocalDate,
+    val lines: List<InvoiceLineItem>
+)
+
+data class ExternalClientCandidate(
+    val name: String,
+    val vatNumber: VatNumber?,
+    val enterpriseNumber: String,
+    val prefillAddress: String? = null
+)
+
+sealed interface ClientSuggestion {
+    data class LocalContact(val contact: ContactDto) : ClientSuggestion
+    data class ExternalCompany(val candidate: ExternalClientCandidate) : ClientSuggestion
+    data class CreateManual(val query: String) : ClientSuggestion
 }
 
-/**
- * Steps in the invoice creation flow (for mobile).
- */
-enum class InvoiceCreationStep {
-    EDIT_INVOICE,
-    SEND_OPTIONS
+data class ClientLookupState(
+    val query: String = "",
+    val isExpanded: Boolean = false,
+    val localResults: List<ContactDto> = emptyList(),
+    val externalResults: List<ExternalClientCandidate> = emptyList(),
+    val isLocalLoading: Boolean = false,
+    val isExternalLoading: Boolean = false,
+    val mergedSuggestions: List<ClientSuggestion> = emptyList(),
+    val errorHint: String? = null
+) {
+    val isLoading: Boolean
+        get() = isLocalLoading || isExternalLoading
 }
 
-// ============================================================================
-// FORM STATE
-// ============================================================================
+data class CreateInvoiceUiState(
+    val expandedItemId: String? = null,
+    val clientLookupState: ClientLookupState = ClientLookupState(),
+    val senderCompanyName: String = "",
+    val senderCompanyVat: String? = null,
+    val isDatePickerOpen: DatePickerTarget? = null,
+    val expandedSections: Set<InvoiceSection> = setOf(InvoiceSection.Client),
+    val suggestedSection: InvoiceSection? = null,
+    val selectedDeliveryPreference: InvoiceDeliveryMethod = InvoiceDeliveryMethod.Peppol,
+    val resolvedDeliveryAction: DeliveryResolution = DeliveryResolution(
+        action = InvoiceResolvedAction.PdfExport,
+        reason = "Select a client to enable PEPPOL."
+    ),
+    val latestInvoiceSuggestion: LatestInvoiceSuggestion? = null,
+    val isPreviewVisible: Boolean = false,
+    val defaultsLoaded: Boolean = false
+)
 
-/**
- * State representing the invoice creation form data.
- */
 data class CreateInvoiceFormState(
     val selectedClient: ContactDto? = null,
     val issueDate: LocalDate? = null,
     val dueDate: LocalDate? = null,
+    val paymentTermsDays: Int = DefaultDueDateOffsetDays,
+    val dueDateMode: InvoiceDueDateMode = InvoiceDueDateMode.Terms,
+    val structuredCommunication: String = "",
+    val senderIban: String = "",
+    val senderBic: String = "",
     val notes: String = "",
     val items: List<InvoiceLineItem> = listOf(InvoiceLineItem()),
+    val peppolStatus: PeppolStatusResponse? = null,
+    val peppolStatusLoading: Boolean = false,
     val isSaving: Boolean = false,
     val errors: Map<String, DokusException> = emptyMap()
 ) {
+    val subtotalMoney: Money
+        get() = items.fold(Money.ZERO) { acc, item -> acc + item.lineTotalMoney }
+
+    val vatAmountMoney: Money
+        get() = items.fold(Money.ZERO) { acc, item -> acc + item.vatAmountMoney }
+
+    val totalMoney: Money
+        get() = subtotalMoney + vatAmountMoney
+
     val subtotal: String
-        get() {
-            val total = items.sumOf { it.lineTotalDouble }
-            return formatMoney(total)
-        }
+        get() = formatMoney(subtotalMoney)
 
     val vatAmount: String
-        get() {
-            val total = items.sumOf { it.vatAmountDouble }
-            return formatMoney(total)
-        }
+        get() = formatMoney(vatAmountMoney)
 
     val total: String
-        get() {
-            val subtotalVal = items.sumOf { it.lineTotalDouble }
-            val vatVal = items.sumOf { it.vatAmountDouble }
-            return formatMoney(subtotalVal + vatVal)
-        }
+        get() = formatMoney(totalMoney)
 
     val isValid: Boolean
-        get() = selectedClient != null && items.any { it.isValid }
+        get() = selectedClient != null &&
+            issueDate != null &&
+            dueDate != null &&
+            items.any { it.isValid }
 
     companion object {
-        /**
-         * Create initial form state with today's date and default due date.
-         */
         @OptIn(ExperimentalTime::class)
-        fun createInitial(expandedItemId: (String) -> Unit): CreateInvoiceFormState {
+        fun createInitial(): CreateInvoiceFormState {
             val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
-            val firstItem = InvoiceLineItem()
-            expandedItemId(firstItem.id)
             return CreateInvoiceFormState(
                 issueDate = today,
                 dueDate = today.plus(DefaultDueDateOffsetDays, DateTimeUnit.DAY),
-                items = listOf(firstItem)
+                items = listOf(InvoiceLineItem())
             )
         }
     }
 }
 
-/**
- * Represents a line item in the invoice form.
- */
 data class InvoiceLineItem(
     val id: String = Random.nextLong().toString(),
     val description: String = "",
     val quantity: Double = DefaultQuantity,
-    val unitPrice: String = "", // Stored as string for form input
-    val vatRatePercent: Int = DefaultVatRatePercent // 21%, 12%, 6%, 0%
+    val unitPrice: String = "",
+    val vatRatePercent: Int = DefaultVatRatePercent
 ) {
-    val unitPriceDouble: Double
-        get() = unitPrice.toDoubleOrNull() ?: 0.0
+    val unitPriceMoney: Money
+        get() = Money.parse(unitPrice) ?: Money.ZERO
 
-    val lineTotalDouble: Double
-        get() = unitPriceDouble * quantity
+    val lineTotalMoney: Money
+        get() = Money(round(unitPriceMoney.minor.toDouble() * quantity).toLong())
 
-    val vatRateDecimal: Double
-        get() = vatRatePercent / CentsMultiplier.toDouble()
+    val vatRate: VatRate
+        get() = VatRate(vatRatePercent * VatRateMultiplier)
 
-    val vatAmountDouble: Double
-        get() = lineTotalDouble * vatRateDecimal
+    val vatAmountMoney: Money
+        get() = vatRate.applyTo(lineTotalMoney)
 
     val lineTotal: String
-        get() = formatMoney(lineTotalDouble)
+        get() = formatMoney(lineTotalMoney)
 
     val isValid: Boolean
-        get() = description.isNotBlank() && quantity > 0 && unitPriceDouble > 0
+        get() = description.isNotBlank() && quantity > 0 && unitPriceMoney.isPositive
 
     val isEmpty: Boolean
         get() = description.isBlank() && unitPrice.isBlank()
 }
 
-/**
- * Format a double value as money (e.g., "€123.45").
- * Multiplatform-compatible formatting.
- */
-fun formatMoney(value: Double): String {
-    val rounded = round(value * CentsMultiplier) / CentsMultiplier
-    val isNegative = rounded < 0
-    val absValue = rounded.absoluteValue
-    val intPart = absValue.toLong()
-    val decPart = ((absValue - intPart) * CentsMultiplier + RoundingOffset).toInt()
-    val sign = if (isNegative) "-" else ""
-    return "$sign€$intPart.${decPart.toString().padStart(DecimalPadLength, '0')}"
-}
+fun formatMoney(amount: Money): String = "€${amount.toDisplayString()}"

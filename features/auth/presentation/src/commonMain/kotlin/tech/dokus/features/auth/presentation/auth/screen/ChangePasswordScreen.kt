@@ -2,6 +2,7 @@ package tech.dokus.features.auth.presentation.auth.screen
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -81,6 +82,7 @@ private fun ChangePasswordContent(
             .fillMaxSize()
             .padding(contentPadding)
             .withContentPadding()
+            .imePadding()
             .dismissKeyboardOnTapOutside(),
         verticalArrangement = Arrangement.Center
     ) {

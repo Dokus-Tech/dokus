@@ -230,7 +230,7 @@ class DocumentReviewCanonicalStateTest {
 
     private fun invoiceDraft(
         issueDate: LocalDate = LocalDate(2026, 2, 10),
-        dueDate: LocalDate = LocalDate(2026, 2, 28),
+        dueDate: LocalDate = LocalDate(2099, 2, 28),
     ) = InvoiceDraftData(
         direction = DocumentDirection.Inbound,
         issueDate = issueDate,

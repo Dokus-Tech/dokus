@@ -47,7 +47,7 @@ data class DokusSizing(
     val iconXLarge: Dp = 48.dp,
     val iconXXLarge: Dp = 64.dp,
     val buttonLoadingIcon: Dp = 20.dp,
-    val buttonHeight: Dp = 42.dp,
+    val buttonHeight: Dp = 34.dp,
     val inputHeight: Dp = 56.dp,
     val navigationBarHeight: Dp = 60.dp,
     val shimmerLineHeight: Dp = 14.dp,
@@ -70,6 +70,7 @@ data class DokusSizing(
     val navigationIndicatorHeight: Dp = 2.dp,
     val searchFieldMinWidth: Dp = 200.dp,
     val searchFieldMaxWidth: Dp = 360.dp,
+    val operatorFormMaxWidth: Dp = 820.dp,
 )
 
 @Immutable
