@@ -18,6 +18,7 @@ import tech.dokus.domain.model.UpsertTenantAddressRequest
 import tech.dokus.domain.model.User
 import tech.dokus.domain.model.auth.ChangePasswordRequest
 import tech.dokus.domain.model.auth.DeactivateUserRequest
+import tech.dokus.domain.model.auth.AccountMeResponse
 import tech.dokus.domain.model.auth.LoginRequest
 import tech.dokus.domain.model.auth.LoginResponse
 import tech.dokus.domain.model.auth.LogoutRequest
@@ -167,6 +168,16 @@ class AuthRepository(
             }
             .onFailure { error ->
                 logger.e(error) { "Failed to check freelancer tenant status" }
+            }
+    }
+
+    /**
+     * Get current session/bootstrap payload.
+     */
+    override suspend fun getAccountMe(): Result<AccountMeResponse> {
+        return accountDataSource.getAccountMe()
+            .onFailure { error ->
+                logger.e(error) { "Failed to get account bootstrap payload" }
             }
     }
 

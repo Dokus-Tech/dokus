@@ -13,6 +13,7 @@ import io.ktor.http.contentType
 import tech.dokus.domain.ids.SessionId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.User
+import tech.dokus.domain.model.auth.AccountMeResponse
 import tech.dokus.domain.model.auth.ChangePasswordRequest
 import tech.dokus.domain.model.auth.DeactivateUserRequest
 import tech.dokus.domain.model.auth.LoginResponse
@@ -30,10 +31,14 @@ internal class AccountRemoteDataSourceImpl(
     private val httpClient: HttpClient,
 ) : AccountRemoteDataSource {
 
-    override suspend fun getCurrentUser(): Result<User> {
+    override suspend fun getAccountMe(): Result<AccountMeResponse> {
         return runCatching {
             httpClient.get(Account.Me()).body()
         }
+    }
+
+    override suspend fun getCurrentUser(): Result<User> {
+        return getAccountMe().map { it.user }
     }
 
     override suspend fun selectTenant(tenantId: TenantId): Result<LoginResponse> {
