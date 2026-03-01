@@ -3,6 +3,7 @@ package tech.dokus.features.auth.datasource
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.SessionId
 import tech.dokus.domain.model.User
+import tech.dokus.domain.model.auth.AccountMeResponse
 import tech.dokus.domain.model.auth.ChangePasswordRequest
 import tech.dokus.domain.model.auth.DeactivateUserRequest
 import tech.dokus.domain.model.auth.LoginResponse
@@ -16,10 +17,10 @@ import tech.dokus.domain.model.auth.UpdateProfileRequest
  */
 interface AccountRemoteDataSource {
     /**
-     * Get the currently authenticated user.
-     * @return Result containing the User object
+     * Get the currently authenticated user and surface availability.
+     * @return Result containing the session/bootstrap payload
      */
-    suspend fun getCurrentUser(): Result<User>
+    suspend fun getAccountMe(): Result<AccountMeResponse>
 
     /**
      * Select/switch to a specific tenant.

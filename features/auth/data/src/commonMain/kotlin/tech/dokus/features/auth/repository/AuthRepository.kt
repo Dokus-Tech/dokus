@@ -18,6 +18,7 @@ import tech.dokus.domain.model.UpsertTenantAddressRequest
 import tech.dokus.domain.model.User
 import tech.dokus.domain.model.auth.ChangePasswordRequest
 import tech.dokus.domain.model.auth.DeactivateUserRequest
+import tech.dokus.domain.model.auth.AccountMeResponse
 import tech.dokus.domain.model.auth.LoginRequest
 import tech.dokus.domain.model.auth.LoginResponse
 import tech.dokus.domain.model.auth.LogoutRequest
@@ -171,10 +172,21 @@ class AuthRepository(
     }
 
     /**
+     * Get current session/bootstrap payload.
+     */
+    override suspend fun getAccountMe(): Result<AccountMeResponse> {
+        return accountDataSource.getAccountMe()
+            .onFailure { error ->
+                logger.e(error) { "Failed to get account bootstrap payload" }
+            }
+    }
+
+    /**
      * Get current user info.
      */
     override suspend fun getCurrentUser(): Result<User> {
-        return accountDataSource.getCurrentUser()
+        return accountDataSource.getAccountMe()
+            .map { it.user }
             .onFailure { error ->
                 logger.e(error) { "Failed to get current user" }
             }

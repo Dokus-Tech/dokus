@@ -1,6 +1,7 @@
 package tech.dokus.database.repository.auth
 
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.plus
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.insertAndGetId
@@ -102,6 +103,15 @@ class TenantRepository {
             ?: return@dbQuery null
 
         tenantRow.toTenant()
+    }
+
+    suspend fun findByIds(ids: List<TenantId>): List<Tenant> = dbQuery {
+        if (ids.isEmpty()) return@dbQuery emptyList()
+        val javaUuids = ids.map { it.value.toJavaUuid() }
+        TenantTable
+            .selectAll()
+            .where { TenantTable.id inList javaUuids }
+            .map { it.toTenant() }
     }
 
     suspend fun getSettings(tenantId: TenantId): TenantSettings = dbQuery {

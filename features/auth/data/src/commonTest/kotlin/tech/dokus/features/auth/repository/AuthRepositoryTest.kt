@@ -4,10 +4,12 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.test.runTest
+import kotlinx.datetime.LocalDateTime
 import tech.dokus.domain.Email
 import tech.dokus.domain.Password
 import tech.dokus.domain.ids.SessionId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.Address
 import tech.dokus.domain.model.AvatarUploadResponse
 import tech.dokus.domain.model.CreateTenantRequest
@@ -15,6 +17,8 @@ import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.TenantSettings
 import tech.dokus.domain.model.UpsertTenantAddressRequest
 import tech.dokus.domain.model.User
+import tech.dokus.domain.model.auth.AccountMeResponse
+import tech.dokus.domain.model.auth.AppSurface
 import tech.dokus.domain.model.auth.AuthEvent
 import tech.dokus.domain.model.auth.ChangePasswordRequest
 import tech.dokus.domain.model.auth.LoginRequest
@@ -24,6 +28,7 @@ import tech.dokus.domain.model.auth.RefreshTokenRequest
 import tech.dokus.domain.model.auth.RegisterRequest
 import tech.dokus.domain.model.auth.ResetPasswordRequest
 import tech.dokus.domain.model.auth.SessionDto
+import tech.dokus.domain.model.auth.SurfaceAvailability
 import tech.dokus.domain.model.common.Thumbnail
 import tech.dokus.features.auth.datasource.AccountRemoteDataSource
 import tech.dokus.features.auth.datasource.IdentityRemoteDataSource
@@ -102,6 +107,75 @@ class AuthRepositoryTest {
         assertTrue(repository.revokeOtherSessions().isSuccess)
         assertTrue(account.revokeOtherSessionsCalled)
     }
+
+    @Test
+    fun getCurrentUserMapsUserFromAccountMePayload() = runTest {
+        val tokenManager = FakeTokenManager()
+        val authManager = FakeAuthManager()
+        val account = FakeAccountRemoteDataSource().apply {
+            accountMeResult = Result.success(
+                AccountMeResponse(
+                    user = sampleUser(),
+                    surface = SurfaceAvailability(
+                        canWorkspace = false,
+                        canConsole = true,
+                        defaultSurface = AppSurface.Console
+                    )
+                )
+            )
+        }
+        val identity = FakeIdentityRemoteDataSource()
+        val tenant = FakeTenantRemoteDataSource()
+        val repository = AuthRepository(tokenManager, authManager, account, identity, tenant)
+
+        val result = repository.getCurrentUser()
+
+        assertTrue(result.isSuccess)
+        assertEquals(sampleUser(), result.getOrThrow())
+    }
+
+    @Test
+    fun getAccountMeReturnsSurfacePayload() = runTest {
+        val tokenManager = FakeTokenManager()
+        val authManager = FakeAuthManager()
+        val expectedPayload = AccountMeResponse(
+            user = sampleUser(),
+            surface = SurfaceAvailability(
+                canWorkspace = true,
+                canConsole = true,
+                defaultSurface = AppSurface.Workspace
+            )
+        )
+        val account = FakeAccountRemoteDataSource().apply {
+            accountMeResult = Result.success(expectedPayload)
+        }
+        val identity = FakeIdentityRemoteDataSource()
+        val tenant = FakeTenantRemoteDataSource()
+        val repository = AuthRepository(tokenManager, authManager, account, identity, tenant)
+
+        val result = repository.getAccountMe()
+
+        assertTrue(result.isSuccess)
+        assertEquals(expectedPayload, result.getOrThrow())
+    }
+
+    @Test
+    fun getAccountMeForwardsFailure() = runTest {
+        val tokenManager = FakeTokenManager()
+        val authManager = FakeAuthManager()
+        val error = RuntimeException("server error")
+        val account = FakeAccountRemoteDataSource().apply {
+            accountMeResult = Result.failure(error)
+        }
+        val identity = FakeIdentityRemoteDataSource()
+        val tenant = FakeTenantRemoteDataSource()
+        val repository = AuthRepository(tokenManager, authManager, account, identity, tenant)
+
+        val result = repository.getAccountMe()
+
+        assertTrue(result.isFailure)
+        assertEquals(error, result.exceptionOrNull())
+    }
 }
 
 private class FakeTokenManager : TokenManagerMutable {
@@ -160,8 +234,9 @@ private class FakeAccountRemoteDataSource : AccountRemoteDataSource {
     var revokeOtherSessionsCalled: Boolean = false
     var lastRevokedSessionId: SessionId? = null
     var lastChangePasswordRequest: ChangePasswordRequest? = null
+    var accountMeResult: Result<AccountMeResponse> = Result.failure(IllegalStateException("not needed"))
 
-    override suspend fun getCurrentUser(): Result<User> = Result.failure(IllegalStateException("not needed"))
+    override suspend fun getAccountMe(): Result<AccountMeResponse> = accountMeResult
 
     override suspend fun selectTenant(tenantId: TenantId): Result<LoginResponse> =
         Result.failure(IllegalStateException("not needed"))
@@ -271,3 +346,15 @@ private class FakeTenantRemoteDataSource : TenantRemoteDataSource {
     override suspend fun getInvoiceNumberPreview(): Result<String> =
         Result.failure(IllegalStateException("not needed"))
 }
+
+private fun sampleUser(): User = User(
+    id = UserId("00000000-0000-0000-0000-000000000111"),
+    email = Email("test@dokus.app"),
+    firstName = null,
+    lastName = null,
+    emailVerified = true,
+    isActive = true,
+    lastLoginAt = null,
+    createdAt = LocalDateTime(2026, 1, 1, 12, 0),
+    updatedAt = LocalDateTime(2026, 1, 1, 12, 0)
+)
