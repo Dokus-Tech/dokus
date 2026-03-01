@@ -5,11 +5,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
@@ -25,8 +25,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.zIndex
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.features.cashflow.mvi.CreateInvoiceIntent
 import tech.dokus.features.cashflow.mvi.model.ClientLookupState
@@ -51,8 +53,10 @@ internal fun InvoiceClientLookup(
     onIntent: (CreateInvoiceIntent) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var fieldHeight by remember { mutableStateOf(0.dp) }
+    var boxWidthPx by remember { mutableStateOf(0) }
+    var boxHeightPx by remember { mutableStateOf(0) }
     val density = LocalDensity.current
+    val dropdownOffsetPx = boxHeightPx + with(density) { DropdownMarginTop.roundToPx() }
 
     Column(
         modifier = modifier,
@@ -64,16 +68,20 @@ internal fun InvoiceClientLookup(
             color = MaterialTheme.colorScheme.textMuted
         )
 
-        Box(modifier = Modifier.fillMaxWidth()) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .onGloballyPositioned { coordinates ->
+                    boxWidthPx = coordinates.size.width
+                    boxHeightPx = coordinates.size.height
+                }
+        ) {
             PLookupField(
                 value = lookupState.query,
                 onValueChange = { onIntent(CreateInvoiceIntent.UpdateClientLookupQuery(it)) },
                 placeholder = stringResource(Res.string.invoice_client_lookup_hint),
                 outline = if (lookupState.query.isBlank()) PLookupFieldOutline.Dashed else PLookupFieldOutline.Solid,
                 isSelected = lookupState.query.isNotBlank(),
-                modifier = Modifier.onGloballyPositioned { coordinates ->
-                    fieldHeight = with(density) { coordinates.size.height.toDp() }
-                },
                 onFocusChanged = { focused ->
                     onIntent(CreateInvoiceIntent.SetClientLookupExpanded(focused))
                 }
@@ -84,77 +92,82 @@ internal fun InvoiceClientLookup(
             val showDropdown = lookupState.isExpanded && hasRows
 
             if (showDropdown) {
-                PLookupDropdownSurface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .align(Alignment.TopStart)
-                        .offset(y = fieldHeight + DropdownMarginTop)
-                        .zIndex(10f),
-                    footer = {
-                        lookupState.errorHint?.let { hint ->
-                            Text(
-                                text = hint,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.textMuted,
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp)
-                            )
-                        }
-                    }
+                Popup(
+                    alignment = Alignment.TopStart,
+                    offset = IntOffset(0, dropdownOffsetPx),
+                    onDismissRequest = {
+                        onIntent(CreateInvoiceIntent.SetClientLookupExpanded(false))
+                    },
+                    properties = PopupProperties(focusable = false)
                 ) {
-                    LazyColumn(modifier = Modifier.fillMaxWidth()) {
-                        if (lookupState.isLoading) {
-                            item {
+                    PLookupDropdownSurface(
+                        modifier = Modifier.width(with(density) { boxWidthPx.toDp() }),
+                        footer = {
+                            lookupState.errorHint?.let { hint ->
                                 Text(
-                                    text = stringResource(Res.string.invoice_searching),
+                                    text = hint,
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.textMuted,
-                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp)
                                 )
                             }
                         }
-
-                        items(lookupState.mergedSuggestions) { suggestion ->
-                            when (suggestion) {
-                                is ClientSuggestion.LocalContact -> {
-                                    LookupSuggestionRow(
-                                        title = suggestion.contact.name.value,
-                                        subtitle = suggestion.contact.toLookupAddressLine(),
-                                        leading = suggestion.contact.name.value.take(2).uppercase(),
-                                        cbeBadge = false,
-                                        peppolEnabled = true,
-                                        onClick = {
-                                            onIntent(CreateInvoiceIntent.SelectClient(suggestion.contact))
-                                            onIntent(CreateInvoiceIntent.SetClientLookupExpanded(false))
-                                        }
+                    ) {
+                        LazyColumn(modifier = Modifier.fillMaxWidth()) {
+                            if (lookupState.isLoading) {
+                                item {
+                                    Text(
+                                        text = stringResource(Res.string.invoice_searching),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.textMuted,
+                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
                                     )
                                 }
+                            }
 
-                                is ClientSuggestion.ExternalCompany -> {
-                                    LookupSuggestionRow(
-                                        title = suggestion.candidate.name,
-                                        subtitle = suggestion.candidate.toLookupAddressLine(),
-                                        leading = suggestion.candidate.name.take(2).uppercase(),
-                                        cbeBadge = true,
-                                        peppolEnabled = suggestion.candidate.vatNumber != null,
-                                        onClick = {
-                                            onIntent(CreateInvoiceIntent.SelectExternalClientCandidate(suggestion.candidate))
-                                            onIntent(CreateInvoiceIntent.SetClientLookupExpanded(false))
-                                        }
-                                    )
-                                }
+                            items(lookupState.mergedSuggestions) { suggestion ->
+                                when (suggestion) {
+                                    is ClientSuggestion.LocalContact -> {
+                                        LookupSuggestionRow(
+                                            title = suggestion.contact.name.value,
+                                            subtitle = suggestion.contact.toLookupAddressLine(),
+                                            leading = suggestion.contact.name.value.take(2).uppercase(),
+                                            cbeBadge = false,
+                                            peppolEnabled = true,
+                                            onClick = {
+                                                onIntent(CreateInvoiceIntent.SelectClient(suggestion.contact))
+                                                onIntent(CreateInvoiceIntent.SetClientLookupExpanded(false))
+                                            }
+                                        )
+                                    }
 
-                                is ClientSuggestion.CreateManual -> {
-                                    LookupSuggestionRow(
-                                        title = stringResource(Res.string.invoice_create_manually),
-                                        subtitle = stringResource(Res.string.invoice_create_manually_desc),
-                                        leading = "+",
-                                        cbeBadge = false,
-                                        peppolEnabled = false,
-                                        onClick = {
-                                            onIntent(CreateInvoiceIntent.CreateClientManuallyFromQuery(suggestion.query))
-                                            onIntent(CreateInvoiceIntent.SetClientLookupExpanded(false))
-                                        }
-                                    )
+                                    is ClientSuggestion.ExternalCompany -> {
+                                        LookupSuggestionRow(
+                                            title = suggestion.candidate.name,
+                                            subtitle = suggestion.candidate.toLookupAddressLine(),
+                                            leading = suggestion.candidate.name.take(2).uppercase(),
+                                            cbeBadge = true,
+                                            peppolEnabled = suggestion.candidate.vatNumber != null,
+                                            onClick = {
+                                                onIntent(CreateInvoiceIntent.SelectExternalClientCandidate(suggestion.candidate))
+                                                onIntent(CreateInvoiceIntent.SetClientLookupExpanded(false))
+                                            }
+                                        )
+                                    }
+
+                                    is ClientSuggestion.CreateManual -> {
+                                        LookupSuggestionRow(
+                                            title = stringResource(Res.string.invoice_create_manually),
+                                            subtitle = stringResource(Res.string.invoice_create_manually_desc),
+                                            leading = "+",
+                                            cbeBadge = false,
+                                            peppolEnabled = false,
+                                            onClick = {
+                                                onIntent(CreateInvoiceIntent.CreateClientManuallyFromQuery(suggestion.query))
+                                                onIntent(CreateInvoiceIntent.SetClientLookupExpanded(false))
+                                            }
+                                        )
+                                    }
                                 }
                             }
                         }
