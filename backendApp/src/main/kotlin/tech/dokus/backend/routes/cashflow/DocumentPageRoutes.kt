@@ -1,5 +1,7 @@
 package tech.dokus.backend.routes.cashflow
 
+import tech.dokus.backend.security.requireTenantId
+
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.resources.get
@@ -48,7 +50,7 @@ internal fun Route.documentPageRoutes() {
          * - maxPages: Maximum pages to return (1-50, default 10)
          */
         get<Documents.Id.Pages> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantId()
             val documentId = DocumentId.parse(route.parent.id)
 
             logger.debug("Listing pages for document {} (tenant: {})", documentId, tenantId)
@@ -90,7 +92,7 @@ internal fun Route.documentPageRoutes() {
          * - dpi: Resolution for rendered page (72-300, default 150)
          */
         get<Documents.Id.PageImage> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantId()
             val documentId = DocumentId.parse(route.parent.id)
             val page = route.page
 
@@ -132,7 +134,7 @@ internal fun Route.documentPageRoutes() {
          * List available PDF pages for a specific source.
          */
         get<Documents.Id.SourcePages> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantId()
             val documentId = DocumentId.parse(route.parent.id)
             val sourceId = DocumentSourceId.parse(route.sourceId)
 
@@ -180,7 +182,7 @@ internal fun Route.documentPageRoutes() {
          * Get a rendered PDF page as PNG image for a specific source.
          */
         get<Documents.Id.SourcePageImage> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantId()
             val documentId = DocumentId.parse(route.parent.id)
             val sourceId = DocumentSourceId.parse(route.sourceId)
             val page = route.page

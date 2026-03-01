@@ -1,17 +1,12 @@
 package tech.dokus.domain.model.auth
 
 import kotlinx.serialization.Serializable
-import tech.dokus.domain.enums.Permission
-import tech.dokus.domain.enums.SubscriptionTier
-import tech.dokus.domain.enums.UserRole
-import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 
 @Serializable
 data class JwtClaims(
     val userId: UserId,
     val email: String,
-    val tenant: TenantScope?,
     val iat: Long,
     val exp: Long,
     val jti: String,
@@ -21,11 +16,6 @@ data class JwtClaims(
     companion object {
         const val CLAIM_SUB = "sub"
         const val CLAIM_EMAIL = "email"
-        const val CLAIM_TENANTS = "tenants"
-        const val CLAIM_TENANT_ID = "tenant_id"
-        const val CLAIM_PERMISSIONS = "permissions"
-        const val CLAIM_SUBSCRIPTION_TIER = "tier"
-        const val CLAIM_ROLE = "role"
         const val CLAIM_IAT = "iat"
         const val CLAIM_EXP = "exp"
         const val CLAIM_JTI = "jti"
@@ -43,22 +33,6 @@ data class JwtClaims(
         const val TOKEN_TYPE_REFRESH = "refresh"
     }
 }
-
-@Serializable
-data class TenantScope(
-    val tenantId: TenantId,
-    val permissions: Set<Permission>,
-    val subscriptionTier: SubscriptionTier,
-    val role: UserRole?,
-)
-
-@Serializable
-data class TenantClaimDto(
-    val tenantId: String,
-    val permissions: List<String>,
-    val subscriptionTier: String,
-    val role: String? = null
-)
 
 enum class TokenStatus {
     VALID,

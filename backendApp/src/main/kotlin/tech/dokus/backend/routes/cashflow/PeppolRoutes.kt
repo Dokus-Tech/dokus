@@ -22,9 +22,10 @@ import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.enums.Permission
 import tech.dokus.domain.model.PeppolConnectStatus
 import tech.dokus.domain.routes.Peppol
+import tech.dokus.backend.security.requirePermission
+import tech.dokus.backend.security.requireTenantId
 import tech.dokus.foundation.backend.security.authenticateJwt
 import tech.dokus.foundation.backend.security.dokusPrincipal
-import tech.dokus.foundation.backend.security.requirePermission
 import tech.dokus.peppol.service.PeppolConnectionService
 import tech.dokus.peppol.service.PeppolRegistrationService
 import tech.dokus.peppol.service.PeppolService
@@ -80,7 +81,7 @@ internal fun Route.peppolRoutes() {
          * Get Peppol settings for current tenant.
          */
         get<Peppol.Settings> {
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantId()
 
             val settings = peppolService.getSettings(tenantId)
                 .getOrElse { throw DokusException.InternalError("Failed to get Peppol settings: ${it.message}") }
@@ -97,7 +98,7 @@ internal fun Route.peppolRoutes() {
          * Test connection with current credentials.
          */
         post<Peppol.Settings.ConnectionTests> {
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantId()
 
             val success = peppolService.testConnection(tenantId)
                 .getOrElse { throw DokusException.InternalError("Failed to test connection: ${it.message}") }
@@ -111,7 +112,7 @@ internal fun Route.peppolRoutes() {
          * Auto-detects or creates Recommand company based on tenant VAT.
          */
         post<Peppol.Settings.Connect> {
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantId()
             val tenant = tenantRepository.findById(tenantId)
                 ?: throw DokusException.NotFound("Tenant not found")
             val companyAddress = addressRepository.getCompanyAddress(tenantId)
@@ -136,7 +137,7 @@ internal fun Route.peppolRoutes() {
          * Verify if a recipient is registered on the Peppol network.
          */
         post<Peppol.RecipientValidations> {
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantId()
             val request = call.receive<VerifyRecipientRequest>()
 
             val result = peppolService.verifyRecipient(tenantId, request.peppolId)
@@ -156,8 +157,8 @@ internal fun Route.peppolRoutes() {
          * The invoice must have a contactId that matches a contact with a valid peppolId.
          */
         post<Peppol.Transmissions> { route ->
+            val tenantId = requireTenantId()
             requirePermission(Permission.InvoicesEdit)
-            val tenantId = dokusPrincipal.requireTenantId()
             val invoiceIdStr = route.invoiceId
                 ?: throw DokusException.BadRequest("invoiceId query parameter is required")
             val invoiceId = InvoiceId(Uuid.parse(invoiceIdStr))
@@ -239,7 +240,7 @@ internal fun Route.peppolRoutes() {
          * Validate an invoice for Peppol without sending.
          */
         post<Peppol.InvoiceValidations> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantId()
             val invoiceIdStr = route.invoiceId
                 ?: throw DokusException.BadRequest("invoiceId query parameter is required")
             val invoiceId = InvoiceId(Uuid.parse(invoiceIdStr))
@@ -297,7 +298,7 @@ internal fun Route.peppolRoutes() {
          * - Auto-confirms PEPPOL documents (creates Inbound Invoices immediately)
          */
         post<Peppol.Inbox.Syncs> {
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantId()
 
             // Use PeppolPollingWorker for consistent PDF handling
             val polled = peppolPollingWorker.pollNow(tenantId)
@@ -322,7 +323,7 @@ internal fun Route.peppolRoutes() {
          * List transmission history.
          */
         get<Peppol.Transmissions> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantId()
 
             if (route.limit < 1 || route.limit > 200) {
                 throw DokusException.BadRequest("Limit must be between 1 and 200")
@@ -345,7 +346,7 @@ internal fun Route.peppolRoutes() {
          * Note: Currently uses invoiceId from Transmissions.Id route
          */
         get<Peppol.Transmissions.Id> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantId()
             val invoiceId = InvoiceId(Uuid.parse(route.id))
 
             val transmission = peppolService.getTransmissionByInvoiceId(invoiceId, tenantId)
@@ -367,7 +368,7 @@ internal fun Route.peppolRoutes() {
          * Get current PEPPOL registration status.
          */
         get<Peppol.Registration> {
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantId()
 
             val result = peppolRegistrationService.getRegistration(tenantId)
                 .getOrElse { throw DokusException.InternalError("Failed to get registration: ${it.message}") }
@@ -398,7 +399,7 @@ internal fun Route.peppolRoutes() {
          * Enable PEPPOL for the tenant.
          */
         post<Peppol.Enable> {
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantId()
             val result = peppolRegistrationService.enablePeppol(tenantId)
                 .getOrElse { throw DokusException.InternalError("Failed to enable PEPPOL: ${it.message}") }
 
@@ -415,7 +416,7 @@ internal fun Route.peppolRoutes() {
          * Enable PEPPOL sending only (when receiving is blocked elsewhere).
          */
         post<Peppol.EnableSendingOnly> {
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantId()
 
             val result = peppolRegistrationService.enableSendingOnly(tenantId)
                 .getOrElse { throw DokusException.InternalError("Failed to enable PEPPOL sending-only: ${it.message}") }
@@ -428,7 +429,7 @@ internal fun Route.peppolRoutes() {
          * Opt to wait for PEPPOL ID transfer.
          */
         post<Peppol.WaitForTransfer> {
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantId()
 
             val result = peppolRegistrationService.waitForTransfer(tenantId)
                 .getOrElse { throw DokusException.InternalError("Failed to set wait for transfer: ${it.message}") }
@@ -441,7 +442,7 @@ internal fun Route.peppolRoutes() {
          * Opt out of PEPPOL via Dokus.
          */
         post<Peppol.OptOut> {
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantId()
 
             peppolRegistrationService.optOut(tenantId)
                 .getOrElse { throw DokusException.InternalError("Failed to opt out: ${it.message}") }
@@ -454,7 +455,7 @@ internal fun Route.peppolRoutes() {
          * Manual poll for transfer status.
          */
         post<Peppol.Poll> {
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantId()
 
             val result = peppolRegistrationService.pollTransferStatus(tenantId)
                 .getOrElse { throw DokusException.InternalError("Failed to poll transfer status: ${it.message}") }

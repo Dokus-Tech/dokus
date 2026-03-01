@@ -7,7 +7,6 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import tech.dokus.domain.asbtractions.TokenManager
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.auth.JwtClaims
 import tech.dokus.domain.model.auth.LoginResponse
 import tech.dokus.domain.model.auth.TokenStatus
 import tech.dokus.features.auth.storage.TokenStorage
@@ -95,10 +94,12 @@ class TokenManagerImpl(
             refreshToken = loginResponse.refreshToken,
             expiresIn = loginResponse.expiresIn
         )
-        jwtDecoder.decode(loginResponse.accessToken)
-            ?.tenant
-            ?.tenantId
-            ?.let { tokenStorage.saveLastSelectedTenantId(it) }
+        val selectedTenantId = loginResponse.selectedTenantId
+        if (selectedTenantId != null) {
+            tokenStorage.saveLastSelectedTenantId(selectedTenantId)
+        } else {
+            tokenStorage.clearLastSelectedTenantId()
+        }
         validateAndUpdateState(loginResponse.accessToken)
     }
 
@@ -137,6 +138,10 @@ class TokenManagerImpl(
         return tokenStorage.getRefreshToken()
     }
 
+    override suspend fun getSelectedTenantId(): TenantId? {
+        return tokenStorage.getLastSelectedTenantId()
+    }
+
     /**
      * Refreshes the access token using the refresh token.
      *
@@ -160,7 +165,7 @@ class TokenManagerImpl(
         val refreshCallback = onTokenRefreshNeeded ?: return null
 
         try {
-            val selectedTenantId = jwtDecoder.decode(currentToken)?.tenant?.tenantId
+            val selectedTenantId = tokenStorage.getLastSelectedTenantId()
             val response = refreshCallback(refreshToken, selectedTenantId)
             if (response != null) {
                 saveTokens(response)
@@ -187,14 +192,6 @@ class TokenManagerImpl(
     override suspend fun onAuthenticationFailed() {
         tokenStorage.clearTokens()
         updateAuthenticationState(false)
-    }
-
-    /**
-     * Gets the current user's JWT claims.
-     */
-    override suspend fun getCurrentClaims(): JwtClaims? {
-        val token = tokenStorage.getAccessToken() ?: return null
-        return jwtDecoder.decode(token)
     }
 
     /**

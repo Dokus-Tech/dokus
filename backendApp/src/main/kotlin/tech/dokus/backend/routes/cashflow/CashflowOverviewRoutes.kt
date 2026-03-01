@@ -1,5 +1,7 @@
 package tech.dokus.backend.routes.cashflow
 
+import tech.dokus.backend.security.requireTenantId
+
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.resources.get
 import io.ktor.server.response.respond
@@ -23,7 +25,7 @@ internal fun Route.cashflowOverviewRoutes() {
     authenticateJwt {
         // GET /api/v1/cashflow/overview - Get cashflow overview
         get<Cashflow.Overview> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantId()
 
             // Enums are used directly from route - no parsing needed
             val overview = cashflowOverviewService.getCashflowOverview(

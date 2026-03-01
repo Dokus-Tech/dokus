@@ -34,7 +34,6 @@ class ShareImportContainerTest {
         val uploadUseCase = FakeUploadDocumentUseCase(Result.success(testDocument()))
         val container = ShareImportContainer(
             tokenManager = FakeTokenManager(isAuthenticated = false),
-            getLastSelectedTenantIdUseCase = FakeGetLastSelectedTenantIdUseCase(),
             listMyTenantsUseCase = FakeListMyTenantsUseCase(Result.success(listOf(testTenant()))),
             selectTenantUseCase = FakeSelectTenantUseCase(),
             uploadDocumentUseCase = uploadUseCase
@@ -67,7 +66,6 @@ class ShareImportContainerTest {
         val selectTenantUseCase = FakeSelectTenantUseCase()
         val container = ShareImportContainer(
             tokenManager = FakeTokenManager(isAuthenticated = true),
-            getLastSelectedTenantIdUseCase = FakeGetLastSelectedTenantIdUseCase(),
             listMyTenantsUseCase = FakeListMyTenantsUseCase(Result.success(listOf(workspace))),
             selectTenantUseCase = selectTenantUseCase,
             uploadDocumentUseCase = uploadUseCase
@@ -90,7 +88,7 @@ class ShareImportContainerTest {
     }
 
     @Test
-    fun `multi-tenant with claims tenant uses claims workspace`() = runTest {
+    fun `multi-tenant with selected tenant uses matching workspace`() = runTest {
         val workspaceA = testTenant(
             id = TenantId("00000000-0000-0000-0000-000000000021"),
             displayName = "Workspace A"
@@ -108,9 +106,8 @@ class ShareImportContainerTest {
         val container = ShareImportContainer(
             tokenManager = FakeTokenManager(
                 isAuthenticated = true,
-                claims = testClaims(workspaceB.id)
+                selectedTenantId = workspaceB.id
             ),
-            getLastSelectedTenantIdUseCase = FakeGetLastSelectedTenantIdUseCase(),
             listMyTenantsUseCase = FakeListMyTenantsUseCase(Result.success(listOf(workspaceA, workspaceB))),
             selectTenantUseCase = selectTenantUseCase,
             uploadDocumentUseCase = uploadUseCase
@@ -129,7 +126,7 @@ class ShareImportContainerTest {
     }
 
     @Test
-    fun `multi-tenant with missing claims uses last selected tenant`() = runTest {
+    fun `multi-tenant with selected tenant resolves and switches workspace`() = runTest {
         val workspaceA = testTenant(
             id = TenantId("00000000-0000-0000-0000-000000000031"),
             displayName = "Workspace A"
@@ -145,8 +142,7 @@ class ShareImportContainerTest {
         val selectTenantUseCase = FakeSelectTenantUseCase()
         val uploadUseCase = FakeUploadDocumentUseCase(Result.success(document))
         val container = ShareImportContainer(
-            tokenManager = FakeTokenManager(isAuthenticated = true, claims = null),
-            getLastSelectedTenantIdUseCase = FakeGetLastSelectedTenantIdUseCase(workspaceB.id),
+            tokenManager = FakeTokenManager(isAuthenticated = true, selectedTenantId = workspaceB.id),
             listMyTenantsUseCase = FakeListMyTenantsUseCase(Result.success(listOf(workspaceA, workspaceB))),
             selectTenantUseCase = selectTenantUseCase,
             uploadDocumentUseCase = uploadUseCase
@@ -159,13 +155,14 @@ class ShareImportContainerTest {
                 failureCount = 0,
                 uploadedDocumentIds = listOf(document.id.toString())
             )
-            assertEquals(listOf(workspaceB.id), selectTenantUseCase.invocations)
+            assertEquals(0, selectTenantUseCase.invocations.size)
             assertEquals(1, uploadUseCase.invocations)
         }
     }
 
     @Test
-    fun `multi-tenant with stale claims falls back to valid last selected`() = runTest {
+    fun `multi-tenant with stale selected tenant shows workspace context error`() = runTest {
+        val testScope = this
         val workspaceA = testTenant(
             id = TenantId("00000000-0000-0000-0000-000000000041"),
             displayName = "Workspace A"
@@ -175,32 +172,25 @@ class ShareImportContainerTest {
             displayName = "Workspace B"
         )
         val staleTenant = TenantId("00000000-0000-0000-0000-000000000099")
-        val document = testDocument(
-            id = DocumentId("40000000-0000-0000-0000-000000000001"),
-            tenantId = workspaceB.id
-        )
-        val selectTenantUseCase = FakeSelectTenantUseCase()
-        val uploadUseCase = FakeUploadDocumentUseCase(Result.success(document))
+        val uploadUseCase = FakeUploadDocumentUseCase(Result.success(testDocument()))
         val container = ShareImportContainer(
             tokenManager = FakeTokenManager(
                 isAuthenticated = true,
-                claims = testClaims(staleTenant)
+                selectedTenantId = staleTenant
             ),
-            getLastSelectedTenantIdUseCase = FakeGetLastSelectedTenantIdUseCase(workspaceB.id),
             listMyTenantsUseCase = FakeListMyTenantsUseCase(Result.success(listOf(workspaceA, workspaceB))),
-            selectTenantUseCase = selectTenantUseCase,
+            selectTenantUseCase = FakeSelectTenantUseCase(),
             uploadDocumentUseCase = uploadUseCase
         )
         ExternalShareImportHandler.onNewSharedFiles(listOf(testSharedFile()))
 
         container.store.subscribeAndTest {
-            ShareImportIntent.Load resultsIn ShareImportAction.Finish(
-                successCount = 1,
-                failureCount = 0,
-                uploadedDocumentIds = listOf(document.id.toString())
-            )
-            assertEquals(listOf(workspaceB.id), selectTenantUseCase.invocations)
-            assertEquals(1, uploadUseCase.invocations)
+            emit(ShareImportIntent.Load)
+            testScope.advanceUntilIdle()
+
+            val error = assertIs<ShareImportState.Error>(states.value)
+            assertEquals(DokusException.WorkspaceContextUnavailable, error.exception)
+            assertEquals(0, uploadUseCase.invocations)
         }
     }
 
@@ -217,8 +207,7 @@ class ShareImportContainerTest {
         )
         val uploadUseCase = FakeUploadDocumentUseCase(Result.success(testDocument()))
         val container = ShareImportContainer(
-            tokenManager = FakeTokenManager(isAuthenticated = true, claims = null),
-            getLastSelectedTenantIdUseCase = FakeGetLastSelectedTenantIdUseCase(null),
+            tokenManager = FakeTokenManager(isAuthenticated = true),
             listMyTenantsUseCase = FakeListMyTenantsUseCase(Result.success(listOf(workspaceA, workspaceB))),
             selectTenantUseCase = FakeSelectTenantUseCase(),
             uploadDocumentUseCase = uploadUseCase
@@ -252,8 +241,7 @@ class ShareImportContainerTest {
             )
         )
         val container = ShareImportContainer(
-            tokenManager = FakeTokenManager(isAuthenticated = true, claims = testClaims(workspace.id)),
-            getLastSelectedTenantIdUseCase = FakeGetLastSelectedTenantIdUseCase(),
+            tokenManager = FakeTokenManager(isAuthenticated = true, selectedTenantId = workspace.id),
             listMyTenantsUseCase = FakeListMyTenantsUseCase(Result.success(listOf(workspace))),
             selectTenantUseCase = FakeSelectTenantUseCase(),
             uploadDocumentUseCase = uploadUseCase
@@ -306,8 +294,7 @@ class ShareImportContainerTest {
             )
         )
         val container = ShareImportContainer(
-            tokenManager = FakeTokenManager(isAuthenticated = true, claims = testClaims(workspace.id)),
-            getLastSelectedTenantIdUseCase = FakeGetLastSelectedTenantIdUseCase(),
+            tokenManager = FakeTokenManager(isAuthenticated = true, selectedTenantId = workspace.id),
             listMyTenantsUseCase = FakeListMyTenantsUseCase(Result.success(listOf(workspace))),
             selectTenantUseCase = FakeSelectTenantUseCase(),
             uploadDocumentUseCase = uploadUseCase
@@ -356,8 +343,7 @@ class ShareImportContainerTest {
             )
         )
         val container = ShareImportContainer(
-            tokenManager = FakeTokenManager(isAuthenticated = true, claims = null),
-            getLastSelectedTenantIdUseCase = FakeGetLastSelectedTenantIdUseCase(workspace.id),
+            tokenManager = FakeTokenManager(isAuthenticated = true),
             listMyTenantsUseCase = FakeListMyTenantsUseCase(Result.success(listOf(workspace))),
             selectTenantUseCase = selectTenantUseCase,
             uploadDocumentUseCase = FakeUploadDocumentUseCase(Result.success(testDocument()))
@@ -386,8 +372,7 @@ class ShareImportContainerTest {
         )
         val uploadUseCase = FakeUploadDocumentUseCase(results = docs.map { Result.success(it) })
         val container = ShareImportContainer(
-            tokenManager = FakeTokenManager(isAuthenticated = true, claims = testClaims(workspace.id)),
-            getLastSelectedTenantIdUseCase = FakeGetLastSelectedTenantIdUseCase(),
+            tokenManager = FakeTokenManager(isAuthenticated = true, selectedTenantId = workspace.id),
             listMyTenantsUseCase = FakeListMyTenantsUseCase(Result.success(listOf(workspace))),
             selectTenantUseCase = FakeSelectTenantUseCase(),
             uploadDocumentUseCase = uploadUseCase

@@ -1,5 +1,7 @@
 package tech.dokus.backend.routes.cashflow
 
+import tech.dokus.backend.security.requireTenantId
+
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.PartData
 import io.ktor.http.content.forEachPart
@@ -60,7 +62,7 @@ internal fun Route.attachmentRoutes() {
 
         // POST /api/v1/invoices/{id}/attachments - Upload invoice document
         post<Invoices.Id.Attachments> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantId()
             val invoiceId = InvoiceId(Uuid.parse(route.parent.id))
 
             logger.info("Uploading invoice document for: $invoiceId")
@@ -126,7 +128,7 @@ internal fun Route.attachmentRoutes() {
 
         // GET /api/v1/invoices/{id}/attachments - List invoice attachments
         get<Invoices.Id.Attachments> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantId()
             val invoiceId = InvoiceId(Uuid.parse(route.parent.id))
 
             logger.info("Listing attachments for invoice: $invoiceId")
@@ -157,7 +159,7 @@ internal fun Route.attachmentRoutes() {
 
         // POST /api/v1/expenses/{id}/attachments - Upload expense receipt
         post<Expenses.Id.Attachments> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantId()
             val expenseId = ExpenseId(Uuid.parse(route.parent.id))
 
             logger.info("Uploading expense receipt for: $expenseId")
@@ -223,7 +225,7 @@ internal fun Route.attachmentRoutes() {
 
         // GET /api/v1/expenses/{id}/attachments - List expense attachments
         get<Expenses.Id.Attachments> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantId()
             val expenseId = ExpenseId(Uuid.parse(route.parent.id))
 
             logger.info("Listing attachments for expense: $expenseId")
@@ -254,7 +256,7 @@ internal fun Route.attachmentRoutes() {
 
         // GET /api/v1/attachments/{id}/url - Get attachment download URL
         get<Attachments.Id.Url> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantId()
             val attachmentId = AttachmentId(Uuid.parse(route.parent.id))
             val documentId = DocumentId.parse(route.parent.id)
 
@@ -270,7 +272,7 @@ internal fun Route.attachmentRoutes() {
 
         // DELETE /api/v1/attachments/{id} - Delete attachment
         delete<Attachments.Id> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantId()
             val attachmentId = AttachmentId(Uuid.parse(route.id))
             val documentId = DocumentId.parse(route.id)
 

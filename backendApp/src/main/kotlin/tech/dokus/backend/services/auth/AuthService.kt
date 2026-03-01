@@ -9,9 +9,6 @@ import tech.dokus.database.repository.auth.RevokedSessionInfo
 import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.domain.DeviceType
 import tech.dokus.domain.Password
-import tech.dokus.domain.enums.Permission
-import tech.dokus.domain.enums.SubscriptionTier
-import tech.dokus.domain.enums.UserRole
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.SessionId
 import tech.dokus.domain.ids.TenantId
@@ -25,7 +22,6 @@ import tech.dokus.domain.model.auth.LogoutRequest
 import tech.dokus.domain.model.auth.RefreshTokenRequest
 import tech.dokus.domain.model.auth.RegisterRequest
 import tech.dokus.domain.model.auth.SessionDto
-import tech.dokus.domain.model.auth.TenantScope
 import tech.dokus.domain.model.auth.UpdateProfileRequest
 import tech.dokus.foundation.backend.database.now
 import tech.dokus.foundation.backend.security.JwtGenerator
@@ -87,17 +83,17 @@ class AuthService(
         val userId = user.id
         val loginTime = now()
 
-        // Get all user's tenants and create scopes for each
         val memberships = userRepository.getUserTenants(userId)
-        val selectedTenant = resolveTenantScope(memberships)
+        val selectedTenantId = resolveDefaultTenantId(memberships)
 
         val claims = jwtGenerator.generateClaims(
             userId = userId,
-            email = user.email.value,
-            tenant = selectedTenant
+            email = user.email.value
         )
 
-        val response = jwtGenerator.generateTokens(claims)
+        val response = jwtGenerator.generateTokens(claims).copy(
+            selectedTenantId = selectedTenantId
+        )
 
         // Enforce concurrent session limit by revoking oldest session if needed
         val activeSessions = refreshTokenRepository.countActiveForUser(userId)
@@ -130,8 +126,8 @@ class AuthService(
         rateLimitService.resetLoginAttempts(request.email.value)
 
         val firstSignIn = userRepository.recordSuccessfulLogin(userId, loginTime)
-        if (firstSignIn && selectedTenant != null) {
-            welcomeEmailService.scheduleIfEligible(userId, selectedTenant.tenantId)
+        if (firstSignIn && selectedTenantId != null) {
+            welcomeEmailService.scheduleIfEligible(userId, selectedTenantId)
                 .onFailure { error ->
                     logger.warn(
                         "Failed to schedule welcome email after first sign-in for user {}",
@@ -168,14 +164,15 @@ class AuthService(
 
         val userId = user.id
 
-        // User starts with no tenants - empty scopes
+        // User starts with no tenants
         val claims = jwtGenerator.generateClaims(
             userId = userId,
-            email = user.email.value,
-            tenant = null
+            email = user.email.value
         )
 
-        val response = jwtGenerator.generateTokens(claims)
+        val response = jwtGenerator.generateTokens(claims).copy(
+            selectedTenantId = null
+        )
 
         refreshTokenRepository.saveRefreshToken(
             userId = userId,
@@ -244,9 +241,8 @@ class AuthService(
             throw DokusException.AccountInactive()
         }
 
-        // Get all user's tenants and create scopes for each
         val memberships = userRepository.getUserTenants(userId)
-        val selectedTenant = resolveTenantScope(
+        val selectedTenantId = resolveDefaultTenantId(
             memberships = memberships,
             selectedTenantId = request.tenantId
         ) ?: if (request.tenantId != null) {
@@ -257,11 +253,12 @@ class AuthService(
 
         val claims = jwtGenerator.generateClaims(
             userId = userId,
-            email = user.email.value,
-            tenant = selectedTenant
+            email = user.email.value
         )
 
-        val response = jwtGenerator.generateTokens(claims)
+        val response = jwtGenerator.generateTokens(claims).copy(
+            selectedTenantId = selectedTenantId
+        )
 
         refreshTokenRepository.saveRefreshToken(
             userId = userId,
@@ -304,18 +301,19 @@ class AuthService(
         }
 
         val memberships = userRepository.getUserTenants(userId)
-        val selectedTenant = resolveTenantScope(
+        val selectedTenantId = resolveDefaultTenantId(
             memberships = memberships,
             selectedTenantId = tenantId
         ) ?: throw DokusException.NotAuthorized("User is not a member of tenant $tenantId")
 
         val claims = jwtGenerator.generateClaims(
             userId = userId,
-            email = user.email.value,
-            tenant = selectedTenant
+            email = user.email.value
         )
 
-        val response = jwtGenerator.generateTokens(claims)
+        val response = jwtGenerator.generateTokens(claims).copy(
+            selectedTenantId = selectedTenantId
+        )
 
         // Enforce concurrent session limit by revoking oldest session if needed
         val activeSessions = refreshTokenRepository.countActiveForUser(userId)
@@ -671,10 +669,10 @@ class AuthService(
         Result.failure(DokusException.InternalError(e.message ?: "Profile update failed"))
     }
 
-    private fun resolveTenantScope(
+    private fun resolveDefaultTenantId(
         memberships: List<TenantMembership>,
         selectedTenantId: TenantId? = null
-    ): TenantScope? {
+    ): TenantId? {
         val activeMemberships = memberships.filter { it.isActive }
         val targetTenantId = when {
             selectedTenantId != null -> selectedTenantId
@@ -682,56 +680,6 @@ class AuthService(
             else -> return null
         }
 
-        val membership = activeMemberships.firstOrNull { it.tenantId == targetTenantId }
-            ?: return null
-
-        return createTenantScope(
-            tenantId = membership.tenantId,
-            role = membership.role
-        )
-    }
-
-    private fun createTenantScope(
-        tenantId: TenantId,
-        role: UserRole
-    ): TenantScope {
-        val permissions = getPermissionsForRole(role)
-        val tier = SubscriptionTier.Core // TODO: Get from tenant
-
-        return TenantScope(
-            tenantId = tenantId,
-            permissions = permissions,
-            subscriptionTier = tier,
-            role = role
-        )
-    }
-
-    private fun getPermissionsForRole(role: UserRole): Set<Permission> = when (role) {
-        UserRole.Owner -> Permission.entries.toSet()
-        UserRole.Admin -> Permission.entries.toSet() - setOf(Permission.UsersManage)
-        UserRole.Accountant -> setOf(
-            Permission.InvoicesRead,
-            Permission.InvoicesCreate,
-            Permission.InvoicesEdit,
-            Permission.InvoicesSend,
-            Permission.ClientsRead,
-            Permission.ClientsManage,
-            Permission.ReportsView,
-            Permission.ExportsCreate
-        )
-
-        UserRole.Editor -> setOf(
-            Permission.InvoicesRead,
-            Permission.InvoicesCreate,
-            Permission.InvoicesEdit,
-            Permission.ClientsRead,
-            Permission.ReportsView
-        )
-
-        UserRole.Viewer -> setOf(
-            Permission.InvoicesRead,
-            Permission.ClientsRead,
-            Permission.ReportsView
-        )
+        return activeMemberships.firstOrNull { it.tenantId == targetTenantId }?.tenantId
     }
 }

@@ -110,6 +110,7 @@ private class FakeTokenManager : TokenManagerMutable {
 
     var accessToken: String? = null
     var refreshToken: String? = null
+    var selectedTenantId: TenantId? = null
     var authenticationFailedCalled: Boolean = false
 
     override suspend fun initialize() = Unit
@@ -123,13 +124,13 @@ private class FakeTokenManager : TokenManagerMutable {
 
     override suspend fun getRefreshToken(): String? = refreshToken
 
+    override suspend fun getSelectedTenantId(): TenantId? = selectedTenantId
+
     override suspend fun refreshToken(force: Boolean): String? = accessToken
 
     override suspend fun onAuthenticationFailed() {
         authenticationFailedCalled = true
     }
-
-    override suspend fun getCurrentClaims() = null
 }
 
 private class FakeAuthManager : AuthManagerMutable {

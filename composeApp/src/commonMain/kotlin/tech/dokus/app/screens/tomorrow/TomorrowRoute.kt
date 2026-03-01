@@ -9,20 +9,22 @@ import androidx.compose.runtime.setValue
 import org.koin.compose.koinInject
 import tech.dokus.app.navigation.local.LocalHomeNavController
 import tech.dokus.app.screens.AiChatPlaceholder
-import tech.dokus.domain.asbtractions.TokenManager
 import tech.dokus.domain.enums.SubscriptionTier
+import tech.dokus.features.auth.usecases.GetCurrentTenantUseCase
 import tech.dokus.navigation.destinations.HomeDestination
 import tech.dokus.navigation.navigateTo
 
 @Composable
 internal fun TomorrowRoute(
-    tokenManager: TokenManager = koinInject(),
+    getCurrentTenantUseCase: GetCurrentTenantUseCase = koinInject(),
 ) {
     val homeNavController = LocalHomeNavController.current
     var userTier by remember { mutableStateOf<SubscriptionTier?>(null) }
 
     LaunchedEffect(Unit) {
-        userTier = tokenManager.getCurrentClaims()?.tenant?.subscriptionTier
+        userTier = getCurrentTenantUseCase()
+            .getOrNull()
+            ?.subscription
             ?: SubscriptionTier.Core
     }
 
