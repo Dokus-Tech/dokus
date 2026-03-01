@@ -216,6 +216,9 @@ private fun PartiesAndDates(
             InvoiceClientLookup(
                 lookupState = uiState.clientLookupState,
                 onIntent = onIntent,
+                selectedClient = formState.selectedClient,
+                peppolStatus = formState.peppolStatus,
+                peppolStatusLoading = formState.peppolStatusLoading,
                 modifier = Modifier.weight(1f)
             )
         }

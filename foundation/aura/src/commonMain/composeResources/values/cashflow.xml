@@ -521,6 +521,8 @@
     <string name="invoice_create_manually">Create manually</string>
     <string name="invoice_create_manually_desc">Individuals, foreign, NGOs</string>
     <string name="invoice_cbe_badge">CBE</string>
+    <string name="invoice_change">change</string>
+    <string name="invoice_no_peppol">NO PEPPOL</string>
     <string name="invoice_preview_title">Invoice preview</string>
     <string name="invoice_new_title">New Invoice</string>
     <string name="invoice_payment_delivery">Payment &amp; delivery</string>

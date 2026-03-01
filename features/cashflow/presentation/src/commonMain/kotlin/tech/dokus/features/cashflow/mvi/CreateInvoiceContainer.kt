@@ -22,8 +22,10 @@ import tech.dokus.domain.enums.InvoiceDeliveryMethod
 import tech.dokus.domain.enums.InvoiceDueDateMode
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.entity.EntityLookup
+import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.validators.ValidateOgmUseCase
 import tech.dokus.domain.usecases.SearchCompanyUseCase
+import tech.dokus.features.auth.usecases.GetCurrentTenantUseCase
 import tech.dokus.features.auth.usecases.GetInvoiceNumberPreviewUseCase
 import tech.dokus.features.auth.usecases.GetTenantSettingsUseCase
 import tech.dokus.features.cashflow.mvi.model.ClientSuggestion
@@ -56,6 +58,7 @@ internal typealias CreateInvoiceCtx = PipelineContext<CreateInvoiceState, Create
 internal class CreateInvoiceContainer(
     private val getInvoiceNumberPreview: GetInvoiceNumberPreviewUseCase,
     private val getTenantSettings: GetTenantSettingsUseCase,
+    private val getCurrentTenant: GetCurrentTenantUseCase,
     private val validateInvoice: ValidateInvoiceUseCase,
     private val submitInvoiceWithDelivery: SubmitInvoiceWithDeliveryUseCase,
     private val getContactPeppolStatus: GetContactPeppolStatusUseCase,
@@ -546,7 +549,7 @@ internal class CreateInvoiceContainer(
                     suggestedSection = InvoiceSection.LineItems,
                     latestInvoiceSuggestion = null,
                     clientLookupState = state.uiState.clientLookupState.copy(
-                        query = client.name.value,
+                        query = "",
                         isExpanded = false,
                         localResults = emptyList(),
                         externalResults = emptyList(),
@@ -624,28 +627,44 @@ internal class CreateInvoiceContainer(
             }
             .onFailure { logger.w { "Could not load invoice number preview: ${it.message}" } }
 
-        getTenantSettings()
-            .onSuccess { settings ->
-                updateInvoice { state ->
-                    val withDefaults = synchronizeDueDate(
+        val tenantSettingsResult = getTenantSettings()
+        val currentTenantResult = getCurrentTenant()
+
+        tenantSettingsResult.onFailure { logger.w { "Could not load tenant defaults: ${it.message}" } }
+        currentTenantResult.onFailure { logger.w { "Could not load current tenant: ${it.message}" } }
+
+        val settings = tenantSettingsResult.getOrNull()
+        val currentTenant = currentTenantResult.getOrNull()
+
+        if (settings != null || currentTenant != null) {
+            updateInvoice { state ->
+                val withDefaults = settings?.let { tenantSettings ->
+                    synchronizeDueDate(
                         state.formState.copy(
-                            paymentTermsDays = settings.defaultPaymentTerms,
-                            senderIban = settings.companyIban?.value.orEmpty(),
-                            senderBic = settings.companyBic?.value.orEmpty(),
-                            notes = state.formState.notes.ifBlank { settings.paymentTermsText.orEmpty() }
+                            paymentTermsDays = tenantSettings.defaultPaymentTerms,
+                            senderIban = tenantSettings.companyIban?.value.orEmpty(),
+                            senderBic = tenantSettings.companyBic?.value.orEmpty(),
+                            notes = state.formState.notes.ifBlank { tenantSettings.paymentTermsText.orEmpty() }
                         )
                     )
-                    state.copy(
-                        formState = withDefaults,
-                        uiState = state.uiState.copy(
-                            senderCompanyName = settings.companyName
-                                ?.takeIf { it.isNotBlank() }
-                                ?: state.uiState.senderCompanyName
-                        )
+                } ?: state.formState
+
+                val (senderCompanyName, senderCompanyVat) = resolveSenderIdentity(
+                    settingsCompanyName = settings?.companyName,
+                    currentTenant = currentTenant,
+                    existingCompanyName = state.uiState.senderCompanyName,
+                    existingCompanyVat = state.uiState.senderCompanyVat
+                )
+
+                state.copy(
+                    formState = withDefaults,
+                    uiState = state.uiState.copy(
+                        senderCompanyName = senderCompanyName,
+                        senderCompanyVat = senderCompanyVat
                     )
-                }
+                )
             }
-            .onFailure { logger.w { "Could not load tenant defaults: ${it.message}" } }
+        }
 
         updateInvoice { state ->
             val updated = if (state.formState.structuredCommunication.isNotBlank()) {
@@ -824,4 +843,24 @@ internal class CreateInvoiceContainer(
             invoiceNumberPreview = null
         )
     }
+}
+
+internal fun resolveSenderIdentity(
+    settingsCompanyName: String?,
+    currentTenant: Tenant?,
+    existingCompanyName: String,
+    existingCompanyVat: String?
+): Pair<String, String?> {
+    val senderCompanyName = settingsCompanyName
+        ?.takeIf { it.isNotBlank() }
+        ?: currentTenant?.legalName?.value?.takeIf { it.isNotBlank() }
+        ?: existingCompanyName.takeIf { it.isNotBlank() }
+        ?: ""
+
+    val senderCompanyVat = currentTenant?.vatNumber
+        ?.formatted
+        ?.takeIf { it.isNotBlank() }
+        ?: existingCompanyVat?.takeIf { it.isNotBlank() }
+
+    return senderCompanyName to senderCompanyVat
 }

@@ -53,6 +53,7 @@ val cashflowViewModelModule = module {
         CreateInvoiceContainer(
             getInvoiceNumberPreview = get(),
             getTenantSettings = get(),
+            getCurrentTenant = get(),
             validateInvoice = get(),
             submitInvoiceWithDelivery = get(),
             getContactPeppolStatus = get(),

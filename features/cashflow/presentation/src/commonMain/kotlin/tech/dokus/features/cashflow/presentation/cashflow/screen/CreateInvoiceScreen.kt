@@ -34,6 +34,7 @@ import tech.dokus.domain.enums.InvoiceDueDateMode
 import tech.dokus.domain.model.FinancialLineItem
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.PartyDraft
+import tech.dokus.domain.model.PeppolStatusResponse
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.ids.Iban
@@ -426,7 +427,7 @@ private fun InvoicePreviewDialog(
     }
 }
 
-@Preview(name = "CreateInvoice Desktop Base", widthDp = 1200, heightDp = 1300)
+@Preview(name = "CreateInvoice Desktop Base", widthDp = 900, heightDp = 1000)
 @Composable
 private fun CreateInvoiceDesktopBasePreview(
     @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
@@ -440,7 +441,7 @@ private fun CreateInvoiceDesktopBasePreview(
     }
 }
 
-@Preview(name = "CreateInvoice Desktop Lookup Local", widthDp = 1200, heightDp = 1300)
+@Preview(name = "CreateInvoice Desktop Lookup Local", widthDp = 900, heightDp = 1000)
 @Composable
 private fun CreateInvoiceDesktopLookupLocalPreview(
     @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
@@ -459,7 +460,7 @@ private fun CreateInvoiceDesktopLookupLocalPreview(
     }
 }
 
-@Preview(name = "CreateInvoice Desktop Lookup Mixed", widthDp = 1200, heightDp = 1300)
+@Preview(name = "CreateInvoice Desktop Lookup Mixed", widthDp = 900, heightDp = 1000)
 @Composable
 private fun CreateInvoiceDesktopLookupMixedPreview(
     @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
@@ -487,7 +488,7 @@ private fun CreateInvoiceDesktopLookupMixedPreview(
     }
 }
 
-@Preview(name = "CreateInvoice Desktop Delivery Fallback", widthDp = 1200, heightDp = 1300)
+@Preview(name = "CreateInvoice Desktop Delivery Fallback", widthDp = 900, heightDp = 1000)
 @Composable
 private fun CreateInvoiceDesktopDeliveryFallbackPreview(
     @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
@@ -507,7 +508,7 @@ private fun CreateInvoiceDesktopDeliveryFallbackPreview(
     }
 }
 
-@Preview(name = "CreateInvoice Desktop PDF Primary", widthDp = 1200, heightDp = 1300)
+@Preview(name = "CreateInvoice Desktop PDF Primary", widthDp = 900, heightDp = 1000)
 @Composable
 private fun CreateInvoiceDesktopPdfPrimaryPreview(
     @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
@@ -524,7 +525,46 @@ private fun CreateInvoiceDesktopPdfPrimaryPreview(
     }
 }
 
-@Preview(name = "CreateInvoice Desktop Preview Dialog", widthDp = 1200, heightDp = 1300)
+@Preview(name = "CreateInvoice Desktop Selected Client", widthDp = 900, heightDp = 1000)
+@Composable
+private fun CreateInvoiceDesktopSelectedClientPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        CreateInvoiceScreen(
+            state = createDesktopPreviewState(
+                peppolStatus = PeppolStatusResponse(
+                    status = PeppolStatusResponse.STATUS_FOUND,
+                    participantId = "0208:BE0123456789",
+                    refreshed = false
+                )
+            ),
+            snackbarHostState = SnackbarHostState(),
+            onIntent = {}
+        )
+    }
+}
+
+@Preview(name = "CreateInvoice Desktop Selected Client No Peppol", widthDp = 900, heightDp = 1000)
+@Composable
+private fun CreateInvoiceDesktopSelectedClientNoPeppolPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        CreateInvoiceScreen(
+            state = createDesktopPreviewState(
+                peppolStatus = PeppolStatusResponse(
+                    status = PeppolStatusResponse.STATUS_NOT_FOUND,
+                    refreshed = false
+                )
+            ),
+            snackbarHostState = SnackbarHostState(),
+            onIntent = {}
+        )
+    }
+}
+
+@Preview(name = "CreateInvoice Desktop Preview Dialog", widthDp = 900, heightDp = 1000)
 @Composable
 private fun CreateInvoiceDesktopPreviewDialogPreview(
     @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
@@ -538,7 +578,7 @@ private fun CreateInvoiceDesktopPreviewDialogPreview(
     }
 }
 
-@Preview(name = "CreateInvoice Desktop Preview Dialog Empty Client", widthDp = 1200, heightDp = 1300)
+@Preview(name = "CreateInvoice Desktop Preview Dialog Empty Client", widthDp = 900, heightDp = 1000)
 @Composable
 private fun CreateInvoiceDesktopPreviewDialogNoClientPreview(
     @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
@@ -562,7 +602,9 @@ private fun createDesktopPreviewState(
     selectedDelivery: InvoiceDeliveryMethod = InvoiceDeliveryMethod.Peppol,
     resolvedAction: DeliveryResolution = DeliveryResolution(InvoiceResolvedAction.Peppol),
     previewVisible: Boolean = false,
-    clearSelectedClient: Boolean = false
+    clearSelectedClient: Boolean = false,
+    peppolStatus: PeppolStatusResponse? = null,
+    peppolStatusLoading: Boolean = false
 ): CreateInvoiceState {
     return CreateInvoiceState(
         formState = Mocks.sampleFormState.copy(
@@ -570,7 +612,9 @@ private fun createDesktopPreviewState(
             notes = "Payment within 30 days of invoice date. Late payments incur interest at 8% per annum plus €40 recovery costs per Belgian law.",
             senderIban = "BE68 5390 0754 7034",
             senderBic = "TRIOBEBB",
-            structuredCommunication = "+++315/838/230/22+++"
+            structuredCommunication = "+++315/838/230/22+++",
+            peppolStatus = peppolStatus,
+            peppolStatusLoading = peppolStatusLoading
         ),
         uiState = Mocks.sampleUiState.copy(
             clientLookupState = Mocks.sampleUiState.clientLookupState.copy(
