@@ -59,6 +59,8 @@ import tech.dokus.features.auth.usecases.GetCurrentTenantIdUseCase
 import tech.dokus.features.auth.usecases.GetCurrentTenantIdUseCaseImpl
 import tech.dokus.features.auth.usecases.GetCurrentTenantUseCase
 import tech.dokus.features.auth.usecases.GetCurrentTenantUseCaseImpl
+import tech.dokus.features.auth.usecases.GetAccountMeUseCase
+import tech.dokus.features.auth.usecases.GetAccountMeUseCaseImpl
 import tech.dokus.features.auth.usecases.GetCurrentUserUseCase
 import tech.dokus.features.auth.usecases.GetCurrentUserUseCaseImpl
 import tech.dokus.features.auth.usecases.GetInvoiceNumberPreviewUseCase
@@ -177,6 +179,7 @@ val authDomainModule = module {
     singleOf(::ResetPasswordUseCaseImpl) bind ResetPasswordUseCase::class
     singleOf(::VerifyEmailUseCaseImpl) bind VerifyEmailUseCase::class
     singleOf(::ResendVerificationEmailUseCaseImpl) bind ResendVerificationEmailUseCase::class
+    singleOf(::GetAccountMeUseCaseImpl) bind GetAccountMeUseCase::class
     singleOf(::GetCurrentUserUseCaseImpl) bind GetCurrentUserUseCase::class
     singleOf(::WatchCurrentUserUseCaseImpl) bind WatchCurrentUserUseCase::class
     singleOf(::UpdateProfileUseCaseImpl) bind UpdateProfileUseCase::class

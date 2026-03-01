@@ -122,7 +122,6 @@ internal class BootstrapContainer(
     private fun needsAccountConfirmation(): Boolean = false
 
     private suspend fun needsTenantSelection(): Boolean {
-        val claims = tokenManager.getCurrentClaims()
-        return claims?.tenant == null
+        return tokenManager.getSelectedTenantId() == null
     }
 }

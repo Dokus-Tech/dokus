@@ -1,5 +1,7 @@
 package tech.dokus.backend.routes.cashflow
 
+import tech.dokus.backend.security.requireTenantId
+
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.request.receiveNullable
@@ -24,7 +26,6 @@ import tech.dokus.domain.model.InvoicePdfResponse
 import tech.dokus.domain.model.RecordPaymentRequest
 import tech.dokus.domain.routes.Invoices
 import tech.dokus.foundation.backend.security.authenticateJwt
-import tech.dokus.foundation.backend.security.dokusPrincipal
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -43,7 +44,7 @@ internal fun Route.invoiceRoutes() {
     authenticateJwt {
         // GET /api/v1/invoices - List invoices with query params
         get<Invoices> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantId()
 
             if (route.limit < 1 || route.limit > 200) {
                 throw DokusException.BadRequest("Limit must be between 1 and 200")
@@ -73,7 +74,7 @@ internal fun Route.invoiceRoutes() {
 
         // POST /api/v1/invoices - Create invoice
         post<Invoices> {
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantId()
             val request = call.receive<CreateInvoiceRequest>()
 
             val invoice = invoiceService.createInvoice(tenantId, request)
@@ -84,7 +85,7 @@ internal fun Route.invoiceRoutes() {
 
         // GET /api/v1/invoices/overdue - List overdue invoices
         get<Invoices.Overdue> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantId()
 
             val invoices = invoiceService.listOverdueInvoices(
                 tenantId = tenantId,
@@ -97,7 +98,7 @@ internal fun Route.invoiceRoutes() {
 
         // GET /api/v1/invoices/{id} - Get invoice by ID
         get<Invoices.Id> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantId()
             val invoiceId = InvoiceId(Uuid.parse(route.id))
 
             val invoice = invoiceService.getInvoice(invoiceId, tenantId)
@@ -109,7 +110,7 @@ internal fun Route.invoiceRoutes() {
 
         // PUT /api/v1/invoices/{id} - Update invoice
         put<Invoices.Id> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantId()
             val invoiceId = InvoiceId(Uuid.parse(route.id))
             val request = call.receive<CreateInvoiceRequest>()
 
@@ -121,7 +122,7 @@ internal fun Route.invoiceRoutes() {
 
         // DELETE /api/v1/invoices/{id} - Delete invoice
         delete<Invoices.Id> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantId()
             val invoiceId = InvoiceId(Uuid.parse(route.id))
 
             invoiceService.deleteInvoice(invoiceId, tenantId)
@@ -132,7 +133,7 @@ internal fun Route.invoiceRoutes() {
 
         // PATCH /api/v1/invoices/{id}/status - Update invoice status
         patch<Invoices.Id.Status> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantId()
             val invoiceId = InvoiceId(Uuid.parse(route.parent.id))
 
             val status = call.receiveNullable<InvoiceStatusRequest>()?.status
@@ -146,7 +147,7 @@ internal fun Route.invoiceRoutes() {
 
         // POST /api/v1/invoices/{id}/payments - Record payment
         post<Invoices.Id.Payments> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantId()
             val invoiceId = InvoiceId(Uuid.parse(route.parent.id))
             val request = call.receive<RecordPaymentRequest>()
 
@@ -162,7 +163,7 @@ internal fun Route.invoiceRoutes() {
 
         // POST /api/v1/invoices/{id}/pdf - Generate PDF export and return download URL
         post<Invoices.Id.Pdf> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantId()
             val invoiceId = InvoiceId(Uuid.parse(route.parent.id))
             val invoice = invoiceService.getInvoice(invoiceId, tenantId)
                 .getOrElse { throw DokusException.InternalError("Failed to fetch invoice") }

@@ -1,5 +1,7 @@
 package tech.dokus.backend.routes.search
 
+import tech.dokus.backend.security.requireTenantId
+
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.resources.get
 import io.ktor.server.resources.post
@@ -20,7 +22,7 @@ fun Route.searchRoutes() {
     authenticateJwt {
         get<Search> { route ->
             val principal = dokusPrincipal
-            val tenantId = principal.requireTenantId()
+            val tenantId = requireTenantId()
             if (route.query.length > 200) {
                 throw DokusException.BadRequest("Search query too long")
             }
@@ -48,7 +50,7 @@ fun Route.searchRoutes() {
 
         post<Search.Events> {
             val principal = dokusPrincipal
-            val tenantId = principal.requireTenantId()
+            val tenantId = requireTenantId()
             val request = call.receive<SearchSignalEventRequest>()
 
             searchService.recordSignal(

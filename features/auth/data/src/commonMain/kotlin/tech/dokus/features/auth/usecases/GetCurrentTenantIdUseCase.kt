@@ -4,7 +4,7 @@ import tech.dokus.domain.asbtractions.TokenManager
 import tech.dokus.domain.ids.TenantId
 
 /**
- * Implementation that reads tenant ID directly from JWT claims.
+ * Implementation that reads tenant ID from local secure storage.
  * No network call is made - this is safe for offline use.
  */
 class GetCurrentTenantIdUseCaseImpl(
@@ -12,6 +12,6 @@ class GetCurrentTenantIdUseCaseImpl(
 ) : GetCurrentTenantIdUseCase {
 
     override suspend operator fun invoke(): TenantId? {
-        return tokenManager.getCurrentClaims()?.tenant?.tenantId
+        return tokenManager.getSelectedTenantId()
     }
 }

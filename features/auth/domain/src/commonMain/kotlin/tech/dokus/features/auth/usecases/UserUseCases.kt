@@ -5,7 +5,15 @@ import tech.dokus.domain.Name
 import tech.dokus.domain.Password
 import tech.dokus.domain.ids.SessionId
 import tech.dokus.domain.model.User
+import tech.dokus.domain.model.auth.AccountMeResponse
 import tech.dokus.domain.model.auth.SessionDto
+
+/**
+ * Use case for retrieving current session/bootstrap payload.
+ */
+interface GetAccountMeUseCase {
+    suspend operator fun invoke(): Result<AccountMeResponse>
+}
 
 /**
  * Use case for retrieving current user.

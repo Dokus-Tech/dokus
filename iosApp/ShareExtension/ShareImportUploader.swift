@@ -11,7 +11,7 @@ final class ShareImportUploader {
         static let appGroupIdentifier = "group.vision.invoid.dokus.share"
         static let serverBaseUrlKey = "share.server.base_url"
         static let uploadPrefix = "documents"
-        static let tenantClaimKey = "tenant_id"
+        static let tenantHeaderName = "X-Tenant-Id"
         static let tokenExpiryClaimKey = "exp"
         static let refreshLeadSeconds: TimeInterval = 60
     }
@@ -68,11 +68,10 @@ final class ShareImportUploader {
         let baseURL = resolvedBaseURL()
 
         if needsRefresh(for: accessToken), let refreshToken {
-            let preferredTenant = tenantIdFromClaims(token: accessToken) ?? lastSelectedTenantId
             let refreshed = try await refreshTokens(
                 baseURL: baseURL,
                 refreshToken: refreshToken,
-                tenantId: preferredTenant
+                tenantId: lastSelectedTenantId
             )
             persist(tokens: refreshed)
             accessToken = refreshed.accessToken
@@ -85,11 +84,10 @@ final class ShareImportUploader {
             guard let refreshToken else {
                 throw failure
             }
-            let preferredTenant = tenantIdFromClaims(token: accessToken) ?? lastSelectedTenantId
             let refreshed = try await refreshTokens(
                 baseURL: baseURL,
                 refreshToken: refreshToken,
-                tenantId: preferredTenant
+                tenantId: lastSelectedTenantId
             )
             persist(tokens: refreshed)
             accessToken = refreshed.accessToken
@@ -104,15 +102,12 @@ final class ShareImportUploader {
             )
         }
 
-        let claimsTenantId = tenantIdFromClaims(token: accessToken)
         let resolvedWorkspace: TenantInfo
         if tenants.count == 1 {
             resolvedWorkspace = tenants[0]
         } else {
-            let candidateIds = [claimsTenantId, lastSelectedTenantId].compactMap { $0 }
-            guard let match = candidateIds
-                .first(where: { candidate in tenants.contains(where: { $0.id == candidate }) })
-                .flatMap({ candidate in tenants.first(where: { $0.id == candidate }) }) else {
+            guard let selectedId = lastSelectedTenantId,
+                  let match = tenants.first(where: { $0.id == selectedId }) else {
                 throw ShareImportFailure(
                     type: .workspaceContextUnavailable,
                     message: ShareLocalizedMessage(key: .errorWorkspaceContextUnavailable),
@@ -122,7 +117,7 @@ final class ShareImportUploader {
             resolvedWorkspace = match
         }
 
-        if claimsTenantId != resolvedWorkspace.id {
+        if lastSelectedTenantId != resolvedWorkspace.id {
             let switched = try await selectTenant(
                 baseURL: baseURL,
                 accessToken: accessToken,
@@ -169,6 +164,7 @@ final class ShareImportUploader {
         request.httpMethod = "POST"
         request.setValue("Bearer \(context.accessToken)", forHTTPHeaderField: "Authorization")
         request.setValue(multipart.contentType, forHTTPHeaderField: "Content-Type")
+        request.setValue(context.workspaceId, forHTTPHeaderField: Constants.tenantHeaderName)
 
         let response = try await uploadWithProgress(request: request, body: multipart.body, onProgress: onProgress)
         let data = response.data
@@ -371,28 +367,6 @@ final class ShareImportUploader {
     private func persist(tokens: TokenBundle) {
         keychain.set(tokens.accessToken, for: Constants.accessTokenKey)
         keychain.set(tokens.refreshToken, for: Constants.refreshTokenKey)
-    }
-
-    private func tenantIdFromClaims(token: String) -> String? {
-        guard let payload = decodeJwtPayload(token: token) else {
-            return nil
-        }
-
-        if let tenantId = payload[Constants.tenantClaimKey] as? String, !tenantId.isEmpty {
-            return tenantId
-        }
-
-        if
-            let tenantsString = payload["tenants"] as? String,
-            let tenantsData = tenantsString.data(using: .utf8),
-            let tenantsObject = try? JSONSerialization.jsonObject(with: tenantsData) as? [[String: Any]],
-            let first = tenantsObject.first,
-            let legacyTenantId = first[Constants.tenantClaimKey] as? String,
-            !legacyTenantId.isEmpty {
-            return legacyTenantId
-        }
-
-        return nil
     }
 
     private func needsRefresh(for token: String) -> Bool {

@@ -3,6 +3,8 @@ package tech.dokus.features.auth.manager
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.auth.LoginResponse
 import tech.dokus.features.auth.storage.TokenStorage
 import tech.dokus.foundation.sstorage.SecureStorage
 import kotlin.io.encoding.Base64
@@ -220,6 +222,103 @@ class TokenManagerImplTest {
         assertFalse(manager.isAuthenticated.value)
         assertNull(tokenStorage.getAccessToken())
         assertNull(tokenStorage.getRefreshToken())
+    }
+
+    @Test
+    fun `saveTokens persists selected tenant id from login response`() = runTest {
+        val tokenStorage = TokenStorage(InMemorySecureStorage())
+        val manager = TokenManagerImpl(tokenStorage)
+        val selectedTenantId = TenantId.generate()
+        val now = Clock.System.now().epochSeconds
+
+        manager.saveTokens(
+            LoginResponse(
+                accessToken = jwtToken(exp = now + 3600),
+                refreshToken = "refresh-token",
+                expiresIn = 3600,
+                selectedTenantId = selectedTenantId
+            )
+        )
+
+        assertEquals(selectedTenantId, manager.getSelectedTenantId())
+        assertEquals(selectedTenantId, tokenStorage.getLastSelectedTenantId())
+    }
+
+    @Test
+    fun `saveTokens clears selected tenant id when login response has no selected tenant`() = runTest {
+        val tokenStorage = TokenStorage(InMemorySecureStorage())
+        val manager = TokenManagerImpl(tokenStorage)
+        val now = Clock.System.now().epochSeconds
+        tokenStorage.saveLastSelectedTenantId(TenantId.generate())
+
+        manager.saveTokens(
+            LoginResponse(
+                accessToken = jwtToken(exp = now + 3600),
+                refreshToken = "refresh-token",
+                expiresIn = 3600,
+                selectedTenantId = null
+            )
+        )
+
+        assertNull(manager.getSelectedTenantId())
+        assertNull(tokenStorage.getLastSelectedTenantId())
+    }
+
+    @Test
+    fun `refreshToken callback receives currently selected tenant id`() = runTest {
+        val tokenStorage = TokenStorage(InMemorySecureStorage())
+        val manager = TokenManagerImpl(tokenStorage)
+        val selectedTenantId = TenantId.generate()
+        val now = Clock.System.now().epochSeconds
+
+        tokenStorage.saveAccessToken(jwtToken(exp = now + 60))
+        tokenStorage.saveRefreshToken("refresh-token")
+        tokenStorage.saveLastSelectedTenantId(selectedTenantId)
+        manager.initialize()
+
+        var callbackTenantId: TenantId? = null
+        manager.onTokenRefreshNeeded = { _, tenantId ->
+            callbackTenantId = tenantId
+            LoginResponse(
+                accessToken = jwtToken(exp = now + 3600),
+                refreshToken = "refresh-token-new",
+                expiresIn = 3600,
+                selectedTenantId = selectedTenantId
+            )
+        }
+
+        val refreshed = manager.refreshToken(force = true)
+
+        assertEquals(selectedTenantId, callbackTenantId)
+        assertEquals(tokenStorage.getAccessToken(), refreshed)
+    }
+
+    @Test
+    fun `refreshToken updates selected tenant id from refresh response`() = runTest {
+        val tokenStorage = TokenStorage(InMemorySecureStorage())
+        val manager = TokenManagerImpl(tokenStorage)
+        val previousTenantId = TenantId.generate()
+        val refreshedTenantId = TenantId.generate()
+        val now = Clock.System.now().epochSeconds
+
+        tokenStorage.saveAccessToken(jwtToken(exp = now + 60))
+        tokenStorage.saveRefreshToken("refresh-token")
+        tokenStorage.saveLastSelectedTenantId(previousTenantId)
+        manager.initialize()
+
+        manager.onTokenRefreshNeeded = { _, _ ->
+            LoginResponse(
+                accessToken = jwtToken(exp = now + 3600),
+                refreshToken = "refresh-token-new",
+                expiresIn = 3600,
+                selectedTenantId = refreshedTenantId
+            )
+        }
+
+        manager.refreshToken(force = true)
+
+        assertEquals(refreshedTenantId, manager.getSelectedTenantId())
+        assertEquals(refreshedTenantId, tokenStorage.getLastSelectedTenantId())
     }
 }
 

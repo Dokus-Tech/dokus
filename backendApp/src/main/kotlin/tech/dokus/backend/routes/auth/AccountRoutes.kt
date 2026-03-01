@@ -22,6 +22,8 @@ import tech.dokus.domain.model.auth.DeactivateUserRequest
 import tech.dokus.domain.model.auth.LogoutRequest
 import tech.dokus.domain.model.auth.SelectTenantRequest
 import tech.dokus.domain.model.auth.UpdateProfileRequest
+import tech.dokus.backend.services.auth.SurfaceResolver
+import tech.dokus.domain.model.auth.AccountMeResponse
 import tech.dokus.domain.routes.Account
 import tech.dokus.foundation.backend.security.authenticateJwt
 import tech.dokus.foundation.backend.security.dokusPrincipal
@@ -48,8 +50,16 @@ internal fun Route.accountRoutes() {
             val principal = dokusPrincipal
             val user = userRepository.findById(principal.userId)
                 ?: throw DokusException.NotAuthenticated("User not found")
+            val memberships = userRepository.getUserTenants(principal.userId)
+            val surface = SurfaceResolver.resolve(memberships)
 
-            call.respond(HttpStatusCode.OK, user)
+            call.respond(
+                HttpStatusCode.OK,
+                AccountMeResponse(
+                    user = user,
+                    surface = surface
+                )
+            )
         }
 
         /**

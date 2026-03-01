@@ -1,7 +1,6 @@
 package tech.dokus.domain.model.auth
 
 import kotlinx.serialization.Serializable
-import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 
 /**
@@ -11,8 +10,7 @@ import tech.dokus.domain.ids.UserId
  * @property userId The unique user identifier
  * @property email The user's email address
  * @property name The user's full name
- * @property tenantId The tenant identifier
- * @property roles Set of roles assigned to the user
+ * @property globalRoles Set of global roles assigned to the user (if any)
  * @property sessionJti JWT session identifier for the current access token
  */
 @Serializable
@@ -20,7 +18,6 @@ data class AuthenticationInfo(
     val userId: UserId,
     val email: String,
     val name: String,
-    val tenantId: TenantId?,
-    val roles: Set<String>,
+    val globalRoles: Set<String> = emptySet(),
     val sessionJti: String? = null
 )

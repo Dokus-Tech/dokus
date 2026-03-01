@@ -90,8 +90,7 @@ internal class LoginContainer(
         loginUseCase(email, password).fold(
             onSuccess = {
                 logger.i { "Login successful, navigating to home" }
-                val claims = tokenManager.getCurrentClaims()
-                if (claims?.tenant == null) {
+                if (tokenManager.getSelectedTenantId() == null) {
                     action(LoginAction.NavigateToWorkspaceSelect)
                 } else {
                     action(LoginAction.NavigateToHome)

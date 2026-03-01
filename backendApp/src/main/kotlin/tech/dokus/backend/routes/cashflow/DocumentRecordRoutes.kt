@@ -1,5 +1,7 @@
 package tech.dokus.backend.routes.cashflow
 
+import tech.dokus.backend.security.requireTenantId
+
 import io.ktor.http.*
 import io.ktor.server.request.*
 import io.ktor.server.resources.*
@@ -88,7 +90,7 @@ internal fun Route.documentRecordRoutes() {
          * Now document-centric: includes documents without drafts (queued/processing/failed).
          */
         get<Documents.Paginated> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantId()
             val page = route.page.coerceAtLeast(0)
             val limit = route.limit.coerceIn(1, 100)
             val filter = route.filter
@@ -164,7 +166,7 @@ internal fun Route.documentRecordRoutes() {
          * Get full document record.
          */
         get<Documents.Id> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantId()
             val documentId = DocumentId.parse(route.id)
 
             logger.info("Getting document record: $documentId, tenant=$tenantId")
@@ -230,7 +232,7 @@ internal fun Route.documentRecordRoutes() {
          * Download raw document bytes through authenticated API.
          */
         get<Documents.Id.Content> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantId()
             val documentId = DocumentId.parse(route.parent.id)
 
             logger.info("Downloading document content: $documentId, tenant=$tenantId")
@@ -276,7 +278,7 @@ internal fun Route.documentRecordRoutes() {
          * Download raw source bytes through authenticated API.
          */
         get<Documents.Id.SourceContent> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantId()
             val documentId = DocumentId.parse(route.parent.id)
             val sourceId = DocumentSourceId.parse(route.sourceId)
 
@@ -326,7 +328,7 @@ internal fun Route.documentRecordRoutes() {
          * List source evidence attached to a canonical document.
          */
         get<Documents.Id.Sources> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantId()
             val documentId = DocumentId.parse(route.parent.id)
 
             if (!documentRepository.exists(tenantId, documentId)) {
@@ -342,7 +344,7 @@ internal fun Route.documentRecordRoutes() {
          * Remove one evidence source using last-source lifecycle rules.
          */
         delete<Documents.Id.Source> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantId()
             val documentId = DocumentId.parse(route.parent.id)
             val sourceId = DocumentSourceId.parse(route.sourceId)
 
@@ -370,7 +372,7 @@ internal fun Route.documentRecordRoutes() {
          * Delete document (cascades to drafts, ingestion runs, chunks).
          */
         delete<Documents.Id> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantId()
             val documentId = DocumentId.parse(route.id)
 
             logger.info("Deleting document: $documentId, tenant=$tenantId")
@@ -411,7 +413,7 @@ internal fun Route.documentRecordRoutes() {
          * Get draft details.
          */
         get<Documents.Id.Draft> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantId()
             val documentId = DocumentId.parse(route.parent.id)
 
             logger.info("Getting draft: $documentId, tenant=$tenantId")
@@ -427,7 +429,7 @@ internal fun Route.documentRecordRoutes() {
          * Update draft with user corrections.
          */
         patch<Documents.Id.Draft> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantId()
             val userId = dokusPrincipal.userId
             val documentId = DocumentId.parse(route.parent.id)
 
@@ -485,7 +487,7 @@ internal fun Route.documentRecordRoutes() {
          * Get ingestion run history.
          */
         get<Documents.Id.Ingestions> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantId()
             val documentId = DocumentId.parse(route.parent.id)
 
             logger.info("Getting ingestion history: $documentId, tenant=$tenantId")
@@ -503,7 +505,7 @@ internal fun Route.documentRecordRoutes() {
          * Reprocess document. IDEMPOTENT: returns existing Queued/Processing run unless force=true.
          */
         post<Documents.Id.Reprocess> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantId()
             val documentId = DocumentId.parse(route.parent.id)
 
             val request = try {
@@ -568,7 +570,7 @@ internal fun Route.documentRecordRoutes() {
          * - If draft was edited after confirmation, re-confirm updates the existing entity + projection (when allowed).
          */
         post<Documents.Id.Confirm> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantId()
             val documentId = DocumentId.parse(route.parent.id)
             logger.info("Confirming document: $documentId, tenant=$tenantId")
 
@@ -704,7 +706,7 @@ internal fun Route.documentRecordRoutes() {
          * IDEMPOTENT: if already rejected, returns existing record.
          */
         post<Documents.Id.Reject> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantId()
             val documentId = DocumentId.parse(route.parent.id)
             val request = call.receive<RejectDocumentRequest>()
 
@@ -744,7 +746,7 @@ internal fun Route.documentRecordRoutes() {
          * Resolve possible-match review as SAME or DIFFERENT.
          */
         post<Documents.MatchReviews.Resolve> { route ->
-            val tenantId = dokusPrincipal.requireTenantId()
+            val tenantId = requireTenantId()
             val userId = dokusPrincipal.userId
             val reviewId = DocumentMatchReviewId.parse(route.reviewId)
             val request = call.receive<ResolveDocumentMatchReviewRequest>()
