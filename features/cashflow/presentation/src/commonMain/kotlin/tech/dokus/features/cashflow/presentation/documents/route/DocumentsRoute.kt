@@ -17,6 +17,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import org.jetbrains.compose.resources.stringResource
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
+import tech.dokus.app.navigation.HomeNavigationCommand
+import tech.dokus.app.navigation.HomeNavigationCommandBus
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.documents_back_to_clients
 import tech.dokus.aura.resources.documents_subtitle
@@ -42,10 +44,8 @@ import tech.dokus.foundation.app.shell.LocalUserAccessContext
 import tech.dokus.foundation.app.shell.RegisterHomeShellTopBar
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.navigation.destinations.CashFlowDestination
-import tech.dokus.navigation.destinations.HomeDestination
 import tech.dokus.navigation.local.LocalNavController
 import tech.dokus.navigation.navigateTo
-import tech.dokus.navigation.navigateToTopLevelTab
 
 private const val HOME_ROUTE_DOCUMENTS = "documents"
 
@@ -55,8 +55,8 @@ internal fun DocumentsRoute(
     uploadContainer: AddDocumentContainer = container(),
 ) {
     val accessContext = LocalUserAccessContext.current
-    val isAccountantReadOnly = accessContext.isAccountantReadOnly
-    val showBackToClients = accessContext.canConsole && isAccountantReadOnly
+    val isAccountantReadOnly = accessContext.isStage2ReadOnly
+    val showBackToClients = accessContext.isConsoleDrillDown
     val navController = LocalNavController.current
     val backStackEntry by navController.currentBackStackEntryAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -98,7 +98,7 @@ internal fun DocumentsRoute(
     val onBackToClientsClick = remember(showBackToClients) {
         {
             if (showBackToClients) {
-                navController.navigateToTopLevelTab(HomeDestination.Accountant)
+                HomeNavigationCommandBus.dispatch(HomeNavigationCommand.OpenConsoleClients)
             }
         }
     }

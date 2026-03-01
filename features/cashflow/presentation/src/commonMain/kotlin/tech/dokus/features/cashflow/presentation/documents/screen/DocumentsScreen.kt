@@ -47,6 +47,7 @@ import tech.dokus.features.cashflow.presentation.documents.components.DocumentTa
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentFilter
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsIntent
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsState
+import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.common.DokusLoaderSize
@@ -284,6 +285,58 @@ private fun DocumentsScreenPreview(
             onUploadClick = {},
             isUploadEnabled = true,
             showBackToClients = false,
+            onBackToClientsClick = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun DocumentsScreenAccountantReadOnlyPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        DocumentsScreen(
+            state = DocumentsState.Content(
+                documents = PaginationState(
+                    hasMorePages = false,
+                    data = emptyList(),
+                ),
+                filter = DocumentFilter.All,
+                needsAttentionCount = 0,
+                confirmedCount = 0,
+            ),
+            snackbarHostState = remember { SnackbarHostState() },
+            onIntent = {},
+            onUploadClick = {},
+            isUploadEnabled = false,
+            showBackToClients = true,
+            onBackToClientsClick = {},
+        )
+    }
+}
+
+@Preview(name = "Documents Accountant Desktop", widthDp = 1366, heightDp = 900)
+@Composable
+private fun DocumentsScreenAccountantReadOnlyDesktopPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        DocumentsScreen(
+            state = DocumentsState.Content(
+                documents = PaginationState(
+                    hasMorePages = false,
+                    data = emptyList(),
+                ),
+                filter = DocumentFilter.All,
+                needsAttentionCount = 0,
+                confirmedCount = 0,
+            ),
+            snackbarHostState = remember { SnackbarHostState() },
+            onIntent = {},
+            onUploadClick = {},
+            isUploadEnabled = false,
+            showBackToClients = true,
             onBackToClientsClick = {},
         )
     }

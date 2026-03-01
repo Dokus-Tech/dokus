@@ -29,7 +29,14 @@ import tech.dokus.aura.resources.console_clients_column_company
 import tech.dokus.aura.resources.console_clients_column_vat
 import tech.dokus.aura.resources.console_clients_count
 import tech.dokus.aura.resources.console_clients_empty
+import tech.dokus.aura.resources.console_clients_empty_all
 import tech.dokus.aura.resources.console_clients_search_placeholder
+import tech.dokus.domain.DisplayName
+import tech.dokus.domain.asbtractions.RetryHandler
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.model.auth.ConsoleClientSummary
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.DokusLoader
@@ -120,12 +127,17 @@ private fun ConsoleClientsContent(
         )
 
         if (state.filteredClients.isEmpty()) {
+            val emptyText = if (state.clients.isEmpty()) {
+                stringResource(Res.string.console_clients_empty_all)
+            } else {
+                stringResource(Res.string.console_clients_empty)
+            }
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = stringResource(Res.string.console_clients_empty),
+                    text = emptyText,
                     textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -248,7 +260,7 @@ private fun ConsoleClientsContent(
 
 @Preview
 @Composable
-private fun ConsoleClientsScreenPreview(
+private fun ConsoleClientsScreenLoadingPreview(
     @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
 ) {
     TestWrapper(parameters) {
@@ -258,4 +270,100 @@ private fun ConsoleClientsScreenPreview(
             onIntent = {},
         )
     }
+}
+
+@Preview
+@Composable
+private fun ConsoleClientsScreenContentPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
+) {
+    TestWrapper(parameters) {
+        ConsoleClientsScreen(
+            state = ConsoleClientsState.Content(clients = previewClients()),
+            snackbarHostState = SnackbarHostState(),
+            onIntent = {},
+        )
+    }
+}
+
+@Preview(name = "Console Clients Desktop", widthDp = 1366, heightDp = 900)
+@Composable
+private fun ConsoleClientsScreenDesktopContentPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
+) {
+    TestWrapper(parameters) {
+        ConsoleClientsScreen(
+            state = ConsoleClientsState.Content(clients = previewClients()),
+            snackbarHostState = SnackbarHostState(),
+            onIntent = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun ConsoleClientsScreenEmptyPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
+) {
+    TestWrapper(parameters) {
+        ConsoleClientsScreen(
+            state = ConsoleClientsState.Content(clients = emptyList()),
+            snackbarHostState = SnackbarHostState(),
+            onIntent = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun ConsoleClientsScreenFilteredEmptyPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
+) {
+    TestWrapper(parameters) {
+        ConsoleClientsScreen(
+            state = ConsoleClientsState.Content(
+                clients = previewClients(),
+                query = "not-found",
+            ),
+            snackbarHostState = SnackbarHostState(),
+            onIntent = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun ConsoleClientsScreenErrorPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
+) {
+    TestWrapper(parameters) {
+        ConsoleClientsScreen(
+            state = ConsoleClientsState.Error(
+                exception = DokusException.Validation.InvalidDisplayName,
+                retryHandler = RetryHandler {},
+            ),
+            snackbarHostState = SnackbarHostState(),
+            onIntent = {},
+        )
+    }
+}
+
+private fun previewClients(): List<ConsoleClientSummary> {
+    return listOf(
+        ConsoleClientSummary(
+            tenantId = TenantId("00000000-0000-0000-0000-000000000001"),
+            companyName = DisplayName("Invoid BV"),
+            vatNumber = VatNumber("BE0792140667"),
+        ),
+        ConsoleClientSummary(
+            tenantId = TenantId("00000000-0000-0000-0000-000000000002"),
+            companyName = DisplayName("PixelForge BV"),
+            vatNumber = VatNumber("BE0456789123"),
+        ),
+        ConsoleClientSummary(
+            tenantId = TenantId("00000000-0000-0000-0000-000000000003"),
+            companyName = DisplayName("Atelier Gent"),
+            vatNumber = null,
+        ),
+    )
 }

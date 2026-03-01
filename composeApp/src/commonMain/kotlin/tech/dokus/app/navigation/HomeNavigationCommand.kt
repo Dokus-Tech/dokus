@@ -7,9 +7,16 @@ import tech.dokus.navigation.destinations.NavigationDestination
 import tech.dokus.navigation.navigateTo
 import tech.dokus.navigation.navigateToTopLevelTab
 
+internal enum class HomeNavigationSource {
+    Workspace,
+    Console,
+}
+
 internal sealed interface HomeNavigationCommand {
     data object OpenConsoleClients : HomeNavigationCommand
-    data object OpenDocuments : HomeNavigationCommand
+    data class OpenDocuments(
+        val source: HomeNavigationSource = HomeNavigationSource.Workspace,
+    ) : HomeNavigationCommand
     data class OpenDocumentReview(val documentId: String) : HomeNavigationCommand
 }
 
@@ -18,12 +25,17 @@ internal sealed interface HomeNavigationStep {
     data class Push(val destination: NavigationDestination) : HomeNavigationStep
 }
 
-internal fun resolveHomeNavigationSteps(command: HomeNavigationCommand): List<HomeNavigationStep> {
+internal fun resolveHomeNavigationSteps(
+    command: HomeNavigationCommand,
+    canConsoleAccess: Boolean = true,
+): List<HomeNavigationStep> {
     return when (command) {
         HomeNavigationCommand.OpenConsoleClients -> listOf(
-            HomeNavigationStep.TopLevelTab(HomeDestination.Accountant)
+            HomeNavigationStep.TopLevelTab(
+                if (canConsoleAccess) HomeDestination.Accountant else HomeDestination.Today
+            )
         )
-        HomeNavigationCommand.OpenDocuments -> listOf(
+        is HomeNavigationCommand.OpenDocuments -> listOf(
             HomeNavigationStep.TopLevelTab(HomeDestination.Documents)
         )
         is HomeNavigationCommand.OpenDocumentReview -> listOf(
@@ -33,8 +45,11 @@ internal fun resolveHomeNavigationSteps(command: HomeNavigationCommand): List<Ho
     }
 }
 
-internal fun NavController.executeHomeNavigationCommand(command: HomeNavigationCommand) {
-    resolveHomeNavigationSteps(command).forEach { step ->
+internal fun NavController.executeHomeNavigationCommand(
+    command: HomeNavigationCommand,
+    canConsoleAccess: Boolean = true,
+) {
+    resolveHomeNavigationSteps(command, canConsoleAccess).forEach { step ->
         when (step) {
             is HomeNavigationStep.TopLevelTab -> navigateToTopLevelTab(step.destination)
             is HomeNavigationStep.Push -> navigateTo(step.destination)

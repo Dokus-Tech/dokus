@@ -24,6 +24,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,6 +50,8 @@ import tech.dokus.app.desktopPinnedItems
 import tech.dokus.app.homeNavigationProviders
 import tech.dokus.app.navSectionsCombined
 import tech.dokus.app.navigation.HomeNavigationCommandBus
+import tech.dokus.app.navigation.HomeNavigationCommand
+import tech.dokus.app.navigation.HomeNavigationSource
 import tech.dokus.app.navigation.SearchFocusRequestBus
 import tech.dokus.app.navigation.executeHomeNavigationCommand
 import tech.dokus.app.navigation.local.HomeNavControllerProvided
@@ -66,7 +69,6 @@ import tech.dokus.app.viewmodel.HomeState
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.more_horizontal
 import tech.dokus.aura.resources.nav_more
-import tech.dokus.domain.enums.UserRole
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.User
@@ -123,6 +125,7 @@ internal fun HomeRoute(
     val pendingHomeCommand by HomeNavigationCommandBus.pendingCommand.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     var pendingError by remember { mutableStateOf<DokusException?>(null) }
+    var isConsoleDrillDown by rememberSaveable { mutableStateOf(false) }
     val errorMessage = pendingError?.localized
     val isLargeScreen = LocalScreenSize.current.isLarge
     val registeredTopBarConfigs = remember { mutableStateMapOf<String, HomeShellTopBarConfig>() }
@@ -148,12 +151,6 @@ internal fun HomeRoute(
         }
     }
 
-    LaunchedEffect(pendingHomeCommand?.id, homeNavController) {
-        val pending = pendingHomeCommand ?: return@LaunchedEffect
-        homeNavController.executeHomeNavigationCommand(pending.command)
-        HomeNavigationCommandBus.consume(pending.id)
-    }
-
     val state by container.store.subscribe(DefaultLifecycle) { action ->
         when (action) {
             is HomeAction.ShowError -> pendingError = action.error
@@ -169,14 +166,48 @@ internal fun HomeRoute(
     val normalizedRoute = normalizeRoute(currentRoute, sortedRoutes)
 
     val shellState = state as? HomeState.Ready ?: HomeState.Ready()
+    val surfaceAvailability = shellState.surfaceAvailability
     val tenant = (shellState.tenantState as? DokusState.Success<Tenant>)?.data
     val user = (shellState.userState as? DokusState.Success<User>)?.data
-    val accessContext = remember(shellState.surfaceAvailability, tenant?.role) {
+    val accessContext = remember(surfaceAvailability, tenant?.role, isConsoleDrillDown) {
         UserAccessContext(
-            canWorkspace = shellState.surfaceAvailability?.canWorkspace ?: true,
-            canConsole = shellState.surfaceAvailability?.canConsole ?: false,
-            currentTenantRole = tenant?.role
+            canWorkspace = surfaceAvailability?.canWorkspace ?: true,
+            canConsole = surfaceAvailability?.canConsole ?: false,
+            isSurfaceAvailabilityResolved = surfaceAvailability != null,
+            currentTenantRole = tenant?.role,
+            isConsoleDrillDown = isConsoleDrillDown,
         )
+    }
+
+    LaunchedEffect(pendingHomeCommand?.id, homeNavController, accessContext.canConsole) {
+        val pending = pendingHomeCommand ?: return@LaunchedEffect
+        when (val command = pending.command) {
+            HomeNavigationCommand.OpenConsoleClients -> {
+                isConsoleDrillDown = false
+                homeNavController.executeHomeNavigationCommand(
+                    command = command,
+                    canConsoleAccess = !accessContext.isSurfaceAvailabilityResolved || accessContext.canConsole
+                )
+            }
+            is HomeNavigationCommand.OpenDocuments -> {
+                isConsoleDrillDown = command.source == HomeNavigationSource.Console
+                homeNavController.executeHomeNavigationCommand(command = command)
+            }
+            is HomeNavigationCommand.OpenDocumentReview -> {
+                isConsoleDrillDown = false
+                homeNavController.executeHomeNavigationCommand(command = command)
+            }
+        }
+        HomeNavigationCommandBus.consume(pending.id)
+    }
+
+    val onTopLevelNavigate = remember(homeNavController) {
+        { destination: HomeDestination ->
+            if (destination != HomeDestination.Documents) {
+                isConsoleDrillDown = false
+            }
+            homeNavController.navigateToTopLevelTab(destination)
+        }
     }
     val visibleNavItems = remember(allNavItems, accessContext) {
         filterHomeNavItems(
@@ -270,14 +301,14 @@ internal fun HomeRoute(
         onAppearanceClick = { navController.navigateTo(SettingsDestination.AppearanceSettings) },
         onLogoutClick = { container.store.intent(HomeIntent.Logout) },
         onNavItemClick = { navItem ->
-            homeNavController.navigateToTopLevelTab(navItem.destination)
+            onTopLevelNavigate(navItem.destination)
             if (navItem.destination == HomeDestination.Search) {
                 SearchFocusRequestBus.requestFocus()
             }
         },
         onTabClick = { tab ->
             tab.destination?.let { destination ->
-                homeNavController.navigateToTopLevelTab(destination)
+                onTopLevelNavigate(destination)
                 if (destination == HomeDestination.Search) {
                     SearchFocusRequestBus.requestFocus()
                 }
@@ -285,7 +316,7 @@ internal fun HomeRoute(
         },
         onSearchShortcut = {
             if (hasSearch) {
-                homeNavController.navigateToTopLevelTab(HomeDestination.Search)
+                onTopLevelNavigate(HomeDestination.Search)
                 SearchFocusRequestBus.requestFocus()
             }
         },
@@ -513,8 +544,7 @@ internal fun filterHomeNavItems(
         when {
             item.destination == HomeDestination.Accountant && !accessContext.canConsole -> false
             accessContext.isConsoleOnlySurface -> item.destination in ConsoleOnlyDestinations
-            accessContext.currentTenantRole == UserRole.Accountant &&
-                item.destination == HomeDestination.Cashflow -> false
+            accessContext.isStage2ReadOnly && item.destination == HomeDestination.Cashflow -> false
             else -> true
         }
     }

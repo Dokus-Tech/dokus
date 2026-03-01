@@ -68,6 +68,7 @@
     <string name="console_clients_subtitle">Bookkeeper console</string>
     <string name="console_clients_search_placeholder">Search by company or VAT</string>
     <string name="console_clients_count">%1$d clients</string>
+    <string name="console_clients_empty_all">No clients yet.</string>
     <string name="console_clients_empty">No clients found</string>
     <string name="console_clients_column_company">Company</string>
     <string name="console_clients_column_vat">VAT</string>
