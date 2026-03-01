@@ -57,7 +57,7 @@ class AuthServiceWelcomeFlowTest {
         val user = testUser()
 
         coEvery { userRepository.register(any(), any(), any(), any()) } returns user
-        coEvery { jwtGenerator.generateClaims(any(), any(), any()) } returns testClaims(user.id, null)
+        coEvery { jwtGenerator.generateClaims(any(), any()) } returns testClaims(user.id)
         coEvery { jwtGenerator.generateTokens(any()) } returns LoginResponse(
             accessToken = "access",
             refreshToken = "refresh",
@@ -104,7 +104,7 @@ class AuthServiceWelcomeFlowTest {
                 updatedAt = Clock.System.now().toLocalDateTime(TimeZone.UTC)
             )
         )
-        coEvery { jwtGenerator.generateClaims(any(), any(), any()) } returns testClaims(user.id, tenantId)
+        coEvery { jwtGenerator.generateClaims(any(), any()) } returns testClaims(user.id)
         coEvery { jwtGenerator.generateTokens(any()) } returns LoginResponse(
             accessToken = "access",
             refreshToken = "refresh",
@@ -163,7 +163,7 @@ class AuthServiceWelcomeFlowTest {
                 updatedAt = Clock.System.now().toLocalDateTime(TimeZone.UTC)
             )
         )
-        coEvery { jwtGenerator.generateClaims(any(), any(), any()) } returns testClaims(user.id, tenantId)
+        coEvery { jwtGenerator.generateClaims(any(), any()) } returns testClaims(user.id)
         coEvery { jwtGenerator.generateTokens(any()) } returns LoginResponse(
             accessToken = "access",
             refreshToken = "refresh",
@@ -200,19 +200,11 @@ class AuthServiceWelcomeFlowTest {
         )
     }
 
-    private fun testClaims(userId: UserId, tenantId: TenantId?): JwtClaims {
+    private fun testClaims(userId: UserId): JwtClaims {
         val nowSeconds = Clock.System.now().epochSeconds
         return JwtClaims(
             userId = userId,
             email = "welcome@test.dokus",
-            tenant = tenantId?.let {
-                tech.dokus.domain.model.auth.TenantScope(
-                    tenantId = it,
-                    permissions = emptySet(),
-                    subscriptionTier = tech.dokus.domain.enums.SubscriptionTier.Core,
-                    role = UserRole.Owner
-                )
-            },
             iat = nowSeconds,
             exp = nowSeconds + 3600,
             jti = "test-jti"

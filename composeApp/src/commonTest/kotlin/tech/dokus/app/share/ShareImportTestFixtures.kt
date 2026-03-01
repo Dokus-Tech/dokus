@@ -8,30 +8,24 @@ import tech.dokus.domain.asbtractions.TokenManager
 import tech.dokus.domain.enums.DocumentIntakeOutcome
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.Language
-import tech.dokus.domain.enums.Permission
 import tech.dokus.domain.enums.SubscriptionTier
 import tech.dokus.domain.enums.TenantStatus
 import tech.dokus.domain.enums.TenantType
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentIntakeOutcomeDto
 import tech.dokus.domain.model.DocumentIntakeResult
 import tech.dokus.domain.model.Tenant
-import tech.dokus.domain.model.auth.JwtClaims
-import tech.dokus.domain.model.auth.TenantScope
-import tech.dokus.features.auth.usecases.GetLastSelectedTenantIdUseCase
 import tech.dokus.features.auth.usecases.ListMyTenantsUseCase
 import tech.dokus.features.auth.usecases.SelectTenantUseCase
 import tech.dokus.features.cashflow.usecases.UploadDocumentUseCase
 
 internal class FakeTokenManager(
     isAuthenticated: Boolean,
-    private val claims: JwtClaims? = null,
-    private val selectedTenantId: TenantId? = claims?.tenant?.tenantId
+    private val selectedTenantId: TenantId? = null
 ) : TokenManager {
     override val isAuthenticated = MutableStateFlow(isAuthenticated)
 
@@ -44,14 +38,6 @@ internal class FakeTokenManager(
     override suspend fun refreshToken(force: Boolean): String? = null
 
     override suspend fun onAuthenticationFailed() = Unit
-
-    override suspend fun getCurrentClaims(): JwtClaims? = claims
-}
-
-internal class FakeGetLastSelectedTenantIdUseCase(
-    private val tenantId: TenantId? = null
-) : GetLastSelectedTenantIdUseCase {
-    override suspend fun invoke(): TenantId? = tenantId
 }
 
 internal class FakeListMyTenantsUseCase(
@@ -158,20 +144,6 @@ internal fun testDocument(
     source = DocumentSource.Upload,
     uploadedAt = LocalDateTime(2024, 1, 1, 0, 0),
     downloadUrl = null
-)
-
-internal fun testClaims(tenantId: TenantId): JwtClaims = JwtClaims(
-    userId = UserId("00000000-0000-0000-0000-000000000777"),
-    email = "test@dokus.tech",
-    tenant = TenantScope(
-        tenantId = tenantId,
-        permissions = setOf(Permission.InvoicesRead),
-        subscriptionTier = SubscriptionTier.Core,
-        role = null
-    ),
-    iat = 1_700_000_000L,
-    exp = 1_800_000_000L,
-    jti = "jti-test"
 )
 
 internal fun clearPendingSharedFiles() {

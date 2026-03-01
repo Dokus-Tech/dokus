@@ -18,7 +18,6 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.AvatarUploadResponse
 import tech.dokus.domain.routes.Tenants
 import tech.dokus.foundation.backend.security.authenticateJwt
-import tech.dokus.foundation.backend.security.dokusPrincipal
 import tech.dokus.foundation.backend.storage.AvatarStorageService
 import tech.dokus.foundation.backend.utils.loggerFor
 
@@ -43,7 +42,6 @@ internal fun Route.avatarRoutes() {
          * Expects multipart form data with a single "file" field.
          */
         post<Tenants.Avatar> {
-            val principal = dokusPrincipal
             val tenantId = requireTenantId()
 
             logger.info("Avatar upload request for tenant: $tenantId")
@@ -110,7 +108,6 @@ internal fun Route.avatarRoutes() {
          * Returns 404 if no avatar is set.
          */
         get<Tenants.Avatar> {
-            val principal = dokusPrincipal
             val tenantId = requireTenantId()
 
             val storageKey = tenantRepository.getAvatarStorageKey(tenantId)
@@ -129,7 +126,6 @@ internal fun Route.avatarRoutes() {
          * Remove the company avatar.
          */
         delete<Tenants.Avatar> {
-            val principal = dokusPrincipal
             val tenantId = requireTenantId()
 
             val storageKey = tenantRepository.getAvatarStorageKey(tenantId)

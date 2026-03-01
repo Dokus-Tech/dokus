@@ -37,21 +37,21 @@ suspend fun RoutingContext.requireTenantAccess(
 
     return TenantAccess(
         tenantId = tenantId,
-        roles = setOf(membership.role)
+        role = membership.role
     ).also { resolved ->
         call.attributes.put(TenantAccessAttributeKey, resolved)
     }
 }
 
-fun TenantAccess.requireRole(role: UserRole): TenantAccess {
-    if (!roles.contains(role)) {
-        throw DokusException.NotAuthorized("Role ${role.dbValue} is required")
+fun TenantAccess.requireRole(required: UserRole): TenantAccess {
+    if (role != required) {
+        throw DokusException.NotAuthorized("Role ${required.dbValue} is required")
     }
     return this
 }
 
 fun TenantAccess.requireAnyRole(vararg requiredRoles: UserRole): TenantAccess {
-    if (requiredRoles.none { roles.contains(it) }) {
+    if (!requiredRoles.contains(role)) {
         val required = requiredRoles.joinToString(", ") { it.dbValue }
         throw DokusException.NotAuthorized("One of roles [$required] is required")
     }
@@ -59,7 +59,7 @@ fun TenantAccess.requireAnyRole(vararg requiredRoles: UserRole): TenantAccess {
 }
 
 fun TenantAccess.hasPermission(permission: Permission): Boolean =
-    roles.any { RolePermissions.hasPermission(it, permission) }
+    RolePermissions.hasPermission(role, permission)
 
 suspend fun RoutingContext.requireTenantId(): TenantId = requireTenantAccess().tenantId
 
@@ -72,6 +72,12 @@ suspend fun RoutingContext.requirePermission(permission: Permission) {
     }
 }
 
+/**
+ * Resolves tenant ID from request using fallback priority:
+ * 1. X-Tenant-Id header (primary — set by client TenantHeaderPlugin)
+ * 2. {tenantId} path parameter
+ * 3. {tenant_id} query parameter
+ */
 private fun RoutingContext.resolveTenantIdFromRequest(): TenantId {
     val tenantRaw = call.request.headers[TenantHeaderName]
         ?.trim()

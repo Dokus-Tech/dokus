@@ -189,16 +189,16 @@ class TenantAccessResolverTest {
             authenticate("test-auth") {
                 get("/tenant-required") {
                     val access = requireTenantAccess(userRepository)
-                    call.respondText("${access.tenantId}:${access.roles.joinToString { it.dbValue }}")
+                    call.respondText("${access.tenantId}:${access.role.dbValue}")
                 }
                 get("/tenant-required-twice") {
                     val first = requireTenantAccess(userRepository)
                     val second = requireTenantAccess(userRepository)
-                    call.respondText("${first.tenantId}:${second.roles.joinToString { it.dbValue }}")
+                    call.respondText("${first.tenantId}:${second.role.dbValue}")
                 }
                 get("/tenant-by-path/{tenantId}") {
                     val access = requireTenantAccess(userRepository)
-                    call.respondText("${access.tenantId}:${access.roles.joinToString { it.dbValue }}")
+                    call.respondText("${access.tenantId}:${access.role.dbValue}")
                 }
                 get("/non-tenant") {
                     call.respondText(dokusPrincipal.userId.toString())

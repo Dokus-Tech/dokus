@@ -157,8 +157,8 @@ internal fun Route.peppolRoutes() {
          * The invoice must have a contactId that matches a contact with a valid peppolId.
          */
         post<Peppol.Transmissions> { route ->
-            requirePermission(Permission.InvoicesEdit)
             val tenantId = requireTenantId()
+            requirePermission(Permission.InvoicesEdit)
             val invoiceIdStr = route.invoiceId
                 ?: throw DokusException.BadRequest("invoiceId query parameter is required")
             val invoiceId = InvoiceId(Uuid.parse(invoiceIdStr))

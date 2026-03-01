@@ -52,7 +52,6 @@ internal fun Route.teamRoutes() {
          * List all active team members in current tenant.
          */
         get<Team.Members> {
-            val principal = dokusPrincipal
             val tenantId = requireTenantId()
 
             val members = teamService.listTeamMembers(tenantId)
@@ -146,7 +145,6 @@ internal fun Route.teamRoutes() {
          * Query param 'status' supported in route definition.
          */
         get<Team.Invitations> { route ->
-            val principal = dokusPrincipal
             val tenantId = requireTenantId()
 
             val invitations = if (route.status == InvitationStatus.Pending) {
@@ -188,7 +186,6 @@ internal fun Route.teamRoutes() {
          * Requires Owner role.
          */
         delete<Team.Invitations.Id> { route ->
-            val principal = dokusPrincipal
             val tenantId = requireTenantAccess().requireRole(UserRole.Owner).tenantId
 
             val invitationId = InvitationId(Uuid.parse(route.id))

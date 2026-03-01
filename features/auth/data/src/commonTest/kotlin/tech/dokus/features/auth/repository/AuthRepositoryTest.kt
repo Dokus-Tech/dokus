@@ -131,8 +131,6 @@ private class FakeTokenManager : TokenManagerMutable {
     override suspend fun onAuthenticationFailed() {
         authenticationFailedCalled = true
     }
-
-    override suspend fun getCurrentClaims() = null
 }
 
 private class FakeAuthManager : AuthManagerMutable {

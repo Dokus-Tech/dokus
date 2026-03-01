@@ -7,7 +7,6 @@ import com.auth0.jwt.algorithms.Algorithm
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.auth.JwtClaims
 import tech.dokus.domain.model.auth.LoginResponse
-import tech.dokus.domain.model.auth.TenantScope
 import tech.dokus.foundation.backend.config.JwtConfig
 import tech.dokus.foundation.backend.database.now
 import java.time.Instant
@@ -35,8 +34,7 @@ class JwtGenerator(
 
     fun generateClaims(
         userId: UserId,
-        email: String,
-        tenant: TenantScope?
+        email: String
     ): JwtClaims {
         val nowTime = now()
         val accessExpiry = nowTime + JwtClaims.ACCESS_TOKEN_EXPIRY_SECONDS.seconds
@@ -44,7 +42,6 @@ class JwtGenerator(
         return JwtClaims(
             userId = userId,
             email = email,
-            tenant = tenant,
             iat = nowTime.epochSeconds,
             exp = accessExpiry.epochSeconds,
             jti = Uuid.random().toString(),

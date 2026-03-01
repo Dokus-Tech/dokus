@@ -7,7 +7,6 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import tech.dokus.domain.asbtractions.TokenManager
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.auth.JwtClaims
 import tech.dokus.domain.model.auth.LoginResponse
 import tech.dokus.domain.model.auth.TokenStatus
 import tech.dokus.features.auth.storage.TokenStorage
@@ -193,14 +192,6 @@ class TokenManagerImpl(
     override suspend fun onAuthenticationFailed() {
         tokenStorage.clearTokens()
         updateAuthenticationState(false)
-    }
-
-    /**
-     * Gets the current user's JWT claims.
-     */
-    override suspend fun getCurrentClaims(): JwtClaims? {
-        val token = tokenStorage.getAccessToken() ?: return null
-        return jwtDecoder.decode(token)
     }
 
     /**

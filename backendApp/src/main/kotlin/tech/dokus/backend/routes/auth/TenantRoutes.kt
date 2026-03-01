@@ -118,7 +118,6 @@ internal fun Route.tenantRoutes() {
          * Get tenant settings for current tenant
          */
         get<Tenants.Settings> {
-            val principal = dokusPrincipal
             val tenantId = requireTenantId()
             val settings = tenantRepository.getSettings(tenantId)
             call.respond(HttpStatusCode.OK, settings)
@@ -169,7 +168,6 @@ internal fun Route.tenantRoutes() {
          * Update tenant settings
          */
         put<Tenants.Settings> {
-            val principal = dokusPrincipal
             val tenantId = requireTenantId()
 
             val settings = call.receive<TenantSettings>()

@@ -10,5 +10,5 @@ import tech.dokus.domain.ids.TenantId
 @Serializable
 data class TenantAccess(
     val tenantId: TenantId,
-    val roles: Set<UserRole>
+    val role: UserRole
 )

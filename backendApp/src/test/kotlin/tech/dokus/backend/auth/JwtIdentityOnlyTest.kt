@@ -2,13 +2,8 @@ package tech.dokus.backend.auth
 
 import com.auth0.jwt.JWT
 import org.junit.jupiter.api.Test
-import tech.dokus.domain.enums.Permission
-import tech.dokus.domain.enums.SubscriptionTier
-import tech.dokus.domain.enums.UserRole
-import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.auth.JwtClaims
-import tech.dokus.domain.model.auth.TenantScope
 import tech.dokus.foundation.backend.config.JwtConfig
 import tech.dokus.foundation.backend.security.DokusPrincipal
 import tech.dokus.foundation.backend.security.JwtGenerator
@@ -26,13 +21,7 @@ class JwtIdentityOnlyTest {
         val userId = UserId.generate()
         val claims = generator.generateClaims(
             userId = userId,
-            email = "identity-only@test.dokus",
-            tenant = TenantScope(
-                tenantId = TenantId.generate(),
-                permissions = setOf(Permission.InvoicesRead, Permission.InvoicesEdit),
-                subscriptionTier = SubscriptionTier.One,
-                role = UserRole.Owner
-            )
+            email = "identity-only@test.dokus"
         )
 
         val token = generator.generateTokens(claims).accessToken
@@ -41,10 +30,10 @@ class JwtIdentityOnlyTest {
         assertEquals(userId.toString(), decoded.subject)
         assertEquals("identity-only@test.dokus", decoded.getClaim(JwtClaims.CLAIM_EMAIL).asString())
         assertNotNull(decoded.id)
-        assertNull(decoded.getClaim(JwtClaims.CLAIM_TENANT_ID).asString())
-        assertNull(decoded.getClaim(JwtClaims.CLAIM_ROLE).asString())
-        assertNull(decoded.getClaim(JwtClaims.CLAIM_SUBSCRIPTION_TIER).asString())
-        assertNull(decoded.getClaim(JwtClaims.CLAIM_PERMISSIONS).asList(String::class.java))
+        assertNull(decoded.getClaim("tenant_id").asString())
+        assertNull(decoded.getClaim("role").asString())
+        assertNull(decoded.getClaim("subscription_tier").asString())
+        assertNull(decoded.getClaim("permissions").asList(String::class.java))
     }
 
     @Test
@@ -55,8 +44,7 @@ class JwtIdentityOnlyTest {
         val userId = UserId.generate()
         val claims = generator.generateClaims(
             userId = userId,
-            email = "validator@test.dokus",
-            tenant = null
+            email = "validator@test.dokus"
         )
 
         val token = generator.generateTokens(claims).accessToken

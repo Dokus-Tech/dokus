@@ -12,7 +12,6 @@ import tech.dokus.domain.asbtractions.TokenManager
 import tech.dokus.domain.enums.DocumentIntakeOutcome
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.Tenant
-import tech.dokus.features.auth.usecases.GetLastSelectedTenantIdUseCase
 import tech.dokus.features.auth.usecases.ListMyTenantsUseCase
 import tech.dokus.features.auth.usecases.SelectTenantUseCase
 import tech.dokus.features.cashflow.usecases.UploadDocumentUseCase
@@ -25,7 +24,6 @@ internal typealias ShareImportCtx =
 
 internal class ShareImportContainer(
     private val tokenManager: TokenManager,
-    private val getLastSelectedTenantIdUseCase: GetLastSelectedTenantIdUseCase,
     private val listMyTenantsUseCase: ListMyTenantsUseCase,
     private val selectTenantUseCase: SelectTenantUseCase,
     private val uploadDocumentUseCase: UploadDocumentUseCase,
@@ -136,12 +134,9 @@ internal class ShareImportContainer(
 
         val selectedTenantId = runCatching { tokenManager.getSelectedTenantId() }
             .getOrNull()
-        val lastSelectedTenantId = runCatching { getLastSelectedTenantIdUseCase() }
-            .getOrNull()
 
-        val candidates = listOfNotNull(selectedTenantId, lastSelectedTenantId).distinct()
-        val resolved = candidates.firstNotNullOfOrNull { candidate ->
-            workspaces.firstOrNull { it.id == candidate }
+        val resolved = selectedTenantId?.let { id ->
+            workspaces.firstOrNull { it.id == id }
         }
 
         if (resolved == null) {
