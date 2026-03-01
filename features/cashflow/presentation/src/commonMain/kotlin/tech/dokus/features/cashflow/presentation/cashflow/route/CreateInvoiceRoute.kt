@@ -14,7 +14,6 @@ import tech.dokus.features.cashflow.mvi.CreateInvoiceContainer
 import tech.dokus.features.cashflow.presentation.cashflow.screen.CreateInvoiceScreen
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.app.network.ConnectionSnackbarEffect
-import tech.dokus.navigation.destinations.CashFlowDestination
 import tech.dokus.navigation.local.LocalNavController
 import tech.dokus.navigation.navigateTo
 
@@ -32,14 +31,6 @@ internal fun CreateInvoiceRoute(
             is CreateInvoiceAction.NavigateBack -> navController.popBackStack()
             is CreateInvoiceAction.NavigateToCreateContact -> {
                 navController.navigateTo(action.toCreateContactDestination())
-            }
-            is CreateInvoiceAction.NavigateToInvoice -> {
-                navController.popBackStack()
-                navController.navigateTo(
-                    CashFlowDestination.DocumentReview(
-                        documentId = action.invoiceId.toString()
-                    )
-                )
             }
             is CreateInvoiceAction.OpenExternalUrl -> uriHandler.openUri(action.url)
             is CreateInvoiceAction.ShowError -> scope.launch { snackbarHostState.showSnackbar(action.message) }

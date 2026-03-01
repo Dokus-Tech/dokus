@@ -128,7 +128,7 @@ internal class CreateInvoiceContainer(
                             if (state.formState.selectedClient?.id != intent.contactId) return@updateInvoice state
                             state.copy(
                                 formState = state.formState.copy(
-                                    peppolStatus = statusResult.getOrNull() ?: state.formState.peppolStatus,
+                                    peppolStatus = statusResult.getOrNull(),
                                     peppolStatusLoading = false
                                 )
                             )
@@ -542,6 +542,8 @@ internal class CreateInvoiceContainer(
             state.copy(
                 formState = state.formState.copy(
                     selectedClient = client,
+                    peppolStatus = null,
+                    peppolStatusLoading = false,
                     errors = state.formState.errors - ValidateInvoiceUseCase.FIELD_CLIENT
                 ),
                 uiState = state.uiState.copy(
@@ -711,20 +713,20 @@ internal class CreateInvoiceContainer(
                 when (result) {
                     is SubmitInvoiceWithDeliveryResult.DraftSaved -> {
                         action(CreateInvoiceAction.ShowSuccess("Draft saved."))
-                        action(CreateInvoiceAction.NavigateToInvoice(result.invoiceId))
+                        action(CreateInvoiceAction.NavigateBack)
                     }
                     is SubmitInvoiceWithDeliveryResult.PeppolQueued -> {
                         action(CreateInvoiceAction.ShowSuccess("Invoice queued for PEPPOL."))
-                        action(CreateInvoiceAction.NavigateToInvoice(result.invoiceId))
+                        action(CreateInvoiceAction.NavigateBack)
                     }
                     is SubmitInvoiceWithDeliveryResult.PdfReady -> {
                         action(CreateInvoiceAction.OpenExternalUrl(result.downloadUrl))
                         action(CreateInvoiceAction.ShowSuccess("Invoice PDF is ready."))
-                        action(CreateInvoiceAction.NavigateToInvoice(result.invoiceId))
+                        action(CreateInvoiceAction.NavigateBack)
                     }
                     is SubmitInvoiceWithDeliveryResult.DeliveryFailed -> {
                         action(CreateInvoiceAction.ShowError("Invoice saved but delivery failed: ${result.error}"))
-                        action(CreateInvoiceAction.NavigateToInvoice(result.invoiceId))
+                        action(CreateInvoiceAction.NavigateBack)
                     }
                 }
             },

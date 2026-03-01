@@ -8,7 +8,6 @@ import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.domain.enums.InvoiceDeliveryMethod
 import tech.dokus.domain.enums.InvoiceDueDateMode
 import tech.dokus.domain.ids.ContactId
-import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.features.cashflow.mvi.model.CreateInvoiceFormState
 import tech.dokus.features.cashflow.mvi.model.CreateInvoiceUiState
@@ -86,7 +85,6 @@ sealed interface CreateInvoiceAction : MVIAction {
         val prefillAddress: String? = null,
         val origin: String? = null
     ) : CreateInvoiceAction
-    data class NavigateToInvoice(val invoiceId: InvoiceId) : CreateInvoiceAction
     data class ShowError(val message: String) : CreateInvoiceAction
     data class ShowValidationError(val message: String) : CreateInvoiceAction
     data class OpenExternalUrl(val url: String) : CreateInvoiceAction
