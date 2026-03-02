@@ -314,6 +314,20 @@ private fun ConsoleClientsScreenEmptyPreview(
     }
 }
 
+@Preview(name = "Console Clients Desktop Empty", widthDp = 1366, heightDp = 900)
+@Composable
+private fun ConsoleClientsScreenDesktopEmptyPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
+) {
+    TestWrapper(parameters) {
+        ConsoleClientsScreen(
+            state = ConsoleClientsState.Content(clients = emptyList()),
+            snackbarHostState = SnackbarHostState(),
+            onIntent = {},
+        )
+    }
+}
+
 @Preview
 @Composable
 private fun ConsoleClientsScreenFilteredEmptyPreview(

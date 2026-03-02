@@ -38,6 +38,7 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -51,13 +52,16 @@ import tech.dokus.app.homeNavigationProviders
 import tech.dokus.app.navSectionsCombined
 import tech.dokus.app.navigation.HomeNavigationCommandBus
 import tech.dokus.app.navigation.HomeNavigationCommand
+import tech.dokus.app.navigation.HomeNavigationEnvelope
 import tech.dokus.app.navigation.HomeNavigationSource
 import tech.dokus.app.navigation.SearchFocusRequestBus
 import tech.dokus.app.navigation.executeHomeNavigationCommand
 import tech.dokus.app.navigation.local.HomeNavControllerProvided
 import tech.dokus.app.screens.home.DesktopShellTopBar
 import tech.dokus.app.screens.home.DesktopSidebarBottomControls
+import tech.dokus.app.screens.companymanager.CompanyManagerHomeRoute
 import tech.dokus.app.screens.home.HomeShellProfileData
+import tech.dokus.app.screens.home.WorkspaceHomeRouteContent
 import tech.dokus.app.screens.home.MobileShellTopBar
 import tech.dokus.app.screens.home.buildSortedRoutes
 import tech.dokus.app.screens.home.normalizeRoute
@@ -110,39 +114,23 @@ import tech.dokus.navigation.local.LocalNavController
 import tech.dokus.navigation.navigateTo
 import tech.dokus.navigation.navigateToTopLevelTab
 
+private enum class HomeSurfaceMode {
+    Workspace,
+    Console,
+}
+
 @Composable
 internal fun HomeRoute(
     appModules: List<AppModule> = LocalAppModules.current,
     container: HomeContainer = container(),
 ) {
     val navController = LocalNavController.current
-    val homeNavProviders = remember(appModules) { appModules.homeNavigationProviders }
-    val homeNavController = rememberNavController()
-    val allNavItems = remember(appModules) { appModules.allNavItems }
-    val navSections = remember(appModules) { appModules.navSectionsCombined }
-    val desktopPinnedItems = remember(appModules) { appModules.desktopPinnedItems }
-    val sortedRoutes = remember(allNavItems) { buildSortedRoutes(allNavItems) }
     val pendingHomeCommand by HomeNavigationCommandBus.pendingCommand.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     var pendingError by remember { mutableStateOf<DokusException?>(null) }
-    var isConsoleDrillDown by rememberSaveable { mutableStateOf(false) }
+    var activeSurface by rememberSaveable { mutableStateOf(HomeSurfaceMode.Workspace) }
     val errorMessage = pendingError?.localized
     val isLargeScreen = LocalScreenSize.current.isLarge
-    val registeredTopBarConfigs = remember { mutableStateMapOf<String, HomeShellTopBarConfig>() }
-    val topBarHost = remember(allNavItems, sortedRoutes) {
-        object : HomeShellTopBarHost {
-            override fun update(route: String, config: HomeShellTopBarConfig) {
-                val normalizedRoute = normalizeRoute(route, sortedRoutes) ?: return
-                if (registeredTopBarConfigs[normalizedRoute] == config) return
-                registeredTopBarConfigs[normalizedRoute] = config
-            }
-
-            override fun clear(route: String) {
-                val normalizedRoute = normalizeRoute(route, sortedRoutes) ?: return
-                registeredTopBarConfigs.remove(normalizedRoute)
-            }
-        }
-    }
 
     LaunchedEffect(errorMessage) {
         if (errorMessage != null) {
@@ -161,167 +149,120 @@ internal fun HomeRoute(
         container.store.intent(HomeIntent.ScreenAppeared)
     }
 
-    val navBackStackEntry by homeNavController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route
-    val normalizedRoute = normalizeRoute(currentRoute, sortedRoutes)
-
     val shellState = state as? HomeState.Ready ?: HomeState.Ready()
     val surfaceAvailability = shellState.surfaceAvailability
     val tenant = (shellState.tenantState as? DokusState.Success<Tenant>)?.data
     val user = (shellState.userState as? DokusState.Success<User>)?.data
-    val accessContext = remember(surfaceAvailability, tenant?.role, isConsoleDrillDown) {
-        UserAccessContext(
-            canWorkspace = surfaceAvailability?.canWorkspace ?: true,
-            canConsole = surfaceAvailability?.canConsole ?: false,
-            isSurfaceAvailabilityResolved = surfaceAvailability != null,
-            currentTenantRole = tenant?.role,
-            isConsoleDrillDown = isConsoleDrillDown,
-        )
-    }
-
-    LaunchedEffect(pendingHomeCommand?.id, homeNavController, accessContext.canConsole) {
-        val pending = pendingHomeCommand ?: return@LaunchedEffect
-        when (val command = pending.command) {
-            HomeNavigationCommand.OpenConsoleClients -> {
-                isConsoleDrillDown = false
-                homeNavController.executeHomeNavigationCommand(
-                    command = command,
-                    canConsoleAccess = !accessContext.isSurfaceAvailabilityResolved || accessContext.canConsole
-                )
-            }
-            is HomeNavigationCommand.OpenDocuments -> {
-                isConsoleDrillDown = command.source == HomeNavigationSource.Console
-                homeNavController.executeHomeNavigationCommand(command = command)
-            }
-            is HomeNavigationCommand.OpenDocumentReview -> {
-                isConsoleDrillDown = false
-                homeNavController.executeHomeNavigationCommand(command = command)
-            }
-        }
-        HomeNavigationCommandBus.consume(pending.id)
-    }
-
-    val onTopLevelNavigate = remember(homeNavController) {
-        { destination: HomeDestination ->
-            if (destination != HomeDestination.Documents) {
-                isConsoleDrillDown = false
-            }
-            homeNavController.navigateToTopLevelTab(destination)
-        }
-    }
-    val visibleNavItems = remember(allNavItems, accessContext) {
-        filterHomeNavItems(
-            items = allNavItems,
-            accessContext = accessContext
-        )
-    }
-    val visibleNavIds = remember(visibleNavItems) { visibleNavItems.map { it.id }.toSet() }
-    val visibleNavSections = remember(navSections, visibleNavIds) {
-        navSections.mapNotNull { section ->
-            val filteredItems = section.items.filter { it.id in visibleNavIds }
-            if (filteredItems.isEmpty()) null else section.copy(items = filteredItems)
-        }
-    }
-    val visiblePinnedItems = remember(desktopPinnedItems, visibleNavIds) {
-        desktopPinnedItems.filter { it.id in visibleNavIds }
-    }
-    val mobileTabs = remember(visibleNavItems) {
-        visibleNavItems
-            .filter { it.mobileTabOrder != null }
-            .sortedBy { it.mobileTabOrder }
-            .map { tech.dokus.foundation.aura.model.MobileTabConfig(it.id, it.titleRes, it.iconRes, it.destination) } +
-            tech.dokus.foundation.aura.model.MobileTabConfig(
-                "more",
-                Res.string.nav_more,
-                Res.drawable.more_horizontal,
-                HomeDestination.More
-            )
-    }
-    val hasSearch = remember(visibleNavItems) {
-        visibleNavItems.any { it.destination == HomeDestination.Search }
-    }
-    val startDestination = remember(visibleNavItems, allNavItems) {
-        visibleNavItems.firstOrNull { it.id == "today" }?.destination
-            ?: visibleNavItems.firstOrNull()?.destination
-            ?: allNavItems.first().destination
-    }
-    val fallbackShellTopBarConfig = rememberFallbackShellTopBarConfig(
-        normalizedRoute = normalizedRoute,
-        allNavItems = visibleNavItems,
-    )
-    val topBarConfig = resolveHomeShellTopBarConfig(
-        route = currentRoute,
-        allNavItems = visibleNavItems,
-        sortedRoutes = sortedRoutes,
-        registeredConfigs = registeredTopBarConfigs,
-        fallback = { _, _ -> fallbackShellTopBarConfig }
-    )
     val profileData = buildProfileData(
         user = user,
         tierLabel = tenant?.subscription?.localized
     )
 
-    val navHostContent: @Composable () -> Unit = {
-        HomeNavControllerProvided(homeNavController) {
-            CompositionLocalProvider(
-                LocalHomeShellTopBarHost provides topBarHost,
-                LocalUserAccessContext provides accessContext,
-            ) {
-                HomeNavHost(
-                    navHostController = homeNavController,
-                    homeNavProviders = homeNavProviders,
-                    startDestination = startDestination
-                )
-            }
+    LaunchedEffect(surfaceAvailability?.canWorkspace, surfaceAvailability?.canConsole) {
+        if (surfaceAvailability?.canConsole == true && surfaceAvailability.canWorkspace.not()) {
+            activeSurface = HomeSurfaceMode.Console
+        }
+        if (surfaceAvailability?.canConsole == false && activeSurface == HomeSurfaceMode.Console) {
+            activeSurface = HomeSurfaceMode.Workspace
         }
     }
 
-    HomeScreen(
-        navSections = visibleNavSections,
-        mobileTabs = mobileTabs,
-        selectedRoute = currentRoute,
-        topBarConfig = topBarConfig,
-        desktopPinnedItems = visiblePinnedItems,
-        tenantState = shellState.tenantState,
-        profileData = profileData,
-        isLoggingOut = shellState.isLoggingOut,
-        snackbarHostState = snackbarHostState,
-        onWorkspaceClick = { navController.navigateTo(AuthDestination.WorkspaceSelect) },
-        onProfileClick = {
-            dispatchProfileNavigation(
-                isLargeScreen = isLargeScreen,
-                onNavigateHomeProfile = {
-                    homeNavController.navigateToTopLevelTab(HomeDestination.Profile)
-                },
-                onNavigateRootProfile = {
-                    navController.navigateTo(AuthDestination.ProfileSettings)
-                }
-            )
-        },
-        onAppearanceClick = { navController.navigateTo(SettingsDestination.AppearanceSettings) },
-        onLogoutClick = { container.store.intent(HomeIntent.Logout) },
-        onNavItemClick = { navItem ->
-            onTopLevelNavigate(navItem.destination)
-            if (navItem.destination == HomeDestination.Search) {
-                SearchFocusRequestBus.requestFocus()
-            }
-        },
-        onTabClick = { tab ->
-            tab.destination?.let { destination ->
-                onTopLevelNavigate(destination)
-                if (destination == HomeDestination.Search) {
-                    SearchFocusRequestBus.requestFocus()
-                }
-            }
-        },
-        onSearchShortcut = {
-            if (hasSearch) {
-                onTopLevelNavigate(HomeDestination.Search)
-                SearchFocusRequestBus.requestFocus()
-            }
-        },
-        content = navHostContent,
+    LaunchedEffect(
+        pendingHomeCommand?.id,
+        activeSurface,
+        surfaceAvailability?.canWorkspace,
+        surfaceAvailability?.canConsole,
+    ) {
+        val pending = pendingHomeCommand ?: return@LaunchedEffect
+        activeSurface = resolveSurfaceForCommand(
+            command = pending.command,
+            currentSurface = activeSurface,
+            surfaceAvailability = surfaceAvailability,
+        )
+    }
+
+    val showConsoleSurface = shouldRenderConsoleSurface(
+        activeSurface = activeSurface,
+        surfaceAvailability = surfaceAvailability
     )
+
+    if (showConsoleSurface) {
+        CompanyManagerHomeRoute(
+            appModules = appModules,
+            rootNavController = navController,
+            isLargeScreen = isLargeScreen,
+            shellState = shellState,
+            tenant = tenant,
+            profileData = profileData,
+            pendingHomeCommand = pendingHomeCommand,
+            onConsumeHomeCommand = { id -> HomeNavigationCommandBus.consume(id) },
+            onSwitchToWorkspaceSurface = { activeSurface = HomeSurfaceMode.Workspace },
+            onLogoutClick = { container.store.intent(HomeIntent.Logout) },
+            snackbarHostState = snackbarHostState,
+        )
+    } else {
+        WorkspaceHomeRouteContent(
+            appModules = appModules,
+            rootNavController = navController,
+            isLargeScreen = isLargeScreen,
+            shellState = shellState,
+            tenant = tenant,
+            profileData = profileData,
+            pendingHomeCommand = pendingHomeCommand,
+            onConsumeHomeCommand = { id -> HomeNavigationCommandBus.consume(id) },
+            onSwitchToConsoleSurface = { activeSurface = HomeSurfaceMode.Console },
+            onLogoutClick = { container.store.intent(HomeIntent.Logout) },
+            snackbarHostState = snackbarHostState,
+        )
+    }
+}
+
+private fun resolveSurfaceForCommand(
+    command: HomeNavigationCommand,
+    currentSurface: HomeSurfaceMode,
+    surfaceAvailability: tech.dokus.domain.model.auth.SurfaceAvailability?,
+): HomeSurfaceMode {
+    val resolved = surfaceAvailability != null
+    val canWorkspace = surfaceAvailability?.canWorkspace ?: true
+    val canConsole = surfaceAvailability?.canConsole == true
+    val canConsoleAccess = !resolved || canConsole
+    val isConsoleOnly = resolved && canConsole && !canWorkspace
+
+    if (isConsoleOnly) return HomeSurfaceMode.Console
+
+    return when (command) {
+        HomeNavigationCommand.OpenConsoleClients -> {
+            if (canConsoleAccess) HomeSurfaceMode.Console else HomeSurfaceMode.Workspace
+        }
+
+        is HomeNavigationCommand.OpenDocuments -> {
+            if (command.source == HomeNavigationSource.Console && canConsoleAccess) {
+                HomeSurfaceMode.Console
+            } else {
+                HomeSurfaceMode.Workspace
+            }
+        }
+
+        is HomeNavigationCommand.OpenDocumentReview -> {
+            if (currentSurface == HomeSurfaceMode.Console && canConsoleAccess) {
+                HomeSurfaceMode.Console
+            } else {
+                HomeSurfaceMode.Workspace
+            }
+        }
+    }
+}
+
+private fun shouldRenderConsoleSurface(
+    activeSurface: HomeSurfaceMode,
+    surfaceAvailability: tech.dokus.domain.model.auth.SurfaceAvailability?,
+): Boolean {
+    if (surfaceAvailability == null) {
+        return activeSurface == HomeSurfaceMode.Console
+    }
+    if (!surfaceAvailability.canConsole) return false
+    if (!surfaceAvailability.canWorkspace) return true
+    return activeSurface == HomeSurfaceMode.Console
 }
 
 @Composable
@@ -397,7 +338,7 @@ internal fun HomeScreen(
 }
 
 @Composable
-private fun HomeNavHost(
+internal fun HomeNavHost(
     navHostController: NavHostController,
     homeNavProviders: List<NavigationProvider>,
     startDestination: NavigationDestination,
@@ -543,17 +484,13 @@ internal fun filterHomeNavItems(
     return items.filter { item ->
         when {
             item.destination == HomeDestination.Accountant && !accessContext.canConsole -> false
-            accessContext.isConsoleOnlySurface -> item.destination in ConsoleOnlyDestinations
+            accessContext.isConsoleOnlySurface -> item.destination == HomeDestination.Accountant ||
+                item.destination == HomeDestination.Documents
             accessContext.isStage2ReadOnly && item.destination == HomeDestination.Cashflow -> false
             else -> true
         }
     }
 }
-
-private val ConsoleOnlyDestinations = setOf(
-    HomeDestination.Accountant,
-    HomeDestination.Documents,
-)
 
 internal fun dispatchProfileNavigation(
     isLargeScreen: Boolean,
@@ -638,7 +575,7 @@ private fun buildProfileData(
 }
 
 @Composable
-private fun rememberFallbackShellTopBarConfig(
+internal fun rememberFallbackShellTopBarConfig(
     normalizedRoute: String?,
     allNavItems: List<NavItem>,
 ): HomeShellTopBarConfig? {

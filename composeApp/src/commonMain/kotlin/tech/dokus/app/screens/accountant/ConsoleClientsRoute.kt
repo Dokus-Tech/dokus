@@ -36,15 +36,21 @@ internal fun ConsoleClientsRoute(
     val accessContext = LocalUserAccessContext.current
     val navController = LocalNavController.current
 
-    LaunchedEffect(accessContext.canConsole) {
-        if (!accessContext.canConsole) {
+    LaunchedEffect(accessContext.isSurfaceAvailabilityResolved, accessContext.canConsole) {
+        if (accessContext.isSurfaceAvailabilityResolved && !accessContext.canConsole) {
             navController.navigateToTopLevelTab(HomeDestination.Today)
         }
     }
 
+    if (!accessContext.isSurfaceAvailabilityResolved) return
     if (!accessContext.canConsole) return
 
-    val container = providedContainer ?: container<ConsoleClientsContainer>()
+    val container = providedContainer ?: container<
+        ConsoleClientsContainer,
+        ConsoleClientsState,
+        ConsoleClientsIntent,
+        ConsoleClientsAction
+        >()
     val snackbarHostState = remember { SnackbarHostState() }
     var pendingError by remember { mutableStateOf<DokusException?>(null) }
 
