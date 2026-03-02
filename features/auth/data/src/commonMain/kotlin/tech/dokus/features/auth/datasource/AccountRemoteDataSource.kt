@@ -2,10 +2,15 @@ package tech.dokus.features.auth.datasource
 
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.SessionId
+import tech.dokus.domain.ids.FirmId
 import tech.dokus.domain.model.User
+import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.model.auth.AccountMeResponse
 import tech.dokus.domain.model.auth.ChangePasswordRequest
 import tech.dokus.domain.model.auth.ConsoleClientSummary
+import tech.dokus.domain.model.auth.CreateFirmRequest
+import tech.dokus.domain.model.auth.CreateFirmResponse
 import tech.dokus.domain.model.auth.DeactivateUserRequest
 import tech.dokus.domain.model.auth.LoginResponse
 import tech.dokus.domain.model.auth.LogoutRequest
@@ -23,10 +28,25 @@ interface AccountRemoteDataSource {
      */
     suspend fun getAccountMe(): Result<AccountMeResponse>
 
+    suspend fun createFirm(request: CreateFirmRequest): Result<CreateFirmResponse>
+
     /**
      * List bookkeeper console clients accessible by the current account.
      */
-    suspend fun listConsoleClients(): Result<List<ConsoleClientSummary>>
+    suspend fun listConsoleClients(firmId: FirmId): Result<List<ConsoleClientSummary>>
+
+    suspend fun listConsoleClientDocuments(
+        firmId: FirmId,
+        tenantId: TenantId,
+        page: Int = 0,
+        limit: Int = 20,
+    ): Result<PaginatedResponse<DocumentRecordDto>>
+
+    suspend fun getConsoleClientDocument(
+        firmId: FirmId,
+        tenantId: TenantId,
+        documentId: String,
+    ): Result<DocumentRecordDto>
 
     /**
      * Select/switch to a specific tenant.

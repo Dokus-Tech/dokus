@@ -19,5 +19,7 @@ data class AuthenticationInfo(
     val email: String,
     val name: String,
     val globalRoles: Set<String> = emptySet(),
+    val tenantMemberships: List<JwtTenantMembershipClaim> = emptyList(),
+    val firmMemberships: List<JwtFirmMembershipClaim> = emptyList(),
     val sessionJti: String? = null
 )

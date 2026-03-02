@@ -45,8 +45,20 @@ sealed interface HomeDestination : NavigationDestination {
     data object WorkspaceDetails : HomeDestination
 
     @Serializable
-    @SerialName("accountant")
-    data object Accountant : HomeDestination
+    @SerialName("console/clients")
+    data object ConsoleClients : HomeDestination
+
+    @Serializable
+    @SerialName("console/requests")
+    data object ConsoleRequests : HomeDestination
+
+    @Serializable
+    @SerialName("console/activity")
+    data object ConsoleActivity : HomeDestination
+
+    @Serializable
+    @SerialName("console/export")
+    data object ConsoleExport : HomeDestination
 
     @Serializable
     @SerialName("ai-chat")
@@ -81,7 +93,10 @@ val NavigationDestination.route: String get() = when (this) {
         HomeDestination.Contacts -> "contacts"
         HomeDestination.Team -> "team"
         HomeDestination.WorkspaceDetails -> "home/workspace_details"
-        HomeDestination.Accountant -> "accountant"
+        HomeDestination.ConsoleClients -> "console/clients"
+        HomeDestination.ConsoleRequests -> "console/requests"
+        HomeDestination.ConsoleActivity -> "console/activity"
+        HomeDestination.ConsoleExport -> "console/export"
         HomeDestination.AiChat -> "ai-chat"
         HomeDestination.Settings -> "settings"
         HomeDestination.More -> "more"

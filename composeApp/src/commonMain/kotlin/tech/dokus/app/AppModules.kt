@@ -3,6 +3,7 @@ package tech.dokus.app
 import org.jetbrains.compose.resources.StringResource
 import org.koin.core.module.Module
 import tech.dokus.app.module.AppMainModule
+import tech.dokus.app.module.ConsoleAppModule
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.more_horizontal
 import tech.dokus.aura.resources.nav_more
@@ -18,6 +19,7 @@ import tech.dokus.features.contacts.contactsDataModule
 import tech.dokus.features.contacts.contactsDomainModule
 import tech.dokus.features.contacts.contactsNetworkModule
 import tech.dokus.foundation.app.AppModule
+import tech.dokus.foundation.app.NavContext
 import tech.dokus.foundation.app.ModuleSettingsGroup
 import tech.dokus.foundation.app.diModules
 import tech.dokus.foundation.aura.model.DesktopNavPlacement
@@ -29,6 +31,7 @@ import tech.dokus.navigation.destinations.HomeDestination
 
 private val baseAppModules = listOf(
     AppMainModule,
+    ConsoleAppModule,
     AuthAppModule,
     CashflowAppModule,
     ContactsAppModule,
@@ -55,11 +58,41 @@ val List<AppModule>.diModules: List<Module>
 val List<AppModule>.homeNavigationProviders: List<NavigationProvider>
     get() = mapNotNull { it.homeNavigationProvider }
 
+private fun List<AppModule>.groupsFor(navContext: NavContext): List<tech.dokus.foundation.app.ModuleNavGroup> =
+    flatMap { it.navGroups }.filter { it.navContext == navContext }
+
 /** All nav items from all modules, flattened */
+fun List<AppModule>.allNavItems(navContext: NavContext): List<NavItem> =
+    groupsFor(navContext).flatMap { it.items }
+
+/** Backward-compatible aggregate across all contexts. */
 val List<AppModule>.allNavItems: List<NavItem>
     get() = flatMap { it.navGroups }.flatMap { it.items }
 
 /** Desktop sections — groups merged by sectionId, items sorted by priority, sections sorted by order */
+fun List<AppModule>.navSectionsCombined(navContext: NavContext): List<NavSection> {
+    val allGroups = groupsFor(navContext)
+    return allGroups
+        .groupBy { it.sectionId }
+        .map { (_, groups) ->
+            val first = groups.minByOrNull { it.sectionOrder } ?: groups.first()
+            val sectionItems = groups
+                .flatMap { it.items }
+                .filter { it.desktopPlacement == DesktopNavPlacement.Section }
+                .sortedBy { it.priority }
+            NavSection(
+                id = first.sectionId,
+                titleRes = first.sectionTitle,
+                iconRes = first.sectionIcon,
+                order = first.sectionOrder,
+                items = sectionItems,
+                defaultExpanded = groups.any { it.sectionDefaultExpanded },
+            )
+        }
+        .filter { it.items.isNotEmpty() }
+        .sortedBy { it.order }
+}
+
 val List<AppModule>.navSectionsCombined: List<NavSection>
     get() {
         val allGroups = flatMap { it.navGroups }
@@ -85,6 +118,11 @@ val List<AppModule>.navSectionsCombined: List<NavSection>
     }
 
 /** Desktop pinned items rendered above sectioned groups. */
+fun List<AppModule>.desktopPinnedItems(navContext: NavContext): List<NavItem> =
+    allNavItems(navContext)
+        .filter { it.desktopPlacement == DesktopNavPlacement.PinnedTop }
+        .sortedBy { it.priority }
+
 val List<AppModule>.desktopPinnedItems: List<NavItem>
     get() = allNavItems
         .filter { it.desktopPlacement == DesktopNavPlacement.PinnedTop }

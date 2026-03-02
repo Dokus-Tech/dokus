@@ -1,16 +1,20 @@
 package tech.dokus.backend.services.auth
 
-import tech.dokus.domain.enums.UserRole
+import tech.dokus.domain.model.FirmMembership
 import tech.dokus.domain.model.TenantMembership
 import tech.dokus.domain.model.auth.AppSurface
 import tech.dokus.domain.model.auth.SurfaceAvailability
 
 object SurfaceResolver {
 
-    fun resolve(memberships: List<TenantMembership>): SurfaceAvailability {
-        val activeMemberships = memberships.filter { it.isActive }
-        val canCompanyManager = activeMemberships.any { it.role != UserRole.Accountant }
-        val canBookkeeperConsole = activeMemberships.any { it.role == UserRole.Accountant }
+    fun resolve(
+        tenantMemberships: List<TenantMembership>,
+        firmMemberships: List<FirmMembership>,
+    ): SurfaceAvailability {
+        val activeTenantMemberships = tenantMemberships.filter { it.isActive }
+        val activeFirmMemberships = firmMemberships.filter { it.isActive }
+        val canCompanyManager = activeTenantMemberships.isNotEmpty()
+        val canBookkeeperConsole = activeFirmMemberships.isNotEmpty()
         val defaultSurface = when {
             canCompanyManager -> AppSurface.CompanyManager
             canBookkeeperConsole -> AppSurface.BookkeeperConsole

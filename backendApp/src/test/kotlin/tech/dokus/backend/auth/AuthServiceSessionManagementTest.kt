@@ -15,6 +15,7 @@ import tech.dokus.backend.services.auth.EmailVerificationService
 import tech.dokus.backend.services.auth.PasswordResetService
 import tech.dokus.backend.services.auth.RateLimitServiceInterface
 import tech.dokus.backend.services.auth.WelcomeEmailService
+import tech.dokus.database.repository.auth.FirmRepository
 import tech.dokus.database.repository.auth.RefreshTokenRepository
 import tech.dokus.database.repository.auth.RevokedSessionInfo
 import tech.dokus.database.repository.auth.UserRepository
@@ -35,6 +36,7 @@ import kotlin.test.assertTrue
 class AuthServiceSessionManagementTest {
 
     private val userRepository = mockk<UserRepository>()
+    private val firmRepository = mockk<FirmRepository>(relaxed = true)
     private val jwtGenerator = mockk<JwtGenerator>()
     private val refreshTokenRepository = mockk<RefreshTokenRepository>()
     private val rateLimitService = mockk<RateLimitServiceInterface>()
@@ -45,6 +47,7 @@ class AuthServiceSessionManagementTest {
 
     private val authService = AuthService(
         userRepository = userRepository,
+        firmRepository = firmRepository,
         jwtGenerator = jwtGenerator,
         refreshTokenRepository = refreshTokenRepository,
         rateLimitService = rateLimitService,

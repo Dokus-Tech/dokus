@@ -6,6 +6,7 @@ import com.auth0.jwt.JWT
 import kotlinx.datetime.Instant
 import tech.dokus.database.repository.auth.RefreshTokenRepository
 import tech.dokus.database.repository.auth.RevokedSessionInfo
+import tech.dokus.database.repository.auth.FirmRepository
 import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.domain.DeviceType
 import tech.dokus.domain.Password
@@ -14,8 +15,11 @@ import tech.dokus.domain.ids.SessionId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.TenantMembership
+import tech.dokus.domain.model.FirmMembership
 import tech.dokus.domain.model.User
 import tech.dokus.domain.model.auth.JwtClaims
+import tech.dokus.domain.model.auth.JwtFirmMembershipClaim
+import tech.dokus.domain.model.auth.JwtTenantMembershipClaim
 import tech.dokus.domain.model.auth.LoginRequest
 import tech.dokus.domain.model.auth.LoginResponse
 import tech.dokus.domain.model.auth.LogoutRequest
@@ -39,6 +43,7 @@ data class SessionContext(
 
 class AuthService(
     private val userRepository: UserRepository,
+    private val firmRepository: FirmRepository,
     private val jwtGenerator: JwtGenerator,
     private val refreshTokenRepository: RefreshTokenRepository,
     private val rateLimitService: RateLimitServiceInterface,
@@ -88,7 +93,9 @@ class AuthService(
 
         val claims = jwtGenerator.generateClaims(
             userId = userId,
-            email = user.email.value
+            email = user.email.value,
+            tenantMemberships = memberships.toJwtTenantClaims(),
+            firmMemberships = firmRepository.listUserMemberships(userId).toJwtFirmClaims()
         )
 
         val response = jwtGenerator.generateTokens(claims).copy(
@@ -167,7 +174,9 @@ class AuthService(
         // User starts with no tenants
         val claims = jwtGenerator.generateClaims(
             userId = userId,
-            email = user.email.value
+            email = user.email.value,
+            tenantMemberships = emptyList(),
+            firmMemberships = emptyList()
         )
 
         val response = jwtGenerator.generateTokens(claims).copy(
@@ -253,7 +262,9 @@ class AuthService(
 
         val claims = jwtGenerator.generateClaims(
             userId = userId,
-            email = user.email.value
+            email = user.email.value,
+            tenantMemberships = memberships.toJwtTenantClaims(),
+            firmMemberships = firmRepository.listUserMemberships(userId).toJwtFirmClaims()
         )
 
         val response = jwtGenerator.generateTokens(claims).copy(
@@ -308,7 +319,9 @@ class AuthService(
 
         val claims = jwtGenerator.generateClaims(
             userId = userId,
-            email = user.email.value
+            email = user.email.value,
+            tenantMemberships = memberships.toJwtTenantClaims(),
+            firmMemberships = firmRepository.listUserMemberships(userId).toJwtFirmClaims()
         )
 
         val response = jwtGenerator.generateTokens(claims).copy(
@@ -681,5 +694,29 @@ class AuthService(
         }
 
         return activeMemberships.firstOrNull { it.tenantId == targetTenantId }?.tenantId
+    }
+
+    private fun List<TenantMembership>.toJwtTenantClaims(): List<JwtTenantMembershipClaim> {
+        return asSequence()
+            .filter { it.isActive }
+            .map { membership ->
+                JwtTenantMembershipClaim(
+                    tenantId = membership.tenantId,
+                    role = membership.role
+                )
+            }
+            .toList()
+    }
+
+    private fun List<FirmMembership>.toJwtFirmClaims(): List<JwtFirmMembershipClaim> {
+        return asSequence()
+            .filter { it.isActive }
+            .map { membership ->
+                JwtFirmMembershipClaim(
+                    firmId = membership.firmId,
+                    role = membership.role
+                )
+            }
+            .toList()
     }
 }

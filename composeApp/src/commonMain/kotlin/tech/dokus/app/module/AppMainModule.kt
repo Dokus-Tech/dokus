@@ -18,7 +18,6 @@ import tech.dokus.aura.resources.file_text
 import tech.dokus.aura.resources.documents_subtitle
 import tech.dokus.aura.resources.home_today
 import tech.dokus.aura.resources.today_subtitle
-import tech.dokus.aura.resources.nav_accountant
 import tech.dokus.aura.resources.nav_documents
 import tech.dokus.aura.resources.nav_reports
 import tech.dokus.aura.resources.nav_section_accounting
@@ -36,7 +35,6 @@ import tech.dokus.aura.resources.search
 import tech.dokus.aura.resources.search_subtitle
 import tech.dokus.aura.resources.user
 import tech.dokus.aura.resources.users
-import tech.dokus.aura.resources.wallet_2
 import tech.dokus.foundation.app.AppDataModuleDi
 import tech.dokus.foundation.app.AppDomainModuleDi
 import tech.dokus.foundation.app.AppModule
@@ -45,6 +43,7 @@ import tech.dokus.foundation.app.DashboardWidget
 import tech.dokus.foundation.app.ModuleNavGroup
 import tech.dokus.foundation.app.ModuleSettingsGroup
 import tech.dokus.foundation.app.ModuleSettingsSection
+import tech.dokus.foundation.app.NavContext
 import tech.dokus.foundation.app.SettingsPriority
 import tech.dokus.foundation.aura.model.DesktopNavPlacement
 import tech.dokus.foundation.aura.model.NavItem
@@ -98,14 +97,6 @@ internal object AppMainModule : AppModule {
                     subtitleRes = Res.string.documents_subtitle,
                 ),
                 NavItem(
-                    id = "accountant",
-                    titleRes = Res.string.nav_accountant,
-                    iconRes = Res.drawable.wallet_2,
-                    destination = HomeDestination.Accountant,
-                    priority = 25,
-                    shellTopBar = ShellTopBarDefault.Title,
-                ),
-                NavItem(
                     id = "vat",
                     titleRes = Res.string.nav_vat,
                     iconRes = Res.drawable.calculator,
@@ -127,6 +118,7 @@ internal object AppMainModule : AppModule {
             sectionId = NavSectionIds.COMPANY,
             sectionTitle = Res.string.nav_section_company,
             sectionIcon = Res.drawable.users,
+            navContext = NavContext.TENANT,
             sectionOrder = 1,
             items = listOf(
                 NavItem(

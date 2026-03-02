@@ -89,9 +89,6 @@ enum class UserRole(override val dbValue: String) : DbEnum {
     @SerialName("ADMIN")
     Admin("ADMIN"),
 
-    @SerialName("ACCOUNTANT")
-    Accountant("ACCOUNTANT"),
-
     @SerialName("EDITOR")
     Editor("EDITOR"),
 
@@ -99,10 +96,10 @@ enum class UserRole(override val dbValue: String) : DbEnum {
     Viewer("VIEWER");
 
     companion object {
-        val all = listOf(Owner, Admin, Accountant, Editor, Viewer)
+        val all = listOf(Owner, Admin, Editor, Viewer)
 
         /** Roles that can be assigned to new members (excludes Owner) */
-        val assignable = listOf(Admin, Accountant, Editor, Viewer)
+        val assignable = listOf(Admin, Editor, Viewer)
     }
 }
 
@@ -119,6 +116,32 @@ enum class InvitationStatus(override val dbValue: String) : DbEnum {
 
     @SerialName("CANCELLED")
     Cancelled("CANCELLED")
+}
+
+@Serializable
+enum class FirmRole(override val dbValue: String) : DbEnum {
+    @SerialName("OWNER")
+    Owner("OWNER"),
+
+    @SerialName("ADMIN")
+    Admin("ADMIN"),
+
+    @SerialName("STAFF")
+    Staff("STAFF");
+
+    companion object {
+        val all = listOf(Owner, Admin, Staff)
+        val assignable = listOf(Admin, Staff)
+    }
+}
+
+@Serializable
+enum class FirmAccessStatus(override val dbValue: String) : DbEnum {
+    @SerialName("ACTIVE")
+    Active("ACTIVE"),
+
+    @SerialName("REVOKED")
+    Revoked("REVOKED")
 }
 
 @Serializable

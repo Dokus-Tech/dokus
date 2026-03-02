@@ -13,6 +13,7 @@ import tech.dokus.backend.services.auth.EmailVerificationService
 import tech.dokus.backend.services.auth.PasswordResetService
 import tech.dokus.backend.services.auth.RateLimitServiceInterface
 import tech.dokus.backend.services.auth.WelcomeEmailService
+import tech.dokus.database.repository.auth.FirmRepository
 import tech.dokus.database.repository.auth.RefreshTokenRepository
 import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.domain.Email
@@ -35,6 +36,7 @@ import kotlin.test.assertTrue
 class AuthServiceWelcomeFlowTest {
 
     private val userRepository = mockk<UserRepository>()
+    private val firmRepository = mockk<FirmRepository>(relaxed = true)
     private val jwtGenerator = mockk<JwtGenerator>()
     private val refreshTokenRepository = mockk<RefreshTokenRepository>()
     private val rateLimitService = mockk<RateLimitServiceInterface>()
@@ -44,6 +46,7 @@ class AuthServiceWelcomeFlowTest {
 
     private val authService = AuthService(
         userRepository = userRepository,
+        firmRepository = firmRepository,
         jwtGenerator = jwtGenerator,
         refreshTokenRepository = refreshTokenRepository,
         rateLimitService = rateLimitService,
@@ -57,7 +60,7 @@ class AuthServiceWelcomeFlowTest {
         val user = testUser()
 
         coEvery { userRepository.register(any(), any(), any(), any()) } returns user
-        coEvery { jwtGenerator.generateClaims(any(), any()) } returns testClaims(user.id)
+        coEvery { jwtGenerator.generateClaims(any(), any(), any(), any()) } returns testClaims(user.id)
         coEvery { jwtGenerator.generateTokens(any()) } returns LoginResponse(
             accessToken = "access",
             refreshToken = "refresh",
@@ -104,7 +107,7 @@ class AuthServiceWelcomeFlowTest {
                 updatedAt = Clock.System.now().toLocalDateTime(TimeZone.UTC)
             )
         )
-        coEvery { jwtGenerator.generateClaims(any(), any()) } returns testClaims(user.id)
+        coEvery { jwtGenerator.generateClaims(any(), any(), any(), any()) } returns testClaims(user.id)
         coEvery { jwtGenerator.generateTokens(any()) } returns LoginResponse(
             accessToken = "access",
             refreshToken = "refresh",
@@ -163,7 +166,7 @@ class AuthServiceWelcomeFlowTest {
                 updatedAt = Clock.System.now().toLocalDateTime(TimeZone.UTC)
             )
         )
-        coEvery { jwtGenerator.generateClaims(any(), any()) } returns testClaims(user.id)
+        coEvery { jwtGenerator.generateClaims(any(), any(), any(), any()) } returns testClaims(user.id)
         coEvery { jwtGenerator.generateTokens(any()) } returns LoginResponse(
             accessToken = "access",
             refreshToken = "refresh",

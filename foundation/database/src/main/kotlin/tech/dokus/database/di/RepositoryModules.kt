@@ -6,6 +6,7 @@ import tech.dokus.database.repository.ai.ChatRepositoryImpl
 import tech.dokus.database.repository.ai.DocumentChunksRepository
 import tech.dokus.database.repository.ai.DocumentExamplesRepository
 import tech.dokus.database.repository.auth.AddressRepository
+import tech.dokus.database.repository.auth.FirmRepository
 import tech.dokus.database.repository.auth.InvitationRepository
 import tech.dokus.database.repository.auth.PasswordResetTokenRepository
 import tech.dokus.database.repository.auth.RefreshTokenRepository
@@ -52,6 +53,7 @@ import tech.dokus.domain.repository.ExampleRepository
  */
 val repositoryModuleAuth = module {
     single { TenantRepository() }
+    single { FirmRepository() }
     single { AddressRepository() }
     single { UserRepository(get()) }
     single { RefreshTokenRepository() }

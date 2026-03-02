@@ -8,9 +8,9 @@ import androidx.compose.runtime.setValue
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.features.auth.mvi.WorkspaceSelectAction
 import tech.dokus.features.auth.mvi.WorkspaceSelectContainer
-import tech.dokus.features.auth.mvi.WorkspaceSelectIntent
 import tech.dokus.features.auth.presentation.auth.screen.WorkspaceSelectScreen
 import tech.dokus.foundation.app.local.LocalBookkeeperConsoleCallback
+import tech.dokus.foundation.app.shell.WorkspaceContextStore
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.navigation.destinations.AuthDestination
 import tech.dokus.navigation.destinations.CoreDestination
@@ -25,15 +25,17 @@ internal fun WorkspaceSelectRoute(
     val navController = LocalNavController.current
     val bcCallback = LocalBookkeeperConsoleCallback.current
     var triggerWarp by remember { mutableStateOf(false) }
-    var pendingBCNavigation by remember { mutableStateOf(false) }
+    var pendingConsoleNavigation by remember { mutableStateOf(false) }
 
     val state by container.store.subscribe { action ->
         when (action) {
             WorkspaceSelectAction.NavigateToHome -> {
+                WorkspaceContextStore.selectTenantWorkspace()
                 triggerWarp = true
             }
-            WorkspaceSelectAction.NavigateToBookkeeperConsole -> {
-                pendingBCNavigation = true
+            is WorkspaceSelectAction.NavigateToBookkeeperConsole -> {
+                WorkspaceContextStore.selectFirmWorkspace(action.firmId)
+                pendingConsoleNavigation = true
                 triggerWarp = true
             }
             is WorkspaceSelectAction.ShowSelectionError -> {
@@ -46,13 +48,10 @@ internal fun WorkspaceSelectRoute(
         state = state,
         onIntent = { container.store.intent(it) },
         onAddTenantClick = { navController.navigateTo(AuthDestination.WorkspaceCreate) },
-        onBookkeeperConsoleClick = bcCallback?.let {
-            { container.store.intent(WorkspaceSelectIntent.OpenBookkeeperConsole) }
-        },
         triggerWarp = triggerWarp,
         onWarpComplete = {
-            if (pendingBCNavigation) {
-                pendingBCNavigation = false
+            if (pendingConsoleNavigation) {
+                pendingConsoleNavigation = false
                 bcCallback?.invoke()
             }
             triggerWarp = false

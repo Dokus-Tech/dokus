@@ -51,6 +51,8 @@ import tech.dokus.features.auth.usecases.CreateInvitationUseCase
 import tech.dokus.features.auth.usecases.CreateInvitationUseCaseImpl
 import tech.dokus.features.auth.usecases.CreateTenantUseCase
 import tech.dokus.features.auth.usecases.CreateTenantUseCaseImpl
+import tech.dokus.features.auth.usecases.CreateFirmUseCase
+import tech.dokus.features.auth.usecases.CreateFirmUseCaseImpl
 import tech.dokus.features.auth.usecases.ChangePasswordUseCase
 import tech.dokus.features.auth.usecases.ChangePasswordUseCaseImpl
 import tech.dokus.features.auth.usecases.DeleteWorkspaceAvatarUseCase
@@ -79,6 +81,10 @@ import tech.dokus.features.auth.usecases.ListSessionsUseCase
 import tech.dokus.features.auth.usecases.ListSessionsUseCaseImpl
 import tech.dokus.features.auth.usecases.ListConsoleClientsUseCase
 import tech.dokus.features.auth.usecases.ListConsoleClientsUseCaseImpl
+import tech.dokus.features.auth.usecases.ListConsoleClientDocumentsUseCase
+import tech.dokus.features.auth.usecases.ListConsoleClientDocumentsUseCaseImpl
+import tech.dokus.features.auth.usecases.GetConsoleClientDocumentUseCase
+import tech.dokus.features.auth.usecases.GetConsoleClientDocumentUseCaseImpl
 import tech.dokus.features.auth.usecases.ListPendingInvitationsUseCase
 import tech.dokus.features.auth.usecases.ListPendingInvitationsUseCaseImpl
 import tech.dokus.features.auth.usecases.ListTeamMembersUseCase
@@ -184,6 +190,8 @@ val authDomainModule = module {
     singleOf(::GetAccountMeUseCaseImpl) bind GetAccountMeUseCase::class
     singleOf(::GetCurrentUserUseCaseImpl) bind GetCurrentUserUseCase::class
     singleOf(::ListConsoleClientsUseCaseImpl) bind ListConsoleClientsUseCase::class
+    singleOf(::ListConsoleClientDocumentsUseCaseImpl) bind ListConsoleClientDocumentsUseCase::class
+    singleOf(::GetConsoleClientDocumentUseCaseImpl) bind GetConsoleClientDocumentUseCase::class
     singleOf(::WatchCurrentUserUseCaseImpl) bind WatchCurrentUserUseCase::class
     singleOf(::UpdateProfileUseCaseImpl) bind UpdateProfileUseCase::class
     singleOf(::ChangePasswordUseCaseImpl) bind ChangePasswordUseCase::class
@@ -192,6 +200,7 @@ val authDomainModule = module {
     singleOf(::RevokeOtherSessionsUseCaseImpl) bind RevokeOtherSessionsUseCase::class
     singleOf(::HasFreelancerTenantUseCaseImpl) bind HasFreelancerTenantUseCase::class
     singleOf(::CreateTenantUseCaseImpl) bind CreateTenantUseCase::class
+    singleOf(::CreateFirmUseCaseImpl) bind CreateFirmUseCase::class
     singleOf(::ListMyTenantsUseCaseImpl) bind ListMyTenantsUseCase::class
     singleOf(::GetInvoiceNumberPreviewUseCaseImpl) bind GetInvoiceNumberPreviewUseCase::class
     singleOf(::GetTenantSettingsUseCaseImpl) bind GetTenantSettingsUseCase::class

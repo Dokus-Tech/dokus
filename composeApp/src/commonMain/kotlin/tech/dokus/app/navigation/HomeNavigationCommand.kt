@@ -32,7 +32,7 @@ internal fun resolveHomeNavigationSteps(
     return when (command) {
         HomeNavigationCommand.OpenConsoleClients -> listOf(
             HomeNavigationStep.TopLevelTab(
-                if (canBCAccess) HomeDestination.Accountant else HomeDestination.Today
+                if (canBCAccess) HomeDestination.ConsoleClients else HomeDestination.Today
             )
         )
         is HomeNavigationCommand.OpenDocuments -> listOf(

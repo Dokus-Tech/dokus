@@ -5,19 +5,19 @@ import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.domain.asbtractions.RetryHandler
-import tech.dokus.domain.enums.UserRole
 import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.FirmId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.Tenant
-import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.domain.model.auth.FirmWorkspaceSummary
+import tech.dokus.domain.model.auth.TenantWorkspaceSummary
 
 /**
  * Contract for Workspace Selection screen.
  *
  * Flow:
- * 1. Loading → Fetching available tenants
- * 2. Content → User selects from tenant list
- * 3. Selecting → User has selected a tenant, processing
+ * 1. Loading → Fetching available workspaces from account/me
+ * 2. Content → User selects tenant workspace or firm practice
+ * 3. Selecting → User has selected a workspace, processing
  * 4. Error → Error occurred with retry option
  */
 
@@ -26,39 +26,34 @@ import tech.dokus.foundation.app.state.DokusState
 // ============================================================================
 
 @Immutable
-sealed interface WorkspaceSelectState : MVIState, DokusState<List<Tenant>> {
+sealed interface WorkspaceSelectState : MVIState {
 
-    /**
-     * Initial loading state - fetching tenants from server.
-     */
-    data object Loading : WorkspaceSelectState, DokusState.Loading<List<Tenant>>
+    data object Loading : WorkspaceSelectState
 
-    /**
-     * Content state - user can select from available tenants.
-     */
     data class Content(
-        override val data: List<Tenant>,
-    ) : WorkspaceSelectState, DokusState.Success<List<Tenant>> {
-        val tenants: List<Tenant> get() = data
-        val hasBookkeeperConsoleAccess: Boolean
-            get() = data.any { it.role == UserRole.Accountant }
+        val tenants: List<TenantWorkspaceSummary>,
+        val firms: List<FirmWorkspaceSummary>,
+        val isCreatingFirm: Boolean = false,
+    ) : WorkspaceSelectState {
+        val hasFirmAccess: Boolean get() = firms.isNotEmpty()
     }
 
-    /**
-     * Selecting state - user has selected a tenant, processing selection.
-     */
-    data class Selecting(
-        val tenants: List<Tenant>,
+    data class SelectingTenant(
+        val tenants: List<TenantWorkspaceSummary>,
+        val firms: List<FirmWorkspaceSummary>,
         val selectedTenantId: TenantId,
     ) : WorkspaceSelectState
 
-    /**
-     * Error state with recovery option.
-     */
+    data class SelectingFirm(
+        val tenants: List<TenantWorkspaceSummary>,
+        val firms: List<FirmWorkspaceSummary>,
+        val selectedFirmId: FirmId,
+    ) : WorkspaceSelectState
+
     data class Error(
-        override val exception: DokusException,
-        override val retryHandler: RetryHandler,
-    ) : WorkspaceSelectState, DokusState.Error<List<Tenant>>
+        val exception: DokusException,
+        val retryHandler: RetryHandler,
+    ) : WorkspaceSelectState
 }
 
 // ============================================================================
@@ -67,13 +62,16 @@ sealed interface WorkspaceSelectState : MVIState, DokusState<List<Tenant>> {
 
 @Immutable
 sealed interface WorkspaceSelectIntent : MVIIntent {
-    data object LoadTenants : WorkspaceSelectIntent
+    data object LoadWorkspaces : WorkspaceSelectIntent
 
     /** User selected a tenant from the list */
     data class SelectTenant(val tenantId: TenantId) : WorkspaceSelectIntent
 
-    /** User wants to open the Bookkeeper Console */
-    data object OpenBookkeeperConsole : WorkspaceSelectIntent
+    /** User selected a firm practice */
+    data class SelectFirm(val firmId: FirmId) : WorkspaceSelectIntent
+
+    /** User wants to bootstrap a firm practice */
+    data class CreateFirm(val prefillTenantId: TenantId?) : WorkspaceSelectIntent
 }
 
 // ============================================================================
@@ -85,8 +83,8 @@ sealed interface WorkspaceSelectAction : MVIAction {
     /** Navigate to home screen after successful tenant selection */
     data object NavigateToHome : WorkspaceSelectAction
 
-    /** Navigate to home screen with BC surface active */
-    data object NavigateToBookkeeperConsole : WorkspaceSelectAction
+    /** Navigate to home screen with console surface active */
+    data class NavigateToBookkeeperConsole(val firmId: FirmId) : WorkspaceSelectAction
 
     /** Show error message when selection fails */
     data class ShowSelectionError(val error: DokusException) : WorkspaceSelectAction

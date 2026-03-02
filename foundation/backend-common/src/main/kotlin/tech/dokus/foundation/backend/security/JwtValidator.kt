@@ -8,9 +8,13 @@ import com.auth0.jwt.algorithms.Algorithm
 import com.auth0.jwt.exceptions.JWTVerificationException
 import com.auth0.jwt.interfaces.DecodedJWT
 import com.auth0.jwt.interfaces.Payload
+import kotlinx.serialization.builtins.ListSerializer
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.auth.AuthenticationInfo
 import tech.dokus.domain.model.auth.JwtClaims
+import tech.dokus.domain.model.auth.JwtFirmMembershipClaim
+import tech.dokus.domain.model.auth.JwtTenantMembershipClaim
+import tech.dokus.domain.utils.json
 import tech.dokus.foundation.backend.config.JwtConfig
 import tech.dokus.foundation.backend.utils.loggerFor
 import kotlin.uuid.ExperimentalUuidApi
@@ -66,6 +70,28 @@ class JwtValidator(
         return try {
             val userId = payload.subject ?: return null
             val email = payload.getClaim(JwtClaims.CLAIM_EMAIL).asString() ?: return null
+            val tenantMemberships = payload.getClaim(JwtClaims.CLAIM_TENANTS)
+                .asString()
+                ?.let {
+                    runCatching {
+                        json.decodeFromString(
+                            ListSerializer(JwtTenantMembershipClaim.serializer()),
+                            it
+                        )
+                    }.getOrDefault(emptyList())
+                }
+                ?: emptyList()
+            val firmMemberships = payload.getClaim(JwtClaims.CLAIM_FIRMS)
+                .asString()
+                ?.let {
+                    runCatching {
+                        json.decodeFromString(
+                            ListSerializer(JwtFirmMembershipClaim.serializer()),
+                            it
+                        )
+                    }.getOrDefault(emptyList())
+                }
+                ?: emptyList()
 
             // We don't store user's name/roles in current JWT; derive minimal values
             val name = email.substringBefore('@', email)
@@ -76,6 +102,8 @@ class JwtValidator(
                 email = email,
                 name = name,
                 globalRoles = emptySet(),
+                tenantMemberships = tenantMemberships,
+                firmMemberships = firmMemberships,
                 sessionJti = sessionJti
             )
         } catch (e: Exception) {

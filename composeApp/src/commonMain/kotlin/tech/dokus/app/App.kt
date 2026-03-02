@@ -18,6 +18,7 @@ import tech.dokus.foundation.app.local.LocalBookkeeperConsoleCallback
 import tech.dokus.foundation.app.navigationProviders
 import tech.dokus.foundation.app.network.ServerConnectionMonitor
 import tech.dokus.foundation.app.network.ServerConnectionProvided
+import tech.dokus.foundation.app.shell.WorkspaceContextStore
 import tech.dokus.foundation.aura.local.ScreenSizeProvided
 import tech.dokus.foundation.aura.local.ThemeManagerProvided
 import tech.dokus.foundation.aura.style.ThemeManager
@@ -49,6 +50,7 @@ fun App(
                             ScreenSizeProvided {
                                 CompositionLocalProvider(
                                     LocalBookkeeperConsoleCallback provides {
+                                        WorkspaceContextStore.switchToFirmWorkspace()
                                         HomeNavigationCommandBus.dispatch(
                                             HomeNavigationCommand.OpenConsoleClients,
                                         )

@@ -10,12 +10,11 @@ import androidx.compose.runtime.setValue
 import org.jetbrains.compose.resources.stringResource
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
-import tech.dokus.app.navigation.HomeNavigationSource
-import tech.dokus.app.navigation.HomeNavigationCommand
-import tech.dokus.app.navigation.HomeNavigationCommandBus
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.console_clients_subtitle
 import tech.dokus.aura.resources.console_clients_title
+import tech.dokus.app.screens.console.canRenderConsoleContent
+import tech.dokus.app.screens.console.isConsoleAccessDenied
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.app.shell.HomeShellTopBarConfig
@@ -27,7 +26,7 @@ import tech.dokus.navigation.destinations.HomeDestination
 import tech.dokus.navigation.local.LocalNavController
 import tech.dokus.navigation.navigateToTopLevelTab
 
-private const val HOME_ROUTE_ACCOUNTANT = "accountant"
+private const val HOME_ROUTE_CONSOLE_CLIENTS = "console/clients"
 
 @Composable
 internal fun ConsoleClientsRoute(
@@ -37,13 +36,12 @@ internal fun ConsoleClientsRoute(
     val navController = LocalNavController.current
 
     LaunchedEffect(accessContext.isSurfaceAvailabilityResolved, accessContext.canBookkeeperConsole) {
-        if (accessContext.isSurfaceAvailabilityResolved && !accessContext.canBookkeeperConsole) {
+        if (isConsoleAccessDenied(accessContext)) {
             navController.navigateToTopLevelTab(HomeDestination.Today)
         }
     }
 
-    if (!accessContext.isSurfaceAvailabilityResolved) return
-    if (!accessContext.canBookkeeperConsole) return
+    if (!canRenderConsoleContent(accessContext)) return
 
     val container = providedContainer ?: container<
         ConsoleClientsContainer,
@@ -65,12 +63,6 @@ internal fun ConsoleClientsRoute(
 
     val state by container.store.subscribe(DefaultLifecycle) { action ->
         when (action) {
-            ConsoleClientsAction.NavigateToDocuments -> {
-                HomeNavigationCommandBus.dispatch(
-                    HomeNavigationCommand.OpenDocuments(source = HomeNavigationSource.BC)
-                )
-            }
-
             is ConsoleClientsAction.ShowError -> {
                 pendingError = action.error
             }
@@ -84,7 +76,7 @@ internal fun ConsoleClientsRoute(
         )
     )
     RegisterHomeShellTopBar(
-        route = HOME_ROUTE_ACCOUNTANT,
+        route = HOME_ROUTE_CONSOLE_CLIENTS,
         config = topBarConfig,
     )
 

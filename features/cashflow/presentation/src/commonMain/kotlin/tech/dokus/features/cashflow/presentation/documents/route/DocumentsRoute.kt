@@ -98,7 +98,7 @@ internal fun DocumentsRoute(
     val onBackToClientsClick = remember(showBackToClients) {
         {
             if (showBackToClients) {
-                navController.navigateToTopLevelTab(HomeDestination.Accountant)
+                navController.navigateToTopLevelTab(HomeDestination.ConsoleClients)
             }
         }
     }

@@ -107,8 +107,10 @@ internal val diModuleApp = module {
     }
     container<ConsoleClientsContainer, ConsoleClientsState, ConsoleClientsIntent, ConsoleClientsAction> {
         ConsoleClientsContainer(
+            getAccountMeUseCase = get(),
             listConsoleClientsUseCase = get(),
-            selectTenantUseCase = get(),
+            listConsoleClientDocumentsUseCase = get(),
+            getConsoleClientDocumentUseCase = get(),
         )
     }
     container<SettingsContainer, SettingsState, SettingsIntent, SettingsAction> {

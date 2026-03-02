@@ -3,10 +3,16 @@ package tech.dokus.features.auth.usecases
 import kotlinx.coroutines.flow.Flow
 import tech.dokus.domain.Name
 import tech.dokus.domain.Password
+import tech.dokus.domain.ids.FirmId
 import tech.dokus.domain.ids.SessionId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.User
+import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.model.auth.AccountMeResponse
 import tech.dokus.domain.model.auth.ConsoleClientSummary
+import tech.dokus.domain.model.auth.CreateFirmRequest
+import tech.dokus.domain.model.auth.FirmWorkspaceSummary
 import tech.dokus.domain.model.auth.SessionDto
 
 /**
@@ -23,11 +29,32 @@ interface GetCurrentUserUseCase {
     suspend operator fun invoke(): Result<User>
 }
 
+interface CreateFirmUseCase {
+    suspend operator fun invoke(request: CreateFirmRequest): Result<FirmWorkspaceSummary>
+}
+
 /**
  * Use case for listing console clients for bookkeepers.
  */
 interface ListConsoleClientsUseCase {
-    suspend operator fun invoke(): Result<List<ConsoleClientSummary>>
+    suspend operator fun invoke(firmId: FirmId): Result<List<ConsoleClientSummary>>
+}
+
+interface ListConsoleClientDocumentsUseCase {
+    suspend operator fun invoke(
+        firmId: FirmId,
+        tenantId: TenantId,
+        page: Int = 0,
+        limit: Int = 20,
+    ): Result<PaginatedResponse<DocumentRecordDto>>
+}
+
+interface GetConsoleClientDocumentUseCase {
+    suspend operator fun invoke(
+        firmId: FirmId,
+        tenantId: TenantId,
+        documentId: String,
+    ): Result<DocumentRecordDto>
 }
 
 /**

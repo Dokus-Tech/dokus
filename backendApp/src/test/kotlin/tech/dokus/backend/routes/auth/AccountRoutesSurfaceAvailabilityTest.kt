@@ -5,24 +5,26 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.junit.jupiter.api.Test
 import tech.dokus.backend.services.auth.SurfaceResolver
+import tech.dokus.domain.enums.FirmRole
 import tech.dokus.domain.enums.UserRole
+import tech.dokus.domain.ids.FirmId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
+import tech.dokus.domain.model.FirmMembership
 import tech.dokus.domain.model.TenantMembership
 import tech.dokus.domain.model.auth.AppSurface
 import kotlin.test.assertEquals
-import kotlin.uuid.ExperimentalUuidApi
 
-@OptIn(ExperimentalUuidApi::class)
 class AccountRoutesSurfaceAvailabilityTest {
 
     @Test
-    fun `only non-accountant memberships enable company manager only`() {
+    fun `tenant memberships enable workspace surface`() {
         val result = SurfaceResolver.resolve(
-            memberships = listOf(
-                membership(role = UserRole.Owner),
-                membership(role = UserRole.Admin)
-            )
+            tenantMemberships = listOf(
+                tenantMembership(role = UserRole.Owner),
+                tenantMembership(role = UserRole.Admin)
+            ),
+            firmMemberships = emptyList(),
         )
 
         assertEquals(true, result.canCompanyManager)
@@ -31,12 +33,13 @@ class AccountRoutesSurfaceAvailabilityTest {
     }
 
     @Test
-    fun `only accountant memberships enable bookkeeper console only`() {
+    fun `firm memberships enable console surface`() {
         val result = SurfaceResolver.resolve(
-            memberships = listOf(
-                membership(role = UserRole.Accountant),
-                membership(role = UserRole.Accountant)
-            )
+            tenantMemberships = emptyList(),
+            firmMemberships = listOf(
+                firmMembership(role = FirmRole.Owner),
+                firmMembership(role = FirmRole.Staff)
+            ),
         )
 
         assertEquals(false, result.canCompanyManager)
@@ -45,12 +48,14 @@ class AccountRoutesSurfaceAvailabilityTest {
     }
 
     @Test
-    fun `mixed memberships enable both and default to company manager`() {
+    fun `mixed memberships enable both and default to workspace`() {
         val result = SurfaceResolver.resolve(
-            memberships = listOf(
-                membership(role = UserRole.Accountant),
-                membership(role = UserRole.Editor)
-            )
+            tenantMemberships = listOf(
+                tenantMembership(role = UserRole.Editor),
+            ),
+            firmMemberships = listOf(
+                firmMembership(role = FirmRole.Admin),
+            ),
         )
 
         assertEquals(true, result.canCompanyManager)
@@ -61,10 +66,12 @@ class AccountRoutesSurfaceAvailabilityTest {
     @Test
     fun `inactive memberships are ignored`() {
         val result = SurfaceResolver.resolve(
-            memberships = listOf(
-                membership(role = UserRole.Accountant, isActive = false),
-                membership(role = UserRole.Editor, isActive = false)
-            )
+            tenantMemberships = listOf(
+                tenantMembership(role = UserRole.Editor, isActive = false),
+            ),
+            firmMemberships = listOf(
+                firmMembership(role = FirmRole.Staff, isActive = false),
+            ),
         )
 
         assertEquals(false, result.canCompanyManager)
@@ -73,17 +80,20 @@ class AccountRoutesSurfaceAvailabilityTest {
     }
 
     @Test
-    fun `empty memberships fallback to company manager default`() {
-        val result = SurfaceResolver.resolve(emptyList())
+    fun `empty memberships fallback to workspace default`() {
+        val result = SurfaceResolver.resolve(
+            tenantMemberships = emptyList(),
+            firmMemberships = emptyList(),
+        )
 
         assertEquals(false, result.canCompanyManager)
         assertEquals(false, result.canBookkeeperConsole)
         assertEquals(AppSurface.CompanyManager, result.defaultSurface)
     }
 
-    private fun membership(
+    private fun tenantMembership(
         role: UserRole,
-        isActive: Boolean = true
+        isActive: Boolean = true,
     ): TenantMembership {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         return TenantMembership(
@@ -92,7 +102,22 @@ class AccountRoutesSurfaceAvailabilityTest {
             role = role,
             isActive = isActive,
             createdAt = now,
-            updatedAt = now
+            updatedAt = now,
+        )
+    }
+
+    private fun firmMembership(
+        role: FirmRole,
+        isActive: Boolean = true,
+    ): FirmMembership {
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+        return FirmMembership(
+            userId = UserId("00000000-0000-0000-0000-000000000123"),
+            firmId = FirmId.generate(),
+            role = role,
+            isActive = isActive,
+            createdAt = now,
+            updatedAt = now,
         )
     }
 }

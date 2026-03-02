@@ -70,7 +70,11 @@ val authPresentationModule = module {
         VerifyEmailContainer(token = params, verifyEmailUseCase = get())
     }
     container<WorkspaceSelectContainer, WorkspaceSelectState, WorkspaceSelectIntent, WorkspaceSelectAction> {
-        WorkspaceSelectContainer(listMyTenants = get(), selectTenantUseCase = get())
+        WorkspaceSelectContainer(
+            getAccountMeUseCase = get(),
+            createFirmUseCase = get(),
+            selectTenantUseCase = get(),
+        )
     }
     container<WorkspaceCreateContainer, WorkspaceCreateState, WorkspaceCreateIntent, WorkspaceCreateAction> {
         WorkspaceCreateContainer(

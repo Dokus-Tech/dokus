@@ -10,10 +10,10 @@ import androidx.compose.runtime.remember
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import tech.dokus.app.allNavItems
 import tech.dokus.app.desktopPinnedItems
 import tech.dokus.app.homeNavigationProviders
 import tech.dokus.app.navSectionsCombined
+import tech.dokus.app.allNavItems
 import tech.dokus.app.navigation.HomeNavigationEnvelope
 import tech.dokus.app.navigation.SearchFocusRequestBus
 import tech.dokus.app.navigation.executeHomeNavigationCommand
@@ -28,6 +28,7 @@ import tech.dokus.aura.resources.more_horizontal
 import tech.dokus.aura.resources.nav_more
 import tech.dokus.domain.model.Tenant
 import tech.dokus.foundation.app.AppModule
+import tech.dokus.foundation.app.NavContext
 import tech.dokus.foundation.app.shell.HomeShellTopBarConfig
 import tech.dokus.foundation.app.shell.HomeShellTopBarHost
 import tech.dokus.foundation.app.shell.LocalHomeShellTopBarHost
@@ -36,18 +37,17 @@ import tech.dokus.foundation.app.shell.UserAccessContext
 import tech.dokus.foundation.aura.model.MobileTabConfig
 import tech.dokus.navigation.destinations.AuthDestination
 import tech.dokus.navigation.destinations.HomeDestination
-import tech.dokus.navigation.destinations.NavigationDestination
 import tech.dokus.navigation.destinations.SettingsDestination
+import tech.dokus.navigation.destinations.route
 import tech.dokus.navigation.navigateTo
 import tech.dokus.navigation.navigateToTopLevelTab
 
 /**
- * Shared shell composable for both CM and BC surfaces.
- * All surface-specific behaviour is driven by [config].
+ * Shared shell composable for tenant (business) and firm (console) contexts.
  */
 @Composable
 internal fun HomeSurfaceShell(
-    config: HomeSurfaceConfig,
+    navContext: NavContext,
     appModules: List<AppModule>,
     rootNavController: NavController,
     isLargeScreen: Boolean,
@@ -56,16 +56,17 @@ internal fun HomeSurfaceShell(
     profileData: HomeShellProfileData?,
     pendingHomeCommand: HomeNavigationEnvelope?,
     onConsumeHomeCommand: (Long) -> Unit,
-    onSwitchSurface: () -> Unit,
     onLogoutClick: () -> Unit,
     snackbarHostState: SnackbarHostState,
 ) {
     // --- Nav providers & controller ---
     val homeNavProviders = remember(appModules) { appModules.homeNavigationProviders }
     val homeNavController = rememberNavController()
-    val allNavItems = remember(appModules) { appModules.allNavItems }
-    val navSections = remember(appModules) { appModules.navSectionsCombined }
-    val desktopPinnedItems = remember(appModules) { appModules.desktopPinnedItems }
+    val allNavItems = remember(appModules, navContext) { appModules.allNavItems(navContext) }
+    val navSections = remember(appModules, navContext) { appModules.navSectionsCombined(navContext) }
+    val desktopPinnedItems = remember(appModules, navContext) {
+        appModules.desktopPinnedItems(navContext)
+    }
     val sortedRoutes = remember(allNavItems) { buildSortedRoutes(allNavItems) }
 
     // --- Top bar host ---
@@ -92,14 +93,15 @@ internal fun HomeSurfaceShell(
 
     // --- Access context (surface-specific drill-down) ---
     val surfaceAvailability = shellState.surfaceAvailability
-    val isBCDrillDown = remember(currentRoute) { config.computeIsBCDrillDown(currentRoute) }
-    val accessContext = remember(surfaceAvailability, tenant?.role, isBCDrillDown) {
+    val isConsoleDrillDown = remember(navContext, currentRoute) {
+        navContext == NavContext.FIRM && currentRoute?.substringBefore("?") != HomeDestination.ConsoleClients.route
+    }
+    val accessContext = remember(surfaceAvailability, isConsoleDrillDown) {
         UserAccessContext(
             canCompanyManager = surfaceAvailability?.canCompanyManager ?: true,
             canBookkeeperConsole = surfaceAvailability?.canBookkeeperConsole ?: false,
             isSurfaceAvailabilityResolved = surfaceAvailability != null,
-            currentTenantRole = tenant?.role,
-            isBookkeeperConsoleDrillDown = isBCDrillDown,
+            isBookkeeperConsoleDrillDown = isConsoleDrillDown,
         )
     }
     val canBCAccess = remember(accessContext.isSurfaceAvailabilityResolved, accessContext.canBookkeeperConsole) {
@@ -111,33 +113,21 @@ internal fun HomeSurfaceShell(
         pendingHomeCommand?.id,
         homeNavController,
         canBCAccess,
-        accessContext.canCompanyManager,
     ) {
         val pending = pendingHomeCommand ?: return@LaunchedEffect
-        val action = config.handleCommand(
-            pending.command,
-            canBCAccess,
-            accessContext.canCompanyManager,
+        homeNavController.executeHomeNavigationCommand(
+            command = pending.command,
+            canBCAccess = canBCAccess,
         )
-        when (action) {
-            SurfaceCommandAction.SwitchSurface -> {
-                onSwitchSurface()
-                return@LaunchedEffect
-            }
-
-            SurfaceCommandAction.ExecuteLocally -> {
-                homeNavController.executeHomeNavigationCommand(
-                    command = pending.command,
-                    canBCAccess = canBCAccess,
-                )
-                onConsumeHomeCommand(pending.id)
-            }
-        }
+        onConsumeHomeCommand(pending.id)
     }
 
     // --- Visible items ---
-    val visibleNavItems = remember(allNavItems, accessContext) {
-        config.filterNavItems(allNavItems, accessContext)
+    val visibleNavItems = remember(allNavItems, accessContext, navContext) {
+        when (navContext) {
+            NavContext.TENANT -> filterTenantNavItems(allNavItems, accessContext)
+            NavContext.FIRM -> filterFirmNavItems(allNavItems, accessContext)
+        }
     }
     val visibleNavIds = remember(visibleNavItems) { visibleNavItems.map { it.id }.toSet() }
     val visibleNavSections = remember(navSections, visibleNavIds) {
@@ -154,7 +144,7 @@ internal fun HomeSurfaceShell(
             .filter { it.mobileTabOrder != null }
             .sortedBy { it.mobileTabOrder }
             .map { MobileTabConfig(it.id, it.titleRes, it.iconRes, it.destination) }
-        if (config.appendMoreTab) {
+        if (navContext == NavContext.TENANT) {
             baseTabs + MobileTabConfig(
                 "more",
                 Res.string.nav_more,
@@ -168,18 +158,24 @@ internal fun HomeSurfaceShell(
     val hasSearch = remember(visibleNavItems) {
         visibleNavItems.any { it.destination == HomeDestination.Search }
     }
-    val startDestination = remember(visibleNavItems, allNavItems) {
-        config.resolveStartDestination(visibleNavItems, allNavItems)
-    }
-
-    // --- Top-level navigate (with surface intercept) ---
-    val onTopLevelNavigate = remember(homeNavController, accessContext) {
-        { destination: NavigationDestination ->
-            if (destination == config.interceptDestination && config.shouldIntercept(accessContext)) {
-                onSwitchSurface()
-            } else {
-                homeNavController.navigateToTopLevelTab(destination)
+    val startDestination = remember(visibleNavItems, allNavItems, navContext) {
+        when (navContext) {
+            NavContext.FIRM -> {
+                HomeDestination.ConsoleClients.takeIf { destination ->
+                    visibleNavItems.any { it.destination == destination }
+                } ?: visibleNavItems.firstOrNull()?.destination ?: allNavItems.first().destination
             }
+
+            NavContext.TENANT -> {
+                visibleNavItems.firstOrNull { it.id == "today" }?.destination
+                    ?: visibleNavItems.firstOrNull()?.destination
+                    ?: allNavItems.first().destination
+            }
+        }
+    }
+    val onTopLevelNavigate = remember(homeNavController) {
+        { destination: tech.dokus.navigation.destinations.NavigationDestination ->
+            homeNavController.navigateToTopLevelTab(destination)
         }
     }
 
@@ -271,4 +267,37 @@ internal fun HomeSurfaceShell(
         },
         content = navHostContent,
     )
+}
+
+private fun filterTenantNavItems(
+    items: List<tech.dokus.foundation.aura.model.NavItem>,
+    accessContext: UserAccessContext,
+): List<tech.dokus.foundation.aura.model.NavItem> {
+    val consoleDestinations = setOf(
+        HomeDestination.ConsoleClients,
+        HomeDestination.ConsoleRequests,
+        HomeDestination.ConsoleActivity,
+        HomeDestination.ConsoleExport,
+    )
+    return items.filter { item ->
+        when {
+            item.destination in consoleDestinations -> false
+            accessContext.isStage2ReadOnly && item.destination == HomeDestination.Cashflow -> false
+            else -> true
+        }
+    }
+}
+
+private fun filterFirmNavItems(
+    items: List<tech.dokus.foundation.aura.model.NavItem>,
+    accessContext: UserAccessContext,
+): List<tech.dokus.foundation.aura.model.NavItem> {
+    if (!accessContext.canBookkeeperConsole) return emptyList()
+    val firmDestinations = setOf(
+        HomeDestination.ConsoleClients,
+        HomeDestination.ConsoleRequests,
+        HomeDestination.ConsoleActivity,
+        HomeDestination.ConsoleExport,
+    )
+    return items.filter { it.destination in firmDestinations }
 }

@@ -1,5 +1,6 @@
 package tech.dokus.app.screens.accountant
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,10 +34,15 @@ import tech.dokus.aura.resources.console_clients_empty_all
 import tech.dokus.aura.resources.console_clients_search_placeholder
 import tech.dokus.domain.DisplayName
 import tech.dokus.domain.asbtractions.RetryHandler
+import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.FirmId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.model.DocumentDto
+import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.auth.ConsoleClientSummary
+import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.DokusLoader
@@ -90,10 +96,17 @@ internal fun ConsoleClientsScreen(
                 }
 
                 is ConsoleClientsState.Content -> {
-                    ConsoleClientsContent(
-                        state = state,
-                        onIntent = onIntent,
-                    )
+                    if (state.selectedClientTenantId == null) {
+                        ClientsListContent(
+                            state = state,
+                            onIntent = onIntent,
+                        )
+                    } else {
+                        ClientDocumentsContent(
+                            state = state,
+                            onIntent = onIntent,
+                        )
+                    }
                 }
             }
         }
@@ -101,7 +114,7 @@ internal fun ConsoleClientsScreen(
 }
 
 @Composable
-private fun ConsoleClientsContent(
+private fun ClientsListContent(
     state: ConsoleClientsState.Content,
     onIntent: (ConsoleClientsIntent) -> Unit,
 ) {
@@ -179,12 +192,9 @@ private fun ConsoleClientsContent(
                             items = state.filteredClients,
                             key = { it.tenantId.toString() }
                         ) { client ->
-                            val isSelecting = state.selectingTenantId == client.tenantId
                             DokusTableRow(
                                 onClick = {
-                                    if (!isSelecting && state.selectingTenantId == null) {
-                                        onIntent(ConsoleClientsIntent.SelectClient(client.tenantId))
-                                    }
+                                    onIntent(ConsoleClientsIntent.SelectClient(client.tenantId))
                                 },
                                 contentPadding = androidx.compose.foundation.layout.PaddingValues(
                                     horizontal = Constraints.Spacing.medium
@@ -219,15 +229,9 @@ private fun ConsoleClientsContent(
                     items = state.filteredClients,
                     key = { it.tenantId.toString() }
                 ) { client ->
-                    val isSelecting = state.selectingTenantId == client.tenantId
                     DokusCardSurface(
                         modifier = Modifier.fillMaxWidth(),
-                        onClick = {
-                            if (!isSelecting && state.selectingTenantId == null) {
-                                onIntent(ConsoleClientsIntent.SelectClient(client.tenantId))
-                            }
-                        },
-                        enabled = !isSelecting,
+                        onClick = { onIntent(ConsoleClientsIntent.SelectClient(client.tenantId)) },
                     ) {
                         Row(
                             modifier = Modifier
@@ -258,6 +262,109 @@ private fun ConsoleClientsContent(
     }
 }
 
+@Composable
+private fun ClientDocumentsContent(
+    state: ConsoleClientsState.Content,
+    onIntent: (ConsoleClientsIntent) -> Unit,
+) {
+    val selectedClient = state.clients.firstOrNull { it.tenantId == state.selectedClientTenantId }
+
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium),
+    ) {
+        Text(
+            text = "< Back to clients",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.clickable { onIntent(ConsoleClientsIntent.BackToClients) },
+        )
+
+        if (selectedClient != null) {
+            Text(
+                text = selectedClient.companyName.value,
+                style = MaterialTheme.typography.headlineSmall,
+            )
+            Text(
+                text = selectedClient.vatNumber?.value ?: "",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+
+        when (val documentsState = state.documentsState) {
+            is DokusState.Loading -> DokusLoader()
+            is DokusState.Error -> DokusErrorContent(
+                exception = documentsState.exception,
+                retryHandler = documentsState.retryHandler
+            )
+            is DokusState.Success -> {
+                if (documentsState.data.isEmpty()) {
+                    Text(
+                        text = "No documents yet.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                } else {
+                    DokusCardSurface(modifier = Modifier.fillMaxWidth()) {
+                        LazyColumn(modifier = Modifier.fillMaxWidth()) {
+                            items(documentsState.data, key = { it.document.id.toString() }) { record ->
+                                DokusTableRow(
+                                    onClick = {
+                                        onIntent(
+                                            ConsoleClientsIntent.OpenDocument(
+                                                record.document.id.toString()
+                                            )
+                                        )
+                                    },
+                                    contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                                        horizontal = Constraints.Spacing.medium,
+                                        vertical = Constraints.Spacing.small,
+                                    ),
+                                ) {
+                                    DokusTableCell(column = DokusTableColumnSpec(2f)) {
+                                        Text(record.document.filename)
+                                    }
+                                    DokusTableCell(column = DokusTableColumnSpec(1f)) {
+                                        Text(record.draft?.documentStatus?.name ?: "PENDING")
+                                    }
+                                }
+                                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                            }
+                        }
+                    }
+                }
+            }
+            else -> Unit
+        }
+
+        state.selectedDocument?.let { document ->
+            DokusCardSurface(modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(Constraints.Spacing.medium),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Text(
+                        text = document.document.filename,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Text(
+                        text = "Status: ${document.draft?.documentStatus ?: DocumentStatus.NeedsReview}",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    Text(
+                        text = "Type: ${document.draft?.documentType ?: "Unknown"}",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+            }
+        }
+    }
+}
+
 @Preview
 @Composable
 private fun ConsoleClientsScreenLoadingPreview(
@@ -272,20 +379,6 @@ private fun ConsoleClientsScreenLoadingPreview(
     }
 }
 
-@Preview
-@Composable
-private fun ConsoleClientsScreenContentPreview(
-    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
-) {
-    TestWrapper(parameters) {
-        ConsoleClientsScreen(
-            state = ConsoleClientsState.Content(clients = previewClients()),
-            snackbarHostState = SnackbarHostState(),
-            onIntent = {},
-        )
-    }
-}
-
 @Preview(name = "Console Clients Desktop", widthDp = 1366, heightDp = 900)
 @Composable
 private fun ConsoleClientsScreenDesktopContentPreview(
@@ -293,51 +386,46 @@ private fun ConsoleClientsScreenDesktopContentPreview(
 ) {
     TestWrapper(parameters) {
         ConsoleClientsScreen(
-            state = ConsoleClientsState.Content(clients = previewClients()),
+            state = ConsoleClientsState.Content(
+                firmId = FirmId("00000000-0000-0000-0000-000000000111"),
+                clients = previewClients(),
+            ),
             snackbarHostState = SnackbarHostState(),
             onIntent = {},
         )
     }
 }
 
-@Preview
+@Preview(name = "Console Client Documents Desktop", widthDp = 1366, heightDp = 900)
 @Composable
-private fun ConsoleClientsScreenEmptyPreview(
+private fun ConsoleClientDocumentsDesktopPreview(
     @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
 ) {
-    TestWrapper(parameters) {
-        ConsoleClientsScreen(
-            state = ConsoleClientsState.Content(clients = emptyList()),
-            snackbarHostState = SnackbarHostState(),
-            onIntent = {},
+    val docs = listOf(
+        DocumentRecordDto(
+            document = DocumentDto(
+                id = tech.dokus.domain.ids.DocumentId("00000000-0000-0000-0000-000000000041"),
+                tenantId = TenantId("00000000-0000-0000-0000-000000000001"),
+                filename = "INV-2026-0188.pdf",
+                contentType = "application/pdf",
+                sizeBytes = 123_000,
+                storageKey = "docs/1.pdf",
+                source = tech.dokus.domain.enums.DocumentSource.Upload,
+                uploadedAt = kotlinx.datetime.LocalDateTime(2026, 2, 14, 9, 0),
+            ),
+            draft = null,
+            latestIngestion = null,
+            confirmedEntity = null,
         )
-    }
-}
+    )
 
-@Preview(name = "Console Clients Desktop Empty", widthDp = 1366, heightDp = 900)
-@Composable
-private fun ConsoleClientsScreenDesktopEmptyPreview(
-    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
-) {
-    TestWrapper(parameters) {
-        ConsoleClientsScreen(
-            state = ConsoleClientsState.Content(clients = emptyList()),
-            snackbarHostState = SnackbarHostState(),
-            onIntent = {},
-        )
-    }
-}
-
-@Preview
-@Composable
-private fun ConsoleClientsScreenFilteredEmptyPreview(
-    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
-) {
     TestWrapper(parameters) {
         ConsoleClientsScreen(
             state = ConsoleClientsState.Content(
+                firmId = FirmId("00000000-0000-0000-0000-000000000111"),
                 clients = previewClients(),
-                query = "not-found",
+                selectedClientTenantId = TenantId("00000000-0000-0000-0000-000000000001"),
+                documentsState = DokusState.success(docs),
             ),
             snackbarHostState = SnackbarHostState(),
             onIntent = {},

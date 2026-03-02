@@ -9,17 +9,22 @@ import tech.dokus.domain.Password
 import tech.dokus.domain.enums.Language
 import tech.dokus.domain.enums.SubscriptionTier
 import tech.dokus.domain.enums.TenantType
+import tech.dokus.domain.ids.FirmId
 import tech.dokus.domain.ids.SessionId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.CreateTenantRequest
+import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.UpsertTenantAddressRequest
 import tech.dokus.domain.model.User
+import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.model.auth.ChangePasswordRequest
 import tech.dokus.domain.model.auth.DeactivateUserRequest
 import tech.dokus.domain.model.auth.AccountMeResponse
 import tech.dokus.domain.model.auth.ConsoleClientSummary
+import tech.dokus.domain.model.auth.CreateFirmRequest
+import tech.dokus.domain.model.auth.CreateFirmResponse
 import tech.dokus.domain.model.auth.LoginRequest
 import tech.dokus.domain.model.auth.LoginResponse
 import tech.dokus.domain.model.auth.LogoutRequest
@@ -182,11 +187,48 @@ class AuthRepository(
             }
     }
 
-    override suspend fun listConsoleClients(): Result<List<ConsoleClientSummary>> {
-        return accountDataSource.listConsoleClients()
+    override suspend fun createFirm(request: CreateFirmRequest): Result<CreateFirmResponse> {
+        return accountDataSource.createFirm(request)
+            .onFailure { error ->
+                logger.e(error) { "Failed to create firm" }
+            }
+    }
+
+    override suspend fun listConsoleClients(firmId: FirmId): Result<List<ConsoleClientSummary>> {
+        return accountDataSource.listConsoleClients(firmId = firmId)
             .onFailure { error ->
                 logger.e(error) { "Failed to list console clients" }
             }
+    }
+
+    override suspend fun listConsoleClientDocuments(
+        firmId: FirmId,
+        tenantId: TenantId,
+        page: Int,
+        limit: Int
+    ): Result<PaginatedResponse<DocumentRecordDto>> {
+        return accountDataSource.listConsoleClientDocuments(
+            firmId = firmId,
+            tenantId = tenantId,
+            page = page,
+            limit = limit
+        ).onFailure { error ->
+            logger.e(error) { "Failed to list console client documents" }
+        }
+    }
+
+    override suspend fun getConsoleClientDocument(
+        firmId: FirmId,
+        tenantId: TenantId,
+        documentId: String
+    ): Result<DocumentRecordDto> {
+        return accountDataSource.getConsoleClientDocument(
+            firmId = firmId,
+            tenantId = tenantId,
+            documentId = documentId
+        ).onFailure { error ->
+            logger.e(error) { "Failed to load console client document" }
+        }
     }
 
     /**

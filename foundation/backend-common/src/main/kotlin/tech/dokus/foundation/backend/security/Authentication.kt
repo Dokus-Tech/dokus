@@ -19,19 +19,11 @@ object AuthMethod {
  * Role-to-permission mapping.
  * Defines which permissions each role has access to.
  *
- * Accountant role is specifically read-only as documented.
  */
 object RolePermissions {
     private val ownerPermissions = Permission.entries.toSet()
 
     private val adminPermissions = Permission.entries.toSet() - setOf(Permission.UsersManage)
-
-    private val accountantPermissions = setOf(
-        Permission.InvoicesRead,
-        Permission.ClientsRead,
-        Permission.SettingsRead,
-        Permission.ReportsView
-    )
 
     private val editorPermissions = setOf(
         Permission.InvoicesRead,
@@ -57,7 +49,6 @@ object RolePermissions {
     fun permissionsFor(role: UserRole): Set<Permission> = when (role) {
         UserRole.Owner -> ownerPermissions
         UserRole.Admin -> adminPermissions
-        UserRole.Accountant -> accountantPermissions
         UserRole.Editor -> editorPermissions
         UserRole.Viewer -> viewerPermissions
     }
@@ -116,4 +107,3 @@ fun Route.authenticateJwt(
 val RoutingContext.dokusPrincipal: DokusPrincipal
     get() = call.principal<DokusPrincipal>()
         ?: throw DokusException.NotAuthenticated("Authentication required")
-

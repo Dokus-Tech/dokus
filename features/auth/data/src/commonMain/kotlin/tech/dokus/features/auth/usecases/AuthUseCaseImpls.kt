@@ -17,11 +17,17 @@ import tech.dokus.domain.Password
 import tech.dokus.domain.enums.Language
 import tech.dokus.domain.enums.SubscriptionTier
 import tech.dokus.domain.enums.TenantType
+import tech.dokus.domain.ids.FirmId
 import tech.dokus.domain.ids.SessionId
+import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.UpsertTenantAddressRequest
 import tech.dokus.domain.model.User
+import tech.dokus.domain.model.common.PaginatedResponse
+import tech.dokus.domain.model.auth.CreateFirmRequest
+import tech.dokus.domain.model.auth.FirmWorkspaceSummary
 import tech.dokus.features.auth.gateway.AuthGateway
 import tech.dokus.features.auth.storage.TokenStorage
 
@@ -49,10 +55,52 @@ internal class GetCurrentUserUseCaseImpl(
     }
 }
 
+internal class CreateFirmUseCaseImpl(
+    private val authGateway: AuthGateway
+) : CreateFirmUseCase {
+    override suspend fun invoke(request: CreateFirmRequest): Result<FirmWorkspaceSummary> {
+        return authGateway.createFirm(request).map { it.firm }
+    }
+}
+
 internal class ListConsoleClientsUseCaseImpl(
     private val authGateway: AuthGateway
 ) : ListConsoleClientsUseCase {
-    override suspend fun invoke() = authGateway.listConsoleClients()
+    override suspend fun invoke(firmId: FirmId) = authGateway.listConsoleClients(firmId)
+}
+
+internal class ListConsoleClientDocumentsUseCaseImpl(
+    private val authGateway: AuthGateway
+) : ListConsoleClientDocumentsUseCase {
+    override suspend fun invoke(
+        firmId: FirmId,
+        tenantId: TenantId,
+        page: Int,
+        limit: Int
+    ): Result<PaginatedResponse<DocumentRecordDto>> {
+        return authGateway.listConsoleClientDocuments(
+            firmId = firmId,
+            tenantId = tenantId,
+            page = page,
+            limit = limit
+        )
+    }
+}
+
+internal class GetConsoleClientDocumentUseCaseImpl(
+    private val authGateway: AuthGateway
+) : GetConsoleClientDocumentUseCase {
+    override suspend fun invoke(
+        firmId: FirmId,
+        tenantId: TenantId,
+        documentId: String
+    ): Result<DocumentRecordDto> {
+        return authGateway.getConsoleClientDocument(
+            firmId = firmId,
+            tenantId = tenantId,
+            documentId = documentId
+        )
+    }
 }
 
 internal class WatchCurrentUserUseCaseImpl(

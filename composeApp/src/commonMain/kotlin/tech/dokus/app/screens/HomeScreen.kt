@@ -23,7 +23,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,10 +45,9 @@ import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.app.navigation.HomeNavigationCommandBus
 import tech.dokus.app.navigation.HomeNavigationCommand
 import tech.dokus.app.navigation.HomeNavigationSource
+import tech.dokus.app.screens.home.HomeSurfaceShell
 import tech.dokus.app.screens.home.DesktopShellTopBar
 import tech.dokus.app.screens.home.DesktopSidebarBottomControls
-import tech.dokus.app.screens.bc.BCHomeRoute
-import tech.dokus.app.screens.home.CMHomeRoute
 import tech.dokus.app.screens.home.HomeShellProfileData
 import tech.dokus.app.screens.home.MobileShellTopBar
 import tech.dokus.app.viewmodel.HomeAction
@@ -60,11 +58,13 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.User
 import tech.dokus.foundation.app.AppModule
+import tech.dokus.foundation.app.NavContext
 import tech.dokus.foundation.app.local.LocalAppModules
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.app.shell.HomeShellTopBarConfig
 import tech.dokus.foundation.app.shell.HomeShellTopBarMode
 import tech.dokus.foundation.app.shell.UserAccessContext
+import tech.dokus.foundation.app.shell.WorkspaceContextStore
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.background.AmbientBackground
 import tech.dokus.foundation.aura.components.navigation.DokusNavigationBar
@@ -102,9 +102,9 @@ internal fun HomeRoute(
 ) {
     val navController = LocalNavController.current
     val pendingHomeCommand by HomeNavigationCommandBus.pendingCommand.collectAsState()
+    val workspaceContext by WorkspaceContextStore.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     var pendingError by remember { mutableStateOf<DokusException?>(null) }
-    var activeSurface by rememberSaveable { mutableStateOf(HomeSurfaceMode.CM) }
     val errorMessage = pendingError?.localized
     val isLargeScreen = LocalScreenSize.current.isLarge
 
@@ -133,15 +133,10 @@ internal fun HomeRoute(
         user = user,
         tierLabel = tenant?.subscription?.localized
     )
-
-    LaunchedEffect(surfaceAvailability?.canCompanyManager, surfaceAvailability?.canBookkeeperConsole) {
-        if (surfaceAvailability?.canBookkeeperConsole == true && surfaceAvailability.canCompanyManager.not()) {
-            activeSurface = HomeSurfaceMode.BC
-        }
-        if (surfaceAvailability?.canBookkeeperConsole == false && activeSurface == HomeSurfaceMode.BC) {
-            activeSurface = HomeSurfaceMode.CM
-        }
-    }
+    val activeSurface = resolveActiveSurface(
+        navContext = workspaceContext.navContext,
+        surfaceAvailability = surfaceAvailability,
+    )
 
     LaunchedEffect(
         pendingHomeCommand?.id,
@@ -150,52 +145,54 @@ internal fun HomeRoute(
         surfaceAvailability?.canBookkeeperConsole,
     ) {
         val pending = pendingHomeCommand ?: return@LaunchedEffect
-        activeSurface = resolveSurfaceForCommand(
+        val resolvedSurface = resolveSurfaceForCommand(
             command = pending.command,
             currentSurface = activeSurface,
             surfaceAvailability = surfaceAvailability,
         )
+        if (resolvedSurface == HomeSurfaceMode.BC) {
+            WorkspaceContextStore.switchToFirmWorkspace()
+        } else {
+            WorkspaceContextStore.switchToTenantWorkspace()
+        }
     }
 
     val showBC = shouldRenderBC(
         activeSurface = activeSurface,
         surfaceAvailability = surfaceAvailability
     )
+    val activeNavContext = if (showBC) NavContext.FIRM else NavContext.TENANT
 
     val onConsumeHomeCommand = remember { { id: Long -> HomeNavigationCommandBus.consume(id) } }
-    val onSwitchToCM = remember { { activeSurface = HomeSurfaceMode.CM } }
-    val onSwitchToBC = remember { { activeSurface = HomeSurfaceMode.BC } }
     val onLogoutClick = remember(container) { { container.store.intent(HomeIntent.Logout) } }
 
-    if (showBC) {
-        BCHomeRoute(
-            appModules = appModules,
-            rootNavController = navController,
-            isLargeScreen = isLargeScreen,
-            shellState = shellState,
-            tenant = tenant,
-            profileData = profileData,
-            pendingHomeCommand = pendingHomeCommand,
-            onConsumeHomeCommand = onConsumeHomeCommand,
-            onSwitchToCM = onSwitchToCM,
-            onLogoutClick = onLogoutClick,
-            snackbarHostState = snackbarHostState,
-        )
-    } else {
-        CMHomeRoute(
-            appModules = appModules,
-            rootNavController = navController,
-            isLargeScreen = isLargeScreen,
-            shellState = shellState,
-            tenant = tenant,
-            profileData = profileData,
-            pendingHomeCommand = pendingHomeCommand,
-            onConsumeHomeCommand = onConsumeHomeCommand,
-            onSwitchToBC = onSwitchToBC,
-            onLogoutClick = onLogoutClick,
-            snackbarHostState = snackbarHostState,
-        )
+    HomeSurfaceShell(
+        navContext = activeNavContext,
+        appModules = appModules,
+        rootNavController = navController,
+        isLargeScreen = isLargeScreen,
+        shellState = shellState,
+        tenant = tenant,
+        profileData = profileData,
+        pendingHomeCommand = pendingHomeCommand,
+        onConsumeHomeCommand = onConsumeHomeCommand,
+        onLogoutClick = onLogoutClick,
+        snackbarHostState = snackbarHostState,
+    )
+}
+
+private fun resolveActiveSurface(
+    navContext: NavContext,
+    surfaceAvailability: tech.dokus.domain.model.auth.SurfaceAvailability?,
+): HomeSurfaceMode {
+    if (surfaceAvailability == null) {
+        return if (navContext == NavContext.FIRM) HomeSurfaceMode.BC else HomeSurfaceMode.CM
     }
+    if (surfaceAvailability.canBookkeeperConsole && !surfaceAvailability.canCompanyManager) {
+        return HomeSurfaceMode.BC
+    }
+    if (!surfaceAvailability.canBookkeeperConsole) return HomeSurfaceMode.CM
+    return if (navContext == NavContext.FIRM) HomeSurfaceMode.BC else HomeSurfaceMode.CM
 }
 
 private fun resolveSurfaceForCommand(
@@ -462,11 +459,15 @@ internal fun filterCMNavItems(
     items: List<NavItem>,
     accessContext: UserAccessContext,
 ): List<NavItem> {
+    val consoleDestinations = setOf(
+        HomeDestination.ConsoleClients,
+        HomeDestination.ConsoleRequests,
+        HomeDestination.ConsoleActivity,
+        HomeDestination.ConsoleExport,
+    )
     return items.filter { item ->
         when {
-            item.destination == HomeDestination.Accountant && !accessContext.canBookkeeperConsole -> false
-            accessContext.isBookkeeperConsoleOnly -> item.destination == HomeDestination.Accountant ||
-                item.destination == HomeDestination.Documents
+            item.destination in consoleDestinations -> false
             accessContext.isStage2ReadOnly && item.destination == HomeDestination.Cashflow -> false
             else -> true
         }

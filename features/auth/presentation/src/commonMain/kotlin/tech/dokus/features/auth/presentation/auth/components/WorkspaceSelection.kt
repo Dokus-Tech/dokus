@@ -1,18 +1,13 @@
 package tech.dokus.features.auth.presentation.auth.components
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Business
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,12 +19,23 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.workspace_bookkeeper_console
+import tech.dokus.aura.resources.console_clients_count
+import tech.dokus.aura.resources.workspace_add
+import tech.dokus.aura.resources.workspace_select_practice_section
+import tech.dokus.aura.resources.workspace_select_practice_setup
 import tech.dokus.aura.resources.workspace_select_title
+import tech.dokus.aura.resources.workspace_select_your_business
+import tech.dokus.domain.DisplayName
+import tech.dokus.domain.asbtractions.RetryHandler
+import tech.dokus.domain.enums.FirmRole
+import tech.dokus.domain.enums.TenantType
 import tech.dokus.domain.enums.UserRole
-import tech.dokus.domain.model.Tenant
-import tech.dokus.foundation.app.state.DokusState
-import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.domain.ids.FirmId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.model.auth.FirmWorkspaceSummary
+import tech.dokus.domain.model.auth.TenantWorkspaceSummary
+import tech.dokus.features.auth.mvi.WorkspaceSelectState
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.tiles.AddCompanyTile
@@ -44,10 +50,11 @@ private fun Modifier.widthInWorkspaceItem(): Modifier =
 
 @Composable
 fun WorkspaceSelectionBody(
-    state: DokusState<List<Tenant>>,
-    onTenantClick: (Tenant) -> Unit,
+    state: WorkspaceSelectState,
+    onTenantClick: (TenantId) -> Unit,
+    onFirmClick: (FirmId) -> Unit,
+    onSetupPracticeClick: (TenantId?) -> Unit,
     onAddTenantClick: () -> Unit,
-    onBookkeeperConsoleClick: (() -> Unit)? = null,
 ) {
     Text(
         text = stringResource(Res.string.workspace_select_title),
@@ -61,116 +68,158 @@ fun WorkspaceSelectionBody(
     StateDrivenContent(
         state = state,
         onTenantClick = onTenantClick,
+        onFirmClick = onFirmClick,
+        onSetupPracticeClick = onSetupPracticeClick,
         onAddTenantClick = onAddTenantClick,
-        onBookkeeperConsoleClick = onBookkeeperConsoleClick,
     )
 }
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun StateDrivenContent(
-    state: DokusState<List<Tenant>>,
-    onTenantClick: (Tenant) -> Unit,
+    state: WorkspaceSelectState,
+    onTenantClick: (TenantId) -> Unit,
+    onFirmClick: (FirmId) -> Unit,
+    onSetupPracticeClick: (TenantId?) -> Unit,
     onAddTenantClick: () -> Unit,
-    onBookkeeperConsoleClick: (() -> Unit)? = null,
 ) {
     when (state) {
-        is DokusState.Success -> {
-            val tenants = state.data
-            val showBCTile = onBookkeeperConsoleClick != null &&
-                tenants.any { it.role == UserRole.Accountant }
-            FlowRow(
+        WorkspaceSelectState.Loading -> DokusLoader()
+        is WorkspaceSelectState.Error -> DokusErrorContent(
+            exception = state.exception,
+            retryHandler = state.retryHandler,
+        )
+        is WorkspaceSelectState.Content,
+        is WorkspaceSelectState.SelectingTenant,
+        is WorkspaceSelectState.SelectingFirm,
+        -> {
+            val contentState = state.toContentState()
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(
-                    Constraints.Spacing.large,
-                    alignment = Alignment.CenterHorizontally,
-                ),
-                verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.large),
-                maxItemsInEachRow = Int.MAX_VALUE,
+                verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xLarge),
             ) {
-                tenants.forEach { tenant ->
-                    CompanyTile(
-                        modifier = Modifier.widthInWorkspaceItem(),
-                        initial = tenant.displayName.initialOrEmpty,
-                        label = tenant.displayName.value,
-                        avatarUrl = tenant.avatar?.small,
-                        badge = tenant.role?.localized,
-                    ) {
-                        onTenantClick(tenant)
+                WorkspaceSection(
+                    title = stringResource(Res.string.workspace_select_your_business),
+                    items = {
+                        contentState.tenants.forEach { tenant ->
+                            CompanyTile(
+                                modifier = Modifier.widthInWorkspaceItem(),
+                                initial = tenant.name.initialOrEmpty,
+                                label = tenant.name.value,
+                                badge = tenant.role.localized,
+                            ) {
+                                onTenantClick(tenant.id)
+                            }
+                        }
+                        AddCompanyTile(
+                            modifier = Modifier.widthInWorkspaceItem(),
+                            label = stringResource(Res.string.workspace_add),
+                            onClick = onAddTenantClick,
+                        )
                     }
-                }
+                )
 
-                if (showBCTile) {
-                    BookkeeperConsoleTile(
-                        modifier = Modifier.widthInWorkspaceItem(),
-                        onClick = onBookkeeperConsoleClick!!,
-                    )
-                }
-
-                AddCompanyTile(
-                    modifier = Modifier.widthInWorkspaceItem(),
-                    onClick = onAddTenantClick,
+                WorkspaceSection(
+                    title = stringResource(Res.string.workspace_select_practice_section),
+                    items = {
+                        if (contentState.firms.isEmpty()) {
+                            AddCompanyTile(
+                                modifier = Modifier.widthInWorkspaceItem(),
+                                label = stringResource(Res.string.workspace_select_practice_setup),
+                                onClick = {
+                                    val prefillTenantId = contentState.tenants.firstOrNull()?.id
+                                    onSetupPracticeClick(prefillTenantId)
+                                },
+                            )
+                        } else {
+                            contentState.firms.forEach { firm ->
+                                CompanyTile(
+                                    modifier = Modifier.widthInWorkspaceItem(),
+                                    initial = firm.name.initialOrEmpty,
+                                    label = firm.name.value,
+                                    badge = stringResource(
+                                        Res.string.console_clients_count,
+                                        firm.clientCount,
+                                    ),
+                                ) {
+                                    onFirmClick(firm.id)
+                                }
+                            }
+                        }
+                    }
                 )
             }
         }
-
-        is DokusState.Error -> DokusErrorContent(
-            text = state.exception.localized,
-            retryHandler = state.retryHandler,
-        )
-
-        else -> DokusLoader()
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun BookkeeperConsoleTile(
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit,
+private fun WorkspaceSection(
+    title: String,
+    items: @Composable () -> Unit,
 ) {
-    val label = stringResource(Res.string.workspace_bookkeeper_console)
-    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        DokusCardSurface(onClick = onClick) {
-            Box(
-                modifier = Modifier.size(Constraints.AvatarSize.tile),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.Business,
-                    contentDescription = label,
-                    tint = MaterialTheme.colorScheme.primary,
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(Constraints.Spacing.medium))
+    Column(
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium),
+    ) {
         Text(
-            text = label,
-            color = MaterialTheme.colorScheme.onBackground,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Medium,
+            text = title,
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            fontWeight = FontWeight.SemiBold,
         )
+
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(
+                Constraints.Spacing.large,
+                alignment = Alignment.CenterHorizontally,
+            ),
+            verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.large),
+            maxItemsInEachRow = Int.MAX_VALUE,
+        ) {
+            items()
+        }
+    }
+}
+
+private fun WorkspaceSelectState.toContentState(): WorkspaceSelectState.Content {
+    return when (this) {
+        is WorkspaceSelectState.Content -> this
+        is WorkspaceSelectState.SelectingTenant -> WorkspaceSelectState.Content(
+            tenants = tenants,
+            firms = firms,
+        )
+        is WorkspaceSelectState.SelectingFirm -> WorkspaceSelectState.Content(
+            tenants = tenants,
+            firms = firms,
+        )
+        else -> WorkspaceSelectState.Content(emptyList(), emptyList())
     }
 }
 
 // ── Previews ─────────────────────────────────────────────────────────────
 
-@OptIn(kotlin.uuid.ExperimentalUuidApi::class)
 private fun previewTenant(
     name: String,
     role: UserRole,
-): Tenant = Tenant(
-    id = tech.dokus.domain.ids.TenantId(kotlin.uuid.Uuid.random()),
-    type = tech.dokus.domain.enums.TenantType.Freelancer,
-    legalName = tech.dokus.domain.LegalName(name),
-    displayName = tech.dokus.domain.DisplayName(name),
-    subscription = tech.dokus.domain.enums.SubscriptionTier.Core,
-    status = tech.dokus.domain.enums.TenantStatus.Active,
-    language = tech.dokus.domain.enums.Language.En,
-    vatNumber = tech.dokus.domain.ids.VatNumber("BE0123456789"),
+): TenantWorkspaceSummary = TenantWorkspaceSummary(
+    id = TenantId.generate(),
+    name = DisplayName(name),
+    vatNumber = VatNumber("BE0123456789"),
     role = role,
-    createdAt = kotlinx.datetime.LocalDateTime(2025, 1, 1, 0, 0),
-    updatedAt = kotlinx.datetime.LocalDateTime(2025, 1, 1, 0, 0),
+    type = TenantType.Company,
+)
+
+private fun previewFirm(
+    name: String,
+    count: Int,
+): FirmWorkspaceSummary = FirmWorkspaceSummary(
+    id = FirmId.generate(),
+    name = DisplayName(name),
+    vatNumber = VatNumber("BE0123456789"),
+    role = FirmRole.Owner,
+    clientCount = count,
 )
 
 @androidx.compose.ui.tooling.preview.Preview
@@ -182,8 +231,13 @@ private fun WorkspaceSelectionEmptyPreview(
 ) {
     tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
         WorkspaceSelectionBody(
-            state = tech.dokus.foundation.app.state.DokusStateSimple.Success(emptyList()),
+            state = WorkspaceSelectState.Content(
+                tenants = listOf(previewTenant("Dokus Tech", UserRole.Owner)),
+                firms = emptyList(),
+            ),
             onTenantClick = {},
+            onFirmClick = {},
+            onSetupPracticeClick = {},
             onAddTenantClick = {},
         )
     }
@@ -191,43 +245,53 @@ private fun WorkspaceSelectionEmptyPreview(
 
 @androidx.compose.ui.tooling.preview.Preview
 @Composable
-private fun WorkspaceSelectionWithBCPreview(
+private fun WorkspaceSelectionWithPracticePreview(
     @androidx.compose.ui.tooling.preview.PreviewParameter(
         tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class,
     ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters,
 ) {
     tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
         WorkspaceSelectionBody(
-            state = tech.dokus.foundation.app.state.DokusStateSimple.Success(
-                listOf(
+            state = WorkspaceSelectState.Content(
+                tenants = listOf(
                     previewTenant("Dokus Tech", UserRole.Owner),
-                    previewTenant("Client Corp", UserRole.Accountant),
+                    previewTenant("Client Corp", UserRole.Admin),
+                ),
+                firms = listOf(
+                    previewFirm("Kantoor Boonen", 8),
                 ),
             ),
             onTenantClick = {},
+            onFirmClick = {},
+            onSetupPracticeClick = {},
             onAddTenantClick = {},
-            onBookkeeperConsoleClick = {},
         )
     }
 }
 
-@androidx.compose.ui.tooling.preview.Preview
+@androidx.compose.ui.tooling.preview.Preview(name = "Workspace Selection Desktop", widthDp = 1366, heightDp = 900)
 @Composable
-private fun WorkspaceSelectionOwnerOnlyPreview(
+private fun WorkspaceSelectionDesktopPreview(
     @androidx.compose.ui.tooling.preview.PreviewParameter(
         tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class,
     ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters,
 ) {
     tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
         WorkspaceSelectionBody(
-            state = tech.dokus.foundation.app.state.DokusStateSimple.Success(
-                listOf(
+            state = WorkspaceSelectState.Content(
+                tenants = listOf(
                     previewTenant("Dokus Tech", UserRole.Owner),
+                    previewTenant("Client Corp", UserRole.Editor),
+                ),
+                firms = listOf(
+                    previewFirm("Kantoor Boonen", 8),
+                    previewFirm("Acme Accounting", 3),
                 ),
             ),
             onTenantClick = {},
+            onFirmClick = {},
+            onSetupPracticeClick = {},
             onAddTenantClick = {},
-            onBookkeeperConsoleClick = {},
         )
     }
 }

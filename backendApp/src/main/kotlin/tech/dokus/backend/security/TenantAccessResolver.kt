@@ -2,8 +2,6 @@ package tech.dokus.backend.security
 
 import io.ktor.server.routing.RoutingContext
 import io.ktor.util.AttributeKey
-import org.koin.ktor.ext.get
-import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.domain.enums.Permission
 import tech.dokus.domain.enums.UserRole
 import tech.dokus.domain.exceptions.DokusException
@@ -24,14 +22,14 @@ val RoutingContext.tenantAccessOrNull: TenantAccess?
     }
 
 suspend fun RoutingContext.requireTenantAccess(
-    userRepository: UserRepository = call.application.get()
 ): TenantAccess {
     tenantAccessOrNull?.let { return it }
 
     val tenantId = resolveTenantIdFromRequest()
-    val membership = userRepository.getMembership(dokusPrincipal.userId, tenantId)
+    val membership = dokusPrincipal.tenantMemberships
+        .firstOrNull { it.tenantId == tenantId }
 
-    if (membership == null || !membership.isActive) {
+    if (membership == null) {
         throw DokusException.NotAuthorized("You do not have access to tenant $tenantId")
     }
 

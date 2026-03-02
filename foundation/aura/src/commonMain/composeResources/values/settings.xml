@@ -100,6 +100,9 @@
     <string name="workspace_create_button">Create workspace</string>
     <string name="workspace_display_name">Display name</string>
     <string name="workspace_select_title">Select your workspace</string>
+    <string name="workspace_select_your_business">Your Business</string>
+    <string name="workspace_select_practice_section">Your Practice</string>
+    <string name="workspace_select_practice_setup">Set up practice</string>
     <string name="workspace_add">Add workspace</string>
     <string name="workspace_type_company">Company</string>
     <string name="workspace_type_freelancer">Freelancer</string>
