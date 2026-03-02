@@ -162,6 +162,11 @@ internal fun HomeRoute(
         surfaceAvailability = surfaceAvailability
     )
 
+    val onConsumeHomeCommand = remember { { id: Long -> HomeNavigationCommandBus.consume(id) } }
+    val onSwitchToCM = remember { { activeSurface = HomeSurfaceMode.CM } }
+    val onSwitchToBC = remember { { activeSurface = HomeSurfaceMode.BC } }
+    val onLogoutClick = remember(container) { { container.store.intent(HomeIntent.Logout) } }
+
     if (showBC) {
         BCHomeRoute(
             appModules = appModules,
@@ -171,9 +176,9 @@ internal fun HomeRoute(
             tenant = tenant,
             profileData = profileData,
             pendingHomeCommand = pendingHomeCommand,
-            onConsumeHomeCommand = { id -> HomeNavigationCommandBus.consume(id) },
-            onSwitchToCM = { activeSurface = HomeSurfaceMode.CM },
-            onLogoutClick = { container.store.intent(HomeIntent.Logout) },
+            onConsumeHomeCommand = onConsumeHomeCommand,
+            onSwitchToCM = onSwitchToCM,
+            onLogoutClick = onLogoutClick,
             snackbarHostState = snackbarHostState,
         )
     } else {
@@ -185,9 +190,9 @@ internal fun HomeRoute(
             tenant = tenant,
             profileData = profileData,
             pendingHomeCommand = pendingHomeCommand,
-            onConsumeHomeCommand = { id -> HomeNavigationCommandBus.consume(id) },
-            onSwitchToBC = { activeSurface = HomeSurfaceMode.BC },
-            onLogoutClick = { container.store.intent(HomeIntent.Logout) },
+            onConsumeHomeCommand = onConsumeHomeCommand,
+            onSwitchToBC = onSwitchToBC,
+            onLogoutClick = onLogoutClick,
             snackbarHostState = snackbarHostState,
         )
     }

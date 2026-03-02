@@ -10,10 +10,7 @@ import tech.dokus.app.screens.filterCMNavItems
 import tech.dokus.app.viewmodel.HomeState
 import tech.dokus.domain.model.Tenant
 import tech.dokus.foundation.app.AppModule
-import tech.dokus.foundation.app.shell.UserAccessContext
-import tech.dokus.foundation.aura.model.NavItem
 import tech.dokus.navigation.destinations.HomeDestination
-import tech.dokus.navigation.destinations.NavigationDestination
 
 // ── CM (Company Manager) surface config ─────────────────────────────────
 

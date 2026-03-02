@@ -16,7 +16,6 @@ import tech.dokus.foundation.app.AppModule
 import tech.dokus.foundation.app.shell.UserAccessContext
 import tech.dokus.foundation.aura.model.NavItem
 import tech.dokus.navigation.destinations.HomeDestination
-import tech.dokus.navigation.destinations.NavigationDestination
 import tech.dokus.navigation.destinations.route
 
 // ── BC (Bookkeeper Console) surface config ──────────────────────────────
