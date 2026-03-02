@@ -56,7 +56,7 @@ internal fun DocumentsRoute(
 ) {
     val accessContext = LocalUserAccessContext.current
     val isAccountantReadOnly = accessContext.isStage2ReadOnly
-    val showBackToClients = accessContext.isConsoleDrillDown
+    val showBackToClients = accessContext.isBookkeeperConsoleDrillDown
     val navController = LocalNavController.current
     val backStackEntry by navController.currentBackStackEntryAsState()
     val snackbarHostState = remember { SnackbarHostState() }

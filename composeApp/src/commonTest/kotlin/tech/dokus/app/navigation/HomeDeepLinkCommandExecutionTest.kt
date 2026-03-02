@@ -19,10 +19,10 @@ class HomeDeepLinkCommandExecutionTest {
     }
 
     @Test
-    fun `open console clients command falls back to today when console access is unavailable`() {
+    fun `open console clients command falls back to today when bookkeeper console access is unavailable`() {
         val steps = resolveHomeNavigationSteps(
             command = HomeNavigationCommand.OpenConsoleClients,
-            canConsoleAccess = false
+            canBCAccess = false
         )
 
         assertEquals(1, steps.size)
@@ -34,10 +34,10 @@ class HomeDeepLinkCommandExecutionTest {
     @Test
     fun `open documents command keeps documents tab regardless of source`() {
         val workspaceSteps = resolveHomeNavigationSteps(
-            HomeNavigationCommand.OpenDocuments(source = HomeNavigationSource.Workspace)
+            HomeNavigationCommand.OpenDocuments(source = HomeNavigationSource.CM)
         )
         val consoleSteps = resolveHomeNavigationSteps(
-            HomeNavigationCommand.OpenDocuments(source = HomeNavigationSource.Console)
+            HomeNavigationCommand.OpenDocuments(source = HomeNavigationSource.BC)
         )
 
         assertEquals(1, workspaceSteps.size)

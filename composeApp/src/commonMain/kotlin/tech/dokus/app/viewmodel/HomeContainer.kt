@@ -207,12 +207,12 @@ internal class HomeContainer(
     private suspend fun HomeCtx.shouldSuppressShellErrors(): Boolean {
         var suppress = false
         withState<HomeState.Ready, _> {
-            suppress = isLoggingOut || surfaceAvailability.isConsoleOnlySurface()
+            suppress = isLoggingOut || surfaceAvailability.isBookkeeperConsoleOnly()
         }
         return suppress
     }
 
-    private fun SurfaceAvailability?.isConsoleOnlySurface(): Boolean {
-        return this?.canConsole == true && !canWorkspace
+    private fun SurfaceAvailability?.isBookkeeperConsoleOnly(): Boolean {
+        return this?.canBookkeeperConsole == true && !canCompanyManager
     }
 }

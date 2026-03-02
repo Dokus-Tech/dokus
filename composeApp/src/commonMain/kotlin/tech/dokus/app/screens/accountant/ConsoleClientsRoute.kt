@@ -36,14 +36,14 @@ internal fun ConsoleClientsRoute(
     val accessContext = LocalUserAccessContext.current
     val navController = LocalNavController.current
 
-    LaunchedEffect(accessContext.isSurfaceAvailabilityResolved, accessContext.canConsole) {
-        if (accessContext.isSurfaceAvailabilityResolved && !accessContext.canConsole) {
+    LaunchedEffect(accessContext.isSurfaceAvailabilityResolved, accessContext.canBookkeeperConsole) {
+        if (accessContext.isSurfaceAvailabilityResolved && !accessContext.canBookkeeperConsole) {
             navController.navigateToTopLevelTab(HomeDestination.Today)
         }
     }
 
     if (!accessContext.isSurfaceAvailabilityResolved) return
-    if (!accessContext.canConsole) return
+    if (!accessContext.canBookkeeperConsole) return
 
     val container = providedContainer ?: container<
         ConsoleClientsContainer,
@@ -67,7 +67,7 @@ internal fun ConsoleClientsRoute(
         when (action) {
             ConsoleClientsAction.NavigateToDocuments -> {
                 HomeNavigationCommandBus.dispatch(
-                    HomeNavigationCommand.OpenDocuments(source = HomeNavigationSource.Console)
+                    HomeNavigationCommand.OpenDocuments(source = HomeNavigationSource.BC)
                 )
             }
 

@@ -120,9 +120,9 @@ class AuthRepositoryTest {
                 AccountMeResponse(
                     user = sampleUser(),
                     surface = SurfaceAvailability(
-                        canWorkspace = false,
-                        canConsole = true,
-                        defaultSurface = AppSurface.Console
+                        canCompanyManager = false,
+                        canBookkeeperConsole = true,
+                        defaultSurface = AppSurface.BookkeeperConsole
                     )
                 )
             )
@@ -144,9 +144,9 @@ class AuthRepositoryTest {
         val expectedPayload = AccountMeResponse(
             user = sampleUser(),
             surface = SurfaceAvailability(
-                canWorkspace = true,
-                canConsole = true,
-                defaultSurface = AppSurface.Workspace
+                canCompanyManager = true,
+                canBookkeeperConsole = true,
+                defaultSurface = AppSurface.CompanyManager
             )
         )
         val account = FakeAccountRemoteDataSource().apply {

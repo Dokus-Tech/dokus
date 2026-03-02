@@ -61,7 +61,7 @@ internal fun MoreRoute(
     val allNavItems = remember(appModules) { appModules.allNavItems }
     val accessContext = LocalUserAccessContext.current
     val visibleNavItems = remember(allNavItems, accessContext) {
-        filterHomeNavItems(
+        filterCMNavItems(
             items = allNavItems,
             accessContext = accessContext
         )

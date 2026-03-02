@@ -7,17 +7,17 @@ import tech.dokus.domain.model.User
 @Serializable
 enum class AppSurface {
     @SerialName("WORKSPACE")
-    Workspace,
+    CompanyManager,
 
     @SerialName("CONSOLE")
-    Console
+    BookkeeperConsole,
 }
 
 @Serializable
 data class SurfaceAvailability(
-    val canWorkspace: Boolean,
-    val canConsole: Boolean,
-    val defaultSurface: AppSurface
+    val canCompanyManager: Boolean,
+    val canBookkeeperConsole: Boolean,
+    val defaultSurface: AppSurface,
 )
 
 @Serializable

@@ -9,18 +9,18 @@ object SurfaceResolver {
 
     fun resolve(memberships: List<TenantMembership>): SurfaceAvailability {
         val activeMemberships = memberships.filter { it.isActive }
-        val canWorkspace = activeMemberships.any { it.role != UserRole.Accountant }
-        val canConsole = activeMemberships.any { it.role == UserRole.Accountant }
+        val canCompanyManager = activeMemberships.any { it.role != UserRole.Accountant }
+        val canBookkeeperConsole = activeMemberships.any { it.role == UserRole.Accountant }
         val defaultSurface = when {
-            canWorkspace -> AppSurface.Workspace
-            canConsole -> AppSurface.Console
+            canCompanyManager -> AppSurface.CompanyManager
+            canBookkeeperConsole -> AppSurface.BookkeeperConsole
             // Safe default: users with no active memberships land on the onboarding flow
-            else -> AppSurface.Workspace
+            else -> AppSurface.CompanyManager
         }
 
         return SurfaceAvailability(
-            canWorkspace = canWorkspace,
-            canConsole = canConsole,
+            canCompanyManager = canCompanyManager,
+            canBookkeeperConsole = canBookkeeperConsole,
             defaultSurface = defaultSurface
         )
     }

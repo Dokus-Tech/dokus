@@ -28,7 +28,7 @@ import kotlin.test.Test
 class BootstrapContainerTest {
 
     @Test
-    fun `console-only authenticated user opens console clients`() = runTest {
+    fun `bookkeeper-console-only authenticated user opens console clients`() = runTest {
         withAuthInitializer(isAuthenticated = true) { authInitializer, _ ->
             val container = BootstrapContainer(
                 authInitializer = authInitializer,
@@ -38,9 +38,9 @@ class BootstrapContainerTest {
                     Result.success(
                         accountMe(
                             SurfaceAvailability(
-                                canWorkspace = false,
-                                canConsole = true,
-                                defaultSurface = AppSurface.Console
+                                canCompanyManager = false,
+                                canBookkeeperConsole = true,
+                                defaultSurface = AppSurface.BookkeeperConsole
                             )
                         )
                     )
@@ -56,7 +56,7 @@ class BootstrapContainerTest {
     }
 
     @Test
-    fun `workspace user without selected tenant goes to tenant selection`() = runTest {
+    fun `company manager user without selected tenant goes to tenant selection`() = runTest {
         withAuthInitializer(isAuthenticated = true) { authInitializer, _ ->
             val container = BootstrapContainer(
                 authInitializer = authInitializer,
@@ -66,9 +66,9 @@ class BootstrapContainerTest {
                     Result.success(
                         accountMe(
                             SurfaceAvailability(
-                                canWorkspace = true,
-                                canConsole = true,
-                                defaultSurface = AppSurface.Workspace
+                                canCompanyManager = true,
+                                canBookkeeperConsole = true,
+                                defaultSurface = AppSurface.CompanyManager
                             )
                         )
                     )
@@ -82,7 +82,7 @@ class BootstrapContainerTest {
     }
 
     @Test
-    fun `workspace user with selected tenant opens main`() = runTest {
+    fun `company manager user with selected tenant opens main`() = runTest {
         withAuthInitializer(isAuthenticated = true) { authInitializer, _ ->
             val container = BootstrapContainer(
                 authInitializer = authInitializer,
@@ -94,9 +94,9 @@ class BootstrapContainerTest {
                     Result.success(
                         accountMe(
                             SurfaceAvailability(
-                                canWorkspace = true,
-                                canConsole = true,
-                                defaultSurface = AppSurface.Workspace
+                                canCompanyManager = true,
+                                canBookkeeperConsole = true,
+                                defaultSurface = AppSurface.CompanyManager
                             )
                         )
                     )

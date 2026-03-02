@@ -69,7 +69,7 @@ class HomeContainerTest {
     }
 
     @Test
-    fun `screen appeared handles no tenant selected as workspace context unavailable`() = runTest {
+    fun `screen appeared handles no tenant selected as company manager context unavailable`() = runTest {
         val user = sampleUser()
         val tenantUseCase = FakeWatchCurrentTenantUseCase(Result.success(null))
         val userUseCase = FakeWatchCurrentUserUseCase(Result.success(user))
@@ -158,12 +158,12 @@ class HomeContainerTest {
     }
 
     @Test
-    fun `screen appeared ignores missing tenant for console-only surface`() = runTest {
+    fun `screen appeared ignores missing tenant for bookkeeper-console-only surface`() = runTest {
         val user = sampleUser()
         val expectedSurface = SurfaceAvailability(
-            canWorkspace = false,
-            canConsole = true,
-            defaultSurface = AppSurface.Console
+            canCompanyManager = false,
+            canBookkeeperConsole = true,
+            defaultSurface = AppSurface.BookkeeperConsole
         )
         val tenantUseCase = FakeWatchCurrentTenantUseCase(Result.success(null))
         val userUseCase = FakeWatchCurrentUserUseCase(Result.success(user))
@@ -239,9 +239,9 @@ private class FakeGetAccountMeUseCase(
         AccountMeResponse(
             user = sampleUser(),
             surface = SurfaceAvailability(
-                canWorkspace = true,
-                canConsole = false,
-                defaultSurface = AppSurface.Workspace
+                canCompanyManager = true,
+                canBookkeeperConsole = false,
+                defaultSurface = AppSurface.CompanyManager
             )
         )
     )

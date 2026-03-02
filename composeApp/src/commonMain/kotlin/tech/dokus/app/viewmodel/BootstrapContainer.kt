@@ -143,7 +143,7 @@ internal class BootstrapContainer(
     private suspend fun isConsoleOnlyUser(): Boolean {
         return getAccountMeUseCase()
             .map { surface ->
-                surface.surface.let { it.canConsole && !it.canWorkspace }
+                surface.surface.let { it.canBookkeeperConsole && !it.canCompanyManager }
             }
             .getOrElse { error ->
                 logger.w(error) { "Failed to resolve surface flags during bootstrap; using fallback routing" }

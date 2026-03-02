@@ -17,7 +17,7 @@ import kotlin.uuid.ExperimentalUuidApi
 class AccountRoutesSurfaceAvailabilityTest {
 
     @Test
-    fun `only non-accountant memberships enable workspace only`() {
+    fun `only non-accountant memberships enable company manager only`() {
         val result = SurfaceResolver.resolve(
             memberships = listOf(
                 membership(role = UserRole.Owner),
@@ -25,13 +25,13 @@ class AccountRoutesSurfaceAvailabilityTest {
             )
         )
 
-        assertEquals(true, result.canWorkspace)
-        assertEquals(false, result.canConsole)
-        assertEquals(AppSurface.Workspace, result.defaultSurface)
+        assertEquals(true, result.canCompanyManager)
+        assertEquals(false, result.canBookkeeperConsole)
+        assertEquals(AppSurface.CompanyManager, result.defaultSurface)
     }
 
     @Test
-    fun `only accountant memberships enable console only`() {
+    fun `only accountant memberships enable bookkeeper console only`() {
         val result = SurfaceResolver.resolve(
             memberships = listOf(
                 membership(role = UserRole.Accountant),
@@ -39,13 +39,13 @@ class AccountRoutesSurfaceAvailabilityTest {
             )
         )
 
-        assertEquals(false, result.canWorkspace)
-        assertEquals(true, result.canConsole)
-        assertEquals(AppSurface.Console, result.defaultSurface)
+        assertEquals(false, result.canCompanyManager)
+        assertEquals(true, result.canBookkeeperConsole)
+        assertEquals(AppSurface.BookkeeperConsole, result.defaultSurface)
     }
 
     @Test
-    fun `mixed memberships enable both and default to workspace`() {
+    fun `mixed memberships enable both and default to company manager`() {
         val result = SurfaceResolver.resolve(
             memberships = listOf(
                 membership(role = UserRole.Accountant),
@@ -53,9 +53,9 @@ class AccountRoutesSurfaceAvailabilityTest {
             )
         )
 
-        assertEquals(true, result.canWorkspace)
-        assertEquals(true, result.canConsole)
-        assertEquals(AppSurface.Workspace, result.defaultSurface)
+        assertEquals(true, result.canCompanyManager)
+        assertEquals(true, result.canBookkeeperConsole)
+        assertEquals(AppSurface.CompanyManager, result.defaultSurface)
     }
 
     @Test
@@ -67,18 +67,18 @@ class AccountRoutesSurfaceAvailabilityTest {
             )
         )
 
-        assertEquals(false, result.canWorkspace)
-        assertEquals(false, result.canConsole)
-        assertEquals(AppSurface.Workspace, result.defaultSurface)
+        assertEquals(false, result.canCompanyManager)
+        assertEquals(false, result.canBookkeeperConsole)
+        assertEquals(AppSurface.CompanyManager, result.defaultSurface)
     }
 
     @Test
-    fun `empty memberships fallback to workspace default`() {
+    fun `empty memberships fallback to company manager default`() {
         val result = SurfaceResolver.resolve(emptyList())
 
-        assertEquals(false, result.canWorkspace)
-        assertEquals(false, result.canConsole)
-        assertEquals(AppSurface.Workspace, result.defaultSurface)
+        assertEquals(false, result.canCompanyManager)
+        assertEquals(false, result.canBookkeeperConsole)
+        assertEquals(AppSurface.CompanyManager, result.defaultSurface)
     }
 
     private fun membership(

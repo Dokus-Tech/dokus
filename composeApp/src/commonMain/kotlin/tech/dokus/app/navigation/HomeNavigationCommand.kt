@@ -8,14 +8,14 @@ import tech.dokus.navigation.navigateTo
 import tech.dokus.navigation.navigateToTopLevelTab
 
 internal enum class HomeNavigationSource {
-    Workspace,
-    Console,
+    CM,
+    BC,
 }
 
 internal sealed interface HomeNavigationCommand {
     data object OpenConsoleClients : HomeNavigationCommand
     data class OpenDocuments(
-        val source: HomeNavigationSource = HomeNavigationSource.Workspace,
+        val source: HomeNavigationSource = HomeNavigationSource.CM,
     ) : HomeNavigationCommand
     data class OpenDocumentReview(val documentId: String) : HomeNavigationCommand
 }
@@ -27,12 +27,12 @@ internal sealed interface HomeNavigationStep {
 
 internal fun resolveHomeNavigationSteps(
     command: HomeNavigationCommand,
-    canConsoleAccess: Boolean = true,
+    canBCAccess: Boolean = true,
 ): List<HomeNavigationStep> {
     return when (command) {
         HomeNavigationCommand.OpenConsoleClients -> listOf(
             HomeNavigationStep.TopLevelTab(
-                if (canConsoleAccess) HomeDestination.Accountant else HomeDestination.Today
+                if (canBCAccess) HomeDestination.Accountant else HomeDestination.Today
             )
         )
         is HomeNavigationCommand.OpenDocuments -> listOf(
@@ -47,9 +47,9 @@ internal fun resolveHomeNavigationSteps(
 
 internal fun NavController.executeHomeNavigationCommand(
     command: HomeNavigationCommand,
-    canConsoleAccess: Boolean = true,
+    canBCAccess: Boolean = true,
 ) {
-    resolveHomeNavigationSteps(command, canConsoleAccess).forEach { step ->
+    resolveHomeNavigationSteps(command, canBCAccess).forEach { step ->
         when (step) {
             is HomeNavigationStep.TopLevelTab -> navigateToTopLevelTab(step.destination)
             is HomeNavigationStep.Push -> navigateTo(step.destination)

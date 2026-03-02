@@ -16,9 +16,9 @@ class UserAccessContextTest {
     }
 
     @Test
-    fun `stage2 read-only is enabled for console drill-down while role is unresolved`() {
+    fun `stage2 read-only is enabled for bookkeeper console drill-down while role is unresolved`() {
         val context = UserAccessContext(
-            isConsoleDrillDown = true,
+            isBookkeeperConsoleDrillDown = true,
             currentTenantRole = null,
         )
 
@@ -28,11 +28,11 @@ class UserAccessContextTest {
     @Test
     fun `stage2 read-only stays disabled outside accountant drill-down context`() {
         val workspaceContext = UserAccessContext(
-            isConsoleDrillDown = false,
+            isBookkeeperConsoleDrillDown = false,
             currentTenantRole = null,
         )
         val nonAccountantConsoleContext = UserAccessContext(
-            isConsoleDrillDown = true,
+            isBookkeeperConsoleDrillDown = true,
             currentTenantRole = UserRole.Admin,
         )
 
