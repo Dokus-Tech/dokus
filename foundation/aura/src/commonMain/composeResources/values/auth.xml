@@ -41,6 +41,7 @@
     <string name="auth_workspace_type_prompt">Choose your workspace type</string>
     <string name="auth_workspace_type_company_description">For registered companies</string>
     <string name="auth_workspace_type_freelancer_description">For individual freelancers</string>
+    <string name="auth_workspace_type_bookkeeper_description">For accounting firms and bookkeepers</string>
     <string name="auth_workspace_type_unavailable">Freelancer workspace already exists</string>
     <string name="auth_your_name">Your name</string>
     <string name="auth_company_name_prompt">Company name</string>

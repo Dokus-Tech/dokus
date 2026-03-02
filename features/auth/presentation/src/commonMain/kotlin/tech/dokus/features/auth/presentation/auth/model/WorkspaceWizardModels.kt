@@ -4,12 +4,17 @@ package tech.dokus.features.auth.presentation.auth.model
 
 import androidx.compose.runtime.Stable
 import tech.dokus.domain.enums.Country
-import tech.dokus.domain.enums.TenantType
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.entity.EntityLookup
 
 private const val MinCompanyNameLength = 3
+
+enum class WorkspaceCreateType {
+    Company,
+    Freelancer,
+    Bookkeeper,
+}
 
 /**
  * Steps in the workspace creation wizard.
@@ -29,9 +34,11 @@ enum class WorkspaceWizardStep {
          * Get the list of steps for a given tenant type.
          * Freelancers skip the CompanyName step.
          */
-        fun stepsForType(type: TenantType): List<WorkspaceWizardStep> = when (type) {
-            TenantType.Freelancer -> listOf(TypeSelection, VatAndAddress)
-            TenantType.Company -> listOf(TypeSelection, CompanyName, VatAndAddress)
+        fun stepsForType(type: WorkspaceCreateType): List<WorkspaceWizardStep> = when (type) {
+            WorkspaceCreateType.Freelancer -> listOf(TypeSelection, VatAndAddress)
+            WorkspaceCreateType.Company,
+            WorkspaceCreateType.Bookkeeper,
+            -> listOf(TypeSelection, CompanyName, VatAndAddress)
         }
     }
 }
@@ -81,7 +88,7 @@ sealed class EntityConfirmationState {
 @Stable
 data class WorkspaceWizardState(
     val step: WorkspaceWizardStep = WorkspaceWizardStep.TypeSelection,
-    val tenantType: TenantType = TenantType.Company,
+    val workspaceType: WorkspaceCreateType = WorkspaceCreateType.Company,
     val companyName: String = "",
     val lookupState: LookupState = LookupState.Idle,
     val selectedEntity: EntityLookup? = null,
@@ -99,9 +106,9 @@ data class WorkspaceWizardState(
 
     /** The total number of steps for the current tenant type */
     val totalSteps: Int
-        get() = WorkspaceWizardStep.stepsForType(tenantType).size
+        get() = WorkspaceWizardStep.stepsForType(workspaceType).size
 
     /** The current step number (1-based) */
     val currentStepNumber: Int
-        get() = WorkspaceWizardStep.stepsForType(tenantType).indexOf(step) + 1
+        get() = WorkspaceWizardStep.stepsForType(workspaceType).indexOf(step) + 1
 }

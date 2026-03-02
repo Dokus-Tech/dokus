@@ -43,6 +43,7 @@ import tech.dokus.features.auth.presentation.auth.components.steps.CompanyNameSt
 import tech.dokus.features.auth.presentation.auth.components.steps.TypeSelectionStep
 import tech.dokus.features.auth.presentation.auth.components.steps.VatAndAddressStep
 import tech.dokus.features.auth.presentation.auth.components.onboarding.OnboardingCenteredShell
+import tech.dokus.features.auth.presentation.auth.model.WorkspaceCreateType
 import tech.dokus.features.auth.presentation.auth.model.WorkspaceWizardStep
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.background.WarpJumpEffect
@@ -138,7 +139,7 @@ private fun WorkspaceCreateContent(
     onBackPress: () -> Unit,
     modifier: Modifier,
 ) {
-    val steps = WorkspaceWizardStep.stepsForType(wizardState.tenantType)
+    val steps = WorkspaceWizardStep.stepsForType(wizardState.workspaceType)
     val pagerState = rememberPagerState(pageCount = { steps.size })
 
     LaunchedEffect(wizardState.step) {
@@ -178,7 +179,7 @@ private fun WorkspaceCreateContent(
                 when (steps[page]) {
                     WorkspaceWizardStep.TypeSelection -> {
                         TypeSelectionStep(
-                            selectedType = wizardState.tenantType,
+                            selectedType = wizardState.workspaceType,
                             hasFreelancerWorkspace = wizardState.hasFreelancerWorkspace,
                             onTypeSelected = { type ->
                                 onIntent(WorkspaceCreateIntent.SelectType(type))
@@ -250,6 +251,26 @@ private fun WorkspaceCreateScreenPreview(
     tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
         WorkspaceCreateScreen(
             state = WorkspaceCreateState.Wizard(),
+            onIntent = {},
+            onNavigateUp = {},
+            triggerWarp = false,
+            onWarpComplete = {},
+        )
+    }
+}
+
+@androidx.compose.ui.tooling.preview.Preview(name = "Workspace Create Desktop", widthDp = 1366, heightDp = 900)
+@Composable
+private fun WorkspaceCreateScreenDesktopPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class,
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters,
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        WorkspaceCreateScreen(
+            state = WorkspaceCreateState.Wizard(
+                workspaceType = WorkspaceCreateType.Bookkeeper,
+            ),
             onIntent = {},
             onNavigateUp = {},
             triggerWarp = false,

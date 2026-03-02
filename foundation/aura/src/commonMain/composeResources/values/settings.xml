@@ -106,6 +106,7 @@
     <string name="workspace_add">Add workspace</string>
     <string name="workspace_type_company">Company</string>
     <string name="workspace_type_freelancer">Freelancer</string>
+    <string name="workspace_type_bookkeeper">Bookkeeper</string>
     <string name="workspace_create_failed">Failed to create workspace</string>
     <string name="workspace_select_failed">Failed to select workspace</string>
     <string name="workspace_bookkeeper_console">Bookkeeper Console</string>

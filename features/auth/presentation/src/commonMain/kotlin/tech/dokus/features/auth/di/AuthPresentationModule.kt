@@ -72,7 +72,6 @@ val authPresentationModule = module {
     container<WorkspaceSelectContainer, WorkspaceSelectState, WorkspaceSelectIntent, WorkspaceSelectAction> {
         WorkspaceSelectContainer(
             getAccountMeUseCase = get(),
-            createFirmUseCase = get(),
             selectTenantUseCase = get(),
         )
     }
@@ -81,6 +80,7 @@ val authPresentationModule = module {
             hasFreelancerTenant = get(),
             getCurrentUser = get(),
             createTenant = get(),
+            createFirm = get(),
             searchCompanyUseCase = get()
         )
     }

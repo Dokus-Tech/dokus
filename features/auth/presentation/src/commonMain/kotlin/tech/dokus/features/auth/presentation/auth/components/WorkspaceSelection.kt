@@ -1,7 +1,6 @@
 package tech.dokus.features.auth.presentation.auth.components
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
@@ -20,7 +19,6 @@ import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.console_clients_count
 import tech.dokus.aura.resources.workspace_add
-import tech.dokus.aura.resources.workspace_select_practice_setup
 import tech.dokus.aura.resources.workspace_select_title
 import tech.dokus.domain.DisplayName
 import tech.dokus.domain.asbtractions.RetryHandler
@@ -50,7 +48,6 @@ fun WorkspaceSelectionBody(
     state: WorkspaceSelectState,
     onTenantClick: (TenantId) -> Unit,
     onFirmClick: (FirmId) -> Unit,
-    onSetupPracticeClick: (TenantId?) -> Unit,
     onAddTenantClick: () -> Unit,
 ) {
     Text(
@@ -66,7 +63,6 @@ fun WorkspaceSelectionBody(
         state = state,
         onTenantClick = onTenantClick,
         onFirmClick = onFirmClick,
-        onSetupPracticeClick = onSetupPracticeClick,
         onAddTenantClick = onAddTenantClick,
     )
 }
@@ -77,7 +73,6 @@ private fun StateDrivenContent(
     state: WorkspaceSelectState,
     onTenantClick: (TenantId) -> Unit,
     onFirmClick: (FirmId) -> Unit,
-    onSetupPracticeClick: (TenantId?) -> Unit,
     onAddTenantClick: () -> Unit,
 ) {
     when (state) {
@@ -91,61 +86,81 @@ private fun StateDrivenContent(
         is WorkspaceSelectState.SelectingFirm,
         -> {
             val contentState = state.toContentState()
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xLarge),
-            ) {
-                WorkspaceSection(
-                    items = {
-                        contentState.tenants.forEach { tenant ->
-                            CompanyTile(
-                                modifier = Modifier.widthInWorkspaceItem(),
-                                initial = tenant.name.initialOrEmpty,
-                                label = tenant.name.value,
-                                badge = tenant.role.localized,
-                            ) {
-                                onTenantClick(tenant.id)
-                            }
-                        }
-                        AddCompanyTile(
-                            modifier = Modifier.widthInWorkspaceItem(),
-                            label = stringResource(Res.string.workspace_add),
-                            onClick = onAddTenantClick,
-                        )
-                    }
-                )
+            val sortedWorkspaceEntries = buildWorkspaceEntries(contentState)
 
-                WorkspaceSection(
-                    items = {
-                        if (contentState.firms.isEmpty()) {
-                            AddCompanyTile(
-                                modifier = Modifier.widthInWorkspaceItem(),
-                                label = stringResource(Res.string.workspace_select_practice_setup),
-                                onClick = {
-                                    val prefillTenantId = contentState.tenants.firstOrNull()?.id
-                                    onSetupPracticeClick(prefillTenantId)
-                                },
-                            )
-                        } else {
-                            contentState.firms.forEach { firm ->
+            WorkspaceSection(
+                items = {
+                    sortedWorkspaceEntries.forEach { entry ->
+                        when (entry) {
+                            is WorkspaceEntry.Firm -> {
                                 CompanyTile(
                                     modifier = Modifier.widthInWorkspaceItem(),
-                                    initial = firm.name.initialOrEmpty,
-                                    label = firm.name.value,
+                                    initial = entry.summary.name.initialOrEmpty,
+                                    label = entry.summary.name.value,
                                     badge = stringResource(
                                         Res.string.console_clients_count,
-                                        firm.clientCount,
+                                        entry.summary.clientCount,
                                     ),
                                 ) {
-                                    onFirmClick(firm.id)
+                                    onFirmClick(entry.summary.id)
+                                }
+                            }
+                            is WorkspaceEntry.Tenant -> {
+                                CompanyTile(
+                                    modifier = Modifier.widthInWorkspaceItem(),
+                                    initial = entry.summary.name.initialOrEmpty,
+                                    label = entry.summary.name.value,
+                                    badge = entry.summary.role.localized,
+                                ) {
+                                    onTenantClick(entry.summary.id)
                                 }
                             }
                         }
                     }
-                )
-            }
+
+                    AddCompanyTile(
+                        modifier = Modifier.widthInWorkspaceItem(),
+                        label = stringResource(Res.string.workspace_add),
+                        onClick = onAddTenantClick,
+                    )
+                },
+            )
         }
     }
+}
+
+private sealed interface WorkspaceEntry {
+    val sortName: String
+    val stableKey: String
+
+    data class Tenant(
+        val summary: TenantWorkspaceSummary,
+    ) : WorkspaceEntry {
+        override val sortName: String = summary.name.value
+        override val stableKey: String = "tenant:${summary.id}"
+    }
+
+    data class Firm(
+        val summary: FirmWorkspaceSummary,
+    ) : WorkspaceEntry {
+        override val sortName: String = summary.name.value
+        override val stableKey: String = "firm:${summary.id}"
+    }
+}
+
+private fun buildWorkspaceEntries(
+    state: WorkspaceSelectState.Content,
+): List<WorkspaceEntry> {
+    return buildList {
+        addAll(state.tenants.map(WorkspaceEntry::Tenant))
+        addAll(state.firms.map(WorkspaceEntry::Firm))
+    }.sortedWith(
+        compareBy<WorkspaceEntry>(
+            { it.sortName.lowercase() },
+            { it.sortName },
+            { it.stableKey },
+        ),
+    )
 }
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -220,7 +235,6 @@ private fun WorkspaceSelectionEmptyPreview(
             ),
             onTenantClick = {},
             onFirmClick = {},
-            onSetupPracticeClick = {},
             onAddTenantClick = {},
         )
     }
@@ -246,7 +260,6 @@ private fun WorkspaceSelectionWithPracticePreview(
             ),
             onTenantClick = {},
             onFirmClick = {},
-            onSetupPracticeClick = {},
             onAddTenantClick = {},
         )
     }
@@ -273,7 +286,6 @@ private fun WorkspaceSelectionDesktopPreview(
             ),
             onTenantClick = {},
             onFirmClick = {},
-            onSetupPracticeClick = {},
             onAddTenantClick = {},
         )
     }

@@ -11,10 +11,6 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.FirmId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.auth.CreateFirmRequest
-import tech.dokus.domain.model.auth.FirmWorkspaceSummary
-import tech.dokus.domain.model.auth.TenantWorkspaceSummary
-import tech.dokus.features.auth.usecases.CreateFirmUseCase
 import tech.dokus.features.auth.usecases.GetAccountMeUseCase
 import tech.dokus.features.auth.usecases.SelectTenantUseCase
 import tech.dokus.foundation.platform.Logger
@@ -28,7 +24,6 @@ internal typealias WorkspaceSelectCtx =
  */
 internal class WorkspaceSelectContainer(
     private val getAccountMeUseCase: GetAccountMeUseCase,
-    private val createFirmUseCase: CreateFirmUseCase,
     private val selectTenantUseCase: SelectTenantUseCase,
 ) : Container<WorkspaceSelectState, WorkspaceSelectIntent, WorkspaceSelectAction> {
 
@@ -44,7 +39,6 @@ internal class WorkspaceSelectContainer(
                     WorkspaceSelectIntent.LoadWorkspaces -> handleLoadWorkspaces()
                     is WorkspaceSelectIntent.SelectTenant -> handleSelectTenant(intent.tenantId)
                     is WorkspaceSelectIntent.SelectFirm -> handleSelectFirm(intent.firmId)
-                    is WorkspaceSelectIntent.CreateFirm -> handleCreateFirm(intent.prefillTenantId)
                 }
             }
         }
@@ -126,59 +120,6 @@ internal class WorkspaceSelectContainer(
                 )
             }
             action(WorkspaceSelectAction.NavigateToBookkeeperConsole(firmId))
-        }
-    }
-
-    private suspend fun WorkspaceSelectCtx.handleCreateFirm(prefillTenantId: TenantId?) {
-        withState<WorkspaceSelectState.Content, _> {
-            if (isCreatingFirm) return@withState
-
-            val currentTenants = tenants
-            val currentFirms = firms
-            val resolvedPrefillTenantId = prefillTenantId ?: currentTenants.firstOrNull()?.id
-
-            if (resolvedPrefillTenantId == null) {
-                action(
-                    WorkspaceSelectAction.ShowSelectionError(
-                        DokusException.BadRequest(
-                            "Cannot setup practice without tenant prefill in this phase"
-                        )
-                    )
-                )
-                return@withState
-            }
-
-            updateState { copy(isCreatingFirm = true) }
-
-            createFirmUseCase(
-                CreateFirmRequest(prefillTenantId = resolvedPrefillTenantId)
-            ).fold(
-                onSuccess = { createdFirm ->
-                    val updatedFirms = (currentFirms + createdFirm)
-                        .distinctBy(FirmWorkspaceSummary::id)
-                        .sortedBy { it.name.value.lowercase() }
-
-                    updateState {
-                        WorkspaceSelectState.Content(
-                            tenants = currentTenants,
-                            firms = updatedFirms,
-                            isCreatingFirm = false,
-                        )
-                    }
-                    action(WorkspaceSelectAction.NavigateToBookkeeperConsole(createdFirm.id))
-                },
-                onFailure = { error ->
-                    logger.e(error) { "Failed to create firm during workspace setup" }
-                    updateState {
-                        WorkspaceSelectState.Content(
-                            tenants = currentTenants,
-                            firms = currentFirms,
-                            isCreatingFirm = false,
-                        )
-                    }
-                    action(WorkspaceSelectAction.ShowSelectionError(error.asDokusException))
-                },
-            )
         }
     }
 }

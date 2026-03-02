@@ -23,22 +23,24 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.auth_workspace_type_bookkeeper_description
 import tech.dokus.aura.resources.auth_workspace_type_company_description
 import tech.dokus.aura.resources.auth_workspace_type_freelancer_description
 import tech.dokus.aura.resources.auth_workspace_type_prompt
 import tech.dokus.aura.resources.auth_workspace_type_unavailable
+import tech.dokus.aura.resources.workspace_type_bookkeeper
 import tech.dokus.aura.resources.workspace_type_company
 import tech.dokus.aura.resources.workspace_type_freelancer
-import tech.dokus.domain.enums.TenantType
+import tech.dokus.features.auth.presentation.auth.model.WorkspaceCreateType
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.text.SectionTitle
 import tech.dokus.foundation.aura.constrains.Constraints
 
 @Composable
 internal fun TypeSelectionStep(
-    selectedType: TenantType,
+    selectedType: WorkspaceCreateType,
     hasFreelancerWorkspace: Boolean,
-    onTypeSelected: (TenantType) -> Unit,
+    onTypeSelected: (WorkspaceCreateType) -> Unit,
     onBackPress: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -58,9 +60,9 @@ internal fun TypeSelectionStep(
             icon = Icons.Outlined.Business,
             title = stringResource(Res.string.workspace_type_company),
             description = stringResource(Res.string.auth_workspace_type_company_description),
-            isSelected = selectedType == TenantType.Company,
+            isSelected = selectedType == WorkspaceCreateType.Company,
             isEnabled = true,
-            onClick = { onTypeSelected(TenantType.Company) },
+            onClick = { onTypeSelected(WorkspaceCreateType.Company) },
             modifier = Modifier.fillMaxWidth(),
         )
 
@@ -70,9 +72,21 @@ internal fun TypeSelectionStep(
             icon = Icons.Outlined.Person,
             title = stringResource(Res.string.workspace_type_freelancer),
             description = stringResource(Res.string.auth_workspace_type_freelancer_description),
-            isSelected = selectedType == TenantType.Freelancer,
+            isSelected = selectedType == WorkspaceCreateType.Freelancer,
             isEnabled = !hasFreelancerWorkspace,
-            onClick = { onTypeSelected(TenantType.Freelancer) },
+            onClick = { onTypeSelected(WorkspaceCreateType.Freelancer) },
+            modifier = Modifier.fillMaxWidth(),
+        )
+
+        Spacer(modifier = Modifier.height(Constraints.Spacing.medium))
+
+        TypeCard(
+            icon = Icons.Outlined.Business,
+            title = stringResource(Res.string.workspace_type_bookkeeper),
+            description = stringResource(Res.string.auth_workspace_type_bookkeeper_description),
+            isSelected = selectedType == WorkspaceCreateType.Bookkeeper,
+            isEnabled = true,
+            onClick = { onTypeSelected(WorkspaceCreateType.Bookkeeper) },
             modifier = Modifier.fillMaxWidth(),
         )
 
@@ -160,8 +174,25 @@ private fun TypeSelectionStepPreview(
 ) {
     tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
         TypeSelectionStep(
-            selectedType = TenantType.Company,
+            selectedType = WorkspaceCreateType.Company,
             hasFreelancerWorkspace = false,
+            onTypeSelected = {},
+            onBackPress = {},
+        )
+    }
+}
+
+@androidx.compose.ui.tooling.preview.Preview(name = "Type Selection Desktop", widthDp = 1366, heightDp = 900)
+@Composable
+private fun TypeSelectionStepDesktopPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class,
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters,
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        TypeSelectionStep(
+            selectedType = WorkspaceCreateType.Bookkeeper,
+            hasFreelancerWorkspace = true,
             onTypeSelected = {},
             onBackPress = {},
         )

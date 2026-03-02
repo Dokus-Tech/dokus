@@ -79,9 +79,6 @@ internal fun WorkspaceSelectScreen(
                         onFirmClick = { firmId ->
                             onIntent(WorkspaceSelectIntent.SelectFirm(firmId))
                         },
-                        onSetupPracticeClick = { tenantId ->
-                            onIntent(WorkspaceSelectIntent.CreateFirm(tenantId))
-                        },
                         onAddTenantClick = onAddTenantClick,
                     )
                 }

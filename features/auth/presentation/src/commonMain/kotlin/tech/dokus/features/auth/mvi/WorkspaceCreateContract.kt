@@ -8,13 +8,14 @@ import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.domain.LegalName
 import tech.dokus.domain.asbtractions.RetryHandler
-import tech.dokus.domain.enums.TenantType
 import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.FirmId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.entity.EntityLookup
 import tech.dokus.features.auth.presentation.auth.model.AddressFormState
 import tech.dokus.features.auth.presentation.auth.model.EntityConfirmationState
 import tech.dokus.features.auth.presentation.auth.model.LookupState
+import tech.dokus.features.auth.presentation.auth.model.WorkspaceCreateType
 import tech.dokus.features.auth.presentation.auth.model.WorkspaceWizardStep
 import tech.dokus.foundation.app.state.DokusState
 
@@ -24,8 +25,8 @@ import tech.dokus.foundation.app.state.DokusState
  * Flow:
  * 1. Loading → Initial loading of user info (check freelancer status, get username)
  * 2. Wizard → Multi-step wizard with states:
- *    - TypeSelection → User selects Freelancer or Company
- *    - CompanyName → User enters company name (Company only)
+ *    - TypeSelection → User selects Freelancer, Company, or Bookkeeper
+ *    - CompanyName → User enters company/practice name (Company and Bookkeeper)
  *    - VatAndAddress → User enters VAT and address
  * 3. Creating → Workspace creation in progress
  * 4. Error → Error occurred with retry option
@@ -48,7 +49,7 @@ sealed interface WorkspaceCreateState : MVIState, DokusState<Nothing> {
      */
     data class Wizard(
         val step: WorkspaceWizardStep = WorkspaceWizardStep.TypeSelection,
-        val tenantType: TenantType = TenantType.Company,
+        val workspaceType: WorkspaceCreateType = WorkspaceCreateType.Company,
         val hasFreelancerWorkspace: Boolean = false,
         val userName: String = "",
         val companyName: LegalName = LegalName.Empty,
@@ -69,22 +70,22 @@ sealed interface WorkspaceCreateState : MVIState, DokusState<Nothing> {
 
         /** The total number of steps for the current tenant type */
         val totalSteps: Int
-            get() = WorkspaceWizardStep.stepsForType(tenantType).size
+            get() = WorkspaceWizardStep.stepsForType(workspaceType).size
 
         /** The current step number (1-based) */
         val currentStepNumber: Int
-            get() = WorkspaceWizardStep.stepsForType(tenantType).indexOf(step) + 1
+            get() = WorkspaceWizardStep.stepsForType(workspaceType).indexOf(step) + 1
 
         /** Whether we can go back in the wizard */
         val canGoBack: Boolean
-            get() = WorkspaceWizardStep.stepsForType(tenantType).indexOf(step) > 0
+            get() = WorkspaceWizardStep.stepsForType(workspaceType).indexOf(step) > 0
     }
 
     /**
      * Creating state - workspace creation in progress.
      */
     data class Creating(
-        val tenantType: TenantType,
+        val workspaceType: WorkspaceCreateType,
         val companyName: LegalName,
         val userName: String,
         val vatNumber: VatNumber,
@@ -111,8 +112,8 @@ sealed interface WorkspaceCreateIntent : MVIIntent {
     /** Load user info on screen init */
     data object LoadUserInfo : WorkspaceCreateIntent
 
-    /** User selected a tenant type (Freelancer or Company) */
-    data class SelectType(val type: TenantType) : WorkspaceCreateIntent
+    /** User selected a workspace type */
+    data class SelectType(val type: WorkspaceCreateType) : WorkspaceCreateIntent
 
     /** User changed the company name */
     data class UpdateCompanyName(val name: LegalName) : WorkspaceCreateIntent
@@ -153,6 +154,9 @@ sealed interface WorkspaceCreateIntent : MVIIntent {
 sealed interface WorkspaceCreateAction : MVIAction {
     /** Navigate to home screen after successful workspace creation */
     data object NavigateHome : WorkspaceCreateAction
+
+    /** Navigate to home screen with bookkeeper console surface active */
+    data class NavigateToBookkeeperConsole(val firmId: FirmId) : WorkspaceCreateAction
 
     /** Navigate back to previous screen */
     data object NavigateBack : WorkspaceCreateAction

@@ -16,12 +16,15 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.UpsertTenantAddressRequest
+import tech.dokus.domain.model.auth.CreateFirmRequest
 import tech.dokus.domain.model.entity.EntityLookup
 import tech.dokus.domain.usecases.SearchCompanyUseCase
 import tech.dokus.features.auth.presentation.auth.model.AddressFormState
 import tech.dokus.features.auth.presentation.auth.model.EntityConfirmationState
 import tech.dokus.features.auth.presentation.auth.model.LookupState
+import tech.dokus.features.auth.presentation.auth.model.WorkspaceCreateType
 import tech.dokus.features.auth.presentation.auth.model.WorkspaceWizardStep
+import tech.dokus.features.auth.usecases.CreateFirmUseCase
 import tech.dokus.features.auth.usecases.CreateTenantUseCase
 import tech.dokus.features.auth.usecases.GetCurrentUserUseCase
 import tech.dokus.features.auth.usecases.HasFreelancerTenantUseCase
@@ -39,6 +42,7 @@ internal class WorkspaceCreateContainer(
     private val hasFreelancerTenant: HasFreelancerTenantUseCase,
     private val getCurrentUser: GetCurrentUserUseCase,
     private val createTenant: CreateTenantUseCase,
+    private val createFirm: CreateFirmUseCase,
     private val searchCompanyUseCase: SearchCompanyUseCase,
 ) : Container<WorkspaceCreateState, WorkspaceCreateIntent, WorkspaceCreateAction> {
 
@@ -113,15 +117,14 @@ internal class WorkspaceCreateContainer(
             WorkspaceCreateState.Wizard(
                 hasFreelancerWorkspace = hasFreelancer,
                 userName = userName,
-                // If user has freelancer, default to Company
-                tenantType = if (hasFreelancer) TenantType.Company else TenantType.Company
+                workspaceType = WorkspaceCreateType.Company,
             )
         }
     }
 
-    private suspend fun WorkspaceCreateCtx.handleSelectType(type: TenantType) {
+    private suspend fun WorkspaceCreateCtx.handleSelectType(type: WorkspaceCreateType) {
         withState<WorkspaceCreateState.Wizard, _> {
-            updateState { copy(tenantType = type) }
+            updateState { copy(workspaceType = type) }
         }
     }
 
@@ -245,10 +248,10 @@ internal class WorkspaceCreateContainer(
         withState<WorkspaceCreateState.Wizard, _> {
             when (step) {
                 WorkspaceWizardStep.TypeSelection -> {
-                    val nextStep = if (tenantType == TenantType.Company) {
-                        WorkspaceWizardStep.CompanyName
-                    } else {
+                    val nextStep = if (workspaceType == WorkspaceCreateType.Freelancer) {
                         WorkspaceWizardStep.VatAndAddress
+                    } else {
+                        WorkspaceWizardStep.CompanyName
                     }
                     updateState { copy(step = nextStep) }
                 }
@@ -267,7 +270,7 @@ internal class WorkspaceCreateContainer(
 
     private suspend fun WorkspaceCreateCtx.handleBack() {
         withState<WorkspaceCreateState.Wizard, _> {
-            val steps = WorkspaceWizardStep.stepsForType(tenantType)
+            val steps = WorkspaceWizardStep.stepsForType(workspaceType)
             val currentIndex = steps.indexOf(step)
             if (currentIndex > 0) {
                 updateState { copy(step = steps[currentIndex - 1]) }
@@ -291,11 +294,11 @@ internal class WorkspaceCreateContainer(
         withState<WorkspaceCreateState.Wizard, _> {
             val currentState = this
 
-            logger.d { "Creating workspace: type=$tenantType" }
+            logger.d { "Creating workspace: type=$workspaceType" }
 
             updateState {
                 WorkspaceCreateState.Creating(
-                    tenantType = tenantType,
+                    workspaceType = workspaceType,
                     companyName = companyName,
                     userName = userName,
                     vatNumber = vatNumber,
@@ -304,62 +307,103 @@ internal class WorkspaceCreateContainer(
                 )
             }
 
-            // For freelancer, use user's name as legal name
-            val effectiveLegalName = if (currentState.tenantType.legalNameFromUser) {
-                LegalName(currentState.userName)
-            } else {
-                currentState.companyName
+            when (currentState.workspaceType) {
+                WorkspaceCreateType.Company,
+                WorkspaceCreateType.Freelancer,
+                -> createTenantWorkspace(currentState)
+
+                WorkspaceCreateType.Bookkeeper -> createBookkeeperWorkspace(currentState)
             }
+        }
+    }
 
-            // For freelancer, display name equals legal name
-            val effectiveDisplayName = if (!currentState.tenantType.requiresDisplayName) {
-                DisplayName(effectiveLegalName.value)
-            } else {
-                DisplayName(currentState.companyName.value)
+    private suspend fun WorkspaceCreateCtx.createTenantWorkspace(
+        currentState: WorkspaceCreateState.Wizard,
+    ) {
+        val tenantType = when (currentState.workspaceType) {
+            WorkspaceCreateType.Company -> TenantType.Company
+            WorkspaceCreateType.Freelancer -> TenantType.Freelancer
+            WorkspaceCreateType.Bookkeeper -> return
+        }
+
+        // For freelancer, use user's name as legal name.
+        val effectiveLegalName = if (tenantType.legalNameFromUser) {
+            LegalName(currentState.userName)
+        } else {
+            currentState.companyName
+        }
+
+        // For freelancer, display name equals legal name.
+        val effectiveDisplayName = if (!tenantType.requiresDisplayName) {
+            DisplayName(effectiveLegalName.value)
+        } else {
+            DisplayName(currentState.companyName.value)
+        }
+
+        val addressRequest = UpsertTenantAddressRequest(
+            streetLine1 = currentState.address.streetLine1,
+            streetLine2 = currentState.address.streetLine2.ifBlank { null },
+            city = currentState.address.city,
+            postalCode = currentState.address.postalCode,
+            country = currentState.address.country,
+        )
+
+        createTenant(
+            type = tenantType,
+            legalName = effectiveLegalName,
+            displayName = effectiveDisplayName,
+            plan = SubscriptionTier.default,
+            language = Language.En,
+            vatNumber = currentState.vatNumber,
+            address = addressRequest,
+        ).fold(
+            onSuccess = { tenant ->
+                logger.i { "Workspace created successfully: ${tenant.id}" }
+                action(WorkspaceCreateAction.NavigateHome)
+            },
+            onFailure = { error ->
+                logger.e(error) { "Failed to create workspace" }
+                handleCreationFailure(error, currentState)
             }
+        )
+    }
 
-            val addressRequest = UpsertTenantAddressRequest(
-                streetLine1 = currentState.address.streetLine1,
-                streetLine2 = currentState.address.streetLine2.ifBlank { null },
-                city = currentState.address.city,
-                postalCode = currentState.address.postalCode,
-                country = currentState.address.country,
-            )
-
-            createTenant(
-                type = currentState.tenantType,
-                legalName = effectiveLegalName,
-                displayName = effectiveDisplayName,
-                plan = SubscriptionTier.default,
-                language = Language.En,
+    private suspend fun WorkspaceCreateCtx.createBookkeeperWorkspace(
+        currentState: WorkspaceCreateState.Wizard,
+    ) {
+        createFirm(
+            CreateFirmRequest(
+                name = DisplayName(currentState.companyName.value),
                 vatNumber = currentState.vatNumber,
-                address = addressRequest,
-            ).fold(
-                onSuccess = { tenant ->
-                    logger.i { "Workspace created successfully: ${tenant.id}" }
-                    action(WorkspaceCreateAction.NavigateHome)
-                },
-                onFailure = { error ->
-                    logger.e(error) { "Failed to create workspace" }
-                    val exception = error.asDokusException
-                    val displayException = if (exception is DokusException.Unknown) {
-                        DokusException.WorkspaceCreateFailed
-                    } else {
-                        exception
-                    }
-                    action(
-                        WorkspaceCreateAction.ShowCreationError(
-                            displayException
-                        )
-                    )
-                    updateState {
-                        WorkspaceCreateState.Error(
-                            exception = error.asDokusException,
-                            retryHandler = { intent(WorkspaceCreateIntent.RetryCreation) },
-                            previousWizardState = currentState
-                        )
-                    }
-                }
+            ),
+        ).fold(
+            onSuccess = { firm ->
+                logger.i { "Bookkeeper workspace created successfully: ${firm.id}" }
+                action(WorkspaceCreateAction.NavigateToBookkeeperConsole(firm.id))
+            },
+            onFailure = { error ->
+                logger.e(error) { "Failed to create bookkeeper workspace" }
+                handleCreationFailure(error, currentState)
+            },
+        )
+    }
+
+    private suspend fun WorkspaceCreateCtx.handleCreationFailure(
+        error: Throwable,
+        currentState: WorkspaceCreateState.Wizard,
+    ) {
+        val exception = error.asDokusException
+        val displayException = if (exception is DokusException.Unknown) {
+            DokusException.WorkspaceCreateFailed
+        } else {
+            exception
+        }
+        action(WorkspaceCreateAction.ShowCreationError(displayException))
+        updateState {
+            WorkspaceCreateState.Error(
+                exception = error.asDokusException,
+                retryHandler = { intent(WorkspaceCreateIntent.RetryCreation) },
+                previousWizardState = currentState,
             )
         }
     }

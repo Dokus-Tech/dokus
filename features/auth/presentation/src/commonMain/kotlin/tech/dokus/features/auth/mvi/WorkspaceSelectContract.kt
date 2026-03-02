@@ -33,7 +33,6 @@ sealed interface WorkspaceSelectState : MVIState {
     data class Content(
         val tenants: List<TenantWorkspaceSummary>,
         val firms: List<FirmWorkspaceSummary>,
-        val isCreatingFirm: Boolean = false,
     ) : WorkspaceSelectState {
         val hasFirmAccess: Boolean get() = firms.isNotEmpty()
     }
@@ -69,9 +68,6 @@ sealed interface WorkspaceSelectIntent : MVIIntent {
 
     /** User selected a firm practice */
     data class SelectFirm(val firmId: FirmId) : WorkspaceSelectIntent
-
-    /** User wants to bootstrap a firm practice */
-    data class CreateFirm(val prefillTenantId: TenantId?) : WorkspaceSelectIntent
 }
 
 // ============================================================================
