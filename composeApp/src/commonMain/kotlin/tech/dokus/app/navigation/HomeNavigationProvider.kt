@@ -5,7 +5,9 @@ import androidx.navigation.compose.composable
 import tech.dokus.app.screens.MoreRoute
 import tech.dokus.app.screens.UnderDevelopmentScreen
 import tech.dokus.app.screens.accountant.ConsoleClientsRoute
+import tech.dokus.app.screens.console.ConsoleActivityRoute
 import tech.dokus.app.screens.console.ConsolePlaceholderRoute
+import tech.dokus.app.screens.console.ConsoleRequestsRoute
 import tech.dokus.app.screens.search.SearchRoute
 import tech.dokus.app.screens.settings.route.TeamSettingsRoute
 import tech.dokus.app.screens.settings.route.WorkspaceSettingsRoute
@@ -29,10 +31,10 @@ internal object HomeNavigationProvider : NavigationProvider {
             ConsoleClientsRoute()
         }
         composable<HomeDestination.ConsoleRequests> {
-            ConsolePlaceholderRoute(title = "Requests")
+            ConsoleRequestsRoute()
         }
         composable<HomeDestination.ConsoleActivity> {
-            ConsolePlaceholderRoute(title = "Activity")
+            ConsoleActivityRoute()
         }
         composable<HomeDestination.ConsoleExport> {
             ConsolePlaceholderRoute(title = "Export")

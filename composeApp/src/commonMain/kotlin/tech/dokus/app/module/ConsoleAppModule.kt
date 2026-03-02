@@ -2,10 +2,12 @@ package tech.dokus.app.module
 
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.chart_bar_trend_up
-import tech.dokus.aura.resources.home_today
-import tech.dokus.aura.resources.nav_accountant
-import tech.dokus.aura.resources.nav_more
-import tech.dokus.aura.resources.nav_reports
+import tech.dokus.aura.resources.console_activity_title
+import tech.dokus.aura.resources.console_clients_title
+import tech.dokus.aura.resources.console_export_title
+import tech.dokus.aura.resources.console_requests_title
+import tech.dokus.aura.resources.file_text
+import tech.dokus.aura.resources.inbox
 import tech.dokus.aura.resources.nav_section_accounting
 import tech.dokus.aura.resources.nav_section_company
 import tech.dokus.aura.resources.wallet_2
@@ -35,7 +37,7 @@ internal object ConsoleAppModule : AppModule {
             items = listOf(
                 NavItem(
                     id = "console_clients",
-                    titleRes = Res.string.nav_accountant,
+                    titleRes = Res.string.console_clients_title,
                     iconRes = Res.drawable.wallet_2,
                     destination = HomeDestination.ConsoleClients,
                     priority = 0,
@@ -43,15 +45,15 @@ internal object ConsoleAppModule : AppModule {
                 ),
                 NavItem(
                     id = "console_requests",
-                    titleRes = Res.string.home_today,
-                    iconRes = Res.drawable.chart_bar_trend_up,
+                    titleRes = Res.string.console_requests_title,
+                    iconRes = Res.drawable.inbox,
                     destination = HomeDestination.ConsoleRequests,
                     priority = 10,
                     shellTopBar = null,
                 ),
                 NavItem(
                     id = "console_activity",
-                    titleRes = Res.string.nav_more,
+                    titleRes = Res.string.console_activity_title,
                     iconRes = Res.drawable.chart_bar_trend_up,
                     destination = HomeDestination.ConsoleActivity,
                     priority = 20,
@@ -68,8 +70,8 @@ internal object ConsoleAppModule : AppModule {
             items = listOf(
                 NavItem(
                     id = "console_export",
-                    titleRes = Res.string.nav_reports,
-                    iconRes = Res.drawable.chart_bar_trend_up,
+                    titleRes = Res.string.console_export_title,
+                    iconRes = Res.drawable.file_text,
                     destination = HomeDestination.ConsoleExport,
                     priority = 0,
                     shellTopBar = null,

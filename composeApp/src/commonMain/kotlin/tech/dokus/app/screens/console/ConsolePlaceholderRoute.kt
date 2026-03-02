@@ -89,7 +89,7 @@ private fun ConsolePlaceholderDesktopPreview(
 ) {
     TestWrapper(parameters) {
         ConsolePlaceholderContent(
-            title = "Requests",
+            title = "Export",
             subtitle = stringResource(Res.string.console_clients_subtitle),
         )
     }
@@ -102,33 +102,7 @@ private fun ConsolePlaceholderMobilePreview(
 ) {
     TestWrapper(parameters) {
         ConsolePlaceholderContent(
-            title = "Activity",
-            subtitle = stringResource(Res.string.console_clients_subtitle),
-        )
-    }
-}
-
-@Preview(name = "Console Requests Desktop", widthDp = 1440, heightDp = 900)
-@Composable
-private fun ConsoleRequestsDesktopPreview(
-    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
-) {
-    TestWrapper(parameters) {
-        ConsolePlaceholderContent(
-            title = "Requests",
-            subtitle = stringResource(Res.string.console_clients_subtitle),
-        )
-    }
-}
-
-@Preview(name = "Console Activity Desktop", widthDp = 1440, heightDp = 900)
-@Composable
-private fun ConsoleActivityDesktopPreview(
-    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
-) {
-    TestWrapper(parameters) {
-        ConsolePlaceholderContent(
-            title = "Activity",
+            title = "Export",
             subtitle = stringResource(Res.string.console_clients_subtitle),
         )
     }
