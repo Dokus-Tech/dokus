@@ -56,6 +56,7 @@ internal fun DocumentsRoute(
     var pendingError by remember { mutableStateOf<DokusException?>(null) }
     var isUploadSidebarVisible by remember { mutableStateOf(false) }
     var isQrDialogVisible by remember { mutableStateOf(false) }
+    val uploadManager = remember(uploadContainer) { uploadContainer.provideUploadManager() }
 
     val errorMessage = pendingError?.localized
 
@@ -76,20 +77,30 @@ internal fun DocumentsRoute(
             }
         }
     }
-
-    val title = stringResource(Res.string.nav_documents)
-    val subtitle = stringResource(Res.string.documents_subtitle)
-    val uploadContentDescription = stringResource(Res.string.documents_upload)
-    val onUploadActionClick = remember {
+    val onIntent = remember(documentsContainer) {
+        { intent: DocumentsIntent ->
+            documentsContainer.store.intent(intent)
+        }
+    }
+    val onDocumentsChanged = remember(documentsContainer) {
+        {
+            documentsContainer.store.intent(DocumentsIntent.ExternalDocumentsChanged)
+        }
+    }
+    val onUploadClick = remember {
         {
             isUploadSidebarVisible = true
         }
     }
+
+    val title = stringResource(Res.string.nav_documents)
+    val subtitle = stringResource(Res.string.documents_subtitle)
+    val uploadContentDescription = stringResource(Res.string.documents_upload)
     val topBarConfig = remember(
         title,
         subtitle,
         uploadContentDescription,
-        onUploadActionClick
+        onUploadClick
     ) {
         HomeShellTopBarConfig(
             mode = HomeShellTopBarMode.Title(
@@ -100,7 +111,7 @@ internal fun DocumentsRoute(
                 HomeShellTopBarAction.Icon(
                     icon = Icons.Default.Upload,
                     contentDescription = uploadContentDescription,
-                    onClick = onUploadActionClick
+                    onClick = onUploadClick
                 )
             )
         )
@@ -110,32 +121,20 @@ internal fun DocumentsRoute(
         config = topBarConfig
     )
 
-    // Upload sidebar state
-    val uploadTasks by uploadContainer.uploadTasks.collectAsState()
-    val uploadedDocuments by uploadContainer.uploadedDocuments.collectAsState()
-    val deletionHandles by uploadContainer.deletionHandles.collectAsState()
-
     ConnectionSnackbarEffect(snackbarHostState)
-
-    LaunchedEffect(Unit) {
-        documentsContainer.store.intent(DocumentsIntent.Refresh)
-    }
 
     val refreshRequired = backStackEntry
         ?.savedStateHandle
         ?.get<Boolean>(DOCUMENTS_REFRESH_REQUIRED_RESULT_KEY) == true
 
     LaunchedEffect(refreshRequired) {
-        if (!refreshRequired) return@LaunchedEffect
-        backStackEntry?.savedStateHandle?.remove<Boolean>(DOCUMENTS_REFRESH_REQUIRED_RESULT_KEY)
-        documentsContainer.store.intent(DocumentsIntent.Refresh)
-    }
-
-    // Refresh documents when an upload completes
-    LaunchedEffect(uploadedDocuments.size) {
-        if (uploadedDocuments.isNotEmpty()) {
-            documentsContainer.store.intent(DocumentsIntent.Refresh)
-        }
+        handleSavedStateDocumentsRefresh(
+            refreshRequired = refreshRequired,
+            clearRefreshResult = {
+                backStackEntry?.savedStateHandle?.remove<Boolean>(DOCUMENTS_REFRESH_REQUIRED_RESULT_KEY)
+            },
+            onRefreshRequested = onDocumentsChanged,
+        )
     }
 
     Box(
@@ -149,7 +148,7 @@ internal fun DocumentsRoute(
                 },
                 onFilesDropped = { files ->
                     if (files.isNotEmpty()) {
-                        uploadContainer.provideUploadManager().enqueueFiles(files)
+                        uploadManager.enqueueFiles(files)
                     }
                 }
             )
@@ -157,19 +156,17 @@ internal fun DocumentsRoute(
         DocumentsScreen(
             state = state,
             snackbarHostState = snackbarHostState,
-            onIntent = { documentsContainer.store.intent(it) },
-            onUploadClick = { isUploadSidebarVisible = true }
+            onIntent = onIntent,
+            onUploadClick = onUploadClick
         )
 
-        // Upload sidebar overlay
-        DocumentUploadSidebar(
+        DocumentsUploadOverlay(
+            uploadContainer = uploadContainer,
             isVisible = isUploadSidebarVisible,
             onDismiss = { isUploadSidebarVisible = false },
-            tasks = uploadTasks,
-            documents = uploadedDocuments,
-            deletionHandles = deletionHandles,
-            uploadManager = uploadContainer.provideUploadManager(),
-            onShowQrCode = { isQrDialogVisible = true }
+            uploadManager = uploadManager,
+            onDocumentsChanged = onDocumentsChanged,
+            onShowQrCode = { isQrDialogVisible = true },
         )
     }
 
@@ -177,6 +174,36 @@ internal fun DocumentsRoute(
     AppDownloadQrDialog(
         isVisible = isQrDialogVisible,
         onDismiss = { isQrDialogVisible = false }
+    )
+}
+
+@Composable
+private fun DocumentsUploadOverlay(
+    uploadContainer: AddDocumentContainer,
+    isVisible: Boolean,
+    uploadManager: tech.dokus.features.cashflow.presentation.cashflow.model.manager.DocumentUploadManager,
+    onDismiss: () -> Unit,
+    onDocumentsChanged: () -> Unit,
+    onShowQrCode: () -> Unit,
+) {
+    val uploadTasks by uploadContainer.uploadTasks.collectAsState()
+    val uploadedDocuments by uploadContainer.uploadedDocuments.collectAsState()
+    val deletionHandles by uploadContainer.deletionHandles.collectAsState()
+
+    LaunchedEffect(uploadedDocuments.size) {
+        if (uploadedDocuments.isNotEmpty()) {
+            onDocumentsChanged()
+        }
+    }
+
+    DocumentUploadSidebar(
+        isVisible = isVisible,
+        onDismiss = onDismiss,
+        tasks = uploadTasks,
+        documents = uploadedDocuments,
+        deletionHandles = deletionHandles,
+        uploadManager = uploadManager,
+        onShowQrCode = onShowQrCode
     )
 }
 

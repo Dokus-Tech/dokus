@@ -64,7 +64,7 @@ internal class CashflowLedgerContainer(
     override val store: Store<CashflowLedgerState, CashflowLedgerIntent, CashflowLedgerAction> =
         store(CashflowLedgerState.Loading) {
             init {
-                handleRefresh()
+                handleRefresh(keepContentIfAvailable = false)
             }
 
             reduce { intent ->
@@ -97,16 +97,36 @@ internal class CashflowLedgerContainer(
             }
         }
 
-    private suspend fun CashflowLedgerCtx.handleRefresh() {
+    private suspend fun CashflowLedgerCtx.handleRefresh(
+        keepContentIfAvailable: Boolean = true,
+        fallbackFiltersOnFailure: CashflowFilters? = null,
+    ) {
         loadJob?.cancel()
         logger.d {
             "Refreshing cashflow entries with viewMode=${currentFilters.viewMode}, direction=${currentFilters.direction}"
         }
 
-        loadedEntries = emptyList()
-        paginationInfo = LocalPaginationInfo()
+        var previousContent: CashflowLedgerState.Content? = null
+        withState<CashflowLedgerState.Content, _> {
+            previousContent = this
+        }
+        val showInlineRefresh = keepContentIfAvailable && previousContent != null
+        val previousEntries = loadedEntries
+        val previousPaginationInfo = paginationInfo
 
-        updateState { CashflowLedgerState.Loading }
+        if (showInlineRefresh) {
+            val contentToRefresh = requireNotNull(previousContent)
+            updateState {
+                contentToRefresh.copy(
+                    filters = currentFilters,
+                    isRefreshing = true,
+                )
+            }
+        } else {
+            loadedEntries = emptyList()
+            paginationInfo = LocalPaginationInfo()
+            updateState { CashflowLedgerState.Loading }
+        }
 
         val (fromDate, toDate) = getDateRangeForViewMode(currentFilters.viewMode)
         val direction = mapDirectionFilter(currentFilters.direction)
@@ -182,28 +202,56 @@ internal class CashflowLedgerContainer(
                     totalOut = overview.cashOut.total
                 )
 
+                val previousSelectedEntryId = previousContent?.selectedEntryId
+                val selectedEntryId = when {
+                    resolvedHighlightId != null -> resolvedHighlightId
+                    previousSelectedEntryId != null &&
+                        loadedEntries.any { it.id == previousSelectedEntryId } ->
+                        previousSelectedEntryId
+                    else -> null
+                }
+                val selectedEntry = selectedEntryId?.let { id -> loadedEntries.find { it.id == id } }
+
                 updateState {
-                    val highlightedEntry = resolvedHighlightId?.let { id -> loadedEntries.find { it.id == id } }
                     CashflowLedgerState.Content(
                         entries = buildPaginationState(),
                         filters = currentFilters,
                         summary = summary,
                         balance = getMockBalanceIfEnabled(),
                         highlightedEntryId = resolvedHighlightId,
-                        selectedEntryId = resolvedHighlightId,
-                        paymentFormState = highlightedEntry?.let { PaymentFormState.withAmount(it.remainingAmount) }
+                        isRefreshing = false,
+                        selectedEntryId = selectedEntryId,
+                        paymentFormState = selectedEntry?.let { PaymentFormState.withAmount(it.remainingAmount) }
                             ?: PaymentFormState(),
+                        actionsEntryId = null,
                     )
                 }
             } else {
                 // Handle error - prefer entries error if both failed
                 val error = entriesResult.exceptionOrNull() ?: overviewResult.exceptionOrNull()!!
                 logger.e(error) { "Failed to load cashflow entries or overview" }
-                updateState {
-                    CashflowLedgerState.Error(
-                        exception = error.asDokusException,
-                        retryHandler = { intent(CashflowLedgerIntent.Refresh) }
-                    )
+                val dokusError = error.asDokusException
+                if (showInlineRefresh) {
+                    loadedEntries = previousEntries
+                    paginationInfo = previousPaginationInfo
+                    fallbackFiltersOnFailure?.let { currentFilters = it }
+                    val contentToRestore = requireNotNull(previousContent)
+                    updateState {
+                        contentToRestore.copy(
+                            entries = buildPaginationState(),
+                            filters = currentFilters,
+                            isRefreshing = false,
+                            actionsEntryId = null
+                        )
+                    }
+                    action(CashflowLedgerAction.ShowError(dokusError))
+                } else {
+                    updateState {
+                        CashflowLedgerState.Error(
+                            exception = dokusError,
+                            retryHandler = { intent(CashflowLedgerIntent.Refresh) }
+                        )
+                    }
                 }
             }
         }
@@ -259,13 +307,23 @@ internal class CashflowLedgerContainer(
     }
 
     private suspend fun CashflowLedgerCtx.handleSetViewMode(mode: CashflowViewMode) {
+        if (currentFilters.viewMode == mode) return
+        val previousFilters = currentFilters
         currentFilters = currentFilters.copy(viewMode = mode)
-        handleRefresh()
+        handleRefresh(
+            keepContentIfAvailable = true,
+            fallbackFiltersOnFailure = previousFilters,
+        )
     }
 
     private suspend fun CashflowLedgerCtx.handleSetDirectionFilter(direction: DirectionFilter) {
+        if (currentFilters.direction == direction) return
+        val previousFilters = currentFilters
         currentFilters = currentFilters.copy(direction = direction)
-        handleRefresh()
+        handleRefresh(
+            keepContentIfAvailable = true,
+            fallbackFiltersOnFailure = previousFilters,
+        )
     }
 
     private suspend fun CashflowLedgerCtx.handleHighlightEntry(entryId: CashflowEntryId?) {

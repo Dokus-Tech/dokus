@@ -61,6 +61,7 @@ sealed interface DocumentsState : MVIState, DokusState<Nothing> {
         val filter: DocumentFilter = DocumentFilter.All,
         val needsAttentionCount: Int = 0,
         val confirmedCount: Int = 0,
+        val isRefreshing: Boolean = false,
     ) : DocumentsState
 
     /**
@@ -85,6 +86,9 @@ sealed interface DocumentsIntent : MVIIntent {
 
     /** Refresh all documents */
     data object Refresh : DocumentsIntent
+
+    /** Refresh documents after external changes (upload/review completion). */
+    data object ExternalDocumentsChanged : DocumentsIntent
 
     /** Load next page of documents */
     data object LoadMore : DocumentsIntent

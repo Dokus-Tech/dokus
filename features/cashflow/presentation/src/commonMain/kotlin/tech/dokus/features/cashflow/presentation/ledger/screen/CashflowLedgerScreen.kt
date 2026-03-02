@@ -50,7 +50,6 @@ import tech.dokus.aura.resources.cashflow_empty_upcoming
 import tech.dokus.aura.resources.cashflow_empty_upcoming_hint
 import tech.dokus.aura.resources.cashflow_empty_upcoming_in
 import tech.dokus.aura.resources.cashflow_empty_upcoming_out
-import tech.dokus.aura.resources.cashflow_title
 import tech.dokus.features.cashflow.presentation.common.components.empty.DokusEmptyState
 import tech.dokus.features.cashflow.presentation.common.components.pagination.rememberLoadMoreTrigger
 import tech.dokus.features.cashflow.presentation.common.components.table.DokusTableDivider
@@ -69,7 +68,6 @@ import tech.dokus.features.cashflow.presentation.ledger.mvi.DirectionFilter
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.common.DokusLoaderSize
-import tech.dokus.foundation.aura.components.text.MobilePageTitle
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
@@ -181,91 +179,116 @@ private fun CashflowLedgerContent(
                 onCreateInvoiceClick = if (isLargeScreen) onCreateInvoiceClick else null,
             )
 
-            // Table surface (data only)
-            DokusTableSurface(
+            Box(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
-                    .padding(bottom = 16.dp),
-                header = if (isLargeScreen) {
-                    { CashflowLedgerHeaderRow() }
-                } else {
-                    null
-                }
+                    .padding(bottom = 16.dp)
             ) {
-                // Table body OR empty state
-                if (state.entries.data.isEmpty() && !state.entries.isLoadingMore) {
-                    // Context-aware empty state based on current filters
-                    val emptyStateTitle = getEmptyStateTitle(
-                        viewMode = state.filters.viewMode,
-                        direction = state.filters.direction
-                    )
-                    // Hint only shown for Upcoming + All
-                    val emptyStateHint = if (
-                        state.filters.viewMode == CashflowViewMode.Upcoming &&
-                        state.filters.direction == DirectionFilter.All
-                    ) {
-                        stringResource(Res.string.cashflow_empty_upcoming_hint)
+                // Table surface (data only)
+                DokusTableSurface(
+                    modifier = Modifier.fillMaxSize(),
+                    header = if (isLargeScreen) {
+                        { CashflowLedgerHeaderRow() }
                     } else {
                         null
                     }
-
-                    DokusEmptyState(
-                        title = emptyStateTitle,
-                        subtitle = emptyStateHint,
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(32.dp)
-                    )
-                } else {
-                    LazyColumn(
-                        state = listState,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        itemsIndexed(
-                            items = state.entries.data,
-                            key = { _, entry -> entry.id.toString() }
-                        ) { index, entry ->
-                            if (isLargeScreen) {
-                                CashflowLedgerTableRow(
-                                    entry = entry,
-                                    viewMode = state.filters.viewMode,
-                                    isHighlighted = entry.id == state.highlightedEntryId,
-                                    showActionsMenu = state.actionsEntryId == entry.id,
-                                    onClick = { onIntent(CashflowLedgerIntent.OpenEntry(entry)) },
-                                    onShowActions = { onIntent(CashflowLedgerIntent.ShowRowActions(entry.id)) },
-                                    onHideActions = { onIntent(CashflowLedgerIntent.HideRowActions) },
-                                    onRecordPayment = { onIntent(CashflowLedgerIntent.RecordPaymentFor(entry.id)) },
-                                    onMarkAsPaid = { onIntent(CashflowLedgerIntent.MarkAsPaidQuick(entry.id)) },
-                                    onViewDocument = { onIntent(CashflowLedgerIntent.ViewDocumentFor(entry)) }
-                                )
-                            } else {
-                                CashflowLedgerMobileRow(
-                                    entry = entry,
-                                    viewMode = state.filters.viewMode,
-                                    onClick = { onIntent(CashflowLedgerIntent.OpenEntry(entry)) },
-                                    onShowActions = { onIntent(CashflowLedgerIntent.ShowRowActions(entry.id)) }
-                                )
-                            }
-
-                            // Dividers only between rows
-                            if (index < state.entries.data.size - 1) {
-                                DokusTableDivider()
-                            }
+                ) {
+                    // Table body OR empty state
+                    if (state.entries.data.isEmpty() && state.isRefreshing) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                                .padding(32.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            DokusLoader(size = DokusLoaderSize.Small)
+                        }
+                    } else if (state.entries.data.isEmpty() && !state.entries.isLoadingMore) {
+                        // Context-aware empty state based on current filters
+                        val emptyStateTitle = getEmptyStateTitle(
+                            viewMode = state.filters.viewMode,
+                            direction = state.filters.direction
+                        )
+                        // Hint only shown for Upcoming + All
+                        val emptyStateHint = if (
+                            state.filters.viewMode == CashflowViewMode.Upcoming &&
+                            state.filters.direction == DirectionFilter.All
+                        ) {
+                            stringResource(Res.string.cashflow_empty_upcoming_hint)
+                        } else {
+                            null
                         }
 
-                        if (state.entries.isLoadingMore) {
-                            item {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(16.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    DokusLoader(size = DokusLoaderSize.Small)
+                        DokusEmptyState(
+                            title = emptyStateTitle,
+                            subtitle = emptyStateHint,
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(32.dp)
+                        )
+                    } else {
+                        LazyColumn(
+                            state = listState,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            itemsIndexed(
+                                items = state.entries.data,
+                                key = { _, entry -> entry.id.toString() }
+                            ) { index, entry ->
+                                if (isLargeScreen) {
+                                    CashflowLedgerTableRow(
+                                        entry = entry,
+                                        viewMode = state.filters.viewMode,
+                                        isHighlighted = entry.id == state.highlightedEntryId,
+                                        showActionsMenu = state.actionsEntryId == entry.id,
+                                        onClick = { onIntent(CashflowLedgerIntent.OpenEntry(entry)) },
+                                        onShowActions = { onIntent(CashflowLedgerIntent.ShowRowActions(entry.id)) },
+                                        onHideActions = { onIntent(CashflowLedgerIntent.HideRowActions) },
+                                        onRecordPayment = { onIntent(CashflowLedgerIntent.RecordPaymentFor(entry.id)) },
+                                        onMarkAsPaid = { onIntent(CashflowLedgerIntent.MarkAsPaidQuick(entry.id)) },
+                                        onViewDocument = { onIntent(CashflowLedgerIntent.ViewDocumentFor(entry)) }
+                                    )
+                                } else {
+                                    CashflowLedgerMobileRow(
+                                        entry = entry,
+                                        viewMode = state.filters.viewMode,
+                                        onClick = { onIntent(CashflowLedgerIntent.OpenEntry(entry)) },
+                                        onShowActions = { onIntent(CashflowLedgerIntent.ShowRowActions(entry.id)) }
+                                    )
+                                }
+
+                                // Dividers only between rows
+                                if (index < state.entries.data.size - 1) {
+                                    DokusTableDivider()
+                                }
+                            }
+
+                            if (state.entries.isLoadingMore) {
+                                item {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        DokusLoader(size = DokusLoaderSize.Small)
+                                    }
                                 }
                             }
                         }
+                    }
+                }
+
+                if (state.isRefreshing && state.entries.data.isNotEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 12.dp),
+                        contentAlignment = Alignment.TopCenter
+                    ) {
+                        DokusLoader(size = DokusLoaderSize.Small)
                     }
                 }
             }

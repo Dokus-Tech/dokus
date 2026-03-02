@@ -18,6 +18,7 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowLedgerAction
 import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowLedgerContainer
+import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowLedgerIntent
 import tech.dokus.features.cashflow.presentation.ledger.screen.CashflowLedgerScreen
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.app.network.ConnectionSnackbarEffect
@@ -91,6 +92,11 @@ internal fun CashflowLedgerRoute(
             navController.navigateTo(CashFlowDestination.CreateInvoice)
         }
     }
+    val onIntent = remember(container) {
+        { intent: CashflowLedgerIntent ->
+            container.store.intent(intent)
+        }
+    }
     val topBarConfig = remember(cashflowTitle, cashflowSubtitle) {
         HomeShellTopBarConfig(
             mode = HomeShellTopBarMode.Title(
@@ -107,7 +113,7 @@ internal fun CashflowLedgerRoute(
 
     CashflowLedgerScreen(
         state = state,
-        onIntent = { container.store.intent(it) },
+        onIntent = onIntent,
         onCreateInvoiceClick = onCreateInvoiceClick
     )
 }
