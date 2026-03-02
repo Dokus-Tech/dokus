@@ -14,17 +14,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.console_clients_count
 import tech.dokus.aura.resources.workspace_add
-import tech.dokus.aura.resources.workspace_select_practice_section
 import tech.dokus.aura.resources.workspace_select_practice_setup
 import tech.dokus.aura.resources.workspace_select_title
-import tech.dokus.aura.resources.workspace_select_your_business
 import tech.dokus.domain.DisplayName
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.enums.FirmRole
@@ -99,7 +96,6 @@ private fun StateDrivenContent(
                 verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xLarge),
             ) {
                 WorkspaceSection(
-                    title = stringResource(Res.string.workspace_select_your_business),
                     items = {
                         contentState.tenants.forEach { tenant ->
                             CompanyTile(
@@ -120,7 +116,6 @@ private fun StateDrivenContent(
                 )
 
                 WorkspaceSection(
-                    title = stringResource(Res.string.workspace_select_practice_section),
                     items = {
                         if (contentState.firms.isEmpty()) {
                             AddCompanyTile(
@@ -156,30 +151,18 @@ private fun StateDrivenContent(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun WorkspaceSection(
-    title: String,
     items: @Composable () -> Unit,
 ) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium),
+    FlowRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(
+            Constraints.Spacing.large,
+            alignment = Alignment.CenterHorizontally,
+        ),
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.large),
+        maxItemsInEachRow = Int.MAX_VALUE,
     ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-            fontWeight = FontWeight.SemiBold,
-        )
-
-        FlowRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(
-                Constraints.Spacing.large,
-                alignment = Alignment.CenterHorizontally,
-            ),
-            verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.large),
-            maxItemsInEachRow = Int.MAX_VALUE,
-        ) {
-            items()
-        }
+        items()
     }
 }
 
