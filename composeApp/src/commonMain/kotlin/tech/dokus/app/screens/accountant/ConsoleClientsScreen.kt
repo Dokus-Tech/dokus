@@ -379,6 +379,23 @@ private fun ConsoleClientsScreenLoadingPreview(
     }
 }
 
+@Preview(name = "Console Clients Mobile", widthDp = 390, heightDp = 844)
+@Composable
+private fun ConsoleClientsScreenMobileContentPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
+) {
+    TestWrapper(parameters) {
+        ConsoleClientsScreen(
+            state = ConsoleClientsState.Content(
+                firmId = FirmId("00000000-0000-0000-0000-000000000111"),
+                clients = previewClients(),
+            ),
+            snackbarHostState = SnackbarHostState(),
+            onIntent = {},
+        )
+    }
+}
+
 @Preview(name = "Console Clients Desktop", widthDp = 1366, heightDp = 900)
 @Composable
 private fun ConsoleClientsScreenDesktopContentPreview(
@@ -396,36 +413,93 @@ private fun ConsoleClientsScreenDesktopContentPreview(
     }
 }
 
+@Preview(name = "Console Clients Empty All Desktop", widthDp = 1366, heightDp = 900)
+@Composable
+private fun ConsoleClientsScreenDesktopEmptyAllPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
+) {
+    TestWrapper(parameters) {
+        ConsoleClientsScreen(
+            state = ConsoleClientsState.Content(
+                firmId = FirmId("00000000-0000-0000-0000-000000000111"),
+                clients = emptyList(),
+            ),
+            snackbarHostState = SnackbarHostState(),
+            onIntent = {},
+        )
+    }
+}
+
+@Preview(name = "Console Clients Empty Filter Desktop", widthDp = 1366, heightDp = 900)
+@Composable
+private fun ConsoleClientsScreenDesktopEmptyFilterPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
+) {
+    TestWrapper(parameters) {
+        ConsoleClientsScreen(
+            state = ConsoleClientsState.Content(
+                firmId = FirmId("00000000-0000-0000-0000-000000000111"),
+                clients = previewClients(),
+                query = "not-found-client",
+            ),
+            snackbarHostState = SnackbarHostState(),
+            onIntent = {},
+        )
+    }
+}
+
 @Preview(name = "Console Client Documents Desktop", widthDp = 1366, heightDp = 900)
 @Composable
 private fun ConsoleClientDocumentsDesktopPreview(
     @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
 ) {
-    val docs = listOf(
-        DocumentRecordDto(
-            document = DocumentDto(
-                id = tech.dokus.domain.ids.DocumentId("00000000-0000-0000-0000-000000000041"),
-                tenantId = TenantId("00000000-0000-0000-0000-000000000001"),
-                filename = "INV-2026-0188.pdf",
-                contentType = "application/pdf",
-                sizeBytes = 123_000,
-                storageKey = "docs/1.pdf",
-                source = tech.dokus.domain.enums.DocumentSource.Upload,
-                uploadedAt = kotlinx.datetime.LocalDateTime(2026, 2, 14, 9, 0),
-            ),
-            draft = null,
-            latestIngestion = null,
-            confirmedEntity = null,
-        )
-    )
-
     TestWrapper(parameters) {
         ConsoleClientsScreen(
             state = ConsoleClientsState.Content(
                 firmId = FirmId("00000000-0000-0000-0000-000000000111"),
                 clients = previewClients(),
                 selectedClientTenantId = TenantId("00000000-0000-0000-0000-000000000001"),
-                documentsState = DokusState.success(docs),
+                documentsState = DokusState.success(previewDocumentRecords()),
+            ),
+            snackbarHostState = SnackbarHostState(),
+            onIntent = {},
+        )
+    }
+}
+
+@Preview(name = "Console Client Documents Empty Desktop", widthDp = 1366, heightDp = 900)
+@Composable
+private fun ConsoleClientDocumentsEmptyDesktopPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
+) {
+    TestWrapper(parameters) {
+        ConsoleClientsScreen(
+            state = ConsoleClientsState.Content(
+                firmId = FirmId("00000000-0000-0000-0000-000000000111"),
+                clients = previewClients(),
+                selectedClientTenantId = TenantId("00000000-0000-0000-0000-000000000001"),
+                documentsState = DokusState.success(emptyList()),
+            ),
+            snackbarHostState = SnackbarHostState(),
+            onIntent = {},
+        )
+    }
+}
+
+@Preview(name = "Console Client Documents Selected Desktop", widthDp = 1366, heightDp = 900)
+@Composable
+private fun ConsoleClientDocumentsSelectedDesktopPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
+) {
+    val documents = previewDocumentRecords()
+    TestWrapper(parameters) {
+        ConsoleClientsScreen(
+            state = ConsoleClientsState.Content(
+                firmId = FirmId("00000000-0000-0000-0000-000000000111"),
+                clients = previewClients(),
+                selectedClientTenantId = TenantId("00000000-0000-0000-0000-000000000001"),
+                documentsState = DokusState.success(documents),
+                selectedDocument = documents.first(),
             ),
             snackbarHostState = SnackbarHostState(),
             onIntent = {},
@@ -449,6 +523,39 @@ private fun ConsoleClientsScreenErrorPreview(
         )
     }
 }
+
+private fun previewDocumentRecords(): List<DocumentRecordDto> = listOf(
+    DocumentRecordDto(
+        document = DocumentDto(
+            id = tech.dokus.domain.ids.DocumentId("00000000-0000-0000-0000-000000000041"),
+            tenantId = TenantId("00000000-0000-0000-0000-000000000001"),
+            filename = "INV-2026-0188.pdf",
+            contentType = "application/pdf",
+            sizeBytes = 123_000,
+            storageKey = "docs/1.pdf",
+            source = tech.dokus.domain.enums.DocumentSource.Upload,
+            uploadedAt = kotlinx.datetime.LocalDateTime(2026, 2, 14, 9, 0),
+        ),
+        draft = null,
+        latestIngestion = null,
+        confirmedEntity = null,
+    ),
+    DocumentRecordDto(
+        document = DocumentDto(
+            id = tech.dokus.domain.ids.DocumentId("00000000-0000-0000-0000-000000000042"),
+            tenantId = TenantId("00000000-0000-0000-0000-000000000001"),
+            filename = "PUR-2026-0042.pdf",
+            contentType = "application/pdf",
+            sizeBytes = 98_000,
+            storageKey = "docs/2.pdf",
+            source = tech.dokus.domain.enums.DocumentSource.Upload,
+            uploadedAt = kotlinx.datetime.LocalDateTime(2026, 2, 15, 11, 30),
+        ),
+        draft = null,
+        latestIngestion = null,
+        confirmedEntity = null,
+    ),
+)
 
 private fun previewClients(): List<ConsoleClientSummary> {
     return listOf(

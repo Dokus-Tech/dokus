@@ -94,3 +94,55 @@ private fun ConsolePlaceholderDesktopPreview(
         )
     }
 }
+
+@Preview(name = "Console Placeholder Mobile", widthDp = 390, heightDp = 844)
+@Composable
+private fun ConsolePlaceholderMobilePreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
+) {
+    TestWrapper(parameters) {
+        ConsolePlaceholderContent(
+            title = "Activity",
+            subtitle = stringResource(Res.string.console_clients_subtitle),
+        )
+    }
+}
+
+@Preview(name = "Console Requests Desktop", widthDp = 1440, heightDp = 900)
+@Composable
+private fun ConsoleRequestsDesktopPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
+) {
+    TestWrapper(parameters) {
+        ConsolePlaceholderContent(
+            title = "Requests",
+            subtitle = stringResource(Res.string.console_clients_subtitle),
+        )
+    }
+}
+
+@Preview(name = "Console Activity Desktop", widthDp = 1440, heightDp = 900)
+@Composable
+private fun ConsoleActivityDesktopPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
+) {
+    TestWrapper(parameters) {
+        ConsolePlaceholderContent(
+            title = "Activity",
+            subtitle = stringResource(Res.string.console_clients_subtitle),
+        )
+    }
+}
+
+@Preview(name = "Console Export Desktop", widthDp = 1440, heightDp = 900)
+@Composable
+private fun ConsoleExportDesktopPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
+) {
+    TestWrapper(parameters) {
+        ConsolePlaceholderContent(
+            title = "Export",
+            subtitle = stringResource(Res.string.console_clients_subtitle),
+        )
+    }
+}
