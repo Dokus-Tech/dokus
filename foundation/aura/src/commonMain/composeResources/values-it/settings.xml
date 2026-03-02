@@ -114,6 +114,7 @@
     <string name="workspace_type_freelancer">Freelance</string>
     <string name="workspace_create_failed">Impossibile creare lo spazio di lavoro</string>
     <string name="workspace_select_failed">Impossibile selezionare lo spazio di lavoro</string>
+    <string name="workspace_bookkeeper_console">Console contabile</string>
     <string name="workspace_settings_load_failed">Impossibile caricare le impostazioni dello spazio di lavoro</string>
     <string name="workspace_company_logo">Logo aziendale</string>
     <string name="workspace_avatar_upload_failed">Impossibile caricare il logo aziendale</string>

@@ -114,6 +114,7 @@
     <string name="workspace_type_freelancer">Фрилансер</string>
     <string name="workspace_create_failed">Не удалось создать рабочее пространство</string>
     <string name="workspace_select_failed">Не удалось выбрать рабочее пространство</string>
+    <string name="workspace_bookkeeper_console">Консоль бухгалтера</string>
     <string name="workspace_settings_load_failed">Не удалось загрузить настройки рабочего пространства</string>
     <string name="workspace_company_logo">Логотип компании</string>
     <string name="workspace_avatar_upload_failed">Не удалось загрузить логотип компании</string>

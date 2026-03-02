@@ -5,6 +5,7 @@ import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.domain.asbtractions.RetryHandler
+import tech.dokus.domain.enums.UserRole
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.Tenant
@@ -39,6 +40,8 @@ sealed interface WorkspaceSelectState : MVIState, DokusState<List<Tenant>> {
         override val data: List<Tenant>,
     ) : WorkspaceSelectState, DokusState.Success<List<Tenant>> {
         val tenants: List<Tenant> get() = data
+        val hasBookkeeperConsoleAccess: Boolean
+            get() = data.any { it.role == UserRole.Accountant }
     }
 
     /**
@@ -68,6 +71,9 @@ sealed interface WorkspaceSelectIntent : MVIIntent {
 
     /** User selected a tenant from the list */
     data class SelectTenant(val tenantId: TenantId) : WorkspaceSelectIntent
+
+    /** User wants to open the Bookkeeper Console */
+    data object OpenBookkeeperConsole : WorkspaceSelectIntent
 }
 
 // ============================================================================
@@ -78,6 +84,9 @@ sealed interface WorkspaceSelectIntent : MVIIntent {
 sealed interface WorkspaceSelectAction : MVIAction {
     /** Navigate to home screen after successful tenant selection */
     data object NavigateToHome : WorkspaceSelectAction
+
+    /** Navigate to home screen with BC surface active */
+    data object NavigateToBookkeeperConsole : WorkspaceSelectAction
 
     /** Show error message when selection fails */
     data class ShowSelectionError(val error: DokusException) : WorkspaceSelectAction

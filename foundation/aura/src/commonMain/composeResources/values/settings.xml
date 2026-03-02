@@ -105,6 +105,7 @@
     <string name="workspace_type_freelancer">Freelancer</string>
     <string name="workspace_create_failed">Failed to create workspace</string>
     <string name="workspace_select_failed">Failed to select workspace</string>
+    <string name="workspace_bookkeeper_console">Bookkeeper Console</string>
     <string name="workspace_settings_load_failed">Failed to load workspace settings</string>
     <string name="workspace_company_logo">Company logo</string>
     <string name="workspace_avatar_upload_failed">Failed to upload company logo</string>

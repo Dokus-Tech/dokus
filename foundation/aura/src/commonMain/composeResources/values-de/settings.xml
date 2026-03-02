@@ -114,6 +114,7 @@
     <string name="workspace_type_freelancer">Freiberufler</string>
     <string name="workspace_create_failed">Workspace konnte nicht erstellt werden</string>
     <string name="workspace_select_failed">Workspace konnte nicht ausgewählt werden</string>
+    <string name="workspace_bookkeeper_console">Buchhalterkonsole</string>
     <string name="workspace_settings_load_failed">Workspace-Einstellungen konnten nicht geladen werden</string>
     <string name="workspace_company_logo">Firmenlogo</string>
     <string name="workspace_avatar_upload_failed">Firmenlogo konnte nicht hochgeladen werden</string>

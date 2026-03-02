@@ -44,6 +44,7 @@ fun CompanyTile(
     initial: String,
     label: String,
     avatarUrl: String? = null,
+    badge: String? = null,
     onClick: () -> Unit
 ) {
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
@@ -66,6 +67,13 @@ fun CompanyTile(
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Medium
         )
+        if (badge != null) {
+            Text(
+                text = badge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.labelSmall,
+            )
+        }
     }
 }
 

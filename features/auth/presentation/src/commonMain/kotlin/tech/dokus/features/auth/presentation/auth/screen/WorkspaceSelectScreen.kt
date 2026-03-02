@@ -32,6 +32,7 @@ internal fun WorkspaceSelectScreen(
     state: WorkspaceSelectState,
     onIntent: (WorkspaceSelectIntent) -> Unit,
     onAddTenantClick: () -> Unit,
+    onBookkeeperConsoleClick: (() -> Unit)? = null,
     triggerWarp: Boolean,
     onWarpComplete: () -> Unit,
 ) {
@@ -68,6 +69,7 @@ internal fun WorkspaceSelectScreen(
                             onIntent(WorkspaceSelectIntent.SelectTenant(tenant.id))
                         },
                         onAddTenantClick = onAddTenantClick,
+                        onBookkeeperConsoleClick = onBookkeeperConsoleClick,
                     )
                 }
             }
@@ -83,6 +85,24 @@ internal fun WorkspaceSelectScreen(
     }
 }
 
+@OptIn(kotlin.uuid.ExperimentalUuidApi::class)
+private fun previewTenant(
+    name: String,
+    role: tech.dokus.domain.enums.UserRole,
+): tech.dokus.domain.model.Tenant = tech.dokus.domain.model.Tenant(
+    id = tech.dokus.domain.ids.TenantId(kotlin.uuid.Uuid.random()),
+    type = tech.dokus.domain.enums.TenantType.Freelancer,
+    legalName = tech.dokus.domain.LegalName(name),
+    displayName = tech.dokus.domain.DisplayName(name),
+    subscription = tech.dokus.domain.enums.SubscriptionTier.Core,
+    status = tech.dokus.domain.enums.TenantStatus.Active,
+    language = tech.dokus.domain.enums.Language.En,
+    vatNumber = tech.dokus.domain.ids.VatNumber("BE0123456789"),
+    role = role,
+    createdAt = kotlinx.datetime.LocalDateTime(2025, 1, 1, 0, 0),
+    updatedAt = kotlinx.datetime.LocalDateTime(2025, 1, 1, 0, 0),
+)
+
 @androidx.compose.ui.tooling.preview.Preview
 @Composable
 private fun WorkspaceSelectScreenPreview(
@@ -92,9 +112,15 @@ private fun WorkspaceSelectScreenPreview(
 ) {
     tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
         WorkspaceSelectScreen(
-            state = WorkspaceSelectState.Content(data = emptyList()),
+            state = WorkspaceSelectState.Content(
+                data = listOf(
+                    previewTenant("Dokus Tech", tech.dokus.domain.enums.UserRole.Owner),
+                    previewTenant("Client Corp", tech.dokus.domain.enums.UserRole.Accountant),
+                ),
+            ),
             onIntent = {},
             onAddTenantClick = {},
+            onBookkeeperConsoleClick = {},
             triggerWarp = false,
             onWarpComplete = {},
         )

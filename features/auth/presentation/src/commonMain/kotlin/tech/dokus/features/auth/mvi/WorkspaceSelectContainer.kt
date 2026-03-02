@@ -39,6 +39,7 @@ internal class WorkspaceSelectContainer(
                 when (intent) {
                     is WorkspaceSelectIntent.LoadTenants -> handleLoadTenants()
                     is WorkspaceSelectIntent.SelectTenant -> handleSelectTenant(intent.tenantId)
+                    is WorkspaceSelectIntent.OpenBookkeeperConsole -> handleOpenBookkeeperConsole()
                 }
             }
         }
@@ -100,6 +101,41 @@ internal class WorkspaceSelectContainer(
                         WorkspaceSelectState.Content(data = currentTenants)
                     }
                 }
+            )
+        }
+    }
+
+    private suspend fun WorkspaceSelectCtx.handleOpenBookkeeperConsole() {
+        withState<WorkspaceSelectState.Content, _> {
+            val currentTenants = tenants
+            val firstTenant = currentTenants.firstOrNull() ?: return@withState
+
+            updateState {
+                WorkspaceSelectState.Selecting(
+                    tenants = currentTenants,
+                    selectedTenantId = firstTenant.id,
+                )
+            }
+
+            logger.d { "Opening Bookkeeper Console, selecting tenant: ${firstTenant.id}" }
+            selectTenantUseCase(firstTenant.id).fold(
+                onSuccess = {
+                    logger.i { "Tenant selected for BC: ${firstTenant.id}" }
+                    action(WorkspaceSelectAction.NavigateToBookkeeperConsole)
+                },
+                onFailure = { error ->
+                    logger.e(error) { "Failed to select tenant for BC: ${firstTenant.id}" }
+                    val exception = error.asDokusException
+                    val displayException = if (exception is DokusException.Unknown) {
+                        DokusException.WorkspaceSelectFailed
+                    } else {
+                        exception
+                    }
+                    action(WorkspaceSelectAction.ShowSelectionError(displayException))
+                    updateState {
+                        WorkspaceSelectState.Content(data = currentTenants)
+                    }
+                },
             )
         }
     }
