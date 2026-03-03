@@ -31,6 +31,10 @@ import tech.dokus.features.contacts.usecases.GetCachedContactsUseCase
 import tech.dokus.features.contacts.usecases.GetCachedContactsUseCaseImpl
 import tech.dokus.features.contacts.usecases.GetContactActivityUseCase
 import tech.dokus.features.contacts.usecases.GetContactActivityUseCaseImpl
+import tech.dokus.features.contacts.usecases.GetContactInvoiceSnapshotUseCase
+import tech.dokus.features.contacts.usecases.GetContactInvoiceSnapshotUseCaseImpl
+import tech.dokus.features.contacts.usecases.GetContactPeppolStatusUseCase
+import tech.dokus.features.contacts.usecases.GetContactPeppolStatusUseCaseImpl
 import tech.dokus.features.contacts.usecases.GetContactUseCase
 import tech.dokus.features.contacts.usecases.GetContactUseCaseImpl
 import tech.dokus.features.contacts.usecases.ListContactNotesUseCase
@@ -98,5 +102,7 @@ val contactsDomainModule = module {
 
     // Activity use cases
     single<GetContactActivityUseCase> { GetContactActivityUseCaseImpl(get()) }
+    single<GetContactInvoiceSnapshotUseCase> { GetContactInvoiceSnapshotUseCaseImpl(get()) }
+    single<GetContactPeppolStatusUseCase> { GetContactPeppolStatusUseCaseImpl(get()) }
     single<MergeContactsUseCase> { MergeContactsUseCaseImpl(get()) }
 }

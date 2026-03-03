@@ -17,6 +17,7 @@
     <string name="contacts_add_first">Add your first contact</string>
     <string name="contacts_add_first_hint">Start managing your customers and suppliers</string>
     <string name="contacts_add_contact">Add Contact</string>
+    <string name="contacts_create">Create</string>
     <string name="contacts_create_contact">Create Contact</string>
     <string name="contacts_resolve_counterparty">Resolve counterparty</string>
     <string name="contacts_resolve_counterparty_create">Create contact from document</string>
@@ -41,6 +42,12 @@
     <string name="contacts_no_notes">No notes yet</string>
     <string name="contacts_add_first_note">Add your first note</string>
     <string name="contacts_contact_info">Contact Information</string>
+    <string name="contacts_total_volume">Total Volume</string>
+    <string name="contacts_outstanding">Outstanding</string>
+    <string name="contacts_documents">Documents</string>
+    <string name="contacts_recent_documents">Recent Documents</string>
+    <string name="contacts_no_documents">No documents yet</string>
+    <string name="contacts_no_peppol">No PEPPOL</string>
     <string name="contacts_activity_summary">Activity Summary</string>
     <string name="contacts_invoices">Invoices</string>
     <string name="contacts_inbound_invoices">Inbound Invoices</string>

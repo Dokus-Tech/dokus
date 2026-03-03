@@ -4,6 +4,10 @@ package tech.dokus.features.contacts.repository
 
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.ContactNoteId
+import tech.dokus.domain.enums.DocumentDirection
+import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.PeppolStatusResponse
+import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.model.contact.ContactActivitySummary
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.ContactMergeResult
@@ -58,6 +62,18 @@ interface ContactRemoteDataSource {
     suspend fun deleteContact(contactId: ContactId): Result<Unit>
 
     // NOTE: Peppol Operations removed - PEPPOL status is in PeppolDirectoryCacheTable
+
+    suspend fun getContactPeppolStatus(
+        contactId: ContactId,
+        refresh: Boolean = false
+    ): Result<PeppolStatusResponse>
+
+    suspend fun listInvoicesByContact(
+        contactId: ContactId,
+        direction: DocumentDirection? = null,
+        limit: Int = 50,
+        offset: Int = 0
+    ): Result<PaginatedResponse<FinancialDocumentDto.InvoiceDto>>
 
     // Activity Operations
     suspend fun getContactActivity(contactId: ContactId): Result<ContactActivitySummary>

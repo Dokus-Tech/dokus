@@ -11,9 +11,12 @@ import org.jetbrains.compose.resources.stringResource
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.contacts_create
 import tech.dokus.aura.resources.contacts_create_success
 import tech.dokus.aura.resources.contacts_delete_success
+import tech.dokus.aura.resources.contacts_subtitle
 import tech.dokus.aura.resources.contacts_update_success
+import tech.dokus.aura.resources.nav_contacts
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.features.contacts.mvi.ContactsAction
 import tech.dokus.features.contacts.mvi.ContactsContainer
@@ -22,10 +25,16 @@ import tech.dokus.features.contacts.mvi.ContactsSuccess
 import tech.dokus.features.contacts.presentation.contacts.screen.ContactsScreen
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.app.network.ConnectionSnackbarEffect
+import tech.dokus.foundation.app.shell.HomeShellTopBarAction
+import tech.dokus.foundation.app.shell.HomeShellTopBarConfig
+import tech.dokus.foundation.app.shell.HomeShellTopBarMode
+import tech.dokus.foundation.app.shell.RegisterHomeShellTopBar
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.navigation.destinations.ContactsDestination
 import tech.dokus.navigation.local.LocalNavController
 import tech.dokus.navigation.navigateTo
+
+private const val HOME_ROUTE_CONTACTS = "contacts"
 
 @Composable
 internal fun ContactsRoute(
@@ -44,6 +53,40 @@ internal fun ContactsRoute(
         }
     }
     val errorMessage = pendingError?.localized
+    val contactsTitle = stringResource(Res.string.nav_contacts)
+    val contactsSubtitle = stringResource(Res.string.contacts_subtitle)
+    val createLabel = "+ ${stringResource(Res.string.contacts_create)}"
+
+    val onCreateContact = remember(navController) {
+        {
+            navController.navigateTo(ContactsDestination.CreateContact())
+        }
+    }
+
+    val topBarConfig = remember(
+        contactsTitle,
+        contactsSubtitle,
+        createLabel,
+        onCreateContact
+    ) {
+        HomeShellTopBarConfig(
+            mode = HomeShellTopBarMode.Title(
+                title = contactsTitle,
+                subtitle = contactsSubtitle
+            ),
+            actions = listOf(
+                HomeShellTopBarAction.Text(
+                    label = createLabel,
+                    onClick = onCreateContact
+                )
+            )
+        )
+    }
+
+    RegisterHomeShellTopBar(
+        route = HOME_ROUTE_CONTACTS,
+        config = topBarConfig
+    )
 
     LaunchedEffect(successMessage) {
         if (successMessage != null) {
@@ -97,6 +140,6 @@ internal fun ContactsRoute(
         onOpenContact = { contact ->
             navController.navigateTo(ContactsDestination.ContactDetails(contact.id.toString()))
         },
-        onCreateContact = { navController.navigateTo(ContactsDestination.CreateContact()) }
+        onCreateContact = onCreateContact
     )
 }

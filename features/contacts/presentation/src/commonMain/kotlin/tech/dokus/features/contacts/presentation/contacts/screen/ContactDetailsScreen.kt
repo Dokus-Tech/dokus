@@ -79,6 +79,16 @@ private fun ContactDetailsScreenContent(
         else -> DokusState.loading()
     }
 
+    val invoiceSnapshotState = when (state) {
+        is ContactDetailsState.Content -> state.invoiceSnapshotState
+        else -> DokusState.loading()
+    }
+
+    val peppolStatusState = when (state) {
+        is ContactDetailsState.Content -> state.peppolStatusState
+        else -> DokusState.loading()
+    }
+
     val notesState: DokusState<List<ContactNoteDto>> = when (state) {
         is ContactDetailsState.Content -> state.notesState
         else -> DokusState.loading()
@@ -88,19 +98,22 @@ private fun ContactDetailsScreenContent(
         is ContactDetailsState.Content -> state.enrichmentSuggestions
         else -> emptyList()
     }
+    val isEmbeddedDesktop = isDesktop && !showBackButton
 
     Scaffold(
         topBar = {
-            ContactDetailsTopBar(
-                contactState = contactState,
-                showBackButton = showBackButton,
-                hasEnrichmentSuggestions = enrichmentSuggestions.isNotEmpty(),
-                onBackClick = onBackClick,
-                onEditClick = onEditClick,
-                onEnrichmentClick = { onIntent(ContactDetailsIntent.ShowEnrichmentPanel) },
-                onMergeClick = { onIntent(ContactDetailsIntent.ShowMergeDialog) },
-                isOnline = isOnline
-            )
+            if (!isEmbeddedDesktop) {
+                ContactDetailsTopBar(
+                    contactState = contactState,
+                    showBackButton = showBackButton,
+                    hasEnrichmentSuggestions = enrichmentSuggestions.isNotEmpty(),
+                    onBackClick = onBackClick,
+                    onEditClick = onEditClick,
+                    onEnrichmentClick = { onIntent(ContactDetailsIntent.ShowEnrichmentPanel) },
+                    onMergeClick = { onIntent(ContactDetailsIntent.ShowMergeDialog) },
+                    isOnline = isOnline
+                )
+            }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background
@@ -108,9 +121,16 @@ private fun ContactDetailsScreenContent(
         ContactDetailsContent(
             contactState = contactState,
             activityState = activityState,
+            invoiceSnapshotState = invoiceSnapshotState,
+            peppolStatusState = peppolStatusState,
             notesState = notesState,
             isOnline = isOnline,
             contentPadding = contentPadding,
+            showInlineActions = isEmbeddedDesktop,
+            hasEnrichmentSuggestions = enrichmentSuggestions.isNotEmpty(),
+            onEditContact = onEditClick,
+            onMergeContact = { onIntent(ContactDetailsIntent.ShowMergeDialog) },
+            onShowEnrichment = { onIntent(ContactDetailsIntent.ShowEnrichmentPanel) },
             onAddNote = {
                 if (isDesktop) {
                     onIntent(ContactDetailsIntent.ShowNotesSidePanel)

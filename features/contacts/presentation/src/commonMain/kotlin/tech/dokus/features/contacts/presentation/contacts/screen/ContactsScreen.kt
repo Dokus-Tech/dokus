@@ -19,46 +19,51 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import kotlinx.datetime.LocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.contacts_select_contact
-import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.Name
+import tech.dokus.domain.model.PeppolStatusResponse
 import tech.dokus.domain.model.common.PaginationState
+import tech.dokus.domain.model.contact.ContactActivitySummary
 import tech.dokus.domain.model.contact.ContactDto
-import tech.dokus.features.contacts.mvi.ContactActiveFilter
-import tech.dokus.features.contacts.mvi.ContactRoleFilter
-import tech.dokus.features.contacts.mvi.ContactSortOption
+import tech.dokus.domain.model.contact.ContactNoteDto
 import tech.dokus.features.contacts.mvi.ContactsIntent
 import tech.dokus.features.contacts.mvi.ContactsState
-import tech.dokus.features.contacts.presentation.contacts.components.ContactsFiltersMobile
 import tech.dokus.features.contacts.presentation.contacts.components.ContactsHeaderActions
 import tech.dokus.features.contacts.presentation.contacts.components.ContactsList
 import tech.dokus.features.contacts.presentation.contacts.route.ContactDetailsRoute
+import tech.dokus.features.contacts.usecases.ContactInvoiceSnapshot
+import tech.dokus.foundation.app.network.LocalServerConnection
+import tech.dokus.foundation.app.network.ServerConnectionState
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.local.LocalScreenSize
+import tech.dokus.foundation.aura.local.ScreenSize
 import tech.dokus.foundation.aura.local.isLarge
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.TenantId
 
-// UI dimension constants
 private val ContentPaddingHorizontal = 16.dp
 private val SpacingMedium = 12.dp
 private val SpacingDefault = 16.dp
-private val MasterPaneWidth = 240.dp
+private val MasterPaneWidth = 360.dp
 private val DividerWidth = 1.dp
 private val BottomPadding = 16.dp
 
 /**
- * The main contacts screen showing a list of contacts with master-detail layout.
- *
- * Desktop layout:
- * - Left panel (40%): Contacts list and actions
- * - Right panel (60%): Contact details panel (updates when a contact is selected)
- *
- * Mobile layout:
- * - Full-screen contacts list
- * - Tapping a contact navigates to the ContactDetailsScreen
+ * Main contacts screen with desktop master-detail and mobile list behavior.
  */
 @Composable
 internal fun ContactsScreen(
@@ -67,95 +72,69 @@ internal fun ContactsScreen(
     onIntent: (ContactsIntent) -> Unit,
     onSelectContact: (ContactDto) -> Unit,
     onOpenContact: (ContactDto) -> Unit,
-    onCreateContact: () -> Unit
+    onCreateContact: () -> Unit,
+    detailContent: @Composable (ContactId) -> Unit = { contactId ->
+        ContactDetailsRoute(
+            contactId = contactId.toString(),
+            showBackButton = false
+        )
+    }
 ) {
     val isLargeScreen = LocalScreenSize.isLarge
-
-    // Extract state values from Content state (with defaults for Loading/Error)
     val contentState = state as? ContactsState.Content
     val selectedContactId = contentState?.selectedContactId
-    val sortOption = contentState?.sortOption ?: ContactSortOption.Default
-    val roleFilter = contentState?.roleFilter ?: ContactRoleFilter.All
-    val activeFilter = contentState?.activeFilter ?: ContactActiveFilter.All
+    val contacts = contentState?.contacts?.data.orEmpty()
+
+    LaunchedEffect(isLargeScreen, selectedContactId, contacts.firstOrNull()?.id) {
+        if (!isLargeScreen) return@LaunchedEffect
+        if (selectedContactId != null) return@LaunchedEffect
+        val first = contacts.firstOrNull() ?: return@LaunchedEffect
+        onSelectContact(first)
+    }
+
+    val contactsState: DokusState<PaginationState<ContactDto>> = when (state) {
+        is ContactsState.Loading -> DokusState.loading()
+        is ContactsState.Content -> DokusState.success(state.contacts)
+        is ContactsState.Error -> DokusState.error(state.exception, state.retryHandler)
+    }
 
     Scaffold(
         topBar = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = ContentPaddingHorizontal, vertical = 8.dp),
-                horizontalArrangement = Arrangement.End,
-            ) {
-                if (!isLargeScreen) {
-                    ContactsHeaderActions(
-                        onAddContactClick = {
-                            onCreateContact()
-                        }
-                    )
+            if (!isLargeScreen) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = ContentPaddingHorizontal, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.End,
+                ) {
+                    ContactsHeaderActions(onAddContactClick = onCreateContact)
                 }
             }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background
     ) { contentPadding ->
-        // Convert state to DokusState for ContactsList
-        val contactsState: DokusState<PaginationState<ContactDto>> =
-            when (state) {
-                is ContactsState.Loading -> DokusState.loading()
-                is ContactsState.Content -> DokusState.success(state.contacts)
-                is ContactsState.Error -> {
-                    DokusState.error(state.exception, state.retryHandler)
-                }
-            }
-
         if (isLargeScreen) {
-            // Desktop: Master-detail layout with compact search + add
             DesktopContactsContent(
                 contactsState = contactsState,
                 selectedContactId = selectedContactId,
                 contentPadding = contentPadding,
-                onContactClick = { contact ->
-                    onSelectContact(contact)
-                },
+                onContactClick = onSelectContact,
                 onLoadMore = { onIntent(ContactsIntent.LoadMore) },
-                onAddContactClick = {
-                    onCreateContact()
-                },
+                detailContent = detailContent
             )
         } else {
-            // Mobile: Full-screen list
             MobileContactsContent(
                 contactsState = contactsState,
-                sortOption = sortOption,
-                roleFilter = roleFilter,
-                activeFilter = activeFilter,
                 contentPadding = contentPadding,
-                onContactClick = { contact ->
-                    onOpenContact(contact)
-                },
+                onContactClick = onOpenContact,
                 onLoadMore = { onIntent(ContactsIntent.LoadMore) },
-                onAddContactClick = {
-                    // Mobile: Navigate to full-screen form
-                    onCreateContact()
-                },
-                onSortOptionSelected = { onIntent(ContactsIntent.UpdateSortOption(it)) },
-                onRoleFilterSelected = { onIntent(ContactsIntent.UpdateRoleFilter(it)) },
-                onActiveFilterSelected = {
-                    onIntent(
-                        ContactsIntent.UpdateActiveFilter(
-                            it
-                        )
-                    )
-                }
+                onAddContactClick = onCreateContact
             )
         }
     }
 }
 
-/**
- * Desktop layout with master-detail panels.
- * Shows contact list on left (40%) and either contact details, create form, or placeholder on right (60%).
- */
 @Composable
 private fun DesktopContactsContent(
     contactsState: DokusState<PaginationState<ContactDto>>,
@@ -163,14 +142,13 @@ private fun DesktopContactsContent(
     contentPadding: PaddingValues,
     onContactClick: (ContactDto) -> Unit,
     onLoadMore: () -> Unit,
-    onAddContactClick: () -> Unit,
+    detailContent: @Composable (ContactId) -> Unit,
 ) {
     Row(
         modifier = Modifier
             .fillMaxSize()
             .padding(contentPadding)
     ) {
-        // Left panel: Contacts list with compact search + add (240dp)
         Column(
             modifier = Modifier
                 .width(MasterPaneWidth)
@@ -179,23 +157,11 @@ private fun DesktopContactsContent(
         ) {
             Spacer(modifier = Modifier.height(SpacingDefault))
 
-            // Header actions
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.End,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                ContactsHeaderActions(onAddContactClick = onAddContactClick)
-            }
-
-            Spacer(modifier = Modifier.height(SpacingMedium))
-
-            // Contacts list
             ContactsList(
                 state = contactsState,
                 onContactClick = onContactClick,
                 onLoadMore = onLoadMore,
-                onAddContactClick = onAddContactClick,
+                onAddContactClick = null,
                 contentPadding = PaddingValues(bottom = BottomPadding),
                 modifier = Modifier.weight(1f),
                 selectedContactId = selectedContactId,
@@ -203,7 +169,6 @@ private fun DesktopContactsContent(
             )
         }
 
-        // Vertical divider
         HorizontalDivider(
             modifier = Modifier
                 .fillMaxHeight()
@@ -211,42 +176,28 @@ private fun DesktopContactsContent(
             color = MaterialTheme.colorScheme.outlineVariant
         )
 
-        // Right panel: Contact details or placeholder (flex)
         Box(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxHeight()
+                .padding(horizontal = ContentPaddingHorizontal)
         ) {
             if (selectedContactId != null) {
-                // Show contact details
-                ContactDetailsRoute(
-                    contactId = selectedContactId.toString(),
-                    showBackButton = false
-                )
+                detailContent(selectedContactId)
             } else {
-                // No contact selected placeholder
                 NoContactSelectedPlaceholder()
             }
         }
     }
 }
 
-/**
- * Mobile layout with full-screen contacts list.
- */
 @Composable
 private fun MobileContactsContent(
     contactsState: DokusState<PaginationState<ContactDto>>,
-    sortOption: ContactSortOption,
-    roleFilter: ContactRoleFilter,
-    activeFilter: ContactActiveFilter,
     contentPadding: PaddingValues,
     onContactClick: (ContactDto) -> Unit,
     onLoadMore: () -> Unit,
     onAddContactClick: () -> Unit,
-    onSortOptionSelected: (ContactSortOption) -> Unit,
-    onRoleFilterSelected: (ContactRoleFilter) -> Unit,
-    onActiveFilterSelected: (ContactActiveFilter) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -254,19 +205,7 @@ private fun MobileContactsContent(
             .padding(contentPadding)
             .padding(horizontal = ContentPaddingHorizontal)
     ) {
-        // Filter controls
-        Spacer(modifier = Modifier.height(SpacingDefault))
-        ContactsFiltersMobile(
-            selectedSortOption = sortOption,
-            selectedRoleFilter = roleFilter,
-            selectedActiveFilter = activeFilter,
-            onSortOptionSelected = onSortOptionSelected,
-            onRoleFilterSelected = onRoleFilterSelected,
-            onActiveFilterSelected = onActiveFilterSelected
-        )
         Spacer(modifier = Modifier.height(SpacingMedium))
-
-        // Contacts list
         ContactsList(
             state = contactsState,
             onContactClick = onContactClick,
@@ -278,9 +217,6 @@ private fun MobileContactsContent(
     }
 }
 
-/**
- * Placeholder when no contact is selected in the detail panel.
- */
 @Composable
 private fun NoContactSelectedPlaceholder(
     modifier: Modifier = Modifier
@@ -297,4 +233,141 @@ private fun NoContactSelectedPlaceholder(
     }
 }
 
-// Preview skipped: Flaky IllegalStateException in parallel Roborazzi runs
+@Preview(widthDp = 1024, heightDp = 640)
+@Composable
+private fun ContactsDesktopMasterDetailPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    val now = LocalDateTime(2026, 3, 3, 10, 0)
+    val contactId = ContactId.generate()
+    val contacts = desktopPreviewContacts(now, contactId)
+
+    TestWrapper(parameters) {
+        ServerConnectionPreviewProvider {
+            CompositionLocalProvider(LocalScreenSize provides ScreenSize.LARGE) {
+                ContactsScreen(
+                    state = ContactsState.Content(
+                        contacts = PaginationState(
+                            data = contacts,
+                            currentPage = 1,
+                            hasMorePages = true
+                        ),
+                        selectedContactId = contactId
+                    ),
+                    snackbarHostState = remember { SnackbarHostState() },
+                    onIntent = {},
+                    onSelectContact = {},
+                    onOpenContact = {},
+                    onCreateContact = {},
+                    detailContent = {
+                        ContactDetailsScreen(
+                            state = tech.dokus.features.contacts.mvi.ContactDetailsState.Content(
+                                contactId = contactId,
+                                contact = contacts.first(),
+                                activityState = DokusState.success(
+                                    ContactActivitySummary(contactId = contactId)
+                                ),
+                                invoiceSnapshotState = DokusState.success(
+                                    ContactInvoiceSnapshot(
+                                        documentsCount = 2,
+                                        totalVolume = tech.dokus.domain.Money(53801),
+                                        outstanding = tech.dokus.domain.Money(24901),
+                                        recentDocuments = emptyList()
+                                    )
+                                ),
+                                peppolStatusState = DokusState.success(
+                                    PeppolStatusResponse(
+                                        status = PeppolStatusResponse.STATUS_FOUND,
+                                        refreshed = false
+                                    )
+                                ),
+                                notesState = DokusState.success(emptyList<ContactNoteDto>())
+                            ),
+                            showBackButton = false,
+                            isOnline = true,
+                            snackbarHostState = remember { SnackbarHostState() },
+                            onIntent = {},
+                            onBackClick = {},
+                            onEditClick = {}
+                        )
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ServerConnectionPreviewProvider(content: @Composable () -> Unit) {
+    CompositionLocalProvider(
+        LocalServerConnection provides ServerConnectionState(
+            isConnected = true,
+            lastCheckTime = null,
+            onRetry = {}
+        )
+    ) {
+        content()
+    }
+}
+
+@Preview
+@Composable
+private fun ContactsMobileListPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    val now = LocalDateTime(2026, 3, 3, 10, 0)
+    val contacts = desktopPreviewContacts(now, ContactId.generate())
+    TestWrapper(parameters) {
+        ServerConnectionPreviewProvider {
+            ContactsScreen(
+                state = ContactsState.Content(
+                    contacts = PaginationState(
+                        data = contacts,
+                        currentPage = 1,
+                        hasMorePages = false
+                    )
+                ),
+                snackbarHostState = remember { SnackbarHostState() },
+                onIntent = {},
+                onSelectContact = {},
+                onOpenContact = {},
+                onCreateContact = {}
+            )
+        }
+    }
+}
+
+private fun desktopPreviewContacts(now: LocalDateTime, selectedId: ContactId): List<ContactDto> {
+    return listOf(
+        ContactDto(
+            id = selectedId,
+            tenantId = TenantId.generate(),
+            name = Name("Coolblue België NV"),
+            vatNumber = tech.dokus.domain.ids.VatNumber("BE0867686774"),
+            invoiceCount = 2,
+            derivedRoles = tech.dokus.domain.model.contact.DerivedContactRoles(isVendor = true),
+            createdAt = now,
+            updatedAt = now
+        ),
+        ContactDto(
+            id = ContactId.generate(),
+            tenantId = TenantId.generate(),
+            name = Name("KBC Bank NV"),
+            vatNumber = tech.dokus.domain.ids.VatNumber("BE0462920226"),
+            invoiceCount = 4,
+            derivedRoles = tech.dokus.domain.model.contact.DerivedContactRoles(isVendor = true),
+            createdAt = now,
+            updatedAt = now
+        ),
+        ContactDto(
+            id = ContactId.generate(),
+            tenantId = TenantId.generate(),
+            name = Name("SRL Accounting & Tax"),
+            vatNumber = tech.dokus.domain.ids.VatNumber("BE0123456789"),
+            invoiceCount = 1,
+            derivedRoles = tech.dokus.domain.model.contact.DerivedContactRoles(isVendor = true),
+            createdAt = now,
+            updatedAt = now
+        )
+    )
+}
