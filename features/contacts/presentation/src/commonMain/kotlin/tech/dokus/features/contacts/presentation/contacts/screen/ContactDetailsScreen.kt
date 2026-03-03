@@ -15,7 +15,6 @@ import kotlinx.datetime.LocalDateTime
 import tech.dokus.domain.Name
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.contact.ContactActivitySummary
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.ContactNoteDto
 import tech.dokus.features.contacts.mvi.ContactDetailsIntent
@@ -74,11 +73,6 @@ private fun ContactDetailsScreenContent(
         is ContactDetailsState.Error -> DokusState.error(state.exception, state.retryHandler)
     }
 
-    val activityState: DokusState<ContactActivitySummary> = when (state) {
-        is ContactDetailsState.Content -> state.activityState
-        else -> DokusState.loading()
-    }
-
     val invoiceSnapshotState = when (state) {
         is ContactDetailsState.Content -> state.invoiceSnapshotState
         else -> DokusState.loading()
@@ -120,7 +114,6 @@ private fun ContactDetailsScreenContent(
     ) { contentPadding ->
         ContactDetailsContent(
             contactState = contactState,
-            activityState = activityState,
             invoiceSnapshotState = invoiceSnapshotState,
             peppolStatusState = peppolStatusState,
             notesState = notesState,

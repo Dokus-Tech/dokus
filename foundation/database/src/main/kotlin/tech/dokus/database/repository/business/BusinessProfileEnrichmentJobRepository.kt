@@ -19,6 +19,7 @@ import tech.dokus.domain.enums.BusinessProfileEnrichmentJobStatus
 import tech.dokus.domain.enums.BusinessProfileSubjectType
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.foundation.backend.database.dbQuery
+import tech.dokus.foundation.backend.utils.runSuspendCatching
 import java.util.UUID
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -52,7 +53,7 @@ class BusinessProfileEnrichmentJobRepository {
         subjectType: BusinessProfileSubjectType,
         subjectId: Uuid,
         triggerReason: String,
-    ): Result<Unit> = runCatching {
+    ): Result<Unit> = runSuspendCatching {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         dbQuery {
             BusinessProfileEnrichmentJobsTable.upsert(
@@ -87,7 +88,7 @@ class BusinessProfileEnrichmentJobRepository {
         }
     }
 
-    suspend fun claimDue(now: LocalDateTime, limit: Int): Result<List<BusinessProfileEnrichmentJob>> = runCatching {
+    suspend fun claimDue(now: LocalDateTime, limit: Int): Result<List<BusinessProfileEnrichmentJob>> = runSuspendCatching {
         dbQuery {
             val candidates = BusinessProfileEnrichmentJobsTable
                 .selectAll()
@@ -122,7 +123,7 @@ class BusinessProfileEnrichmentJobRepository {
         }
     }
 
-    suspend fun markCompleted(jobId: Uuid): Result<Boolean> = runCatching {
+    suspend fun markCompleted(jobId: Uuid): Result<Boolean> = runSuspendCatching {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         dbQuery {
             BusinessProfileEnrichmentJobsTable.update({
@@ -136,7 +137,7 @@ class BusinessProfileEnrichmentJobRepository {
         }
     }
 
-    suspend fun markCompletedWithError(jobId: Uuid, error: String): Result<Boolean> = runCatching {
+    suspend fun markCompletedWithError(jobId: Uuid, error: String): Result<Boolean> = runSuspendCatching {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         dbQuery {
             BusinessProfileEnrichmentJobsTable.update({
@@ -156,7 +157,7 @@ class BusinessProfileEnrichmentJobRepository {
         attemptCount: Int,
         nextAttemptAt: LocalDateTime,
         error: String
-    ): Result<Boolean> = runCatching {
+    ): Result<Boolean> = runSuspendCatching {
         dbQuery {
             BusinessProfileEnrichmentJobsTable.update({
                 (BusinessProfileEnrichmentJobsTable.id eq jobId.toJavaUuid()) and
@@ -176,7 +177,7 @@ class BusinessProfileEnrichmentJobRepository {
         staleBefore: LocalDateTime,
         retryAt: LocalDateTime,
         reason: String = "Recovered stale processing lease"
-    ): Result<Int> = runCatching {
+    ): Result<Int> = runSuspendCatching {
         dbQuery {
             BusinessProfileEnrichmentJobsTable.update({
                 (BusinessProfileEnrichmentJobsTable.status eq BusinessProfileEnrichmentJobStatus.Processing) and

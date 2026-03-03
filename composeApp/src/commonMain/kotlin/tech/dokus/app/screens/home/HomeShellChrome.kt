@@ -60,6 +60,8 @@ import tech.dokus.domain.model.Tenant
 import tech.dokus.foundation.app.shell.HomeShellTopBarAction
 import tech.dokus.foundation.app.shell.HomeShellTopBarConfig
 import tech.dokus.foundation.app.shell.HomeShellTopBarMode
+import tech.dokus.foundation.app.network.rememberAuthenticatedImageLoader
+import tech.dokus.foundation.app.network.rememberResolvedApiUrl
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.AvatarShape
 import tech.dokus.foundation.aura.components.AvatarSize
@@ -150,6 +152,7 @@ private fun DesktopWorkspaceArea(
     val isHovered by interactionSource.collectIsHoveredAsState()
     val tenant = (tenantState as? DokusState.Success<Tenant>)?.data
     val isLoading = tenantState is DokusState.Loading
+    val imageLoader = rememberAuthenticatedImageLoader()
 
     Row(
         modifier = modifier
@@ -186,12 +189,14 @@ private fun DesktopWorkspaceArea(
             val workspaceName = tenant.displayName.value
             val workspaceVat = tenant.vatNumber.formatted
             val initial = tenant.displayName.value.trim().firstOrNull()?.uppercaseChar()?.toString() ?: "D"
+            val avatarUrl = rememberResolvedApiUrl(tenant.avatar?.small)
 
             CompanyAvatarImage(
-                avatarUrl = tenant.avatar?.small,
+                avatarUrl = avatarUrl,
                 initial = initial,
                 size = AvatarSize.ExtraSmall,
-                shape = AvatarShape.RoundedSquare
+                shape = AvatarShape.RoundedSquare,
+                imageLoader = imageLoader
             )
             Column(
                 modifier = Modifier.weight(1f),

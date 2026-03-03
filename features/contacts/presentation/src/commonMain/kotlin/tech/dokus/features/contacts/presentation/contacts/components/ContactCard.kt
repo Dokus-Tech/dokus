@@ -15,12 +15,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil3.ImageLoader
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.contacts_doc_count_plural
 import tech.dokus.aura.resources.contacts_doc_count_single
+import tech.dokus.aura.resources.contacts_no_docs
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.DerivedContactRoles
+import tech.dokus.foundation.app.network.rememberResolvedApiUrl
 import tech.dokus.foundation.aura.components.AvatarShape
 import tech.dokus.foundation.aura.components.AvatarSize
 import tech.dokus.foundation.aura.components.CompanyAvatarImage
@@ -37,10 +40,12 @@ import tech.dokus.foundation.aura.style.textMuted
 @Composable
 internal fun ContactCard(
     contact: ContactDto,
+    imageLoader: ImageLoader? = null,
     modifier: Modifier = Modifier
 ) {
     val initials = remember(contact.name.value) { extractInitials(contact.name.value) }
     val uiRole = remember(contact.derivedRoles) { mapToUiRole(contact.derivedRoles) }
+    val avatarUrl = rememberResolvedApiUrl(contact.avatar?.small)
     val docCount = contact.invoiceCount + contact.inboundInvoiceCount + contact.expenseCount
     val docLabel = if (docCount == 1L) {
         stringResource(Res.string.contacts_doc_count_single)
@@ -57,10 +62,11 @@ internal fun ContactCard(
             horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium),
         ) {
             CompanyAvatarImage(
-                avatarUrl = contact.avatar?.small,
+                avatarUrl = avatarUrl,
                 initial = initials,
                 size = AvatarSize.Medium,
-                shape = AvatarShape.RoundedSquare
+                shape = AvatarShape.RoundedSquare,
+                imageLoader = imageLoader
             )
 
             Column(
@@ -101,7 +107,7 @@ internal fun ContactCard(
                 verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 Text(
-                    text = if (docCount > 0) "$docCount $docLabel" else "No docs",
+                    text = if (docCount > 0) "$docCount $docLabel" else stringResource(Res.string.contacts_no_docs),
                     style = MaterialTheme.typography.labelSmall.copy(
                         fontFamily = MaterialTheme.typography.labelLarge.fontFamily,
                         fontSize = 9.sp,

@@ -1,9 +1,39 @@
 package tech.dokus.backend.services.business
 
+import kotlinx.serialization.Serializable
 import tech.dokus.domain.enums.BusinessProfileEvidenceCheck
 import tech.dokus.domain.enums.BusinessProfileVerificationState
 import java.net.URI
 import java.util.Locale
+
+/** Domains that are aggregators/social sites, not real company websites. Shared between evidence gate and worker. */
+val BLOCKED_AGGREGATOR_DOMAINS = listOf(
+    "linkedin.com",
+    "facebook.com",
+    "instagram.com",
+    "x.com",
+    "twitter.com",
+    "wikipedia.org",
+    "yellowpages",
+    "yelp.",
+    "trustpilot.",
+    "crunchbase.com",
+    "opencorporates.com",
+    "kompass.com",
+    "bloomberg.com",
+    "dnb.com",
+)
+
+fun isAggregatorOrSocialHost(host: String): Boolean =
+    host.isBlank() || BLOCKED_AGGREGATOR_DOMAINS.any { token -> host.contains(token) }
+
+@Serializable
+data class EvidenceCheckDecision(
+    val check: BusinessProfileEvidenceCheck,
+    val passed: Boolean,
+    val score: Int,
+    val details: String? = null,
+)
 
 enum class EvidenceGateOutcome {
     AUTO_PERSIST,
@@ -230,24 +260,5 @@ class BusinessProfileEvidenceGate {
         return candidateCount >= 2 || (candidateCount == 1 && isTop1 && hosts.distinct().size <= 2)
     }
 
-    private fun isNonAggregator(host: String): Boolean {
-        if (host.isBlank()) return false
-        val blocked = listOf(
-            "linkedin.com",
-            "facebook.com",
-            "instagram.com",
-            "x.com",
-            "twitter.com",
-            "wikipedia.org",
-            "yellowpages",
-            "yelp.",
-            "trustpilot.",
-            "crunchbase.com",
-            "opencorporates.com",
-            "kompass.com",
-            "bloomberg.com",
-            "dnb.com",
-        )
-        return blocked.none { token -> host.contains(token) }
-    }
+    private fun isNonAggregator(host: String): Boolean = !isAggregatorOrSocialHost(host)
 }

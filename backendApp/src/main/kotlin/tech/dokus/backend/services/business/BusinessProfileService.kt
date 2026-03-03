@@ -5,7 +5,6 @@ package tech.dokus.backend.services.business
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import kotlinx.serialization.Serializable
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.business.BusinessProfileEnrichmentJobRepository
 import tech.dokus.database.repository.business.BusinessProfileRecord
@@ -21,8 +20,8 @@ import tech.dokus.domain.model.UpdateBusinessProfileRequest
 import tech.dokus.domain.model.common.Thumbnail
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.utils.json
-import tech.dokus.foundation.backend.storage.AvatarStorageService
 import tech.dokus.foundation.backend.utils.loggerFor
+import tech.dokus.foundation.backend.utils.runSuspendCatching
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -43,9 +42,14 @@ class BusinessProfileService(
     private val profileRepository: BusinessProfileRepository,
     private val jobRepository: BusinessProfileEnrichmentJobRepository,
     private val tenantRepository: TenantRepository,
-    private val avatarStorageService: AvatarStorageService,
 ) {
     private val logger = loggerFor()
+
+    companion object {
+        private const val AVATAR_SIZE_SMALL = "small"
+        private const val AVATAR_SIZE_MEDIUM = "medium"
+        private const val AVATAR_SIZE_LARGE = "large"
+    }
 
     suspend fun enqueueTenant(tenantId: TenantId, triggerReason: String): Result<Unit> {
         return jobRepository.enqueueOrReset(
@@ -87,65 +91,77 @@ class BusinessProfileService(
             subjectType = BusinessProfileSubjectType.Contact,
             subjectIds = contacts.map { it.id.value }
         )
-        val avatars = mutableMapOf<Uuid, Thumbnail?>()
-        for ((subjectId, profile) in byId) {
-            avatars[subjectId] = profile.logoStorageKey?.let { storageKey ->
-                runCatching { avatarStorageService.getAvatarUrls(storageKey) }.getOrNull()
-            }
-        }
-
         return contacts.map { contact ->
             val profile = byId[contact.id.value]
             val activities = profile?.businessActivitiesJson
                 ?.let { decodeActivities(it) }
                 .orEmpty()
+            val avatar = when {
+                profile == null -> null
+                profile.logoStorageKey.isNullOrBlank() -> {
+                    logger.debug(
+                        "No avatar in contact projection for tenant={}, contact={}, reason=no_logo_key",
+                        tenantId,
+                        contact.id
+                    )
+                    null
+                }
+                else -> buildContactAvatarThumbnail(contact.id.value)
+            }
             contact.copy(
                 websiteUrl = profile?.websiteUrl,
                 businessSummary = profile?.businessSummary,
                 businessActivities = activities,
                 businessProfileVerified = profile?.verificationState == BusinessProfileVerificationState.Verified,
-                avatar = avatars[contact.id.value]
+                avatar = avatar
             )
         }
     }
+
+    suspend fun getLogoStorageKey(
+        tenantId: TenantId,
+        subjectType: BusinessProfileSubjectType,
+        subjectId: Uuid
+    ): String? {
+        return profileRepository.getBySubject(tenantId, subjectType, subjectId)?.logoStorageKey
+    }
+
+    fun buildContactAvatarThumbnail(contactId: Uuid): Thumbnail = Thumbnail(
+        small = "/api/v1/contacts/$contactId/avatar/$AVATAR_SIZE_SMALL.webp",
+        medium = "/api/v1/contacts/$contactId/avatar/$AVATAR_SIZE_MEDIUM.webp",
+        large = "/api/v1/contacts/$contactId/avatar/$AVATAR_SIZE_LARGE.webp"
+    )
+
+    fun buildTenantAvatarThumbnail(): Thumbnail = Thumbnail(
+        small = "/api/v1/tenants/avatar/$AVATAR_SIZE_SMALL.webp",
+        medium = "/api/v1/tenants/avatar/$AVATAR_SIZE_MEDIUM.webp",
+        large = "/api/v1/tenants/avatar/$AVATAR_SIZE_LARGE.webp"
+    )
 
     suspend fun updateTenantProfile(
         tenantId: TenantId,
         request: UpdateBusinessProfileRequest
     ): BusinessProfileUpdateResponse {
-        val subjectType = BusinessProfileSubjectType.Tenant
-        val subjectId = tenantId.value
-        val existing = profileRepository.getBySubject(tenantId, subjectType, subjectId)
-            ?: defaultRecord(tenantId, subjectType, subjectId)
-        val activities = request.businessActivities?.let { normalizeActivities(it) }
-
-        val updated = existing.copy(
-            websiteUrl = request.websiteUrl ?: existing.websiteUrl,
-            businessSummary = request.businessSummary ?: existing.businessSummary,
-            businessActivitiesJson = activities?.let { encodeActivities(it) } ?: existing.businessActivitiesJson,
-            verificationState = BusinessProfileVerificationState.Verified,
-            websitePinned = request.websiteUrl?.let { true } ?: existing.websitePinned,
-            summaryPinned = request.businessSummary?.let { true } ?: existing.summaryPinned,
-            activitiesPinned = request.businessActivities?.let { true } ?: existing.activitiesPinned,
-            lastRunAt = Clock.System.now().toLocalDateTime(TimeZone.UTC),
-            lastErrorCode = null,
-            lastErrorMessage = null,
-        )
-
-        profileRepository.upsert(updated)
-        if (!updated.websiteUrl.isNullOrBlank()) {
-            tenantRepository.updateWebsiteUrl(tenantId, updated.websiteUrl)
+        val response = updateProfile(tenantId, BusinessProfileSubjectType.Tenant, tenantId.value, request)
+        if (!request.websiteUrl.isNullOrBlank()) {
+            tenantRepository.updateWebsiteUrl(tenantId, request.websiteUrl)
         }
-        return updated.toResponse()
+        return response
     }
 
     suspend fun updateContactProfile(
         tenantId: TenantId,
         contactId: ContactId,
         request: UpdateBusinessProfileRequest
+    ): BusinessProfileUpdateResponse =
+        updateProfile(tenantId, BusinessProfileSubjectType.Contact, contactId.value, request)
+
+    private suspend fun updateProfile(
+        tenantId: TenantId,
+        subjectType: BusinessProfileSubjectType,
+        subjectId: Uuid,
+        request: UpdateBusinessProfileRequest,
     ): BusinessProfileUpdateResponse {
-        val subjectType = BusinessProfileSubjectType.Contact
-        val subjectId = contactId.value
         val existing = profileRepository.getBySubject(tenantId, subjectType, subjectId)
             ?: defaultRecord(tenantId, subjectType, subjectId)
         val activities = request.businessActivities?.let { normalizeActivities(it) }
@@ -264,11 +280,34 @@ class BusinessProfileService(
             skip -> existing.businessActivitiesJson
             else -> normalizedActivities?.let { encodeActivities(it) }
         }
-        val mergedLogoStorageKey = when {
-            existing.logoPinned -> existing.logoStorageKey
-            !existing.logoStorageKey.isNullOrBlank() -> existing.logoStorageKey // never overwrite existing logo
-            verificationState != BusinessProfileVerificationState.Verified -> existing.logoStorageKey // suggested never applies logo
-            else -> logoStorageKey
+        val mergedLogoStorageKey: String?
+        val logoReason: String?
+        when {
+            existing.logoPinned -> {
+                mergedLogoStorageKey = existing.logoStorageKey
+                logoReason = if (subjectType == BusinessProfileSubjectType.Tenant) "tenant_logo_pinned" else "logo_pinned"
+            }
+            !existing.logoStorageKey.isNullOrBlank() -> {
+                mergedLogoStorageKey = existing.logoStorageKey
+                logoReason = "existing_logo_preserved"
+            }
+            skip -> {
+                mergedLogoStorageKey = existing.logoStorageKey
+                logoReason = "no_logo_key"
+            }
+            else -> {
+                mergedLogoStorageKey = logoStorageKey
+                logoReason = if (logoStorageKey == null) "no_logo_key" else null
+            }
+        }
+        if (logoReason != null) {
+            logger.debug(
+                "Skipped logo update for tenant={}, subjectType={}, subjectId={}, reason={}",
+                tenantId,
+                subjectType,
+                subjectId,
+                logoReason
+            )
         }
 
         val updated = existing.copy(
@@ -290,7 +329,7 @@ class BusinessProfileService(
             !existing.websitePinned &&
             !mergedWebsite.isNullOrBlank()
         ) {
-            runCatching { tenantRepository.updateWebsiteUrl(tenantId, mergedWebsite) }
+            runSuspendCatching { tenantRepository.updateWebsiteUrl(tenantId, mergedWebsite) }
                 .onFailure { logger.error("Failed to update canonical tenant website for {}", tenantId, it) }
         }
 
@@ -307,8 +346,19 @@ class BusinessProfileService(
             subjectType = subjectType,
             subjectId = subjectId
         ) ?: return null
-        val avatar = profile.logoStorageKey?.let { storageKey ->
-            runCatching { avatarStorageService.getAvatarUrls(storageKey) }.getOrNull()
+        val avatar = if (profile.logoStorageKey.isNullOrBlank()) {
+            logger.debug(
+                "No avatar in business profile projection for tenant={}, subjectType={}, subjectId={}, reason=no_logo_key",
+                tenantId,
+                subjectType,
+                subjectId
+            )
+            null
+        } else {
+            when (subjectType) {
+                BusinessProfileSubjectType.Contact -> buildContactAvatarThumbnail(subjectId)
+                BusinessProfileSubjectType.Tenant -> buildTenantAvatarThumbnail()
+            }
         }
         return BusinessProfileProjection(
             websiteUrl = profile.websiteUrl,
@@ -378,11 +428,3 @@ class BusinessProfileService(
         json.decodeFromString<List<String>>(serialized)
     }.getOrDefault(emptyList())
 }
-
-@Serializable
-data class EvidenceCheckDecision(
-    val check: tech.dokus.domain.enums.BusinessProfileEvidenceCheck,
-    val passed: Boolean,
-    val score: Int,
-    val details: String? = null,
-)

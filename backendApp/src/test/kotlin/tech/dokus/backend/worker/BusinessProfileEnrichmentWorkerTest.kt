@@ -35,6 +35,7 @@ import tech.dokus.domain.enums.TenantType
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.Address
 import tech.dokus.domain.model.Tenant
+import tech.dokus.domain.model.common.Thumbnail
 import tech.dokus.features.ai.agents.BusinessProfileEnrichmentAgent
 import tech.dokus.features.ai.models.BusinessDiscoveryStatus
 import tech.dokus.features.ai.models.BusinessProfileDiscoveryResult
@@ -242,6 +243,101 @@ class BusinessProfileEnrichmentWorkerTest {
             )
         }
         coVerify(exactly = 0) { avatarStorageService.uploadAvatar(any(), any(), any()) }
+    }
+
+    @Test
+    fun `suggested enrichment uploads and persists logo when available`() = runBlocking {
+        val job = sampleJob(subjectType = BusinessProfileSubjectType.Tenant, attemptCount = 0)
+        coEvery { jobRepository.recoverStaleProcessing(any(), any(), any()) } returns Result.success(0)
+        coEvery { jobRepository.claimDue(any(), any()) } returns Result.success(listOf(job))
+        coEvery { jobRepository.markCompleted(job.id) } returns Result.success(true)
+
+        coEvery { tenantRepository.findById(job.tenantId) } returns sampleTenant(job.tenantId)
+        coEvery { addressRepository.getCompanyAddress(job.tenantId) } returns sampleAddress(job.tenantId)
+        coEvery { tenantRepository.getAvatarStorageKey(job.tenantId) } returns null
+
+        coEvery { enrichmentAgent.enrich(any()) } returns BusinessProfileDiscoveryResult(
+            status = BusinessDiscoveryStatus.Found,
+            candidateWebsiteUrl = "https://acme.example",
+            businessSummary = "Acme summary",
+            activities = listOf("Logistics"),
+            logoUrl = "https://acme.example/logo.png",
+            confidence = 0.9
+        )
+        coEvery { websiteProbe.crawl("https://acme.example", config.maxPages) } returns BusinessWebsiteCrawlResult(
+            pages = listOf(
+                CrawledBusinessPage(
+                    url = "https://acme.example",
+                    textContent = "Acme",
+                    structuredDataSnippets = emptyList(),
+                    emails = emptyList(),
+                    phones = emptyList(),
+                    links = emptyList(),
+                    logoCandidates = listOf("https://acme.example/logo.png")
+                )
+            ),
+            blockedByRobots = false
+        )
+        coEvery { evidenceGate.evaluate(any()) } returns BusinessProfileEvidenceResult(
+            outcome = EvidenceGateOutcome.PERSIST_AS_SUGGESTED,
+            verificationState = BusinessProfileVerificationState.Suggested,
+            evidenceScore = 45,
+            checks = emptyList()
+        )
+        coEvery { profileRepository.getBySubject(job.tenantId, job.subjectType, job.subjectId) } returns null
+        coEvery { websiteProbe.downloadImage("https://acme.example/logo.png") } returns
+            tech.dokus.backend.services.business.DownloadedBusinessImage(
+                bytes = byteArrayOf(1, 2, 3),
+                contentType = "image/png"
+            )
+        coEvery {
+            avatarStorageService.uploadAvatar(job.tenantId, any(), "image/png")
+        } returns AvatarStorageService.AvatarUploadResult(
+            storageKeyPrefix = "avatars/new-logo",
+            avatar = Thumbnail(small = "s", medium = "m", large = "l"),
+            sizeBytes = 3
+        )
+        coEvery { tenantRepository.updateAvatarStorageKey(job.tenantId, "avatars/new-logo") } returns Unit
+        coEvery {
+            businessProfileService.applyEnrichment(
+                tenantId = any(),
+                subjectType = any(),
+                subjectId = any(),
+                verificationState = any(),
+                evidenceScore = any(),
+                evidenceChecksJson = any(),
+                websiteUrl = any(),
+                businessSummary = any(),
+                businessActivities = any(),
+                logoStorageKey = any(),
+                lastErrorCode = any(),
+                lastErrorMessage = any()
+            )
+        } returns BusinessProfileRecord(
+            tenantId = job.tenantId,
+            subjectType = job.subjectType,
+            subjectId = job.subjectId
+        )
+
+        val worker = createWorker()
+        worker.processBatchForTest()
+
+        coVerify(exactly = 1) {
+            businessProfileService.applyEnrichment(
+                tenantId = job.tenantId,
+                subjectType = job.subjectType,
+                subjectId = job.subjectId,
+                verificationState = BusinessProfileVerificationState.Suggested,
+                evidenceScore = 45,
+                evidenceChecksJson = any(),
+                websiteUrl = "https://acme.example",
+                businessSummary = "Acme summary",
+                businessActivities = listOf("Logistics"),
+                logoStorageKey = "avatars/new-logo",
+                lastErrorCode = null,
+                lastErrorMessage = null
+            )
+        }
     }
 
     @Test

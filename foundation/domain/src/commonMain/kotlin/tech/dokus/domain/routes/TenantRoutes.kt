@@ -49,6 +49,14 @@ class Tenants {
     class Avatar(val parent: Tenants = Tenants())
 
     /**
+     * GET /api/v1/tenants/avatar/{size}.webp
+     * Stream tenant avatar image by size.
+     */
+    @Serializable
+    @Resource("avatar/{size}.webp")
+    class AvatarImage(val parent: Tenants = Tenants(), val size: String)
+
+    /**
      * GET /api/v1/tenants/invoice-number-preview
      * Preview the next invoice number without consuming it.
      */

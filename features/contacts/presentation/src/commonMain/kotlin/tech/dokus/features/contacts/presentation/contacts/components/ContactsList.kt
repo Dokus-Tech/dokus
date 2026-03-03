@@ -44,6 +44,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil3.ImageLoader
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import org.jetbrains.compose.resources.stringResource
@@ -58,6 +59,8 @@ import tech.dokus.aura.resources.contacts_vendor
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.foundation.app.network.rememberAuthenticatedImageLoader
+import tech.dokus.foundation.app.network.rememberResolvedApiUrl
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.AvatarShape
 import tech.dokus.foundation.aura.components.AvatarSize
@@ -209,6 +212,7 @@ private fun ContactsListContent(
     selectedContactId: ContactId? = null,
     isDesktop: Boolean = false,
 ) {
+    val imageLoader = rememberAuthenticatedImageLoader()
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         state = listState,
@@ -224,10 +228,12 @@ private fun ContactsListContent(
                     contact = contact,
                     isSelected = contact.id == selectedContactId,
                     onClick = { onContactClick(contact) },
+                    imageLoader = imageLoader,
                 )
             } else {
                 ContactCard(
                     contact = contact,
+                    imageLoader = imageLoader,
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { onContactClick(contact) }
@@ -256,10 +262,12 @@ private fun ContactListItem(
     contact: ContactDto,
     isSelected: Boolean,
     onClick: () -> Unit,
+    imageLoader: ImageLoader,
     modifier: Modifier = Modifier,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isHovered by interactionSource.collectIsHoveredAsState()
+    val avatarUrl = rememberResolvedApiUrl(contact.avatar?.small)
 
     val surfaceHover = MaterialTheme.colorScheme.surfaceHover
     val borderAmberColor = MaterialTheme.colorScheme.borderAmber
@@ -297,10 +305,11 @@ private fun ContactListItem(
         horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium),
     ) {
         CompanyAvatarImage(
-            avatarUrl = contact.avatar?.small,
+            avatarUrl = avatarUrl,
             initial = initials,
             size = AvatarSize.Small,
-            shape = AvatarShape.RoundedSquare
+            shape = AvatarShape.RoundedSquare,
+            imageLoader = imageLoader
         )
 
         Column(

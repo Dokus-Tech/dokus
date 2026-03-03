@@ -16,7 +16,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import tech.dokus.domain.Money
 import tech.dokus.domain.model.PeppolStatusResponse
-import tech.dokus.domain.model.contact.ContactActivitySummary
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.ContactNoteDto
 import tech.dokus.features.contacts.usecases.ContactInvoiceSnapshot
@@ -29,7 +28,6 @@ private val SectionSpacing = 16.dp
 @Composable
 internal fun ContactDetailsContent(
     contactState: DokusState<ContactDto>,
-    activityState: DokusState<ContactActivitySummary>,
     invoiceSnapshotState: DokusState<ContactInvoiceSnapshot>,
     peppolStatusState: DokusState<PeppolStatusResponse>,
     notesState: DokusState<List<ContactNoteDto>>,
@@ -44,9 +42,6 @@ internal fun ContactDetailsContent(
     onEditNote: (ContactNoteDto) -> Unit,
     onDeleteNote: (ContactNoteDto) -> Unit
 ) {
-    // Kept for merge-route data consistency; section intentionally hidden in v16 layout.
-    activityState
-
     when (contactState) {
         is DokusState.Error -> {
             Box(
@@ -131,9 +126,6 @@ private fun ContactDetailsContentPreview(
                     createdAt = now,
                     updatedAt = now
                 )
-            ),
-            activityState = DokusState.success(
-                ContactActivitySummary(contactId = contactId, invoiceCount = 5)
             ),
             invoiceSnapshotState = DokusState.success(
                 ContactInvoiceSnapshot(

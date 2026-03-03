@@ -37,6 +37,8 @@ import tech.dokus.aura.resources.contacts_total_volume
 import tech.dokus.domain.model.PeppolStatusResponse
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.features.contacts.usecases.ContactInvoiceSnapshot
+import tech.dokus.foundation.app.network.rememberAuthenticatedImageLoader
+import tech.dokus.foundation.app.network.rememberResolvedApiUrl
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.AvatarShape
 import tech.dokus.foundation.aura.components.AvatarSize
@@ -66,6 +68,7 @@ internal fun ContactHeroSection(
     onMergeContact: () -> Unit,
     onShowEnrichment: () -> Unit,
 ) {
+    val imageLoader = rememberAuthenticatedImageLoader()
     DokusCardSurface(accent = true) {
         when (contactState) {
             is DokusState.Loading, is DokusState.Idle -> {
@@ -84,6 +87,7 @@ internal fun ContactHeroSection(
                 val contact = contactState.data
                 val initials = remember(contact.name.value) { extractInitials(contact.name.value) }
                 val uiRole = remember(contact.derivedRoles) { mapToUiRole(contact.derivedRoles) }
+                val avatarUrl = rememberResolvedApiUrl(contact.avatar?.medium ?: contact.avatar?.small)
 
                 Row(
                     modifier = Modifier
@@ -93,10 +97,11 @@ internal fun ContactHeroSection(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     CompanyAvatarImage(
-                        avatarUrl = contact.avatar?.medium ?: contact.avatar?.small,
+                        avatarUrl = avatarUrl,
                         initial = initials,
                         size = AvatarSize.Large,
-                        shape = AvatarShape.RoundedSquare
+                        shape = AvatarShape.RoundedSquare,
+                        imageLoader = imageLoader
                     )
 
                     Column(

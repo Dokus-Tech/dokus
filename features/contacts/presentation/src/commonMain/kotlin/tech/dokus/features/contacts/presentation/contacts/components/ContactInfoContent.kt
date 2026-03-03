@@ -40,6 +40,8 @@ import tech.dokus.aura.resources.contacts_phone
 import tech.dokus.aura.resources.contacts_tags
 import tech.dokus.aura.resources.contacts_vat_number
 import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.foundation.app.network.rememberAuthenticatedImageLoader
+import tech.dokus.foundation.app.network.rememberResolvedApiUrl
 import tech.dokus.foundation.aura.components.AvatarShape
 import tech.dokus.foundation.aura.components.AvatarSize
 import tech.dokus.foundation.aura.components.CompanyAvatarImage
@@ -49,6 +51,8 @@ import tech.dokus.foundation.aura.components.CompanyAvatarImage
 internal fun ContactInfoContent(
     contact: ContactDto
 ) {
+    val imageLoader = rememberAuthenticatedImageLoader()
+    val avatarUrl = rememberResolvedApiUrl(contact.avatar?.medium ?: contact.avatar?.small)
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
@@ -57,10 +61,11 @@ internal fun ContactInfoContent(
             verticalAlignment = Alignment.CenterVertically
         ) {
             CompanyAvatarImage(
-                avatarUrl = contact.avatar?.medium ?: contact.avatar?.small,
+                avatarUrl = avatarUrl,
                 initial = contact.name.value.take(1),
                 size = AvatarSize.Medium,
-                shape = AvatarShape.RoundedSquare
+                shape = AvatarShape.RoundedSquare,
+                imageLoader = imageLoader
             )
 
             Spacer(modifier = Modifier.width(12.dp))

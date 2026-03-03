@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import coil3.ImageLoader
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.workspace_add
@@ -35,6 +36,7 @@ import tech.dokus.foundation.aura.tooling.TestWrapper
  * @param initial The initial letter to display as fallback (typically first letter of company name)
  * @param label The company name to display below the avatar
  * @param avatarUrl Optional URL of the company avatar image
+ * @param imageLoader Optional authenticated image loader
  * @param onClick Click handler for the tile
  * @param modifier Modifier to be applied to the tile
  */
@@ -44,6 +46,7 @@ fun CompanyTile(
     initial: String,
     label: String,
     avatarUrl: String? = null,
+    imageLoader: ImageLoader? = null,
     onClick: () -> Unit
 ) {
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
@@ -55,6 +58,7 @@ fun CompanyTile(
                 initial = initial,
                 size = AvatarSize.Medium,
                 shape = AvatarShape.RoundedSquare,
+                imageLoader = imageLoader,
                 modifier = Modifier.size(Constraints.AvatarSize.tile)
             )
         }

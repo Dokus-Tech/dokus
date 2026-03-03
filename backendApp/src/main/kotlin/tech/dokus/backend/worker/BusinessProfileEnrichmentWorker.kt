@@ -13,15 +13,17 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
-import kotlinx.coroutines.sync.Semaphore
-import kotlinx.coroutines.sync.withPermit
+import tech.dokus.backend.services.business.BusinessProfileEvidenceResult
+import tech.dokus.backend.services.business.EvidenceGateOutcome
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import tech.dokus.backend.services.business.BusinessProfileEvidenceGate
 import tech.dokus.backend.services.business.BusinessProfileEvidenceInput
-import tech.dokus.backend.services.business.BusinessWebsiteProbe
 import tech.dokus.backend.services.business.BusinessProfileService
+import tech.dokus.backend.services.business.BusinessWebsiteCrawlResult
+import tech.dokus.backend.services.business.BusinessWebsiteProbe
+import tech.dokus.backend.services.business.isAggregatorOrSocialHost
 import tech.dokus.database.repository.auth.AddressRepository
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.business.BusinessProfileEnrichmentJob
@@ -39,7 +41,9 @@ import tech.dokus.features.ai.models.BusinessProfileEnrichmentInput
 import tech.dokus.foundation.backend.config.BusinessProfileEnrichmentConfig
 import tech.dokus.foundation.backend.storage.AvatarStorageService
 import tech.dokus.foundation.backend.utils.loggerFor
+import tech.dokus.foundation.backend.utils.runSuspendCatching
 import java.net.URI
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
@@ -71,22 +75,26 @@ class BusinessProfileEnrichmentWorker(
     private val evidenceGate: BusinessProfileEvidenceGate,
 ) {
     private val logger = loggerFor()
-    private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+    private var scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     private var pollingJob: Job? = null
-    private var running = false
+    private val running = AtomicBoolean(false)
 
     fun start() {
         if (!config.enabled) {
             logger.info("Business profile enrichment worker disabled by config")
             return
         }
-        if (running) {
+        if (config.serperApiKey.isBlank()) {
+            logger.warn("Business profile enrichment worker disabled: serperApiKey is not configured")
+            return
+        }
+        if (!running.compareAndSet(false, true)) {
             logger.warn("Business profile enrichment worker already running")
             return
         }
-        running = true
+        scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
         pollingJob = scope.launch {
-            while (isActive && running) {
+            while (isActive && running.get()) {
                 try {
                     processBatch()
                 } catch (e: CancellationException) {
@@ -106,10 +114,10 @@ class BusinessProfileEnrichmentWorker(
     }
 
     fun stop() {
-        if (!running) return
-        running = false
+        if (!running.compareAndSet(true, false)) return
         pollingJob?.cancel()
         pollingJob = null
+        scope.coroutineContext[Job]?.cancel()
         logger.info("Stopped business profile enrichment worker")
     }
 
@@ -135,30 +143,22 @@ class BusinessProfileEnrichmentWorker(
         }
         logger.info("Processing {} business profile enrichment job(s)", jobs.size)
 
-        val concurrency = config.batchSize.coerceAtLeast(1)
-        val semaphore = Semaphore(concurrency)
         supervisorScope {
-            jobs.map { job ->
-                async {
-                    semaphore.withPermit {
-                        processSingleJob(job)
-                    }
-                }
-            }.awaitAll()
+            jobs.map { job -> async { processSingleJob(job) } }.awaitAll()
         }
     }
 
     internal suspend fun processBatchForTest() {
-        running = true
+        running.set(true)
         try {
             processBatch()
         } finally {
-            running = false
+            running.set(false)
         }
     }
 
     private suspend fun processSingleJob(job: BusinessProfileEnrichmentJob) {
-        runCatching {
+        runSuspendCatching {
             val context = loadSubjectContext(job) ?: run {
                 jobRepository.markCompletedWithError(job.id, "Subject not found")
                 return
@@ -189,17 +189,12 @@ class BusinessProfileEnrichmentWorker(
                 )
             }
 
-            val evidenceResult = if (discovery.status == BusinessDiscoveryStatus.Found &&
-                !candidateWebsite.isNullOrBlank()
-            ) {
-                val crawl = websiteProbe.crawl(
-                    startUrl = candidateWebsite,
-                    maxPages = config.maxPages
-                )
-                val combinedText = crawl.pages.joinToString("\n") { it.textContent }
-                val structured = crawl.pages.flatMap { it.structuredDataSnippets }
+            val evidence: BusinessProfileEvidenceResult
+            val crawl: BusinessWebsiteCrawlResult?
 
-                evidenceGate.evaluate(
+            if (discovery.status == BusinessDiscoveryStatus.Found && !candidateWebsite.isNullOrBlank()) {
+                crawl = websiteProbe.crawl(startUrl = candidateWebsite, maxPages = config.maxPages)
+                evidence = evidenceGate.evaluate(
                     BusinessProfileEvidenceInput(
                         companyName = context.name,
                         companyVatNumber = context.vatNumber,
@@ -211,30 +206,20 @@ class BusinessProfileEnrichmentWorker(
                         candidateWebsiteUrl = candidateWebsite,
                         llmConfidence = discovery.confidence,
                         searchResultUrls = discovery.searchResultUrls,
-                        crawledText = combinedText,
-                        structuredDataSnippets = structured
+                        crawledText = crawl.pages.joinToString("\n") { it.textContent },
+                        structuredDataSnippets = crawl.pages.flatMap { it.structuredDataSnippets }
                     )
-                ) to crawl
+                )
             } else {
-                evidenceGate.evaluate(
-                    BusinessProfileEvidenceInput(
-                        companyName = context.name,
-                        companyVatNumber = context.vatNumber,
-                        companyCountry = context.country,
-                        companyCity = context.city,
-                        companyPostalCode = context.postalCode,
-                        companyEmail = context.email,
-                        companyPhone = context.phone,
-                        candidateWebsiteUrl = "https://invalid.local",
-                        llmConfidence = 0.0,
-                        searchResultUrls = emptyList(),
-                        crawledText = "",
-                        structuredDataSnippets = emptyList()
-                    )
-                ) to null
+                crawl = null
+                evidence = BusinessProfileEvidenceResult(
+                    outcome = EvidenceGateOutcome.SKIP,
+                    verificationState = BusinessProfileVerificationState.Unset,
+                    evidenceScore = 0,
+                    checks = emptyList()
+                )
             }
 
-            val (evidence, crawl) = evidenceResult
             val checksJson = json.encodeToString(evidence.checks)
 
             val shouldSkip = evidence.verificationState == BusinessProfileVerificationState.Unset
@@ -244,10 +229,18 @@ class BusinessProfileEnrichmentWorker(
             val lastErrorCode = if (shouldSkip) "LOW_EVIDENCE" else null
             val lastErrorMessage = if (shouldSkip) "Evidence score below threshold" else null
 
-            val logoStorageKey = if (!shouldSkip && evidence.verificationState == BusinessProfileVerificationState.Verified) {
+            val shouldAttemptLogo = !shouldSkip && evidence.verificationState != BusinessProfileVerificationState.Unset
+            val logoStorageKey = if (shouldAttemptLogo) {
                 resolveLogoStorageKey(job, discovery.logoUrl, crawl?.pages.orEmpty().flatMap { it.logoCandidates })
             } else {
                 null
+            }
+            if (evidence.verificationState == BusinessProfileVerificationState.Suggested && !logoStorageKey.isNullOrBlank()) {
+                logger.info(
+                    "Applied discovered logo for suggested business profile subjectType={}, subjectId={}",
+                    job.subjectType,
+                    job.subjectId
+                )
             }
 
             businessProfileService.applyEnrichment(
@@ -299,7 +292,7 @@ class BusinessProfileEnrichmentWorker(
             ?: return null
 
         val image = websiteProbe.downloadImage(candidateUrl) ?: return null
-        val upload = runCatching {
+        val upload = runSuspendCatching {
             avatarStorageService.uploadAvatar(job.tenantId, image.bytes, image.contentType)
         }.getOrElse { error ->
             logger.warn("Failed to upload discovered logo for {}: {}", job.subjectId, error.message)
@@ -307,7 +300,7 @@ class BusinessProfileEnrichmentWorker(
         }
 
         if (job.subjectType == BusinessProfileSubjectType.Tenant) {
-            runCatching { tenantRepository.updateAvatarStorageKey(job.tenantId, upload.storageKeyPrefix) }
+            runSuspendCatching { tenantRepository.updateAvatarStorageKey(job.tenantId, upload.storageKeyPrefix) }
                 .onFailure { logger.warn("Failed to apply discovered tenant logo for {}: {}", job.tenantId, it.message) }
         }
         return upload.storageKeyPrefix
@@ -381,22 +374,6 @@ class BusinessProfileEnrichmentWorker(
 
     private fun isAggregatorOrSocialUrl(url: String): Boolean {
         val host = runCatching { URI(url).host?.lowercase() }.getOrNull()?.removePrefix("www.") ?: return true
-        val blocked = listOf(
-            "linkedin.com",
-            "facebook.com",
-            "instagram.com",
-            "x.com",
-            "twitter.com",
-            "wikipedia.org",
-            "yellowpages",
-            "yelp.",
-            "trustpilot.",
-            "crunchbase.com",
-            "opencorporates.com",
-            "kompass.com",
-            "bloomberg.com",
-            "dnb.com",
-        )
-        return blocked.any { token -> host.contains(token) }
+        return isAggregatorOrSocialHost(host)
     }
 }

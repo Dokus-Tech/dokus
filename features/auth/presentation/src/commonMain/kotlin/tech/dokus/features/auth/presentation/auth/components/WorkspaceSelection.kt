@@ -19,6 +19,8 @@ import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.workspace_select_title
 import tech.dokus.domain.model.Tenant
+import tech.dokus.foundation.app.network.rememberAuthenticatedImageLoader
+import tech.dokus.foundation.app.network.rememberResolvedApiUrl
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.DokusLoader
@@ -60,6 +62,7 @@ private fun StateDrivenContent(
     onTenantClick: (Tenant) -> Unit,
     onAddTenantClick: () -> Unit,
 ) {
+    val imageLoader = rememberAuthenticatedImageLoader()
     when (state) {
         is DokusState.Success -> {
             val tenants = state.data
@@ -73,11 +76,13 @@ private fun StateDrivenContent(
                 maxItemsInEachRow = Int.MAX_VALUE,
             ) {
                 tenants.forEach { tenant ->
+                    val avatarUrl = rememberResolvedApiUrl(tenant.avatar?.small)
                     CompanyTile(
                         modifier = Modifier.widthInWorkspaceItem(),
                         initial = tenant.displayName.initialOrEmpty,
                         label = tenant.displayName.value,
-                        avatarUrl = tenant.avatar?.small,
+                        avatarUrl = avatarUrl,
+                        imageLoader = imageLoader,
                     ) {
                         onTenantClick(tenant)
                     }

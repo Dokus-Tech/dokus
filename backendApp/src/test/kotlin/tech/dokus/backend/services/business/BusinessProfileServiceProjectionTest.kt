@@ -23,10 +23,8 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.Tenant
-import tech.dokus.domain.model.common.Thumbnail
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.utils.json
-import tech.dokus.foundation.backend.storage.AvatarStorageService
 import kotlinx.datetime.LocalDateTime
 import kotlin.uuid.Uuid
 
@@ -34,13 +32,11 @@ class BusinessProfileServiceProjectionTest {
     private val profileRepository = mockk<BusinessProfileRepository>()
     private val jobRepository = mockk<BusinessProfileEnrichmentJobRepository>(relaxed = true)
     private val tenantRepository = mockk<TenantRepository>(relaxed = true)
-    private val avatarStorageService = mockk<AvatarStorageService>()
 
     private val service = BusinessProfileService(
         profileRepository = profileRepository,
         jobRepository = jobRepository,
-        tenantRepository = tenantRepository,
-        avatarStorageService = avatarStorageService
+        tenantRepository = tenantRepository
     )
 
     @Test
@@ -108,17 +104,14 @@ class BusinessProfileServiceProjectionTest {
                 subjectIds = listOf(contactId.value)
             )
         } returns mapOf(contactId.value to profile)
-        coEvery { avatarStorageService.getAvatarUrls("logo/contact-beta") } returns Thumbnail(
-            small = "s",
-            medium = "m",
-            large = "l"
-        )
 
         val projected = service.projectContacts(tenantId, listOf(contact)).single()
         assertEquals("https://beta.example", projected.websiteUrl)
         assertEquals("Beta summary", projected.businessSummary)
         assertEquals(listOf("consulting"), projected.businessActivities)
         assertEquals(true, projected.businessProfileVerified)
-        assertEquals("s", projected.avatar?.small)
+        assertEquals("/api/v1/contacts/${contactId.value}/avatar/small.webp", projected.avatar?.small)
+        assertEquals("/api/v1/contacts/${contactId.value}/avatar/medium.webp", projected.avatar?.medium)
+        assertEquals("/api/v1/contacts/${contactId.value}/avatar/large.webp", projected.avatar?.large)
     }
 }

@@ -9,7 +9,9 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import tech.dokus.foundation.backend.config.BusinessProfileEnrichmentConfig
+import tech.dokus.foundation.backend.utils.runSuspendCatching
 import java.net.URI
+import java.util.concurrent.ConcurrentHashMap
 
 private const val ProbeUserAgent = "DokusBusinessProfileBot/1.0 (+https://dokus.io)"
 private const val MaxHtmlChars = 200_000
@@ -53,7 +55,7 @@ class BusinessWebsiteProbe(
     private val httpClient: HttpClient,
     private val config: BusinessProfileEnrichmentConfig,
 ) {
-    private val robotsCache = mutableMapOf<String, RobotsTxtPolicy>()
+    private val robotsCache = ConcurrentHashMap<String, RobotsTxtPolicy>()
 
     suspend fun crawl(startUrl: String, maxPages: Int = config.maxPages): BusinessWebsiteCrawlResult {
         val normalizedStart = normalizeUrl(startUrl)
@@ -93,7 +95,7 @@ class BusinessWebsiteProbe(
 
     suspend fun downloadImage(url: String): DownloadedBusinessImage? {
         val normalized = normalizeUrl(url) ?: return null
-        return runCatching {
+        return runSuspendCatching {
             val response = httpClient.get(normalized) {
                 header(HttpHeaders.UserAgent, ProbeUserAgent)
             }
@@ -110,14 +112,14 @@ class BusinessWebsiteProbe(
         val uri = runCatching { URI(url) }.getOrNull() ?: return null
         val host = uri.host ?: return null
 
-        return runCatching {
+        return runSuspendCatching {
             val response = httpClient.get(url) {
                 header(HttpHeaders.UserAgent, ProbeUserAgent)
             }
-            if (!response.status.isSuccess()) return@runCatching null
+            if (!response.status.isSuccess()) return@runSuspendCatching null
 
             val contentType = response.contentType()?.toString()?.lowercase()
-            if (contentType != null && "text/html" !in contentType) return@runCatching null
+            if (contentType != null && "text/html" !in contentType) return@runSuspendCatching null
 
             val html = response.bodyAsText().take(MaxHtmlChars)
             val cleanedText = StripScriptStyleRegex.replace(html, " ")
@@ -200,9 +202,9 @@ class BusinessWebsiteProbe(
     }
 
     private suspend fun loadRobots(robotsUrl: String): RobotsTxtPolicy {
-        return runCatching {
+        return runSuspendCatching {
             val response = httpClient.get(robotsUrl) { header(HttpHeaders.UserAgent, ProbeUserAgent) }
-            if (!response.status.isSuccess()) return@runCatching RobotsTxtPolicy.ALLOW_ALL
+            if (!response.status.isSuccess()) return@runSuspendCatching RobotsTxtPolicy.ALLOW_ALL
             RobotsTxtParser.parse(response.bodyAsText())
         }.getOrElse { RobotsTxtPolicy.ALLOW_ALL }
     }

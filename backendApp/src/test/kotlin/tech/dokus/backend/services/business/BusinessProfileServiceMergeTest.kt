@@ -15,20 +15,17 @@ import tech.dokus.database.repository.business.BusinessProfileRepository
 import tech.dokus.domain.enums.BusinessProfileSubjectType
 import tech.dokus.domain.enums.BusinessProfileVerificationState
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.foundation.backend.storage.AvatarStorageService
 import kotlin.uuid.Uuid
 
 class BusinessProfileServiceMergeTest {
     private val profileRepository = mockk<BusinessProfileRepository>()
     private val jobRepository = mockk<BusinessProfileEnrichmentJobRepository>()
     private val tenantRepository = mockk<TenantRepository>(relaxed = true)
-    private val avatarStorageService = mockk<AvatarStorageService>(relaxed = true)
 
     private val service = BusinessProfileService(
         profileRepository = profileRepository,
         jobRepository = jobRepository,
-        tenantRepository = tenantRepository,
-        avatarStorageService = avatarStorageService
+        tenantRepository = tenantRepository
     )
 
     @Test
@@ -68,7 +65,7 @@ class BusinessProfileServiceMergeTest {
     }
 
     @Test
-    fun `suggested state never auto applies logo`() = kotlinx.coroutines.runBlocking {
+    fun `suggested state applies logo when no existing logo and not pinned`() = kotlinx.coroutines.runBlocking {
         val tenantId = TenantId.generate()
         val subjectId = Uuid.random()
         val existing = BusinessProfileRecord(
@@ -99,6 +96,42 @@ class BusinessProfileServiceMergeTest {
             lastErrorMessage = null
         )
 
-        assertEquals(null, captured.captured.logoStorageKey)
+        assertEquals("auto-logo", captured.captured.logoStorageKey)
+    }
+
+    @Test
+    fun `pinned logo is preserved during suggested enrichment`() = kotlinx.coroutines.runBlocking {
+        val tenantId = TenantId.generate()
+        val subjectId = Uuid.random()
+        val existing = BusinessProfileRecord(
+            tenantId = tenantId,
+            subjectType = BusinessProfileSubjectType.Contact,
+            subjectId = subjectId,
+            logoStorageKey = "existing-logo",
+            logoPinned = true
+        )
+        val captured = slot<BusinessProfileRecord>()
+
+        coEvery {
+            profileRepository.getBySubject(tenantId, BusinessProfileSubjectType.Contact, subjectId)
+        } returns existing
+        coJustRun { profileRepository.upsert(capture(captured)) }
+
+        service.applyEnrichment(
+            tenantId = tenantId,
+            subjectType = BusinessProfileSubjectType.Contact,
+            subjectId = subjectId,
+            verificationState = BusinessProfileVerificationState.Suggested,
+            evidenceScore = 42,
+            evidenceChecksJson = "[]",
+            websiteUrl = null,
+            businessSummary = null,
+            businessActivities = null,
+            logoStorageKey = "new-logo",
+            lastErrorCode = null,
+            lastErrorMessage = null
+        )
+
+        assertEquals("existing-logo", captured.captured.logoStorageKey)
     }
 }

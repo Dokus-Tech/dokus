@@ -120,6 +120,14 @@ class Contacts(
         class BusinessProfilePins(val parent: Id)
 
         /**
+         * GET /api/v1/contacts/{id}/avatar/{size}.webp
+         * Stream a contact avatar image by size.
+         */
+        @Serializable
+        @Resource("avatar/{size}.webp")
+        class Avatar(val parent: Id, val size: String)
+
+        /**
          * GET/POST /api/v1/contacts/{id}/notes
          * GET - List notes for contact
          * POST - Create new note

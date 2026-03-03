@@ -27,6 +27,7 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.common_unknown
 import tech.dokus.aura.resources.contacts_address
 import tech.dokus.aura.resources.contacts_email
+import tech.dokus.aura.resources.contacts_invoice
 import tech.dokus.aura.resources.contacts_no_documents
 import tech.dokus.aura.resources.contacts_payment_terms
 import tech.dokus.aura.resources.contacts_recent_documents
@@ -219,7 +220,7 @@ private fun RecentDocumentRow(document: ContactRecentInvoice) {
             modifier = Modifier.width(52.dp)
         )
         Text(
-            text = "Invoice",
+            text = stringResource(Res.string.contacts_invoice),
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.weight(1f)
         )
@@ -257,20 +258,10 @@ private fun formatAddress(contact: ContactDto): String {
 }
 
 private fun formatMonthDay(monthNumber: Int, day: Int): String {
-    val month = when (monthNumber) {
-        1 -> "Jan"
-        2 -> "Feb"
-        3 -> "Mar"
-        4 -> "Apr"
-        5 -> "May"
-        6 -> "Jun"
-        7 -> "Jul"
-        8 -> "Aug"
-        9 -> "Sep"
-        10 -> "Oct"
-        11 -> "Nov"
-        else -> "Dec"
-    }
+    val month = kotlinx.datetime.Month(monthNumber).name
+        .take(3)
+        .lowercase()
+        .replaceFirstChar { it.uppercase() }
     return "$month $day"
 }
 

@@ -29,7 +29,6 @@ import tech.dokus.domain.model.common.Thumbnail
 import tech.dokus.domain.routes.Tenants
 import tech.dokus.foundation.backend.security.authenticateJwt
 import tech.dokus.foundation.backend.security.dokusPrincipal
-import tech.dokus.foundation.backend.storage.AvatarStorageService
 import tech.dokus.foundation.backend.utils.loggerFor
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -46,7 +45,6 @@ internal fun Route.tenantRoutes() {
     val tenantRepository by inject<TenantRepository>()
     val addressRepository by inject<AddressRepository>()
     val userRepository by inject<UserRepository>()
-    val avatarStorageService by inject<AvatarStorageService>()
     val invoiceNumberGenerator by inject<InvoiceNumberGenerator>()
     val businessProfileService by inject<BusinessProfileService>()
 
@@ -73,7 +71,7 @@ internal fun Route.tenantRoutes() {
                     val avatar = try {
                         val storageKey = tenantRepository.getAvatarStorageKey(tenant.id)
                         if (storageKey != null) {
-                            avatarStorageService.getAvatarUrls(storageKey)
+                            businessProfileService.buildTenantAvatarThumbnail()
                         } else {
                             null
                         }
@@ -233,7 +231,7 @@ internal fun Route.tenantRoutes() {
             val avatar = try {
                 val storageKey = tenantRepository.getAvatarStorageKey(tenantId)
                 if (storageKey != null) {
-                    avatarStorageService.getAvatarUrls(storageKey)
+                    businessProfileService.buildTenantAvatarThumbnail()
                 } else {
                     null
                 }

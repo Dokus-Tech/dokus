@@ -43,6 +43,5 @@ object BusinessProfilesTable : UUIDTable("business_profiles") {
     init {
         uniqueIndex(tenantId, subjectType, subjectId)
         index(false, tenantId, subjectType)
-        index(false, tenantId, subjectId)
     }
 }
