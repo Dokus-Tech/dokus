@@ -185,7 +185,36 @@ internal fun SearchScreen(
 
                 Spacer(modifier = Modifier.height(18.dp))
 
-                if (state.isLoading) {
+                val hasVisibleResults = response != null
+                    && state.visibleResultCount > 0L
+                    && with(response) { documents.isNotEmpty() || contacts.isNotEmpty() || transactions.isNotEmpty() }
+                if (hasVisibleResults) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                    ) {
+                        SearchResultsSections(
+                            state = state,
+                            response = checkNotNull(response) { "response must not be null when hasVisibleResults is true" },
+                            onDocumentClick = onDocumentClick,
+                            onContactClick = onContactClick,
+                            onTransactionClick = onTransactionClick,
+                            modifier = Modifier.fillMaxSize()
+                        )
+
+                        if (state.isLoading) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 12.dp),
+                                contentAlignment = Alignment.TopCenter
+                            ) {
+                                DokusLoader(size = DokusLoaderSize.Small)
+                            }
+                        }
+                    }
+                } else if (state.isLoading) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -204,17 +233,6 @@ internal fun SearchScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
-                } else {
-                    SearchResultsSections(
-                        state = state,
-                        response = response,
-                        onDocumentClick = onDocumentClick,
-                        onContactClick = onContactClick,
-                        onTransactionClick = onTransactionClick,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f)
-                    )
                 }
             }
         }

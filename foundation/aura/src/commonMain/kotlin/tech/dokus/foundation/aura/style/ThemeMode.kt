@@ -2,9 +2,6 @@ package tech.dokus.foundation.aura.style
 
 import kotlinx.serialization.Serializable
 import tech.dokus.foundation.aura.style.ThemeMode.Companion.DEFAULT
-import tech.dokus.foundation.aura.style.ThemeMode.DARK
-import tech.dokus.foundation.aura.style.ThemeMode.LIGHT
-import tech.dokus.foundation.aura.style.ThemeMode.SYSTEM
 
 /**
  * Theme mode preference for the application.
@@ -21,7 +18,7 @@ enum class ThemeMode {
 
     companion object {
         /** Default theme mode (follows system setting) */
-        val DEFAULT = SYSTEM
+        val DEFAULT = DARK
 
         /**
          * Parse from persistence string value.

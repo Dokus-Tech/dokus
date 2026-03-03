@@ -18,6 +18,7 @@ import tech.dokus.aura.resources.contacts_subtitle
 import tech.dokus.aura.resources.contacts_update_success
 import tech.dokus.aura.resources.nav_contacts
 import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.features.contacts.mvi.ContactsAction
 import tech.dokus.features.contacts.mvi.ContactsContainer
 import tech.dokus.features.contacts.mvi.ContactsIntent
@@ -127,19 +128,39 @@ internal fun ContactsRoute(
     }
 
     ConnectionSnackbarEffect(snackbarHostState)
-
-    LaunchedEffect(Unit) {
-        container.store.intent(ContactsIntent.Refresh)
+    val onIntent = remember(container) {
+        { intent: ContactsIntent ->
+            container.store.intent(intent)
+        }
+    }
+    val onSelectContact = remember(onIntent) {
+        { contact: ContactDto ->
+            onIntent(ContactsIntent.SelectContact(contact.id))
+        }
+    }
+    val onOpenContact = remember(navController) {
+        { contact: ContactDto ->
+            navController.navigateTo(ContactsDestination.ContactDetails(contact.id.toString()))
+        }
+    }
+    val onCreateContact = remember(navController) {
+        { navController.navigateTo(ContactsDestination.CreateContact()) }
     }
 
     ContactsScreen(
         state = state,
         snackbarHostState = snackbarHostState,
+<<<<<<< HEAD
         onIntent = { container.store.intent(it) },
         onSelectContact = { contact -> container.store.intent(ContactsIntent.SelectContact(contact.id)) },
         onOpenContact = { contact ->
             navController.navigateTo(ContactsDestination.ContactDetails(contact.id.toString()))
         },
+=======
+        onIntent = onIntent,
+        onSelectContact = onSelectContact,
+        onOpenContact = onOpenContact,
+>>>>>>> origin/main
         onCreateContact = onCreateContact
     )
 }
