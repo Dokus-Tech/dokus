@@ -70,6 +70,8 @@ kotlin {
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+            implementation(libs.kotlinx.coroutinesTest)
+            implementation(libs.flowmvi.test)
         }
         androidUnitTest.dependencies {
             implementation(libs.kotlin.test)
