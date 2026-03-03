@@ -1,7 +1,5 @@
 package tech.dokus.backend.routes.contacts
 
-import tech.dokus.backend.security.requireTenantId
-
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.resources.delete
@@ -11,6 +9,7 @@ import io.ktor.server.resources.put
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
+import tech.dokus.backend.security.requireTenantId
 import tech.dokus.backend.services.contacts.ContactNoteService
 import tech.dokus.backend.services.contacts.ContactService
 import tech.dokus.backend.services.peppol.PeppolRecipientResolver

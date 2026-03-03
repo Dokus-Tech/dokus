@@ -5,13 +5,12 @@ package tech.dokus.backend.services.auth
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.auth0.jwt.exceptions.JWTVerificationException
-import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.FirmId
 import tech.dokus.foundation.backend.config.JwtConfig
-import java.time.Instant as JavaInstant
 import java.util.Date
+import java.time.Instant as JavaInstant
 
 private const val TOKEN_ISSUER = "dokus-firm-invite"
 private const val CLAIM_FIRM_ID = "firm_id"
@@ -57,10 +56,6 @@ class FirmInviteTokenService(
             ?: throw DokusException.BadRequest("Invalid invite link payload")
         val expiresAt = decoded.expiresAt?.toInstant()
             ?: throw DokusException.BadRequest("Invalid invite link expiration")
-
-        if (expiresAt.isBefore(JavaInstant.ofEpochSecond(Clock.System.now().epochSeconds))) {
-            throw DokusException.BadRequest("Invite link expired")
-        }
 
         return FirmInviteTokenPayload(
             firmId = FirmId.parse(firmRaw),

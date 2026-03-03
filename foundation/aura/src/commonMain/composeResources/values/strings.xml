@@ -85,6 +85,7 @@
     <string name="console_activity_title">Activity</string>
     <string name="console_activity_subtitle">Click any event to navigate</string>
     <string name="console_export_title">Export</string>
+    <string name="nav_section_console_tools">Tools</string>
 
     <!-- Chat -->
     <string name="chat_title">AI Chat</string>

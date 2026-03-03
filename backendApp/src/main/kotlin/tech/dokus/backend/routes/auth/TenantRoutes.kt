@@ -1,7 +1,5 @@
 package tech.dokus.backend.routes.auth
 
-import tech.dokus.backend.security.requireTenantId
-
 import io.ktor.http.*
 import io.ktor.server.request.*
 import io.ktor.server.resources.*
@@ -10,6 +8,7 @@ import io.ktor.server.resources.put
 import io.ktor.server.response.*
 import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
+import tech.dokus.backend.security.requireTenantId
 import tech.dokus.database.repository.auth.AddressRepository
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.auth.UserRepository

@@ -23,10 +23,9 @@ import tech.dokus.foundation.app.shell.LocalUserAccessContext
 import tech.dokus.foundation.app.shell.RegisterHomeShellTopBar
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.navigation.destinations.HomeDestination
+import tech.dokus.navigation.destinations.route
 import tech.dokus.navigation.local.LocalNavController
 import tech.dokus.navigation.navigateToTopLevelTab
-
-private const val HOME_ROUTE_CONSOLE_CLIENTS = "console/clients"
 
 @Composable
 internal fun ConsoleClientsRoute(
@@ -76,7 +75,7 @@ internal fun ConsoleClientsRoute(
         )
     )
     RegisterHomeShellTopBar(
-        route = HOME_ROUTE_CONSOLE_CLIENTS,
+        route = HomeDestination.ConsoleClients.route,
         config = topBarConfig,
     )
 

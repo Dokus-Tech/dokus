@@ -119,7 +119,10 @@ internal fun Route.peppolWebhookRoutes() {
             debounceSeconds = peppolModuleConfig.webhook.pollDebounceSeconds
         ).getOrElse {
             logger.error("Failed webhook debounce check for tenant {}", settings.tenantId, it)
-            call.respond(HttpStatusCode.InternalServerError, WebhookResponse(success = false, message = "Internal error"))
+            call.respond(
+                HttpStatusCode.InternalServerError,
+                WebhookResponse(success = false, message = "Internal error")
+            )
             return@post
         }
 

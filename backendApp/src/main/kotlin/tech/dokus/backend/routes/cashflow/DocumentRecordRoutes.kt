@@ -1,7 +1,5 @@
 package tech.dokus.backend.routes.cashflow
 
-import tech.dokus.backend.security.requireTenantId
-
 import io.ktor.http.*
 import io.ktor.server.request.*
 import io.ktor.server.resources.*
@@ -19,6 +17,7 @@ import tech.dokus.backend.routes.cashflow.documents.findConfirmedEntity
 import tech.dokus.backend.routes.cashflow.documents.toDto
 import tech.dokus.backend.routes.cashflow.documents.toSummaryDto
 import tech.dokus.backend.routes.cashflow.documents.updateDraftCounterparty
+import tech.dokus.backend.security.requireTenantId
 import tech.dokus.backend.services.cashflow.CashflowProjectionReconciliationService
 import tech.dokus.backend.services.documents.DocumentTruthService
 import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
@@ -308,7 +307,7 @@ internal fun Route.documentRecordRoutes() {
 
             val contentType = runCatching { ContentType.parse(source.contentType) }
                 .getOrDefault(ContentType.Application.OctetStream)
-            val resolvedFilename = source.filename ?: "${documentId}_${sourceId}"
+            val resolvedFilename = source.filename ?: "${documentId}_$sourceId"
 
             call.response.header(
                 HttpHeaders.ContentDisposition,

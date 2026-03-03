@@ -38,7 +38,7 @@ suspend fun RoutingContext.requireFirmAccess(): FirmAccessContext {
     val firmId = resolveFirmIdFromRequest()
     val membership = dokusPrincipal.firmMemberships
         .firstOrNull { it.firmId == firmId }
-        ?: throw DokusException.NotAuthorized("You do not have access to firm $firmId")
+        ?: throw DokusException.NotAuthorized("You do not have access to this firm")
 
     return FirmAccessContext(
         firmId = firmId,
@@ -60,7 +60,7 @@ suspend fun RoutingContext.requireFirmClientAccess(
     val hasAccess = firmRepository.hasActiveAccess(firmAccess.firmId, tenantId)
     if (!hasAccess) {
         throw DokusException.NotAuthorized(
-            "Firm ${firmAccess.firmId} does not have active access to tenant $tenantId"
+            "Firm does not have active access to this tenant"
         )
     }
 
@@ -95,20 +95,4 @@ private fun RoutingContext.resolveFirmIdFromRequest(): FirmId {
 
     return runCatching { FirmId.parse(firmRaw) }
         .getOrElse { throw DokusException.BadRequest("Invalid firm id in $FirmHeaderName") }
-}
-
-private fun RoutingContext.resolveTenantIdFromRequest(): TenantId {
-    val tenantRaw = call.request.headers[TenantHeaderName]
-        ?.trim()
-        ?.takeIf { it.isNotEmpty() }
-        ?: call.parameters["tenantId"]
-            ?.trim()
-            ?.takeIf { it.isNotEmpty() }
-        ?: call.parameters["tenant_id"]
-            ?.trim()
-            ?.takeIf { it.isNotEmpty() }
-        ?: throw DokusException.BadRequest("Missing tenant id")
-
-    return runCatching { TenantId.parse(tenantRaw) }
-        .getOrElse { throw DokusException.BadRequest("Invalid tenant id") }
 }

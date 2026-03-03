@@ -1,6 +1,7 @@
 package tech.dokus.app.module
 
 import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.bar_chart
 import tech.dokus.aura.resources.chart_bar_trend_up
 import tech.dokus.aura.resources.console_activity_title
 import tech.dokus.aura.resources.console_clients_title
@@ -9,7 +10,8 @@ import tech.dokus.aura.resources.console_requests_title
 import tech.dokus.aura.resources.file_text
 import tech.dokus.aura.resources.inbox
 import tech.dokus.aura.resources.nav_section_accounting
-import tech.dokus.aura.resources.nav_section_company
+import tech.dokus.aura.resources.nav_section_console_tools
+import tech.dokus.aura.resources.settings
 import tech.dokus.aura.resources.wallet_2
 import tech.dokus.foundation.app.AppDataModuleDi
 import tech.dokus.foundation.app.AppDomainModuleDi
@@ -54,7 +56,7 @@ internal object ConsoleAppModule : AppModule {
                 NavItem(
                     id = "console_activity",
                     titleRes = Res.string.console_activity_title,
-                    iconRes = Res.drawable.chart_bar_trend_up,
+                    iconRes = Res.drawable.bar_chart,
                     destination = HomeDestination.ConsoleActivity,
                     priority = 20,
                     shellTopBar = null,
@@ -63,8 +65,8 @@ internal object ConsoleAppModule : AppModule {
         ),
         ModuleNavGroup(
             sectionId = "console_tools",
-            sectionTitle = Res.string.nav_section_company,
-            sectionIcon = Res.drawable.chart_bar_trend_up,
+            sectionTitle = Res.string.nav_section_console_tools,
+            sectionIcon = Res.drawable.settings,
             navContext = NavContext.FIRM,
             sectionOrder = 1,
             items = listOf(

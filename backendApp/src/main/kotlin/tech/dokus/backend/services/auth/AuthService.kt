@@ -4,9 +4,9 @@ package tech.dokus.backend.services.auth
 
 import com.auth0.jwt.JWT
 import kotlinx.datetime.Instant
+import tech.dokus.database.repository.auth.FirmRepository
 import tech.dokus.database.repository.auth.RefreshTokenRepository
 import tech.dokus.database.repository.auth.RevokedSessionInfo
-import tech.dokus.database.repository.auth.FirmRepository
 import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.domain.DeviceType
 import tech.dokus.domain.Password
@@ -14,8 +14,8 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.SessionId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
-import tech.dokus.domain.model.TenantMembership
 import tech.dokus.domain.model.FirmMembership
+import tech.dokus.domain.model.TenantMembership
 import tech.dokus.domain.model.User
 import tech.dokus.domain.model.auth.JwtClaims
 import tech.dokus.domain.model.auth.JwtFirmMembershipClaim

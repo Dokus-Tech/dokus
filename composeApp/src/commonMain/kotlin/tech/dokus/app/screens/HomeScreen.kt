@@ -63,7 +63,6 @@ import tech.dokus.foundation.app.local.LocalAppModules
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.app.shell.HomeShellTopBarConfig
 import tech.dokus.foundation.app.shell.HomeShellTopBarMode
-import tech.dokus.foundation.app.shell.UserAccessContext
 import tech.dokus.foundation.app.shell.WorkspaceContextStore
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.background.AmbientBackground
@@ -85,14 +84,13 @@ import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
 import tech.dokus.navigation.NavigationProvider
 import tech.dokus.navigation.animation.TransitionsProvider
-import tech.dokus.navigation.destinations.HomeDestination
 import tech.dokus.navigation.destinations.NavigationDestination
 import tech.dokus.navigation.destinations.route
 import tech.dokus.navigation.local.LocalNavController
 
 private enum class HomeSurfaceMode {
-    CM,
-    BC,
+    CompanyManager,
+    BookkeeperConsole,
 }
 
 @Composable
@@ -150,7 +148,7 @@ internal fun HomeRoute(
             currentSurface = activeSurface,
             surfaceAvailability = surfaceAvailability,
         )
-        if (resolvedSurface == HomeSurfaceMode.BC) {
+        if (resolvedSurface == HomeSurfaceMode.BookkeeperConsole) {
             WorkspaceContextStore.switchToFirmWorkspace()
         } else {
             WorkspaceContextStore.switchToTenantWorkspace()
@@ -186,13 +184,13 @@ private fun resolveActiveSurface(
     surfaceAvailability: tech.dokus.domain.model.auth.SurfaceAvailability?,
 ): HomeSurfaceMode {
     if (surfaceAvailability == null) {
-        return if (navContext == NavContext.FIRM) HomeSurfaceMode.BC else HomeSurfaceMode.CM
+        return if (navContext == NavContext.FIRM) HomeSurfaceMode.BookkeeperConsole else HomeSurfaceMode.CompanyManager
     }
     if (surfaceAvailability.canBookkeeperConsole && !surfaceAvailability.canCompanyManager) {
-        return HomeSurfaceMode.BC
+        return HomeSurfaceMode.BookkeeperConsole
     }
-    if (!surfaceAvailability.canBookkeeperConsole) return HomeSurfaceMode.CM
-    return if (navContext == NavContext.FIRM) HomeSurfaceMode.BC else HomeSurfaceMode.CM
+    if (!surfaceAvailability.canBookkeeperConsole) return HomeSurfaceMode.CompanyManager
+    return if (navContext == NavContext.FIRM) HomeSurfaceMode.BookkeeperConsole else HomeSurfaceMode.CompanyManager
 }
 
 private fun resolveSurfaceForCommand(
@@ -206,26 +204,26 @@ private fun resolveSurfaceForCommand(
     val canBCAccess = !resolved || canBC
     val isBCOnly = resolved && canBC && !canCM
 
-    if (isBCOnly) return HomeSurfaceMode.BC
+    if (isBCOnly) return HomeSurfaceMode.BookkeeperConsole
 
     return when (command) {
         HomeNavigationCommand.OpenConsoleClients -> {
-            if (canBCAccess) HomeSurfaceMode.BC else HomeSurfaceMode.CM
+            if (canBCAccess) HomeSurfaceMode.BookkeeperConsole else HomeSurfaceMode.CompanyManager
         }
 
         is HomeNavigationCommand.OpenDocuments -> {
             if (command.source == HomeNavigationSource.BC && canBCAccess) {
-                HomeSurfaceMode.BC
+                HomeSurfaceMode.BookkeeperConsole
             } else {
-                HomeSurfaceMode.CM
+                HomeSurfaceMode.CompanyManager
             }
         }
 
         is HomeNavigationCommand.OpenDocumentReview -> {
-            if (currentSurface == HomeSurfaceMode.BC && canBCAccess) {
-                HomeSurfaceMode.BC
+            if (currentSurface == HomeSurfaceMode.BookkeeperConsole && canBCAccess) {
+                HomeSurfaceMode.BookkeeperConsole
             } else {
-                HomeSurfaceMode.CM
+                HomeSurfaceMode.CompanyManager
             }
         }
     }
@@ -236,11 +234,11 @@ private fun shouldRenderBC(
     surfaceAvailability: tech.dokus.domain.model.auth.SurfaceAvailability?,
 ): Boolean {
     if (surfaceAvailability == null) {
-        return activeSurface == HomeSurfaceMode.BC
+        return activeSurface == HomeSurfaceMode.BookkeeperConsole
     }
     if (!surfaceAvailability.canBookkeeperConsole) return false
     if (!surfaceAvailability.canCompanyManager) return true
-    return activeSurface == HomeSurfaceMode.BC
+    return activeSurface == HomeSurfaceMode.BookkeeperConsole
 }
 
 @Composable
@@ -454,25 +452,6 @@ private fun RailNavigationLayout(
 
 /** Routes where the shell header (Dokus + avatar) is shown. Other tabs provide their own top bar. */
 private val ShellHeaderRoutes = setOf("today", "documents", "search", "cashflow", "more")
-
-internal fun filterCMNavItems(
-    items: List<NavItem>,
-    accessContext: UserAccessContext,
-): List<NavItem> {
-    val consoleDestinations = setOf(
-        HomeDestination.ConsoleClients,
-        HomeDestination.ConsoleRequests,
-        HomeDestination.ConsoleActivity,
-        HomeDestination.ConsoleExport,
-    )
-    return items.filter { item ->
-        when {
-            item.destination in consoleDestinations -> false
-            accessContext.isStage2ReadOnly && item.destination == HomeDestination.Cashflow -> false
-            else -> true
-        }
-    }
-}
 
 internal fun dispatchProfileNavigation(
     isLargeScreen: Boolean,

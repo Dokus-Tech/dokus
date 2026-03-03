@@ -21,8 +21,7 @@ val RoutingContext.tenantAccessOrNull: TenantAccess?
         null
     }
 
-suspend fun RoutingContext.requireTenantAccess(
-): TenantAccess {
+suspend fun RoutingContext.requireTenantAccess(): TenantAccess {
     tenantAccessOrNull?.let { return it }
 
     val tenantId = resolveTenantIdFromRequest()
@@ -76,7 +75,7 @@ suspend fun RoutingContext.requirePermission(permission: Permission) {
  * 2. {tenantId} path parameter
  * 3. {tenant_id} query parameter
  */
-private fun RoutingContext.resolveTenantIdFromRequest(): TenantId {
+internal fun RoutingContext.resolveTenantIdFromRequest(): TenantId {
     val tenantRaw = call.request.headers[TenantHeaderName]
         ?.trim()
         ?.takeIf { it.isNotEmpty() }

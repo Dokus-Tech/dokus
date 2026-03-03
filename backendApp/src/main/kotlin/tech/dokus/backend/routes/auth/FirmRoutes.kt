@@ -13,10 +13,8 @@ import org.koin.ktor.ext.inject
 import tech.dokus.backend.services.auth.FirmInviteTokenService
 import tech.dokus.database.repository.auth.FirmRepository
 import tech.dokus.database.repository.auth.TenantRepository
-import tech.dokus.domain.DisplayName
 import tech.dokus.domain.enums.FirmRole
 import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.auth.CreateFirmRequest
 import tech.dokus.domain.model.auth.CreateFirmResponse
 import tech.dokus.domain.model.auth.FirmWorkspaceSummary
@@ -79,8 +77,8 @@ internal fun Route.firmRoutes() {
                 .firstOrNull { it.firmId == route.parent.firmId }
                 ?: throw DokusException.NotAuthorized("No access to this firm")
 
-            if (membership.role !in setOf(FirmRole.Owner, FirmRole.Admin, FirmRole.Staff)) {
-                throw DokusException.NotAuthorized("Firm membership is required")
+            if (membership.role !in setOf(FirmRole.Owner, FirmRole.Admin)) {
+                throw DokusException.NotAuthorized("Owner or admin role is required")
             }
 
             val expiresAt = Clock.System.now() + 7.days

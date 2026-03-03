@@ -1,7 +1,5 @@
 package tech.dokus.backend.routes.cashflow
 
-import tech.dokus.backend.security.requireTenantId
-
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.resources.get
@@ -13,6 +11,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
+import tech.dokus.backend.security.requireTenantId
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId

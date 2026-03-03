@@ -1,10 +1,13 @@
 package tech.dokus.database.repository.auth
 
+import org.jetbrains.exposed.v1.core.Count
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.insertAndGetId
+import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
 import tech.dokus.database.mapper.FirmMappers.toFirm
@@ -79,17 +82,13 @@ class FirmRepository {
     }
 
     suspend fun listUserMemberships(userId: UserId, activeOnly: Boolean = true): List<FirmMembership> = dbQuery {
-        val base = FirmMembersTable
+        FirmMembersTable
             .selectAll()
-            .where { FirmMembersTable.userId eq userId.value.toJavaUuid() }
-
-        if (!activeOnly) {
-            base.map { it.toFirmMembership() }
-        } else {
-            base
-                .filter { it[FirmMembersTable.isActive] }
-                .map { it.toFirmMembership() }
-        }
+            .where {
+                val userFilter = FirmMembersTable.userId eq userId.value.toJavaUuid()
+                if (activeOnly) userFilter and (FirmMembersTable.isActive eq true) else userFilter
+            }
+            .map { it.toFirmMembership() }
     }
 
     suspend fun listFirmsByIds(firmIds: List<FirmId>): List<Firm> = dbQuery {
@@ -104,14 +103,17 @@ class FirmRepository {
     suspend fun countActiveClientsByFirmIds(firmIds: List<FirmId>): Map<FirmId, Int> = dbQuery {
         if (firmIds.isEmpty()) return@dbQuery emptyMap()
 
+        val countCol = Count(FirmAccessTable.id)
         FirmAccessTable
-            .selectAll()
+            .select(FirmAccessTable.firmId, countCol)
             .where {
                 (FirmAccessTable.firmId inList firmIds.map { it.value.toJavaUuid() }) and
                     (FirmAccessTable.status eq FirmAccessStatus.Active)
             }
-            .groupBy { FirmId(it[FirmAccessTable.firmId].value.toKotlinUuid()) }
-            .mapValues { (_, rows) -> rows.size }
+            .groupBy(FirmAccessTable.firmId)
+            .associate { row ->
+                FirmId(row[FirmAccessTable.firmId].value.toKotlinUuid()) to row[countCol].toInt()
+            }
     }
 
     suspend fun listActiveAccessByFirm(firmId: FirmId): List<FirmAccess> = dbQuery {
@@ -164,6 +166,7 @@ class FirmRepository {
             }) {
                 it[status] = FirmAccessStatus.Active
                 it[FirmAccessTable.grantedByUserId] = grantedByUserId.value.toJavaUuid()
+                it[updatedAt] = CurrentDateTime
             }
             !wasActive
         }
@@ -176,6 +179,7 @@ class FirmRepository {
                 (FirmAccessTable.status eq FirmAccessStatus.Active)
         }) {
             it[status] = FirmAccessStatus.Revoked
+            it[updatedAt] = CurrentDateTime
         }
         updated > 0
     }

@@ -1,7 +1,5 @@
 package tech.dokus.backend.routes.cashflow
 
-import tech.dokus.backend.security.requireTenantId
-
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.resources.get
@@ -9,6 +7,7 @@ import io.ktor.server.resources.post
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
+import tech.dokus.backend.security.requireTenantId
 import tech.dokus.backend.services.cashflow.CashflowEntriesService
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.exceptions.DokusException
@@ -18,7 +17,6 @@ import tech.dokus.domain.model.CashflowPaymentRequest
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.routes.Cashflow
 import tech.dokus.foundation.backend.security.authenticateJwt
-import tech.dokus.foundation.backend.security.dokusPrincipal
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 

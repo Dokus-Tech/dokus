@@ -34,6 +34,7 @@ import org.koin.compose.koinInject
 import tech.dokus.app.allNavItems
 import tech.dokus.app.navSectionsCombined
 import tech.dokus.app.navigation.local.LocalRootNavController
+import tech.dokus.app.screens.home.filterTenantNavItems
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.coming_soon
 import tech.dokus.domain.enums.SubscriptionTier
@@ -61,7 +62,7 @@ internal fun MoreRoute(
     val allNavItems = remember(appModules) { appModules.allNavItems }
     val accessContext = LocalUserAccessContext.current
     val visibleNavItems = remember(allNavItems, accessContext) {
-        filterCMNavItems(
+        filterTenantNavItems(
             items = allNavItems,
             accessContext = accessContext
         )

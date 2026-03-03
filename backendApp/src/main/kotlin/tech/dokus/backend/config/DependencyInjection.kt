@@ -101,8 +101,8 @@ import tech.dokus.peppol.service.PeppolCredentialResolverImpl
 import tech.dokus.peppol.service.PeppolOutboundErrorClassifier
 import tech.dokus.peppol.service.PeppolRegistrationService
 import tech.dokus.peppol.service.PeppolService
-import tech.dokus.peppol.service.PeppolTransmissionStateMachine
 import tech.dokus.peppol.service.PeppolTransferPollingService
+import tech.dokus.peppol.service.PeppolTransmissionStateMachine
 import tech.dokus.peppol.service.PeppolVerificationService
 import tech.dokus.peppol.service.PeppolWebhookSyncService
 import tech.dokus.peppol.validator.PeppolValidator

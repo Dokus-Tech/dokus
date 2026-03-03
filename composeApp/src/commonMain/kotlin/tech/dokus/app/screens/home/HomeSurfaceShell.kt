@@ -269,7 +269,7 @@ internal fun HomeSurfaceShell(
     )
 }
 
-private fun filterTenantNavItems(
+internal fun filterTenantNavItems(
     items: List<tech.dokus.foundation.aura.model.NavItem>,
     accessContext: UserAccessContext,
 ): List<tech.dokus.foundation.aura.model.NavItem> {
