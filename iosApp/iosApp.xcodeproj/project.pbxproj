@@ -11,12 +11,13 @@
 		058557D9273AAEEB004C7B11 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */; };
 		2152FB042600AC8F00CF470E /* iOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* iOSApp.swift */; };
 		7555FF83242A565900829871 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* ContentView.swift */; };
-		F30301012EAC000100000001 /* DokusFileProviderDomainRegistrar.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30300112EAC000100000001 /* DokusFileProviderDomainRegistrar.swift */; };
-		F30401012EAD000100000001 /* DokusWorkspaceDiscoveryClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30400112EAD000100000001 /* DokusWorkspaceDiscoveryClient.swift */; };
-		F30401022EAD000100000001 /* DokusWorkspaceDiscoveryClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30400112EAD000100000001 /* DokusWorkspaceDiscoveryClient.swift */; };
-		F30401032EAD000100000001 /* DokusFileProviderDomainRegistrar.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30300112EAC000100000001 /* DokusFileProviderDomainRegistrar.swift */; };
-		F30401042EAD000100000001 /* DokusFileProviderDomainRegistrarTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30400122EAD000100000001 /* DokusFileProviderDomainRegistrarTests.swift */; };
-		F30401052EAD000100000001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F10100722EAA000100000001 /* Assets.xcassets */; };
+		F10100012EAA000100000001 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10100112EAA000100000001 /* ShareViewController.swift */; };
+		F10100022EAA000100000001 /* DokusShareExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = F10100152EAA000100000001 /* DokusShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		F10100032EAA000100000001 /* ShareImportState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10100162EAA000100000001 /* ShareImportState.swift */; };
+		F10100042EAA000100000001 /* ShareImportViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10100172EAA000100000001 /* ShareImportViewModel.swift */; };
+		F10100052EAA000100000001 /* ShareImportUploader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10100182EAA000100000001 /* ShareImportUploader.swift */; };
+		F10100062EAA000100000001 /* MultipartBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10100192EAA000100000001 /* MultipartBuilder.swift */; };
+		F10100712EAA000100000001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F10100722EAA000100000001 /* Assets.xcassets */; };
 		F20100012EAB000100000001 /* ShareLocalization.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20100112EAB000100000001 /* ShareLocalization.swift */; };
 		F20100022EAB000100000001 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = F20101112EAB000100000001 /* Localizable.strings */; };
 		F20100032EAB000100000001 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = F20101112EAB000100000001 /* Localizable.strings */; };
@@ -24,13 +25,6 @@
 		F20100052EAB000100000001 /* ShareImportFailureLocalizationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20100132EAB000100000001 /* ShareImportFailureLocalizationTests.swift */; };
 		F20100062EAB000100000001 /* ShareLocalization.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20100112EAB000100000001 /* ShareLocalization.swift */; };
 		F20100072EAB000100000001 /* ShareImportState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10100162EAA000100000001 /* ShareImportState.swift */; };
-		F10100012EAA000100000001 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10100112EAA000100000001 /* ShareViewController.swift */; };
-		F10100032EAA000100000001 /* ShareImportState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10100162EAA000100000001 /* ShareImportState.swift */; };
-		F10100042EAA000100000001 /* ShareImportViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10100172EAA000100000001 /* ShareImportViewModel.swift */; };
-		F10100052EAA000100000001 /* ShareImportUploader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10100182EAA000100000001 /* ShareImportUploader.swift */; };
-		F10100062EAA000100000001 /* MultipartBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10100192EAA000100000001 /* MultipartBuilder.swift */; };
-		F10100022EAA000100000001 /* DokusShareExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = F10100152EAA000100000001 /* DokusShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		F10100712EAA000100000001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F10100722EAA000100000001 /* Assets.xcassets */; };
 		F30101012EAC000100000001 /* DokusFileProviderExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30100112EAC000100000001 /* DokusFileProviderExtension.swift */; };
 		F30101022EAC000100000001 /* DokusFileProviderEnumerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30100122EAC000100000001 /* DokusFileProviderEnumerator.swift */; };
 		F30101032EAC000100000001 /* DokusFileProviderRuntime.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30100132EAC000100000001 /* DokusFileProviderRuntime.swift */; };
@@ -47,17 +41,23 @@
 		F30201032EAC000100000001 /* DokusFileProviderConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30100192EAC000100000001 /* DokusFileProviderConstants.swift */; };
 		F30201042EAC000100000001 /* DokusFileProviderProjection.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30100162EAC000100000001 /* DokusFileProviderProjection.swift */; };
 		F30201052EAC000100000001 /* DokusFileProviderSnapshotStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30100152EAC000100000001 /* DokusFileProviderSnapshotStore.swift */; };
+		F30301012EAC000100000001 /* DokusFileProviderDomainRegistrar.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30300112EAC000100000001 /* DokusFileProviderDomainRegistrar.swift */; };
+		F30401012EAD000100000001 /* DokusWorkspaceDiscoveryClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30400112EAD000100000001 /* DokusWorkspaceDiscoveryClient.swift */; };
+		F30401022EAD000100000001 /* DokusWorkspaceDiscoveryClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30400112EAD000100000001 /* DokusWorkspaceDiscoveryClient.swift */; };
+		F30401032EAD000100000001 /* DokusFileProviderDomainRegistrar.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30300112EAC000100000001 /* DokusFileProviderDomainRegistrar.swift */; };
+		F30401042EAD000100000001 /* DokusFileProviderDomainRegistrarTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30400122EAD000100000001 /* DokusFileProviderDomainRegistrarTests.swift */; };
+		F30401052EAD000100000001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F10100722EAA000100000001 /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		F20100512EAB000100000001 /* PBXContainerItemProxy */ = {
+		F10100512EAA000100000001 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 7555FF73242A565900829871 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = F10100412EAA000100000001;
 			remoteInfo = DokusShareExtension;
 		};
-		F10100512EAA000100000001 /* PBXContainerItemProxy */ = {
+		F20100512EAB000100000001 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 7555FF73242A565900829871 /* Project object */;
 			proxyType = 1;
@@ -103,9 +103,16 @@
 		7555FF82242A565900829871 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		7555FF8C242A565B00829871 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AB3632DC29227652001CCB65 /* Config.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
-		F30300112EAC000100000001 /* DokusFileProviderDomainRegistrar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DokusFileProviderDomainRegistrar.swift; sourceTree = "<group>"; };
-		F30400112EAD000100000001 /* DokusWorkspaceDiscoveryClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DokusWorkspaceDiscoveryClient.swift; sourceTree = "<group>"; };
-		F30400122EAD000100000001 /* DokusFileProviderDomainRegistrarTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DokusFileProviderDomainRegistrarTests.swift; sourceTree = "<group>"; };
+		F10100112EAA000100000001 /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
+		F10100122EAA000100000001 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		F10100132EAA000100000001 /* ShareExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ShareExtension.entitlements; sourceTree = "<group>"; };
+		F10100142EAA000100000001 /* iosApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = iosApp.entitlements; sourceTree = "<group>"; };
+		F10100152EAA000100000001 /* DokusShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DokusShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		F10100162EAA000100000001 /* ShareImportState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareImportState.swift; sourceTree = "<group>"; };
+		F10100172EAA000100000001 /* ShareImportViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareImportViewModel.swift; sourceTree = "<group>"; };
+		F10100182EAA000100000001 /* ShareImportUploader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareImportUploader.swift; sourceTree = "<group>"; };
+		F10100192EAA000100000001 /* MultipartBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultipartBuilder.swift; sourceTree = "<group>"; };
+		F10100722EAA000100000001 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		F20100112EAB000100000001 /* ShareLocalization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareLocalization.swift; sourceTree = "<group>"; };
 		F20100122EAB000100000001 /* ShareLocalizationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareLocalizationTests.swift; sourceTree = "<group>"; };
 		F20100132EAB000100000001 /* ShareImportFailureLocalizationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareImportFailureLocalizationTests.swift; sourceTree = "<group>"; };
@@ -120,16 +127,6 @@
 		F20101082EAB000100000001 /* nl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = nl; path = nl.lproj/Localizable.strings; sourceTree = "<group>"; };
 		F20101092EAB000100000001 /* nl-BE */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "nl-BE"; path = "nl-BE.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		F20101102EAB000100000001 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/Localizable.strings; sourceTree = "<group>"; };
-		F10100112EAA000100000001 /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
-		F10100122EAA000100000001 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		F10100132EAA000100000001 /* ShareExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ShareExtension.entitlements; sourceTree = "<group>"; };
-		F10100142EAA000100000001 /* iosApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = iosApp.entitlements; sourceTree = "<group>"; };
-		F10100152EAA000100000001 /* DokusShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DokusShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-		F10100162EAA000100000001 /* ShareImportState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareImportState.swift; sourceTree = "<group>"; };
-		F10100172EAA000100000001 /* ShareImportViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareImportViewModel.swift; sourceTree = "<group>"; };
-		F10100182EAA000100000001 /* ShareImportUploader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareImportUploader.swift; sourceTree = "<group>"; };
-		F10100192EAA000100000001 /* MultipartBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultipartBuilder.swift; sourceTree = "<group>"; };
-		F10100722EAA000100000001 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		F30100112EAC000100000001 /* DokusFileProviderExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DokusFileProviderExtension.swift; sourceTree = "<group>"; };
 		F30100122EAC000100000001 /* DokusFileProviderEnumerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DokusFileProviderEnumerator.swift; sourceTree = "<group>"; };
 		F30100132EAC000100000001 /* DokusFileProviderRuntime.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DokusFileProviderRuntime.swift; sourceTree = "<group>"; };
@@ -146,6 +143,9 @@
 		F30200112EAC000100000001 /* DokusFileProviderProjectionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DokusFileProviderProjectionTests.swift; sourceTree = "<group>"; };
 		F30200122EAC000100000001 /* DokusFileProviderOperationPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DokusFileProviderOperationPolicyTests.swift; sourceTree = "<group>"; };
 		F30200132EAC000100000001 /* DokusFileProviderExtensionTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DokusFileProviderExtensionTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		F30300112EAC000100000001 /* DokusFileProviderDomainRegistrar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DokusFileProviderDomainRegistrar.swift; sourceTree = "<group>"; };
+		F30400112EAD000100000001 /* DokusWorkspaceDiscoveryClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DokusWorkspaceDiscoveryClient.swift; sourceTree = "<group>"; };
+		F30400122EAD000100000001 /* DokusFileProviderDomainRegistrarTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DokusFileProviderDomainRegistrarTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -156,14 +156,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		F20100212EAB000100000001 /* Frameworks */ = {
+		F10100212EAA000100000001 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		F10100212EAA000100000001 /* Frameworks */ = {
+		F20100212EAB000100000001 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -332,6 +332,25 @@
 			productReference = 7555FF7B242A565900829871 /* Dokus.app */;
 			productType = "com.apple.product-type.application";
 		};
+		F10100412EAA000100000001 /* DokusShareExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F10100632EAA000100000001 /* Build configuration list for PBXNativeTarget "DokusShareExtension" */;
+			buildPhases = (
+				F10100232EAA000100000001 /* Sources */,
+				F10100212EAA000100000001 /* Frameworks */,
+				F10100222EAA000100000001 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = DokusShareExtension;
+			packageProductDependencies = (
+			);
+			productName = DokusShareExtension;
+			productReference = F10100152EAA000100000001 /* DokusShareExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		F20100412EAB000100000001 /* DokusShareExtensionTests */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = F20100632EAB000100000001 /* Build configuration list for PBXNativeTarget "DokusShareExtensionTests" */;
@@ -351,25 +370,6 @@
 			productName = DokusShareExtensionTests;
 			productReference = F20100152EAB000100000001 /* DokusShareExtensionTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
-		};
-		F10100412EAA000100000001 /* DokusShareExtension */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = F10100632EAA000100000001 /* Build configuration list for PBXNativeTarget "DokusShareExtension" */;
-			buildPhases = (
-				F10100232EAA000100000001 /* Sources */,
-				F10100212EAA000100000001 /* Frameworks */,
-				F10100222EAA000100000001 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = DokusShareExtension;
-			packageProductDependencies = (
-			);
-			productName = DokusShareExtension;
-			productReference = F10100152EAA000100000001 /* DokusShareExtension.appex */;
-			productType = "com.apple.product-type.app-extension";
 		};
 		F30104012EAC000100000001 /* DokusFileProviderExtension */ = {
 			isa = PBXNativeTarget;
@@ -424,16 +424,16 @@
 					7555FF7A242A565900829871 = {
 						CreatedOnToolsVersion = 11.3.1;
 					};
-					F30104012EAC000100000001 = {
-						CreatedOnToolsVersion = 16.0;
-					};
-					F30204012EAC000100000001 = {
-						CreatedOnToolsVersion = 16.0;
-					};
 					F10100412EAA000100000001 = {
 						CreatedOnToolsVersion = 16.0;
 					};
 					F20100412EAB000100000001 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+					F30104012EAC000100000001 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+					F30204012EAC000100000001 = {
 						CreatedOnToolsVersion = 16.0;
 					};
 				};
@@ -480,20 +480,20 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		F20100222EAB000100000001 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				F20100032EAB000100000001 /* Localizable.strings in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		F10100222EAA000100000001 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				F20100022EAB000100000001 /* Localizable.strings in Resources */,
 				F10100712EAA000100000001 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F20100222EAB000100000001 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F20100032EAB000100000001 /* Localizable.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -548,17 +548,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		F20100232EAB000100000001 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				F20100062EAB000100000001 /* ShareLocalization.swift in Sources */,
-				F20100072EAB000100000001 /* ShareImportState.swift in Sources */,
-				F20100042EAB000100000001 /* ShareLocalizationTests.swift in Sources */,
-				F20100052EAB000100000001 /* ShareImportFailureLocalizationTests.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		F10100232EAA000100000001 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -569,6 +558,17 @@
 				F10100032EAA000100000001 /* ShareImportState.swift in Sources */,
 				F20100012EAB000100000001 /* ShareLocalization.swift in Sources */,
 				F10100012EAA000100000001 /* ShareViewController.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F20100232EAB000100000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F20100062EAB000100000001 /* ShareLocalization.swift in Sources */,
+				F20100072EAB000100000001 /* ShareImportState.swift in Sources */,
+				F20100042EAB000100000001 /* ShareLocalizationTests.swift in Sources */,
+				F20100052EAB000100000001 /* ShareImportFailureLocalizationTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -589,33 +589,33 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-			F30203012EAC000100000001 /* Sources */ = {
-				isa = PBXSourcesBuildPhase;
-				buildActionMask = 2147483647;
-				files = (
-					F30401042EAD000100000001 /* DokusFileProviderDomainRegistrarTests.swift in Sources */,
-					F30401032EAD000100000001 /* DokusFileProviderDomainRegistrar.swift in Sources */,
-					F30401022EAD000100000001 /* DokusWorkspaceDiscoveryClient.swift in Sources */,
-					F30201052EAC000100000001 /* DokusFileProviderSnapshotStore.swift in Sources */,
-					F30201042EAC000100000001 /* DokusFileProviderProjection.swift in Sources */,
-					F30201032EAC000100000001 /* DokusFileProviderConstants.swift in Sources */,
-					F30201022EAC000100000001 /* DokusFileProviderOperationPolicyTests.swift in Sources */,
-					F30201012EAC000100000001 /* DokusFileProviderProjectionTests.swift in Sources */,
-				);
-				runOnlyForDeploymentPostprocessing = 0;
+		F30203012EAC000100000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F30401042EAD000100000001 /* DokusFileProviderDomainRegistrarTests.swift in Sources */,
+				F30401032EAD000100000001 /* DokusFileProviderDomainRegistrar.swift in Sources */,
+				F30401022EAD000100000001 /* DokusWorkspaceDiscoveryClient.swift in Sources */,
+				F30201052EAC000100000001 /* DokusFileProviderSnapshotStore.swift in Sources */,
+				F30201042EAC000100000001 /* DokusFileProviderProjection.swift in Sources */,
+				F30201032EAC000100000001 /* DokusFileProviderConstants.swift in Sources */,
+				F30201022EAC000100000001 /* DokusFileProviderOperationPolicyTests.swift in Sources */,
+				F30201012EAC000100000001 /* DokusFileProviderProjectionTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		F20100522EAB000100000001 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = F10100412EAA000100000001 /* DokusShareExtension */;
-			targetProxy = F20100512EAB000100000001 /* PBXContainerItemProxy */;
-		};
 		F10100522EAA000100000001 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = F10100412EAA000100000001 /* DokusShareExtension */;
 			targetProxy = F10100512EAA000100000001 /* PBXContainerItemProxy */;
+		};
+		F20100522EAB000100000001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F10100412EAA000100000001 /* DokusShareExtension */;
+			targetProxy = F20100512EAB000100000001 /* PBXContainerItemProxy */;
 		};
 		F30102022EAC000100000001 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -886,6 +886,42 @@
 			};
 			name = Release;
 		};
+		F20100612EAB000100000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "";
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = V2V9U9A3MG;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.4;
+				PRODUCT_BUNDLE_IDENTIFIER = "${BUNDLE_ID}.shareextensiontests${TEAM_ID}";
+				"PRODUCT_BUNDLE_IDENTIFIER[sdk=iphoneos*]" = vision.invoid.dokus.shareextensiontests;
+				PRODUCT_NAME = DokusShareExtensionTests;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "";
+			};
+			name = Debug;
+		};
+		F20100622EAB000100000001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "";
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = V2V9U9A3MG;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.4;
+				PRODUCT_BUNDLE_IDENTIFIER = "${BUNDLE_ID}.shareextensiontests${TEAM_ID}";
+				"PRODUCT_BUNDLE_IDENTIFIER[sdk=iphoneos*]" = vision.invoid.dokus.shareextensiontests;
+				PRODUCT_NAME = DokusShareExtensionTests;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "";
+			};
+			name = Release;
+		};
 		F30106012EAC000100000001 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -978,42 +1014,6 @@
 			};
 			name = Release;
 		};
-		F20100612EAB000100000001 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "";
-				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = V2V9U9A3MG;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.4;
-				PRODUCT_BUNDLE_IDENTIFIER = "${BUNDLE_ID}.shareextensiontests${TEAM_ID}";
-				"PRODUCT_BUNDLE_IDENTIFIER[sdk=iphoneos*]" = vision.invoid.dokus.shareextensiontests;
-				PRODUCT_NAME = DokusShareExtensionTests;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "";
-			};
-			name = Debug;
-		};
-		F20100622EAB000100000001 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "";
-				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = V2V9U9A3MG;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.4;
-				PRODUCT_BUNDLE_IDENTIFIER = "${BUNDLE_ID}.shareextensiontests${TEAM_ID}";
-				"PRODUCT_BUNDLE_IDENTIFIER[sdk=iphoneos*]" = vision.invoid.dokus.shareextensiontests;
-				PRODUCT_NAME = DokusShareExtensionTests;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "";
-			};
-			name = Release;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -1044,6 +1044,15 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		F20100632EAB000100000001 /* Build configuration list for PBXNativeTarget "DokusShareExtensionTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F20100612EAB000100000001 /* Debug */,
+				F20100622EAB000100000001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		F30106032EAC000100000001 /* Build configuration list for PBXNativeTarget "DokusFileProviderExtension" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -1058,15 +1067,6 @@
 			buildConfigurations = (
 				F30206012EAC000100000001 /* Debug */,
 				F30206022EAC000100000001 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		F20100632EAB000100000001 /* Build configuration list for PBXNativeTarget "DokusShareExtensionTests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				F20100612EAB000100000001 /* Debug */,
-				F20100622EAB000100000001 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
