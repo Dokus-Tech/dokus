@@ -1,8 +1,10 @@
 package tech.dokus.app.screens.search
 
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import pro.respawn.flowmvi.test.subscribeAndTest
 import tech.dokus.domain.ids.CashflowEntryId
@@ -207,12 +209,54 @@ class SearchContainerTest {
             )
         }
     }
+
+    @Test
+    fun `loading keeps previous response until new response arrives`() = runTest {
+        val remote = FakeSearchRemoteDataSource()
+        val container = SearchContainer(remote)
+
+        container.store.subscribeAndTest {
+            advanceUntilIdle() // init
+
+            emit(SearchIntent.QueryChanged("first"))
+            advanceUntilIdle()
+            assertEquals("first", states.value.response?.query)
+
+            val deferredResponse = CompletableDeferred<Result<UnifiedSearchResponse>>()
+            remote.nextSearchDeferred = deferredResponse
+
+            emit(SearchIntent.QueryChanged("second"))
+            advanceTimeBy(221)
+            runCurrent()
+
+            val loadingState = states.value
+            assertTrue(loadingState.isLoading)
+            assertEquals("first", loadingState.response?.query)
+
+            deferredResponse.complete(
+                Result.success(
+                    UnifiedSearchResponse(
+                        query = "second",
+                        scope = UnifiedSearchScope.All,
+                        counts = SearchCounts(all = 1),
+                        suggestions = emptyList(),
+                    )
+                )
+            )
+            advanceUntilIdle()
+
+            val finalState = states.value
+            assertTrue(!finalState.isLoading)
+            assertEquals("second", finalState.response?.query)
+        }
+    }
 }
 
 private class FakeSearchRemoteDataSource : SearchRemoteDataSource {
     val requests = mutableListOf<SearchRequest>()
     val signals = mutableListOf<SearchSignalEventRequest>()
     var nextSearchFailure: Throwable? = null
+    var nextSearchDeferred: CompletableDeferred<Result<UnifiedSearchResponse>>? = null
 
     override suspend fun search(
         query: String,
@@ -225,6 +269,10 @@ private class FakeSearchRemoteDataSource : SearchRemoteDataSource {
         nextSearchFailure?.let { pendingFailure ->
             nextSearchFailure = null
             return Result.failure(pendingFailure)
+        }
+        nextSearchDeferred?.let { deferred ->
+            nextSearchDeferred = null
+            return deferred.await()
         }
 
         return Result.success(

@@ -10,6 +10,7 @@ import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.dsl.withState
+import pro.respawn.flowmvi.plugins.init
 import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.ContactId
@@ -42,6 +43,10 @@ internal class ContactsContainer(
 
     override val store: Store<ContactsState, ContactsIntent, ContactsAction> =
         store(ContactsState.Loading) {
+            init {
+                handleRefresh()
+            }
+
             reduce { intent ->
                 when (intent) {
                     is ContactsIntent.Refresh -> handleRefresh()
