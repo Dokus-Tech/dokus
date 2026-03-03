@@ -57,6 +57,7 @@ internal class DocumentsContainer(
     private suspend fun DocumentsCtx.handleRefresh(forceGlobalLoading: Boolean) {
         logger.d { "Refreshing documents" }
 
+        // Safe: intents are processed sequentially (parallelIntents = false)
         var previousContent: DocumentsState.Content? = null
         withState<DocumentsState.Content, _> {
             previousContent = this
@@ -76,6 +77,8 @@ internal class DocumentsContainer(
 
         val previousDocuments = loadedDocuments
         val previousPaginationInfo = paginationInfo
+        val previousNeedsAttentionCount = needsAttentionCount
+        val previousConfirmedCount = confirmedCount
 
         needsAttentionCount = loadNeedsAttentionCount()
         confirmedCount = loadConfirmedCount()
@@ -114,6 +117,8 @@ internal class DocumentsContainer(
                 } else {
                     loadedDocuments = previousDocuments
                     paginationInfo = previousPaginationInfo
+                    needsAttentionCount = previousNeedsAttentionCount
+                    confirmedCount = previousConfirmedCount
                     val contentToRestore = requireNotNull(previousContent)
                     updateState {
                         contentToRestore.copy(
@@ -170,11 +175,12 @@ internal class DocumentsContainer(
     }
 
     private suspend fun DocumentsCtx.handleUpdateFilter(filter: DocumentFilter) {
-        currentFilter = filter
+        val previousFilter = currentFilter
+        val previousDocuments = loadedDocuments
+        val previousPaginationInfo = paginationInfo
 
-        var previousDocuments = loadedDocuments
-        var previousPaginationInfo = paginationInfo
         withState<DocumentsState.Content, _> {
+            currentFilter = filter
             updateState {
                 copy(
                     filter = filter,
@@ -208,11 +214,13 @@ internal class DocumentsContainer(
                 },
                 onFailure = { error ->
                     logger.e(error) { "Failed to filter documents" }
+                    currentFilter = previousFilter
                     loadedDocuments = previousDocuments
                     paginationInfo = previousPaginationInfo
                     updateState {
                         copy(
                             documents = buildPaginationState(),
+                            filter = previousFilter,
                             needsAttentionCount = this@DocumentsContainer.needsAttentionCount,
                             confirmedCount = this@DocumentsContainer.confirmedCount,
                             isRefreshing = false

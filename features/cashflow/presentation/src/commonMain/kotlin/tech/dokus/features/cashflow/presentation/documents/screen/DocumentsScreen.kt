@@ -107,6 +107,8 @@ private fun DocumentsContent(
 ) {
     val listState = rememberLazyListState()
     val documents = state.documents.data
+    // During filter switch the loaded documents may not yet match the badge counts;
+    // maxOf avoids showing a lower count than the sum of visible filter tabs.
     val totalCount = maxOf(documents.size, state.needsAttentionCount + state.confirmedCount)
     val isLargeScreen = LocalScreenSize.current.isLarge
 

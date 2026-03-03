@@ -152,6 +152,56 @@ class CashflowLedgerContainerRefreshTest {
             assertEquals(outEntries.map { it.id }, updated.entries.data.map { it.id })
         }
     }
+
+    @Test
+    fun `view mode change error rolls back to previous filters and entries`() = runTest {
+        val upcomingEntries = listOf(
+            cashflowEntry("00000000-0000-0000-0000-000000000501", CashflowDirection.In, 5000L),
+        )
+
+        val overviewUseCase = FakeGetCashflowOverviewUseCase().apply {
+            enqueueResult(Result.success(cashflowOverview(net = 5000L, cashIn = 5000L, cashOut = 0L)))
+        }
+        val entriesUseCase = FakeLoadCashflowEntriesUseCase().apply {
+            enqueueResult(Result.success(pageResponse(upcomingEntries)))
+        }
+
+        // Enqueue failing results for the Overdue switch
+        val deferredOverview = CompletableDeferred<Result<CashflowOverview>>()
+        val deferredEntries = CompletableDeferred<Result<PaginatedResponse<CashflowEntry>>>()
+        overviewUseCase.enqueueDeferred(deferredOverview)
+        entriesUseCase.enqueueDeferred(deferredEntries)
+
+        val container = CashflowLedgerContainer(
+            loadCashflowEntries = entriesUseCase,
+            getCashflowOverview = overviewUseCase,
+            recordPayment = FakeRecordCashflowPaymentUseCase(),
+        )
+
+        container.store.subscribeAndTest {
+            advanceUntilIdle()
+
+            val initial = assertIs<CashflowLedgerState.Content>(states.value)
+            assertEquals(CashflowViewMode.Upcoming, initial.filters.viewMode)
+            assertEquals(upcomingEntries.map { it.id }, initial.entries.data.map { it.id })
+
+            emit(CashflowLedgerIntent.SetViewMode(CashflowViewMode.Overdue))
+            runCurrent()
+
+            val refreshing = assertIs<CashflowLedgerState.Content>(states.value)
+            assertTrue(refreshing.isRefreshing)
+            assertEquals(CashflowViewMode.Overdue, refreshing.filters.viewMode)
+
+            deferredOverview.complete(Result.failure(RuntimeException("network error")))
+            deferredEntries.complete(Result.failure(RuntimeException("network error")))
+            advanceUntilIdle()
+
+            val restored = assertIs<CashflowLedgerState.Content>(states.value)
+            assertFalse(restored.isRefreshing)
+            assertEquals(CashflowViewMode.Upcoming, restored.filters.viewMode)
+            assertEquals(upcomingEntries.map { it.id }, restored.entries.data.map { it.id })
+        }
+    }
 }
 
 private class FakeGetCashflowOverviewUseCase : GetCashflowOverviewUseCase {

@@ -64,7 +64,7 @@ internal class CashflowLedgerContainer(
     override val store: Store<CashflowLedgerState, CashflowLedgerIntent, CashflowLedgerAction> =
         store(CashflowLedgerState.Loading) {
             init {
-                handleRefresh(keepContentIfAvailable = false)
+                handleRefresh()
             }
 
             reduce { intent ->
@@ -111,6 +111,7 @@ internal class CashflowLedgerContainer(
             previousContent = this
         }
         val showInlineRefresh = keepContentIfAvailable && previousContent != null
+        // Safe: sequential intent processing prevents races with handleLoadMore
         val previousEntries = loadedEntries
         val previousPaginationInfo = paginationInfo
 
@@ -202,17 +203,18 @@ internal class CashflowLedgerContainer(
                     totalOut = overview.cashOut.total
                 )
 
-                val previousSelectedEntryId = previousContent?.selectedEntryId
-                val selectedEntryId = when {
-                    resolvedHighlightId != null -> resolvedHighlightId
-                    previousSelectedEntryId != null &&
-                        loadedEntries.any { it.id == previousSelectedEntryId } ->
-                        previousSelectedEntryId
-                    else -> null
-                }
-                val selectedEntry = selectedEntryId?.let { id -> loadedEntries.find { it.id == id } }
-
                 updateState {
+                    val currentContent = this as? CashflowLedgerState.Content
+                    val currentSelectedId = currentContent?.selectedEntryId
+                    val selectedEntryId = when {
+                        resolvedHighlightId != null -> resolvedHighlightId
+                        currentSelectedId != null &&
+                            loadedEntries.any { it.id == currentSelectedId } ->
+                            currentSelectedId
+                        else -> null
+                    }
+                    val selectedEntry = selectedEntryId?.let { id -> loadedEntries.find { it.id == id } }
+
                     CashflowLedgerState.Content(
                         entries = buildPaginationState(),
                         filters = currentFilters,
@@ -223,7 +225,9 @@ internal class CashflowLedgerContainer(
                         selectedEntryId = selectedEntryId,
                         paymentFormState = selectedEntry?.let { PaymentFormState.withAmount(it.remainingAmount) }
                             ?: PaymentFormState(),
-                        actionsEntryId = null,
+                        actionsEntryId = currentContent?.actionsEntryId?.takeIf { id ->
+                            loadedEntries.any { it.id == id }
+                        },
                     )
                 }
             } else {

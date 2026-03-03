@@ -88,35 +88,33 @@ internal fun CashflowLedgerScreen(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         modifier = modifier
     ) {
-        Box(Modifier.fillMaxSize()) {
-            when (state) {
-                is CashflowLedgerState.Loading -> {
-                    CashflowLedgerSkeleton(
-                        showHeader = isLargeScreen,
-                        rowCount = 5,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(horizontal = 16.dp)
-                    )
-                }
+        when (state) {
+            is CashflowLedgerState.Loading -> {
+                CashflowLedgerSkeleton(
+                    showHeader = isLargeScreen,
+                    rowCount = 5,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp)
+                )
+            }
 
-                is CashflowLedgerState.Content -> {
-                    CashflowLedgerContent(
-                        state = state,
-                        onIntent = onIntent,
-                        onCreateInvoiceClick = onCreateInvoiceClick
-                    )
-                }
+            is CashflowLedgerState.Content -> {
+                CashflowLedgerContent(
+                    state = state,
+                    onIntent = onIntent,
+                    onCreateInvoiceClick = onCreateInvoiceClick
+                )
+            }
 
-                is CashflowLedgerState.Error -> {
-                    DokusErrorContent(
-                        exception = state.exception,
-                        retryHandler = state.retryHandler,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp)
-                    )
-                }
+            is CashflowLedgerState.Error -> {
+                DokusErrorContent(
+                    exception = state.exception,
+                    retryHandler = state.retryHandler,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp)
+                )
             }
         }
     }

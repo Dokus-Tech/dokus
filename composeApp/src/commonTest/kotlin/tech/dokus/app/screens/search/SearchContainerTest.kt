@@ -226,7 +226,7 @@ class SearchContainerTest {
             remote.nextSearchDeferred = deferredResponse
 
             emit(SearchIntent.QueryChanged("second"))
-            advanceTimeBy(220)
+            advanceTimeBy(221)
             runCurrent()
 
             val loadingState = states.value

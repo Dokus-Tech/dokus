@@ -71,6 +71,46 @@ class DocumentsContainerFilteringTest {
             assertEquals(25, updated.confirmedCount)
         }
     }
+
+    @Test
+    fun `filter error rolls back to previous filter and documents`() = runTest {
+        val allDocs = listOf(documentRecord("00000000-0000-0000-0000-000000000101"))
+
+        val loadDocuments = FakeLoadDocumentRecordsUseCase().apply {
+            countTotals[DocumentListFilter.NeedsAttention] = 10L
+            countTotals[DocumentListFilter.Confirmed] = 5L
+            enqueuePageResult(
+                filter = DocumentListFilter.All,
+                result = pageResponse(allDocs)
+            )
+        }
+        val deferredFailure = CompletableDeferred<Result<PaginatedResponse<DocumentRecordDto>>>()
+        loadDocuments.enqueuePageDeferred(DocumentListFilter.NeedsAttention, deferredFailure)
+
+        val container = DocumentsContainer(loadDocuments)
+
+        container.store.subscribeAndTest {
+            advanceUntilIdle()
+
+            val initial = assertIs<DocumentsState.Content>(states.value)
+            assertEquals(DocumentFilter.All, initial.filter)
+            assertEquals(allDocs.map { it.document.id }, initial.documents.data.map { it.document.id })
+
+            emit(DocumentsIntent.UpdateFilter(DocumentFilter.NeedsAttention))
+            runCurrent()
+
+            val refreshing = assertIs<DocumentsState.Content>(states.value)
+            assertTrue(refreshing.isRefreshing)
+
+            deferredFailure.complete(Result.failure(RuntimeException("network error")))
+            advanceUntilIdle()
+
+            val restored = assertIs<DocumentsState.Content>(states.value)
+            assertFalse(restored.isRefreshing)
+            assertEquals(DocumentFilter.All, restored.filter)
+            assertEquals(allDocs.map { it.document.id }, restored.documents.data.map { it.document.id })
+        }
+    }
 }
 
 private class FakeLoadDocumentRecordsUseCase : LoadDocumentRecordsUseCase {

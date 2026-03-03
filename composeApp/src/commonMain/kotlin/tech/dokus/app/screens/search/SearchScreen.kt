@@ -185,7 +185,9 @@ internal fun SearchScreen(
 
                 Spacer(modifier = Modifier.height(18.dp))
 
-                val hasVisibleResults = state.visibleResultCount > 0L && response != null
+                val hasVisibleResults = response != null
+                    && state.visibleResultCount > 0L
+                    && with(response) { documents.isNotEmpty() || contacts.isNotEmpty() || transactions.isNotEmpty() }
                 if (hasVisibleResults) {
                     Box(
                         modifier = Modifier
@@ -194,7 +196,7 @@ internal fun SearchScreen(
                     ) {
                         SearchResultsSections(
                             state = state,
-                            response = checkNotNull(response),
+                            response = checkNotNull(response) { "response must not be null when hasVisibleResults is true" },
                             onDocumentClick = onDocumentClick,
                             onContactClick = onContactClick,
                             onTransactionClick = onTransactionClick,
