@@ -19,6 +19,7 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.ids.Iban
+import tech.dokus.domain.model.common.Thumbnail
 
 /**
  * Main contact DTO representing a customer, vendor, or both.
@@ -50,6 +51,11 @@ data class ContactDto(
     val inboundInvoiceCount: Long = 0,
     val expenseCount: Long = 0,
     val notesCount: Long = 0,
+    val websiteUrl: String? = null,
+    val businessSummary: String? = null,
+    val businessActivities: List<String> = emptyList(),
+    val businessProfileVerified: Boolean = false,
+    val avatar: Thumbnail? = null,
     // UI Contract: New fields for contacts module extension
     /** Computed roles from cashflow items (customer, supplier, vendor) */
     val derivedRoles: DerivedContactRoles? = null,

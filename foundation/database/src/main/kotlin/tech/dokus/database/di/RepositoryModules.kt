@@ -13,6 +13,8 @@ import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.database.repository.auth.WelcomeEmailJobRepository
 import tech.dokus.database.repository.banking.BankingRepository
+import tech.dokus.database.repository.business.BusinessProfileEnrichmentJobRepository
+import tech.dokus.database.repository.business.BusinessProfileRepository
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.database.repository.cashflow.CashflowRepository
 import tech.dokus.database.repository.cashflow.CreditNoteRepository
@@ -144,6 +146,11 @@ val repositoryModuleContacts = module {
     single { ContactNoteRepository() }
 }
 
+val repositoryModuleBusinessProfiles = module {
+    single { BusinessProfileRepository() }
+    single { BusinessProfileEnrichmentJobRepository() }
+}
+
 /**
  * AI repositories module.
  * Provides repositories for document chunks (RAG) and chat messages.
@@ -177,6 +184,7 @@ val repositoryModules = module {
         repositoryModulePayment,
         repositoryModuleNotifications,
         repositoryModuleContacts,
+        repositoryModuleBusinessProfiles,
         repositoryModuleAI
     )
 }

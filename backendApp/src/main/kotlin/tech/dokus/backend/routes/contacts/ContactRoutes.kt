@@ -18,6 +18,8 @@ import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.ContactNoteId
+import tech.dokus.domain.model.PinBusinessProfileFieldsRequest
+import tech.dokus.domain.model.UpdateBusinessProfileRequest
 import tech.dokus.domain.model.contact.CreateContactNoteRequest
 import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.model.contact.UpdateContactNoteRequest
@@ -199,6 +201,30 @@ fun Route.contactRoutes() {
                 .getOrElse { throw DokusException.InternalError("Failed to update contact: ${it.message}") }
 
             call.respond(HttpStatusCode.OK, contact)
+        }
+
+        /**
+         * PUT /api/v1/contacts/{id}/business-profile
+         * Backend-only endpoint: update contact business profile values and pin edited fields.
+         */
+        put<Contacts.Id.BusinessProfile> { route ->
+            val tenantId = requireTenantId()
+            val contactId = ContactId.parse(route.parent.id)
+            val request = call.receive<UpdateBusinessProfileRequest>()
+            val response = contactService.updateContactProfile(tenantId, contactId, request)
+            call.respond(HttpStatusCode.OK, response)
+        }
+
+        /**
+         * PUT /api/v1/contacts/{id}/business-profile/pins
+         * Backend-only endpoint: update contact business profile pin flags.
+         */
+        put<Contacts.Id.BusinessProfilePins> { route ->
+            val tenantId = requireTenantId()
+            val contactId = ContactId.parse(route.parent.id)
+            val request = call.receive<PinBusinessProfileFieldsRequest>()
+            val response = contactService.updateContactProfilePins(tenantId, contactId, request)
+            call.respond(HttpStatusCode.OK, response)
         }
 
         /**

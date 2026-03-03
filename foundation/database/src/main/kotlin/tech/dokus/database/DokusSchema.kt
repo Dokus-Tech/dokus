@@ -15,6 +15,8 @@ import tech.dokus.database.tables.auth.UsersTable
 import tech.dokus.database.tables.auth.WelcomeEmailJobsTable
 import tech.dokus.database.tables.banking.BankConnectionsTable
 import tech.dokus.database.tables.banking.BankTransactionsTable
+import tech.dokus.database.tables.business.BusinessProfileEnrichmentJobsTable
+import tech.dokus.database.tables.business.BusinessProfilesTable
 import tech.dokus.database.tables.cashflow.CashflowEntriesTable
 import tech.dokus.database.tables.cashflow.CreditNotesTable
 import tech.dokus.database.tables.cashflow.ExpensesTable
@@ -88,6 +90,8 @@ object DokusSchema {
                 ContactsTable,
                 ContactAddressesTable,  // Join table: contacts -> addresses
                 ContactNotesTable,
+                BusinessProfilesTable,
+                BusinessProfileEnrichmentJobsTable,
 
                 // ----------------------------
                 // Cashflow (depends on contacts)

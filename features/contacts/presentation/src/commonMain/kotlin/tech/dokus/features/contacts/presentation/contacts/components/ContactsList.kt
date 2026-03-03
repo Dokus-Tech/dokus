@@ -59,8 +59,10 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.aura.components.AvatarShape
+import tech.dokus.foundation.aura.components.AvatarSize
+import tech.dokus.foundation.aura.components.CompanyAvatarImage
 import tech.dokus.foundation.aura.components.DokusCardSurface
-import tech.dokus.foundation.aura.components.MonogramAvatar
 import tech.dokus.foundation.aura.components.badges.ContactRole as UiContactRole
 import tech.dokus.foundation.aura.components.badges.RoleBadge
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
@@ -295,11 +297,11 @@ private fun ContactListItem(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
     ) {
-        MonogramAvatar(
-            initials = initials,
-            size = 32.dp,
-            radius = 8.dp,
-            selected = isSelected,
+        CompanyAvatarImage(
+            avatarUrl = contact.avatar?.small,
+            initial = initials,
+            size = AvatarSize.Small,
+            shape = AvatarShape.RoundedSquare
         )
 
         Column(

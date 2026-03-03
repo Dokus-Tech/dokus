@@ -60,6 +60,10 @@ data class Tenant(
     val subscriptionStartedAt: LocalDateTime? = null,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime,
+    val websiteUrl: String? = null,
+    val businessSummary: String? = null,
+    val businessActivities: List<String> = emptyList(),
+    val businessProfileVerified: Boolean = false,
     val avatar: Thumbnail? = null,
 )
 

@@ -16,9 +16,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.foundation.aura.components.AvatarShape
+import tech.dokus.foundation.aura.components.AvatarSize
+import tech.dokus.foundation.aura.components.CompanyAvatarImage
 import tech.dokus.domain.model.contact.DerivedContactRoles
 import tech.dokus.foundation.aura.components.DokusCardSurface
-import tech.dokus.foundation.aura.components.MonogramAvatar
 import tech.dokus.foundation.aura.components.badges.ContactRole as UiContactRole
 import tech.dokus.foundation.aura.components.badges.RoleBadge
 import tech.dokus.foundation.aura.constrains.Constraints
@@ -50,10 +52,11 @@ internal fun ContactCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium),
         ) {
-            MonogramAvatar(
-                initials = initials,
-                size = 38.dp,
-                radius = 10.dp,
+            CompanyAvatarImage(
+                avatarUrl = contact.avatar?.small,
+                initial = initials,
+                size = AvatarSize.Small,
+                shape = AvatarShape.RoundedSquare
             )
 
             Column(

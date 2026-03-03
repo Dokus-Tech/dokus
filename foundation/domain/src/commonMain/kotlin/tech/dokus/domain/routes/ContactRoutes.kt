@@ -104,6 +104,22 @@ class Contacts(
         class MergeInto(val parent: Id, val targetId: String)
 
         /**
+         * PUT /api/v1/contacts/{id}/business-profile
+         * Update canonical website/summary/activities and mark edited fields as pinned.
+         */
+        @Serializable
+        @Resource("business-profile")
+        class BusinessProfile(val parent: Id)
+
+        /**
+         * PUT /api/v1/contacts/{id}/business-profile/pins
+         * Update pin flags for contact business profile fields.
+         */
+        @Serializable
+        @Resource("business-profile/pins")
+        class BusinessProfilePins(val parent: Id)
+
+        /**
          * GET/POST /api/v1/contacts/{id}/notes
          * GET - List notes for contact
          * POST - Create new note

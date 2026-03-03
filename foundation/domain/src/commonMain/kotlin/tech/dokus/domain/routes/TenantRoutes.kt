@@ -55,4 +55,20 @@ class Tenants {
     @Serializable
     @Resource("invoice-number-preview")
     class InvoiceNumberPreview(val parent: Tenants = Tenants())
+
+    /**
+     * PUT /api/v1/tenants/business-profile
+     * Update canonical website/summary/activities and mark edited fields as pinned.
+     */
+    @Serializable
+    @Resource("business-profile")
+    class BusinessProfile(val parent: Tenants = Tenants())
+
+    /**
+     * PUT /api/v1/tenants/business-profile/pins
+     * Update pin flags for tenant business profile fields.
+     */
+    @Serializable
+    @Resource("business-profile/pins")
+    class BusinessProfilePins(val parent: Tenants = Tenants())
 }

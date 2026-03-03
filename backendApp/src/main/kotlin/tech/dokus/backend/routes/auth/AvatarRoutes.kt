@@ -13,6 +13,7 @@ import io.ktor.server.resources.post
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
+import tech.dokus.backend.services.business.BusinessProfileService
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.AvatarUploadResponse
@@ -34,6 +35,7 @@ private val logger = loggerFor("AvatarRoutes")
 internal fun Route.avatarRoutes() {
     val tenantRepository by inject<TenantRepository>()
     val avatarStorageService by inject<AvatarStorageService>()
+    val businessProfileService by inject<BusinessProfileService>()
 
     authenticateJwt {
         /**
@@ -91,6 +93,7 @@ internal fun Route.avatarRoutes() {
 
             // Save storage key to database
             tenantRepository.updateAvatarStorageKey(tenantId, result.storageKeyPrefix)
+            businessProfileService.markTenantAvatarUploaded(tenantId, result.storageKeyPrefix)
 
             logger.info("Avatar uploaded successfully for tenant: $tenantId, key=${result.storageKeyPrefix}")
 
@@ -145,6 +148,7 @@ internal fun Route.avatarRoutes() {
 
             // Clear from database
             tenantRepository.updateAvatarStorageKey(tenantId, null)
+            businessProfileService.markTenantAvatarDeleted(tenantId)
 
             call.respond(HttpStatusCode.NoContent)
         }

@@ -5,7 +5,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.Email
@@ -38,6 +40,9 @@ import tech.dokus.aura.resources.contacts_phone
 import tech.dokus.aura.resources.contacts_tags
 import tech.dokus.aura.resources.contacts_vat_number
 import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.foundation.aura.components.AvatarShape
+import tech.dokus.foundation.aura.components.AvatarSize
+import tech.dokus.foundation.aura.components.CompanyAvatarImage
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -49,9 +54,17 @@ internal fun ContactInfoContent(
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            CompanyAvatarImage(
+                avatarUrl = contact.avatar?.medium ?: contact.avatar?.small,
+                initial = contact.name.value.take(1),
+                size = AvatarSize.Medium,
+                shape = AvatarShape.RoundedSquare
+            )
+
+            Spacer(modifier = Modifier.width(12.dp))
+
             Text(
                 text = contact.name.value,
                 style = MaterialTheme.typography.headlineSmall,
@@ -61,6 +74,7 @@ internal fun ContactInfoContent(
                 modifier = Modifier.weight(1f)
             )
 
+            Spacer(modifier = Modifier.width(12.dp))
             ContactStatusLabel(isActive = contact.isActive)
         }
 
