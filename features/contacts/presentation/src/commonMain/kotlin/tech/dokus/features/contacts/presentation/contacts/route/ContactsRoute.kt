@@ -150,17 +150,9 @@ internal fun ContactsRoute(
     ContactsScreen(
         state = state,
         snackbarHostState = snackbarHostState,
-<<<<<<< HEAD
-        onIntent = { container.store.intent(it) },
-        onSelectContact = { contact -> container.store.intent(ContactsIntent.SelectContact(contact.id)) },
-        onOpenContact = { contact ->
-            navController.navigateTo(ContactsDestination.ContactDetails(contact.id.toString()))
-        },
-=======
         onIntent = onIntent,
         onSelectContact = onSelectContact,
         onOpenContact = onOpenContact,
->>>>>>> origin/main
         onCreateContact = onCreateContact
     )
 }
