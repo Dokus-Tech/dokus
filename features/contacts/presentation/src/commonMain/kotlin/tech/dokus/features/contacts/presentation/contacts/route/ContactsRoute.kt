@@ -143,9 +143,6 @@ internal fun ContactsRoute(
             navController.navigateTo(ContactsDestination.ContactDetails(contact.id.toString()))
         }
     }
-    val onCreateContact = remember(navController) {
-        { navController.navigateTo(ContactsDestination.CreateContact()) }
-    }
 
     ContactsScreen(
         state = state,

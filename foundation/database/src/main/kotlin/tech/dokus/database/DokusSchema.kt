@@ -36,6 +36,7 @@ import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.database.tables.notifications.NotificationPreferencesTable
 import tech.dokus.database.tables.notifications.NotificationsTable
 import tech.dokus.database.tables.payment.PaymentsTable
+import tech.dokus.database.tables.peppol.PeppolDirectoryCacheTable
 import tech.dokus.database.tables.peppol.PeppolRegistrationTable
 import tech.dokus.database.tables.peppol.PeppolSettingsTable
 import tech.dokus.database.tables.peppol.PeppolTransmissionsTable
@@ -122,6 +123,7 @@ object DokusSchema {
                 PeppolRegistrationTable,
                 PeppolSettingsTable,
                 PeppolTransmissionsTable,
+                PeppolDirectoryCacheTable,
 
                 // ----------------------------
                 // AI / RAG (depends on users/docs)
