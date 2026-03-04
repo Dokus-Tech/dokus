@@ -1,10 +1,12 @@
 package tech.dokus.features.cashflow.presentation.documents.components
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
@@ -32,6 +34,7 @@ import tech.dokus.foundation.aura.components.layout.DokusTableRow
 import tech.dokus.foundation.aura.components.status.StatusDot
 import tech.dokus.foundation.aura.components.status.StatusDotType
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.style.textFaint
 import tech.dokus.foundation.aura.style.textMuted
 
 private object LocalUploadTableColumns {
@@ -142,20 +145,19 @@ internal fun DocumentLocalUploadMobileRow(
         DocumentsLocalUploadRow.Status.Failed -> StatusDotType.Error
     }
 
-    DokusCardSurface(
-        modifier = modifier,
-        accent = row.status == DocumentsLocalUploadRow.Status.Failed
-    ) {
-        Column(
+    DokusCardSurface(modifier = modifier) {
+        Row(
             modifier = Modifier
+                .fillMaxWidth()
                 .padding(horizontal = 14.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            StatusDot(type = statusDot, size = 6.dp)
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
-                StatusDot(type = statusDot, size = 6.dp)
                 Text(
                     text = row.fileName,
                     style = MaterialTheme.typography.bodyMedium.copy(
@@ -170,29 +172,60 @@ internal fun DocumentLocalUploadMobileRow(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
+                Text(
+                    text = statusLabel,
+                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 9.sp),
+                    color = MaterialTheme.colorScheme.textMuted,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
             }
-
-            Text(
-                text = statusLabel,
-                style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
-                color = MaterialTheme.colorScheme.textMuted
-            )
 
             if (row.status == DocumentsLocalUploadRow.Status.Failed) {
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    TextButton(onClick = { onRetry(row.taskId) }) {
-                        Text(text = stringResource(Res.string.upload_action_retry))
-                    }
-                    TextButton(onClick = { onDismiss(row.taskId) }) {
-                        Text(text = stringResource(Res.string.documents_local_action_dismiss))
-                    }
+                    InlineRowAction(
+                        label = stringResource(Res.string.upload_action_retry),
+                        onClick = { onRetry(row.taskId) },
+                        isPrimary = true
+                    )
+                    InlineRowAction(
+                        label = stringResource(Res.string.documents_local_action_dismiss),
+                        onClick = { onDismiss(row.taskId) },
+                        isPrimary = false
+                    )
                 }
+            } else {
+                Text(
+                    text = "\u203A",
+                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
+                    color = MaterialTheme.colorScheme.textFaint
+                )
             }
         }
     }
+}
+
+@Composable
+private fun InlineRowAction(
+    label: String,
+    onClick: () -> Unit,
+    isPrimary: Boolean,
+) {
+    Text(
+        text = label,
+        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+        color = if (isPrimary) {
+            MaterialTheme.colorScheme.primary
+        } else {
+            MaterialTheme.colorScheme.textMuted
+        },
+        modifier = Modifier
+            .clickable(onClick = onClick)
+            .padding(vertical = 2.dp)
+    )
 }
 
 @Composable
