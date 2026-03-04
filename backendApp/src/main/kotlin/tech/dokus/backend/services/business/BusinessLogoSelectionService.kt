@@ -5,6 +5,7 @@ import org.apache.batik.transcoder.TranscoderOutput
 import org.apache.batik.transcoder.image.PNGTranscoder
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
+import java.net.URI
 import java.nio.charset.StandardCharsets
 import javax.imageio.ImageIO
 
@@ -23,14 +24,20 @@ private data class LogoCandidate(
 class BusinessLogoSelectionService(
     private val websiteProbe: BusinessWebsiteProbe,
 ) {
-    suspend fun selectPreferredLogo(logoCandidates: List<String>): DownloadedBusinessImage? {
+    suspend fun selectPreferredLogo(
+        websiteUrl: String?,
+        logoCandidates: List<String>
+    ): DownloadedBusinessImage? {
         val normalizedCandidates = logoCandidates
             .asSequence()
             .map { it.trim() }
             .filter { it.startsWith("http://") || it.startsWith("https://") }
             .distinct()
             .take(40)
-            .toList()
+            .toMutableList()
+        if (normalizedCandidates.isEmpty()) {
+            normalizedCandidates += buildHostFallbackCandidates(websiteUrl)
+        }
 
         val evaluated = mutableListOf<LogoCandidate>()
         for (url in normalizedCandidates) {
@@ -62,6 +69,18 @@ class BusinessLogoSelectionService(
             ?: evaluated.filter { it.format == LogoFormat.Ico }
                 .maxByOrNull { it.area }
                 ?.image
+    }
+
+    private fun buildHostFallbackCandidates(websiteUrl: String?): List<String> {
+        val host = runCatching { URI(websiteUrl).host }
+            .getOrNull()
+            ?.removePrefix("www.")
+            ?.takeIf { it.isNotBlank() }
+            ?: return emptyList()
+        return listOf(
+            "https://$host/favicon.ico",
+            "https://$host/apple-touch-icon.png"
+        )
     }
 
     private fun detectLogoFormat(url: String, contentType: String): LogoFormat? {

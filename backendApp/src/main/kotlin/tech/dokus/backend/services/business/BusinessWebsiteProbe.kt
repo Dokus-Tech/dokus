@@ -15,6 +15,7 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import tech.dokus.domain.utils.json
@@ -61,6 +62,13 @@ data class DownloadedBusinessImage(
     val contentType: String,
 )
 
+data class WebsiteSearchResult(
+    val url: String,
+    val title: String? = null,
+    val snippet: String? = null,
+    val searchRank: Int,
+)
+
 class BusinessWebsiteProbe(
     private val httpClient: HttpClient,
     private val config: BusinessProfileEnrichmentConfig,
@@ -71,15 +79,15 @@ class BusinessWebsiteProbe(
         companyName: String,
         country: String? = null,
         maxResults: Int = 3
-    ): List<String> {
+    ): List<WebsiteSearchResult> {
         if (config.serperApiKey.isBlank()) return emptyList()
         val query = buildStrictSearchQuery(companyName, country) ?: return emptyList()
         val limit = maxResults.coerceIn(1, 3)
-        return fetchSerperUrls(query, limit).take(limit)
+        return fetchSerperResults(query, limit).take(limit)
     }
 
     internal fun buildStrictSearchQuery(companyName: String, country: String?): String? {
-        val normalizedName = companyName.trim()
+        val normalizedName = sanitizeCompanyNameForSearch(companyName)
         if (normalizedName.isBlank()) return null
         val countryPart = country?.trim().orEmpty()
         return if (countryPart.isBlank()) normalizedName else "$normalizedName $countryPart"
@@ -204,7 +212,7 @@ class BusinessWebsiteProbe(
         }.getOrNull()
     }
 
-    private suspend fun fetchSerperUrls(query: String, maxResults: Int): List<String> {
+    private suspend fun fetchSerperResults(query: String, maxResults: Int): List<WebsiteSearchResult> {
         return runSuspendCatching {
             val requestBody = buildJsonObject {
                 put("q", JsonPrimitive(query))
@@ -219,12 +227,38 @@ class BusinessWebsiteProbe(
             if (!response.status.isSuccess()) return@runSuspendCatching emptyList()
             val parsed = json.parseToJsonElement(response.bodyAsText()).jsonObject
             val organic = parsed["organic"] as? JsonArray ?: JsonArray(emptyList())
-            organic.mapNotNull { element ->
-                val obj = element as? JsonObject ?: return@mapNotNull null
-                val rawUrl = obj["link"]?.jsonPrimitive?.content ?: return@mapNotNull null
-                normalizeUrl(rawUrl)
+            organic.mapIndexedNotNull { index, element ->
+                val obj = element as? JsonObject ?: return@mapIndexedNotNull null
+                val rawUrl = obj["link"]?.jsonPrimitive?.content ?: return@mapIndexedNotNull null
+                val normalizedUrl = normalizeUrl(rawUrl) ?: return@mapIndexedNotNull null
+                WebsiteSearchResult(
+                    url = normalizedUrl,
+                    title = obj["title"]?.jsonPrimitive?.contentOrNull,
+                    snippet = obj["snippet"]?.jsonPrimitive?.contentOrNull,
+                    searchRank = index + 1
+                )
             }
         }.getOrDefault(emptyList())
+    }
+
+    internal fun sanitizeCompanyNameForSearch(companyName: String): String {
+        val legalSuffixes = setOf(
+            "nv", "bv", "bvba", "srl", "sprl", "sa", "sas", "ag", "gmbh", "llc", "ltd", "inc", "corp"
+        )
+        val tokens = companyName
+            .trim()
+            .split(Regex("\\s+"))
+            .map { token -> token.trim().trim(',', '.', ';', ':', '-', '_') }
+            .filter { it.isNotBlank() }
+            .toMutableList()
+        while (tokens.isNotEmpty()) {
+            val last = tokens.last()
+                .lowercase()
+                .replace(Regex("[^a-z0-9]"), "")
+            if (last.isBlank() || last !in legalSuffixes) break
+            tokens.removeAt(tokens.lastIndex)
+        }
+        return tokens.joinToString(" ").ifBlank { companyName.trim() }
     }
 
     private fun prioritizeLinks(links: List<String>): List<String> {

@@ -21,6 +21,7 @@ import tech.dokus.backend.services.business.BusinessProfileService
 import tech.dokus.backend.services.business.BusinessWebsiteProbe
 import tech.dokus.backend.services.business.BusinessWebsiteRanker
 import tech.dokus.backend.services.business.WebsiteCandidateInput
+import tech.dokus.backend.services.business.WebsiteRankingDecision
 import tech.dokus.backend.services.business.WebsiteRankingContext
 import tech.dokus.backend.services.business.isAggregatorOrSocialHost
 import tech.dokus.database.repository.auth.AddressRepository
@@ -182,9 +183,9 @@ class BusinessProfileEnrichmentWorker(
 
             val candidatesWithPages = searchCandidates
                 .take(3)
-                .mapIndexedNotNull { index, url ->
-                    val candidateUrl = url.trim()
-                    if (candidateUrl.isBlank()) return@mapIndexedNotNull null
+                .mapNotNull { searchResult ->
+                    val candidateUrl = searchResult.url.trim()
+                    if (candidateUrl.isBlank()) return@mapNotNull null
                     if (isAggregatorOrSocialUrl(candidateUrl)) {
                         logger.info(
                             "Skipping aggregator/social candidate for subjectType={}, subjectId={}, url={}",
@@ -192,15 +193,17 @@ class BusinessProfileEnrichmentWorker(
                             job.subjectId,
                             candidateUrl
                         )
-                        return@mapIndexedNotNull null
+                        return@mapNotNull null
                     }
 
                     val crawl = websiteProbe.crawl(startUrl = candidateUrl, maxPages = config.maxPages)
                     RankedCandidateWithPages(
                         input = WebsiteCandidateInput(
                             url = candidateUrl,
-                            searchRank = index + 1,
-                            pages = crawl.pages
+                            searchRank = searchResult.searchRank,
+                            pages = crawl.pages,
+                            searchTitle = searchResult.title,
+                            searchSnippet = searchResult.snippet
                         )
                     )
                 }
@@ -219,17 +222,48 @@ class BusinessProfileEnrichmentWorker(
                 candidates = candidatesWithPages.map { it.input }
             )
             val rankingJson = json.encodeToString(ranking.evidence)
+            logger.info(
+                "Website ranking decision for subjectType={}, subjectId={}, decision={}, selectedScore={}, verifiedThreshold={}, suggestedThreshold={}, selectedUrl={}",
+                job.subjectType,
+                job.subjectId,
+                ranking.decision,
+                ranking.evidence.selectedScore,
+                ranking.evidence.verifiedThreshold,
+                ranking.evidence.suggestedThreshold,
+                ranking.evidence.selectedUrl
+            )
+            ranking.allCandidates.forEach { candidate ->
+                val signals = candidate.signals.joinToString(",") { signal ->
+                    "${signal.signal.name}:${if (signal.passed) 1 else 0}"
+                }
+                logger.debug(
+                    "Website candidate ranking for subjectType={}, subjectId={}, rank={}, score={}, url={}, signals={}",
+                    job.subjectType,
+                    job.subjectId,
+                    candidate.searchRank,
+                    candidate.score,
+                    candidate.url,
+                    signals
+                )
+            }
 
             val selected = ranking.bestCandidate
-            if (!ranking.accepted || selected == null) {
+            if (ranking.decision == WebsiteRankingDecision.REJECTED || selected == null) {
                 val bestHost = selected?.url
                     ?.let { runCatching { URI(it).host?.removePrefix("www.") }.getOrNull() }
                 val bestScore = selected?.score ?: 0
                 val message = if (bestHost.isNullOrBlank()) {
-                    "No official website candidate scored above 70"
+                    "No official website candidate scored at least 50"
                 } else {
-                    "Top candidate $bestHost scored $bestScore (requires > 70)"
+                    "Top candidate $bestHost scored $bestScore (requires >= 50)"
                 }
+                logger.info(
+                    "Rejected business profile enrichment for subjectType={}, subjectId={}, reason={}, score={}",
+                    job.subjectType,
+                    job.subjectId,
+                    message,
+                    bestScore
+                )
 
                 businessProfileService.applyEnrichment(
                     tenantId = job.tenantId,
@@ -263,14 +297,20 @@ class BusinessProfileEnrichmentWorker(
 
             val logoStorageKey = resolveLogoStorageKey(
                 job = job,
+                websiteUrl = selected.url,
                 logoCandidates = selectedPages.flatMap { it.logoCandidates }
             )
+            val verificationState = when (ranking.decision) {
+                WebsiteRankingDecision.VERIFIED -> BusinessProfileVerificationState.Verified
+                WebsiteRankingDecision.SUGGESTED -> BusinessProfileVerificationState.Suggested
+                WebsiteRankingDecision.REJECTED -> BusinessProfileVerificationState.Unset
+            }
 
             businessProfileService.applyEnrichment(
                 tenantId = job.tenantId,
                 subjectType = job.subjectType,
                 subjectId = job.subjectId,
-                verificationState = BusinessProfileVerificationState.Verified,
+                verificationState = verificationState,
                 evidenceScore = selected.score,
                 evidenceChecksJson = rankingJson,
                 websiteUrl = selected.url,
@@ -280,6 +320,15 @@ class BusinessProfileEnrichmentWorker(
                 lastErrorCode = null,
                 lastErrorMessage = null,
             )
+            if (verificationState == BusinessProfileVerificationState.Suggested) {
+                logger.info(
+                    "Persisted suggested website enrichment for subjectType={}, subjectId={}, website={}, score={}",
+                    job.subjectType,
+                    job.subjectId,
+                    selected.url,
+                    selected.score
+                )
+            }
 
             jobRepository.markCompleted(job.id)
         }.onFailure { error ->
@@ -332,6 +381,7 @@ class BusinessProfileEnrichmentWorker(
 
     private suspend fun resolveLogoStorageKey(
         job: BusinessProfileEnrichmentJob,
+        websiteUrl: String,
         logoCandidates: List<String>
     ): String? {
         val existingProfile = profileRepository.getBySubject(job.tenantId, job.subjectType, job.subjectId)
@@ -343,7 +393,7 @@ class BusinessProfileEnrichmentWorker(
             if (!tenantAvatar.isNullOrBlank()) return null
         }
 
-        val preferred = logoSelectionService.selectPreferredLogo(logoCandidates) ?: return null
+        val preferred = logoSelectionService.selectPreferredLogo(websiteUrl = websiteUrl, logoCandidates = logoCandidates) ?: return null
         val upload = runSuspendCatching {
             avatarStorageService.uploadAvatar(job.tenantId, preferred.bytes, preferred.contentType)
         }.getOrElse { error ->
@@ -400,10 +450,11 @@ class BusinessProfileEnrichmentWorker(
                     .let { addresses -> addresses.firstOrNull { it.isDefault } ?: addresses.firstOrNull() }
                     ?.address
                 val tenant = tenantRepository.findById(job.tenantId) ?: return null
+                val companyAddress = addressRepository.getCompanyAddress(job.tenantId)
                 BusinessSubjectContext(
                     name = contact.name.value,
                     vatNumber = contact.vatNumber?.value,
-                    country = contactAddress?.country,
+                    country = contactAddress?.country ?: companyAddress?.country,
                     city = contactAddress?.city,
                     postalCode = contactAddress?.postalCode,
                     email = contact.email?.value,

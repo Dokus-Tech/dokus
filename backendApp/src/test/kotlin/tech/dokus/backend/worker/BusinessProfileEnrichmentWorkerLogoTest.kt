@@ -16,8 +16,10 @@ import tech.dokus.backend.services.business.BusinessWebsiteProbe
 import tech.dokus.backend.services.business.BusinessWebsiteRanker
 import tech.dokus.backend.services.business.DownloadedBusinessImage
 import tech.dokus.backend.services.business.RankedWebsiteCandidate
+import tech.dokus.backend.services.business.WebsiteRankingDecision
 import tech.dokus.backend.services.business.WebsiteRankingEvidence
 import tech.dokus.backend.services.business.WebsiteRankingResult
+import tech.dokus.backend.services.business.WebsiteSearchResult
 import tech.dokus.database.repository.auth.AddressRepository
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.business.BusinessProfileEnrichmentJob
@@ -93,7 +95,14 @@ class BusinessProfileEnrichmentWorkerLogoTest {
         coEvery { addressRepository.getCompanyAddress(job.tenantId) } returns sampleAddress(job.tenantId)
 
         coEvery { websiteProbe.buildStrictSearchQuery("Acme Logistics", "BE") } returns "Acme Logistics BE"
-        coEvery { websiteProbe.searchWebsiteCandidates("Acme Logistics", "BE", 3) } returns listOf("https://acme.example")
+        coEvery { websiteProbe.searchWebsiteCandidates("Acme Logistics", "BE", 3) } returns listOf(
+            WebsiteSearchResult(
+                url = "https://acme.example",
+                title = "Acme Logistics",
+                snippet = "Acme website",
+                searchRank = 1
+            )
+        )
         coEvery { websiteProbe.crawl("https://acme.example", config.maxPages) } returns tech.dokus.backend.services.business.BusinessWebsiteCrawlResult(
             pages = listOf(
                 tech.dokus.backend.services.business.CrawledBusinessPage(
@@ -193,6 +202,110 @@ class BusinessProfileEnrichmentWorkerLogoTest {
         }
     }
 
+    @Test
+    fun `favicon fallback is used when no page logo candidates are present`() = runBlocking {
+        val job = sampleJob(subjectType = BusinessProfileSubjectType.Tenant, attemptCount = 0)
+        val ranking = acceptedRanking("https://acme.example", 91)
+        val faviconPng = pngBytes(96, 96, Color.GREEN)
+
+        coEvery { jobRepository.recoverStaleProcessing(any(), any(), any()) } returns Result.success(0)
+        coEvery { jobRepository.claimDue(any(), any()) } returns Result.success(listOf(job))
+        coEvery { jobRepository.markCompleted(job.id) } returns Result.success(true)
+
+        coEvery { tenantRepository.findById(job.tenantId) } returns sampleTenant(job.tenantId)
+        coEvery { addressRepository.getCompanyAddress(job.tenantId) } returns sampleAddress(job.tenantId)
+
+        coEvery { websiteProbe.buildStrictSearchQuery("Acme Logistics", "BE") } returns "Acme Logistics BE"
+        coEvery { websiteProbe.searchWebsiteCandidates("Acme Logistics", "BE", 3) } returns listOf(
+            WebsiteSearchResult(
+                url = "https://acme.example",
+                title = "Acme Logistics",
+                snippet = "Acme website",
+                searchRank = 1
+            )
+        )
+        coEvery { websiteProbe.crawl("https://acme.example", config.maxPages) } returns tech.dokus.backend.services.business.BusinessWebsiteCrawlResult(
+            pages = listOf(
+                tech.dokus.backend.services.business.CrawledBusinessPage(
+                    url = "https://acme.example",
+                    textContent = "Acme Logistics",
+                    structuredDataSnippets = emptyList(),
+                    emails = emptyList(),
+                    phones = emptyList(),
+                    links = emptyList(),
+                    logoCandidates = emptyList()
+                )
+            ),
+            blockedByRobots = false
+        )
+        coEvery { websiteRanker.rank(any(), any(), any()) } returns ranking
+        coEvery { contentExtractionAgent.extract(any()) } throws IllegalStateException("simulate extract failure")
+
+        coEvery { profileRepository.getBySubject(job.tenantId, job.subjectType, job.subjectId) } returns null
+        coEvery { tenantRepository.getAvatarStorageKey(job.tenantId) } returns null
+
+        coEvery { websiteProbe.downloadImage("https://acme.example/favicon.ico") } returns DownloadedBusinessImage(
+            bytes = faviconPng,
+            contentType = "image/png"
+        )
+        coEvery { websiteProbe.downloadImage("https://acme.example/apple-touch-icon.png") } returns null
+
+        val uploadedBytes = slot<ByteArray>()
+        coEvery {
+            avatarStorageService.uploadAvatar(
+                job.tenantId,
+                capture(uploadedBytes),
+                "image/png"
+            )
+        } returns AvatarStorageService.AvatarUploadResult(
+            storageKeyPrefix = "avatars/fallback-logo",
+            avatar = Thumbnail(small = "s", medium = "m", large = "l"),
+            sizeBytes = faviconPng.size.toLong()
+        )
+        coEvery { tenantRepository.updateAvatarStorageKey(job.tenantId, "avatars/fallback-logo") } returns Unit
+        coEvery {
+            businessProfileService.applyEnrichment(
+                tenantId = any(),
+                subjectType = any(),
+                subjectId = any(),
+                verificationState = any(),
+                evidenceScore = any(),
+                evidenceChecksJson = any(),
+                websiteUrl = any(),
+                businessSummary = any(),
+                businessActivities = any(),
+                logoStorageKey = any(),
+                lastErrorCode = any(),
+                lastErrorMessage = any()
+            )
+        } returns BusinessProfileRecord(
+            tenantId = job.tenantId,
+            subjectType = job.subjectType,
+            subjectId = job.subjectId
+        )
+
+        createWorker().processBatchForTest()
+
+        assertTrue(uploadedBytes.captured.contentEquals(faviconPng))
+        coVerify(exactly = 1) { websiteProbe.downloadImage("https://acme.example/favicon.ico") }
+        coVerify(exactly = 1) {
+            businessProfileService.applyEnrichment(
+                tenantId = job.tenantId,
+                subjectType = job.subjectType,
+                subjectId = job.subjectId,
+                verificationState = BusinessProfileVerificationState.Verified,
+                evidenceScore = 91,
+                evidenceChecksJson = any(),
+                websiteUrl = "https://acme.example",
+                businessSummary = null,
+                businessActivities = null,
+                logoStorageKey = "avatars/fallback-logo",
+                lastErrorCode = null,
+                lastErrorMessage = null
+            )
+        }
+    }
+
     private fun createWorker(): BusinessProfileEnrichmentWorker {
         return BusinessProfileEnrichmentWorker(
             config = config,
@@ -221,11 +334,15 @@ class BusinessProfileEnrichmentWorkerLogoTest {
             signals = emptyList()
         )
         return WebsiteRankingResult(
+            decision = WebsiteRankingDecision.VERIFIED,
             accepted = true,
             bestCandidate = best,
             allCandidates = listOf(best),
             evidence = WebsiteRankingEvidence(
                 query = "Acme Logistics BE",
+                decision = WebsiteRankingDecision.VERIFIED,
+                verifiedThreshold = 70,
+                suggestedThreshold = 50,
                 threshold = 70,
                 accepted = true,
                 selectedUrl = url,

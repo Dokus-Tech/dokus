@@ -10,7 +10,7 @@ class BusinessWebsiteRankerTest {
     private val ranker = BusinessWebsiteRanker()
 
     @Test
-    fun `accepts candidate only when score is strictly above 70`() {
+    fun `score above 70 is verified`() {
         val context = WebsiteRankingContext(
             companyName = "Invoid Vision",
             vatNumber = "BE0123456789",
@@ -40,13 +40,14 @@ class BusinessWebsiteRankerTest {
 
         val result = ranker.rank(context, "Invoid Vision BE", listOf(strongCandidate))
 
+        assertEquals(WebsiteRankingDecision.VERIFIED, result.decision)
         assertTrue(result.accepted)
         assertNotNull(result.bestCandidate)
         assertTrue((result.bestCandidate?.score ?: 0) > 70)
     }
 
     @Test
-    fun `score of 70 is rejected`() {
+    fun `score of 70 is suggested`() {
         val context = WebsiteRankingContext(
             companyName = "Acme Logistics",
             vatNumber = null,
@@ -77,7 +78,8 @@ class BusinessWebsiteRankerTest {
         val result = ranker.rank(context, "Acme Logistics BE", listOf(candidate))
 
         assertEquals(70, result.bestCandidate?.score)
-        assertFalse(result.accepted)
+        assertEquals(WebsiteRankingDecision.SUGGESTED, result.decision)
+        assertTrue(result.accepted)
     }
 
     @Test
@@ -132,5 +134,157 @@ class BusinessWebsiteRankerTest {
         assertEquals(50, result.bestCandidate?.score)
         assertEquals("https://official-example.com", result.bestCandidate?.url)
         assertEquals(2, result.bestCandidate?.hardIdentityHits)
+        assertEquals(WebsiteRankingDecision.SUGGESTED, result.decision)
+    }
+
+    @Test
+    fun `kbc acronym matches domain token`() {
+        val context = WebsiteRankingContext(companyName = "KBC Bank NV")
+        val candidate = WebsiteCandidateInput(
+            url = "https://www.kbc.com/en.html",
+            searchRank = 1,
+            pages = listOf(
+                CrawledBusinessPage(
+                    url = "https://www.kbc.com/en.html",
+                    title = "KBC Bank",
+                    description = "KBC financial services",
+                    textContent = "KBC provides banking services.",
+                    structuredDataSnippets = emptyList(),
+                    emails = emptyList(),
+                    phones = emptyList(),
+                    links = emptyList(),
+                    logoCandidates = emptyList()
+                )
+            )
+        )
+
+        val result = ranker.rank(context, "KBC Bank BE", listOf(candidate))
+
+        val domainSignal = result.bestCandidate?.signals?.firstOrNull {
+            it.signal == WebsiteRankingSignal.DOMAIN_COMPANY_MATCH
+        } ?: error("Expected DOMAIN_COMPANY_MATCH signal")
+        assertTrue(domainSignal.passed)
+    }
+
+    @Test
+    fun `brand matching uses alias and search metadata`() {
+        val context = WebsiteRankingContext(companyName = "Coolblue België N.V.")
+        val candidate = WebsiteCandidateInput(
+            url = "https://www.coolblue.be",
+            searchRank = 1,
+            searchTitle = "Coolblue België | Elektronica",
+            searchSnippet = "Coolblue België webshop",
+            pages = listOf(
+                CrawledBusinessPage(
+                    url = "https://www.coolblue.be",
+                    title = "Welcome",
+                    description = null,
+                    textContent = "Best products and delivery.",
+                    structuredDataSnippets = emptyList(),
+                    emails = emptyList(),
+                    phones = emptyList(),
+                    links = emptyList(),
+                    logoCandidates = emptyList()
+                )
+            )
+        )
+
+        val result = ranker.rank(context, "Coolblue België BE", listOf(candidate))
+
+        val brandSignal = result.bestCandidate?.signals?.firstOrNull {
+            it.signal == WebsiteRankingSignal.BRAND_TEXT_MATCH
+        } ?: error("Expected BRAND_TEXT_MATCH signal")
+        assertTrue(brandSignal.passed)
+    }
+
+    @Test
+    fun `contact corroboration adapts when only one signal is available`() {
+        val context = WebsiteRankingContext(
+            companyName = "Acme",
+            city = "Brussels"
+        )
+        val candidate = WebsiteCandidateInput(
+            url = "https://acme.example",
+            searchRank = 1,
+            pages = listOf(
+                CrawledBusinessPage(
+                    url = "https://acme.example",
+                    title = "Acme",
+                    description = null,
+                    textContent = "Acme has offices in Brussels.",
+                    structuredDataSnippets = emptyList(),
+                    emails = emptyList(),
+                    phones = emptyList(),
+                    links = emptyList(),
+                    logoCandidates = emptyList()
+                )
+            )
+        )
+
+        val result = ranker.rank(context, "Acme Brussels", listOf(candidate))
+
+        val corroborationSignal = result.bestCandidate?.signals?.firstOrNull {
+            it.signal == WebsiteRankingSignal.CONTACT_CORROBORATION
+        } ?: error("Expected CONTACT_CORROBORATION signal")
+        assertTrue(corroborationSignal.passed)
+    }
+
+    @Test
+    fun `vat digits fallback matches even when country prefix is omitted`() {
+        val context = WebsiteRankingContext(
+            companyName = "Invoid Vision",
+            vatNumber = "BE0777887045"
+        )
+        val candidate = WebsiteCandidateInput(
+            url = "https://invoid.vision",
+            searchRank = 1,
+            pages = listOf(
+                CrawledBusinessPage(
+                    url = "https://invoid.vision",
+                    title = "Invoid Vision",
+                    description = null,
+                    textContent = "Company number 0777887045",
+                    structuredDataSnippets = emptyList(),
+                    emails = emptyList(),
+                    phones = emptyList(),
+                    links = emptyList(),
+                    logoCandidates = emptyList()
+                )
+            )
+        )
+
+        val result = ranker.rank(context, "Invoid Vision BE", listOf(candidate))
+
+        val vatSignal = result.bestCandidate?.signals?.firstOrNull {
+            it.signal == WebsiteRankingSignal.VAT_MATCH
+        } ?: error("Expected VAT_MATCH signal")
+        assertTrue(vatSignal.passed)
+    }
+
+    @Test
+    fun `score below 50 is rejected`() {
+        val context = WebsiteRankingContext(companyName = "Acme")
+        val weakCandidate = WebsiteCandidateInput(
+            url = "https://example.org",
+            searchRank = 1,
+            pages = listOf(
+                CrawledBusinessPage(
+                    url = "https://example.org",
+                    title = "Example",
+                    description = null,
+                    textContent = "Generic content",
+                    structuredDataSnippets = emptyList(),
+                    emails = emptyList(),
+                    phones = emptyList(),
+                    links = emptyList(),
+                    logoCandidates = emptyList()
+                )
+            )
+        )
+
+        val result = ranker.rank(context, "Acme BE", listOf(weakCandidate))
+
+        assertFalse(result.accepted)
+        assertEquals(WebsiteRankingDecision.REJECTED, result.decision)
     }
 }

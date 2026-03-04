@@ -32,4 +32,10 @@ class BusinessWebsiteProbeSearchTest {
         assertEquals("Invoid Vision", probe.buildStrictSearchQuery("Invoid Vision", null))
         assertEquals("Invoid Vision", probe.buildStrictSearchQuery("Invoid Vision", "   "))
     }
+
+    @Test
+    fun `strips legal suffixes from company name before building query`() {
+        assertEquals("KBC Bank BE", probe.buildStrictSearchQuery("KBC Bank NV", "BE"))
+        assertEquals("Coolblue België BE", probe.buildStrictSearchQuery("Coolblue België N.V.", "BE"))
+    }
 }

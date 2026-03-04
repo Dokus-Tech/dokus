@@ -13,8 +13,10 @@ import tech.dokus.backend.services.business.BusinessLogoSelectionService
 import tech.dokus.backend.services.business.BusinessWebsiteProbe
 import tech.dokus.backend.services.business.BusinessWebsiteRanker
 import tech.dokus.backend.services.business.RankedWebsiteCandidate
+import tech.dokus.backend.services.business.WebsiteRankingDecision
 import tech.dokus.backend.services.business.WebsiteRankingEvidence
 import tech.dokus.backend.services.business.WebsiteRankingResult
+import tech.dokus.backend.services.business.WebsiteSearchResult
 import tech.dokus.database.repository.auth.AddressRepository
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.business.BusinessProfileEnrichmentJob
@@ -69,7 +71,7 @@ class BusinessProfileEnrichmentWorkerTest {
     @Test
     fun `low confidence website keeps fields unchanged and stores low confidence error`() = runBlocking {
         val job = sampleJob(subjectType = BusinessProfileSubjectType.Tenant, attemptCount = 0)
-        val ranking = rejectedRanking("https://acme.example", 70)
+        val ranking = rejectedRanking("https://acme.example", 49)
 
         coEvery { jobRepository.recoverStaleProcessing(any(), any(), any()) } returns Result.success(0)
         coEvery { jobRepository.claimDue(any(), any()) } returns Result.success(listOf(job))
@@ -79,7 +81,14 @@ class BusinessProfileEnrichmentWorkerTest {
         coEvery { addressRepository.getCompanyAddress(job.tenantId) } returns sampleAddress(job.tenantId)
 
         coEvery { websiteProbe.buildStrictSearchQuery("Acme Logistics", "BE") } returns "Acme Logistics BE"
-        coEvery { websiteProbe.searchWebsiteCandidates("Acme Logistics", "BE", 3) } returns listOf("https://acme.example")
+        coEvery { websiteProbe.searchWebsiteCandidates("Acme Logistics", "BE", 3) } returns listOf(
+            WebsiteSearchResult(
+                url = "https://acme.example",
+                title = "Acme Logistics",
+                snippet = "Acme Logistics website",
+                searchRank = 1
+            )
+        )
         coEvery { websiteProbe.crawl("https://acme.example", config.maxPages) } returns tech.dokus.backend.services.business.BusinessWebsiteCrawlResult(
             pages = listOf(
                 tech.dokus.backend.services.business.CrawledBusinessPage(
@@ -127,14 +136,14 @@ class BusinessProfileEnrichmentWorkerTest {
                 subjectType = job.subjectType,
                 subjectId = job.subjectId,
                 verificationState = BusinessProfileVerificationState.Unset,
-                evidenceScore = 70,
+                evidenceScore = 49,
                 evidenceChecksJson = any(),
                 websiteUrl = null,
                 businessSummary = null,
                 businessActivities = null,
                 logoStorageKey = null,
                 lastErrorCode = "LOW_CONFIDENCE_WEBSITE",
-                lastErrorMessage = "Top candidate acme.example scored 70 (requires > 70)"
+                lastErrorMessage = "Top candidate acme.example scored 49 (requires >= 50)"
             )
         }
         coVerify(exactly = 0) { contentExtractionAgent.extract(any()) }
@@ -153,7 +162,14 @@ class BusinessProfileEnrichmentWorkerTest {
         coEvery { addressRepository.getCompanyAddress(job.tenantId) } returns sampleAddress(job.tenantId)
 
         coEvery { websiteProbe.buildStrictSearchQuery("Acme Logistics", "BE") } returns "Acme Logistics BE"
-        coEvery { websiteProbe.searchWebsiteCandidates("Acme Logistics", "BE", 3) } returns listOf("https://acme.example")
+        coEvery { websiteProbe.searchWebsiteCandidates("Acme Logistics", "BE", 3) } returns listOf(
+            WebsiteSearchResult(
+                url = "https://acme.example",
+                title = "Acme Logistics",
+                snippet = "Acme Logistics website",
+                searchRank = 1
+            )
+        )
         coEvery { websiteProbe.crawl("https://acme.example", config.maxPages) } returns tech.dokus.backend.services.business.BusinessWebsiteCrawlResult(
             pages = listOf(
                 tech.dokus.backend.services.business.CrawledBusinessPage(
@@ -226,6 +242,93 @@ class BusinessProfileEnrichmentWorkerTest {
     }
 
     @Test
+    fun `suggested ranking persists website with suggested state`() = runBlocking {
+        val job = sampleJob(subjectType = BusinessProfileSubjectType.Tenant, attemptCount = 0)
+        val ranking = suggestedRanking("https://acme.example", 70)
+
+        coEvery { jobRepository.recoverStaleProcessing(any(), any(), any()) } returns Result.success(0)
+        coEvery { jobRepository.claimDue(any(), any()) } returns Result.success(listOf(job))
+        coEvery { jobRepository.markCompleted(job.id) } returns Result.success(true)
+
+        coEvery { tenantRepository.findById(job.tenantId) } returns sampleTenant(job.tenantId)
+        coEvery { addressRepository.getCompanyAddress(job.tenantId) } returns sampleAddress(job.tenantId)
+
+        coEvery { websiteProbe.buildStrictSearchQuery("Acme Logistics", "BE") } returns "Acme Logistics BE"
+        coEvery { websiteProbe.searchWebsiteCandidates("Acme Logistics", "BE", 3) } returns listOf(
+            WebsiteSearchResult(
+                url = "https://acme.example",
+                title = "Acme Logistics",
+                snippet = "Acme Logistics website",
+                searchRank = 1
+            )
+        )
+        coEvery { websiteProbe.crawl("https://acme.example", config.maxPages) } returns tech.dokus.backend.services.business.BusinessWebsiteCrawlResult(
+            pages = listOf(
+                tech.dokus.backend.services.business.CrawledBusinessPage(
+                    url = "https://acme.example",
+                    textContent = "Acme Logistics helps finance teams automate AP workflows.",
+                    structuredDataSnippets = emptyList(),
+                    emails = emptyList(),
+                    phones = emptyList(),
+                    links = emptyList(),
+                    logoCandidates = emptyList()
+                )
+            ),
+            blockedByRobots = false
+        )
+
+        coEvery { websiteRanker.rank(any(), any(), any()) } returns ranking
+        coEvery { contentExtractionAgent.extract(any()) } returns BusinessProfileContentExtractionResult(
+            businessSummary = "Acme Logistics provides AP automation software.",
+            activities = listOf("AP automation"),
+            confidence = 0.88
+        )
+        coEvery { profileRepository.getBySubject(job.tenantId, job.subjectType, job.subjectId) } returns null
+        coEvery { tenantRepository.getAvatarStorageKey(job.tenantId) } returns null
+        coEvery { websiteProbe.downloadImage(any()) } returns null
+        coEvery {
+            businessProfileService.applyEnrichment(
+                tenantId = any(),
+                subjectType = any(),
+                subjectId = any(),
+                verificationState = any(),
+                evidenceScore = any(),
+                evidenceChecksJson = any(),
+                websiteUrl = any(),
+                businessSummary = any(),
+                businessActivities = any(),
+                logoStorageKey = any(),
+                lastErrorCode = any(),
+                lastErrorMessage = any()
+            )
+        } returns BusinessProfileRecord(
+            tenantId = job.tenantId,
+            subjectType = job.subjectType,
+            subjectId = job.subjectId
+        )
+
+        val worker = createWorker()
+        worker.processBatchForTest()
+
+        coVerify(exactly = 1) {
+            businessProfileService.applyEnrichment(
+                tenantId = job.tenantId,
+                subjectType = job.subjectType,
+                subjectId = job.subjectId,
+                verificationState = BusinessProfileVerificationState.Suggested,
+                evidenceScore = 70,
+                evidenceChecksJson = any(),
+                websiteUrl = "https://acme.example",
+                businessSummary = "Acme Logistics provides AP automation software.",
+                businessActivities = listOf("AP automation"),
+                logoStorageKey = null,
+                lastErrorCode = null,
+                lastErrorMessage = null
+            )
+        }
+    }
+
+    @Test
     fun `failed processing schedules retry with incremented attempt count`() = runBlocking {
         val job = sampleJob(subjectType = BusinessProfileSubjectType.Tenant, attemptCount = 2)
         coEvery { jobRepository.recoverStaleProcessing(any(), any(), any()) } returns Result.success(0)
@@ -284,11 +387,15 @@ class BusinessProfileEnrichmentWorkerTest {
             signals = emptyList()
         )
         return WebsiteRankingResult(
+            decision = WebsiteRankingDecision.VERIFIED,
             accepted = true,
             bestCandidate = best,
             allCandidates = listOf(best),
             evidence = WebsiteRankingEvidence(
                 query = "Acme Logistics BE",
+                decision = WebsiteRankingDecision.VERIFIED,
+                verifiedThreshold = 70,
+                suggestedThreshold = 50,
                 threshold = 70,
                 accepted = true,
                 selectedUrl = url,
@@ -308,14 +415,46 @@ class BusinessProfileEnrichmentWorkerTest {
             signals = emptyList()
         )
         return WebsiteRankingResult(
+            decision = WebsiteRankingDecision.REJECTED,
             accepted = false,
             bestCandidate = best,
             allCandidates = listOf(best),
             evidence = WebsiteRankingEvidence(
                 query = "Acme Logistics BE",
+                decision = WebsiteRankingDecision.REJECTED,
+                verifiedThreshold = 70,
+                suggestedThreshold = 50,
                 threshold = 70,
                 accepted = false,
                 selectedUrl = null,
+                selectedScore = score,
+                candidates = emptyList()
+            )
+        )
+    }
+
+    private fun suggestedRanking(url: String, score: Int): WebsiteRankingResult {
+        val best = RankedWebsiteCandidate(
+            url = url,
+            searchRank = 1,
+            pathDepth = 0,
+            score = score,
+            hardIdentityHits = 1,
+            signals = emptyList()
+        )
+        return WebsiteRankingResult(
+            decision = WebsiteRankingDecision.SUGGESTED,
+            accepted = true,
+            bestCandidate = best,
+            allCandidates = listOf(best),
+            evidence = WebsiteRankingEvidence(
+                query = "Acme Logistics BE",
+                decision = WebsiteRankingDecision.SUGGESTED,
+                verifiedThreshold = 70,
+                suggestedThreshold = 50,
+                threshold = 70,
+                accepted = true,
+                selectedUrl = url,
                 selectedScore = score,
                 candidates = emptyList()
             )
