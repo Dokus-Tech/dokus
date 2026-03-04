@@ -17,6 +17,7 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import tech.dokus.backend.services.business.BusinessLogoSelectionService
+import tech.dokus.backend.services.business.LogoSelectionTrace
 import tech.dokus.backend.services.business.BusinessProfileService
 import tech.dokus.backend.services.business.BusinessWebsiteProbe
 import tech.dokus.backend.services.business.BusinessWebsiteRanker
@@ -63,6 +64,11 @@ private data class BusinessSubjectContext(
 
 private data class RankedCandidateWithPages(
     val input: WebsiteCandidateInput,
+)
+
+private data class LogoResolutionResult(
+    val storageKey: String?,
+    val trace: LogoSelectionTrace,
 )
 
 class BusinessProfileEnrichmentWorker(
@@ -184,7 +190,7 @@ class BusinessProfileEnrichmentWorker(
             val candidatesWithPages = searchCandidates
                 .take(3)
                 .mapNotNull { searchResult ->
-                    val candidateUrl = searchResult.url.trim()
+                    val candidateUrl = websiteProbe.canonicalizeWebsiteUrl(searchResult.url) ?: searchResult.url.trim()
                     if (candidateUrl.isBlank()) return@mapNotNull null
                     if (isAggregatorOrSocialUrl(candidateUrl)) {
                         logger.info(
@@ -295,10 +301,26 @@ class BusinessProfileEnrichmentWorker(
                 pages = selectedPages
             )
 
-            val logoStorageKey = resolveLogoStorageKey(
+            val logoResolution = resolveLogoStorageKey(
                 job = job,
                 websiteUrl = selected.url,
                 logoCandidates = selectedPages.flatMap { it.logoCandidates }
+            )
+            logger.info(
+                "Logo discovery summary for subjectType={}, subjectId={}, website={}, candidatesInitial={}, fallbackCandidatesAppended={}, attempts={}, successesPng={}, successesSvg={}, successesIco={}, selectedSource={}, selectedFormat={}, terminalReason={}, elapsedMs={}",
+                job.subjectType,
+                job.subjectId,
+                selected.url,
+                logoResolution.trace.initialCandidates,
+                logoResolution.trace.fallbackCandidatesAppended,
+                logoResolution.trace.attempts,
+                logoResolution.trace.pngSuccesses,
+                logoResolution.trace.svgSuccesses,
+                logoResolution.trace.icoSuccesses,
+                logoResolution.trace.selectedSourceUrl,
+                logoResolution.trace.selectedFormat,
+                logoResolution.trace.terminalReason,
+                logoResolution.trace.elapsedMs
             )
             val verificationState = when (ranking.decision) {
                 WebsiteRankingDecision.VERIFIED -> BusinessProfileVerificationState.Verified
@@ -316,7 +338,7 @@ class BusinessProfileEnrichmentWorker(
                 websiteUrl = selected.url,
                 businessSummary = extracted?.businessSummary,
                 businessActivities = extracted?.activities,
-                logoStorageKey = logoStorageKey,
+                logoStorageKey = logoResolution.storageKey,
                 lastErrorCode = null,
                 lastErrorMessage = null,
             )
@@ -383,29 +405,84 @@ class BusinessProfileEnrichmentWorker(
         job: BusinessProfileEnrichmentJob,
         websiteUrl: String,
         logoCandidates: List<String>
-    ): String? {
+    ): LogoResolutionResult {
         val existingProfile = profileRepository.getBySubject(job.tenantId, job.subjectType, job.subjectId)
-        if (existingProfile?.logoPinned == true) return null
-        if (!existingProfile?.logoStorageKey.isNullOrBlank()) return null
+        if (existingProfile?.logoPinned == true) {
+            return LogoResolutionResult(
+                storageKey = null,
+                trace = LogoSelectionTrace(
+                    initialCandidates = 0,
+                    fallbackCandidatesAppended = 0,
+                    totalCandidates = 0,
+                    attempts = 0,
+                    pngSuccesses = 0,
+                    svgSuccesses = 0,
+                    icoSuccesses = 0,
+                    terminalReason = null,
+                    elapsedMs = 0
+                )
+            )
+        }
+        if (!existingProfile?.logoStorageKey.isNullOrBlank()) {
+            return LogoResolutionResult(
+                storageKey = null,
+                trace = LogoSelectionTrace(
+                    initialCandidates = 0,
+                    fallbackCandidatesAppended = 0,
+                    totalCandidates = 0,
+                    attempts = 0,
+                    pngSuccesses = 0,
+                    svgSuccesses = 0,
+                    icoSuccesses = 0,
+                    terminalReason = null,
+                    elapsedMs = 0
+                )
+            )
+        }
 
         if (job.subjectType == BusinessProfileSubjectType.Tenant) {
             val tenantAvatar = tenantRepository.getAvatarStorageKey(job.tenantId)
-            if (!tenantAvatar.isNullOrBlank()) return null
+            if (!tenantAvatar.isNullOrBlank()) {
+                return LogoResolutionResult(
+                    storageKey = null,
+                    trace = LogoSelectionTrace(
+                        initialCandidates = 0,
+                        fallbackCandidatesAppended = 0,
+                        totalCandidates = 0,
+                        attempts = 0,
+                        pngSuccesses = 0,
+                        svgSuccesses = 0,
+                        icoSuccesses = 0,
+                        terminalReason = null,
+                        elapsedMs = 0
+                    )
+                )
+            }
         }
 
-        val preferred = logoSelectionService.selectPreferredLogo(websiteUrl = websiteUrl, logoCandidates = logoCandidates) ?: return null
+        val selection = logoSelectionService.selectPreferredLogo(websiteUrl = websiteUrl, logoCandidates = logoCandidates)
+        val preferred = selection.image ?: return LogoResolutionResult(
+            storageKey = null,
+            trace = selection.trace
+        )
         val upload = runSuspendCatching {
             avatarStorageService.uploadAvatar(job.tenantId, preferred.bytes, preferred.contentType)
         }.getOrElse { error ->
             logger.warn("Failed to upload discovered logo for {}: {}", job.subjectId, error.message)
-            return null
+            return LogoResolutionResult(
+                storageKey = null,
+                trace = selection.trace
+            )
         }
 
         if (job.subjectType == BusinessProfileSubjectType.Tenant) {
             runSuspendCatching { tenantRepository.updateAvatarStorageKey(job.tenantId, upload.storageKeyPrefix) }
                 .onFailure { logger.warn("Failed to apply discovered tenant logo for {}: {}", job.tenantId, it.message) }
         }
-        return upload.storageKeyPrefix
+        return LogoResolutionResult(
+            storageKey = upload.storageKeyPrefix,
+            trace = selection.trace
+        )
     }
 
     private suspend fun scheduleRetry(job: BusinessProfileEnrichmentJob, error: Throwable) {

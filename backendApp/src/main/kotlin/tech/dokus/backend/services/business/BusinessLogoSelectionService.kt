@@ -3,11 +3,17 @@ package tech.dokus.backend.services.business
 import org.apache.batik.transcoder.TranscoderInput
 import org.apache.batik.transcoder.TranscoderOutput
 import org.apache.batik.transcoder.image.PNGTranscoder
+import tech.dokus.foundation.backend.utils.loggerFor
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.net.URI
 import java.nio.charset.StandardCharsets
 import javax.imageio.ImageIO
+
+private const val LogoDiscoveryBudgetMs = 3_500L
+private const val LogoPerAttemptTimeoutMs = 1_200L
+private const val LogoRetryMinRemainingBudgetMs = 900L
+private val RetryableBotBlockStatusCodes = setOf(403, 406, 429)
 
 private enum class LogoFormat {
     Png,
@@ -16,40 +22,137 @@ private enum class LogoFormat {
 }
 
 private data class LogoCandidate(
+    val sourceUrl: String,
     val format: LogoFormat,
     val area: Int,
     val image: DownloadedBusinessImage,
 )
 
+enum class LogoSelectionTerminalReason {
+    NO_CANDIDATES,
+    ALL_DOWNLOAD_FAILED,
+    BLOCKED_OR_FORBIDDEN,
+    NON_IMAGE_RESPONSE,
+    NORMALIZATION_FAILED,
+    BUDGET_EXHAUSTED,
+}
+
+data class LogoSelectionTrace(
+    val initialCandidates: Int,
+    val fallbackCandidatesAppended: Int,
+    val totalCandidates: Int,
+    val attempts: Int,
+    val pngSuccesses: Int,
+    val svgSuccesses: Int,
+    val icoSuccesses: Int,
+    val selectedSourceUrl: String? = null,
+    val selectedFormat: String? = null,
+    val terminalReason: LogoSelectionTerminalReason? = null,
+    val elapsedMs: Long,
+)
+
+data class LogoSelectionResult(
+    val image: DownloadedBusinessImage? = null,
+    val trace: LogoSelectionTrace,
+)
+
 class BusinessLogoSelectionService(
     private val websiteProbe: BusinessWebsiteProbe,
 ) {
+    private val logger = loggerFor()
+
     suspend fun selectPreferredLogo(
         websiteUrl: String?,
         logoCandidates: List<String>
-    ): DownloadedBusinessImage? {
-        val normalizedCandidates = logoCandidates
+    ): LogoSelectionResult {
+        val initialCandidates = logoCandidates
             .asSequence()
             .map { it.trim() }
             .filter { it.startsWith("http://") || it.startsWith("https://") }
             .distinct()
             .take(40)
-            .toMutableList()
-        if (normalizedCandidates.isEmpty()) {
-            normalizedCandidates += buildHostFallbackCandidates(websiteUrl)
+            .toList()
+        val fallbackCandidates = buildHostFallbackCandidates(websiteUrl)
+        val mergedCandidates = (initialCandidates + fallbackCandidates)
+            .distinct()
+            .take(60)
+        val appendedFallbackCount = (mergedCandidates.size - initialCandidates.size).coerceAtLeast(0)
+
+        if (mergedCandidates.isEmpty()) {
+            return LogoSelectionResult(
+                image = null,
+                trace = LogoSelectionTrace(
+                    initialCandidates = 0,
+                    fallbackCandidatesAppended = 0,
+                    totalCandidates = 0,
+                    attempts = 0,
+                    pngSuccesses = 0,
+                    svgSuccesses = 0,
+                    icoSuccesses = 0,
+                    selectedSourceUrl = null,
+                    selectedFormat = null,
+                    terminalReason = LogoSelectionTerminalReason.NO_CANDIDATES,
+                    elapsedMs = 0
+                )
+            )
         }
 
+        var attempts = 0
+        var pngSuccesses = 0
+        var svgSuccesses = 0
+        var icoSuccesses = 0
+        var blockedFailures = 0
+        var nonImageFailures = 0
+        var normalizationFailures = 0
+        var budgetExhausted = false
+
+        val startedAtNanos = System.nanoTime()
+        fun elapsedMs(): Long = (System.nanoTime() - startedAtNanos) / 1_000_000
+        fun remainingBudgetMs(): Long = (LogoDiscoveryBudgetMs - elapsedMs()).coerceAtLeast(0)
+
         val evaluated = mutableListOf<LogoCandidate>()
-        for (url in normalizedCandidates) {
-            val downloaded = websiteProbe.downloadImage(url) ?: continue
-            val format = detectLogoFormat(url, downloaded.contentType) ?: continue
-            val pngBytes = normalizeLogoToPng(downloaded.bytes, format) ?: continue
+        suspend fun evaluateAttempt(url: String, result: ImageDownloadResult) {
+            if (result.image == null) {
+                when (result.failureKind) {
+                    ImageDownloadFailureKind.HttpStatus -> {
+                        if (result.statusCode in RetryableBotBlockStatusCodes) {
+                            blockedFailures++
+                        }
+                    }
+                    ImageDownloadFailureKind.NonImageResponse -> nonImageFailures++
+                    else -> Unit
+                }
+                return
+            }
+
+            val downloaded = result.image
+            val sourceUrl = result.normalizedUrl ?: url
+            val format = detectLogoFormat(sourceUrl, downloaded.contentType)
+            if (format == null) {
+                normalizationFailures++
+                return
+            }
+            val pngBytes = normalizeLogoToPng(downloaded.bytes, format)
+            if (pngBytes == null) {
+                normalizationFailures++
+                return
+            }
             val area = when (format) {
-                LogoFormat.Png -> imageArea(pngBytes)
-                LogoFormat.Svg -> extractSvgArea(downloaded.bytes)
-                LogoFormat.Ico -> imageArea(pngBytes)
+                LogoFormat.Png -> {
+                    pngSuccesses++
+                    imageArea(pngBytes)
+                }
+                LogoFormat.Svg -> {
+                    svgSuccesses++
+                    extractSvgArea(downloaded.bytes)
+                }
+                LogoFormat.Ico -> {
+                    icoSuccesses++
+                    imageArea(pngBytes)
+                }
             }
             evaluated += LogoCandidate(
+                sourceUrl = sourceUrl,
                 format = format,
                 area = area,
                 image = DownloadedBusinessImage(
@@ -59,16 +162,84 @@ class BusinessLogoSelectionService(
             )
         }
 
-        return evaluated
+        for (url in mergedCandidates) {
+            val remainingBeforeAttempt = remainingBudgetMs()
+            if (remainingBeforeAttempt <= 0) {
+                budgetExhausted = true
+                break
+            }
+
+            attempts++
+            val firstAttempt = websiteProbe.downloadImageDetailed(
+                url = url,
+                requestTimeoutMs = minOf(LogoPerAttemptTimeoutMs, remainingBeforeAttempt),
+                useBrowserUserAgent = false
+            )
+            evaluateAttempt(url, firstAttempt)
+
+            val shouldRetryWithBrowserUa = firstAttempt.image == null &&
+                firstAttempt.failureKind == ImageDownloadFailureKind.HttpStatus &&
+                firstAttempt.statusCode in RetryableBotBlockStatusCodes
+            if (shouldRetryWithBrowserUa) {
+                val remainingBeforeRetry = remainingBudgetMs()
+                if (remainingBeforeRetry >= LogoRetryMinRemainingBudgetMs) {
+                    attempts++
+                    val retryAttempt = websiteProbe.downloadImageDetailed(
+                        url = url,
+                        requestTimeoutMs = minOf(LogoPerAttemptTimeoutMs, remainingBeforeRetry),
+                        useBrowserUserAgent = true
+                    )
+                    evaluateAttempt(url, retryAttempt)
+                }
+            }
+        }
+
+        val selected = evaluated
             .filter { it.format == LogoFormat.Png }
             .maxByOrNull { it.area }
-            ?.image
             ?: evaluated.filter { it.format == LogoFormat.Svg }
                 .maxByOrNull { it.area }
-                ?.image
             ?: evaluated.filter { it.format == LogoFormat.Ico }
                 .maxByOrNull { it.area }
-                ?.image
+        val terminalReason = when {
+            selected != null -> null
+            budgetExhausted -> LogoSelectionTerminalReason.BUDGET_EXHAUSTED
+            blockedFailures > 0 -> LogoSelectionTerminalReason.BLOCKED_OR_FORBIDDEN
+            nonImageFailures > 0 -> LogoSelectionTerminalReason.NON_IMAGE_RESPONSE
+            normalizationFailures > 0 -> LogoSelectionTerminalReason.NORMALIZATION_FAILED
+            else -> LogoSelectionTerminalReason.ALL_DOWNLOAD_FAILED
+        }
+        val trace = LogoSelectionTrace(
+            initialCandidates = initialCandidates.size,
+            fallbackCandidatesAppended = appendedFallbackCount,
+            totalCandidates = mergedCandidates.size,
+            attempts = attempts,
+            pngSuccesses = pngSuccesses,
+            svgSuccesses = svgSuccesses,
+            icoSuccesses = icoSuccesses,
+            selectedSourceUrl = selected?.sourceUrl,
+            selectedFormat = selected?.format?.name,
+            terminalReason = terminalReason,
+            elapsedMs = elapsedMs()
+        )
+        logger.debug(
+            "Logo selection trace websiteUrl={}, initialCandidates={}, fallbackAppended={}, attempts={}, pngSuccesses={}, svgSuccesses={}, icoSuccesses={}, selectedSource={}, selectedFormat={}, terminalReason={}, elapsedMs={}",
+            websiteUrl,
+            trace.initialCandidates,
+            trace.fallbackCandidatesAppended,
+            trace.attempts,
+            trace.pngSuccesses,
+            trace.svgSuccesses,
+            trace.icoSuccesses,
+            trace.selectedSourceUrl,
+            trace.selectedFormat,
+            trace.terminalReason,
+            trace.elapsedMs
+        )
+        return LogoSelectionResult(
+            image = selected?.image,
+            trace = trace
+        )
     }
 
     private fun buildHostFallbackCandidates(websiteUrl: String?): List<String> {
@@ -77,10 +248,16 @@ class BusinessLogoSelectionService(
             ?.removePrefix("www.")
             ?.takeIf { it.isNotBlank() }
             ?: return emptyList()
+        val hosts = linkedSetOf(host, "www.$host")
         return listOf(
-            "https://$host/favicon.ico",
-            "https://$host/apple-touch-icon.png"
-        )
+            "/favicon.ico",
+            "/apple-touch-icon.png",
+            "/favicon-32x32.png",
+            "/favicon-96x96.png",
+            "/android-chrome-192x192.png"
+        ).flatMap { path ->
+            hosts.map { fallbackHost -> "https://$fallbackHost$path" }
+        }.distinct()
     }
 
     private fun detectLogoFormat(url: String, contentType: String): LogoFormat? {

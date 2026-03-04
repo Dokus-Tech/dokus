@@ -15,6 +15,8 @@ import tech.dokus.backend.services.business.BusinessLogoSelectionService
 import tech.dokus.backend.services.business.BusinessWebsiteProbe
 import tech.dokus.backend.services.business.BusinessWebsiteRanker
 import tech.dokus.backend.services.business.DownloadedBusinessImage
+import tech.dokus.backend.services.business.ImageDownloadFailureKind
+import tech.dokus.backend.services.business.ImageDownloadResult
 import tech.dokus.backend.services.business.RankedWebsiteCandidate
 import tech.dokus.backend.services.business.WebsiteRankingDecision
 import tech.dokus.backend.services.business.WebsiteRankingEvidence
@@ -127,16 +129,36 @@ class BusinessProfileEnrichmentWorkerLogoTest {
         coEvery { profileRepository.getBySubject(job.tenantId, job.subjectType, job.subjectId) } returns null
         coEvery { tenantRepository.getAvatarStorageKey(job.tenantId) } returns null
 
-        coEvery { websiteProbe.downloadImage("https://acme.example/logo-small.png") } returns DownloadedBusinessImage(
+        coEvery { websiteProbe.downloadImageDetailed(any(), any(), any()) } returns ImageDownloadResult(
+            image = null,
+            failureKind = ImageDownloadFailureKind.HttpStatus,
+            statusCode = 404
+        )
+        coEvery { websiteProbe.downloadImageDetailed("https://acme.example/logo-small.png", any(), any()) } returns ImageDownloadResult(
+            image = DownloadedBusinessImage(
             bytes = smallPng,
             contentType = "image/png"
-        )
-        coEvery { websiteProbe.downloadImage("https://acme.example/logo-large.png") } returns DownloadedBusinessImage(
-            bytes = largePng,
+            ),
+            normalizedUrl = "https://acme.example/logo-small.png",
+            statusCode = 200,
             contentType = "image/png"
         )
-        coEvery { websiteProbe.downloadImage("https://acme.example/logo.svg") } returns DownloadedBusinessImage(
+        coEvery { websiteProbe.downloadImageDetailed("https://acme.example/logo-large.png", any(), any()) } returns ImageDownloadResult(
+            image = DownloadedBusinessImage(
+            bytes = largePng,
+            contentType = "image/png"
+            ),
+            normalizedUrl = "https://acme.example/logo-large.png",
+            statusCode = 200,
+            contentType = "image/png"
+        )
+        coEvery { websiteProbe.downloadImageDetailed("https://acme.example/logo.svg", any(), any()) } returns ImageDownloadResult(
+            image = DownloadedBusinessImage(
             bytes = svg,
+            contentType = "image/svg+xml"
+            ),
+            normalizedUrl = "https://acme.example/logo.svg",
+            statusCode = 200,
             contentType = "image/svg+xml"
         )
 
@@ -244,11 +266,20 @@ class BusinessProfileEnrichmentWorkerLogoTest {
         coEvery { profileRepository.getBySubject(job.tenantId, job.subjectType, job.subjectId) } returns null
         coEvery { tenantRepository.getAvatarStorageKey(job.tenantId) } returns null
 
-        coEvery { websiteProbe.downloadImage("https://acme.example/favicon.ico") } returns DownloadedBusinessImage(
+        coEvery { websiteProbe.downloadImageDetailed(any(), any(), any()) } returns ImageDownloadResult(
+            image = null,
+            failureKind = ImageDownloadFailureKind.HttpStatus,
+            statusCode = 404
+        )
+        coEvery { websiteProbe.downloadImageDetailed("https://acme.example/favicon.ico", any(), any()) } returns ImageDownloadResult(
+            image = DownloadedBusinessImage(
             bytes = faviconPng,
             contentType = "image/png"
+            ),
+            normalizedUrl = "https://acme.example/favicon.ico",
+            statusCode = 200,
+            contentType = "image/png"
         )
-        coEvery { websiteProbe.downloadImage("https://acme.example/apple-touch-icon.png") } returns null
 
         val uploadedBytes = slot<ByteArray>()
         coEvery {
@@ -287,7 +318,7 @@ class BusinessProfileEnrichmentWorkerLogoTest {
         createWorker().processBatchForTest()
 
         assertTrue(uploadedBytes.captured.contentEquals(faviconPng))
-        coVerify(exactly = 1) { websiteProbe.downloadImage("https://acme.example/favicon.ico") }
+        coVerify(exactly = 1) { websiteProbe.downloadImageDetailed("https://acme.example/favicon.ico", any(), any()) }
         coVerify(exactly = 1) {
             businessProfileService.applyEnrichment(
                 tenantId = job.tenantId,
@@ -307,6 +338,7 @@ class BusinessProfileEnrichmentWorkerLogoTest {
     }
 
     private fun createWorker(): BusinessProfileEnrichmentWorker {
+        coEvery { websiteProbe.canonicalizeWebsiteUrl(any()) } answers { invocation.args[0] as String }
         return BusinessProfileEnrichmentWorker(
             config = config,
             jobRepository = jobRepository,

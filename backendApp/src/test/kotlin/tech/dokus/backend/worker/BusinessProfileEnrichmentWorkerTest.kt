@@ -12,6 +12,8 @@ import tech.dokus.backend.services.business.BusinessProfileService
 import tech.dokus.backend.services.business.BusinessLogoSelectionService
 import tech.dokus.backend.services.business.BusinessWebsiteProbe
 import tech.dokus.backend.services.business.BusinessWebsiteRanker
+import tech.dokus.backend.services.business.ImageDownloadFailureKind
+import tech.dokus.backend.services.business.ImageDownloadResult
 import tech.dokus.backend.services.business.RankedWebsiteCandidate
 import tech.dokus.backend.services.business.WebsiteRankingDecision
 import tech.dokus.backend.services.business.WebsiteRankingEvidence
@@ -36,10 +38,15 @@ import tech.dokus.domain.enums.TenantType
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.Address
 import tech.dokus.domain.model.Tenant
+import tech.dokus.domain.model.common.Thumbnail
 import tech.dokus.features.ai.agents.BusinessProfileContentExtractionAgent
 import tech.dokus.features.ai.models.BusinessProfileContentExtractionResult
 import tech.dokus.foundation.backend.config.BusinessProfileEnrichmentConfig
 import tech.dokus.foundation.backend.storage.AvatarStorageService
+import java.awt.Color
+import java.awt.image.BufferedImage
+import java.io.ByteArrayOutputStream
+import javax.imageio.ImageIO
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -285,7 +292,11 @@ class BusinessProfileEnrichmentWorkerTest {
         )
         coEvery { profileRepository.getBySubject(job.tenantId, job.subjectType, job.subjectId) } returns null
         coEvery { tenantRepository.getAvatarStorageKey(job.tenantId) } returns null
-        coEvery { websiteProbe.downloadImage(any()) } returns null
+        coEvery { websiteProbe.downloadImageDetailed(any(), any(), any()) } returns ImageDownloadResult(
+            image = null,
+            failureKind = ImageDownloadFailureKind.HttpStatus,
+            statusCode = 404
+        )
         coEvery {
             businessProfileService.applyEnrichment(
                 tenantId = any(),
@@ -329,6 +340,120 @@ class BusinessProfileEnrichmentWorkerTest {
     }
 
     @Test
+    fun `suggested ranking can persist discovered logo`() = runBlocking {
+        val job = sampleJob(subjectType = BusinessProfileSubjectType.Tenant, attemptCount = 0)
+        val ranking = suggestedRanking("https://acme.example", 62)
+        val logoPng = pngBytes(96, 96, Color.BLUE)
+
+        coEvery { jobRepository.recoverStaleProcessing(any(), any(), any()) } returns Result.success(0)
+        coEvery { jobRepository.claimDue(any(), any()) } returns Result.success(listOf(job))
+        coEvery { jobRepository.markCompleted(job.id) } returns Result.success(true)
+
+        coEvery { tenantRepository.findById(job.tenantId) } returns sampleTenant(job.tenantId)
+        coEvery { addressRepository.getCompanyAddress(job.tenantId) } returns sampleAddress(job.tenantId)
+
+        coEvery { websiteProbe.buildStrictSearchQuery("Acme Logistics", "BE") } returns "Acme Logistics BE"
+        coEvery { websiteProbe.searchWebsiteCandidates("Acme Logistics", "BE", 3) } returns listOf(
+            WebsiteSearchResult(
+                url = "https://acme.example",
+                title = "Acme Logistics",
+                snippet = "Acme Logistics website",
+                searchRank = 1
+            )
+        )
+        coEvery { websiteProbe.crawl("https://acme.example", config.maxPages) } returns tech.dokus.backend.services.business.BusinessWebsiteCrawlResult(
+            pages = listOf(
+                tech.dokus.backend.services.business.CrawledBusinessPage(
+                    url = "https://acme.example",
+                    textContent = "Acme Logistics helps finance teams automate AP workflows.",
+                    structuredDataSnippets = emptyList(),
+                    emails = emptyList(),
+                    phones = emptyList(),
+                    links = emptyList(),
+                    logoCandidates = listOf("https://acme.example/logo.png")
+                )
+            ),
+            blockedByRobots = false
+        )
+
+        coEvery { websiteRanker.rank(any(), any(), any()) } returns ranking
+        coEvery { contentExtractionAgent.extract(any()) } returns BusinessProfileContentExtractionResult(
+            businessSummary = "Acme Logistics provides AP automation software.",
+            activities = listOf("AP automation"),
+            confidence = 0.88
+        )
+        coEvery { profileRepository.getBySubject(job.tenantId, job.subjectType, job.subjectId) } returns null
+        coEvery { tenantRepository.getAvatarStorageKey(job.tenantId) } returns null
+        coEvery { websiteProbe.downloadImageDetailed(any(), any(), any()) } returns ImageDownloadResult(
+            image = null,
+            failureKind = ImageDownloadFailureKind.HttpStatus,
+            statusCode = 404
+        )
+        coEvery { websiteProbe.downloadImageDetailed("https://acme.example/logo.png", any(), any()) } returns ImageDownloadResult(
+            image = tech.dokus.backend.services.business.DownloadedBusinessImage(
+                bytes = logoPng,
+                contentType = "image/png"
+            ),
+            normalizedUrl = "https://acme.example/logo.png",
+            statusCode = 200,
+            contentType = "image/png"
+        )
+        coEvery {
+            avatarStorageService.uploadAvatar(
+                job.tenantId,
+                any(),
+                "image/png"
+            )
+        } returns AvatarStorageService.AvatarUploadResult(
+            storageKeyPrefix = "avatars/suggested-logo",
+            avatar = Thumbnail(small = "s", medium = "m", large = "l"),
+            sizeBytes = logoPng.size.toLong()
+        )
+        coEvery { tenantRepository.updateAvatarStorageKey(job.tenantId, "avatars/suggested-logo") } returns Unit
+        coEvery {
+            businessProfileService.applyEnrichment(
+                tenantId = any(),
+                subjectType = any(),
+                subjectId = any(),
+                verificationState = any(),
+                evidenceScore = any(),
+                evidenceChecksJson = any(),
+                websiteUrl = any(),
+                businessSummary = any(),
+                businessActivities = any(),
+                logoStorageKey = any(),
+                lastErrorCode = any(),
+                lastErrorMessage = any()
+            )
+        } returns BusinessProfileRecord(
+            tenantId = job.tenantId,
+            subjectType = job.subjectType,
+            subjectId = job.subjectId
+        )
+
+        val worker = createWorker()
+        worker.processBatchForTest()
+
+        coVerify(exactly = 1) { avatarStorageService.uploadAvatar(job.tenantId, any(), "image/png") }
+        coVerify(exactly = 1) {
+            businessProfileService.applyEnrichment(
+                tenantId = job.tenantId,
+                subjectType = job.subjectType,
+                subjectId = job.subjectId,
+                verificationState = BusinessProfileVerificationState.Suggested,
+                evidenceScore = 62,
+                evidenceChecksJson = any(),
+                websiteUrl = "https://acme.example",
+                businessSummary = "Acme Logistics provides AP automation software.",
+                businessActivities = listOf("AP automation"),
+                logoStorageKey = "avatars/suggested-logo",
+                lastErrorCode = null,
+                lastErrorMessage = null
+            )
+        }
+    }
+
+    @Test
     fun `failed processing schedules retry with incremented attempt count`() = runBlocking {
         val job = sampleJob(subjectType = BusinessProfileSubjectType.Tenant, attemptCount = 2)
         coEvery { jobRepository.recoverStaleProcessing(any(), any(), any()) } returns Result.success(0)
@@ -360,6 +485,7 @@ class BusinessProfileEnrichmentWorkerTest {
     }
 
     private fun createWorker(): BusinessProfileEnrichmentWorker {
+        coEvery { websiteProbe.canonicalizeWebsiteUrl(any()) } answers { invocation.args[0] as String }
         return BusinessProfileEnrichmentWorker(
             config = config,
             jobRepository = jobRepository,
@@ -459,6 +585,18 @@ class BusinessProfileEnrichmentWorkerTest {
                 candidates = emptyList()
             )
         )
+    }
+
+    private fun pngBytes(width: Int, height: Int, color: Color): ByteArray {
+        val image = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
+        val graphics = image.createGraphics()
+        graphics.color = color
+        graphics.fillRect(0, 0, width, height)
+        graphics.dispose()
+        return ByteArrayOutputStream().use { output ->
+            ImageIO.write(image, "png", output)
+            output.toByteArray()
+        }
     }
 
     private fun sampleTenant(tenantId: tech.dokus.domain.ids.TenantId): Tenant {
