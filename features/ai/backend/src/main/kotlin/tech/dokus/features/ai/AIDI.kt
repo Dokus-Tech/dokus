@@ -5,6 +5,7 @@ import ai.koog.prompt.executor.model.PromptExecutor
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
+import tech.dokus.features.ai.agents.BusinessEnrichmentAgent
 import tech.dokus.features.ai.agents.ChatAgent
 import tech.dokus.features.ai.agents.DocumentProcessingAgent
 import tech.dokus.features.ai.config.AIModels
@@ -60,6 +61,7 @@ fun aiModule() = module {
     // =========================================================================
 
     singleOf(::DocumentProcessingAgent)
+    singleOf(::BusinessEnrichmentAgent)
 
     single {
         val models = get<ModelSet>()

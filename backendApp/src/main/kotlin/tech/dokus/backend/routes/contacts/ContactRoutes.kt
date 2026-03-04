@@ -13,8 +13,10 @@ import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
 import tech.dokus.backend.services.contacts.ContactNoteService
 import tech.dokus.backend.services.contacts.ContactService
+import tech.dokus.backend.services.enrichment.BusinessEnrichmentService
 import tech.dokus.backend.services.peppol.PeppolRecipientResolver
 import tech.dokus.database.repository.contacts.ContactRepository
+import tech.dokus.domain.enums.EnrichmentEntityType
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.ContactNoteId
@@ -25,6 +27,8 @@ import tech.dokus.domain.model.contact.UpdateContactRequest
 import tech.dokus.domain.routes.Contacts
 import tech.dokus.foundation.backend.security.authenticateJwt
 import tech.dokus.foundation.backend.security.dokusPrincipal
+import tech.dokus.foundation.backend.utils.loggerFor
+import java.util.UUID
 
 /**
  * Contact API Routes using Ktor Type-Safe Routing
@@ -38,11 +42,14 @@ import tech.dokus.foundation.backend.security.dokusPrincipal
  *
  * All routes require JWT authentication and tenant context.
  */
+private val logger = loggerFor("ContactRoutes")
+
 fun Route.contactRoutes() {
     val contactService by inject<ContactService>()
     val contactNoteService by inject<ContactNoteService>()
     val contactRepository by inject<ContactRepository>()
     val peppolResolver by inject<PeppolRecipientResolver>()
+    val enrichmentService by inject<BusinessEnrichmentService>()
 
     authenticateJwt {
         // ================================================================
@@ -127,6 +134,19 @@ fun Route.contactRoutes() {
                     authorId = principal.userId,
                     authorName = principal.email
                 )
+            }
+
+            // Dispatch business enrichment for business contacts (fire-and-forget)
+            if (request.businessType != null) {
+                runCatching {
+                    enrichmentService.dispatchEnrichment(
+                        tenantId = tenantId,
+                        entityType = EnrichmentEntityType.Contact,
+                        entityId = UUID.fromString(contact.id.toString()),
+                        companyName = request.name.value,
+                        vatNumber = request.vatNumber?.value
+                    )
+                }.onFailure { e -> logger.warn("Failed to dispatch enrichment for contact ${contact.id}", e) }
             }
 
             call.respond(HttpStatusCode.Created, contact)

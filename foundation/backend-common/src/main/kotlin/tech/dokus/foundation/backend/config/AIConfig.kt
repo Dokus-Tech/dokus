@@ -10,7 +10,8 @@ import com.typesafe.config.Config
 data class AIConfig(
     val mode: IntelligenceMode,
     val ollamaHost: String,
-    val lmStudioHost: String
+    val lmStudioHost: String,
+    val serpApiKey: String
 ) {
     companion object {
         /**
@@ -20,7 +21,13 @@ data class AIConfig(
             val mode = IntelligenceMode.fromDbValue(config.getString("mode"))
             val ollamaHost = config.getString("ollama-host")
             val lmStudioHost = config.getString("lm-studio-host")
-            return AIConfig(mode = mode, ollamaHost = ollamaHost, lmStudioHost = lmStudioHost)
+            val serpApiKey = if (config.hasPath("serp-api-key")) config.getString("serp-api-key") else ""
+            return AIConfig(
+                mode = mode,
+                ollamaHost = ollamaHost,
+                lmStudioHost = lmStudioHost,
+                serpApiKey = serpApiKey,
+            )
         }
     }
 }

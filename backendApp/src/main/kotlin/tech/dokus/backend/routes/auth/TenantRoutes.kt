@@ -10,10 +10,12 @@ import io.ktor.server.resources.put
 import io.ktor.server.response.*
 import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
+import tech.dokus.backend.services.enrichment.BusinessEnrichmentService
 import tech.dokus.database.repository.auth.AddressRepository
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.database.services.InvoiceNumberGenerator
+import tech.dokus.domain.enums.EnrichmentEntityType
 import tech.dokus.domain.enums.UserRole
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.TenantId
@@ -30,6 +32,7 @@ import tech.dokus.foundation.backend.storage.AvatarStorageService
 import tech.dokus.foundation.backend.utils.loggerFor
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
+import kotlin.uuid.toJavaUuid
 
 /**
  * Tenant routes using Ktor Type-Safe Routing for tenant management operations:
@@ -44,6 +47,7 @@ internal fun Route.tenantRoutes() {
     val addressRepository by inject<AddressRepository>()
     val userRepository by inject<UserRepository>()
     val avatarStorageService by inject<AvatarStorageService>()
+    val enrichmentService by inject<BusinessEnrichmentService>()
     val invoiceNumberGenerator by inject<InvoiceNumberGenerator>()
 
     authenticateJwt {
@@ -106,6 +110,17 @@ internal fun Route.tenantRoutes() {
 
             val tenant = tenantRepository.findById(tenantId)
                 ?: throw DokusException.InternalError("Failed to load created tenant")
+
+            // Dispatch business enrichment (fire-and-forget, non-blocking)
+            runCatching {
+                enrichmentService.dispatchEnrichment(
+                    tenantId = tenantId,
+                    entityType = EnrichmentEntityType.Tenant,
+                    entityId = tenantId.value.toJavaUuid(),
+                    companyName = request.legalName.value,
+                    vatNumber = request.vatNumber.value
+                )
+            }.onFailure { e -> logger.warn("Failed to dispatch enrichment for tenant $tenantId", e) }
 
             call.respond(
                 HttpStatusCode.Created,

@@ -51,6 +51,7 @@ object TenantMappers {
         companyIban = this[TenantSettingsTable.companyIban]?.let { Iban(it) },
         companyBic = this[TenantSettingsTable.companyBic]?.let { Bic(it) },
         companyLogoUrl = this[TenantSettingsTable.companyLogoUrl],
+        companyWebsite = this[TenantSettingsTable.companyWebsite],
         emailInvoiceReminders = this[TenantSettingsTable.emailInvoiceReminders],
         emailPaymentConfirmations = this[TenantSettingsTable.emailPaymentConfirmations],
         emailWeeklyReports = this[TenantSettingsTable.emailWeeklyReports],

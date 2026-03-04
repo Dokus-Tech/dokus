@@ -139,6 +139,7 @@ class TenantRepository {
             it[companyIban] = settings.companyIban?.value
             it[companyBic] = settings.companyBic?.value
             it[companyLogoUrl] = settings.companyLogoUrl
+            it[companyWebsite] = settings.companyWebsite
             it[emailInvoiceReminders] = settings.emailInvoiceReminders
             it[emailPaymentConfirmations] = settings.emailPaymentConfirmations
             it[emailWeeklyReports] = settings.emailWeeklyReports
@@ -198,6 +199,17 @@ class TenantRepository {
             .where { TenantSettingsTable.tenantId eq javaUuid }
             .singleOrNull()
             ?.get(TenantSettingsTable.companyLogoUrl)
+    }
+
+    /**
+     * Update the company website URL for a tenant.
+     */
+    suspend fun updateCompanyWebsite(tenantId: TenantId, website: String?): Unit = dbQuery {
+        val javaUuid = tenantId.value.toJavaUuid()
+        TenantSettingsTable.update({ TenantSettingsTable.tenantId eq javaUuid }) {
+            it[companyWebsite] = website
+        }
+        logger.info("Updated company website for tenant: $tenantId, website=$website")
     }
 
     /**

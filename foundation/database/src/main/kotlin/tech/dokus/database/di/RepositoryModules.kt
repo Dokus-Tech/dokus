@@ -2,6 +2,7 @@ package tech.dokus.database.di
 
 import org.koin.dsl.bind
 import org.koin.dsl.module
+import tech.dokus.database.repository.enrichment.BusinessDescriptionRepository
 import tech.dokus.database.repository.ai.ChatRepositoryImpl
 import tech.dokus.database.repository.ai.DocumentChunksRepository
 import tech.dokus.database.repository.ai.DocumentExamplesRepository
@@ -152,6 +153,7 @@ val repositoryModuleAI = module {
     single { DocumentChunksRepository() } bind ChunkRepository::class
     single { ChatRepositoryImpl() } bind ChatRepository::class
     single { DocumentExamplesRepository() } bind ExampleRepository::class
+    single { BusinessDescriptionRepository() }
 }
 
 /**

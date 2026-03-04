@@ -37,6 +37,7 @@ object TenantSettingsTable : UUIDTable("tenant_settings") {
     val companyIban = varchar("company_iban", 34).nullable()
     val companyBic = varchar("company_bic", 11).nullable()
     val companyLogoUrl = varchar("company_logo_url", 500).nullable()
+    val companyWebsite = varchar("company_website", 500).nullable()
 
     // Notifications
     val emailInvoiceReminders = bool("email_invoice_reminders").default(true)

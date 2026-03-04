@@ -97,6 +97,7 @@ data class TenantSettings(
     val companyIban: Iban? = null,
     val companyBic: Bic? = null,
     val companyLogoUrl: String? = null,
+    val companyWebsite: String? = null,
     val emailInvoiceReminders: Boolean = true,
     val emailPaymentConfirmations: Boolean = true,
     val emailWeeklyReports: Boolean = false,

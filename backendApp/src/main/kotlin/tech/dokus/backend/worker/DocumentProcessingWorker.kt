@@ -18,6 +18,7 @@ import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.slf4j.MDC
+import tech.dokus.backend.services.enrichment.BusinessEnrichmentService
 import tech.dokus.backend.services.documents.AutoConfirmPolicy
 import tech.dokus.backend.services.documents.ContactResolutionService
 import tech.dokus.backend.services.documents.DocumentTruthService
@@ -30,6 +31,7 @@ import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.processor.ProcessorIngestionRepository
 import tech.dokus.domain.enums.ContactLinkSource
+import tech.dokus.domain.enums.EnrichmentEntityType
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.model.contact.ContactResolution
@@ -75,6 +77,7 @@ class DocumentProcessingWorker(
     private val config: ProcessorConfig,
     private val tenantRepository: TenantRepository,
     private val userRepository: UserRepository,
+    private val enrichmentService: BusinessEnrichmentService,
 ) {
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
@@ -398,6 +401,19 @@ class DocumentProcessingWorker(
                                 linkedContactId = contactId,
                                 linkedContactSource = if (contactId != null) ContactLinkSource.AI else null
                             )
+
+                            // Dispatch business enrichment for auto-created contacts
+                            if (contactId != null && !decision.contactData.name.isNullOrBlank()) {
+                                runCatching {
+                                    enrichmentService.dispatchEnrichment(
+                                        tenantId = parsedTenantId,
+                                        entityType = EnrichmentEntityType.Contact,
+                                        entityId = java.util.UUID.fromString(contactId.toString()),
+                                        companyName = decision.contactData.name!!,
+                                        vatNumber = decision.contactData.vatNumber?.value
+                                    )
+                                }.onFailure { e -> logger.warn("Failed to dispatch enrichment for contact $contactId", e) }
+                            }
                         }
 
                         is ContactResolution.Suggested -> {

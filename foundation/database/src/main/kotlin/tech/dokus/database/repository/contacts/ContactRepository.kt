@@ -722,6 +722,41 @@ class ContactRepository {
     }
 
     // =========================================================================
+    // AVATAR
+    // =========================================================================
+
+    /**
+     * Update the avatar storage key for a contact.
+     * CRITICAL: MUST filter by tenant_id
+     */
+    suspend fun updateAvatarStorageKey(
+        contactId: ContactId,
+        tenantId: TenantId,
+        avatarStorageKey: String?
+    ): Unit = dbQuery {
+        ContactsTable.update({
+            (ContactsTable.id eq UUID.fromString(contactId.toString())) and
+                (ContactsTable.tenantId eq UUID.fromString(tenantId.toString()))
+        }) {
+            it[ContactsTable.avatarStorageKey] = avatarStorageKey
+        }
+    }
+
+    /**
+     * Get the avatar storage key for a contact.
+     * CRITICAL: MUST filter by tenant_id
+     */
+    suspend fun getAvatarStorageKey(
+        contactId: ContactId,
+        tenantId: TenantId
+    ): String? = dbQuery {
+        ContactsTable.selectAll().where {
+            (ContactsTable.id eq UUID.fromString(contactId.toString())) and
+                (ContactsTable.tenantId eq UUID.fromString(tenantId.toString()))
+        }.singleOrNull()?.get(ContactsTable.avatarStorageKey)
+    }
+
+    // =========================================================================
     // MAPPING
     // =========================================================================
 

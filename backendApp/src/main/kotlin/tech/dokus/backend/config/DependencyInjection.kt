@@ -31,6 +31,7 @@ import tech.dokus.backend.services.cashflow.InvoiceService
 import tech.dokus.backend.services.contacts.ContactMatchingService
 import tech.dokus.backend.services.contacts.ContactNoteService
 import tech.dokus.backend.services.contacts.ContactService
+import tech.dokus.backend.services.enrichment.BusinessEnrichmentService
 import tech.dokus.backend.services.documents.AutoConfirmPolicy
 import tech.dokus.backend.services.documents.ContactResolutionService
 import tech.dokus.backend.services.documents.DocumentTruthService
@@ -46,6 +47,7 @@ import tech.dokus.backend.services.pdf.PdfPreviewService
 import tech.dokus.backend.services.peppol.PeppolRecipientResolver
 import tech.dokus.backend.services.search.SearchService
 import tech.dokus.backend.worker.CashflowProjectionReconciliationWorker
+import tech.dokus.backend.worker.BusinessEnrichmentWorker
 import tech.dokus.backend.worker.DocumentProcessingWorker
 import tech.dokus.backend.worker.PeppolOutboundReconciliationWorker
 import tech.dokus.backend.worker.PeppolOutboundWorker
@@ -332,4 +334,8 @@ private fun documentProcessingModule() = module {
 
     // Document Processing Worker
     singleOf(::DocumentProcessingWorker)
+
+    // Business Enrichment
+    singleOf(::BusinessEnrichmentService)
+    singleOf(::BusinessEnrichmentWorker)
 }

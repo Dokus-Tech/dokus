@@ -252,6 +252,41 @@ enum class ContactLinkSource(override val dbValue: String) : DbEnum {
 }
 
 // ============================================================================
+// ENRICHMENT ENUMS
+// ============================================================================
+
+/**
+ * Status of business enrichment processing for a tenant or contact.
+ */
+@Serializable
+enum class EnrichmentStatus(override val dbValue: String) : DbEnum {
+    @SerialName("PENDING")
+    Pending("PENDING"),
+
+    @SerialName("IN_PROGRESS")
+    InProgress("IN_PROGRESS"),
+
+    @SerialName("COMPLETED")
+    Completed("COMPLETED"),
+
+    @SerialName("FAILED")
+    Failed("FAILED")
+}
+
+/**
+ * Entity type for business enrichment - determines whether the enrichment
+ * is for a tenant (workspace) or a contact.
+ */
+@Serializable
+enum class EnrichmentEntityType(override val dbValue: String) : DbEnum {
+    @SerialName("TENANT")
+    Tenant("TENANT"),
+
+    @SerialName("CONTACT")
+    Contact("CONTACT")
+}
+
+// ============================================================================
 // INVOICE ENUMS
 // ============================================================================
 

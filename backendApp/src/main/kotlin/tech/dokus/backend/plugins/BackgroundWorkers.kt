@@ -8,6 +8,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.koin.ktor.ext.getKoin
 import org.koin.ktor.ext.inject
+import tech.dokus.backend.worker.BusinessEnrichmentWorker
 import tech.dokus.backend.worker.CashflowProjectionReconciliationWorker
 import tech.dokus.backend.worker.DocumentProcessingWorker
 import tech.dokus.backend.worker.PeppolOutboundReconciliationWorker
@@ -30,6 +31,7 @@ fun Application.configureBackgroundWorkers() {
     val peppolWebhookSyncService by inject<PeppolWebhookSyncService>()
     val cashflowProjectionReconciliationWorker by inject<CashflowProjectionReconciliationWorker>()
     val welcomeEmailWorker by inject<WelcomeEmailWorker>()
+    val businessEnrichmentWorker by inject<BusinessEnrichmentWorker>()
 
     var webhookSyncJob: Job? = null
 
@@ -47,6 +49,8 @@ fun Application.configureBackgroundWorkers() {
         cashflowProjectionReconciliationWorker.start()
         logger.info("Starting welcome email worker")
         welcomeEmailWorker.start()
+        logger.info("Starting business enrichment worker")
+        businessEnrichmentWorker.start()
 
         webhookSyncJob = launch {
             peppolWebhookSyncService.syncAllEnabledTenants()
@@ -74,6 +78,7 @@ fun Application.configureBackgroundWorkers() {
         peppolOutboundReconciliationWorker.stop()
         cashflowProjectionReconciliationWorker.stop()
         welcomeEmailWorker.stop()
+        businessEnrichmentWorker.stop()
 
         // Close optional Redis connection if present.
         val redisClient = runCatching { getKoin().getOrNull<RedisClient>() }.getOrNull()

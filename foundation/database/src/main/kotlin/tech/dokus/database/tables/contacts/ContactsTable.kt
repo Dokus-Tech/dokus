@@ -56,6 +56,9 @@ object ContactsTable : UUIDTable("contacts") {
         .nullable() // Track which document led to this contact's creation (user-confirmed)
     val contactSource = dbEnumeration<ContactSource>("source").default(ContactSource.Manual)
 
+    // Avatar (company logo from enrichment)
+    val avatarStorageKey = varchar("avatar_storage_key", 500).nullable()
+
     // Timestamps
     val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)
     val updatedAt = datetime("updated_at").defaultExpression(CurrentDateTime)
