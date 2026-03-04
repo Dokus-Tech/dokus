@@ -1,0 +1,205 @@
+package tech.dokus.features.cashflow.presentation.documents.components
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.documents_local_action_dismiss
+import tech.dokus.aura.resources.documents_local_status_preparing
+import tech.dokus.aura.resources.upload_action_retry
+import tech.dokus.aura.resources.upload_failed_message
+import tech.dokus.features.cashflow.presentation.documents.model.DocumentsLocalUploadRow
+import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.layout.DokusTableCell
+import tech.dokus.foundation.aura.components.layout.DokusTableColumnSpec
+import tech.dokus.foundation.aura.components.layout.DokusTableRow
+import tech.dokus.foundation.aura.components.status.StatusDot
+import tech.dokus.foundation.aura.components.status.StatusDotType
+import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.style.textMuted
+
+private object LocalUploadTableColumns {
+    val Vendor = DokusTableColumnSpec(weight = 1f)
+    val Reference = DokusTableColumnSpec(width = 150.dp)
+    val Amount = DokusTableColumnSpec(width = 90.dp, horizontalAlignment = Alignment.End)
+    val Date = DokusTableColumnSpec(width = 70.dp)
+    val Source = DokusTableColumnSpec(width = 64.dp)
+}
+
+@Composable
+internal fun DocumentLocalUploadTableRow(
+    row: DocumentsLocalUploadRow,
+    onRetry: (String) -> Unit,
+    onDismiss: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val statusLabel = when (row.status) {
+        DocumentsLocalUploadRow.Status.Preparing -> stringResource(Res.string.documents_local_status_preparing)
+        DocumentsLocalUploadRow.Status.Failed -> stringResource(Res.string.upload_failed_message)
+    }
+    val statusDot = when (row.status) {
+        DocumentsLocalUploadRow.Status.Preparing -> StatusDotType.Neutral
+        DocumentsLocalUploadRow.Status.Failed -> StatusDotType.Error
+    }
+
+    DokusTableRow(
+        modifier = modifier,
+        minHeight = 48.dp,
+        contentPadding = PaddingValues(horizontal = Constraints.Spacing.large)
+    ) {
+        DokusTableCell(LocalUploadTableColumns.Vendor) {
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    StatusDot(type = statusDot, size = 5.dp)
+                    Text(
+                        text = row.fileName,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 12.5.sp,
+                            fontStyle = if (row.status == DocumentsLocalUploadRow.Status.Preparing) {
+                                FontStyle.Italic
+                            } else {
+                                FontStyle.Normal
+                            }
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+
+                if (row.status == DocumentsLocalUploadRow.Status.Failed) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        TextButton(onClick = { onRetry(row.taskId) }) {
+                            Text(text = stringResource(Res.string.upload_action_retry))
+                        }
+                        TextButton(onClick = { onDismiss(row.taskId) }) {
+                            Text(text = stringResource(Res.string.documents_local_action_dismiss))
+                        }
+                    }
+                }
+            }
+        }
+
+        DokusTableCell(LocalUploadTableColumns.Reference) {
+            Text(
+                text = statusLabel,
+                style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.5.sp),
+                color = MaterialTheme.colorScheme.textMuted,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+
+        DokusTableCell(LocalUploadTableColumns.Amount) {
+            DashCell()
+        }
+
+        DokusTableCell(LocalUploadTableColumns.Date) {
+            DashCell()
+        }
+
+        DokusTableCell(LocalUploadTableColumns.Source) {
+            Spacer(modifier = Modifier.width(1.dp))
+        }
+    }
+}
+
+@Composable
+internal fun DocumentLocalUploadMobileRow(
+    row: DocumentsLocalUploadRow,
+    onRetry: (String) -> Unit,
+    onDismiss: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val statusLabel = when (row.status) {
+        DocumentsLocalUploadRow.Status.Preparing -> stringResource(Res.string.documents_local_status_preparing)
+        DocumentsLocalUploadRow.Status.Failed -> stringResource(Res.string.upload_failed_message)
+    }
+    val statusDot = when (row.status) {
+        DocumentsLocalUploadRow.Status.Preparing -> StatusDotType.Neutral
+        DocumentsLocalUploadRow.Status.Failed -> StatusDotType.Error
+    }
+
+    DokusCardSurface(
+        modifier = modifier,
+        accent = row.status == DocumentsLocalUploadRow.Status.Failed
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                StatusDot(type = statusDot, size = 6.dp)
+                Text(
+                    text = row.fileName,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 13.sp,
+                        fontStyle = if (row.status == DocumentsLocalUploadRow.Status.Preparing) {
+                            FontStyle.Italic
+                        } else {
+                            FontStyle.Normal
+                        }
+                    ),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            Text(
+                text = statusLabel,
+                style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
+                color = MaterialTheme.colorScheme.textMuted
+            )
+
+            if (row.status == DocumentsLocalUploadRow.Status.Failed) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextButton(onClick = { onRetry(row.taskId) }) {
+                        Text(text = stringResource(Res.string.upload_action_retry))
+                    }
+                    TextButton(onClick = { onDismiss(row.taskId) }) {
+                        Text(text = stringResource(Res.string.documents_local_action_dismiss))
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DashCell() {
+    Text(
+        text = "\u2014",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.textMuted
+    )
+}

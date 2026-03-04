@@ -70,8 +70,6 @@
     <string name="upload_no_app_hint">Vous n\'avez pas l\'application ? Cliquez ici</string>
     <string name="upload_uploads_title">Téléchargements</string>
     <string name="upload_no_documents">Aucun téléchargement actif</string>
-    <string name="upload_release_to_upload">Relâchez pour télécharger</string>
-    <string name="upload_documents_absorbed">Les documents seront absorbés</string>
 
     <!-- Upload Item Actions -->
     <string name="upload_action_cancel">Annuler</string>
