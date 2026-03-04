@@ -2,6 +2,7 @@ package tech.dokus.features.cashflow.presentation.documents.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -18,6 +19,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.stringResource
@@ -36,6 +39,9 @@ import tech.dokus.foundation.aura.components.status.StatusDotType
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.textFaint
 import tech.dokus.foundation.aura.style.textMuted
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 private object LocalUploadTableColumns {
     val Vendor = DokusTableColumnSpec(weight = 1f)
@@ -223,6 +229,7 @@ private fun InlineRowAction(
             MaterialTheme.colorScheme.textMuted
         },
         modifier = Modifier
+            .defaultMinSize(minHeight = Constraints.Height.button)
             .clickable(onClick = onClick)
             .padding(vertical = 2.dp)
     )
@@ -235,4 +242,40 @@ private fun DashCell() {
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.textMuted
     )
+}
+
+@Preview(name = "Local Upload Mobile Preparing", widthDp = 390, heightDp = 130)
+@Composable
+private fun DocumentLocalUploadMobilePreparingPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        DocumentLocalUploadMobileRow(
+            row = DocumentsLocalUploadRow(
+                taskId = "preview-local-preparing",
+                fileName = "receipt-feb-28.pdf",
+                status = DocumentsLocalUploadRow.Status.Preparing
+            ),
+            onRetry = {},
+            onDismiss = {}
+        )
+    }
+}
+
+@Preview(name = "Local Upload Mobile Failed", widthDp = 390, heightDp = 130)
+@Composable
+private fun DocumentLocalUploadMobileFailedPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        DocumentLocalUploadMobileRow(
+            row = DocumentsLocalUploadRow(
+                taskId = "preview-local-failed",
+                fileName = "tesla-belgium.pdf",
+                status = DocumentsLocalUploadRow.Status.Failed
+            ),
+            onRetry = {},
+            onDismiss = {}
+        )
+    }
 }

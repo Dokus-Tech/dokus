@@ -68,10 +68,3 @@ private fun shouldShowLocalRow(
     }
 }
 
-internal fun retryLocalUploadRow(taskId: String, onRetry: (String) -> Unit) {
-    onRetry(taskId)
-}
-
-internal fun dismissLocalUploadRow(taskId: String, onDismiss: (String) -> Unit) {
-    onDismiss(taskId)
-}

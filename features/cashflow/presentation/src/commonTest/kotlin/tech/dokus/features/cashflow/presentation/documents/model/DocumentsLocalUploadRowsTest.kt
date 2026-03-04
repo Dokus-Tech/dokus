@@ -160,24 +160,6 @@ class DocumentsLocalUploadRowsTest {
         assertEquals(listOf("new", "old"), rows.map { it.taskId })
     }
 
-    @Test
-    fun `retry helper dispatches task id`() {
-        var received: String? = null
-
-        retryLocalUploadRow("task-1") { id -> received = id }
-
-        assertEquals("task-1", received)
-    }
-
-    @Test
-    fun `dismiss helper dispatches task id`() {
-        var received: String? = null
-
-        dismissLocalUploadRow("task-2") { id -> received = id }
-
-        assertEquals("task-2", received)
-    }
-
     private fun task(
         id: String,
         fileName: String,

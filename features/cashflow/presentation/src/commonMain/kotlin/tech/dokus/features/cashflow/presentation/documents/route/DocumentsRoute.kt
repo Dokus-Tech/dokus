@@ -24,8 +24,6 @@ import tech.dokus.features.cashflow.presentation.cashflow.components.fileDropTar
 import tech.dokus.features.cashflow.presentation.cashflow.components.rememberDocumentFilePicker
 import tech.dokus.features.cashflow.presentation.documents.components.DocumentsAddDocumentSheet
 import tech.dokus.features.cashflow.presentation.documents.model.buildDocumentsLocalUploadRows
-import tech.dokus.features.cashflow.presentation.documents.model.dismissLocalUploadRow
-import tech.dokus.features.cashflow.presentation.documents.model.retryLocalUploadRow
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsAction
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsContainer
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsIntent
@@ -103,15 +101,15 @@ internal fun DocumentsRoute(
         }
     }
 
-    val localUploadRows = remember(state, uploadTasks, uploadedDocuments) {
-        val contentState = state as? DocumentsState.Content
-            ?: return@remember emptyList()
+    val contentState = state as? DocumentsState.Content
+    val localUploadRows = remember(contentState?.filter, contentState?.documents?.data, uploadTasks, uploadedDocuments) {
+        val cs = contentState ?: return@remember emptyList()
 
         buildDocumentsLocalUploadRows(
-            filter = contentState.filter,
+            filter = cs.filter,
             uploadTasks = uploadTasks,
             uploadedDocuments = uploadedDocuments,
-            remoteDocuments = contentState.documents.data
+            remoteDocuments = cs.documents.data
         )
     }
 
@@ -176,12 +174,8 @@ internal fun DocumentsRoute(
             onIntent = onIntent,
             onUploadClick = onUploadClick,
             onMobileFabClick = { isAddDocumentSheetVisible = true },
-            onRetryLocalUpload = { taskId ->
-                retryLocalUploadRow(taskId) { uploadManager.retryUpload(it) }
-            },
-            onDismissLocalUpload = { taskId ->
-                dismissLocalUploadRow(taskId) { uploadManager.cancelUpload(it) }
-            }
+            onRetryLocalUpload = { taskId -> uploadManager.retryUpload(taskId) },
+            onDismissLocalUpload = { taskId -> uploadManager.cancelUpload(taskId) }
         )
 
         DocumentsAddDocumentSheet(

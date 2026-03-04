@@ -36,6 +36,8 @@ import tech.dokus.aura.resources.documents_drop_to_upload
 import tech.dokus.aura.resources.documents_empty_title
 import tech.dokus.aura.resources.documents_filter_no_match
 import tech.dokus.aura.resources.documents_upload
+import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.features.cashflow.presentation.common.components.empty.DokusEmptyState
 import tech.dokus.features.cashflow.presentation.common.components.pagination.rememberLoadMoreTrigger
 import tech.dokus.features.cashflow.presentation.common.components.table.DokusTableDivider
@@ -62,7 +64,7 @@ private const val DashPhase = 0f
 
 private sealed interface DocumentsDisplayRow {
     data class Local(val row: DocumentsLocalUploadRow) : DocumentsDisplayRow
-    data class Remote(val row: tech.dokus.domain.model.DocumentRecordDto) : DocumentsDisplayRow
+    data class Remote(val row: DocumentRecordDto) : DocumentsDisplayRow
 }
 
 @Composable
@@ -249,7 +251,7 @@ private fun DesktopDocumentsTable(
     isLoadingMore: Boolean,
     isRefreshing: Boolean,
     isDropTargetActive: Boolean,
-    onOpenDocument: (tech.dokus.domain.ids.DocumentId) -> Unit,
+    onOpenDocument: (DocumentId) -> Unit,
     onRetryLocalUpload: (String) -> Unit,
     onDismissLocalUpload: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -350,7 +352,7 @@ private fun MobileDocumentsList(
     listState: LazyListState,
     isLoadingMore: Boolean,
     isRefreshing: Boolean,
-    onOpenDocument: (tech.dokus.domain.ids.DocumentId) -> Unit,
+    onOpenDocument: (DocumentId) -> Unit,
     onRetryLocalUpload: (String) -> Unit,
     onDismissLocalUpload: (String) -> Unit,
     modifier: Modifier = Modifier,
