@@ -39,7 +39,9 @@ import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.Address
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.common.Thumbnail
+import tech.dokus.features.ai.agents.BusinessLogoFallbackAgent
 import tech.dokus.features.ai.agents.BusinessProfileContentExtractionAgent
+import tech.dokus.features.ai.models.BusinessLogoFallbackResult
 import tech.dokus.features.ai.models.BusinessProfileContentExtractionResult
 import tech.dokus.foundation.backend.config.BusinessProfileEnrichmentConfig
 import tech.dokus.foundation.backend.storage.AvatarStorageService
@@ -72,6 +74,7 @@ class BusinessProfileEnrichmentWorkerTest {
     private val contactAddressRepository = mockk<ContactAddressRepository>(relaxed = true)
     private val avatarStorageService = mockk<AvatarStorageService>(relaxed = true)
     private val contentExtractionAgent = mockk<BusinessProfileContentExtractionAgent>()
+    private val logoFallbackAgent = mockk<BusinessLogoFallbackAgent>()
     private val websiteProbe = mockk<BusinessWebsiteProbe>()
     private val websiteRanker = mockk<BusinessWebsiteRanker>()
 
@@ -292,6 +295,7 @@ class BusinessProfileEnrichmentWorkerTest {
         )
         coEvery { profileRepository.getBySubject(job.tenantId, job.subjectType, job.subjectId) } returns null
         coEvery { tenantRepository.getAvatarStorageKey(job.tenantId) } returns null
+        coEvery { logoFallbackAgent.findLogoCandidates(any()) } returns BusinessLogoFallbackResult(emptyList())
         coEvery { websiteProbe.downloadImageDetailed(any(), any(), any()) } returns ImageDownloadResult(
             image = null,
             failureKind = ImageDownloadFailureKind.HttpStatus,
@@ -497,6 +501,7 @@ class BusinessProfileEnrichmentWorkerTest {
             contactAddressRepository = contactAddressRepository,
             avatarStorageService = avatarStorageService,
             contentExtractionAgent = contentExtractionAgent,
+            logoFallbackAgent = logoFallbackAgent,
             websiteProbe = websiteProbe,
             websiteRanker = websiteRanker,
             logoSelectionService = BusinessLogoSelectionService(websiteProbe)

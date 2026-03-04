@@ -3,6 +3,7 @@ package tech.dokus.backend.services.business
 import org.apache.batik.transcoder.TranscoderInput
 import org.apache.batik.transcoder.TranscoderOutput
 import org.apache.batik.transcoder.image.PNGTranscoder
+import tech.dokus.features.ai.models.BusinessLogoFallbackCandidate
 import tech.dokus.foundation.backend.utils.loggerFor
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -10,10 +11,18 @@ import java.net.URI
 import java.nio.charset.StandardCharsets
 import javax.imageio.ImageIO
 
-private const val LogoDiscoveryBudgetMs = 3_500L
+internal const val LogoPipelineTotalBudgetMs = 900_000L
 private const val LogoPerAttemptTimeoutMs = 1_200L
 private const val LogoRetryMinRemainingBudgetMs = 900L
 private val RetryableBotBlockStatusCodes = setOf(403, 406, 429)
+private val NoisyAiPathMarkers = listOf(
+    "/share/",
+    "social-banner",
+    "social_share",
+    "twitter-card",
+    "opengraph",
+    "og-image"
+)
 
 private enum class LogoFormat {
     Png,
@@ -49,11 +58,22 @@ data class LogoSelectionTrace(
     val selectedFormat: String? = null,
     val terminalReason: LogoSelectionTerminalReason? = null,
     val elapsedMs: Long,
+    val aiFallbackInvoked: Boolean = false,
+    val aiCallMs: Long = 0L,
+    val aiCandidateCountRaw: Int = 0,
+    val aiCandidateCountAccepted: Int = 0,
+    val aiCandidateRejectReasons: Map<String, Int> = emptyMap(),
+    val phaseTerminalReason: String? = null,
 )
 
 data class LogoSelectionResult(
     val image: DownloadedBusinessImage? = null,
     val trace: LogoSelectionTrace,
+)
+
+data class AiCandidateValidationResult(
+    val acceptedUrls: List<String>,
+    val rejectReasons: Map<String, Int>,
 )
 
 class BusinessLogoSelectionService(
@@ -63,8 +83,27 @@ class BusinessLogoSelectionService(
 
     suspend fun selectPreferredLogo(
         websiteUrl: String?,
-        logoCandidates: List<String>
+        logoCandidates: List<String>,
+        budgetMs: Long = LogoPipelineTotalBudgetMs,
+        phaseLabel: String = "DETERMINISTIC",
     ): LogoSelectionResult {
+        if (budgetMs <= 0L) {
+            return LogoSelectionResult(
+                image = null,
+                trace = LogoSelectionTrace(
+                    initialCandidates = 0,
+                    fallbackCandidatesAppended = 0,
+                    totalCandidates = 0,
+                    attempts = 0,
+                    pngSuccesses = 0,
+                    svgSuccesses = 0,
+                    icoSuccesses = 0,
+                    terminalReason = LogoSelectionTerminalReason.BUDGET_EXHAUSTED,
+                    elapsedMs = 0,
+                    phaseTerminalReason = "${phaseLabel.uppercase()}_${LogoSelectionTerminalReason.BUDGET_EXHAUSTED.name}"
+                )
+            )
+        }
         val initialCandidates = logoCandidates
             .asSequence()
             .map { it.trim() }
@@ -92,7 +131,8 @@ class BusinessLogoSelectionService(
                     selectedSourceUrl = null,
                     selectedFormat = null,
                     terminalReason = LogoSelectionTerminalReason.NO_CANDIDATES,
-                    elapsedMs = 0
+                    elapsedMs = 0,
+                    phaseTerminalReason = "${phaseLabel.uppercase()}_${LogoSelectionTerminalReason.NO_CANDIDATES.name}"
                 )
             )
         }
@@ -108,7 +148,8 @@ class BusinessLogoSelectionService(
 
         val startedAtNanos = System.nanoTime()
         fun elapsedMs(): Long = (System.nanoTime() - startedAtNanos) / 1_000_000
-        fun remainingBudgetMs(): Long = (LogoDiscoveryBudgetMs - elapsedMs()).coerceAtLeast(0)
+        val effectiveBudgetMs = budgetMs.coerceAtLeast(100L)
+        fun remainingBudgetMs(): Long = (effectiveBudgetMs - elapsedMs()).coerceAtLeast(0)
 
         val evaluated = mutableListOf<LogoCandidate>()
         suspend fun evaluateAttempt(url: String, result: ImageDownloadResult) {
@@ -220,10 +261,12 @@ class BusinessLogoSelectionService(
             selectedSourceUrl = selected?.sourceUrl,
             selectedFormat = selected?.format?.name,
             terminalReason = terminalReason,
-            elapsedMs = elapsedMs()
+            elapsedMs = elapsedMs(),
+            phaseTerminalReason = terminalReason?.let { "${phaseLabel.uppercase()}_${it.name}" }
         )
         logger.debug(
-            "Logo selection trace websiteUrl={}, initialCandidates={}, fallbackAppended={}, attempts={}, pngSuccesses={}, svgSuccesses={}, icoSuccesses={}, selectedSource={}, selectedFormat={}, terminalReason={}, elapsedMs={}",
+            "Logo selection trace phase={}, websiteUrl={}, initialCandidates={}, fallbackAppended={}, attempts={}, pngSuccesses={}, svgSuccesses={}, icoSuccesses={}, selectedSource={}, selectedFormat={}, terminalReason={}, elapsedMs={}",
+            phaseLabel,
             websiteUrl,
             trace.initialCandidates,
             trace.fallbackCandidatesAppended,
@@ -239,6 +282,69 @@ class BusinessLogoSelectionService(
         return LogoSelectionResult(
             image = selected?.image,
             trace = trace
+        )
+    }
+
+    fun validateAiFallbackCandidates(
+        selectedWebsiteUrl: String,
+        knownAssetHosts: Set<String>,
+        aiCandidates: List<BusinessLogoFallbackCandidate>,
+    ): AiCandidateValidationResult {
+        val selectedRootDomain = registrableDomain(hostOf(selectedWebsiteUrl))
+        val allowedHosts = knownAssetHosts
+            .mapNotNull { host -> host.lowercase().removePrefix("www.").ifBlank { null } }
+            .toSet()
+        val accepted = linkedSetOf<String>()
+        val rejectReasons = mutableMapOf<String, Int>()
+
+        fun reject(reason: String) {
+            rejectReasons[reason] = (rejectReasons[reason] ?: 0) + 1
+        }
+
+        aiCandidates.forEach { candidate ->
+            val url = candidate.url.trim()
+            if (url.isBlank()) {
+                reject("empty_url")
+                return@forEach
+            }
+            val uri = runCatching { URI(url) }.getOrNull()
+            if (uri == null || uri.isOpaque) {
+                reject("invalid_url")
+                return@forEach
+            }
+            val scheme = uri.scheme?.lowercase()
+            if (scheme != "http" && scheme != "https") {
+                reject("non_http_scheme")
+                return@forEach
+            }
+            val host = uri.host?.lowercase()?.removePrefix("www.")
+            if (host.isNullOrBlank()) {
+                reject("missing_host")
+                return@forEach
+            }
+
+            val path = uri.path?.lowercase().orEmpty()
+            if (NoisyAiPathMarkers.any { marker -> marker in path }) {
+                reject("noisy_path")
+                return@forEach
+            }
+
+            val hostAllowedByDomain = selectedRootDomain != null &&
+                registrableDomain(host) == selectedRootDomain
+            val hostAllowedByAssetList = host in allowedHosts
+            if (!hostAllowedByDomain && !hostAllowedByAssetList) {
+                reject("off_domain")
+                return@forEach
+            }
+
+            if (!accepted.add(url)) {
+                reject("duplicate")
+            }
+        }
+
+        return AiCandidateValidationResult(
+            acceptedUrls = accepted.toList(),
+            rejectReasons = rejectReasons.toMap()
         )
     }
 
@@ -351,5 +457,24 @@ class BusinessLogoSelectionService(
             val image = ImageIO.read(ByteArrayInputStream(bytes)) ?: return 0
             image.width * image.height
         }.getOrDefault(0)
+    }
+
+    private fun hostOf(url: String): String? {
+        return runCatching { URI(url).host }
+            .getOrNull()
+            ?.lowercase()
+            ?.removePrefix("www.")
+            ?.ifBlank { null }
+    }
+
+    private fun registrableDomain(host: String?): String? {
+        val value = host
+            ?.lowercase()
+            ?.removePrefix("www.")
+            ?.split(".")
+            ?.filter { it.isNotBlank() }
+            ?: return null
+        if (value.isEmpty()) return null
+        return if (value.size <= 2) value.joinToString(".") else value.takeLast(2).joinToString(".")
     }
 }

@@ -42,7 +42,10 @@ import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.Address
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.common.Thumbnail
+import tech.dokus.features.ai.agents.BusinessLogoFallbackAgent
 import tech.dokus.features.ai.agents.BusinessProfileContentExtractionAgent
+import tech.dokus.features.ai.models.BusinessLogoFallbackCandidate
+import tech.dokus.features.ai.models.BusinessLogoFallbackResult
 import tech.dokus.foundation.backend.config.BusinessProfileEnrichmentConfig
 import tech.dokus.foundation.backend.storage.AvatarStorageService
 import java.awt.Color
@@ -74,6 +77,7 @@ class BusinessProfileEnrichmentWorkerLogoTest {
     private val contactAddressRepository = mockk<ContactAddressRepository>(relaxed = true)
     private val avatarStorageService = mockk<AvatarStorageService>(relaxed = true)
     private val contentExtractionAgent = mockk<BusinessProfileContentExtractionAgent>()
+    private val logoFallbackAgent = mockk<BusinessLogoFallbackAgent>()
     private val websiteProbe = mockk<BusinessWebsiteProbe>()
     private val websiteRanker = mockk<BusinessWebsiteRanker>()
 
@@ -337,6 +341,221 @@ class BusinessProfileEnrichmentWorkerLogoTest {
         }
     }
 
+    @Test
+    fun `ai fallback candidate is used when deterministic candidates are missing`() = runBlocking {
+        val job = sampleJob(subjectType = BusinessProfileSubjectType.Tenant, attemptCount = 0)
+        val ranking = acceptedRanking("https://acme.example", 90)
+        val aiLogoPng = pngBytes(128, 128, Color.ORANGE)
+        val aiLogoUrl = "https://acme.example/assets/brand/logo.png"
+
+        coEvery { jobRepository.recoverStaleProcessing(any(), any(), any()) } returns Result.success(0)
+        coEvery { jobRepository.claimDue(any(), any()) } returns Result.success(listOf(job))
+        coEvery { jobRepository.markCompleted(job.id) } returns Result.success(true)
+        coEvery { tenantRepository.findById(job.tenantId) } returns sampleTenant(job.tenantId)
+        coEvery { addressRepository.getCompanyAddress(job.tenantId) } returns sampleAddress(job.tenantId)
+
+        coEvery { websiteProbe.buildStrictSearchQuery("Acme Logistics", "BE") } returns "Acme Logistics BE"
+        coEvery { websiteProbe.searchWebsiteCandidates("Acme Logistics", "BE", 3) } returns listOf(
+            WebsiteSearchResult(
+                url = "https://acme.example",
+                title = "Acme Logistics",
+                snippet = "Acme website",
+                searchRank = 1
+            )
+        )
+        coEvery { websiteProbe.crawl("https://acme.example", config.maxPages) } returns tech.dokus.backend.services.business.BusinessWebsiteCrawlResult(
+            pages = listOf(
+                tech.dokus.backend.services.business.CrawledBusinessPage(
+                    url = "https://acme.example",
+                    title = "Acme Logistics",
+                    headHtmlSnippet = "<link rel=\"icon\" href=\"/favicon.ico\">",
+                    logoRelevantHtmlSnippet = "<img src=\"/assets/brand/logo.png\">",
+                    textContent = "Acme Logistics",
+                    structuredDataSnippets = emptyList(),
+                    emails = emptyList(),
+                    phones = emptyList(),
+                    links = emptyList(),
+                    logoCandidates = emptyList()
+                )
+            ),
+            blockedByRobots = false
+        )
+        coEvery { websiteRanker.rank(any(), any(), any()) } returns ranking
+        coEvery { contentExtractionAgent.extract(any()) } throws IllegalStateException("simulate extract failure")
+        coEvery { profileRepository.getBySubject(job.tenantId, job.subjectType, job.subjectId) } returns null
+        coEvery { tenantRepository.getAvatarStorageKey(job.tenantId) } returns null
+        coEvery {
+            logoFallbackAgent.findLogoCandidates(any())
+        } returns BusinessLogoFallbackResult(
+            candidates = listOf(
+                BusinessLogoFallbackCandidate(
+                    url = aiLogoUrl,
+                    confidence = 0.88,
+                    reason = "Logo asset path from header snippet"
+                )
+            )
+        )
+        coEvery { websiteProbe.downloadImageDetailed(any(), any(), any()) } returns ImageDownloadResult(
+            image = null,
+            failureKind = ImageDownloadFailureKind.HttpStatus,
+            statusCode = 404
+        )
+        coEvery { websiteProbe.downloadImageDetailed(aiLogoUrl, any(), any()) } returns ImageDownloadResult(
+            image = DownloadedBusinessImage(bytes = aiLogoPng, contentType = "image/png"),
+            normalizedUrl = aiLogoUrl,
+            statusCode = 200,
+            contentType = "image/png"
+        )
+        coEvery {
+            avatarStorageService.uploadAvatar(
+                job.tenantId,
+                any(),
+                "image/png"
+            )
+        } returns AvatarStorageService.AvatarUploadResult(
+            storageKeyPrefix = "avatars/ai-fallback-logo",
+            avatar = Thumbnail(small = "s", medium = "m", large = "l"),
+            sizeBytes = aiLogoPng.size.toLong()
+        )
+        coEvery { tenantRepository.updateAvatarStorageKey(job.tenantId, "avatars/ai-fallback-logo") } returns Unit
+        coEvery {
+            businessProfileService.applyEnrichment(
+                tenantId = any(),
+                subjectType = any(),
+                subjectId = any(),
+                verificationState = any(),
+                evidenceScore = any(),
+                evidenceChecksJson = any(),
+                websiteUrl = any(),
+                businessSummary = any(),
+                businessActivities = any(),
+                logoStorageKey = any(),
+                lastErrorCode = any(),
+                lastErrorMessage = any()
+            )
+        } returns BusinessProfileRecord(
+            tenantId = job.tenantId,
+            subjectType = job.subjectType,
+            subjectId = job.subjectId
+        )
+
+        createWorker().processBatchForTest()
+
+        coVerify(exactly = 1) { logoFallbackAgent.findLogoCandidates(any()) }
+        coVerify(exactly = 1) { avatarStorageService.uploadAvatar(job.tenantId, any(), "image/png") }
+        coVerify(exactly = 1) {
+            businessProfileService.applyEnrichment(
+                tenantId = job.tenantId,
+                subjectType = job.subjectType,
+                subjectId = job.subjectId,
+                verificationState = BusinessProfileVerificationState.Verified,
+                evidenceScore = 90,
+                evidenceChecksJson = any(),
+                websiteUrl = "https://acme.example",
+                businessSummary = null,
+                businessActivities = null,
+                logoStorageKey = "avatars/ai-fallback-logo",
+                lastErrorCode = null,
+                lastErrorMessage = null
+            )
+        }
+    }
+
+    @Test
+    fun `off-domain ai fallback candidates are rejected and no logo is persisted`() = runBlocking {
+        val job = sampleJob(subjectType = BusinessProfileSubjectType.Tenant, attemptCount = 0)
+        val ranking = acceptedRanking("https://acme.example", 88)
+        val rejectedUrl = "https://cdn.evil.example/share/social-banner.png"
+
+        coEvery { jobRepository.recoverStaleProcessing(any(), any(), any()) } returns Result.success(0)
+        coEvery { jobRepository.claimDue(any(), any()) } returns Result.success(listOf(job))
+        coEvery { jobRepository.markCompleted(job.id) } returns Result.success(true)
+        coEvery { tenantRepository.findById(job.tenantId) } returns sampleTenant(job.tenantId)
+        coEvery { addressRepository.getCompanyAddress(job.tenantId) } returns sampleAddress(job.tenantId)
+
+        coEvery { websiteProbe.buildStrictSearchQuery("Acme Logistics", "BE") } returns "Acme Logistics BE"
+        coEvery { websiteProbe.searchWebsiteCandidates("Acme Logistics", "BE", 3) } returns listOf(
+            WebsiteSearchResult(
+                url = "https://acme.example",
+                title = "Acme Logistics",
+                snippet = "Acme website",
+                searchRank = 1
+            )
+        )
+        coEvery { websiteProbe.crawl("https://acme.example", config.maxPages) } returns tech.dokus.backend.services.business.BusinessWebsiteCrawlResult(
+            pages = listOf(
+                tech.dokus.backend.services.business.CrawledBusinessPage(
+                    url = "https://acme.example",
+                    textContent = "Acme Logistics",
+                    structuredDataSnippets = emptyList(),
+                    emails = emptyList(),
+                    phones = emptyList(),
+                    links = emptyList(),
+                    logoCandidates = emptyList()
+                )
+            ),
+            blockedByRobots = false
+        )
+        coEvery { websiteRanker.rank(any(), any(), any()) } returns ranking
+        coEvery { contentExtractionAgent.extract(any()) } throws IllegalStateException("simulate extract failure")
+        coEvery { profileRepository.getBySubject(job.tenantId, job.subjectType, job.subjectId) } returns null
+        coEvery { tenantRepository.getAvatarStorageKey(job.tenantId) } returns null
+        coEvery {
+            logoFallbackAgent.findLogoCandidates(any())
+        } returns BusinessLogoFallbackResult(
+            candidates = listOf(
+                BusinessLogoFallbackCandidate(url = rejectedUrl, confidence = 0.95, reason = "Banner")
+            )
+        )
+        coEvery { websiteProbe.downloadImageDetailed(any(), any(), any()) } returns ImageDownloadResult(
+            image = null,
+            failureKind = ImageDownloadFailureKind.HttpStatus,
+            statusCode = 404
+        )
+        coEvery {
+            businessProfileService.applyEnrichment(
+                tenantId = any(),
+                subjectType = any(),
+                subjectId = any(),
+                verificationState = any(),
+                evidenceScore = any(),
+                evidenceChecksJson = any(),
+                websiteUrl = any(),
+                businessSummary = any(),
+                businessActivities = any(),
+                logoStorageKey = any(),
+                lastErrorCode = any(),
+                lastErrorMessage = any()
+            )
+        } returns BusinessProfileRecord(
+            tenantId = job.tenantId,
+            subjectType = job.subjectType,
+            subjectId = job.subjectId
+        )
+
+        createWorker().processBatchForTest()
+
+        coVerify(exactly = 1) { logoFallbackAgent.findLogoCandidates(any()) }
+        coVerify(exactly = 0) { websiteProbe.downloadImageDetailed(rejectedUrl, any(), any()) }
+        coVerify(exactly = 0) { avatarStorageService.uploadAvatar(any(), any(), any()) }
+        coVerify(exactly = 1) {
+            businessProfileService.applyEnrichment(
+                tenantId = job.tenantId,
+                subjectType = job.subjectType,
+                subjectId = job.subjectId,
+                verificationState = BusinessProfileVerificationState.Verified,
+                evidenceScore = 88,
+                evidenceChecksJson = any(),
+                websiteUrl = "https://acme.example",
+                businessSummary = null,
+                businessActivities = null,
+                logoStorageKey = null,
+                lastErrorCode = null,
+                lastErrorMessage = null
+            )
+        }
+    }
+
     private fun createWorker(): BusinessProfileEnrichmentWorker {
         coEvery { websiteProbe.canonicalizeWebsiteUrl(any()) } answers { invocation.args[0] as String }
         return BusinessProfileEnrichmentWorker(
@@ -350,6 +569,7 @@ class BusinessProfileEnrichmentWorkerLogoTest {
             contactAddressRepository = contactAddressRepository,
             avatarStorageService = avatarStorageService,
             contentExtractionAgent = contentExtractionAgent,
+            logoFallbackAgent = logoFallbackAgent,
             websiteProbe = websiteProbe,
             websiteRanker = websiteRanker,
             logoSelectionService = BusinessLogoSelectionService(websiteProbe)

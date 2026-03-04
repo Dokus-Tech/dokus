@@ -33,9 +33,12 @@ private const val HtmlAcceptHeader = "text/html,application/xhtml+xml,*/*;q=0.8"
 private const val ImageAcceptHeader = "image/*,*/*;q=0.8"
 private const val MaxHtmlChars = 200_000
 private const val MaxTextChars = 20_000
+private const val MaxHeadHtmlSnippetChars = 12_000
+private const val MaxLogoRelevantHtmlSnippetChars = 18_000
 private val StripScriptStyleRegex = Regex("(?is)<(script|style|noscript)[^>]*>.*?</\\1>")
 private val StripTagRegex = Regex("(?is)<[^>]+>")
 private val CollapseWhitespaceRegex = Regex("\\s+")
+private val HeadRegex = Regex("(?is)<head[^>]*>(.*?)</head>")
 private val TitleRegex = Regex("(?is)<title[^>]*>(.*?)</title>")
 private val MetaDescriptionRegex = Regex("(?is)<meta[^>]+name=[\"']description[\"'][^>]+content=[\"']([^\"']+)[\"']")
 private val JsonLdRegex = Regex("(?is)<script[^>]+type=[\"']application/ld\\+json[\"'][^>]*>(.*?)</script>")
@@ -44,6 +47,9 @@ private val IconHrefRegex = Regex("(?is)<link[^>]+rel=[\"'][^\"']*icon[^\"']*[\"
 private val ManifestHrefRegex = Regex("(?is)<link[^>]+rel=[\"'][^\"']*manifest[^\"']*[\"'][^>]+href=[\"']([^\"']+)[\"']")
 private val OgImageRegex = Regex("(?is)<meta[^>]+property=[\"']og:image[\"'][^>]+content=[\"']([^\"']+)[\"']")
 private val ImgSrcRegex = Regex("(?is)<img[^>]+src=[\"']([^\"']+)[\"']")
+private val LogoRelevantTagRegex = Regex(
+    "(?is)<(?:link|meta|img|script)[^>]*(?:logo|icon|favicon|manifest|og:image|application/ld\\+json)[^>]*>(?:.*?</script>)?"
+)
 private val EmailRegex = Regex("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}")
 private val PhoneRegex = Regex("(?<!\\w)(\\+?\\d[\\d\\s()./-]{6,}\\d)(?!\\w)")
 private val TrackingQueryParams = setOf("srsltid", "gclid", "fbclid", "msclkid")
@@ -53,6 +59,8 @@ data class CrawledBusinessPage(
     val url: String,
     val title: String? = null,
     val description: String? = null,
+    val headHtmlSnippet: String? = null,
+    val logoRelevantHtmlSnippet: String? = null,
     val textContent: String,
     val structuredDataSnippets: List<String>,
     val emails: List<String>,
@@ -246,6 +254,13 @@ class BusinessWebsiteProbe(
                 .let { StripTagRegex.replace(it, " ") }
                 .let { CollapseWhitespaceRegex.replace(it, " ").trim() }
                 .take(MaxTextChars)
+            val headHtmlSnippet = HeadRegex.find(html)
+                ?.groupValues
+                ?.getOrNull(1)
+                ?.trim()
+                ?.take(MaxHeadHtmlSnippetChars)
+                ?.ifBlank { null }
+            val logoRelevantHtmlSnippet = extractLogoRelevantHtmlSnippet(html)
 
             val links = HrefRegex.findAll(html)
                 .mapNotNull { normalizeUrl(it.groupValues[1], base = url) }
@@ -291,6 +306,8 @@ class BusinessWebsiteProbe(
                 url = url,
                 title = TitleRegex.find(html)?.groupValues?.getOrNull(1)?.trim(),
                 description = MetaDescriptionRegex.find(html)?.groupValues?.getOrNull(1)?.trim(),
+                headHtmlSnippet = headHtmlSnippet,
+                logoRelevantHtmlSnippet = logoRelevantHtmlSnippet,
                 textContent = cleanedText,
                 structuredDataSnippets = structuredData,
                 emails = emails,
@@ -299,6 +316,16 @@ class BusinessWebsiteProbe(
                 logoCandidates = logoCandidates
             )
         }.getOrNull()
+    }
+
+    private fun extractLogoRelevantHtmlSnippet(html: String): String? {
+        val snippet = LogoRelevantTagRegex.findAll(html)
+            .map { it.value.trim() }
+            .filter { it.isNotBlank() }
+            .joinToString("\n")
+            .take(MaxLogoRelevantHtmlSnippetChars)
+            .trim()
+        return snippet.ifBlank { null }
     }
 
     private suspend fun fetchSerperResults(query: String, maxResults: Int): List<WebsiteSearchResult> {

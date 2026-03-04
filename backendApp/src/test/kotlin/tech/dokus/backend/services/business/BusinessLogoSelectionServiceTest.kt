@@ -5,10 +5,12 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import tech.dokus.features.ai.models.BusinessLogoFallbackCandidate
 import java.awt.Color
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
@@ -98,12 +100,52 @@ class BusinessLogoSelectionServiceTest {
                 "https://example.com/c.png",
                 "https://example.com/d.png",
                 "https://example.com/e.png"
-            )
+            ),
+            budgetMs = 3_500L,
         )
 
         assertEquals(LogoSelectionTerminalReason.BUDGET_EXHAUSTED, result.trace.terminalReason)
         assertTrue(result.trace.attempts in 2..3)
         assertTrue(result.trace.elapsedMs >= 3_500L)
+    }
+
+    @Test
+    fun `ai candidate validation keeps same-domain http urls and rejects noisy off-domain`() {
+        val validated = service.validateAiFallbackCandidates(
+            selectedWebsiteUrl = "https://www.tesla.com/nl_be",
+            knownAssetHosts = setOf("static-assets.tesla.com"),
+            aiCandidates = listOf(
+                BusinessLogoFallbackCandidate(
+                    url = "https://www.tesla.com/themes/custom/logo.svg",
+                    confidence = 0.92
+                ),
+                BusinessLogoFallbackCandidate(
+                    url = "data:image/png;base64,abc",
+                    confidence = 0.4
+                ),
+                BusinessLogoFallbackCandidate(
+                    url = "https://cdn.example.com/share/social-banner.png",
+                    confidence = 0.7
+                ),
+                BusinessLogoFallbackCandidate(
+                    url = "https://static-assets.tesla.com/favicon.ico",
+                    confidence = 0.6
+                )
+            )
+        )
+
+        assertEquals(
+            listOf(
+                "https://www.tesla.com/themes/custom/logo.svg",
+                "https://static-assets.tesla.com/favicon.ico"
+            ),
+            validated.acceptedUrls
+        )
+        assertTrue(
+            (validated.rejectReasons["non_http_scheme"] ?: 0) >= 1 ||
+                (validated.rejectReasons["invalid_url"] ?: 0) >= 1
+        )
+        assertFalse(validated.rejectReasons.isEmpty())
     }
 
     private fun pngBytes(width: Int, height: Int, color: Color): ByteArray {

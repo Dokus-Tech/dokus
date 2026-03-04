@@ -65,3 +65,33 @@ data class BusinessProfileContentExtractionResult(
     val activities: List<String> = emptyList(),
     val confidence: Double = 0.0,
 )
+
+@Serializable
+data class BusinessLogoFallbackPage(
+    val url: String,
+    val title: String? = null,
+    val description: String? = null,
+    val headHtmlSnippet: String? = null,
+    val logoRelevantHtmlSnippet: String? = null,
+    val structuredDataSnippets: List<String> = emptyList(),
+    val assetUrls: List<String> = emptyList(),
+)
+
+@Serializable
+data class BusinessLogoFallbackInput(
+    val selectedWebsiteUrl: String,
+    val failedCandidateUrls: List<String> = emptyList(),
+    val pages: List<BusinessLogoFallbackPage>,
+)
+
+@Serializable
+data class BusinessLogoFallbackCandidate(
+    val url: String,
+    val confidence: Double = 0.0,
+    val reason: String? = null,
+)
+
+@Serializable
+data class BusinessLogoFallbackResult(
+    val candidates: List<BusinessLogoFallbackCandidate> = emptyList(),
+)

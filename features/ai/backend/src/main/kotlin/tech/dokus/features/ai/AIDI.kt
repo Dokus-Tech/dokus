@@ -8,6 +8,7 @@ import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import tech.dokus.features.ai.agents.BusinessProfileEnrichmentAgent
 import tech.dokus.features.ai.agents.BusinessProfileContentExtractionAgent
+import tech.dokus.features.ai.agents.BusinessLogoFallbackAgent
 import tech.dokus.features.ai.agents.ChatAgent
 import tech.dokus.features.ai.agents.DocumentProcessingAgent
 import tech.dokus.features.ai.config.AIModels
@@ -67,6 +68,7 @@ fun aiModule() = module {
     singleOf(::DocumentProcessingAgent)
     singleOf(::BusinessProfileEnrichmentAgent)
     singleOf(::BusinessProfileContentExtractionAgent)
+    singleOf(::BusinessLogoFallbackAgent)
 
     single {
         val models = get<ModelSet>()
