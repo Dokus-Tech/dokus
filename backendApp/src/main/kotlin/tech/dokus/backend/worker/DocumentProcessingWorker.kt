@@ -91,6 +91,7 @@ class DocumentProcessingWorker(
         FailedValidation("failed_validation"),
         FailedCancelled("failed_cancelled"),
         FailedUnexpected("failed_unexpected"),
+        SkippedAlreadyClaimed("skipped_already_claimed"),
     }
 
     /**
@@ -177,6 +178,16 @@ class DocumentProcessingWorker(
                         val startedAtNanos = System.nanoTime()
                         var attemptResult = AttemptResult.FailedUnexpected
                         try {
+                            val claimed = ingestionRepository.markAsProcessing(ingestion.runId.toString(), "koog-graph")
+                            if (!claimed) {
+                                logger.info(
+                                    "Skipping ingestion run {} for document {} because it was already claimed",
+                                    ingestion.runId,
+                                    ingestion.documentId
+                                )
+                                attemptResult = AttemptResult.SkippedAlreadyClaimed
+                                return@withPermit
+                            }
                             attemptResult = processIngestionRunWithTimeout(ingestion, timeout)
                         } catch (e: CancellationException) {
                             if (!isRunning.get()) throw e
@@ -317,9 +328,6 @@ class DocumentProcessingWorker(
         MDC.put("tenantId", tenantId.toString())
 
         logger.info("Processing ingestion run: $runId for document: $documentId")
-
-        // Mark as processing
-        ingestionRepository.markAsProcessing(runId.toString(), "koog-graph")
 
         try {
             // Fetch tenant context for improved invoice classification and direction resolution

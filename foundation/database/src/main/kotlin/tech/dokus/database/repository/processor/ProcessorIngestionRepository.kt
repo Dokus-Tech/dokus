@@ -82,13 +82,15 @@ class ProcessorIngestionRepository {
     /**
      * Mark an ingestion run as currently being processed.
      * Sets status to Processing and records the AI provider.
+     * Uses compare-and-set semantics (Queued -> Processing) to avoid duplicate claims.
      */
     @OptIn(ExperimentalTime::class)
     suspend fun markAsProcessing(runId: String, provider: String): Boolean =
         newSuspendedTransaction {
             val now = Clock.System.now().toStdlibInstant().toLocalDateTime(TimeZone.Companion.UTC)
             DocumentIngestionRunsTable.update({
-                DocumentIngestionRunsTable.id eq UUID.fromString(runId)
+                (DocumentIngestionRunsTable.id eq UUID.fromString(runId)) and
+                    (DocumentIngestionRunsTable.status eq IngestionStatus.Queued)
             }) {
                 it[status] = IngestionStatus.Processing
                 it[startedAt] = now
