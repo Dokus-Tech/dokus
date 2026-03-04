@@ -64,7 +64,7 @@ class DocumentProcessingWorkerConcurrencyTest {
         coEvery { tenantRepository.findById(any()) } coAnswers {
             val current = active.incrementAndGet()
             maxObserved.updateAndGet { previous -> maxOf(previous, current) }
-            delay(60.milliseconds)
+            delay(500.milliseconds)
             active.decrementAndGet()
             null
         }

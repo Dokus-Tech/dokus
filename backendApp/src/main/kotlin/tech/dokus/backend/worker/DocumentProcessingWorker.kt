@@ -17,6 +17,8 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import ai.koog.http.client.KoogHttpClientException
+import ai.koog.prompt.executor.clients.LLMClientException
 import org.slf4j.MDC
 import tech.dokus.backend.services.documents.AutoConfirmPolicy
 import tech.dokus.backend.services.documents.ContactResolutionService
@@ -100,10 +102,9 @@ class DocumentProcessingWorker(
             return
         }
 
-        val concurrency = config.maxConcurrentRuns.coerceAtLeast(1)
         logger.info(
             "Starting worker (KOOG-GRAPH): interval=${config.pollingInterval}ms, " +
-                "batchSize=${config.batchSize}, maxConcurrentRuns=$concurrency"
+                "batchSize=${config.batchSize}, maxConcurrentRuns=${config.maxConcurrentRuns}"
         )
 
         pollingJob = scope.launch {
@@ -147,7 +148,7 @@ class DocumentProcessingWorker(
         runSuspendCatching {
             val recovered = ingestionRepository.recoverStaleRuns()
             if (recovered > 0) {
-                logger.warn("Recovered $recovered stale ingestion run(s) (marked as Failed)")
+                logger.info("Recovered $recovered stale ingestion run(s) (marked as Failed)")
             }
         }.onFailure { e ->
             logger.error("Failed to recover stale runs", e)
@@ -166,7 +167,7 @@ class DocumentProcessingWorker(
         val queueDepthAtClaim = pending.size
         logger.info("Found ${pending.size} pending ingestion runs to process (queueDepthAtClaim=$queueDepthAtClaim)")
 
-        val semaphore = Semaphore(config.maxConcurrentRuns.coerceAtLeast(1))
+        val semaphore = Semaphore(config.maxConcurrentRuns)
 
         supervisorScope {
             pending.map { ingestion ->
@@ -223,6 +224,7 @@ class DocumentProcessingWorker(
         }
     }
 
+    /** Test-only entry point. Must not be called concurrently with [start]/[stop]. */
     internal suspend fun processBatchForTest(timeout: Duration) {
         isRunning.set(true)
         try {
@@ -241,7 +243,7 @@ class DocumentProcessingWorker(
                 processIngestionRun(ingestion)
             }
         } catch (e: TimeoutCancellationException) {
-            val timeoutMessage = DocumentProcessingConstants.ingestionTimeoutErrorMessage()
+            val timeoutMessage = DocumentProcessingConstants.INGESTION_TIMEOUT_ERROR_MESSAGE
             logger.error(
                 "Ingestion run {} for document {} exceeded timeout {}; marking as failed",
                 ingestion.runId,
@@ -251,6 +253,13 @@ class DocumentProcessingWorker(
             )
             markRunFailedSafely(ingestion.runId, timeoutMessage)
             AttemptResult.FailedTimeout
+        } finally {
+            // Defensive cleanup: processIngestionRun sets MDC keys and clears them in its own
+            // finally block. If a timeout + parent cancellation prevents that finally from running,
+            // stale MDC keys would leak onto the shared thread pool.
+            MDC.remove("runId")
+            MDC.remove("documentId")
+            MDC.remove("tenantId")
         }
     }
 
@@ -270,14 +279,14 @@ class DocumentProcessingWorker(
         startedAtNanos: Long,
         attemptResult: AttemptResult
     ) {
-        val runtimeMs = (System.nanoTime() - startedAtNanos) / 1_000_000
+        val processingTimeMs = (System.nanoTime() - startedAtNanos) / 1_000_000
         logger.info(
-            "Ingestion attempt completed: runId={}, documentId={}, queueDepthAtClaim={}, runtimeMs={}, " +
+            "Ingestion attempt completed: runId={}, documentId={}, queueDepthAtClaim={}, processingTimeMs={}, " +
                 "maxConcurrentRuns={}, attemptResult={}",
             ingestion.runId,
             ingestion.documentId,
             queueDepthAtClaim,
-            runtimeMs,
+            processingTimeMs,
             config.maxConcurrentRuns,
             attemptResult.label
         )
@@ -286,13 +295,7 @@ class DocumentProcessingWorker(
     private fun isProviderFailure(error: Throwable): Boolean {
         var current: Throwable? = error
         while (current != null) {
-            val className = current::class.qualifiedName.orEmpty()
-            if (
-                className.contains("LLMClientException") ||
-                className.contains("KoogHttpClientException")
-            ) {
-                return true
-            }
+            if (current is LLMClientException || current is KoogHttpClientException) return true
             current = current.cause
         }
         return false
@@ -330,22 +333,16 @@ class DocumentProcessingWorker(
                     .joinToString(" ").ifBlank { null }
             }
 
-            val result = try {
-                processingAgent.process(
-                    AcceptDocumentInput(
-                        documentId = documentId,
-                        tenant = tenant,
-                        associatedPersonNames = personNames,
-                        userFeedback = ingestion.userFeedback,
-                        maxPagesOverride = ingestion.overrideMaxPages,
-                        dpiOverride = ingestion.overrideDpi
-                    )
+            val result = processingAgent.process(
+                AcceptDocumentInput(
+                    documentId = documentId,
+                    tenant = tenant,
+                    associatedPersonNames = personNames,
+                    userFeedback = ingestion.userFeedback,
+                    maxPagesOverride = ingestion.overrideMaxPages,
+                    dpiOverride = ingestion.overrideDpi
                 )
-            } catch (e: Exception) {
-                logger.error("AI provider failure while processing document $documentId", e)
-                markRunFailedSafely(runId, "Processing provider error: ${e.message ?: "Unknown provider error"}")
-                return AttemptResult.FailedProvider
-            }
+            )
 
             val counterpartyInvariantFailure = result.auditReport.criticalFailures.firstOrNull {
                 it.type == CheckType.COUNTERPARTY_INTEGRITY

@@ -12,6 +12,10 @@ data class ProcessorConfig(
     val batchSize: Int,
     val maxConcurrentRuns: Int,
 ) {
+    init {
+        require(maxConcurrentRuns >= 1) { "maxConcurrentRuns must be >= 1, was $maxConcurrentRuns" }
+    }
+
     companion object {
         fun fromConfig(config: Config): ProcessorConfig = ProcessorConfig(
             pollingInterval = config.getLong("pollingInterval"),

@@ -109,7 +109,7 @@ class DocumentIngestionRunRepositoryStaleRecoveryTest {
 
         assertNotNull(latest)
         assertEquals(IngestionStatus.Failed, latest.status)
-        assertEquals(DocumentProcessingConstants.ingestionTimeoutErrorMessage(), latest.errorMessage)
+        assertEquals(DocumentProcessingConstants.INGESTION_TIMEOUT_ERROR_MESSAGE, latest.errorMessage)
     }
 
     @Test
@@ -131,7 +131,7 @@ class DocumentIngestionRunRepositoryStaleRecoveryTest {
         assertNull(active)
         assertNotNull(latest)
         assertEquals(IngestionStatus.Failed, latest.status)
-        assertEquals(DocumentProcessingConstants.ingestionTimeoutErrorMessage(), latest.errorMessage)
+        assertEquals(DocumentProcessingConstants.INGESTION_TIMEOUT_ERROR_MESSAGE, latest.errorMessage)
     }
 
     @Test
@@ -142,7 +142,7 @@ class DocumentIngestionRunRepositoryStaleRecoveryTest {
 
         assertEquals(1, runs.size)
         assertEquals(IngestionStatus.Failed, runs.first().status)
-        assertEquals(DocumentProcessingConstants.ingestionTimeoutErrorMessage(), runs.first().errorMessage)
+        assertEquals(DocumentProcessingConstants.INGESTION_TIMEOUT_ERROR_MESSAGE, runs.first().errorMessage)
     }
 
     private fun insertProcessingRun(stale: Boolean): IngestionRunId {
