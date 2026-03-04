@@ -4,10 +4,20 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.client.request.header
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import tech.dokus.domain.utils.json
 import tech.dokus.foundation.backend.config.BusinessProfileEnrichmentConfig
 import tech.dokus.foundation.backend.utils.runSuspendCatching
 import java.net.URI
@@ -56,6 +66,36 @@ class BusinessWebsiteProbe(
     private val config: BusinessProfileEnrichmentConfig,
 ) {
     private val robotsCache = ConcurrentHashMap<String, RobotsTxtPolicy>()
+
+    suspend fun searchWebsiteCandidates(
+        companyName: String,
+        vatNumber: String? = null,
+        country: String? = null,
+        maxResults: Int = 5
+    ): List<String> {
+        if (config.serperApiKey.isBlank()) return emptyList()
+        val normalizedName = companyName.trim()
+        if (normalizedName.isBlank()) return emptyList()
+
+        val queries = buildList {
+            val base = listOf(normalizedName, country?.trim().orEmpty())
+                .filter { it.isNotBlank() }
+                .joinToString(" ")
+            if (base.isNotBlank()) add(base)
+            if (!vatNumber.isNullOrBlank()) add("$normalizedName ${vatNumber.trim()} official website")
+            add("$normalizedName official website")
+        }.distinct()
+
+        val collected = linkedSetOf<String>()
+        for (query in queries) {
+            val urls = fetchSerperUrls(query, maxResults)
+            urls.forEach { url ->
+                collected += url
+                if (collected.size >= maxResults) return collected.toList()
+            }
+        }
+        return collected.toList()
+    }
 
     suspend fun crawl(startUrl: String, maxPages: Int = config.maxPages): BusinessWebsiteCrawlResult {
         val normalizedStart = normalizeUrl(startUrl)
@@ -174,6 +214,29 @@ class BusinessWebsiteProbe(
                 logoCandidates = logoCandidates
             )
         }.getOrNull()
+    }
+
+    private suspend fun fetchSerperUrls(query: String, maxResults: Int): List<String> {
+        return runSuspendCatching {
+            val requestBody = buildJsonObject {
+                put("q", JsonPrimitive(query))
+                put("num", JsonPrimitive(maxResults.coerceIn(1, 10)))
+            }
+            val response = httpClient.post(config.serperBaseUrl) {
+                contentType(ContentType.Application.Json)
+                header("X-API-KEY", config.serperApiKey)
+                header(HttpHeaders.UserAgent, ProbeUserAgent)
+                setBody(requestBody.toString())
+            }
+            if (!response.status.isSuccess()) return@runSuspendCatching emptyList()
+            val parsed = json.parseToJsonElement(response.bodyAsText()).jsonObject
+            val organic = parsed["organic"] as? JsonArray ?: JsonArray(emptyList())
+            organic.mapNotNull { element ->
+                val obj = element as? JsonObject ?: return@mapNotNull null
+                val rawUrl = obj["link"]?.jsonPrimitive?.content ?: return@mapNotNull null
+                normalizeUrl(rawUrl)
+            }
+        }.getOrDefault(emptyList())
     }
 
     private fun prioritizeLinks(links: List<String>): List<String> {

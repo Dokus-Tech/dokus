@@ -341,6 +341,197 @@ class BusinessProfileEnrichmentWorkerTest {
     }
 
     @Test
+    fun `uses non-aggregator search result fallback when discovery is not found`() = runBlocking {
+        val job = sampleJob(subjectType = BusinessProfileSubjectType.Tenant, attemptCount = 0)
+        coEvery { jobRepository.recoverStaleProcessing(any(), any(), any()) } returns Result.success(0)
+        coEvery { jobRepository.claimDue(any(), any()) } returns Result.success(listOf(job))
+        coEvery { jobRepository.markCompleted(job.id) } returns Result.success(true)
+
+        coEvery { tenantRepository.findById(job.tenantId) } returns sampleTenant(job.tenantId)
+        coEvery { addressRepository.getCompanyAddress(job.tenantId) } returns sampleAddress(job.tenantId)
+        coEvery { profileRepository.getBySubject(job.tenantId, job.subjectType, job.subjectId) } returns null
+        coEvery { tenantRepository.getAvatarStorageKey(job.tenantId) } returns null
+
+        coEvery { enrichmentAgent.enrich(any()) } returns BusinessProfileDiscoveryResult(
+            status = BusinessDiscoveryStatus.NotFound,
+            candidateWebsiteUrl = null,
+            businessSummary = null,
+            activities = emptyList(),
+            logoUrl = null,
+            confidence = 0.4,
+            searchResultUrls = listOf(
+                "https://www.linkedin.com/company/invoid-vision/",
+                "https://invoid.vision/",
+                "https://www.facebook.com/invoidvision"
+            )
+        )
+        coEvery { websiteProbe.crawl("https://invoid.vision/", config.maxPages) } returns BusinessWebsiteCrawlResult(
+            pages = listOf(
+                CrawledBusinessPage(
+                    url = "https://invoid.vision/",
+                    textContent = "Invoid Vision",
+                    structuredDataSnippets = emptyList(),
+                    emails = emptyList(),
+                    phones = emptyList(),
+                    links = emptyList(),
+                    logoCandidates = emptyList()
+                )
+            ),
+            blockedByRobots = false
+        )
+        coEvery { evidenceGate.evaluate(any()) } returns BusinessProfileEvidenceResult(
+            outcome = EvidenceGateOutcome.PERSIST_AS_SUGGESTED,
+            verificationState = BusinessProfileVerificationState.Suggested,
+            evidenceScore = 35,
+            checks = emptyList()
+        )
+        coEvery {
+            businessProfileService.applyEnrichment(
+                tenantId = any(),
+                subjectType = any(),
+                subjectId = any(),
+                verificationState = any(),
+                evidenceScore = any(),
+                evidenceChecksJson = any(),
+                websiteUrl = any(),
+                businessSummary = any(),
+                businessActivities = any(),
+                logoStorageKey = any(),
+                lastErrorCode = any(),
+                lastErrorMessage = any()
+            )
+        } returns BusinessProfileRecord(
+            tenantId = job.tenantId,
+            subjectType = job.subjectType,
+            subjectId = job.subjectId
+        )
+
+        val worker = createWorker()
+        worker.processBatchForTest()
+
+        coVerify(exactly = 1) { websiteProbe.crawl("https://invoid.vision/", config.maxPages) }
+        coVerify(exactly = 1) {
+            businessProfileService.applyEnrichment(
+                tenantId = job.tenantId,
+                subjectType = job.subjectType,
+                subjectId = job.subjectId,
+                verificationState = BusinessProfileVerificationState.Suggested,
+                evidenceScore = 35,
+                evidenceChecksJson = any(),
+                websiteUrl = "https://invoid.vision/",
+                businessSummary = null,
+                businessActivities = emptyList(),
+                logoStorageKey = null,
+                lastErrorCode = null,
+                lastErrorMessage = null
+            )
+        }
+    }
+
+    @Test
+    fun `uses deterministic serper fallback when discovery has no candidates`() = runBlocking {
+        val job = sampleJob(subjectType = BusinessProfileSubjectType.Tenant, attemptCount = 0)
+        coEvery { jobRepository.recoverStaleProcessing(any(), any(), any()) } returns Result.success(0)
+        coEvery { jobRepository.claimDue(any(), any()) } returns Result.success(listOf(job))
+        coEvery { jobRepository.markCompleted(job.id) } returns Result.success(true)
+
+        coEvery { tenantRepository.findById(job.tenantId) } returns sampleTenant(job.tenantId)
+        coEvery { addressRepository.getCompanyAddress(job.tenantId) } returns sampleAddress(job.tenantId)
+        coEvery { profileRepository.getBySubject(job.tenantId, job.subjectType, job.subjectId) } returns null
+        coEvery { tenantRepository.getAvatarStorageKey(job.tenantId) } returns null
+
+        coEvery { enrichmentAgent.enrich(any()) } returns BusinessProfileDiscoveryResult(
+            status = BusinessDiscoveryStatus.NotFound,
+            candidateWebsiteUrl = null,
+            businessSummary = null,
+            activities = emptyList(),
+            logoUrl = null,
+            confidence = 0.35,
+            searchResultUrls = emptyList()
+        )
+        coEvery {
+            websiteProbe.searchWebsiteCandidates(
+                companyName = "Acme Logistics",
+                vatNumber = "BE0123456789",
+                country = "BE",
+                maxResults = 5
+            )
+        } returns listOf(
+            "https://www.linkedin.com/company/acme-logistics/",
+            "https://invoid.vision/"
+        )
+        coEvery { websiteProbe.crawl("https://invoid.vision/", config.maxPages) } returns BusinessWebsiteCrawlResult(
+            pages = listOf(
+                CrawledBusinessPage(
+                    url = "https://invoid.vision/",
+                    textContent = "Invoid Vision",
+                    structuredDataSnippets = emptyList(),
+                    emails = emptyList(),
+                    phones = emptyList(),
+                    links = emptyList(),
+                    logoCandidates = emptyList()
+                )
+            ),
+            blockedByRobots = false
+        )
+        coEvery { evidenceGate.evaluate(any()) } returns BusinessProfileEvidenceResult(
+            outcome = EvidenceGateOutcome.PERSIST_AS_SUGGESTED,
+            verificationState = BusinessProfileVerificationState.Suggested,
+            evidenceScore = 40,
+            checks = emptyList()
+        )
+        coEvery {
+            businessProfileService.applyEnrichment(
+                tenantId = any(),
+                subjectType = any(),
+                subjectId = any(),
+                verificationState = any(),
+                evidenceScore = any(),
+                evidenceChecksJson = any(),
+                websiteUrl = any(),
+                businessSummary = any(),
+                businessActivities = any(),
+                logoStorageKey = any(),
+                lastErrorCode = any(),
+                lastErrorMessage = any()
+            )
+        } returns BusinessProfileRecord(
+            tenantId = job.tenantId,
+            subjectType = job.subjectType,
+            subjectId = job.subjectId
+        )
+
+        val worker = createWorker()
+        worker.processBatchForTest()
+
+        coVerify(exactly = 1) {
+            websiteProbe.searchWebsiteCandidates(
+                companyName = "Acme Logistics",
+                vatNumber = "BE0123456789",
+                country = "BE",
+                maxResults = 5
+            )
+        }
+        coVerify(exactly = 1) { websiteProbe.crawl("https://invoid.vision/", config.maxPages) }
+        coVerify(exactly = 1) {
+            businessProfileService.applyEnrichment(
+                tenantId = job.tenantId,
+                subjectType = job.subjectType,
+                subjectId = job.subjectId,
+                verificationState = BusinessProfileVerificationState.Suggested,
+                evidenceScore = 40,
+                evidenceChecksJson = any(),
+                websiteUrl = "https://invoid.vision/",
+                businessSummary = null,
+                businessActivities = emptyList(),
+                logoStorageKey = null,
+                lastErrorCode = null,
+                lastErrorMessage = null
+            )
+        }
+    }
+
+    @Test
     fun `failed processing schedules retry with incremented attempt count`() = runBlocking {
         val job = sampleJob(subjectType = BusinessProfileSubjectType.Tenant, attemptCount = 2)
         coEvery { jobRepository.recoverStaleProcessing(any(), any(), any()) } returns Result.success(0)

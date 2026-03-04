@@ -36,7 +36,7 @@ import tech.dokus.domain.enums.BusinessProfileVerificationState
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.utils.json
 import tech.dokus.features.ai.agents.BusinessProfileEnrichmentAgent
-import tech.dokus.features.ai.models.BusinessDiscoveryStatus
+import tech.dokus.features.ai.models.BusinessProfileDiscoveryResult
 import tech.dokus.features.ai.models.BusinessProfileEnrichmentInput
 import tech.dokus.foundation.backend.config.BusinessProfileEnrichmentConfig
 import tech.dokus.foundation.backend.storage.AvatarStorageService
@@ -180,19 +180,34 @@ class BusinessProfileEnrichmentWorker(
             )
 
             val discovery = enrichmentAgent.enrich(modelInput)
-            val candidateWebsite = discovery.candidateWebsiteUrl?.takeUnless { isAggregatorOrSocialUrl(it) }
-            if (discovery.candidateWebsiteUrl != null && candidateWebsite == null) {
-                logger.info(
-                    "Discarded aggregator/social website candidate for subjectType={}, subjectId={}",
-                    job.subjectType,
-                    job.subjectId
+            var searchResultUrls = discovery.searchResultUrls
+            var candidateWebsite = pickCandidateWebsite(discovery)
+
+            if (candidateWebsite.isNullOrBlank()) {
+                val deterministicSearchUrls = websiteProbe.searchWebsiteCandidates(
+                    companyName = context.name,
+                    vatNumber = context.vatNumber,
+                    country = context.country,
+                    maxResults = 5
                 )
+                if (deterministicSearchUrls.isNotEmpty()) {
+                    searchResultUrls = (searchResultUrls + deterministicSearchUrls).distinct()
+                    candidateWebsite = searchResultUrls.firstOrNull { !isAggregatorOrSocialUrl(it) }
+                    if (!candidateWebsite.isNullOrBlank()) {
+                        logger.info(
+                            "Using deterministic Serper fallback candidate for subjectType={}, subjectId={}: {}",
+                            job.subjectType,
+                            job.subjectId,
+                            candidateWebsite
+                        )
+                    }
+                }
             }
 
             val evidence: BusinessProfileEvidenceResult
             val crawl: BusinessWebsiteCrawlResult?
 
-            if (discovery.status == BusinessDiscoveryStatus.Found && !candidateWebsite.isNullOrBlank()) {
+            if (!candidateWebsite.isNullOrBlank()) {
                 crawl = websiteProbe.crawl(startUrl = candidateWebsite, maxPages = config.maxPages)
                 evidence = evidenceGate.evaluate(
                     BusinessProfileEvidenceInput(
@@ -205,12 +220,18 @@ class BusinessProfileEnrichmentWorker(
                         companyPhone = context.phone,
                         candidateWebsiteUrl = candidateWebsite,
                         llmConfidence = discovery.confidence,
-                        searchResultUrls = discovery.searchResultUrls,
+                        searchResultUrls = searchResultUrls,
                         crawledText = crawl.pages.joinToString("\n") { it.textContent },
                         structuredDataSnippets = crawl.pages.flatMap { it.structuredDataSnippets }
                     )
                 )
             } else {
+                logger.info(
+                    "No website candidate resolved for subjectType={}, subjectId={} (agent status={})",
+                    job.subjectType,
+                    job.subjectId,
+                    discovery.status
+                )
                 crawl = null
                 evidence = BusinessProfileEvidenceResult(
                     outcome = EvidenceGateOutcome.SKIP,
@@ -269,6 +290,20 @@ class BusinessProfileEnrichmentWorker(
             )
             scheduleRetry(job, error)
         }
+    }
+
+    private fun pickCandidateWebsite(discovery: BusinessProfileDiscoveryResult): String? {
+        val directCandidate = discovery.candidateWebsiteUrl?.takeUnless { isAggregatorOrSocialUrl(it) }
+        if (discovery.candidateWebsiteUrl != null && directCandidate == null) {
+            logger.info("Discarded aggregator/social direct website candidate: {}", discovery.candidateWebsiteUrl)
+        }
+        if (!directCandidate.isNullOrBlank()) return directCandidate
+
+        val searchFallback = discovery.searchResultUrls.firstOrNull { !isAggregatorOrSocialUrl(it) }
+        if (!searchFallback.isNullOrBlank()) {
+            logger.info("Using search result fallback website candidate: {}", searchFallback)
+        }
+        return searchFallback
     }
 
     private suspend fun resolveLogoStorageKey(
