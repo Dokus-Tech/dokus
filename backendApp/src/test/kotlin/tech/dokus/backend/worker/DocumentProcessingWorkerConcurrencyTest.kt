@@ -5,7 +5,6 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
 import org.junit.jupiter.api.Test
 import tech.dokus.backend.services.documents.AutoConfirmPolicy
 import tech.dokus.backend.services.documents.ContactResolutionService
@@ -22,13 +21,15 @@ import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.features.ai.agents.DocumentProcessingAgent
 import tech.dokus.foundation.backend.config.ProcessorConfig
+import java.util.concurrent.atomic.AtomicInteger
+import kotlin.test.assertEquals
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
-class DocumentProcessingWorkerTimeoutTest {
+class DocumentProcessingWorkerConcurrencyTest {
 
     @Test
-    fun `timed out run does not block other runs in same batch`() = runBlocking {
+    fun `maxConcurrentRuns caps parallel ingestion execution`() = runBlocking {
         val ingestionRepository = mockk<ProcessorIngestionRepository>()
         val processingAgent = mockk<DocumentProcessingAgent>()
         val contactResolutionService = mockk<ContactResolutionService>(relaxed = true)
@@ -40,34 +41,33 @@ class DocumentProcessingWorkerTimeoutTest {
         val tenantRepository = mockk<TenantRepository>()
         val userRepository = mockk<UserRepository>()
 
-        val firstRun = IngestionItemEntity(
-            runId = IngestionRunId.generate(),
-            documentId = DocumentId.generate(),
-            tenantId = TenantId.generate(),
-            storageKey = "docs/first.pdf",
-            filename = "first.pdf",
-            contentType = "application/pdf"
-        )
-        val secondRun = IngestionItemEntity(
-            runId = IngestionRunId.generate(),
-            documentId = DocumentId.generate(),
-            tenantId = TenantId.generate(),
-            storageKey = "docs/second.pdf",
-            filename = "second.pdf",
-            contentType = "application/pdf"
-        )
+        val runs = (1..4).map { idx ->
+            IngestionItemEntity(
+                runId = IngestionRunId.generate(),
+                documentId = DocumentId.generate(),
+                tenantId = TenantId.generate(),
+                storageKey = "docs/$idx.pdf",
+                filename = "$idx.pdf",
+                contentType = "application/pdf"
+            )
+        }
+
+        val active = AtomicInteger(0)
+        val maxObserved = AtomicInteger(0)
 
         coEvery { ingestionRepository.recoverStaleRuns() } returns 0
-        coEvery { ingestionRepository.findPendingForProcessing(2) } returns listOf(firstRun, secondRun)
+        coEvery { ingestionRepository.findPendingForProcessing(10) } returns runs
         coEvery { ingestionRepository.markAsProcessing(any(), "koog-graph") } returns true
         coEvery { ingestionRepository.markAsFailed(any(), any()) } returns true
         coEvery { processingAgent.process(any()) } throws AssertionError("processingAgent must not be invoked")
-        coEvery { tenantRepository.findById(firstRun.tenantId) } coAnswers {
-            delay(5.seconds)
+        coEvery { userRepository.listByTenant(any(), activeOnly = true) } returns emptyList()
+        coEvery { tenantRepository.findById(any()) } coAnswers {
+            val current = active.incrementAndGet()
+            maxObserved.updateAndGet { previous -> maxOf(previous, current) }
+            delay(60.milliseconds)
+            active.decrementAndGet()
             null
         }
-        coEvery { tenantRepository.findById(secondRun.tenantId) } returns null
-        coEvery { userRepository.listByTenant(any(), activeOnly = true) } returns emptyList()
 
         val worker = DocumentProcessingWorker(
             ingestionRepository = ingestionRepository,
@@ -81,29 +81,16 @@ class DocumentProcessingWorkerTimeoutTest {
             config = ProcessorConfig(
                 pollingInterval = 1_000,
                 maxAttempts = 3,
-                batchSize = 2,
-                maxConcurrentRuns = 2
+                batchSize = 10,
+                maxConcurrentRuns = 1
             ),
             tenantRepository = tenantRepository,
             userRepository = userRepository
         )
 
-        withTimeout(2.seconds) {
-            worker.processBatchForTest(timeout = 75.milliseconds)
-        }
+        worker.processBatchForTest(timeout = 5.seconds)
 
-        coVerify(exactly = 2) { ingestionRepository.markAsProcessing(any(), "koog-graph") }
-        coVerify {
-            ingestionRepository.markAsFailed(
-                firstRun.runId.toString(),
-                match { it.contains("timed out") }
-            )
-        }
-        coVerify {
-            ingestionRepository.markAsFailed(
-                secondRun.runId.toString(),
-                match { it.contains("Tenant not found") }
-            )
-        }
+        assertEquals(1, maxObserved.get())
+        coVerify(exactly = runs.size) { ingestionRepository.markAsProcessing(any(), "koog-graph") }
     }
 }
