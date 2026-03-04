@@ -33,7 +33,9 @@ import tech.dokus.backend.services.contacts.ContactNoteService
 import tech.dokus.backend.services.contacts.ContactService
 import tech.dokus.backend.services.business.BusinessProfileService
 import tech.dokus.backend.services.business.BusinessProfileEvidenceGate
+import tech.dokus.backend.services.business.BusinessLogoSelectionService
 import tech.dokus.backend.services.business.BusinessWebsiteProbe
+import tech.dokus.backend.services.business.BusinessWebsiteRanker
 import tech.dokus.backend.services.documents.AutoConfirmPolicy
 import tech.dokus.backend.services.documents.ContactResolutionService
 import tech.dokus.backend.services.documents.DocumentTruthService
@@ -318,6 +320,8 @@ private fun cashflowModule() = module {
 private val contactsModule = module {
     singleOf(::BusinessProfileService)
     singleOf(::BusinessWebsiteProbe)
+    singleOf(::BusinessWebsiteRanker)
+    singleOf(::BusinessLogoSelectionService)
     singleOf(::BusinessProfileEvidenceGate)
     // NOTE: ContactService takes optional PeppolDirectoryCacheRepository for cache invalidation
     single { ContactService(get(), get(), get(), getOrNull()) }

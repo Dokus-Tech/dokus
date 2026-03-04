@@ -63,6 +63,7 @@ resilience4j = "2.3.0"
 minio = "8.6.0"
 koog = "0.6.1"
 scrimage = "4.3.6"
+batik = "1.17"
 coil = "3.0.4"
 flowmvi = "3.2.1"
 detekt = "1.23.8"
@@ -163,6 +164,8 @@ minio = { module = "io.minio:minio", version.ref = "minio" }
 pdfbox = { module = "org.apache.pdfbox:pdfbox", version.ref = "pdfbox" }
 scrimage-core = { module = "com.sksamuel.scrimage:scrimage-core", version.ref = "scrimage" }
 scrimage-webp = { module = "com.sksamuel.scrimage:scrimage-webp", version.ref = "scrimage" }
+batik-transcoder = { module = "org.apache.xmlgraphics:batik-transcoder", version.ref = "batik" }
+batik-codec = { module = "org.apache.xmlgraphics:batik-codec", version.ref = "batik" }
 
 # Coil Image Loading (multiplatform)
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }

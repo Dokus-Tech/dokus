@@ -13,16 +13,15 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
-import tech.dokus.backend.services.business.BusinessProfileEvidenceResult
-import tech.dokus.backend.services.business.EvidenceGateOutcome
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import tech.dokus.backend.services.business.BusinessProfileEvidenceGate
-import tech.dokus.backend.services.business.BusinessProfileEvidenceInput
+import tech.dokus.backend.services.business.BusinessLogoSelectionService
 import tech.dokus.backend.services.business.BusinessProfileService
-import tech.dokus.backend.services.business.BusinessWebsiteCrawlResult
 import tech.dokus.backend.services.business.BusinessWebsiteProbe
+import tech.dokus.backend.services.business.BusinessWebsiteRanker
+import tech.dokus.backend.services.business.WebsiteCandidateInput
+import tech.dokus.backend.services.business.WebsiteRankingContext
 import tech.dokus.backend.services.business.isAggregatorOrSocialHost
 import tech.dokus.database.repository.auth.AddressRepository
 import tech.dokus.database.repository.auth.TenantRepository
@@ -35,9 +34,10 @@ import tech.dokus.domain.enums.BusinessProfileSubjectType
 import tech.dokus.domain.enums.BusinessProfileVerificationState
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.utils.json
-import tech.dokus.features.ai.agents.BusinessProfileEnrichmentAgent
-import tech.dokus.features.ai.models.BusinessProfileDiscoveryResult
-import tech.dokus.features.ai.models.BusinessProfileEnrichmentInput
+import tech.dokus.features.ai.agents.BusinessProfileContentExtractionAgent
+import tech.dokus.features.ai.models.BusinessProfileContentExtractionInput
+import tech.dokus.features.ai.models.BusinessProfileContentExtractionResult
+import tech.dokus.features.ai.models.BusinessProfileContentPage
 import tech.dokus.foundation.backend.config.BusinessProfileEnrichmentConfig
 import tech.dokus.foundation.backend.storage.AvatarStorageService
 import tech.dokus.foundation.backend.utils.loggerFor
@@ -60,6 +60,10 @@ private data class BusinessSubjectContext(
     val language: tech.dokus.domain.enums.Language,
 )
 
+private data class RankedCandidateWithPages(
+    val input: WebsiteCandidateInput,
+)
+
 class BusinessProfileEnrichmentWorker(
     private val config: BusinessProfileEnrichmentConfig,
     private val jobRepository: BusinessProfileEnrichmentJobRepository,
@@ -70,9 +74,10 @@ class BusinessProfileEnrichmentWorker(
     private val contactRepository: ContactRepository,
     private val contactAddressRepository: ContactAddressRepository,
     private val avatarStorageService: AvatarStorageService,
-    private val enrichmentAgent: BusinessProfileEnrichmentAgent,
+    private val contentExtractionAgent: BusinessProfileContentExtractionAgent,
     private val websiteProbe: BusinessWebsiteProbe,
-    private val evidenceGate: BusinessProfileEvidenceGate,
+    private val websiteRanker: BusinessWebsiteRanker,
+    private val logoSelectionService: BusinessLogoSelectionService,
 ) {
     private val logger = loggerFor()
     private var scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
@@ -164,119 +169,116 @@ class BusinessProfileEnrichmentWorker(
                 return
             }
 
-            val modelInput = BusinessProfileEnrichmentInput(
-                tenantId = job.tenantId.toString(),
-                subjectType = job.subjectType.dbValue,
-                subjectId = job.subjectId.toString(),
-                companyName = context.name,
-                companyVatNumber = context.vatNumber,
-                companyCountry = context.country,
-                companyCity = context.city,
-                companyPostalCode = context.postalCode,
-                companyEmail = context.email,
-                companyPhone = context.phone,
-                outputLanguage = context.language,
-                maxPages = config.maxPages
-            )
+            val searchQuery = websiteProbe.buildStrictSearchQuery(context.name, context.country)
+            val searchCandidates = if (searchQuery == null) {
+                emptyList()
+            } else {
+                websiteProbe.searchWebsiteCandidates(
+                    companyName = context.name,
+                    country = context.country,
+                    maxResults = 3
+                )
+            }
 
-            val discovery = enrichmentAgent.enrich(modelInput)
-            var searchResultUrls = discovery.searchResultUrls
-            var candidateWebsite = pickCandidateWebsite(discovery)
+            val candidatesWithPages = searchCandidates
+                .take(3)
+                .mapIndexedNotNull { index, url ->
+                    val candidateUrl = url.trim()
+                    if (candidateUrl.isBlank()) return@mapIndexedNotNull null
+                    if (isAggregatorOrSocialUrl(candidateUrl)) {
+                        logger.info(
+                            "Skipping aggregator/social candidate for subjectType={}, subjectId={}, url={}",
+                            job.subjectType,
+                            job.subjectId,
+                            candidateUrl
+                        )
+                        return@mapIndexedNotNull null
+                    }
 
-            if (candidateWebsite.isNullOrBlank()) {
-                val deterministicSearchUrls = websiteProbe.searchWebsiteCandidates(
+                    val crawl = websiteProbe.crawl(startUrl = candidateUrl, maxPages = config.maxPages)
+                    RankedCandidateWithPages(
+                        input = WebsiteCandidateInput(
+                            url = candidateUrl,
+                            searchRank = index + 1,
+                            pages = crawl.pages
+                        )
+                    )
+                }
+
+            val ranking = websiteRanker.rank(
+                context = WebsiteRankingContext(
                     companyName = context.name,
                     vatNumber = context.vatNumber,
                     country = context.country,
-                    maxResults = 5
-                )
-                if (deterministicSearchUrls.isNotEmpty()) {
-                    searchResultUrls = (searchResultUrls + deterministicSearchUrls).distinct()
-                    candidateWebsite = searchResultUrls.firstOrNull { !isAggregatorOrSocialUrl(it) }
-                    if (!candidateWebsite.isNullOrBlank()) {
-                        logger.info(
-                            "Using deterministic Serper fallback candidate for subjectType={}, subjectId={}: {}",
-                            job.subjectType,
-                            job.subjectId,
-                            candidateWebsite
-                        )
-                    }
+                    city = context.city,
+                    postalCode = context.postalCode,
+                    email = context.email,
+                    phone = context.phone,
+                ),
+                searchQuery = searchQuery ?: context.name,
+                candidates = candidatesWithPages.map { it.input }
+            )
+            val rankingJson = json.encodeToString(ranking.evidence)
+
+            val selected = ranking.bestCandidate
+            if (!ranking.accepted || selected == null) {
+                val bestHost = selected?.url
+                    ?.let { runCatching { URI(it).host?.removePrefix("www.") }.getOrNull() }
+                val bestScore = selected?.score ?: 0
+                val message = if (bestHost.isNullOrBlank()) {
+                    "No official website candidate scored above 70"
+                } else {
+                    "Top candidate $bestHost scored $bestScore (requires > 70)"
                 }
-            }
 
-            val evidence: BusinessProfileEvidenceResult
-            val crawl: BusinessWebsiteCrawlResult?
-
-            if (!candidateWebsite.isNullOrBlank()) {
-                crawl = websiteProbe.crawl(startUrl = candidateWebsite, maxPages = config.maxPages)
-                evidence = evidenceGate.evaluate(
-                    BusinessProfileEvidenceInput(
-                        companyName = context.name,
-                        companyVatNumber = context.vatNumber,
-                        companyCountry = context.country,
-                        companyCity = context.city,
-                        companyPostalCode = context.postalCode,
-                        companyEmail = context.email,
-                        companyPhone = context.phone,
-                        candidateWebsiteUrl = candidateWebsite,
-                        llmConfidence = discovery.confidence,
-                        searchResultUrls = searchResultUrls,
-                        crawledText = crawl.pages.joinToString("\n") { it.textContent },
-                        structuredDataSnippets = crawl.pages.flatMap { it.structuredDataSnippets }
-                    )
-                )
-            } else {
-                logger.info(
-                    "No website candidate resolved for subjectType={}, subjectId={} (agent status={})",
-                    job.subjectType,
-                    job.subjectId,
-                    discovery.status
-                )
-                crawl = null
-                evidence = BusinessProfileEvidenceResult(
-                    outcome = EvidenceGateOutcome.SKIP,
+                businessProfileService.applyEnrichment(
+                    tenantId = job.tenantId,
+                    subjectType = job.subjectType,
+                    subjectId = job.subjectId,
                     verificationState = BusinessProfileVerificationState.Unset,
-                    evidenceScore = 0,
-                    checks = emptyList()
+                    evidenceScore = bestScore,
+                    evidenceChecksJson = rankingJson,
+                    websiteUrl = null,
+                    businessSummary = null,
+                    businessActivities = null,
+                    logoStorageKey = null,
+                    lastErrorCode = "LOW_CONFIDENCE_WEBSITE",
+                    lastErrorMessage = message,
                 )
+                jobRepository.markCompleted(job.id)
+                return
             }
 
-            val checksJson = json.encodeToString(evidence.checks)
+            val selectedPages = candidatesWithPages
+                .firstOrNull { it.input.url == selected.url }
+                ?.input
+                ?.pages
+                .orEmpty()
 
-            val shouldSkip = evidence.verificationState == BusinessProfileVerificationState.Unset
-            val websiteToPersist = if (shouldSkip) null else candidateWebsite
-            val summaryToPersist = if (shouldSkip) null else discovery.businessSummary
-            val activitiesToPersist = if (shouldSkip) null else discovery.activities
-            val lastErrorCode = if (shouldSkip) "LOW_EVIDENCE" else null
-            val lastErrorMessage = if (shouldSkip) "Evidence score below threshold" else null
+            val extracted = extractBusinessContent(
+                context = context,
+                websiteUrl = selected.url,
+                pages = selectedPages
+            )
 
-            val shouldAttemptLogo = !shouldSkip && evidence.verificationState != BusinessProfileVerificationState.Unset
-            val logoStorageKey = if (shouldAttemptLogo) {
-                resolveLogoStorageKey(job, discovery.logoUrl, crawl?.pages.orEmpty().flatMap { it.logoCandidates })
-            } else {
-                null
-            }
-            if (evidence.verificationState == BusinessProfileVerificationState.Suggested && !logoStorageKey.isNullOrBlank()) {
-                logger.info(
-                    "Applied discovered logo for suggested business profile subjectType={}, subjectId={}",
-                    job.subjectType,
-                    job.subjectId
-                )
-            }
+            val logoStorageKey = resolveLogoStorageKey(
+                job = job,
+                logoCandidates = selectedPages.flatMap { it.logoCandidates }
+            )
 
             businessProfileService.applyEnrichment(
                 tenantId = job.tenantId,
                 subjectType = job.subjectType,
                 subjectId = job.subjectId,
-                verificationState = evidence.verificationState,
-                evidenceScore = evidence.evidenceScore,
-                evidenceChecksJson = checksJson,
-                websiteUrl = websiteToPersist,
-                businessSummary = summaryToPersist,
-                businessActivities = activitiesToPersist,
+                verificationState = BusinessProfileVerificationState.Verified,
+                evidenceScore = selected.score,
+                evidenceChecksJson = rankingJson,
+                websiteUrl = selected.url,
+                businessSummary = extracted?.businessSummary,
+                businessActivities = extracted?.activities,
                 logoStorageKey = logoStorageKey,
-                lastErrorCode = lastErrorCode,
-                lastErrorMessage = lastErrorMessage,
+                lastErrorCode = null,
+                lastErrorMessage = null,
             )
 
             jobRepository.markCompleted(job.id)
@@ -292,24 +294,45 @@ class BusinessProfileEnrichmentWorker(
         }
     }
 
-    private fun pickCandidateWebsite(discovery: BusinessProfileDiscoveryResult): String? {
-        val directCandidate = discovery.candidateWebsiteUrl?.takeUnless { isAggregatorOrSocialUrl(it) }
-        if (discovery.candidateWebsiteUrl != null && directCandidate == null) {
-            logger.info("Discarded aggregator/social direct website candidate: {}", discovery.candidateWebsiteUrl)
-        }
-        if (!directCandidate.isNullOrBlank()) return directCandidate
+    private suspend fun extractBusinessContent(
+        context: BusinessSubjectContext,
+        websiteUrl: String,
+        pages: List<tech.dokus.backend.services.business.CrawledBusinessPage>
+    ): BusinessProfileContentExtractionResult? {
+        if (pages.isEmpty()) return null
+        val input = BusinessProfileContentExtractionInput(
+            companyName = context.name,
+            companyVatNumber = context.vatNumber,
+            websiteUrl = websiteUrl,
+            outputLanguage = context.language,
+            pages = pages.take(config.maxPages).map { page ->
+                BusinessProfileContentPage(
+                    url = page.url,
+                    title = page.title,
+                    description = page.description,
+                    textContent = page.textContent.take(4_000),
+                    structuredDataSnippets = page.structuredDataSnippets
+                        .map { it.take(1_200) }
+                        .take(5)
+                )
+            }
+        )
 
-        val searchFallback = discovery.searchResultUrls.firstOrNull { !isAggregatorOrSocialUrl(it) }
-        if (!searchFallback.isNullOrBlank()) {
-            logger.info("Using search result fallback website candidate: {}", searchFallback)
-        }
-        return searchFallback
+        return runSuspendCatching { contentExtractionAgent.extract(input) }
+            .onFailure { error ->
+                logger.warn(
+                    "Content extraction failed for website={}, company={}, error={}",
+                    websiteUrl,
+                    context.name,
+                    error.message
+                )
+            }
+            .getOrNull()
     }
 
     private suspend fun resolveLogoStorageKey(
         job: BusinessProfileEnrichmentJob,
-        preferredLogoUrl: String?,
-        fallbackLogoUrls: List<String>
+        logoCandidates: List<String>
     ): String? {
         val existingProfile = profileRepository.getBySubject(job.tenantId, job.subjectType, job.subjectId)
         if (existingProfile?.logoPinned == true) return null
@@ -320,15 +343,9 @@ class BusinessProfileEnrichmentWorker(
             if (!tenantAvatar.isNullOrBlank()) return null
         }
 
-        val candidateUrl = sequenceOf(preferredLogoUrl)
-            .plus(fallbackLogoUrls.asSequence())
-            .mapNotNull { it?.trim() }
-            .firstOrNull { it.startsWith("http://") || it.startsWith("https://") }
-            ?: return null
-
-        val image = websiteProbe.downloadImage(candidateUrl) ?: return null
+        val preferred = logoSelectionService.selectPreferredLogo(logoCandidates) ?: return null
         val upload = runSuspendCatching {
-            avatarStorageService.uploadAvatar(job.tenantId, image.bytes, image.contentType)
+            avatarStorageService.uploadAvatar(job.tenantId, preferred.bytes, preferred.contentType)
         }.getOrElse { error ->
             logger.warn("Failed to upload discovered logo for {}: {}", job.subjectId, error.message)
             return null

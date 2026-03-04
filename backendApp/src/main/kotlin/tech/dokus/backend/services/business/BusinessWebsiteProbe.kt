@@ -69,32 +69,20 @@ class BusinessWebsiteProbe(
 
     suspend fun searchWebsiteCandidates(
         companyName: String,
-        vatNumber: String? = null,
         country: String? = null,
-        maxResults: Int = 5
+        maxResults: Int = 3
     ): List<String> {
         if (config.serperApiKey.isBlank()) return emptyList()
+        val query = buildStrictSearchQuery(companyName, country) ?: return emptyList()
+        val limit = maxResults.coerceIn(1, 3)
+        return fetchSerperUrls(query, limit).take(limit)
+    }
+
+    internal fun buildStrictSearchQuery(companyName: String, country: String?): String? {
         val normalizedName = companyName.trim()
-        if (normalizedName.isBlank()) return emptyList()
-
-        val queries = buildList {
-            val base = listOf(normalizedName, country?.trim().orEmpty())
-                .filter { it.isNotBlank() }
-                .joinToString(" ")
-            if (base.isNotBlank()) add(base)
-            if (!vatNumber.isNullOrBlank()) add("$normalizedName ${vatNumber.trim()} official website")
-            add("$normalizedName official website")
-        }.distinct()
-
-        val collected = linkedSetOf<String>()
-        for (query in queries) {
-            val urls = fetchSerperUrls(query, maxResults)
-            urls.forEach { url ->
-                collected += url
-                if (collected.size >= maxResults) return collected.toList()
-            }
-        }
-        return collected.toList()
+        if (normalizedName.isBlank()) return null
+        val countryPart = country?.trim().orEmpty()
+        return if (countryPart.isBlank()) normalizedName else "$normalizedName $countryPart"
     }
 
     suspend fun crawl(startUrl: String, maxPages: Int = config.maxPages): BusinessWebsiteCrawlResult {

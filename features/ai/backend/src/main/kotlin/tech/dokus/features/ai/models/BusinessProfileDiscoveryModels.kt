@@ -40,3 +40,28 @@ data class BusinessProfileDiscoveryResult(
     val candidateReasons: List<String> = emptyList(),
     val searchResultUrls: List<String> = emptyList(),
 )
+
+@Serializable
+data class BusinessProfileContentPage(
+    val url: String,
+    val title: String? = null,
+    val description: String? = null,
+    val textContent: String,
+    val structuredDataSnippets: List<String> = emptyList(),
+)
+
+@Serializable
+data class BusinessProfileContentExtractionInput(
+    val companyName: String,
+    val companyVatNumber: String? = null,
+    val websiteUrl: String,
+    val outputLanguage: Language,
+    val pages: List<BusinessProfileContentPage>,
+)
+
+@Serializable
+data class BusinessProfileContentExtractionResult(
+    val businessSummary: String? = null,
+    val activities: List<String> = emptyList(),
+    val confidence: Double = 0.0,
+)

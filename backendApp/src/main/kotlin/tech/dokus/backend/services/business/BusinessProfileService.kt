@@ -263,7 +263,8 @@ class BusinessProfileService(
         val existing = profileRepository.getBySubject(tenantId, subjectType, subjectId)
             ?: defaultRecord(tenantId, subjectType, subjectId)
         val normalizedActivities = businessActivities?.let { normalizeActivities(it) }
-        val skip = verificationState == BusinessProfileVerificationState.Unset && lastErrorCode == "LOW_EVIDENCE"
+        val skip = verificationState == BusinessProfileVerificationState.Unset &&
+            (lastErrorCode == "LOW_EVIDENCE" || lastErrorCode == "LOW_CONFIDENCE_WEBSITE")
 
         val mergedWebsite = when {
             existing.websitePinned -> existing.websiteUrl
@@ -315,8 +316,8 @@ class BusinessProfileService(
             businessSummary = mergedSummary,
             businessActivitiesJson = mergedActivitiesJson,
             verificationState = if (skip) existing.verificationState else verificationState,
-            evidenceScore = if (skip) existing.evidenceScore else evidenceScore,
-            evidenceChecksJson = if (skip) existing.evidenceChecksJson else evidenceChecksJson,
+            evidenceScore = evidenceScore,
+            evidenceChecksJson = evidenceChecksJson,
             logoStorageKey = mergedLogoStorageKey,
             lastRunAt = now,
             lastErrorCode = lastErrorCode,

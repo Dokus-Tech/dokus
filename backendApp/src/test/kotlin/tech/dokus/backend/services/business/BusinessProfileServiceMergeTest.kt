@@ -134,4 +134,48 @@ class BusinessProfileServiceMergeTest {
 
         assertEquals("existing-logo", captured.captured.logoStorageKey)
     }
+
+    @Test
+    fun `low confidence keeps fields but stores latest ranking evidence`() = kotlinx.coroutines.runBlocking {
+        val tenantId = TenantId.generate()
+        val subjectId = Uuid.random()
+        val existing = BusinessProfileRecord(
+            tenantId = tenantId,
+            subjectType = BusinessProfileSubjectType.Contact,
+            subjectId = subjectId,
+            websiteUrl = "https://kept.example",
+            businessSummary = "existing summary",
+            businessActivitiesJson = "[\"existing\"]",
+            verificationState = BusinessProfileVerificationState.Verified,
+            evidenceScore = 88,
+            evidenceChecksJson = "{\"old\":true}"
+        )
+        val captured = slot<BusinessProfileRecord>()
+
+        coEvery {
+            profileRepository.getBySubject(tenantId, BusinessProfileSubjectType.Contact, subjectId)
+        } returns existing
+        coJustRun { profileRepository.upsert(capture(captured)) }
+
+        service.applyEnrichment(
+            tenantId = tenantId,
+            subjectType = BusinessProfileSubjectType.Contact,
+            subjectId = subjectId,
+            verificationState = BusinessProfileVerificationState.Unset,
+            evidenceScore = 55,
+            evidenceChecksJson = "{\"new\":true}",
+            websiteUrl = null,
+            businessSummary = null,
+            businessActivities = null,
+            logoStorageKey = null,
+            lastErrorCode = "LOW_CONFIDENCE_WEBSITE",
+            lastErrorMessage = "Top candidate scored 55"
+        )
+
+        assertEquals("https://kept.example", captured.captured.websiteUrl)
+        assertEquals("existing summary", captured.captured.businessSummary)
+        assertEquals(BusinessProfileVerificationState.Verified, captured.captured.verificationState)
+        assertEquals(55, captured.captured.evidenceScore)
+        assertEquals("{\"new\":true}", captured.captured.evidenceChecksJson)
+    }
 }
