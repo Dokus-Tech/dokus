@@ -62,7 +62,7 @@ class PeppolRegistrationContainerTest {
 
             val error = assertIs<PeppolRegistrationState.Error>(states.value)
             assertIs<DokusException.PeppolDirectoryUnavailable>(error.exception)
-            assertFalse(error.exception.recoverable)
+            assertTrue(error.exception.recoverable)
             assertEquals(1, verify.invocations)
         }
     }

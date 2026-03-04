@@ -1,4 +1,4 @@
-package tech.dokus.backend.util
+package tech.dokus.foundation.backend.utils
 
 import kotlinx.coroutines.CancellationException
 

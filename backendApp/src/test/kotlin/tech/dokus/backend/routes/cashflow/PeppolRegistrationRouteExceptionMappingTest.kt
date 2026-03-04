@@ -29,6 +29,6 @@ class PeppolRegistrationRouteExceptionMappingTest {
         val internal = assertIs<DokusException.InternalError>(mapped)
         assertTrue(internal.recoverable)
         assertEquals("INTERNAL_ERROR", internal.errorCode)
-        assertEquals("Failed to enable PEPPOL: boom", internal.errorMessage)
+        assertEquals("Failed to enable PEPPOL", internal.errorMessage)
     }
 }

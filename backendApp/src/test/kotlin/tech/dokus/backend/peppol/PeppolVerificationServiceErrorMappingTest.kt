@@ -22,7 +22,7 @@ import kotlin.test.assertTrue
 class PeppolVerificationServiceErrorMappingTest {
 
     @Test
-    fun `recommand api error maps to nonrecoverable peppol directory unavailable`() = runTest {
+    fun `recommand api 5xx error maps to recoverable peppol directory unavailable`() = runTest {
         val provider = mockk<RecommandProvider>()
         every { provider.configure(any()) } returns Unit
         coEvery { provider.searchDirectory(any()) } returns Result.failure(RecommandApiException(503, "down"))
@@ -31,7 +31,19 @@ class PeppolVerificationServiceErrorMappingTest {
         val failure = service.verify(VatNumber("BE0777887045")).exceptionOrNull()
 
         val error = assertIs<DokusException.PeppolDirectoryUnavailable>(failure)
-        assertFalse(error.recoverable)
+        assertTrue(error.recoverable)
+    }
+
+    @Test
+    fun `recommand api 4xx error maps to internal error`() = runTest {
+        val provider = mockk<RecommandProvider>()
+        every { provider.configure(any()) } returns Unit
+        coEvery { provider.searchDirectory(any()) } returns Result.failure(RecommandApiException(401, "unauthorized"))
+
+        val service = PeppolVerificationService(provider, testModuleConfig())
+        val failure = service.verify(VatNumber("BE0777887045")).exceptionOrNull()
+
+        assertIs<DokusException.InternalError>(failure)
     }
 
     @Test

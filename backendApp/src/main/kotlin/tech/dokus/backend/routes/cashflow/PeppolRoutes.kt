@@ -29,12 +29,18 @@ import tech.dokus.foundation.backend.security.dokusPrincipal
 import tech.dokus.peppol.service.PeppolConnectionService
 import tech.dokus.peppol.service.PeppolRegistrationService
 import tech.dokus.peppol.service.PeppolService
+import tech.dokus.foundation.backend.utils.loggerFor
 import tech.dokus.peppol.service.PeppolVerificationService
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
+private val peppolRoutesLogger = loggerFor("PeppolRoutes")
+
 internal fun Throwable.toPeppolRegistrationRouteException(operation: String): DokusException =
-    this as? DokusException ?: DokusException.InternalError("$operation: ${message ?: "Unknown error"}")
+    this as? DokusException ?: run {
+        peppolRoutesLogger.error("$operation failed", this)
+        DokusException.InternalError(operation)
+    }
 
 /**
  * Peppol API Routes using Ktor Type-Safe Routing

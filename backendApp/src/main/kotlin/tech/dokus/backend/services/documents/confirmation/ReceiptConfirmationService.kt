@@ -2,7 +2,7 @@ package tech.dokus.backend.services.documents.confirmation
 
 import tech.dokus.backend.services.cashflow.CashflowEntriesService
 import tech.dokus.backend.util.isUniqueViolation
-import tech.dokus.backend.util.runSuspendCatching
+import tech.dokus.foundation.backend.utils.runSuspendCatching
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.domain.Money

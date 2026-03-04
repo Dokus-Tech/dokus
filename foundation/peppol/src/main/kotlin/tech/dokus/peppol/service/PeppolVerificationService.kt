@@ -5,6 +5,7 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.PeppolIdVerificationResult
 import tech.dokus.foundation.backend.utils.loggerFor
+import tech.dokus.foundation.backend.utils.runSuspendCatching
 import tech.dokus.peppol.config.PeppolModuleConfig
 import tech.dokus.peppol.provider.client.RecommandApiException
 import tech.dokus.peppol.provider.client.RecommandProvider
@@ -35,7 +36,7 @@ class PeppolVerificationService(
         val peppolId = "0208:${vatNumber.normalized}"
         logger.info("Verifying PEPPOL ID availability: $peppolId")
 
-        return runCatching {
+        return runSuspendCatching {
             // Configure provider with master credentials
             val creds = tech.dokus.peppol.provider.client.RecommandCredentials(
                 companyId = "", // Not needed for directory search
@@ -88,7 +89,10 @@ class PeppolVerificationService(
 
 internal fun Throwable.toPeppolVerificationException(): DokusException = when (this) {
     is DokusException -> this
-    is RecommandApiException -> DokusException.PeppolDirectoryUnavailable()
+    is RecommandApiException -> when (statusCode) {
+        in 500..599 -> DokusException.PeppolDirectoryUnavailable()
+        else -> DokusException.InternalError("PEPPOL directory request failed ($statusCode)")
+    }
     is ConnectException,
     is SocketTimeoutException,
     is HttpRequestTimeoutException,

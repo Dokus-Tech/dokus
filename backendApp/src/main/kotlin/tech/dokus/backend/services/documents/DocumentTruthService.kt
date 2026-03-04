@@ -46,7 +46,7 @@ import tech.dokus.domain.model.VatBreakdownEntry
 import tech.dokus.domain.model.toDocumentType
 import tech.dokus.domain.utils.json
 import tech.dokus.foundation.backend.storage.DocumentStorageService
-import tech.dokus.backend.util.runSuspendCatching
+import tech.dokus.foundation.backend.utils.runSuspendCatching
 import tech.dokus.foundation.backend.utils.loggerFor
 import java.security.MessageDigest
 import java.util.UUID

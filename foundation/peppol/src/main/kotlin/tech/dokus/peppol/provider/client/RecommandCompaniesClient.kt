@@ -18,6 +18,7 @@ import tech.dokus.peppol.provider.client.recommand.model.RecommandCreateCompanyR
 import tech.dokus.peppol.provider.client.recommand.model.RecommandGetCompaniesResponse
 import tech.dokus.peppol.provider.client.recommand.model.RecommandUpdateCompanyRequest
 import tech.dokus.peppol.provider.client.recommand.model.RecommandUpdateCompanyResponse
+import tech.dokus.foundation.backend.utils.runSuspendCatching
 import tech.dokus.peppol.config.PeppolProviderConfig
 
 class RecommandCompaniesClient(
@@ -29,7 +30,7 @@ class RecommandCompaniesClient(
         apiKey: String,
         apiSecret: String,
         vatNumber: String,
-    ): Result<List<RecommandCompany>> = runCatching {
+    ): Result<List<RecommandCompany>> = runSuspendCatching {
         val response = httpClient.get("$baseUrl/api/v1/companies") {
             basicAuth(apiKey, apiSecret)
             parameter("vatNumber", vatNumber)
@@ -50,7 +51,7 @@ class RecommandCompaniesClient(
         apiKey: String,
         apiSecret: String,
         request: RecommandCreateCompanyRequest,
-    ): Result<RecommandCompany> = runCatching {
+    ): Result<RecommandCompany> = runSuspendCatching {
         val response = httpClient.post("$baseUrl/api/v1/companies") {
             basicAuth(apiKey, apiSecret)
             contentType(ContentType.Application.Json)
@@ -73,7 +74,7 @@ class RecommandCompaniesClient(
         apiSecret: String,
         companyId: String,
         request: RecommandUpdateCompanyRequest,
-    ): Result<RecommandCompany> = runCatching {
+    ): Result<RecommandCompany> = runSuspendCatching {
         val response = httpClient.put("$baseUrl/api/v1/companies/$companyId") {
             basicAuth(apiKey, apiSecret)
             contentType(ContentType.Application.Json)

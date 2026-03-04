@@ -7,7 +7,7 @@ import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import tech.dokus.backend.services.cashflow.CashflowEntriesService
 import tech.dokus.backend.util.isUniqueViolation
-import tech.dokus.backend.util.runSuspendCatching
+import tech.dokus.foundation.backend.utils.runSuspendCatching
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
 import tech.dokus.domain.Money
