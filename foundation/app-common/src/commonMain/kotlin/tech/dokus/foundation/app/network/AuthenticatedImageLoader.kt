@@ -2,6 +2,7 @@ package tech.dokus.foundation.app.network
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalInspectionMode
 import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.compose.LocalPlatformContext
@@ -19,8 +20,11 @@ private const val MemoryCacheSizePercent = 0.25
  */
 @Composable
 fun rememberAuthenticatedImageLoader(): ImageLoader {
-    val httpClient = koinInject<HttpClient>()
     val context = LocalPlatformContext.current
+    if (LocalInspectionMode.current) {
+        return remember { ImageLoader.Builder(context).build() }
+    }
+    val httpClient = koinInject<HttpClient>()
     return remember(httpClient) {
         createAuthenticatedImageLoader(context, httpClient)
     }
