@@ -30,13 +30,11 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.action_continue
 import tech.dokus.aura.resources.state_creating
 import tech.dokus.aura.resources.workspace_create_button
 import tech.dokus.domain.LegalName
 import tech.dokus.features.auth.mvi.WorkspaceCreateIntent
 import tech.dokus.features.auth.mvi.WorkspaceCreateState
-import tech.dokus.features.auth.presentation.auth.components.EntityConfirmationDialog
 import tech.dokus.features.auth.presentation.auth.components.steps.CompanyNameStep
 import tech.dokus.features.auth.presentation.auth.components.steps.TypeSelectionStep
 import tech.dokus.features.auth.presentation.auth.components.steps.VatAndAddressStep
@@ -50,9 +48,12 @@ import tech.dokus.foundation.aura.extensions.dismissKeyboardOnTapOutside
 
 private const val ContentFadeOutDurationMs = 600
 private const val NavigationDelayMs = 100L
+private const val CompanyLookupDebounceMs = 300L
+private const val CompanyLookupMinCharacters = 3
 private val StepContentMinHeight = 320.dp
 private val WizardContentMaxWidth = 520.dp
 private val WizardTypeSelectionMaxWidth = 560.dp
+private val WizardLookupMaxWidth = 760.dp
 
 @Composable
 internal fun WorkspaceCreateScreen(
@@ -112,21 +113,6 @@ internal fun WorkspaceCreateScreen(
                     shouldNavigate = true
                 },
             )
-
-            if (wizardState != null) {
-                EntityConfirmationDialog(
-                    state = wizardState.confirmationState,
-                    onEntitySelected = { entity ->
-                        onIntent(WorkspaceCreateIntent.SelectEntity(entity))
-                    },
-                    onEnterManually = {
-                        onIntent(WorkspaceCreateIntent.EnterManually)
-                    },
-                    onDismiss = {
-                        onIntent(WorkspaceCreateIntent.DismissConfirmation)
-                    },
-                )
-            }
         }
     }
 }
@@ -149,13 +135,23 @@ private fun WorkspaceCreateContent(
         }
     }
 
+    LaunchedEffect(wizardState.step, wizardState.companyName.value) {
+        if (wizardState.step != WorkspaceWizardStep.CompanyName) return@LaunchedEffect
+
+        val query = wizardState.companyName.value.trim()
+        if (query.length < CompanyLookupMinCharacters) return@LaunchedEffect
+
+        delay(CompanyLookupDebounceMs)
+        onIntent(WorkspaceCreateIntent.LookupCompany)
+    }
+
     Column(
         modifier = modifier.widthIn(
-            max = if (wizardState.step == WorkspaceWizardStep.TypeSelection) {
-                WizardTypeSelectionMaxWidth
-            } else {
-                WizardContentMaxWidth
-            },
+            max = when (wizardState.step) {
+                WorkspaceWizardStep.TypeSelection -> WizardTypeSelectionMaxWidth
+                WorkspaceWizardStep.CompanyName -> WizardLookupMaxWidth
+                WorkspaceWizardStep.VatAndAddress -> WizardContentMaxWidth
+            }
         ),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -185,10 +181,17 @@ private fun WorkspaceCreateContent(
 
                     WorkspaceWizardStep.CompanyName -> {
                         CompanyNameStep(
-                            companyName = wizardState.companyName.value,
+                            query = wizardState.companyName.value,
                             lookupState = wizardState.lookupState,
-                            onCompanyNameChanged = { name ->
+                            onQueryChanged = { name ->
                                 onIntent(WorkspaceCreateIntent.UpdateCompanyName(LegalName(name)))
+                            },
+                            onResultSelected = { entity ->
+                                onIntent(WorkspaceCreateIntent.SelectEntity(entity))
+                            },
+                            onEnterManually = {
+                                onIntent(WorkspaceCreateIntent.UpdateCompanyName(LegalName(wizardState.companyName.value)))
+                                onIntent(WorkspaceCreateIntent.EnterManually)
                             },
                             onBackPress = { onIntent(WorkspaceCreateIntent.BackClicked) },
                             modifier = Modifier.fillMaxWidth(),
@@ -213,18 +216,14 @@ private fun WorkspaceCreateContent(
             }
         }
 
-        if (wizardState.step != WorkspaceWizardStep.TypeSelection) {
+        if (wizardState.step == WorkspaceWizardStep.VatAndAddress) {
             Spacer(modifier = Modifier.height(Constraints.Spacing.xLarge))
 
             PPrimaryButton(
-                text = when (wizardState.step) {
-                    WorkspaceWizardStep.VatAndAddress -> if (isSubmitting) {
-                        stringResource(Res.string.state_creating)
-                    } else {
-                        stringResource(Res.string.workspace_create_button)
-                    }
-
-                    else -> stringResource(Res.string.action_continue)
+                text = if (isSubmitting) {
+                    stringResource(Res.string.state_creating)
+                } else {
+                    stringResource(Res.string.workspace_create_button)
                 },
                 enabled = wizardState.canProceed && !isSubmitting,
                 modifier = Modifier.fillMaxWidth(),

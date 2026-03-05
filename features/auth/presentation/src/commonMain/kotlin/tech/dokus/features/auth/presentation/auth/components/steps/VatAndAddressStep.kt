@@ -24,6 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_back
 import tech.dokus.aura.resources.auth_business_details
 import tech.dokus.aura.resources.auth_business_details_subtitle
 import tech.dokus.aura.resources.contacts_address_line1
@@ -40,9 +41,9 @@ import tech.dokus.domain.enums.Country
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.features.auth.presentation.auth.model.AddressFormState
 import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.common.PBackIconButton
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
 import tech.dokus.foundation.aura.components.fields.PTextFieldTaxNumber
-import tech.dokus.foundation.aura.components.text.SectionTitle
 import tech.dokus.foundation.aura.constrains.Constraints
 
 @Composable
@@ -58,13 +59,23 @@ internal fun VatAndAddressStep(
         modifier = modifier
             .fillMaxWidth()
             .verticalScroll(rememberScrollState()),
-        horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+        horizontalAlignment = androidx.compose.ui.Alignment.Start,
     ) {
-        SectionTitle(
-            text = stringResource(Res.string.auth_business_details),
-            horizontalArrangement = Arrangement.Start,
-            onBackPress = onBackPress,
-        )
+        Row(
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium),
+        ) {
+            PBackIconButton(
+                onClick = onBackPress,
+                contentDescription = stringResource(Res.string.action_back),
+            )
+            Text(
+                text = stringResource(Res.string.auth_business_details),
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+        }
 
         Spacer(modifier = Modifier.height(Constraints.Spacing.small))
 
@@ -72,7 +83,7 @@ internal fun VatAndAddressStep(
             text = stringResource(Res.string.auth_business_details_subtitle),
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
+            textAlign = TextAlign.Start,
         )
 
         Spacer(modifier = Modifier.height(Constraints.Spacing.xLarge))

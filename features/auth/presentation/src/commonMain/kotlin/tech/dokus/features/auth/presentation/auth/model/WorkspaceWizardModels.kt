@@ -69,20 +69,6 @@ sealed class LookupState {
 }
 
 /**
- * State for the entity confirmation dialog.
- */
-sealed class EntityConfirmationState {
-    /** Dialog is hidden */
-    data object Hidden : EntityConfirmationState()
-
-    /** Single result found - show confirmation */
-    data class SingleResult(val entity: EntityLookup) : EntityConfirmationState()
-
-    /** Multiple results found - show selection list */
-    data class MultipleResults(val entities: List<EntityLookup>) : EntityConfirmationState()
-}
-
-/**
  * Complete state for the workspace creation wizard.
  */
 @Stable

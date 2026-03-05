@@ -13,7 +13,6 @@ import tech.dokus.domain.ids.FirmId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.entity.EntityLookup
 import tech.dokus.features.auth.presentation.auth.model.AddressFormState
-import tech.dokus.features.auth.presentation.auth.model.EntityConfirmationState
 import tech.dokus.features.auth.presentation.auth.model.LookupState
 import tech.dokus.features.auth.presentation.auth.model.WorkspaceCreateType
 import tech.dokus.features.auth.presentation.auth.model.WorkspaceWizardStep
@@ -54,7 +53,6 @@ sealed interface WorkspaceCreateState : MVIState, DokusState<Nothing> {
         val userName: String = "",
         val companyName: LegalName = LegalName.Empty,
         val lookupState: LookupState = LookupState.Idle,
-        val confirmationState: EntityConfirmationState = EntityConfirmationState.Hidden,
         val selectedEntity: EntityLookup? = null,
         val vatNumber: VatNumber = VatNumber(""),
         val address: AddressFormState = AddressFormState(),
@@ -126,9 +124,6 @@ sealed interface WorkspaceCreateIntent : MVIIntent {
 
     /** User chose to enter manually instead of using lookup */
     data object EnterManually : WorkspaceCreateIntent
-
-    /** User dismissed the confirmation dialog */
-    data object DismissConfirmation : WorkspaceCreateIntent
 
     /** User changed the VAT number */
     data class UpdateVatNumber(val vatNumber: VatNumber) : WorkspaceCreateIntent

@@ -49,6 +49,13 @@
     <string name="auth_company_name_label">Company name</string>
     <string name="auth_company_name_searching">Searching...</string>
     <string name="auth_company_lookup_failed">Company lookup failed</string>
+    <string name="auth_company_lookup_prompt">Find your company</string>
+    <string name="auth_company_lookup_subtitle">Search by name or VAT number</string>
+    <string name="auth_company_lookup_results_count">%1$d results in KBO/CBE</string>
+    <string name="auth_company_lookup_idle_line_1">Start typing to search</string>
+    <string name="auth_company_lookup_idle_line_2">the Belgian company registry</string>
+    <string name="auth_company_lookup_not_found_title">&quot;%1$s&quot; not found</string>
+    <string name="auth_company_lookup_not_found_subtitle">Not in the Belgian company registry</string>
     <string name="auth_business_details">Business details</string>
     <string name="auth_business_details_subtitle">Add VAT and address information</string>
 

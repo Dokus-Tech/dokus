@@ -20,7 +20,6 @@ import tech.dokus.domain.model.auth.CreateFirmRequest
 import tech.dokus.domain.model.entity.EntityLookup
 import tech.dokus.domain.usecases.SearchCompanyUseCase
 import tech.dokus.features.auth.presentation.auth.model.AddressFormState
-import tech.dokus.features.auth.presentation.auth.model.EntityConfirmationState
 import tech.dokus.features.auth.presentation.auth.model.LookupState
 import tech.dokus.features.auth.presentation.auth.model.WorkspaceCreateType
 import tech.dokus.features.auth.presentation.auth.model.WorkspaceWizardStep
@@ -61,7 +60,6 @@ internal class WorkspaceCreateContainer(
                     is WorkspaceCreateIntent.LookupCompany -> handleLookupCompany()
                     is WorkspaceCreateIntent.SelectEntity -> handleSelectEntity(intent.entity)
                     is WorkspaceCreateIntent.EnterManually -> handleEnterManually()
-                    is WorkspaceCreateIntent.DismissConfirmation -> handleDismissConfirmation()
                     is WorkspaceCreateIntent.UpdateVatNumber -> handleUpdateVatNumber(intent.vatNumber)
                     is WorkspaceCreateIntent.UpdateAddress -> handleUpdateAddress(intent.address)
                     is WorkspaceCreateIntent.NextClicked -> handleNext()
@@ -150,28 +148,9 @@ internal class WorkspaceCreateContainer(
                 onSuccess = { response ->
                     logger.d { "Company lookup returned ${response.results.size} results" }
                     updateState {
-                        val newConfirmation = when {
-                            response.results.size == 1 -> EntityConfirmationState.SingleResult(
-                                response.results.first()
-                            )
-
-                            response.results.isNotEmpty() -> EntityConfirmationState.MultipleResults(
-                                response.results
-                            )
-
-                            else -> EntityConfirmationState.Hidden
-                        }
                         copy(
                             lookupState = LookupState.Success(response.results),
-                            confirmationState = newConfirmation
                         )
-                    }
-
-                    // If no results, proceed to manual entry
-                    if (response.results.isEmpty()) {
-                        updateState {
-                            copy(step = WorkspaceWizardStep.VatAndAddress)
-                        }
                     }
                 },
                 onFailure = { error ->
@@ -179,8 +158,6 @@ internal class WorkspaceCreateContainer(
                     updateState {
                         copy(
                             lookupState = LookupState.Error(DokusException.CompanyLookupFailed),
-                            // Still allow manual entry
-                            step = WorkspaceWizardStep.VatAndAddress
                         )
                     }
                 }
@@ -206,7 +183,6 @@ internal class WorkspaceCreateContainer(
                     companyName = entity.name,
                     vatNumber = entity.vatNumber,
                     address = newAddress,
-                    confirmationState = EntityConfirmationState.Hidden
                 )
             }
 
@@ -219,16 +195,9 @@ internal class WorkspaceCreateContainer(
         withState<WorkspaceCreateState.Wizard, _> {
             updateState {
                 copy(
-                    confirmationState = EntityConfirmationState.Hidden,
                     step = WorkspaceWizardStep.VatAndAddress
                 )
             }
-        }
-    }
-
-    private suspend fun WorkspaceCreateCtx.handleDismissConfirmation() {
-        withState<WorkspaceCreateState.Wizard, _> {
-            updateState { copy(confirmationState = EntityConfirmationState.Hidden) }
         }
     }
 
@@ -257,7 +226,6 @@ internal class WorkspaceCreateContainer(
                 }
 
                 WorkspaceWizardStep.CompanyName -> {
-                    // Trigger lookup, dialog will handle navigation
                     handleLookupCompany()
                 }
 
