@@ -70,8 +70,6 @@
     <string name="upload_no_app_hint">Нет приложения? Нажмите здесь</string>
     <string name="upload_uploads_title">Загрузки</string>
     <string name="upload_no_documents">Нет активных загрузок</string>
-    <string name="upload_release_to_upload">Отпустите для загрузки</string>
-    <string name="upload_documents_absorbed">Документы будут обработаны</string>
 
     <!-- Upload Item Actions -->
     <string name="upload_action_cancel">Отмена</string>
