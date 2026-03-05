@@ -264,6 +264,25 @@ private fun SourceViewerCenter(
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val pdfPreviewState = viewerState.previewState as? DocumentPreviewState.Ready
+    if (pdfPreviewState != null && pdfPreviewState.pages.isNotEmpty()) {
+        Box(
+            modifier = modifier.fillMaxSize(),
+            contentAlignment = Alignment.TopCenter,
+        ) {
+            PdfPreviewPane(
+                state = pdfPreviewState,
+                selectedFieldPath = null,
+                onLoadMore = {},
+                modifier = Modifier
+                    .width(CanonicalPreviewWidth)
+                    .fillMaxHeight(),
+                showScanAnimation = false,
+            )
+        }
+        return
+    }
+
     Box(
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.TopCenter,
