@@ -9,8 +9,10 @@ import tech.dokus.domain.enums.DocumentRejectReason
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentDirection
+import tech.dokus.domain.enums.DocumentPurposeSource
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.enums.ProcessingOutcome
+import tech.dokus.domain.enums.PurposePeriodMode
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
@@ -71,8 +73,14 @@ data class DocumentDraftDto(
     val direction: DocumentDirection = DocumentDirection.Unknown,
     val extractedData: DocumentDraftData?,
     val aiDraftData: DocumentDraftData?, // Original immutable AI extraction (for diff display)
-    val aiDescription: String? = null,
     val aiKeywords: List<String> = emptyList(),
+    val purposeBase: String? = null,
+    val purposePeriodYear: Int? = null,
+    val purposePeriodMonth: Int? = null,
+    val purposeRendered: String? = null,
+    val purposeSource: DocumentPurposeSource? = null,
+    val purposeLocked: Boolean = false,
+    val purposePeriodMode: PurposePeriodMode = PurposePeriodMode.IssueMonth,
     val aiDraftSourceRunId: IngestionRunId?, // Which run produced ai_draft_data
     val draftVersion: Int,
     val draftEditedAt: LocalDateTime?,
@@ -149,6 +157,8 @@ data class UpdateDraftRequest(
     val extractedData: DocumentDraftData? = null,
     val contactId: String? = null,
     val counterpartyIntent: CounterpartyIntent? = null,
+    val purpose: String? = null,
+    val purposePeriodMode: PurposePeriodMode? = null,
     val changeDescription: String? = null
 )
 

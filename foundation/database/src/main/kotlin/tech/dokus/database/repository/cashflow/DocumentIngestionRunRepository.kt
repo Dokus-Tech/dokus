@@ -236,6 +236,7 @@ class DocumentIngestionRunRepository {
                     documentId = DocumentId(row[DocumentIngestionRunsTable.documentId].toKotlinUuid()),
                     tenantId = TenantId(row[DocumentIngestionRunsTable.tenantId].toKotlinUuid()),
                     sourceId = row[DocumentIngestionRunsTable.sourceId]?.toKotlinUuid()?.let { DocumentSourceId(it) },
+                    documentSource = row[DocumentsTable.documentSource],
                     storageKey = row[DocumentsTable.storageKey],
                     filename = row[DocumentsTable.filename],
                     contentType = row[DocumentsTable.contentType],

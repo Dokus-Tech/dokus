@@ -226,7 +226,7 @@ private fun InlineRowAction(
             MaterialTheme.colorScheme.textMuted
         },
         modifier = Modifier
-            .defaultMinSize(minHeight = Constraints.Height.button)
+            .defaultMinSize(minHeight = 44.dp)
             .clickable(onClick = onClick)
             .padding(vertical = 2.dp)
     )

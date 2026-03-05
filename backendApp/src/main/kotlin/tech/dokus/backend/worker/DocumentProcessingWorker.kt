@@ -22,16 +22,17 @@ import kotlinx.coroutines.withTimeout
 import org.slf4j.MDC
 import tech.dokus.backend.services.documents.AutoConfirmPolicy
 import tech.dokus.backend.services.documents.ContactResolutionService
+import tech.dokus.backend.services.documents.DocumentPurposeService
 import tech.dokus.backend.services.documents.DocumentTruthService
 import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
 import tech.dokus.database.entity.IngestionItemEntity
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
-import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.processor.ProcessorIngestionRepository
 import tech.dokus.domain.enums.ContactLinkSource
 import tech.dokus.domain.enums.DocumentStatus
+import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.model.contact.ContactResolution
 import tech.dokus.domain.processing.DocumentProcessingConstants
@@ -69,9 +70,9 @@ class DocumentProcessingWorker(
     private val ingestionRepository: ProcessorIngestionRepository,
     private val processingAgent: DocumentProcessingAgent,
     private val contactResolutionService: ContactResolutionService,
+    private val purposeService: DocumentPurposeService,
     private val documentTruthService: DocumentTruthService,
     private val draftRepository: DocumentDraftRepository,
-    private val documentRepository: DocumentRepository,
     private val autoConfirmPolicy: AutoConfirmPolicy,
     private val confirmationDispatcher: DocumentConfirmationDispatcher,
     private val config: ProcessorConfig,
@@ -334,6 +335,15 @@ class DocumentProcessingWorker(
             val parsedTenantId = tenantId
             val tenant = tenantRepository.findById(parsedTenantId)
                 ?: error("Tenant not found: $tenantId")
+            val sourceChannel = ingestion.sourceChannel ?: ingestion.documentSource
+            if (ingestion.sourceChannel == null) {
+                logger.warn(
+                    "Missing source channel for run {} document {}; using document source {}",
+                    runId,
+                    documentId,
+                    sourceChannel
+                )
+            }
 
             val members = userRepository.listByTenant(parsedTenantId, activeOnly = true)
             val personNames = members.mapNotNull { m ->
@@ -341,10 +351,22 @@ class DocumentProcessingWorker(
                     .joinToString(" ").ifBlank { null }
             }
 
+            if (sourceChannel == DocumentSource.Peppol &&
+                ingestion.peppolStructuredSnapshotJson.isNullOrBlank()
+            ) {
+                logger.warn(
+                    "PEPPOL run {} has no structured snapshot; falling back to vision extraction",
+                    runId
+                )
+            }
+
             val result = processingAgent.process(
                 AcceptDocumentInput(
                     documentId = documentId,
                     tenant = tenant,
+                    sourceChannel = sourceChannel,
+                    peppolStructuredSnapshotJson = ingestion.peppolStructuredSnapshotJson,
+                    peppolSnapshotVersion = ingestion.peppolSnapshotVersion,
                     associatedPersonNames = personNames,
                     userFeedback = ingestion.userFeedback,
                     maxPagesOverride = ingestion.overrideMaxPages,
@@ -387,7 +409,6 @@ class DocumentProcessingWorker(
                 confidence = confidence,
                 processingOutcome = processingOutcome,
                 rawText = null,
-                description = null,
                 keywords = emptyList(),
                 force = false
             )
@@ -501,36 +522,49 @@ class DocumentProcessingWorker(
                     }
                 }
 
-                val document = documentRepository.getById(parsedTenantId, documentId)
-                if (document != null) {
-                    val canAutoConfirm = autoConfirmPolicy.canAutoConfirm(
-                        tenantId = parsedTenantId,
-                        documentId = documentId,
-                        source = document.source,
-                        documentType = documentType,
-                        draftData = draftData,
-                        auditPassed = result.auditReport.isValid,
-                        confidence = confidence,
-                        linkedContactId = linkedContactId,
-                        directionResolvedFromAiHintOnly = result.directionResolution.source == DirectionResolutionSource.AiHint
-                    )
+                val currentDraft = draftRepository.getByDocumentId(documentId, parsedTenantId)
+                if (currentDraft != null) {
+                    runSuspendCatching {
+                        purposeService.enrichAfterContactResolution(
+                            tenantId = parsedTenantId,
+                            documentId = documentId,
+                            documentType = documentType,
+                            draftData = draftData,
+                            linkedContactId = linkedContactId,
+                            currentDraft = currentDraft
+                        )
+                    }.onFailure { e ->
+                        logger.warn("Purpose enrichment failed for document {}, skipping", documentId, e)
+                    }
+                }
 
-                    if (canAutoConfirm) {
-                        try {
-                            confirmationDispatcher.confirm(
-                                parsedTenantId,
-                                documentId,
-                                draftData,
-                                linkedContactId
-                            ).getOrThrow()
-                        } catch (e: Exception) {
-                            logger.error("Auto-confirm failed for document $documentId", e)
-                            draftRepository.updateDocumentStatus(
-                                documentId = documentId,
-                                tenantId = parsedTenantId,
-                                status = DocumentStatus.NeedsReview
-                            )
-                        }
+                val canAutoConfirm = autoConfirmPolicy.canAutoConfirm(
+                    tenantId = parsedTenantId,
+                    documentId = documentId,
+                    source = sourceChannel,
+                    documentType = documentType,
+                    draftData = draftData,
+                    auditPassed = result.auditReport.isValid,
+                    confidence = confidence,
+                    linkedContactId = linkedContactId,
+                    directionResolvedFromAiHintOnly = result.directionResolution.source == DirectionResolutionSource.AiHint
+                )
+
+                if (canAutoConfirm) {
+                    try {
+                        confirmationDispatcher.confirm(
+                            parsedTenantId,
+                            documentId,
+                            draftData,
+                            linkedContactId
+                        ).getOrThrow()
+                    } catch (e: Exception) {
+                        logger.error("Auto-confirm failed for document $documentId", e)
+                        draftRepository.updateDocumentStatus(
+                            documentId = documentId,
+                            tenantId = parsedTenantId,
+                            status = DocumentStatus.NeedsReview
+                        )
                     }
                 }
             }

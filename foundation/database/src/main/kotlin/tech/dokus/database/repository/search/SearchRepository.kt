@@ -279,7 +279,8 @@ class SearchRepository(
 
         query = query.andWhere {
             (LowerCase(DocumentsTable.filename) like pattern) or
-                (LowerCase(DocumentDraftsTable.aiDescription) like pattern) or
+                (LowerCase(DocumentDraftsTable.purposeRendered) like pattern) or
+                (LowerCase(DocumentDraftsTable.purposeBase) like pattern) or
                 (LowerCase(DocumentDraftsTable.aiKeywords) like pattern) or
                 (LowerCase(DocumentDraftsTable.counterpartySnapshot) like pattern) or
                 (LowerCase(ContactsTable.name) like pattern) or

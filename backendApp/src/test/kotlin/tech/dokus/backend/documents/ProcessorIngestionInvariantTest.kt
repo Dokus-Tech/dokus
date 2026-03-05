@@ -142,8 +142,7 @@ class ProcessorIngestionInvariantTest {
             rawExtractionJson = "{}",
             confidence = 0.99,
             processingOutcome = ProcessingOutcome.AutoConfirmEligible,
-            rawText = null,
-            description = "Auto-confirm eligible, but still needs review"
+            rawText = null
         )
         assertTrue(marked)
 

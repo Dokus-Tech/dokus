@@ -434,7 +434,6 @@ class DocumentTruthServiceTest {
         documentType = DocumentType.Invoice,
         extractedData = extractedData,
         aiDraftData = null,
-        aiDescription = null,
         aiKeywords = emptyList(),
         aiDraftSourceRunId = null,
         draftVersion = 1,

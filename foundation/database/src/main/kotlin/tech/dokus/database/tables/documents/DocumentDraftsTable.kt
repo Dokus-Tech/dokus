@@ -12,6 +12,8 @@ import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentRejectReason
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DocumentStatus
+import tech.dokus.domain.enums.DocumentPurposeSource
+import tech.dokus.domain.enums.PurposePeriodMode
 import tech.dokus.foundation.backend.database.dbEnumeration
 
 /**
@@ -58,11 +60,22 @@ object DocumentDraftsTable : Table("document_drafts") {
     // Preserves the AI's initial extraction for audit purposes
     val aiDraftData = text("ai_draft_data").nullable()
 
-    // AI-generated short description for list views
-    val aiDescription = text("ai_description").nullable()
-
     // AI-generated keywords for search (JSON array)
     val aiKeywords = text("ai_keywords").nullable()
+
+    // Canonical purpose/description fields for UI and downstream enrichment.
+    val purposeBase = text("purpose_base").nullable()
+    val purposePeriodYear = integer("purpose_period_year").nullable()
+    val purposePeriodMonth = integer("purpose_period_month").nullable()
+    val purposeRendered = text("purpose_rendered").nullable()
+    val purposeSource = dbEnumeration<DocumentPurposeSource>("purpose_source").nullable()
+    val purposeLocked = bool("purpose_locked").default(false)
+    val purposePeriodMode = dbEnumeration<PurposePeriodMode>("purpose_period_mode")
+        .default(PurposePeriodMode.IssueMonth)
+
+    // Stable identity keys for purpose template + RAG retrieval filters.
+    val counterpartyKey = varchar("counterparty_key", 255).nullable()
+    val merchantToken = varchar("merchant_token", 120).nullable()
 
     // Which ingestion run produced the ai_draft_data
     val aiDraftSourceRunId = uuid("ai_draft_source_run_id")
@@ -144,5 +157,9 @@ object DocumentDraftsTable : Table("document_drafts") {
 
         // For contact activity queries
         index(false, tenantId, linkedContactId)
+
+        // For purpose template and similarity retrieval.
+        index(false, tenantId, counterpartyKey, documentType, documentStatus)
+        index(false, tenantId, merchantToken, documentType, documentStatus)
     }
 }

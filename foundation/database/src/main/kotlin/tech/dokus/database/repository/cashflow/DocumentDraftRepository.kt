@@ -17,9 +17,11 @@ import org.jetbrains.exposed.v1.jdbc.update
 import tech.dokus.database.tables.documents.DocumentDraftsTable
 import tech.dokus.domain.enums.ContactLinkSource
 import tech.dokus.domain.enums.CounterpartyIntent
+import tech.dokus.domain.enums.DocumentPurposeSource
 import tech.dokus.domain.enums.DocumentRejectReason
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DocumentStatus
+import tech.dokus.domain.enums.PurposePeriodMode
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
@@ -49,8 +51,16 @@ data class DraftSummary(
     val documentType: DocumentType?,
     val extractedData: DocumentDraftData?,
     val aiDraftData: DocumentDraftData?,
-    val aiDescription: String? = null,
     val aiKeywords: List<String> = emptyList(),
+    val purposeBase: String? = null,
+    val purposePeriodYear: Int? = null,
+    val purposePeriodMonth: Int? = null,
+    val purposeRendered: String? = null,
+    val purposeSource: DocumentPurposeSource? = null,
+    val purposeLocked: Boolean = false,
+    val purposePeriodMode: PurposePeriodMode = PurposePeriodMode.IssueMonth,
+    val counterpartyKey: String? = null,
+    val merchantToken: String? = null,
     val aiDraftSourceRunId: IngestionRunId?,
     val draftVersion: Int,
     val draftEditedAt: LocalDateTime?,
@@ -91,7 +101,6 @@ class DocumentDraftRepository : DocumentStatusChecker {
         runId: IngestionRunId,
         extractedData: DocumentDraftData,
         documentType: DocumentType,
-        aiDescription: String? = null,
         aiKeywords: List<String> = emptyList(),
         force: Boolean = false
     ): Boolean = newSuspendedTransaction {
@@ -117,7 +126,6 @@ class DocumentDraftRepository : DocumentStatusChecker {
                 it[documentStatus] = DocumentStatus.NeedsReview
                 it[DocumentDraftsTable.documentType] = documentType
                 it[aiDraftData] = json.encodeToString(extractedData)
-                it[DocumentDraftsTable.aiDescription] = aiDescription?.takeIf { value -> value.isNotBlank() }
                 it[DocumentDraftsTable.aiKeywords] = keywordsJson
                 it[aiDraftSourceRunId] = runIdUuid
                 it[DocumentDraftsTable.extractedData] = json.encodeToString(extractedData)
@@ -139,7 +147,6 @@ class DocumentDraftRepository : DocumentStatusChecker {
                 // ai_draft_data: set only if null (immutable)
                 if (!hasAiDraft) {
                     it[aiDraftData] = json.encodeToString(extractedData)
-                    it[DocumentDraftsTable.aiDescription] = aiDescription?.takeIf { value -> value.isNotBlank() }
                     it[DocumentDraftsTable.aiKeywords] = keywordsJson
                     it[aiDraftSourceRunId] = runIdUuid
                 }
@@ -149,9 +156,6 @@ class DocumentDraftRepository : DocumentStatusChecker {
                     it[DocumentDraftsTable.extractedData] = json.encodeToString(extractedData)
                     it[DocumentDraftsTable.documentType] = documentType
                     it[documentStatus] = DocumentStatus.NeedsReview
-                    if (!aiDescription.isNullOrBlank()) {
-                        it[DocumentDraftsTable.aiDescription] = aiDescription
-                    }
                     if (keywordsJson != null) {
                         it[DocumentDraftsTable.aiKeywords] = keywordsJson
                     }
@@ -404,6 +408,87 @@ class DocumentDraftRepository : DocumentStatusChecker {
         } > 0
     }
 
+    suspend fun updatePurposeContext(
+        documentId: DocumentId,
+        tenantId: TenantId,
+        counterpartyKey: String?,
+        merchantToken: String?
+    ): Boolean = newSuspendedTransaction {
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+        DocumentDraftsTable.update({
+            (DocumentDraftsTable.documentId eq UUID.fromString(documentId.toString())) and
+                (DocumentDraftsTable.tenantId eq UUID.fromString(tenantId.toString()))
+        }) {
+            counterpartyKey?.let { key -> it[DocumentDraftsTable.counterpartyKey] = key }
+            merchantToken?.let { token -> it[DocumentDraftsTable.merchantToken] = token }
+            it[DocumentDraftsTable.updatedAt] = now
+        } > 0
+    }
+
+    @Suppress("LongParameterList")
+    suspend fun updatePurposeFields(
+        documentId: DocumentId,
+        tenantId: TenantId,
+        purposeBase: String?,
+        purposePeriodYear: Int?,
+        purposePeriodMonth: Int?,
+        purposeRendered: String?,
+        purposeSource: DocumentPurposeSource?,
+        purposeLocked: Boolean,
+        purposePeriodMode: PurposePeriodMode
+    ): Boolean = newSuspendedTransaction {
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+        DocumentDraftsTable.update({
+            (DocumentDraftsTable.documentId eq UUID.fromString(documentId.toString())) and
+                (DocumentDraftsTable.tenantId eq UUID.fromString(tenantId.toString()))
+        }) {
+            it[DocumentDraftsTable.purposeBase] = purposeBase
+            it[DocumentDraftsTable.purposePeriodYear] = purposePeriodYear
+            it[DocumentDraftsTable.purposePeriodMonth] = purposePeriodMonth
+            it[DocumentDraftsTable.purposeRendered] = purposeRendered
+            it[DocumentDraftsTable.purposeSource] = purposeSource
+            it[DocumentDraftsTable.purposeLocked] = purposeLocked
+            it[DocumentDraftsTable.purposePeriodMode] = purposePeriodMode
+            it[DocumentDraftsTable.updatedAt] = now
+        } > 0
+    }
+
+    suspend fun listConfirmedPurposeBasesByCounterparty(
+        tenantId: TenantId,
+        counterpartyKey: String,
+        documentType: DocumentType,
+        limit: Int = 5
+    ): List<String> = newSuspendedTransaction {
+        DocumentDraftsTable.selectAll()
+            .where {
+                (DocumentDraftsTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                    (DocumentDraftsTable.counterpartyKey eq counterpartyKey) and
+                    (DocumentDraftsTable.documentType eq documentType) and
+                    (DocumentDraftsTable.documentStatus eq DocumentStatus.Confirmed)
+            }
+            .orderBy(DocumentDraftsTable.updatedAt, SortOrder.DESC)
+            .limit(limit)
+            .mapNotNull { row -> row[DocumentDraftsTable.purposeBase] }
+    }
+
+    suspend fun listConfirmedPurposeBasesByMerchantToken(
+        tenantId: TenantId,
+        merchantToken: String,
+        documentType: DocumentType,
+        limit: Int = 5
+    ): List<String> = newSuspendedTransaction {
+        DocumentDraftsTable.selectAll()
+            .where {
+                (DocumentDraftsTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                    (DocumentDraftsTable.merchantToken eq merchantToken) and
+                    (DocumentDraftsTable.documentType eq documentType) and
+                    (DocumentDraftsTable.documentStatus eq DocumentStatus.Confirmed)
+            }
+            .orderBy(DocumentDraftsTable.updatedAt, SortOrder.DESC)
+            .limit(limit)
+            .mapNotNull { row -> row[DocumentDraftsTable.purposeBase] }
+    }
+
     /**
      * Delete a draft.
      * CRITICAL: Must filter by tenantId.
@@ -450,8 +535,16 @@ class DocumentDraftRepository : DocumentStatusChecker {
             documentType = this[DocumentDraftsTable.documentType],
             extractedData = this[DocumentDraftsTable.extractedData]?.let { json.decodeFromString(it) },
             aiDraftData = this[DocumentDraftsTable.aiDraftData]?.let { json.decodeFromString(it) },
-            aiDescription = this[DocumentDraftsTable.aiDescription],
             aiKeywords = this[DocumentDraftsTable.aiKeywords]?.let { json.decodeFromString(it) } ?: emptyList(),
+            purposeBase = this[DocumentDraftsTable.purposeBase],
+            purposePeriodYear = this[DocumentDraftsTable.purposePeriodYear],
+            purposePeriodMonth = this[DocumentDraftsTable.purposePeriodMonth],
+            purposeRendered = this[DocumentDraftsTable.purposeRendered],
+            purposeSource = this[DocumentDraftsTable.purposeSource],
+            purposeLocked = this[DocumentDraftsTable.purposeLocked],
+            purposePeriodMode = this[DocumentDraftsTable.purposePeriodMode],
+            counterpartyKey = this[DocumentDraftsTable.counterpartyKey],
+            merchantToken = this[DocumentDraftsTable.merchantToken],
             aiDraftSourceRunId = this[DocumentDraftsTable.aiDraftSourceRunId]
                 ?.let { IngestionRunId.parse(it.toString()) },
             draftVersion = this[DocumentDraftsTable.draftVersion],
