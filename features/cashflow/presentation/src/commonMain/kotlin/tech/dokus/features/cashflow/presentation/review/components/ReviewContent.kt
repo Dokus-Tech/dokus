@@ -31,7 +31,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.RoundedCornerShape
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
@@ -274,14 +273,14 @@ private fun SourceTabsPanel(
         Surface(
             modifier = Modifier.wrapContentWidth(),
             shape = SourceTabsPanelShape,
-            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.24f),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.65f)),
             tonalElevation = 0.dp,
             shadowElevation = 0.dp,
         ) {
             Row(
                 modifier = Modifier.padding(4.dp),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 tabs.forEach { tab ->
@@ -304,24 +303,23 @@ private fun SourceTabChip(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val activeBorder = MaterialTheme.colorScheme.primary.copy(alpha = 0.58f)
+    val activeBorder = MaterialTheme.colorScheme.primary.copy(alpha = 0.72f)
     val activeBg = MaterialTheme.colorScheme.surfaceHover
-    val inactiveBg = MaterialTheme.colorScheme.surface.copy(alpha = 0.12f)
+    val inactiveBg = MaterialTheme.colorScheme.surface.copy(alpha = 0f)
     val textColor = if (isActive) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.textMuted
 
     Surface(
         modifier = modifier
-            .clip(SourceTabShape)
             .clickable(onClick = onClick),
         shape = SourceTabShape,
         color = if (isActive) activeBg else inactiveBg,
-        border = BorderStroke(1.dp, if (isActive) activeBorder else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)),
+        border = if (isActive) BorderStroke(1.dp, activeBorder) else null,
         tonalElevation = 0.dp,
         shadowElevation = 0.dp,
     ) {
         Text(
             text = label,
-            modifier = Modifier.padding(horizontal = 18.dp, vertical = 8.dp),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             style = MaterialTheme.typography.labelLarge,
             fontWeight = if (isActive) FontWeight.SemiBold else FontWeight.Medium,
             color = textColor,

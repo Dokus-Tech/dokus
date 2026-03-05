@@ -6,9 +6,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.HorizontalDivider
@@ -49,8 +49,7 @@ import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
 
-private val CanonicalPreviewWidth = Constraints.DocumentDetail.previewMaxWidth + 128.dp
-private val CanonicalPreviewMinHeight = 650.dp
+private val CanonicalPreviewWidth = Constraints.DocumentDetail.previewMaxWidth + 160.dp
 
 @Composable
 internal fun CanonicalCenterPane(
@@ -93,9 +92,8 @@ internal fun CanonicalCenterPane(
                 counterpartyName = counterparty.name ?: state.document.document.filename,
                 counterpartyAddress = counterparty.address,
                 modifier = Modifier
-                    .padding(vertical = Constraints.Spacing.large)
                     .width(CanonicalPreviewWidth)
-                    .heightIn(min = CanonicalPreviewMinHeight)
+                    .fillMaxHeight()
             )
         }
         return
@@ -112,9 +110,8 @@ internal fun CanonicalCenterPane(
     ) {
         DokusCardSurface(
             modifier = Modifier
-                .padding(vertical = Constraints.Spacing.large)
                 .width(CanonicalPreviewWidth)
-                .heightIn(min = CanonicalPreviewMinHeight),
+                .fillMaxHeight(),
             shape = MaterialTheme.shapes.small,
         ) {
             Column(
@@ -273,9 +270,8 @@ private fun SourceViewerCenter(
     ) {
         DokusCardSurface(
             modifier = Modifier
-                .padding(vertical = Constraints.Spacing.large)
                 .width(CanonicalPreviewWidth)
-                .heightIn(min = CanonicalPreviewMinHeight),
+                .fillMaxHeight(),
             shape = MaterialTheme.shapes.small,
         ) {
             Column(
