@@ -163,8 +163,8 @@ internal fun OnboardingCenteredShell(
 
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .widthIn(max = CenterPaneMaxWidth),
+                    .widthIn(max = CenterPaneMaxWidth)
+                    .fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 content = content,
             )

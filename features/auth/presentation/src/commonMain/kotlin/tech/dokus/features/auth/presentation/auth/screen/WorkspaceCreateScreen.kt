@@ -14,11 +14,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -32,7 +31,6 @@ import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_continue
-import tech.dokus.aura.resources.auth_step_of
 import tech.dokus.aura.resources.state_creating
 import tech.dokus.aura.resources.workspace_create_button
 import tech.dokus.domain.LegalName
@@ -53,6 +51,7 @@ import tech.dokus.foundation.aura.extensions.dismissKeyboardOnTapOutside
 private const val ContentFadeOutDurationMs = 600
 private const val NavigationDelayMs = 100L
 private val StepContentMinHeight = 320.dp
+private val WizardContentMaxWidth = 520.dp
 
 @Composable
 internal fun WorkspaceCreateScreen(
@@ -150,21 +149,9 @@ private fun WorkspaceCreateContent(
     }
 
     Column(
-        modifier = modifier,
+        modifier = modifier.widthIn(max = WizardContentMaxWidth),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(
-            text = stringResource(
-                Res.string.auth_step_of,
-                wizardState.currentStepNumber,
-                wizardState.totalSteps,
-            ),
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-
-        Spacer(modifier = Modifier.height(Constraints.Spacing.xLarge))
-
         Box(
             modifier = Modifier
                 .heightIn(min = StepContentMinHeight)
