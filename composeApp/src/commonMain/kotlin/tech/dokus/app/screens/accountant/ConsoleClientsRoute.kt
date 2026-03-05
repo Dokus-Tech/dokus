@@ -11,11 +11,14 @@ import org.jetbrains.compose.resources.stringResource
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.console_clients_count
 import tech.dokus.aura.resources.console_clients_subtitle
-import tech.dokus.aura.resources.console_clients_title
+import tech.dokus.aura.resources.console_clients_triage_title
+import tech.dokus.aura.resources.console_requests_period_label
 import tech.dokus.app.screens.console.canRenderConsoleContent
 import tech.dokus.app.screens.console.isConsoleAccessDenied
 import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.foundation.app.shell.HomeShellTopBarAction
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.app.shell.HomeShellTopBarConfig
 import tech.dokus.foundation.app.shell.HomeShellTopBarMode
@@ -68,10 +71,27 @@ internal fun ConsoleClientsRoute(
         }
     }
 
+    val title = stringResource(Res.string.console_clients_triage_title)
+    val fallbackSubtitle = stringResource(Res.string.console_clients_subtitle)
+    val periodLabel = stringResource(Res.string.console_requests_period_label)
+    val topBarSubtitle = when (state) {
+        is ConsoleClientsState.Content -> {
+            val content = state as ConsoleClientsState.Content
+            "${content.firmName} · ${stringResource(Res.string.console_clients_count, content.clients.size)}"
+        }
+
+        else -> fallbackSubtitle
+    }
     val topBarConfig = HomeShellTopBarConfig(
         mode = HomeShellTopBarMode.Title(
-            title = stringResource(Res.string.console_clients_title),
-            subtitle = stringResource(Res.string.console_clients_subtitle),
+            title = title,
+            subtitle = topBarSubtitle,
+        ),
+        actions = listOf(
+            HomeShellTopBarAction.Text(
+                label = periodLabel,
+                onClick = {},
+            )
         )
     )
     RegisterHomeShellTopBar(

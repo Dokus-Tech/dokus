@@ -79,6 +79,7 @@ internal class ConsoleClientsContainer(
                 updateState {
                     ConsoleClientsState.Content(
                         firmId = firm.id,
+                        firmName = firm.name.value,
                         clients = clients.sortedWith(
                             compareBy<ConsoleClientSummary> {
                                 it.companyName.value.lowercase()

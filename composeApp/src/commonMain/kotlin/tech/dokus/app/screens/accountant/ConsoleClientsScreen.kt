@@ -26,6 +26,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.console_clients_add_client
 import tech.dokus.aura.resources.console_clients_column_company
 import tech.dokus.aura.resources.console_clients_column_vat
 import tech.dokus.aura.resources.console_clients_count
@@ -36,6 +37,7 @@ import tech.dokus.aura.resources.console_back_to_clients
 import tech.dokus.aura.resources.console_document_status
 import tech.dokus.aura.resources.console_document_type
 import tech.dokus.aura.resources.console_no_documents_yet
+import tech.dokus.aura.resources.console_requests_period_label
 import tech.dokus.domain.DisplayName
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.enums.DocumentStatus
@@ -48,6 +50,8 @@ import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.auth.ConsoleClientSummary
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.PButton
+import tech.dokus.foundation.aura.components.PButtonVariant
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.common.PSearchFieldCompact
@@ -68,6 +72,7 @@ internal fun ConsoleClientsScreen(
     state: ConsoleClientsState,
     snackbarHostState: SnackbarHostState,
     onIntent: (ConsoleClientsIntent) -> Unit,
+    onAddClientClick: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -104,6 +109,7 @@ internal fun ConsoleClientsScreen(
                         ClientsListContent(
                             state = state,
                             onIntent = onIntent,
+                            onAddClientClick = onAddClientClick,
                         )
                     } else {
                         ClientDocumentsContent(
@@ -121,8 +127,11 @@ internal fun ConsoleClientsScreen(
 private fun ClientsListContent(
     state: ConsoleClientsState.Content,
     onIntent: (ConsoleClientsIntent) -> Unit,
+    onAddClientClick: () -> Unit,
 ) {
     val isLargeScreen = LocalScreenSize.current.isLarge
+    val filteredClients = state.filteredClients
+    val periodLabel = stringResource(Res.string.console_requests_period_label)
 
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -134,23 +143,20 @@ private fun ClientsListContent(
             placeholder = stringResource(Res.string.console_clients_search_placeholder),
             onClear = {
                 onIntent(ConsoleClientsIntent.UpdateQuery(""))
-            }
+            },
+            modifier = if (isLargeScreen) Modifier.fillMaxWidth(0.5f) else Modifier.fillMaxWidth(),
         )
 
-        Text(
-            text = stringResource(Res.string.console_clients_count, state.filteredClients.size),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-
-        if (state.filteredClients.isEmpty()) {
+        if (filteredClients.isEmpty()) {
             val emptyText = if (state.clients.isEmpty()) {
                 stringResource(Res.string.console_clients_empty_all)
             } else {
                 stringResource(Res.string.console_clients_empty)
             }
             Box(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
@@ -160,58 +166,104 @@ private fun ClientsListContent(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            return
-        }
-
-        if (isLargeScreen) {
-            DokusCardSurface(
-                modifier = Modifier.fillMaxSize(),
-            ) {
-                Column(modifier = Modifier.fillMaxSize()) {
-                    DokusTableRow(
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                            horizontal = Constraints.Spacing.medium
-                        ),
+        } else {
+            if (isLargeScreen) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                ) {
+                    DokusCardSurface(
+                        modifier = Modifier.fillMaxSize(),
                     ) {
-                        DokusTableCell(column = CompanyColumnSpec) {
-                            Text(
-                                text = stringResource(Res.string.console_clients_column_company),
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                        DokusTableCell(column = VatColumnSpec) {
-                            Text(
-                                text = stringResource(Res.string.console_clients_column_vat),
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    }
-
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-
-                    LazyColumn(modifier = Modifier.fillMaxSize()) {
-                        items(
-                            items = state.filteredClients,
-                            key = { it.tenantId.toString() }
-                        ) { client ->
+                        Column(modifier = Modifier.fillMaxSize()) {
                             DokusTableRow(
-                                onClick = {
-                                    onIntent(ConsoleClientsIntent.SelectClient(client.tenantId))
-                                },
                                 contentPadding = androidx.compose.foundation.layout.PaddingValues(
                                     horizontal = Constraints.Spacing.medium
                                 ),
                             ) {
                                 DokusTableCell(column = CompanyColumnSpec) {
                                     Text(
+                                        text = stringResource(Res.string.console_clients_column_company),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                                DokusTableCell(column = VatColumnSpec) {
+                                    Text(
+                                        text = stringResource(Res.string.console_clients_column_vat),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                            }
+
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+                            LazyColumn(modifier = Modifier.fillMaxSize()) {
+                                items(
+                                    items = filteredClients,
+                                    key = { it.tenantId.toString() }
+                                ) { client ->
+                                    DokusTableRow(
+                                        onClick = {
+                                            onIntent(ConsoleClientsIntent.SelectClient(client.tenantId))
+                                        },
+                                        contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                                            horizontal = Constraints.Spacing.medium
+                                        ),
+                                    ) {
+                                        DokusTableCell(column = CompanyColumnSpec) {
+                                            Text(
+                                                text = client.companyName.value,
+                                                style = MaterialTheme.typography.bodyLarge,
+                                                fontWeight = FontWeight.Medium,
+                                            )
+                                        }
+                                        DokusTableCell(column = VatColumnSpec) {
+                                            Text(
+                                                text = client.vatNumber?.value ?: "—",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            )
+                                        }
+                                    }
+                                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    items(
+                        items = filteredClients,
+                        key = { it.tenantId.toString() }
+                    ) { client ->
+                        DokusCardSurface(
+                            modifier = Modifier.fillMaxWidth(),
+                            onClick = { onIntent(ConsoleClientsIntent.SelectClient(client.tenantId)) },
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(Constraints.Spacing.medium),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Column(
+                                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                                ) {
+                                    Text(
                                         text = client.companyName.value,
                                         style = MaterialTheme.typography.bodyLarge,
                                         fontWeight = FontWeight.Medium,
                                     )
-                                }
-                                DokusTableCell(column = VatColumnSpec) {
                                     Text(
                                         text = client.vatNumber?.value ?: "—",
                                         style = MaterialTheme.typography.bodyMedium,
@@ -219,49 +271,27 @@ private fun ClientsListContent(
                                     )
                                 }
                             }
-                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                         }
                     }
                 }
             }
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                items(
-                    items = state.filteredClients,
-                    key = { it.tenantId.toString() }
-                ) { client ->
-                    DokusCardSurface(
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = { onIntent(ConsoleClientsIntent.SelectClient(client.tenantId)) },
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(Constraints.Spacing.medium),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Column(
-                                verticalArrangement = Arrangement.spacedBy(4.dp),
-                            ) {
-                                Text(
-                                    text = client.companyName.value,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.Medium,
-                                )
-                                Text(
-                                    text = client.vatNumber?.value ?: "—",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
-                        }
-                    }
-                }
-            }
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = "${stringResource(Res.string.console_clients_count, filteredClients.size)} · $periodLabel",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            PButton(
+                text = stringResource(Res.string.console_clients_add_client),
+                variant = PButtonVariant.Outline,
+                onClick = onAddClientClick,
+            )
         }
     }
 }
@@ -398,6 +428,7 @@ private fun ConsoleClientsScreenMobileContentPreview(
         ConsoleClientsScreen(
             state = ConsoleClientsState.Content(
                 firmId = FirmId("00000000-0000-0000-0000-000000000111"),
+                firmName = "Kantoor Boonen",
                 clients = previewClients(),
             ),
             snackbarHostState = SnackbarHostState(),
@@ -415,6 +446,7 @@ private fun ConsoleClientsScreenDesktopContentPreview(
         ConsoleClientsScreen(
             state = ConsoleClientsState.Content(
                 firmId = FirmId("00000000-0000-0000-0000-000000000111"),
+                firmName = "Kantoor Boonen",
                 clients = previewClients(),
             ),
             snackbarHostState = SnackbarHostState(),
@@ -432,6 +464,7 @@ private fun ConsoleClientsScreenDesktopEmptyAllPreview(
         ConsoleClientsScreen(
             state = ConsoleClientsState.Content(
                 firmId = FirmId("00000000-0000-0000-0000-000000000111"),
+                firmName = "Kantoor Boonen",
                 clients = emptyList(),
             ),
             snackbarHostState = SnackbarHostState(),
@@ -449,6 +482,7 @@ private fun ConsoleClientsScreenDesktopEmptyFilterPreview(
         ConsoleClientsScreen(
             state = ConsoleClientsState.Content(
                 firmId = FirmId("00000000-0000-0000-0000-000000000111"),
+                firmName = "Kantoor Boonen",
                 clients = previewClients(),
                 query = "not-found-client",
             ),
@@ -467,6 +501,7 @@ private fun ConsoleClientDocumentsDesktopPreview(
         ConsoleClientsScreen(
             state = ConsoleClientsState.Content(
                 firmId = FirmId("00000000-0000-0000-0000-000000000111"),
+                firmName = "Kantoor Boonen",
                 clients = previewClients(),
                 selectedClientTenantId = TenantId("00000000-0000-0000-0000-000000000001"),
                 documentsState = DokusState.success(previewDocumentRecords()),
@@ -486,6 +521,7 @@ private fun ConsoleClientDocumentsEmptyDesktopPreview(
         ConsoleClientsScreen(
             state = ConsoleClientsState.Content(
                 firmId = FirmId("00000000-0000-0000-0000-000000000111"),
+                firmName = "Kantoor Boonen",
                 clients = previewClients(),
                 selectedClientTenantId = TenantId("00000000-0000-0000-0000-000000000001"),
                 documentsState = DokusState.success(emptyList()),
@@ -506,6 +542,7 @@ private fun ConsoleClientDocumentsSelectedDesktopPreview(
         ConsoleClientsScreen(
             state = ConsoleClientsState.Content(
                 firmId = FirmId("00000000-0000-0000-0000-000000000111"),
+                firmName = "Kantoor Boonen",
                 clients = previewClients(),
                 selectedClientTenantId = TenantId("00000000-0000-0000-0000-000000000001"),
                 documentsState = DokusState.success(documents),

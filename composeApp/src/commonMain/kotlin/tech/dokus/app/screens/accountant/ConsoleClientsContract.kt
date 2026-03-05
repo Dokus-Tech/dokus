@@ -19,6 +19,7 @@ sealed interface ConsoleClientsState : MVIState, DokusState<Nothing> {
 
     data class Content(
         val firmId: FirmId,
+        val firmName: String,
         val clients: List<ConsoleClientSummary>,
         val query: String = "",
         val selectedClientTenantId: TenantId? = null,

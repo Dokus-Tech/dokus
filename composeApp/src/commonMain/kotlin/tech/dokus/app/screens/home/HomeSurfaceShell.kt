@@ -294,6 +294,7 @@ private fun filterFirmNavItems(
 ): List<tech.dokus.foundation.aura.model.NavItem> {
     if (!accessContext.canBookkeeperConsole) return emptyList()
     val firmDestinations = setOf(
+        HomeDestination.Search,
         HomeDestination.ConsoleClients,
         HomeDestination.ConsoleRequests,
         HomeDestination.ConsoleActivity,
