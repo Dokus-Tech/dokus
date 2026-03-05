@@ -1,7 +1,6 @@
 package tech.dokus.features.auth.presentation.auth.route
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -9,7 +8,6 @@ import androidx.compose.runtime.setValue
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.features.auth.mvi.WorkspaceSelectAction
 import tech.dokus.features.auth.mvi.WorkspaceSelectContainer
-import tech.dokus.features.auth.mvi.WorkspaceSelectState
 import tech.dokus.features.auth.presentation.auth.screen.WorkspaceSelectScreen
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.navigation.destinations.AuthDestination
@@ -24,34 +22,15 @@ internal fun WorkspaceSelectRoute(
 ) {
     val navController = LocalNavController.current
     var triggerWarp by remember { mutableStateOf(false) }
-    var loginRedirectHandled by remember { mutableStateOf(false) }
-
-    val navigateToLogin: () -> Unit = {
-        if (!loginRedirectHandled) {
-            loginRedirectHandled = true
-            navController.navigateTo(AuthDestination.Login) {
-                popUpTo(0) { inclusive = true }
-            }
-        }
-    }
 
     val state by container.store.subscribe { action ->
         when (action) {
             WorkspaceSelectAction.NavigateToHome -> {
                 triggerWarp = true
             }
-            WorkspaceSelectAction.NavigateToLogin -> {
-                navigateToLogin()
-            }
             is WorkspaceSelectAction.ShowSelectionError -> {
                 // TODO: surface error feedback
             }
-        }
-    }
-
-    LaunchedEffect(state) {
-        if (state is WorkspaceSelectState.SessionExpired) {
-            navigateToLogin()
         }
     }
 

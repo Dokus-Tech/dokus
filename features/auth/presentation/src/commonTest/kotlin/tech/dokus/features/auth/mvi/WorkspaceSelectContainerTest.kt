@@ -1,6 +1,7 @@
 package tech.dokus.features.auth.mvi
 
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import pro.respawn.flowmvi.test.subscribeAndTest
 import tech.dokus.domain.exceptions.DokusException
@@ -15,7 +16,7 @@ import kotlin.test.assertIs
 class WorkspaceSelectContainerTest {
 
     @Test
-    fun `unauthenticated tenants load emits navigate to login instead of error state`() = runTest {
+    fun `unauthenticated tenants load resolves to auth error state for global logout handler`() = runTest {
         val container = WorkspaceSelectContainer(
             listMyTenants = FakeListMyTenantsUseCase(
                 Result.failure(DokusException.NotAuthenticated("Authentication required"))
@@ -24,8 +25,9 @@ class WorkspaceSelectContainerTest {
         )
 
         container.store.subscribeAndTest {
-            WorkspaceSelectIntent.LoadTenants resultsIn WorkspaceSelectAction.NavigateToLogin
-            assertIs<WorkspaceSelectState.SessionExpired>(states.value)
+            advanceUntilIdle()
+            val state = assertIs<WorkspaceSelectState.Error>(states.value)
+            assertIs<DokusException.NotAuthenticated>(state.exception)
         }
     }
 }
