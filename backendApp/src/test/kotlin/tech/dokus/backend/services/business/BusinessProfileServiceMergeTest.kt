@@ -8,6 +8,7 @@ import io.mockk.mockk
 import io.mockk.slot
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.business.BusinessProfileEnrichmentJobRepository
 import tech.dokus.database.repository.business.BusinessProfileRecord
@@ -177,5 +178,48 @@ class BusinessProfileServiceMergeTest {
         assertEquals(BusinessProfileVerificationState.Verified, captured.captured.verificationState)
         assertEquals(55, captured.captured.evidenceScore)
         assertEquals("{\"new\":true}", captured.captured.evidenceChecksJson)
+    }
+
+    @Test
+    fun `null enrichment text does not erase existing unpinned summary and activities`() = kotlinx.coroutines.runBlocking {
+        val tenantId = TenantId.generate()
+        val subjectId = Uuid.random()
+        val existing = BusinessProfileRecord(
+            tenantId = tenantId,
+            subjectType = BusinessProfileSubjectType.Contact,
+            subjectId = subjectId,
+            websiteUrl = "https://kept.example",
+            businessSummary = "Existing business summary",
+            businessActivitiesJson = "[\"existing activity\"]",
+            verificationState = BusinessProfileVerificationState.Verified,
+            summaryPinned = false,
+            activitiesPinned = false
+        )
+        val captured = slot<BusinessProfileRecord>()
+
+        coEvery {
+            profileRepository.getBySubject(tenantId, BusinessProfileSubjectType.Contact, subjectId)
+        } returns existing
+        coJustRun { profileRepository.upsert(capture(captured)) }
+
+        service.applyEnrichment(
+            tenantId = tenantId,
+            subjectType = BusinessProfileSubjectType.Contact,
+            subjectId = subjectId,
+            verificationState = BusinessProfileVerificationState.Suggested,
+            evidenceScore = 62,
+            evidenceChecksJson = "{\"new\":true}",
+            websiteUrl = "https://new.example",
+            businessSummary = null,
+            businessActivities = null,
+            logoStorageKey = null,
+            lastErrorCode = null,
+            lastErrorMessage = null
+        )
+
+        assertEquals("Existing business summary", captured.captured.businessSummary)
+        assertEquals("[\"existing activity\"]", captured.captured.businessActivitiesJson)
+        assertEquals("https://new.example", captured.captured.websiteUrl)
+        assertNull(captured.captured.lastErrorCode)
     }
 }

@@ -274,12 +274,12 @@ class BusinessProfileService(
         val mergedSummary = when {
             existing.summaryPinned -> existing.businessSummary
             skip -> existing.businessSummary
-            else -> businessSummary
+            else -> businessSummary ?: existing.businessSummary
         }
         val mergedActivitiesJson = when {
             existing.activitiesPinned -> existing.businessActivitiesJson
             skip -> existing.businessActivitiesJson
-            else -> normalizedActivities?.let { encodeActivities(it) }
+            else -> normalizedActivities?.let { encodeActivities(it) } ?: existing.businessActivitiesJson
         }
         val mergedLogoStorageKey: String?
         val logoReason: String?

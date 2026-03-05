@@ -7,7 +7,11 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
+import io.mockk.slot
 import org.junit.jupiter.api.Test
+import kotlin.test.assertTrue
 import tech.dokus.backend.services.business.BusinessProfileService
 import tech.dokus.backend.services.business.BusinessLogoSelectionService
 import tech.dokus.backend.services.business.BusinessWebsiteProbe
@@ -51,6 +55,7 @@ import java.io.ByteArrayOutputStream
 import javax.imageio.ImageIO
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
+import kotlin.time.Duration.Companion.minutes
 
 class BusinessProfileEnrichmentWorkerTest {
     private val config = BusinessProfileEnrichmentConfig(
@@ -486,6 +491,27 @@ class BusinessProfileEnrichmentWorkerTest {
                 error = "boom"
             )
         }
+    }
+
+    @Test
+    fun `stale recovery lease is extended for long-running logo pipeline`() = runBlocking {
+        val staleBefore = slot<LocalDateTime>()
+        val retryAt = slot<LocalDateTime>()
+
+        coEvery {
+            jobRepository.recoverStaleProcessing(
+                staleBefore = capture(staleBefore),
+                retryAt = capture(retryAt),
+                reason = any()
+            )
+        } returns Result.success(0)
+        coEvery { jobRepository.claimDue(any(), any()) } returns Result.success(emptyList())
+
+        val worker = createWorker()
+        worker.processBatchForTest()
+
+        val delta = retryAt.captured.toInstant(TimeZone.UTC) - staleBefore.captured.toInstant(TimeZone.UTC)
+        assertTrue(delta >= 20.minutes, "Expected stale lease window >= 20 minutes, got $delta")
     }
 
     private fun createWorker(): BusinessProfileEnrichmentWorker {

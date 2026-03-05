@@ -20,6 +20,7 @@ import tech.dokus.backend.services.business.BusinessLogoSelectionService
 import tech.dokus.backend.services.business.BusinessProfileService
 import tech.dokus.backend.services.business.BusinessWebsiteProbe
 import tech.dokus.backend.services.business.BusinessWebsiteRanker
+import tech.dokus.backend.services.business.LogoPipelineTotalBudgetMs
 import tech.dokus.database.repository.auth.AddressRepository
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.business.BusinessProfileEnrichmentJob
@@ -36,6 +37,7 @@ import tech.dokus.foundation.backend.utils.runSuspendCatching
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.uuid.ExperimentalUuidApi
 
@@ -56,6 +58,10 @@ class BusinessProfileEnrichmentWorker(
     websiteRanker: BusinessWebsiteRanker,
     logoSelectionService: BusinessLogoSelectionService,
 ) {
+    private companion object {
+        val MinStaleProcessingLease: Duration = LogoPipelineTotalBudgetMs.milliseconds + 5.minutes
+    }
+
     private val subjectContextLoader = BusinessSubjectContextLoader(
         tenantRepository = tenantRepository,
         addressRepository = addressRepository,
@@ -129,7 +135,8 @@ class BusinessProfileEnrichmentWorker(
     private suspend fun processBatch() {
         val nowInstant = Clock.System.now()
         val now = nowInstant.toLocalDateTime(TimeZone.UTC)
-        val staleBefore = (nowInstant - config.staleLeaseMinutes.minutes).toLocalDateTime(TimeZone.UTC)
+        val staleLease = maxOf(config.staleLeaseMinutes.minutes, MinStaleProcessingLease)
+        val staleBefore = (nowInstant - staleLease).toLocalDateTime(TimeZone.UTC)
         jobRepository.recoverStaleProcessing(
             staleBefore = staleBefore,
             retryAt = now,
