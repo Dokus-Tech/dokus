@@ -44,6 +44,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil3.ImageLoader
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import org.jetbrains.compose.resources.stringResource
@@ -58,9 +59,13 @@ import tech.dokus.aura.resources.contacts_vendor
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.foundation.app.network.rememberAuthenticatedImageLoader
+import tech.dokus.foundation.app.network.rememberResolvedApiUrl
 import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.aura.components.AvatarShape
+import tech.dokus.foundation.aura.components.AvatarSize
+import tech.dokus.foundation.aura.components.CompanyAvatarImage
 import tech.dokus.foundation.aura.components.DokusCardSurface
-import tech.dokus.foundation.aura.components.MonogramAvatar
 import tech.dokus.foundation.aura.components.badges.ContactRole as UiContactRole
 import tech.dokus.foundation.aura.components.badges.RoleBadge
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
@@ -120,7 +125,7 @@ internal fun ContactsList(
     state: DokusState<PaginationState<ContactDto>>,
     onContactClick: (ContactDto) -> Unit,
     onLoadMore: () -> Unit,
-    onAddContactClick: () -> Unit,
+    onAddContactClick: (() -> Unit)?,
     contentPadding: PaddingValues = PaddingValues(Constraints.Elevation.none),
     modifier: Modifier = Modifier,
     selectedContactId: ContactId? = null,
@@ -207,6 +212,7 @@ private fun ContactsListContent(
     selectedContactId: ContactId? = null,
     isDesktop: Boolean = false,
 ) {
+    val imageLoader = rememberAuthenticatedImageLoader()
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         state = listState,
@@ -222,10 +228,12 @@ private fun ContactsListContent(
                     contact = contact,
                     isSelected = contact.id == selectedContactId,
                     onClick = { onContactClick(contact) },
+                    imageLoader = imageLoader,
                 )
             } else {
                 ContactCard(
                     contact = contact,
+                    imageLoader = imageLoader,
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { onContactClick(contact) }
@@ -247,18 +255,19 @@ private fun ContactsListContent(
 // =============================================================================
 
 /**
- * Desktop master list row: MonogramAvatar + name + RoleBadge + doc count.
- * Selected: warm bg + 2dp amber right border.
+ * Desktop master list row matching the v16 split-pane structure.
  */
 @Composable
 private fun ContactListItem(
     contact: ContactDto,
     isSelected: Boolean,
     onClick: () -> Unit,
+    imageLoader: ImageLoader,
     modifier: Modifier = Modifier,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isHovered by interactionSource.collectIsHoveredAsState()
+    val avatarUrl = rememberResolvedApiUrl(contact.avatar?.small)
 
     val surfaceHover = MaterialTheme.colorScheme.surfaceHover
     val borderAmberColor = MaterialTheme.colorScheme.borderAmber
@@ -293,13 +302,14 @@ private fun ContactListItem(
             )
             .padding(horizontal = Constraints.Spacing.medium, vertical = Constraints.Spacing.small),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
+        horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium),
     ) {
-        MonogramAvatar(
-            initials = initials,
-            size = 32.dp,
-            radius = 8.dp,
-            selected = isSelected,
+        CompanyAvatarImage(
+            avatarUrl = avatarUrl,
+            initial = initials,
+            size = AvatarSize.Small,
+            shape = AvatarShape.RoundedSquare,
+            imageLoader = imageLoader
         )
 
         Column(
@@ -309,13 +319,12 @@ private fun ContactListItem(
             Text(
                 text = contact.name.value,
                 style = MaterialTheme.typography.bodyMedium.copy(
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 12.5.sp,
+                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
+                    fontSize = 13.sp,
                 ),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            // Subtitle: "Vendor · 2 docs"
             val roleName = when (uiRole) {
                 UiContactRole.Vendor -> stringResource(Res.string.contacts_vendor)
                 UiContactRole.Bank, UiContactRole.Accountant -> null
@@ -326,17 +335,17 @@ private fun ContactListItem(
             } else {
                 stringResource(Res.string.contacts_doc_count_plural)
             }
-            val subtitle = buildString {
+            val meta = buildString {
                 if (roleName != null) append(roleName)
                 if (docCount > 0L) {
                     if (isNotEmpty()) append(" \u00b7 ")
                     append("$docCount $docLabel")
                 }
             }
-            if (subtitle.isNotEmpty()) {
+            if (meta.isNotEmpty()) {
                 Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodySmall,
+                    text = meta,
+                    style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.textMuted,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -356,7 +365,7 @@ private fun ContactListItem(
  */
 @Composable
 private fun ContactsEmptyState(
-    onAddContactClick: () -> Unit,
+    onAddContactClick: (() -> Unit)?,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -397,29 +406,30 @@ private fun ContactsEmptyState(
 
             Spacer(modifier = Modifier.height(EmptyStateSpacingLarge))
 
-            // Empty state CTA card
-            DokusCardSurface(
-                onClick = onAddContactClick,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(CtaCardPadding),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
+            if (onAddContactClick != null) {
+                DokusCardSurface(
+                    onClick = onAddContactClick,
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.PersonAdd,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(modifier = Modifier.width(CtaIconSpacing))
-                    Text(
-                        text = stringResource(Res.string.contacts_add_first),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.primary
-                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(CtaCardPadding),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PersonAdd,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.width(CtaIconSpacing))
+                        Text(
+                            text = stringResource(Res.string.contacts_add_first),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
             }
         }

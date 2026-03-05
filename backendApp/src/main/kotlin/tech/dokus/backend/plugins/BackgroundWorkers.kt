@@ -8,6 +8,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.koin.ktor.ext.getKoin
 import org.koin.ktor.ext.inject
+import tech.dokus.backend.worker.BusinessProfileEnrichmentWorker
 import tech.dokus.backend.worker.CashflowProjectionReconciliationWorker
 import tech.dokus.backend.worker.DocumentProcessingWorker
 import tech.dokus.backend.worker.PeppolOutboundReconciliationWorker
@@ -23,6 +24,7 @@ private val logger = loggerFor("BackgroundWorkers")
 
 fun Application.configureBackgroundWorkers() {
     val processingWorker by inject<DocumentProcessingWorker>()
+    val businessProfileEnrichmentWorker by inject<BusinessProfileEnrichmentWorker>()
     val rateLimitCleanupWorker by inject<RateLimitCleanupWorker>()
     val peppolPollingWorker by inject<PeppolPollingWorker>()
     val peppolOutboundWorker by inject<PeppolOutboundWorker>()
@@ -37,6 +39,8 @@ fun Application.configureBackgroundWorkers() {
         rateLimitCleanupWorker.start()
         logger.info("Starting document processing worker")
         processingWorker.start()
+        logger.info("Starting business profile enrichment worker")
+        businessProfileEnrichmentWorker.start()
         logger.info("Starting Peppol polling worker")
         peppolPollingWorker.start()
         logger.info("Starting PEPPOL outbound worker")
@@ -69,6 +73,7 @@ fun Application.configureBackgroundWorkers() {
     monitor.subscribe(ApplicationStopping) {
         webhookSyncJob?.cancel()
         processingWorker.stop()
+        businessProfileEnrichmentWorker.stop()
         peppolPollingWorker.stop()
         peppolOutboundWorker.stop()
         peppolOutboundReconciliationWorker.stop()

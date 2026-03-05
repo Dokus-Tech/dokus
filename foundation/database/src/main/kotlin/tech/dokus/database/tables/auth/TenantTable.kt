@@ -32,6 +32,7 @@ object TenantTable : UUIDTable("tenants") {
 
     // Business info
     val vatNumber = varchar("vat_number", 50)
+    val websiteUrl = varchar("website_url", 500).nullable()
 
     // Timestamps
     val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)

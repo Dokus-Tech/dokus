@@ -34,7 +34,8 @@ object TenantMappers {
         trialEndsAt = this[TenantTable.trialEndsAt],
         subscriptionStartedAt = this[TenantTable.subscriptionStartedAt],
         createdAt = this[TenantTable.createdAt],
-        updatedAt = this[TenantTable.updatedAt]
+        updatedAt = this[TenantTable.updatedAt],
+        websiteUrl = this[TenantTable.websiteUrl]
     )
 
     fun ResultRow.toTenantSettings(): TenantSettings = TenantSettings(

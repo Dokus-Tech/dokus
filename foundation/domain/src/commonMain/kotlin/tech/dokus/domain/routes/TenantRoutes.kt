@@ -49,10 +49,34 @@ class Tenants {
     class Avatar(val parent: Tenants = Tenants())
 
     /**
+     * GET /api/v1/tenants/avatar/{size}.webp
+     * Stream tenant avatar image by size.
+     */
+    @Serializable
+    @Resource("avatar/{size}.webp")
+    class AvatarImage(val parent: Tenants = Tenants(), val size: String)
+
+    /**
      * GET /api/v1/tenants/invoice-number-preview
      * Preview the next invoice number without consuming it.
      */
     @Serializable
     @Resource("invoice-number-preview")
     class InvoiceNumberPreview(val parent: Tenants = Tenants())
+
+    /**
+     * PUT /api/v1/tenants/business-profile
+     * Update canonical website/summary/activities and mark edited fields as pinned.
+     */
+    @Serializable
+    @Resource("business-profile")
+    class BusinessProfile(val parent: Tenants = Tenants())
+
+    /**
+     * PUT /api/v1/tenants/business-profile/pins
+     * Update pin flags for tenant business profile fields.
+     */
+    @Serializable
+    @Resource("business-profile/pins")
+    class BusinessProfilePins(val parent: Tenants = Tenants())
 }

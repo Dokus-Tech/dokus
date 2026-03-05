@@ -73,3 +73,6 @@ data class ModelSet(
 
 val IntelligenceMode.asVisionModel
     get() = AIModels.forMode(this).vision
+
+val IntelligenceMode.asOrchestratorModel
+    get() = AIModels.forMode(this).orchestrator

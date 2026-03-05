@@ -8,9 +8,11 @@ import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.model.PeppolStatusResponse
 import tech.dokus.domain.model.contact.ContactActivitySummary
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.ContactNoteDto
+import tech.dokus.features.contacts.usecases.ContactInvoiceSnapshot
 import tech.dokus.foundation.app.state.DokusState
 
 /**
@@ -51,6 +53,8 @@ sealed interface ContactDetailsState : MVIState, DokusState<Nothing> {
      * @property contactId ID of the contact being displayed
      * @property contact The contact data
      * @property activityState State of activity summary (independent loading)
+     * @property invoiceSnapshotState State of invoice snapshot (count/totals/recent docs)
+     * @property peppolStatusState State of PEPPOL lookup
      * @property notesState State of notes list (independent loading)
      * @property enrichmentSuggestions Available enrichment suggestions
      * @property uiState UI state for dialogs and panels
@@ -61,6 +65,8 @@ sealed interface ContactDetailsState : MVIState, DokusState<Nothing> {
         val contactId: ContactId,
         val contact: ContactDto,
         val activityState: DokusState<ContactActivitySummary> = DokusState.loading(),
+        val invoiceSnapshotState: DokusState<ContactInvoiceSnapshot> = DokusState.loading(),
+        val peppolStatusState: DokusState<PeppolStatusResponse> = DokusState.loading(),
         val notesState: DokusState<List<ContactNoteDto>> = DokusState.loading(),
         val enrichmentSuggestions: List<EnrichmentSuggestion> = emptyList(),
         val uiState: ContactDetailsUiState = ContactDetailsUiState(),

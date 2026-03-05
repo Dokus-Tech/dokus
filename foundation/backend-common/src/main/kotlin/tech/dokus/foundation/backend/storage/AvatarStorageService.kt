@@ -46,6 +46,14 @@ class AvatarStorageService(
         )
     }
 
+    fun normalizeSize(size: String): String? = size.lowercase().takeIf { AVATAR_SIZES.containsKey(it) }
+
+    fun buildAvatarObjectKey(storageKeyPrefix: String, size: String): String {
+        val normalized = normalizeSize(size)
+            ?: throw IllegalArgumentException("Invalid avatar size: $size")
+        return "${storageKeyPrefix}_$normalized.webp"
+    }
+
     /**
      * Result of avatar upload operation.
      */
@@ -124,7 +132,7 @@ class AvatarStorageService(
     suspend fun getAvatarUrls(storageKeyPrefix: String): Thumbnail? =
         withContext(Dispatchers.IO) {
             // Check if avatar exists by checking one of the sizes
-            val smallKey = "${storageKeyPrefix}_small.webp"
+            val smallKey = buildAvatarObjectKey(storageKeyPrefix, "small")
 
             if (!storage.exists(smallKey)) {
                 logger.debug("Avatar not found: $storageKeyPrefix")
@@ -132,7 +140,7 @@ class AvatarStorageService(
             }
 
             val urls = AVATAR_SIZES.keys.associateWith { sizeName ->
-                val key = "${storageKeyPrefix}_$sizeName.webp"
+                val key = buildAvatarObjectKey(storageKeyPrefix, sizeName)
                 storage.getSignedUrl(key, defaultUrlExpiry)
             }
 
@@ -141,6 +149,13 @@ class AvatarStorageService(
                 medium = urls["medium"]!!,
                 large = urls["large"]!!
             )
+        }
+
+    suspend fun getAvatarBytes(storageKeyPrefix: String, size: String): ByteArray? =
+        withContext(Dispatchers.IO) {
+            val key = buildAvatarObjectKey(storageKeyPrefix, size)
+            if (!storage.exists(key)) return@withContext null
+            storage.get(key)
         }
 
     /**
@@ -152,7 +167,7 @@ class AvatarStorageService(
         logger.info("Deleting avatar: $storageKeyPrefix")
 
         for (sizeName in AVATAR_SIZES.keys) {
-            val key = "${storageKeyPrefix}_$sizeName.webp"
+            val key = buildAvatarObjectKey(storageKeyPrefix, sizeName)
             try {
                 if (storage.exists(key)) {
                     storage.delete(key)

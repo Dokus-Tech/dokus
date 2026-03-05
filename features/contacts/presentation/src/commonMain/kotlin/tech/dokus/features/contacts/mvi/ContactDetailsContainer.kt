@@ -16,6 +16,8 @@ import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.model.PeppolStatusResponse
+import tech.dokus.domain.model.contact.ContactActivitySummary
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.ContactNoteDto
 import tech.dokus.domain.model.contact.CreateContactNoteRequest
@@ -26,9 +28,12 @@ import tech.dokus.features.contacts.usecases.CreateContactNoteUseCase
 import tech.dokus.features.contacts.usecases.DeleteContactNoteUseCase
 import tech.dokus.features.contacts.usecases.GetCachedContactsUseCase
 import tech.dokus.features.contacts.usecases.GetContactActivityUseCase
+import tech.dokus.features.contacts.usecases.GetContactInvoiceSnapshotUseCase
+import tech.dokus.features.contacts.usecases.GetContactPeppolStatusUseCase
 import tech.dokus.features.contacts.usecases.GetContactUseCase
 import tech.dokus.features.contacts.usecases.ListContactNotesUseCase
 import tech.dokus.features.contacts.usecases.UpdateContactNoteUseCase
+import tech.dokus.features.contacts.usecases.ContactInvoiceSnapshot
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.platform.Logger
 
@@ -53,6 +58,8 @@ internal class ContactDetailsContainer(
     contactId: ContactId,
     private val getContact: GetContactUseCase,
     private val getContactActivity: GetContactActivityUseCase,
+    private val getContactInvoiceSnapshot: GetContactInvoiceSnapshotUseCase,
+    private val getContactPeppolStatus: GetContactPeppolStatusUseCase,
     private val listContactNotes: ListContactNotesUseCase,
     private val createContactNote: CreateContactNoteUseCase,
     private val updateContactNote: UpdateContactNoteUseCase,
@@ -121,36 +128,35 @@ internal class ContactDetailsContainer(
 
         updateState { ContactDetailsState.Loading(contactId) }
 
-        // Load all data in parallel
-        val contactDeferred = async { loadContactData(contactId) }
-        val activityDeferred = async { loadActivityData(contactId) }
-        val notesDeferred = async { loadNotesData(contactId) }
+        val contact = loadContactData(contactId)
+        if (contact == null) return
 
-        contactDeferred.await()
-        activityDeferred.await()
-        notesDeferred.await()
+        loadDetailSections(contactId)
     }
 
     private suspend fun ContactDetailsCtx.handleRefresh() {
         withState<ContactDetailsState.Content, _> {
             logger.d { "Refreshing contact details: $contactId" }
 
-            // Reset sub-states to loading
+            // Reset section states while keeping core contact visible.
             updateState {
                 copy(
                     activityState = DokusState.loading(),
+                    invoiceSnapshotState = DokusState.loading(),
+                    peppolStatusState = DokusState.loading(),
                     notesState = DokusState.loading()
                 )
             }
 
-            // Reload all data in parallel
-            val contactDeferred = async { loadContactData(contactId) }
-            val activityDeferred = async { loadActivityData(contactId) }
-            val notesDeferred = async { loadNotesData(contactId) }
+            val refreshedContact = getContact(contactId)
+            refreshedContact.onSuccess { contact ->
+                transitionToContent(contactId, contact)
+                cacheContact(contact)
+            }.onFailure { error ->
+                logger.e(error) { "Failed to refresh contact: $contactId" }
+            }
 
-            contactDeferred.await()
-            activityDeferred.await()
-            notesDeferred.await()
+            loadDetailSections(contactId)
         }
 
         // Also handle refresh from error state
@@ -164,9 +170,10 @@ internal class ContactDetailsContainer(
      * Load contact data with cache-first pattern.
      * Shows cached data immediately, then refreshes from network.
      */
-    private suspend fun ContactDetailsCtx.loadContactData(contactId: ContactId) {
+    private suspend fun ContactDetailsCtx.loadContactData(contactId: ContactId): ContactDto? {
         // Try cache first for immediate display
         val cached = loadContactFromCache(contactId)
+        var resolvedContact: ContactDto? = cached
         if (cached != null) {
             logger.d { "Loaded contact from cache: ${cached.name}" }
             transitionToContent(contactId, cached)
@@ -179,6 +186,7 @@ internal class ContactDetailsContainer(
                 transitionToContent(contactId, contact)
                 // Update cache with fresh data
                 cacheContact(contact)
+                resolvedContact = contact
             },
             onFailure = { error ->
                 logger.e(error) { "Failed to load contact from network: $contactId" }
@@ -195,6 +203,8 @@ internal class ContactDetailsContainer(
                 // If we have cached data, silently keep showing it
             }
         )
+
+        return resolvedContact
     }
 
     /**
@@ -238,21 +248,28 @@ internal class ContactDetailsContainer(
         }
     }
 
-    /**
-     * Load activity summary from API.
-     */
-    private suspend fun ContactDetailsCtx.loadActivityData(contactId: ContactId) {
-        getContactActivity(contactId).fold(
+    private suspend fun ContactDetailsCtx.loadDetailSections(contactId: ContactId) {
+        val activityDeferred = async { getContactActivity(contactId) }
+        val invoiceSnapshotDeferred = async { getContactInvoiceSnapshot(contactId) }
+        val peppolStatusDeferred = async { getContactPeppolStatus(contactId) }
+        val notesDeferred = async { listContactNotes(contactId) }
+
+        applyActivityResult(activityDeferred.await())
+        applyInvoiceSnapshotResult(invoiceSnapshotDeferred.await())
+        applyPeppolStatusResult(peppolStatusDeferred.await())
+        applyNotesResult(notesDeferred.await())
+    }
+
+    private suspend fun ContactDetailsCtx.applyActivityResult(result: Result<ContactActivitySummary>) {
+        result.fold(
             onSuccess = { activity ->
                 logger.i { "Loaded activity: invoices=${activity.invoiceCount}, inbound invoices=${activity.inboundInvoiceCount}" }
                 withState<ContactDetailsState.Content, _> {
-                    updateState {
-                        copy(activityState = DokusState.success(activity))
-                    }
+                    updateState { copy(activityState = DokusState.success(activity)) }
                 }
             },
             onFailure = { error ->
-                logger.e(error) { "Failed to load activity: $contactId" }
+                logger.e(error) { "Failed to load activity" }
                 withState<ContactDetailsState.Content, _> {
                     updateState {
                         copy(
@@ -266,21 +283,66 @@ internal class ContactDetailsContainer(
         )
     }
 
-    /**
-     * Load notes from API.
-     */
-    private suspend fun ContactDetailsCtx.loadNotesData(contactId: ContactId) {
-        listContactNotes(contactId).fold(
-            onSuccess = { notes ->
-                logger.i { "Loaded ${notes.size} notes" }
+    private suspend fun ContactDetailsCtx.applyInvoiceSnapshotResult(
+        result: Result<ContactInvoiceSnapshot>
+    ) {
+        result.fold(
+            onSuccess = { snapshot ->
+                logger.i { "Loaded invoice snapshot: docs=${snapshot.documentsCount}" }
                 withState<ContactDetailsState.Content, _> {
-                    updateState {
-                        copy(notesState = DokusState.success(notes))
-                    }
+                    updateState { copy(invoiceSnapshotState = DokusState.success(snapshot)) }
                 }
             },
             onFailure = { error ->
-                logger.e(error) { "Failed to load notes: $contactId" }
+                logger.e(error) { "Failed to load invoice snapshot" }
+                withState<ContactDetailsState.Content, _> {
+                    updateState {
+                        copy(
+                            invoiceSnapshotState = DokusState.error(error) {
+                                intent(ContactDetailsIntent.Refresh)
+                            }
+                        )
+                    }
+                }
+            }
+        )
+    }
+
+    private suspend fun ContactDetailsCtx.applyPeppolStatusResult(
+        result: Result<PeppolStatusResponse>
+    ) {
+        result.fold(
+            onSuccess = { status ->
+                logger.i { "Loaded PEPPOL status: ${status.status}" }
+                withState<ContactDetailsState.Content, _> {
+                    updateState { copy(peppolStatusState = DokusState.success(status)) }
+                }
+            },
+            onFailure = { error ->
+                logger.e(error) { "Failed to load PEPPOL status" }
+                withState<ContactDetailsState.Content, _> {
+                    updateState {
+                        copy(
+                            peppolStatusState = DokusState.error(error) {
+                                intent(ContactDetailsIntent.Refresh)
+                            }
+                        )
+                    }
+                }
+            }
+        )
+    }
+
+    private suspend fun ContactDetailsCtx.applyNotesResult(result: Result<List<ContactNoteDto>>) {
+        result.fold(
+            onSuccess = { notes ->
+                logger.i { "Loaded ${notes.size} notes" }
+                withState<ContactDetailsState.Content, _> {
+                    updateState { copy(notesState = DokusState.success(notes)) }
+                }
+            },
+            onFailure = { error ->
+                logger.e(error) { "Failed to load notes" }
                 withState<ContactDetailsState.Content, _> {
                     updateState {
                         copy(
@@ -473,7 +535,7 @@ internal class ContactDetailsContainer(
                     }
                     action(ContactDetailsAction.ShowSuccess(ContactDetailsSuccess.NoteAdded))
                     // Reload notes to get updated list
-                    loadNotesData(contactId)
+                    applyNotesResult(listContactNotes(contactId))
                 },
                 onFailure = { error ->
                     logger.e(error) { "Failed to add note" }
@@ -521,7 +583,7 @@ internal class ContactDetailsContainer(
                     }
                     action(ContactDetailsAction.ShowSuccess(ContactDetailsSuccess.NoteUpdated))
                     // Reload notes to get updated list
-                    loadNotesData(contactId)
+                    applyNotesResult(listContactNotes(contactId))
                 },
                 onFailure = { error ->
                     logger.e(error) { "Failed to update note" }
@@ -560,7 +622,7 @@ internal class ContactDetailsContainer(
                     }
                     action(ContactDetailsAction.ShowSuccess(ContactDetailsSuccess.NoteDeleted))
                     // Reload notes to get updated list
-                    loadNotesData(contactId)
+                    applyNotesResult(listContactNotes(contactId))
                 },
                 onFailure = { error ->
                     logger.e(error) { "Failed to delete note" }
