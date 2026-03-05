@@ -183,9 +183,9 @@ private fun WorkspaceCreateContent(
                             hasFreelancerWorkspace = wizardState.hasFreelancerWorkspace,
                             onTypeSelected = { type ->
                                 onIntent(WorkspaceCreateIntent.SelectType(type))
-                                onIntent(WorkspaceCreateIntent.NextClicked)
                             },
                             onBackPress = onBackPress,
+                            onContinue = { onIntent(WorkspaceCreateIntent.NextClicked) },
                             modifier = Modifier.fillMaxWidth(),
                         )
                     }
