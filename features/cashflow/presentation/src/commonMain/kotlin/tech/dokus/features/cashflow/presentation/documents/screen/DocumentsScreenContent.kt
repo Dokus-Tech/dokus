@@ -24,10 +24,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
@@ -57,10 +53,6 @@ import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.style.textMuted
-
-private const val DashLength = 10f
-private const val DashGap = 10f
-private const val DashPhase = 0f
 
 private sealed interface DocumentsDisplayRow {
     data class Local(val row: DocumentsLocalUploadRow) : DocumentsDisplayRow
@@ -415,38 +407,5 @@ private fun MobileDocumentsList(
                 DokusLoader(size = DokusLoaderSize.Small)
             }
         }
-    }
-}
-
-@Composable
-private fun DesktopDropOverlay(text: String) {
-    val borderColor = MaterialTheme.colorScheme.primary
-
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(1.dp)
-            .drawBehind {
-                val stroke = Stroke(
-                    width = 2.dp.toPx(),
-                    pathEffect = PathEffect.dashPathEffect(
-                        intervals = floatArrayOf(DashLength, DashGap),
-                        phase = DashPhase
-                    )
-                )
-                drawRoundRect(
-                    color = borderColor,
-                    style = stroke,
-                    cornerRadius = CornerRadius(12.dp.toPx())
-                )
-            },
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary,
-            textAlign = TextAlign.Center
-        )
     }
 }

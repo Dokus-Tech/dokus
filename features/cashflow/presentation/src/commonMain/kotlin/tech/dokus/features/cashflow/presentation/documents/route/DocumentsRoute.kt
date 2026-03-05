@@ -13,16 +13,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.currentBackStackEntryAsState
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.documents_subtitle
 import tech.dokus.aura.resources.nav_documents
 import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.DocumentId
 import tech.dokus.features.cashflow.mvi.AddDocumentContainer
 import tech.dokus.features.cashflow.presentation.cashflow.components.fileDropTarget
 import tech.dokus.features.cashflow.presentation.cashflow.components.rememberDocumentFilePicker
+import tech.dokus.features.cashflow.presentation.cashflow.model.UploadStatus
 import tech.dokus.features.cashflow.presentation.documents.components.DocumentsAddDocumentSheet
+import tech.dokus.features.cashflow.presentation.documents.components.computeNeedsAttention
 import tech.dokus.features.cashflow.presentation.documents.model.buildDocumentsLocalUploadRows
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsAction
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsContainer
@@ -30,6 +34,7 @@ import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsIntent
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsState
 import tech.dokus.features.cashflow.presentation.documents.screen.DocumentsScreen
 import tech.dokus.features.cashflow.presentation.review.route.toRouteFilterToken
+import tech.dokus.features.cashflow.usecases.GetDocumentRecordUseCase
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.app.network.ConnectionSnackbarEffect
 import tech.dokus.foundation.app.shell.HomeShellTopBarConfig
@@ -46,6 +51,7 @@ private const val HOME_ROUTE_DOCUMENTS = "documents"
 internal fun DocumentsRoute(
     documentsContainer: DocumentsContainer = container(),
     uploadContainer: AddDocumentContainer = container(),
+    getDocumentRecord: GetDocumentRecordUseCase = koinInject(),
 ) {
     val navController = LocalNavController.current
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -53,6 +59,7 @@ internal fun DocumentsRoute(
     var pendingError by remember { mutableStateOf<DokusException?>(null) }
     var isDraggingOverTable by remember { mutableStateOf(false) }
     var isAddDocumentSheetVisible by remember { mutableStateOf(false) }
+    var knownNonAttentionDocumentIds by remember { mutableStateOf<Set<DocumentId>>(emptySet()) }
 
     val uploadManager = remember(uploadContainer) { uploadContainer.provideUploadManager() }
     val uploadTasks by uploadContainer.uploadTasks.collectAsState()
@@ -101,15 +108,53 @@ internal fun DocumentsRoute(
         }
     }
 
+    val completedDocumentIds = remember(uploadTasks, uploadedDocuments) {
+        uploadTasks.mapNotNull { task ->
+            if (task.status == UploadStatus.COMPLETED) {
+                task.documentId ?: uploadedDocuments[task.id]?.id
+            } else {
+                null
+            }
+        }.toSet()
+    }
+
+    LaunchedEffect(completedDocumentIds) {
+        if (completedDocumentIds.isEmpty()) {
+            knownNonAttentionDocumentIds = emptySet()
+            return@LaunchedEffect
+        }
+
+        knownNonAttentionDocumentIds = knownNonAttentionDocumentIds.intersect(completedDocumentIds)
+        val unresolvedIds = completedDocumentIds - knownNonAttentionDocumentIds
+        if (unresolvedIds.isEmpty()) return@LaunchedEffect
+
+        unresolvedIds.forEach { documentId ->
+            getDocumentRecord(documentId)
+                .getOrNull()
+                ?.let { document ->
+                    if (!computeNeedsAttention(document)) {
+                        knownNonAttentionDocumentIds = knownNonAttentionDocumentIds + documentId
+                    }
+                }
+        }
+    }
+
     val contentState = state as? DocumentsState.Content
-    val localUploadRows = remember(contentState?.filter, contentState?.documents?.data, uploadTasks, uploadedDocuments) {
+    val localUploadRows = remember(
+        contentState?.filter,
+        contentState?.documents?.data,
+        uploadTasks,
+        uploadedDocuments,
+        knownNonAttentionDocumentIds
+    ) {
         val cs = contentState ?: return@remember emptyList()
 
         buildDocumentsLocalUploadRows(
             filter = cs.filter,
             uploadTasks = uploadTasks,
             uploadedDocuments = uploadedDocuments,
-            remoteDocuments = cs.documents.data
+            remoteDocuments = cs.documents.data,
+            knownNonAttentionDocumentIds = knownNonAttentionDocumentIds
         )
     }
 

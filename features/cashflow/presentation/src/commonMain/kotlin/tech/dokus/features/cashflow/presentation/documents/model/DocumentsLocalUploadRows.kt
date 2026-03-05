@@ -27,6 +27,7 @@ internal fun buildDocumentsLocalUploadRows(
     uploadTasks: List<DocumentUploadTask>,
     uploadedDocuments: Map<String, DocumentDto>,
     remoteDocuments: List<DocumentRecordDto>,
+    knownNonAttentionDocumentIds: Set<DocumentId> = emptySet(),
 ): List<DocumentsLocalUploadRow> {
     if (uploadTasks.isEmpty()) return emptyList()
 
@@ -45,7 +46,15 @@ internal fun buildDocumentsLocalUploadRows(
         }
 
         if (task.status == UploadStatus.COMPLETED && isRemotePresent) return@mapNotNull null
-        if (!shouldShowLocalRow(filter = filter, isRemotePresent = isRemotePresent)) return@mapNotNull null
+        if (!shouldShowLocalRow(
+                filter = filter,
+                isRemotePresent = isRemotePresent,
+                documentId = documentId,
+                knownNonAttentionDocumentIds = knownNonAttentionDocumentIds
+            )
+        ) {
+            return@mapNotNull null
+        }
 
         DocumentsLocalUploadRow(
             taskId = task.id,
@@ -59,12 +68,14 @@ internal fun buildDocumentsLocalUploadRows(
 private fun shouldShowLocalRow(
     filter: DocumentFilter,
     isRemotePresent: Boolean,
+    documentId: DocumentId?,
+    knownNonAttentionDocumentIds: Set<DocumentId>,
 ): Boolean {
     return when (filter) {
         DocumentFilter.All -> true
-        // Local rows stay visible while server replacement is not present yet.
-        DocumentFilter.NeedsAttention -> !isRemotePresent
+        // Hide rows known to be non-attention even if current filtered page does not include them.
+        DocumentFilter.NeedsAttention -> !isRemotePresent &&
+            (documentId == null || !knownNonAttentionDocumentIds.contains(documentId))
         DocumentFilter.Confirmed -> false
     }
 }
-

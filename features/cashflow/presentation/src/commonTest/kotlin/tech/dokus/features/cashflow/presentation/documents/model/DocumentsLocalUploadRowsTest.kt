@@ -146,6 +146,29 @@ class DocumentsLocalUploadRowsTest {
     }
 
     @Test
+    fun `needs attention hides completed local row when document is known non attention`() {
+        val confirmedId = DocumentId.parse("00000000-0000-0000-0000-000000000666")
+
+        val rows = buildDocumentsLocalUploadRows(
+            filter = DocumentFilter.NeedsAttention,
+            uploadTasks = listOf(
+                task(
+                    id = "confirmed",
+                    fileName = "confirmed.pdf",
+                    status = UploadStatus.COMPLETED,
+                    documentId = confirmedId
+                ),
+                task("pending", "pending.pdf", UploadStatus.PENDING)
+            ),
+            uploadedDocuments = emptyMap(),
+            remoteDocuments = emptyList(),
+            knownNonAttentionDocumentIds = setOf(confirmedId)
+        )
+
+        assertEquals(listOf("pending"), rows.map { it.taskId })
+    }
+
+    @Test
     fun `newer local rows are prepended first`() {
         val first = task("old", "old.pdf", UploadStatus.PENDING)
         val second = task("new", "new.pdf", UploadStatus.FAILED)
