@@ -18,16 +18,17 @@ import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.contact.CounterpartySnapshot
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class DocumentReviewStateDirectionTest {
 
     @Test
-    fun `confirm is allowed for invoice when direction is unknown`() {
+    fun `confirm is blocked for invoice when direction is unknown`() {
         val state = contentState(direction = DocumentDirection.Unknown)
 
-        assertTrue(state.canConfirm)
-        assertTrue(state.confirmBlockedReason == null)
+        assertFalse(state.canConfirm)
+        assertTrue(state.confirmBlockedReason != null)
     }
 
     @Test
@@ -38,15 +39,15 @@ class DocumentReviewStateDirectionTest {
     }
 
     @Test
-    fun `confirm is allowed when required contact is missing`() {
+    fun `confirm is blocked when required contact is missing`() {
         val state = contentState(
             direction = DocumentDirection.Inbound,
             selectedContactId = null,
             isContactRequired = true,
         )
 
-        assertTrue(state.canConfirm)
-        assertTrue(state.confirmBlockedReason == null)
+        assertFalse(state.canConfirm)
+        assertTrue(state.confirmBlockedReason != null)
     }
 
     @Test

@@ -11,6 +11,7 @@ import org.jetbrains.compose.resources.StringResource
 import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_confirm_missing_fields
+import tech.dokus.aura.resources.cashflow_confirm_select_contact
 import tech.dokus.domain.Money
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.enums.CashflowEntryStatus
@@ -182,7 +183,12 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
             get() = when {
                 isDocumentConfirmed || isDocumentRejected -> null
                 draftData == null -> Res.string.cashflow_confirm_missing_fields
+                counterpartyIntent == CounterpartyIntent.Pending -> Res.string.cashflow_confirm_select_contact
+                draftData.isContactRequired && selectedContactId == null -> Res.string.cashflow_confirm_select_contact
+                !draftData.hasKnownDirectionForConfirmation -> Res.string.cashflow_confirm_missing_fields
+                !draftData.hasRequiredIdentityForConfirmation -> Res.string.cashflow_confirm_missing_fields
                 !draftData.hasRequiredDates -> Res.string.cashflow_confirm_missing_fields
+                !draftData.hasRequiredSubtotalForConfirmation -> Res.string.cashflow_confirm_missing_fields
                 !draftData.hasRequiredTotalForConfirmation -> Res.string.cashflow_confirm_missing_fields
                 !draftData.hasRequiredVatForConfirmation -> Res.string.cashflow_confirm_missing_fields
                 !draftData.hasCoherentAmountsForConfirmation -> Res.string.cashflow_confirm_missing_fields
@@ -338,6 +344,30 @@ private val DocumentDraftData.hasRequiredDates: Boolean
         is InvoiceDraftData -> issueDate != null
         is ReceiptDraftData -> date != null
         is CreditNoteDraftData -> issueDate != null
+    }
+
+/** Direction must be known for document types that map to invoice/credit-note entities. */
+private val DocumentDraftData.hasKnownDirectionForConfirmation: Boolean
+    get() = when (this) {
+        is InvoiceDraftData -> direction != DocumentDirection.Unknown
+        is CreditNoteDraftData -> direction != DocumentDirection.Unknown
+        is ReceiptDraftData -> true
+    }
+
+/** Identity fields required by backend confirmation services. */
+private val DocumentDraftData.hasRequiredIdentityForConfirmation: Boolean
+    get() = when (this) {
+        is InvoiceDraftData -> true
+        is ReceiptDraftData -> !merchantName.isNullOrBlank()
+        is CreditNoteDraftData -> !creditNoteNumber.isNullOrBlank()
+    }
+
+/** Subtotal requirement enforced by backend (credit notes only). */
+private val DocumentDraftData.hasRequiredSubtotalForConfirmation: Boolean
+    get() = when (this) {
+        is InvoiceDraftData -> true
+        is ReceiptDraftData -> true
+        is CreditNoteDraftData -> subtotalAmount != null
     }
 
 /** Whether totals required for confirmation are present. */

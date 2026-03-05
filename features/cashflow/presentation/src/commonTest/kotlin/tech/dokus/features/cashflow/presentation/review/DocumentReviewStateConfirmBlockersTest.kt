@@ -70,6 +70,52 @@ class DocumentReviewStateConfirmBlockersTest {
     }
 
     @Test
+    fun `pending counterparty blocks confirmation`() {
+        val state = contentState(
+            draftData = defaultInvoiceDraft(direction = DocumentDirection.Inbound),
+            counterpartyIntent = CounterpartyIntent.Pending,
+            selectedContactId = null,
+        )
+
+        assertTrue(state.isBlocking)
+        assertFalse(state.canConfirm)
+    }
+
+    @Test
+    fun `missing merchant blocks receipt confirmation`() {
+        val state = contentState(
+            ReceiptDraftData(
+                direction = DocumentDirection.Inbound,
+                merchantName = null,
+                date = LocalDate(2026, 2, 10),
+                totalAmount = Money.from("12.34"),
+                vatAmount = null,
+            )
+        )
+
+        assertTrue(state.isBlocking)
+        assertFalse(state.canConfirm)
+    }
+
+    @Test
+    fun `missing credit note number blocks confirmation`() {
+        val state = contentState(
+            CreditNoteDraftData(
+                direction = DocumentDirection.Inbound,
+                creditNoteNumber = null,
+                issueDate = LocalDate(2026, 2, 10),
+                subtotalAmount = Money.from("100.00"),
+                vatAmount = Money.from("21.00"),
+                totalAmount = Money.from("121.00"),
+            ),
+            selectedContactId = tech.dokus.domain.ids.ContactId.parse("8d2af381-d2bc-4f7f-8d2d-fae6dcbecf77"),
+        )
+
+        assertTrue(state.isBlocking)
+        assertFalse(state.canConfirm)
+    }
+
+    @Test
     fun `missing vat does not block receipt confirmation`() {
         val state = contentState(
             ReceiptDraftData(
@@ -112,6 +158,8 @@ class DocumentReviewStateConfirmBlockersTest {
         draftData: DocumentDraftData,
         hasUnsavedChanges: Boolean = false,
         isSaving: Boolean = false,
+        selectedContactId: tech.dokus.domain.ids.ContactId? = null,
+        counterpartyIntent: CounterpartyIntent = CounterpartyIntent.None,
     ): DocumentReviewState.Content {
         val tenantId = TenantId.parse("44e8ed5c-020a-4bbb-9439-ac85899c5589")
         val documentId = DocumentId.parse("e72f69a8-6913-4d8f-98e7-224db7f4133f")
@@ -128,8 +176,8 @@ class DocumentReviewStateConfirmBlockersTest {
             draftVersion = 1,
             draftEditedAt = null,
             draftEditedBy = null,
-            linkedContactId = null,
-            counterpartyIntent = CounterpartyIntent.None,
+            linkedContactId = selectedContactId,
+            counterpartyIntent = counterpartyIntent,
             lastSuccessfulRunId = null,
             createdAt = now,
             updatedAt = now,
@@ -159,13 +207,15 @@ class DocumentReviewStateConfirmBlockersTest {
             hasUnsavedChanges = hasUnsavedChanges,
             isSaving = isSaving,
             isContactRequired = true,
-            selectedContactId = null,
-            counterpartyIntent = CounterpartyIntent.None,
+            selectedContactId = selectedContactId,
+            counterpartyIntent = counterpartyIntent,
         )
     }
 
-    private fun defaultInvoiceDraft() = InvoiceDraftData(
-        direction = DocumentDirection.Unknown,
+    private fun defaultInvoiceDraft(
+        direction: DocumentDirection = DocumentDirection.Unknown,
+    ) = InvoiceDraftData(
+        direction = direction,
         issueDate = LocalDate(2026, 2, 10),
         subtotalAmount = Money.from("100.00"),
         vatAmount = Money.from("21.00"),
