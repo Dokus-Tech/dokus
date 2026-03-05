@@ -10,9 +10,6 @@ data class UserAccessContext(
     val isSurfaceAvailabilityResolved: Boolean = false,
     val isBookkeeperConsoleDrillDown: Boolean = false,
 ) {
-    val isStage2ReadOnly: Boolean
-        get() = isBookkeeperConsoleDrillDown
-
     val isBookkeeperConsoleOnly: Boolean
         get() = canBookkeeperConsole && !canCompanyManager
 }

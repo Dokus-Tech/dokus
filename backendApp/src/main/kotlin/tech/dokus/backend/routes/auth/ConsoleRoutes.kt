@@ -13,14 +13,16 @@ import org.slf4j.LoggerFactory
 import tech.dokus.backend.routes.cashflow.documents.addDownloadUrl
 import tech.dokus.backend.routes.cashflow.documents.toDto
 import tech.dokus.backend.security.requireFirmAccess
+import tech.dokus.backend.security.requireAnyRole
 import tech.dokus.backend.security.requireFirmClientAccess
-import tech.dokus.backend.security.requireTenantId
+import tech.dokus.backend.security.requireTenantAccess
 import tech.dokus.backend.services.auth.FirmInviteTokenService
 import tech.dokus.database.repository.auth.FirmRepository
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
+import tech.dokus.domain.enums.UserRole
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.DocumentRecordDto
@@ -184,13 +186,22 @@ internal fun Route.consoleRoutes() {
             val principal = dokusPrincipal
             val request = call.receive<AcceptFirmInviteRequest>()
             val payload = inviteTokenService.parse(request.token)
-            val tenantId = requireTenantId()
+            val tenantAccess = requireTenantAccess()
+                .requireAnyRole(UserRole.Admin, UserRole.Owner)
+            val tenantId = tenantAccess.tenantId
 
             val activated = firmRepository.activateAccess(
                 firmId = payload.firmId,
                 tenantId = tenantId,
                 grantedByUserId = principal.userId,
             )
+
+            if (activated) {
+                logger.info(
+                    "Firm access granted: firmId={}, tenantId={}, grantedBy={}",
+                    payload.firmId, tenantId, principal.userId,
+                )
+            }
 
             call.respond(
                 HttpStatusCode.OK,

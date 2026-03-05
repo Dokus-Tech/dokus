@@ -26,7 +26,7 @@ internal fun ShareImportRoute(
                     launchSingleTop = true
                     restoreState = true
                 }
-                HomeNavigationCommandBus.dispatch(HomeNavigationCommand.OpenDocuments())
+                HomeNavigationCommandBus.dispatch(HomeNavigationCommand.OpenDocuments)
             }
 
             ShareImportAction.NavigateToLogin -> {
@@ -40,7 +40,7 @@ internal fun ShareImportRoute(
                     launchSingleTop = true
                     restoreState = true
                 }
-                HomeNavigationCommandBus.dispatch(HomeNavigationCommand.OpenDocuments())
+                HomeNavigationCommandBus.dispatch(HomeNavigationCommand.OpenDocuments)
             }
         }
     }

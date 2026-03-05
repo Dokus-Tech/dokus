@@ -25,8 +25,15 @@ data class FirmInviteTokenPayload(
 class FirmInviteTokenService(
     jwtConfig: JwtConfig,
 ) {
+    // Uses the same HMAC key as auth JWTs. Cross-use is prevented by the distinct
+    // issuer ("dokus-firm-invite") and required token_type claim ("firm_access_invite")
+    // enforced in parse(). If the main JWT verifier ever relaxes issuer/claim checks,
+    // this should be revisited (consider a dedicated secret or derived key).
     private val algorithm = Algorithm.HMAC256(jwtConfig.secret)
 
+    // Tokens are firm-scoped, not tenant-scoped. Any authenticated tenant Owner/Admin
+    // who receives this link can accept it. This is intentional to support sharing
+    // invite links via email, Slack, etc.
     fun generateToken(
         firmId: FirmId,
         expiresAt: Instant,

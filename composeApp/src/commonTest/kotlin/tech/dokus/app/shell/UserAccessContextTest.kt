@@ -8,16 +8,16 @@ import kotlin.test.assertTrue
 class UserAccessContextTest {
 
     @Test
-    fun `stage2 read-only is enabled for bookkeeper console drill-down`() {
-        val context = UserAccessContext(isBookkeeperConsoleDrillDown = true)
+    fun `bookkeeper console only when can console but not company manager`() {
+        val context = UserAccessContext(canCompanyManager = false, canBookkeeperConsole = true)
 
-        assertTrue(context.isStage2ReadOnly)
+        assertTrue(context.isBookkeeperConsoleOnly)
     }
 
     @Test
-    fun `stage2 read-only stays disabled outside console drill-down`() {
-        val context = UserAccessContext(isBookkeeperConsoleDrillDown = false)
+    fun `not bookkeeper console only when both surfaces available`() {
+        val context = UserAccessContext(canCompanyManager = true, canBookkeeperConsole = true)
 
-        assertFalse(context.isStage2ReadOnly)
+        assertFalse(context.isBookkeeperConsoleOnly)
     }
 }

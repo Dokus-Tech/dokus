@@ -22,6 +22,7 @@ object FirmMappers {
         id = FirmId(this[FirmsTable.id].value.toKotlinUuid()),
         name = DisplayName(this[FirmsTable.name]),
         vatNumber = VatNumber(this[FirmsTable.vatNumber]),
+        isActive = this[FirmsTable.isActive],
         createdAt = this[FirmsTable.createdAt],
         updatedAt = this[FirmsTable.updatedAt],
     )

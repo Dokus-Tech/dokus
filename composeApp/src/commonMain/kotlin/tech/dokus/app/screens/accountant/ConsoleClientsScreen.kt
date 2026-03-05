@@ -32,6 +32,10 @@ import tech.dokus.aura.resources.console_clients_count
 import tech.dokus.aura.resources.console_clients_empty
 import tech.dokus.aura.resources.console_clients_empty_all
 import tech.dokus.aura.resources.console_clients_search_placeholder
+import tech.dokus.aura.resources.console_back_to_clients
+import tech.dokus.aura.resources.console_document_status
+import tech.dokus.aura.resources.console_document_type
+import tech.dokus.aura.resources.console_no_documents_yet
 import tech.dokus.domain.DisplayName
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.enums.DocumentStatus
@@ -274,7 +278,7 @@ private fun ClientDocumentsContent(
         verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium),
     ) {
         Text(
-            text = "< Back to clients",
+            text = stringResource(Res.string.console_back_to_clients),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.clickable { onIntent(ConsoleClientsIntent.BackToClients) },
@@ -301,7 +305,7 @@ private fun ClientDocumentsContent(
             is DokusState.Success -> {
                 if (documentsState.data.isEmpty()) {
                     Text(
-                        text = "No documents yet.",
+                        text = stringResource(Res.string.console_no_documents_yet),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -352,11 +356,17 @@ private fun ClientDocumentsContent(
                         fontWeight = FontWeight.SemiBold,
                     )
                     Text(
-                        text = "Status: ${document.draft?.documentStatus ?: DocumentStatus.NeedsReview}",
+                        text = stringResource(
+                            Res.string.console_document_status,
+                            (document.draft?.documentStatus ?: DocumentStatus.NeedsReview).name,
+                        ),
                         style = MaterialTheme.typography.bodyMedium,
                     )
                     Text(
-                        text = "Type: ${document.draft?.documentType ?: "Unknown"}",
+                        text = stringResource(
+                            Res.string.console_document_type,
+                            (document.draft?.documentType?.name ?: "Unknown"),
+                        ),
                         style = MaterialTheme.typography.bodyMedium,
                     )
                 }

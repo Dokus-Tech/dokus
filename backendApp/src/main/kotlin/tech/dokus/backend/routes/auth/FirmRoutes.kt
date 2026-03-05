@@ -10,6 +10,7 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.koin.ktor.ext.inject
+import org.slf4j.LoggerFactory
 import tech.dokus.backend.services.auth.FirmInviteTokenService
 import tech.dokus.database.repository.auth.FirmRepository
 import tech.dokus.database.repository.auth.TenantRepository
@@ -28,6 +29,7 @@ internal fun Route.firmRoutes() {
     val firmRepository by inject<FirmRepository>()
     val tenantRepository by inject<TenantRepository>()
     val inviteTokenService by inject<FirmInviteTokenService>()
+    val logger = LoggerFactory.getLogger("FirmRoutes")
 
     authenticateJwt {
         post<Firms.Create> {
@@ -110,6 +112,11 @@ internal fun Route.firmRoutes() {
             if (!revoked) {
                 throw DokusException.NotFound("Active firm access not found")
             }
+
+            logger.info(
+                "Firm access revoked: firmId={}, tenantId={}, revokedBy={}",
+                route.parent.firmId, route.tenantId, principal.userId,
+            )
 
             call.respond(HttpStatusCode.NoContent)
         }

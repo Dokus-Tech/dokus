@@ -93,8 +93,8 @@ internal fun HomeSurfaceShell(
 
     // --- Access context (surface-specific drill-down) ---
     val surfaceAvailability = shellState.surfaceAvailability
-    val isConsoleDrillDown = remember(navContext, currentRoute) {
-        navContext == NavContext.FIRM && currentRoute?.substringBefore("?") != HomeDestination.ConsoleClients.route
+    val isConsoleDrillDown = remember(navContext, normalizedRoute) {
+        navContext == NavContext.FIRM && normalizedRoute != HomeDestination.ConsoleClients.route
     }
     val accessContext = remember(surfaceAvailability, isConsoleDrillDown) {
         UserAccessContext(
@@ -282,7 +282,7 @@ internal fun filterTenantNavItems(
     return items.filter { item ->
         when {
             item.destination in consoleDestinations -> false
-            accessContext.isStage2ReadOnly && item.destination == HomeDestination.Cashflow -> false
+            accessContext.isBookkeeperConsoleDrillDown && item.destination == HomeDestination.Cashflow -> false
             else -> true
         }
     }

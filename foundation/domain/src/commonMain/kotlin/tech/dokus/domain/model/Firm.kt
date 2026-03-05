@@ -17,6 +17,7 @@ data class Firm(
     val id: FirmId,
     val name: DisplayName,
     val vatNumber: VatNumber,
+    val isActive: Boolean = true,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime,
 )

@@ -72,7 +72,7 @@ internal fun DocumentReviewRoute(
     listContacts: ListContactsUseCase = org.koin.compose.koinInject(),
 ) {
     val accessContext = LocalUserAccessContext.current
-    val isAccountantReadOnly = accessContext.isStage2ReadOnly
+    val isAccountantReadOnly = accessContext.isBookkeeperConsoleDrillDown
     val navController = LocalNavController.current
     val backStackEntry by navController.currentBackStackEntryAsState()
     val initialDocumentId = remember(route.documentId) { DocumentId.parse(route.documentId) }

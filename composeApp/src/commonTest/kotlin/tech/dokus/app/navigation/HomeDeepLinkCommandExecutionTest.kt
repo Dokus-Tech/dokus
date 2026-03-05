@@ -32,23 +32,13 @@ class HomeDeepLinkCommandExecutionTest {
     }
 
     @Test
-    fun `open documents command keeps documents tab regardless of source`() {
-        val workspaceSteps = resolveHomeNavigationSteps(
-            HomeNavigationCommand.OpenDocuments(source = HomeNavigationSource.CM)
-        )
-        val consoleSteps = resolveHomeNavigationSteps(
-            HomeNavigationCommand.OpenDocuments(source = HomeNavigationSource.BC)
-        )
+    fun `open documents command resolves to documents tab`() {
+        val steps = resolveHomeNavigationSteps(HomeNavigationCommand.OpenDocuments)
 
-        assertEquals(1, workspaceSteps.size)
-        assertEquals(1, consoleSteps.size)
+        assertEquals(1, steps.size)
         assertEquals(
             HomeDestination.Documents,
-            assertIs<HomeNavigationStep.TopLevelTab>(workspaceSteps[0]).destination
-        )
-        assertEquals(
-            HomeDestination.Documents,
-            assertIs<HomeNavigationStep.TopLevelTab>(consoleSteps[0]).destination
+            assertIs<HomeNavigationStep.TopLevelTab>(steps[0]).destination
         )
     }
 

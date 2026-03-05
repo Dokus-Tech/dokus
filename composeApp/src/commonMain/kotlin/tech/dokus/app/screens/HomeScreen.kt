@@ -44,7 +44,6 @@ import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.app.navigation.HomeNavigationCommandBus
 import tech.dokus.app.navigation.HomeNavigationCommand
-import tech.dokus.app.navigation.HomeNavigationSource
 import tech.dokus.app.screens.home.HomeSurfaceShell
 import tech.dokus.app.screens.home.DesktopShellTopBar
 import tech.dokus.app.screens.home.DesktopSidebarBottomControls
@@ -138,7 +137,6 @@ internal fun HomeRoute(
 
     LaunchedEffect(
         pendingHomeCommand?.id,
-        activeSurface,
         surfaceAvailability?.canCompanyManager,
         surfaceAvailability?.canBookkeeperConsole,
     ) {
@@ -211,12 +209,8 @@ private fun resolveSurfaceForCommand(
             if (canBCAccess) HomeSurfaceMode.BookkeeperConsole else HomeSurfaceMode.CompanyManager
         }
 
-        is HomeNavigationCommand.OpenDocuments -> {
-            if (command.source == HomeNavigationSource.BC && canBCAccess) {
-                HomeSurfaceMode.BookkeeperConsole
-            } else {
-                HomeSurfaceMode.CompanyManager
-            }
+        HomeNavigationCommand.OpenDocuments -> {
+            currentSurface
         }
 
         is HomeNavigationCommand.OpenDocumentReview -> {

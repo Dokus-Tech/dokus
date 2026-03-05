@@ -55,7 +55,7 @@ internal fun DocumentsRoute(
     uploadContainer: AddDocumentContainer = container(),
 ) {
     val accessContext = LocalUserAccessContext.current
-    val isAccountantReadOnly = accessContext.isStage2ReadOnly
+    val isAccountantReadOnly = accessContext.isBookkeeperConsoleDrillDown
     val showBackToClients = accessContext.isBookkeeperConsoleDrillDown
     val navController = LocalNavController.current
     val backStackEntry by navController.currentBackStackEntryAsState()

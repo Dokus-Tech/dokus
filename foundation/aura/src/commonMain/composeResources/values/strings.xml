@@ -72,6 +72,10 @@
     <string name="console_clients_empty">No clients found</string>
     <string name="console_clients_column_company">Company</string>
     <string name="console_clients_column_vat">VAT</string>
+    <string name="console_back_to_clients">Back to clients</string>
+    <string name="console_no_documents_yet">No documents yet.</string>
+    <string name="console_document_status">Status: %1$s</string>
+    <string name="console_document_type">Type: %1$s</string>
     <string name="console_requests_title">Requests</string>
     <string name="console_requests_subtitle">Open requests across connected clients</string>
     <string name="console_requests_summary">4 pending · 2 viewed · 1 expired</string>

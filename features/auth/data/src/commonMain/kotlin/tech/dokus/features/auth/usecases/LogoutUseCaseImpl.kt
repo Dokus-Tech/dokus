@@ -2,6 +2,7 @@ package tech.dokus.features.auth.usecases
 
 import tech.dokus.features.auth.gateway.AuthGateway
 import tech.dokus.foundation.app.database.LocalDatabaseCleaner
+import tech.dokus.foundation.app.shell.WorkspaceContextStore
 import tech.dokus.foundation.platform.Logger
 
 /**
@@ -36,6 +37,7 @@ class LogoutUseCaseImpl(
     override suspend operator fun invoke(): Result<Unit> {
         logger.d { "Executing logout use case" }
 
+        WorkspaceContextStore.reset()
         val clearResult = localDatabaseCleaner.clearAll()
         val logoutResult = runCatching { authGateway.logout() }
 

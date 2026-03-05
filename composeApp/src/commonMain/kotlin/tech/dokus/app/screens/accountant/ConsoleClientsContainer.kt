@@ -74,8 +74,6 @@ internal class ConsoleClientsContainer(
             }
             return
         }
-        WorkspaceContextStore.selectFirmWorkspace(firm.id)
-
         listConsoleClientsUseCase(firm.id).fold(
             onSuccess = { clients ->
                 updateState {

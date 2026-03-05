@@ -27,6 +27,10 @@ internal fun WorkspaceCreateRoute(
     var pendingConsoleNavigation by remember { mutableStateOf(false) }
     var shouldOpenPeppolOnComplete by remember { mutableStateOf(false) }
 
+    // WorkspaceContextStore is mutated here because the route is the coordination
+    // point between the auth flow action and the app shell's surface context.
+    // The container emits the navigation action; the route translates it into a
+    // global context switch before triggering the warp animation.
     val state by container.store.subscribe { action ->
         when (action) {
             WorkspaceCreateAction.NavigateHome -> {

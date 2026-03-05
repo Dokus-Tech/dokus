@@ -34,4 +34,8 @@ object WorkspaceContextStore {
     fun selectFirmWorkspace(firmId: FirmId) {
         mutableState.value = WorkspaceContext(navContext = NavContext.FIRM, selectedFirmId = firmId)
     }
+
+    fun reset() {
+        mutableState.value = WorkspaceContext()
+    }
 }

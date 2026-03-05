@@ -25,6 +25,10 @@ suspend fun RoutingContext.requireTenantAccess(): TenantAccess {
     tenantAccessOrNull?.let { return it }
 
     val tenantId = resolveTenantIdFromRequest()
+    // Memberships are read from JWT claims (snapshot at token-generation time), not
+    // from the database. A deactivated membership remains valid until token expiry
+    // (~1 hour). This is an accepted trade-off for avoiding a DB round-trip on every
+    // request. AuthService.toJwtTenantClaims() filters isActive at generation time.
     val membership = dokusPrincipal.tenantMemberships
         .firstOrNull { it.tenantId == tenantId }
 

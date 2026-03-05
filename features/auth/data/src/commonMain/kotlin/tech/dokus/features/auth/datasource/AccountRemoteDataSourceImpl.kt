@@ -42,7 +42,6 @@ internal class AccountRemoteDataSourceImpl(
 
     private companion object {
         const val FirmHeaderName = "X-Firm-Id"
-        const val TenantHeaderName = "X-Tenant-Id"
     }
 
     override suspend fun getAccountMe(): Result<AccountMeResponse> {
@@ -83,7 +82,6 @@ internal class AccountRemoteDataSourceImpl(
                 )
             ) {
                 header(FirmHeaderName, firmId.toString())
-                header(TenantHeaderName, tenantId.toString())
             }.body()
         }
     }
@@ -101,7 +99,6 @@ internal class AccountRemoteDataSourceImpl(
                 )
             ) {
                 header(FirmHeaderName, firmId.toString())
-                header(TenantHeaderName, tenantId.toString())
             }.body()
         }
     }

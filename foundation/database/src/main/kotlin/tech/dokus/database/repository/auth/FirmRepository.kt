@@ -65,7 +65,10 @@ class FirmRepository {
     suspend fun findById(firmId: FirmId): Firm? = dbQuery {
         FirmsTable
             .selectAll()
-            .where { FirmsTable.id eq firmId.value.toJavaUuid() }
+            .where {
+                (FirmsTable.id eq firmId.value.toJavaUuid()) and
+                    (FirmsTable.isActive eq true)
+            }
             .singleOrNull()
             ?.toFirm()
     }
@@ -96,7 +99,10 @@ class FirmRepository {
 
         FirmsTable
             .selectAll()
-            .where { FirmsTable.id inList firmIds.map { it.value.toJavaUuid() } }
+            .where {
+                (FirmsTable.id inList firmIds.map { it.value.toJavaUuid() }) and
+                    (FirmsTable.isActive eq true)
+            }
             .map { it.toFirm() }
     }
 

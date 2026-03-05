@@ -7,6 +7,13 @@ import tech.dokus.domain.ids.FirmId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
 
+/**
+ * Request to create a new firm (accounting practice).
+ *
+ * When [prefillTenantId] is set, [name] and [vatNumber] fall back to the
+ * tenant's values on the server side. When [prefillTenantId] is null,
+ * both [name] and [vatNumber] are required.
+ */
 @Serializable
 data class CreateFirmRequest(
     val prefillTenantId: TenantId? = null,
