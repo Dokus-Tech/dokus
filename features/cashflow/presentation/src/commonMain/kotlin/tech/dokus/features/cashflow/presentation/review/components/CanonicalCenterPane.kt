@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
@@ -38,6 +39,9 @@ import tech.dokus.foundation.aura.style.textMuted
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
+
+private val CanonicalPreviewWidth = Constraints.DocumentDetail.previewMaxWidth + 96.dp
+private val CanonicalPreviewMinHeight = 620.dp
 
 @Composable
 internal fun CanonicalCenterPane(
@@ -70,8 +74,8 @@ internal fun CanonicalCenterPane(
                 counterpartyAddress = counterparty.address,
                 modifier = Modifier
                     .padding(vertical = Constraints.Spacing.large)
-                    .width(Constraints.DocumentDetail.previewMaxWidth)
-                    .heightIn(min = 560.dp)
+                    .width(CanonicalPreviewWidth)
+                    .heightIn(min = CanonicalPreviewMinHeight)
             )
         }
         return
@@ -89,8 +93,8 @@ internal fun CanonicalCenterPane(
         DokusCardSurface(
             modifier = Modifier
                 .padding(vertical = Constraints.Spacing.large)
-                .width(Constraints.DocumentDetail.previewMaxWidth)
-                .heightIn(min = 560.dp),
+                .width(CanonicalPreviewWidth)
+                .heightIn(min = CanonicalPreviewMinHeight),
             shape = MaterialTheme.shapes.small,
         ) {
             Column(
@@ -109,6 +113,9 @@ internal fun CanonicalCenterPane(
                     verticalAlignment = Alignment.Top,
                 ) {
                     Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(end = Constraints.Spacing.small),
                         verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall),
                     ) {
                         Text(
@@ -116,12 +123,16 @@ internal fun CanonicalCenterPane(
                             style = MaterialTheme.typography.displaySmall.copy(fontSize = 20.sp),
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
                         )
                         counterparty.address?.let { address ->
                             Text(
                                 text = address,
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.textMuted,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
                             )
                         }
                     }
@@ -129,6 +140,8 @@ internal fun CanonicalCenterPane(
                         text = "CREDIT NOTE",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.textMuted,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
 
