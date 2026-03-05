@@ -52,6 +52,7 @@ private const val ContentFadeOutDurationMs = 600
 private const val NavigationDelayMs = 100L
 private val StepContentMinHeight = 320.dp
 private val WizardContentMaxWidth = 520.dp
+private val WizardTypeSelectionMaxWidth = 560.dp
 
 @Composable
 internal fun WorkspaceCreateScreen(
@@ -149,7 +150,13 @@ private fun WorkspaceCreateContent(
     }
 
     Column(
-        modifier = modifier.widthIn(max = WizardContentMaxWidth),
+        modifier = modifier.widthIn(
+            max = if (wizardState.step == WorkspaceWizardStep.TypeSelection) {
+                WizardTypeSelectionMaxWidth
+            } else {
+                WizardContentMaxWidth
+            },
+        ),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Box(

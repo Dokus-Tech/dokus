@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -43,7 +44,7 @@ import tech.dokus.foundation.aura.components.common.PBackIconButton
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.local.LocalScreenSize
 
-private val TypeCardMinHeight = 176.dp
+private val TypeCardMinHeight = 160.dp
 
 @Composable
 internal fun TypeSelectionStep(
@@ -196,18 +197,19 @@ private fun TypeCard(
     ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(Constraints.Spacing.large),
+                .fillMaxSize()
+                .padding(horizontal = Constraints.Spacing.medium, vertical = Constraints.Spacing.small),
+            verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
                 tint = if (isSelected) MaterialTheme.colorScheme.primary else contentColor,
-                modifier = Modifier.size(32.dp),
+                modifier = Modifier.size(28.dp),
             )
 
-            Spacer(modifier = Modifier.height(Constraints.Spacing.medium))
+            Spacer(modifier = Modifier.height(Constraints.Spacing.small))
 
             Text(
                 text = title,
