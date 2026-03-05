@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -22,11 +23,11 @@ import tech.dokus.aura.resources.nav_documents
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.features.cashflow.mvi.AddDocumentContainer
+import tech.dokus.features.cashflow.presentation.cashflow.components.DroppedFile
 import tech.dokus.features.cashflow.presentation.cashflow.components.fileDropTarget
 import tech.dokus.features.cashflow.presentation.cashflow.components.rememberDocumentFilePicker
 import tech.dokus.features.cashflow.presentation.cashflow.model.UploadStatus
 import tech.dokus.features.cashflow.presentation.documents.components.DocumentsAddDocumentSheet
-import tech.dokus.features.cashflow.presentation.documents.components.computeNeedsAttention
 import tech.dokus.features.cashflow.presentation.documents.model.buildDocumentsLocalUploadRows
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsAction
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsContainer
@@ -59,7 +60,8 @@ internal fun DocumentsRoute(
     var pendingError by remember { mutableStateOf<DokusException?>(null) }
     var isDraggingOverTable by remember { mutableStateOf(false) }
     var isAddDocumentSheetVisible by remember { mutableStateOf(false) }
-    var knownNonAttentionDocumentIds by remember { mutableStateOf<Set<DocumentId>>(emptySet()) }
+    var knownRemoteDocumentIds by remember { mutableStateOf<Set<DocumentId>>(emptySet()) }
+    var desktopDropScrollToken by remember { mutableIntStateOf(0) }
 
     val uploadManager = remember(uploadContainer) { uploadContainer.provideUploadManager() }
     val uploadTasks by uploadContainer.uploadTasks.collectAsState()
@@ -120,21 +122,19 @@ internal fun DocumentsRoute(
 
     LaunchedEffect(completedDocumentIds) {
         if (completedDocumentIds.isEmpty()) {
-            knownNonAttentionDocumentIds = emptySet()
+            knownRemoteDocumentIds = emptySet()
             return@LaunchedEffect
         }
 
-        knownNonAttentionDocumentIds = knownNonAttentionDocumentIds.intersect(completedDocumentIds)
-        val unresolvedIds = completedDocumentIds - knownNonAttentionDocumentIds
+        knownRemoteDocumentIds = knownRemoteDocumentIds.intersect(completedDocumentIds)
+        val unresolvedIds = completedDocumentIds - knownRemoteDocumentIds
         if (unresolvedIds.isEmpty()) return@LaunchedEffect
 
         unresolvedIds.forEach { documentId ->
             getDocumentRecord(documentId)
                 .getOrNull()
-                ?.let { document ->
-                    if (!computeNeedsAttention(document)) {
-                        knownNonAttentionDocumentIds = knownNonAttentionDocumentIds + documentId
-                    }
+                ?.let {
+                    knownRemoteDocumentIds = knownRemoteDocumentIds + documentId
                 }
         }
     }
@@ -145,7 +145,7 @@ internal fun DocumentsRoute(
         contentState?.documents?.data,
         uploadTasks,
         uploadedDocuments,
-        knownNonAttentionDocumentIds
+        knownRemoteDocumentIds
     ) {
         val cs = contentState ?: return@remember emptyList()
 
@@ -154,7 +154,7 @@ internal fun DocumentsRoute(
             uploadTasks = uploadTasks,
             uploadedDocuments = uploadedDocuments,
             remoteDocuments = cs.documents.data,
-            knownNonAttentionDocumentIds = knownNonAttentionDocumentIds
+            knownRemoteDocumentIds = knownRemoteDocumentIds
         )
     }
 
@@ -205,9 +205,11 @@ internal fun DocumentsRoute(
                     isDraggingOverTable = isDragging
                 },
                 onFilesDropped = { files ->
-                    if (files.isNotEmpty()) {
-                        uploadManager.enqueueFiles(files)
-                    }
+                    handleDroppedFiles(
+                        files = files,
+                        enqueue = uploadManager::enqueueFiles,
+                        onAccepted = { desktopDropScrollToken += 1 }
+                    )
                 }
             )
     ) {
@@ -215,12 +217,17 @@ internal fun DocumentsRoute(
             state = state,
             localUploadRows = localUploadRows,
             isDesktopDropTargetActive = isDraggingOverTable,
+            desktopDropScrollToken = desktopDropScrollToken,
             snackbarHostState = snackbarHostState,
             onIntent = onIntent,
             onUploadClick = onUploadClick,
             onMobileFabClick = { isAddDocumentSheetVisible = true },
-            onRetryLocalUpload = { taskId -> uploadManager.retryUpload(taskId) },
-            onDismissLocalUpload = { taskId -> uploadManager.cancelUpload(taskId) }
+            onRetryLocalUpload = { taskId ->
+                dispatchRetryLocalUpload(taskId = taskId, retryUpload = uploadManager::retryUpload)
+            },
+            onDismissLocalUpload = { taskId ->
+                dispatchDismissLocalUpload(taskId = taskId, cancelUpload = uploadManager::cancelUpload)
+            }
         )
 
         DocumentsAddDocumentSheet(
@@ -232,6 +239,30 @@ internal fun DocumentsRoute(
             }
         )
     }
+}
+
+internal fun handleDroppedFiles(
+    files: List<DroppedFile>,
+    enqueue: (List<DroppedFile>) -> List<String>,
+    onAccepted: () -> Unit,
+) {
+    if (files.isEmpty()) return
+    enqueue(files)
+    onAccepted()
+}
+
+internal fun dispatchRetryLocalUpload(
+    taskId: String,
+    retryUpload: (String) -> Unit,
+) {
+    retryUpload(taskId)
+}
+
+internal fun dispatchDismissLocalUpload(
+    taskId: String,
+    cancelUpload: (String) -> Unit,
+) {
+    cancelUpload(taskId)
 }
 
 internal fun toDocumentReviewDestination(

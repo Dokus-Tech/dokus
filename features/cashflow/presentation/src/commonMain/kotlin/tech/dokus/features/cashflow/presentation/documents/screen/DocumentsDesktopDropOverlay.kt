@@ -3,11 +3,13 @@ package tech.dokus.features.cashflow.presentation.documents.screen
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.PathEffect
@@ -22,12 +24,18 @@ private const val DashPhase = 0f
 @Composable
 internal fun DesktopDropOverlay(text: String) {
     val borderColor = MaterialTheme.colorScheme.primary
+    val tintColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
 
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .clip(RoundedCornerShape(12.dp))
             .padding(1.dp)
             .drawBehind {
+                drawRoundRect(
+                    color = tintColor,
+                    cornerRadius = CornerRadius(12.dp.toPx())
+                )
                 val stroke = Stroke(
                     width = 2.dp.toPx(),
                     pathEffect = PathEffect.dashPathEffect(
@@ -46,7 +54,7 @@ internal fun DesktopDropOverlay(text: String) {
         Text(
             text = text,
             style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary,
+            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.98f),
             textAlign = TextAlign.Center
         )
     }

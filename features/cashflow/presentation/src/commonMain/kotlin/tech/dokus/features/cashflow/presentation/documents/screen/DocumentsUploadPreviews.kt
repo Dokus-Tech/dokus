@@ -23,6 +23,7 @@ private fun DocumentsDesktopUploadHeaderPreview(
             state = previewContentState(),
             localUploadRows = previewLocalRows(),
             isDesktopDropTargetActive = false,
+            desktopDropScrollToken = 0,
             onIntent = {},
             onUploadClick = {},
             onMobileFabClick = {},
@@ -43,6 +44,7 @@ private fun DocumentsDesktopDropOverlayPreview(
             state = previewContentState(),
             localUploadRows = previewLocalRows(),
             isDesktopDropTargetActive = true,
+            desktopDropScrollToken = 0,
             onIntent = {},
             onUploadClick = {},
             onMobileFabClick = {},
@@ -63,6 +65,7 @@ private fun DocumentsMobileFabPreview(
             state = previewContentState(),
             localUploadRows = previewLocalRows(),
             isDesktopDropTargetActive = false,
+            desktopDropScrollToken = 0,
             onIntent = {},
             onUploadClick = {},
             onMobileFabClick = {},
@@ -94,7 +97,7 @@ private fun previewLocalRows(): List<DocumentsLocalUploadRow> {
         DocumentsLocalUploadRow(
             taskId = "local-1",
             fileName = "receipt-feb-28.pdf",
-            status = DocumentsLocalUploadRow.Status.Preparing
+            status = DocumentsLocalUploadRow.Status.ReadingDocument
         ),
         DocumentsLocalUploadRow(
             taskId = "local-2",

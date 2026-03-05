@@ -26,10 +26,9 @@ import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.documents_local_action_dismiss
-import tech.dokus.aura.resources.documents_local_status_preparing
 import tech.dokus.aura.resources.upload_action_retry
-import tech.dokus.aura.resources.upload_failed_message
 import tech.dokus.features.cashflow.presentation.documents.model.DocumentsLocalUploadRow
+import tech.dokus.features.cashflow.presentation.documents.model.localized
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.layout.DokusTableCell
 import tech.dokus.foundation.aura.components.layout.DokusTableColumnSpec
@@ -58,12 +57,11 @@ internal fun DocumentLocalUploadTableRow(
     onDismiss: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val statusLabel = when (row.status) {
-        DocumentsLocalUploadRow.Status.Preparing -> stringResource(Res.string.documents_local_status_preparing)
-        DocumentsLocalUploadRow.Status.Failed -> stringResource(Res.string.upload_failed_message)
-    }
+    val statusLabel = row.status.localized
     val statusDot = when (row.status) {
-        DocumentsLocalUploadRow.Status.Preparing -> StatusDotType.Neutral
+        DocumentsLocalUploadRow.Status.Uploading,
+        DocumentsLocalUploadRow.Status.PreparingDocument,
+        DocumentsLocalUploadRow.Status.ReadingDocument -> StatusDotType.Warning
         DocumentsLocalUploadRow.Status.Failed -> StatusDotType.Error
     }
 
@@ -84,7 +82,7 @@ internal fun DocumentLocalUploadTableRow(
                         style = MaterialTheme.typography.bodyMedium.copy(
                             fontWeight = FontWeight.Medium,
                             fontSize = 12.5.sp,
-                            fontStyle = if (row.status == DocumentsLocalUploadRow.Status.Preparing) {
+                            fontStyle = if (row.status != DocumentsLocalUploadRow.Status.Failed) {
                                 FontStyle.Italic
                             } else {
                                 FontStyle.Normal
@@ -142,12 +140,11 @@ internal fun DocumentLocalUploadMobileRow(
     onDismiss: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val statusLabel = when (row.status) {
-        DocumentsLocalUploadRow.Status.Preparing -> stringResource(Res.string.documents_local_status_preparing)
-        DocumentsLocalUploadRow.Status.Failed -> stringResource(Res.string.upload_failed_message)
-    }
+    val statusLabel = row.status.localized
     val statusDot = when (row.status) {
-        DocumentsLocalUploadRow.Status.Preparing -> StatusDotType.Neutral
+        DocumentsLocalUploadRow.Status.Uploading,
+        DocumentsLocalUploadRow.Status.PreparingDocument,
+        DocumentsLocalUploadRow.Status.ReadingDocument -> StatusDotType.Warning
         DocumentsLocalUploadRow.Status.Failed -> StatusDotType.Error
     }
 
@@ -169,7 +166,7 @@ internal fun DocumentLocalUploadMobileRow(
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 13.sp,
-                        fontStyle = if (row.status == DocumentsLocalUploadRow.Status.Preparing) {
+                        fontStyle = if (row.status != DocumentsLocalUploadRow.Status.Failed) {
                             FontStyle.Italic
                         } else {
                             FontStyle.Normal
@@ -244,6 +241,24 @@ private fun DashCell() {
     )
 }
 
+@Preview(name = "Local Upload Mobile Uploading", widthDp = 390, heightDp = 130)
+@Composable
+private fun DocumentLocalUploadMobileUploadingPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        DocumentLocalUploadMobileRow(
+            row = DocumentsLocalUploadRow(
+                taskId = "preview-local-uploading",
+                fileName = "receipt-feb-28.pdf",
+                status = DocumentsLocalUploadRow.Status.Uploading
+            ),
+            onRetry = {},
+            onDismiss = {}
+        )
+    }
+}
+
 @Preview(name = "Local Upload Mobile Preparing", widthDp = 390, heightDp = 130)
 @Composable
 private fun DocumentLocalUploadMobilePreparingPreview(
@@ -253,8 +268,26 @@ private fun DocumentLocalUploadMobilePreparingPreview(
         DocumentLocalUploadMobileRow(
             row = DocumentsLocalUploadRow(
                 taskId = "preview-local-preparing",
-                fileName = "receipt-feb-28.pdf",
-                status = DocumentsLocalUploadRow.Status.Preparing
+                fileName = "tesla-belgium.pdf",
+                status = DocumentsLocalUploadRow.Status.PreparingDocument
+            ),
+            onRetry = {},
+            onDismiss = {}
+        )
+    }
+}
+
+@Preview(name = "Local Upload Mobile Reading", widthDp = 390, heightDp = 130)
+@Composable
+private fun DocumentLocalUploadMobileReadingPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        DocumentLocalUploadMobileRow(
+            row = DocumentsLocalUploadRow(
+                taskId = "preview-local-reading",
+                fileName = "anthropic-feb.pdf",
+                status = DocumentsLocalUploadRow.Status.ReadingDocument
             ),
             onRetry = {},
             onDismiss = {}
@@ -271,7 +304,7 @@ private fun DocumentLocalUploadMobileFailedPreview(
         DocumentLocalUploadMobileRow(
             row = DocumentsLocalUploadRow(
                 taskId = "preview-local-failed",
-                fileName = "tesla-belgium.pdf",
+                fileName = "unknown-vendor.pdf",
                 status = DocumentsLocalUploadRow.Status.Failed
             ),
             onRetry = {},

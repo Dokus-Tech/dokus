@@ -17,14 +17,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
@@ -44,6 +44,7 @@ import tech.dokus.features.cashflow.presentation.documents.components.DocumentLo
 import tech.dokus.features.cashflow.presentation.documents.components.DocumentMobileRow
 import tech.dokus.features.cashflow.presentation.documents.components.DocumentTableHeaderRow
 import tech.dokus.features.cashflow.presentation.documents.components.DocumentTableRow
+import tech.dokus.features.cashflow.presentation.documents.components.DocumentsDropHintTableRow
 import tech.dokus.features.cashflow.presentation.documents.model.DocumentsLocalUploadRow
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentFilter
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsIntent
@@ -52,7 +53,6 @@ import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import tech.dokus.foundation.aura.local.LocalScreenSize
-import tech.dokus.foundation.aura.style.textMuted
 
 private sealed interface DocumentsDisplayRow {
     data class Local(val row: DocumentsLocalUploadRow) : DocumentsDisplayRow
@@ -64,6 +64,7 @@ internal fun DocumentsContent(
     state: DocumentsState.Content,
     localUploadRows: List<DocumentsLocalUploadRow>,
     isDesktopDropTargetActive: Boolean,
+    desktopDropScrollToken: Int,
     onIntent: (DocumentsIntent) -> Unit,
     onUploadClick: () -> Unit,
     onMobileFabClick: () -> Unit,
@@ -74,6 +75,7 @@ internal fun DocumentsContent(
     val listState = rememberLazyListState()
     val remoteDocuments = state.documents.data
     val isLargeScreen = LocalScreenSize.current.isLarge
+    var handledDropScrollToken by remember { mutableIntStateOf(0) }
 
     val displayRows = remember(localUploadRows, remoteDocuments) {
         buildList {
@@ -97,6 +99,16 @@ internal fun DocumentsContent(
     LaunchedEffect(shouldLoadMore) {
         if (shouldLoadMore) {
             onIntent(DocumentsIntent.LoadMore)
+        }
+    }
+
+    LaunchedEffect(desktopDropScrollToken, isLargeScreen, displayRows.size) {
+        val shouldScroll = isLargeScreen &&
+            desktopDropScrollToken > handledDropScrollToken &&
+            displayRows.isNotEmpty()
+        if (shouldScroll) {
+            listState.animateScrollToItem(0)
+            handledDropScrollToken = desktopDropScrollToken
         }
     }
 
@@ -125,7 +137,9 @@ internal fun DocumentsContent(
                     }
                 }
 
-                displayRows.isEmpty() && state.filter == DocumentFilter.All -> {
+                displayRows.isEmpty() &&
+                    state.filter == DocumentFilter.All &&
+                    !isLargeScreen -> {
                     DokusEmptyState(
                         title = stringResource(Res.string.documents_empty_title),
                         modifier = Modifier.fillMaxSize()
@@ -147,6 +161,7 @@ internal fun DocumentsContent(
                             isLoadingMore = state.documents.isLoadingMore,
                             isRefreshing = state.isRefreshing,
                             isDropTargetActive = isDesktopDropTargetActive,
+                            dropHintText = stringResource(Res.string.documents_drop_to_upload),
                             onOpenDocument = { documentId ->
                                 onIntent(DocumentsIntent.OpenDocument(documentId))
                             },
@@ -243,6 +258,7 @@ private fun DesktopDocumentsTable(
     isLoadingMore: Boolean,
     isRefreshing: Boolean,
     isDropTargetActive: Boolean,
+    dropHintText: String,
     onOpenDocument: (DocumentId) -> Unit,
     onRetryLocalUpload: (String) -> Unit,
     onDismissLocalUpload: (String) -> Unit,
@@ -264,6 +280,13 @@ private fun DesktopDocumentsTable(
                         .fillMaxWidth()
                         .weight(1f)
                 ) {
+                    item(key = "desktop-drop-hint-row") {
+                        DocumentsDropHintTableRow(text = dropHintText)
+                        if (displayRows.isNotEmpty()) {
+                            DokusTableDivider()
+                        }
+                    }
+
                     itemsIndexed(
                         items = displayRows,
                         key = { _, row ->
@@ -311,7 +334,7 @@ private fun DesktopDocumentsTable(
             }
 
             if (isDropTargetActive) {
-                DesktopDropOverlay(text = stringResource(Res.string.documents_drop_to_upload))
+                DesktopDropOverlay(text = dropHintText)
             }
 
             if (isRefreshing) {
@@ -325,16 +348,6 @@ private fun DesktopDocumentsTable(
                 }
             }
         }
-
-        Text(
-            text = stringResource(Res.string.documents_drop_to_upload),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.textMuted,
-            textAlign = TextAlign.Center,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 12.dp)
-        )
     }
 }
 

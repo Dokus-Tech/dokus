@@ -43,6 +43,7 @@ import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.features.cashflow.presentation.common.utils.formatShortDate
+import tech.dokus.features.cashflow.presentation.model.toUiStatus
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.badges.SourceBadge
 import tech.dokus.foundation.aura.components.layout.DokusTableCell
@@ -52,6 +53,8 @@ import tech.dokus.foundation.aura.components.status.StatusDot
 import tech.dokus.foundation.aura.components.status.StatusDotType
 import tech.dokus.foundation.aura.components.text.Amt
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.extensions.localized
+import tech.dokus.foundation.aura.model.DocumentUiStatus
 import tech.dokus.foundation.aura.style.surfaceHover
 import tech.dokus.foundation.aura.style.textFaint
 import tech.dokus.foundation.aura.style.textMuted
@@ -61,6 +64,11 @@ import tech.dokus.foundation.aura.tooling.TestWrapper
 import tech.dokus.foundation.aura.components.badges.DocumentSource as UiDocumentSource
 
 private val TableRowHeight = 48.dp
+
+internal sealed interface DocumentListReferenceValue {
+    data class Status(val value: DocumentUiStatus) : DocumentListReferenceValue
+    data class Reference(val value: String) : DocumentListReferenceValue
+}
 
 /**
  * Column specifications for the documents table.
@@ -120,12 +128,26 @@ internal fun DocumentTableRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val vendorName = resolveCounterparty(document, stringResource(Res.string.common_unknown))
-    val reference = extractReference(document)
+    val listStatus = resolveListInlineStatus(document)
+    val listReference = resolveListReferenceValue(document, listStatus)
+    val unknownVendor = stringResource(Res.string.common_unknown)
+    val vendorName = resolveListVendorName(document, unknownVendor, listStatus)
+    val reference = when (listReference) {
+        is DocumentListReferenceValue.Reference -> listReference.value
+        is DocumentListReferenceValue.Status -> listReference.value.localized
+    }
     val amountDouble = extractAmountDouble(document)
     val dateLabel = formatShortDate(extractDocumentDate(document))
-    val needsAttention = computeNeedsAttention(document)
-    val isProcessing = computeIsProcessing(document)
+    val needsAttention = when (listStatus) {
+        DocumentUiStatus.Queued,
+        DocumentUiStatus.Processing,
+        DocumentUiStatus.Failed -> true
+
+        null -> computeNeedsAttention(document)
+        else -> false
+    }
+    val isProcessing = listStatus == DocumentUiStatus.Queued ||
+        listStatus == DocumentUiStatus.Processing
     val source = document.document.source.toUiSource()
 
     val interactionSource = remember { MutableInteractionSource() }
@@ -217,12 +239,26 @@ internal fun DocumentMobileRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val vendorName = resolveCounterparty(document, stringResource(Res.string.common_unknown))
-    val reference = extractReference(document)
+    val listStatus = resolveListInlineStatus(document)
+    val listReference = resolveListReferenceValue(document, listStatus)
+    val unknownVendor = stringResource(Res.string.common_unknown)
+    val vendorName = resolveListVendorName(document, unknownVendor, listStatus)
+    val reference = when (listReference) {
+        is DocumentListReferenceValue.Reference -> listReference.value
+        is DocumentListReferenceValue.Status -> listReference.value.localized
+    }
     val amountDouble = extractAmountDouble(document)
     val dateLabel = formatShortDate(extractDocumentDate(document))
-    val needsAttention = computeNeedsAttention(document)
-    val isProcessing = computeIsProcessing(document)
+    val needsAttention = when (listStatus) {
+        DocumentUiStatus.Queued,
+        DocumentUiStatus.Processing,
+        DocumentUiStatus.Failed -> true
+
+        null -> computeNeedsAttention(document)
+        else -> false
+    }
+    val isProcessing = listStatus == DocumentUiStatus.Queued ||
+        listStatus == DocumentUiStatus.Processing
     val source = document.document.source.toUiSource()
 
     DokusCardSurface(
@@ -338,6 +374,42 @@ internal fun computeIsProcessing(document: DocumentRecordDto): Boolean {
     val ingestionStatus = document.latestIngestion?.status
     return ingestionStatus == IngestionStatus.Processing ||
         ingestionStatus == IngestionStatus.Queued
+}
+
+internal fun resolveListInlineStatus(document: DocumentRecordDto): DocumentUiStatus? {
+    if (document.latestIngestion == null) return null
+
+    return when (val status = document.toUiStatus()) {
+        DocumentUiStatus.Queued,
+        DocumentUiStatus.Processing,
+        DocumentUiStatus.Failed -> status
+
+        DocumentUiStatus.Review,
+        DocumentUiStatus.Ready -> null
+    }
+}
+
+internal fun resolveListReferenceValue(
+    document: DocumentRecordDto,
+    listStatus: DocumentUiStatus? = resolveListInlineStatus(document),
+): DocumentListReferenceValue {
+    return if (listStatus == null) {
+        DocumentListReferenceValue.Reference(extractReference(document))
+    } else {
+        DocumentListReferenceValue.Status(listStatus)
+    }
+}
+
+internal fun resolveListVendorName(
+    document: DocumentRecordDto,
+    unknownLabel: String,
+    listStatus: DocumentUiStatus? = resolveListInlineStatus(document),
+): String {
+    return if (listStatus == null) {
+        resolveCounterparty(document, unknownLabel)
+    } else {
+        document.document.filename.nonBlank() ?: unknownLabel
+    }
 }
 
 // =============================================================================

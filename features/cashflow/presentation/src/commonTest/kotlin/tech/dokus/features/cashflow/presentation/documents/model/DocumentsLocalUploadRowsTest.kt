@@ -16,7 +16,7 @@ import kotlin.test.assertTrue
 class DocumentsLocalUploadRowsTest {
 
     @Test
-    fun `pending and uploading map to preparing rows`() {
+    fun `pending and uploading map to preparing and uploading rows`() {
         val rows = buildDocumentsLocalUploadRows(
             filter = DocumentFilter.All,
             uploadTasks = listOf(
@@ -28,8 +28,14 @@ class DocumentsLocalUploadRowsTest {
         )
 
         assertEquals(2, rows.size)
-        assertTrue(rows.all { it.status == DocumentsLocalUploadRow.Status.Preparing })
         assertEquals(listOf("t-2", "t-1"), rows.map { it.taskId })
+        assertEquals(
+            listOf(
+                DocumentsLocalUploadRow.Status.Uploading,
+                DocumentsLocalUploadRow.Status.PreparingDocument
+            ),
+            rows.map { it.status }
+        )
     }
 
     @Test
@@ -63,7 +69,7 @@ class DocumentsLocalUploadRowsTest {
             remoteDocuments = emptyList()
         )
         assertEquals(1, beforeSync.size)
-        assertEquals(DocumentsLocalUploadRow.Status.Preparing, beforeSync.single().status)
+        assertEquals(DocumentsLocalUploadRow.Status.ReadingDocument, beforeSync.single().status)
 
         val afterSync = buildDocumentsLocalUploadRows(
             filter = DocumentFilter.All,
@@ -146,8 +152,8 @@ class DocumentsLocalUploadRowsTest {
     }
 
     @Test
-    fun `needs attention hides completed local row when document is known non attention`() {
-        val confirmedId = DocumentId.parse("00000000-0000-0000-0000-000000000666")
+    fun `needs attention hides completed local row when document is known remote`() {
+        val syncedId = DocumentId.parse("00000000-0000-0000-0000-000000000666")
 
         val rows = buildDocumentsLocalUploadRows(
             filter = DocumentFilter.NeedsAttention,
@@ -156,13 +162,13 @@ class DocumentsLocalUploadRowsTest {
                     id = "confirmed",
                     fileName = "confirmed.pdf",
                     status = UploadStatus.COMPLETED,
-                    documentId = confirmedId
+                    documentId = syncedId
                 ),
                 task("pending", "pending.pdf", UploadStatus.PENDING)
             ),
             uploadedDocuments = emptyMap(),
             remoteDocuments = emptyList(),
-            knownNonAttentionDocumentIds = setOf(confirmedId)
+            knownRemoteDocumentIds = setOf(syncedId)
         )
 
         assertEquals(listOf("pending"), rows.map { it.taskId })

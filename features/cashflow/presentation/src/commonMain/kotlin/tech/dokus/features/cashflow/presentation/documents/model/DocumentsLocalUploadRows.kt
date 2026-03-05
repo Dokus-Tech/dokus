@@ -17,7 +17,9 @@ internal data class DocumentsLocalUploadRow(
 ) {
     @Immutable
     enum class Status {
-        Preparing,
+        Uploading,
+        PreparingDocument,
+        ReadingDocument,
         Failed,
     }
 }
@@ -27,7 +29,7 @@ internal fun buildDocumentsLocalUploadRows(
     uploadTasks: List<DocumentUploadTask>,
     uploadedDocuments: Map<String, DocumentDto>,
     remoteDocuments: List<DocumentRecordDto>,
-    knownNonAttentionDocumentIds: Set<DocumentId> = emptySet(),
+    knownRemoteDocumentIds: Set<DocumentId> = emptySet(),
 ): List<DocumentsLocalUploadRow> {
     if (uploadTasks.isEmpty()) return emptyList()
 
@@ -38,9 +40,9 @@ internal fun buildDocumentsLocalUploadRows(
         val isRemotePresent = documentId != null && remoteIds.contains(documentId)
 
         val localStatus = when (task.status) {
-            UploadStatus.PENDING,
-            UploadStatus.UPLOADING,
-            UploadStatus.COMPLETED -> DocumentsLocalUploadRow.Status.Preparing
+            UploadStatus.UPLOADING -> DocumentsLocalUploadRow.Status.Uploading
+            UploadStatus.PENDING -> DocumentsLocalUploadRow.Status.PreparingDocument
+            UploadStatus.COMPLETED -> DocumentsLocalUploadRow.Status.ReadingDocument
 
             UploadStatus.FAILED -> DocumentsLocalUploadRow.Status.Failed
         }
@@ -50,7 +52,7 @@ internal fun buildDocumentsLocalUploadRows(
                 filter = filter,
                 isRemotePresent = isRemotePresent,
                 documentId = documentId,
-                knownNonAttentionDocumentIds = knownNonAttentionDocumentIds
+                knownRemoteDocumentIds = knownRemoteDocumentIds
             )
         ) {
             return@mapNotNull null
@@ -69,13 +71,13 @@ private fun shouldShowLocalRow(
     filter: DocumentFilter,
     isRemotePresent: Boolean,
     documentId: DocumentId?,
-    knownNonAttentionDocumentIds: Set<DocumentId>,
+    knownRemoteDocumentIds: Set<DocumentId>,
 ): Boolean {
     return when (filter) {
         DocumentFilter.All -> true
-        // Hide rows known to be non-attention even if current filtered page does not include them.
+        // Hide rows once we know their replacement exists remotely, even if not in this filtered page.
         DocumentFilter.NeedsAttention -> !isRemotePresent &&
-            (documentId == null || !knownNonAttentionDocumentIds.contains(documentId))
+            (documentId == null || !knownRemoteDocumentIds.contains(documentId))
         DocumentFilter.Confirmed -> false
     }
 }
