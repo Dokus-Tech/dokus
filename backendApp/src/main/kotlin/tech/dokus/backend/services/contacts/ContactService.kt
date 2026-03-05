@@ -1,19 +1,19 @@
 package tech.dokus.backend.services.contacts
 
-import tech.dokus.database.repository.contacts.ContactRepository
+import tech.dokus.backend.services.business.BusinessProfileService
 import tech.dokus.database.repository.contacts.ContactAddressRepository
+import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.database.repository.peppol.PeppolDirectoryCacheRepository
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.BusinessProfileUpdateResponse
+import tech.dokus.domain.model.PinBusinessProfileFieldsRequest
+import tech.dokus.domain.model.UpdateBusinessProfileRequest
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.ContactStats
 import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.model.contact.UpdateContactRequest
-import tech.dokus.domain.model.BusinessProfileUpdateResponse
-import tech.dokus.domain.model.PinBusinessProfileFieldsRequest
-import tech.dokus.domain.model.UpdateBusinessProfileRequest
-import tech.dokus.backend.services.business.BusinessProfileService
 import tech.dokus.foundation.backend.utils.loggerFor
 
 /**
@@ -62,7 +62,9 @@ class ContactService(
                     logger.warn("Failed to enqueue business enrichment for contact ${created.id}: ${e.message}")
                 }
             } else {
-                logger.warn("Skipping business enrichment enqueue for contact ${created.id} due to address persistence failure")
+                logger.warn(
+                    "Skipping business enrichment enqueue for contact ${created.id} due to address persistence failure"
+                )
             }
 
             hydrateSingle(tenantId, created) ?: created

@@ -2,7 +2,6 @@ package tech.dokus.backend.services.documents.confirmation
 
 import tech.dokus.backend.services.cashflow.CreditNoteService
 import tech.dokus.backend.util.isUniqueViolation
-import tech.dokus.foundation.backend.utils.runSuspendCatching
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
 import tech.dokus.database.repository.documents.DocumentLinkRepository
@@ -18,6 +17,7 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.CreateCreditNoteRequest
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.foundation.backend.utils.loggerFor
+import tech.dokus.foundation.backend.utils.runSuspendCatching
 
 /**
  * Confirms CreditNote documents via the dedicated [CreditNoteService].

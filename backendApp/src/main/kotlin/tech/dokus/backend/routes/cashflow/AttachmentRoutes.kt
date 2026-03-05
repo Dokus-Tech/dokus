@@ -1,7 +1,5 @@
 package tech.dokus.backend.routes.cashflow
 
-import tech.dokus.backend.security.requireTenantId
-
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.PartData
 import io.ktor.http.content.forEachPart
@@ -15,6 +13,7 @@ import io.ktor.server.routing.RoutingContext
 import kotlinx.serialization.Serializable
 import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
+import tech.dokus.backend.security.requireTenantId
 import tech.dokus.database.repository.cashflow.DocumentCreatePayload
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.ExpenseRepository
@@ -31,7 +30,6 @@ import tech.dokus.domain.routes.Attachments
 import tech.dokus.domain.routes.Expenses
 import tech.dokus.domain.routes.Invoices
 import tech.dokus.foundation.backend.security.authenticateJwt
-import tech.dokus.foundation.backend.security.dokusPrincipal
 import tech.dokus.foundation.backend.storage.DocumentUploadValidator
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid

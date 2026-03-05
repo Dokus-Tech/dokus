@@ -8,6 +8,8 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import kotlinx.serialization.Serializable
 import org.koin.ktor.ext.inject
+import tech.dokus.backend.security.requirePermission
+import tech.dokus.backend.security.requireTenantId
 import tech.dokus.backend.services.cashflow.InvoiceService
 import tech.dokus.backend.services.peppol.PeppolRecipientResolver
 import tech.dokus.backend.worker.PeppolPollingWorker
@@ -15,21 +17,18 @@ import tech.dokus.database.repository.auth.AddressRepository
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.contacts.ContactRepository
+import tech.dokus.domain.enums.InvoiceStatus
+import tech.dokus.domain.enums.Permission
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.VatNumber
-import tech.dokus.domain.enums.InvoiceStatus
-import tech.dokus.domain.enums.Permission
 import tech.dokus.domain.model.PeppolConnectStatus
 import tech.dokus.domain.routes.Peppol
-import tech.dokus.backend.security.requirePermission
-import tech.dokus.backend.security.requireTenantId
 import tech.dokus.foundation.backend.security.authenticateJwt
-import tech.dokus.foundation.backend.security.dokusPrincipal
+import tech.dokus.foundation.backend.utils.loggerFor
 import tech.dokus.peppol.service.PeppolConnectionService
 import tech.dokus.peppol.service.PeppolRegistrationService
 import tech.dokus.peppol.service.PeppolService
-import tech.dokus.foundation.backend.utils.loggerFor
 import tech.dokus.peppol.service.PeppolVerificationService
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -227,7 +226,9 @@ internal fun Route.peppolRoutes() {
                 recipientPeppolId
             ).getOrElse { error ->
                 when (error) {
-                    is IllegalArgumentException -> throw DokusException.BadRequest(error.message ?: "Invalid PEPPOL request")
+                    is IllegalArgumentException -> throw DokusException.BadRequest(
+                        error.message ?: "Invalid PEPPOL request"
+                    )
                     else -> throw DokusException.InternalError("Failed to queue invoice via PEPPOL")
                 }
             }

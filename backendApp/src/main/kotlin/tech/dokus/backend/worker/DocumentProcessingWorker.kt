@@ -1,5 +1,7 @@
 package tech.dokus.backend.worker
 
+import ai.koog.http.client.KoogHttpClientException
+import ai.koog.prompt.executor.clients.LLMClientException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -17,14 +19,11 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
-import ai.koog.http.client.KoogHttpClientException
-import ai.koog.prompt.executor.clients.LLMClientException
 import org.slf4j.MDC
 import tech.dokus.backend.services.documents.AutoConfirmPolicy
 import tech.dokus.backend.services.documents.ContactResolutionService
 import tech.dokus.backend.services.documents.DocumentTruthService
 import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
-import tech.dokus.foundation.backend.utils.runSuspendCatching
 import tech.dokus.database.entity.IngestionItemEntity
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.auth.UserRepository
@@ -47,6 +46,7 @@ import tech.dokus.features.ai.models.toProcessingOutcome
 import tech.dokus.features.ai.validation.CheckType
 import tech.dokus.foundation.backend.config.ProcessorConfig
 import tech.dokus.foundation.backend.utils.loggerFor
+import tech.dokus.foundation.backend.utils.runSuspendCatching
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration
 

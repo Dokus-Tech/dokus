@@ -1,7 +1,5 @@
 package tech.dokus.backend.routes.auth
 
-import tech.dokus.backend.security.requireTenantId
-
 import io.ktor.http.*
 import io.ktor.server.request.*
 import io.ktor.server.resources.*
@@ -10,6 +8,7 @@ import io.ktor.server.resources.put
 import io.ktor.server.response.*
 import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
+import tech.dokus.backend.security.requireTenantId
 import tech.dokus.backend.services.business.BusinessProfileService
 import tech.dokus.database.repository.auth.AddressRepository
 import tech.dokus.database.repository.auth.TenantRepository
@@ -20,11 +19,11 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.CreateTenantRequest
 import tech.dokus.domain.model.InvoiceNumberPreviewResponse
+import tech.dokus.domain.model.PinBusinessProfileFieldsRequest
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.TenantSettings
-import tech.dokus.domain.model.UpsertTenantAddressRequest
 import tech.dokus.domain.model.UpdateBusinessProfileRequest
-import tech.dokus.domain.model.PinBusinessProfileFieldsRequest
+import tech.dokus.domain.model.UpsertTenantAddressRequest
 import tech.dokus.domain.model.common.Thumbnail
 import tech.dokus.domain.routes.Tenants
 import tech.dokus.foundation.backend.security.authenticateJwt
@@ -180,7 +179,11 @@ internal fun Route.tenantRoutes() {
                 tenantId = tenantId,
                 triggerReason = "TENANT_ADDRESS_UPDATED"
             ).onFailure { error ->
-                logger.warn("Failed to enqueue business profile enrichment after tenant address update {}", tenantId, error)
+                logger.warn(
+                    "Failed to enqueue business profile enrichment after tenant address update {}",
+                    tenantId,
+                    error
+                )
             }
             call.respond(HttpStatusCode.OK, address)
         }
