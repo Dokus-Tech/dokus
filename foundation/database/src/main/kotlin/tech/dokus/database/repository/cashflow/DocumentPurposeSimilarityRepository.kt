@@ -13,7 +13,6 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.foundation.backend.utils.loggerFor
 import java.sql.Connection
 import java.util.UUID
-import kotlin.uuid.toJavaUuid
 
 class DocumentPurposeSimilarityRepository {
     private val logger = loggerFor()
@@ -31,8 +30,8 @@ class DocumentPurposeSimilarityRepository {
         embedding: List<Float>?,
         embeddingModel: String?
     ) = newSuspendedTransaction {
-        val tenantUuid = tenantId.value.toJavaUuid()
-        val documentUuid = documentId.value.toJavaUuid()
+        val tenantUuid = UUID.fromString(tenantId.toString())
+        val documentUuid = UUID.fromString(documentId.toString())
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         DocumentPurposeExamplesTable.upsert(
@@ -88,7 +87,7 @@ class DocumentPurposeSimilarityRepository {
         }
 
         val vectorString = "[${queryEmbedding.joinToString(",")}]"
-        val tenantUuid = tenantId.value.toJavaUuid()
+        val tenantUuid = UUID.fromString(tenantId.toString())
         val sql = buildString {
             append("SELECT dpe.purpose_base, ")
             append("(1 - (dpe.embedding <=> '${escapeSqlLiteral(vectorString)}'::vector)) AS similarity ")

@@ -335,8 +335,15 @@ class DocumentProcessingWorker(
             val parsedTenantId = tenantId
             val tenant = tenantRepository.findById(parsedTenantId)
                 ?: error("Tenant not found: $tenantId")
-            val sourceChannel = ingestion.sourceChannel
-                ?: error("Missing source channel for run=$runId document=$documentId")
+            val sourceChannel = ingestion.sourceChannel ?: ingestion.documentSource
+            if (ingestion.sourceChannel == null) {
+                logger.warn(
+                    "Missing source channel for run {} document {}; using document source {}",
+                    runId,
+                    documentId,
+                    sourceChannel
+                )
+            }
 
             val members = userRepository.listByTenant(parsedTenantId, activeOnly = true)
             val personNames = members.mapNotNull { m ->

@@ -81,6 +81,7 @@ class ProcessorIngestionRepository {
                         tenantId = TenantId(row[DocumentIngestionRunsTable.tenantId].toKotlinUuid()),
                         sourceId = row[DocumentIngestionRunsTable.sourceId]?.toKotlinUuid()?.let { DocumentSourceId(it) },
                         sourceChannel = row.getOrNull(DocumentSourcesTable.sourceChannel),
+                        documentSource = row[DocumentsTable.documentSource],
                         peppolStructuredSnapshotJson = row.getOrNull(DocumentSourcesTable.peppolStructuredSnapshotJson),
                         peppolSnapshotVersion = row.getOrNull(DocumentSourcesTable.peppolSnapshotVersion),
                         storageKey = row[DocumentsTable.storageKey],

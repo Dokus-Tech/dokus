@@ -16,6 +16,7 @@ import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.processor.ProcessorIngestionRepository
+import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
@@ -147,5 +148,69 @@ class DocumentProcessingWorkerConcurrencyTest {
         coVerify(exactly = 0) { ingestionRepository.markAsFailed(any(), any()) }
         coVerify(exactly = 0) { tenantRepository.findById(any()) }
         coVerify(exactly = 0) { processingAgent.process(any()) }
+    }
+
+    @Test
+    fun `missing source channel falls back to document source`() = runBlocking {
+        val ingestionRepository = mockk<ProcessorIngestionRepository>()
+        val processingAgent = mockk<DocumentProcessingAgent>()
+        val contactResolutionService = mockk<ContactResolutionService>(relaxed = true)
+        val purposeService = mockk<DocumentPurposeService>(relaxed = true)
+        val draftRepository = mockk<DocumentDraftRepository>(relaxed = true)
+        val documentTruthService = mockk<DocumentTruthService>(relaxed = true)
+        val autoConfirmPolicy = mockk<AutoConfirmPolicy>(relaxed = true)
+        val confirmationDispatcher = mockk<DocumentConfirmationDispatcher>(relaxed = true)
+        val tenantRepository = mockk<TenantRepository>()
+        val userRepository = mockk<UserRepository>(relaxed = true)
+
+        val run = IngestionItemEntity(
+            runId = IngestionRunId.generate(),
+            documentId = DocumentId.generate(),
+            tenantId = TenantId.generate(),
+            sourceChannel = null,
+            documentSource = DocumentSource.Email,
+            storageKey = "docs/fallback.pdf",
+            filename = "fallback.pdf",
+            contentType = "application/pdf"
+        )
+
+        coEvery { ingestionRepository.recoverStaleRuns() } returns 0
+        coEvery { ingestionRepository.findPendingForProcessing(10) } returns listOf(run)
+        coEvery { ingestionRepository.markAsProcessing(run.runId.toString(), "koog-graph") } returns true
+        coEvery { ingestionRepository.markAsFailed(any(), any()) } returns true
+        coEvery { tenantRepository.findById(run.tenantId) } returns mockk(relaxed = true)
+        coEvery { userRepository.listByTenant(run.tenantId, activeOnly = true) } returns emptyList()
+        coEvery { processingAgent.process(any()) } throws IllegalStateException("stop after source resolution")
+
+        val worker = DocumentProcessingWorker(
+            ingestionRepository = ingestionRepository,
+            processingAgent = processingAgent,
+            contactResolutionService = contactResolutionService,
+            purposeService = purposeService,
+            documentTruthService = documentTruthService,
+            draftRepository = draftRepository,
+            autoConfirmPolicy = autoConfirmPolicy,
+            confirmationDispatcher = confirmationDispatcher,
+            config = ProcessorConfig(
+                pollingInterval = 1_000,
+                maxAttempts = 3,
+                batchSize = 10,
+                maxConcurrentRuns = 1
+            ),
+            tenantRepository = tenantRepository,
+            userRepository = userRepository
+        )
+
+        worker.processBatchForTest(timeout = 5.seconds)
+
+        coVerify(exactly = 1) {
+            processingAgent.process(match { input -> input.sourceChannel == DocumentSource.Email })
+        }
+        coVerify(exactly = 1) {
+            ingestionRepository.markAsFailed(
+                run.runId.toString(),
+                match { it.contains("stop after source resolution") }
+            )
+        }
     }
 }
