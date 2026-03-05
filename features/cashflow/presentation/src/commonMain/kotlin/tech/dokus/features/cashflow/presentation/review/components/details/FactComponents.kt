@@ -33,7 +33,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -43,8 +42,14 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_tap_to_identify
 import tech.dokus.aura.resources.cashflow_who_issued_document
 import tech.dokus.features.cashflow.presentation.review.ContactSnapshot
+import tech.dokus.foundation.app.network.rememberAuthenticatedImageLoader
+import tech.dokus.foundation.app.network.rememberResolvedApiUrl
+import tech.dokus.foundation.aura.components.AvatarShape
+import tech.dokus.foundation.aura.components.AvatarSize
+import tech.dokus.foundation.aura.components.CompanyAvatarImage
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.local.LocalScreenSize
+import tech.dokus.foundation.aura.style.statusConfirmed
 import tech.dokus.foundation.aura.style.statusWarning
 import tech.dokus.foundation.aura.style.textMuted
 import tech.dokus.foundation.aura.tooling.PreviewParameters
@@ -57,8 +62,6 @@ private val PencilIconSize = 16.dp
 private val ChevronIconSize = 16.dp
 private val AttentionBorderAlpha = 0.3f
 private val HoverBackgroundAlpha = 0.08f
-private const val FactFieldLabelWeight = 0.42f
-private const val FactFieldValueWeight = 0.58f
 
 /**
  * Contact display as a fact block with hover-to-edit behavior.
@@ -116,6 +119,9 @@ private fun ContactFactDisplay(
     interactionSource: MutableInteractionSource,
     modifier: Modifier = Modifier
 ) {
+    val imageLoader = rememberAuthenticatedImageLoader()
+    val avatarUrl = rememberResolvedApiUrl(contact.avatarUrl)
+
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -139,10 +145,21 @@ private fun ContactFactDisplay(
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
             verticalAlignment = Alignment.Top
         ) {
-            Column(modifier = Modifier.weight(1f)) {
+            CompanyAvatarImage(
+                avatarUrl = avatarUrl,
+                initial = contactInitials(contact.name),
+                size = AvatarSize.Small,
+                shape = AvatarShape.RoundedSquare,
+                imageLoader = imageLoader,
+            )
+
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
                 // Name (primary)
                 Text(
                     text = contact.name,
@@ -321,7 +338,7 @@ fun MicroLabel(
     modifier: Modifier = Modifier
 ) {
     Text(
-        text = text,
+        text = text.uppercase(),
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.textMuted,
         modifier = modifier.padding(bottom = Constraints.Spacing.xSmall)
@@ -342,46 +359,64 @@ fun FactField(
     val isHovered by interactionSource.collectIsHoveredAsState()
     val isLargeScreen = LocalScreenSize.current.isLarge
     val isClickable = onClick != null
+    val hasValue = !value.isNullOrBlank()
 
-    Row(
+    Column(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(4.dp))
             .background(
                 if (isHovered && isClickable) {
-                    MaterialTheme.colorScheme.outline.copy(alpha = HoverBackgroundAlpha)
+                    MaterialTheme.colorScheme.outline.copy(alpha = HoverBackgroundAlpha + 0.06f)
                 } else {
-                    MaterialTheme.colorScheme.surface.copy(alpha = 0f)
+                    MaterialTheme.colorScheme.outline.copy(alpha = 0.07f)
                 }
+            )
+            .border(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f),
+                shape = RoundedCornerShape(4.dp),
             )
             .then(if (isClickable) Modifier.hoverable(interactionSource) else Modifier)
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(vertical = Constraints.Spacing.xSmall),
-        horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(
+                horizontal = Constraints.Spacing.small,
+                vertical = Constraints.Spacing.xSmall,
+            ),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         Text(
             text = label,
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.textMuted,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(FactFieldLabelWeight),
         )
         Row(
-            modifier = Modifier.weight(FactFieldValueWeight),
-            horizontalArrangement = Arrangement.End,
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            Box(
+                modifier = Modifier
+                    .size(StatusDotSize)
+                    .background(
+                        color = if (hasValue) {
+                            MaterialTheme.colorScheme.statusConfirmed.copy(alpha = 0.86f)
+                        } else {
+                            MaterialTheme.colorScheme.outline.copy(alpha = 0.85f)
+                        },
+                        shape = CircleShape,
+                    )
+            )
             Text(
                 text = value ?: "—",
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyLarge.copy(fontFeatureSettings = "tnum"),
                 color = if (value != null) {
                     MaterialTheme.colorScheme.onSurface
                 } else {
                     MaterialTheme.colorScheme.textMuted
                 },
-                textAlign = TextAlign.End,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f),
@@ -398,6 +433,13 @@ fun FactField(
         }
     }
 }
+
+private fun contactInitials(name: String): String = name
+    .split(" ")
+    .filter { it.isNotBlank() }
+    .take(2)
+    .joinToString("") { it.take(1) }
+    .ifBlank { "?" }
 
 // =============================================================================
 // Previews

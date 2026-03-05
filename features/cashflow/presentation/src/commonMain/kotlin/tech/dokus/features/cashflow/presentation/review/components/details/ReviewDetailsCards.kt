@@ -1,14 +1,23 @@
 package tech.dokus.features.cashflow.presentation.review.components.details
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_choose_different
@@ -49,6 +58,7 @@ import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.style.textMuted
 
 /**
  * Counterparty display section - shows extracted counterparty info as facts.
@@ -398,49 +408,91 @@ private fun DirectionSelector(
     onDirectionSelected: (DocumentDirection) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    if (isReadOnly) {
+        FactField(
+            label = stringResource(Res.string.cashflow_direction),
+            value = cashflowDirectionLabel(direction),
+            modifier = modifier,
+        )
+        return
+    }
+
+    val cashflowInSelected = direction == DocumentDirection.Outbound
+    val cashflowOutSelected = direction == DocumentDirection.Inbound
+
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall)
     ) {
         MicroLabel(text = stringResource(Res.string.cashflow_direction))
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.08f),
+                    shape = RoundedCornerShape(12.dp),
+                )
+                .border(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.65f),
+                    shape = RoundedCornerShape(12.dp),
+                )
+                .padding(4.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            val isInbound = direction == DocumentDirection.Inbound
-            val isOutbound = direction == DocumentDirection.Outbound
-
-            if (isInbound) {
-                PPrimaryButton(
-                    text = stringResource(Res.string.cashflow_direction_in),
-                    onClick = { onDirectionSelected(DocumentDirection.Inbound) },
-                    enabled = !isReadOnly,
-                    modifier = Modifier.weight(1f)
-                )
-            } else {
-                POutlinedButton(
-                    text = stringResource(Res.string.cashflow_direction_in),
-                    onClick = { onDirectionSelected(DocumentDirection.Inbound) },
-                    enabled = !isReadOnly,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-
-            if (isOutbound) {
-                PPrimaryButton(
-                    text = stringResource(Res.string.cashflow_direction_out),
-                    onClick = { onDirectionSelected(DocumentDirection.Outbound) },
-                    enabled = !isReadOnly,
-                    modifier = Modifier.weight(1f)
-                )
-            } else {
-                POutlinedButton(
-                    text = stringResource(Res.string.cashflow_direction_out),
-                    onClick = { onDirectionSelected(DocumentDirection.Outbound) },
-                    enabled = !isReadOnly,
-                    modifier = Modifier.weight(1f)
-                )
-            }
+            DirectionChoice(
+                text = stringResource(Res.string.cashflow_direction_in),
+                selected = cashflowInSelected,
+                onClick = { onDirectionSelected(DocumentDirection.Outbound) },
+                modifier = Modifier.weight(1f),
+            )
+            DirectionChoice(
+                text = stringResource(Res.string.cashflow_direction_out),
+                selected = cashflowOutSelected,
+                onClick = { onDirectionSelected(DocumentDirection.Inbound) },
+                modifier = Modifier.weight(1f),
+            )
         }
     }
+}
+
+@Composable
+private fun DirectionChoice(
+    text: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        text = text,
+        textAlign = TextAlign.Center,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        style = MaterialTheme.typography.bodyLarge,
+        fontWeight = FontWeight.Medium,
+        color = if (selected) {
+            MaterialTheme.colorScheme.onPrimary
+        } else {
+            MaterialTheme.colorScheme.textMuted
+        },
+        modifier = modifier
+            .background(
+                color = if (selected) {
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.92f)
+                } else {
+                    MaterialTheme.colorScheme.surface.copy(alpha = 0f)
+                },
+                shape = RoundedCornerShape(9.dp),
+            )
+            .clickable(onClick = onClick)
+            .padding(vertical = 10.dp, horizontal = Constraints.Spacing.small),
+    )
+}
+
+@Composable
+private fun cashflowDirectionLabel(direction: DocumentDirection): String = when (direction) {
+    DocumentDirection.Inbound -> stringResource(Res.string.cashflow_direction_out)
+    DocumentDirection.Outbound -> stringResource(Res.string.cashflow_direction_in)
+    DocumentDirection.Unknown -> "—"
 }
