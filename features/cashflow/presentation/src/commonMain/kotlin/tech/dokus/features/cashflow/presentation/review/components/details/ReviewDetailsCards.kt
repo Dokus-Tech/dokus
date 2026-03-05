@@ -329,7 +329,10 @@ private fun InvoiceDetailsFactDisplay(
     dueDate: String?,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier.fillMaxWidth()) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall),
+    ) {
         DirectionSelector(
             direction = direction,
             isReadOnly = isReadOnly,
@@ -356,7 +359,10 @@ private fun ReceiptDetailsFactDisplay(
     date: String?,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier.fillMaxWidth()) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall),
+    ) {
         FactField(
             label = stringResource(Res.string.cashflow_receipt_number),
             value = receiptNumber
@@ -378,7 +384,10 @@ private fun CreditNoteDetailsFactDisplay(
     originalInvoiceNumber: String?,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier.fillMaxWidth()) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall),
+    ) {
         DirectionSelector(
             direction = direction,
             isReadOnly = isReadOnly,

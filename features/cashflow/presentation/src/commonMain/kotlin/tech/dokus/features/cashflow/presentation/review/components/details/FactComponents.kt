@@ -62,6 +62,7 @@ private val PencilIconSize = 16.dp
 private val ChevronIconSize = 16.dp
 private val AttentionBorderAlpha = 0.3f
 private val HoverBackgroundAlpha = 0.08f
+private val FactFieldCornerRadius = 6.dp
 
 /**
  * Contact display as a fact block with hover-to-edit behavior.
@@ -364,24 +365,19 @@ fun FactField(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(4.dp))
+            .clip(RoundedCornerShape(FactFieldCornerRadius))
             .background(
                 if (isHovered && isClickable) {
-                    MaterialTheme.colorScheme.outline.copy(alpha = HoverBackgroundAlpha + 0.06f)
+                    MaterialTheme.colorScheme.outline.copy(alpha = HoverBackgroundAlpha + 0.03f)
                 } else {
-                    MaterialTheme.colorScheme.outline.copy(alpha = 0.07f)
+                    MaterialTheme.colorScheme.surface.copy(alpha = 0f)
                 }
-            )
-            .border(
-                width = 1.dp,
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f),
-                shape = RoundedCornerShape(4.dp),
             )
             .then(if (isClickable) Modifier.hoverable(interactionSource) else Modifier)
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
             .padding(
-                horizontal = Constraints.Spacing.small,
-                vertical = Constraints.Spacing.xSmall,
+                horizontal = Constraints.Spacing.xSmall,
+                vertical = 2.dp,
             ),
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {

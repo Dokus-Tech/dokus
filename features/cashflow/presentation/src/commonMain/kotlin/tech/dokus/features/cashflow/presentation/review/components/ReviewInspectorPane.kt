@@ -32,6 +32,7 @@ import tech.dokus.features.cashflow.presentation.review.dotType
 import tech.dokus.features.cashflow.presentation.review.statusBadgeLocalized
 import tech.dokus.features.cashflow.presentation.review.components.details.CounterpartyCard
 import tech.dokus.features.cashflow.presentation.review.components.details.InvoiceDetailsCard
+import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.icons.LockIcon
 import tech.dokus.foundation.aura.components.status.StatusDot
 import tech.dokus.foundation.aura.constrains.Constraints
@@ -73,16 +74,20 @@ internal fun ReviewInspectorPane(
                 .padding(horizontal = Constraints.Spacing.medium),
             verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
         ) {
-            CounterpartyCard(
-                state = state,
-                onIntent = onIntent,
-                onCorrectContact = onCorrectContact,
-                onCreateContact = onCreateContact,
-            )
-            InvoiceDetailsCard(
-                state = state,
-                onIntent = onIntent,
-            )
+            InspectorFactGroupCard {
+                CounterpartyCard(
+                    state = state,
+                    onIntent = onIntent,
+                    onCorrectContact = onCorrectContact,
+                    onCreateContact = onCreateContact,
+                )
+            }
+            InspectorFactGroupCard {
+                InvoiceDetailsCard(
+                    state = state,
+                    onIntent = onIntent,
+                )
+            }
             InspectorAmountSection(state = state)
             InspectorSourcesSection(
                 state = state,
@@ -102,6 +107,23 @@ internal fun ReviewInspectorPane(
                 .padding(Constraints.Spacing.medium),
         ) {
             Text("Request amendment")
+        }
+    }
+}
+
+@Composable
+private fun InspectorFactGroupCard(
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    DokusCardSurface(modifier = modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(Constraints.Spacing.medium),
+            verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
+        ) {
+            content()
         }
     }
 }
