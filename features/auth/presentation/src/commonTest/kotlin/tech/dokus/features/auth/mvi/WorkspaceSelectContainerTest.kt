@@ -25,7 +25,7 @@ class WorkspaceSelectContainerTest {
 
         container.store.subscribeAndTest {
             WorkspaceSelectIntent.LoadTenants resultsIn WorkspaceSelectAction.NavigateToLogin
-            assertIs<WorkspaceSelectState.Loading>(states.value)
+            assertIs<WorkspaceSelectState.SessionExpired>(states.value)
         }
     }
 }

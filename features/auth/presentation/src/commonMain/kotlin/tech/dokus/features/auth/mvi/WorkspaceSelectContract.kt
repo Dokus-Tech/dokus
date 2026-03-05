@@ -50,6 +50,13 @@ sealed interface WorkspaceSelectState : MVIState, DokusState<List<Tenant>> {
     ) : WorkspaceSelectState
 
     /**
+     * Session is invalid and user must be redirected to login.
+     *
+     * Keeps a non-error persistent fallback state in case one-off navigation action is missed.
+     */
+    data object SessionExpired : WorkspaceSelectState, DokusState.Loading<List<Tenant>>
+
+    /**
      * Error state with recovery option.
      */
     data class Error(
