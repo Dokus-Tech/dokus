@@ -334,3 +334,47 @@ private fun RecordPaymentDialogErrorPreview(
         )
     }
 }
+
+@Preview
+@Composable
+private fun RecordPaymentDialogSuggestedTransactionPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        RecordPaymentDialogContent(
+            sheetState = previewPaymentSheetState(withSuggestedTransaction = true),
+            currencySign = "\u20AC",
+            onPaidAtChange = {},
+            onAmountChange = {},
+            onNoteChange = {},
+            onOpenTransactionPicker = {},
+            onCloseTransactionPicker = {},
+            onSelectTransaction = {},
+            onClearSelectedTransaction = {},
+            onSubmit = {},
+            onDismiss = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun RecordPaymentDialogTransactionPickerPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        RecordPaymentDialogContent(
+            sheetState = previewPaymentSheetState(withTransactionPicker = true),
+            currencySign = "\u20AC",
+            onPaidAtChange = {},
+            onAmountChange = {},
+            onNoteChange = {},
+            onOpenTransactionPicker = {},
+            onCloseTransactionPicker = {},
+            onSelectTransaction = {},
+            onClearSelectedTransaction = {},
+            onSubmit = {},
+            onDismiss = {},
+        )
+    }
+}
