@@ -1,6 +1,10 @@
 package tech.dokus.app.module
 
 import io.ktor.client.HttpClient
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 import tech.dokus.domain.config.DynamicDokusEndpointProvider
@@ -46,15 +50,18 @@ private val networkModule = module {
             tokenManager = get<TokenManagerMutable>(),
             connectionMonitor = get<ServerConnectionMonitor>(),
             onAuthenticationFailed = {
-                val localDatabaseCleaner = get<LocalDatabaseCleaner>()
                 val authManager = get<AuthManagerMutable>()
                 val tokenManager = get<TokenManagerMutable>()
-                localDatabaseCleaner.clearAll()
-                    .onFailure { error ->
-                        appLogger.w(error) { "Failed to clear local database during forced logout" }
-                    }
+                // Fast in-memory state changes first — unblocks the HTTP pipeline
                 tokenManager.onAuthenticationFailed()
                 authManager.onAuthenticationFailed()
+                // Best-effort DB cleanup — must not block the HTTP send coroutine
+                CoroutineScope(SupervisorJob() + Dispatchers.Default).launch {
+                    get<LocalDatabaseCleaner>().clearAll()
+                        .onFailure { error ->
+                            appLogger.w(error) { "Failed to clear local database during forced logout" }
+                        }
+                }
             }
         )
     }

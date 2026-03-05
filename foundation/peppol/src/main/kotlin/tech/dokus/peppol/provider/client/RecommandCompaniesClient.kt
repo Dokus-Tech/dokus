@@ -94,6 +94,6 @@ class RecommandCompaniesClient(
 }
 
 class RecommandUnauthorizedException(
-    val statusCode: Int,
+    statusCode: Int,
     val responseBody: String,
-) : Exception("Recommand API unauthorized (HTTP $statusCode): $responseBody")
+) : RecommandApiException(statusCode, responseBody)
