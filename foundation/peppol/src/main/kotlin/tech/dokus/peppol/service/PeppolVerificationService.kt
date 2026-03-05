@@ -9,6 +9,7 @@ import tech.dokus.foundation.backend.utils.runSuspendCatching
 import tech.dokus.peppol.config.PeppolModuleConfig
 import tech.dokus.peppol.provider.client.RecommandApiException
 import tech.dokus.peppol.provider.client.RecommandProvider
+import tech.dokus.peppol.provider.client.RecommandUnauthorizedException
 import java.io.IOException
 import java.net.ConnectException
 import java.net.SocketTimeoutException
@@ -89,6 +90,7 @@ class PeppolVerificationService(
 
 internal fun Throwable.toPeppolVerificationException(): DokusException = when (this) {
     is DokusException -> this
+    is RecommandUnauthorizedException -> DokusException.InternalError("PEPPOL directory credentials rejected ($statusCode)")
     is RecommandApiException -> when (statusCode) {
         in 500..599 -> DokusException.PeppolDirectoryUnavailable()
         else -> DokusException.InternalError("PEPPOL directory request failed ($statusCode)")

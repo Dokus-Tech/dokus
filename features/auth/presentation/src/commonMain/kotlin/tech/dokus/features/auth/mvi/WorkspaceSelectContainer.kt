@@ -56,9 +56,10 @@ internal class WorkspaceSelectContainer(
             },
             onFailure = { error ->
                 logger.e(error) { "Failed to load tenants" }
+                val exception = error.asDokusException
                 updateState {
                     WorkspaceSelectState.Error(
-                        exception = error.asDokusException,
+                        exception = exception,
                         retryHandler = { intent(WorkspaceSelectIntent.LoadTenants) }
                     )
                 }

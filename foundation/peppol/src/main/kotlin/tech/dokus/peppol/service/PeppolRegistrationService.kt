@@ -80,8 +80,11 @@ class PeppolRegistrationService(
 
         val countryCode = address.country?.trim()?.uppercase().orEmpty()
         require(countryCode.isNotBlank()) { "Tenant address is incomplete (country)" }
-        val country = runSuspendCatching { RecommandCompanyCountry.valueOf(countryCode) }
-            .getOrElse { throw IllegalStateException("Unsupported country for Peppol provider: $countryCode") }
+        val country = try {
+            RecommandCompanyCountry.valueOf(countryCode)
+        } catch (_: IllegalArgumentException) {
+            throw IllegalStateException("Unsupported country for Peppol provider: $countryCode")
+        }
 
         val peppolId = PeppolId("0208:${vatNumber.normalized}")
         val enterpriseNumber = vatNumber.companyNumber

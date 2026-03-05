@@ -63,7 +63,7 @@ fun Application.configureJwtAuthentication() {
             }
 
             challenge { _, _ ->
-                call.respond(
+                call.respond<DokusException>(
                     HttpStatusCode.Unauthorized,
                     DokusException.NotAuthenticated("Authentication required")
                 )
