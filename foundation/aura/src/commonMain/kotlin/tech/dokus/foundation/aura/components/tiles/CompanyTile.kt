@@ -13,15 +13,16 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.text.font.FontWeight
+import coil3.ImageLoader
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.workspace_add
 import tech.dokus.foundation.aura.components.AvatarShape
 import tech.dokus.foundation.aura.components.AvatarSize
 import tech.dokus.foundation.aura.components.CompanyAvatarImage
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.tooling.PreviewParameters
@@ -35,6 +36,8 @@ import tech.dokus.foundation.aura.tooling.TestWrapper
  * @param initial The initial letter to display as fallback (typically first letter of company name)
  * @param label The company name to display below the avatar
  * @param avatarUrl Optional URL of the company avatar image
+ * @param badge Optional secondary text shown below the label
+ * @param imageLoader Optional authenticated image loader
  * @param onClick Click handler for the tile
  * @param modifier Modifier to be applied to the tile
  */
@@ -45,6 +48,7 @@ fun CompanyTile(
     label: String,
     avatarUrl: String? = null,
     badge: String? = null,
+    imageLoader: ImageLoader? = null,
     onClick: () -> Unit
 ) {
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
@@ -56,6 +60,7 @@ fun CompanyTile(
                 initial = initial,
                 size = AvatarSize.Medium,
                 shape = AvatarShape.RoundedSquare,
+                imageLoader = imageLoader,
                 modifier = Modifier.size(Constraints.AvatarSize.tile)
             )
         }

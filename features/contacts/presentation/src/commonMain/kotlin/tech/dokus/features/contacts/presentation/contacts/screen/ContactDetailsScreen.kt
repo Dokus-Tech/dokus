@@ -15,7 +15,6 @@ import kotlinx.datetime.LocalDateTime
 import tech.dokus.domain.Name
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.contact.ContactActivitySummary
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.ContactNoteDto
 import tech.dokus.features.contacts.mvi.ContactDetailsIntent
@@ -74,8 +73,13 @@ private fun ContactDetailsScreenContent(
         is ContactDetailsState.Error -> DokusState.error(state.exception, state.retryHandler)
     }
 
-    val activityState: DokusState<ContactActivitySummary> = when (state) {
-        is ContactDetailsState.Content -> state.activityState
+    val invoiceSnapshotState = when (state) {
+        is ContactDetailsState.Content -> state.invoiceSnapshotState
+        else -> DokusState.loading()
+    }
+
+    val peppolStatusState = when (state) {
+        is ContactDetailsState.Content -> state.peppolStatusState
         else -> DokusState.loading()
     }
 
@@ -88,29 +92,38 @@ private fun ContactDetailsScreenContent(
         is ContactDetailsState.Content -> state.enrichmentSuggestions
         else -> emptyList()
     }
+    val isEmbeddedDesktop = isDesktop && !showBackButton
 
     Scaffold(
         topBar = {
-            ContactDetailsTopBar(
-                contactState = contactState,
-                showBackButton = showBackButton,
-                hasEnrichmentSuggestions = enrichmentSuggestions.isNotEmpty(),
-                onBackClick = onBackClick,
-                onEditClick = onEditClick,
-                onEnrichmentClick = { onIntent(ContactDetailsIntent.ShowEnrichmentPanel) },
-                onMergeClick = { onIntent(ContactDetailsIntent.ShowMergeDialog) },
-                isOnline = isOnline
-            )
+            if (!isEmbeddedDesktop) {
+                ContactDetailsTopBar(
+                    contactState = contactState,
+                    showBackButton = showBackButton,
+                    hasEnrichmentSuggestions = enrichmentSuggestions.isNotEmpty(),
+                    onBackClick = onBackClick,
+                    onEditClick = onEditClick,
+                    onEnrichmentClick = { onIntent(ContactDetailsIntent.ShowEnrichmentPanel) },
+                    onMergeClick = { onIntent(ContactDetailsIntent.ShowMergeDialog) },
+                    isOnline = isOnline
+                )
+            }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background
     ) { contentPadding ->
         ContactDetailsContent(
             contactState = contactState,
-            activityState = activityState,
+            invoiceSnapshotState = invoiceSnapshotState,
+            peppolStatusState = peppolStatusState,
             notesState = notesState,
             isOnline = isOnline,
             contentPadding = contentPadding,
+            showInlineActions = isEmbeddedDesktop,
+            hasEnrichmentSuggestions = enrichmentSuggestions.isNotEmpty(),
+            onEditContact = onEditClick,
+            onMergeContact = { onIntent(ContactDetailsIntent.ShowMergeDialog) },
+            onShowEnrichment = { onIntent(ContactDetailsIntent.ShowEnrichmentPanel) },
             onAddNote = {
                 if (isDesktop) {
                     onIntent(ContactDetailsIntent.ShowNotesSidePanel)

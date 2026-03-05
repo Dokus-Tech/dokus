@@ -86,6 +86,8 @@ dependencies {
 
     // PDF/Image processing (for document processor)
     implementation(libs.pdfbox)
+    implementation(libs.batik.transcoder)
+    implementation(libs.batik.codec)
 
     // Testing
     testImplementation(libs.junit.jupiter)

@@ -32,6 +32,11 @@ import tech.dokus.backend.services.cashflow.InvoiceService
 import tech.dokus.backend.services.contacts.ContactMatchingService
 import tech.dokus.backend.services.contacts.ContactNoteService
 import tech.dokus.backend.services.contacts.ContactService
+import tech.dokus.backend.services.business.BusinessProfileService
+import tech.dokus.backend.services.business.BusinessProfileEvidenceGate
+import tech.dokus.backend.services.business.BusinessLogoSelectionService
+import tech.dokus.backend.services.business.BusinessWebsiteProbe
+import tech.dokus.backend.services.business.BusinessWebsiteRanker
 import tech.dokus.backend.services.documents.AutoConfirmPolicy
 import tech.dokus.backend.services.documents.ContactResolutionService
 import tech.dokus.backend.services.documents.DocumentTruthService
@@ -47,6 +52,7 @@ import tech.dokus.backend.services.pdf.PdfPreviewService
 import tech.dokus.backend.services.peppol.PeppolRecipientResolver
 import tech.dokus.backend.services.search.SearchService
 import tech.dokus.backend.worker.CashflowProjectionReconciliationWorker
+import tech.dokus.backend.worker.BusinessProfileEnrichmentWorker
 import tech.dokus.backend.worker.DocumentProcessingWorker
 import tech.dokus.backend.worker.PeppolOutboundReconciliationWorker
 import tech.dokus.backend.worker.PeppolOutboundWorker
@@ -316,8 +322,13 @@ private fun cashflowModule() = module {
 }
 
 private val contactsModule = module {
+    singleOf(::BusinessProfileService)
+    singleOf(::BusinessWebsiteProbe)
+    singleOf(::BusinessWebsiteRanker)
+    singleOf(::BusinessLogoSelectionService)
+    singleOf(::BusinessProfileEvidenceGate)
     // NOTE: ContactService takes optional PeppolDirectoryCacheRepository for cache invalidation
-    single { ContactService(get(), getOrNull()) }
+    single { ContactService(get(), get(), get(), getOrNull()) }
     single { ContactNoteService(get()) }
     single { ContactMatchingService(get()) }
 }
@@ -336,4 +347,7 @@ private fun documentProcessingModule() = module {
 
     // Document Processing Worker
     singleOf(::DocumentProcessingWorker)
+
+    // Business profile enrichment worker
+    singleOf(::BusinessProfileEnrichmentWorker)
 }

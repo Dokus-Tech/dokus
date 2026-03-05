@@ -2,9 +2,13 @@ package tech.dokus.features.ai
 
 import ai.koog.agents.core.tools.ToolRegistry
 import ai.koog.prompt.executor.model.PromptExecutor
+import io.ktor.client.HttpClient
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
+import tech.dokus.features.ai.agents.BusinessProfileEnrichmentAgent
+import tech.dokus.features.ai.agents.BusinessProfileContentExtractionAgent
+import tech.dokus.features.ai.agents.BusinessLogoFallbackAgent
 import tech.dokus.features.ai.agents.ChatAgent
 import tech.dokus.features.ai.agents.DocumentProcessingAgent
 import tech.dokus.features.ai.config.AIModels
@@ -16,11 +20,13 @@ import tech.dokus.features.ai.services.DocumentImageCache
 import tech.dokus.features.ai.services.EmbeddingService
 import tech.dokus.features.ai.services.RAGService
 import tech.dokus.features.ai.services.RedisDocumentImageCache
+import tech.dokus.features.ai.tools.BusinessDiscoveryRegistry
 import tech.dokus.features.ai.tools.TenantDocumentsRegistry
 import tech.dokus.foundation.backend.cache.RedisClient
 import tech.dokus.foundation.backend.cache.RedisNamespace
 import tech.dokus.foundation.backend.cache.redis
 import tech.dokus.foundation.backend.config.AIConfig
+import tech.dokus.foundation.backend.config.BusinessProfileEnrichmentConfig
 import tech.dokus.foundation.backend.config.CachingConfig
 import tech.dokus.foundation.backend.lookup.CbeApiClient
 
@@ -60,6 +66,9 @@ fun aiModule() = module {
     // =========================================================================
 
     singleOf(::DocumentProcessingAgent)
+    singleOf(::BusinessProfileEnrichmentAgent)
+    singleOf(::BusinessProfileContentExtractionAgent)
+    singleOf(::BusinessLogoFallbackAgent)
 
     single {
         val models = get<ModelSet>()
@@ -74,6 +83,14 @@ fun aiModule() = module {
         TenantDocumentsRegistry(
             tenantId = args.tenantId,
             cbeApiClient = get<CbeApiClient>(),
+        )
+    }
+
+    factory<ToolRegistry>(named<BusinessDiscoveryRegistry>()) { (args: BusinessDiscoveryRegistry.Args) ->
+        BusinessDiscoveryRegistry(
+            args = args,
+            httpClient = get<HttpClient>(),
+            config = get<BusinessProfileEnrichmentConfig>()
         )
     }
 }

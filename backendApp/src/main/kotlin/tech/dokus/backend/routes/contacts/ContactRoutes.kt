@@ -1,5 +1,6 @@
 package tech.dokus.backend.routes.contacts
 
+import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.resources.delete
@@ -7,16 +8,21 @@ import io.ktor.server.resources.get
 import io.ktor.server.resources.post
 import io.ktor.server.resources.put
 import io.ktor.server.response.respond
+import io.ktor.server.response.respondBytes
 import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
 import tech.dokus.backend.security.requireTenantId
+import tech.dokus.backend.services.business.BusinessProfileService
 import tech.dokus.backend.services.contacts.ContactNoteService
 import tech.dokus.backend.services.contacts.ContactService
 import tech.dokus.backend.services.peppol.PeppolRecipientResolver
 import tech.dokus.database.repository.contacts.ContactRepository
+import tech.dokus.domain.enums.BusinessProfileSubjectType
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.ContactNoteId
+import tech.dokus.domain.model.PinBusinessProfileFieldsRequest
+import tech.dokus.domain.model.UpdateBusinessProfileRequest
 import tech.dokus.domain.model.contact.CreateContactNoteRequest
 import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.model.contact.UpdateContactNoteRequest
@@ -24,6 +30,9 @@ import tech.dokus.domain.model.contact.UpdateContactRequest
 import tech.dokus.domain.routes.Contacts
 import tech.dokus.foundation.backend.security.authenticateJwt
 import tech.dokus.foundation.backend.security.dokusPrincipal
+import tech.dokus.foundation.backend.storage.AvatarStorageService
+import tech.dokus.foundation.backend.utils.loggerFor
+import kotlin.uuid.ExperimentalUuidApi
 
 /**
  * Contact API Routes using Ktor Type-Safe Routing
@@ -37,11 +46,15 @@ import tech.dokus.foundation.backend.security.dokusPrincipal
  *
  * All routes require JWT authentication and tenant context.
  */
+@OptIn(ExperimentalUuidApi::class)
 fun Route.contactRoutes() {
+    val logger = loggerFor("ContactRoutes")
     val contactService by inject<ContactService>()
     val contactNoteService by inject<ContactNoteService>()
     val contactRepository by inject<ContactRepository>()
     val peppolResolver by inject<PeppolRecipientResolver>()
+    val businessProfileService by inject<BusinessProfileService>()
+    val avatarStorageService by inject<AvatarStorageService>()
 
     authenticateJwt {
         // ================================================================
@@ -186,6 +199,44 @@ fun Route.contactRoutes() {
         }
 
         /**
+         * GET /api/v1/contacts/{id}/avatar/{size}.webp
+         * Stream a contact avatar image from backend storage.
+         */
+        get<Contacts.Id.Avatar> { route ->
+            val tenantId = requireTenantId()
+            val contactId = ContactId.parse(route.parent.id)
+            val size = avatarStorageService.normalizeSize(route.size)
+                ?: throw DokusException.BadRequest("Avatar size must be one of: small, medium, large")
+
+            contactService.getContact(contactId, tenantId)
+                .getOrElse { throw DokusException.InternalError("Failed to fetch contact: ${it.message}") }
+                ?: throw DokusException.NotFound("Contact not found")
+
+            val storageKey = businessProfileService.getLogoStorageKey(
+                tenantId = tenantId,
+                subjectType = BusinessProfileSubjectType.Contact,
+                subjectId = contactId.value
+            ) ?: throw DokusException.NotFound("Avatar not found")
+
+            val imageBytes = avatarStorageService.getAvatarBytes(storageKey, size)
+            if (imageBytes == null) {
+                logger.debug(
+                    "Missing avatar object for tenant={}, contact={}, size={}, reason=storage_missing",
+                    tenantId,
+                    contactId,
+                    size
+                )
+                throw DokusException.NotFound("Avatar not found")
+            }
+
+            call.respondBytes(
+                bytes = imageBytes,
+                contentType = ContentType("image", "webp"),
+                status = HttpStatusCode.OK
+            )
+        }
+
+        /**
          * PUT /api/v1/contacts/{id}
          * Update a contact.
          */
@@ -198,6 +249,30 @@ fun Route.contactRoutes() {
                 .getOrElse { throw DokusException.InternalError("Failed to update contact: ${it.message}") }
 
             call.respond(HttpStatusCode.OK, contact)
+        }
+
+        /**
+         * PUT /api/v1/contacts/{id}/business-profile
+         * Backend-only endpoint: update contact business profile values and pin edited fields.
+         */
+        put<Contacts.Id.BusinessProfile> { route ->
+            val tenantId = requireTenantId()
+            val contactId = ContactId.parse(route.parent.id)
+            val request = call.receive<UpdateBusinessProfileRequest>()
+            val response = contactService.updateContactProfile(tenantId, contactId, request)
+            call.respond(HttpStatusCode.OK, response)
+        }
+
+        /**
+         * PUT /api/v1/contacts/{id}/business-profile/pins
+         * Backend-only endpoint: update contact business profile pin flags.
+         */
+        put<Contacts.Id.BusinessProfilePins> { route ->
+            val tenantId = requireTenantId()
+            val contactId = ContactId.parse(route.parent.id)
+            val request = call.receive<PinBusinessProfileFieldsRequest>()
+            val response = contactService.updateContactProfilePins(tenantId, contactId, request)
+            call.respond(HttpStatusCode.OK, response)
         }
 
         /**

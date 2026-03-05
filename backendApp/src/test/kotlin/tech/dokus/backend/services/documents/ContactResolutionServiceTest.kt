@@ -7,6 +7,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.LocalDateTime
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import tech.dokus.backend.services.contacts.ContactService
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.domain.Name
 import tech.dokus.domain.enums.ClientType
@@ -26,10 +27,12 @@ class ContactResolutionServiceTest {
 
     private val contactRepository = mockk<ContactRepository>()
     private val cbeApiClient = mockk<CbeApiClient>()
+    private val contactService = mockk<ContactService>(relaxed = true)
 
     private val service = ContactResolutionService(
         contactRepository = contactRepository,
-        cbeApiClient = cbeApiClient
+        cbeApiClient = cbeApiClient,
+        contactService = contactService
     )
 
     private val tenantId = TenantId.parse("44e8ed5c-020a-4bbb-9439-ac85899c5589")

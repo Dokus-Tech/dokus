@@ -18,6 +18,8 @@ import tech.dokus.database.tables.auth.UsersTable
 import tech.dokus.database.tables.auth.WelcomeEmailJobsTable
 import tech.dokus.database.tables.banking.BankConnectionsTable
 import tech.dokus.database.tables.banking.BankTransactionsTable
+import tech.dokus.database.tables.business.BusinessProfileEnrichmentJobsTable
+import tech.dokus.database.tables.business.BusinessProfilesTable
 import tech.dokus.database.tables.cashflow.CashflowEntriesTable
 import tech.dokus.database.tables.cashflow.CreditNotesTable
 import tech.dokus.database.tables.cashflow.ExpensesTable
@@ -37,6 +39,7 @@ import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.database.tables.notifications.NotificationPreferencesTable
 import tech.dokus.database.tables.notifications.NotificationsTable
 import tech.dokus.database.tables.payment.PaymentsTable
+import tech.dokus.database.tables.peppol.PeppolDirectoryCacheTable
 import tech.dokus.database.tables.peppol.PeppolRegistrationTable
 import tech.dokus.database.tables.peppol.PeppolSettingsTable
 import tech.dokus.database.tables.peppol.PeppolTransmissionsTable
@@ -94,6 +97,8 @@ object DokusSchema {
                 ContactsTable,
                 ContactAddressesTable,  // Join table: contacts -> addresses
                 ContactNotesTable,
+                BusinessProfilesTable,
+                BusinessProfileEnrichmentJobsTable,
 
                 // ----------------------------
                 // Cashflow (depends on contacts)
@@ -124,6 +129,7 @@ object DokusSchema {
                 PeppolRegistrationTable,
                 PeppolSettingsTable,
                 PeppolTransmissionsTable,
+                PeppolDirectoryCacheTable,
 
                 // ----------------------------
                 // AI / RAG (depends on users/docs)

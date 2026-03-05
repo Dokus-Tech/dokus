@@ -515,8 +515,8 @@ internal fun Route.documentRecordRoutes() {
 
             logger.info(
                 "Reprocessing document: $documentId, force=${request.force}, " +
-                    "overrides=[maxPages=${request.maxPages}, dpi=${request.dpi}, " +
-                    "timeout=${request.timeoutSeconds}s], tenant=$tenantId"
+                    "overrides=[maxPages=${request.maxPages}, dpi=${request.dpi}], " +
+                    "timeoutOverride=${request.timeoutSeconds} (ignored), tenant=$tenantId"
             )
 
             // Check document exists

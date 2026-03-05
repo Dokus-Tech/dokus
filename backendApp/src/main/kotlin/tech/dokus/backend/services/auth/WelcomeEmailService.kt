@@ -4,6 +4,7 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.toStdlibInstant
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.database.repository.auth.WelcomeEmailJobRepository
@@ -56,9 +57,9 @@ class WelcomeEmailService(
         val now = Clock.System.now()
         val workspaceReadyAt = tenantCreatedAt.toKotlinxInstant() + WelcomeDelay
         return if (workspaceReadyAt > now) {
-            workspaceReadyAt.toLocalDateTime(TimeZone.UTC)
+            workspaceReadyAt.toStdlibInstant().toLocalDateTime(TimeZone.UTC)
         } else {
-            now.toLocalDateTime(TimeZone.UTC)
+            now.toStdlibInstant().toLocalDateTime(TimeZone.UTC)
         }
     }
 }

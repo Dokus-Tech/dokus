@@ -118,7 +118,7 @@ data class DocumentRecordDto(
  * @property preferredProvider AI provider to use (future feature)
  * @property maxPages Override max pages to process (null = use default 10)
  * @property dpi Override DPI for PDF rendering (null = use default 150)
- * @property timeoutSeconds Override base timeout in seconds (null = use default 60)
+ * @property timeoutSeconds Reserved for compatibility. Ignored while global timeout policy is active.
  */
 @Serializable
 data class ReprocessRequest(

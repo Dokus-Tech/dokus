@@ -9,8 +9,11 @@ import io.ktor.client.plugins.resources.put
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.ContactNoteId
+import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.PeppolStatusResponse
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.model.contact.ContactActivitySummary
 import tech.dokus.domain.model.contact.ContactDto
@@ -22,6 +25,7 @@ import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.model.contact.UpdateContactNoteRequest
 import tech.dokus.domain.model.contact.UpdateContactRequest
 import tech.dokus.domain.routes.Contacts
+import tech.dokus.domain.routes.Invoices
 import tech.dokus.foundation.platform.Logger
 
 /**
@@ -180,6 +184,53 @@ internal class ContactRemoteDataSourceImpl(
     }
 
     // NOTE: updateContactPeppol removed - PEPPOL status is in PeppolDirectoryCacheTable
+
+    override suspend fun getContactPeppolStatus(
+        contactId: ContactId,
+        refresh: Boolean
+    ): Result<PeppolStatusResponse> {
+        logger.d { "Getting PEPPOL status for contact: $contactId (refresh=$refresh)" }
+        return runCatching {
+            val contactIdRoute = Contacts.Id(id = contactId.toString())
+            httpClient.get(
+                Contacts.Id.PeppolStatus(
+                    parent = contactIdRoute,
+                    refresh = refresh
+                )
+            ).body<PeppolStatusResponse>()
+        }.onSuccess { status ->
+            logger.i { "Got PEPPOL status for $contactId: ${status.status}" }
+        }.onFailure { error ->
+            logger.e(error) { "Failed to get PEPPOL status for contact: $contactId" }
+        }
+    }
+
+    override suspend fun listInvoicesByContact(
+        contactId: ContactId,
+        direction: DocumentDirection?,
+        limit: Int,
+        offset: Int
+    ): Result<PaginatedResponse<FinancialDocumentDto.InvoiceDto>> {
+        logger.d {
+            "Listing invoices for contact: $contactId, direction=$direction, limit=$limit, offset=$offset"
+        }
+        return runCatching {
+            httpClient.get(
+                Invoices(
+                    contactId = contactId.toString(),
+                    direction = direction,
+                    limit = limit,
+                    offset = offset
+                )
+            ).body<PaginatedResponse<FinancialDocumentDto.InvoiceDto>>()
+        }.onSuccess { response ->
+            logger.i {
+                "Listed ${response.items.size} invoices for $contactId (hasMore=${response.hasMore})"
+            }
+        }.onFailure { error ->
+            logger.e(error) { "Failed to list invoices for contact: $contactId" }
+        }
+    }
 
     override suspend fun getContactActivity(contactId: ContactId): Result<ContactActivitySummary> {
         logger.d { "Getting contact activity: $contactId" }
