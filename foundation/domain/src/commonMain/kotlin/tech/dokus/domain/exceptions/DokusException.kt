@@ -1044,6 +1044,21 @@ sealed class DokusException(
         }
     }
 
+    @Serializable
+    @SerialName("DokusException.PeppolDirectoryUnavailable")
+    data class PeppolDirectoryUnavailable(
+        override val message: String? = "PEPPOL directory is currently unavailable.",
+    ) : DokusException(
+        httpStatusCode = HTTP_STATUS,
+        errorCode = ERROR_CODE,
+        recoverable = true,
+    ) {
+        companion object {
+            const val HTTP_STATUS = 503
+            const val ERROR_CODE = "PEPPOL_DIRECTORY_UNAVAILABLE"
+        }
+    }
+
     companion object {
         @OptIn(ExperimentalUuidApi::class)
         fun generateErrorId(): String =

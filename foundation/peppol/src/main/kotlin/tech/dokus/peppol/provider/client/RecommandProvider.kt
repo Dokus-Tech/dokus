@@ -15,6 +15,7 @@ import io.ktor.http.isSuccess
 import tech.dokus.domain.enums.PeppolTransmissionDirection
 import tech.dokus.domain.utils.json
 import tech.dokus.foundation.backend.utils.loggerFor
+import tech.dokus.foundation.backend.utils.runSuspendCatching
 import tech.dokus.peppol.config.PeppolProviderConfig
 import tech.dokus.peppol.model.PeppolDocumentList
 import tech.dokus.peppol.model.PeppolInboxItem
@@ -82,7 +83,7 @@ class RecommandProvider(
         request: PeppolSendRequest,
         idempotencyKey: String?
     ): Result<PeppolSendResponse> =
-        runCatching {
+        runSuspendCatching {
             ensureConfigured()
             logger.info("Sending document to Peppol via Recommand. Recipient: ${request.recipientPeppolId}")
 
@@ -128,7 +129,7 @@ class RecommandProvider(
      * For production, consider implementing proper SMP lookup.
      */
     override suspend fun verifyRecipient(peppolId: String): Result<PeppolVerifyResponse> =
-        runCatching {
+        runSuspendCatching {
             ensureConfigured()
             logger.debug("Verifying Peppol participant: $peppolId")
 
@@ -151,7 +152,7 @@ class RecommandProvider(
      * Get unread documents from the inbox.
      * GET /api/v1/inbox?companyId={companyId}
      */
-    override suspend fun getInbox(): Result<List<PeppolInboxItem>> = runCatching {
+    override suspend fun getInbox(): Result<List<PeppolInboxItem>> = runSuspendCatching {
         ensureConfigured()
         logger.debug("Fetching Peppol inbox for company: ${credentials.companyId}")
 
@@ -184,7 +185,7 @@ class RecommandProvider(
      * Returns {"success": true, "document": {...}} with parsed content
      */
     override suspend fun getDocument(documentId: String): Result<PeppolReceivedDocument> =
-        runCatching {
+        runSuspendCatching {
             ensureConfigured()
             logger.debug("Fetching Peppol document: $documentId")
 
@@ -215,7 +216,7 @@ class RecommandProvider(
      * GET /api/v1/documents/{documentId}
      */
     suspend fun getDocumentDetail(documentId: String): Result<RecommandDocumentDetail> =
-        runCatching {
+        runSuspendCatching {
             ensureConfigured()
             logger.debug("Fetching raw document detail: $documentId")
 
@@ -242,7 +243,7 @@ class RecommandProvider(
      * Mark a document as read.
      * POST /api/v1/documents/{documentId}/mark-as-read
      */
-    override suspend fun markAsRead(documentId: String): Result<Unit> = runCatching {
+    override suspend fun markAsRead(documentId: String): Result<Unit> = runSuspendCatching {
         ensureConfigured()
         logger.debug("Marking document as read: $documentId")
 
@@ -276,7 +277,7 @@ class RecommandProvider(
         limit: Int,
         offset: Int,
         isUnread: Boolean?
-    ): Result<PeppolDocumentList> = runCatching {
+    ): Result<PeppolDocumentList> = runSuspendCatching {
         ensureConfigured()
         logger.debug(
             "Listing Peppol documents. Direction: {}, Limit: {}, Offset: {}, isUnread: {}",
@@ -327,7 +328,7 @@ class RecommandProvider(
      * Test the connection and validate credentials.
      * Uses GET /api/v1/documents with limit=1 to verify API access.
      */
-    override suspend fun testConnection(): Result<Boolean> = runCatching {
+    override suspend fun testConnection(): Result<Boolean> = runSuspendCatching {
         ensureConfigured()
         logger.debug("Testing Recommand connection for company: ${credentials.companyId}")
 
@@ -364,7 +365,7 @@ class RecommandProvider(
      * @return List of matching participants with their supported document types
      */
     suspend fun searchDirectory(query: String): Result<List<PeppolDirectorySearchResult>> =
-        runCatching {
+        runSuspendCatching {
             ensureConfigured()
             logger.debug("Searching PEPPOL directory: $query")
 

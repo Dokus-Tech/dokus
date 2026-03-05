@@ -71,6 +71,7 @@ import tech.dokus.aura.resources.exception_not_authenticated
 import tech.dokus.aura.resources.exception_not_authorized
 import tech.dokus.aura.resources.exception_not_found
 import tech.dokus.aura.resources.exception_not_implemented
+import tech.dokus.aura.resources.exception_peppol_directory_unavailable
 import tech.dokus.aura.resources.exception_peppol_send_requires_confirmed_document
 import tech.dokus.aura.resources.exception_password_do_not_match
 import tech.dokus.aura.resources.exception_payment_amount_exceeds_remaining
@@ -283,4 +284,5 @@ val DokusException.localized: String
 
         // 503 Service Unavailable
         is DokusException.ConnectionError -> stringResource(Res.string.exception_connection_error)
+        is DokusException.PeppolDirectoryUnavailable -> stringResource(Res.string.exception_peppol_directory_unavailable)
     }

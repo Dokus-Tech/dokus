@@ -76,4 +76,5 @@
 
     <!-- 503 Service Unavailable -->
     <string name="exception_connection_error">Connection error. Please try again later.</string>
+    <string name="exception_peppol_directory_unavailable">We are having trouble with PEPPOL connection right now. You can enable it later in Settings.</string>
 </resources>

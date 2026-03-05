@@ -23,6 +23,11 @@ import tech.dokus.backend.services.auth.RedisRateLimitService
 import tech.dokus.backend.services.auth.ResendEmailService
 import tech.dokus.backend.services.auth.TeamService
 import tech.dokus.backend.services.auth.WelcomeEmailService
+import tech.dokus.backend.services.business.BusinessLogoSelectionService
+import tech.dokus.backend.services.business.BusinessProfileEvidenceGate
+import tech.dokus.backend.services.business.BusinessProfileService
+import tech.dokus.backend.services.business.BusinessWebsiteProbe
+import tech.dokus.backend.services.business.BusinessWebsiteRanker
 import tech.dokus.backend.services.cashflow.CashflowEntriesService
 import tech.dokus.backend.services.cashflow.CashflowOverviewService
 import tech.dokus.backend.services.cashflow.CashflowProjectionReconciliationService
@@ -32,11 +37,6 @@ import tech.dokus.backend.services.cashflow.InvoiceService
 import tech.dokus.backend.services.contacts.ContactMatchingService
 import tech.dokus.backend.services.contacts.ContactNoteService
 import tech.dokus.backend.services.contacts.ContactService
-import tech.dokus.backend.services.business.BusinessProfileService
-import tech.dokus.backend.services.business.BusinessProfileEvidenceGate
-import tech.dokus.backend.services.business.BusinessLogoSelectionService
-import tech.dokus.backend.services.business.BusinessWebsiteProbe
-import tech.dokus.backend.services.business.BusinessWebsiteRanker
 import tech.dokus.backend.services.documents.AutoConfirmPolicy
 import tech.dokus.backend.services.documents.ContactResolutionService
 import tech.dokus.backend.services.documents.DocumentTruthService
@@ -51,8 +51,8 @@ import tech.dokus.backend.services.pdf.InvoicePdfService
 import tech.dokus.backend.services.pdf.PdfPreviewService
 import tech.dokus.backend.services.peppol.PeppolRecipientResolver
 import tech.dokus.backend.services.search.SearchService
-import tech.dokus.backend.worker.CashflowProjectionReconciliationWorker
 import tech.dokus.backend.worker.BusinessProfileEnrichmentWorker
+import tech.dokus.backend.worker.CashflowProjectionReconciliationWorker
 import tech.dokus.backend.worker.DocumentProcessingWorker
 import tech.dokus.backend.worker.PeppolOutboundReconciliationWorker
 import tech.dokus.backend.worker.PeppolOutboundWorker

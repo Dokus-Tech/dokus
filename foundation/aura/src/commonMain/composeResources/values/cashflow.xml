@@ -118,11 +118,11 @@
     <string name="pending_documents_next">Next</string>
 
     <!-- Document UI Status -->
-    <string name="document_status_queued">Waiting</string>
-    <string name="document_status_processing">Processing</string>
-    <string name="document_status_review">Needs attention</string>
-    <string name="document_status_ready">Ready to confirm</string>
-    <string name="document_status_failed">Failed</string>
+    <string name="document_status_queued">Preparing document...</string>
+    <string name="document_status_processing">Reading document...</string>
+    <string name="document_status_review">Needs review</string>
+    <string name="document_status_ready">Confirmed</string>
+    <string name="document_status_failed">Couldn't read document</string>
 
     <!-- Documents Screen -->
     <string name="documents_empty_title">No documents yet</string>
@@ -138,6 +138,11 @@
     <string name="documents_filter_rejected">Rejected</string>
     <string name="documents_upload">Upload</string>
     <string name="documents_back_to_clients">Back to clients</string>
+    <string name="documents_drop_to_upload">Drop files here to upload</string>
+    <string name="documents_local_status_uploading">Uploading...</string>
+    <string name="documents_local_status_preparing_document">Preparing document...</string>
+    <string name="documents_local_status_reading_document">Reading document...</string>
+    <string name="documents_local_action_dismiss">Dismiss</string>
     <string name="documents_view_details">View details</string>
     <string name="documents_table_document">Document</string>
     <string name="documents_table_status">Status</string>
@@ -195,8 +200,6 @@
     <string name="upload_no_app_hint">Don\'t have the application? Click here</string>
     <string name="upload_uploads_title">Uploads</string>
     <string name="upload_no_documents">No active uploads</string>
-    <string name="upload_release_to_upload">Release to Upload</string>
-    <string name="upload_documents_absorbed">Documents will be absorbed</string>
 
     <!-- Share Import -->
     <string name="share_import_title">Import Documents</string>
@@ -558,6 +561,13 @@
     <string name="upload_drop_files">Drop files here</string>
     <string name="upload_with_camera">Upload with camera</string>
     <string name="upload_select_file">Select a file</string>
+    <string name="documents_add_sheet_title">Add document</string>
+    <string name="documents_add_sheet_scan_title">Scan with camera</string>
+    <string name="documents_add_sheet_scan_subtitle">Point at receipt or invoice</string>
+    <string name="documents_add_sheet_upload_title">Upload file</string>
+    <string name="documents_add_sheet_upload_subtitle">PDF or image from files</string>
+    <string name="documents_add_sheet_import_photos_title">Import from photos</string>
+    <string name="documents_add_sheet_import_photos_subtitle">Select from photo library</string>
     <string name="upload_status_deleting">Deleting...</string>
     <string name="upload_status_waiting">Waiting...</string>
     <string name="upload_failed_message">Upload failed</string>

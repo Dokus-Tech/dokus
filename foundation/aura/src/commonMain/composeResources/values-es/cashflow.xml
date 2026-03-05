@@ -70,8 +70,6 @@
     <string name="upload_no_app_hint">¿No tienes la aplicación? Haz clic aquí</string>
     <string name="upload_uploads_title">Subidas</string>
     <string name="upload_no_documents">No hay cargas activas</string>
-    <string name="upload_release_to_upload">Suelta para subir</string>
-    <string name="upload_documents_absorbed">Los documentos serán procesados</string>
 
     <!-- Upload Item Actions -->
     <string name="upload_action_cancel">Cancelar</string>

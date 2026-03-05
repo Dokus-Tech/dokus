@@ -3,6 +3,7 @@ package tech.dokus.peppol.service
 import tech.dokus.database.repository.peppol.PeppolSettingsRepository
 import tech.dokus.domain.model.PeppolSettingsDto
 import tech.dokus.foundation.backend.utils.loggerFor
+import tech.dokus.foundation.backend.utils.runSuspendCatching
 import tech.dokus.peppol.config.PeppolModuleConfig
 import tech.dokus.peppol.provider.client.RecommandWebhooksClient
 import tech.dokus.peppol.provider.client.recommand.model.RecommandWebhook
@@ -23,7 +24,7 @@ class PeppolWebhookSyncService(
 ) {
     private val logger = loggerFor("PeppolWebhookSyncService")
 
-    suspend fun ensureSingleWebhookForSettings(settings: PeppolSettingsDto): Result<RecommandWebhook> = runCatching {
+    suspend fun ensureSingleWebhookForSettings(settings: PeppolSettingsDto): Result<RecommandWebhook> = runSuspendCatching {
         val outcome = convergeWebhook(settings).getOrThrow()
         logger.info(
             "Synced Recommand webhook for tenant {} company {} (created={}, updated={}, deleted={})",
@@ -36,7 +37,7 @@ class PeppolWebhookSyncService(
         outcome.webhook
     }
 
-    suspend fun syncAllEnabledTenants(): Result<PeppolWebhookSyncSummary> = runCatching {
+    suspend fun syncAllEnabledTenants(): Result<PeppolWebhookSyncSummary> = runSuspendCatching {
         val enabledSettings = settingsRepository.getAllEnabled().getOrThrow()
 
         var created = 0
@@ -78,7 +79,7 @@ class PeppolWebhookSyncService(
         return "$base$path?token=$webhookToken"
     }
 
-    private suspend fun convergeWebhook(settings: PeppolSettingsDto): Result<SyncOutcome> = runCatching {
+    private suspend fun convergeWebhook(settings: PeppolSettingsDto): Result<SyncOutcome> = runSuspendCatching {
         val token = settings.webhookToken?.trim()
             ?.takeIf { it.isNotEmpty() }
             ?: throw IllegalStateException("Missing webhook token for tenant ${settings.tenantId}")

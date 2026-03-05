@@ -13,6 +13,7 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
+import tech.dokus.foundation.backend.utils.runSuspendCatching
 import tech.dokus.peppol.config.PeppolProviderConfig
 import tech.dokus.peppol.provider.client.recommand.model.RecommandCreateWebhookRequest
 import tech.dokus.peppol.provider.client.recommand.model.RecommandCreateWebhookResponse
@@ -31,7 +32,7 @@ class RecommandWebhooksClient(
         apiKey: String,
         apiSecret: String,
         companyId: String? = null
-    ): Result<List<RecommandWebhook>> = runCatching {
+    ): Result<List<RecommandWebhook>> = runSuspendCatching {
         val response = httpClient.get("$baseUrl/api/v1/webhooks") {
             basicAuth(apiKey, apiSecret)
             companyId?.let { parameter("companyId", it) }
@@ -53,7 +54,7 @@ class RecommandWebhooksClient(
         apiSecret: String,
         url: String,
         companyId: String
-    ): Result<RecommandWebhook> = runCatching {
+    ): Result<RecommandWebhook> = runSuspendCatching {
         val response = httpClient.post("$baseUrl/api/v1/webhooks") {
             basicAuth(apiKey, apiSecret)
             contentType(ContentType.Application.Json)
@@ -77,7 +78,7 @@ class RecommandWebhooksClient(
         webhookId: String,
         url: String,
         companyId: String
-    ): Result<RecommandWebhook> = runCatching {
+    ): Result<RecommandWebhook> = runSuspendCatching {
         val response = httpClient.put("$baseUrl/api/v1/webhooks/$webhookId") {
             basicAuth(apiKey, apiSecret)
             contentType(ContentType.Application.Json)
@@ -99,7 +100,7 @@ class RecommandWebhooksClient(
         apiKey: String,
         apiSecret: String,
         webhookId: String
-    ): Result<Boolean> = runCatching {
+    ): Result<Boolean> = runSuspendCatching {
         val response = httpClient.delete("$baseUrl/api/v1/webhooks/$webhookId") {
             basicAuth(apiKey, apiSecret)
         }

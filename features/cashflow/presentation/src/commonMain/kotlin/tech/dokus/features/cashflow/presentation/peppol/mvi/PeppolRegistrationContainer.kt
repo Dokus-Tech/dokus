@@ -13,7 +13,6 @@ import tech.dokus.features.auth.usecases.GetCurrentTenantUseCase
 import tech.dokus.features.cashflow.usecases.EnablePeppolSendingOnlyUseCase
 import tech.dokus.features.cashflow.usecases.EnablePeppolUseCase
 import tech.dokus.features.cashflow.usecases.GetPeppolRegistrationUseCase
-import tech.dokus.features.cashflow.usecases.OptOutPeppolUseCase
 import tech.dokus.features.cashflow.usecases.PollPeppolTransferUseCase
 import tech.dokus.features.cashflow.usecases.VerifyPeppolIdUseCase
 import tech.dokus.features.cashflow.usecases.WaitForPeppolTransferUseCase
@@ -33,7 +32,6 @@ internal class PeppolRegistrationContainer(
     private val enablePeppol: EnablePeppolUseCase,
     private val enableSendingOnly: EnablePeppolSendingOnlyUseCase,
     private val waitForTransfer: WaitForPeppolTransferUseCase,
-    private val optOut: OptOutPeppolUseCase,
     private val pollTransfer: PollPeppolTransferUseCase
 ) : Container<PeppolRegistrationState, PeppolRegistrationIntent, PeppolRegistrationAction> {
 
@@ -313,15 +311,7 @@ internal class PeppolRegistrationContainer(
     }
 
     private suspend fun PeppolRegistrationCtx.handleNotNow() {
-        optOut().fold(
-            onSuccess = {
-                action(PeppolRegistrationAction.NavigateToHome)
-            },
-            onFailure = { error ->
-                logger.e(error) { "Failed to opt out" }
-                action(PeppolRegistrationAction.ShowError(error.asDokusException))
-            }
-        )
+        action(PeppolRegistrationAction.NavigateToHome)
     }
 
     private suspend fun PeppolRegistrationCtx.handleRetry() {

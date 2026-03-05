@@ -44,7 +44,9 @@ private val MetaDescriptionRegex = Regex("(?is)<meta[^>]+name=[\"']description[\
 private val JsonLdRegex = Regex("(?is)<script[^>]+type=[\"']application/ld\\+json[\"'][^>]*>(.*?)</script>")
 private val HrefRegex = Regex("(?is)<a[^>]+href=[\"']([^\"']+)[\"']")
 private val IconHrefRegex = Regex("(?is)<link[^>]+rel=[\"'][^\"']*icon[^\"']*[\"'][^>]+href=[\"']([^\"']+)[\"']")
-private val ManifestHrefRegex = Regex("(?is)<link[^>]+rel=[\"'][^\"']*manifest[^\"']*[\"'][^>]+href=[\"']([^\"']+)[\"']")
+private val ManifestHrefRegex = Regex(
+    "(?is)<link[^>]+rel=[\"'][^\"']*manifest[^\"']*[\"'][^>]+href=[\"']([^\"']+)[\"']"
+)
 private val OgImageRegex = Regex("(?is)<meta[^>]+property=[\"']og:image[\"'][^>]+content=[\"']([^\"']+)[\"']")
 private val ImgSrcRegex = Regex("(?is)<img[^>]+src=[\"']([^\"']+)[\"']")
 private val LogoRelevantTagRegex = Regex(
@@ -264,7 +266,11 @@ class BusinessWebsiteProbe(
 
             val links = HrefRegex.findAll(html)
                 .mapNotNull { normalizeUrl(it.groupValues[1], base = url) }
-                .filter { candidate -> runCatching { URI(candidate).host?.equals(host, ignoreCase = true) == true }.getOrDefault(false) }
+                .filter { candidate ->
+                    runCatching { URI(candidate).host?.equals(host, ignoreCase = true) == true }.getOrDefault(
+                        false
+                    )
+                }
                 .distinct()
                 .take(40)
                 .toList()

@@ -8,6 +8,7 @@ import tech.dokus.domain.model.PeppolConnectStatus
 import tech.dokus.domain.model.RecommandCompanySummary
 import tech.dokus.domain.model.Tenant
 import tech.dokus.foundation.backend.utils.loggerFor
+import tech.dokus.foundation.backend.utils.runSuspendCatching
 import tech.dokus.peppol.config.PeppolModuleConfig
 import tech.dokus.peppol.provider.client.RecommandCompaniesClient
 import tech.dokus.peppol.provider.client.RecommandUnauthorizedException
@@ -40,11 +41,11 @@ class PeppolConnectionService(
         tenant: Tenant,
         companyAddress: Address?,
         testMode: Boolean = moduleConfig.globalTestMode
-    ): Result<PeppolConnectResponse> = runCatching {
+    ): Result<PeppolConnectResponse> = runSuspendCatching {
         val masterCreds = moduleConfig.masterCredentials
 
         val tenantVat = tenant.vatNumber
-            ?: return@runCatching PeppolConnectResponse(PeppolConnectStatus.MissingVatNumber)
+            ?: return@runSuspendCatching PeppolConnectResponse(PeppolConnectStatus.MissingVatNumber)
 
         val vatNormalized = tenantVat.normalized
 
@@ -56,7 +57,7 @@ class PeppolConnectionService(
             ).getOrThrow()
         } catch (e: RecommandUnauthorizedException) {
             logger.error("Master Peppol credentials rejected - check PEPPOL_MASTER_API_KEY/SECRET")
-            return@runCatching PeppolConnectResponse(PeppolConnectStatus.InvalidCredentials)
+            return@runSuspendCatching PeppolConnectResponse(PeppolConnectStatus.InvalidCredentials)
         }
 
         val matchingCompanies = companies
@@ -71,7 +72,7 @@ class PeppolConnectionService(
                 try {
                     createCompany(tenant, tenantVat, companyAddress)
                 } catch (_: MissingCompanyAddressException) {
-                    return@runCatching PeppolConnectResponse(PeppolConnectStatus.MissingCompanyAddress)
+                    return@runSuspendCatching PeppolConnectResponse(PeppolConnectStatus.MissingCompanyAddress)
                 }
             }
             else -> {

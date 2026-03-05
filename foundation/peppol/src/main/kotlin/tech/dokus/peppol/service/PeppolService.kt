@@ -30,6 +30,7 @@ import tech.dokus.domain.model.TenantSettings
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.utils.json
 import tech.dokus.foundation.backend.utils.loggerFor
+import tech.dokus.foundation.backend.utils.runSuspendCatching
 import tech.dokus.peppol.mapper.PeppolMapper
 import tech.dokus.peppol.model.PeppolDocumentSummary
 import tech.dokus.peppol.model.PeppolInboxItem
@@ -85,7 +86,7 @@ class PeppolService(
      */
     suspend fun testConnection(tenantId: TenantId): Result<Boolean> {
         logger.debug("Testing Peppol connection for tenant: $tenantId")
-        return runCatching {
+        return runSuspendCatching {
             val provider = createProviderForTenant(tenantId)
             provider.testConnection().getOrThrow()
         }
@@ -110,7 +111,7 @@ class PeppolService(
     ): Result<PeppolValidationResult> {
         logger.debug("Validating invoice {} for Peppol sending", invoice.id)
 
-        return runCatching {
+        return runSuspendCatching {
             val peppolSettings = settingsRepository.getSettings(tenantId).getOrThrow()
                 ?: throw IllegalStateException("Peppol settings not configured for tenant: $tenantId")
 
@@ -135,7 +136,7 @@ class PeppolService(
     ): Result<PeppolVerifyResponse> {
         logger.debug("Verifying Peppol recipient: $peppolId")
 
-        return runCatching {
+        return runSuspendCatching {
             val provider = createProviderForTenant(tenantId)
             provider.verifyRecipient(peppolId).getOrThrow()
         }
@@ -160,7 +161,7 @@ class PeppolService(
     ): Result<SendInvoiceViaPeppolResponse> {
         logger.info("Queueing invoice {} for outbound PEPPOL send (tenant={})", invoice.id, tenantId)
 
-        return runCatching {
+        return runSuspendCatching {
             val peppolSettings = settingsRepository.getSettings(tenantId).getOrThrow()
                 ?: throw IllegalStateException("Peppol settings not configured for tenant: $tenantId")
 
@@ -219,7 +220,7 @@ class PeppolService(
      * The transmission must be in SENDING state.
      */
     suspend fun processOutboundTransmission(transmission: PeppolTransmissionInternal): Result<PeppolStatus> {
-        return runCatching {
+        return runSuspendCatching {
             if (transmission.direction != PeppolTransmissionDirection.Outbound) {
                 throw IllegalArgumentException("Transmission ${transmission.id} is not outbound")
             }
@@ -272,10 +273,10 @@ class PeppolService(
     suspend fun reconcileOutboundByExternalDocumentId(
         tenantId: TenantId,
         externalDocumentId: String
-    ): Result<Boolean> = runCatching {
+    ): Result<Boolean> = runSuspendCatching {
         val transmission = transmissionRepository.getOutboundByExternalDocumentIdInternal(tenantId, externalDocumentId)
             .getOrThrow()
-            ?: return@runCatching false
+            ?: return@runSuspendCatching false
 
         reconcileOutboundTransmission(transmission)
     }
@@ -283,7 +284,7 @@ class PeppolService(
     suspend fun reconcileStaleOutbound(
         olderThan: LocalDateTime,
         limit: Int = 100
-    ): Result<Int> = runCatching {
+    ): Result<Int> = runSuspendCatching {
         val candidates = transmissionRepository.listOutboundForReconciliation(
             olderThan = olderThan,
             limit = limit
@@ -325,7 +326,7 @@ class PeppolService(
     ): Result<PeppolInboxPollResponse> {
         logger.info("Polling Peppol inbox for tenant: $tenantId")
 
-        return runCatching {
+        return runSuspendCatching {
             val provider = createProviderForTenant(tenantId)
             val settings = settingsRepository.getSettings(tenantId).getOrThrow()
                 ?: throw IllegalStateException("Peppol settings not configured for tenant: $tenantId")

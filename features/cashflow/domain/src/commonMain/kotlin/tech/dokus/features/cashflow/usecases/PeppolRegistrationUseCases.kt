@@ -49,6 +49,7 @@ interface WaitForPeppolTransferUseCase {
 
 /**
  * Use case to opt out of PEPPOL via Dokus.
+ * TODO: Wire to Settings screen for explicit Peppol opt-out
  */
 interface OptOutPeppolUseCase {
     suspend operator fun invoke(): Result<Unit>

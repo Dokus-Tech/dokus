@@ -19,11 +19,11 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.CreateTenantRequest
 import tech.dokus.domain.model.InvoiceNumberPreviewResponse
+import tech.dokus.domain.model.PinBusinessProfileFieldsRequest
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.TenantSettings
-import tech.dokus.domain.model.UpsertTenantAddressRequest
 import tech.dokus.domain.model.UpdateBusinessProfileRequest
-import tech.dokus.domain.model.PinBusinessProfileFieldsRequest
+import tech.dokus.domain.model.UpsertTenantAddressRequest
 import tech.dokus.domain.model.common.Thumbnail
 import tech.dokus.domain.routes.Tenants
 import tech.dokus.foundation.backend.security.authenticateJwt
@@ -179,7 +179,11 @@ internal fun Route.tenantRoutes() {
                 tenantId = tenantId,
                 triggerReason = "TENANT_ADDRESS_UPDATED"
             ).onFailure { error ->
-                logger.warn("Failed to enqueue business profile enrichment after tenant address update {}", tenantId, error)
+                logger.warn(
+                    "Failed to enqueue business profile enrichment after tenant address update {}",
+                    tenantId,
+                    error
+                )
             }
             call.respond(HttpStatusCode.OK, address)
         }
