@@ -23,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -60,6 +61,8 @@ import tech.dokus.foundation.aura.style.textMuted
 import tech.dokus.features.cashflow.presentation.review.colorized as financialStatusColorized
 
 private val AmountAccentWidth = 3.5.dp
+private const val InspectorLabelWeight = 0.42f
+private const val InspectorValueWeight = 0.58f
 
 @Composable
 internal fun InspectorAmountSection(state: DocumentReviewState.Content) {
@@ -371,21 +374,26 @@ private fun InspectorValueRow(
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
+        horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             text = label,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.textMuted,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(InspectorLabelWeight),
         )
         Text(
             text = value,
             style = if (emphasized) MaterialTheme.typography.titleLarge else MaterialTheme.typography.bodyMedium,
             fontWeight = if (emphasized) FontWeight.Bold else FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.End,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(InspectorValueWeight),
         )
     }
 }

@@ -33,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -56,6 +57,8 @@ private val PencilIconSize = 16.dp
 private val ChevronIconSize = 16.dp
 private val AttentionBorderAlpha = 0.3f
 private val HoverBackgroundAlpha = 0.08f
+private const val FactFieldLabelWeight = 0.42f
+private const val FactFieldValueWeight = 0.58f
 
 /**
  * Contact display as a fact block with hover-to-edit behavior.
@@ -354,15 +357,22 @@ fun FactField(
             .then(if (isClickable) Modifier.hoverable(interactionSource) else Modifier)
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
             .padding(vertical = Constraints.Spacing.xSmall),
-        horizontalArrangement = Arrangement.SpaceBetween,
+        horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = label,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.textMuted
+            color = MaterialTheme.colorScheme.textMuted,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(FactFieldLabelWeight),
         )
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier.weight(FactFieldValueWeight),
+            horizontalArrangement = Arrangement.End,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Text(
                 text = value ?: "—",
                 style = MaterialTheme.typography.bodyMedium,
@@ -370,7 +380,11 @@ fun FactField(
                     MaterialTheme.colorScheme.onSurface
                 } else {
                     MaterialTheme.colorScheme.textMuted
-                }
+                },
+                textAlign = TextAlign.End,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f),
             )
             if (isClickable && (!isLargeScreen || isHovered)) {
                 Spacer(Modifier.width(Constraints.Spacing.xSmall))

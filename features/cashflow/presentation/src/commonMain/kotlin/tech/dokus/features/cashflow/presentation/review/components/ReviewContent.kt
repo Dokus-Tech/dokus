@@ -59,6 +59,7 @@ import tech.dokus.foundation.aura.style.textMuted
 private const val SummaryTabId = "summary"
 private val SourceTabsPanelShape = RoundedCornerShape(14.dp)
 private val SourceTabShape = RoundedCornerShape(10.dp)
+private val DesktopInspectorWidth = Constraints.DocumentDetail.inspectorWidth + 32.dp
 
 @Composable
 internal fun ReviewContent(
@@ -152,7 +153,7 @@ private fun AwaitingExtractionContent(
             }
             DokusCardSurface(
                 modifier = Modifier
-                    .width(Constraints.DocumentDetail.inspectorWidth)
+                    .width(DesktopInspectorWidth)
                     .fillMaxHeight(),
             ) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -221,7 +222,7 @@ private fun DesktopReviewContent(
             onCorrectContact = { onCorrectContact(counterpartyInfo(state)) },
             onCreateContact = { onCreateContact(counterpartyInfo(state)) },
             modifier = Modifier
-                .width(Constraints.DocumentDetail.inspectorWidth)
+                .width(DesktopInspectorWidth)
                 .fillMaxHeight(),
         )
     }
