@@ -173,13 +173,12 @@ private fun WorkspaceCreateContent(
                 when (steps[page]) {
                     WorkspaceWizardStep.TypeSelection -> {
                         TypeSelectionStep(
-                            selectedType = wizardState.workspaceType,
                             hasFreelancerWorkspace = wizardState.hasFreelancerWorkspace,
                             onTypeSelected = { type ->
                                 onIntent(WorkspaceCreateIntent.SelectType(type))
+                                onIntent(WorkspaceCreateIntent.NextClicked)
                             },
                             onBackPress = onBackPress,
-                            onContinue = { onIntent(WorkspaceCreateIntent.NextClicked) },
                             modifier = Modifier.fillMaxWidth(),
                         )
                     }

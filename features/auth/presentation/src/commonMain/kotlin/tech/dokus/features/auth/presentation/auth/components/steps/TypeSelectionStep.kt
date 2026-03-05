@@ -26,7 +26,6 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_back
-import tech.dokus.aura.resources.action_continue
 import tech.dokus.aura.resources.auth_workspace_type_bookkeeper_description
 import tech.dokus.aura.resources.auth_workspace_type_company_description
 import tech.dokus.aura.resources.auth_workspace_type_freelancer_description
@@ -39,7 +38,6 @@ import tech.dokus.features.auth.presentation.auth.model.WorkspaceCreateType
 import tech.dokus.foundation.aura.components.DokusCardVariant
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.DokusGlassSurface
-import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.common.PBackIconButton
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.local.LocalScreenSize
@@ -48,11 +46,9 @@ private val TypeCardMinHeight = 160.dp
 
 @Composable
 internal fun TypeSelectionStep(
-    selectedType: WorkspaceCreateType,
     hasFreelancerWorkspace: Boolean,
     onTypeSelected: (WorkspaceCreateType) -> Unit,
     onBackPress: () -> Unit,
-    onContinue: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val isLargeScreen = LocalScreenSize.current.isLarge
@@ -91,7 +87,6 @@ internal fun TypeSelectionStep(
                         icon = Icons.Outlined.Business,
                         title = stringResource(Res.string.workspace_type_company),
                         description = stringResource(Res.string.auth_workspace_type_company_description),
-                        isSelected = selectedType == WorkspaceCreateType.Company,
                         isEnabled = true,
                         onClick = { onTypeSelected(WorkspaceCreateType.Company) },
                         modifier = Modifier.weight(1f),
@@ -100,7 +95,6 @@ internal fun TypeSelectionStep(
                         icon = Icons.Outlined.Person,
                         title = stringResource(Res.string.workspace_type_freelancer),
                         description = stringResource(Res.string.auth_workspace_type_freelancer_description),
-                        isSelected = selectedType == WorkspaceCreateType.Freelancer,
                         isEnabled = !hasFreelancerWorkspace,
                         onClick = { onTypeSelected(WorkspaceCreateType.Freelancer) },
                         modifier = Modifier.weight(1f),
@@ -109,7 +103,6 @@ internal fun TypeSelectionStep(
                         icon = Icons.Outlined.Description,
                         title = stringResource(Res.string.workspace_type_bookkeeper),
                         description = stringResource(Res.string.auth_workspace_type_bookkeeper_description),
-                        isSelected = selectedType == WorkspaceCreateType.Bookkeeper,
                         isEnabled = true,
                         onClick = { onTypeSelected(WorkspaceCreateType.Bookkeeper) },
                         modifier = Modifier.weight(1f),
@@ -124,7 +117,6 @@ internal fun TypeSelectionStep(
                         icon = Icons.Outlined.Business,
                         title = stringResource(Res.string.workspace_type_company),
                         description = stringResource(Res.string.auth_workspace_type_company_description),
-                        isSelected = selectedType == WorkspaceCreateType.Company,
                         isEnabled = true,
                         onClick = { onTypeSelected(WorkspaceCreateType.Company) },
                         modifier = Modifier.fillMaxWidth(),
@@ -133,7 +125,6 @@ internal fun TypeSelectionStep(
                         icon = Icons.Outlined.Person,
                         title = stringResource(Res.string.workspace_type_freelancer),
                         description = stringResource(Res.string.auth_workspace_type_freelancer_description),
-                        isSelected = selectedType == WorkspaceCreateType.Freelancer,
                         isEnabled = !hasFreelancerWorkspace,
                         onClick = { onTypeSelected(WorkspaceCreateType.Freelancer) },
                         modifier = Modifier.fillMaxWidth(),
@@ -142,7 +133,6 @@ internal fun TypeSelectionStep(
                         icon = Icons.Outlined.Description,
                         title = stringResource(Res.string.workspace_type_bookkeeper),
                         description = stringResource(Res.string.auth_workspace_type_bookkeeper_description),
-                        isSelected = selectedType == WorkspaceCreateType.Bookkeeper,
                         isEnabled = true,
                         onClick = { onTypeSelected(WorkspaceCreateType.Bookkeeper) },
                         modifier = Modifier.fillMaxWidth(),
@@ -159,14 +149,6 @@ internal fun TypeSelectionStep(
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
-
-            Spacer(modifier = Modifier.height(Constraints.Spacing.small))
-
-            PPrimaryButton(
-                text = stringResource(Res.string.action_continue),
-                modifier = Modifier.fillMaxWidth(),
-                onClick = onContinue,
-            )
         }
     }
 }
@@ -176,7 +158,6 @@ private fun TypeCard(
     icon: ImageVector,
     title: String,
     description: String,
-    isSelected: Boolean,
     isEnabled: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -192,8 +173,8 @@ private fun TypeCard(
         variant = DokusCardVariant.Soft,
         onClick = onClick,
         enabled = isEnabled,
-        accent = isSelected,
-        shadow = isSelected,
+        accent = false,
+        shadow = false,
     ) {
         Column(
             modifier = Modifier
@@ -205,7 +186,7 @@ private fun TypeCard(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = if (isSelected) MaterialTheme.colorScheme.primary else contentColor,
+                tint = contentColor,
                 modifier = Modifier.size(28.dp),
             )
 
@@ -240,11 +221,9 @@ private fun TypeSelectionStepPreview(
 ) {
     tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
         TypeSelectionStep(
-            selectedType = WorkspaceCreateType.Company,
             hasFreelancerWorkspace = false,
             onTypeSelected = {},
             onBackPress = {},
-            onContinue = {},
         )
     }
 }
@@ -258,11 +237,9 @@ private fun TypeSelectionStepDesktopPreview(
 ) {
     tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
         TypeSelectionStep(
-            selectedType = WorkspaceCreateType.Bookkeeper,
             hasFreelancerWorkspace = true,
             onTypeSelected = {},
             onBackPress = {},
-            onContinue = {},
         )
     }
 }
