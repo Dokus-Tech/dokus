@@ -1,5 +1,6 @@
 package tech.dokus.backend.services.documents
 
+import tech.dokus.backend.services.contacts.ContactService
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.domain.Name
 import tech.dokus.domain.enums.ContactSource
@@ -33,7 +34,8 @@ data class ContactResolutionResult(
 
 class ContactResolutionService(
     private val contactRepository: ContactRepository,
-    private val cbeApiClient: CbeApiClient
+    private val cbeApiClient: CbeApiClient,
+    private val contactService: ContactService
 ) {
     private val logger = loggerFor()
     companion object {
@@ -308,7 +310,7 @@ class ContactResolutionService(
             source = ContactSource.AI
         )
 
-        return contactRepository.createContact(tenantId, request).getOrNull()?.id
+        return contactService.createContact(tenantId, request).getOrNull()?.id
     }
 
     private suspend fun resolveCbeStatus(vat: VatNumber): EntityStatus? {

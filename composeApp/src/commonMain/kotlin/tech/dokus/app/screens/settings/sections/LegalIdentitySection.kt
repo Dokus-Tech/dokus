@@ -22,6 +22,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import coil3.ImageLoader
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.app.viewmodel.WorkspaceSettingsIntent
 import tech.dokus.app.viewmodel.WorkspaceSettingsState
@@ -37,6 +38,8 @@ import tech.dokus.aura.resources.workspace_company_name
 import tech.dokus.aura.resources.workspace_legal_name
 import tech.dokus.aura.resources.workspace_vat_number
 import tech.dokus.domain.model.common.Thumbnail
+import tech.dokus.foundation.app.network.rememberAuthenticatedImageLoader
+import tech.dokus.foundation.app.network.rememberResolvedApiUrl
 import tech.dokus.foundation.app.picker.FilePickerLauncher
 import tech.dokus.foundation.aura.components.AvatarSize
 import tech.dokus.foundation.aura.components.CompanyAvatarImage
@@ -64,6 +67,8 @@ internal fun LegalIdentitySection(
     currentAvatar: Thumbnail?,
     avatarPicker: FilePickerLauncher,
 ) {
+    val imageLoader = rememberAuthenticatedImageLoader()
+    val mediumAvatarUrl = rememberResolvedApiUrl(currentAvatar?.medium)
     val subtitle = if (!expanded) formState.legalName else null
 
     SettingsSection(
@@ -132,7 +137,8 @@ internal fun LegalIdentitySection(
                 companyInitial = formState.companyName.take(1).ifBlank { "C" },
                 avatarPicker = avatarPicker,
                 onDeleteAvatar = { onIntent(WorkspaceSettingsIntent.DeleteAvatar) },
-                onResetAvatarState = { onIntent(WorkspaceSettingsIntent.ResetAvatarState) }
+                onResetAvatarState = { onIntent(WorkspaceSettingsIntent.ResetAvatarState) },
+                imageLoader = imageLoader
             )
         } else {
             // View mode: show DataRows
@@ -174,9 +180,10 @@ internal fun LegalIdentitySection(
                     modifier = Modifier.width(140.dp),
                 )
                 CompanyAvatarImage(
-                    avatarUrl = currentAvatar?.medium,
+                    avatarUrl = mediumAvatarUrl,
                     initial = formState.companyName.take(1).ifBlank { "C" },
                     size = AvatarSize.Small,
+                    imageLoader = imageLoader,
                     onClick = null,
                 )
             }
@@ -194,16 +201,18 @@ private fun CompanyAvatarSection(
     companyInitial: String,
     avatarPicker: FilePickerLauncher,
     onDeleteAvatar: () -> Unit,
-    onResetAvatarState: () -> Unit
+    onResetAvatarState: () -> Unit,
+    imageLoader: ImageLoader
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
         CompanyAvatarImage(
-            avatarUrl = currentAvatar?.medium,
+            avatarUrl = rememberResolvedApiUrl(currentAvatar?.medium),
             initial = companyInitial,
             size = AvatarSize.Large,
+            imageLoader = imageLoader,
             onClick = { avatarPicker.launch() }
         )
 

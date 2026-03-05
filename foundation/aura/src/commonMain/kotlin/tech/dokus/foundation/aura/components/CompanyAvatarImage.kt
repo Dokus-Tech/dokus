@@ -18,6 +18,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
+import coil3.ImageLoader
 import coil3.compose.SubcomposeAsyncImage
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
@@ -71,6 +72,7 @@ enum class AvatarShape {
  * @param initial The initial letter to display as fallback (typically first letter of company name)
  * @param size The size of the avatar (Small, Medium, Large, ExtraLarge)
  * @param shape The shape of the avatar (Circle or RoundedSquare)
+ * @param imageLoader Optional image loader (useful for authenticated image URLs)
  * @param modifier Modifier to be applied to the avatar container
  * @param onClick Optional click handler for the avatar
  */
@@ -80,6 +82,7 @@ fun CompanyAvatarImage(
     initial: String,
     size: AvatarSize = AvatarSize.Medium,
     shape: AvatarShape = AvatarShape.RoundedSquare,
+    imageLoader: ImageLoader? = null,
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null
 ) {
@@ -106,28 +109,54 @@ fun CompanyAvatarImage(
         contentAlignment = Alignment.Center
     ) {
         if (avatarUrl != null) {
-            SubcomposeAsyncImage(
-                model = avatarUrl,
-                contentDescription = stringResource(Res.string.company_avatar_content_description),
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(size.value)
-                    .clip(clipShape),
-                loading = {
-                    AvatarFallback(
-                        initial = initial,
-                        size = size,
-                        shape = shape
-                    )
-                },
-                error = {
-                    AvatarFallback(
-                        initial = initial,
-                        size = size,
-                        shape = shape
-                    )
-                }
-            )
+            if (imageLoader != null) {
+                SubcomposeAsyncImage(
+                    model = avatarUrl,
+                    imageLoader = imageLoader,
+                    contentDescription = stringResource(Res.string.company_avatar_content_description),
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(size.value)
+                        .clip(clipShape),
+                    loading = {
+                        AvatarFallback(
+                            initial = initial,
+                            size = size,
+                            shape = shape
+                        )
+                    },
+                    error = {
+                        AvatarFallback(
+                            initial = initial,
+                            size = size,
+                            shape = shape
+                        )
+                    }
+                )
+            } else {
+                SubcomposeAsyncImage(
+                    model = avatarUrl,
+                    contentDescription = stringResource(Res.string.company_avatar_content_description),
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(size.value)
+                        .clip(clipShape),
+                    loading = {
+                        AvatarFallback(
+                            initial = initial,
+                            size = size,
+                            shape = shape
+                        )
+                    },
+                    error = {
+                        AvatarFallback(
+                            initial = initial,
+                            size = size,
+                            shape = shape
+                        )
+                    }
+                )
+            }
         } else {
             AvatarFallback(
                 initial = initial,

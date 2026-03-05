@@ -81,7 +81,8 @@ class DocumentProcessingWorkerTimeoutTest {
             config = ProcessorConfig(
                 pollingInterval = 1_000,
                 maxAttempts = 3,
-                batchSize = 2
+                batchSize = 2,
+                maxConcurrentRuns = 2
             ),
             tenantRepository = tenantRepository,
             userRepository = userRepository

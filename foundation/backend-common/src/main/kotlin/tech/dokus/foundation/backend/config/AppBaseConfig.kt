@@ -18,6 +18,7 @@ data class AppBaseConfig(
     val storage: StorageConfig,
     val ai: AIConfig,
     val processor: ProcessorConfig,
+    val businessProfileEnrichment: BusinessProfileEnrichmentConfig,
     val config: Config,
 ) {
     companion object Companion {
@@ -41,6 +42,9 @@ data class AppBaseConfig(
                 },
                 ai = AIConfig.fromConfig(config.getConfig("ai")),
                 processor = ProcessorConfig.fromConfig(config.getConfig("processor")),
+                businessProfileEnrichment = BusinessProfileEnrichmentConfig.fromConfig(
+                    config.getConfig("businessProfileEnrichment")
+                ),
                 config = config,
             )
         }
