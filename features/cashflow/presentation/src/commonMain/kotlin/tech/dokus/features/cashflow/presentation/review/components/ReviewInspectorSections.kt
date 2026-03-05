@@ -141,22 +141,34 @@ internal fun InspectorContactSection(state: DocumentReviewState.Content) {
 internal fun InspectorSourcesSection(
     state: DocumentReviewState.Content,
     onIntent: (DocumentReviewIntent) -> Unit,
+    showSourceList: Boolean = true,
 ) {
+    if (!showSourceList && state.document.pendingMatchReview == null && !state.hasCrossMatchedSources) {
+        return
+    }
+
     InspectorSectionCard(title = "Sources") {
-        if (state.document.sources.isEmpty()) {
-            InspectorValueRow("Source", "No sources")
-        } else {
-            state.document.sources.forEach { source ->
-                SourceRow(
-                    type = source.sourceChannel,
-                    title = source.filename ?: source.sourceChannel.name,
-                    onClick = { onIntent(DocumentReviewIntent.OpenSourceModal(source.id)) },
-                )
+        var hasContent = false
+
+        if (showSourceList) {
+            if (state.document.sources.isEmpty()) {
+                InspectorValueRow("Source", "No sources")
+            } else {
+                state.document.sources.forEach { source ->
+                    SourceRow(
+                        type = source.sourceChannel,
+                        title = source.filename ?: source.sourceChannel.name,
+                        onClick = { onIntent(DocumentReviewIntent.OpenSourceModal(source.id)) },
+                    )
+                }
             }
+            hasContent = true
         }
 
         state.document.pendingMatchReview?.let { review ->
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            if (hasContent) {
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            }
             Text(
                 text = when (review.reasonType) {
                     DocumentMatchReviewReasonType.MaterialConflict -> {
@@ -184,10 +196,13 @@ internal fun InspectorSourcesSection(
                     Text(stringResource(Res.string.cashflow_match_review_different_document))
                 }
             }
+            hasContent = true
         }
 
         if (state.hasCrossMatchedSources) {
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            if (hasContent) {
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            }
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 color = MaterialTheme.colorScheme.greenSoft.copy(alpha = 0.35f),

@@ -76,6 +76,7 @@ internal fun ReviewInspectorPane(
             InspectorSourcesSection(
                 state = state,
                 onIntent = onIntent,
+                showSourceList = false,
             )
             InspectorPaymentSection(
                 state = state,

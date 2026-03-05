@@ -41,7 +41,6 @@ import tech.dokus.features.cashflow.presentation.review.components.DocumentRevie
 import tech.dokus.features.cashflow.presentation.review.components.FeedbackDialog
 import tech.dokus.features.cashflow.presentation.review.components.RecordPaymentDialog
 import tech.dokus.features.cashflow.presentation.review.components.RejectDocumentDialog
-import tech.dokus.features.cashflow.presentation.review.components.SourceEvidenceDialog
 import tech.dokus.features.cashflow.presentation.review.screen.DocumentReviewScreen
 import tech.dokus.features.contacts.usecases.ListContactsUseCase
 import tech.dokus.foundation.app.mvi.container
@@ -359,19 +358,6 @@ internal fun DocumentReviewRoute(
     }
 
     val content = state as? DocumentReviewState.Content
-    val viewerState = content?.sourceViewerState
-    if (isLargeScreen && content != null && viewerState != null) {
-        SourceEvidenceDialog(
-            contentState = content,
-            viewerState = viewerState,
-            onClose = { container.store.intent(DocumentReviewIntent.CloseSourceModal) },
-            onToggleTechnicalDetails = {
-                container.store.intent(DocumentReviewIntent.ToggleSourceTechnicalDetails)
-            },
-            onRetry = { container.store.intent(DocumentReviewIntent.OpenSourceModal(viewerState.sourceId)) },
-        )
-    }
-
     content?.paymentSheetState?.let { paymentState ->
         val currencySign = when (val data = content.draftData) {
             is tech.dokus.domain.model.InvoiceDraftData -> data.currency.displaySign

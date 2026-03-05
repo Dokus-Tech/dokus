@@ -1,5 +1,6 @@
 package tech.dokus.features.cashflow.presentation.review.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -18,7 +19,9 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -26,11 +29,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.RoundedCornerShape
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_awaiting_extraction
 import tech.dokus.aura.resources.cashflow_loading_document
 import tech.dokus.domain.ids.DocumentSourceId
+import tech.dokus.domain.model.DocumentSourceDto
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.components.mobile.MobileCanonicalContent
@@ -44,7 +52,13 @@ import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.constrains.withContentPadding
 import tech.dokus.foundation.aura.extensions.dismissKeyboardOnTapOutside
+import tech.dokus.foundation.aura.extensions.localizedUppercase
+import tech.dokus.foundation.aura.style.surfaceHover
 import tech.dokus.foundation.aura.style.textMuted
+
+private const val SummaryTabId = "summary"
+private val SourceTabsPanelShape = RoundedCornerShape(14.dp)
+private val SourceTabShape = RoundedCornerShape(10.dp)
 
 @Composable
 internal fun ReviewContent(
@@ -190,7 +204,7 @@ private fun DesktopReviewContent(
             .padding(Constraints.Spacing.small),
         horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
     ) {
-        CanonicalCenterPane(
+        DesktopDocumentPane(
             state = state,
             onIntent = onIntent,
             modifier = Modifier
@@ -204,6 +218,142 @@ private fun DesktopReviewContent(
                 .width(Constraints.DocumentDetail.inspectorWidth)
                 .fillMaxHeight(),
         )
+    }
+}
+
+@Composable
+private fun DesktopDocumentPane(
+    state: DocumentReviewState.Content,
+    onIntent: (DocumentReviewIntent) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val sourceIds = state.document.sources.map { it.id.toString() }.toSet()
+    val activeSourceId = state.sourceViewerState?.sourceId?.toString()
+    val activeTabId = activeSourceId?.takeIf { it in sourceIds } ?: SummaryTabId
+
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
+    ) {
+        CanonicalCenterPane(
+            state = state,
+            onIntent = onIntent,
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(),
+        )
+
+        SourceTabsPanel(
+            sources = state.document.sources,
+            activeTabId = activeTabId,
+            onTabSelected = { selectedTabId ->
+                if (selectedTabId == activeTabId) return@SourceTabsPanel
+                if (selectedTabId == SummaryTabId) {
+                    onIntent(DocumentReviewIntent.CloseSourceModal)
+                } else {
+                    onIntent(DocumentReviewIntent.OpenSourceModal(DocumentSourceId.parse(selectedTabId)))
+                }
+            },
+        )
+    }
+}
+
+@Composable
+private fun SourceTabsPanel(
+    sources: List<DocumentSourceDto>,
+    activeTabId: String,
+    onTabSelected: (String) -> Unit,
+) {
+    if (sources.isEmpty()) return
+
+    val tabs = sourceTabs(sources)
+    Box(
+        modifier = Modifier.fillMaxWidth(),
+        contentAlignment = Alignment.Center,
+    ) {
+        Surface(
+            modifier = Modifier.wrapContentWidth(),
+            shape = SourceTabsPanelShape,
+            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+            tonalElevation = 0.dp,
+            shadowElevation = 0.dp,
+        ) {
+            Row(
+                modifier = Modifier.padding(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                tabs.forEach { tab ->
+                    val isActive = tab.id == activeTabId
+                    SourceTabChip(
+                        label = tab.label,
+                        isActive = isActive,
+                        onClick = { onTabSelected(tab.id) },
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SourceTabChip(
+    label: String,
+    isActive: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val activeBorder = MaterialTheme.colorScheme.primary.copy(alpha = 0.58f)
+    val activeBg = MaterialTheme.colorScheme.surfaceHover
+    val inactiveBg = MaterialTheme.colorScheme.surface.copy(alpha = 0.12f)
+    val textColor = if (isActive) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.textMuted
+
+    Surface(
+        modifier = modifier
+            .clip(SourceTabShape)
+            .clickable(onClick = onClick),
+        shape = SourceTabShape,
+        color = if (isActive) activeBg else inactiveBg,
+        border = BorderStroke(1.dp, if (isActive) activeBorder else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)),
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp,
+    ) {
+        Text(
+            text = label,
+            modifier = Modifier.padding(horizontal = 18.dp, vertical = 8.dp),
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = if (isActive) FontWeight.SemiBold else FontWeight.Medium,
+            color = textColor,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+private data class SourceTabItem(
+    val id: String,
+    val label: String,
+)
+
+@Composable
+private fun sourceTabs(sources: List<DocumentSourceDto>): List<SourceTabItem> {
+    val sourceChannelCounts = sources.groupingBy { it.sourceChannel }.eachCount()
+    val sourceChannelIndices = mutableMapOf<tech.dokus.domain.enums.DocumentSource, Int>()
+
+    return buildList {
+        add(SourceTabItem(id = SummaryTabId, label = "Document"))
+        sources.forEach { source ->
+            val index = (sourceChannelIndices[source.sourceChannel] ?: 0) + 1
+            sourceChannelIndices[source.sourceChannel] = index
+            val hasDuplicates = (sourceChannelCounts[source.sourceChannel] ?: 0) > 1
+            val label = if (hasDuplicates) {
+                "${source.sourceChannel.localizedUppercase} $index"
+            } else {
+                source.sourceChannel.localizedUppercase
+            }
+            add(SourceTabItem(id = source.id.toString(), label = label))
+        }
     }
 }
 

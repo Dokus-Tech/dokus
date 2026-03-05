@@ -1,5 +1,6 @@
 package tech.dokus.features.cashflow.presentation.review.components
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,25 +24,33 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.document_source_received_on
+import tech.dokus.aura.resources.document_source_technical_details
 import tech.dokus.domain.Money
+import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.FinancialLineItem
 import tech.dokus.domain.model.InvoiceDraftData
+import tech.dokus.features.cashflow.presentation.common.utils.formatShortDate
 import tech.dokus.features.cashflow.presentation.review.DocumentPreviewState
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.PdfPreviewPane
+import tech.dokus.features.cashflow.presentation.review.SourceEvidenceViewerState
 import tech.dokus.features.cashflow.presentation.review.models.counterpartyInfo
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.extensions.sourceViewerSubtitleLocalized
 import tech.dokus.foundation.aura.style.textMuted
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
 
-private val CanonicalPreviewWidth = Constraints.DocumentDetail.previewMaxWidth + 96.dp
-private val CanonicalPreviewMinHeight = 620.dp
+private val CanonicalPreviewWidth = Constraints.DocumentDetail.previewMaxWidth + 128.dp
+private val CanonicalPreviewMinHeight = 650.dp
 
 @Composable
 internal fun CanonicalCenterPane(
@@ -55,6 +64,17 @@ internal fun CanonicalCenterPane(
             selectedFieldPath = state.selectedFieldPath,
             isProcessing = state.isProcessing,
             onLoadMore = { maxPages -> onIntent(DocumentReviewIntent.LoadMorePages(maxPages)) },
+            modifier = modifier,
+        )
+        return
+    }
+
+    state.sourceViewerState?.let { viewerState ->
+        SourceViewerCenter(
+            contentState = state,
+            viewerState = viewerState,
+            onToggleTechnicalDetails = { onIntent(DocumentReviewIntent.ToggleSourceTechnicalDetails) },
+            onRetry = { onIntent(DocumentReviewIntent.OpenSourceModal(viewerState.sourceId)) },
             modifier = modifier,
         )
         return
@@ -236,6 +256,93 @@ private fun PdfFallbackCenter(
             modifier = Modifier.fillMaxSize(),
             showScanAnimation = isProcessing
         )
+    }
+}
+
+@Composable
+private fun SourceViewerCenter(
+    contentState: DocumentReviewState.Content,
+    viewerState: SourceEvidenceViewerState,
+    onToggleTechnicalDetails: () -> Unit,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier.fillMaxSize(),
+        contentAlignment = Alignment.TopCenter,
+    ) {
+        DokusCardSurface(
+            modifier = Modifier
+                .padding(vertical = Constraints.Spacing.large)
+                .width(CanonicalPreviewWidth)
+                .heightIn(min = CanonicalPreviewMinHeight),
+            shape = MaterialTheme.shapes.small,
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(Constraints.Spacing.medium),
+                verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
+            ) {
+                Text(
+                    text = viewerState.sourceName,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = viewerState.sourceType.sourceViewerSubtitleLocalized,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.textMuted,
+                )
+                viewerState.sourceReceivedAt?.let { receivedAt ->
+                    Text(
+                        text = stringResource(
+                            Res.string.document_source_received_on,
+                            formatShortDate(receivedAt.date),
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.textMuted,
+                    )
+                }
+
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+                SourceEvidenceBody(
+                    contentState = contentState,
+                    viewerState = viewerState,
+                    onRetry = onRetry,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                )
+
+                if (viewerState.sourceType == DocumentSource.Peppol) {
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(onClick = onToggleTechnicalDetails)
+                            .padding(vertical = Constraints.Spacing.xSmall),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall),
+                    ) {
+                        Text(
+                            text = if (viewerState.isTechnicalDetailsExpanded) "\u2304" else "\u203A",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.textMuted,
+                        )
+                        Text(
+                            text = stringResource(Res.string.document_source_technical_details),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.textMuted,
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 
