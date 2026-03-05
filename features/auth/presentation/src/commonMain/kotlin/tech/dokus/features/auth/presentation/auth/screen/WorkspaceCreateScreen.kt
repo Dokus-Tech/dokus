@@ -6,7 +6,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -26,6 +25,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
@@ -35,16 +36,19 @@ import tech.dokus.aura.resources.workspace_create_button
 import tech.dokus.domain.LegalName
 import tech.dokus.features.auth.mvi.WorkspaceCreateIntent
 import tech.dokus.features.auth.mvi.WorkspaceCreateState
+import tech.dokus.features.auth.presentation.auth.components.onboarding.OnboardingCenteredShell
 import tech.dokus.features.auth.presentation.auth.components.steps.CompanyNameStep
 import tech.dokus.features.auth.presentation.auth.components.steps.TypeSelectionStep
 import tech.dokus.features.auth.presentation.auth.components.steps.VatAndAddressStep
-import tech.dokus.features.auth.presentation.auth.components.onboarding.OnboardingCenteredShell
 import tech.dokus.features.auth.presentation.auth.model.WorkspaceCreateType
 import tech.dokus.features.auth.presentation.auth.model.WorkspaceWizardStep
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.background.WarpJumpEffect
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.extensions.dismissKeyboardOnTapOutside
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 private const val ContentFadeOutDurationMs = 600
 private const val NavigationDelayMs = 100L
@@ -53,7 +57,10 @@ private const val CompanyLookupMinCharacters = 3
 private val StepContentMinHeight = 320.dp
 private val WizardContentMaxWidth = 520.dp
 private val WizardTypeSelectionMaxWidth = 560.dp
-private val WizardLookupMaxWidth = 760.dp
+private val WorkspaceCreateDefaultShellMaxWidth = 520.dp
+private val WorkspaceCreateLookupShellMaxWidth = 980.dp
+private val WizardLookupMaxWidth = 980.dp
+private val LookupPaneMaxHeight = 540.dp
 
 @Composable
 internal fun WorkspaceCreateScreen(
@@ -82,7 +89,8 @@ internal fun WorkspaceCreateScreen(
     }
 
     val wizardState = state as? WorkspaceCreateState.Wizard
-    val isSubmitting = state is WorkspaceCreateState.Loading || state is WorkspaceCreateState.Creating
+    val isSubmitting =
+        state is WorkspaceCreateState.Loading || state is WorkspaceCreateState.Creating
 
     Scaffold {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -93,7 +101,12 @@ internal fun WorkspaceCreateScreen(
             ) {
                 if (wizardState != null) {
                     OnboardingCenteredShell(
-                        modifier = Modifier.dismissKeyboardOnTapOutside()
+                        modifier = Modifier.dismissKeyboardOnTapOutside(),
+                        contentMaxWidth = if (wizardState.step == WorkspaceWizardStep.CompanyName) {
+                            WorkspaceCreateLookupShellMaxWidth
+                        } else {
+                            WorkspaceCreateDefaultShellMaxWidth
+                        },
                     ) {
                         WorkspaceCreateContent(
                             wizardState = wizardState,
@@ -157,7 +170,7 @@ private fun WorkspaceCreateContent(
     ) {
         Box(
             modifier = Modifier
-                .heightIn(min = StepContentMinHeight)
+                .heightIn(min = StepContentMinHeight, max = LookupPaneMaxHeight)
                 .fillMaxWidth(),
             contentAlignment = Alignment.Center,
         ) {
@@ -190,11 +203,16 @@ private fun WorkspaceCreateContent(
                                 onIntent(WorkspaceCreateIntent.SelectEntity(entity))
                             },
                             onEnterManually = {
-                                onIntent(WorkspaceCreateIntent.UpdateCompanyName(LegalName(wizardState.companyName.value)))
+                                onIntent(
+                                    WorkspaceCreateIntent.UpdateCompanyName(
+                                        LegalName(
+                                            wizardState.companyName.value
+                                        )
+                                    )
+                                )
                                 onIntent(WorkspaceCreateIntent.EnterManually)
                             },
                             onBackPress = { onIntent(WorkspaceCreateIntent.BackClicked) },
-                            modifier = Modifier.fillMaxWidth(),
                         )
                     }
 
@@ -233,14 +251,12 @@ private fun WorkspaceCreateContent(
     }
 }
 
-@androidx.compose.ui.tooling.preview.Preview
+@Preview
 @Composable
 private fun WorkspaceCreateScreenPreview(
-    @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class,
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters,
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
 ) {
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    TestWrapper(parameters) {
         WorkspaceCreateScreen(
             state = WorkspaceCreateState.Wizard(),
             onIntent = {},
@@ -251,14 +267,12 @@ private fun WorkspaceCreateScreenPreview(
     }
 }
 
-@androidx.compose.ui.tooling.preview.Preview(name = "Workspace Create Desktop", widthDp = 1366, heightDp = 900)
+@Preview(name = "Workspace Create Desktop", widthDp = 1200, heightDp = 760)
 @Composable
 private fun WorkspaceCreateScreenDesktopPreview(
-    @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class,
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters,
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
 ) {
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    TestWrapper(parameters) {
         WorkspaceCreateScreen(
             state = WorkspaceCreateState.Wizard(
                 workspaceType = WorkspaceCreateType.Bookkeeper,

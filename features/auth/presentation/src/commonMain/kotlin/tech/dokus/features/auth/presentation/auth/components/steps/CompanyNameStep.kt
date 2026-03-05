@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -42,7 +41,6 @@ import tech.dokus.aura.resources.auth_company_lookup_not_found_subtitle
 import tech.dokus.aura.resources.auth_company_lookup_not_found_title
 import tech.dokus.aura.resources.auth_company_lookup_prompt
 import tech.dokus.aura.resources.auth_company_lookup_results_count
-import tech.dokus.aura.resources.auth_company_lookup_subtitle
 import tech.dokus.aura.resources.auth_company_name_searching
 import tech.dokus.aura.resources.auth_entity_manual_entry
 import tech.dokus.aura.resources.console_clients_search_placeholder
@@ -70,8 +68,6 @@ import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
 
 private const val MinLookupCharacters = 3
-private val LookupPaneMinHeight = 340.dp
-private val LookupLeftPaneWidth = 300.dp
 
 @Composable
 internal fun CompanyNameStep(
@@ -85,20 +81,18 @@ internal fun CompanyNameStep(
 ) {
     val normalizedQuery = query.trim()
     val isIdle = normalizedQuery.length < MinLookupCharacters
-    val results = if (!isIdle && lookupState is LookupState.Success) lookupState.results else emptyList()
-    val isLoading = !isIdle && (lookupState is LookupState.Loading || lookupState is LookupState.Idle)
+    val results =
+        if (!isIdle && lookupState is LookupState.Success) lookupState.results else emptyList()
+    val isLoading =
+        !isIdle && (lookupState is LookupState.Loading || lookupState is LookupState.Idle)
     val isError = !isIdle && lookupState is LookupState.Error
     val showNoResults = !isIdle && lookupState is LookupState.Success && results.isEmpty()
     val isLargeScreen = LocalScreenSize.current.isLarge
 
-    DokusGlassSurface(
-        modifier = modifier.fillMaxWidth(),
-    ) {
+    DokusGlassSurface(modifier) {
         if (isLargeScreen) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = LookupPaneMinHeight),
+                modifier = Modifier.fillMaxSize(),
             ) {
                 LookupInputPane(
                     query = query,
@@ -107,7 +101,7 @@ internal fun CompanyNameStep(
                     onQueryChanged = onQueryChanged,
                     onBackPress = onBackPress,
                     modifier = Modifier
-                        .width(LookupLeftPaneWidth)
+                        .weight(1f)
                         .fillMaxHeight(),
                 )
 
@@ -124,16 +118,12 @@ internal fun CompanyNameStep(
                     onResultSelected = onResultSelected,
                     onEnterManually = onEnterManually,
                     modifier = Modifier
-                        .weight(1f)
+                        .weight(2f)
                         .fillMaxHeight(),
                 )
             }
         } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = LookupPaneMinHeight),
-            ) {
+            Column {
                 LookupInputPane(
                     query = query,
                     lookupState = lookupState,
@@ -171,7 +161,8 @@ private fun LookupInputPane(
     onBackPress: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val showCount = lookupState is LookupState.Success && query.trim().length >= MinLookupCharacters && results.isNotEmpty()
+    val showCount =
+        lookupState is LookupState.Success && query.trim().length >= MinLookupCharacters && results.isNotEmpty()
 
     Column(
         modifier = modifier
@@ -193,13 +184,6 @@ private fun LookupInputPane(
                 color = MaterialTheme.colorScheme.onSurface,
             )
         }
-
-        Text(
-            text = stringResource(Res.string.auth_company_lookup_subtitle),
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(start = Constraints.Spacing.xxLarge),
-        )
 
         PSearchFieldCompact(
             value = query,
@@ -330,7 +314,10 @@ private fun LookupResultCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = Constraints.Spacing.large, vertical = Constraints.Spacing.medium),
+                .padding(
+                    horizontal = Constraints.Spacing.large,
+                    vertical = Constraints.Spacing.medium
+                ),
             verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall),
         ) {
             Row(
@@ -543,7 +530,7 @@ private fun CompanyNameStepErrorPreview(
     }
 }
 
-@Preview(name = "Company Lookup Desktop", widthDp = 1366, heightDp = 900)
+@Preview(name = "Company Lookup Desktop", widthDp = 1200, heightDp = 760)
 @Composable
 private fun CompanyNameStepDesktopPreview(
     @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,

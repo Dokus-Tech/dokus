@@ -65,18 +65,6 @@ sealed interface WorkspaceCreateState : MVIState, DokusState<Nothing> {
                 WorkspaceWizardStep.CompanyName -> companyName.isValid
                 WorkspaceWizardStep.VatAndAddress -> vatNumber.isValid && address.isValid
             }
-
-        /** The total number of steps for the current tenant type */
-        val totalSteps: Int
-            get() = WorkspaceWizardStep.stepsForType(workspaceType).size
-
-        /** The current step number (1-based) */
-        val currentStepNumber: Int
-            get() = WorkspaceWizardStep.stepsForType(workspaceType).indexOf(step) + 1
-
-        /** Whether we can go back in the wizard */
-        val canGoBack: Boolean
-            get() = WorkspaceWizardStep.stepsForType(workspaceType).indexOf(step) > 0
     }
 
     /**

@@ -20,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -147,6 +148,7 @@ internal fun OnboardingSplitShell(
 @Composable
 internal fun OnboardingCenteredShell(
     modifier: Modifier = Modifier,
+    contentMaxWidth: Dp = CenterPaneMaxWidth,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Box(modifier = modifier.fillMaxSize()) {
@@ -163,7 +165,7 @@ internal fun OnboardingCenteredShell(
 
             Column(
                 modifier = Modifier
-                    .widthIn(max = CenterPaneMaxWidth)
+                    .widthIn(max = contentMaxWidth)
                     .fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 content = content,
