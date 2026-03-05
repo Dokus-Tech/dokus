@@ -58,6 +58,8 @@
     <string name="auth_company_lookup_not_found_subtitle">Not in the Belgian company registry</string>
     <string name="auth_business_details">Business details</string>
     <string name="auth_business_details_subtitle">Add VAT and address information</string>
+    <string name="auth_registered_address">Address</string>
+    <string name="auth_vat_number_prefixed">VAT Number</string>
 
     <!-- Entity Confirmation -->
     <string name="auth_entity_single_prompt">Is this your company?</string>

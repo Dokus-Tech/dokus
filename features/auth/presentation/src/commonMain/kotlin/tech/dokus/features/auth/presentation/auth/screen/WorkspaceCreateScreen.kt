@@ -8,10 +8,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.pager.HorizontalPager
@@ -29,10 +27,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
-import org.jetbrains.compose.resources.stringResource
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.state_creating
-import tech.dokus.aura.resources.workspace_create_button
 import tech.dokus.domain.LegalName
 import tech.dokus.features.auth.mvi.WorkspaceCreateIntent
 import tech.dokus.features.auth.mvi.WorkspaceCreateState
@@ -42,9 +36,7 @@ import tech.dokus.features.auth.presentation.auth.components.steps.TypeSelection
 import tech.dokus.features.auth.presentation.auth.components.steps.VatAndAddressStep
 import tech.dokus.features.auth.presentation.auth.model.WorkspaceCreateType
 import tech.dokus.features.auth.presentation.auth.model.WorkspaceWizardStep
-import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.background.WarpJumpEffect
-import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.extensions.dismissKeyboardOnTapOutside
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
@@ -222,6 +214,8 @@ private fun WorkspaceCreateContent(
                             companyName = wizardState.companyName.value,
                             vatNumber = wizardState.vatNumber,
                             address = wizardState.address,
+                            canCreate = wizardState.canProceed,
+                            isSubmitting = isSubmitting,
                             onCompanyNameChanged = { name ->
                                 onIntent(WorkspaceCreateIntent.UpdateCompanyName(LegalName(name)))
                             },
@@ -231,27 +225,13 @@ private fun WorkspaceCreateContent(
                             onAddressChanged = { address ->
                                 onIntent(WorkspaceCreateIntent.UpdateAddress(address))
                             },
+                            onCreate = { onIntent(WorkspaceCreateIntent.NextClicked) },
                             onBackPress = { onIntent(WorkspaceCreateIntent.BackClicked) },
                             modifier = Modifier.fillMaxWidth(),
                         )
                     }
                 }
             }
-        }
-
-        if (wizardState.step == WorkspaceWizardStep.VatAndAddress) {
-            Spacer(modifier = Modifier.height(Constraints.Spacing.xLarge))
-
-            PPrimaryButton(
-                text = if (isSubmitting) {
-                    stringResource(Res.string.state_creating)
-                } else {
-                    stringResource(Res.string.workspace_create_button)
-                },
-                enabled = wizardState.canProceed && !isSubmitting,
-                modifier = Modifier.fillMaxWidth(),
-                onClick = { onIntent(WorkspaceCreateIntent.NextClicked) },
-            )
         }
     }
 }

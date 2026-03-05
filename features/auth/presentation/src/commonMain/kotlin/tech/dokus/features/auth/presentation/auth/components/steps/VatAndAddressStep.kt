@@ -1,7 +1,6 @@
 package tech.dokus.features.auth.presentation.auth.components.steps
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,19 +9,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -32,6 +23,8 @@ import tech.dokus.aura.resources.action_back
 import tech.dokus.aura.resources.auth_business_details
 import tech.dokus.aura.resources.auth_business_details_subtitle
 import tech.dokus.aura.resources.auth_company_name_label
+import tech.dokus.aura.resources.auth_registered_address
+import tech.dokus.aura.resources.auth_vat_number_prefixed
 import tech.dokus.aura.resources.contacts_address_line1
 import tech.dokus.aura.resources.contacts_address_line2
 import tech.dokus.aura.resources.contacts_city
@@ -40,16 +33,17 @@ import tech.dokus.aura.resources.contacts_postal_code
 import tech.dokus.aura.resources.country_belgium
 import tech.dokus.aura.resources.country_france
 import tech.dokus.aura.resources.country_netherlands
-import tech.dokus.aura.resources.workspace_address
-import tech.dokus.aura.resources.workspace_vat_number
+import tech.dokus.aura.resources.state_creating
+import tech.dokus.aura.resources.workspace_create_button
 import tech.dokus.domain.enums.Country
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.features.auth.presentation.auth.model.AddressFormState
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.DokusGlassSurface
+import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.common.PBackIconButton
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
-import tech.dokus.foundation.aura.components.fields.PTextFieldTaxNumber
+import tech.dokus.foundation.aura.components.icons.LockIcon
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.tooling.PreviewParameters
@@ -61,9 +55,12 @@ internal fun VatAndAddressStep(
     companyName: String,
     vatNumber: VatNumber,
     address: AddressFormState,
+    canCreate: Boolean,
+    isSubmitting: Boolean,
     onCompanyNameChanged: (String) -> Unit,
     onVatNumberChanged: (VatNumber) -> Unit,
     onAddressChanged: (AddressFormState) -> Unit,
+    onCreate: () -> Unit,
     onBackPress: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -78,7 +75,6 @@ internal fun VatAndAddressStep(
                     selectedCountry = address.country,
                     onCompanyNameChanged = onCompanyNameChanged,
                     onVatNumberChanged = onVatNumberChanged,
-                    onCountrySelected = { onAddressChanged(address.copy(country = it)) },
                     onBackPress = onBackPress,
                     modifier = Modifier
                         .weight(1f)
@@ -89,9 +85,13 @@ internal fun VatAndAddressStep(
 
                 RegisteredAddressPane(
                     address = address,
+                    canCreate = canCreate,
+                    isSubmitting = isSubmitting,
+                    isLargeScreen = true,
                     onAddressChanged = onAddressChanged,
+                    onCreate = onCreate,
                     modifier = Modifier
-                        .weight(1f)
+                        .weight(2f)
                         .fillMaxHeight(),
                 )
             }
@@ -103,7 +103,6 @@ internal fun VatAndAddressStep(
                     selectedCountry = address.country,
                     onCompanyNameChanged = onCompanyNameChanged,
                     onVatNumberChanged = onVatNumberChanged,
-                    onCountrySelected = { onAddressChanged(address.copy(country = it)) },
                     onBackPress = onBackPress,
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -112,7 +111,11 @@ internal fun VatAndAddressStep(
 
                 RegisteredAddressPane(
                     address = address,
+                    canCreate = canCreate,
+                    isSubmitting = isSubmitting,
+                    isLargeScreen = false,
                     onAddressChanged = onAddressChanged,
+                    onCreate = onCreate,
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
@@ -127,14 +130,11 @@ private fun CompanyDetailsPane(
     selectedCountry: Country,
     onCompanyNameChanged: (String) -> Unit,
     onVatNumberChanged: (VatNumber) -> Unit,
-    onCountrySelected: (Country) -> Unit,
     onBackPress: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier
-            .padding(Constraints.Spacing.xLarge)
-            .verticalScroll(rememberScrollState()),
+        modifier = modifier.padding(Constraints.Spacing.xLarge),
         verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium),
     ) {
         Row(
@@ -159,6 +159,8 @@ private fun CompanyDetailsPane(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
         Spacer(modifier = Modifier.height(Constraints.Spacing.small))
 
         PTextFieldStandard(
@@ -168,16 +170,15 @@ private fun CompanyDetailsPane(
             onValueChange = onCompanyNameChanged,
         )
 
-        PTextFieldTaxNumber(
-            fieldName = stringResource(Res.string.workspace_vat_number),
+        PTextFieldStandard(
+            fieldName = stringResource(Res.string.auth_vat_number_prefixed),
             value = vatNumber.value,
             modifier = Modifier.fillMaxWidth(),
             onValueChange = { onVatNumberChanged(VatNumber(it)) },
         )
 
-        CountrySelector(
+        CountryField(
             selectedCountry = selectedCountry,
-            onCountrySelected = onCountrySelected,
             modifier = Modifier.fillMaxWidth(),
         )
     }
@@ -186,20 +187,22 @@ private fun CompanyDetailsPane(
 @Composable
 private fun RegisteredAddressPane(
     address: AddressFormState,
+    canCreate: Boolean,
+    isSubmitting: Boolean,
+    isLargeScreen: Boolean,
     onAddressChanged: (AddressFormState) -> Unit,
+    onCreate: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier
-            .padding(Constraints.Spacing.xLarge)
-            .verticalScroll(rememberScrollState()),
+        modifier = modifier.padding(Constraints.Spacing.xLarge),
         verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium),
     ) {
         Text(
-            text = stringResource(Res.string.workspace_address),
-            style = MaterialTheme.typography.headlineMedium,
+            text = stringResource(Res.string.auth_registered_address),
+            style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.onSurface,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
         Row(
@@ -239,17 +242,29 @@ private fun RegisteredAddressPane(
                 onValueChange = { onAddressChanged(address.copy(city = it)) },
             )
         }
+
+        if (isLargeScreen) {
+            Spacer(modifier = Modifier.weight(1f))
+        }
+
+        PPrimaryButton(
+            text = if (isSubmitting) {
+                stringResource(Res.string.state_creating)
+            } else {
+                stringResource(Res.string.workspace_create_button)
+            },
+            enabled = canCreate && !isSubmitting,
+            modifier = Modifier.fillMaxWidth(),
+            onClick = onCreate,
+        )
     }
 }
 
 @Composable
-private fun CountrySelector(
+private fun CountryField(
     selectedCountry: Country,
-    onCountrySelected: (Country) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var expanded by remember { mutableStateOf(false) }
-
     Column(modifier = modifier) {
         Text(
             text = stringResource(Res.string.contacts_country),
@@ -260,31 +275,22 @@ private fun CountrySelector(
 
         Spacer(modifier = Modifier.height(Constraints.Spacing.xSmall))
 
-        Box {
-            DokusCardSurface(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = { expanded = true },
+        DokusCardSurface(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(Constraints.Spacing.large),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
             ) {
                 Text(
                     text = selectedCountry.localizedName(),
                     style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(Constraints.Spacing.large),
+                    modifier = Modifier.weight(1f),
                 )
-            }
-
-            DropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false },
-            ) {
-                Country.entries.forEach { country ->
-                    DropdownMenuItem(
-                        text = { Text(country.localizedName()) },
-                        onClick = {
-                            onCountrySelected(country)
-                            expanded = false
-                        },
-                    )
-                }
+                LockIcon(
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.42f),
+                )
             }
         }
     }
@@ -316,9 +322,45 @@ private fun VatAndAddressStepPreview(
                 postalCode = "9860",
                 country = Country.Belgium,
             ),
+            canCreate = true,
+            isSubmitting = false,
             onCompanyNameChanged = {},
             onVatNumberChanged = {},
             onAddressChanged = {},
+            onCreate = {},
+            onBackPress = {},
+        )
+    }
+}
+
+@androidx.compose.ui.tooling.preview.Preview(
+    name = "Business Details Desktop",
+    widthDp = 1200,
+    heightDp = 760,
+)
+@Composable
+private fun VatAndAddressStepDesktopPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        PreviewParametersProvider::class,
+    ) parameters: PreviewParameters,
+) {
+    TestWrapper(parameters) {
+        VatAndAddressStep(
+            companyName = "Invoid Vision",
+            vatNumber = VatNumber("BE0123456789"),
+            address = AddressFormState(
+                streetLine1 = "Balegemstraat",
+                streetLine2 = "17",
+                city = "Oosterzele",
+                postalCode = "9860",
+                country = Country.Belgium,
+            ),
+            canCreate = true,
+            isSubmitting = false,
+            onCompanyNameChanged = {},
+            onVatNumberChanged = {},
+            onAddressChanged = {},
+            onCreate = {},
             onBackPress = {},
         )
     }
