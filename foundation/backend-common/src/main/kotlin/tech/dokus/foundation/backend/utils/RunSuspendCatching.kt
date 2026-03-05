@@ -1,14 +1,17 @@
-<<<<<<<< HEAD:foundation/backend-common/src/main/kotlin/tech/dokus/foundation/backend/utils/RunSuspendCatching.kt
 package tech.dokus.foundation.backend.utils
-========
-@file:Suppress("NOTHING_TO_INLINE")
 
-package tech.dokus.backend.util
->>>>>>>> origin/main:backendApp/src/main/kotlin/tech/dokus/backend/util/RunSuspendCatching.kt
+import kotlinx.coroutines.CancellationException
 
 /**
- * Re-export from foundation for backward compatibility.
- * Prefer importing from [tech.dokus.foundation.backend.utils.runSuspendCatching] directly.
+ * Like [runCatching] but re-throws [CancellationException] to preserve structured concurrency.
+ * Use this instead of [runCatching] in suspend functions.
  */
+@Suppress("TooGenericExceptionCaught")
 suspend inline fun <T> runSuspendCatching(block: () -> T): Result<T> =
-    tech.dokus.foundation.backend.utils.runSuspendCatching(block)
+    try {
+        Result.success(block())
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Throwable) {
+        Result.failure(e)
+    }
