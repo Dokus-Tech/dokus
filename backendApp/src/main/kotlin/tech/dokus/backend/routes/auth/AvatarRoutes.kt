@@ -16,10 +16,13 @@ import org.koin.ktor.ext.inject
 import tech.dokus.backend.security.requireTenantId
 import tech.dokus.backend.services.business.BusinessProfileService
 import tech.dokus.database.repository.auth.TenantRepository
+import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.AvatarUploadResponse
 import tech.dokus.domain.routes.Tenants
 import tech.dokus.foundation.backend.security.authenticateJwt
+import tech.dokus.foundation.backend.security.dokusPrincipal
 import tech.dokus.foundation.backend.storage.AvatarStorageService
 import tech.dokus.foundation.backend.utils.loggerFor
 
@@ -35,6 +38,7 @@ private val logger = loggerFor("AvatarRoutes")
  */
 internal fun Route.avatarRoutes() {
     val tenantRepository by inject<TenantRepository>()
+    val userRepository by inject<UserRepository>()
     val avatarStorageService by inject<AvatarStorageService>()
     val businessProfileService by inject<BusinessProfileService>()
 
@@ -99,7 +103,7 @@ internal fun Route.avatarRoutes() {
             logger.info("Avatar uploaded successfully for tenant: $tenantId, key=${result.storageKeyPrefix}")
 
             val response = AvatarUploadResponse(
-                avatar = businessProfileService.buildTenantAvatarThumbnail(),
+                avatar = businessProfileService.buildTenantAvatarThumbnail(tenantId),
                 storageKey = result.storageKeyPrefix,
                 tenantId = tenantId
             )
@@ -126,9 +130,36 @@ internal fun Route.avatarRoutes() {
                 throw DokusException.NotFound("Avatar not found in storage")
             }
 
-            val avatar = businessProfileService.buildTenantAvatarThumbnail()
+            val avatar = businessProfileService.buildTenantAvatarThumbnail(tenantId)
 
             call.respond(HttpStatusCode.OK, avatar)
+        }
+
+        /**
+         * GET /api/v1/tenants/{id}/avatar/{size}.webp
+         * Stream a tenant avatar image for a specific tenant.
+         */
+        get<Tenants.AvatarImageById> { route ->
+            val tenantId = runCatching { TenantId.parse(route.id) }
+                .getOrElse { throw DokusException.BadRequest("Invalid tenant id in path") }
+            val principal = dokusPrincipal
+            val membership = userRepository.getMembership(principal.userId, tenantId)
+            if (membership == null || !membership.isActive) {
+                throw DokusException.NotAuthorized("You do not have access to tenant $tenantId")
+            }
+
+            val imageBytes = loadTenantAvatarImageBytes(
+                tenantId = tenantId,
+                size = route.size,
+                tenantRepository = tenantRepository,
+                avatarStorageService = avatarStorageService
+            )
+
+            call.respondBytes(
+                bytes = imageBytes,
+                contentType = ContentType("image", "webp"),
+                status = HttpStatusCode.OK
+            )
         }
 
         /**
@@ -137,21 +168,12 @@ internal fun Route.avatarRoutes() {
          */
         get<Tenants.AvatarImage> { route ->
             val tenantId = requireTenantId()
-            val size = avatarStorageService.normalizeSize(route.size)
-                ?: throw DokusException.BadRequest("Avatar size must be one of: small, medium, large")
-
-            val storageKey = tenantRepository.getAvatarStorageKey(tenantId)
-                ?: throw DokusException.NotFound("No avatar set")
-
-            val imageBytes = avatarStorageService.getAvatarBytes(storageKey, size)
-            if (imageBytes == null) {
-                logger.debug(
-                    "Missing tenant avatar object for tenant={}, size={}, reason=storage_missing",
-                    tenantId,
-                    size
-                )
-                throw DokusException.NotFound("Avatar not found in storage")
-            }
+            val imageBytes = loadTenantAvatarImageBytes(
+                tenantId = tenantId,
+                size = route.size,
+                tenantRepository = tenantRepository,
+                avatarStorageService = avatarStorageService
+            )
 
             call.respondBytes(
                 bytes = imageBytes,
@@ -189,4 +211,28 @@ internal fun Route.avatarRoutes() {
             call.respond(HttpStatusCode.NoContent)
         }
     }
+}
+
+private suspend fun loadTenantAvatarImageBytes(
+    tenantId: TenantId,
+    size: String,
+    tenantRepository: TenantRepository,
+    avatarStorageService: AvatarStorageService
+): ByteArray {
+    val normalizedSize = avatarStorageService.normalizeSize(size)
+        ?: throw DokusException.BadRequest("Avatar size must be one of: small, medium, large")
+
+    val storageKey = tenantRepository.getAvatarStorageKey(tenantId)
+        ?: throw DokusException.NotFound("No avatar set")
+
+    val imageBytes = avatarStorageService.getAvatarBytes(storageKey, normalizedSize)
+    if (imageBytes == null) {
+        logger.debug(
+            "Missing tenant avatar object for tenant={}, size={}, reason=storage_missing",
+            tenantId,
+            normalizedSize
+        )
+        throw DokusException.NotFound("Avatar not found in storage")
+    }
+    return imageBytes
 }

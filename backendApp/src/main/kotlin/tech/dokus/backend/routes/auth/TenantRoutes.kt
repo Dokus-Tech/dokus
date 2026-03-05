@@ -70,7 +70,7 @@ internal fun Route.tenantRoutes() {
                     val avatar = try {
                         val storageKey = tenantRepository.getAvatarStorageKey(tenant.id)
                         if (storageKey != null) {
-                            businessProfileService.buildTenantAvatarThumbnail()
+                            businessProfileService.buildTenantAvatarThumbnail(tenant.id)
                         } else {
                             null
                         }
@@ -234,7 +234,7 @@ internal fun Route.tenantRoutes() {
             val avatar = try {
                 val storageKey = tenantRepository.getAvatarStorageKey(tenantId)
                 if (storageKey != null) {
-                    businessProfileService.buildTenantAvatarThumbnail()
+                    businessProfileService.buildTenantAvatarThumbnail(tenantId)
                 } else {
                     null
                 }

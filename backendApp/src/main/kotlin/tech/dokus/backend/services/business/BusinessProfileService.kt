@@ -132,10 +132,10 @@ class BusinessProfileService(
         large = "/api/v1/contacts/$contactId/avatar/$AVATAR_SIZE_LARGE.webp"
     )
 
-    fun buildTenantAvatarThumbnail(): Thumbnail = Thumbnail(
-        small = "/api/v1/tenants/avatar/$AVATAR_SIZE_SMALL.webp",
-        medium = "/api/v1/tenants/avatar/$AVATAR_SIZE_MEDIUM.webp",
-        large = "/api/v1/tenants/avatar/$AVATAR_SIZE_LARGE.webp"
+    fun buildTenantAvatarThumbnail(tenantId: TenantId): Thumbnail = Thumbnail(
+        small = "/api/v1/tenants/$tenantId/avatar/$AVATAR_SIZE_SMALL.webp",
+        medium = "/api/v1/tenants/$tenantId/avatar/$AVATAR_SIZE_MEDIUM.webp",
+        large = "/api/v1/tenants/$tenantId/avatar/$AVATAR_SIZE_LARGE.webp"
     )
 
     suspend fun updateTenantProfile(
@@ -358,7 +358,7 @@ class BusinessProfileService(
         } else {
             when (subjectType) {
                 BusinessProfileSubjectType.Contact -> buildContactAvatarThumbnail(subjectId)
-                BusinessProfileSubjectType.Tenant -> buildTenantAvatarThumbnail()
+                BusinessProfileSubjectType.Tenant -> buildTenantAvatarThumbnail(tenantId)
             }
         }
         return BusinessProfileProjection(
