@@ -39,6 +39,7 @@ import tech.dokus.backend.services.contacts.ContactService
 import tech.dokus.backend.services.documents.AutoConfirmPolicy
 import tech.dokus.backend.services.documents.ContactResolutionService
 import tech.dokus.backend.services.documents.DocumentPurposeService
+import tech.dokus.backend.services.documents.DocumentPurposeSimilarityService
 import tech.dokus.backend.services.documents.DocumentTruthService
 import tech.dokus.backend.services.documents.StorageDocumentFetcher
 import tech.dokus.backend.services.documents.confirmation.CreditNoteConfirmationService
@@ -279,7 +280,7 @@ private fun cashflowModule() = module {
     single { InvoiceConfirmationService(get(), get(), get()) }
     single { ReceiptConfirmationService(get(), get(), get()) }
     single { CreditNoteConfirmationService(get(), get(), get(), get()) }
-    single { DocumentConfirmationDispatcher(get(), get(), get()) }
+    single { DocumentConfirmationDispatcher(get(), get(), get(), get()) }
     single { DocumentTruthService(get(), get(), get(), get(), get(), get(), get()) }
     singleOf(::CashflowProjectionReconciliationWorker)
 
@@ -341,6 +342,7 @@ private fun documentProcessingModule() = module {
     // Contact resolution (deterministic post-processing)
     singleOf(::ContactResolutionService)
     singleOf(::AutoConfirmPolicy)
+    singleOf(::DocumentPurposeSimilarityService)
     singleOf(::DocumentPurposeService)
 
     // Document Processing Worker

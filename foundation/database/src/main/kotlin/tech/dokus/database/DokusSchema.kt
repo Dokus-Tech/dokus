@@ -31,6 +31,7 @@ import tech.dokus.database.tables.documents.DocumentDraftsTable
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
 import tech.dokus.database.tables.documents.DocumentBlobsTable
 import tech.dokus.database.tables.documents.DocumentMatchReviewsTable
+import tech.dokus.database.tables.documents.DocumentPurposeExamplesTable
 import tech.dokus.database.tables.documents.DocumentPurposeTemplatesTable
 import tech.dokus.database.tables.documents.DocumentSourcesTable
 import tech.dokus.database.tables.documents.DocumentsTable
@@ -86,6 +87,7 @@ object DokusSchema {
                 DocumentDraftsTable,
                 DocumentMatchReviewsTable,
                 DocumentPurposeTemplatesTable,
+                DocumentPurposeExamplesTable,
 
                 // ----------------------------
                 // Contacts (depends on docs/users/addresses)

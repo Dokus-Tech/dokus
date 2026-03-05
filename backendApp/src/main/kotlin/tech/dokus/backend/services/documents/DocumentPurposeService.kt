@@ -6,6 +6,7 @@ import tech.dokus.database.repository.cashflow.DocumentPurposeTemplateRepository
 import tech.dokus.database.repository.cashflow.DraftSummary
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentPurposeSource
+import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.PurposePeriodMode
 import tech.dokus.domain.ids.ContactId
@@ -26,6 +27,7 @@ private const val PurposeBaseMaxLength = 72
 class DocumentPurposeService(
     private val draftRepository: DocumentDraftRepository,
     private val templateRepository: DocumentPurposeTemplateRepository,
+    private val similarityService: DocumentPurposeSimilarityService,
     private val processingAgent: DocumentProcessingAgent
 ) {
     private val logger = loggerFor()
@@ -63,27 +65,41 @@ class DocumentPurposeService(
             )
         }
 
+        val servicePeriodStart = PurposePeriodHeuristics.detectServicePeriodStart(draftData)
         val ragCandidates = if (template == null) {
-            when {
-                !counterpartyKey.isNullOrBlank() -> {
-                    draftRepository.listConfirmedPurposeBasesByCounterparty(
-                        tenantId = tenantId,
-                        counterpartyKey = counterpartyKey,
-                        documentType = documentType,
-                        limit = 5
-                    )
-                }
+            val similarityCandidates = similarityService.findCandidates(
+                tenantId = tenantId,
+                documentType = documentType,
+                counterpartyKey = counterpartyKey,
+                merchantToken = merchantToken,
+                queryPurposeBase = deriveSimilarityQueryPurposeBase(draftData, documentType),
+                minSimilarity = 0.78f,
+                topK = 3
+            )
+            if (similarityCandidates.isNotEmpty()) {
+                similarityCandidates
+            } else {
+                when {
+                    !counterpartyKey.isNullOrBlank() -> {
+                        draftRepository.listConfirmedPurposeBasesByCounterparty(
+                            tenantId = tenantId,
+                            counterpartyKey = counterpartyKey,
+                            documentType = documentType,
+                            limit = 5
+                        )
+                    }
 
-                !merchantToken.isNullOrBlank() -> {
-                    draftRepository.listConfirmedPurposeBasesByMerchantToken(
-                        tenantId = tenantId,
-                        merchantToken = merchantToken,
-                        documentType = documentType,
-                        limit = 5
-                    )
-                }
+                    !merchantToken.isNullOrBlank() -> {
+                        draftRepository.listConfirmedPurposeBasesByMerchantToken(
+                            tenantId = tenantId,
+                            merchantToken = merchantToken,
+                            documentType = documentType,
+                            limit = 5
+                        )
+                    }
 
-                else -> emptyList()
+                    else -> emptyList()
+                }
             }
         } else {
             emptyList()
@@ -95,7 +111,7 @@ class DocumentPurposeService(
                 documentType = documentType,
                 supplierDisplayName = supplierDisplayName,
                 issueDate = extractIssueDate(draftData),
-                servicePeriodStart = null,
+                servicePeriodStart = servicePeriodStart,
                 templatePurposeBase = template?.purposeBase,
                 templatePeriodMode = template?.periodMode,
                 ragPurposeBaseCandidates = ragCandidates,
@@ -104,7 +120,7 @@ class DocumentPurposeService(
         )
 
         val purposeBase = enrichment.purposeBase?.trim()?.take(PurposeBaseMaxLength)
-        val purposeRendered = enrichment.purposeRendered?.trim()?.take(90)
+        val purposeRendered = enrichment.purposeRendered?.trim()?.take(80)
         if (purposeBase.isNullOrBlank() || purposeRendered.isNullOrBlank()) {
             return
         }
@@ -153,7 +169,7 @@ class DocumentPurposeService(
             purposePeriodYear = periodDate?.year,
             purposePeriodMonth = periodDate?.monthNumber,
             periodMode = mode
-        )
+        )?.take(80)
 
         draftRepository.updatePurposeFields(
             documentId = documentId,
@@ -178,6 +194,10 @@ class DocumentPurposeService(
                 confidence = 1.0,
                 incrementUsage = true
             )
+        }
+
+        if (draft.documentStatus == DocumentStatus.Confirmed) {
+            similarityService.indexConfirmedDocument(tenantId, documentId)
         }
     }
 
@@ -238,7 +258,7 @@ class DocumentPurposeService(
     private fun extractPeriodDate(draftData: DocumentDraftData, mode: PurposePeriodMode): LocalDate? {
         return when (mode) {
             PurposePeriodMode.IssueMonth -> extractIssueDate(draftData)
-            PurposePeriodMode.ServicePeriod -> extractIssueDate(draftData)
+            PurposePeriodMode.ServicePeriod -> PurposePeriodHeuristics.detectServicePeriodStart(draftData) ?: extractIssueDate(draftData)
             PurposePeriodMode.None -> null
         }
     }
@@ -269,6 +289,25 @@ class DocumentPurposeService(
             is ReceiptDraftData -> draftData.lineItems.firstOrNull()?.description
         }?.trim()?.take(PurposeBaseMaxLength)
         return lineHint?.takeIf { it.isNotBlank() }
+    }
+
+    private fun deriveSimilarityQueryPurposeBase(
+        draftData: DocumentDraftData,
+        documentType: DocumentType
+    ): String {
+        val explicitHint = when (draftData) {
+            is InvoiceDraftData -> draftData.notes
+            is CreditNoteDraftData -> draftData.reason ?: draftData.notes
+            is ReceiptDraftData -> draftData.notes
+        }?.trim()?.take(PurposeBaseMaxLength)
+        return deriveFallbackPurposeBase(draftData)
+            ?: explicitHint?.takeIf { it.isNotBlank() }
+            ?: when (documentType) {
+                DocumentType.Invoice -> "invoice"
+                DocumentType.CreditNote -> "credit note"
+                DocumentType.Receipt -> "receipt"
+                else -> "document"
+            }
     }
 
     private fun renderPurpose(
