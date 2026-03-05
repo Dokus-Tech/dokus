@@ -186,7 +186,7 @@ class BusinessProfileEvidenceGate {
 
         val score = checks.sumOf { it.score }
         val hasHardCheck = checks.any {
-                it.passed && (
+            it.passed && (
                 it.check == BusinessProfileEvidenceCheck.VatFoundOnSite ||
                     it.check == BusinessProfileEvidenceCheck.DomainContainsCompanyName ||
                     it.check == BusinessProfileEvidenceCheck.StructuredDataMatch

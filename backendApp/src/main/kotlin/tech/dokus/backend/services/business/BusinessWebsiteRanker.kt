@@ -228,7 +228,7 @@ class BusinessWebsiteRanker {
             }
             val brandTextMatch = (
                 normalizedCompany.isNotBlank() && normalizedCompany.length >= 6 && searchableNormalized.contains(normalizedCompany)
-                    ) || aliasFullMatch || tokenHitsInText >= 2 || (domainCompanyMatch && tokenHitsInText >= 1)
+                ) || aliasFullMatch || tokenHitsInText >= 2 || (domainCompanyMatch && tokenHitsInText >= 1)
             addDecision(
                 signal = WebsiteRankingSignal.BRAND_TEXT_MATCH,
                 passed = brandTextMatch,
@@ -243,7 +243,7 @@ class BusinessWebsiteRanker {
             }
             val structuredOrgMatch = (
                 normalizedCompany.isNotBlank() && structuredNormalized.contains(normalizedCompany)
-                    ) || aliasStructuredMatch || tokenHitsInStructured >= 2 ||
+                ) || aliasStructuredMatch || tokenHitsInStructured >= 2 ||
                 (!normalizedVat.isNullOrBlank() && structuredNormalized.contains(normalizedVat))
             addDecision(
                 signal = WebsiteRankingSignal.STRUCTURED_ORG_MATCH,
@@ -270,8 +270,10 @@ class BusinessWebsiteRanker {
             val normalizedPhone = normalizePhone(context.phone)
             val digitsText = plainText.replace(Regex("[^0-9+]"), "")
             val phoneMatch = !normalizedPhone.isNullOrBlank() &&
-                (digitsText.contains(normalizedPhone) ||
-                    pagePhonesNormalized.any { it.contains(normalizedPhone) || normalizedPhone.contains(it) })
+                (
+                    digitsText.contains(normalizedPhone) ||
+                        pagePhonesNormalized.any { it.contains(normalizedPhone) || normalizedPhone.contains(it) }
+                    )
 
             val cityMatch = context.city
                 ?.trim()

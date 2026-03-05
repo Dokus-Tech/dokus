@@ -159,7 +159,13 @@ internal class BusinessProfileLogoResolver(
 
         if (job.subjectType == BusinessProfileSubjectType.Tenant) {
             runSuspendCatching { tenantRepository.updateAvatarStorageKey(job.tenantId, upload.storageKeyPrefix) }
-                .onFailure { logger.warn("Failed to apply discovered tenant logo for {}: {}", job.tenantId, it.message) }
+                .onFailure {
+                    logger.warn(
+                        "Failed to apply discovered tenant logo for {}: {}",
+                        job.tenantId,
+                        it.message
+                    )
+                }
         }
         return LogoResolutionResult(storageKey = upload.storageKeyPrefix, trace = mergedTrace)
     }

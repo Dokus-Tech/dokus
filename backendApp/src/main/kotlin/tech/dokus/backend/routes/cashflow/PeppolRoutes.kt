@@ -8,6 +8,8 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import kotlinx.serialization.Serializable
 import org.koin.ktor.ext.inject
+import tech.dokus.backend.security.requirePermission
+import tech.dokus.backend.security.requireTenantId
 import tech.dokus.backend.services.cashflow.InvoiceService
 import tech.dokus.backend.services.peppol.PeppolRecipientResolver
 import tech.dokus.backend.worker.PeppolPollingWorker
@@ -15,23 +17,29 @@ import tech.dokus.database.repository.auth.AddressRepository
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.contacts.ContactRepository
+import tech.dokus.domain.enums.InvoiceStatus
+import tech.dokus.domain.enums.Permission
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.VatNumber
-import tech.dokus.domain.enums.InvoiceStatus
-import tech.dokus.domain.enums.Permission
 import tech.dokus.domain.model.PeppolConnectStatus
 import tech.dokus.domain.routes.Peppol
-import tech.dokus.backend.security.requirePermission
-import tech.dokus.backend.security.requireTenantId
 import tech.dokus.foundation.backend.security.authenticateJwt
-import tech.dokus.foundation.backend.security.dokusPrincipal
+import tech.dokus.foundation.backend.utils.loggerFor
 import tech.dokus.peppol.service.PeppolConnectionService
 import tech.dokus.peppol.service.PeppolRegistrationService
 import tech.dokus.peppol.service.PeppolService
 import tech.dokus.peppol.service.PeppolVerificationService
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
+
+private val peppolRoutesLogger = loggerFor("PeppolRoutes")
+
+internal fun Throwable.toPeppolRegistrationRouteException(operation: String): DokusException =
+    this as? DokusException ?: run {
+        peppolRoutesLogger.error("$operation failed", this)
+        DokusException.InternalError(operation)
+    }
 
 /**
  * Peppol API Routes using Ktor Type-Safe Routing
@@ -218,7 +226,9 @@ internal fun Route.peppolRoutes() {
                 recipientPeppolId
             ).getOrElse { error ->
                 when (error) {
-                    is IllegalArgumentException -> throw DokusException.BadRequest(error.message ?: "Invalid PEPPOL request")
+                    is IllegalArgumentException -> throw DokusException.BadRequest(
+                        error.message ?: "Invalid PEPPOL request"
+                    )
                     else -> throw DokusException.InternalError("Failed to queue invoice via PEPPOL")
                 }
             }
@@ -371,7 +381,7 @@ internal fun Route.peppolRoutes() {
             val tenantId = requireTenantId()
 
             val result = peppolRegistrationService.getRegistration(tenantId)
-                .getOrElse { throw DokusException.InternalError("Failed to get registration: ${it.message}") }
+                .getOrElse { throw it.toPeppolRegistrationRouteException("Failed to get registration") }
 
             if (result == null) {
                 call.respond(HttpStatusCode.NotFound, mapOf("message" to "No PEPPOL registration found"))
@@ -389,7 +399,7 @@ internal fun Route.peppolRoutes() {
             val request = call.receive<VerifyPeppolIdRequest>()
 
             val result = peppolVerificationService.verify(request.vatNumber)
-                .getOrElse { throw DokusException.InternalError("Failed to verify PEPPOL ID: ${it.message}") }
+                .getOrElse { throw it.toPeppolRegistrationRouteException("Failed to verify PEPPOL ID") }
 
             call.respond(HttpStatusCode.OK, result)
         }
@@ -401,7 +411,7 @@ internal fun Route.peppolRoutes() {
         post<Peppol.Enable> {
             val tenantId = requireTenantId()
             val result = peppolRegistrationService.enablePeppol(tenantId)
-                .getOrElse { throw DokusException.InternalError("Failed to enable PEPPOL: ${it.message}") }
+                .getOrElse { throw it.toPeppolRegistrationRouteException("Failed to enable PEPPOL") }
 
             // Trigger immediate poll for initial sync if receiving is enabled
             if (result.registration.canReceive) {
@@ -419,7 +429,7 @@ internal fun Route.peppolRoutes() {
             val tenantId = requireTenantId()
 
             val result = peppolRegistrationService.enableSendingOnly(tenantId)
-                .getOrElse { throw DokusException.InternalError("Failed to enable PEPPOL sending-only: ${it.message}") }
+                .getOrElse { throw it.toPeppolRegistrationRouteException("Failed to enable PEPPOL sending-only") }
 
             call.respond(HttpStatusCode.OK, result)
         }
@@ -432,7 +442,7 @@ internal fun Route.peppolRoutes() {
             val tenantId = requireTenantId()
 
             val result = peppolRegistrationService.waitForTransfer(tenantId)
-                .getOrElse { throw DokusException.InternalError("Failed to set wait for transfer: ${it.message}") }
+                .getOrElse { throw it.toPeppolRegistrationRouteException("Failed to set wait for transfer") }
 
             call.respond(HttpStatusCode.OK, result)
         }
@@ -445,7 +455,7 @@ internal fun Route.peppolRoutes() {
             val tenantId = requireTenantId()
 
             peppolRegistrationService.optOut(tenantId)
-                .getOrElse { throw DokusException.InternalError("Failed to opt out: ${it.message}") }
+                .getOrElse { throw it.toPeppolRegistrationRouteException("Failed to opt out") }
 
             call.respond(HttpStatusCode.OK, mapOf("success" to true))
         }
@@ -458,7 +468,7 @@ internal fun Route.peppolRoutes() {
             val tenantId = requireTenantId()
 
             val result = peppolRegistrationService.pollTransferStatus(tenantId)
-                .getOrElse { throw DokusException.InternalError("Failed to poll transfer status: ${it.message}") }
+                .getOrElse { throw it.toPeppolRegistrationRouteException("Failed to poll transfer status") }
 
             // If transfer completed and receiving is now enabled, trigger initial sync
             if (result.registration.canReceive) {

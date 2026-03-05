@@ -1,14 +1,13 @@
 package tech.dokus.backend.routes.search
 
-import tech.dokus.backend.security.requireTenantId
-
 import io.ktor.http.HttpStatusCode
+import io.ktor.server.request.receive
 import io.ktor.server.resources.get
 import io.ktor.server.resources.post
-import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
+import tech.dokus.backend.security.requireTenantId
 import tech.dokus.backend.services.search.SearchService
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.SearchSignalEventRequest

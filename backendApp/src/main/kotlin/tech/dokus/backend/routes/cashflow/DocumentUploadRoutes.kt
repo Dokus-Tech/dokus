@@ -1,7 +1,5 @@
 package tech.dokus.backend.routes.cashflow
 
-import tech.dokus.backend.security.requireTenantId
-
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.PartData
 import io.ktor.http.content.forEachPart
@@ -14,6 +12,7 @@ import org.koin.ktor.ext.inject
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import tech.dokus.backend.routes.cashflow.documents.addDownloadUrl
+import tech.dokus.backend.security.requireTenantId
 import tech.dokus.backend.services.documents.DocumentTruthService
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.domain.enums.DocumentIntakeOutcome
@@ -22,7 +21,6 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.DocumentIntakeResult
 import tech.dokus.domain.routes.Documents
 import tech.dokus.foundation.backend.security.authenticateJwt
-import tech.dokus.foundation.backend.security.dokusPrincipal
 import tech.dokus.foundation.backend.storage.DocumentUploadValidator
 import tech.dokus.foundation.backend.storage.DocumentStorageService as MinioDocumentStorageService
 

@@ -1,7 +1,5 @@
 package tech.dokus.backend.routes.auth
 
-import tech.dokus.backend.security.requireTenantId
-
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.resources.get
@@ -10,6 +8,7 @@ import io.ktor.server.resources.post
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
+import tech.dokus.backend.security.requireTenantId
 import tech.dokus.backend.services.notifications.NotificationPreferencesService
 import tech.dokus.backend.services.notifications.NotificationService
 import tech.dokus.domain.exceptions.DokusException

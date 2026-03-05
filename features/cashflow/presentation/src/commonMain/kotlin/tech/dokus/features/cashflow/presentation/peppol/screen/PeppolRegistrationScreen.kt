@@ -60,6 +60,8 @@ import tech.dokus.aura.resources.peppol_reg_transfer_request
 import tech.dokus.aura.resources.peppol_reg_waiting_body
 import tech.dokus.aura.resources.peppol_reg_waiting_subtitle
 import tech.dokus.aura.resources.peppol_reg_waiting_title
+import tech.dokus.aura.resources.state_retry
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.features.cashflow.presentation.peppol.mvi.PeppolRegistrationIntent
 import tech.dokus.features.cashflow.presentation.peppol.mvi.PeppolRegistrationState
 import tech.dokus.foundation.aura.components.POutlinedButton
@@ -71,6 +73,7 @@ import tech.dokus.foundation.aura.components.common.WaitingIndicator
 import tech.dokus.foundation.aura.components.layout.PCollapsibleSection
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.constrains.limitWidthCenteredContent
+import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.style.textMuted
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
@@ -108,11 +111,17 @@ internal fun PeppolRegistrationScreen(
                 is PeppolRegistrationState.SendingOnly -> SendingOnlyContent(state, onIntent)
                 is PeppolRegistrationState.External -> ExternalContent(onIntent)
                 is PeppolRegistrationState.Failed -> FailedContent(state, onIntent)
-                is PeppolRegistrationState.Error -> DokusErrorContent(
-                    exception = state.exception,
-                    retryHandler = state.retryHandler,
-                    modifier = Modifier.fillMaxWidth().padding(Constraints.Spacing.large)
-                )
+                is PeppolRegistrationState.Error -> {
+                    if (isPeppolSetupFlowError(state.exception)) {
+                        SetupErrorContent(state, onIntent)
+                    } else {
+                        DokusErrorContent(
+                            exception = state.exception,
+                            retryHandler = state.retryHandler,
+                            modifier = Modifier.fillMaxWidth().padding(Constraints.Spacing.large)
+                        )
+                    }
+                }
             }
         }
     }
@@ -407,6 +416,62 @@ private fun FailedContent(
         footnote = stringResource(Res.string.peppol_reg_failed_footnote),
     )
 }
+
+@Composable
+private fun SetupErrorContent(
+    state: PeppolRegistrationState.Error,
+    onIntent: (PeppolRegistrationIntent) -> Unit,
+) {
+    val canRetry = shouldShowPeppolSetupRetry(state.exception)
+    var retryClicked by remember { mutableStateOf(false) }
+
+    PeppolCenteredFlow(
+        icon = {
+            PeppolCircle {
+                PeppolCloseIcon()
+            }
+        },
+        title = stringResource(Res.string.peppol_reg_failed_title),
+        subtitle = state.exception.localized,
+        primary = {
+            if (canRetry) {
+                POutlinedButton(
+                    text = stringResource(Res.string.state_retry),
+                    isLoading = retryClicked,
+                    enabled = !retryClicked,
+                    onClick = {
+                        retryClicked = true
+                        state.retryHandler.retry()
+                    }
+                )
+            } else {
+                POutlinedButton(
+                    text = stringResource(Res.string.peppol_reg_failed_skip),
+                    onClick = { onIntent(PeppolRegistrationIntent.NotNow) }
+                )
+            }
+        },
+        secondary = {
+            if (canRetry) {
+                TextButton(onClick = { onIntent(PeppolRegistrationIntent.NotNow) }) {
+                    Text(
+                        text = stringResource(Res.string.peppol_reg_failed_skip),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.textMuted,
+                    )
+                }
+            }
+        },
+        footnote = stringResource(Res.string.peppol_reg_enable_later),
+    )
+}
+
+internal fun isPeppolSetupFlowError(exception: DokusException): Boolean =
+    exception is DokusException.PeppolDirectoryUnavailable ||
+        exception is DokusException.ConnectionError
+
+internal fun shouldShowPeppolSetupRetry(exception: DokusException): Boolean =
+    isPeppolSetupFlowError(exception) && exception.recoverable
 
 @Preview
 @Composable

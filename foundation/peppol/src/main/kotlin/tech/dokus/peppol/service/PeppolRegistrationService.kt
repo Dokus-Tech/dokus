@@ -11,6 +11,7 @@ import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.PeppolNextAction
 import tech.dokus.domain.model.PeppolRegistrationResponse
 import tech.dokus.foundation.backend.utils.loggerFor
+import tech.dokus.foundation.backend.utils.runSuspendCatching
 import tech.dokus.peppol.config.PeppolModuleConfig
 import tech.dokus.peppol.provider.client.RecommandCompaniesClient
 import tech.dokus.peppol.provider.client.recommand.model.RecommandCompanyCountry
@@ -79,7 +80,7 @@ class PeppolRegistrationService(
 
         val countryCode = address.country?.trim()?.uppercase().orEmpty()
         require(countryCode.isNotBlank()) { "Tenant address is incomplete (country)" }
-        val country = runCatching { RecommandCompanyCountry.valueOf(countryCode) }
+        val country = runSuspendCatching { RecommandCompanyCountry.valueOf(countryCode) }
             .getOrElse { throw IllegalStateException("Unsupported country for Peppol provider: $countryCode") }
 
         val peppolId = PeppolId("0208:${vatNumber.normalized}")
@@ -109,7 +110,7 @@ class PeppolRegistrationService(
      */
     suspend fun enablePeppol(
         tenantId: TenantId,
-    ): Result<PeppolRegistrationResponse> = runCatching {
+    ): Result<PeppolRegistrationResponse> = runSuspendCatching {
         val ctx = loadTenantPeppolContext(tenantId)
         val vatNumber = ctx.vatNumber
         logger.info("Enabling PEPPOL for tenant $tenantId with VAT number: ${vatNumber.normalized}")
@@ -121,7 +122,7 @@ class PeppolRegistrationService(
         val existing = registrationRepository.getRegistration(tenantId).getOrNull()
         if (existing != null && existing.status == PeppolRegistrationStatus.Active) {
             logger.info("Tenant $tenantId already has active PEPPOL registration")
-            return@runCatching PeppolRegistrationResponse(
+            return@runSuspendCatching PeppolRegistrationResponse(
                 registration = existing,
                 nextAction = PeppolNextAction.NONE
             )
@@ -152,7 +153,7 @@ class PeppolRegistrationService(
             ).getOrThrow()
 
             val updatedReg = registrationRepository.getRegistration(tenantId).getOrThrow()!!
-            return@runCatching PeppolRegistrationResponse(
+            return@runSuspendCatching PeppolRegistrationResponse(
                 registration = updatedReg,
                 nextAction = PeppolNextAction.WAIT_FOR_TRANSFER
             )
@@ -247,7 +248,7 @@ class PeppolRegistrationService(
      * Used when receiving is blocked because the PEPPOL ID is registered with another service.
      * This registers the company in Recommand without publishing SMP recipient capabilities.
      */
-    suspend fun enableSendingOnly(tenantId: TenantId): Result<PeppolRegistrationResponse> = runCatching {
+    suspend fun enableSendingOnly(tenantId: TenantId): Result<PeppolRegistrationResponse> = runSuspendCatching {
         val ctx = loadTenantPeppolContext(tenantId)
         val vatNumber = ctx.vatNumber
         logger.info("Enabling PEPPOL sending-only for tenant $tenantId")
@@ -321,7 +322,7 @@ class PeppolRegistrationService(
      * Set registration to WAITING_TRANSFER status.
      * User chose to wait for ID transfer from another provider.
      */
-    suspend fun waitForTransfer(tenantId: TenantId): Result<PeppolRegistrationResponse> = runCatching {
+    suspend fun waitForTransfer(tenantId: TenantId): Result<PeppolRegistrationResponse> = runSuspendCatching {
         logger.info("Setting tenant $tenantId to wait for PEPPOL transfer")
 
         registrationRepository.setWaitingForTransfer(tenantId).getOrThrow()
@@ -339,7 +340,7 @@ class PeppolRegistrationService(
      * Opt out of PEPPOL via Dokus.
      * User chose to manage PEPPOL externally.
      */
-    suspend fun optOut(tenantId: TenantId): Result<Unit> = runCatching {
+    suspend fun optOut(tenantId: TenantId): Result<Unit> = runSuspendCatching {
         logger.info("Tenant $tenantId opted out of PEPPOL via Dokus")
         registrationRepository.updateStatus(tenantId, PeppolRegistrationStatus.External).getOrThrow()
         registrationRepository.updateCapabilities(tenantId, canReceive = false, canSend = false).getOrThrow()
@@ -350,7 +351,7 @@ class PeppolRegistrationService(
      */
     suspend fun retryRegistration(
         tenantId: TenantId,
-    ): Result<PeppolRegistrationResponse> = runCatching {
+    ): Result<PeppolRegistrationResponse> = runSuspendCatching {
         logger.info("Retrying PEPPOL registration for tenant $tenantId")
 
         val existing = registrationRepository.getRegistration(tenantId).getOrNull()
@@ -370,7 +371,7 @@ class PeppolRegistrationService(
      * Poll for transfer status.
      * Checks if the PEPPOL ID is now available for registration.
      */
-    suspend fun pollTransferStatus(tenantId: TenantId): Result<PeppolRegistrationResponse> = runCatching {
+    suspend fun pollTransferStatus(tenantId: TenantId): Result<PeppolRegistrationResponse> = runSuspendCatching {
         logger.info("Polling transfer status for tenant $tenantId")
 
         val existing = registrationRepository.getRegistration(tenantId).getOrNull()
@@ -379,7 +380,7 @@ class PeppolRegistrationService(
         if (existing.status != PeppolRegistrationStatus.WaitingTransfer &&
             existing.status != PeppolRegistrationStatus.SendingOnly
         ) {
-            return@runCatching PeppolRegistrationResponse(
+            return@runSuspendCatching PeppolRegistrationResponse(
                 registration = existing,
                 nextAction = PeppolNextAction.NONE
             )
@@ -397,7 +398,7 @@ class PeppolRegistrationService(
         if (!verifyResult.isBlocked) {
             // ID is now available! Register automatically.
             logger.info("PEPPOL ID ${existing.peppolId} is now available for tenant $tenantId")
-            return@runCatching enablePeppol(tenantId).getOrThrow()
+            return@runSuspendCatching enablePeppol(tenantId).getOrThrow()
         }
 
         // Still blocked
@@ -411,9 +412,9 @@ class PeppolRegistrationService(
     /**
      * Get current registration status.
      */
-    suspend fun getRegistration(tenantId: TenantId): Result<PeppolRegistrationResponse?> = runCatching {
+    suspend fun getRegistration(tenantId: TenantId): Result<PeppolRegistrationResponse?> = runSuspendCatching {
         val registration = registrationRepository.getRegistration(tenantId).getOrNull()
-            ?: return@runCatching null
+            ?: return@runSuspendCatching null
 
         val nextAction = when (registration.status) {
             PeppolRegistrationStatus.NotConfigured -> null
