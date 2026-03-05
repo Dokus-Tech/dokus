@@ -709,10 +709,11 @@ class DocumentTruthService(
     private fun computeIdentity(tenantId: TenantId, data: DocumentDraftData): IdentityDescriptor? {
         return when (data) {
             is InvoiceDraftData -> {
-                if (data.direction == DocumentDirection.Unknown) return null
+                if (data.direction == DocumentDirection.Unknown || data.direction == DocumentDirection.Neutral) return null
                 val supplierVat = when (data.direction) {
                     DocumentDirection.Inbound -> data.seller.vat
                     DocumentDirection.Outbound -> data.buyer.vat
+                    DocumentDirection.Neutral -> null
                     DocumentDirection.Unknown -> null
                 }?.takeIf { it.isValid } ?: return null
                 val number = normalizeDocumentNumber(data.invoiceNumber) ?: return null
@@ -726,10 +727,11 @@ class DocumentTruthService(
             }
 
             is CreditNoteDraftData -> {
-                if (data.direction == DocumentDirection.Unknown) return null
+                if (data.direction == DocumentDirection.Unknown || data.direction == DocumentDirection.Neutral) return null
                 val supplierVat = when (data.direction) {
                     DocumentDirection.Inbound -> data.seller.vat
                     DocumentDirection.Outbound -> data.buyer.vat
+                    DocumentDirection.Neutral -> null
                     DocumentDirection.Unknown -> null
                 }?.takeIf { it.isValid } ?: return null
                 val number = normalizeDocumentNumber(data.creditNoteNumber) ?: return null

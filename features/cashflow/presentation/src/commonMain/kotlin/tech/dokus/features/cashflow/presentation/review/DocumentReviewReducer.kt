@@ -8,12 +8,14 @@ import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentSourceId
+import tech.dokus.domain.model.BankStatementDraftData
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.FinancialLineItem
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.features.cashflow.usecases.ConfirmDocumentUseCase
 import tech.dokus.features.cashflow.usecases.GetCashflowEntryUseCase
+import tech.dokus.features.cashflow.usecases.GetCashflowPaymentCandidatesUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentPagesUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentRecordUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentSourceContentUseCase
@@ -40,6 +42,7 @@ internal class DocumentReviewReducer(
     private val getDocumentSourcePages: GetDocumentSourcePagesUseCase,
     private val getDocumentSourceContent: GetDocumentSourceContentUseCase,
     private val getCashflowEntry: GetCashflowEntryUseCase,
+    private val getCashflowPaymentCandidates: GetCashflowPaymentCandidatesUseCase,
     private val recordCashflowPayment: RecordCashflowPaymentUseCase,
     private val getContact: GetContactUseCase,
     private val logger: Logger,
@@ -63,6 +66,7 @@ internal class DocumentReviewReducer(
     )
     private val paymentActions = DocumentReviewPaymentActions(
         getCashflowEntry = getCashflowEntry,
+        getCashflowPaymentCandidates = getCashflowPaymentCandidates,
         recordCashflowPayment = recordCashflowPayment,
         logger = logger,
     )
@@ -115,6 +119,7 @@ internal class DocumentReviewReducer(
                     data.copy(direction = direction)
                 }
                 is ReceiptDraftData,
+                is BankStatementDraftData,
                 null -> return@withState
             }
 
@@ -230,6 +235,21 @@ internal class DocumentReviewReducer(
 
     suspend fun DocumentReviewCtx.handleClosePaymentSheet() =
         with(paymentActions) { handleClosePaymentSheet() }
+
+    suspend fun DocumentReviewCtx.handleLoadPaymentCandidates() =
+        with(paymentActions) { handleLoadPaymentCandidates() }
+
+    suspend fun DocumentReviewCtx.handleOpenPaymentTransactionPicker() =
+        with(paymentActions) { handleOpenPaymentTransactionPicker() }
+
+    suspend fun DocumentReviewCtx.handleClosePaymentTransactionPicker() =
+        with(paymentActions) { handleClosePaymentTransactionPicker() }
+
+    suspend fun DocumentReviewCtx.handleSelectPaymentTransaction(transactionId: tech.dokus.domain.ids.ImportedBankTransactionId) =
+        with(paymentActions) { handleSelectPaymentTransaction(transactionId) }
+
+    suspend fun DocumentReviewCtx.handleClearPaymentTransactionSelection() =
+        with(paymentActions) { handleClearPaymentTransactionSelection() }
 
     suspend fun DocumentReviewCtx.handleUpdatePaymentAmountText(text: String) =
         with(paymentActions) { handleUpdatePaymentAmountText(text) }

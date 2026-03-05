@@ -9,6 +9,7 @@ import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.model.CancelEntryRequest
 import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.model.CashflowOverview
+import tech.dokus.domain.model.CashflowPaymentCandidatesResponse
 import tech.dokus.domain.model.CashflowPaymentRequest
 import tech.dokus.domain.model.common.PaginatedResponse
 
@@ -57,6 +58,10 @@ interface LoadCashflowEntriesUseCase {
  */
 interface GetCashflowEntryUseCase {
     suspend operator fun invoke(entryId: CashflowEntryId): Result<CashflowEntry>
+}
+
+interface GetCashflowPaymentCandidatesUseCase {
+    suspend operator fun invoke(entryId: CashflowEntryId): Result<CashflowPaymentCandidatesResponse>
 }
 
 /**

@@ -16,6 +16,7 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.CreditNoteDraftData
+import tech.dokus.domain.model.BankStatementDraftData
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.DocumentDto
@@ -111,6 +112,7 @@ private fun DocumentDraftData?.directionOrUnknown(): DocumentDirection = when (t
     is InvoiceDraftData -> this.direction
     is ReceiptDraftData -> this.direction
     is CreditNoteDraftData -> this.direction
+    is BankStatementDraftData -> this.direction
     null -> DocumentDirection.Unknown
 }
 

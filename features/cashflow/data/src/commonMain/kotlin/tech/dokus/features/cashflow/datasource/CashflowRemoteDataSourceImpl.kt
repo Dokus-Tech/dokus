@@ -50,6 +50,7 @@ import tech.dokus.domain.model.AttachmentDto
 import tech.dokus.domain.model.CancelEntryRequest
 import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.model.CashflowOverview
+import tech.dokus.domain.model.CashflowPaymentCandidatesResponse
 import tech.dokus.domain.model.CashflowPaymentRequest
 import tech.dokus.domain.model.CreateExpenseRequest
 import tech.dokus.domain.model.CreateInvoiceRequest
@@ -523,6 +524,16 @@ internal class CashflowRemoteDataSourceImpl(
         return runCatching {
             val entriesRoute = Cashflow.Entries()
             httpClient.get(Cashflow.Entries.Id(parent = entriesRoute, id = entryId.toString())).body()
+        }
+    }
+
+    override suspend fun getCashflowPaymentCandidates(
+        entryId: CashflowEntryId
+    ): Result<CashflowPaymentCandidatesResponse> {
+        return runCatching {
+            val entriesRoute = Cashflow.Entries()
+            val idRoute = Cashflow.Entries.Id(parent = entriesRoute, id = entryId.toString())
+            httpClient.get(Cashflow.Entries.Id.PaymentCandidates(parent = idRoute)).body()
         }
     }
 

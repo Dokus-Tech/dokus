@@ -8,9 +8,12 @@ import tech.dokus.domain.enums.CashflowDirection
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.enums.Currency
+import tech.dokus.domain.enums.ImportedBankTransactionStatus
+import tech.dokus.domain.enums.PaymentCandidateTier
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.ids.ImportedBankTransactionId
 import tech.dokus.domain.ids.TenantId
 
 /**
@@ -97,7 +100,38 @@ data class CashflowEntry(
 data class CashflowPaymentRequest(
     val amount: Money,
     val paidAt: LocalDateTime,
-    val note: String? = null
+    val note: String? = null,
+    val bankTransactionId: ImportedBankTransactionId? = null,
+    val ignoreSuggestedTransaction: Boolean = false
+)
+
+@Serializable
+data class ImportedBankTransactionDto(
+    val id: ImportedBankTransactionId,
+    val tenantId: TenantId,
+    val documentId: DocumentId,
+    val transactionDate: LocalDate,
+    val signedAmount: Money,
+    val counterpartyName: String? = null,
+    val counterpartyIban: String? = null,
+    val structuredCommunicationRaw: String? = null,
+    val descriptionRaw: String? = null,
+    val rowConfidence: Double? = null,
+    val largeAmountFlag: Boolean = false,
+    val status: ImportedBankTransactionStatus,
+    val linkedCashflowEntryId: CashflowEntryId? = null,
+    val suggestedCashflowEntryId: CashflowEntryId? = null,
+    val score: Double? = null,
+    val tier: PaymentCandidateTier? = null,
+    val createdAt: LocalDateTime,
+    val updatedAt: LocalDateTime
+)
+
+@Serializable
+data class CashflowPaymentCandidatesResponse(
+    val strongCandidate: ImportedBankTransactionDto? = null,
+    val possibleCandidates: List<ImportedBankTransactionDto> = emptyList(),
+    val selectableTransactions: List<ImportedBankTransactionDto> = emptyList()
 )
 
 /**

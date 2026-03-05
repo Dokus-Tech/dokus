@@ -13,6 +13,7 @@ import tech.dokus.features.cashflow.presentation.review.route.toDocQueueItem
 import tech.dokus.features.cashflow.presentation.review.route.toListFilter
 import tech.dokus.features.cashflow.usecases.ConfirmDocumentUseCase
 import tech.dokus.features.cashflow.usecases.GetCashflowEntryUseCase
+import tech.dokus.features.cashflow.usecases.GetCashflowPaymentCandidatesUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentPagesUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentRecordUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentSourceContentUseCase
@@ -61,6 +62,7 @@ internal class DocumentReviewContainer(
     private val getDocumentSourcePages: GetDocumentSourcePagesUseCase,
     private val getDocumentSourceContent: GetDocumentSourceContentUseCase,
     private val getCashflowEntry: GetCashflowEntryUseCase,
+    private val getCashflowPaymentCandidates: GetCashflowPaymentCandidatesUseCase,
     private val recordCashflowPayment: RecordCashflowPaymentUseCase,
     private val getContact: GetContactUseCase,
     private val loadDocumentRecords: LoadDocumentRecordsUseCase,
@@ -81,6 +83,7 @@ internal class DocumentReviewContainer(
         getDocumentSourcePages = getDocumentSourcePages,
         getDocumentSourceContent = getDocumentSourceContent,
         getCashflowEntry = getCashflowEntry,
+        getCashflowPaymentCandidates = getCashflowPaymentCandidates,
         recordCashflowPayment = recordCashflowPayment,
         getContact = getContact,
         logger = logger,
@@ -135,6 +138,11 @@ internal class DocumentReviewContainer(
                 is DocumentReviewIntent.LoadCashflowEntry -> handleLoadCashflowEntry()
                 is DocumentReviewIntent.OpenPaymentSheet -> handleOpenPaymentSheet()
                 is DocumentReviewIntent.ClosePaymentSheet -> handleClosePaymentSheet()
+                is DocumentReviewIntent.LoadPaymentCandidates -> handleLoadPaymentCandidates()
+                is DocumentReviewIntent.OpenPaymentTransactionPicker -> handleOpenPaymentTransactionPicker()
+                is DocumentReviewIntent.ClosePaymentTransactionPicker -> handleClosePaymentTransactionPicker()
+                is DocumentReviewIntent.SelectPaymentTransaction -> handleSelectPaymentTransaction(intent.transactionId)
+                is DocumentReviewIntent.ClearPaymentTransactionSelection -> handleClearPaymentTransactionSelection()
                 is DocumentReviewIntent.UpdatePaymentAmountText ->
                     handleUpdatePaymentAmountText(intent.text)
                 is DocumentReviewIntent.UpdatePaymentPaidAt ->

@@ -18,6 +18,7 @@ object FinancialExtractionAuditor {
             is FinancialExtractionResult.ProForma -> auditProForma(extraction.data)
             is FinancialExtractionResult.PurchaseOrder -> auditPurchaseOrder(extraction.data)
             is FinancialExtractionResult.Receipt -> auditReceipt(extraction.data)
+            is FinancialExtractionResult.BankStatement -> emptyList()
             is FinancialExtractionResult.Unsupported -> emptyList()
         }
 

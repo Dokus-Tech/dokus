@@ -26,6 +26,7 @@ import tech.dokus.domain.enums.NotificationReferenceType
 import tech.dokus.domain.enums.NotificationType
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.BankStatementDraftData
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.InvoiceDraftData
@@ -425,5 +426,6 @@ class PeppolPollingWorker(
         is CreditNoteDraftData -> draftData.creditNoteNumber
         is InvoiceDraftData -> draftData.invoiceNumber
         is ReceiptDraftData -> draftData.receiptNumber
+        is BankStatementDraftData -> null
     }
 }

@@ -7,5 +7,6 @@ fun FinancialExtractionResult.confidenceScore(): Double = when (this) {
     is FinancialExtractionResult.ProForma -> data.confidence
     is FinancialExtractionResult.PurchaseOrder -> data.confidence
     is FinancialExtractionResult.Receipt -> data.confidence
+    is FinancialExtractionResult.BankStatement -> data.confidence
     is FinancialExtractionResult.Unsupported -> 0.0
 }

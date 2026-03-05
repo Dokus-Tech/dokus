@@ -16,6 +16,7 @@ import tech.dokus.aura.resources.cashflow_select_document_type
 import tech.dokus.aura.resources.cashflow_vat_amount
 import tech.dokus.aura.resources.invoice_subtotal
 import tech.dokus.aura.resources.invoice_total_amount
+import tech.dokus.domain.model.BankStatementDraftData
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
@@ -56,6 +57,13 @@ internal fun AmountsCard(
                     subtotal = draft.subtotalAmount?.toString(),
                     vat = draft.vatAmount?.toString(),
                     total = draft.totalAmount?.toString()
+                )
+            }
+            is BankStatementDraftData -> {
+                Text(
+                    text = "Amounts are available per transaction in bank statements.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             null -> {

@@ -76,6 +76,7 @@ val cashflowViewModelModule = module {
             getDocumentSourcePages = get(),
             getDocumentSourceContent = get(),
             getCashflowEntry = get(),
+            getCashflowPaymentCandidates = get(),
             recordCashflowPayment = get(),
             getContact = get(),
             loadDocumentRecords = get(),

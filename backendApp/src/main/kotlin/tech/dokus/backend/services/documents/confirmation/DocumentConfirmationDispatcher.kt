@@ -1,9 +1,11 @@
 package tech.dokus.backend.services.documents.confirmation
 
 import tech.dokus.backend.services.documents.DocumentPurposeSimilarityService
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.BankStatementDraftData
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.InvoiceDraftData
@@ -33,6 +35,9 @@ class DocumentConfirmationDispatcher(
             is InvoiceDraftData -> invoiceService.confirm(tenantId, documentId, draftData, linkedContactId)
             is ReceiptDraftData -> receiptService.confirm(tenantId, documentId, draftData, linkedContactId)
             is CreditNoteDraftData -> creditNoteService.confirm(tenantId, documentId, draftData, linkedContactId)
+            is BankStatementDraftData -> Result.failure(
+                DokusException.BadRequest("Bank statements are confirmed automatically after extraction")
+            )
         }
 
         confirmation.onSuccess {

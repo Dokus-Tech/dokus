@@ -36,6 +36,7 @@ import tech.dokus.domain.model.AttachmentDto
 import tech.dokus.domain.model.CancelEntryRequest
 import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.model.CashflowOverview
+import tech.dokus.domain.model.CashflowPaymentCandidatesResponse
 import tech.dokus.domain.model.CashflowPaymentRequest
 import tech.dokus.domain.model.CreateExpenseRequest
 import tech.dokus.domain.model.CreateInvoiceRequest
@@ -397,6 +398,14 @@ interface CashflowRemoteDataSource {
      * GET /api/v1/cashflow/entries/{id}
      */
     suspend fun getCashflowEntry(entryId: CashflowEntryId): Result<CashflowEntry>
+
+    /**
+     * Get imported transaction candidates for recording payment.
+     * GET /api/v1/cashflow/entries/{id}/payment-candidates
+     */
+    suspend fun getCashflowPaymentCandidates(
+        entryId: CashflowEntryId
+    ): Result<CashflowPaymentCandidatesResponse>
 
     /**
      * Record a payment against a cashflow entry.

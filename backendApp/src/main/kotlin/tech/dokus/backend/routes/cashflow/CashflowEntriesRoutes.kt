@@ -8,7 +8,9 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
 import tech.dokus.backend.security.requireTenantId
+import tech.dokus.backend.services.cashflow.BankStatementMatchingService
 import tech.dokus.backend.services.cashflow.CashflowEntriesService
+import tech.dokus.backend.services.cashflow.CashflowPaymentService
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.CashflowEntryId
@@ -35,6 +37,8 @@ private const val MAX_PAGE_SIZE = 200
 @Suppress("LongMethod", "CyclomaticComplexMethod", "ThrowsCount")
 internal fun Route.cashflowEntriesRoutes() {
     val cashflowEntriesService by inject<CashflowEntriesService>()
+    val bankStatementMatchingService by inject<BankStatementMatchingService>()
+    val cashflowPaymentService by inject<CashflowPaymentService>()
 
     authenticateJwt {
         // GET /api/v1/cashflow/entries - List cashflow entries with filters
@@ -132,15 +136,32 @@ internal fun Route.cashflowEntriesRoutes() {
                 throw DokusException.BadRequest("Payment amount must be positive")
             }
 
-            cashflowEntriesService.recordPayment(entryId, tenantId, request.amount)
-                .getOrElse { throw DokusException.InternalError("Failed to record payment: ${it.message}") }
-
-            // Return updated entry
-            val updatedEntry = cashflowEntriesService.getEntry(entryId, tenantId)
-                .getOrElse { throw DokusException.InternalError("Failed to get updated entry: ${it.message}") }
-                ?: throw DokusException.NotFound("Cashflow entry not found after update")
+            val updatedEntry = cashflowPaymentService.recordPayment(
+                tenantId = tenantId,
+                entryId = entryId,
+                request = request
+            ).getOrElse { error ->
+                throw (error as? DokusException
+                    ?: DokusException.InternalError("Failed to record payment: ${error.message}"))
+            }
 
             call.respond(HttpStatusCode.OK, updatedEntry)
+        }
+
+        // GET /api/v1/cashflow/entries/{id}/payment-candidates - Candidate imported transactions
+        get<Cashflow.Entries.Id.PaymentCandidates> { route ->
+            val tenantId = requireTenantId()
+            val entryId = try {
+                CashflowEntryId(Uuid.parse(route.parent.id))
+            } catch (_: Exception) {
+                throw DokusException.BadRequest("Invalid entry ID format")
+            }
+
+            val response = bankStatementMatchingService.getPaymentCandidates(
+                tenantId = tenantId,
+                cashflowEntryId = entryId
+            )
+            call.respond(HttpStatusCode.OK, response)
         }
 
         // POST /api/v1/cashflow/entries/{id}/cancel - Cancel entry

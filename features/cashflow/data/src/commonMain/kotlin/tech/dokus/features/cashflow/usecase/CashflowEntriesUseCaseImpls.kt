@@ -14,6 +14,7 @@ import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.features.cashflow.datasource.CashflowRemoteDataSource
 import tech.dokus.features.cashflow.usecases.CancelCashflowEntryUseCase
 import tech.dokus.features.cashflow.usecases.GetCashflowEntryUseCase
+import tech.dokus.features.cashflow.usecases.GetCashflowPaymentCandidatesUseCase
 import tech.dokus.features.cashflow.usecases.GetCashflowOverviewUseCase
 import tech.dokus.features.cashflow.usecases.LoadCashflowEntriesUseCase
 import tech.dokus.features.cashflow.usecases.RecordCashflowPaymentUseCase
@@ -74,6 +75,12 @@ internal class GetCashflowEntryUseCaseImpl(
     override suspend fun invoke(entryId: CashflowEntryId): Result<CashflowEntry> {
         return dataSource.getCashflowEntry(entryId)
     }
+}
+
+internal class GetCashflowPaymentCandidatesUseCaseImpl(
+    private val dataSource: CashflowRemoteDataSource
+) : GetCashflowPaymentCandidatesUseCase {
+    override suspend fun invoke(entryId: CashflowEntryId) = dataSource.getCashflowPaymentCandidates(entryId)
 }
 
 internal class RecordCashflowPaymentUseCaseImpl(

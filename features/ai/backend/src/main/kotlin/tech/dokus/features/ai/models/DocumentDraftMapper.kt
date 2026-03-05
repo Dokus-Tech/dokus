@@ -2,6 +2,8 @@ package tech.dokus.features.ai.models
 
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.model.CreditNoteDraftData
+import tech.dokus.domain.model.BankStatementDraftData
+import tech.dokus.domain.model.BankStatementTransactionDraftRow
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.PartyDraft
@@ -50,11 +52,13 @@ private fun FinancialExtractionResult.toDraftData(direction: DocumentDirection):
         val counterpartyName = when (direction) {
             DocumentDirection.Inbound -> data.sellerName
             DocumentDirection.Outbound -> data.buyerName
+            DocumentDirection.Neutral,
             DocumentDirection.Unknown -> data.buyerName ?: data.sellerName
         }
         val counterpartyVat = when (direction) {
             DocumentDirection.Inbound -> data.sellerVat
             DocumentDirection.Outbound -> data.buyerVat
+            DocumentDirection.Neutral,
             DocumentDirection.Unknown -> data.buyerVat ?: data.sellerVat
         }
 
@@ -97,6 +101,23 @@ private fun FinancialExtractionResult.toDraftData(direction: DocumentDirection):
         receiptNumber = data.receiptNumber,
         paymentMethod = data.paymentMethod,
         notes = null,
+    )
+
+    is FinancialExtractionResult.BankStatement -> BankStatementDraftData(
+        direction = DocumentDirection.Neutral,
+        transactions = data.rows.map { row ->
+            BankStatementTransactionDraftRow(
+                transactionDate = row.transactionDate,
+                signedAmount = row.signedAmount,
+                counterpartyName = row.counterpartyName,
+                counterpartyIban = row.counterpartyIban,
+                structuredCommunicationRaw = row.structuredCommunicationRaw,
+                descriptionRaw = row.descriptionRaw,
+                rowConfidence = row.rowConfidence,
+                largeAmountFlag = false
+            )
+        },
+        notes = null
     )
 
     is FinancialExtractionResult.Quote,
