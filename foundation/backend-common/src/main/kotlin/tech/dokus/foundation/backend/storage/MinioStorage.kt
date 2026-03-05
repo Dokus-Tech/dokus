@@ -196,7 +196,12 @@ class MinioStorage(
             // 2. Insert the path prefix into the generated URL afterward
             val (signingClient, signingBaseUrl, pathPrefix) = if (publicUrl != null) {
                 try {
-                    val url = java.net.URL(publicUrl)
+                    val normalizedUrl = if (!publicUrl.startsWith("http://") && !publicUrl.startsWith("https://")) {
+                        "http://$publicUrl"
+                    } else {
+                        publicUrl
+                    }
+                    val url = java.net.URL(normalizedUrl)
                     val baseUrl =
                         "${url.protocol}://${url.host}${if (url.port != -1) ":${url.port}" else ""}"
                     val path = url.path.takeIf { it.isNotEmpty() && it != "/" }

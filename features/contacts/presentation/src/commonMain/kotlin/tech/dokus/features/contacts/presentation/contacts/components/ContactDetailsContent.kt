@@ -14,20 +14,30 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import tech.dokus.domain.model.contact.ContactActivitySummary
+import tech.dokus.domain.Money
+import tech.dokus.domain.model.PeppolStatusResponse
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.ContactNoteDto
+import tech.dokus.features.contacts.usecases.ContactInvoiceSnapshot
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.OfflineOverlay
 
+private val SectionSpacing = 16.dp
+
 @Composable
 internal fun ContactDetailsContent(
     contactState: DokusState<ContactDto>,
-    activityState: DokusState<ContactActivitySummary>,
+    invoiceSnapshotState: DokusState<ContactInvoiceSnapshot>,
+    peppolStatusState: DokusState<PeppolStatusResponse>,
     notesState: DokusState<List<ContactNoteDto>>,
     isOnline: Boolean,
     contentPadding: PaddingValues,
+    showInlineActions: Boolean,
+    hasEnrichmentSuggestions: Boolean,
+    onEditContact: () -> Unit,
+    onMergeContact: () -> Unit,
+    onShowEnrichment: () -> Unit,
     onAddNote: () -> Unit,
     onEditNote: (ContactNoteDto) -> Unit,
     onDeleteNote: (ContactNoteDto) -> Unit
@@ -49,17 +59,30 @@ internal fun ContactDetailsContent(
         }
 
         else -> {
+            val contact = (contactState as? DokusState.Success)?.data
+
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(contentPadding)
                     .verticalScroll(rememberScrollState())
                     .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(SectionSpacing)
             ) {
-                ContactInfoSection(
-                    state = contactState
+                ContactHeroSection(
+                    contactState = contactState,
+                    peppolStatusState = peppolStatusState,
+                    showInlineActions = showInlineActions,
+                    hasEnrichmentSuggestions = hasEnrichmentSuggestions,
+                    isOnline = isOnline,
+                    onEditContact = onEditContact,
+                    onMergeContact = onMergeContact,
+                    onShowEnrichment = onShowEnrichment
                 )
+
+                ContactStatsSection(invoiceSnapshotState = invoiceSnapshotState)
+                ContactInfoSectionCompact(contact = contact)
+                RecentDocumentsSection(invoiceSnapshotState = invoiceSnapshotState)
 
                 OfflineOverlay(isOffline = !isOnline) {
                     NotesSection(
@@ -74,15 +97,11 @@ internal fun ContactDetailsContent(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(8.dp))
             }
         }
     }
 }
-
-// ============================================================================
-// PREVIEWS
-// ============================================================================
 
 @androidx.compose.ui.tooling.preview.Preview
 @Composable
@@ -108,20 +127,28 @@ private fun ContactDetailsContentPreview(
                     updatedAt = now
                 )
             ),
-            activityState = DokusState.success(
-                ContactActivitySummary(
-                    contactId = contactId,
-                    invoiceCount = 5,
-                    invoiceTotal = "10,000.00",
-                    inboundInvoiceCount = 2,
-                    inboundInvoiceTotal = "3,000.00",
-                    expenseCount = 3,
-                    expenseTotal = "500.00"
+            invoiceSnapshotState = DokusState.success(
+                ContactInvoiceSnapshot(
+                    documentsCount = 3,
+                    totalVolume = Money(129652),
+                    outstanding = Money(96252),
+                    recentDocuments = emptyList()
+                )
+            ),
+            peppolStatusState = DokusState.success(
+                PeppolStatusResponse(
+                    status = PeppolStatusResponse.STATUS_FOUND,
+                    refreshed = false
                 )
             ),
             notesState = DokusState.success(emptyList()),
             isOnline = true,
             contentPadding = PaddingValues(0.dp),
+            showInlineActions = true,
+            hasEnrichmentSuggestions = true,
+            onEditContact = {},
+            onMergeContact = {},
+            onShowEnrichment = {},
             onAddNote = {},
             onEditNote = {},
             onDeleteNote = {}

@@ -200,6 +200,13 @@ class TenantRepository {
             ?.get(TenantSettingsTable.companyLogoUrl)
     }
 
+    suspend fun updateWebsiteUrl(tenantId: TenantId, websiteUrl: String?): Unit = dbQuery {
+        val javaUuid = tenantId.value.toJavaUuid()
+        TenantTable.update({ TenantTable.id eq javaUuid }) {
+            it[TenantTable.websiteUrl] = websiteUrl
+        }
+    }
+
     /**
      * Fetch invoice numbering configuration for a tenant.
      *

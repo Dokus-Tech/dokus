@@ -10,6 +10,7 @@ import io.ktor.server.resources.put
 import io.ktor.server.response.*
 import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
+import tech.dokus.backend.services.business.BusinessProfileService
 import tech.dokus.database.repository.auth.AddressRepository
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.auth.UserRepository
@@ -22,11 +23,12 @@ import tech.dokus.domain.model.InvoiceNumberPreviewResponse
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.TenantSettings
 import tech.dokus.domain.model.UpsertTenantAddressRequest
+import tech.dokus.domain.model.UpdateBusinessProfileRequest
+import tech.dokus.domain.model.PinBusinessProfileFieldsRequest
 import tech.dokus.domain.model.common.Thumbnail
 import tech.dokus.domain.routes.Tenants
 import tech.dokus.foundation.backend.security.authenticateJwt
 import tech.dokus.foundation.backend.security.dokusPrincipal
-import tech.dokus.foundation.backend.storage.AvatarStorageService
 import tech.dokus.foundation.backend.utils.loggerFor
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -43,8 +45,8 @@ internal fun Route.tenantRoutes() {
     val tenantRepository by inject<TenantRepository>()
     val addressRepository by inject<AddressRepository>()
     val userRepository by inject<UserRepository>()
-    val avatarStorageService by inject<AvatarStorageService>()
     val invoiceNumberGenerator by inject<InvoiceNumberGenerator>()
+    val businessProfileService by inject<BusinessProfileService>()
 
     authenticateJwt {
         /**
@@ -58,13 +60,18 @@ internal fun Route.tenantRoutes() {
             val tenants = buildList {
                 for (membership in userRepository.getUserTenants(principal.userId)) {
                     if (!membership.isActive) continue
-                    val tenant = tenantRepository.findById(membership.tenantId) ?: continue
+                    val rawTenant = tenantRepository.findById(membership.tenantId) ?: continue
+                    val tenant = runCatching { businessProfileService.projectTenant(rawTenant) }
+                        .getOrElse { error ->
+                            logger.warn("Failed to project tenant business profile for {}", rawTenant.id, error)
+                            rawTenant
+                        }
 
                     // Try to get avatar for this tenant
                     val avatar = try {
                         val storageKey = tenantRepository.getAvatarStorageKey(tenant.id)
                         if (storageKey != null) {
-                            avatarStorageService.getAvatarUrls(storageKey)
+                            businessProfileService.buildTenantAvatarThumbnail()
                         } else {
                             null
                         }
@@ -104,8 +111,17 @@ internal fun Route.tenantRoutes() {
                 role = UserRole.Owner,
             )
 
-            val tenant = tenantRepository.findById(tenantId)
+            val rawTenant = tenantRepository.findById(tenantId)
                 ?: throw DokusException.InternalError("Failed to load created tenant")
+            val tenant = runCatching { businessProfileService.projectTenant(rawTenant) }
+                .getOrElse { rawTenant }
+
+            businessProfileService.enqueueTenant(
+                tenantId = tenantId,
+                triggerReason = "TENANT_CREATED"
+            ).onFailure { error ->
+                logger.warn("Failed to enqueue business profile enrichment for tenant {}", tenantId, error)
+            }
 
             call.respond(
                 HttpStatusCode.Created,
@@ -160,6 +176,12 @@ internal fun Route.tenantRoutes() {
             val tenantId = requireTenantId()
             val request = call.receive<UpsertTenantAddressRequest>()
             val address = addressRepository.upsertCompanyAddress(tenantId, request)
+            businessProfileService.enqueueTenant(
+                tenantId = tenantId,
+                triggerReason = "TENANT_ADDRESS_UPDATED"
+            ).onFailure { error ->
+                logger.warn("Failed to enqueue business profile enrichment after tenant address update {}", tenantId, error)
+            }
             call.respond(HttpStatusCode.OK, address)
         }
 
@@ -199,12 +221,17 @@ internal fun Route.tenantRoutes() {
 
             val tenant = tenantRepository.findById(tenantId)
                 ?: throw DokusException.NotFound("Tenant not found")
+            val projectedTenant = runCatching { businessProfileService.projectTenant(tenant) }
+                .getOrElse { error ->
+                    logger.warn("Failed to project tenant business profile for {}", tenantId, error)
+                    tenant
+                }
 
             // Include avatar if available
             val avatar = try {
                 val storageKey = tenantRepository.getAvatarStorageKey(tenantId)
                 if (storageKey != null) {
-                    avatarStorageService.getAvatarUrls(storageKey)
+                    businessProfileService.buildTenantAvatarThumbnail()
                 } else {
                     null
                 }
@@ -213,7 +240,29 @@ internal fun Route.tenantRoutes() {
                 null
             }
 
-            call.respond(HttpStatusCode.OK, projectTenantForMembership(tenant, membership.role, avatar))
+            call.respond(HttpStatusCode.OK, projectTenantForMembership(projectedTenant, membership.role, avatar))
+        }
+
+        /**
+         * PUT /api/v1/tenants/business-profile
+         * Backend-only endpoint: update tenant business profile values and pin edited fields.
+         */
+        put<Tenants.BusinessProfile> {
+            val tenantId = requireTenantId()
+            val request = call.receive<UpdateBusinessProfileRequest>()
+            val response = businessProfileService.updateTenantProfile(tenantId, request)
+            call.respond(HttpStatusCode.OK, response)
+        }
+
+        /**
+         * PUT /api/v1/tenants/business-profile/pins
+         * Backend-only endpoint: update tenant business profile pin flags.
+         */
+        put<Tenants.BusinessProfilePins> {
+            val tenantId = requireTenantId()
+            val request = call.receive<PinBusinessProfileFieldsRequest>()
+            val response = businessProfileService.updateTenantPins(tenantId, request)
+            call.respond(HttpStatusCode.OK, response)
         }
     }
 }

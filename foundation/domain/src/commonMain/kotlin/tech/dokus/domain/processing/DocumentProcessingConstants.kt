@@ -18,11 +18,11 @@ object DocumentProcessingConstants {
     /**
      * Maximum allowed runtime for a single ingestion run before it is considered stuck.
      */
-    val INGESTION_RUN_TIMEOUT: Duration = 15.minutes
+    val INGESTION_RUN_TIMEOUT: Duration = 30.minutes
 
     /**
      * Canonical error shown when a run exceeded [INGESTION_RUN_TIMEOUT].
      */
-    fun ingestionTimeoutErrorMessage(): String =
+    val INGESTION_TIMEOUT_ERROR_MESSAGE: String =
         "Processing timed out after ${INGESTION_RUN_TIMEOUT.inWholeMinutes} minutes"
 }

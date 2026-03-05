@@ -15,10 +15,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil3.ImageLoader
+import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.contacts_doc_count_plural
+import tech.dokus.aura.resources.contacts_doc_count_single
+import tech.dokus.aura.resources.contacts_no_docs
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.DerivedContactRoles
+import tech.dokus.foundation.app.network.rememberResolvedApiUrl
+import tech.dokus.foundation.aura.components.AvatarShape
+import tech.dokus.foundation.aura.components.AvatarSize
+import tech.dokus.foundation.aura.components.CompanyAvatarImage
 import tech.dokus.foundation.aura.components.DokusCardSurface
-import tech.dokus.foundation.aura.components.MonogramAvatar
 import tech.dokus.foundation.aura.components.badges.ContactRole as UiContactRole
 import tech.dokus.foundation.aura.components.badges.RoleBadge
 import tech.dokus.foundation.aura.constrains.Constraints
@@ -26,23 +35,25 @@ import tech.dokus.foundation.aura.style.textFaint
 import tech.dokus.foundation.aura.style.textMuted
 
 /**
- * Mobile contact card with MonogramAvatar + name + RoleBadge + VAT + doc count.
- * Bank/Accountant contacts get accent styling on the card.
+ * Mobile contact card with monogram, metadata, and compact document count.
  */
 @Composable
 internal fun ContactCard(
     contact: ContactDto,
+    imageLoader: ImageLoader? = null,
     modifier: Modifier = Modifier
 ) {
     val initials = remember(contact.name.value) { extractInitials(contact.name.value) }
     val uiRole = remember(contact.derivedRoles) { mapToUiRole(contact.derivedRoles) }
+    val avatarUrl = rememberResolvedApiUrl(contact.avatar?.small)
     val docCount = contact.invoiceCount + contact.inboundInvoiceCount + contact.expenseCount
-    val isAccent = uiRole == UiContactRole.Bank || uiRole == UiContactRole.Accountant
+    val docLabel = if (docCount == 1L) {
+        stringResource(Res.string.contacts_doc_count_single)
+    } else {
+        stringResource(Res.string.contacts_doc_count_plural)
+    }
 
-    DokusCardSurface(
-        modifier = modifier,
-        accent = isAccent,
-    ) {
+    DokusCardSurface(modifier = modifier) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -50,10 +61,12 @@ internal fun ContactCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium),
         ) {
-            MonogramAvatar(
-                initials = initials,
-                size = 38.dp,
-                radius = 10.dp,
+            CompanyAvatarImage(
+                avatarUrl = avatarUrl,
+                initial = initials,
+                size = AvatarSize.Medium,
+                shape = AvatarShape.RoundedSquare,
+                imageLoader = imageLoader
             )
 
             Column(
@@ -64,6 +77,7 @@ internal fun ContactCard(
                     text = contact.name.value,
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontWeight = FontWeight.SemiBold,
+                        fontSize = 14.sp,
                     ),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -88,27 +102,24 @@ internal fun ContactCard(
                 }
             }
 
-            // Right side: doc count
-            if (docCount > 0) {
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
                 Text(
-                    text = "$docCount docs",
+                    text = if (docCount > 0) "$docCount $docLabel" else stringResource(Res.string.contacts_no_docs),
                     style = MaterialTheme.typography.labelSmall.copy(
                         fontFamily = MaterialTheme.typography.labelLarge.fontFamily,
                         fontSize = 9.sp,
                     ),
-                    color = MaterialTheme.colorScheme.textMuted,
-                )
-            } else {
-                Text(
-                    text = "No docs",
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontSize = 9.sp,
-                    ),
-                    color = MaterialTheme.colorScheme.textFaint,
+                    color = if (docCount > 0) {
+                        MaterialTheme.colorScheme.textMuted
+                    } else {
+                        MaterialTheme.colorScheme.textFaint
+                    },
                 )
             }
 
-            // Chevron
             Text(
                 text = "\u203A",
                 style = MaterialTheme.typography.titleMedium,
@@ -122,9 +133,6 @@ internal fun ContactCard(
 // Helpers (shared with ContactsList.kt)
 // =============================================================================
 
-/**
- * Extract initials from a contact name (first letter of first two words).
- */
 internal fun extractInitials(name: String): String {
     val words = name.split(" ").filter { it.isNotBlank() }
     return when {
@@ -134,10 +142,6 @@ internal fun extractInitials(name: String): String {
     }.uppercase()
 }
 
-/**
- * Map domain DerivedContactRoles to aura ContactRole for badge display.
- * Only Vendor/Supplier maps to a badge; Customer has no UI badge.
- */
 internal fun mapToUiRole(roles: DerivedContactRoles?): UiContactRole? {
     if (roles == null) return null
     return when {
@@ -145,10 +149,6 @@ internal fun mapToUiRole(roles: DerivedContactRoles?): UiContactRole? {
         else -> null
     }
 }
-
-// ============================================================================
-// PREVIEWS
-// ============================================================================
 
 @androidx.compose.ui.tooling.preview.Preview
 @Composable

@@ -18,6 +18,7 @@ import kotlinx.serialization.json.decodeFromJsonElement
 import org.slf4j.LoggerFactory
 import tech.dokus.backend.services.documents.AutoConfirmPolicy
 import tech.dokus.backend.services.documents.DocumentTruthService
+import tech.dokus.backend.services.contacts.ContactService
 import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
 import tech.dokus.backend.services.notifications.NotificationEmission
 import tech.dokus.backend.services.notifications.NotificationService
@@ -113,6 +114,7 @@ class PeppolPollingWorker(
     private val autoConfirmPolicy: AutoConfirmPolicy,
     private val confirmationDispatcher: DocumentConfirmationDispatcher,
     private val contactRepository: ContactRepository,
+    private val contactService: ContactService,
     private val notificationService: NotificationService
 ) {
     private val logger = LoggerFactory.getLogger(PeppolPollingWorker::class.java)
@@ -567,7 +569,7 @@ class PeppolPollingWorker(
                 vatNumber = counterpartyVatNumber,
                 source = ContactSource.Peppol
             )
-            val newContact = contactRepository.createContact(tenantId, request).getOrNull()
+            val newContact = contactService.createContact(tenantId, request).getOrNull()
             return newContact?.id
         }
 

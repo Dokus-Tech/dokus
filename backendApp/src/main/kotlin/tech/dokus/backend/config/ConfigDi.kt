@@ -6,6 +6,7 @@ import org.koin.dsl.module
 import tech.dokus.foundation.backend.config.AIConfig
 import tech.dokus.foundation.backend.config.AppBaseConfig
 import tech.dokus.foundation.backend.config.AuthConfig
+import tech.dokus.foundation.backend.config.BusinessProfileEnrichmentConfig
 import tech.dokus.foundation.backend.config.CachingConfig
 import tech.dokus.foundation.backend.config.DatabaseConfig
 import tech.dokus.foundation.backend.config.EmailConfig
@@ -34,6 +35,7 @@ internal fun configureConfigDi(appConfig: AppBaseConfig) = module {
     single { appConfig.storage } bind StorageConfig::class
     single { appConfig.ai } bind AIConfig::class
     single { appConfig.processor } bind ProcessorConfig::class
+    single { appConfig.businessProfileEnrichment } bind BusinessProfileEnrichmentConfig::class
     single { appConfig.email } bind EmailConfig::class
     single { appConfig.config } bind Config::class
     single {

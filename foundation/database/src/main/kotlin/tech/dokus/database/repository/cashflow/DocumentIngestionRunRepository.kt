@@ -370,7 +370,7 @@ class DocumentIngestionRunRepository {
         return DocumentIngestionRunsTable.update({ staleCondition }) {
             it[status] = IngestionStatus.Failed
             it[finishedAt] = now
-            it[errorMessage] = DocumentProcessingConstants.ingestionTimeoutErrorMessage()
+            it[errorMessage] = DocumentProcessingConstants.INGESTION_TIMEOUT_ERROR_MESSAGE
         }
     }
 }
