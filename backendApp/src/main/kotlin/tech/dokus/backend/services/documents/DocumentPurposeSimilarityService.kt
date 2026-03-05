@@ -8,6 +8,7 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.features.ai.services.EmbeddingService
 import tech.dokus.foundation.backend.utils.loggerFor
+import tech.dokus.foundation.backend.utils.runSuspendCatching
 
 private const val DefaultPurposeSimilarityThreshold = 0.78f
 private const val DefaultPurposeTopK = 3
@@ -37,13 +38,13 @@ class DocumentPurposeSimilarityService(
         val key = counterpartyKey?.takeIf { it.isNotBlank() } ?: merchantToken?.takeIf { it.isNotBlank() }
         if (key == null) return emptyList()
 
-        val embedding = runCatching {
+        val embedding = runSuspendCatching {
             embeddingService.generateEmbedding(query)
         }.onFailure { error ->
             logger.warn("Purpose similarity embedding failed for tenant={} type={}: {}", tenantId, documentType, error.message)
         }.getOrNull() ?: return emptyList()
 
-        return runCatching {
+        return runSuspendCatching {
             similarityRepository.searchSimilarPurposeBases(
                 tenantId = tenantId,
                 documentType = documentType,
@@ -70,13 +71,13 @@ class DocumentPurposeSimilarityService(
         val purposeBase = draft.purposeBase?.trim()?.takeIf { it.isNotBlank() } ?: return
         val purposeRendered = draft.purposeRendered?.trim()?.takeIf { it.isNotBlank() }
 
-        val embedding = runCatching {
+        val embedding = runSuspendCatching {
             embeddingService.generateEmbedding(purposeBase)
         }.onFailure { error ->
             logger.warn("Purpose similarity indexing embedding failed for document {}: {}", documentId, error.message)
         }.getOrNull()
 
-        runCatching {
+        runSuspendCatching {
             similarityRepository.upsertForDocument(
                 tenantId = tenantId,
                 documentId = documentId,

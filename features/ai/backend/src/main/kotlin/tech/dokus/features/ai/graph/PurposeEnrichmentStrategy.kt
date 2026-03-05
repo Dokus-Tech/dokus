@@ -3,7 +3,6 @@ package tech.dokus.features.ai.graph
 import ai.koog.agents.core.agent.entity.AIAgentGraphStrategy
 import ai.koog.agents.core.dsl.builder.forwardTo
 import ai.koog.agents.core.dsl.builder.strategy
-import kotlinx.datetime.LocalDate
 import tech.dokus.domain.enums.DocumentPurposeSource
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.PurposePeriodMode
@@ -29,7 +28,7 @@ fun purposeEnrichmentGraph(): AIAgentGraphStrategy<PurposeEnrichmentInput, Purpo
             val source = when {
                 !templateBase.isNullOrBlank() -> DocumentPurposeSource.AiTemplate
                 !ragBase.isNullOrBlank() -> DocumentPurposeSource.AiRag
-                else -> DocumentPurposeSource.AiRag
+                else -> null
             }
 
             val periodDate = when (resolvedMode) {

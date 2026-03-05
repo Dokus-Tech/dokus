@@ -9,6 +9,7 @@ import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.foundation.backend.utils.loggerFor
+import tech.dokus.foundation.backend.utils.runSuspendCatching
 
 /**
  * Dispatches document confirmation to the appropriate type-specific service.
@@ -35,7 +36,7 @@ class DocumentConfirmationDispatcher(
         }
 
         confirmation.onSuccess {
-            runCatching {
+            runSuspendCatching {
                 purposeSimilarityService.indexConfirmedDocument(
                     tenantId = tenantId,
                     documentId = documentId

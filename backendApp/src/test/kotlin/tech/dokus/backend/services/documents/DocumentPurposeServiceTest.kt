@@ -3,7 +3,7 @@ package tech.dokus.backend.services.documents
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import org.junit.jupiter.api.Test
@@ -45,7 +45,7 @@ class DocumentPurposeServiceTest {
     private val contactId = ContactId.parse("33333333-3333-3333-3333-333333333333")
 
     @Test
-    fun `locked purpose is never overwritten`() = runBlocking {
+    fun `locked purpose is never overwritten`() = runTest {
         coEvery { draftRepository.updatePurposeContext(any(), any(), any(), any()) } returns true
 
         service.enrichAfterContactResolution(
@@ -65,7 +65,7 @@ class DocumentPurposeServiceTest {
     }
 
     @Test
-    fun `template hit bypasses similarity retrieval`() = runBlocking {
+    fun `template hit bypasses similarity retrieval`() = runTest {
         coEvery { draftRepository.updatePurposeContext(any(), any(), any(), any()) } returns true
         coEvery {
             templateRepository.findByCounterparty(
@@ -106,7 +106,7 @@ class DocumentPurposeServiceTest {
     }
 
     @Test
-    fun `counterparty fallback never uses merchant fallback when counterparty exists`() = runBlocking {
+    fun `counterparty fallback never uses merchant fallback when counterparty exists`() = runTest {
         coEvery { draftRepository.updatePurposeContext(any(), any(), any(), any()) } returns true
         coEvery { templateRepository.findByCounterparty(any(), any(), any()) } returns null
         coEvery {
@@ -152,7 +152,7 @@ class DocumentPurposeServiceTest {
     }
 
     @Test
-    fun `merchant fallback is used when counterparty key is missing`() = runBlocking {
+    fun `merchant fallback is used when counterparty key is missing`() = runTest {
         coEvery { draftRepository.updatePurposeContext(any(), any(), any(), any()) } returns true
         coEvery { templateRepository.findByCounterparty(any(), any(), any()) } returns null
         coEvery {
@@ -201,7 +201,7 @@ class DocumentPurposeServiceTest {
     }
 
     @Test
-    fun `user edit locks purpose and triggers reindex when draft is confirmed`() = runBlocking {
+    fun `user edit locks purpose and triggers reindex when draft is confirmed`() = runTest {
         coEvery { draftRepository.updatePurposeFields(any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns true
         coEvery { templateRepository.upsert(any(), any(), any(), any(), any(), any(), any()) } returns Unit
 

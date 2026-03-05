@@ -3,7 +3,7 @@ package tech.dokus.backend.services.documents
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDateTime
 import org.junit.jupiter.api.Test
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
@@ -33,7 +33,7 @@ class DocumentPurposeSimilarityServiceTest {
     private val documentId = DocumentId.parse("22222222-2222-2222-2222-222222222222")
 
     @Test
-    fun `findCandidates degrades to empty when embedding fails`() = runBlocking {
+    fun `findCandidates degrades to empty when embedding fails`() = runTest {
         coEvery { embeddingService.generateEmbedding(any()) } throws RuntimeException("embedding down")
 
         val result = service.findCandidates(
@@ -49,7 +49,7 @@ class DocumentPurposeSimilarityServiceTest {
     }
 
     @Test
-    fun `findCandidates returns empty when retrieval has no matches`() = runBlocking {
+    fun `findCandidates returns empty when retrieval has no matches`() = runTest {
         coEvery { embeddingService.generateEmbedding(any()) } returns EmbeddingService.EmbeddingResult(
             embedding = listOf(0.11f, 0.22f, 0.33f),
             dimensions = 3,
@@ -81,7 +81,7 @@ class DocumentPurposeSimilarityServiceTest {
     }
 
     @Test
-    fun `indexConfirmedDocument still upserts when embedding fails`() = runBlocking {
+    fun `indexConfirmedDocument still upserts when embedding fails`() = runTest {
         coEvery { draftRepository.getByDocumentId(documentId, tenantId) } returns confirmedDraft()
         coEvery { embeddingService.generateEmbedding(any()) } throws RuntimeException("embedding down")
 

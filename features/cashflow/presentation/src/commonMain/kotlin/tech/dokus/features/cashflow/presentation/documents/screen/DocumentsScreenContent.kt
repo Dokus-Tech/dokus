@@ -138,8 +138,7 @@ internal fun DocumentsContent(
                 }
 
                 displayRows.isEmpty() &&
-                    state.filter == DocumentFilter.All &&
-                    !isLargeScreen -> {
+                    state.filter == DocumentFilter.All -> {
                     DokusEmptyState(
                         title = stringResource(Res.string.documents_empty_title),
                         modifier = Modifier.fillMaxSize()

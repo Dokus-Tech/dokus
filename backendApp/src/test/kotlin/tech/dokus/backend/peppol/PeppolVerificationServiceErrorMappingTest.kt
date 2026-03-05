@@ -15,7 +15,6 @@ import tech.dokus.peppol.provider.client.RecommandApiException
 import tech.dokus.peppol.provider.client.RecommandProvider
 import tech.dokus.peppol.service.PeppolVerificationService
 import java.net.ConnectException
-import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
 

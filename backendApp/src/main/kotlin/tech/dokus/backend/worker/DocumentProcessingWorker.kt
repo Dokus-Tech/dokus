@@ -517,14 +517,18 @@ class DocumentProcessingWorker(
 
                 val currentDraft = draftRepository.getByDocumentId(documentId, parsedTenantId)
                 if (currentDraft != null) {
-                    purposeService.enrichAfterContactResolution(
-                        tenantId = parsedTenantId,
-                        documentId = documentId,
-                        documentType = documentType,
-                        draftData = draftData,
-                        linkedContactId = linkedContactId,
-                        currentDraft = currentDraft
-                    )
+                    runSuspendCatching {
+                        purposeService.enrichAfterContactResolution(
+                            tenantId = parsedTenantId,
+                            documentId = documentId,
+                            documentType = documentType,
+                            draftData = draftData,
+                            linkedContactId = linkedContactId,
+                            currentDraft = currentDraft
+                        )
+                    }.onFailure { e ->
+                        logger.warn("Purpose enrichment failed for document {}, skipping", documentId, e)
+                    }
                 }
 
                 val canAutoConfirm = autoConfirmPolicy.canAutoConfirm(

@@ -54,12 +54,16 @@ fun DokusNavHost(
     tokenManager: TokenManager = koinInject(),
 ) {
     var pendingPostAuthHomeCommand by remember { mutableStateOf<HomeNavigationCommand?>(null) }
+    var hasForceLoggedOut by remember { mutableStateOf(false) }
     val forceNavigateToLogin: () -> Unit = {
-        pendingPostAuthHomeCommand = null
-        HomeNavigationCommandBus.clear()
-        navController.navigateTo(AuthDestination.Login) {
-            launchSingleTop = true
-            popUpTo(0) { inclusive = true }
+        if (!hasForceLoggedOut) {
+            hasForceLoggedOut = true
+            pendingPostAuthHomeCommand = null
+            HomeNavigationCommandBus.clear()
+            navController.navigateTo(AuthDestination.Login) {
+                launchSingleTop = true
+                popUpTo(0) { inclusive = true }
+            }
         }
     }
 
@@ -170,6 +174,7 @@ fun DokusNavHost(
                 }
 
                 is AuthEvent.LoginSuccess -> {
+                    hasForceLoggedOut = false
                     pendingPostAuthHomeCommand?.let { command ->
                         pendingPostAuthHomeCommand = null
                         navController.navigateTo(CoreDestination.Home) {

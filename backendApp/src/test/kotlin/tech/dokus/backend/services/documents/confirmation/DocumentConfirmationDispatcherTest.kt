@@ -3,7 +3,7 @@ package tech.dokus.backend.services.documents.confirmation
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
 import tech.dokus.backend.services.documents.DocumentPurposeSimilarityService
 import tech.dokus.domain.enums.DocumentDirection
@@ -31,7 +31,7 @@ class DocumentConfirmationDispatcherTest {
     private val documentId = DocumentId.parse("22222222-2222-2222-2222-222222222222")
 
     @Test
-    fun `confirm success triggers purpose index`() = runBlocking {
+    fun `confirm success triggers purpose index`() = runTest {
         val result = ConfirmationResult(
             entity = mockk<FinancialDocumentDto>(),
             cashflowEntryId = null,
@@ -51,7 +51,7 @@ class DocumentConfirmationDispatcherTest {
     }
 
     @Test
-    fun `confirm failure does not trigger purpose index`() = runBlocking {
+    fun `confirm failure does not trigger purpose index`() = runTest {
         coEvery {
             invoiceService.confirm(tenantId, documentId, any(), any())
         } returns Result.failure(IllegalStateException("boom"))

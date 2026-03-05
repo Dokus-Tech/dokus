@@ -6,6 +6,7 @@ import ai.koog.agents.core.dsl.builder.strategy
 import ai.koog.agents.core.tools.ToolRegistry
 import ai.koog.agents.ext.agent.ConditionResult
 import ai.koog.agents.ext.agent.subgraphWithRetrySimple
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.Serializable
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.Tenant
@@ -83,7 +84,15 @@ fun acceptDocumentGraph(
                 val snapshot = requireNotNull(input.peppolStructuredSnapshotJson) {
                     "PEPPOL structured snapshot is required for PEPPOL extraction route"
                 }
-                val draftData = tech.dokus.domain.utils.json.decodeFromString<tech.dokus.domain.model.DocumentDraftData>(snapshot)
+                val draftData = try {
+                    tech.dokus.domain.utils.json.decodeFromString<tech.dokus.domain.model.DocumentDraftData>(snapshot)
+                } catch (e: SerializationException) {
+                    throw IllegalStateException(
+                        "Failed to deserialize PEPPOL structured snapshot (version=${input.peppolSnapshotVersion}); " +
+                            "document ${input.documentId} will need vision extraction",
+                        e
+                    )
+                }
                 draftData.toPeppolProcessingResult(input.peppolSnapshotVersion)
             }
             nodeStart then processStructured then nodeFinish

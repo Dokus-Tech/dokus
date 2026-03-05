@@ -120,11 +120,14 @@ internal fun DocumentsRoute(
         }.toSet()
     }
 
-    LaunchedEffect(completedDocumentIds) {
-        if (completedDocumentIds.isEmpty()) {
+    LaunchedEffect(uploadTasks) {
+        if (uploadTasks.isEmpty()) {
             knownRemoteDocumentIds = emptySet()
-            return@LaunchedEffect
         }
+    }
+
+    LaunchedEffect(completedDocumentIds) {
+        if (completedDocumentIds.isEmpty()) return@LaunchedEffect
 
         knownRemoteDocumentIds = knownRemoteDocumentIds.intersect(completedDocumentIds)
         val unresolvedIds = completedDocumentIds - knownRemoteDocumentIds

@@ -419,8 +419,8 @@ class DocumentDraftRepository : DocumentStatusChecker {
             (DocumentDraftsTable.documentId eq UUID.fromString(documentId.toString())) and
                 (DocumentDraftsTable.tenantId eq UUID.fromString(tenantId.toString()))
         }) {
-            it[DocumentDraftsTable.counterpartyKey] = counterpartyKey
-            it[DocumentDraftsTable.merchantToken] = merchantToken
+            counterpartyKey?.let { key -> it[DocumentDraftsTable.counterpartyKey] = key }
+            merchantToken?.let { token -> it[DocumentDraftsTable.merchantToken] = token }
             it[DocumentDraftsTable.updatedAt] = now
         } > 0
     }
