@@ -10,6 +10,7 @@ import kotlinx.serialization.Serializable
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.processing.DocumentProcessingConstants.AUTO_CONFIRM_CONFIDENCE_THRESHOLD
+import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.features.ai.graph.nodes.InputWithDocumentId
 import tech.dokus.features.ai.graph.nodes.InputWithTenantContext
 import tech.dokus.features.ai.graph.nodes.InputWithUserFeedback
@@ -17,6 +18,7 @@ import tech.dokus.features.ai.graph.sub.documentProcessingSubGraph
 import tech.dokus.features.ai.models.DocumentAiProcessingResult
 import tech.dokus.features.ai.models.FinancialExtractionResult
 import tech.dokus.features.ai.models.confidenceScore
+import tech.dokus.features.ai.models.toPeppolProcessingResult
 import tech.dokus.features.ai.services.DocumentFetcher
 import tech.dokus.foundation.backend.config.AIConfig
 import java.util.*
@@ -25,6 +27,9 @@ import java.util.*
 data class AcceptDocumentInput(
     override val documentId: DocumentId,
     override val tenant: Tenant,
+    val sourceChannel: DocumentSource = DocumentSource.Upload,
+    val peppolStructuredSnapshotJson: String? = null,
+    val peppolSnapshotVersion: Int? = null,
     override val associatedPersonNames: List<String> = emptyList(),
     override val userFeedback: String? = null,
     override val maxPagesOverride: Int? = null,
@@ -36,11 +41,11 @@ fun acceptDocumentGraph(
     registry: ToolRegistry,
     documentFetcher: DocumentFetcher,
 ): AIAgentGraphStrategy<AcceptDocumentInput, DocumentAiProcessingResult> {
-    return strategy<AcceptDocumentInput, DocumentAiProcessingResult>("accept-document-graph") {
+    return strategy<AcceptDocumentInput, DocumentAiProcessingResult>("accept-document-parent") {
         val confirmThreshold = AUTO_CONFIRM_CONFIDENCE_THRESHOLD
 
-        val processWithRetry by subgraphWithRetrySimple<AcceptDocumentInput, DocumentAiProcessingResult>(
-            name = "process-document-with-retry",
+        val visionExtractionSubGraph by subgraphWithRetrySimple<AcceptDocumentInput, DocumentAiProcessingResult>(
+            name = "vision-extraction-subgraph",
             maxRetries = 2,
             strict = false,
             conditionDescription = buildString {
@@ -71,8 +76,35 @@ fun acceptDocumentGraph(
             nodeStart then process then nodeFinish
         }
 
-        edge(nodeStart forwardTo processWithRetry)
-        edge(processWithRetry forwardTo nodeFinish)
+        val peppolStructuredExtractionSubGraph by subgraph(
+            name = "peppol-structured-extraction-subgraph"
+        ) {
+            val processStructured by node<AcceptDocumentInput, DocumentAiProcessingResult>("parse-peppol-structured-snapshot") { input ->
+                val snapshot = requireNotNull(input.peppolStructuredSnapshotJson) {
+                    "PEPPOL structured snapshot is required for PEPPOL extraction route"
+                }
+                val draftData = tech.dokus.domain.utils.json.decodeFromString<tech.dokus.domain.model.DocumentDraftData>(snapshot)
+                draftData.toPeppolProcessingResult(input.peppolSnapshotVersion)
+            }
+            nodeStart then processStructured then nodeFinish
+        }
+
+        edge(
+            nodeStart forwardTo peppolStructuredExtractionSubGraph
+                onCondition { input ->
+                    input.sourceChannel == DocumentSource.Peppol &&
+                        !input.peppolStructuredSnapshotJson.isNullOrBlank()
+                }
+        )
+        edge(
+            nodeStart forwardTo visionExtractionSubGraph
+                onCondition { input ->
+                    input.sourceChannel != DocumentSource.Peppol ||
+                        input.peppolStructuredSnapshotJson.isNullOrBlank()
+                }
+        )
+        edge(visionExtractionSubGraph forwardTo nodeFinish)
+        edge(peppolStructuredExtractionSubGraph forwardTo nodeFinish)
     }
 }
 

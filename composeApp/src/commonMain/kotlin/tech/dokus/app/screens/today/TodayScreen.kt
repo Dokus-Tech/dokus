@@ -275,7 +275,7 @@ private fun TodayAttentionCard(
 ) {
     val vendorName = document.vendorName()
     val dateText = document.formattedDate()
-    val description = document.draft?.aiDescription ?: stringResource(Res.string.today_document_needs_review)
+    val description = document.draft?.purposeRendered ?: stringResource(Res.string.today_document_needs_review)
 
     DokusCardSurface(accent = true) {
         Row(

@@ -17,6 +17,7 @@ import org.jetbrains.exposed.v1.jdbc.update
 import tech.dokus.database.entity.IngestionItemEntity
 import tech.dokus.database.tables.documents.DocumentDraftsTable
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
+import tech.dokus.database.tables.documents.DocumentSourcesTable
 import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DocumentStatus
@@ -56,7 +57,17 @@ class ProcessorIngestionRepository {
     @OptIn(ExperimentalUuidApi::class)
     suspend fun findPendingForProcessing(limit: Int = 10): List<IngestionItemEntity> =
         newSuspendedTransaction {
-            (DocumentIngestionRunsTable innerJoin DocumentsTable)
+            val sourceJoin = (DocumentIngestionRunsTable innerJoin DocumentsTable)
+                .join(
+                    DocumentSourcesTable,
+                    joinType = org.jetbrains.exposed.v1.core.JoinType.LEFT,
+                    additionalConstraint = {
+                        (DocumentIngestionRunsTable.sourceId eq DocumentSourcesTable.id) and
+                            (DocumentIngestionRunsTable.tenantId eq DocumentSourcesTable.tenantId)
+                    }
+                )
+
+            sourceJoin
                 .selectAll()
                 .where {
                     DocumentIngestionRunsTable.status eq IngestionStatus.Queued
@@ -69,6 +80,9 @@ class ProcessorIngestionRepository {
                         documentId = DocumentId(row[DocumentIngestionRunsTable.documentId].toKotlinUuid()),
                         tenantId = TenantId(row[DocumentIngestionRunsTable.tenantId].toKotlinUuid()),
                         sourceId = row[DocumentIngestionRunsTable.sourceId]?.toKotlinUuid()?.let { DocumentSourceId(it) },
+                        sourceChannel = row.getOrNull(DocumentSourcesTable.sourceChannel),
+                        peppolStructuredSnapshotJson = row.getOrNull(DocumentSourcesTable.peppolStructuredSnapshotJson),
+                        peppolSnapshotVersion = row.getOrNull(DocumentSourcesTable.peppolSnapshotVersion),
                         storageKey = row[DocumentsTable.storageKey],
                         filename = row[DocumentsTable.filename],
                         contentType = row[DocumentsTable.contentType],
@@ -156,7 +170,6 @@ class ProcessorIngestionRepository {
      * @param confidence Overall confidence score (0.0 - 1.0)
      * @param processingOutcome Derived outcome used for draft status
      * @param rawText Raw OCR/extracted text
-     * @param description AI-generated short description (optional)
      * @param keywords AI-generated keywords (optional)
      * @param force If true, overwrite extracted_data even if user has edited
      */
@@ -170,7 +183,6 @@ class ProcessorIngestionRepository {
         confidence: Double,
         processingOutcome: ProcessingOutcome,
         rawText: String?,
-        description: String? = null,
         keywords: List<String> = emptyList(),
         force: Boolean = false
     ): Boolean {
@@ -219,7 +231,6 @@ class ProcessorIngestionRepository {
                     it[documentStatus] = calculatedStatus
                     it[DocumentDraftsTable.documentType] = documentType
                     it[aiDraftData] = draftJson
-                    it[DocumentDraftsTable.aiDescription] = description?.takeIf { value -> value.isNotBlank() }
                     it[DocumentDraftsTable.aiKeywords] = keywordsJson
                     it[aiDraftSourceRunId] = runUuid
                     it[DocumentDraftsTable.extractedData] = draftJson
@@ -250,7 +261,6 @@ class ProcessorIngestionRepository {
 
                     if (shouldSetAiDraft) {
                         it[aiDraftData] = draftJson
-                        it[DocumentDraftsTable.aiDescription] = description?.takeIf { value -> value.isNotBlank() }
                         it[DocumentDraftsTable.aiKeywords] = keywordsJson
                         it[aiDraftSourceRunId] = runUuid
                     }
@@ -259,9 +269,6 @@ class ProcessorIngestionRepository {
                         it[DocumentDraftsTable.extractedData] = draftJson
                         // Update status when we update extracted data
                         it[documentStatus] = calculatedStatus
-                        if (!description.isNullOrBlank()) {
-                            it[DocumentDraftsTable.aiDescription] = description
-                        }
                         if (keywordsJson != null) {
                             it[DocumentDraftsTable.aiKeywords] = keywordsJson
                         }

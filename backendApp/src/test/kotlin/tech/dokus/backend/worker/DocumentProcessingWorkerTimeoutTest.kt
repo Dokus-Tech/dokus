@@ -9,13 +9,13 @@ import kotlinx.coroutines.withTimeout
 import org.junit.jupiter.api.Test
 import tech.dokus.backend.services.documents.AutoConfirmPolicy
 import tech.dokus.backend.services.documents.ContactResolutionService
+import tech.dokus.backend.services.documents.DocumentPurposeService
 import tech.dokus.backend.services.documents.DocumentTruthService
 import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
 import tech.dokus.database.entity.IngestionItemEntity
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
-import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.processor.ProcessorIngestionRepository
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
@@ -32,8 +32,8 @@ class DocumentProcessingWorkerTimeoutTest {
         val ingestionRepository = mockk<ProcessorIngestionRepository>()
         val processingAgent = mockk<DocumentProcessingAgent>()
         val contactResolutionService = mockk<ContactResolutionService>(relaxed = true)
+        val purposeService = mockk<DocumentPurposeService>(relaxed = true)
         val draftRepository = mockk<DocumentDraftRepository>(relaxed = true)
-        val documentRepository = mockk<DocumentRepository>(relaxed = true)
         val documentTruthService = mockk<DocumentTruthService>(relaxed = true)
         val autoConfirmPolicy = mockk<AutoConfirmPolicy>(relaxed = true)
         val confirmationDispatcher = mockk<DocumentConfirmationDispatcher>(relaxed = true)
@@ -73,9 +73,9 @@ class DocumentProcessingWorkerTimeoutTest {
             ingestionRepository = ingestionRepository,
             processingAgent = processingAgent,
             contactResolutionService = contactResolutionService,
+            purposeService = purposeService,
             documentTruthService = documentTruthService,
             draftRepository = draftRepository,
-            documentRepository = documentRepository,
             autoConfirmPolicy = autoConfirmPolicy,
             confirmationDispatcher = confirmationDispatcher,
             config = ProcessorConfig(
