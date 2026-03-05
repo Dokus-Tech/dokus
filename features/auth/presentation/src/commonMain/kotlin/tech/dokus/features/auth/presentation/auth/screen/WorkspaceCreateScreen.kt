@@ -102,10 +102,11 @@ internal fun WorkspaceCreateScreen(
                 if (wizardState != null) {
                     OnboardingCenteredShell(
                         modifier = Modifier.dismissKeyboardOnTapOutside(),
-                        contentMaxWidth = if (wizardState.step == WorkspaceWizardStep.CompanyName) {
-                            WorkspaceCreateLookupShellMaxWidth
-                        } else {
-                            WorkspaceCreateDefaultShellMaxWidth
+                        contentMaxWidth = when (wizardState.step) {
+                            WorkspaceWizardStep.CompanyName,
+                            WorkspaceWizardStep.VatAndAddress -> WorkspaceCreateLookupShellMaxWidth
+
+                            WorkspaceWizardStep.TypeSelection -> WorkspaceCreateDefaultShellMaxWidth
                         },
                     ) {
                         WorkspaceCreateContent(
@@ -163,7 +164,7 @@ private fun WorkspaceCreateContent(
             max = when (wizardState.step) {
                 WorkspaceWizardStep.TypeSelection -> WizardTypeSelectionMaxWidth
                 WorkspaceWizardStep.CompanyName -> WizardLookupMaxWidth
-                WorkspaceWizardStep.VatAndAddress -> WizardContentMaxWidth
+                WorkspaceWizardStep.VatAndAddress -> WizardLookupMaxWidth
             }
         ),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -218,8 +219,12 @@ private fun WorkspaceCreateContent(
 
                     WorkspaceWizardStep.VatAndAddress -> {
                         VatAndAddressStep(
+                            companyName = wizardState.companyName.value,
                             vatNumber = wizardState.vatNumber,
                             address = wizardState.address,
+                            onCompanyNameChanged = { name ->
+                                onIntent(WorkspaceCreateIntent.UpdateCompanyName(LegalName(name)))
+                            },
                             onVatNumberChanged = { vatNumber ->
                                 onIntent(WorkspaceCreateIntent.UpdateVatNumber(vatNumber))
                             },
