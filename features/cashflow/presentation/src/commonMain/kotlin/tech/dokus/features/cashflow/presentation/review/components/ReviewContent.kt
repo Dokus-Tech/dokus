@@ -45,6 +45,7 @@ import tech.dokus.features.cashflow.presentation.review.components.mobile.Mobile
 import tech.dokus.features.cashflow.presentation.review.components.mobile.MobileDocumentDetailTopBar
 import tech.dokus.features.cashflow.presentation.review.components.mobile.PreviewTabContent
 import tech.dokus.features.cashflow.presentation.review.models.CounterpartyInfo
+import tech.dokus.features.cashflow.presentation.review.models.counterpartyInfo
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.DokusLoader
@@ -83,6 +84,8 @@ internal fun ReviewContent(
                     state = state,
                     contentPadding = contentPadding,
                     onIntent = onIntent,
+                    onCorrectContact = onCorrectContact,
+                    onCreateContact = onCreateContact,
                 )
             } else {
                 MobileReviewContent(
@@ -195,6 +198,8 @@ private fun DesktopReviewContent(
     state: DocumentReviewState.Content,
     contentPadding: PaddingValues,
     onIntent: (DocumentReviewIntent) -> Unit,
+    onCorrectContact: (CounterpartyInfo) -> Unit,
+    onCreateContact: (CounterpartyInfo) -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -213,6 +218,8 @@ private fun DesktopReviewContent(
         ReviewInspectorPane(
             state = state,
             onIntent = onIntent,
+            onCorrectContact = { onCorrectContact(counterpartyInfo(state)) },
+            onCreateContact = { onCreateContact(counterpartyInfo(state)) },
             modifier = Modifier
                 .width(Constraints.DocumentDetail.inspectorWidth)
                 .fillMaxHeight(),

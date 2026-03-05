@@ -11,7 +11,6 @@ import org.jetbrains.compose.resources.StringResource
 import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_confirm_missing_fields
-import tech.dokus.aura.resources.cashflow_confirm_select_contact
 import tech.dokus.domain.Money
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.enums.CashflowEntryStatus
@@ -133,7 +132,6 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
         val isDocumentRejected: Boolean = false,
         val confirmedCashflowEntryId: CashflowEntryId? = null,
         val cashflowEntryState: DokusState<CashflowEntry> = DokusState.idle(),
-        val isEditMode: Boolean = false,
         val sourceViewerState: SourceEvidenceViewerState? = null,
         val paymentSheetState: PaymentSheetState? = null,
         val rejectDialogState: RejectDialogState? = null,
@@ -177,16 +175,17 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
                 return baseValid
             }
 
+        val hasUnsyncedLocalChanges: Boolean
+            get() = hasUnsavedChanges || isSaving
+
         val confirmBlockedReason: StringResource?
             get() = when {
                 isDocumentConfirmed || isDocumentRejected -> null
                 draftData == null -> Res.string.cashflow_confirm_missing_fields
                 !draftData.hasRequiredDates -> Res.string.cashflow_confirm_missing_fields
-                !draftData.hasCoherentAmounts -> Res.string.cashflow_confirm_missing_fields
-                !draftData.hasKnownDirectionForConfirmation -> Res.string.cashflow_confirm_missing_fields
-                counterpartyIntent == CounterpartyIntent.Pending -> Res.string.cashflow_confirm_select_contact
-                isContactRequired && selectedContactId == null -> Res.string.cashflow_confirm_select_contact
-                !draftData.isReviewValid -> Res.string.cashflow_confirm_missing_fields
+                !draftData.hasRequiredTotalForConfirmation -> Res.string.cashflow_confirm_missing_fields
+                !draftData.hasRequiredVatForConfirmation -> Res.string.cashflow_confirm_missing_fields
+                !draftData.hasCoherentAmountsForConfirmation -> Res.string.cashflow_confirm_missing_fields
                 else -> null
             }
 
@@ -341,22 +340,42 @@ private val DocumentDraftData.hasRequiredDates: Boolean
         is CreditNoteDraftData -> issueDate != null
     }
 
-/** Whether amounts are coherent (subtotal + vat ≈ total where applicable). */
-private val DocumentDraftData.hasCoherentAmounts: Boolean
+/** Whether totals required for confirmation are present. */
+private val DocumentDraftData.hasRequiredTotalForConfirmation: Boolean
+    get() = when (this) {
+        is InvoiceDraftData -> totalAmount != null
+        is ReceiptDraftData -> totalAmount != null
+        is CreditNoteDraftData -> totalAmount != null
+    }
+
+/** Whether VAT required for confirmation is present (0-value VAT is valid). */
+private val DocumentDraftData.hasRequiredVatForConfirmation: Boolean
+    get() = when (this) {
+        is InvoiceDraftData -> vatAmount != null
+        is CreditNoteDraftData -> vatAmount != null
+        is ReceiptDraftData -> true
+    }
+
+/** Whether amount math is coherent when all required values are present. */
+private val DocumentDraftData.hasCoherentAmountsForConfirmation: Boolean
     get() {
         return when (this) {
             is InvoiceDraftData -> {
-                val subtotal = subtotalAmount ?: return false
-                if (totalAmount == null || vatAmount == null) return true
-                val expected = subtotal + vatAmount!!
-                kotlin.math.abs(expected.minor - totalAmount!!.minor) <= 1L
+                val subtotal = subtotalAmount
+                val vat = vatAmount
+                val total = totalAmount
+                if (subtotal == null || vat == null || total == null) return true
+                val expected = subtotal + vat
+                kotlin.math.abs(expected.minor - total.minor) <= 1L
             }
-            is ReceiptDraftData -> totalAmount != null
+            is ReceiptDraftData -> true
             is CreditNoteDraftData -> {
-                val subtotal = subtotalAmount ?: return false
-                if (totalAmount == null || vatAmount == null) return true
-                val expected = subtotal + vatAmount!!
-                kotlin.math.abs(expected.minor - totalAmount!!.minor) <= 1L
+                val subtotal = subtotalAmount
+                val vat = vatAmount
+                val total = totalAmount
+                if (subtotal == null || vat == null || total == null) return true
+                val expected = subtotal + vat
+                kotlin.math.abs(expected.minor - total.minor) <= 1L
             }
         }
     }
@@ -387,13 +406,6 @@ internal val DocumentDraftData?.documentType: DocumentType
         is CreditNoteDraftData -> DocumentType.CreditNote
         is ReceiptDraftData -> DocumentType.Receipt
         null -> DocumentType.Unknown
-    }
-
-private val DocumentDraftData.hasKnownDirectionForConfirmation: Boolean
-    get() = when (this) {
-        is InvoiceDraftData -> direction != DocumentDirection.Unknown
-        is CreditNoteDraftData -> direction != DocumentDirection.Unknown
-        is ReceiptDraftData -> true
     }
 
 /** Context/description text for understanding line. */

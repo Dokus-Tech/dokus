@@ -18,17 +18,16 @@ import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.contact.CounterpartySnapshot
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class DocumentReviewStateDirectionTest {
 
     @Test
-    fun `confirm is blocked for invoice when direction is unknown`() {
+    fun `confirm is allowed for invoice when direction is unknown`() {
         val state = contentState(direction = DocumentDirection.Unknown)
 
-        assertFalse(state.canConfirm)
-        assertTrue(state.confirmBlockedReason != null)
+        assertTrue(state.canConfirm)
+        assertTrue(state.confirmBlockedReason == null)
     }
 
     @Test
@@ -36,6 +35,18 @@ class DocumentReviewStateDirectionTest {
         val state = contentState(direction = DocumentDirection.Inbound)
 
         assertTrue(state.canConfirm)
+    }
+
+    @Test
+    fun `confirm is allowed when required contact is missing`() {
+        val state = contentState(
+            direction = DocumentDirection.Inbound,
+            selectedContactId = null,
+            isContactRequired = true,
+        )
+
+        assertTrue(state.canConfirm)
+        assertTrue(state.confirmBlockedReason == null)
     }
 
     @Test
@@ -53,16 +64,19 @@ class DocumentReviewStateDirectionTest {
         direction: DocumentDirection,
         sellerName: String? = null,
         counterpartySnapshotName: String? = null,
+        selectedContactId: ContactId? = ContactId.parse("ee14421b-c659-45e3-9a27-e4d3ef6b32eb"),
+        isContactRequired: Boolean = true,
     ): DocumentReviewState.Content {
         val tenantId = TenantId.parse("44e8ed5c-020a-4bbb-9439-ac85899c5589")
         val documentId = DocumentId.parse("e72f69a8-6913-4d8f-98e7-224db7f4133f")
-        val contactId = ContactId.parse("ee14421b-c659-45e3-9a27-e4d3ef6b32eb")
         val now = LocalDateTime(2026, 2, 11, 0, 0, 0)
 
         val draftData = InvoiceDraftData(
             direction = direction,
             issueDate = LocalDate(2026, 2, 10),
             subtotalAmount = Money.from("100.00"),
+            vatAmount = Money.from("21.00"),
+            totalAmount = Money.from("121.00"),
             seller = tech.dokus.domain.model.PartyDraft(name = sellerName)
         )
 
@@ -77,7 +91,7 @@ class DocumentReviewStateDirectionTest {
             draftVersion = 0,
             draftEditedAt = null,
             draftEditedBy = null,
-            linkedContactId = contactId,
+            linkedContactId = selectedContactId,
             counterpartySnapshot = counterpartySnapshotName?.let { CounterpartySnapshot(name = it) },
             counterpartyIntent = CounterpartyIntent.None,
             lastSuccessfulRunId = null,
@@ -106,8 +120,8 @@ class DocumentReviewStateDirectionTest {
             document = document,
             draftData = draftData,
             originalData = draftData,
-            isContactRequired = true,
-            selectedContactId = contactId,
+            isContactRequired = isContactRequired,
+            selectedContactId = selectedContactId,
             counterpartyIntent = CounterpartyIntent.None
         )
     }
