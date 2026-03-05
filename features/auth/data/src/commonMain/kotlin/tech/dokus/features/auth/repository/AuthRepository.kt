@@ -9,6 +9,7 @@ import tech.dokus.domain.Password
 import tech.dokus.domain.enums.Language
 import tech.dokus.domain.enums.SubscriptionTier
 import tech.dokus.domain.enums.TenantType
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.FirmId
 import tech.dokus.domain.ids.SessionId
 import tech.dokus.domain.ids.TenantId
@@ -189,16 +190,44 @@ class AuthRepository(
 
     override suspend fun createFirm(request: CreateFirmRequest): Result<CreateFirmResponse> {
         return accountDataSource.createFirm(request)
+            .onSuccess {
+                // Creating a firm updates user memberships on the server.
+                // Refresh immediately so subsequent console calls use JWT claims with firm access.
+                val refreshedToken = tokenManager.refreshToken(force = true)
+                if (refreshedToken.isNullOrBlank()) {
+                    logger.w { "Firm created but token refresh returned null; continuing with existing session" }
+                }
+            }
             .onFailure { error ->
                 logger.e(error) { "Failed to create firm" }
             }
     }
 
     override suspend fun listConsoleClients(firmId: FirmId): Result<List<ConsoleClientSummary>> {
-        return accountDataSource.listConsoleClients(firmId = firmId)
-            .onFailure { error ->
-                logger.e(error) { "Failed to list console clients" }
+        val initialResult = accountDataSource.listConsoleClients(firmId = firmId)
+        if (initialResult.isSuccess) {
+            return initialResult
+        }
+
+        val initialError = initialResult.exceptionOrNull()
+        if (initialError is DokusException.NotAuthorized) {
+            logger.w {
+                "Console clients returned NotAuthorized for firm $firmId; forcing token refresh and retrying once"
             }
+            val refreshedToken = tokenManager.refreshToken(force = true)
+            if (!refreshedToken.isNullOrBlank()) {
+                return accountDataSource.listConsoleClients(firmId = firmId)
+                    .onFailure { retryError ->
+                        logger.e(retryError) { "Failed to list console clients after token refresh" }
+                    }
+            }
+            logger.w {
+                "Token refresh after console NotAuthorized returned null; using original failure"
+            }
+        }
+
+        logger.e(initialError) { "Failed to list console clients" }
+        return initialResult
     }
 
     override suspend fun listConsoleClientDocuments(

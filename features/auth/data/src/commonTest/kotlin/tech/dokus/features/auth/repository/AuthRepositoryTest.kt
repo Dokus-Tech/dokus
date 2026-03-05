@@ -8,6 +8,8 @@ import kotlinx.datetime.LocalDateTime
 import tech.dokus.domain.DisplayName
 import tech.dokus.domain.Email
 import tech.dokus.domain.Password
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.FirmId
 import tech.dokus.domain.ids.SessionId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
@@ -24,6 +26,9 @@ import tech.dokus.domain.model.auth.AppSurface
 import tech.dokus.domain.model.auth.AuthEvent
 import tech.dokus.domain.model.auth.ChangePasswordRequest
 import tech.dokus.domain.model.auth.ConsoleClientSummary
+import tech.dokus.domain.model.auth.CreateFirmRequest
+import tech.dokus.domain.model.auth.CreateFirmResponse
+import tech.dokus.domain.model.auth.FirmWorkspaceSummary
 import tech.dokus.domain.model.auth.LoginRequest
 import tech.dokus.domain.model.auth.LoginResponse
 import tech.dokus.domain.model.auth.LogoutRequest
@@ -32,7 +37,9 @@ import tech.dokus.domain.model.auth.RegisterRequest
 import tech.dokus.domain.model.auth.ResetPasswordRequest
 import tech.dokus.domain.model.auth.SessionDto
 import tech.dokus.domain.model.auth.SurfaceAvailability
+import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.model.common.Thumbnail
+import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.features.auth.datasource.AccountRemoteDataSource
 import tech.dokus.features.auth.datasource.IdentityRemoteDataSource
 import tech.dokus.features.auth.datasource.TenantRemoteDataSource
@@ -184,6 +191,7 @@ class AuthRepositoryTest {
     fun listConsoleClientsDelegatesToAccountDataSource() = runTest {
         val tokenManager = FakeTokenManager()
         val authManager = FakeAuthManager()
+        val firmId = FirmId("00000000-0000-0000-0000-000000000111")
         val expectedClients = listOf(
             ConsoleClientSummary(
                 tenantId = TenantId("00000000-0000-0000-0000-000000000222"),
@@ -203,9 +211,10 @@ class AuthRepositoryTest {
         val tenant = FakeTenantRemoteDataSource()
         val repository = AuthRepository(tokenManager, authManager, account, identity, tenant)
 
-        val result = repository.listConsoleClients()
+        val result = repository.listConsoleClients(firmId)
 
         assertTrue(account.listConsoleClientsCalled)
+        assertEquals(firmId, account.lastConsoleClientsFirmId)
         assertTrue(result.isSuccess)
         assertEquals(expectedClients, result.getOrThrow())
     }
@@ -214,6 +223,7 @@ class AuthRepositoryTest {
     fun listConsoleClientsForwardsFailure() = runTest {
         val tokenManager = FakeTokenManager()
         val authManager = FakeAuthManager()
+        val firmId = FirmId("00000000-0000-0000-0000-000000000111")
         val error = RuntimeException("console unavailable")
         val account = FakeAccountRemoteDataSource().apply {
             consoleClientsResult = Result.failure(error)
@@ -222,11 +232,83 @@ class AuthRepositoryTest {
         val tenant = FakeTenantRemoteDataSource()
         val repository = AuthRepository(tokenManager, authManager, account, identity, tenant)
 
-        val result = repository.listConsoleClients()
+        val result = repository.listConsoleClients(firmId)
 
         assertTrue(account.listConsoleClientsCalled)
+        assertEquals(firmId, account.lastConsoleClientsFirmId)
         assertTrue(result.isFailure)
         assertEquals(error, result.exceptionOrNull())
+    }
+
+    @Test
+    fun listConsoleClientsRefreshesAndRetriesOnNotAuthorized() = runTest {
+        val tokenManager = FakeTokenManager().apply {
+            accessToken = "old-access"
+            refreshToken = "refresh-token"
+            refreshTokenReturn = "new-access"
+        }
+        val authManager = FakeAuthManager()
+        val firmId = FirmId("00000000-0000-0000-0000-000000000111")
+        val expectedClients = listOf(
+            ConsoleClientSummary(
+                tenantId = TenantId("00000000-0000-0000-0000-000000000222"),
+                companyName = DisplayName("Invoid BV"),
+                vatNumber = VatNumber("BE0792.140.667")
+            ),
+        )
+        val account = FakeAccountRemoteDataSource().apply {
+            consoleClientsResultQueue += Result.failure(
+                DokusException.NotAuthorized("You do not have access to this firm")
+            )
+            consoleClientsResultQueue += Result.success(expectedClients)
+        }
+        val identity = FakeIdentityRemoteDataSource()
+        val tenant = FakeTenantRemoteDataSource()
+        val repository = AuthRepository(tokenManager, authManager, account, identity, tenant)
+
+        val result = repository.listConsoleClients(firmId)
+
+        assertTrue(result.isSuccess)
+        assertEquals(expectedClients, result.getOrThrow())
+        assertEquals(2, account.listConsoleClientsCallCount)
+        assertEquals(listOf(true), tokenManager.refreshTokenForceCalls)
+    }
+
+    @Test
+    fun createFirmForcesTokenRefreshAfterSuccess() = runTest {
+        val tokenManager = FakeTokenManager().apply {
+            accessToken = "old-access"
+            refreshToken = "refresh-token"
+            refreshTokenReturn = "new-access"
+        }
+        val authManager = FakeAuthManager()
+        val account = FakeAccountRemoteDataSource().apply {
+            createFirmResult = Result.success(
+                CreateFirmResponse(
+                    firm = FirmWorkspaceSummary(
+                        id = FirmId("00000000-0000-0000-0000-000000000111"),
+                        name = DisplayName("Kantoor Boonen"),
+                        vatNumber = VatNumber("BE0777887045"),
+                        role = tech.dokus.domain.enums.FirmRole.Owner,
+                        clientCount = 0
+                    )
+                )
+            )
+        }
+        val identity = FakeIdentityRemoteDataSource()
+        val tenant = FakeTenantRemoteDataSource()
+        val repository = AuthRepository(tokenManager, authManager, account, identity, tenant)
+
+        val result = repository.createFirm(
+            CreateFirmRequest(
+                name = DisplayName("Kantoor Boonen"),
+                vatNumber = VatNumber("BE0777887045"),
+            )
+        )
+
+        assertTrue(result.isSuccess)
+        assertTrue(account.createFirmCalled)
+        assertEquals(listOf(true), tokenManager.refreshTokenForceCalls)
     }
 }
 
@@ -238,6 +320,8 @@ private class FakeTokenManager : TokenManagerMutable {
     var refreshToken: String? = null
     var selectedTenantId: TenantId? = null
     var authenticationFailedCalled: Boolean = false
+    var refreshTokenReturn: String? = null
+    val refreshTokenForceCalls: MutableList<Boolean> = mutableListOf()
 
     override suspend fun initialize() = Unit
 
@@ -252,7 +336,10 @@ private class FakeTokenManager : TokenManagerMutable {
 
     override suspend fun getSelectedTenantId(): TenantId? = selectedTenantId
 
-    override suspend fun refreshToken(force: Boolean): String? = accessToken
+    override suspend fun refreshToken(force: Boolean): String? {
+        refreshTokenForceCalls += force
+        return refreshTokenReturn ?: accessToken
+    }
 
     override suspend fun onAuthenticationFailed() {
         authenticationFailedCalled = true
@@ -287,16 +374,50 @@ private class FakeAccountRemoteDataSource : AccountRemoteDataSource {
     var lastRevokedSessionId: SessionId? = null
     var lastChangePasswordRequest: ChangePasswordRequest? = null
     var listConsoleClientsCalled: Boolean = false
+    var listConsoleClientsCallCount: Int = 0
+    var lastConsoleClientsFirmId: FirmId? = null
+    var createFirmCalled: Boolean = false
+    var lastCreateFirmRequest: CreateFirmRequest? = null
     var accountMeResult: Result<AccountMeResponse> = Result.failure(IllegalStateException("not needed"))
     var consoleClientsResult: Result<List<ConsoleClientSummary>> =
+        Result.failure(IllegalStateException("not needed"))
+    val consoleClientsResultQueue: MutableList<Result<List<ConsoleClientSummary>>> = mutableListOf()
+    var createFirmResult: Result<CreateFirmResponse> =
         Result.failure(IllegalStateException("not needed"))
 
     override suspend fun getAccountMe(): Result<AccountMeResponse> = accountMeResult
 
-    override suspend fun listConsoleClients(): Result<List<ConsoleClientSummary>> {
-        listConsoleClientsCalled = true
-        return consoleClientsResult
+    override suspend fun createFirm(request: CreateFirmRequest): Result<CreateFirmResponse> {
+        createFirmCalled = true
+        lastCreateFirmRequest = request
+        return createFirmResult
     }
+
+    override suspend fun listConsoleClients(firmId: FirmId): Result<List<ConsoleClientSummary>> {
+        listConsoleClientsCalled = true
+        listConsoleClientsCallCount += 1
+        lastConsoleClientsFirmId = firmId
+        return if (consoleClientsResultQueue.isNotEmpty()) {
+            consoleClientsResultQueue.removeAt(0)
+        } else {
+            consoleClientsResult
+        }
+    }
+
+    override suspend fun listConsoleClientDocuments(
+        firmId: FirmId,
+        tenantId: TenantId,
+        page: Int,
+        limit: Int
+    ): Result<PaginatedResponse<DocumentRecordDto>> =
+        Result.failure(IllegalStateException("not needed"))
+
+    override suspend fun getConsoleClientDocument(
+        firmId: FirmId,
+        tenantId: TenantId,
+        documentId: String
+    ): Result<DocumentRecordDto> =
+        Result.failure(IllegalStateException("not needed"))
 
     override suspend fun selectTenant(tenantId: TenantId): Result<LoginResponse> =
         Result.failure(IllegalStateException("not needed"))
