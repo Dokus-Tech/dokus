@@ -56,9 +56,14 @@ internal class WorkspaceSelectContainer(
             },
             onFailure = { error ->
                 logger.e(error) { "Failed to load tenants" }
+                val exception = error.asDokusException
+                if (exception.httpStatusCode == DokusException.NotAuthenticated.HTTP_STATUS) {
+                    action(WorkspaceSelectAction.NavigateToLogin)
+                    return@fold
+                }
                 updateState {
                     WorkspaceSelectState.Error(
-                        exception = error.asDokusException,
+                        exception = exception,
                         retryHandler = { intent(WorkspaceSelectIntent.LoadTenants) }
                     )
                 }
@@ -86,6 +91,10 @@ internal class WorkspaceSelectContainer(
                 onFailure = { error ->
                     logger.e(error) { "Failed to select tenant: $tenantId" }
                     val exception = error.asDokusException
+                    if (exception.httpStatusCode == DokusException.NotAuthenticated.HTTP_STATUS) {
+                        action(WorkspaceSelectAction.NavigateToLogin)
+                        return@fold
+                    }
                     val displayException = if (exception is DokusException.Unknown) {
                         DokusException.WorkspaceSelectFailed
                     } else {

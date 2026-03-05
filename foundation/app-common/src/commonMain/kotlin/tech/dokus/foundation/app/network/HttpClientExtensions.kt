@@ -263,57 +263,71 @@ private suspend fun Sender.executeWithUnauthorizedRefreshRetry(
     }
 
     while (true) {
-        try {
-            return execute(request)
+        var unauthorizedCause: Throwable? = null
+        val call = try {
+            execute(request)
         } catch (cause: Throwable) {
             val dokusException = cause as? DokusException
             val isUnauthorized = dokusException?.httpStatusCode == HttpStatusCode.Unauthorized.value
             if (!isUnauthorized) throw cause
+            unauthorizedCause = cause
+            null
+        }
 
-            if (attempts >= maxRetries) {
+        val isUnauthorizedResponse = call?.response?.status == HttpStatusCode.Unauthorized
+        val isUnauthorized = unauthorizedCause != null || isUnauthorizedResponse
+        if (!isUnauthorized) return call!!
+
+        if (attempts >= maxRetries) {
+            onAuthenticationFailed()
+            unauthorizedCause?.let { throw it }
+            return call!!
+        }
+
+        attempts += 1
+        request.attributes.put(UnauthorizedRefreshRetryAttemptKey, attempts)
+
+        val tokenUsedForFailedRequest =
+            extractBearerToken(request.headers[HttpHeaders.Authorization])
+        val latestValidToken = tokenManager.getValidAccessToken()
+
+        if (latestValidToken.isNullOrBlank()) {
+            if (!tokenManager.isAuthenticated.value) {
                 onAuthenticationFailed()
-                throw cause
             }
+            unauthorizedCause?.let { throw it }
+            return call!!
+        }
 
-            attempts += 1
-            request.attributes.put(UnauthorizedRefreshRetryAttemptKey, attempts)
+        val tokenForRetry = if (latestValidToken != tokenUsedForFailedRequest) {
+            latestValidToken
+        } else {
+            tokenManager.refreshToken(force = true)
+        }
 
-            val tokenUsedForFailedRequest =
-                extractBearerToken(request.headers[HttpHeaders.Authorization])
-            val latestValidToken = tokenManager.getValidAccessToken()
-
-            if (latestValidToken.isNullOrBlank()) {
+        if (tokenForRetry.isNullOrBlank()) {
+            if (!tokenManager.isAuthenticated.value) {
                 onAuthenticationFailed()
-                throw cause
             }
+            unauthorizedCause?.let { throw it }
+            return call!!
+        }
 
-            val tokenForRetry = if (latestValidToken != tokenUsedForFailedRequest) {
-                latestValidToken
-            } else {
-                tokenManager.refreshToken(force = true)
-            }
+        request.headers.remove(HttpHeaders.Authorization)
+        request.headers.append(HttpHeaders.Authorization, "Bearer $tokenForRetry")
 
-            if (tokenForRetry.isNullOrBlank()) {
-                onAuthenticationFailed()
-                throw cause
-            }
-
-            request.headers.remove(HttpHeaders.Authorization)
-            request.headers.append(HttpHeaders.Authorization, "Bearer $tokenForRetry")
-
-            // Refresh can change selected tenant context; recompute tenant header for retry.
-            val headerInjectedByPlugin = if (request.attributes.contains(TenantHeaderInjectedByPluginKey)) {
-                request.attributes[TenantHeaderInjectedByPluginKey]
-            } else {
-                false
-            }
-            if (headerInjectedByPlugin || request.headers[TenantHeaderName] == null) {
-                request.headers.remove(TenantHeaderName)
-                val tenantIdForRetry = runCatching { tokenManager.getSelectedTenantId() }.getOrNull()
-                tenantIdForRetry?.let {
-                    request.headers.append(TenantHeaderName, it.toString())
-                    request.attributes.put(TenantHeaderInjectedByPluginKey, true)
-                }
+        // Refresh can change selected tenant context; recompute tenant header for retry.
+        val headerInjectedByPlugin = if (request.attributes.contains(TenantHeaderInjectedByPluginKey)) {
+            request.attributes[TenantHeaderInjectedByPluginKey]
+        } else {
+            false
+        }
+        if (headerInjectedByPlugin || request.headers[TenantHeaderName] == null) {
+            request.headers.remove(TenantHeaderName)
+            val tenantIdForRetry = runCatching { tokenManager.getSelectedTenantId() }.getOrNull()
+            tenantIdForRetry?.let {
+                request.headers.append(TenantHeaderName, it.toString())
+                request.attributes.put(TenantHeaderInjectedByPluginKey, true)
             }
         }
     }

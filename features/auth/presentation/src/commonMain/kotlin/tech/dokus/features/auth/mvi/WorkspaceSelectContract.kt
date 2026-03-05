@@ -79,6 +79,9 @@ sealed interface WorkspaceSelectAction : MVIAction {
     /** Navigate to home screen after successful tenant selection */
     data object NavigateToHome : WorkspaceSelectAction
 
+    /** Session is no longer valid, navigate to login */
+    data object NavigateToLogin : WorkspaceSelectAction
+
     /** Show error message when selection fails */
     data class ShowSelectionError(val error: DokusException) : WorkspaceSelectAction
 }

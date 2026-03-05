@@ -71,9 +71,19 @@ internal class BootstrapContainer(
             return
         }
 
+        if (!tokenManager.isAuthenticated.value) {
+            action(BootstrapAction.NavigateToLogin)
+            return
+        }
+
         // Step 5: Check tenant selection
         if (needsTenantSelection()) {
             action(BootstrapAction.NavigateToTenantSelection)
+            return
+        }
+
+        if (!tokenManager.isAuthenticated.value) {
+            action(BootstrapAction.NavigateToLogin)
             return
         }
 

@@ -28,6 +28,11 @@ internal fun WorkspaceSelectRoute(
             WorkspaceSelectAction.NavigateToHome -> {
                 triggerWarp = true
             }
+            WorkspaceSelectAction.NavigateToLogin -> {
+                navController.navigateTo(AuthDestination.Login) {
+                    popUpTo(0) { inclusive = true }
+                }
+            }
             is WorkspaceSelectAction.ShowSelectionError -> {
                 // TODO: surface error feedback
             }
