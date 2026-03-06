@@ -6,27 +6,26 @@ struct DokusResolvedSession {
 }
 
 actor DokusFileProviderSessionProvider {
-    private let keychain: DokusSharedKeychainStore
+    private let keychain: DokusFileProviderStringStore
     private let defaults: UserDefaults?
     private let session: URLSession
 
-    init() {
+    init(
+        keychain: DokusFileProviderStringStore? = nil,
+        defaults: UserDefaults? = nil,
+        session: URLSession? = nil
+    ) {
         let appGroupIdentifier = Bundle.main.object(forInfoDictionaryKey: "DokusShareAppGroupIdentifier") as? String
         let keychainAccessGroup = Bundle.main.object(forInfoDictionaryKey: "DokusSharedKeychainAccessGroup") as? String
 
-        keychain = DokusSharedKeychainStore(
+        self.keychain = keychain ?? DokusSharedKeychainStore(
             service: DokusFileProviderConstants.authService,
             accessGroup: keychainAccessGroup
         )
-        defaults = UserDefaults(suiteName: appGroupIdentifier ?? DokusFileProviderConstants.appGroupIdentifier)
-
-        let configuration = URLSessionConfiguration.ephemeral
-        configuration.timeoutIntervalForRequest = 60
-        configuration.timeoutIntervalForResource = 300
-        if let appGroupIdentifier {
-            configuration.sharedContainerIdentifier = appGroupIdentifier
-        }
-        session = URLSession(configuration: configuration)
+        self.defaults = defaults ?? UserDefaults(
+            suiteName: appGroupIdentifier ?? DokusFileProviderConstants.appGroupIdentifier
+        )
+        self.session = session ?? Self.makeSession(appGroupIdentifier: appGroupIdentifier)
     }
 
     func resolvedSession(workspaceId: String?) async throws -> DokusResolvedSession {
@@ -36,6 +35,7 @@ actor DokusFileProviderSessionProvider {
         }
 
         let refreshToken = keychain.string(for: DokusFileProviderConstants.refreshTokenKey)
+        var selectedTenantId = keychain.string(for: DokusFileProviderConstants.lastSelectedTenantKey)
         let baseURL = resolvedBaseURL()
         DokusFileProviderLog.session.debug(
             "resolvedSession start workspaceId=\(workspaceId ?? "nil", privacy: .public) baseURL=\(baseURL.absoluteString, privacy: .public)"
@@ -43,13 +43,15 @@ actor DokusFileProviderSessionProvider {
 
         if needsRefresh(for: accessToken), let refreshToken {
             DokusFileProviderLog.session.debug("resolvedSession refreshing token")
+            let refreshTenantId = workspaceId ?? selectedTenantId
             let refreshed = try await refreshTokens(
                 baseURL: baseURL,
                 refreshToken: refreshToken,
-                tenantId: workspaceId ?? tenantIdFromClaims(token: accessToken)
+                tenantId: refreshTenantId
             )
-            persist(tokens: refreshed)
+            persist(tokens: refreshed, fallbackSelectedTenantId: refreshTenantId)
             accessToken = refreshed.accessToken
+            selectedTenantId = refreshed.selectedTenantId ?? refreshTenantId
             DokusFileProviderLog.session.debug("resolvedSession token refresh succeeded")
         }
 
@@ -58,8 +60,7 @@ actor DokusFileProviderSessionProvider {
             return DokusResolvedSession(baseURL: baseURL, accessToken: accessToken)
         }
 
-        let claimedTenant = tenantIdFromClaims(token: accessToken)
-        if claimedTenant == targetWorkspaceId {
+        if selectedTenantId == targetWorkspaceId {
             DokusFileProviderLog.session.debug("resolvedSession already on tenantId=\(targetWorkspaceId, privacy: .public)")
             return DokusResolvedSession(baseURL: baseURL, accessToken: accessToken)
         }
@@ -77,10 +78,19 @@ actor DokusFileProviderSessionProvider {
             accessToken: accessToken,
             tenantId: targetWorkspaceId
         )
-        persist(tokens: switched)
-        keychain.set(targetWorkspaceId, for: DokusFileProviderConstants.lastSelectedTenantKey)
+        persist(tokens: switched, fallbackSelectedTenantId: targetWorkspaceId)
         DokusFileProviderLog.session.debug("resolvedSession tenant switch succeeded tenantId=\(targetWorkspaceId, privacy: .public)")
         return DokusResolvedSession(baseURL: baseURL, accessToken: switched.accessToken)
+    }
+
+    private static func makeSession(appGroupIdentifier: String?) -> URLSession {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.timeoutIntervalForRequest = 60
+        configuration.timeoutIntervalForResource = 300
+        if let appGroupIdentifier {
+            configuration.sharedContainerIdentifier = appGroupIdentifier
+        }
+        return URLSession(configuration: configuration)
     }
 
     private func resolvedBaseURL() -> URL {
@@ -126,15 +136,7 @@ actor DokusFileProviderSessionProvider {
             throw DokusFileProviderError.notAuthenticated
         }
 
-        guard
-            let object = (try? JSONSerialization.jsonObject(with: result.0)) as? [String: Any],
-            let accessToken = object["accessToken"] as? String,
-            let newRefreshToken = object["refreshToken"] as? String
-        else {
-            throw DokusFileProviderError.invalidServerResponse
-        }
-
-        return TokenBundle(accessToken: accessToken, refreshToken: newRefreshToken)
+        return try parseTokenBundle(from: result.0)
     }
 
     private func selectTenant(
@@ -167,42 +169,18 @@ actor DokusFileProviderSessionProvider {
             throw DokusFileProviderError.notAuthenticated
         }
 
-        guard
-            let object = (try? JSONSerialization.jsonObject(with: result.0)) as? [String: Any],
-            let newAccessToken = object["accessToken"] as? String,
-            let newRefreshToken = object["refreshToken"] as? String
-        else {
-            throw DokusFileProviderError.invalidServerResponse
-        }
-
-        return TokenBundle(accessToken: newAccessToken, refreshToken: newRefreshToken)
+        return try parseTokenBundle(from: result.0)
     }
 
-    private func persist(tokens: TokenBundle) {
+    private func persist(tokens: TokenBundle, fallbackSelectedTenantId: String?) {
         keychain.set(tokens.accessToken, for: DokusFileProviderConstants.accessTokenKey)
         keychain.set(tokens.refreshToken, for: DokusFileProviderConstants.refreshTokenKey)
-    }
-
-    private func tenantIdFromClaims(token: String) -> String? {
-        guard let payload = decodeJwtPayload(token: token) else {
-            return nil
+        let selectedTenantId = tokens.selectedTenantId ?? fallbackSelectedTenantId
+        if let selectedTenantId, !selectedTenantId.isEmpty {
+            keychain.set(selectedTenantId, for: DokusFileProviderConstants.lastSelectedTenantKey)
+        } else {
+            keychain.remove(DokusFileProviderConstants.lastSelectedTenantKey)
         }
-
-        if let tenantId = payload[DokusFileProviderConstants.tenantClaimKey] as? String, !tenantId.isEmpty {
-            return tenantId
-        }
-
-        if
-            let tenantsString = payload["tenants"] as? String,
-            let tenantsData = tenantsString.data(using: .utf8),
-            let tenantsObject = try? JSONSerialization.jsonObject(with: tenantsData) as? [[String: Any]],
-            let first = tenantsObject.first,
-            let legacyTenantId = first[DokusFileProviderConstants.tenantClaimKey] as? String,
-            !legacyTenantId.isEmpty {
-            return legacyTenantId
-        }
-
-        return nil
     }
 
     private func needsRefresh(for token: String) -> Bool {
@@ -244,9 +222,44 @@ actor DokusFileProviderSessionProvider {
         }
         return object
     }
+
+    private func parseTokenBundle(from data: Data) throws -> TokenBundle {
+        guard
+            let object = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
+            let accessToken = object["accessToken"] as? String,
+            let refreshToken = object["refreshToken"] as? String
+        else {
+            throw DokusFileProviderError.invalidServerResponse
+        }
+
+        return TokenBundle(
+            accessToken: accessToken,
+            refreshToken: refreshToken,
+            selectedTenantId: decodeFlexibleString(object["selectedTenantId"])
+        )
+    }
+
+    private func decodeFlexibleString(_ value: Any?) -> String? {
+        if let string = value as? String, !string.isEmpty {
+            return string
+        }
+        if let number = value as? NSNumber {
+            return number.stringValue
+        }
+        if let dictionary = value as? [String: Any] {
+            if let nested = dictionary["value"] as? String, !nested.isEmpty {
+                return nested
+            }
+            if let nested = dictionary["id"] as? String, !nested.isEmpty {
+                return nested
+            }
+        }
+        return nil
+    }
 }
 
 private struct TokenBundle {
     let accessToken: String
     let refreshToken: String
+    let selectedTenantId: String?
 }

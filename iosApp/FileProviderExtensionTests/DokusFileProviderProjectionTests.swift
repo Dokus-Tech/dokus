@@ -38,7 +38,7 @@ final class DokusFileProviderProjectionTests: XCTestCase {
     }
 
     func testRoleVisibilityHidesLifecycleForAccountant() {
-        let workspace = DokusWorkspace(id: "ws-2", name: "Bakkerij Peeters", role: .accountant)
+        let workspace = DokusWorkspace(id: "ws-2", name: "Bakkerij Peeters", role: .viewer)
         let docs = [
             makeRecord(id: "queued", ingestion: .queued, draftStatus: nil, draftType: nil, direction: .unknown),
             makeRecord(id: "confirmed", ingestion: .succeeded, draftStatus: .confirmed, draftType: .invoice, direction: .inbound),
@@ -50,7 +50,7 @@ final class DokusFileProviderProjectionTests: XCTestCase {
             rootDisplayName: DokusFileProviderConstants.domainDisplayName
         )
 
-        let rootChildren = projection.children(of: .rootContainer).map(\.filename)
+        let rootChildren = projection.children(of: NSFileProviderItemIdentifier.rootContainer).map { $0.filename }
         XCTAssertFalse(rootChildren.contains(DokusLifecycleFolder.inbox.rawValue))
         XCTAssertFalse(rootChildren.contains(DokusLifecycleFolder.needsReview.rawValue))
         XCTAssertTrue(rootChildren.contains(DokusTypedFolder.invoicesIn.rawValue))

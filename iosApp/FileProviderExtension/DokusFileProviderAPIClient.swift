@@ -5,13 +5,12 @@ final class DokusFileProviderAPIClient {
     private let sessionProvider: DokusFileProviderSessionProvider
     private let session: URLSession
 
-    init(sessionProvider: DokusFileProviderSessionProvider) {
+    init(
+        sessionProvider: DokusFileProviderSessionProvider,
+        session: URLSession? = nil
+    ) {
         self.sessionProvider = sessionProvider
-
-        let configuration = URLSessionConfiguration.ephemeral
-        configuration.timeoutIntervalForRequest = 60
-        configuration.timeoutIntervalForResource = 300
-        self.session = URLSession(configuration: configuration)
+        self.session = session ?? Self.makeSession()
     }
 
     func listWorkspaces() async throws -> [DokusWorkspace] {
@@ -71,6 +70,7 @@ final class DokusFileProviderAPIClient {
             var request = URLRequest(url: url)
             request.httpMethod = "GET"
             request.setValue("Bearer \(resolved.accessToken)", forHTTPHeaderField: "Authorization")
+            attachTenantHeader(workspaceId: workspaceId, to: &request)
 
             let data = try await dataForRequest(request)
             guard let object = try parseJsonObject(from: data) as? [String: Any] else {
@@ -121,6 +121,7 @@ final class DokusFileProviderAPIClient {
         request.setValue("Bearer \(resolved.accessToken)", forHTTPHeaderField: "Authorization")
         request.setValue(multipart.contentType, forHTTPHeaderField: "Content-Type")
         request.setValue("\(multipart.contentLength)", forHTTPHeaderField: "Content-Length")
+        attachTenantHeader(workspaceId: workspaceId, to: &request)
 
         let data = try await uploadDataForRequest(request, fromFile: multipart.fileURL)
         guard let object = try parseJsonObject(from: data) as? [String: Any] else {
@@ -145,6 +146,7 @@ final class DokusFileProviderAPIClient {
         var request = URLRequest(url: url)
         request.httpMethod = "DELETE"
         request.setValue("Bearer \(resolved.accessToken)", forHTTPHeaderField: "Authorization")
+        attachTenantHeader(workspaceId: workspaceId, to: &request)
 
         _ = try await dataForRequest(request, allowNoContent: true)
     }
@@ -277,6 +279,7 @@ final class DokusFileProviderAPIClient {
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.setValue("Bearer \(resolved.accessToken)", forHTTPHeaderField: "Authorization")
+        attachTenantHeader(workspaceId: workspaceId, to: &request)
         DokusFileProviderLog.api.debug(
             "fetchThumbnail request workspaceId=\(workspaceId, privacy: .public) documentId=\(record.documentId, privacy: .public) dpi=\(dpi, privacy: .public)"
         )
@@ -293,6 +296,7 @@ final class DokusFileProviderAPIClient {
         )
         request.httpMethod = "GET"
         request.setValue("Bearer \(resolved.accessToken)", forHTTPHeaderField: "Authorization")
+        attachTenantHeader(workspaceId: record.workspaceId, to: &request)
         return try await downloadFileForRequest(
             request,
             record: record,
@@ -331,6 +335,7 @@ final class DokusFileProviderAPIClient {
         var request = URLRequest(url: resolved.baseURL.appendingPathQuery("/api/v1/documents/\(record.documentId)"))
         request.httpMethod = "GET"
         request.setValue("Bearer \(resolved.accessToken)", forHTTPHeaderField: "Authorization")
+        attachTenantHeader(workspaceId: record.workspaceId, to: &request)
 
         let data = try await dataForRequest(request)
         guard
@@ -357,6 +362,20 @@ final class DokusFileProviderAPIClient {
         case .notAuthenticated, .unsupportedOperation, .noSuchItem:
             return false
         }
+    }
+
+    private static func makeSession() -> URLSession {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.timeoutIntervalForRequest = 60
+        configuration.timeoutIntervalForResource = 300
+        return URLSession(configuration: configuration)
+    }
+
+    private func attachTenantHeader(workspaceId: String, to request: inout URLRequest) {
+        request.setValue(
+            workspaceId,
+            forHTTPHeaderField: DokusFileProviderConstants.tenantHeaderName
+        )
     }
 
     private func shouldRetryDirectDownload(after error: DokusFileProviderError) -> Bool {

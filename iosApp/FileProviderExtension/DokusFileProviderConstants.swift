@@ -14,7 +14,7 @@ enum DokusFileProviderConstants {
     static let accessTokenKey = "auth.access_token"
     static let refreshTokenKey = "auth.refresh_token"
     static let lastSelectedTenantKey = "auth.last_selected_tenant_id"
-    static let tenantClaimKey = "tenant_id"
+    static let tenantHeaderName = "X-Tenant-Id"
     static let tokenExpiryClaimKey = "exp"
     static let refreshLeadSeconds: TimeInterval = 60
 
@@ -134,7 +134,13 @@ struct DokusDocumentRecord: Hashable {
     let documentNumber: String?
 }
 
-final class DokusSharedKeychainStore {
+protocol DokusFileProviderStringStore: AnyObject {
+    func string(for key: String) -> String?
+    func set(_ value: String, for key: String)
+    func remove(_ key: String)
+}
+
+final class DokusSharedKeychainStore: DokusFileProviderStringStore {
     private let service: String
     private let accessGroup: String?
 
@@ -182,6 +188,10 @@ final class DokusSharedKeychainStore {
             addQuery[kSecValueData as String] = data
             SecItemAdd(addQuery as CFDictionary, nil)
         }
+    }
+
+    func remove(_ key: String) {
+        SecItemDelete(baseQuery(for: key) as CFDictionary)
     }
 
     private func baseQuery(for key: String) -> [String: Any] {
