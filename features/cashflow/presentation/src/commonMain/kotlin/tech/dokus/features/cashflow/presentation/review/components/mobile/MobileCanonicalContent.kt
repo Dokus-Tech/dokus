@@ -19,6 +19,7 @@ import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
+import tech.dokus.features.cashflow.presentation.review.components.previewAutoPaymentStatus
 import tech.dokus.features.cashflow.presentation.review.components.previewReviewContentState
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.tooling.PreviewParameters
@@ -106,6 +107,25 @@ private fun MobileCanonicalContentPaidPreview(
     TestWrapper(parameters) {
         MobileCanonicalContent(
             state = previewReviewContentState(entryStatus = CashflowEntryStatus.Paid),
+            onIntent = {},
+            onBackClick = {},
+            onOpenSource = {},
+            modifier = Modifier.fillMaxSize(),
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun MobileCanonicalContentAutoPaidPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
+) {
+    TestWrapper(parameters) {
+        MobileCanonicalContent(
+            state = previewReviewContentState(
+                entryStatus = CashflowEntryStatus.Paid,
+                autoPaymentStatus = previewAutoPaymentStatus(canUndo = true),
+            ),
             onIntent = {},
             onBackClick = {},
             onOpenSource = {},

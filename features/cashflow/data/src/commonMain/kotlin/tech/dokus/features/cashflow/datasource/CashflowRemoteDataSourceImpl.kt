@@ -48,10 +48,12 @@ import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.AttachmentDto
 import tech.dokus.domain.model.CancelEntryRequest
+import tech.dokus.domain.model.AutoPaymentStatusDto
 import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.model.CashflowOverview
 import tech.dokus.domain.model.CashflowPaymentCandidatesResponse
 import tech.dokus.domain.model.CashflowPaymentRequest
+import tech.dokus.domain.model.UndoAutoPaymentRequest
 import tech.dokus.domain.model.CreateExpenseRequest
 import tech.dokus.domain.model.CreateInvoiceRequest
 import tech.dokus.domain.model.DocumentDraftDto
@@ -537,6 +539,16 @@ internal class CashflowRemoteDataSourceImpl(
         }
     }
 
+    override suspend fun getAutoPaymentStatus(
+        entryId: CashflowEntryId
+    ): Result<AutoPaymentStatusDto> {
+        return runCatching {
+            val entriesRoute = Cashflow.Entries()
+            val idRoute = Cashflow.Entries.Id(parent = entriesRoute, id = entryId.toString())
+            httpClient.get(Cashflow.Entries.Id.AutoPaymentStatus(parent = idRoute)).body()
+        }
+    }
+
     override suspend fun recordCashflowPayment(
         entryId: CashflowEntryId,
         request: CashflowPaymentRequest
@@ -561,6 +573,20 @@ internal class CashflowRemoteDataSourceImpl(
             httpClient.post(Cashflow.Entries.Id.Cancel(parent = idRoute)) {
                 contentType(ContentType.Application.Json)
                 request?.let { setBody(it) }
+            }.body()
+        }
+    }
+
+    override suspend fun undoAutoPayment(
+        entryId: CashflowEntryId,
+        request: UndoAutoPaymentRequest
+    ): Result<CashflowEntry> {
+        return runCatching {
+            val entriesRoute = Cashflow.Entries()
+            val idRoute = Cashflow.Entries.Id(parent = entriesRoute, id = entryId.toString())
+            httpClient.post(Cashflow.Entries.Id.UndoAutoPayment(parent = idRoute)) {
+                contentType(ContentType.Application.Json)
+                setBody(request)
             }.body()
         }
     }

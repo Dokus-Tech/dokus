@@ -12,6 +12,7 @@ import tech.dokus.domain.enums.PaymentCandidateTier
 import tech.dokus.foundation.backend.database.dbEnumeration
 
 private const val HashLength = 64
+private const val FingerprintLength = 64
 private const val IbanLength = 34
 private const val NameLength = 255
 private const val StructuredCommLength = 64
@@ -29,6 +30,7 @@ object ImportedBankTransactionsTable : UUIDTable("imported_bank_transactions") {
     )
 
     val rowHash = varchar("row_hash", HashLength)
+    val transactionFingerprint = varchar("transaction_fingerprint", FingerprintLength)
     val transactionDate = date("transaction_date")
     val signedAmount = decimal("signed_amount", 12, 2)
     val counterpartyName = varchar("counterparty_name", NameLength).nullable()
@@ -57,5 +59,6 @@ object ImportedBankTransactionsTable : UUIDTable("imported_bank_transactions") {
         index(false, tenantId, suggestedCashflowEntryId)
         index(false, tenantId, linkedCashflowEntryId)
         index(false, tenantId, normalizedStructuredCommunication)
+        index(false, tenantId, transactionFingerprint)
     }
 }

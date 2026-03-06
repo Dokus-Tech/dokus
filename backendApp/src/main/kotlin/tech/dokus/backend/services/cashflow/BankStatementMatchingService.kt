@@ -110,6 +110,7 @@ class BankStatementMatchingService(
             validRows += sanitized
             inserts += ImportedBankTransactionCreate(
                 rowHash = rowHash,
+                transactionFingerprint = rowHash,
                 transactionDate = date,
                 signedAmount = amount,
                 counterpartyName = row.counterpartyName,

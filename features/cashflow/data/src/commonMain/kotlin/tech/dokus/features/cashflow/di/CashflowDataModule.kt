@@ -25,10 +25,12 @@ import tech.dokus.features.cashflow.gateway.PeppolTransmissionsGatewayImpl
 import tech.dokus.features.cashflow.usecase.CancelCashflowEntryUseCaseImpl
 import tech.dokus.features.cashflow.usecase.ConfirmDocumentUseCaseImpl
 import tech.dokus.features.cashflow.usecase.GetCashflowEntryUseCaseImpl
+import tech.dokus.features.cashflow.usecase.GetAutoPaymentStatusUseCaseImpl
 import tech.dokus.features.cashflow.usecase.GetCashflowPaymentCandidatesUseCaseImpl
 import tech.dokus.features.cashflow.usecase.GetCashflowOverviewUseCaseImpl
 import tech.dokus.features.cashflow.usecase.LoadCashflowEntriesUseCaseImpl
 import tech.dokus.features.cashflow.usecase.RecordCashflowPaymentUseCaseImpl
+import tech.dokus.features.cashflow.usecase.UndoAutoPaymentUseCaseImpl
 import tech.dokus.features.cashflow.usecase.ConnectPeppolUseCaseImpl
 import tech.dokus.features.cashflow.usecase.DeleteDocumentUseCaseImpl
 import tech.dokus.features.cashflow.usecase.GetChatConfigurationUseCaseImpl
@@ -69,10 +71,12 @@ import tech.dokus.features.cashflow.usecase.WaitForPeppolTransferUseCaseImpl
 import tech.dokus.features.cashflow.usecases.CancelCashflowEntryUseCase
 import tech.dokus.features.cashflow.usecases.ConfirmDocumentUseCase
 import tech.dokus.features.cashflow.usecases.GetCashflowEntryUseCase
+import tech.dokus.features.cashflow.usecases.GetAutoPaymentStatusUseCase
 import tech.dokus.features.cashflow.usecases.GetCashflowPaymentCandidatesUseCase
 import tech.dokus.features.cashflow.usecases.GetCashflowOverviewUseCase
 import tech.dokus.features.cashflow.usecases.LoadCashflowEntriesUseCase
 import tech.dokus.features.cashflow.usecases.RecordCashflowPaymentUseCase
+import tech.dokus.features.cashflow.usecases.UndoAutoPaymentUseCase
 import tech.dokus.features.cashflow.usecases.ConnectPeppolUseCase
 import tech.dokus.features.cashflow.usecases.DeleteDocumentUseCase
 import tech.dokus.features.cashflow.usecases.GetChatConfigurationUseCase
@@ -212,6 +216,8 @@ val cashflowNetworkModule = module {
     factory<LoadCashflowEntriesUseCase> { LoadCashflowEntriesUseCaseImpl(get()) }
     factory<GetCashflowEntryUseCase> { GetCashflowEntryUseCaseImpl(get()) }
     factory<GetCashflowPaymentCandidatesUseCase> { GetCashflowPaymentCandidatesUseCaseImpl(get()) }
+    factory<GetAutoPaymentStatusUseCase> { GetAutoPaymentStatusUseCaseImpl(get()) }
     factory<RecordCashflowPaymentUseCase> { RecordCashflowPaymentUseCaseImpl(get()) }
+    factory<UndoAutoPaymentUseCase> { UndoAutoPaymentUseCaseImpl(get()) }
     factory<CancelCashflowEntryUseCase> { CancelCashflowEntryUseCaseImpl(get()) }
 }

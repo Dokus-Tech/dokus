@@ -14,8 +14,11 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
 import tech.dokus.database.tables.payment.PaymentsTable
 import tech.dokus.domain.Money
+import tech.dokus.domain.enums.PaymentCreatedBy
 import tech.dokus.domain.enums.PaymentMethod
+import tech.dokus.domain.enums.PaymentSource
 import tech.dokus.domain.fromDbDecimal
+import tech.dokus.domain.ids.ImportedBankTransactionId
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.PaymentId
 import tech.dokus.domain.ids.TenantId
@@ -47,6 +50,9 @@ class PaymentRepository {
         paymentDate: LocalDate,
         paymentMethod: PaymentMethod,
         transactionId: TransactionId?,
+        bankTransactionId: ImportedBankTransactionId? = null,
+        source: PaymentSource = PaymentSource.Manual,
+        createdBy: PaymentCreatedBy = PaymentCreatedBy.User,
         notes: String?
     ): Result<PaymentDto> = runCatching {
         dbQuery {
@@ -57,6 +63,9 @@ class PaymentRepository {
                 it[PaymentsTable.paymentDate] = paymentDate
                 it[PaymentsTable.paymentMethod] = paymentMethod
                 it[PaymentsTable.transactionId] = transactionId?.value
+                it[PaymentsTable.bankTransactionId] = bankTransactionId?.let { id -> UUID.fromString(id.toString()) }
+                it[PaymentsTable.paymentSource] = source
+                it[PaymentsTable.createdBy] = createdBy
                 it[PaymentsTable.notes] = notes
             } get PaymentsTable.id
 
@@ -183,7 +192,13 @@ class PaymentRepository {
             paymentDate = this[PaymentsTable.paymentDate],
             paymentMethod = this[PaymentsTable.paymentMethod],
             transactionId = this[PaymentsTable.transactionId]?.let { TransactionId(it) },
+            bankTransactionId = this[PaymentsTable.bankTransactionId]?.let { ImportedBankTransactionId.parse(it.toString()) },
+            source = this[PaymentsTable.paymentSource],
+            createdBy = this[PaymentsTable.createdBy],
             notes = this[PaymentsTable.notes],
+            reversedAt = this[PaymentsTable.reversedAt],
+            reversedByUserId = this[PaymentsTable.reversedByUserId]?.let { tech.dokus.domain.ids.UserId(it.toString()) },
+            reversalReason = this[PaymentsTable.reversalReason],
             createdAt = this[PaymentsTable.createdAt]
         )
     }

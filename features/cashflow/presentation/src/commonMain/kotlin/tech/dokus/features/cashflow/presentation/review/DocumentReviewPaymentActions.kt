@@ -10,16 +10,21 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.model.CashflowPaymentRequest
+import tech.dokus.domain.model.UndoAutoPaymentRequest
 import tech.dokus.features.cashflow.usecases.GetCashflowEntryUseCase
+import tech.dokus.features.cashflow.usecases.GetAutoPaymentStatusUseCase
 import tech.dokus.features.cashflow.usecases.GetCashflowPaymentCandidatesUseCase
 import tech.dokus.features.cashflow.usecases.RecordCashflowPaymentUseCase
+import tech.dokus.features.cashflow.usecases.UndoAutoPaymentUseCase
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.platform.Logger
 
 internal class DocumentReviewPaymentActions(
     private val getCashflowEntry: GetCashflowEntryUseCase,
     private val getCashflowPaymentCandidates: GetCashflowPaymentCandidatesUseCase,
+    private val getAutoPaymentStatus: GetAutoPaymentStatusUseCase,
     private val recordCashflowPayment: RecordCashflowPaymentUseCase,
+    private val undoAutoPayment: UndoAutoPaymentUseCase,
     private val logger: Logger,
 ) {
     suspend fun DocumentReviewCtx.handleLoadCashflowEntry() {
@@ -36,6 +41,7 @@ internal class DocumentReviewPaymentActions(
                                     confirmedCashflowEntryId = entry.id,
                                 )
                             }
+                            intent(DocumentReviewIntent.LoadAutoPaymentStatus)
                         }
                     },
                     onFailure = { error ->
@@ -46,6 +52,38 @@ internal class DocumentReviewPaymentActions(
                                     cashflowEntryState = DokusState.error(
                                         exception = error.asDokusException,
                                         retryHandler = { intent(DocumentReviewIntent.LoadCashflowEntry) }
+                                    )
+                                )
+                            }
+                        }
+                    }
+                )
+            }
+        }
+    }
+
+    suspend fun DocumentReviewCtx.handleLoadAutoPaymentStatus() {
+        withState<DocumentReviewState.Content, _> {
+            val entry = (cashflowEntryState as? DokusState.Success<*>)?.data as? CashflowEntry ?: run {
+                updateState { copy(autoPaymentStatus = DokusState.idle()) }
+                return@withState
+            }
+            updateState { copy(autoPaymentStatus = DokusState.loading()) }
+            launch {
+                getAutoPaymentStatus(entry.id).fold(
+                    onSuccess = { status ->
+                        withState<DocumentReviewState.Content, _> {
+                            updateState { copy(autoPaymentStatus = DokusState.success(status)) }
+                        }
+                    },
+                    onFailure = { error ->
+                        logger.e(error) { "Failed to load auto-payment status for entry: ${entry.id}" }
+                        withState<DocumentReviewState.Content, _> {
+                            updateState {
+                                copy(
+                                    autoPaymentStatus = DokusState.error(
+                                        exception = error.asDokusException,
+                                        retryHandler = { intent(DocumentReviewIntent.LoadAutoPaymentStatus) }
                                     )
                                 )
                             }
@@ -279,6 +317,7 @@ internal class DocumentReviewPaymentActions(
                                     paymentSheetState = null,
                                 )
                             }
+                            intent(DocumentReviewIntent.LoadAutoPaymentStatus)
                         }
                     },
                     onFailure = { error ->
@@ -292,6 +331,39 @@ internal class DocumentReviewPaymentActions(
                                     )
                                 }
                             }
+                        }
+                        action(DocumentReviewAction.ShowError(error.asDokusException))
+                    }
+                )
+            }
+        }
+    }
+
+    suspend fun DocumentReviewCtx.handleUndoAutoPayment(reason: String?) {
+        withState<DocumentReviewState.Content, _> {
+            if (isUndoingAutoPayment) return@withState
+            val entry = (cashflowEntryState as? DokusState.Success<*>)?.data as? CashflowEntry ?: return@withState
+            updateState { copy(isUndoingAutoPayment = true) }
+            launch {
+                undoAutoPayment(
+                    entryId = entry.id,
+                    request = UndoAutoPaymentRequest(reason = reason)
+                ).fold(
+                    onSuccess = { updatedEntry ->
+                        withState<DocumentReviewState.Content, _> {
+                            updateState {
+                                copy(
+                                    isUndoingAutoPayment = false,
+                                    cashflowEntryState = DokusState.success(updatedEntry),
+                                )
+                            }
+                            intent(DocumentReviewIntent.LoadAutoPaymentStatus)
+                        }
+                    },
+                    onFailure = { error ->
+                        logger.e(error) { "Failed to undo auto payment: ${entry.id}" }
+                        withState<DocumentReviewState.Content, _> {
+                            updateState { copy(isUndoingAutoPayment = false) }
                         }
                         action(DocumentReviewAction.ShowError(error.asDokusException))
                     }

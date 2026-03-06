@@ -27,3 +27,66 @@ enum class PaymentCandidateTier(override val dbValue: String) : DbEnum {
     @SerialName("POSSIBLE")
     Possible("POSSIBLE")
 }
+
+@Serializable
+enum class AutoMatchCreatedBy(override val dbValue: String) : DbEnum {
+    @SerialName("AUTO")
+    Auto("AUTO"),
+
+    @SerialName("USER")
+    User("USER")
+}
+
+@Serializable
+enum class AutoMatchStatus(override val dbValue: String) : DbEnum {
+    @SerialName("SUGGESTED")
+    Suggested("SUGGESTED"),
+
+    @SerialName("AUTO_MATCHED")
+    AutoMatched("AUTO_MATCHED"),
+
+    @SerialName("AUTO_PAID")
+    AutoPaid("AUTO_PAID"),
+
+    @SerialName("REVERSED")
+    Reversed("REVERSED")
+}
+
+@Serializable
+enum class AutoPaymentTriggerSource(override val dbValue: String) : DbEnum {
+    @SerialName("INVOICE_CONFIRMED")
+    InvoiceConfirmed("INVOICE_CONFIRMED"),
+
+    @SerialName("BANK_IMPORT")
+    BankImport("BANK_IMPORT"),
+
+    @SerialName("CONTACT_UPDATED")
+    ContactUpdated("CONTACT_UPDATED"),
+
+    @SerialName("MANUAL_RETRY")
+    ManualRetry("MANUAL_RETRY"),
+
+    @SerialName("UNDO_REQUEST")
+    UndoRequest("UNDO_REQUEST")
+}
+
+@Serializable
+enum class AutoPaymentDecision(override val dbValue: String) : DbEnum {
+    @SerialName("SKIPPED")
+    Skipped("SKIPPED"),
+
+    @SerialName("SUGGESTED_ONLY")
+    SuggestedOnly("SUGGESTED_ONLY"),
+
+    @SerialName("AUTO_MATCHED")
+    AutoMatched("AUTO_MATCHED"),
+
+    @SerialName("AUTO_PAID")
+    AutoPaid("AUTO_PAID"),
+
+    @SerialName("UNDO_APPLIED")
+    UndoApplied("UNDO_APPLIED"),
+
+    @SerialName("UNDO_REJECTED")
+    UndoRejected("UNDO_REJECTED")
+}

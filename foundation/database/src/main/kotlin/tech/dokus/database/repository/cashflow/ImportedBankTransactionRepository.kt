@@ -7,6 +7,7 @@ import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.greaterEq
 import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.neq
 import org.jetbrains.exposed.v1.jdbc.batchInsert
@@ -29,6 +30,7 @@ import java.util.UUID
 
 data class ImportedBankTransactionCreate(
     val rowHash: String,
+    val transactionFingerprint: String,
     val transactionDate: LocalDate,
     val signedAmount: Money,
     val counterpartyName: String? = null,
@@ -62,6 +64,7 @@ class ImportedBankTransactionRepository {
                 this[ImportedBankTransactionsTable.tenantId] = tenantUuid
                 this[ImportedBankTransactionsTable.documentId] = documentUuid
                 this[ImportedBankTransactionsTable.rowHash] = row.rowHash
+                this[ImportedBankTransactionsTable.transactionFingerprint] = row.transactionFingerprint
                 this[ImportedBankTransactionsTable.transactionDate] = row.transactionDate
                 this[ImportedBankTransactionsTable.signedAmount] = row.signedAmount.toDbDecimal()
                 this[ImportedBankTransactionsTable.counterpartyName] = row.counterpartyName
@@ -207,6 +210,51 @@ class ImportedBankTransactionRepository {
             it[status] = ImportedBankTransactionStatus.Ignored
             it[updatedAt] = now
         }
+    }
+
+    suspend fun listRecentCandidatePool(
+        tenantId: TenantId,
+        fromDate: LocalDate
+    ): List<ImportedBankTransactionDto> = newSuspendedTransaction {
+        ImportedBankTransactionsTable.selectAll().where {
+            (ImportedBankTransactionsTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                (ImportedBankTransactionsTable.status inList listOf(
+                    ImportedBankTransactionStatus.Unmatched,
+                    ImportedBankTransactionStatus.Suggested
+                )) and
+                (ImportedBankTransactionsTable.transactionDate greaterEq fromDate)
+        }.orderBy(
+            ImportedBankTransactionsTable.transactionDate to SortOrder.DESC,
+            ImportedBankTransactionsTable.createdAt to SortOrder.DESC
+        ).map { it.toDto() }
+    }
+
+    suspend fun findByFingerprint(
+        tenantId: TenantId,
+        fingerprint: String
+    ): ImportedBankTransactionDto? = newSuspendedTransaction {
+        ImportedBankTransactionsTable.selectAll().where {
+            (ImportedBankTransactionsTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                (ImportedBankTransactionsTable.transactionFingerprint eq fingerprint)
+        }.orderBy(ImportedBankTransactionsTable.createdAt, SortOrder.DESC).limit(1).singleOrNull()?.toDto()
+    }
+
+    suspend fun clearLinkAndSuggestion(
+        tenantId: TenantId,
+        transactionId: ImportedBankTransactionId
+    ): Boolean = newSuspendedTransaction {
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+        ImportedBankTransactionsTable.update({
+            (ImportedBankTransactionsTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                (ImportedBankTransactionsTable.id eq UUID.fromString(transactionId.toString()))
+        }) {
+            it[linkedCashflowEntryId] = null
+            it[suggestedCashflowEntryId] = null
+            it[suggestedScore] = null
+            it[suggestedTier] = null
+            it[status] = ImportedBankTransactionStatus.Unmatched
+            it[updatedAt] = now
+        } > 0
     }
 
     private fun org.jetbrains.exposed.v1.core.ResultRow.toDto(): ImportedBankTransactionDto {

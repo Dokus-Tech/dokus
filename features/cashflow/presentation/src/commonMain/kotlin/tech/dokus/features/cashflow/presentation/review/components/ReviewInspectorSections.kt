@@ -32,11 +32,13 @@ import tech.dokus.aura.resources.cashflow_match_review_different_document
 import tech.dokus.aura.resources.cashflow_match_review_same_document
 import tech.dokus.aura.resources.document_section_payment
 import tech.dokus.aura.resources.document_sources_independently_verified
+import tech.dokus.domain.enums.AutoMatchStatus
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.DocumentMatchReviewReasonType
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.InvoiceDraftData
+import tech.dokus.domain.model.AutoPaymentStatusDto
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.ReviewFinancialStatus
@@ -238,6 +240,7 @@ internal fun InspectorPaymentSection(
     state: DocumentReviewState.Content,
     onIntent: (DocumentReviewIntent) -> Unit,
 ) {
+    val autoPaymentStatus = (state.autoPaymentStatus as? DokusState.Success<*>)?.data as? AutoPaymentStatusDto
     InspectorSectionCard(title = stringResource(Res.string.document_section_payment)) {
         when (val entryState = state.cashflowEntryState) {
             is DokusState.Success -> {
@@ -248,36 +251,73 @@ internal fun InspectorPaymentSection(
                         modifier = Modifier.fillMaxWidth(),
                         variant = DokusCardVariant.Soft,
                     ) {
-                        Row(
+                        Column(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(Constraints.Spacing.small),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
+                            verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
                         ) {
                             Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
                             ) {
-                                StatusDot(type = state.financialStatus.dotType, size = 6.dp)
-                                Column {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
+                                ) {
+                                    StatusDot(type = state.financialStatus.dotType, size = 6.dp)
+                                    Column {
+                                        Text(
+                                            text = "Bank transfer",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                        )
+                                        Text(
+                                            text = paidAt ?: "\u2014",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.textMuted,
+                                        )
+                                    }
+                                }
+                                Text(
+                                    text = state.financialStatus.localized,
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = state.financialStatus.financialStatusColorized,
+                                )
+                            }
+                            if (autoPaymentStatus?.matchStatus == AutoMatchStatus.AutoPaid) {
+                                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                                Text(
+                                    text = "Auto-paid from imported bank transaction",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                )
+                                val confidenceText = autoPaymentStatus.confidenceScore
+                                    ?.let { score -> "${(score * 100).toInt()}%" }
+                                    ?: "\u2014"
+                                Text(
+                                    text = "Confidence $confidenceText",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.textMuted,
+                                )
+                                if (autoPaymentStatus.reasons.isNotEmpty()) {
                                     Text(
-                                        text = "Bank transfer",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurface,
-                                    )
-                                    Text(
-                                        text = paidAt ?: "\u2014",
+                                        text = autoPaymentStatus.reasons.joinToString(", "),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.textMuted,
                                     )
                                 }
+                                if (autoPaymentStatus.canUndo) {
+                                    OutlinedButton(
+                                        onClick = { onIntent(DocumentReviewIntent.UndoAutoPayment()) },
+                                        enabled = !state.isUndoingAutoPayment,
+                                        modifier = Modifier.fillMaxWidth(),
+                                    ) {
+                                        Text(if (state.isUndoingAutoPayment) "Undoing..." else "Undo auto payment")
+                                    }
+                                }
                             }
-                            Text(
-                                text = state.financialStatus.localized,
-                                style = MaterialTheme.typography.titleSmall,
-                                color = state.financialStatus.financialStatusColorized,
-                            )
                         }
                     }
                 } else {
@@ -320,6 +360,9 @@ internal fun InspectorPaymentSection(
                     }
                 }
             }
+        }
+        if (state.autoPaymentStatus is DokusState.Loading) {
+            InspectorValueRow("Automation", "Loading\u2026")
         }
     }
 }

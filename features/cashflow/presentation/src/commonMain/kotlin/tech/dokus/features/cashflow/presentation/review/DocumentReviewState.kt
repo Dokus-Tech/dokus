@@ -32,6 +32,7 @@ import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.BankStatementDraftData
+import tech.dokus.domain.model.AutoPaymentStatusDto
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.DocumentRecordDto
@@ -141,6 +142,8 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
         val isDocumentRejected: Boolean = false,
         val confirmedCashflowEntryId: CashflowEntryId? = null,
         val cashflowEntryState: DokusState<CashflowEntry> = DokusState.idle(),
+        val autoPaymentStatus: DokusState<AutoPaymentStatusDto> = DokusState.idle(),
+        val isUndoingAutoPayment: Boolean = false,
         val isEditMode: Boolean = false,
         val sourceViewerState: SourceEvidenceViewerState? = null,
         val paymentSheetState: PaymentSheetState? = null,

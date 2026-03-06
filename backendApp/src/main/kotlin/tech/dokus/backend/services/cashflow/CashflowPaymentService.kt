@@ -19,7 +19,9 @@ import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.enums.ImportedBankTransactionStatus
 import tech.dokus.domain.enums.InvoiceStatus
+import tech.dokus.domain.enums.PaymentCreatedBy
 import tech.dokus.domain.enums.PaymentMethod
+import tech.dokus.domain.enums.PaymentSource
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.TenantId
@@ -102,6 +104,9 @@ class CashflowPaymentService(
                     it[paymentDate] = request.paidAt.date
                     it[paymentMethod] = PaymentMethod.BankTransfer
                     it[transactionId] = request.bankTransactionId?.toString()
+                    it[bankTransactionId] = request.bankTransactionId?.let { id -> UUID.fromString(id.toString()) }
+                    it[paymentSource] = PaymentSource.Manual
+                    it[createdBy] = PaymentCreatedBy.User
                     it[notes] = request.note
                 }
             }

@@ -802,6 +802,24 @@ enum class PaymentStatus(override val dbValue: String) : DbEnum {
     Refunded("REFUNDED")
 }
 
+@Serializable
+enum class PaymentSource(override val dbValue: String) : DbEnum {
+    @SerialName("MANUAL")
+    Manual("MANUAL"),
+
+    @SerialName("BANK_IMPORT")
+    BankImport("BANK_IMPORT")
+}
+
+@Serializable
+enum class PaymentCreatedBy(override val dbValue: String) : DbEnum {
+    @SerialName("USER")
+    User("USER"),
+
+    @SerialName("AUTO")
+    Auto("AUTO")
+}
+
 // ============================================================================
 // BANKING ENUMS
 // ============================================================================

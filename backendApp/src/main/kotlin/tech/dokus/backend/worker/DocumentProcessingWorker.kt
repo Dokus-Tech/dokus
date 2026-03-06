@@ -25,6 +25,7 @@ import tech.dokus.backend.services.documents.ContactResolutionService
 import tech.dokus.backend.services.documents.DocumentPurposeService
 import tech.dokus.backend.services.documents.DocumentTruthService
 import tech.dokus.backend.services.cashflow.BankStatementMatchingService
+import tech.dokus.backend.services.cashflow.InvoiceBankAutomationService
 import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
 import tech.dokus.database.entity.IngestionItemEntity
 import tech.dokus.database.repository.auth.TenantRepository
@@ -76,6 +77,7 @@ class DocumentProcessingWorker(
     private val documentTruthService: DocumentTruthService,
     private val draftRepository: DocumentDraftRepository,
     private val bankStatementMatchingService: BankStatementMatchingService,
+    private val invoiceBankAutomationService: InvoiceBankAutomationService,
     private val autoConfirmPolicy: AutoConfirmPolicy,
     private val confirmationDispatcher: DocumentConfirmationDispatcher,
     private val config: ProcessorConfig,
@@ -454,6 +456,20 @@ class DocumentProcessingWorker(
                         extractedData = bankProcessing.sanitizedDraft,
                         status = targetStatus
                     )
+                    if (bankProcessing.validRows > 0) {
+                        runSuspendCatching {
+                            invoiceBankAutomationService.onBankStatementImported(
+                                tenantId = parsedTenantId,
+                                documentId = documentId
+                            )
+                        }.onFailure {
+                            logger.warn(
+                                "Invoice-bank automation failed after bank statement processing for {}: {}",
+                                documentId,
+                                it.message
+                            )
+                        }
+                    }
                     logger.info(
                         "Processed bank statement {}: validRows={}, discardedRows={}, status={}",
                         documentId,

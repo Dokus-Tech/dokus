@@ -124,6 +124,52 @@ class CashflowEntriesRepository {
         }
     }
 
+    suspend fun listOpenInvoiceEntries(
+        tenantId: TenantId
+    ): Result<List<CashflowEntry>> = runCatching {
+        dbQuery {
+            CashflowEntriesTable
+                .join(
+                    ContactsTable,
+                    JoinType.LEFT,
+                    onColumn = CashflowEntriesTable.counterpartyId,
+                    otherColumn = ContactsTable.id
+                )
+                .selectAll()
+                .where {
+                    (CashflowEntriesTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                        (CashflowEntriesTable.sourceType eq CashflowSourceType.Invoice) and
+                        (CashflowEntriesTable.status inList listOf(CashflowEntryStatus.Open, CashflowEntryStatus.Overdue))
+                }
+                .map { row -> mapRowToEntry(row, row.getOrNull(ContactsTable.name)) }
+                .filter { !it.remainingAmount.isZero }
+        }
+    }
+
+    suspend fun listOpenInvoiceEntriesByContact(
+        tenantId: TenantId,
+        contactId: ContactId
+    ): Result<List<CashflowEntry>> = runCatching {
+        dbQuery {
+            CashflowEntriesTable
+                .join(
+                    ContactsTable,
+                    JoinType.LEFT,
+                    onColumn = CashflowEntriesTable.counterpartyId,
+                    otherColumn = ContactsTable.id
+                )
+                .selectAll()
+                .where {
+                    (CashflowEntriesTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                        (CashflowEntriesTable.sourceType eq CashflowSourceType.Invoice) and
+                        (CashflowEntriesTable.counterpartyId eq UUID.fromString(contactId.toString())) and
+                        (CashflowEntriesTable.status inList listOf(CashflowEntryStatus.Open, CashflowEntryStatus.Overdue))
+                }
+                .map { row -> mapRowToEntry(row, row.getOrNull(ContactsTable.name)) }
+                .filter { !it.remainingAmount.isZero }
+        }
+    }
+
     /**
      * Update an entry projection by source (Invoice/Expense).
      * This is used for safe "re-confirm" flows to update the projection from the latest draft.

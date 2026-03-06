@@ -10,6 +10,7 @@ import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.Currency
+import tech.dokus.domain.enums.AutoMatchStatus
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentMatchReviewReasonType
 import tech.dokus.domain.enums.DocumentMatchReviewStatus
@@ -26,7 +27,9 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentMatchReviewId
 import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.ids.ImportedBankTransactionId
+import tech.dokus.domain.ids.PaymentId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.AutoPaymentStatusDto
 import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.DocumentDto
@@ -64,6 +67,8 @@ internal fun previewReviewContentState(
     ),
     sourceViewerState: SourceEvidenceViewerState? = null,
     paymentSheetState: PaymentSheetState? = null,
+    autoPaymentStatus: DokusState<AutoPaymentStatusDto> = DokusState.idle(),
+    isUndoingAutoPayment: Boolean = false,
     hasCrossMatchedSource: Boolean = true,
     showPendingMatchReview: Boolean = false,
 ): DocumentReviewState.Content {
@@ -211,11 +216,29 @@ internal fun previewReviewContentState(
         isDocumentRejected = false,
         confirmedCashflowEntryId = cashflowEntry?.id,
         cashflowEntryState = cashflowEntry?.let { DokusState.success(it) } ?: DokusState.idle(),
+        autoPaymentStatus = autoPaymentStatus,
+        isUndoingAutoPayment = isUndoingAutoPayment,
         sourceViewerState = sourceViewerState,
         paymentSheetState = paymentSheetState,
         counterpartyIntent = CounterpartyIntent.None,
     )
 }
+
+internal fun previewAutoPaymentStatus(
+    canUndo: Boolean = true,
+    confidenceScore: Double = 0.97,
+): DokusState<AutoPaymentStatusDto> = DokusState.success(
+    AutoPaymentStatusDto(
+        matchStatus = AutoMatchStatus.AutoPaid,
+        paymentId = PaymentId.parse("6cc26605-d49d-480a-ad2e-93fca770de95"),
+        bankTransactionId = ImportedBankTransactionId.parse("b038fd5b-c2b7-45b4-a0f2-f3a17d673aa3"),
+        confidenceScore = confidenceScore,
+        reasons = listOf("structured_reference_match", "exact_amount", "date_proximity"),
+        matchedAt = LocalDateTime(2026, 2, 15, 7, 32, 0),
+        autoPaidAt = LocalDateTime(2026, 2, 15, 7, 33, 0),
+        canUndo = canUndo,
+    )
+)
 
 internal fun previewSourceEvidenceViewerState(
     sourceType: DocumentSource = DocumentSource.Peppol,

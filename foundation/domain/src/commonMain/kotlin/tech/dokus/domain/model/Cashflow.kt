@@ -8,12 +8,14 @@ import tech.dokus.domain.enums.CashflowDirection
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.enums.Currency
+import tech.dokus.domain.enums.AutoMatchStatus
 import tech.dokus.domain.enums.ImportedBankTransactionStatus
 import tech.dokus.domain.enums.PaymentCandidateTier
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.ImportedBankTransactionId
+import tech.dokus.domain.ids.PaymentId
 import tech.dokus.domain.ids.TenantId
 
 /**
@@ -132,6 +134,23 @@ data class CashflowPaymentCandidatesResponse(
     val strongCandidate: ImportedBankTransactionDto? = null,
     val possibleCandidates: List<ImportedBankTransactionDto> = emptyList(),
     val selectableTransactions: List<ImportedBankTransactionDto> = emptyList()
+)
+
+@Serializable
+data class AutoPaymentStatusDto(
+    val matchStatus: AutoMatchStatus? = null,
+    val paymentId: PaymentId? = null,
+    val bankTransactionId: ImportedBankTransactionId? = null,
+    val confidenceScore: Double? = null,
+    val reasons: List<String> = emptyList(),
+    val matchedAt: LocalDateTime? = null,
+    val autoPaidAt: LocalDateTime? = null,
+    val canUndo: Boolean = false
+)
+
+@Serializable
+data class UndoAutoPaymentRequest(
+    val reason: String? = null
 )
 
 /**

@@ -29,7 +29,9 @@ import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_needed_to_complete
 import tech.dokus.aura.resources.document_payment_awaiting
+import tech.dokus.domain.enums.AutoMatchStatus
 import tech.dokus.domain.model.InvoiceDraftData
+import tech.dokus.domain.model.AutoPaymentStatusDto
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.ReviewFinancialStatus
@@ -44,6 +46,7 @@ import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.PIcon
 import tech.dokus.foundation.aura.components.status.StatusDot
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.style.amberWhisper
 import tech.dokus.foundation.aura.style.greenSoft
 import tech.dokus.foundation.aura.style.redSoft
@@ -128,6 +131,7 @@ internal fun MobilePaymentStateCard(
     state: DocumentReviewState.Content,
     onIntent: (DocumentReviewIntent) -> Unit,
 ) {
+    val autoPaymentStatus = (state.autoPaymentStatus as? DokusState.Success<*>)?.data as? AutoPaymentStatusDto
     val (title, subtitle) = when (state.financialStatus) {
         ReviewFinancialStatus.Paid -> {
             state.paidHeadlineLocalized to state.paidMethodLocalized
@@ -234,6 +238,55 @@ internal fun MobilePaymentStateCard(
                 }
 
                 ReviewFinancialStatus.Paid -> Unit
+            }
+
+            if (state.financialStatus == ReviewFinancialStatus.Paid) {
+                when (state.autoPaymentStatus) {
+                    is DokusState.Loading -> {
+                        Text(
+                            text = "Loading automation status...",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.textMuted,
+                        )
+                    }
+
+                    is DokusState.Success -> {
+                        if (autoPaymentStatus?.matchStatus == AutoMatchStatus.AutoPaid) {
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                            Text(
+                                text = "Auto-paid from imported bank transaction",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                            val confidenceText = autoPaymentStatus.confidenceScore
+                                ?.let { score -> "${(score * 100).toInt()}%" }
+                                ?: "\u2014"
+                            Text(
+                                text = "Confidence $confidenceText",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.textMuted,
+                            )
+                            if (autoPaymentStatus.reasons.isNotEmpty()) {
+                                Text(
+                                    text = autoPaymentStatus.reasons.joinToString(", "),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.textMuted,
+                                )
+                            }
+                            if (autoPaymentStatus.canUndo) {
+                                OutlinedButton(
+                                    onClick = { onIntent(DocumentReviewIntent.UndoAutoPayment()) },
+                                    enabled = !state.isUndoingAutoPayment,
+                                    modifier = Modifier.fillMaxWidth(),
+                                ) {
+                                    Text(if (state.isUndoingAutoPayment) "Undoing..." else "Undo auto payment")
+                                }
+                            }
+                        }
+                    }
+
+                    else -> Unit
+                }
             }
         }
     }

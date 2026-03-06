@@ -215,6 +215,22 @@ private fun ReviewInspectorPanePaidPreview(
 
 @Preview
 @Composable
+private fun ReviewInspectorPaneAutoPaidPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
+) {
+    TestWrapper(parameters) {
+        ReviewInspectorPane(
+            state = previewReviewContentState(
+                entryStatus = CashflowEntryStatus.Paid,
+                autoPaymentStatus = previewAutoPaymentStatus(canUndo = true),
+            ),
+            onIntent = {},
+        )
+    }
+}
+
+@Preview
+@Composable
 private fun ReviewInspectorPaneUnpaidPreview(
     @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
 ) {

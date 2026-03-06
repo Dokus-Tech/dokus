@@ -28,6 +28,7 @@ sealed interface DocumentReviewIntent : MVIIntent {
     data object CloseSourceModal : DocumentReviewIntent
     data object ToggleSourceTechnicalDetails : DocumentReviewIntent
     data object LoadCashflowEntry : DocumentReviewIntent
+    data object LoadAutoPaymentStatus : DocumentReviewIntent
     data object OpenPaymentSheet : DocumentReviewIntent
     data object ClosePaymentSheet : DocumentReviewIntent
     data object LoadPaymentCandidates : DocumentReviewIntent
@@ -39,6 +40,7 @@ sealed interface DocumentReviewIntent : MVIIntent {
     data class UpdatePaymentPaidAt(val date: LocalDate) : DocumentReviewIntent
     data class UpdatePaymentNote(val note: String) : DocumentReviewIntent
     data object SubmitPayment : DocumentReviewIntent
+    data class UndoAutoPayment(val reason: String? = null) : DocumentReviewIntent
 
     data class SelectContact(val contactId: ContactId) : DocumentReviewIntent
     data object AcceptSuggestedContact : DocumentReviewIntent
