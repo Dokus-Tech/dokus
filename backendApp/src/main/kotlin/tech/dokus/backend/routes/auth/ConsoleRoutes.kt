@@ -12,8 +12,8 @@ import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
 import tech.dokus.backend.routes.cashflow.documents.addDownloadUrl
 import tech.dokus.backend.routes.cashflow.documents.toDto
-import tech.dokus.backend.security.requireFirmAccess
 import tech.dokus.backend.security.requireAnyRole
+import tech.dokus.backend.security.requireFirmAccess
 import tech.dokus.backend.security.requireFirmClientAccess
 import tech.dokus.backend.security.requireTenantAccess
 import tech.dokus.backend.services.auth.FirmInviteTokenService
@@ -199,7 +199,9 @@ internal fun Route.consoleRoutes() {
             if (activated) {
                 logger.info(
                     "Firm access granted: firmId={}, tenantId={}, grantedBy={}",
-                    payload.firmId, tenantId, principal.userId,
+                    payload.firmId,
+                    tenantId,
+                    principal.userId,
                 )
             }
 

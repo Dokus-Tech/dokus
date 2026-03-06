@@ -16,11 +16,9 @@ sealed interface DocumentReviewAction : MVIAction {
 
     data class ShowError(val error: DokusException) : DocumentReviewAction
     data class ShowSuccess(val success: DocumentReviewSuccess) : DocumentReviewAction
-    data object ShowDiscardConfirmation : DocumentReviewAction
 }
 
 @Immutable
 sealed interface DocumentReviewSuccess {
-    data object DraftSaved : DocumentReviewSuccess
     data object DocumentConfirmed : DocumentReviewSuccess
 }

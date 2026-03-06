@@ -114,4 +114,15 @@ class BusinessProfileServiceProjectionTest {
         assertEquals("/api/v1/contacts/${contactId.value}/avatar/medium.webp", projected.avatar?.medium)
         assertEquals("/api/v1/contacts/${contactId.value}/avatar/large.webp", projected.avatar?.large)
     }
+
+    @Test
+    fun `build tenant avatar thumbnail includes tenant id path`() {
+        val tenantId = TenantId.generate()
+
+        val thumbnail = service.buildTenantAvatarThumbnail(tenantId)
+
+        assertEquals("/api/v1/tenants/$tenantId/avatar/small.webp", thumbnail.small)
+        assertEquals("/api/v1/tenants/$tenantId/avatar/medium.webp", thumbnail.medium)
+        assertEquals("/api/v1/tenants/$tenantId/avatar/large.webp", thumbnail.large)
+    }
 }

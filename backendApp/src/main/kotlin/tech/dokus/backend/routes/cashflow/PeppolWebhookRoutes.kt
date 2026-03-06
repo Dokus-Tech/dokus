@@ -26,8 +26,8 @@ private val logger = loggerFor("PeppolWebhook")
  * This endpoint receives notifications from the Peppol provider (Recommand)
  * when new documents arrive. It uses a per-tenant webhook token for authentication.
  *
- * The webhook simply triggers an immediate poll - all document processing
- * goes through the standard pollInbox() flow.
+ * The webhook only triggers inbox fetch + durable queueing.
+ * Extraction, contact resolution, purpose enrichment, and confirmation run asynchronously in the shared worker.
  */
 internal fun Route.peppolWebhookRoutes() {
     val peppolSettingsRepository by inject<PeppolSettingsRepository>()

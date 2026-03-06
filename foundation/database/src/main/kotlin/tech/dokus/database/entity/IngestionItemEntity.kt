@@ -4,6 +4,7 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.enums.DocumentSource
 
 /**
  * Item representing a document ready for processing.
@@ -14,6 +15,10 @@ data class IngestionItemEntity(
     val documentId: DocumentId,
     val tenantId: TenantId,
     val sourceId: DocumentSourceId? = null,
+    val sourceChannel: DocumentSource? = null,
+    val documentSource: DocumentSource = DocumentSource.Upload,
+    val peppolStructuredSnapshotJson: String? = null,
+    val peppolSnapshotVersion: Int? = null,
     val storageKey: String,
     val filename: String,
     val contentType: String,

@@ -115,7 +115,9 @@ internal fun Route.firmRoutes() {
 
             logger.info(
                 "Firm access revoked: firmId={}, tenantId={}, revokedBy={}",
-                route.parent.firmId, route.tenantId, principal.userId,
+                route.parent.firmId,
+                route.tenantId,
+                principal.userId,
             )
 
             call.respond(HttpStatusCode.NoContent)

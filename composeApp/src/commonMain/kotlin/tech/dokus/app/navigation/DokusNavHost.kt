@@ -54,6 +54,18 @@ fun DokusNavHost(
     tokenManager: TokenManager = koinInject(),
 ) {
     var pendingPostAuthHomeCommand by remember { mutableStateOf<HomeNavigationCommand?>(null) }
+    var hasForceLoggedOut by remember { mutableStateOf(false) }
+    val forceNavigateToLogin: () -> Unit = {
+        if (!hasForceLoggedOut) {
+            hasForceLoggedOut = true
+            pendingPostAuthHomeCommand = null
+            HomeNavigationCommandBus.clear()
+            navController.navigateTo(AuthDestination.Login) {
+                launchSingleTop = true
+                popUpTo(0) { inclusive = true }
+            }
+        }
+    }
 
     fun navigateToHomeCommand(command: HomeNavigationCommand) {
         if (!tokenManager.isAuthenticated.value) {
@@ -150,28 +162,19 @@ fun DokusNavHost(
     }
 
     // Observe authentication events globally
-    LaunchedEffect(authManager) {
+    LaunchedEffect(authManager, navController) {
         authManager.authenticationEvents.collectLatest { event ->
             when (event) {
                 is AuthEvent.ForceLogout -> {
-                    pendingPostAuthHomeCommand = null
-                    HomeNavigationCommandBus.clear()
-                    // Force navigation to login screen and clear backstack
-                    navController.navigateTo(AuthDestination.Login) {
-                        popUpTo(0) { inclusive = true }
-                    }
+                    forceNavigateToLogin()
                 }
 
                 is AuthEvent.UserLogout -> {
-                    pendingPostAuthHomeCommand = null
-                    HomeNavigationCommandBus.clear()
-                    // Navigate to login screen and clear backstack
-                    navController.navigateTo(AuthDestination.Login) {
-                        popUpTo(0) { inclusive = true }
-                    }
+                    forceNavigateToLogin()
                 }
 
                 is AuthEvent.LoginSuccess -> {
+                    hasForceLoggedOut = false
                     pendingPostAuthHomeCommand?.let { command ->
                         pendingPostAuthHomeCommand = null
                         navController.navigateTo(CoreDestination.Home) {
@@ -181,6 +184,19 @@ fun DokusNavHost(
                         HomeNavigationCommandBus.dispatch(command)
                     }
                 }
+            }
+        }
+    }
+
+    // Global safety net: if auth state flips from authenticated to unauthenticated,
+    // force login routing even when the active screen does not emit a navigation action.
+    LaunchedEffect(tokenManager, navController) {
+        var wasAuthenticated = tokenManager.isAuthenticated.value
+        tokenManager.isAuthenticated.collectLatest { isAuthenticated ->
+            val becameUnauthenticated = wasAuthenticated && !isAuthenticated
+            wasAuthenticated = isAuthenticated
+            if (becameUnauthenticated) {
+                forceNavigateToLogin()
             }
         }
     }

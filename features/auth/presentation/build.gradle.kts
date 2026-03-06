@@ -58,6 +58,11 @@ kotlin {
         }
         desktopMain.dependencies {
         }
+        commonTest.dependencies {
+            implementation(libs.kotlin.test)
+            implementation(libs.kotlinx.coroutinesTest)
+            implementation(libs.flowmvi.test)
+        }
         androidUnitTest.dependencies {
             implementation(libs.kotlin.test)
             implementation(libs.kotlin.test.junit)

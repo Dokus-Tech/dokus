@@ -92,6 +92,11 @@ kotlin {
             implementation(libs.ktor.client.logging)
             implementation(libs.ktor.client.auth)
         }
+        commonTest.dependencies {
+            implementation(libs.kotlin.test)
+            implementation(libs.kotlinx.coroutinesTest)
+            implementation("io.ktor:ktor-client-mock:${libs.versions.ktor.get()}")
+        }
         desktopMain.dependencies {
             implementation(libs.ktor.client.cio)
             implementation(compose.desktop.currentOs)

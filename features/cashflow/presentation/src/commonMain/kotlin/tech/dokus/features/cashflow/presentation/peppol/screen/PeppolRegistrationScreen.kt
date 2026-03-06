@@ -423,7 +423,7 @@ private fun SetupErrorContent(
     onIntent: (PeppolRegistrationIntent) -> Unit,
 ) {
     val canRetry = shouldShowPeppolSetupRetry(state.exception)
-    var retryClicked by remember { mutableStateOf(false) }
+    var retryClicked by remember(state) { mutableStateOf(false) }
 
     PeppolCenteredFlow(
         icon = {

@@ -228,6 +228,50 @@ class DocumentTruthService(
         }
     }
 
+    suspend fun persistPeppolSourceEnvelope(
+        tenantId: TenantId,
+        sourceId: DocumentSourceId,
+        structuredSnapshotJson: String,
+        snapshotVersion: Int,
+        rawUblXml: String?
+    ): Boolean {
+        val rawUblBlobId = rawUblXml
+            ?.takeIf { it.isNotBlank() }
+            ?.let { xml ->
+                val xmlBytes = xml.encodeToByteArray()
+                val inputHash = sha256Hex(xmlBytes)
+                val existingBlob = blobRepository.getByInputHash(tenantId, inputHash)
+                if (existingBlob != null) {
+                    existingBlob.id
+                } else {
+                    val upload = storageService.uploadDocument(
+                        tenantId = tenantId,
+                        prefix = "peppol",
+                        filename = "peppol-$sourceId.xml",
+                        data = xmlBytes,
+                        contentType = "application/xml"
+                    )
+                    blobRepository.createIfAbsent(
+                        tenantId = tenantId,
+                        payload = DocumentBlobCreatePayload(
+                            inputHash = inputHash,
+                            storageKey = upload.key,
+                            contentType = upload.contentType,
+                            sizeBytes = upload.sizeBytes
+                        )
+                    ).id
+                }
+            }
+
+        return sourceRepository.updatePeppolEnvelope(
+            tenantId = tenantId,
+            sourceId = sourceId,
+            peppolRawUblBlobId = rawUblBlobId,
+            peppolStructuredSnapshotJson = structuredSnapshotJson,
+            peppolSnapshotVersion = snapshotVersion
+        )
+    }
+
     suspend fun applyPostExtractionMatching(
         tenantId: TenantId,
         documentId: DocumentId,

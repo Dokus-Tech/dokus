@@ -35,6 +35,9 @@ object DocumentSourcesTable : UUIDTable("document_sources") {
         DocumentBlobsTable.id,
         onDelete = ReferenceOption.RESTRICT
     )
+    val peppolRawUblBlobId = uuid("peppol_raw_ubl_blob_id")
+        .references(DocumentBlobsTable.id, onDelete = ReferenceOption.SET_NULL)
+        .nullable()
 
     val sourceChannel = dbEnumeration<DocumentSource>("source_channel")
     val arrivalAt = datetime("arrival_at").defaultExpression(CurrentDateTime)
@@ -45,6 +48,8 @@ object DocumentSourcesTable : UUIDTable("document_sources") {
     val matchType = dbEnumeration<DocumentMatchType>("match_type").nullable()
     val isCorrective = bool("is_corrective").default(false)
     val extractedSnapshotJson = text("extracted_snapshot_json").nullable()
+    val peppolStructuredSnapshotJson = text("peppol_structured_snapshot_json").nullable()
+    val peppolSnapshotVersion = integer("peppol_snapshot_version").nullable()
     val detachedAt = datetime("detached_at").nullable()
 
     // Normalized fields used for deterministic and fuzzy identity matching.

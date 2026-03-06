@@ -19,11 +19,11 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.InvitationId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.CreateInvitationRequest
+import tech.dokus.domain.model.TransferOwnershipRequest
+import tech.dokus.domain.model.UpdateMemberRoleRequest
 import tech.dokus.domain.model.auth.BookkeeperFirmSearchItem
 import tech.dokus.domain.model.auth.GrantBookkeeperAccessRequest
 import tech.dokus.domain.model.auth.GrantBookkeeperAccessResponse
-import tech.dokus.domain.model.TransferOwnershipRequest
-import tech.dokus.domain.model.UpdateMemberRoleRequest
 import tech.dokus.domain.routes.Team
 import tech.dokus.foundation.backend.security.authenticateJwt
 import tech.dokus.foundation.backend.security.dokusPrincipal

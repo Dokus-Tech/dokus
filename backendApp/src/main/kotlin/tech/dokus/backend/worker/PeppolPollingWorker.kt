@@ -16,35 +16,20 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.json.decodeFromJsonElement
 import org.slf4j.LoggerFactory
-import tech.dokus.backend.services.contacts.ContactService
-import tech.dokus.backend.services.documents.AutoConfirmPolicy
 import tech.dokus.backend.services.documents.DocumentTruthService
-import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
 import tech.dokus.backend.services.notifications.NotificationEmission
 import tech.dokus.backend.services.notifications.NotificationService
-import tech.dokus.database.repository.cashflow.DocumentDraftRepository
-import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
-import tech.dokus.database.repository.cashflow.DocumentRepository
-import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.database.repository.peppol.PeppolSettingsRepository
-import tech.dokus.domain.Money
-import tech.dokus.domain.Name
-import tech.dokus.domain.enums.ContactSource
-import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentIntakeOutcome
 import tech.dokus.domain.enums.DocumentSource
-import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.NotificationReferenceType
 import tech.dokus.domain.enums.NotificationType
-import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
-import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.utils.json
 import tech.dokus.peppol.provider.client.recommand.model.RecommandAttachment
 import tech.dokus.peppol.provider.client.recommand.model.RecommandCreditNote
@@ -107,14 +92,7 @@ internal fun decodePeppolAttachmentBase64(encoded: String): ByteArray {
 class PeppolPollingWorker(
     private val peppolSettingsRepository: PeppolSettingsRepository,
     private val peppolService: PeppolService,
-    private val documentRepository: DocumentRepository,
-    private val draftRepository: DocumentDraftRepository,
-    private val ingestionRunRepository: DocumentIngestionRunRepository,
     private val documentTruthService: DocumentTruthService,
-    private val autoConfirmPolicy: AutoConfirmPolicy,
-    private val confirmationDispatcher: DocumentConfirmationDispatcher,
-    private val contactRepository: ContactRepository,
-    private val contactService: ContactService,
     private val notificationService: NotificationService
 ) {
     private val logger = LoggerFactory.getLogger(PeppolPollingWorker::class.java)
@@ -271,7 +249,7 @@ class PeppolPollingWorker(
     /**
      * Poll a single tenant's Peppol inbox.
      */
-    @Suppress("LongMethod") // Complex inbox polling with document creation and confirmation
+    @Suppress("LongMethod") // Complex inbox polling with queue-only durable ingestion boundary
     private suspend fun pollTenant(tenantId: TenantId, isFullSyncPoll: Boolean? = null) {
         // Get or create mutex for this tenant
         val mutex = pollMutexes.computeIfAbsent(tenantId) { Mutex() }
@@ -398,83 +376,30 @@ class PeppolPollingWorker(
         )
         val documentId = intake.documentId
 
-        if (intake.outcome == DocumentIntakeOutcome.LinkedToExisting) {
-            logger.info(
-                "PEPPOL artifact linked to existing document {} via exact-byte match",
-                documentId
-            )
-            return documentId
-        }
-
-        val runId = intake.runId
-            ?: ingestionRunRepository.createRun(
-                documentId = documentId,
-                tenantId = tenantId,
-                sourceId = intake.sourceId
-            )
-        ingestionRunRepository.markAsProcessing(runId, "peppol")
-        ingestionRunRepository.markAsSucceeded(
-            runId = runId,
-            rawText = null,
-            rawExtractionJson = json.encodeToString(draftData),
-            confidence = 1.0
-        )
-
-        val documentType = documentTypeFor(draftData)
-        draftRepository.createOrUpdateFromIngestion(
-            documentId = documentId,
+        val structuredSnapshotJson = json.encodeToString(draftData)
+        val envelopePersisted = documentTruthService.persistPeppolSourceEnvelope(
             tenantId = tenantId,
-            runId = runId,
-            extractedData = draftData,
-            documentType = documentType,
-            force = true
-        )
-
-        val matchOutcome = documentTruthService.applyPostExtractionMatching(
-            tenantId = tenantId,
-            documentId = documentId,
             sourceId = intake.sourceId,
-            draftData = draftData,
-            extractedSnapshotJson = json.encodeToString(draftData)
+            structuredSnapshotJson = structuredSnapshotJson,
+            snapshotVersion = 1,
+            rawUblXml = documentDetail?.xml
         )
-        if (matchOutcome.documentId != documentId ||
-            matchOutcome.outcome == DocumentIntakeOutcome.PendingMatchReview
-        ) {
-            logger.info(
-                "PEPPOL source {} resolved by truth matcher with outcome {} (target={})",
-                intake.sourceId,
-                matchOutcome.outcome,
-                matchOutcome.documentId
-            )
-            return matchOutcome.documentId
+        require(envelopePersisted) {
+            "Failed to persist PEPPOL envelope for source ${intake.sourceId}"
         }
 
-        val counterparty = extractCounterparty(draftData)
-        val linkedContactId = findOrCreateContactForPeppol(
-            tenantId = tenantId,
-            counterpartyName = counterparty.name,
-            counterpartyVatNumber = counterparty.vatNumber
-        )
-
-        val canAutoConfirm = autoConfirmPolicy.canAutoConfirm(
-            tenantId = tenantId,
-            documentId = documentId,
-            source = DocumentSource.Peppol,
-            documentType = documentType,
-            draftData = draftData,
-            auditPassed = peppolAuditPassed(draftData),
-            confidence = 1.0,
-            linkedContactId = linkedContactId,
-            directionResolvedFromAiHintOnly = false
-        )
-
-        if (canAutoConfirm) {
-            confirmationDispatcher.confirm(
-                tenantId = tenantId,
-                documentId = documentId,
-                draftData = draftData,
-                linkedContactId = linkedContactId
-            ).getOrThrow()
+        if (intake.outcome == DocumentIntakeOutcome.LinkedToExisting) {
+            logger.info("PEPPOL artifact linked to existing document {} via exact-byte match", documentId)
+        } else {
+            require(intake.runId != null) {
+                "PEPPOL intake did not persist a queued run for new source ${intake.sourceId}"
+            }
+            logger.info(
+                "Queued PEPPOL document {} for unified ingestion worker: documentId={}, runId={}",
+                intake.sourceId,
+                documentId,
+                intake.runId
+            )
         }
 
         return documentId
@@ -496,83 +421,9 @@ class PeppolPollingWorker(
         return lastFullSyncAt < threshold
     }
 
-    /**
-     * Counterparty info extracted from any draft data type.
-     */
-    private data class CounterpartyInfo(val name: String?, val vatNumber: VatNumber?)
-
-    private fun extractCounterparty(draftData: DocumentDraftData): CounterpartyInfo = when (draftData) {
-        is CreditNoteDraftData -> CounterpartyInfo(draftData.counterpartyName, draftData.counterpartyVat)
-        is InvoiceDraftData -> when (draftData.direction) {
-            DocumentDirection.Inbound -> CounterpartyInfo(
-                draftData.seller.name,
-                draftData.seller.vat
-            )
-            DocumentDirection.Outbound -> CounterpartyInfo(
-                draftData.buyer.name,
-                draftData.buyer.vat
-            )
-            DocumentDirection.Unknown -> CounterpartyInfo(
-                draftData.buyer.name ?: draftData.seller.name,
-                draftData.buyer.vat ?: draftData.seller.vat
-            )
-        }
-        is ReceiptDraftData -> CounterpartyInfo(draftData.merchantName, draftData.merchantVat)
-    }
-
-    private fun documentTypeFor(draftData: DocumentDraftData): DocumentType = when (draftData) {
-        is CreditNoteDraftData -> DocumentType.CreditNote
-        is InvoiceDraftData -> DocumentType.Invoice
-        is ReceiptDraftData -> DocumentType.Receipt
-    }
-
     private fun documentNumberOf(draftData: DocumentDraftData): String? = when (draftData) {
         is CreditNoteDraftData -> draftData.creditNoteNumber
         is InvoiceDraftData -> draftData.invoiceNumber
         is ReceiptDraftData -> draftData.receiptNumber
-    }
-
-    private fun peppolAuditPassed(draftData: DocumentDraftData): Boolean = when (draftData) {
-        is InvoiceDraftData -> vatMathOk(draftData.subtotalAmount, draftData.vatAmount, draftData.totalAmount)
-        is CreditNoteDraftData -> vatMathOk(draftData.subtotalAmount, draftData.vatAmount, draftData.totalAmount)
-        is ReceiptDraftData -> true // Receipts typically don't provide a subtotal; keep audit deterministic and minimal
-    }
-
-    private fun vatMathOk(subtotal: Money?, vat: Money?, total: Money?): Boolean {
-        if (subtotal == null || vat == null || total == null) return true
-        val diffMinor = (subtotal + vat - total).minor
-        return kotlin.math.abs(diffMinor) <= 1L // tolerate rounding differences up to 1 cent
-    }
-
-    /**
-     * Find or create a contact for a Peppol document.
-     * Matching priority:
-     * 1. VAT number (most reliable)
-     * 2. Auto-create if we have enough data
-     */
-    private suspend fun findOrCreateContactForPeppol(
-        tenantId: TenantId,
-        counterpartyName: String?,
-        counterpartyVatNumber: VatNumber?
-    ): ContactId? {
-        // 1. Try VAT number (most reliable) - already normalized in repository
-        val vatValue = counterpartyVatNumber?.value
-        if (!vatValue.isNullOrBlank()) {
-            contactRepository.findByVatNumber(tenantId, vatValue)
-                .getOrNull()?.let { return it.id }
-        }
-
-        // 2. Auto-create if we have enough data
-        if (!counterpartyName.isNullOrBlank()) {
-            val request = CreateContactRequest(
-                name = Name(counterpartyName),
-                vatNumber = counterpartyVatNumber,
-                source = ContactSource.Peppol
-            )
-            val newContact = contactService.createContact(tenantId, request).getOrNull()
-            return newContact?.id
-        }
-
-        return null
     }
 }

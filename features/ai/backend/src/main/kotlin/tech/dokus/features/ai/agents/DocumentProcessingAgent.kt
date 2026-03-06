@@ -14,7 +14,10 @@ import org.koin.core.qualifier.named
 import tech.dokus.features.ai.config.asVisionModel
 import tech.dokus.features.ai.graph.AcceptDocumentInput
 import tech.dokus.features.ai.graph.acceptDocumentGraph
+import tech.dokus.features.ai.graph.purposeEnrichmentGraph
 import tech.dokus.features.ai.models.DocumentAiProcessingResult
+import tech.dokus.features.ai.models.PurposeEnrichmentInput
+import tech.dokus.features.ai.models.PurposeEnrichmentResult
 import tech.dokus.features.ai.services.DocumentFetcher
 import tech.dokus.features.ai.tools.TenantDocumentsRegistry
 import tech.dokus.foundation.backend.config.AIConfig
@@ -34,19 +37,48 @@ class DocumentProcessingAgent(
 
         val strategy = acceptDocumentGraph(
             aiConfig = aiConfig,
-            registry = ToolRegistry.EMPTY,
+            registry = toolRegistry,
             documentFetcher = documentFetcher
         )
 
         val agent = AIAgent(
             promptExecutor = executor,
-            toolRegistry = ToolRegistry.EMPTY,
+            toolRegistry = toolRegistry,
             strategy = strategy,
             agentConfig = AIAgentConfig(
                 prompt = prompt("koog-agents") { system("You are a document processor.") },
                 model = aiConfig.mode.asVisionModel,
                 maxAgentIterations = aiConfig.mode.maxIterations,
-                responseProcessor = ManualToolCallFixProcessor(ToolRegistry.EMPTY)
+                responseProcessor = ManualToolCallFixProcessor(toolRegistry)
+            )
+        )
+
+        return try {
+            agent.run(input)
+        } finally {
+            runCatching { agent.close() }
+        }
+    }
+
+    @OptIn(ExperimentalAgentsApi::class)
+    suspend fun enrichPurpose(input: PurposeEnrichmentInput): PurposeEnrichmentResult {
+        val toolRegistry by inject<ToolRegistry>(named<TenantDocumentsRegistry>()) {
+            parametersOf(
+                TenantDocumentsRegistry.Args(input.tenantId)
+            )
+        }
+        val strategy = purposeEnrichmentGraph()
+        val agent = AIAgent(
+            promptExecutor = executor,
+            toolRegistry = toolRegistry,
+            strategy = strategy,
+            agentConfig = AIAgentConfig(
+                prompt = prompt("koog-purpose-enrichment") {
+                    system("You render canonical document purpose labels.")
+                },
+                model = aiConfig.mode.asVisionModel,
+                maxAgentIterations = aiConfig.mode.maxIterations,
+                responseProcessor = ManualToolCallFixProcessor(toolRegistry)
             )
         )
 

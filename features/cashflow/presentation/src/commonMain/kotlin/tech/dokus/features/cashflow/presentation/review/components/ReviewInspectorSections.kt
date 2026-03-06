@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.Check
@@ -142,22 +143,34 @@ internal fun InspectorSourcesSection(
     state: DocumentReviewState.Content,
     isAccountantReadOnly: Boolean,
     onIntent: (DocumentReviewIntent) -> Unit,
+    showSourceList: Boolean = true,
 ) {
+    if (!showSourceList && state.document.pendingMatchReview == null && !state.hasCrossMatchedSources) {
+        return
+    }
+
     InspectorSectionCard(title = "Sources") {
-        if (state.document.sources.isEmpty()) {
-            InspectorValueRow("Source", "No sources")
-        } else {
-            state.document.sources.forEach { source ->
-                SourceRow(
-                    type = source.sourceChannel,
-                    title = source.filename ?: source.sourceChannel.name,
-                    onClick = { onIntent(DocumentReviewIntent.OpenSourceModal(source.id)) },
-                )
+        var hasContent = false
+
+        if (showSourceList) {
+            if (state.document.sources.isEmpty()) {
+                InspectorValueRow("Source", "No sources")
+            } else {
+                state.document.sources.forEach { source ->
+                    SourceRow(
+                        type = source.sourceChannel,
+                        title = source.filename ?: source.sourceChannel.name,
+                        onClick = { onIntent(DocumentReviewIntent.OpenSourceModal(source.id)) },
+                    )
+                }
             }
+            hasContent = true
         }
 
         state.document.pendingMatchReview?.let { review ->
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            if (hasContent) {
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            }
             Text(
                 text = when (review.reasonType) {
                     DocumentMatchReviewReasonType.MaterialConflict -> {
@@ -187,10 +200,13 @@ internal fun InspectorSourcesSection(
                     }
                 }
             }
+            hasContent = true
         }
 
         if (state.hasCrossMatchedSources) {
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            if (hasContent) {
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            }
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 color = MaterialTheme.colorScheme.greenSoft.copy(alpha = 0.35f),
@@ -358,24 +374,47 @@ private fun InspectorValueRow(
     emphasized: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
+    val hasValue = value != "—"
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 2.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         Text(
             text = label,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.textMuted,
-        )
-        Text(
-            text = value,
-            style = if (emphasized) MaterialTheme.typography.titleLarge else MaterialTheme.typography.bodyMedium,
-            fontWeight = if (emphasized) FontWeight.Bold else FontWeight.Medium,
-            color = MaterialTheme.colorScheme.onSurface,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(6.dp)
+                    .background(
+                        color = if (hasValue) {
+                            MaterialTheme.colorScheme.statusConfirmed.copy(alpha = 0.86f)
+                        } else {
+                            MaterialTheme.colorScheme.outline.copy(alpha = 0.85f)
+                        },
+                        shape = CircleShape,
+                    )
+            )
+            Text(
+                text = value,
+                style = if (emphasized) MaterialTheme.typography.titleLarge else MaterialTheme.typography.bodyMedium,
+                fontWeight = if (emphasized) FontWeight.Bold else FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
     }
 }
 

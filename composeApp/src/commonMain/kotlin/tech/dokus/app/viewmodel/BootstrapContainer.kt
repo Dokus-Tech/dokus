@@ -74,6 +74,11 @@ internal class BootstrapContainer(
             return
         }
 
+        if (!tokenManager.isAuthenticated.value) {
+            action(BootstrapAction.NavigateToLogin)
+            return
+        }
+
         val isConsoleOnlyUser = isConsoleOnlyUser()
         if (isConsoleOnlyUser) {
             completeAllSteps()
@@ -89,6 +94,11 @@ internal class BootstrapContainer(
         // Step 5: Check tenant selection
         if (needsTenantSelection()) {
             action(BootstrapAction.NavigateToTenantSelection)
+            return
+        }
+
+        if (!tokenManager.isAuthenticated.value) {
+            action(BootstrapAction.NavigateToLogin)
             return
         }
 

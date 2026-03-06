@@ -19,6 +19,7 @@ import tech.dokus.backend.routes.cashflow.documents.toSummaryDto
 import tech.dokus.backend.routes.cashflow.documents.updateDraftCounterparty
 import tech.dokus.backend.security.requireTenantId
 import tech.dokus.backend.services.cashflow.CashflowProjectionReconciliationService
+import tech.dokus.backend.services.documents.DocumentPurposeService
 import tech.dokus.backend.services.documents.DocumentTruthService
 import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
@@ -80,6 +81,7 @@ internal fun Route.documentRecordRoutes() {
     val minioStorage by inject<MinioDocumentStorageService>()
     val confirmationDispatcher by inject<DocumentConfirmationDispatcher>()
     val truthService by inject<DocumentTruthService>()
+    val purposeService by inject<DocumentPurposeService>()
     val logger = LoggerFactory.getLogger("DocumentRecordRoutes")
 
     authenticateJwt {
@@ -442,9 +444,14 @@ internal fun Route.documentRecordRoutes() {
             val requestData = request.extractedData
             val hasExtractedData = requestData != null
             val hasContactUpdate = request.contactId != null || request.counterpartyIntent != null
+            val hasPurposeUpdate = request.purpose != null || request.purposePeriodMode != null
 
-            if (!hasExtractedData && !hasContactUpdate) {
+            if (!hasExtractedData && !hasContactUpdate && !hasPurposeUpdate) {
                 throw DokusException.BadRequest("No draft changes provided")
+            }
+
+            if (request.purposePeriodMode != null && request.purpose == null) {
+                throw DokusException.BadRequest("purposePeriodMode requires purpose")
             }
 
             if (draft.documentStatus == DocumentStatus.Rejected) {
@@ -465,6 +472,18 @@ internal fun Route.documentRecordRoutes() {
                 if (hasContactUpdate) {
                     updateDraftCounterparty(draftRepository, documentId, tenantId, request)
                 }
+                if (hasPurposeUpdate) {
+                    val purpose = request.purpose
+                        ?: throw DokusException.BadRequest("purpose is required for purpose update")
+                    purposeService.applyUserPurposeEdit(
+                        tenantId = tenantId,
+                        documentId = documentId,
+                        draft = draftRepository.getByDocumentId(documentId, tenantId)
+                            ?: throw DokusException.NotFound("Draft not found for document"),
+                        purpose = purpose,
+                        purposePeriodMode = request.purposePeriodMode
+                    )
+                }
 
                 call.respond(
                     HttpStatusCode.OK,
@@ -476,7 +495,20 @@ internal fun Route.documentRecordRoutes() {
                     )
                 )
             } else {
-                updateDraftCounterparty(draftRepository, documentId, tenantId, request)
+                if (hasContactUpdate) {
+                    updateDraftCounterparty(draftRepository, documentId, tenantId, request)
+                }
+                if (hasPurposeUpdate) {
+                    val purpose = request.purpose
+                        ?: throw DokusException.BadRequest("purpose is required for purpose update")
+                    purposeService.applyUserPurposeEdit(
+                        tenantId = tenantId,
+                        documentId = documentId,
+                        draft = draft,
+                        purpose = purpose,
+                        purposePeriodMode = request.purposePeriodMode
+                    )
+                }
                 call.respond(HttpStatusCode.NoContent)
             }
         }

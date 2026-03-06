@@ -34,6 +34,7 @@ data class DocumentSourceSummary(
     val tenantId: TenantId,
     val documentId: DocumentId,
     val blobId: DocumentBlobId,
+    val peppolRawUblBlobId: DocumentBlobId? = null,
     val sourceChannel: DocumentSource,
     val arrivalAt: kotlinx.datetime.LocalDateTime,
     val contentHash: String?,
@@ -42,6 +43,8 @@ data class DocumentSourceSummary(
     val matchType: DocumentMatchType?,
     val isCorrective: Boolean,
     val extractedSnapshotJson: String?,
+    val peppolStructuredSnapshotJson: String? = null,
+    val peppolSnapshotVersion: Int? = null,
     val detachedAt: kotlinx.datetime.LocalDateTime?,
     val normalizedSupplierVat: String?,
     val normalizedDocumentNumber: String?,
@@ -57,6 +60,7 @@ data class DocumentSourceSummary(
 data class DocumentSourceCreatePayload(
     val documentId: DocumentId,
     val blobId: DocumentBlobId,
+    val peppolRawUblBlobId: DocumentBlobId? = null,
     val sourceChannel: DocumentSource,
     val status: DocumentSourceStatus = DocumentSourceStatus.Linked,
     val matchType: DocumentMatchType? = null,
@@ -64,6 +68,8 @@ data class DocumentSourceCreatePayload(
     val identityKeyHash: String? = null,
     val isCorrective: Boolean = false,
     val extractedSnapshotJson: String? = null,
+    val peppolStructuredSnapshotJson: String? = null,
+    val peppolSnapshotVersion: Int? = null,
     val normalizedSupplierVat: String? = null,
     val normalizedDocumentNumber: String? = null,
     val documentType: DocumentType? = null,
@@ -91,6 +97,8 @@ class DocumentSourceRepository {
             it[DocumentSourcesTable.tenantId] = UUID.fromString(tenantId.toString())
             it[documentId] = UUID.fromString(payload.documentId.toString())
             it[blobId] = UUID.fromString(payload.blobId.toString())
+            it[DocumentSourcesTable.peppolRawUblBlobId] = payload.peppolRawUblBlobId
+                ?.let { value -> UUID.fromString(value.toString()) }
             it[sourceChannel] = payload.sourceChannel
             it[status] = payload.status
             it[matchType] = payload.matchType
@@ -98,6 +106,8 @@ class DocumentSourceRepository {
             it[identityKeyHash] = payload.identityKeyHash
             it[isCorrective] = payload.isCorrective
             it[extractedSnapshotJson] = payload.extractedSnapshotJson
+            it[peppolStructuredSnapshotJson] = payload.peppolStructuredSnapshotJson
+            it[peppolSnapshotVersion] = payload.peppolSnapshotVersion
             it[normalizedSupplierVat] = payload.normalizedSupplierVat
             it[normalizedDocumentNumber] = payload.normalizedDocumentNumber
             it[DocumentSourcesTable.documentType] = payload.documentType
@@ -294,6 +304,27 @@ class DocumentSourceRepository {
         } > 0
     }
 
+    suspend fun updatePeppolEnvelope(
+        tenantId: TenantId,
+        sourceId: DocumentSourceId,
+        peppolRawUblBlobId: DocumentBlobId?,
+        peppolStructuredSnapshotJson: String?,
+        peppolSnapshotVersion: Int
+    ): Boolean = newSuspendedTransaction {
+        DocumentSourcesTable.update({
+            (DocumentSourcesTable.id eq UUID.fromString(sourceId.toString())) and
+                (DocumentSourcesTable.tenantId eq UUID.fromString(tenantId.toString()))
+        }) {
+            it[DocumentSourcesTable.peppolRawUblBlobId] = peppolRawUblBlobId
+                ?.let { value -> UUID.fromString(value.toString()) }
+            it[DocumentSourcesTable.peppolStructuredSnapshotJson] = peppolStructuredSnapshotJson
+            it[DocumentSourcesTable.peppolSnapshotVersion] = peppolSnapshotVersion
+            if (peppolStructuredSnapshotJson != null) {
+                it[DocumentSourcesTable.extractedSnapshotJson] = peppolStructuredSnapshotJson
+            }
+        } > 0
+    }
+
     suspend fun reassignToDocument(
         tenantId: TenantId,
         sourceId: DocumentSourceId,
@@ -350,6 +381,7 @@ class DocumentSourceRepository {
             tenantId = TenantId(this[DocumentSourcesTable.tenantId].toKotlinUuid()),
             documentId = DocumentId.parse(this[DocumentSourcesTable.documentId].toString()),
             blobId = DocumentBlobId(this[DocumentSourcesTable.blobId].toKotlinUuid()),
+            peppolRawUblBlobId = this[DocumentSourcesTable.peppolRawUblBlobId]?.let { DocumentBlobId(it.toKotlinUuid()) },
             sourceChannel = this[DocumentSourcesTable.sourceChannel],
             arrivalAt = this[DocumentSourcesTable.arrivalAt],
             contentHash = this[DocumentSourcesTable.contentHash],
@@ -358,6 +390,8 @@ class DocumentSourceRepository {
             matchType = this[DocumentSourcesTable.matchType],
             isCorrective = this[DocumentSourcesTable.isCorrective],
             extractedSnapshotJson = this[DocumentSourcesTable.extractedSnapshotJson],
+            peppolStructuredSnapshotJson = this[DocumentSourcesTable.peppolStructuredSnapshotJson],
+            peppolSnapshotVersion = this[DocumentSourcesTable.peppolSnapshotVersion],
             detachedAt = this[DocumentSourcesTable.detachedAt],
             normalizedSupplierVat = this[DocumentSourcesTable.normalizedSupplierVat],
             normalizedDocumentNumber = this[DocumentSourcesTable.normalizedDocumentNumber],

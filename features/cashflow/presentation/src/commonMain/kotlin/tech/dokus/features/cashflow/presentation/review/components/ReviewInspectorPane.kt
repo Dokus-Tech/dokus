@@ -30,6 +30,9 @@ import tech.dokus.features.cashflow.presentation.review.ReviewFinancialStatus
 import tech.dokus.features.cashflow.presentation.review.compressedStatusDetailLocalized
 import tech.dokus.features.cashflow.presentation.review.dotType
 import tech.dokus.features.cashflow.presentation.review.statusBadgeLocalized
+import tech.dokus.features.cashflow.presentation.review.components.details.CounterpartyCard
+import tech.dokus.features.cashflow.presentation.review.components.details.InvoiceDetailsCard
+import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.icons.LockIcon
 import tech.dokus.foundation.aura.components.status.StatusDot
 import tech.dokus.foundation.aura.constrains.Constraints
@@ -44,6 +47,8 @@ internal fun ReviewInspectorPane(
     state: DocumentReviewState.Content,
     isAccountantReadOnly: Boolean,
     onIntent: (DocumentReviewIntent) -> Unit,
+    onCorrectContact: () -> Unit,
+    onCreateContact: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -71,14 +76,26 @@ internal fun ReviewInspectorPane(
                 .padding(horizontal = Constraints.Spacing.medium),
             verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
         ) {
+            InspectorFactGroupCard {
+                CounterpartyCard(
+                    state = state,
+                    onIntent = onIntent,
+                    onCorrectContact = onCorrectContact,
+                    onCreateContact = onCreateContact,
+                )
+            }
+            InspectorFactGroupCard {
+                InvoiceDetailsCard(
+                    state = state,
+                    onIntent = onIntent,
+                )
+            }
             InspectorAmountSection(state = state)
-            InspectorTimelineSection(state = state)
-            InspectorReferenceSection(state = state)
-            InspectorContactSection(state = state)
             InspectorSourcesSection(
                 state = state,
                 isAccountantReadOnly = isAccountantReadOnly,
                 onIntent = onIntent,
+                showSourceList = false,
             )
             InspectorPaymentSection(
                 state = state,
@@ -101,6 +118,23 @@ internal fun ReviewInspectorPane(
 }
 
 @Composable
+private fun InspectorFactGroupCard(
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    DokusCardSurface(modifier = modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(Constraints.Spacing.medium),
+            verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
+        ) {
+            content()
+        }
+    }
+}
+
+@Composable
 private fun InspectorHeader(
     state: DocumentReviewState.Content,
     isAccountantReadOnly: Boolean,
@@ -117,26 +151,6 @@ private fun InspectorHeader(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             CompressedStatusLine(state)
-
-            if (!isAccountantReadOnly && !state.isDocumentConfirmed && !state.isDocumentRejected) {
-                if (state.isEditMode) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)) {
-                        OutlinedButton(onClick = { onIntent(DocumentReviewIntent.CancelEditMode) }) {
-                            Text("Cancel")
-                        }
-                        Button(
-                            onClick = { onIntent(DocumentReviewIntent.SaveDraft) },
-                            enabled = !state.isSaving,
-                        ) {
-                            Text("Save")
-                        }
-                    }
-                } else {
-                    OutlinedButton(onClick = { onIntent(DocumentReviewIntent.EnterEditMode) }) {
-                        Text("Edit")
-                    }
-                }
-            }
         }
 
         if (!isAccountantReadOnly && !state.isDocumentConfirmed && !state.isDocumentRejected &&
@@ -217,6 +231,8 @@ private fun ReviewInspectorPanePaidPreview(
             state = previewReviewContentState(entryStatus = CashflowEntryStatus.Paid),
             isAccountantReadOnly = false,
             onIntent = {},
+            onCorrectContact = {},
+            onCreateContact = {},
         )
     }
 }
@@ -231,6 +247,8 @@ private fun ReviewInspectorPaneUnpaidPreview(
             state = previewReviewContentState(entryStatus = CashflowEntryStatus.Open),
             isAccountantReadOnly = false,
             onIntent = {},
+            onCorrectContact = {},
+            onCreateContact = {},
         )
     }
 }
@@ -245,6 +263,8 @@ private fun ReviewInspectorPaneOverduePreview(
             state = previewReviewContentState(entryStatus = CashflowEntryStatus.Overdue),
             isAccountantReadOnly = false,
             onIntent = {},
+            onCorrectContact = {},
+            onCreateContact = {},
         )
     }
 }
@@ -259,6 +279,8 @@ private fun ReviewInspectorPaneReviewPreview(
             state = previewReviewContentState(entryStatus = null, isDocumentConfirmed = false),
             isAccountantReadOnly = false,
             onIntent = {},
+            onCorrectContact = {},
+            onCreateContact = {},
         )
     }
 }

@@ -23,6 +23,8 @@ import tech.dokus.database.repository.cashflow.DocumentBlobRepository
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentMatchReviewRepository
+import tech.dokus.database.repository.cashflow.DocumentPurposeTemplateRepository
+import tech.dokus.database.repository.cashflow.DocumentPurposeSimilarityRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.DocumentSourceRepository
 import tech.dokus.database.repository.cashflow.ExpenseRepository
@@ -72,6 +74,8 @@ val repositoryModuleCashflow = module {
     single { DocumentBlobRepository() }
     single { DocumentSourceRepository() }
     single { DocumentMatchReviewRepository() }
+    single { DocumentPurposeTemplateRepository() }
+    single { DocumentPurposeSimilarityRepository() }
     single { DocumentRepository() }
     single { DocumentIngestionRunRepository() }
     single { DocumentDraftRepository() }

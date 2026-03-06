@@ -127,6 +127,65 @@ class BootstrapContainerTest {
         }
     }
 
+    @Test
+    fun `routes to login when token manager becomes unauthenticated before tenant decision`() = runTest {
+        withAuthInitializer(isAuthenticated = true) { authInitializer, _ ->
+            val container = BootstrapContainer(
+                authInitializer = authInitializer,
+                tokenManager = BootstrapFakeTokenManager(
+                    isAuthenticated = false,
+                    selectedTenantId = null
+                ),
+                serverConfigManager = BootstrapFakeServerConfigManager(),
+                getAccountMeUseCase = BootstrapFakeGetAccountMeUseCase(
+                    Result.success(
+                        accountMe(
+                            SurfaceAvailability(
+                                canCompanyManager = true,
+                                canBookkeeperConsole = true,
+                                defaultSurface = AppSurface.CompanyManager
+                            )
+                        )
+                    )
+                )
+            )
+
+            container.store.subscribeAndTest {
+                BootstrapIntent.Load resultsIn BootstrapAction.NavigateToLogin
+            }
+        }
+    }
+
+    @Test
+    fun `routes to login when auth becomes invalid during tenant lookup before main routing`() = runTest {
+        withAuthInitializer(isAuthenticated = true) { authInitializer, _ ->
+            val container = BootstrapContainer(
+                authInitializer = authInitializer,
+                tokenManager = BootstrapFakeTokenManager(
+                    isAuthenticated = true,
+                    selectedTenantId = TenantId.generate(),
+                    invalidateOnTenantLookup = true
+                ),
+                serverConfigManager = BootstrapFakeServerConfigManager(),
+                getAccountMeUseCase = BootstrapFakeGetAccountMeUseCase(
+                    Result.success(
+                        accountMe(
+                            SurfaceAvailability(
+                                canCompanyManager = true,
+                                canBookkeeperConsole = true,
+                                defaultSurface = AppSurface.CompanyManager
+                            )
+                        )
+                    )
+                )
+            )
+
+            container.store.subscribeAndTest {
+                BootstrapIntent.Load resultsIn BootstrapAction.NavigateToLogin
+            }
+        }
+    }
+
     private suspend fun withAuthInitializer(
         isAuthenticated: Boolean,
         block: suspend (AuthInitializer, BootstrapFakeAuthSessionUseCase) -> Unit
@@ -152,41 +211,44 @@ private class BootstrapFakeAuthSessionUseCase(
     authenticated: Boolean
 ) : AuthSessionUseCase {
     override val isAuthenticated = MutableStateFlow(authenticated)
-    var initializeCalls: Int = 0
 
-    override suspend fun initialize() {
-        initializeCalls += 1
-    }
+    override suspend fun initialize() = Unit
 }
 
 private class BootstrapFakeTokenManager(
-    private val selectedTenantId: TenantId?
+    isAuthenticated: Boolean = true,
+    private val selectedTenantId: TenantId?,
+    private val invalidateOnTenantLookup: Boolean = false
 ) : TokenManager {
-    override val isAuthenticated = MutableStateFlow(true)
+    override val isAuthenticated = MutableStateFlow(isAuthenticated)
 
     override suspend fun getValidAccessToken(): String? = null
 
     override suspend fun getRefreshToken(): String? = null
 
-    override suspend fun getSelectedTenantId(): TenantId? = selectedTenantId
+    override suspend fun getSelectedTenantId(): TenantId? {
+        if (invalidateOnTenantLookup) {
+            isAuthenticated.value = false
+        }
+        return selectedTenantId
+    }
 
     override suspend fun refreshToken(force: Boolean): String? = null
 
-    override suspend fun onAuthenticationFailed() = Unit
+    override suspend fun onAuthenticationFailed() {
+        isAuthenticated.value = false
+    }
 }
 
 private class BootstrapFakeServerConfigManager : ServerConfigManager {
     override val currentServer = MutableStateFlow(ServerConfig.Cloud)
     override val isCloudServer = MutableStateFlow(true)
-    var initializeCalls: Int = 0
 
     override suspend fun setServer(config: ServerConfig) = Unit
 
     override suspend fun resetToCloud() = Unit
 
-    override suspend fun initialize() {
-        initializeCalls += 1
-    }
+    override suspend fun initialize() = Unit
 }
 
 private class BootstrapFakeGetAccountMeUseCase(
