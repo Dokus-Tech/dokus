@@ -23,7 +23,6 @@ import tech.dokus.aura.resources.action_confirm
 import tech.dokus.aura.resources.cashflow_discard_changes_message
 import tech.dokus.aura.resources.cashflow_discard_changes_title
 import tech.dokus.aura.resources.cashflow_document_confirmed
-import tech.dokus.aura.resources.cashflow_draft_saved
 import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
@@ -41,7 +40,6 @@ import tech.dokus.features.cashflow.presentation.review.components.DocumentRevie
 import tech.dokus.features.cashflow.presentation.review.components.FeedbackDialog
 import tech.dokus.features.cashflow.presentation.review.components.RecordPaymentDialog
 import tech.dokus.features.cashflow.presentation.review.components.RejectDocumentDialog
-import tech.dokus.features.cashflow.presentation.review.components.SourceEvidenceDialog
 import tech.dokus.features.cashflow.presentation.review.screen.DocumentReviewScreen
 import tech.dokus.features.contacts.usecases.ListContactsUseCase
 import tech.dokus.foundation.app.mvi.container
@@ -99,8 +97,6 @@ internal fun DocumentReviewRoute(
 
     val successMessage = pendingSuccess?.let { success ->
         when (success) {
-            DocumentReviewSuccess.DraftSaved ->
-                stringResource(Res.string.cashflow_draft_saved)
             DocumentReviewSuccess.DocumentConfirmed ->
                 stringResource(Res.string.cashflow_document_confirmed)
         }
@@ -144,9 +140,6 @@ internal fun DocumentReviewRoute(
                 pendingSuccess = action.success
                 markDocumentsRefreshRequired()
             }
-            is DocumentReviewAction.ShowDiscardConfirmation -> {
-                showDiscardDialog = true
-            }
         }
     }
 
@@ -167,6 +160,17 @@ internal fun DocumentReviewRoute(
 
     val isLargeScreen = LocalScreenSize.isLarge
     val contentState = state as? DocumentReviewState.Content
+    val navigateBack: () -> Unit = {
+        markDocumentsRefreshRequired()
+        navController.popBackStack()
+    }
+    val requestBackNavigation: () -> Unit = {
+        if (contentState?.hasUnsyncedLocalChanges == true) {
+            showDiscardDialog = true
+        } else {
+            navigateBack()
+        }
+    }
 
     // Load contacts when contact sheet opens
     LaunchedEffect(contentState?.showContactSheet) {
@@ -191,10 +195,7 @@ internal fun DocumentReviewRoute(
             state = state,
             isLargeScreen = isLargeScreen,
             onIntent = { container.store.intent(it) },
-            onBackClick = {
-                markDocumentsRefreshRequired()
-                navController.popBackStack()
-            },
+            onBackClick = requestBackNavigation,
             onOpenChat = { container.store.intent(DocumentReviewIntent.OpenChat) },
             onOpenSource = { sourceId ->
                 val activeDocumentId = (state as? DocumentReviewState.Content)
@@ -228,18 +229,18 @@ internal fun DocumentReviewRoute(
     }
 
     val queueState = state.queueStateOrNull()
-    val showDesktopSplit = isLargeScreen && queueState?.items?.isNotEmpty() == true
+    val desktopQueueState = queueState?.takeIf { isLargeScreen && it.items.isNotEmpty() }
     val selectedDocumentId = state.selectedQueueDocumentIdOrDefault(initialDocumentId)
     val selectedDoc = queueState?.items?.firstOrNull { it.id == selectedDocumentId }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        if (showDesktopSplit) {
+        if (desktopQueueState != null) {
             DocumentReviewDesktopSplit(
-                documents = queueState?.items.orEmpty(),
+                documents = desktopQueueState.items,
                 selectedDocumentId = selectedDocumentId,
                 selectedDoc = selectedDoc,
-                hasMore = queueState?.hasMore == true,
-                isLoadingMore = queueState?.isLoadingMore == true,
+                hasMore = desktopQueueState.hasMore,
+                isLoadingMore = desktopQueueState.isLoadingMore,
                 onSelectDocument = { selectedDocumentIdCandidate ->
                     if (selectedDocumentIdCandidate != selectedDocumentId) {
                         container.store.intent(
@@ -250,10 +251,7 @@ internal fun DocumentReviewRoute(
                 onLoadMore = {
                     container.store.intent(DocumentReviewIntent.LoadMoreQueue)
                 },
-                onExit = {
-                    markDocumentsRefreshRequired()
-                    navController.popBackStack()
-                },
+                onExit = requestBackNavigation,
                 content = reviewContent,
             )
         } else {
@@ -308,7 +306,7 @@ internal fun DocumentReviewRoute(
                 text = stringResource(Res.string.action_confirm),
                 onClick = {
                     showDiscardDialog = false
-                    container.store.intent(DocumentReviewIntent.ConfirmDiscardChanges)
+                    navigateBack()
                 },
                 isDestructive = true,
             ),
@@ -359,19 +357,6 @@ internal fun DocumentReviewRoute(
     }
 
     val content = state as? DocumentReviewState.Content
-    val viewerState = content?.sourceViewerState
-    if (isLargeScreen && content != null && viewerState != null) {
-        SourceEvidenceDialog(
-            contentState = content,
-            viewerState = viewerState,
-            onClose = { container.store.intent(DocumentReviewIntent.CloseSourceModal) },
-            onToggleTechnicalDetails = {
-                container.store.intent(DocumentReviewIntent.ToggleSourceTechnicalDetails)
-            },
-            onRetry = { container.store.intent(DocumentReviewIntent.OpenSourceModal(viewerState.sourceId)) },
-        )
-    }
-
     content?.paymentSheetState?.let { paymentState ->
         val currencySign = when (val data = content.draftData) {
             is tech.dokus.domain.model.InvoiceDraftData -> data.currency.displaySign

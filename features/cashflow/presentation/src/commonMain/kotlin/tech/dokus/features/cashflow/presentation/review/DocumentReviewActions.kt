@@ -1,5 +1,7 @@
 package tech.dokus.features.cashflow.presentation.review
 
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import pro.respawn.flowmvi.dsl.withState
 import tech.dokus.domain.enums.CounterpartyIntent
@@ -8,6 +10,7 @@ import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.RejectDocumentRequest
 import tech.dokus.domain.model.UpdateDraftRequest
@@ -24,86 +27,77 @@ internal class DocumentReviewActions(
     private val getDocumentRecord: GetDocumentRecordUseCase,
     private val logger: Logger,
 ) {
-    suspend fun DocumentReviewCtx.handleEnterEditMode() {
-        withState<DocumentReviewState.Content, _> {
-            if (isDocumentConfirmed || isDocumentRejected || isProcessing) return@withState
-            updateState { copy(isEditMode = true) }
-        }
-    }
+    private data class DraftSyncPayload(
+        val documentId: DocumentId,
+        val draftData: DocumentDraftData,
+        val token: Long,
+    )
 
-    suspend fun DocumentReviewCtx.handleCancelEditMode() {
+    private var inlineDraftSyncJob: Job? = null
+    private var inlineDraftSyncToken: Long = 0L
+
+    suspend fun DocumentReviewCtx.syncDraftImmediately() {
+        var payload: DraftSyncPayload? = null
         withState<DocumentReviewState.Content, _> {
+            val updatedData = draftData ?: return@withState
+            inlineDraftSyncToken += 1
+            val token = inlineDraftSyncToken
+
             updateState {
                 copy(
-                    draftData = if (hasUnsavedChanges) originalData else draftData,
-                    hasUnsavedChanges = false,
-                    isEditMode = false,
+                    hasUnsavedChanges = true,
+                    isSaving = true,
                 )
             }
+
+            payload = DraftSyncPayload(
+                documentId = documentId,
+                draftData = updatedData,
+                token = token,
+            )
         }
-    }
+        val syncPayload = payload ?: return
 
-    suspend fun DocumentReviewCtx.handleSaveDraft() {
-        withState<DocumentReviewState.Content, _> {
-            if (!hasUnsavedChanges) {
-                updateState { copy(isEditMode = false) }
-                return@withState
-            }
+        inlineDraftSyncJob?.cancel()
+        inlineDraftSyncJob = launch {
+            val result = updateDocumentDraft(
+                syncPayload.documentId,
+                UpdateDraftRequest(extractedData = syncPayload.draftData)
+            )
 
-            val updatedData = draftData
-            if (updatedData == null) {
-                action(DocumentReviewAction.ShowError(DokusException.Validation.DocumentMissingFields))
-                return@withState
-            }
-
-            logger.d { "Saving draft for document: $documentId" }
-            updateState { copy(isSaving = true) }
-
-            launch {
-                updateDocumentDraft(
-                    documentId,
-                    UpdateDraftRequest(extractedData = updatedData)
-                ).fold(
-                    onSuccess = {
-                        refreshAfterDraftUpdate(documentId)
-                        withState<DocumentReviewState.Content, _> {
-                            updateState {
-                                copy(
-                                    isSaving = false,
-                                    hasUnsavedChanges = false,
-                                    isEditMode = false,
-                                )
-                            }
+            result.fold(
+                onSuccess = { response ->
+                    if (syncPayload.token != inlineDraftSyncToken) return@fold
+                    inlineDraftSyncJob = null
+                    withState<DocumentReviewState.Content, _> {
+                        updateState {
+                            copy(
+                                draftData = response.extractedData,
+                                originalData = response.extractedData,
+                                hasUnsavedChanges = false,
+                                isSaving = false,
+                                isContactRequired = response.extractedData.isContactRequired,
+                            )
                         }
-                        action(DocumentReviewAction.ShowSuccess(DocumentReviewSuccess.DraftSaved))
-                    },
-                    onFailure = { error ->
-                        logger.e(error) { "Failed to save draft: $documentId" }
-                        withState<DocumentReviewState.Content, _> {
-                            updateState { copy(isSaving = false) }
-                        }
-                        action(DocumentReviewAction.ShowError(error.asDokusException))
                     }
-                )
-            }
-        }
-    }
-
-    suspend fun DocumentReviewCtx.handleDiscardChanges() {
-        withState<DocumentReviewState.Content, _> {
-            if (!hasUnsavedChanges) return@withState
-            action(DocumentReviewAction.ShowDiscardConfirmation)
-        }
-    }
-
-    suspend fun DocumentReviewCtx.handleConfirmDiscardChanges() {
-        withState<DocumentReviewState.Content, _> {
-            updateState {
-                copy(
-                    draftData = originalData,
-                    hasUnsavedChanges = false
-                )
-            }
+                },
+                onFailure = { error ->
+                    if (error is CancellationException || syncPayload.token != inlineDraftSyncToken) {
+                        return@fold
+                    }
+                    inlineDraftSyncJob = null
+                    logger.e(error) { "Failed to persist draft correction: ${syncPayload.documentId}" }
+                    withState<DocumentReviewState.Content, _> {
+                        updateState {
+                            copy(
+                                hasUnsavedChanges = true,
+                                isSaving = false,
+                            )
+                        }
+                    }
+                    action(DocumentReviewAction.ShowError(error.asDokusException))
+                }
+            )
         }
     }
 
@@ -123,6 +117,10 @@ internal class DocumentReviewActions(
                 action(DocumentReviewAction.ShowError(DokusException.Validation.DocumentMissingFields))
                 return@withState
             }
+
+            inlineDraftSyncToken += 1
+            inlineDraftSyncJob?.cancel()
+            inlineDraftSyncJob = null
 
             logger.d { "Confirming document: $documentId" }
             updateState { copy(isConfirming = true) }
@@ -148,7 +146,8 @@ internal class DocumentReviewActions(
                             copy(
                                 draftData = savedData,
                                 originalData = savedData,
-                                hasUnsavedChanges = false
+                                hasUnsavedChanges = false,
+                                isContactRequired = savedData.isContactRequired,
                             )
                         }
                     }
@@ -169,10 +168,12 @@ internal class DocumentReviewActions(
                                     originalData = draft?.extractedData,
                                     hasUnsavedChanges = false,
                                     isConfirming = false,
-                                    isEditMode = false,
                                     isDocumentConfirmed = isConfirmed,
                                     isDocumentRejected = isRejected,
                                     confirmedCashflowEntryId = cashflowEntryId,
+                                    isContactRequired = draft?.extractedData?.let {
+                                        it.isContactRequired
+                                    } ?: isContactRequired,
                                     counterpartyIntent = draft?.counterpartyIntent ?: CounterpartyIntent.None,
                                     selectedContactId = linkedContactId ?: selectedContactId,
                                     contactSelectionState = if (linkedContactId != null) {
@@ -334,6 +335,9 @@ internal class DocumentReviewActions(
                             document = record,
                             draftData = draft?.extractedData,
                             originalData = draft?.extractedData,
+                            isContactRequired = draft?.extractedData?.let {
+                                it.isContactRequired
+                            } ?: isContactRequired,
                             counterpartyIntent = draft?.counterpartyIntent ?: CounterpartyIntent.None,
                             confirmedCashflowEntryId = record.cashflowEntryId,
                             isDocumentConfirmed = draft?.documentStatus == DocumentStatus.Confirmed,

@@ -9,6 +9,7 @@ data class ContactSnapshot(
     val name: String,
     val vatNumber: String?,
     val email: String?,
+    val avatarUrl: String?,
 )
 
 @Immutable

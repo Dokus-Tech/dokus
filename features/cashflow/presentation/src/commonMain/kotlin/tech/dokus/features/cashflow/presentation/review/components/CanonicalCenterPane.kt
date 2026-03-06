@@ -1,13 +1,14 @@
 package tech.dokus.features.cashflow.presentation.review.components
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.HorizontalDivider
@@ -18,26 +19,37 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.document_source_received_on
+import tech.dokus.aura.resources.document_source_technical_details
 import tech.dokus.domain.Money
+import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.FinancialLineItem
 import tech.dokus.domain.model.InvoiceDraftData
+import tech.dokus.features.cashflow.presentation.common.utils.formatShortDate
 import tech.dokus.features.cashflow.presentation.review.DocumentPreviewState
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.PdfPreviewPane
+import tech.dokus.features.cashflow.presentation.review.SourceEvidenceViewerState
 import tech.dokus.features.cashflow.presentation.review.models.counterpartyInfo
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.extensions.sourceViewerSubtitleLocalized
 import tech.dokus.foundation.aura.style.textMuted
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
+
+private val CanonicalPreviewWidth = Constraints.DocumentDetail.previewMaxWidth + 160.dp
 
 @Composable
 internal fun CanonicalCenterPane(
@@ -56,6 +68,17 @@ internal fun CanonicalCenterPane(
         return
     }
 
+    state.sourceViewerState?.let { viewerState ->
+        SourceViewerCenter(
+            contentState = state,
+            viewerState = viewerState,
+            onToggleTechnicalDetails = { onIntent(DocumentReviewIntent.ToggleSourceTechnicalDetails) },
+            onRetry = { onIntent(DocumentReviewIntent.OpenSourceModal(viewerState.sourceId)) },
+            modifier = modifier,
+        )
+        return
+    }
+
     val counterparty = counterpartyInfo(state)
 
     val invoiceDraft = state.draftData as? InvoiceDraftData
@@ -69,9 +92,8 @@ internal fun CanonicalCenterPane(
                 counterpartyName = counterparty.name ?: state.document.document.filename,
                 counterpartyAddress = counterparty.address,
                 modifier = Modifier
-                    .padding(vertical = Constraints.Spacing.large)
-                    .width(Constraints.DocumentDetail.previewMaxWidth)
-                    .heightIn(min = 560.dp)
+                    .width(CanonicalPreviewWidth)
+                    .fillMaxHeight()
             )
         }
         return
@@ -88,9 +110,8 @@ internal fun CanonicalCenterPane(
     ) {
         DokusCardSurface(
             modifier = Modifier
-                .padding(vertical = Constraints.Spacing.large)
-                .width(Constraints.DocumentDetail.previewMaxWidth)
-                .heightIn(min = 560.dp),
+                .width(CanonicalPreviewWidth)
+                .fillMaxHeight(),
             shape = MaterialTheme.shapes.small,
         ) {
             Column(
@@ -109,6 +130,9 @@ internal fun CanonicalCenterPane(
                     verticalAlignment = Alignment.Top,
                 ) {
                     Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(end = Constraints.Spacing.small),
                         verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall),
                     ) {
                         Text(
@@ -116,12 +140,16 @@ internal fun CanonicalCenterPane(
                             style = MaterialTheme.typography.displaySmall.copy(fontSize = 20.sp),
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
                         )
                         counterparty.address?.let { address ->
                             Text(
                                 text = address,
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.textMuted,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
                             )
                         }
                     }
@@ -129,6 +157,8 @@ internal fun CanonicalCenterPane(
                         text = "CREDIT NOTE",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.textMuted,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
 
@@ -223,6 +253,111 @@ private fun PdfFallbackCenter(
             modifier = Modifier.fillMaxSize(),
             showScanAnimation = isProcessing
         )
+    }
+}
+
+@Composable
+private fun SourceViewerCenter(
+    contentState: DocumentReviewState.Content,
+    viewerState: SourceEvidenceViewerState,
+    onToggleTechnicalDetails: () -> Unit,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val pdfPreviewState = viewerState.previewState as? DocumentPreviewState.Ready
+    if (pdfPreviewState != null && pdfPreviewState.pages.isNotEmpty()) {
+        Box(
+            modifier = modifier.fillMaxSize(),
+            contentAlignment = Alignment.TopCenter,
+        ) {
+            PdfPreviewPane(
+                state = pdfPreviewState,
+                selectedFieldPath = null,
+                onLoadMore = {},
+                modifier = Modifier
+                    .width(CanonicalPreviewWidth)
+                    .fillMaxHeight(),
+                showScanAnimation = false,
+            )
+        }
+        return
+    }
+
+    Box(
+        modifier = modifier.fillMaxSize(),
+        contentAlignment = Alignment.TopCenter,
+    ) {
+        DokusCardSurface(
+            modifier = Modifier
+                .width(CanonicalPreviewWidth)
+                .fillMaxHeight(),
+            shape = MaterialTheme.shapes.small,
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(Constraints.Spacing.medium),
+                verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
+            ) {
+                Text(
+                    text = viewerState.sourceName,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = viewerState.sourceType.sourceViewerSubtitleLocalized,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.textMuted,
+                )
+                viewerState.sourceReceivedAt?.let { receivedAt ->
+                    Text(
+                        text = stringResource(
+                            Res.string.document_source_received_on,
+                            formatShortDate(receivedAt.date),
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.textMuted,
+                    )
+                }
+
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+                SourceEvidenceBody(
+                    contentState = contentState,
+                    viewerState = viewerState,
+                    onRetry = onRetry,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                )
+
+                if (viewerState.sourceType == DocumentSource.Peppol) {
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(onClick = onToggleTechnicalDetails)
+                            .padding(vertical = Constraints.Spacing.xSmall),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall),
+                    ) {
+                        Text(
+                            text = if (viewerState.isTechnicalDetailsExpanded) "\u2304" else "\u203A",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.textMuted,
+                        )
+                        Text(
+                            text = stringResource(Res.string.document_source_technical_details),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.textMuted,
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 

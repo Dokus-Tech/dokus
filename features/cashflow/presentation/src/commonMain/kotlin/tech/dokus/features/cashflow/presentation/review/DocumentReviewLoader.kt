@@ -187,6 +187,7 @@ internal class DocumentReviewLoader(
                                 name = contact.name.value,
                                 vatNumber = contact.vatNumber?.value,
                                 email = contact.email?.value,
+                                avatarUrl = contact.avatar?.small,
                             )
                         )
                     }
