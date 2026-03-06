@@ -92,8 +92,11 @@ internal class DocumentReviewReducer(
         with(loader) { handleRefresh() }
 
     suspend fun DocumentReviewCtx.handleSelectDocumentType(type: DocumentType) {
+        var shouldPersist = false
         withState<DocumentReviewState.Content, _> {
             if (type == DocumentType.Unknown) return@withState
+
+            if (draftData.documentType == type) return@withState
 
             val newDraftData = when (type) {
                 DocumentType.Invoice -> InvoiceDraftData()
@@ -106,12 +109,19 @@ internal class DocumentReviewReducer(
                 copy(
                     draftData = newDraftData,
                     hasUnsavedChanges = true,
+                    isContactRequired = newDraftData.isContactRequired,
                 )
             }
+            shouldPersist = true
+        }
+
+        if (shouldPersist) {
+            with(actions) { syncDraftImmediately() }
         }
     }
 
     suspend fun DocumentReviewCtx.handleSelectDirection(direction: DocumentDirection) {
+        var shouldPersist = false
         withState<DocumentReviewState.Content, _> {
             if (direction == DocumentDirection.Unknown) return@withState
 
@@ -135,6 +145,11 @@ internal class DocumentReviewReducer(
                     hasUnsavedChanges = true
                 )
             }
+            shouldPersist = true
+        }
+
+        if (shouldPersist) {
+            with(actions) { syncDraftImmediately() }
         }
     }
 
@@ -189,21 +204,6 @@ internal class DocumentReviewReducer(
 
     suspend fun DocumentReviewCtx.handleSelectFieldForProvenance(fieldPath: String?) =
         with(provenance) { handleSelectFieldForProvenance(fieldPath) }
-
-    suspend fun DocumentReviewCtx.handleEnterEditMode() =
-        with(actions) { handleEnterEditMode() }
-
-    suspend fun DocumentReviewCtx.handleCancelEditMode() =
-        with(actions) { handleCancelEditMode() }
-
-    suspend fun DocumentReviewCtx.handleSaveDraft() =
-        with(actions) { handleSaveDraft() }
-
-    suspend fun DocumentReviewCtx.handleDiscardChanges() =
-        with(actions) { handleDiscardChanges() }
-
-    suspend fun DocumentReviewCtx.handleConfirmDiscardChanges() =
-        with(actions) { handleConfirmDiscardChanges() }
 
     suspend fun DocumentReviewCtx.handleConfirm() =
         with(actions) { handleConfirm() }

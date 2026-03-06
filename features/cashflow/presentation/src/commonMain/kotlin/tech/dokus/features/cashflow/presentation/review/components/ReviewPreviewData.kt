@@ -58,7 +58,7 @@ private val previewDocumentId = DocumentId.parse("e72f69a8-6913-4d8f-98e7-224db7
 internal fun previewReviewContentState(
     entryStatus: CashflowEntryStatus? = CashflowEntryStatus.Open,
     isDocumentConfirmed: Boolean = true,
-    isEditMode: Boolean = false,
+    hasUnsyncedChanges: Boolean = false,
     previewState: DocumentPreviewState = DocumentPreviewState.Ready(
         pages = listOf(DocumentPagePreviewDto(page = 1, imageUrl = "/api/v1/documents/preview/pages/1.png")),
         totalPages = 1,
@@ -211,8 +211,7 @@ internal fun previewReviewContentState(
         draftData = draftData,
         originalData = draftData,
         previewState = previewState,
-        hasUnsavedChanges = isEditMode,
-        isEditMode = isEditMode,
+        hasUnsavedChanges = hasUnsyncedChanges,
         isDocumentConfirmed = isDocumentConfirmed,
         isDocumentRejected = false,
         confirmedCashflowEntryId = cashflowEntry?.id,

@@ -163,6 +163,7 @@ internal class DocumentReviewContactBinder(
                                             name = contact.name.value,
                                             vatNumber = contact.vatNumber?.value,
                                             email = contact.email?.value,
+                                            avatarUrl = contact.avatar?.small,
                                         ),
                                         contactSelectionState = ContactSelectionState.Selected,
                                         counterpartyIntent = CounterpartyIntent.None,

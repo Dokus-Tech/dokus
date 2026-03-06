@@ -181,11 +181,6 @@ internal class DocumentReviewContainer(
                 )
 
                 // === Actions ===
-                is DocumentReviewIntent.EnterEditMode -> handleEnterEditMode()
-                is DocumentReviewIntent.CancelEditMode -> handleCancelEditMode()
-                is DocumentReviewIntent.SaveDraft -> handleSaveDraft()
-                is DocumentReviewIntent.DiscardChanges -> handleDiscardChanges()
-                is DocumentReviewIntent.ConfirmDiscardChanges -> handleConfirmDiscardChanges()
                 is DocumentReviewIntent.Confirm -> handleConfirm()
                 is DocumentReviewIntent.OpenChat -> handleOpenChat()
                 is DocumentReviewIntent.ViewCashflowEntry -> handleViewCashflowEntry()

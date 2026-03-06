@@ -10,11 +10,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.domain.enums.CashflowEntryStatus
+import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.components.ReviewContent
 import tech.dokus.features.cashflow.presentation.review.components.ReviewTopBar
+import tech.dokus.features.cashflow.presentation.review.components.previewReviewContentState
+import tech.dokus.features.cashflow.presentation.review.components.previewSourceEvidenceViewerState
 import tech.dokus.features.cashflow.presentation.review.models.CounterpartyInfo
 import tech.dokus.foundation.app.shell.LocalIsInDocDetailMode
 import tech.dokus.foundation.aura.tooling.PreviewParameters
@@ -71,15 +75,83 @@ internal fun DocumentReviewScreen(
     }
 }
 
-@Preview
+@Preview(name = "Document Review - Mobile Loading", widthDp = 430, heightDp = 900)
 @Composable
-private fun DocumentReviewScreenPreview(
+private fun DocumentReviewScreenLoadingPreview(
     @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
 ) {
     TestWrapper(parameters) {
         DocumentReviewScreen(
             state = DocumentReviewState.Loading(),
             isLargeScreen = false,
+            onIntent = {},
+            onBackClick = {},
+            onOpenChat = {},
+            onOpenSource = {},
+            onCorrectContact = {},
+            onCreateContact = {},
+            snackbarHostState = remember { SnackbarHostState() },
+        )
+    }
+}
+
+@Preview(name = "Document Review - Desktop Open", widthDp = 1366, heightDp = 900)
+@Composable
+private fun DocumentReviewScreenDesktopOpenPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        DocumentReviewScreen(
+            state = previewReviewContentState(entryStatus = CashflowEntryStatus.Open),
+            isLargeScreen = true,
+            onIntent = {},
+            onBackClick = {},
+            onOpenChat = {},
+            onOpenSource = {},
+            onCorrectContact = {},
+            onCreateContact = {},
+            snackbarHostState = remember { SnackbarHostState() },
+        )
+    }
+}
+
+@Preview(name = "Document Review - Desktop Source", widthDp = 1366, heightDp = 900)
+@Composable
+private fun DocumentReviewScreenDesktopSourcePreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        val baseState = previewReviewContentState(entryStatus = CashflowEntryStatus.Open)
+        val peppolSourceId = baseState.document.sources
+            .firstOrNull { it.sourceChannel == DocumentSource.Peppol }
+            ?.id
+            ?: baseState.document.sources.first().id
+        val sourceViewerState = previewSourceEvidenceViewerState(sourceType = DocumentSource.Peppol)
+            .copy(sourceId = peppolSourceId)
+
+        DocumentReviewScreen(
+            state = baseState.copy(sourceViewerState = sourceViewerState),
+            isLargeScreen = true,
+            onIntent = {},
+            onBackClick = {},
+            onOpenChat = {},
+            onOpenSource = {},
+            onCorrectContact = {},
+            onCreateContact = {},
+            snackbarHostState = remember { SnackbarHostState() },
+        )
+    }
+}
+
+@Preview(name = "Document Review - Desktop Paid", widthDp = 1366, heightDp = 900)
+@Composable
+private fun DocumentReviewScreenDesktopPaidPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        DocumentReviewScreen(
+            state = previewReviewContentState(entryStatus = CashflowEntryStatus.Paid),
+            isLargeScreen = true,
             onIntent = {},
             onBackClick = {},
             onOpenChat = {},

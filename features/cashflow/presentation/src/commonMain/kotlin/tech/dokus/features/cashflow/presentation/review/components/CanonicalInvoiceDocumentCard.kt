@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import tech.dokus.domain.Money
@@ -60,6 +61,9 @@ internal fun CanonicalInvoiceDocumentCard(
                 verticalAlignment = Alignment.Top,
             ) {
                 Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(end = Constraints.Spacing.small),
                     verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall),
                 ) {
                     Text(
@@ -67,12 +71,16 @@ internal fun CanonicalInvoiceDocumentCard(
                         style = MaterialTheme.typography.displaySmall.copy(fontSize = 20.sp),
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
                     )
                     counterpartyAddress?.let { address ->
                         Text(
                             text = address,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.textMuted,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                         )
                     }
                 }
@@ -80,6 +88,8 @@ internal fun CanonicalInvoiceDocumentCard(
                     text = stringResource(Res.string.invoice_label),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.textMuted,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
 
