@@ -194,6 +194,7 @@ class BankStatementMatchingService(
         }
 
         val bestPerEntry = mutableMapOf<CashflowEntryId, MatchCandidate>()
+        val transactionSuggestions = mutableListOf<TransactionSuggestion>()
 
         for (tx in transactions) {
             val scored = openEntries.mapNotNull { entry ->
@@ -216,10 +217,9 @@ class BankStatementMatchingService(
                 else -> null
             } ?: continue
 
-            importedBankTransactionRepository.setSuggestion(
-                tenantId = tenantId,
+            transactionSuggestions += TransactionSuggestion(
                 transactionId = tx.id,
-                cashflowEntryId = best.entry.id,
+                entryId = best.entry.id,
                 score = best.score,
                 tier = tier
             )
@@ -235,6 +235,16 @@ class BankStatementMatchingService(
             cashflowPaymentCandidateRepository.clearForEntry(tenantId, entryId)
         }
 
+        transactionSuggestions.forEach { suggestion ->
+            importedBankTransactionRepository.setSuggestion(
+                tenantId = tenantId,
+                transactionId = suggestion.transactionId,
+                cashflowEntryId = suggestion.entryId,
+                score = suggestion.score,
+                tier = suggestion.tier
+            )
+        }
+
         bestPerEntry.values.forEach { candidate ->
             cashflowPaymentCandidateRepository.upsertBestCandidate(
                 tenantId = tenantId,
@@ -248,6 +258,13 @@ class BankStatementMatchingService(
             )
         }
     }
+
+    private data class TransactionSuggestion(
+        val transactionId: tech.dokus.domain.ids.ImportedBankTransactionId,
+        val entryId: CashflowEntryId,
+        val score: Double,
+        val tier: PaymentCandidateTier
+    )
 
     private data class MatchCandidate(
         val transaction: ImportedBankTransactionDto,

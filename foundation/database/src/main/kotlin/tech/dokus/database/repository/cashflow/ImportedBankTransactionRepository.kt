@@ -10,6 +10,7 @@ import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.greaterEq
 import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.neq
+import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.batchInsert
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.selectAll
@@ -62,8 +63,18 @@ class ImportedBankTransactionRepository {
                 (ImportedBankTransactionsTable.status neq ImportedBankTransactionStatus.Linked)
         }
 
-        if (rows.isNotEmpty()) {
-            ImportedBankTransactionsTable.batchInsert(rows) { row ->
+        val existingRowHashes = ImportedBankTransactionsTable.select(ImportedBankTransactionsTable.rowHash).where {
+            (ImportedBankTransactionsTable.tenantId eq tenantUuid) and
+                (ImportedBankTransactionsTable.documentId eq documentUuid)
+        }.map { it[ImportedBankTransactionsTable.rowHash] }
+            .toHashSet()
+
+        val rowsToInsert = rows
+            .distinctBy { it.rowHash }
+            .filterNot { it.rowHash in existingRowHashes }
+
+        if (rowsToInsert.isNotEmpty()) {
+            ImportedBankTransactionsTable.batchInsert(rowsToInsert) { row ->
                 this[ImportedBankTransactionsTable.id] = UUID.randomUUID()
                 this[ImportedBankTransactionsTable.tenantId] = tenantUuid
                 this[ImportedBankTransactionsTable.documentId] = documentUuid
