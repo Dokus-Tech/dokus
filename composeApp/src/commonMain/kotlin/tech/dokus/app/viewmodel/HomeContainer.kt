@@ -195,7 +195,12 @@ internal class HomeContainer(
         getAccountMeUseCase().fold(
             onSuccess = { accountMe ->
                 withState<HomeState.Ready, _> {
-                    updateState { copy(surfaceAvailability = accountMe.surface) }
+                    updateState {
+                        copy(
+                            surfaceAvailability = accountMe.surface,
+                            firms = accountMe.firms.sortedBy { it.name.value.lowercase() }
+                        )
+                    }
                 }
             },
             onFailure = { error ->

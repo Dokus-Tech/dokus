@@ -6,6 +6,7 @@ import tech.dokus.app.screens.MoreRoute
 import tech.dokus.app.screens.UnderDevelopmentScreen
 import tech.dokus.app.screens.accountant.ConsoleClientsRoute
 import tech.dokus.app.screens.console.ConsoleActivityRoute
+import tech.dokus.app.screens.console.ConsoleExportRoute
 import tech.dokus.app.screens.console.ConsolePlaceholderRoute
 import tech.dokus.app.screens.console.ConsoleRequestsRoute
 import tech.dokus.app.screens.search.SearchRoute
@@ -37,7 +38,7 @@ internal object HomeNavigationProvider : NavigationProvider {
             ConsoleActivityRoute()
         }
         composable<HomeDestination.ConsoleExport> {
-            ConsolePlaceholderRoute(title = "Export")
+            ConsoleExportRoute()
         }
         composable<HomeDestination.Search> {
             SearchRoute()

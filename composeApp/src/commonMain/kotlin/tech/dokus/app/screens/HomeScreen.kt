@@ -56,6 +56,7 @@ import tech.dokus.app.viewmodel.HomeState
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.User
+import tech.dokus.domain.model.auth.FirmWorkspaceSummary
 import tech.dokus.foundation.app.AppModule
 import tech.dokus.foundation.app.NavContext
 import tech.dokus.foundation.app.local.LocalAppModules
@@ -126,6 +127,8 @@ internal fun HomeRoute(
     val surfaceAvailability = shellState.surfaceAvailability
     val tenant = (shellState.tenantState as? DokusState.Success<Tenant>)?.data
     val user = (shellState.userState as? DokusState.Success<User>)?.data
+    val selectedFirm = shellState.firms.firstOrNull { it.id == workspaceContext.selectedFirmId }
+        ?: shellState.firms.firstOrNull()
     val profileData = buildProfileData(
         user = user,
         tierLabel = tenant?.subscription?.localized
@@ -168,7 +171,7 @@ internal fun HomeRoute(
         rootNavController = navController,
         isLargeScreen = isLargeScreen,
         shellState = shellState,
-        tenant = tenant,
+        selectedFirm = selectedFirm,
         profileData = profileData,
         pendingHomeCommand = pendingHomeCommand,
         onConsumeHomeCommand = onConsumeHomeCommand,
@@ -242,7 +245,9 @@ internal fun HomeScreen(
     selectedRoute: String?,
     topBarConfig: HomeShellTopBarConfig?,
     desktopPinnedItems: List<NavItem>,
+    navContext: NavContext,
     tenantState: DokusState<Tenant>,
+    selectedFirm: FirmWorkspaceSummary?,
     profileData: HomeShellProfileData?,
     isLoggingOut: Boolean,
     snackbarHostState: SnackbarHostState,
@@ -278,7 +283,9 @@ internal fun HomeScreen(
                     pinnedItems = desktopPinnedItems,
                     selectedRoute = selectedRoute,
                     topBarConfig = topBarConfig,
+                    navContext = navContext,
                     tenantState = tenantState,
+                    selectedFirm = selectedFirm,
                     profileData = profileData,
                     isLoggingOut = isLoggingOut,
                     onWorkspaceClick = onWorkspaceClick,
@@ -340,7 +347,9 @@ private fun RailNavigationLayout(
     pinnedItems: List<NavItem>,
     selectedRoute: String?,
     topBarConfig: HomeShellTopBarConfig?,
+    navContext: NavContext,
     tenantState: DokusState<Tenant>,
+    selectedFirm: FirmWorkspaceSummary?,
     profileData: HomeShellProfileData?,
     isLoggingOut: Boolean,
     onWorkspaceClick: () -> Unit,
@@ -407,7 +416,9 @@ private fun RailNavigationLayout(
                     Spacer(modifier = Modifier.weight(1f))
 
                     DesktopSidebarBottomControls(
+                        navContext = navContext,
                         tenantState = tenantState,
+                        selectedFirm = selectedFirm,
                         profileData = profileData,
                         isLoggingOut = isLoggingOut,
                         onWorkspaceClick = onWorkspaceClick,
@@ -561,7 +572,9 @@ private fun HomeScreenPreview(
             selectedRoute = null,
             topBarConfig = null,
             desktopPinnedItems = emptyList(),
+            navContext = NavContext.TENANT,
             tenantState = DokusState.loading(),
+            selectedFirm = null,
             profileData = null,
             isLoggingOut = false,
             snackbarHostState = remember { SnackbarHostState() },

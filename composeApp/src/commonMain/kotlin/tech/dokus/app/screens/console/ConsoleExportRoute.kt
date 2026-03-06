@@ -4,8 +4,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.console_activity_subtitle
-import tech.dokus.aura.resources.console_activity_title
+import tech.dokus.aura.resources.console_export_subtitle
+import tech.dokus.aura.resources.console_export_title
 import tech.dokus.aura.resources.console_requests_period_label
 import tech.dokus.foundation.app.shell.HomeShellTopBarAction
 import tech.dokus.foundation.app.shell.HomeShellTopBarConfig
@@ -18,7 +18,7 @@ import tech.dokus.navigation.local.LocalNavController
 import tech.dokus.navigation.navigateToTopLevelTab
 
 @Composable
-internal fun ConsoleActivityRoute() {
+internal fun ConsoleExportRoute() {
     val accessContext = LocalUserAccessContext.current
     val navController = LocalNavController.current
 
@@ -30,12 +30,12 @@ internal fun ConsoleActivityRoute() {
 
     if (!canRenderConsoleContent(accessContext)) return
 
-    val title = stringResource(Res.string.console_activity_title)
-    val subtitle = stringResource(Res.string.console_activity_subtitle)
+    val title = stringResource(Res.string.console_export_title)
+    val subtitle = stringResource(Res.string.console_export_subtitle)
     val periodLabel = stringResource(Res.string.console_requests_period_label)
 
     RegisterHomeShellTopBar(
-        route = HomeDestination.ConsoleActivity.route,
+        route = HomeDestination.ConsoleExport.route,
         config = HomeShellTopBarConfig(
             mode = HomeShellTopBarMode.Title(
                 title = title,
@@ -50,6 +50,8 @@ internal fun ConsoleActivityRoute() {
         ),
     )
 
-    ConsoleActivityScreen()
+    ConsoleExportScreen(
+        firmName = "Kantoor Boonen",
+        period = periodLabel,
+    )
 }
-

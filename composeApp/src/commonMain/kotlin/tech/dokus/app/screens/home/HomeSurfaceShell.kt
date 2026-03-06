@@ -26,7 +26,7 @@ import tech.dokus.app.viewmodel.HomeState
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.more_horizontal
 import tech.dokus.aura.resources.nav_more
-import tech.dokus.domain.model.Tenant
+import tech.dokus.domain.model.auth.FirmWorkspaceSummary
 import tech.dokus.foundation.app.AppModule
 import tech.dokus.foundation.app.NavContext
 import tech.dokus.foundation.app.shell.HomeShellTopBarConfig
@@ -52,7 +52,7 @@ internal fun HomeSurfaceShell(
     rootNavController: NavController,
     isLargeScreen: Boolean,
     shellState: HomeState.Ready,
-    tenant: Tenant?,
+    selectedFirm: FirmWorkspaceSummary?,
     profileData: HomeShellProfileData?,
     pendingHomeCommand: HomeNavigationEnvelope?,
     onConsumeHomeCommand: (Long) -> Unit,
@@ -215,7 +215,9 @@ internal fun HomeSurfaceShell(
         selectedRoute = currentRoute,
         topBarConfig = topBarConfig,
         desktopPinnedItems = visiblePinnedItems,
+        navContext = navContext,
         tenantState = shellState.tenantState,
+        selectedFirm = selectedFirm,
         profileData = profileData,
         isLoggingOut = shellState.isLoggingOut,
         snackbarHostState = snackbarHostState,

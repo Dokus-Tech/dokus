@@ -21,11 +21,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
-import org.jetbrains.compose.resources.stringResource
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.console_activity_subtitle
-import tech.dokus.aura.resources.console_activity_title
-import tech.dokus.aura.resources.console_requests_period_label
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.tooling.PreviewParameters
@@ -51,38 +46,6 @@ internal fun ConsoleActivityScreen(
             .padding(Constraints.Spacing.medium),
         verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium),
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Top,
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall)) {
-                Text(
-                    text = stringResource(Res.string.console_activity_title),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Text(
-                    text = stringResource(Res.string.console_activity_subtitle),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-
-            DokusCardSurface {
-                Text(
-                    text = stringResource(Res.string.console_requests_period_label),
-                    modifier = Modifier.padding(
-                        horizontal = Constraints.Spacing.medium,
-                        vertical = Constraints.Spacing.small
-                    ),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.SemiBold,
-                )
-            }
-        }
-
         DokusCardSurface(modifier = Modifier.fillMaxWidth()) {
             LazyColumn(modifier = Modifier.fillMaxWidth()) {
                 items(items) { item ->

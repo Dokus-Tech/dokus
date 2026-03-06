@@ -12,7 +12,6 @@ import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.console_clients_count
-import tech.dokus.aura.resources.console_clients_subtitle
 import tech.dokus.aura.resources.console_clients_overview_title
 import tech.dokus.aura.resources.console_requests_period_label
 import tech.dokus.app.screens.console.canRenderConsoleContent
@@ -71,21 +70,25 @@ internal fun ConsoleClientsRoute(
         }
     }
 
-    val title = stringResource(Res.string.console_clients_overview_title)
-    val fallbackSubtitle = stringResource(Res.string.console_clients_subtitle)
+    val defaultTitle = stringResource(Res.string.console_clients_overview_title)
     val periodLabel = stringResource(Res.string.console_requests_period_label)
-    val topBarSubtitle = when (state) {
+    val topBarContent = when (state) {
         is ConsoleClientsState.Content -> {
             val content = state as ConsoleClientsState.Content
-            "${content.firmName} · ${stringResource(Res.string.console_clients_count, content.clients.size)}"
+            val selectedClient = content.clients.firstOrNull { it.tenantId == content.selectedClientTenantId }
+            if (selectedClient != null) {
+                selectedClient.companyName.value to (selectedClient.vatNumber?.formatted ?: "")
+            } else {
+                defaultTitle to "${content.firmName} · ${stringResource(Res.string.console_clients_count, content.clients.size)}"
+            }
         }
 
-        else -> fallbackSubtitle
+        else -> defaultTitle to ""
     }
     val topBarConfig = HomeShellTopBarConfig(
         mode = HomeShellTopBarMode.Title(
-            title = title,
-            subtitle = topBarSubtitle,
+            title = topBarContent.first,
+            subtitle = topBarContent.second.ifBlank { null },
         ),
         actions = listOf(
             HomeShellTopBarAction.Text(
