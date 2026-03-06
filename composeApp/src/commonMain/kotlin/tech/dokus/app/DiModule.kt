@@ -146,6 +146,10 @@ internal val diModuleApp = module {
                 transferWorkspaceOwnership = get(),
                 getCurrentUser = get(),
                 getCurrentTenant = get(),
+                searchBookkeeperFirms = get(),
+                listBookkeeperAccess = get(),
+                grantBookkeeperAccess = get(),
+                revokeBookkeeperAccess = get(),
             )
         )
     }

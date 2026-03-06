@@ -1,11 +1,15 @@
 package tech.dokus.features.auth.datasource
 
 import tech.dokus.domain.enums.UserRole
+import tech.dokus.domain.ids.FirmId
 import tech.dokus.domain.ids.InvitationId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.CreateInvitationRequest
 import tech.dokus.domain.model.TeamMember
 import tech.dokus.domain.model.TenantInvitation
+import tech.dokus.domain.model.auth.BookkeeperFirmSearchItem
+import tech.dokus.domain.model.auth.GrantBookkeeperAccessResponse
+import tech.dokus.domain.model.auth.TenantBookkeeperAccessItem
 
 /**
  * Remote data source for team management operations.
@@ -60,4 +64,27 @@ interface TeamRemoteDataSource {
      * @return Result indicating success or failure
      */
     suspend fun transferOwnership(newOwnerId: UserId): Result<Unit>
+
+    /**
+     * Search bookkeeper firms by name or VAT.
+     */
+    suspend fun searchBookkeeperFirms(
+        query: String,
+        limit: Int = 20,
+    ): Result<List<BookkeeperFirmSearchItem>>
+
+    /**
+     * List active firm access links for current tenant.
+     */
+    suspend fun listBookkeeperAccess(): Result<List<TenantBookkeeperAccessItem>>
+
+    /**
+     * Grant current tenant access to a firm.
+     */
+    suspend fun grantBookkeeperAccess(firmId: FirmId): Result<GrantBookkeeperAccessResponse>
+
+    /**
+     * Revoke current tenant access to a firm.
+     */
+    suspend fun revokeBookkeeperAccess(firmId: FirmId): Result<Unit>
 }

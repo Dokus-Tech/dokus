@@ -13,7 +13,7 @@ import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.console_clients_count
 import tech.dokus.aura.resources.console_clients_subtitle
-import tech.dokus.aura.resources.console_clients_triage_title
+import tech.dokus.aura.resources.console_clients_overview_title
 import tech.dokus.aura.resources.console_requests_period_label
 import tech.dokus.app.screens.console.canRenderConsoleContent
 import tech.dokus.app.screens.console.isConsoleAccessDenied
@@ -71,7 +71,7 @@ internal fun ConsoleClientsRoute(
         }
     }
 
-    val title = stringResource(Res.string.console_clients_triage_title)
+    val title = stringResource(Res.string.console_clients_overview_title)
     val fallbackSubtitle = stringResource(Res.string.console_clients_subtitle)
     val periodLabel = stringResource(Res.string.console_requests_period_label)
     val topBarSubtitle = when (state) {

@@ -10,17 +10,22 @@ import tech.dokus.domain.Email
 import tech.dokus.domain.enums.UserRole
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
+import tech.dokus.domain.ids.FirmId
 import tech.dokus.domain.ids.InvitationId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.CreateInvitationRequest
 import tech.dokus.domain.enums.maxSeats
 import tech.dokus.features.auth.usecases.CancelInvitationUseCase
 import tech.dokus.features.auth.usecases.CreateInvitationUseCase
+import tech.dokus.features.auth.usecases.GrantBookkeeperAccessUseCase
 import tech.dokus.features.auth.usecases.GetCurrentTenantUseCase
 import tech.dokus.features.auth.usecases.GetCurrentUserUseCase
+import tech.dokus.features.auth.usecases.ListBookkeeperAccessUseCase
 import tech.dokus.features.auth.usecases.ListPendingInvitationsUseCase
 import tech.dokus.features.auth.usecases.ListTeamMembersUseCase
+import tech.dokus.features.auth.usecases.RevokeBookkeeperAccessUseCase
 import tech.dokus.features.auth.usecases.RemoveTeamMemberUseCase
+import tech.dokus.features.auth.usecases.SearchBookkeeperFirmsUseCase
 import tech.dokus.features.auth.usecases.TransferWorkspaceOwnershipUseCase
 import tech.dokus.features.auth.usecases.UpdateTeamMemberRoleUseCase
 import tech.dokus.foundation.platform.Logger
@@ -37,6 +42,10 @@ internal data class TeamSettingsUseCases(
     val transferWorkspaceOwnership: TransferWorkspaceOwnershipUseCase,
     val getCurrentUser: GetCurrentUserUseCase,
     val getCurrentTenant: GetCurrentTenantUseCase,
+    val searchBookkeeperFirms: SearchBookkeeperFirmsUseCase,
+    val listBookkeeperAccess: ListBookkeeperAccessUseCase,
+    val grantBookkeeperAccess: GrantBookkeeperAccessUseCase,
+    val revokeBookkeeperAccess: RevokeBookkeeperAccessUseCase,
 )
 
 /**
@@ -66,6 +75,12 @@ internal class TeamSettingsContainer(
                     is TeamSettingsIntent.UpdateMemberRole -> handleUpdateMemberRole(intent.userId, intent.newRole)
                     is TeamSettingsIntent.RemoveMember -> handleRemoveMember(intent.userId)
                     is TeamSettingsIntent.TransferOwnership -> handleTransferOwnership(intent.newOwnerId)
+                    is TeamSettingsIntent.UpdateBookkeeperSearchQuery -> handleUpdateBookkeeperSearchQuery(intent.query)
+                    TeamSettingsIntent.SearchBookkeeperFirms -> handleSearchBookkeeperFirms()
+                    is TeamSettingsIntent.SelectBookkeeperFirm -> handleSelectBookkeeperFirm(intent.firmId)
+                    TeamSettingsIntent.GrantBookkeeperAccess -> handleGrantBookkeeperAccess()
+                    is TeamSettingsIntent.RevokeBookkeeperAccess -> handleRevokeBookkeeperAccess(intent.firmId)
+                    TeamSettingsIntent.ResetBookkeeperAccessForm -> handleResetBookkeeperAccessForm()
                     is TeamSettingsIntent.ResetActionState -> handleResetActionState()
                 }
             }
@@ -84,7 +99,11 @@ internal class TeamSettingsContainer(
 
         withState<TeamSettingsState.Content, _> {
             updateState {
-                copy(membersLoading = true, invitationsLoading = true)
+                copy(
+                    membersLoading = true,
+                    invitationsLoading = true,
+                    bookkeeperAccessLoading = isCurrentUserOwner,
+                )
             }
         }
 
@@ -96,7 +115,14 @@ internal class TeamSettingsContainer(
         val membersResult = useCases.listTeamMembers()
         val invitationsResult = useCases.listPendingInvitations()
         val currentUserId = useCases.getCurrentUser().getOrNull()?.id
-        val maxSeats = useCases.getCurrentTenant().getOrNull()?.subscription?.maxSeats ?: 3
+        val currentTenant = useCases.getCurrentTenant().getOrNull()
+        val maxSeats = currentTenant?.subscription?.maxSeats ?: 3
+        val isCurrentUserOwner = currentTenant?.role == UserRole.Owner
+        val bookkeeperAccessResult = if (isCurrentUserOwner) {
+            useCases.listBookkeeperAccess()
+        } else {
+            Result.success(emptyList())
+        }
 
         membersResult.fold(
             onSuccess = { members ->
@@ -104,16 +130,40 @@ internal class TeamSettingsContainer(
                 invitationsResult.fold(
                     onSuccess = { invitations ->
                         logger.i { "Loaded ${invitations.size} pending invitations" }
-                        updateState {
-                            TeamSettingsState.Content(
-                                members = members,
-                                membersLoading = false,
-                                invitations = invitations,
-                                invitationsLoading = false,
-                                currentUserId = currentUserId,
-                                maxSeats = maxSeats,
-                            )
-                        }
+                        bookkeeperAccessResult.fold(
+                            onSuccess = { bookkeeperAccess ->
+                                updateState {
+                                    TeamSettingsState.Content(
+                                        members = members,
+                                        membersLoading = false,
+                                        invitations = invitations,
+                                        invitationsLoading = false,
+                                        currentUserId = currentUserId,
+                                        maxSeats = maxSeats,
+                                        bookkeeperAccess = bookkeeperAccess,
+                                        bookkeeperAccessLoading = false,
+                                        isCurrentUserOwner = isCurrentUserOwner,
+                                    )
+                                }
+                            },
+                            onFailure = { error ->
+                                logger.e(error) { "Failed to load connected bookkeeper firms" }
+                                updateState {
+                                    TeamSettingsState.Content(
+                                        members = members,
+                                        membersLoading = false,
+                                        invitations = invitations,
+                                        invitationsLoading = false,
+                                        currentUserId = currentUserId,
+                                        maxSeats = maxSeats,
+                                        bookkeeperAccess = emptyList(),
+                                        bookkeeperAccessLoading = false,
+                                        isCurrentUserOwner = isCurrentUserOwner,
+                                    )
+                                }
+                                action(TeamSettingsAction.ShowError(error.asDokusException))
+                            }
+                        )
                     },
                     onFailure = { error ->
                         logger.e(error) { "Failed to load invitations" }
@@ -224,6 +274,177 @@ internal class TeamSettingsContainer(
                     action(TeamSettingsAction.ShowError(displayException))
                 }
             )
+        }
+    }
+
+    private suspend fun TeamSettingsCtx.handleUpdateBookkeeperSearchQuery(query: String) {
+        withState<TeamSettingsState.Content, _> {
+            updateState {
+                copy(
+                    bookkeeperSearchQuery = query,
+                    selectedBookkeeperFirmId = null,
+                )
+            }
+        }
+    }
+
+    private suspend fun TeamSettingsCtx.handleSearchBookkeeperFirms() {
+        withState<TeamSettingsState.Content, _> {
+            if (!isCurrentUserOwner) return@withState
+
+            val query = bookkeeperSearchQuery.trim()
+            if (query.length < 2) {
+                updateState {
+                    copy(
+                        bookkeeperSearchResults = emptyList(),
+                        bookkeeperSearchLoading = false,
+                        selectedBookkeeperFirmId = null,
+                    )
+                }
+                return@withState
+            }
+
+            updateState { copy(bookkeeperSearchLoading = true) }
+
+            useCases.searchBookkeeperFirms(query = query).fold(
+                onSuccess = { results ->
+                    val sorted = results.sortedBy { it.name.value.lowercase() }
+                    val selectedId = selectedBookkeeperFirmId?.takeIf { selected ->
+                        sorted.any { it.firmId == selected }
+                    }
+                    updateState {
+                        copy(
+                            bookkeeperSearchResults = sorted,
+                            bookkeeperSearchLoading = false,
+                            selectedBookkeeperFirmId = selectedId,
+                        )
+                    }
+                },
+                onFailure = { error ->
+                    logger.e(error) { "Failed to search bookkeeper firms" }
+                    updateState {
+                        copy(
+                            bookkeeperSearchResults = emptyList(),
+                            bookkeeperSearchLoading = false,
+                            selectedBookkeeperFirmId = null,
+                        )
+                    }
+                    action(TeamSettingsAction.ShowError(error.asDokusException))
+                }
+            )
+        }
+    }
+
+    private suspend fun TeamSettingsCtx.handleSelectBookkeeperFirm(firmId: FirmId?) {
+        withState<TeamSettingsState.Content, _> {
+            updateState { copy(selectedBookkeeperFirmId = firmId) }
+        }
+    }
+
+    private suspend fun TeamSettingsCtx.handleGrantBookkeeperAccess() {
+        withState<TeamSettingsState.Content, _> {
+            if (!isCurrentUserOwner) {
+                action(TeamSettingsAction.ShowError(DokusException.NotAuthorized()))
+                return@withState
+            }
+
+            val selectedFirmId = selectedBookkeeperFirmId
+            if (selectedFirmId == null) {
+                val exception = DokusException.BadRequest("Select a bookkeeper firm first")
+                updateState {
+                    copy(actionState = TeamSettingsState.Content.ActionState.Error(exception))
+                }
+                action(TeamSettingsAction.ShowError(exception))
+                return@withState
+            }
+
+            updateState {
+                copy(
+                    actionState = TeamSettingsState.Content.ActionState.Processing,
+                    bookkeeperAccessLoading = true,
+                )
+            }
+
+            useCases.grantBookkeeperAccess(selectedFirmId).fold(
+                onSuccess = {
+                    updateState {
+                        copy(
+                            actionState = TeamSettingsState.Content.ActionState.Success(
+                                TeamSettingsSuccess.BookkeeperAccessGranted
+                            ),
+                            bookkeeperSearchQuery = "",
+                            bookkeeperSearchResults = emptyList(),
+                            selectedBookkeeperFirmId = null,
+                        )
+                    }
+                    action(TeamSettingsAction.ShowSuccess(TeamSettingsSuccess.BookkeeperAccessGranted))
+                    action(TeamSettingsAction.DismissBookkeeperDialog)
+                    refreshBookkeeperAccess()
+                },
+                onFailure = { error ->
+                    val exception = error.asDokusException
+                    updateState {
+                        copy(
+                            actionState = TeamSettingsState.Content.ActionState.Error(exception),
+                            bookkeeperAccessLoading = false,
+                        )
+                    }
+                    action(TeamSettingsAction.ShowError(exception))
+                }
+            )
+        }
+    }
+
+    private suspend fun TeamSettingsCtx.handleRevokeBookkeeperAccess(firmId: FirmId) {
+        withState<TeamSettingsState.Content, _> {
+            if (!isCurrentUserOwner) {
+                action(TeamSettingsAction.ShowError(DokusException.NotAuthorized()))
+                return@withState
+            }
+
+            updateState {
+                copy(
+                    actionState = TeamSettingsState.Content.ActionState.Processing,
+                    bookkeeperAccessLoading = true,
+                )
+            }
+
+            useCases.revokeBookkeeperAccess(firmId).fold(
+                onSuccess = {
+                    updateState {
+                        copy(
+                            actionState = TeamSettingsState.Content.ActionState.Success(
+                                TeamSettingsSuccess.BookkeeperAccessRevoked
+                            ),
+                        )
+                    }
+                    action(TeamSettingsAction.ShowSuccess(TeamSettingsSuccess.BookkeeperAccessRevoked))
+                    refreshBookkeeperAccess()
+                },
+                onFailure = { error ->
+                    val exception = error.asDokusException
+                    updateState {
+                        copy(
+                            actionState = TeamSettingsState.Content.ActionState.Error(exception),
+                            bookkeeperAccessLoading = false,
+                        )
+                    }
+                    action(TeamSettingsAction.ShowError(exception))
+                }
+            )
+        }
+    }
+
+    private suspend fun TeamSettingsCtx.handleResetBookkeeperAccessForm() {
+        withState<TeamSettingsState.Content, _> {
+            updateState {
+                copy(
+                    bookkeeperSearchQuery = "",
+                    bookkeeperSearchResults = emptyList(),
+                    bookkeeperSearchLoading = false,
+                    selectedBookkeeperFirmId = null,
+                )
+            }
         }
     }
 
@@ -412,6 +633,33 @@ internal class TeamSettingsContainer(
                 onFailure = { error ->
                     logger.e(error) { "Failed to refresh invitations" }
                     updateState { copy(invitationsLoading = false) }
+                }
+            )
+        }
+    }
+
+    private suspend fun TeamSettingsCtx.refreshBookkeeperAccess() {
+        withState<TeamSettingsState.Content, _> {
+            if (!isCurrentUserOwner) {
+                updateState { copy(bookkeeperAccess = emptyList(), bookkeeperAccessLoading = false) }
+                return@withState
+            }
+
+            updateState { copy(bookkeeperAccessLoading = true) }
+
+            useCases.listBookkeeperAccess().fold(
+                onSuccess = { access ->
+                    updateState {
+                        copy(
+                            bookkeeperAccess = access,
+                            bookkeeperAccessLoading = false,
+                        )
+                    }
+                },
+                onFailure = { error ->
+                    logger.e(error) { "Failed to refresh connected bookkeeper firms" }
+                    updateState { copy(bookkeeperAccessLoading = false) }
+                    action(TeamSettingsAction.ShowError(error.asDokusException))
                 }
             )
         }

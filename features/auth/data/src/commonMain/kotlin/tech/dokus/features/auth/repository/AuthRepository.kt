@@ -188,6 +188,15 @@ class AuthRepository(
             }
     }
 
+    override suspend fun refreshSessionNow(): Result<Unit> {
+        val refreshedToken = tokenManager.refreshToken(force = true)
+        return if (!refreshedToken.isNullOrBlank()) {
+            Result.success(Unit)
+        } else {
+            Result.failure(DokusException.RefreshTokenExpired())
+        }
+    }
+
     override suspend fun createFirm(request: CreateFirmRequest): Result<CreateFirmResponse> {
         return accountDataSource.createFirm(request)
             .onSuccess {

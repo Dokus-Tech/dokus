@@ -263,7 +263,7 @@ private fun authModule() = module {
         )
     }
 
-    single { TeamService(get(), get(), get()) }
+    single { TeamService(get(), get(), get(), get()) }
 
     single {
         val config = get<Config>()

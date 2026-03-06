@@ -22,6 +22,10 @@ interface GetAccountMeUseCase {
     suspend operator fun invoke(): Result<AccountMeResponse>
 }
 
+interface RefreshSessionNowUseCase {
+    suspend operator fun invoke(): Result<Unit>
+}
+
 /**
  * Use case for retrieving current user.
  */

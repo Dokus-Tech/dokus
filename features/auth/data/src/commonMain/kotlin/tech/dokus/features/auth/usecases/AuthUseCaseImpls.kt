@@ -47,6 +47,12 @@ internal class GetAccountMeUseCaseImpl(
     override suspend fun invoke() = authGateway.getAccountMe()
 }
 
+internal class RefreshSessionNowUseCaseImpl(
+    private val authGateway: AuthGateway
+) : RefreshSessionNowUseCase {
+    override suspend fun invoke(): Result<Unit> = authGateway.refreshSessionNow()
+}
+
 internal class GetCurrentUserUseCaseImpl(
     private val authGateway: AuthGateway
 ) : GetCurrentUserUseCase {

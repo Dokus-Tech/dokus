@@ -38,6 +38,18 @@
     <string name="team_email_invalid">Invalid email format</string>
     <string name="team_role_update_success">Role updated</string>
     <string name="team_role_update_failed">Failed to update role</string>
+    <string name="team_bookkeeper_access_title">Bookkeeper access</string>
+    <string name="team_bookkeeper_access_subtitle">Grant this workspace to an existing bookkeeper firm.</string>
+    <string name="team_bookkeeper_access_empty">No connected bookkeeper firms yet.</string>
+    <string name="team_bookkeeper_access_grant">Grant access</string>
+    <string name="team_bookkeeper_access_search_placeholder">Search firm name or VAT</string>
+    <string name="team_bookkeeper_access_no_results">No matching firms found.</string>
+    <string name="team_bookkeeper_access_revoke">Revoke</string>
+    <string name="team_bookkeeper_access_connected_label">Connected</string>
+    <string name="team_bookkeeper_access_owner_only">Only owners can grant or revoke access.</string>
+    <string name="team_bookkeeper_access_dialog_title">Grant bookkeeper access</string>
+    <string name="team_bookkeeper_access_granted_success">Bookkeeper access granted</string>
+    <string name="team_bookkeeper_access_revoked_success">Bookkeeper access revoked</string>
 
     <!-- Team Settings Screen v2 -->
     <string name="team_load_failed">Failed to load team</string>

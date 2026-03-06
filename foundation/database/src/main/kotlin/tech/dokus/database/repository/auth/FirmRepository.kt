@@ -1,9 +1,13 @@
 package tech.dokus.database.repository.auth
 
 import org.jetbrains.exposed.v1.core.Count
+import org.jetbrains.exposed.v1.core.LowerCase
+import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.core.like
+import org.jetbrains.exposed.v1.core.or
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.insertAndGetId
@@ -106,6 +110,25 @@ class FirmRepository {
             .map { it.toFirm() }
     }
 
+    suspend fun searchActiveFirmsByNameOrVat(query: String, limit: Int): List<Firm> = dbQuery {
+        val normalizedQuery = query.trim().lowercase()
+        if (normalizedQuery.isBlank()) return@dbQuery emptyList()
+
+        val boundedLimit = limit.coerceIn(1, 50)
+        val pattern = "%$normalizedQuery%"
+        FirmsTable
+            .selectAll()
+            .where {
+                (FirmsTable.isActive eq true) and (
+                    (LowerCase(FirmsTable.name) like pattern) or
+                        (LowerCase(FirmsTable.vatNumber) like pattern)
+                    )
+            }
+            .orderBy(FirmsTable.name to SortOrder.ASC)
+            .limit(boundedLimit)
+            .map { it.toFirm() }
+    }
+
     suspend fun countActiveClientsByFirmIds(firmIds: List<FirmId>): Map<FirmId, Int> = dbQuery {
         if (firmIds.isEmpty()) return@dbQuery emptyMap()
 
@@ -127,6 +150,16 @@ class FirmRepository {
             .selectAll()
             .where {
                 (FirmAccessTable.firmId eq firmId.value.toJavaUuid()) and
+                    (FirmAccessTable.status eq FirmAccessStatus.Active)
+            }
+            .map { it.toFirmAccess() }
+    }
+
+    suspend fun listActiveAccessByTenant(tenantId: TenantId): List<FirmAccess> = dbQuery {
+        FirmAccessTable
+            .selectAll()
+            .where {
+                (FirmAccessTable.tenantId eq tenantId.value.toJavaUuid()) and
                     (FirmAccessTable.status eq FirmAccessStatus.Active)
             }
             .map { it.toFirmAccess() }

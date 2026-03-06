@@ -1,11 +1,15 @@
 package tech.dokus.features.auth.usecases
 
 import tech.dokus.domain.enums.UserRole
+import tech.dokus.domain.ids.FirmId
 import tech.dokus.domain.ids.InvitationId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.CreateInvitationRequest
 import tech.dokus.domain.model.TeamMember
 import tech.dokus.domain.model.TenantInvitation
+import tech.dokus.domain.model.auth.BookkeeperFirmSearchItem
+import tech.dokus.domain.model.auth.GrantBookkeeperAccessResponse
+import tech.dokus.domain.model.auth.TenantBookkeeperAccessItem
 
 /**
  * Use case for listing team members.
@@ -54,4 +58,23 @@ interface RemoveTeamMemberUseCase {
  */
 interface TransferWorkspaceOwnershipUseCase {
     suspend operator fun invoke(newOwnerId: UserId): Result<Unit>
+}
+
+interface SearchBookkeeperFirmsUseCase {
+    suspend operator fun invoke(
+        query: String,
+        limit: Int = 20,
+    ): Result<List<BookkeeperFirmSearchItem>>
+}
+
+interface ListBookkeeperAccessUseCase {
+    suspend operator fun invoke(): Result<List<TenantBookkeeperAccessItem>>
+}
+
+interface GrantBookkeeperAccessUseCase {
+    suspend operator fun invoke(firmId: FirmId): Result<GrantBookkeeperAccessResponse>
+}
+
+interface RevokeBookkeeperAccessUseCase {
+    suspend operator fun invoke(firmId: FirmId): Result<Unit>
 }

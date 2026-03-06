@@ -55,6 +55,8 @@ interface AuthGateway {
 
     suspend fun getAccountMe(): Result<AccountMeResponse>
 
+    suspend fun refreshSessionNow(): Result<Unit>
+
     suspend fun createFirm(request: CreateFirmRequest): Result<CreateFirmResponse>
 
     suspend fun listConsoleClients(firmId: FirmId): Result<List<ConsoleClientSummary>>

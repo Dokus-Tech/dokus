@@ -66,10 +66,13 @@
     <string name="coming_soon">Coming soon</string>
     <string name="console_clients_title">Clients</string>
     <string name="console_clients_subtitle">Bookkeeper console</string>
-    <string name="console_clients_triage_title">Client Triage</string>
+    <string name="console_clients_overview_title">Clients overview</string>
     <string name="console_clients_search_placeholder">Search by company or VAT</string>
     <string name="console_clients_count">%1$d clients</string>
     <string name="console_clients_add_client">+ Add Client</string>
+    <string name="console_clients_add_client_dialog_title">Add client</string>
+    <string name="console_clients_add_client_email">Email address</string>
+    <string name="console_clients_filter_all">All</string>
     <string name="console_clients_empty_all">No clients yet.</string>
     <string name="console_clients_empty">No clients found</string>
     <string name="console_clients_column_company">Company</string>

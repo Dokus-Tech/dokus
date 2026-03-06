@@ -12,6 +12,7 @@ import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.FirmId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.features.auth.usecases.GetAccountMeUseCase
+import tech.dokus.features.auth.usecases.RefreshSessionNowUseCase
 import tech.dokus.features.auth.usecases.SelectTenantUseCase
 import tech.dokus.foundation.platform.Logger
 
@@ -25,6 +26,7 @@ internal typealias WorkspaceSelectCtx =
 internal class WorkspaceSelectContainer(
     private val getAccountMeUseCase: GetAccountMeUseCase,
     private val selectTenantUseCase: SelectTenantUseCase,
+    private val refreshSessionNowUseCase: RefreshSessionNowUseCase,
 ) : Container<WorkspaceSelectState, WorkspaceSelectIntent, WorkspaceSelectAction> {
 
     private val logger = Logger.forClass<WorkspaceSelectContainer>()
@@ -112,14 +114,37 @@ internal class WorkspaceSelectContainer(
 
     private suspend fun WorkspaceSelectCtx.handleSelectFirm(firmId: FirmId) {
         withState<WorkspaceSelectState.Content, _> {
+            val currentTenants = tenants
+            val currentFirms = firms
             updateState {
                 WorkspaceSelectState.SelectingFirm(
-                    tenants = tenants,
-                    firms = firms,
+                    tenants = currentTenants,
+                    firms = currentFirms,
                     selectedFirmId = firmId,
                 )
             }
-            action(WorkspaceSelectAction.NavigateToBookkeeperConsole(firmId))
+
+            refreshSessionNowUseCase().fold(
+                onSuccess = {
+                    action(WorkspaceSelectAction.NavigateToBookkeeperConsole(firmId))
+                },
+                onFailure = { error ->
+                    logger.e(error) { "Failed to refresh session before firm navigation: $firmId" }
+                    val exception = error.asDokusException
+                    val displayException = if (exception is DokusException.Unknown) {
+                        DokusException.WorkspaceSelectFailed
+                    } else {
+                        exception
+                    }
+                    action(WorkspaceSelectAction.ShowSelectionError(displayException))
+                    updateState {
+                        WorkspaceSelectState.Content(
+                            tenants = currentTenants,
+                            firms = currentFirms,
+                        )
+                    }
+                }
+            )
         }
     }
 }

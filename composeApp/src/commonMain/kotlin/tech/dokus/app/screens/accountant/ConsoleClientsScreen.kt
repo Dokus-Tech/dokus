@@ -17,6 +17,10 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -26,12 +30,17 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_close
+import tech.dokus.aura.resources.cancel
 import tech.dokus.aura.resources.console_clients_add_client
+import tech.dokus.aura.resources.console_clients_add_client_dialog_title
+import tech.dokus.aura.resources.console_clients_add_client_email
 import tech.dokus.aura.resources.console_clients_column_company
 import tech.dokus.aura.resources.console_clients_column_vat
 import tech.dokus.aura.resources.console_clients_count
 import tech.dokus.aura.resources.console_clients_empty
 import tech.dokus.aura.resources.console_clients_empty_all
+import tech.dokus.aura.resources.console_clients_filter_all
 import tech.dokus.aura.resources.console_clients_search_placeholder
 import tech.dokus.aura.resources.console_back_to_clients
 import tech.dokus.aura.resources.console_document_status
@@ -50,11 +59,13 @@ import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.auth.ConsoleClientSummary
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.DokusCardSurface
-import tech.dokus.foundation.aura.components.PButton
-import tech.dokus.foundation.aura.components.PButtonVariant
+import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.common.PSearchFieldCompact
+import tech.dokus.foundation.aura.components.dialog.DokusDialog
+import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
+import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
 import tech.dokus.foundation.aura.components.layout.DokusTableCell
 import tech.dokus.foundation.aura.components.layout.DokusTableColumnSpec
 import tech.dokus.foundation.aura.components.layout.DokusTableRow
@@ -73,6 +84,7 @@ internal fun ConsoleClientsScreen(
     snackbarHostState: SnackbarHostState,
     onIntent: (ConsoleClientsIntent) -> Unit,
     onAddClientClick: () -> Unit = {},
+    initialShowAddClientDialog: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -110,6 +122,7 @@ internal fun ConsoleClientsScreen(
                             state = state,
                             onIntent = onIntent,
                             onAddClientClick = onAddClientClick,
+                            initialShowAddClientDialog = initialShowAddClientDialog,
                         )
                     } else {
                         ClientDocumentsContent(
@@ -128,7 +141,10 @@ private fun ClientsListContent(
     state: ConsoleClientsState.Content,
     onIntent: (ConsoleClientsIntent) -> Unit,
     onAddClientClick: () -> Unit,
+    initialShowAddClientDialog: Boolean,
 ) {
+    var showAddClientDialog by remember { mutableStateOf(initialShowAddClientDialog) }
+    var addClientEmail by remember { mutableStateOf("") }
     val isLargeScreen = LocalScreenSize.current.isLarge
     val filteredClients = state.filteredClients
     val periodLabel = stringResource(Res.string.console_requests_period_label)
@@ -137,15 +153,65 @@ private fun ClientsListContent(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium),
     ) {
-        PSearchFieldCompact(
-            value = state.query,
-            onValueChange = { onIntent(ConsoleClientsIntent.UpdateQuery(it)) },
-            placeholder = stringResource(Res.string.console_clients_search_placeholder),
-            onClear = {
-                onIntent(ConsoleClientsIntent.UpdateQuery(""))
-            },
-            modifier = if (isLargeScreen) Modifier.fillMaxWidth(0.5f) else Modifier.fillMaxWidth(),
-        )
+        if (isLargeScreen) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                PSearchFieldCompact(
+                    value = state.query,
+                    onValueChange = { onIntent(ConsoleClientsIntent.UpdateQuery(it)) },
+                    placeholder = stringResource(Res.string.console_clients_search_placeholder),
+                    onClear = {
+                        onIntent(ConsoleClientsIntent.UpdateQuery(""))
+                    },
+                    modifier = Modifier.weight(1f),
+                )
+                FilterPill(
+                    text = "${stringResource(Res.string.console_clients_filter_all)} ${state.clients.size}",
+                )
+                PPrimaryButton(
+                    text = stringResource(Res.string.console_clients_add_client),
+                    onClick = {
+                        showAddClientDialog = true
+                        onAddClientClick()
+                    },
+                )
+            }
+        } else {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
+            ) {
+                PSearchFieldCompact(
+                    value = state.query,
+                    onValueChange = { onIntent(ConsoleClientsIntent.UpdateQuery(it)) },
+                    placeholder = stringResource(Res.string.console_clients_search_placeholder),
+                    onClear = {
+                        onIntent(ConsoleClientsIntent.UpdateQuery(""))
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    FilterPill(
+                        text = "${stringResource(Res.string.console_clients_filter_all)} ${state.clients.size}",
+                    )
+                    PPrimaryButton(
+                        text = stringResource(Res.string.console_clients_add_client),
+                        onClick = {
+                            showAddClientDialog = true
+                            onAddClientClick()
+                        },
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
+        }
 
         if (filteredClients.isEmpty()) {
             val emptyText = if (state.clients.isEmpty()) {
@@ -277,22 +343,46 @@ private fun ClientsListContent(
             }
         }
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = "${stringResource(Res.string.console_clients_count, filteredClients.size)} · $periodLabel",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+        Text(
+            text = "${stringResource(Res.string.console_clients_count, filteredClients.size)} · $periodLabel",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+
+    if (showAddClientDialog) {
+        DokusDialog(
+            onDismissRequest = { showAddClientDialog = false },
+            title = stringResource(Res.string.console_clients_add_client_dialog_title),
+            content = {
+                PTextFieldStandard(
+                    fieldName = stringResource(Res.string.console_clients_add_client_email),
+                    value = addClientEmail,
+                    onValueChange = { addClientEmail = it },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            },
+            primaryAction = DokusDialogAction(
+                text = stringResource(Res.string.action_close),
+                onClick = { showAddClientDialog = false },
+            ),
+            secondaryAction = DokusDialogAction(
+                text = stringResource(Res.string.cancel),
+                onClick = { showAddClientDialog = false },
             )
-            PButton(
-                text = stringResource(Res.string.console_clients_add_client),
-                variant = PButtonVariant.Outline,
-                onClick = onAddClientClick,
-            )
-        }
+        )
+    }
+}
+
+@Composable
+private fun FilterPill(text: String) {
+    DokusCardSurface {
+        Text(
+            text = text,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 
@@ -492,6 +582,25 @@ private fun ConsoleClientsScreenDesktopEmptyFilterPreview(
     }
 }
 
+@Preview(name = "Console Clients Add Client Dialog Desktop", widthDp = 1024, heightDp = 720)
+@Composable
+private fun ConsoleClientsScreenDesktopAddClientDialogPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
+) {
+    TestWrapper(parameters) {
+        ConsoleClientsScreen(
+            state = ConsoleClientsState.Content(
+                firmId = FirmId("00000000-0000-0000-0000-000000000111"),
+                firmName = "Kantoor Boonen",
+                clients = previewClients(),
+            ),
+            snackbarHostState = SnackbarHostState(),
+            onIntent = {},
+            initialShowAddClientDialog = true,
+        )
+    }
+}
+
 @Preview(name = "Console Client Documents Desktop", widthDp = 1366, heightDp = 900)
 @Composable
 private fun ConsoleClientDocumentsDesktopPreview(
@@ -619,7 +728,7 @@ private fun previewClients(): List<ConsoleClientSummary> {
         ConsoleClientSummary(
             tenantId = TenantId("00000000-0000-0000-0000-000000000003"),
             companyName = DisplayName("Atelier Gent"),
-            vatNumber = null,
+            vatNumber = VatNumber("BE0890123456"),
         ),
     )
 }

@@ -73,6 +73,7 @@ val authPresentationModule = module {
         WorkspaceSelectContainer(
             getAccountMeUseCase = get(),
             selectTenantUseCase = get(),
+            refreshSessionNowUseCase = get(),
         )
     }
     container<WorkspaceCreateContainer, WorkspaceCreateState, WorkspaceCreateIntent, WorkspaceCreateAction> {

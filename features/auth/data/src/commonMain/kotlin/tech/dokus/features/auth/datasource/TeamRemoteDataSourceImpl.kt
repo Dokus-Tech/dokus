@@ -11,6 +11,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import tech.dokus.domain.enums.InvitationStatus
 import tech.dokus.domain.enums.UserRole
+import tech.dokus.domain.ids.FirmId
 import tech.dokus.domain.ids.InvitationId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.CreateInvitationRequest
@@ -18,6 +19,10 @@ import tech.dokus.domain.model.TeamMember
 import tech.dokus.domain.model.TenantInvitation
 import tech.dokus.domain.model.TransferOwnershipRequest
 import tech.dokus.domain.model.UpdateMemberRoleRequest
+import tech.dokus.domain.model.auth.BookkeeperFirmSearchItem
+import tech.dokus.domain.model.auth.GrantBookkeeperAccessRequest
+import tech.dokus.domain.model.auth.GrantBookkeeperAccessResponse
+import tech.dokus.domain.model.auth.TenantBookkeeperAccessItem
 import tech.dokus.domain.routes.Team
 import kotlin.uuid.ExperimentalUuidApi
 
@@ -82,6 +87,42 @@ internal class TeamRemoteDataSourceImpl(
                 contentType(ContentType.Application.Json)
                 setBody(TransferOwnershipRequest(newOwnerId))
             }
+        }
+    }
+
+    override suspend fun searchBookkeeperFirms(query: String, limit: Int): Result<List<BookkeeperFirmSearchItem>> {
+        return runCatching {
+            httpClient.get(
+                Team.Bookkeepers.Search(
+                    query = query,
+                    limit = limit,
+                )
+            ).body()
+        }
+    }
+
+    override suspend fun listBookkeeperAccess(): Result<List<TenantBookkeeperAccessItem>> {
+        return runCatching {
+            httpClient.get(Team.Bookkeepers.Access()).body()
+        }
+    }
+
+    override suspend fun grantBookkeeperAccess(firmId: FirmId): Result<GrantBookkeeperAccessResponse> {
+        return runCatching {
+            httpClient.post(Team.Bookkeepers.Access()) {
+                contentType(ContentType.Application.Json)
+                setBody(GrantBookkeeperAccessRequest(firmId))
+            }.body()
+        }
+    }
+
+    override suspend fun revokeBookkeeperAccess(firmId: FirmId): Result<Unit> {
+        return runCatching {
+            httpClient.delete(
+                Team.Bookkeepers.Access.ByFirm(
+                    firmId = firmId,
+                )
+            )
         }
     }
 }

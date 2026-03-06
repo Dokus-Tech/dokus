@@ -25,6 +25,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,6 +38,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.format
 import kotlinx.datetime.format.MonthNames
@@ -53,6 +55,16 @@ import tech.dokus.aura.resources.state_sending
 import tech.dokus.aura.resources.team_cancel_invitation
 import tech.dokus.aura.resources.team_cancel_invitation_confirm
 import tech.dokus.aura.resources.team_change_role
+import tech.dokus.aura.resources.team_bookkeeper_access_title
+import tech.dokus.aura.resources.team_bookkeeper_access_subtitle
+import tech.dokus.aura.resources.team_bookkeeper_access_empty
+import tech.dokus.aura.resources.team_bookkeeper_access_grant
+import tech.dokus.aura.resources.team_bookkeeper_access_search_placeholder
+import tech.dokus.aura.resources.team_bookkeeper_access_no_results
+import tech.dokus.aura.resources.team_bookkeeper_access_revoke
+import tech.dokus.aura.resources.team_bookkeeper_access_connected_label
+import tech.dokus.aura.resources.team_bookkeeper_access_owner_only
+import tech.dokus.aura.resources.team_bookkeeper_access_dialog_title
 import tech.dokus.aura.resources.team_footer_note
 import tech.dokus.aura.resources.team_invite_email
 import tech.dokus.aura.resources.team_invite_member
@@ -73,6 +85,8 @@ import tech.dokus.domain.enums.UserRole
 import tech.dokus.domain.ids.InvitationId
 import tech.dokus.domain.model.TeamMember
 import tech.dokus.domain.model.TenantInvitation
+import tech.dokus.domain.model.auth.BookkeeperFirmSearchItem
+import tech.dokus.domain.model.auth.TenantBookkeeperAccessItem
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.MonogramAvatar
 import tech.dokus.foundation.aura.components.common.DokusLoader
@@ -108,6 +122,8 @@ internal fun TeamSettingsScreen(
     snackbarHostState: SnackbarHostState,
     showInviteDialog: Boolean,
     onShowInviteDialog: (Boolean) -> Unit,
+    showBookkeeperDialog: Boolean,
+    onShowBookkeeperDialog: (Boolean) -> Unit,
     onIntent: (TeamSettingsIntent) -> Unit
 ) {
     val isLargeScreen = LocalScreenSize.current.isLarge
@@ -121,6 +137,8 @@ internal fun TeamSettingsScreen(
             state = state,
             showInviteDialog = showInviteDialog,
             onShowInviteDialog = onShowInviteDialog,
+            showBookkeeperDialog = showBookkeeperDialog,
+            onShowBookkeeperDialog = onShowBookkeeperDialog,
             onIntent = onIntent,
             modifier = Modifier.padding(contentPadding)
         )
@@ -135,6 +153,8 @@ fun TeamSettingsContent(
     state: TeamSettingsState,
     showInviteDialog: Boolean,
     onShowInviteDialog: (Boolean) -> Unit,
+    showBookkeeperDialog: Boolean,
+    onShowBookkeeperDialog: (Boolean) -> Unit,
     onIntent: (TeamSettingsIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -153,9 +173,17 @@ fun TeamSettingsContent(
     val inviteRole = contentState?.inviteRole ?: UserRole.Editor
     val isInviting = contentState?.actionState is TeamSettingsState.Content.ActionState.Inviting
     val currentUserId = contentState?.currentUserId
+    val isCurrentUserOwner = contentState?.isCurrentUserOwner == true
 
     val owner = members.find { it.role == UserRole.Owner }
     val nonOwnerMembers = members.filter { it.role != UserRole.Owner }
+
+    val debouncedSearchQuery = contentState?.bookkeeperSearchQuery.orEmpty()
+    LaunchedEffect(showBookkeeperDialog, debouncedSearchQuery) {
+        if (!showBookkeeperDialog) return@LaunchedEffect
+        delay(300)
+        onIntent(TeamSettingsIntent.SearchBookkeeperFirms)
+    }
 
     Column(
         modifier = modifier
@@ -241,6 +269,18 @@ fun TeamSettingsContent(
                         }
                     }
 
+                    DokusCardSurface(modifier = Modifier.fillMaxWidth()) {
+                        BookkeeperAccessSection(
+                            access = contentState?.bookkeeperAccess ?: emptyList(),
+                            isLoading = contentState?.bookkeeperAccessLoading ?: false,
+                            isOwner = isCurrentUserOwner,
+                            onGrantClick = { onShowBookkeeperDialog(true) },
+                            onRevokeClick = { firmId ->
+                                onIntent(TeamSettingsIntent.RevokeBookkeeperAccess(firmId))
+                            },
+                        )
+                    }
+
                     // Footer note
                     Text(
                         text = stringResource(Res.string.team_footer_note, contentState?.maxSeats ?: 3),
@@ -270,6 +310,22 @@ fun TeamSettingsContent(
                 onIntent(TeamSettingsIntent.ResetInviteForm)
             },
             onInvite = { onIntent(TeamSettingsIntent.SendInvitation) }
+        )
+    }
+
+    if (showBookkeeperDialog && contentState != null) {
+        GrantBookkeeperAccessDialog(
+            query = contentState.bookkeeperSearchQuery,
+            results = contentState.bookkeeperSearchResults,
+            selectedFirmId = contentState.selectedBookkeeperFirmId,
+            loading = contentState.bookkeeperSearchLoading,
+            onQueryChange = { onIntent(TeamSettingsIntent.UpdateBookkeeperSearchQuery(it)) },
+            onSelectFirm = { onIntent(TeamSettingsIntent.SelectBookkeeperFirm(it)) },
+            onDismiss = {
+                onShowBookkeeperDialog(false)
+                onIntent(TeamSettingsIntent.ResetBookkeeperAccessForm)
+            },
+            onGrant = { onIntent(TeamSettingsIntent.GrantBookkeeperAccess) },
         )
     }
 
@@ -521,6 +577,220 @@ private fun InviteRow(
     }
 }
 
+@Composable
+private fun BookkeeperAccessSection(
+    access: List<TenantBookkeeperAccessItem>,
+    isLoading: Boolean,
+    isOwner: Boolean,
+    onGrantClick: () -> Unit,
+    onRevokeClick: (tech.dokus.domain.ids.FirmId) -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 18.dp, vertical = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text(
+            text = stringResource(Res.string.team_bookkeeper_access_title),
+            fontSize = 13.sp,
+            fontWeight = FontWeight.SemiBold,
+        )
+        Text(
+            text = stringResource(Res.string.team_bookkeeper_access_subtitle),
+            fontSize = 11.sp,
+            color = MaterialTheme.colorScheme.textMuted,
+        )
+
+        when {
+            isLoading -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(64.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    DokusLoader()
+                }
+            }
+
+            access.isEmpty() -> {
+                Text(
+                    text = stringResource(Res.string.team_bookkeeper_access_empty),
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.textFaint,
+                )
+            }
+
+            else -> {
+                access.forEachIndexed { index, item ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = item.firmName.value,
+                                fontSize = 12.5.sp,
+                                fontWeight = FontWeight.Medium,
+                            )
+                            Text(
+                                text = item.vatNumber.value,
+                                fontSize = 10.5.sp,
+                                color = MaterialTheme.colorScheme.textFaint,
+                            )
+                        }
+                        if (isOwner) {
+                            Text(
+                                text = stringResource(Res.string.team_bookkeeper_access_revoke),
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.clickable { onRevokeClick(item.firmId) },
+                            )
+                        }
+                    }
+                    if (index < access.lastIndex) {
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    }
+                }
+            }
+        }
+
+        if (isOwner) {
+            Text(
+                text = stringResource(Res.string.team_bookkeeper_access_grant),
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = onGrantClick)
+                    .padding(top = 4.dp),
+            )
+        } else {
+            Text(
+                text = stringResource(Res.string.team_bookkeeper_access_owner_only),
+                fontSize = 10.5.sp,
+                color = MaterialTheme.colorScheme.textFaint,
+            )
+        }
+    }
+}
+
+@Composable
+private fun GrantBookkeeperAccessDialog(
+    query: String,
+    results: List<BookkeeperFirmSearchItem>,
+    selectedFirmId: tech.dokus.domain.ids.FirmId?,
+    loading: Boolean,
+    onQueryChange: (String) -> Unit,
+    onSelectFirm: (tech.dokus.domain.ids.FirmId) -> Unit,
+    onDismiss: () -> Unit,
+    onGrant: () -> Unit,
+) {
+    DokusDialog(
+        onDismissRequest = onDismiss,
+        title = stringResource(Res.string.team_bookkeeper_access_dialog_title),
+        content = {
+            Column(
+                modifier = Modifier.widthIn(max = 420.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                PTextFieldStandard(
+                    fieldName = stringResource(Res.string.team_bookkeeper_access_search_placeholder),
+                    value = query,
+                    onValueChange = onQueryChange,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+
+                when {
+                    loading -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(120.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            DokusLoader()
+                        }
+                    }
+
+                    query.trim().length < 2 -> {
+                        Text(
+                            text = stringResource(Res.string.team_bookkeeper_access_subtitle),
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.textFaint,
+                        )
+                    }
+
+                    results.isEmpty() -> {
+                        Text(
+                            text = stringResource(Res.string.team_bookkeeper_access_no_results),
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.textFaint,
+                        )
+                    }
+
+                    else -> {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            results.forEach { result ->
+                                val selected = selectedFirmId == result.firmId
+                                DokusCardSurface(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    onClick = { onSelectFirm(result.firmId) },
+                                    accent = selected,
+                                ) {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically,
+                                        ) {
+                                            Text(
+                                                text = result.name.value,
+                                                fontSize = 12.5.sp,
+                                                fontWeight = FontWeight.SemiBold,
+                                            )
+                                            if (result.alreadyConnected) {
+                                                Text(
+                                                    text = stringResource(Res.string.team_bookkeeper_access_connected_label),
+                                                    fontSize = 10.sp,
+                                                    color = MaterialTheme.colorScheme.primary,
+                                                )
+                                            }
+                                        }
+                                        Text(
+                                            text = result.vatNumber.value,
+                                            fontSize = 10.5.sp,
+                                            color = MaterialTheme.colorScheme.textFaint,
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        primaryAction = DokusDialogAction(
+            text = stringResource(Res.string.team_bookkeeper_access_grant),
+            onClick = onGrant,
+            enabled = selectedFirmId != null && !loading,
+        ),
+        secondaryAction = DokusDialogAction(
+            text = stringResource(Res.string.cancel),
+            onClick = onDismiss,
+            enabled = !loading,
+        ),
+        scrollableContent = true,
+    )
+}
+
 // =============================================================================
 // Dialogs (preserved)
 // =============================================================================
@@ -709,9 +979,12 @@ private fun TeamSettingsContentPreview(
             state = TeamSettingsState.Content(
                 members = sampleMembers,
                 currentUserId = ownerId,
+                isCurrentUserOwner = true,
             ),
             showInviteDialog = false,
             onShowInviteDialog = {},
+            showBookkeeperDialog = false,
+            onShowBookkeeperDialog = {},
             onIntent = {},
         )
     }
