@@ -42,7 +42,7 @@ import kotlin.math.abs
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid
 
-private const val AUTO_PAY_ENABLED = false
+private const val AUTO_PAY_ENABLED = true
 private const val AUTO_MATCH_THRESHOLD = 0.95
 private const val MARGIN_THRESHOLD = 0.10
 private const val POSSIBLE_THRESHOLD = 0.70
