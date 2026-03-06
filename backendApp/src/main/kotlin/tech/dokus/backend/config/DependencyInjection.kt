@@ -30,10 +30,14 @@ import tech.dokus.backend.services.business.BusinessWebsiteProbe
 import tech.dokus.backend.services.business.BusinessWebsiteRanker
 import tech.dokus.backend.services.cashflow.CashflowEntriesService
 import tech.dokus.backend.services.cashflow.CashflowOverviewService
+import tech.dokus.backend.services.cashflow.CashflowPaymentService
 import tech.dokus.backend.services.cashflow.CashflowProjectionReconciliationService
 import tech.dokus.backend.services.cashflow.CreditNoteService
 import tech.dokus.backend.services.cashflow.ExpenseService
 import tech.dokus.backend.services.cashflow.InvoiceService
+import tech.dokus.backend.services.cashflow.BankStatementMatchingService
+import tech.dokus.backend.services.cashflow.InvoiceBankAutomationService
+import tech.dokus.backend.services.cashflow.AutoPaymentService
 import tech.dokus.backend.services.contacts.ContactMatchingService
 import tech.dokus.backend.services.contacts.ContactNoteService
 import tech.dokus.backend.services.contacts.ContactService
@@ -279,6 +283,10 @@ private fun cashflowModule() = module {
     single { ExpenseService(get()) }
     single { CreditNoteService(get(), get(), get()) }
     single { CashflowEntriesService(get()) }
+    singleOf(::CashflowPaymentService)
+    singleOf(::AutoPaymentService)
+    singleOf(::BankStatementMatchingService)
+    singleOf(::InvoiceBankAutomationService)
     single { CashflowProjectionReconciliationService(get(), get()) }
     single { CashflowOverviewService(get(), get(), get()) }
     single { InvoiceConfirmationService(get(), get(), get()) }
@@ -330,7 +338,7 @@ private val contactsModule = module {
     singleOf(::BusinessLogoSelectionService)
     singleOf(::BusinessProfileEvidenceGate)
     // NOTE: ContactService takes optional PeppolDirectoryCacheRepository for cache invalidation
-    single { ContactService(get(), get(), get(), getOrNull()) }
+    single { ContactService(get(), get(), get(), get(), getOrNull()) }
     single { ContactNoteService(get()) }
     single { ContactMatchingService(get()) }
 }

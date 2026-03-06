@@ -8,6 +8,8 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.junit.jupiter.api.Test
 import tech.dokus.backend.services.documents.AutoConfirmPolicy
+import tech.dokus.backend.services.cashflow.BankStatementMatchingService
+import tech.dokus.backend.services.cashflow.InvoiceBankAutomationService
 import tech.dokus.backend.services.documents.ContactResolutionService
 import tech.dokus.backend.services.documents.DocumentPurposeService
 import tech.dokus.backend.services.documents.DocumentTruthService
@@ -35,6 +37,8 @@ class DocumentProcessingWorkerTimeoutTest {
         val purposeService = mockk<DocumentPurposeService>(relaxed = true)
         val draftRepository = mockk<DocumentDraftRepository>(relaxed = true)
         val documentTruthService = mockk<DocumentTruthService>(relaxed = true)
+        val bankStatementMatchingService = mockk<BankStatementMatchingService>(relaxed = true)
+        val invoiceBankAutomationService = mockk<InvoiceBankAutomationService>(relaxed = true)
         val autoConfirmPolicy = mockk<AutoConfirmPolicy>(relaxed = true)
         val confirmationDispatcher = mockk<DocumentConfirmationDispatcher>(relaxed = true)
         val tenantRepository = mockk<TenantRepository>()
@@ -76,6 +80,8 @@ class DocumentProcessingWorkerTimeoutTest {
             purposeService = purposeService,
             documentTruthService = documentTruthService,
             draftRepository = draftRepository,
+            bankStatementMatchingService = bankStatementMatchingService,
+            invoiceBankAutomationService = invoiceBankAutomationService,
             autoConfirmPolicy = autoConfirmPolicy,
             confirmationDispatcher = confirmationDispatcher,
             config = ProcessorConfig(

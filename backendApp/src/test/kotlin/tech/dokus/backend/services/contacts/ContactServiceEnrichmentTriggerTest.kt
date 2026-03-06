@@ -9,6 +9,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.LocalDateTime
 import org.junit.jupiter.api.Test
 import tech.dokus.backend.services.business.BusinessProfileService
+import tech.dokus.backend.services.cashflow.InvoiceBankAutomationService
 import tech.dokus.database.repository.contacts.ContactAddressRepository
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.domain.Name
@@ -31,10 +32,12 @@ class ContactServiceEnrichmentTriggerTest {
     private val contactRepository = mockk<ContactRepository>()
     private val contactAddressRepository = mockk<ContactAddressRepository>()
     private val businessProfileService = mockk<BusinessProfileService>()
+    private val invoiceBankAutomationService = mockk<InvoiceBankAutomationService>(relaxed = true)
     private val service = ContactService(
         contactRepository = contactRepository,
         contactAddressRepository = contactAddressRepository,
         businessProfileService = businessProfileService,
+        invoiceBankAutomationService = invoiceBankAutomationService,
         peppolCacheRepository = null
     )
 

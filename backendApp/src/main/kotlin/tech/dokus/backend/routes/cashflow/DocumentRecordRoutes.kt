@@ -19,6 +19,7 @@ import tech.dokus.backend.routes.cashflow.documents.toSummaryDto
 import tech.dokus.backend.routes.cashflow.documents.updateDraftCounterparty
 import tech.dokus.backend.security.requireTenantId
 import tech.dokus.backend.services.cashflow.CashflowProjectionReconciliationService
+import tech.dokus.backend.services.cashflow.InvoiceBankAutomationService
 import tech.dokus.backend.services.documents.DocumentPurposeService
 import tech.dokus.backend.services.documents.DocumentTruthService
 import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
@@ -78,6 +79,7 @@ internal fun Route.documentRecordRoutes() {
     val cashflowEntriesRepository by inject<CashflowEntriesRepository>()
     val documentSourceRepository by inject<DocumentSourceRepository>()
     val projectionReconciliationService by inject<CashflowProjectionReconciliationService>()
+    val invoiceBankAutomationService by inject<InvoiceBankAutomationService>()
     val minioStorage by inject<MinioDocumentStorageService>()
     val confirmationDispatcher by inject<DocumentConfirmationDispatcher>()
     val truthService by inject<DocumentTruthService>()
@@ -709,6 +711,22 @@ internal fun Route.documentRecordRoutes() {
 
             val entryId = confirmationResult.cashflowEntryId
             logger.info("Document confirmed: $documentId -> $draftType, cashflowEntryId=$entryId")
+
+            if (confirmationResult.entity is FinancialDocumentDto.InvoiceDto && entryId != null) {
+                runCatching {
+                    invoiceBankAutomationService.onInvoiceConfirmed(
+                        tenantId = tenantId,
+                        entryId = entryId
+                    )
+                }.onFailure {
+                    logger.warn(
+                        "Invoice-bank automation failed after confirmation for tenant={}, document={}: {}",
+                        tenantId,
+                        documentId,
+                        it.message
+                    )
+                }
+            }
 
             // Return full record
             val document = documentRepository.getById(tenantId, documentId)!!

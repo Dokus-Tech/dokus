@@ -7,9 +7,12 @@ import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.enums.CashflowViewMode
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.model.CancelEntryRequest
+import tech.dokus.domain.model.AutoPaymentStatusDto
 import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.model.CashflowOverview
+import tech.dokus.domain.model.CashflowPaymentCandidatesResponse
 import tech.dokus.domain.model.CashflowPaymentRequest
+import tech.dokus.domain.model.UndoAutoPaymentRequest
 import tech.dokus.domain.model.common.PaginatedResponse
 
 /**
@@ -59,6 +62,14 @@ interface GetCashflowEntryUseCase {
     suspend operator fun invoke(entryId: CashflowEntryId): Result<CashflowEntry>
 }
 
+interface GetCashflowPaymentCandidatesUseCase {
+    suspend operator fun invoke(entryId: CashflowEntryId): Result<CashflowPaymentCandidatesResponse>
+}
+
+interface GetAutoPaymentStatusUseCase {
+    suspend operator fun invoke(entryId: CashflowEntryId): Result<AutoPaymentStatusDto>
+}
+
 /**
  * Use case for recording a payment against a cashflow entry.
  */
@@ -76,5 +87,12 @@ interface CancelCashflowEntryUseCase {
     suspend operator fun invoke(
         entryId: CashflowEntryId,
         request: CancelEntryRequest? = null
+    ): Result<CashflowEntry>
+}
+
+interface UndoAutoPaymentUseCase {
+    suspend operator fun invoke(
+        entryId: CashflowEntryId,
+        request: UndoAutoPaymentRequest = UndoAutoPaymentRequest()
     ): Result<CashflowEntry>
 }

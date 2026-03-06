@@ -9,6 +9,7 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.CreditNoteDraftData
+import tech.dokus.domain.model.BankStatementDraftData
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
@@ -73,6 +74,7 @@ class ContactResolutionService(
             is InvoiceDraftData -> draftData.direction == DocumentDirection.Unknown
             is ReceiptDraftData -> draftData.direction == DocumentDirection.Unknown
             is CreditNoteDraftData -> draftData.direction == DocumentDirection.Unknown
+            is BankStatementDraftData -> false
         }
 
         if (unknownDirectionInvoiceOrCreditNote && vat.isSameVat(tenantVat)) {
@@ -274,7 +276,8 @@ class ContactResolutionService(
     private fun isUnknownDirectionInvoiceOrCreditNote(draftData: DocumentDraftData): Boolean = when (draftData) {
         is InvoiceDraftData -> draftData.direction == DocumentDirection.Unknown
         is CreditNoteDraftData -> draftData.direction == DocumentDirection.Unknown
-        is ReceiptDraftData -> false
+        is ReceiptDraftData,
+        is BankStatementDraftData -> false
     }
 
     private fun VatNumber?.isSameVat(other: VatNumber?): Boolean {

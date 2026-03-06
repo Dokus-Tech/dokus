@@ -23,6 +23,7 @@ fun DocumentDraftData.toDocumentType(): DocumentType = when (this) {
     is InvoiceDraftData -> DocumentType.Invoice
     is CreditNoteDraftData -> DocumentType.CreditNote
     is ReceiptDraftData -> DocumentType.Receipt
+    is BankStatementDraftData -> DocumentType.BankStatement
 }
 
 @Serializable
@@ -100,3 +101,23 @@ data class ReceiptDraftData(
     val notes: String? = null
 ) : DocumentDraftData {
 }
+
+@Serializable
+data class BankStatementTransactionDraftRow(
+    val transactionDate: LocalDate? = null,
+    val signedAmount: Money? = null,
+    val counterpartyName: String? = null,
+    val counterpartyIban: Iban? = null,
+    val structuredCommunicationRaw: String? = null,
+    val descriptionRaw: String? = null,
+    val rowConfidence: Double = 0.0,
+    val largeAmountFlag: Boolean = false
+)
+
+@Serializable
+@SerialName("bank_statement_draft")
+data class BankStatementDraftData(
+    val direction: DocumentDirection = DocumentDirection.Neutral,
+    val transactions: List<BankStatementTransactionDraftRow> = emptyList(),
+    val notes: String? = null
+) : DocumentDraftData

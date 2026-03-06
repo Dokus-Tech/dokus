@@ -31,13 +31,43 @@ import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_match_review_different_document
 import tech.dokus.aura.resources.cashflow_match_review_same_document
+import tech.dokus.aura.resources.common_unknown
 import tech.dokus.aura.resources.document_section_payment
 import tech.dokus.aura.resources.document_sources_independently_verified
+import tech.dokus.aura.resources.inspector_conflict_confirmation
+import tech.dokus.aura.resources.inspector_fuzzy_match
+import tech.dokus.aura.resources.inspector_label_address
+import tech.dokus.aura.resources.inspector_label_automation
+import tech.dokus.aura.resources.inspector_label_due_date
+import tech.dokus.aura.resources.inspector_label_invoice_number
+import tech.dokus.aura.resources.inspector_label_issue_date
+import tech.dokus.aura.resources.inspector_label_name
+import tech.dokus.aura.resources.inspector_label_source
+import tech.dokus.aura.resources.inspector_label_subtotal
+import tech.dokus.aura.resources.inspector_label_total
+import tech.dokus.aura.resources.inspector_label_vat
+import tech.dokus.aura.resources.inspector_no_sources
+import tech.dokus.aura.resources.inspector_section_amount
+import tech.dokus.aura.resources.inspector_section_contact
+import tech.dokus.aura.resources.inspector_section_reference
+import tech.dokus.aura.resources.inspector_section_sources
+import tech.dokus.aura.resources.inspector_section_timeline
+import tech.dokus.aura.resources.payment_auto_paid
+import tech.dokus.aura.resources.payment_confidence
+import tech.dokus.aura.resources.payment_method_bank_transfer
+import tech.dokus.aura.resources.payment_no_payment_recorded
+import tech.dokus.aura.resources.payment_record_title
+import tech.dokus.aura.resources.payment_unable_to_load
+import tech.dokus.aura.resources.payment_undo_auto
+import tech.dokus.aura.resources.payment_undoing
+import tech.dokus.aura.resources.state_loading
+import tech.dokus.domain.enums.AutoMatchStatus
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.DocumentMatchReviewReasonType
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.InvoiceDraftData
+import tech.dokus.domain.model.AutoPaymentStatusDto
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.ReviewFinancialStatus
@@ -73,7 +103,7 @@ internal fun InspectorAmountSection(state: DocumentReviewState.Content) {
         ReviewFinancialStatus.Review -> MaterialTheme.colorScheme.statusWarning
     }
 
-    InspectorSectionCard(title = "Amount") {
+    InspectorSectionCard(title = stringResource(Res.string.inspector_section_amount)) {
         DokusCardSurface(modifier = Modifier.fillMaxWidth()) {
             Row(
                 modifier = Modifier
@@ -91,7 +121,7 @@ internal fun InspectorAmountSection(state: DocumentReviewState.Content) {
                         )
                 )
                 Text(
-                    text = "Total",
+                    text = stringResource(Res.string.inspector_label_total),
                     style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
@@ -107,33 +137,33 @@ internal fun InspectorAmountSection(state: DocumentReviewState.Content) {
             }
         }
 
-        InspectorValueRow("Subtotal", state.prefixedAmount(state.subtotalAmount()))
-        InspectorValueRow("VAT", state.prefixedAmount(state.vatAmount()))
+        InspectorValueRow(stringResource(Res.string.inspector_label_subtotal), state.prefixedAmount(state.subtotalAmount()))
+        InspectorValueRow(stringResource(Res.string.inspector_label_vat), state.prefixedAmount(state.vatAmount()))
     }
 }
 
 @Composable
 internal fun InspectorTimelineSection(state: DocumentReviewState.Content) {
-    InspectorSectionCard(title = "Timeline") {
-        InspectorValueRow("Issue date", state.issueDate() ?: "\u2014")
-        InspectorValueRow("Due date", state.dueDate() ?: "\u2014")
+    InspectorSectionCard(title = stringResource(Res.string.inspector_section_timeline)) {
+        InspectorValueRow(stringResource(Res.string.inspector_label_issue_date), state.issueDate() ?: "\u2014")
+        InspectorValueRow(stringResource(Res.string.inspector_label_due_date), state.dueDate() ?: "\u2014")
     }
 }
 
 @Composable
 internal fun InspectorReferenceSection(state: DocumentReviewState.Content) {
-    InspectorSectionCard(title = "Reference") {
-        InspectorValueRow("Invoice number", state.referenceNumber() ?: "\u2014")
+    InspectorSectionCard(title = stringResource(Res.string.inspector_section_reference)) {
+        InspectorValueRow(stringResource(Res.string.inspector_label_invoice_number), state.referenceNumber() ?: "\u2014")
     }
 }
 
 @Composable
 internal fun InspectorContactSection(state: DocumentReviewState.Content) {
     val counterparty = counterpartyInfo(state)
-    InspectorSectionCard(title = "Contact") {
-        InspectorValueRow("Name", counterparty.name ?: "Unknown")
+    InspectorSectionCard(title = stringResource(Res.string.inspector_section_contact)) {
+        InspectorValueRow(stringResource(Res.string.inspector_label_name), counterparty.name ?: stringResource(Res.string.common_unknown))
         counterparty.address?.let { address ->
-            InspectorValueRow("Address", address)
+            InspectorValueRow(stringResource(Res.string.inspector_label_address), address)
         }
     }
 }
@@ -149,12 +179,12 @@ internal fun InspectorSourcesSection(
         return
     }
 
-    InspectorSectionCard(title = "Sources") {
+    InspectorSectionCard(title = stringResource(Res.string.inspector_section_sources)) {
         var hasContent = false
 
         if (showSourceList) {
             if (state.document.sources.isEmpty()) {
-                InspectorValueRow("Source", "No sources")
+                InspectorValueRow(stringResource(Res.string.inspector_label_source), stringResource(Res.string.inspector_no_sources))
             } else {
                 state.document.sources.forEach { source ->
                     SourceRow(
@@ -174,11 +204,11 @@ internal fun InspectorSourcesSection(
             Text(
                 text = when (review.reasonType) {
                     DocumentMatchReviewReasonType.MaterialConflict -> {
-                        "Conflicting financial facts require confirmation."
+                        stringResource(Res.string.inspector_conflict_confirmation)
                     }
 
                     DocumentMatchReviewReasonType.FuzzyCandidate -> {
-                        "Potential same document found with fuzzy identity match."
+                        stringResource(Res.string.inspector_fuzzy_match)
                     }
                 },
                 style = MaterialTheme.typography.bodySmall,
@@ -258,6 +288,7 @@ internal fun InspectorPaymentSection(
     isAccountantReadOnly: Boolean,
     onIntent: (DocumentReviewIntent) -> Unit,
 ) {
+    val autoPaymentStatus = (state.autoPaymentStatus as? DokusState.Success<*>)?.data as? AutoPaymentStatusDto
     InspectorSectionCard(title = stringResource(Res.string.document_section_payment)) {
         when (val entryState = state.cashflowEntryState) {
             is DokusState.Success -> {
@@ -268,78 +299,118 @@ internal fun InspectorPaymentSection(
                         modifier = Modifier.fillMaxWidth(),
                         variant = DokusCardVariant.Soft,
                     ) {
-                        Row(
+                        Column(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(Constraints.Spacing.small),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
+                            verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
                         ) {
                             Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
                             ) {
-                                StatusDot(type = state.financialStatus.dotType, size = 6.dp)
-                                Column {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
+                                ) {
+                                    StatusDot(type = state.financialStatus.dotType, size = 6.dp)
+                                    Column {
+                                        Text(
+                                            text = stringResource(Res.string.payment_method_bank_transfer),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                        )
+                                        Text(
+                                            text = paidAt ?: "\u2014",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.textMuted,
+                                        )
+                                    }
+                                }
+                                Text(
+                                    text = state.financialStatus.localized,
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = state.financialStatus.financialStatusColorized,
+                                )
+                            }
+                            if (autoPaymentStatus?.matchStatus == AutoMatchStatus.AutoPaid) {
+                                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                                Text(
+                                    text = stringResource(Res.string.payment_auto_paid),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                )
+                                val confidenceText = autoPaymentStatus.confidenceScore
+                                    ?.let { score -> "${(score * 100).toInt()}%" }
+                                    ?: "\u2014"
+                                Text(
+                                    text = stringResource(Res.string.payment_confidence, confidenceText),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.textMuted,
+                                )
+                                if (autoPaymentStatus.reasons.isNotEmpty()) {
                                     Text(
-                                        text = "Bank transfer",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurface,
-                                    )
-                                    Text(
-                                        text = paidAt ?: "\u2014",
+                                        text = autoPaymentStatus.reasons.joinToString(", ") { formatMatchReason(it) },
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.textMuted,
                                     )
                                 }
+                                if (autoPaymentStatus.canUndo) {
+                                    OutlinedButton(
+                                        onClick = { onIntent(DocumentReviewIntent.UndoAutoPayment()) },
+                                        enabled = !state.isUndoingAutoPayment,
+                                        modifier = Modifier.fillMaxWidth(),
+                                    ) {
+                                        Text(if (state.isUndoingAutoPayment) stringResource(Res.string.payment_undoing) else stringResource(Res.string.payment_undo_auto))
+                                    }
+                                }
                             }
-                            Text(
-                                text = state.financialStatus.localized,
-                                style = MaterialTheme.typography.titleSmall,
-                                color = state.financialStatus.financialStatusColorized,
-                            )
                         }
                     }
                 } else {
-                    InspectorValueRow("Payment", "No payment recorded")
+                    InspectorValueRow(stringResource(Res.string.document_section_payment), stringResource(Res.string.payment_no_payment_recorded))
                     if (!isAccountantReadOnly && state.canRecordPayment) {
                         OutlinedButton(
                             onClick = { onIntent(DocumentReviewIntent.OpenPaymentSheet) },
                             modifier = Modifier.fillMaxWidth(),
                         ) {
-                            Text("Record payment")
+                            Text(stringResource(Res.string.payment_record_title))
                         }
                     }
                 }
             }
 
             is DokusState.Loading -> {
-                InspectorValueRow("Payment", "Loading\u2026")
+                InspectorValueRow(stringResource(Res.string.document_section_payment), stringResource(Res.string.state_loading))
             }
 
             is DokusState.Error<*> -> {
-                InspectorValueRow("Payment", "Unable to load")
+                InspectorValueRow(stringResource(Res.string.document_section_payment), stringResource(Res.string.payment_unable_to_load))
                 if (!isAccountantReadOnly && state.canRecordPayment) {
                     OutlinedButton(
                         onClick = { onIntent(DocumentReviewIntent.OpenPaymentSheet) },
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Text("Record payment")
+                        Text(stringResource(Res.string.payment_record_title))
                     }
                 }
             }
 
             is DokusState.Idle<*> -> {
-                InspectorValueRow("Payment", "No payment recorded")
+                InspectorValueRow(stringResource(Res.string.document_section_payment), stringResource(Res.string.payment_no_payment_recorded))
                 if (!isAccountantReadOnly && state.canRecordPayment) {
                     OutlinedButton(
                         onClick = { onIntent(DocumentReviewIntent.OpenPaymentSheet) },
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Text("Record payment")
+                        Text(stringResource(Res.string.payment_record_title))
                     }
                 }
             }
+        }
+        if (state.autoPaymentStatus is DokusState.Loading) {
+            InspectorValueRow(stringResource(Res.string.inspector_label_automation), stringResource(Res.string.state_loading))
         }
     }
 }
@@ -491,3 +562,14 @@ private fun DocumentReviewState.Content.currencySign(): String = when (val data 
 
 private fun DocumentReviewState.Content.prefixedAmount(value: tech.dokus.domain.Money?): String =
     value?.let { "${currencySign()}${it.toDisplayString()}" } ?: "\u2014"
+
+private fun formatMatchReason(reason: String): String = when (reason) {
+    "structured_reference_match" -> "Structured reference match"
+    "exact_amount" -> "Exact amount"
+    "date_proximity" -> "Date proximity"
+    "iban_match" -> "IBAN match"
+    "name_similarity" -> "Name similarity"
+    "vat_match" -> "VAT number match"
+    "invoice_number_match" -> "Invoice number match"
+    else -> reason.replace('_', ' ').replaceFirstChar { it.uppercase() }
+}

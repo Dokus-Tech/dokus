@@ -8,15 +8,21 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
 import tech.dokus.backend.security.requireTenantId
+import tech.dokus.backend.services.cashflow.BankStatementMatchingService
+import tech.dokus.backend.services.cashflow.AutoPaymentService
 import tech.dokus.backend.services.cashflow.CashflowEntriesService
+import tech.dokus.backend.services.cashflow.CashflowPaymentService
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.model.CancelEntryRequest
 import tech.dokus.domain.model.CashflowPaymentRequest
+import tech.dokus.domain.model.UndoAutoPaymentRequest
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.routes.Cashflow
 import tech.dokus.foundation.backend.security.authenticateJwt
+import tech.dokus.foundation.backend.security.dokusPrincipal
+import tech.dokus.foundation.backend.utils.runSuspendCatching
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -35,6 +41,9 @@ private const val MAX_PAGE_SIZE = 200
 @Suppress("LongMethod", "CyclomaticComplexMethod", "ThrowsCount")
 internal fun Route.cashflowEntriesRoutes() {
     val cashflowEntriesService by inject<CashflowEntriesService>()
+    val bankStatementMatchingService by inject<BankStatementMatchingService>()
+    val cashflowPaymentService by inject<CashflowPaymentService>()
+    val autoPaymentService by inject<AutoPaymentService>()
 
     authenticateJwt {
         // GET /api/v1/cashflow/entries - List cashflow entries with filters
@@ -132,13 +141,77 @@ internal fun Route.cashflowEntriesRoutes() {
                 throw DokusException.BadRequest("Payment amount must be positive")
             }
 
-            cashflowEntriesService.recordPayment(entryId, tenantId, request.amount)
-                .getOrElse { throw DokusException.InternalError("Failed to record payment: ${it.message}") }
+            val updatedEntry = cashflowPaymentService.recordPayment(
+                tenantId = tenantId,
+                entryId = entryId,
+                request = request
+            ).getOrElse { error ->
+                throw (error as? DokusException
+                    ?: DokusException.InternalError("Failed to record payment: ${error.message}"))
+            }
 
-            // Return updated entry
-            val updatedEntry = cashflowEntriesService.getEntry(entryId, tenantId)
-                .getOrElse { throw DokusException.InternalError("Failed to get updated entry: ${it.message}") }
-                ?: throw DokusException.NotFound("Cashflow entry not found after update")
+            call.respond(HttpStatusCode.OK, updatedEntry)
+        }
+
+        // GET /api/v1/cashflow/entries/{id}/payment-candidates - Candidate imported transactions
+        get<Cashflow.Entries.Id.PaymentCandidates> { route ->
+            val tenantId = requireTenantId()
+            val entryId = try {
+                CashflowEntryId(Uuid.parse(route.parent.id))
+            } catch (_: Exception) {
+                throw DokusException.BadRequest("Invalid entry ID format")
+            }
+
+            val response = runSuspendCatching {
+                bankStatementMatchingService.getPaymentCandidates(
+                    tenantId = tenantId,
+                    cashflowEntryId = entryId
+                )
+            }.getOrElse {
+                throw DokusException.BadRequest("Failed to load payment candidates: ${it.message}")
+            }
+            call.respond(HttpStatusCode.OK, response)
+        }
+
+        // GET /api/v1/cashflow/entries/{id}/auto-payment-status
+        get<Cashflow.Entries.Id.AutoPaymentStatus> { route ->
+            val tenantId = requireTenantId()
+            val entryId = try {
+                CashflowEntryId(Uuid.parse(route.parent.id))
+            } catch (_: Exception) {
+                throw DokusException.BadRequest("Invalid entry ID format")
+            }
+
+            val status = autoPaymentService.getAutoPaymentStatus(
+                tenantId = tenantId,
+                entryId = entryId
+            )
+            call.respond(HttpStatusCode.OK, status)
+        }
+
+        // POST /api/v1/cashflow/entries/{id}/undo-auto-payment
+        post<Cashflow.Entries.Id.UndoAutoPayment> { route ->
+            val tenantId = requireTenantId()
+            val entryId = try {
+                CashflowEntryId(Uuid.parse(route.parent.id))
+            } catch (_: Exception) {
+                throw DokusException.BadRequest("Invalid entry ID format")
+            }
+            val request = try {
+                call.receive<UndoAutoPaymentRequest>()
+            } catch (_: Exception) {
+                UndoAutoPaymentRequest()
+            }
+
+            val updatedEntry = autoPaymentService.undoAutoPayment(
+                tenantId = tenantId,
+                entryId = entryId,
+                actorUserId = dokusPrincipal.userId,
+                reason = request.reason
+            ).getOrElse { error ->
+                throw (error as? DokusException
+                    ?: DokusException.InternalError("Failed to undo auto payment: ${error.message}"))
+            }
 
             call.respond(HttpStatusCode.OK, updatedEntry)
         }

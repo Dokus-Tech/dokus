@@ -1,6 +1,7 @@
 package tech.dokus.backend.services.contacts
 
 import tech.dokus.backend.services.business.BusinessProfileService
+import tech.dokus.backend.services.cashflow.InvoiceBankAutomationService
 import tech.dokus.database.repository.contacts.ContactAddressRepository
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.database.repository.peppol.PeppolDirectoryCacheRepository
@@ -27,6 +28,7 @@ class ContactService(
     private val contactRepository: ContactRepository,
     private val contactAddressRepository: ContactAddressRepository,
     private val businessProfileService: BusinessProfileService,
+    private val invoiceBankAutomationService: InvoiceBankAutomationService,
     private val peppolCacheRepository: PeppolDirectoryCacheRepository? = null // Optional for cache invalidation
 ) {
     private val logger = loggerFor()
@@ -186,6 +188,8 @@ class ContactService(
     ): Result<ContactDto> {
         logger.info("Updating contact: $contactId for tenant: $tenantId")
 
+        val before = contactRepository.getContact(contactId, tenantId).getOrNull()
+
         // Invalidate PEPPOL cache if VAT or company number is being updated
         // (cache staleness is detected by snapshot comparison, but proactive invalidation is cleaner)
         if (request.vatNumber != null || request.companyNumber != null) {
@@ -196,6 +200,22 @@ class ContactService(
 
         return contactRepository.updateContact(contactId, tenantId, request)
             .map { updated ->
+                val matchingRelevantChange = before?.let {
+                    it.name != updated.name ||
+                        it.iban?.value != updated.iban?.value ||
+                        it.vatNumber?.normalized != updated.vatNumber?.normalized
+                } ?: false
+                if (matchingRelevantChange) {
+                    runCatching {
+                        invoiceBankAutomationService.onContactUpdated(tenantId, contactId)
+                    }.onFailure { error ->
+                        logger.warn(
+                            "Invoice-bank automation failed after contact update for {}: {}",
+                            contactId,
+                            error.message
+                        )
+                    }
+                }
                 hydrateSingle(tenantId, updated) ?: updated
             }
             .onSuccess { logger.info("Contact updated: $contactId") }

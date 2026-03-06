@@ -1,6 +1,7 @@
 package tech.dokus.features.cashflow.presentation.review
 
 import pro.respawn.flowmvi.dsl.withState
+import tech.dokus.domain.model.BankStatementDraftData
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.FinancialLineItem
 import tech.dokus.domain.model.InvoiceDraftData
@@ -38,6 +39,7 @@ internal class DocumentReviewLineItems {
                 is InvoiceDraftData -> currentData.lineItems
                 is ReceiptDraftData -> currentData.lineItems
                 is CreditNoteDraftData -> currentData.lineItems
+                is BankStatementDraftData -> return@withState
             }
 
             val updatedItems = currentItems.toMutableList()
@@ -52,6 +54,7 @@ internal class DocumentReviewLineItems {
                 is InvoiceDraftData -> currentData.copy(lineItems = updatedItems)
                 is ReceiptDraftData -> currentData.copy(lineItems = updatedItems)
                 is CreditNoteDraftData -> currentData.copy(lineItems = updatedItems)
+                is BankStatementDraftData -> return@withState
             }
 
             updateState {

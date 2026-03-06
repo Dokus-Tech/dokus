@@ -1,6 +1,7 @@
 package tech.dokus.backend.services.documents
 
 import kotlinx.datetime.LocalDate
+import tech.dokus.domain.model.BankStatementDraftData
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.InvoiceDraftData
@@ -153,6 +154,11 @@ internal object PurposePeriodHeuristics {
             is ReceiptDraftData -> {
                 draftData.notes?.let(texts::add)
                 texts += draftData.lineItems.map { it.description }
+            }
+
+            is BankStatementDraftData -> {
+                draftData.notes?.let(texts::add)
+                texts += draftData.transactions.mapNotNull { it.descriptionRaw }
             }
         }
         return texts

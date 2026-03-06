@@ -51,6 +51,13 @@ internal object DirectionResolutionResolver {
                 associatedPersonNames = associatedPersonNames
             )
 
+            is FinancialExtractionResult.BankStatement -> DirectionResolution(
+                direction = DocumentDirection.Neutral,
+                source = DirectionResolutionSource.Unknown,
+                confidence = 1.0,
+                reasoning = "Bank statement rows are evidence-only and direction is neutral"
+            )
+
             is FinancialExtractionResult.ProForma,
             is FinancialExtractionResult.PurchaseOrder,
             is FinancialExtractionResult.Quote,
@@ -68,20 +75,25 @@ internal object DirectionResolutionResolver {
             is FinancialExtractionResult.Invoice -> when (direction) {
                 DocumentDirection.Inbound -> extraction.data.sellerVat?.normalized
                 DocumentDirection.Outbound -> extraction.data.buyerVat?.normalized
+                DocumentDirection.Neutral,
                 DocumentDirection.Unknown -> null
             }
 
             is FinancialExtractionResult.CreditNote -> when (direction) {
                 DocumentDirection.Inbound -> extraction.data.sellerVat?.normalized
                 DocumentDirection.Outbound -> extraction.data.buyerVat?.normalized
+                DocumentDirection.Neutral,
                 DocumentDirection.Unknown -> null
             }
 
             is FinancialExtractionResult.Receipt -> when (direction) {
                 DocumentDirection.Inbound -> extraction.data.merchantVat?.normalized
                 DocumentDirection.Outbound,
+                DocumentDirection.Neutral,
                 DocumentDirection.Unknown -> null
             }
+
+            is FinancialExtractionResult.BankStatement -> null
 
             is FinancialExtractionResult.ProForma,
             is FinancialExtractionResult.PurchaseOrder,
@@ -156,6 +168,7 @@ internal object DirectionResolutionResolver {
             val counterpartyVat = when (hintDirection) {
                 DocumentDirection.Inbound -> sellerVat
                 DocumentDirection.Outbound -> buyerVat
+                DocumentDirection.Neutral,
                 DocumentDirection.Unknown -> null
             }
             return DirectionResolution(

@@ -21,7 +21,9 @@ import tech.dokus.domain.enums.InvoiceDeliveryMethod
 import tech.dokus.domain.enums.InvoiceDueDateMode
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.enums.Language
+import tech.dokus.domain.enums.PaymentCreatedBy
 import tech.dokus.domain.enums.PaymentMethod
+import tech.dokus.domain.enums.PaymentSource
 import tech.dokus.domain.enums.SubscriptionTier
 import tech.dokus.domain.enums.TenantStatus
 import tech.dokus.domain.enums.TenantType
@@ -34,6 +36,7 @@ import tech.dokus.domain.ids.Bic
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.ExpenseId
+import tech.dokus.domain.ids.ImportedBankTransactionId
 import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.InvitationId
 import tech.dokus.domain.ids.InvoiceId
@@ -234,7 +237,13 @@ data class PaymentDto(
     val paymentDate: LocalDate,
     val paymentMethod: PaymentMethod,
     val transactionId: TransactionId? = null,
+    val bankTransactionId: ImportedBankTransactionId? = null,
+    val source: PaymentSource = PaymentSource.Manual,
+    val createdBy: PaymentCreatedBy = PaymentCreatedBy.User,
     val notes: String? = null,
+    val reversedAt: LocalDateTime? = null,
+    val reversedByUserId: UserId? = null,
+    val reversalReason: String? = null,
     val createdAt: LocalDateTime
 )
 

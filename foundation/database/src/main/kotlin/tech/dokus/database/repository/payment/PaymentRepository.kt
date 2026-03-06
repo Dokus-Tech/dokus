@@ -14,8 +14,11 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
 import tech.dokus.database.tables.payment.PaymentsTable
 import tech.dokus.domain.Money
+import tech.dokus.domain.enums.PaymentCreatedBy
 import tech.dokus.domain.enums.PaymentMethod
+import tech.dokus.domain.enums.PaymentSource
 import tech.dokus.domain.fromDbDecimal
+import tech.dokus.domain.ids.ImportedBankTransactionId
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.PaymentId
 import tech.dokus.domain.ids.TenantId
@@ -23,8 +26,10 @@ import tech.dokus.domain.ids.TransactionId
 import tech.dokus.domain.model.PaymentDto
 import tech.dokus.domain.toDbDecimal
 import tech.dokus.foundation.backend.database.dbQuery
+import tech.dokus.foundation.backend.utils.runSuspendCatching
 import java.util.UUID
 import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.toJavaUuid
 
 /**
  * Repository for managing payment records.
@@ -47,8 +52,11 @@ class PaymentRepository {
         paymentDate: LocalDate,
         paymentMethod: PaymentMethod,
         transactionId: TransactionId?,
+        bankTransactionId: ImportedBankTransactionId? = null,
+        source: PaymentSource = PaymentSource.Manual,
+        createdBy: PaymentCreatedBy = PaymentCreatedBy.User,
         notes: String?
-    ): Result<PaymentDto> = runCatching {
+    ): Result<PaymentDto> = runSuspendCatching {
         dbQuery {
             val id = PaymentsTable.insert {
                 it[PaymentsTable.tenantId] = UUID.fromString(tenantId.toString())
@@ -57,11 +65,15 @@ class PaymentRepository {
                 it[PaymentsTable.paymentDate] = paymentDate
                 it[PaymentsTable.paymentMethod] = paymentMethod
                 it[PaymentsTable.transactionId] = transactionId?.value
+                it[PaymentsTable.bankTransactionId] = bankTransactionId?.value?.toJavaUuid()
+                it[PaymentsTable.paymentSource] = source
+                it[PaymentsTable.createdBy] = createdBy
                 it[PaymentsTable.notes] = notes
             } get PaymentsTable.id
 
             PaymentsTable.selectAll().where {
-                PaymentsTable.id eq id.value
+                (PaymentsTable.id eq id.value) and
+                    (PaymentsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.single().toPaymentDto()
         }
     }
@@ -73,7 +85,7 @@ class PaymentRepository {
     suspend fun getPayment(
         paymentId: PaymentId,
         tenantId: TenantId
-    ): Result<PaymentDto?> = runCatching {
+    ): Result<PaymentDto?> = runSuspendCatching {
         dbQuery {
             PaymentsTable.selectAll().where {
                 (PaymentsTable.id eq UUID.fromString(paymentId.toString())) and
@@ -85,10 +97,11 @@ class PaymentRepository {
     /**
      * List payments for an invoice.
      */
-    suspend fun listByInvoice(invoiceId: InvoiceId): Result<List<PaymentDto>> = runCatching {
+    suspend fun listByInvoice(invoiceId: InvoiceId, tenantId: TenantId): Result<List<PaymentDto>> = runSuspendCatching {
         dbQuery {
             PaymentsTable.selectAll().where {
-                PaymentsTable.invoiceId eq UUID.fromString(invoiceId.toString())
+                (PaymentsTable.invoiceId eq UUID.fromString(invoiceId.toString())) and
+                    (PaymentsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.orderBy(PaymentsTable.paymentDate, SortOrder.DESC)
                 .map { it.toPaymentDto() }
         }
@@ -105,7 +118,7 @@ class PaymentRepository {
         paymentMethod: PaymentMethod? = null,
         limit: Int = 50,
         offset: Int = 0
-    ): Result<List<PaymentDto>> = runCatching {
+    ): Result<List<PaymentDto>> = runSuspendCatching {
         dbQuery {
             var query = PaymentsTable.selectAll().where {
                 PaymentsTable.tenantId eq UUID.fromString(tenantId.toString())
@@ -131,10 +144,11 @@ class PaymentRepository {
     /**
      * Get total amount paid for an invoice.
      */
-    suspend fun getTotalPaid(invoiceId: InvoiceId): Result<Money> = runCatching {
+    suspend fun getTotalPaid(invoiceId: InvoiceId, tenantId: TenantId): Result<Money> = runSuspendCatching {
         dbQuery {
             val total = PaymentsTable.selectAll().where {
-                PaymentsTable.invoiceId eq UUID.fromString(invoiceId.toString())
+                (PaymentsTable.invoiceId eq UUID.fromString(invoiceId.toString())) and
+                    (PaymentsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.sumOf { it[PaymentsTable.amount] }
             Money.fromDbDecimal(total)
         }
@@ -147,7 +161,7 @@ class PaymentRepository {
     suspend fun deletePayment(
         paymentId: PaymentId,
         tenantId: TenantId
-    ): Result<Boolean> = runCatching {
+    ): Result<Boolean> = runSuspendCatching {
         dbQuery {
             PaymentsTable.deleteWhere {
                 (PaymentsTable.id eq UUID.fromString(paymentId.toString())) and
@@ -163,7 +177,7 @@ class PaymentRepository {
         paymentId: PaymentId,
         tenantId: TenantId,
         transactionId: TransactionId
-    ): Result<Boolean> = runCatching {
+    ): Result<Boolean> = runSuspendCatching {
         dbQuery {
             PaymentsTable.update({
                 (PaymentsTable.id eq UUID.fromString(paymentId.toString())) and
@@ -183,7 +197,13 @@ class PaymentRepository {
             paymentDate = this[PaymentsTable.paymentDate],
             paymentMethod = this[PaymentsTable.paymentMethod],
             transactionId = this[PaymentsTable.transactionId]?.let { TransactionId(it) },
+            bankTransactionId = this[PaymentsTable.bankTransactionId]?.let { ImportedBankTransactionId.parse(it.toString()) },
+            source = this[PaymentsTable.paymentSource],
+            createdBy = this[PaymentsTable.createdBy],
             notes = this[PaymentsTable.notes],
+            reversedAt = this[PaymentsTable.reversedAt],
+            reversedByUserId = this[PaymentsTable.reversedByUserId]?.let { tech.dokus.domain.ids.UserId(it.toString()) },
+            reversalReason = this[PaymentsTable.reversalReason],
             createdAt = this[PaymentsTable.createdAt]
         )
     }

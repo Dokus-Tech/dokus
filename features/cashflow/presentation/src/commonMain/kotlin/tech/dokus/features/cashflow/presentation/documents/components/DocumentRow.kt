@@ -37,8 +37,10 @@ import tech.dokus.aura.resources.documents_table_counterparty
 import tech.dokus.aura.resources.documents_table_description
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.DocumentStatus
+import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.model.CreditNoteDraftData
+import tech.dokus.domain.model.BankStatementDraftData
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
@@ -345,6 +347,7 @@ internal fun DocumentMobileRow(
 internal fun computeNeedsAttention(document: DocumentRecordDto): Boolean {
     val ingestionStatus = document.latestIngestion?.status
     val documentStatus = document.draft?.documentStatus
+    val documentType = document.draft?.documentType
     val hasConfirmedEntity = document.confirmedEntity != null
     val hasPendingMatchReview = document.pendingMatchReview != null
 
@@ -356,11 +359,14 @@ internal fun computeNeedsAttention(document: DocumentRecordDto): Boolean {
         ingestionStatus == IngestionStatus.Processing ||
         ingestionStatus == IngestionStatus.Queued
     val draftNeedsReview = documentStatus == DocumentStatus.NeedsReview
-    val confirmedButNoEntity = documentStatus == DocumentStatus.Confirmed && !hasConfirmedEntity
+    val confirmedButNoEntity =
+        documentStatus == DocumentStatus.Confirmed &&
+            !hasConfirmedEntity &&
+            documentType != DocumentType.BankStatement
     val succeededButNoDraft = document.draft == null && ingestionStatus == IngestionStatus.Succeeded
     val isNotConfirmed = documentStatus == null ||
         documentStatus != DocumentStatus.Confirmed ||
-        !hasConfirmedEntity
+        (!hasConfirmedEntity && documentType != DocumentType.BankStatement)
 
     return hasPendingMatchReview ||
         confirmedButNoEntity ||
@@ -426,6 +432,7 @@ internal fun resolveDescription(document: DocumentRecordDto, unknownLabel: Strin
         is InvoiceDraftData -> extractedData.invoiceNumber.nonBlank()
         is ReceiptDraftData -> extractedData.receiptNumber.nonBlank()
         is CreditNoteDraftData -> extractedData.creditNoteNumber.nonBlank()
+        is BankStatementDraftData -> null
         else -> null
     }
     val counterparty = document.draft?.counterpartySnapshot?.name.nonBlank()
@@ -455,6 +462,7 @@ internal fun resolveCounterparty(document: DocumentRecordDto, emptyLabel: String
         is InvoiceDraftData -> data.seller.name.nonBlank() ?: data.buyer.name.nonBlank()
         is CreditNoteDraftData -> data.counterpartyName.nonBlank()
         is ReceiptDraftData -> data.merchantName.nonBlank()
+        is BankStatementDraftData -> data.transactions.firstOrNull()?.counterpartyName?.nonBlank()
         else -> null
     }
     return fromDraft ?: document.document.filename.nonBlank() ?: emptyLabel
@@ -469,6 +477,7 @@ private fun extractReference(document: DocumentRecordDto): String {
         is InvoiceDraftData -> extractedData.invoiceNumber.nonBlank()
         is ReceiptDraftData -> extractedData.receiptNumber.nonBlank()
         is CreditNoteDraftData -> extractedData.creditNoteNumber.nonBlank()
+        is BankStatementDraftData -> null
         else -> null
     }
     return number ?: document.document.filename.nonBlank() ?: "\u2014"
@@ -483,6 +492,7 @@ private fun extractAmountDouble(document: DocumentRecordDto): Double? {
         is InvoiceDraftData -> extractedData.totalAmount
         is ReceiptDraftData -> extractedData.totalAmount
         is CreditNoteDraftData -> extractedData.totalAmount
+        is BankStatementDraftData -> extractedData.transactions.firstOrNull()?.signedAmount
         else -> null
     }
     return amount?.toDouble()
@@ -495,12 +505,14 @@ private fun extractAmount(document: DocumentRecordDto): String {
         is InvoiceDraftData -> extractedData.totalAmount
         is ReceiptDraftData -> extractedData.totalAmount
         is CreditNoteDraftData -> extractedData.totalAmount
+        is BankStatementDraftData -> extractedData.transactions.firstOrNull()?.signedAmount
         else -> null
     }
     val currency = when (extractedData) {
         is InvoiceDraftData -> extractedData.currency
         is ReceiptDraftData -> extractedData.currency
         is CreditNoteDraftData -> extractedData.currency
+        is BankStatementDraftData -> null
         else -> null
     }
 
@@ -517,6 +529,7 @@ private fun extractDocumentDate(document: DocumentRecordDto): LocalDate {
         is InvoiceDraftData -> extractedData.issueDate
         is ReceiptDraftData -> extractedData.date
         is CreditNoteDraftData -> extractedData.issueDate
+        is BankStatementDraftData -> extractedData.transactions.firstOrNull()?.transactionDate
         else -> null
     }
         ?: document.document.uploadedAt.date

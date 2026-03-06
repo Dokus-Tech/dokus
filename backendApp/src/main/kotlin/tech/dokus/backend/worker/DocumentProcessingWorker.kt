@@ -24,6 +24,8 @@ import tech.dokus.backend.services.documents.AutoConfirmPolicy
 import tech.dokus.backend.services.documents.ContactResolutionService
 import tech.dokus.backend.services.documents.DocumentPurposeService
 import tech.dokus.backend.services.documents.DocumentTruthService
+import tech.dokus.backend.services.cashflow.BankStatementMatchingService
+import tech.dokus.backend.services.cashflow.InvoiceBankAutomationService
 import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
 import tech.dokus.database.entity.IngestionItemEntity
 import tech.dokus.database.repository.auth.TenantRepository
@@ -34,6 +36,7 @@ import tech.dokus.domain.enums.ContactLinkSource
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.ids.IngestionRunId
+import tech.dokus.domain.model.BankStatementDraftData
 import tech.dokus.domain.model.contact.ContactResolution
 import tech.dokus.domain.processing.DocumentProcessingConstants
 import tech.dokus.domain.utils.json
@@ -73,6 +76,8 @@ class DocumentProcessingWorker(
     private val purposeService: DocumentPurposeService,
     private val documentTruthService: DocumentTruthService,
     private val draftRepository: DocumentDraftRepository,
+    private val bankStatementMatchingService: BankStatementMatchingService,
+    private val invoiceBankAutomationService: InvoiceBankAutomationService,
     private val autoConfirmPolicy: AutoConfirmPolicy,
     private val confirmationDispatcher: DocumentConfirmationDispatcher,
     private val config: ProcessorConfig,
@@ -430,6 +435,43 @@ class DocumentProcessingWorker(
                         ingestion.sourceId,
                         matchOutcome.outcome,
                         matchOutcome.documentId
+                    )
+                    return AttemptResult.Succeeded
+                }
+
+                if (draftData is BankStatementDraftData) {
+                    val bankProcessing = bankStatementMatchingService.processAndMatch(
+                        tenantId = parsedTenantId,
+                        documentId = documentId,
+                        draftData = draftData
+                    )
+                    val targetStatus = DocumentStatus.NeedsReview
+                    draftRepository.updateExtractedDataAndStatus(
+                        documentId = documentId,
+                        tenantId = parsedTenantId,
+                        extractedData = bankProcessing.sanitizedDraft,
+                        status = targetStatus
+                    )
+                    if (bankProcessing.validRows > 0) {
+                        runSuspendCatching {
+                            invoiceBankAutomationService.onBankStatementImported(
+                                tenantId = parsedTenantId,
+                                documentId = documentId
+                            )
+                        }.onFailure {
+                            logger.warn(
+                                "Invoice-bank automation failed after bank statement processing for {}: {}",
+                                documentId,
+                                it.message
+                            )
+                        }
+                    }
+                    logger.info(
+                        "Processed bank statement {}: validRows={}, discardedRows={}, status={}",
+                        documentId,
+                        bankProcessing.validRows,
+                        bankProcessing.discardedRows.size,
+                        targetStatus
                     )
                     return AttemptResult.Succeeded
                 }

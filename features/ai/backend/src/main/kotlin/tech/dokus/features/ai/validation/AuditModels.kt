@@ -31,7 +31,10 @@ enum class CheckType {
     COMPANY_NAME,
 
     /** Counterparty integrity check (must not equal tenant identity) */
-    COUNTERPARTY_INTEGRITY
+    COUNTERPARTY_INTEGRITY,
+
+    /** Bank statement row-level validation */
+    BANK_STATEMENT_ROW
 }
 
 /**

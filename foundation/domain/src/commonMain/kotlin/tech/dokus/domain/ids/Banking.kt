@@ -35,6 +35,18 @@ value class BankTransactionId(val value: Uuid) {
     }
 }
 
+@OptIn(ExperimentalUuidApi::class)
+@Serializable
+@JvmInline
+value class ImportedBankTransactionId(val value: Uuid) {
+    override fun toString(): String = value.toString()
+
+    companion object {
+        fun generate(): ImportedBankTransactionId = ImportedBankTransactionId(Uuid.random())
+        fun parse(value: String): ImportedBankTransactionId = ImportedBankTransactionId(Uuid.parse(value))
+    }
+}
+
 @Serializable
 @JvmInline
 value class TransactionId(val value: String) {

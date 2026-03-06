@@ -51,6 +51,7 @@ class CreditNoteConfirmationService(
         val creditNoteType = when (draftData.direction) {
             DocumentDirection.Outbound -> CreditNoteType.Sales
             DocumentDirection.Inbound -> CreditNoteType.Purchase
+            DocumentDirection.Neutral -> throw DokusException.BadRequest("Credit note direction is invalid")
             DocumentDirection.Unknown -> throw DokusException.BadRequest("Credit note direction is unknown")
         }
         val creditNoteNumber = draftData.creditNoteNumber

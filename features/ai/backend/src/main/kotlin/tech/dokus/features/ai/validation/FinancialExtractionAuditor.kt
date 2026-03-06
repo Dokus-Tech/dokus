@@ -1,6 +1,7 @@
 package tech.dokus.features.ai.validation
 
 import tech.dokus.domain.Money
+import tech.dokus.features.ai.graph.sub.extraction.financial.BankStatementExtractionResult
 import tech.dokus.features.ai.graph.sub.extraction.financial.CreditNoteExtractionResult
 import tech.dokus.features.ai.graph.sub.extraction.financial.InvoiceExtractionResult
 import tech.dokus.features.ai.graph.sub.extraction.financial.ProFormaExtractionResult
@@ -18,6 +19,7 @@ object FinancialExtractionAuditor {
             is FinancialExtractionResult.ProForma -> auditProForma(extraction.data)
             is FinancialExtractionResult.PurchaseOrder -> auditPurchaseOrder(extraction.data)
             is FinancialExtractionResult.Receipt -> auditReceipt(extraction.data)
+            is FinancialExtractionResult.BankStatement -> auditBankStatement(extraction.data)
             is FinancialExtractionResult.Unsupported -> emptyList()
         }
 
@@ -115,6 +117,38 @@ object FinancialExtractionAuditor {
         add(BelgianVatRateValidator.verify(subtotal, vat, data.orderDate, null))
         add(ChecksumValidator.auditIban(data.iban))
         add(ChecksumValidator.auditOgm(data.payment?.structuredComm))
+    }
+
+    private fun auditBankStatement(data: BankStatementExtractionResult): List<AuditCheck> = buildList {
+        data.rows.forEachIndexed { index, row ->
+            if (row.transactionDate == null) {
+                add(
+                    AuditCheck.warning(
+                        type = CheckType.BANK_STATEMENT_ROW,
+                        field = "rows[$index].transactionDate",
+                        message = "Row ${index + 1}: missing transaction date"
+                    )
+                )
+            }
+            if (row.signedAmount == null || row.signedAmount.isZero) {
+                add(
+                    AuditCheck.warning(
+                        type = CheckType.BANK_STATEMENT_ROW,
+                        field = "rows[$index].signedAmount",
+                        message = "Row ${index + 1}: missing or zero amount"
+                    )
+                )
+            }
+            if (row.rowConfidence < 0.0 || row.rowConfidence > 1.0) {
+                add(
+                    AuditCheck.warning(
+                        type = CheckType.BANK_STATEMENT_ROW,
+                        field = "rows[$index].rowConfidence",
+                        message = "Row ${index + 1}: confidence out of range"
+                    )
+                )
+            }
+        }
     }
 
     private fun derivedSubtotal(total: Money?, vat: Money?): Money? {
