@@ -130,6 +130,7 @@ private fun MobileCanonicalContentAutoPaidPreview(
                 entryStatus = CashflowEntryStatus.Paid,
                 autoPaymentStatus = previewAutoPaymentStatus(canUndo = true),
             ),
+            isAccountantReadOnly = false,
             onIntent = {},
             onBackClick = {},
             onOpenSource = {},

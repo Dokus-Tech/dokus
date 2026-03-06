@@ -248,6 +248,7 @@ private fun ReviewInspectorPaneAutoPaidPreview(
                 entryStatus = CashflowEntryStatus.Paid,
                 autoPaymentStatus = previewAutoPaymentStatus(canUndo = true),
             ),
+            isAccountantReadOnly = false,
             onIntent = {},
             onCorrectContact = {},
             onCreateContact = {},
