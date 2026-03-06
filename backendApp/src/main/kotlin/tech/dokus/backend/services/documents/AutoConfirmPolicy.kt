@@ -7,6 +7,7 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.CreditNoteDraftData
+import tech.dokus.domain.model.BankStatementDraftData
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
@@ -53,6 +54,7 @@ class AutoConfirmPolicy {
             is InvoiceDraftData -> draftData.direction != DocumentDirection.Unknown
             is ReceiptDraftData -> draftData.direction != DocumentDirection.Unknown
             is CreditNoteDraftData -> draftData.direction != DocumentDirection.Unknown
+            is BankStatementDraftData -> draftData.direction == DocumentDirection.Neutral
         }
     }
 
@@ -61,6 +63,7 @@ class AutoConfirmPolicy {
             is InvoiceDraftData -> draftData.totalAmount?.isPositive == true
             is ReceiptDraftData -> draftData.totalAmount?.isPositive == true
             is CreditNoteDraftData -> draftData.totalAmount?.isPositive == true
+            is BankStatementDraftData -> false
         }
     }
 
@@ -79,6 +82,7 @@ class AutoConfirmPolicy {
                     draftData.vatAmount != null &&
                     draftData.totalAmount != null
             }
+            is BankStatementDraftData -> draftData.transactions.isNotEmpty()
         }
     }
 }

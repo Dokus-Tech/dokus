@@ -49,6 +49,7 @@ import tech.dokus.aura.resources.invoice_issue_date
 import tech.dokus.aura.resources.workspace_iban
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentType
+import tech.dokus.domain.model.BankStatementDraftData
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
@@ -234,6 +235,7 @@ internal fun InvoiceDetailsCard(
         is InvoiceDraftData -> Res.string.cashflow_invoice_details_section
         is ReceiptDraftData -> Res.string.cashflow_receipt_details_section
         is CreditNoteDraftData -> Res.string.cashflow_credit_note_details_section
+        is BankStatementDraftData -> Res.string.cashflow_invoice_details_section
         null -> Res.string.cashflow_invoice_details_section
     }
 
@@ -271,6 +273,18 @@ internal fun InvoiceDetailsCard(
                     issueDate = draft.issueDate?.toString(),
                     originalInvoiceNumber = draft.originalInvoiceNumber?.takeIf { it.isNotBlank() }
                 )
+            }
+            is BankStatementDraftData -> {
+                FactField(
+                    label = "Transactions",
+                    value = draft.transactions.size.toString()
+                )
+                draft.transactions.firstOrNull()?.transactionDate?.let {
+                    FactField(
+                        label = stringResource(Res.string.common_date),
+                        value = it.toString()
+                    )
+                }
             }
             null -> {
                 // Document type selector - only show when type is unknown and not processing
@@ -503,5 +517,6 @@ private fun DirectionChoice(
 private fun cashflowDirectionLabel(direction: DocumentDirection): String = when (direction) {
     DocumentDirection.Inbound -> stringResource(Res.string.cashflow_direction_out)
     DocumentDirection.Outbound -> stringResource(Res.string.cashflow_direction_in)
+    DocumentDirection.Neutral,
     DocumentDirection.Unknown -> "—"
 }

@@ -23,6 +23,7 @@ object ExtractionToolDescriptions {
     const val OrderDate = "Order date. Null if not visible."
     const val ExpectedDeliveryDate = "Expected delivery date. Null if not visible."
     const val ReceiptDate = "Transaction date. Null if not visible."
+    const val BankTransactionDate = "Transaction booking/value date for one bank statement row. Null if not visible."
 
     const val CustomerName = "Customer/billed-to name. Null if unclear."
     const val CustomerVat = "Customer VAT number if shown (e.g. BE0123456789). Null if not visible."
@@ -71,6 +72,12 @@ object ExtractionToolDescriptions {
 
     const val Iban = "IBAN for payment if visible."
     const val PaymentReference = "Payment reference / structured communication if visible."
+    const val BankSignedAmount = "Signed amount for one transaction row as plain number string; positive for money received, negative for money sent."
+    const val BankCounterpartyName = "Counterparty name from the transaction row if visible."
+    const val BankCounterpartyIban = "Counterparty IBAN from the transaction row if visible."
+    const val BankStructuredCommunicationRaw = "Structured communication string exactly as displayed (e.g. +++123/4567/89012+++). Preserve formatting verbatim."
+    const val BankDescriptionRaw = "Raw transaction description line as displayed on statement."
+    const val BankRowConfidence = "Confidence score 0.0-1.0 for this specific transaction row."
 
     const val LineItems = "Line items table. Leave empty list if not itemized."
     const val VatBreakdown = "VAT breakdown rows per rate (rate/base/amount). Leave empty list if not shown. Use rate 0 and VAT amount 0 for reverse charge."

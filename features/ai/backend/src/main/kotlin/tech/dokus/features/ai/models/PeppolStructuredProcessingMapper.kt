@@ -1,12 +1,15 @@
 package tech.dokus.features.ai.models
 
 import tech.dokus.domain.enums.DocumentDirection
+import tech.dokus.domain.model.BankStatementDraftData
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.domain.model.toDocumentType
 import tech.dokus.features.ai.graph.sub.ClassificationResult
+import tech.dokus.features.ai.graph.sub.extraction.financial.BankStatementExtractionResult
+import tech.dokus.features.ai.graph.sub.extraction.financial.BankStatementTransactionExtractionRow
 import tech.dokus.features.ai.graph.sub.extraction.financial.CreditNoteExtractionResult
 import tech.dokus.features.ai.graph.sub.extraction.financial.InvoiceExtractionResult
 import tech.dokus.features.ai.graph.sub.extraction.financial.ReceiptExtractionResult
@@ -129,12 +132,32 @@ private fun DocumentDraftData.toPeppolExtractionResult(): FinancialExtractionRes
             reasoning = "Structured PEPPOL receipt payload"
         )
     )
+
+    // Bank statements are never received via Peppol; this branch is a defensive catch-all
+    is BankStatementDraftData -> FinancialExtractionResult.BankStatement(
+        BankStatementExtractionResult(
+            rows = transactions.map { row ->
+                BankStatementTransactionExtractionRow(
+                    transactionDate = row.transactionDate,
+                    signedAmount = row.signedAmount,
+                    counterpartyName = row.counterpartyName,
+                    counterpartyIban = row.counterpartyIban,
+                    structuredCommunicationRaw = row.structuredCommunicationRaw,
+                    descriptionRaw = row.descriptionRaw,
+                    rowConfidence = row.rowConfidence.coerceIn(0.0, 1.0),
+                )
+            },
+            confidence = 1.0,
+            reasoning = "Structured PEPPOL bank statement payload"
+        )
+    )
 }
 
 private fun counterpartyExtractionForInvoice(data: InvoiceDraftData): CounterpartyExtraction {
     val counterparty = when (data.direction) {
         DocumentDirection.Inbound -> data.seller to CounterpartyRole.Seller
         DocumentDirection.Outbound -> data.buyer to CounterpartyRole.Buyer
+        DocumentDirection.Neutral -> data.seller to CounterpartyRole.Unknown
         DocumentDirection.Unknown -> {
             val fallback = if (!data.seller.name.isNullOrBlank()) data.seller else data.buyer
             fallback to CounterpartyRole.Unknown
@@ -157,6 +180,7 @@ private fun counterpartyExtractionForCreditNote(data: CreditNoteDraftData): Coun
     val role = when (data.direction) {
         DocumentDirection.Inbound -> CounterpartyRole.Seller
         DocumentDirection.Outbound -> CounterpartyRole.Buyer
+        DocumentDirection.Neutral -> CounterpartyRole.Unknown
         DocumentDirection.Unknown -> CounterpartyRole.Unknown
     }
     val name = data.counterpartyName ?: data.seller.name ?: data.buyer.name
@@ -173,4 +197,5 @@ private fun DocumentDraftData.directionOrUnknown(): DocumentDirection = when (th
     is InvoiceDraftData -> direction
     is CreditNoteDraftData -> direction
     is ReceiptDraftData -> direction
+    is BankStatementDraftData -> direction
 }

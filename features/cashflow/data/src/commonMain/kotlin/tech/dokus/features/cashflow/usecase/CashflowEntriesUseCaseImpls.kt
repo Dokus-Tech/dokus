@@ -7,16 +7,21 @@ import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.enums.CashflowViewMode
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.model.CancelEntryRequest
+import tech.dokus.domain.model.AutoPaymentStatusDto
 import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.model.CashflowOverview
 import tech.dokus.domain.model.CashflowPaymentRequest
+import tech.dokus.domain.model.UndoAutoPaymentRequest
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.features.cashflow.datasource.CashflowRemoteDataSource
 import tech.dokus.features.cashflow.usecases.CancelCashflowEntryUseCase
+import tech.dokus.features.cashflow.usecases.GetAutoPaymentStatusUseCase
 import tech.dokus.features.cashflow.usecases.GetCashflowEntryUseCase
+import tech.dokus.features.cashflow.usecases.GetCashflowPaymentCandidatesUseCase
 import tech.dokus.features.cashflow.usecases.GetCashflowOverviewUseCase
 import tech.dokus.features.cashflow.usecases.LoadCashflowEntriesUseCase
 import tech.dokus.features.cashflow.usecases.RecordCashflowPaymentUseCase
+import tech.dokus.features.cashflow.usecases.UndoAutoPaymentUseCase
 
 private const val PAGE_SIZE_DEFAULT = 50
 
@@ -76,6 +81,20 @@ internal class GetCashflowEntryUseCaseImpl(
     }
 }
 
+internal class GetCashflowPaymentCandidatesUseCaseImpl(
+    private val dataSource: CashflowRemoteDataSource
+) : GetCashflowPaymentCandidatesUseCase {
+    override suspend fun invoke(entryId: CashflowEntryId) = dataSource.getCashflowPaymentCandidates(entryId)
+}
+
+internal class GetAutoPaymentStatusUseCaseImpl(
+    private val dataSource: CashflowRemoteDataSource
+) : GetAutoPaymentStatusUseCase {
+    override suspend fun invoke(entryId: CashflowEntryId): Result<AutoPaymentStatusDto> {
+        return dataSource.getAutoPaymentStatus(entryId)
+    }
+}
+
 internal class RecordCashflowPaymentUseCaseImpl(
     private val dataSource: CashflowRemoteDataSource
 ) : RecordCashflowPaymentUseCase {
@@ -95,5 +114,16 @@ internal class CancelCashflowEntryUseCaseImpl(
         request: CancelEntryRequest?
     ): Result<CashflowEntry> {
         return dataSource.cancelCashflowEntry(entryId, request)
+    }
+}
+
+internal class UndoAutoPaymentUseCaseImpl(
+    private val dataSource: CashflowRemoteDataSource
+) : UndoAutoPaymentUseCase {
+    override suspend fun invoke(
+        entryId: CashflowEntryId,
+        request: UndoAutoPaymentRequest
+    ): Result<CashflowEntry> {
+        return dataSource.undoAutoPayment(entryId, request)
     }
 }

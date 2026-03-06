@@ -36,7 +36,11 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.toDbDecimal
 import tech.dokus.foundation.backend.database.dbQuery
+import tech.dokus.foundation.backend.utils.runSuspendCatching
+import java.math.BigDecimal
 import java.util.UUID
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.toJavaUuid
 
 /**
  * Repository for managing cashflow entries.
@@ -121,6 +125,54 @@ class CashflowEntriesRepository {
                     (CashflowEntriesTable.sourceType eq sourceType) and
                     (CashflowEntriesTable.sourceId eq sourceId)
             }.singleOrNull()?.let { mapRowToEntry(it) }
+        }
+    }
+
+    @OptIn(ExperimentalUuidApi::class)
+    suspend fun listOpenInvoiceEntries(
+        tenantId: TenantId
+    ): Result<List<CashflowEntry>> = runSuspendCatching {
+        dbQuery {
+            CashflowEntriesTable
+                .join(
+                    ContactsTable,
+                    JoinType.LEFT,
+                    onColumn = CashflowEntriesTable.counterpartyId,
+                    otherColumn = ContactsTable.id
+                )
+                .selectAll()
+                .where {
+                    (CashflowEntriesTable.tenantId eq tenantId.value.toJavaUuid()) and
+                        (CashflowEntriesTable.sourceType eq CashflowSourceType.Invoice) and
+                        (CashflowEntriesTable.status inList listOf(CashflowEntryStatus.Open, CashflowEntryStatus.Overdue)) and
+                        (CashflowEntriesTable.remainingAmount neq BigDecimal.ZERO)
+                }
+                .map { row -> mapRowToEntry(row, row.getOrNull(ContactsTable.name)) }
+        }
+    }
+
+    @OptIn(ExperimentalUuidApi::class)
+    suspend fun listOpenInvoiceEntriesByContact(
+        tenantId: TenantId,
+        contactId: ContactId
+    ): Result<List<CashflowEntry>> = runSuspendCatching {
+        dbQuery {
+            CashflowEntriesTable
+                .join(
+                    ContactsTable,
+                    JoinType.LEFT,
+                    onColumn = CashflowEntriesTable.counterpartyId,
+                    otherColumn = ContactsTable.id
+                )
+                .selectAll()
+                .where {
+                    (CashflowEntriesTable.tenantId eq tenantId.value.toJavaUuid()) and
+                        (CashflowEntriesTable.sourceType eq CashflowSourceType.Invoice) and
+                        (CashflowEntriesTable.counterpartyId eq contactId.value.toJavaUuid()) and
+                        (CashflowEntriesTable.status inList listOf(CashflowEntryStatus.Open, CashflowEntryStatus.Overdue)) and
+                        (CashflowEntriesTable.remainingAmount neq BigDecimal.ZERO)
+                }
+                .map { row -> mapRowToEntry(row, row.getOrNull(ContactsTable.name)) }
         }
     }
 

@@ -366,11 +366,26 @@ internal fun DocumentReviewRoute(
         RecordPaymentDialog(
             sheetState = paymentState,
             currencySign = currencySign,
+            onPaidAtChange = { paidAt ->
+                container.store.intent(DocumentReviewIntent.UpdatePaymentPaidAt(paidAt))
+            },
             onAmountChange = { amount ->
                 container.store.intent(DocumentReviewIntent.UpdatePaymentAmountText(amount))
             },
             onNoteChange = { note ->
                 container.store.intent(DocumentReviewIntent.UpdatePaymentNote(note))
+            },
+            onOpenTransactionPicker = {
+                container.store.intent(DocumentReviewIntent.OpenPaymentTransactionPicker)
+            },
+            onCloseTransactionPicker = {
+                container.store.intent(DocumentReviewIntent.ClosePaymentTransactionPicker)
+            },
+            onSelectTransaction = { transactionId ->
+                container.store.intent(DocumentReviewIntent.SelectPaymentTransaction(transactionId))
+            },
+            onClearSelectedTransaction = {
+                container.store.intent(DocumentReviewIntent.ClearPaymentTransactionSelection)
             },
             onSubmit = { container.store.intent(DocumentReviewIntent.SubmitPayment) },
             onDismiss = { container.store.intent(DocumentReviewIntent.ClosePaymentSheet) },

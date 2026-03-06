@@ -31,9 +31,12 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.model.CreditNoteDraftData
+import tech.dokus.domain.model.BankStatementDraftData
+import tech.dokus.domain.model.AutoPaymentStatusDto
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.ImportedBankTransactionDto
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.domain.model.contact.ContactDto
@@ -79,6 +82,12 @@ data class PaymentSheetState(
     val amount: Money? = null,
     val paidAt: LocalDate = Clock.System.todayIn(TimeZone.currentSystemDefault()),
     val note: String = "",
+    val suggestedTransaction: ImportedBankTransactionDto? = null,
+    val selectedTransaction: ImportedBankTransactionDto? = null,
+    val selectableTransactions: List<ImportedBankTransactionDto> = emptyList(),
+    val showTransactionPicker: Boolean = false,
+    val isLoadingTransactions: Boolean = false,
+    val transactionsError: DokusException? = null,
     val isSubmitting: Boolean = false,
     val amountError: DokusException? = null,
 )
@@ -133,6 +142,9 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
         val isDocumentRejected: Boolean = false,
         val confirmedCashflowEntryId: CashflowEntryId? = null,
         val cashflowEntryState: DokusState<CashflowEntry> = DokusState.idle(),
+        val autoPaymentStatus: DokusState<AutoPaymentStatusDto> = DokusState.idle(),
+        val isUndoingAutoPayment: Boolean = false,
+        val isEditMode: Boolean = false,
         val sourceViewerState: SourceEvidenceViewerState? = null,
         val paymentSheetState: PaymentSheetState? = null,
         val rejectDialogState: RejectDialogState? = null,
@@ -279,6 +291,7 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
                 is InvoiceDraftData -> draftData.totalAmount
                 is ReceiptDraftData -> draftData.totalAmount
                 is CreditNoteDraftData -> draftData.totalAmount
+                is BankStatementDraftData -> null
                 null -> null
             }
 
@@ -344,6 +357,7 @@ private val DocumentDraftData.hasRequiredDates: Boolean
         is InvoiceDraftData -> issueDate != null
         is ReceiptDraftData -> date != null
         is CreditNoteDraftData -> issueDate != null
+        is BankStatementDraftData -> transactions.all { it.transactionDate != null }
     }
 
 /** Direction must be known for document types that map to invoice/credit-note entities. */
@@ -352,6 +366,7 @@ private val DocumentDraftData.hasKnownDirectionForConfirmation: Boolean
         is InvoiceDraftData -> direction != DocumentDirection.Unknown
         is CreditNoteDraftData -> direction != DocumentDirection.Unknown
         is ReceiptDraftData -> true
+        is BankStatementDraftData -> direction == DocumentDirection.Neutral
     }
 
 /** Identity fields required by backend confirmation services. */
@@ -360,6 +375,7 @@ private val DocumentDraftData.hasRequiredIdentityForConfirmation: Boolean
         is InvoiceDraftData -> true
         is ReceiptDraftData -> !merchantName.isNullOrBlank()
         is CreditNoteDraftData -> !creditNoteNumber.isNullOrBlank()
+        is BankStatementDraftData -> true
     }
 
 /** Subtotal requirement enforced by backend (credit notes only). */
@@ -368,6 +384,7 @@ private val DocumentDraftData.hasRequiredSubtotalForConfirmation: Boolean
         is InvoiceDraftData -> true
         is ReceiptDraftData -> true
         is CreditNoteDraftData -> subtotalAmount != null
+        is BankStatementDraftData -> true
     }
 
 /** Whether totals required for confirmation are present. */
@@ -376,6 +393,7 @@ private val DocumentDraftData.hasRequiredTotalForConfirmation: Boolean
         is InvoiceDraftData -> totalAmount != null
         is ReceiptDraftData -> totalAmount != null
         is CreditNoteDraftData -> totalAmount != null
+        is BankStatementDraftData -> true
     }
 
 /** Whether VAT required for confirmation is present (0-value VAT is valid). */
@@ -384,6 +402,7 @@ private val DocumentDraftData.hasRequiredVatForConfirmation: Boolean
         is InvoiceDraftData -> vatAmount != null
         is CreditNoteDraftData -> vatAmount != null
         is ReceiptDraftData -> true
+        is BankStatementDraftData -> true
     }
 
 /** Whether amount math is coherent when all required values are present. */
@@ -407,6 +426,10 @@ private val DocumentDraftData.hasCoherentAmountsForConfirmation: Boolean
                 val expected = subtotal + vat
                 kotlin.math.abs(expected.minor - total.minor) <= 1L
             }
+            is BankStatementDraftData -> transactions.all { row ->
+                val amount = row.signedAmount
+                amount != null && !amount.isZero
+            }
         }
     }
 
@@ -419,10 +442,12 @@ val DocumentDraftData.isReviewValid: Boolean
             val resolvedCounterparty = when (direction) {
                 DocumentDirection.Inbound -> seller.name ?: counterpartyName
                 DocumentDirection.Outbound -> buyer.name ?: counterpartyName
+                DocumentDirection.Neutral,
                 DocumentDirection.Unknown -> buyer.name ?: seller.name ?: counterpartyName
             }
             resolvedCounterparty != null && issueDate != null && subtotalAmount != null
         }
+        is BankStatementDraftData -> transactions.isNotEmpty()
     }
 
 /** Whether a contact is required for this document type. */
@@ -435,6 +460,7 @@ internal val DocumentDraftData?.documentType: DocumentType
         is InvoiceDraftData -> DocumentType.Invoice
         is CreditNoteDraftData -> DocumentType.CreditNote
         is ReceiptDraftData -> DocumentType.Receipt
+        is BankStatementDraftData -> DocumentType.BankStatement
         null -> DocumentType.Unknown
     }
 
@@ -444,6 +470,7 @@ private val DocumentDraftData?.displayContextDescription: String?
         is InvoiceDraftData -> notes?.takeIf { it.isNotBlank() }
         is ReceiptDraftData -> notes?.takeIf { it.isNotBlank() }
         is CreditNoteDraftData -> reason?.takeIf { it.isNotBlank() }
+        is BankStatementDraftData -> notes?.takeIf { it.isNotBlank() }
         null -> null
     }
 
@@ -453,6 +480,7 @@ private val DocumentDraftData?.dueDate: kotlinx.datetime.LocalDate?
         is InvoiceDraftData -> dueDate
         is ReceiptDraftData -> null
         is CreditNoteDraftData -> null
+        is BankStatementDraftData -> null
         null -> null
     }
 

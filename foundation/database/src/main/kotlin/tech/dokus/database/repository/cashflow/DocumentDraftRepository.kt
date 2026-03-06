@@ -238,6 +238,24 @@ class DocumentDraftRepository : DocumentStatusChecker {
         newVersion
     }
 
+    suspend fun updateExtractedDataAndStatus(
+        documentId: DocumentId,
+        tenantId: TenantId,
+        extractedData: DocumentDraftData,
+        status: DocumentStatus
+    ): Boolean = newSuspendedTransaction {
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+        DocumentDraftsTable.update({
+            (DocumentDraftsTable.documentId eq UUID.fromString(documentId.toString())) and
+                (DocumentDraftsTable.tenantId eq UUID.fromString(tenantId.toString()))
+        }) {
+            it[DocumentDraftsTable.extractedData] = json.encodeToString(extractedData)
+            it[DocumentDraftsTable.documentType] = extractedData.toDocumentType()
+            it[documentStatus] = status
+            it[updatedAt] = now
+        } > 0
+    }
+
     /**
      * Update document status.
      * CRITICAL: Must filter by tenantId.

@@ -34,9 +34,12 @@ import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.AttachmentDto
 import tech.dokus.domain.model.CancelEntryRequest
+import tech.dokus.domain.model.AutoPaymentStatusDto
 import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.model.CashflowOverview
+import tech.dokus.domain.model.CashflowPaymentCandidatesResponse
 import tech.dokus.domain.model.CashflowPaymentRequest
+import tech.dokus.domain.model.UndoAutoPaymentRequest
 import tech.dokus.domain.model.CreateExpenseRequest
 import tech.dokus.domain.model.CreateInvoiceRequest
 import tech.dokus.domain.model.DocumentDraftDto
@@ -399,6 +402,22 @@ interface CashflowRemoteDataSource {
     suspend fun getCashflowEntry(entryId: CashflowEntryId): Result<CashflowEntry>
 
     /**
+     * Get imported transaction candidates for recording payment.
+     * GET /api/v1/cashflow/entries/{id}/payment-candidates
+     */
+    suspend fun getCashflowPaymentCandidates(
+        entryId: CashflowEntryId
+    ): Result<CashflowPaymentCandidatesResponse>
+
+    /**
+     * Get auto-payment status for a cashflow entry.
+     * GET /api/v1/cashflow/entries/{id}/auto-payment-status
+     */
+    suspend fun getAutoPaymentStatus(
+        entryId: CashflowEntryId
+    ): Result<AutoPaymentStatusDto>
+
+    /**
      * Record a payment against a cashflow entry.
      * POST /api/v1/cashflow/entries/{id}/payments
      */
@@ -414,6 +433,15 @@ interface CashflowRemoteDataSource {
     suspend fun cancelCashflowEntry(
         entryId: CashflowEntryId,
         request: CancelEntryRequest? = null
+    ): Result<CashflowEntry>
+
+    /**
+     * Undo active auto payment for an entry.
+     * POST /api/v1/cashflow/entries/{id}/undo-auto-payment
+     */
+    suspend fun undoAutoPayment(
+        entryId: CashflowEntryId,
+        request: UndoAutoPaymentRequest = UndoAutoPaymentRequest()
     ): Result<CashflowEntry>
 
     // ============================================================================

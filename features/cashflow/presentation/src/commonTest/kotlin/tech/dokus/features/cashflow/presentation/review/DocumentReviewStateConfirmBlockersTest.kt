@@ -10,6 +10,7 @@ import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.BankStatementDraftData
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.DocumentDraftDto
@@ -226,5 +227,6 @@ class DocumentReviewStateConfirmBlockersTest {
         is InvoiceDraftData -> DocumentType.Invoice
         is ReceiptDraftData -> DocumentType.Receipt
         is CreditNoteDraftData -> DocumentType.CreditNote
+        is BankStatementDraftData -> DocumentType.BankStatement
     }
 }

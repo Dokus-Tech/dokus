@@ -58,7 +58,7 @@ enum class DocumentType(
     // ═══════════════════════════════════════════════════════════════════
 
     @SerialName("BANK_STATEMENT")
-    BankStatement("BANK_STATEMENT", false),
+    BankStatement("BANK_STATEMENT", true),
 
     @SerialName("BANK_FEE")
     BankFee("BANK_FEE", false),
@@ -319,6 +319,7 @@ enum class CounterpartyIntent(override val dbValue: String) : DbEnum {
  *
  * - Inbound: received by tenant (tenant is buyer/recipient)
  * - Outbound: issued by tenant (tenant is seller/sender)
+ * - Neutral: evidence-only document with no cashflow direction
  * - Unknown: not deterministically resolved yet
  */
 @Serializable
@@ -328,6 +329,9 @@ enum class DocumentDirection(override val dbValue: String) : DbEnum {
 
     @SerialName("OUTBOUND")
     Outbound("OUTBOUND"),
+
+    @SerialName("NEUTRAL")
+    Neutral("NEUTRAL"),
 
     @SerialName("UNKNOWN")
     Unknown("UNKNOWN");

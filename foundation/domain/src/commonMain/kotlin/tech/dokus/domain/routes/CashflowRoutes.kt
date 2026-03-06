@@ -84,6 +84,18 @@ class Cashflow {
             class Payments(val parent: Id)
 
             @Serializable
+            @Resource("payment-candidates")
+            class PaymentCandidates(val parent: Id)
+
+            @Serializable
+            @Resource("auto-payment-status")
+            class AutoPaymentStatus(val parent: Id)
+
+            @Serializable
+            @Resource("undo-auto-payment")
+            class UndoAutoPayment(val parent: Id)
+
+            @Serializable
             @Resource("cancel")
             class Cancel(val parent: Id)
         }

@@ -13,6 +13,7 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.model.BankStatementDraftData
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.InvoiceDraftData
@@ -221,38 +222,45 @@ class DocumentPurposeService(
         is InvoiceDraftData -> when (draftData.direction) {
             DocumentDirection.Inbound -> draftData.seller.name
             DocumentDirection.Outbound -> draftData.buyer.name
+            DocumentDirection.Neutral -> draftData.seller.name ?: draftData.buyer.name
             DocumentDirection.Unknown -> draftData.seller.name ?: draftData.buyer.name
         }
 
         is CreditNoteDraftData -> when (draftData.direction) {
             DocumentDirection.Inbound -> draftData.seller.name ?: draftData.counterpartyName
             DocumentDirection.Outbound -> draftData.buyer.name ?: draftData.counterpartyName
+            DocumentDirection.Neutral -> draftData.counterpartyName ?: draftData.seller.name ?: draftData.buyer.name
             DocumentDirection.Unknown -> draftData.counterpartyName ?: draftData.seller.name ?: draftData.buyer.name
         }
 
         is ReceiptDraftData -> draftData.merchantName
+        is BankStatementDraftData -> draftData.transactions.firstNotNullOfOrNull { it.counterpartyName }
     }
 
     private fun extractCounterpartyVat(draftData: DocumentDraftData): VatNumber? = when (draftData) {
         is InvoiceDraftData -> when (draftData.direction) {
             DocumentDirection.Inbound -> draftData.seller.vat
             DocumentDirection.Outbound -> draftData.buyer.vat
+            DocumentDirection.Neutral -> draftData.seller.vat ?: draftData.buyer.vat
             DocumentDirection.Unknown -> draftData.seller.vat ?: draftData.buyer.vat
         }
 
         is CreditNoteDraftData -> when (draftData.direction) {
             DocumentDirection.Inbound -> draftData.seller.vat ?: draftData.counterpartyVat
             DocumentDirection.Outbound -> draftData.buyer.vat ?: draftData.counterpartyVat
+            DocumentDirection.Neutral -> draftData.counterpartyVat ?: draftData.seller.vat ?: draftData.buyer.vat
             DocumentDirection.Unknown -> draftData.counterpartyVat ?: draftData.seller.vat ?: draftData.buyer.vat
         }
 
         is ReceiptDraftData -> draftData.merchantVat
+        is BankStatementDraftData -> null
     }
 
     private fun extractIssueDate(draftData: DocumentDraftData): LocalDate? = when (draftData) {
         is InvoiceDraftData -> draftData.issueDate
         is CreditNoteDraftData -> draftData.issueDate
         is ReceiptDraftData -> draftData.date
+        is BankStatementDraftData -> draftData.transactions.firstNotNullOfOrNull { it.transactionDate }
     }
 
     private fun extractPeriodDate(draftData: DocumentDraftData, mode: PurposePeriodMode): LocalDate? {
@@ -287,6 +295,7 @@ class DocumentPurposeService(
             is InvoiceDraftData -> draftData.lineItems.firstOrNull()?.description
             is CreditNoteDraftData -> draftData.lineItems.firstOrNull()?.description
             is ReceiptDraftData -> draftData.lineItems.firstOrNull()?.description
+            is BankStatementDraftData -> draftData.transactions.firstOrNull()?.descriptionRaw
         }?.trim()?.take(PurposeBaseMaxLength)
         return lineHint?.takeIf { it.isNotBlank() }
     }
@@ -299,6 +308,7 @@ class DocumentPurposeService(
             is InvoiceDraftData -> draftData.notes
             is CreditNoteDraftData -> draftData.reason ?: draftData.notes
             is ReceiptDraftData -> draftData.notes
+            is BankStatementDraftData -> draftData.notes
         }?.trim()?.take(PurposeBaseMaxLength)
         return deriveFallbackPurposeBase(draftData)
             ?: explicitHint?.takeIf { it.isNotBlank() }
@@ -356,5 +366,6 @@ class DocumentPurposeService(
         is InvoiceDraftData -> DocumentType.Invoice
         is CreditNoteDraftData -> DocumentType.CreditNote
         is ReceiptDraftData -> DocumentType.Receipt
+        is BankStatementDraftData -> DocumentType.BankStatement
     }
 }

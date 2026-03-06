@@ -4,6 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import tech.dokus.features.ai.graph.sub.extraction.financial.CreditNoteExtractionResult
 import tech.dokus.features.ai.graph.sub.extraction.financial.InvoiceExtractionResult
+import tech.dokus.features.ai.graph.sub.extraction.financial.BankStatementExtractionResult
 import tech.dokus.features.ai.graph.sub.extraction.financial.ProFormaExtractionResult
 import tech.dokus.features.ai.graph.sub.extraction.financial.PurchaseOrderExtractionResult
 import tech.dokus.features.ai.graph.sub.extraction.financial.QuoteExtractionResult
@@ -56,6 +57,12 @@ sealed interface FinancialExtractionResult : ExtractionResult {
     @SerialName("ReceiptExtraction")
     data class Receipt(
         val data: ReceiptExtractionResult
+    ) : FinancialExtractionResult
+
+    @Serializable
+    @SerialName("BankStatementExtraction")
+    data class BankStatement(
+        val data: BankStatementExtractionResult
     ) : FinancialExtractionResult
 
     /**

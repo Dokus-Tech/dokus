@@ -232,8 +232,14 @@ internal object DocumentListingQuery {
         )
         val entityExists = invoiceExists or expenseExists or creditNoteExists
 
-        val confirmedStrict = (DocumentDraftsTable.documentStatus eq DocumentStatus.Confirmed) and entityExists
-        val confirmedButNoEntity = (DocumentDraftsTable.documentStatus eq DocumentStatus.Confirmed) and not(entityExists)
+        val isBankStatementType = DocumentDraftsTable.documentType eq DocumentType.BankStatement
+        val confirmedBankStatement = (DocumentDraftsTable.documentStatus eq DocumentStatus.Confirmed) and isBankStatementType
+        val confirmedStrict = ((DocumentDraftsTable.documentStatus eq DocumentStatus.Confirmed) and entityExists) or
+            confirmedBankStatement
+        val confirmedButNoEntity =
+            (DocumentDraftsTable.documentStatus eq DocumentStatus.Confirmed) and
+                not(entityExists) and
+                not(isBankStatementType)
         val hasPendingMatchReview = exists(
             DocumentMatchReviewsTable.select(DocumentMatchReviewsTable.id).where {
                 (DocumentMatchReviewsTable.tenantId eq DocumentsTable.tenantId) and
@@ -289,7 +295,7 @@ internal object DocumentListingQuery {
                 val isNotConfirmed =
                     DocumentDraftsTable.documentStatus.isNull() or
                         (DocumentDraftsTable.documentStatus neq DocumentStatus.Confirmed) or
-                        not(entityExists)
+                        (not(entityExists) and not(isBankStatementType))
 
                 val ingestionNeedsAttention = latestIsQueued or latestIsProcessing or latestIsFailed
                 val draftNeedsReview = DocumentDraftsTable.documentStatus eq DocumentStatus.NeedsReview

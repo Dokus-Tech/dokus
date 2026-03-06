@@ -23,6 +23,7 @@ import tech.dokus.domain.ids.DocumentMatchReviewId
 import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.BankStatementDraftData
 import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentDraftData
@@ -169,6 +170,7 @@ class DocumentReviewCanonicalStateTest {
                 is InvoiceDraftData -> DocumentType.Invoice
                 is CreditNoteDraftData -> DocumentType.CreditNote
                 is ReceiptDraftData -> DocumentType.Receipt
+                is BankStatementDraftData -> DocumentType.BankStatement
             },
             extractedData = draftData,
             aiDraftData = draftData,

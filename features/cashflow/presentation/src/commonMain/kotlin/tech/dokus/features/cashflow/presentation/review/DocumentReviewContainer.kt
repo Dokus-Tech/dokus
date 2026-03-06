@@ -12,7 +12,9 @@ import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsState
 import tech.dokus.features.cashflow.presentation.review.route.toDocQueueItem
 import tech.dokus.features.cashflow.presentation.review.route.toListFilter
 import tech.dokus.features.cashflow.usecases.ConfirmDocumentUseCase
+import tech.dokus.features.cashflow.usecases.GetAutoPaymentStatusUseCase
 import tech.dokus.features.cashflow.usecases.GetCashflowEntryUseCase
+import tech.dokus.features.cashflow.usecases.GetCashflowPaymentCandidatesUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentPagesUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentRecordUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentSourceContentUseCase
@@ -22,6 +24,7 @@ import tech.dokus.features.cashflow.usecases.RecordCashflowPaymentUseCase
 import tech.dokus.features.cashflow.usecases.RejectDocumentUseCase
 import tech.dokus.features.cashflow.usecases.ReprocessDocumentUseCase
 import tech.dokus.features.cashflow.usecases.ResolveDocumentMatchReviewUseCase
+import tech.dokus.features.cashflow.usecases.UndoAutoPaymentUseCase
 import tech.dokus.features.cashflow.usecases.UpdateDocumentDraftContactUseCase
 import tech.dokus.features.cashflow.usecases.UpdateDocumentDraftUseCase
 import tech.dokus.features.contacts.usecases.GetContactUseCase
@@ -61,7 +64,10 @@ internal class DocumentReviewContainer(
     private val getDocumentSourcePages: GetDocumentSourcePagesUseCase,
     private val getDocumentSourceContent: GetDocumentSourceContentUseCase,
     private val getCashflowEntry: GetCashflowEntryUseCase,
+    private val getCashflowPaymentCandidates: GetCashflowPaymentCandidatesUseCase,
+    private val getAutoPaymentStatus: GetAutoPaymentStatusUseCase,
     private val recordCashflowPayment: RecordCashflowPaymentUseCase,
+    private val undoAutoPayment: UndoAutoPaymentUseCase,
     private val getContact: GetContactUseCase,
     private val loadDocumentRecords: LoadDocumentRecordsUseCase,
     private val initialDocumentId: DocumentId,
@@ -81,7 +87,10 @@ internal class DocumentReviewContainer(
         getDocumentSourcePages = getDocumentSourcePages,
         getDocumentSourceContent = getDocumentSourceContent,
         getCashflowEntry = getCashflowEntry,
+        getCashflowPaymentCandidates = getCashflowPaymentCandidates,
+        getAutoPaymentStatus = getAutoPaymentStatus,
         recordCashflowPayment = recordCashflowPayment,
+        undoAutoPayment = undoAutoPayment,
         getContact = getContact,
         logger = logger,
     )
@@ -133,14 +142,21 @@ internal class DocumentReviewContainer(
                 is DocumentReviewIntent.CloseSourceModal -> handleCloseSourceModal()
                 is DocumentReviewIntent.ToggleSourceTechnicalDetails -> handleToggleSourceTechnicalDetails()
                 is DocumentReviewIntent.LoadCashflowEntry -> handleLoadCashflowEntry()
+                is DocumentReviewIntent.LoadAutoPaymentStatus -> handleLoadAutoPaymentStatus()
                 is DocumentReviewIntent.OpenPaymentSheet -> handleOpenPaymentSheet()
                 is DocumentReviewIntent.ClosePaymentSheet -> handleClosePaymentSheet()
+                is DocumentReviewIntent.LoadPaymentCandidates -> handleLoadPaymentCandidates()
+                is DocumentReviewIntent.OpenPaymentTransactionPicker -> handleOpenPaymentTransactionPicker()
+                is DocumentReviewIntent.ClosePaymentTransactionPicker -> handleClosePaymentTransactionPicker()
+                is DocumentReviewIntent.SelectPaymentTransaction -> handleSelectPaymentTransaction(intent.transactionId)
+                is DocumentReviewIntent.ClearPaymentTransactionSelection -> handleClearPaymentTransactionSelection()
                 is DocumentReviewIntent.UpdatePaymentAmountText ->
                     handleUpdatePaymentAmountText(intent.text)
                 is DocumentReviewIntent.UpdatePaymentPaidAt ->
                     handleUpdatePaymentPaidAt(intent.date)
                 is DocumentReviewIntent.UpdatePaymentNote -> handleUpdatePaymentNote(intent.note)
                 is DocumentReviewIntent.SubmitPayment -> handleSubmitPayment()
+                is DocumentReviewIntent.UndoAutoPayment -> handleUndoAutoPayment(intent.reason)
 
                 // === Contact Sheet ===
                 is DocumentReviewIntent.OpenContactSheet -> handleOpenContactSheet()
