@@ -33,5 +33,6 @@ object AutoPaymentAuditEventsTable : UUIDTable("auto_payment_audit_events") {
         index(false, tenantId, createdAt)
         index(false, tenantId, invoiceId)
         index(false, tenantId, importedBankTransactionId)
+        index(false, tenantId, cashflowEntryId)
     }
 }

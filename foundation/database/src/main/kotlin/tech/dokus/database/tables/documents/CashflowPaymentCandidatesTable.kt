@@ -25,6 +25,7 @@ object CashflowPaymentCandidatesTable : UUIDTable("cashflow_payment_candidates")
     val score = decimal("score", 5, 4)
     val tier = dbEnumeration<PaymentCandidateTier>("tier")
     val signalSnapshotJson = text("signal_snapshot_json").nullable()
+    val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)
     val updatedAt = datetime("updated_at").defaultExpression(CurrentDateTime)
 
     init {

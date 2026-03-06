@@ -10,6 +10,8 @@ import tech.dokus.domain.ids.ImportedBankTransactionId
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.TenantId
 import java.util.UUID
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.toJavaUuid
 
 data class AutoPaymentAuditEventCreate(
     val tenantId: TenantId,
@@ -25,16 +27,17 @@ data class AutoPaymentAuditEventCreate(
     val actorUserId: UUID? = null,
 )
 
+@OptIn(ExperimentalUuidApi::class)
 class AutoPaymentAuditRepository {
     suspend fun append(event: AutoPaymentAuditEventCreate): Unit = newSuspendedTransaction {
         AutoPaymentAuditEventsTable.insert {
             it[id] = UUID.randomUUID()
-            it[tenantId] = UUID.fromString(event.tenantId.toString())
+            it[tenantId] = event.tenantId.value.toJavaUuid()
             it[triggerSource] = event.triggerSource
             it[decision] = event.decision
-            it[invoiceId] = event.invoiceId?.let { id -> UUID.fromString(id.toString()) }
-            it[cashflowEntryId] = event.cashflowEntryId?.let { id -> UUID.fromString(id.toString()) }
-            it[importedBankTransactionId] = event.transactionId?.let { id -> UUID.fromString(id.toString()) }
+            it[invoiceId] = event.invoiceId?.value?.toJavaUuid()
+            it[cashflowEntryId] = event.cashflowEntryId?.value?.toJavaUuid()
+            it[importedBankTransactionId] = event.transactionId?.value?.toJavaUuid()
             it[score] = event.score?.toBigDecimal()
             it[margin] = event.margin?.toBigDecimal()
             it[reasonsJson] = event.reasonsJson

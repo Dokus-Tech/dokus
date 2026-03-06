@@ -606,6 +606,58 @@
     <string name="expense_category_vehicle">Vehicle</string>
     <string name="expense_category_other">Other</string>
 
+    <!-- Record Payment Dialog -->
+    <string name="payment_record_title">Record payment</string>
+    <string name="payment_confirm">Confirm payment</string>
+    <string name="payment_date_label">Payment date</string>
+    <string name="payment_amount_label">Amount (%1$s)</string>
+    <string name="payment_note_label">Note (optional)</string>
+    <string name="payment_imported_transaction">Imported transaction</string>
+    <string name="payment_suggested_match">Suggested match</string>
+    <string name="payment_loading_transactions">Loading imported transactions...</string>
+    <string name="payment_choose_different">Choose different</string>
+    <string name="payment_use_manual_entry">Use manual entry</string>
+    <string name="payment_choose_from_transactions">Choose from imported transactions</string>
+    <string name="payment_no_transactions">No imported transactions available.</string>
+    <string name="payment_close_list">Close list</string>
+    <string name="payment_transaction_date_amount">Date: %1$s  Amount: %2$s</string>
+    <string name="payment_counterparty">Counterparty: %1$s</string>
+    <string name="payment_reference">Reference: %1$s</string>
+    <string name="payment_auto_paid">Auto-paid from imported bank transaction</string>
+    <string name="payment_confidence">Confidence %1$s</string>
+    <string name="payment_undoing">Undoing...</string>
+    <string name="payment_undo_auto">Undo auto payment</string>
+    <string name="payment_no_payment_recorded">No payment recorded</string>
+    <string name="payment_unable_to_load">Unable to load</string>
+    <string name="payment_loading_automation">Loading automation status...</string>
+
+    <!-- Inspector Sections -->
+    <string name="inspector_section_amount">Amount</string>
+    <string name="inspector_section_timeline">Timeline</string>
+    <string name="inspector_section_reference">Reference</string>
+    <string name="inspector_section_contact">Contact</string>
+    <string name="inspector_section_sources">Sources</string>
+    <string name="inspector_label_total">Total</string>
+    <string name="inspector_label_subtotal">Subtotal</string>
+    <string name="inspector_label_vat">VAT</string>
+    <string name="inspector_label_issue_date">Issue date</string>
+    <string name="inspector_label_due_date">Due date</string>
+    <string name="inspector_label_invoice_number">Invoice number</string>
+    <string name="inspector_label_name">Name</string>
+    <string name="inspector_label_address">Address</string>
+    <string name="inspector_label_source">Source</string>
+    <string name="inspector_no_sources">No sources</string>
+    <string name="inspector_conflict_confirmation">Conflicting financial facts require confirmation.</string>
+    <string name="inspector_fuzzy_match">Potential same document found with fuzzy identity match.</string>
+    <string name="inspector_label_automation">Automation</string>
+
+    <!-- Mobile Canonical -->
+    <string name="mobile_unknown_vendor">Unknown vendor</string>
+    <string name="mobile_label_issued">Issued</string>
+    <string name="mobile_label_due">Due</string>
+    <string name="mobile_label_invoice">Invoice</string>
+    <string name="mobile_confirm_document">Confirm document</string>
+
     <!-- Payment Methods -->
     <string name="payment_method_bank_transfer">Bank transfer</string>
     <string name="payment_method_credit_card">Credit card</string>

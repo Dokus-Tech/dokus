@@ -22,6 +22,7 @@ import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.routes.Cashflow
 import tech.dokus.foundation.backend.security.authenticateJwt
 import tech.dokus.foundation.backend.security.dokusPrincipal
+import tech.dokus.foundation.backend.utils.runSuspendCatching
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -161,10 +162,14 @@ internal fun Route.cashflowEntriesRoutes() {
                 throw DokusException.BadRequest("Invalid entry ID format")
             }
 
-            val response = bankStatementMatchingService.getPaymentCandidates(
-                tenantId = tenantId,
-                cashflowEntryId = entryId
-            )
+            val response = runSuspendCatching {
+                bankStatementMatchingService.getPaymentCandidates(
+                    tenantId = tenantId,
+                    cashflowEntryId = entryId
+                )
+            }.getOrElse {
+                throw DokusException.BadRequest("Failed to load payment candidates: ${it.message}")
+            }
             call.respond(HttpStatusCode.OK, response)
         }
 

@@ -16,6 +16,8 @@ import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ImportedBankTransactionId
 import tech.dokus.domain.ids.TenantId
 import java.util.UUID
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.toJavaUuid
 
 data class CashflowPaymentCandidateRecord(
     val cashflowEntryId: CashflowEntryId,
@@ -25,14 +27,15 @@ data class CashflowPaymentCandidateRecord(
     val signalSnapshotJson: String? = null
 )
 
+@OptIn(ExperimentalUuidApi::class)
 class CashflowPaymentCandidateRepository {
     suspend fun upsertBestCandidate(
         tenantId: TenantId,
         record: CashflowPaymentCandidateRecord
     ): Boolean = newSuspendedTransaction {
-        val tenantUuid = UUID.fromString(tenantId.toString())
-        val entryUuid = UUID.fromString(record.cashflowEntryId.toString())
-        val txUuid = UUID.fromString(record.importedBankTransactionId.toString())
+        val tenantUuid = tenantId.value.toJavaUuid()
+        val entryUuid = record.cashflowEntryId.value.toJavaUuid()
+        val txUuid = record.importedBankTransactionId.value.toJavaUuid()
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         val updated = CashflowPaymentCandidatesTable.update({
@@ -66,8 +69,8 @@ class CashflowPaymentCandidateRepository {
         cashflowEntryId: CashflowEntryId
     ): CashflowPaymentCandidateRecord? = newSuspendedTransaction {
         CashflowPaymentCandidatesTable.selectAll().where {
-            (CashflowPaymentCandidatesTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                (CashflowPaymentCandidatesTable.cashflowEntryId eq UUID.fromString(cashflowEntryId.toString()))
+            (CashflowPaymentCandidatesTable.tenantId eq tenantId.value.toJavaUuid()) and
+                (CashflowPaymentCandidatesTable.cashflowEntryId eq cashflowEntryId.value.toJavaUuid())
         }.singleOrNull()?.let { row ->
             CashflowPaymentCandidateRecord(
                 cashflowEntryId = CashflowEntryId.parse(row[CashflowPaymentCandidatesTable.cashflowEntryId].toString()),
@@ -85,8 +88,8 @@ class CashflowPaymentCandidateRepository {
         cashflowEntryId: CashflowEntryId
     ): Int = newSuspendedTransaction {
         CashflowPaymentCandidatesTable.deleteWhere {
-            (CashflowPaymentCandidatesTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                (CashflowPaymentCandidatesTable.cashflowEntryId eq UUID.fromString(cashflowEntryId.toString()))
+            (CashflowPaymentCandidatesTable.tenantId eq tenantId.value.toJavaUuid()) and
+                (CashflowPaymentCandidatesTable.cashflowEntryId eq cashflowEntryId.value.toJavaUuid())
         }
     }
 }

@@ -46,8 +46,7 @@ object PaymentsTable : UUIDTable("payments") {
 
     init {
         index(false, tenantId, paymentDate)
-        // Prevent duplicate payment records per invoice/transaction
-        uniqueIndex(invoiceId, transactionId)
         index(false, tenantId, bankTransactionId)
+        // Partial unique indexes for duplicate prevention are defined in V9 migration
     }
 }

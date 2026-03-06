@@ -21,12 +21,15 @@ import tech.dokus.domain.enums.ImportedBankTransactionStatus
 import tech.dokus.domain.enums.PaymentCandidateTier
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.ImportedBankTransactionId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.ImportedBankTransactionDto
 import tech.dokus.domain.fromDbDecimal
 import tech.dokus.domain.toDbDecimal
 import java.util.UUID
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.toJavaUuid
 
 data class ImportedBankTransactionCreate(
     val rowHash: String,
@@ -42,14 +45,15 @@ data class ImportedBankTransactionCreate(
     val largeAmountFlag: Boolean = false,
 )
 
+@OptIn(ExperimentalUuidApi::class)
 class ImportedBankTransactionRepository {
     suspend fun replaceForDocument(
         tenantId: TenantId,
         documentId: DocumentId,
         rows: List<ImportedBankTransactionCreate>
     ): List<ImportedBankTransactionDto> = newSuspendedTransaction {
-        val tenantUuid = UUID.fromString(tenantId.toString())
-        val documentUuid = UUID.fromString(documentId.toString())
+        val tenantUuid = tenantId.value.toJavaUuid()
+        val documentUuid = documentId.value.toJavaUuid()
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         ImportedBankTransactionsTable.deleteWhere {
@@ -94,7 +98,7 @@ class ImportedBankTransactionRepository {
         )
     ): List<ImportedBankTransactionDto> = newSuspendedTransaction {
         ImportedBankTransactionsTable.selectAll().where {
-            (ImportedBankTransactionsTable.tenantId eq UUID.fromString(tenantId.toString())) and
+            (ImportedBankTransactionsTable.tenantId eq tenantId.value.toJavaUuid()) and
                 (ImportedBankTransactionsTable.status inList statuses)
         }.orderBy(
             ImportedBankTransactionsTable.transactionDate to SortOrder.DESC,
@@ -107,8 +111,8 @@ class ImportedBankTransactionRepository {
         documentId: DocumentId
     ): List<ImportedBankTransactionDto> = newSuspendedTransaction {
         ImportedBankTransactionsTable.selectAll().where {
-            (ImportedBankTransactionsTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                (ImportedBankTransactionsTable.documentId eq UUID.fromString(documentId.toString()))
+            (ImportedBankTransactionsTable.tenantId eq tenantId.value.toJavaUuid()) and
+                (ImportedBankTransactionsTable.documentId eq documentId.value.toJavaUuid())
         }.orderBy(
             ImportedBankTransactionsTable.transactionDate to SortOrder.DESC,
             ImportedBankTransactionsTable.createdAt to SortOrder.DESC
@@ -120,8 +124,8 @@ class ImportedBankTransactionRepository {
         transactionId: ImportedBankTransactionId
     ): ImportedBankTransactionDto? = newSuspendedTransaction {
         ImportedBankTransactionsTable.selectAll().where {
-            (ImportedBankTransactionsTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                (ImportedBankTransactionsTable.id eq UUID.fromString(transactionId.toString()))
+            (ImportedBankTransactionsTable.tenantId eq tenantId.value.toJavaUuid()) and
+                (ImportedBankTransactionsTable.id eq transactionId.value.toJavaUuid())
         }.singleOrNull()?.toDto()
     }
 
@@ -130,8 +134,8 @@ class ImportedBankTransactionRepository {
         cashflowEntryId: CashflowEntryId
     ): List<ImportedBankTransactionDto> = newSuspendedTransaction {
         ImportedBankTransactionsTable.selectAll().where {
-            (ImportedBankTransactionsTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                (ImportedBankTransactionsTable.suggestedCashflowEntryId eq UUID.fromString(cashflowEntryId.toString()))
+            (ImportedBankTransactionsTable.tenantId eq tenantId.value.toJavaUuid()) and
+                (ImportedBankTransactionsTable.suggestedCashflowEntryId eq cashflowEntryId.value.toJavaUuid())
         }.orderBy(
             ImportedBankTransactionsTable.suggestedScore to SortOrder.DESC,
             ImportedBankTransactionsTable.transactionDate to SortOrder.DESC
@@ -144,8 +148,8 @@ class ImportedBankTransactionRepository {
     ): Int = newSuspendedTransaction {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         ImportedBankTransactionsTable.update({
-            (ImportedBankTransactionsTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                (ImportedBankTransactionsTable.suggestedCashflowEntryId eq UUID.fromString(cashflowEntryId.toString())) and
+            (ImportedBankTransactionsTable.tenantId eq tenantId.value.toJavaUuid()) and
+                (ImportedBankTransactionsTable.suggestedCashflowEntryId eq cashflowEntryId.value.toJavaUuid()) and
                 (ImportedBankTransactionsTable.status neq ImportedBankTransactionStatus.Linked)
         }) {
             it[suggestedCashflowEntryId] = null
@@ -165,10 +169,10 @@ class ImportedBankTransactionRepository {
     ): Boolean = newSuspendedTransaction {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         ImportedBankTransactionsTable.update({
-            (ImportedBankTransactionsTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                (ImportedBankTransactionsTable.id eq UUID.fromString(transactionId.toString()))
+            (ImportedBankTransactionsTable.tenantId eq tenantId.value.toJavaUuid()) and
+                (ImportedBankTransactionsTable.id eq transactionId.value.toJavaUuid())
         }) {
-            it[suggestedCashflowEntryId] = UUID.fromString(cashflowEntryId.toString())
+            it[suggestedCashflowEntryId] = cashflowEntryId.value.toJavaUuid()
             it[suggestedScore] = score.toBigDecimal()
             it[suggestedTier] = tier
             it[status] = if (tier == PaymentCandidateTier.Strong) {
@@ -187,12 +191,12 @@ class ImportedBankTransactionRepository {
     ): Boolean = newSuspendedTransaction {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         ImportedBankTransactionsTable.update({
-            (ImportedBankTransactionsTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                (ImportedBankTransactionsTable.id eq UUID.fromString(transactionId.toString()))
+            (ImportedBankTransactionsTable.tenantId eq tenantId.value.toJavaUuid()) and
+                (ImportedBankTransactionsTable.id eq transactionId.value.toJavaUuid())
         }) {
             it[status] = ImportedBankTransactionStatus.Linked
-            it[linkedCashflowEntryId] = UUID.fromString(cashflowEntryId.toString())
-            it[suggestedCashflowEntryId] = UUID.fromString(cashflowEntryId.toString())
+            it[linkedCashflowEntryId] = cashflowEntryId.value.toJavaUuid()
+            it[suggestedCashflowEntryId] = cashflowEntryId.value.toJavaUuid()
             it[updatedAt] = now
         } > 0
     }
@@ -203,8 +207,8 @@ class ImportedBankTransactionRepository {
     ): Int = newSuspendedTransaction {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         ImportedBankTransactionsTable.update({
-            (ImportedBankTransactionsTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                (ImportedBankTransactionsTable.suggestedCashflowEntryId eq UUID.fromString(cashflowEntryId.toString())) and
+            (ImportedBankTransactionsTable.tenantId eq tenantId.value.toJavaUuid()) and
+                (ImportedBankTransactionsTable.suggestedCashflowEntryId eq cashflowEntryId.value.toJavaUuid()) and
                 (ImportedBankTransactionsTable.status eq ImportedBankTransactionStatus.Suggested)
         }) {
             it[status] = ImportedBankTransactionStatus.Ignored
@@ -217,7 +221,7 @@ class ImportedBankTransactionRepository {
         fromDate: LocalDate
     ): List<ImportedBankTransactionDto> = newSuspendedTransaction {
         ImportedBankTransactionsTable.selectAll().where {
-            (ImportedBankTransactionsTable.tenantId eq UUID.fromString(tenantId.toString())) and
+            (ImportedBankTransactionsTable.tenantId eq tenantId.value.toJavaUuid()) and
                 (ImportedBankTransactionsTable.status inList listOf(
                     ImportedBankTransactionStatus.Unmatched,
                     ImportedBankTransactionStatus.Suggested
@@ -234,7 +238,7 @@ class ImportedBankTransactionRepository {
         fingerprint: String
     ): ImportedBankTransactionDto? = newSuspendedTransaction {
         ImportedBankTransactionsTable.selectAll().where {
-            (ImportedBankTransactionsTable.tenantId eq UUID.fromString(tenantId.toString())) and
+            (ImportedBankTransactionsTable.tenantId eq tenantId.value.toJavaUuid()) and
                 (ImportedBankTransactionsTable.transactionFingerprint eq fingerprint)
         }.orderBy(ImportedBankTransactionsTable.createdAt, SortOrder.DESC).limit(1).singleOrNull()?.toDto()
     }
@@ -245,8 +249,8 @@ class ImportedBankTransactionRepository {
     ): Boolean = newSuspendedTransaction {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         ImportedBankTransactionsTable.update({
-            (ImportedBankTransactionsTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                (ImportedBankTransactionsTable.id eq UUID.fromString(transactionId.toString()))
+            (ImportedBankTransactionsTable.tenantId eq tenantId.value.toJavaUuid()) and
+                (ImportedBankTransactionsTable.id eq transactionId.value.toJavaUuid())
         }) {
             it[linkedCashflowEntryId] = null
             it[suggestedCashflowEntryId] = null
@@ -265,7 +269,7 @@ class ImportedBankTransactionRepository {
             transactionDate = this[ImportedBankTransactionsTable.transactionDate],
             signedAmount = Money.fromDbDecimal(this[ImportedBankTransactionsTable.signedAmount]),
             counterpartyName = this[ImportedBankTransactionsTable.counterpartyName],
-            counterpartyIban = this[ImportedBankTransactionsTable.counterpartyIban],
+            counterpartyIban = Iban.from(this[ImportedBankTransactionsTable.counterpartyIban]),
             structuredCommunicationRaw = this[ImportedBankTransactionsTable.structuredCommunicationRaw],
             descriptionRaw = this[ImportedBankTransactionsTable.descriptionRaw],
             rowConfidence = this[ImportedBankTransactionsTable.rowConfidence]?.toDouble(),

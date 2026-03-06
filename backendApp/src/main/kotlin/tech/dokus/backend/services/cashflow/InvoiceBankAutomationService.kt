@@ -39,8 +39,10 @@ import tech.dokus.domain.util.JaroWinkler
 import tech.dokus.foundation.backend.utils.loggerFor
 import java.util.UUID
 import kotlin.math.abs
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.toJavaUuid
 
-private const val AUTO_PAY_ENABLED = true
+private const val AUTO_PAY_ENABLED = false
 private const val AUTO_MATCH_THRESHOLD = 0.95
 private const val MARGIN_THRESHOLD = 0.10
 private const val POSSIBLE_THRESHOLD = 0.70
@@ -263,6 +265,7 @@ class InvoiceBankAutomationService(
         }
     }
 
+    @OptIn(ExperimentalUuidApi::class)
     private suspend fun loadInvoiceMeta(
         tenantId: TenantId,
         entries: List<CashflowEntry>
@@ -282,7 +285,7 @@ class InvoiceBankAutomationService(
             InvoicesTable.paidAmount,
             InvoicesTable.totalAmount,
         ).where {
-            (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString())) and
+            (InvoicesTable.tenantId eq tenantId.value.toJavaUuid()) and
                 (InvoicesTable.id inList invoiceIds.toList())
         }.associate { row ->
             row[InvoicesTable.id].value.toString() to InvoiceMeta(
@@ -317,7 +320,7 @@ class InvoiceBankAutomationService(
         val invoiceNumberMatch = normalizedInvoiceNumber.isNotBlank() &&
             normalizedDescription.replace(" ", "").contains(normalizedInvoiceNumber)
 
-        val normalizedTxIban = normalizeIban(tx.counterpartyIban)
+        val normalizedTxIban = tx.counterpartyIban?.value
         val normalizedContactIban = normalizeIban(contactIban)
         val ibanMatch = normalizedTxIban != null && normalizedTxIban == normalizedContactIban
 

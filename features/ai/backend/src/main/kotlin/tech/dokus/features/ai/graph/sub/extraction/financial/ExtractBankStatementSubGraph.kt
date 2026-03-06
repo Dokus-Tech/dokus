@@ -93,7 +93,7 @@ private class BankStatementExtractionFinishTool :
                         transactionDate = row.transactionDate,
                         signedAmount = Money.from(row.signedAmount),
                         counterpartyName = row.counterpartyName,
-                        counterpartyIban = Iban.from(row.counterpartyIban),
+                        counterpartyIban = Iban.from(row.counterpartyIban)?.takeIf { it.isValid },
                         structuredCommunicationRaw = row.structuredCommunicationRaw,
                         descriptionRaw = row.descriptionRaw,
                         rowConfidence = row.rowConfidence.coerceIn(0.0, 1.0),
@@ -126,5 +126,5 @@ private val ExtractDocumentInput.bankStatementPrompt
     Include all visible transaction rows on the page(s). Return empty list if no transaction table is visible.
 
     LANGUAGE HINT
-    Detected language hint: $language
+    Detected language hint: ${language.take(8).replace(Regex("[^a-zA-Z]"), "")}
     """.trimIndent()

@@ -7,14 +7,14 @@ import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.isNull
-import org.jetbrains.exposed.v1.jdbc.insertIgnore
 import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.upsert
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.v1.jdbc.update
 import tech.dokus.database.tables.documents.InvoiceBankMatchLinksTable
 import tech.dokus.domain.Money
-import tech.dokus.domain.enums.AutoMatchCreatedBy
 import tech.dokus.domain.enums.AutoMatchStatus
+import tech.dokus.domain.enums.PaymentCreatedBy
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.ids.CashflowEntryId
@@ -23,6 +23,8 @@ import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.toDbDecimal
 import java.util.UUID
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.toJavaUuid
 
 data class InvoiceBankMatchSnapshot(
     val invoiceStatusBefore: InvoiceStatus,
@@ -40,7 +42,7 @@ data class InvoiceBankMatchLinkRecord(
     val cashflowEntryId: CashflowEntryId,
     val importedBankTransactionId: ImportedBankTransactionId,
     val status: AutoMatchStatus,
-    val createdBy: AutoMatchCreatedBy,
+    val createdBy: PaymentCreatedBy,
     val confidenceScore: Double?,
     val scoreMargin: Double?,
     val reasonsJson: String?,
@@ -52,6 +54,7 @@ data class InvoiceBankMatchLinkRecord(
     val reversalReason: String?
 )
 
+@OptIn(ExperimentalUuidApi::class)
 class InvoiceBankMatchLinkRepository {
 
     suspend fun upsertAutoMatched(
@@ -65,63 +68,63 @@ class InvoiceBankMatchLinkRepository {
         rulesJson: String,
     ): UUID = newSuspendedTransaction {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-        val tenantUuid = UUID.fromString(tenantId.toString())
-        val invoiceUuid = UUID.fromString(invoiceId.toString())
-        val entryUuid = UUID.fromString(cashflowEntryId.toString())
-        val txUuid = UUID.fromString(transactionId.toString())
+        val tenantUuid = tenantId.value.toJavaUuid()
+        val invoiceUuid = invoiceId.value.toJavaUuid()
+        val entryUuid = cashflowEntryId.value.toJavaUuid()
+        val txUuid = transactionId.value.toJavaUuid()
 
-        val existing = InvoiceBankMatchLinksTable.selectAll().where {
+        val newId = UUID.randomUUID()
+        InvoiceBankMatchLinksTable.upsert(
+            InvoiceBankMatchLinksTable.tenantId,
+            InvoiceBankMatchLinksTable.invoiceId,
+            InvoiceBankMatchLinksTable.importedBankTransactionId,
+            onUpdate = { stmt ->
+                stmt[InvoiceBankMatchLinksTable.cashflowEntryId] = entryUuid
+                stmt[InvoiceBankMatchLinksTable.status] = AutoMatchStatus.AutoMatched
+                stmt[InvoiceBankMatchLinksTable.confidenceScore] = confidenceScore.toBigDecimal()
+                stmt[InvoiceBankMatchLinksTable.scoreMargin] = scoreMargin.toBigDecimal()
+                stmt[InvoiceBankMatchLinksTable.reasonsJson] = reasonsJson
+                stmt[InvoiceBankMatchLinksTable.rulesJson] = rulesJson
+                stmt[InvoiceBankMatchLinksTable.matchedAt] = now
+                stmt[InvoiceBankMatchLinksTable.reversedAt] = null
+                stmt[InvoiceBankMatchLinksTable.reversedByUserId] = null
+                stmt[InvoiceBankMatchLinksTable.reversalReason] = null
+                stmt[InvoiceBankMatchLinksTable.updatedAt] = now
+            }
+        ) {
+            it[id] = newId
+            it[InvoiceBankMatchLinksTable.tenantId] = tenantUuid
+            it[InvoiceBankMatchLinksTable.invoiceId] = invoiceUuid
+            it[InvoiceBankMatchLinksTable.cashflowEntryId] = entryUuid
+            it[importedBankTransactionId] = txUuid
+            it[status] = AutoMatchStatus.AutoMatched
+            it[createdBy] = PaymentCreatedBy.Auto
+            it[InvoiceBankMatchLinksTable.confidenceScore] = confidenceScore.toBigDecimal()
+            it[InvoiceBankMatchLinksTable.scoreMargin] = scoreMargin.toBigDecimal()
+            it[InvoiceBankMatchLinksTable.reasonsJson] = reasonsJson
+            it[InvoiceBankMatchLinksTable.rulesJson] = rulesJson
+            it[matchedAt] = now
+            it[createdAt] = now
+            it[updatedAt] = now
+        }
+
+        InvoiceBankMatchLinksTable.selectAll().where {
             (InvoiceBankMatchLinksTable.tenantId eq tenantUuid) and
                 (InvoiceBankMatchLinksTable.invoiceId eq invoiceUuid) and
                 (InvoiceBankMatchLinksTable.importedBankTransactionId eq txUuid)
-        }.singleOrNull()
-
-        if (existing == null) {
-            val newId = UUID.randomUUID()
-            InvoiceBankMatchLinksTable.insertIgnore {
-                it[id] = newId
-                it[InvoiceBankMatchLinksTable.tenantId] = tenantUuid
-                it[InvoiceBankMatchLinksTable.invoiceId] = invoiceUuid
-                it[InvoiceBankMatchLinksTable.cashflowEntryId] = entryUuid
-                it[importedBankTransactionId] = txUuid
-                it[status] = AutoMatchStatus.AutoMatched
-                it[createdBy] = AutoMatchCreatedBy.Auto
-                it[InvoiceBankMatchLinksTable.confidenceScore] = confidenceScore.toBigDecimal()
-                it[InvoiceBankMatchLinksTable.scoreMargin] = scoreMargin.toBigDecimal()
-                it[InvoiceBankMatchLinksTable.reasonsJson] = reasonsJson
-                it[InvoiceBankMatchLinksTable.rulesJson] = rulesJson
-                it[matchedAt] = now
-                it[createdAt] = now
-                it[updatedAt] = now
-            }
-            newId
-        } else {
-            val existingId = existing[InvoiceBankMatchLinksTable.id].value
-            InvoiceBankMatchLinksTable.update({
-                (InvoiceBankMatchLinksTable.id eq existingId)
-            }) {
-                it[InvoiceBankMatchLinksTable.cashflowEntryId] = entryUuid
-                it[status] = AutoMatchStatus.AutoMatched
-                it[InvoiceBankMatchLinksTable.confidenceScore] = confidenceScore.toBigDecimal()
-                it[InvoiceBankMatchLinksTable.scoreMargin] = scoreMargin.toBigDecimal()
-                it[InvoiceBankMatchLinksTable.reasonsJson] = reasonsJson
-                it[InvoiceBankMatchLinksTable.rulesJson] = rulesJson
-                it[matchedAt] = now
-                it[reversedAt] = null
-                it[reversedByUserId] = null
-                it[reversalReason] = null
-                it[updatedAt] = now
-            }
-            existingId
-        }
+        }.single()[InvoiceBankMatchLinksTable.id].value
     }
 
     suspend fun markAutoPaid(
         linkId: UUID,
+        tenantId: TenantId,
         snapshot: InvoiceBankMatchSnapshot
     ): Boolean = newSuspendedTransaction {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-        InvoiceBankMatchLinksTable.update({ InvoiceBankMatchLinksTable.id eq linkId }) {
+        InvoiceBankMatchLinksTable.update({
+            (InvoiceBankMatchLinksTable.id eq linkId) and
+                (InvoiceBankMatchLinksTable.tenantId eq tenantId.value.toJavaUuid())
+        }) {
             it[status] = AutoMatchStatus.AutoPaid
             it[autoPaidAt] = now
             it[invoiceStatusBefore] = snapshot.invoiceStatusBefore
@@ -139,8 +142,8 @@ class InvoiceBankMatchLinkRepository {
         entryId: CashflowEntryId
     ): InvoiceBankMatchLinkRecord? = newSuspendedTransaction {
         InvoiceBankMatchLinksTable.selectAll().where {
-            (InvoiceBankMatchLinksTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                (InvoiceBankMatchLinksTable.cashflowEntryId eq UUID.fromString(entryId.toString())) and
+            (InvoiceBankMatchLinksTable.tenantId eq tenantId.value.toJavaUuid()) and
+                (InvoiceBankMatchLinksTable.cashflowEntryId eq entryId.value.toJavaUuid()) and
                 (InvoiceBankMatchLinksTable.reversedAt.isNull())
         }.orderBy(InvoiceBankMatchLinksTable.createdAt).limit(1).singleOrNull()?.toRecord()
     }
@@ -150,19 +153,23 @@ class InvoiceBankMatchLinkRepository {
         transactionId: ImportedBankTransactionId
     ): InvoiceBankMatchLinkRecord? = newSuspendedTransaction {
         InvoiceBankMatchLinksTable.selectAll().where {
-            (InvoiceBankMatchLinksTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                (InvoiceBankMatchLinksTable.importedBankTransactionId eq UUID.fromString(transactionId.toString())) and
+            (InvoiceBankMatchLinksTable.tenantId eq tenantId.value.toJavaUuid()) and
+                (InvoiceBankMatchLinksTable.importedBankTransactionId eq transactionId.value.toJavaUuid()) and
                 (InvoiceBankMatchLinksTable.reversedAt.isNull())
         }.orderBy(InvoiceBankMatchLinksTable.createdAt).limit(1).singleOrNull()?.toRecord()
     }
 
     suspend fun markReversed(
         linkId: UUID,
+        tenantId: TenantId,
         reversedByUserId: UUID?,
         reason: String?
     ): Boolean = newSuspendedTransaction {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-        InvoiceBankMatchLinksTable.update({ InvoiceBankMatchLinksTable.id eq linkId }) {
+        InvoiceBankMatchLinksTable.update({
+            (InvoiceBankMatchLinksTable.id eq linkId) and
+                (InvoiceBankMatchLinksTable.tenantId eq tenantId.value.toJavaUuid())
+        }) {
             it[status] = AutoMatchStatus.Reversed
             it[reversedAt] = now
             it[InvoiceBankMatchLinksTable.reversedByUserId] = reversedByUserId

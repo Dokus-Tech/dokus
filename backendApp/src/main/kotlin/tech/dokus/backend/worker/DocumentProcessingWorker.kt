@@ -445,11 +445,7 @@ class DocumentProcessingWorker(
                         documentId = documentId,
                         draftData = draftData
                     )
-                    val targetStatus = if (bankProcessing.validRows > 0) {
-                        DocumentStatus.Confirmed
-                    } else {
-                        DocumentStatus.NeedsReview
-                    }
+                    val targetStatus = DocumentStatus.NeedsReview
                     draftRepository.updateExtractedDataAndStatus(
                         documentId = documentId,
                         tenantId = parsedTenantId,

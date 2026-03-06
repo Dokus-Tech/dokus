@@ -54,6 +54,7 @@ import tech.dokus.aura.resources.today_recent
 import tech.dokus.aura.resources.today_review_button
 import tech.dokus.aura.resources.today_view_all
 import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.model.BankStatementDraftData
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.InvoiceDraftData
@@ -425,6 +426,7 @@ private fun DocumentRecordDto.vendorName(): String {
         is InvoiceDraftData -> data.seller.name ?: data.buyer.name ?: document.filename
         is CreditNoteDraftData -> data.counterpartyName ?: document.filename
         is ReceiptDraftData -> data.merchantName ?: document.filename
+        is BankStatementDraftData -> document.filename
         null -> document.filename
     }
 }
@@ -434,6 +436,7 @@ private fun DocumentRecordDto.formattedDate(): String? {
         is InvoiceDraftData -> data.issueDate
         is CreditNoteDraftData -> data.issueDate
         is ReceiptDraftData -> data.date
+        is BankStatementDraftData -> null
         null -> null
     } ?: return null
     val months = arrayOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
@@ -445,6 +448,7 @@ private fun DocumentRecordDto.extractedTotalMinor(): Long {
         is InvoiceDraftData -> data.totalAmount?.minor ?: 0L
         is CreditNoteDraftData -> data.totalAmount?.minor ?: 0L
         is ReceiptDraftData -> data.totalAmount?.minor ?: 0L
+        is BankStatementDraftData -> 0L
         null -> 0L
     }
 }
@@ -454,6 +458,7 @@ private fun DocumentRecordDto.extractedTotalDouble(): Double? {
         is InvoiceDraftData -> data.totalAmount?.toDouble()
         is CreditNoteDraftData -> data.totalAmount?.toDouble()
         is ReceiptDraftData -> data.totalAmount?.toDouble()
+        is BankStatementDraftData -> null
         null -> null
     }
 }

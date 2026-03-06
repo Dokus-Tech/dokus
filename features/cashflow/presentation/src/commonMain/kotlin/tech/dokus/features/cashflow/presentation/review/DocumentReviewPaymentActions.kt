@@ -109,9 +109,7 @@ internal class DocumentReviewPaymentActions(
                     )
                 )
             }
-            launch {
-                intent(DocumentReviewIntent.LoadPaymentCandidates)
-            }
+            intent(DocumentReviewIntent.LoadPaymentCandidates)
         }
     }
 
@@ -306,7 +304,7 @@ internal class DocumentReviewPaymentActions(
                         paidAt = LocalDateTime(sheet.paidAt, LocalTime(0, 0)),
                         note = sheet.note.ifBlank { null },
                         bankTransactionId = sheet.selectedTransaction?.id,
-                        ignoreSuggestedTransaction = shouldIgnoreSuggested
+                        dismissSuggestedMatch = shouldIgnoreSuggested
                     )
                 ).fold(
                     onSuccess = { updatedEntry ->

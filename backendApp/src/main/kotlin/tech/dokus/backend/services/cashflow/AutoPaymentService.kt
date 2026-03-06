@@ -23,7 +23,6 @@ import tech.dokus.database.tables.documents.ImportedBankTransactionsTable
 import tech.dokus.database.tables.documents.InvoiceBankMatchLinksTable
 import tech.dokus.database.tables.payment.PaymentsTable
 import tech.dokus.domain.Money
-import tech.dokus.domain.enums.AutoMatchCreatedBy
 import tech.dokus.domain.enums.AutoMatchStatus
 import tech.dokus.domain.enums.AutoPaymentDecision
 import tech.dokus.domain.enums.AutoPaymentTriggerSource
@@ -45,13 +44,17 @@ import tech.dokus.domain.model.AutoPaymentStatusDto
 import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.model.ImportedBankTransactionDto
 import tech.dokus.domain.toDbDecimal
+import tech.dokus.foundation.backend.utils.runSuspendCatching
 import java.util.UUID
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.toJavaUuid
 
 private data class AutoPayApplyResult(
     val applied: Boolean,
     val paymentId: PaymentId?
 )
 
+@OptIn(ExperimentalUuidApi::class)
 class AutoPaymentService(
     private val cashflowEntriesRepository: CashflowEntriesRepository
 ) {
@@ -64,9 +67,9 @@ class AutoPaymentService(
         reasonsJson: String,
         rulesJson: String,
         triggerSource: AutoPaymentTriggerSource
-    ): Result<Boolean> = runCatching {
-        if (entry.sourceType != CashflowSourceType.Invoice) return@runCatching false
-        if (entry.remainingAmount.isZero) return@runCatching false
+    ): Result<Boolean> = runSuspendCatching {
+        if (entry.sourceType != CashflowSourceType.Invoice) return@runSuspendCatching false
+        if (entry.remainingAmount.isZero) return@runSuspendCatching false
 
         val applyResult = applyAutoPaymentInTransaction(
             tenantId = tenantId,
@@ -86,8 +89,8 @@ class AutoPaymentService(
         tenantId: TenantId,
         entryId: CashflowEntryId
     ): AutoPaymentStatusDto = newSuspendedTransaction {
-        val tenantUuid = UUID.fromString(tenantId.toString())
-        val entryUuid = UUID.fromString(entryId.toString())
+        val tenantUuid = tenantId.value.toJavaUuid()
+        val entryUuid = entryId.value.toJavaUuid()
 
         val link = InvoiceBankMatchLinksTable.selectAll().where {
             (InvoiceBankMatchLinksTable.tenantId eq tenantUuid) and
@@ -115,7 +118,9 @@ class AutoPaymentService(
             paymentId = paymentRow?.let { PaymentId.parse(it[PaymentsTable.id].value.toString()) },
             bankTransactionId = ImportedBankTransactionId.parse(link[InvoiceBankMatchLinksTable.importedBankTransactionId].toString()),
             confidenceScore = link[InvoiceBankMatchLinksTable.confidenceScore]?.toDouble(),
+            scoreMargin = link[InvoiceBankMatchLinksTable.scoreMargin]?.toDouble(),
             reasons = parseJsonArray(link[InvoiceBankMatchLinksTable.reasonsJson]),
+            matchSignals = parseJsonArray(link[InvoiceBankMatchLinksTable.rulesJson]),
             matchedAt = link[InvoiceBankMatchLinksTable.matchedAt],
             autoPaidAt = link[InvoiceBankMatchLinksTable.autoPaidAt],
             canUndo =
@@ -130,9 +135,9 @@ class AutoPaymentService(
         entryId: CashflowEntryId,
         actorUserId: UserId?,
         reason: String?
-    ): Result<CashflowEntry> = runCatching {
-        val tenantUuid = UUID.fromString(tenantId.toString())
-        val entryUuid = UUID.fromString(entryId.toString())
+    ): Result<CashflowEntry> = runSuspendCatching {
+        val tenantUuid = tenantId.value.toJavaUuid()
+        val entryUuid = entryId.value.toJavaUuid()
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         newSuspendedTransaction {
@@ -187,9 +192,12 @@ class AutoPaymentService(
             val cashflowRemainingBefore = link[InvoiceBankMatchLinksTable.cashflowRemainingBefore]
                 ?: throw DokusException.BadRequest("Undo snapshot missing cashflow remaining amount")
 
-            PaymentsTable.update({ PaymentsTable.id eq payment[PaymentsTable.id].value }) {
+            PaymentsTable.update({
+                (PaymentsTable.id eq payment[PaymentsTable.id].value) and
+                    (PaymentsTable.tenantId eq tenantUuid)
+            }) {
                 it[reversedAt] = now
-                it[reversedByUserId] = actorUserId?.let { id -> UUID.fromString(id.toString()) }
+                it[reversedByUserId] = actorUserId?.value?.toJavaUuid()
                 it[reversalReason] = reason
             }
 
@@ -224,7 +232,7 @@ class AutoPaymentService(
             InvoiceBankMatchLinksTable.update({ InvoiceBankMatchLinksTable.id eq link[InvoiceBankMatchLinksTable.id].value }) {
                 it[status] = AutoMatchStatus.Reversed
                 it[reversedAt] = now
-                it[reversedByUserId] = actorUserId?.let { id -> UUID.fromString(id.toString()) }
+                it[reversedByUserId] = actorUserId?.value?.toJavaUuid()
                 it[reversalReason] = reason
                 it[updatedAt] = now
             }
@@ -264,9 +272,9 @@ class AutoPaymentService(
         triggerSource: AutoPaymentTriggerSource
     ): AutoPayApplyResult = newSuspendedTransaction {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-        val tenantUuid = UUID.fromString(tenantId.toString())
-        val entryUuid = UUID.fromString(entry.id.toString())
-        val txUuid = UUID.fromString(transaction.id.toString())
+        val tenantUuid = tenantId.value.toJavaUuid()
+        val entryUuid = entry.id.value.toJavaUuid()
+        val txUuid = transaction.id.value.toJavaUuid()
         val invoiceUuid = runCatching { UUID.fromString(entry.sourceId) }
             .getOrElse { throw DokusException.BadRequest("Cashflow entry source is not an invoice UUID") }
 
@@ -484,7 +492,7 @@ class AutoPaymentService(
                 it[cashflowEntryId] = entryUuid
                 it[importedBankTransactionId] = txUuid
                 it[InvoiceBankMatchLinksTable.status] = status
-                it[createdBy] = AutoMatchCreatedBy.Auto
+                it[createdBy] = PaymentCreatedBy.Auto
                 it[InvoiceBankMatchLinksTable.confidenceScore] = confidenceScore.toBigDecimal()
                 it[InvoiceBankMatchLinksTable.scoreMargin] = scoreMargin.toBigDecimal()
                 it[InvoiceBankMatchLinksTable.reasonsJson] = reasonsJson
@@ -537,16 +545,17 @@ class AutoPaymentService(
             it[AutoPaymentAuditEventsTable.margin] = margin?.toBigDecimal()
             it[AutoPaymentAuditEventsTable.reasonsJson] = reasonsJson
             it[AutoPaymentAuditEventsTable.rulesJson] = rulesJson
-            it[AutoPaymentAuditEventsTable.actorUserId] = actorUserId?.let { id -> UUID.fromString(id.toString()) }
+            it[AutoPaymentAuditEventsTable.actorUserId] = actorUserId?.value?.toJavaUuid()
         }
     }
 
     private fun parseJsonArray(raw: String?): List<String> {
         if (raw.isNullOrBlank()) return emptyList()
-        return raw.removePrefix("[").removeSuffix("]")
-            .split(',')
-            .map { it.trim().trim('"') }
-            .filter { it.isNotBlank() }
+        return try {
+            kotlinx.serialization.json.Json.decodeFromString<List<String>>(raw)
+        } catch (_: Exception) {
+            emptyList()
+        }
     }
 
     private fun Money.absolute(): Money = if (isNegative) -this else this

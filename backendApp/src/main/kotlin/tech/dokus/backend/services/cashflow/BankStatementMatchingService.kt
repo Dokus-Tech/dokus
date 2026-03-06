@@ -35,6 +35,8 @@ import tech.dokus.domain.util.JaroWinkler
 import tech.dokus.foundation.backend.utils.loggerFor
 import java.util.UUID
 import kotlin.math.abs
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.toJavaUuid
 
 private const val RowConfidenceThreshold = 0.90
 private const val LargeAmountThresholdMinor = 10_000_000L // 100_000.00
@@ -181,11 +183,6 @@ class BankStatementMatchingService(
         if (openEntries.isEmpty()) return
         val invoiceStructuredReferenceBySourceId = loadInvoiceStructuredReferenceMap(tenantId, openEntries)
 
-        openEntries.forEach { entry ->
-            importedBankTransactionRepository.clearSuggestionsForEntry(tenantId, entry.id)
-            cashflowPaymentCandidateRepository.clearForEntry(tenantId, entry.id)
-        }
-
         val contactById = mutableMapOf<String, tech.dokus.domain.model.contact.ContactDto?>()
         suspend fun resolveContact(entry: CashflowEntry): tech.dokus.domain.model.contact.ContactDto? {
             val contactId = entry.contactId ?: return null
@@ -233,6 +230,11 @@ class BankStatementMatchingService(
             }
         }
 
+        bestPerEntry.keys.forEach { entryId ->
+            importedBankTransactionRepository.clearSuggestionsForEntry(tenantId, entryId)
+            cashflowPaymentCandidateRepository.clearForEntry(tenantId, entryId)
+        }
+
         bestPerEntry.values.forEach { candidate ->
             cashflowPaymentCandidateRepository.upsertBestCandidate(
                 tenantId = tenantId,
@@ -275,8 +277,8 @@ class BankStatementMatchingService(
         val normalizedTxStructuredRef = normalizeStructuredCommunication(tx.structuredCommunicationRaw)
         val normalizedEntryStructuredRef = invoiceStructuredReference ?: normalizeStructuredCommunication(entry.description)
         val structuredMatch = normalizedTxStructuredRef != null && normalizedTxStructuredRef == normalizedEntryStructuredRef
-        val ibanMatch = exactAmount && normalizedIban(tx.counterpartyIban) != null &&
-            normalizedIban(tx.counterpartyIban) == normalizedIban(contactIban)
+        val ibanMatch = exactAmount && tx.counterpartyIban?.value != null &&
+            tx.counterpartyIban?.value == normalizedIban(contactIban)
         val vatMatch = exactAmount && !contactVat.isNullOrBlank() &&
             containsVatHint(tx.descriptionRaw, contactVat)
 
@@ -353,6 +355,7 @@ class BankStatementMatchingService(
         return normalizedText.contains(normalizedVat)
     }
 
+    @OptIn(ExperimentalUuidApi::class)
     private suspend fun loadInvoiceStructuredReferenceMap(
         tenantId: TenantId,
         entries: List<CashflowEntry>
@@ -370,7 +373,7 @@ class BankStatementMatchingService(
             InvoicesTable.id,
             InvoicesTable.structuredCommunication
         ).where {
-            (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString())) and
+            (InvoicesTable.tenantId eq tenantId.value.toJavaUuid()) and
                 (InvoicesTable.id inList invoiceSourceIds.toList())
         }.mapNotNull { row ->
             val structured = normalizeStructuredCommunication(row[InvoicesTable.structuredCommunication])

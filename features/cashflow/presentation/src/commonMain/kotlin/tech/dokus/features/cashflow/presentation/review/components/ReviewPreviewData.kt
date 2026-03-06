@@ -22,6 +22,7 @@ import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.ImportedBankTransactionStatus
 import tech.dokus.domain.enums.PaymentCandidateTier
 import tech.dokus.domain.ids.CashflowEntryId
+import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.DocumentBlobId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentMatchReviewId
@@ -301,7 +302,7 @@ internal fun previewImportedTransactions(): List<ImportedBankTransactionDto> = l
         transactionDate = LocalDate(2026, 2, 15),
         signedAmount = Money.from("-289.00")!!,
         counterpartyName = "KBC Bank NV",
-        counterpartyIban = "BE68539007547034",
+        counterpartyIban = Iban("BE68539007547034"),
         structuredCommunicationRaw = "+++123/4567/89123+++",
         descriptionRaw = "SEPA transfer premium Q1",
         rowConfidence = 0.97,

@@ -7,8 +7,8 @@ import org.jetbrains.exposed.v1.datetime.datetime
 import tech.dokus.database.tables.auth.TenantTable
 import tech.dokus.database.tables.cashflow.CashflowEntriesTable
 import tech.dokus.database.tables.cashflow.InvoicesTable
-import tech.dokus.domain.enums.AutoMatchCreatedBy
 import tech.dokus.domain.enums.AutoMatchStatus
+import tech.dokus.domain.enums.PaymentCreatedBy
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.foundation.backend.database.dbEnumeration
@@ -21,7 +21,7 @@ object InvoiceBankMatchLinksTable : UUIDTable("invoice_bank_match_links") {
         .references(ImportedBankTransactionsTable.id, onDelete = ReferenceOption.CASCADE)
 
     val status = dbEnumeration<AutoMatchStatus>("status")
-    val createdBy = dbEnumeration<AutoMatchCreatedBy>("created_by").default(AutoMatchCreatedBy.Auto)
+    val createdBy = dbEnumeration<PaymentCreatedBy>("created_by").default(PaymentCreatedBy.Auto)
     val confidenceScore = decimal("confidence_score", 5, 4).nullable()
     val scoreMargin = decimal("score_margin", 5, 4).nullable()
     val reasonsJson = text("reasons_json").nullable()

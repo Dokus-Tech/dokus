@@ -36,7 +36,7 @@ class DocumentConfirmationDispatcher(
             is ReceiptDraftData -> receiptService.confirm(tenantId, documentId, draftData, linkedContactId)
             is CreditNoteDraftData -> creditNoteService.confirm(tenantId, documentId, draftData, linkedContactId)
             is BankStatementDraftData -> Result.failure(
-                DokusException.BadRequest("Bank statements are confirmed automatically after extraction")
+                DokusException.BadRequest("Bank statement documents cannot be manually confirmed")
             )
         }
 

@@ -36,7 +36,11 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.toDbDecimal
 import tech.dokus.foundation.backend.database.dbQuery
+import tech.dokus.foundation.backend.utils.runSuspendCatching
+import java.math.BigDecimal
 import java.util.UUID
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.toJavaUuid
 
 /**
  * Repository for managing cashflow entries.
@@ -124,9 +128,10 @@ class CashflowEntriesRepository {
         }
     }
 
+    @OptIn(ExperimentalUuidApi::class)
     suspend fun listOpenInvoiceEntries(
         tenantId: TenantId
-    ): Result<List<CashflowEntry>> = runCatching {
+    ): Result<List<CashflowEntry>> = runSuspendCatching {
         dbQuery {
             CashflowEntriesTable
                 .join(
@@ -137,19 +142,20 @@ class CashflowEntriesRepository {
                 )
                 .selectAll()
                 .where {
-                    (CashflowEntriesTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                    (CashflowEntriesTable.tenantId eq tenantId.value.toJavaUuid()) and
                         (CashflowEntriesTable.sourceType eq CashflowSourceType.Invoice) and
-                        (CashflowEntriesTable.status inList listOf(CashflowEntryStatus.Open, CashflowEntryStatus.Overdue))
+                        (CashflowEntriesTable.status inList listOf(CashflowEntryStatus.Open, CashflowEntryStatus.Overdue)) and
+                        (CashflowEntriesTable.remainingAmount neq BigDecimal.ZERO)
                 }
                 .map { row -> mapRowToEntry(row, row.getOrNull(ContactsTable.name)) }
-                .filter { !it.remainingAmount.isZero }
         }
     }
 
+    @OptIn(ExperimentalUuidApi::class)
     suspend fun listOpenInvoiceEntriesByContact(
         tenantId: TenantId,
         contactId: ContactId
-    ): Result<List<CashflowEntry>> = runCatching {
+    ): Result<List<CashflowEntry>> = runSuspendCatching {
         dbQuery {
             CashflowEntriesTable
                 .join(
@@ -160,13 +166,13 @@ class CashflowEntriesRepository {
                 )
                 .selectAll()
                 .where {
-                    (CashflowEntriesTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                    (CashflowEntriesTable.tenantId eq tenantId.value.toJavaUuid()) and
                         (CashflowEntriesTable.sourceType eq CashflowSourceType.Invoice) and
-                        (CashflowEntriesTable.counterpartyId eq UUID.fromString(contactId.toString())) and
-                        (CashflowEntriesTable.status inList listOf(CashflowEntryStatus.Open, CashflowEntryStatus.Overdue))
+                        (CashflowEntriesTable.counterpartyId eq contactId.value.toJavaUuid()) and
+                        (CashflowEntriesTable.status inList listOf(CashflowEntryStatus.Open, CashflowEntryStatus.Overdue)) and
+                        (CashflowEntriesTable.remainingAmount neq BigDecimal.ZERO)
                 }
                 .map { row -> mapRowToEntry(row, row.getOrNull(ContactsTable.name)) }
-                .filter { !it.remainingAmount.isZero }
         }
     }
 

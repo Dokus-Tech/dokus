@@ -29,15 +29,6 @@ enum class PaymentCandidateTier(override val dbValue: String) : DbEnum {
 }
 
 @Serializable
-enum class AutoMatchCreatedBy(override val dbValue: String) : DbEnum {
-    @SerialName("AUTO")
-    Auto("AUTO"),
-
-    @SerialName("USER")
-    User("USER")
-}
-
-@Serializable
 enum class AutoMatchStatus(override val dbValue: String) : DbEnum {
     @SerialName("SUGGESTED")
     Suggested("SUGGESTED"),
@@ -67,7 +58,10 @@ enum class AutoPaymentTriggerSource(override val dbValue: String) : DbEnum {
     ManualRetry("MANUAL_RETRY"),
 
     @SerialName("UNDO_REQUEST")
-    UndoRequest("UNDO_REQUEST")
+    UndoRequest("UNDO_REQUEST"),
+
+    @SerialName("MANUAL_PAYMENT")
+    ManualPayment("MANUAL_PAYMENT")
 }
 
 @Serializable
@@ -88,5 +82,8 @@ enum class AutoPaymentDecision(override val dbValue: String) : DbEnum {
     UndoApplied("UNDO_APPLIED"),
 
     @SerialName("UNDO_REJECTED")
-    UndoRejected("UNDO_REJECTED")
+    UndoRejected("UNDO_REJECTED"),
+
+    @SerialName("MANUAL_PAID")
+    ManualPaid("MANUAL_PAID")
 }

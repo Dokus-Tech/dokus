@@ -11,9 +11,11 @@ import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.AutoMatchStatus
 import tech.dokus.domain.enums.ImportedBankTransactionStatus
 import tech.dokus.domain.enums.PaymentCandidateTier
+import tech.dokus.domain.enums.PaymentMethod
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.ImportedBankTransactionId
 import tech.dokus.domain.ids.PaymentId
 import tech.dokus.domain.ids.TenantId
@@ -104,7 +106,8 @@ data class CashflowPaymentRequest(
     val paidAt: LocalDateTime,
     val note: String? = null,
     val bankTransactionId: ImportedBankTransactionId? = null,
-    val ignoreSuggestedTransaction: Boolean = false
+    val dismissSuggestedMatch: Boolean = false,
+    val paymentMethod: PaymentMethod = PaymentMethod.BankTransfer
 )
 
 @Serializable
@@ -115,7 +118,7 @@ data class ImportedBankTransactionDto(
     val transactionDate: LocalDate,
     val signedAmount: Money,
     val counterpartyName: String? = null,
-    val counterpartyIban: String? = null,
+    val counterpartyIban: Iban? = null,
     val structuredCommunicationRaw: String? = null,
     val descriptionRaw: String? = null,
     val rowConfidence: Double? = null,
@@ -142,7 +145,9 @@ data class AutoPaymentStatusDto(
     val paymentId: PaymentId? = null,
     val bankTransactionId: ImportedBankTransactionId? = null,
     val confidenceScore: Double? = null,
+    val scoreMargin: Double? = null,
     val reasons: List<String> = emptyList(),
+    val matchSignals: List<String> = emptyList(),
     val matchedAt: LocalDateTime? = null,
     val autoPaidAt: LocalDateTime? = null,
     val canUndo: Boolean = false

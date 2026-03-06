@@ -133,6 +133,7 @@ private fun DocumentDraftData.toPeppolExtractionResult(): FinancialExtractionRes
         )
     )
 
+    // Bank statements are never received via Peppol; this branch is a defensive catch-all
     is BankStatementDraftData -> FinancialExtractionResult.BankStatement(
         BankStatementExtractionResult(
             rows = transactions.map { row ->
