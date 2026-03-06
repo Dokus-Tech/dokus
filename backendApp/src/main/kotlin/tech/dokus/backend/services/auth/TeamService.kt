@@ -2,17 +2,22 @@ package tech.dokus.backend.services.auth
 
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import tech.dokus.database.repository.auth.FirmRepository
 import tech.dokus.database.repository.auth.InvitationRepository
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.domain.enums.InvitationStatus
 import tech.dokus.domain.enums.UserRole
+import tech.dokus.domain.ids.FirmId
 import tech.dokus.domain.ids.InvitationId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.CreateInvitationRequest
 import tech.dokus.domain.model.TeamMember
 import tech.dokus.domain.model.TenantInvitation
+import tech.dokus.domain.model.auth.BookkeeperFirmSearchItem
+import tech.dokus.domain.model.auth.TenantBookkeeperAccessItem
 import tech.dokus.foundation.backend.utils.loggerFor
 import kotlin.time.Duration.Companion.days
 
@@ -23,7 +28,8 @@ import kotlin.time.Duration.Companion.days
 class TeamService(
     private val userRepository: UserRepository,
     private val tenantRepository: TenantRepository,
-    private val invitationRepository: InvitationRepository
+    private val invitationRepository: InvitationRepository,
+    private val firmRepository: FirmRepository,
 ) {
     private val logger = loggerFor()
 
@@ -131,6 +137,71 @@ class TeamService(
      */
     suspend fun listPendingInvitations(tenantId: TenantId): List<TenantInvitation> {
         return invitationRepository.listByTenant(tenantId, InvitationStatus.Pending)
+    }
+
+    suspend fun searchBookkeeperFirms(
+        tenantId: TenantId,
+        query: String,
+        limit: Int,
+    ): List<BookkeeperFirmSearchItem> {
+        val firms = firmRepository.searchActiveFirmsByNameOrVat(query = query, limit = limit)
+        if (firms.isEmpty()) return emptyList()
+
+        val connectedFirmIds = firmRepository.listActiveAccessByTenant(tenantId)
+            .map { it.firmId }
+            .toSet()
+
+        return firms.map { firm ->
+            BookkeeperFirmSearchItem(
+                firmId = firm.id,
+                name = firm.name,
+                vatNumber = firm.vatNumber,
+                alreadyConnected = firm.id in connectedFirmIds,
+            )
+        }
+    }
+
+    suspend fun listBookkeeperAccess(tenantId: TenantId): List<TenantBookkeeperAccessItem> {
+        val activeAccess = firmRepository.listActiveAccessByTenant(tenantId)
+        if (activeAccess.isEmpty()) return emptyList()
+
+        val firmsById = firmRepository.listFirmsByIds(activeAccess.map { it.firmId })
+            .associateBy { it.id }
+
+        return activeAccess.mapNotNull { access ->
+            val firm = firmsById[access.firmId] ?: return@mapNotNull null
+            TenantBookkeeperAccessItem(
+                firmId = firm.id,
+                firmName = firm.name,
+                vatNumber = firm.vatNumber,
+                grantedAt = access.createdAt,
+            )
+        }.sortedBy { it.firmName.value.lowercase() }
+    }
+
+    suspend fun grantBookkeeperAccess(
+        tenantId: TenantId,
+        firmId: FirmId,
+        grantedBy: UserId,
+    ): Result<Boolean> = runCatching {
+        val firm = firmRepository.findById(firmId)
+            ?: throw IllegalArgumentException("Firm not found")
+        logger.info("Granting tenant {} access to firm {} ({})", tenantId, firmId, firm.name.value)
+        firmRepository.activateAccess(
+            firmId = firmId,
+            tenantId = tenantId,
+            grantedByUserId = grantedBy,
+        )
+    }
+
+    suspend fun revokeBookkeeperAccess(
+        tenantId: TenantId,
+        firmId: FirmId,
+    ): Result<Boolean> = runCatching {
+        firmRepository.revokeAccess(
+            firmId = firmId,
+            tenantId = tenantId,
+        )
     }
 
     /**
@@ -248,10 +319,4 @@ class TeamService(
         val membership = userRepository.getMembership(userId, tenantId)
         return membership?.role == UserRole.Owner && membership.isActive
     }
-}
-
-private fun kotlinx.datetime.Instant.toLocalDateTime(
-    timeZone: kotlinx.datetime.TimeZone
-): kotlinx.datetime.LocalDateTime {
-    return this.toLocalDateTime(timeZone)
 }

@@ -57,6 +57,8 @@ import tech.dokus.aura.resources.date_month_short_oct
 import tech.dokus.aura.resources.date_month_short_sep
 import tech.dokus.aura.resources.settings_current_workspace
 import tech.dokus.domain.model.Tenant
+import tech.dokus.domain.model.auth.FirmWorkspaceSummary
+import tech.dokus.foundation.app.NavContext
 import tech.dokus.foundation.app.shell.HomeShellTopBarAction
 import tech.dokus.foundation.app.shell.HomeShellTopBarConfig
 import tech.dokus.foundation.app.shell.HomeShellTopBarMode
@@ -102,7 +104,9 @@ private val DesktopShellTopBarHeight = Constraints.Height.button + Constraints.S
 
 @Composable
 internal fun DesktopSidebarBottomControls(
+    navContext: NavContext,
     tenantState: DokusState<Tenant>,
+    selectedFirm: FirmWorkspaceSummary?,
     profileData: HomeShellProfileData?,
     isLoggingOut: Boolean,
     onWorkspaceClick: () -> Unit,
@@ -127,7 +131,9 @@ internal fun DesktopSidebarBottomControls(
         horizontalArrangement = Arrangement.spacedBy(spacing.small)
     ) {
         DesktopWorkspaceArea(
+            navContext = navContext,
             tenantState = tenantState,
+            selectedFirm = selectedFirm,
             onClick = onWorkspaceClick,
             modifier = Modifier.weight(1f)
         )
@@ -142,7 +148,9 @@ internal fun DesktopSidebarBottomControls(
 
 @Composable
 private fun DesktopWorkspaceArea(
+    navContext: NavContext,
     tenantState: DokusState<Tenant>,
+    selectedFirm: FirmWorkspaceSummary?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -151,7 +159,24 @@ private fun DesktopWorkspaceArea(
     val interactionSource = remember { MutableInteractionSource() }
     val isHovered by interactionSource.collectIsHoveredAsState()
     val tenant = (tenantState as? DokusState.Success<Tenant>)?.data
-    val isLoading = tenantState is DokusState.Loading
+    val activeWorkspace = when {
+        navContext == NavContext.FIRM && selectedFirm != null -> WorkspaceCardData(
+            name = selectedFirm.name.value,
+            subtitle = selectedFirm.vatNumber.formatted,
+            initial = selectedFirm.name.value.trim().firstOrNull()?.uppercaseChar()?.toString() ?: "D",
+            avatarUrl = null,
+        )
+
+        tenant != null -> WorkspaceCardData(
+            name = tenant.displayName.value,
+            subtitle = tenant.vatNumber.formatted,
+            initial = tenant.displayName.value.trim().firstOrNull()?.uppercaseChar()?.toString() ?: "D",
+            avatarUrl = rememberResolvedApiUrl(tenant.avatar?.small),
+        )
+
+        else -> null
+    }
+    val isLoading = navContext == NavContext.TENANT && tenantState is DokusState.Loading
     val imageLoader = rememberAuthenticatedImageLoader()
 
     Row(
@@ -185,15 +210,10 @@ private fun DesktopWorkspaceArea(
                     height = spacing.small
                 )
             }
-        } else if (tenant != null) {
-            val workspaceName = tenant.displayName.value
-            val workspaceVat = tenant.vatNumber.formatted
-            val initial = tenant.displayName.value.trim().firstOrNull()?.uppercaseChar()?.toString() ?: "D"
-            val avatarUrl = rememberResolvedApiUrl(tenant.avatar?.small)
-
+        } else if (activeWorkspace != null) {
             CompanyAvatarImage(
-                avatarUrl = avatarUrl,
-                initial = initial,
+                avatarUrl = activeWorkspace.avatarUrl,
+                initial = activeWorkspace.initial,
                 size = AvatarSize.ExtraSmall,
                 shape = AvatarShape.RoundedSquare,
                 imageLoader = imageLoader
@@ -203,13 +223,13 @@ private fun DesktopWorkspaceArea(
                 verticalArrangement = Arrangement.spacedBy(spacing.xxSmall)
             ) {
                 Text(
-                    text = workspaceName,
+                    text = activeWorkspace.name,
                     style = MaterialTheme.typography.bodySmall,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    text = workspaceVat,
+                    text = activeWorkspace.subtitle,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.textMuted,
                     maxLines = 1,
@@ -228,6 +248,13 @@ private fun DesktopWorkspaceArea(
         }
     }
 }
+
+private data class WorkspaceCardData(
+    val name: String,
+    val subtitle: String,
+    val initial: String,
+    val avatarUrl: String?,
+)
 
 @Composable
 private fun DesktopProfileMenuButton(

@@ -2,8 +2,6 @@ package tech.dokus.backend.security
 
 import io.ktor.server.routing.RoutingContext
 import io.ktor.util.AttributeKey
-import org.koin.ktor.ext.get
-import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.domain.enums.Permission
 import tech.dokus.domain.enums.UserRole
 import tech.dokus.domain.exceptions.DokusException
@@ -23,15 +21,18 @@ val RoutingContext.tenantAccessOrNull: TenantAccess?
         null
     }
 
-suspend fun RoutingContext.requireTenantAccess(
-    userRepository: UserRepository = call.application.get()
-): TenantAccess {
+suspend fun RoutingContext.requireTenantAccess(): TenantAccess {
     tenantAccessOrNull?.let { return it }
 
     val tenantId = resolveTenantIdFromRequest()
-    val membership = userRepository.getMembership(dokusPrincipal.userId, tenantId)
+    // Memberships are read from JWT claims (snapshot at token-generation time), not
+    // from the database. A deactivated membership remains valid until token expiry
+    // (~1 hour). This is an accepted trade-off for avoiding a DB round-trip on every
+    // request. AuthService.toJwtTenantClaims() filters isActive at generation time.
+    val membership = dokusPrincipal.tenantMemberships
+        .firstOrNull { it.tenantId == tenantId }
 
-    if (membership == null || !membership.isActive) {
+    if (membership == null) {
         throw DokusException.NotAuthorized("You do not have access to tenant $tenantId")
     }
 
@@ -78,7 +79,7 @@ suspend fun RoutingContext.requirePermission(permission: Permission) {
  * 2. {tenantId} path parameter
  * 3. {tenant_id} query parameter
  */
-private fun RoutingContext.resolveTenantIdFromRequest(): TenantId {
+internal fun RoutingContext.resolveTenantIdFromRequest(): TenantId {
     val tenantRaw = call.request.headers[TenantHeaderName]
         ?.trim()
         ?.takeIf { it.isNotEmpty() }

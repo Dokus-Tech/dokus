@@ -19,6 +19,8 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.team_invite_cancelled
 import tech.dokus.aura.resources.team_invite_success
 import tech.dokus.aura.resources.team_member_removed_success
+import tech.dokus.aura.resources.team_bookkeeper_access_granted_success
+import tech.dokus.aura.resources.team_bookkeeper_access_revoked_success
 import tech.dokus.aura.resources.team_ownership_transferred_success
 import tech.dokus.aura.resources.team_role_update_success
 import tech.dokus.domain.exceptions.DokusException
@@ -33,6 +35,7 @@ internal fun TeamSettingsRoute(
     var pendingSuccess by remember { mutableStateOf<TeamSettingsSuccess?>(null) }
     var pendingError by remember { mutableStateOf<DokusException?>(null) }
     var showInviteDialog by remember { mutableStateOf(false) }
+    var showBookkeeperDialog by remember { mutableStateOf(false) }
 
     val successMessage = pendingSuccess?.let { success ->
         when (success) {
@@ -42,6 +45,10 @@ internal fun TeamSettingsRoute(
             TeamSettingsSuccess.MemberRemoved -> stringResource(Res.string.team_member_removed_success)
             TeamSettingsSuccess.OwnershipTransferred ->
                 stringResource(Res.string.team_ownership_transferred_success)
+            TeamSettingsSuccess.BookkeeperAccessGranted ->
+                stringResource(Res.string.team_bookkeeper_access_granted_success)
+            TeamSettingsSuccess.BookkeeperAccessRevoked ->
+                stringResource(Res.string.team_bookkeeper_access_revoked_success)
         }
     }
     val errorMessage = pendingError?.localized
@@ -71,6 +78,9 @@ internal fun TeamSettingsRoute(
             TeamSettingsAction.DismissInviteDialog -> {
                 showInviteDialog = false
             }
+            TeamSettingsAction.DismissBookkeeperDialog -> {
+                showBookkeeperDialog = false
+            }
         }
     }
 
@@ -84,6 +94,8 @@ internal fun TeamSettingsRoute(
         snackbarHostState = snackbarHostState,
         showInviteDialog = showInviteDialog,
         onShowInviteDialog = { showInviteDialog = it },
+        showBookkeeperDialog = showBookkeeperDialog,
+        onShowBookkeeperDialog = { showBookkeeperDialog = it },
         onIntent = { container.store.intent(it) }
     )
 }

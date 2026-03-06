@@ -5,6 +5,9 @@ import tech.dokus.database.tables.ai.ChatMessagesTable
 import tech.dokus.database.tables.ai.DocumentChunksTable
 import tech.dokus.database.tables.ai.DocumentExamplesTable
 import tech.dokus.database.tables.auth.AddressTable
+import tech.dokus.database.tables.auth.FirmAccessTable
+import tech.dokus.database.tables.auth.FirmMembersTable
+import tech.dokus.database.tables.auth.FirmsTable
 import tech.dokus.database.tables.auth.PasswordResetTokensTable
 import tech.dokus.database.tables.auth.RefreshTokensTable
 import tech.dokus.database.tables.auth.TenantInvitationsTable
@@ -70,10 +73,13 @@ object DokusSchema {
                 // Auth (tenants, users, tokens)
                 // ----------------------------
                 TenantTable,
+                FirmsTable,
                 TenantSettingsTable,
                 UsersTable,
                 WelcomeEmailJobsTable,
                 TenantMembersTable,
+                FirmMembersTable,
+                FirmAccessTable,
                 TenantInvitationsTable,
                 RefreshTokensTable,
                 PasswordResetTokensTable,

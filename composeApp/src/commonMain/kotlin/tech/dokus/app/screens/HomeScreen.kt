@@ -17,7 +17,6 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -39,42 +38,32 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import org.jetbrains.compose.resources.stringResource
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
-import tech.dokus.app.allNavItems
-import tech.dokus.app.desktopPinnedItems
-import tech.dokus.app.homeNavigationProviders
-import tech.dokus.app.mobileTabConfigs
-import tech.dokus.app.navSectionsCombined
 import tech.dokus.app.navigation.HomeNavigationCommandBus
-import tech.dokus.app.navigation.SearchFocusRequestBus
-import tech.dokus.app.navigation.executeHomeNavigationCommand
-import tech.dokus.app.navigation.local.HomeNavControllerProvided
+import tech.dokus.app.navigation.HomeNavigationCommand
+import tech.dokus.app.screens.home.HomeSurfaceShell
 import tech.dokus.app.screens.home.DesktopShellTopBar
 import tech.dokus.app.screens.home.DesktopSidebarBottomControls
 import tech.dokus.app.screens.home.HomeShellProfileData
 import tech.dokus.app.screens.home.MobileShellTopBar
-import tech.dokus.app.screens.home.buildSortedRoutes
-import tech.dokus.app.screens.home.normalizeRoute
-import tech.dokus.app.screens.home.resolveHomeShellTopBarConfig
 import tech.dokus.app.viewmodel.HomeAction
 import tech.dokus.app.viewmodel.HomeContainer
 import tech.dokus.app.viewmodel.HomeIntent
 import tech.dokus.app.viewmodel.HomeState
-import tech.dokus.aura.resources.Res
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.User
+import tech.dokus.domain.model.auth.FirmWorkspaceSummary
 import tech.dokus.foundation.app.AppModule
+import tech.dokus.foundation.app.NavContext
 import tech.dokus.foundation.app.local.LocalAppModules
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.app.shell.HomeShellTopBarConfig
-import tech.dokus.foundation.app.shell.HomeShellTopBarHost
 import tech.dokus.foundation.app.shell.HomeShellTopBarMode
-import tech.dokus.foundation.app.shell.LocalHomeShellTopBarHost
+import tech.dokus.foundation.app.shell.WorkspaceContextStore
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.background.AmbientBackground
 import tech.dokus.foundation.aura.components.navigation.DokusNavigationBar
@@ -95,14 +84,14 @@ import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
 import tech.dokus.navigation.NavigationProvider
 import tech.dokus.navigation.animation.TransitionsProvider
-import tech.dokus.navigation.destinations.AuthDestination
-import tech.dokus.navigation.destinations.HomeDestination
 import tech.dokus.navigation.destinations.NavigationDestination
-import tech.dokus.navigation.destinations.SettingsDestination
 import tech.dokus.navigation.destinations.route
 import tech.dokus.navigation.local.LocalNavController
-import tech.dokus.navigation.navigateTo
-import tech.dokus.navigation.navigateToTopLevelTab
+
+private enum class HomeSurfaceMode {
+    CompanyManager,
+    BookkeeperConsole,
+}
 
 @Composable
 internal fun HomeRoute(
@@ -110,49 +99,18 @@ internal fun HomeRoute(
     container: HomeContainer = container(),
 ) {
     val navController = LocalNavController.current
-    val homeNavProviders = remember(appModules) { appModules.homeNavigationProviders }
-    val homeNavController = rememberNavController()
-    val navSections = remember(appModules) { appModules.navSectionsCombined }
-    val desktopPinnedItems = remember(appModules) { appModules.desktopPinnedItems }
-    val mobileTabs = remember(appModules) { appModules.mobileTabConfigs }
-    val allNavItems = remember(appModules) { appModules.allNavItems }
-    val sortedRoutes = remember(allNavItems) { buildSortedRoutes(allNavItems) }
-    val startDestination = remember(allNavItems) {
-        allNavItems.firstOrNull { it.id == "today" }?.destination
-            ?: allNavItems.first().destination
-    }
     val pendingHomeCommand by HomeNavigationCommandBus.pendingCommand.collectAsState()
+    val workspaceContext by WorkspaceContextStore.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     var pendingError by remember { mutableStateOf<DokusException?>(null) }
     val errorMessage = pendingError?.localized
     val isLargeScreen = LocalScreenSize.current.isLarge
-    val registeredTopBarConfigs = remember { mutableStateMapOf<String, HomeShellTopBarConfig>() }
-    val topBarHost = remember(allNavItems, sortedRoutes) {
-        object : HomeShellTopBarHost {
-            override fun update(route: String, config: HomeShellTopBarConfig) {
-                val normalizedRoute = normalizeRoute(route, sortedRoutes) ?: return
-                if (registeredTopBarConfigs[normalizedRoute] == config) return
-                registeredTopBarConfigs[normalizedRoute] = config
-            }
-
-            override fun clear(route: String) {
-                val normalizedRoute = normalizeRoute(route, sortedRoutes) ?: return
-                registeredTopBarConfigs.remove(normalizedRoute)
-            }
-        }
-    }
 
     LaunchedEffect(errorMessage) {
         if (errorMessage != null) {
             snackbarHostState.showSnackbar(errorMessage)
             pendingError = null
         }
-    }
-
-    LaunchedEffect(pendingHomeCommand?.id, homeNavController) {
-        val pending = pendingHomeCommand ?: return@LaunchedEffect
-        homeNavController.executeHomeNavigationCommand(pending.command)
-        HomeNavigationCommandBus.consume(pending.id)
     }
 
     val state by container.store.subscribe(DefaultLifecycle) { action ->
@@ -165,87 +123,119 @@ internal fun HomeRoute(
         container.store.intent(HomeIntent.ScreenAppeared)
     }
 
-    val navBackStackEntry by homeNavController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route
-    val normalizedRoute = normalizeRoute(currentRoute, sortedRoutes)
-
     val shellState = state as? HomeState.Ready ?: HomeState.Ready()
+    val surfaceAvailability = shellState.surfaceAvailability
     val tenant = (shellState.tenantState as? DokusState.Success<Tenant>)?.data
     val user = (shellState.userState as? DokusState.Success<User>)?.data
-    val fallbackShellTopBarConfig = rememberFallbackShellTopBarConfig(
-        normalizedRoute = normalizedRoute,
-        allNavItems = allNavItems,
-    )
-    val topBarConfig = resolveHomeShellTopBarConfig(
-        route = currentRoute,
-        allNavItems = allNavItems,
-        sortedRoutes = sortedRoutes,
-        registeredConfigs = registeredTopBarConfigs,
-        fallback = { _, _ -> fallbackShellTopBarConfig }
-    )
+    val selectedFirm = shellState.firms.firstOrNull { it.id == workspaceContext.selectedFirmId }
+        ?: shellState.firms.firstOrNull()
     val profileData = buildProfileData(
         user = user,
         tierLabel = tenant?.subscription?.localized
     )
+    val activeSurface = resolveActiveSurface(
+        navContext = workspaceContext.navContext,
+        surfaceAvailability = surfaceAvailability,
+    )
 
-    val navHostContent: @Composable () -> Unit = {
-        HomeNavControllerProvided(homeNavController) {
-            CompositionLocalProvider(
-                LocalHomeShellTopBarHost provides topBarHost,
-            ) {
-                HomeNavHost(
-                    navHostController = homeNavController,
-                    homeNavProviders = homeNavProviders,
-                    startDestination = startDestination
-                )
-            }
+    LaunchedEffect(
+        pendingHomeCommand?.id,
+        surfaceAvailability?.canCompanyManager,
+        surfaceAvailability?.canBookkeeperConsole,
+    ) {
+        val pending = pendingHomeCommand ?: return@LaunchedEffect
+        val resolvedSurface = resolveSurfaceForCommand(
+            command = pending.command,
+            currentSurface = activeSurface,
+            surfaceAvailability = surfaceAvailability,
+        )
+        if (resolvedSurface == HomeSurfaceMode.BookkeeperConsole) {
+            WorkspaceContextStore.switchToFirmWorkspace()
+        } else {
+            WorkspaceContextStore.switchToTenantWorkspace()
         }
     }
 
-    HomeScreen(
-        navSections = navSections,
-        mobileTabs = mobileTabs,
-        selectedRoute = currentRoute,
-        topBarConfig = topBarConfig,
-        desktopPinnedItems = desktopPinnedItems,
-        tenantState = shellState.tenantState,
-        profileData = profileData,
-        isLoggingOut = shellState.isLoggingOut,
-        snackbarHostState = snackbarHostState,
-        onWorkspaceClick = { navController.navigateTo(AuthDestination.WorkspaceSelect) },
-        onProfileClick = {
-            dispatchProfileNavigation(
-                isLargeScreen = isLargeScreen,
-                onNavigateHomeProfile = {
-                    homeNavController.navigateToTopLevelTab(HomeDestination.Profile)
-                },
-                onNavigateRootProfile = {
-                    navController.navigateTo(AuthDestination.ProfileSettings)
-                }
-            )
-        },
-        onAppearanceClick = { navController.navigateTo(SettingsDestination.AppearanceSettings) },
-        onLogoutClick = { container.store.intent(HomeIntent.Logout) },
-        onNavItemClick = { navItem ->
-            homeNavController.navigateToTopLevelTab(navItem.destination)
-            if (navItem.destination == HomeDestination.Search) {
-                SearchFocusRequestBus.requestFocus()
-            }
-        },
-        onTabClick = { tab ->
-            tab.destination?.let { destination ->
-                homeNavController.navigateToTopLevelTab(destination)
-                if (destination == HomeDestination.Search) {
-                    SearchFocusRequestBus.requestFocus()
-                }
-            }
-        },
-        onSearchShortcut = {
-            homeNavController.navigateToTopLevelTab(HomeDestination.Search)
-            SearchFocusRequestBus.requestFocus()
-        },
-        content = navHostContent,
+    val showBC = shouldRenderBC(
+        activeSurface = activeSurface,
+        surfaceAvailability = surfaceAvailability
     )
+    val activeNavContext = if (showBC) NavContext.FIRM else NavContext.TENANT
+
+    val onConsumeHomeCommand = remember { { id: Long -> HomeNavigationCommandBus.consume(id) } }
+    val onLogoutClick = remember(container) { { container.store.intent(HomeIntent.Logout) } }
+
+    HomeSurfaceShell(
+        navContext = activeNavContext,
+        appModules = appModules,
+        rootNavController = navController,
+        isLargeScreen = isLargeScreen,
+        shellState = shellState,
+        selectedFirm = selectedFirm,
+        profileData = profileData,
+        pendingHomeCommand = pendingHomeCommand,
+        onConsumeHomeCommand = onConsumeHomeCommand,
+        onLogoutClick = onLogoutClick,
+        snackbarHostState = snackbarHostState,
+    )
+}
+
+private fun resolveActiveSurface(
+    navContext: NavContext,
+    surfaceAvailability: tech.dokus.domain.model.auth.SurfaceAvailability?,
+): HomeSurfaceMode {
+    if (surfaceAvailability == null) {
+        return if (navContext == NavContext.FIRM) HomeSurfaceMode.BookkeeperConsole else HomeSurfaceMode.CompanyManager
+    }
+    if (surfaceAvailability.canBookkeeperConsole && !surfaceAvailability.canCompanyManager) {
+        return HomeSurfaceMode.BookkeeperConsole
+    }
+    if (!surfaceAvailability.canBookkeeperConsole) return HomeSurfaceMode.CompanyManager
+    return if (navContext == NavContext.FIRM) HomeSurfaceMode.BookkeeperConsole else HomeSurfaceMode.CompanyManager
+}
+
+private fun resolveSurfaceForCommand(
+    command: HomeNavigationCommand,
+    currentSurface: HomeSurfaceMode,
+    surfaceAvailability: tech.dokus.domain.model.auth.SurfaceAvailability?,
+): HomeSurfaceMode {
+    val resolved = surfaceAvailability != null
+    val canCM = surfaceAvailability?.canCompanyManager ?: true
+    val canBC = surfaceAvailability?.canBookkeeperConsole == true
+    val canBCAccess = !resolved || canBC
+    val isBCOnly = resolved && canBC && !canCM
+
+    if (isBCOnly) return HomeSurfaceMode.BookkeeperConsole
+
+    return when (command) {
+        HomeNavigationCommand.OpenConsoleClients -> {
+            if (canBCAccess) HomeSurfaceMode.BookkeeperConsole else HomeSurfaceMode.CompanyManager
+        }
+
+        HomeNavigationCommand.OpenDocuments -> {
+            currentSurface
+        }
+
+        is HomeNavigationCommand.OpenDocumentReview -> {
+            if (currentSurface == HomeSurfaceMode.BookkeeperConsole && canBCAccess) {
+                HomeSurfaceMode.BookkeeperConsole
+            } else {
+                HomeSurfaceMode.CompanyManager
+            }
+        }
+    }
+}
+
+private fun shouldRenderBC(
+    activeSurface: HomeSurfaceMode,
+    surfaceAvailability: tech.dokus.domain.model.auth.SurfaceAvailability?,
+): Boolean {
+    if (surfaceAvailability == null) {
+        return activeSurface == HomeSurfaceMode.BookkeeperConsole
+    }
+    if (!surfaceAvailability.canBookkeeperConsole) return false
+    if (!surfaceAvailability.canCompanyManager) return true
+    return activeSurface == HomeSurfaceMode.BookkeeperConsole
 }
 
 @Composable
@@ -255,7 +245,9 @@ internal fun HomeScreen(
     selectedRoute: String?,
     topBarConfig: HomeShellTopBarConfig?,
     desktopPinnedItems: List<NavItem>,
+    navContext: NavContext,
     tenantState: DokusState<Tenant>,
+    selectedFirm: FirmWorkspaceSummary?,
     profileData: HomeShellProfileData?,
     isLoggingOut: Boolean,
     snackbarHostState: SnackbarHostState,
@@ -291,7 +283,9 @@ internal fun HomeScreen(
                     pinnedItems = desktopPinnedItems,
                     selectedRoute = selectedRoute,
                     topBarConfig = topBarConfig,
+                    navContext = navContext,
                     tenantState = tenantState,
+                    selectedFirm = selectedFirm,
                     profileData = profileData,
                     isLoggingOut = isLoggingOut,
                     onWorkspaceClick = onWorkspaceClick,
@@ -321,7 +315,7 @@ internal fun HomeScreen(
 }
 
 @Composable
-private fun HomeNavHost(
+internal fun HomeNavHost(
     navHostController: NavHostController,
     homeNavProviders: List<NavigationProvider>,
     startDestination: NavigationDestination,
@@ -353,7 +347,9 @@ private fun RailNavigationLayout(
     pinnedItems: List<NavItem>,
     selectedRoute: String?,
     topBarConfig: HomeShellTopBarConfig?,
+    navContext: NavContext,
     tenantState: DokusState<Tenant>,
+    selectedFirm: FirmWorkspaceSummary?,
     profileData: HomeShellProfileData?,
     isLoggingOut: Boolean,
     onWorkspaceClick: () -> Unit,
@@ -420,7 +416,9 @@ private fun RailNavigationLayout(
                     Spacer(modifier = Modifier.weight(1f))
 
                     DesktopSidebarBottomControls(
+                        navContext = navContext,
                         tenantState = tenantState,
+                        selectedFirm = selectedFirm,
                         profileData = profileData,
                         isLoggingOut = isLoggingOut,
                         onWorkspaceClick = onWorkspaceClick,
@@ -543,7 +541,7 @@ private fun buildProfileData(
 }
 
 @Composable
-private fun rememberFallbackShellTopBarConfig(
+internal fun rememberFallbackShellTopBarConfig(
     normalizedRoute: String?,
     allNavItems: List<NavItem>,
 ): HomeShellTopBarConfig? {
@@ -574,7 +572,9 @@ private fun HomeScreenPreview(
             selectedRoute = null,
             topBarConfig = null,
             desktopPinnedItems = emptyList(),
+            navContext = NavContext.TENANT,
             tenantState = DokusState.loading(),
+            selectedFirm = null,
             profileData = null,
             isLoggingOut = false,
             snackbarHostState = remember { SnackbarHostState() },

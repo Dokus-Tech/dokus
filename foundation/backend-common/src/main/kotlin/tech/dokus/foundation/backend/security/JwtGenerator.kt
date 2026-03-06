@@ -6,6 +6,9 @@ import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.auth.JwtClaims
+import tech.dokus.domain.model.auth.JwtFirmMembershipClaim
+import tech.dokus.domain.model.auth.JwtTenantMembershipClaim
+import tech.dokus.domain.utils.json
 import tech.dokus.domain.model.auth.LoginResponse
 import tech.dokus.foundation.backend.config.JwtConfig
 import tech.dokus.foundation.backend.database.now
@@ -34,7 +37,9 @@ class JwtGenerator(
 
     fun generateClaims(
         userId: UserId,
-        email: String
+        email: String,
+        tenantMemberships: List<JwtTenantMembershipClaim> = emptyList(),
+        firmMemberships: List<JwtFirmMembershipClaim> = emptyList(),
     ): JwtClaims {
         val nowTime = now()
         val accessExpiry = nowTime + JwtClaims.ACCESS_TOKEN_EXPIRY_SECONDS.seconds
@@ -42,6 +47,8 @@ class JwtGenerator(
         return JwtClaims(
             userId = userId,
             email = email,
+            tenantMemberships = tenantMemberships,
+            firmMemberships = firmMemberships,
             iat = nowTime.epochSeconds,
             exp = accessExpiry.epochSeconds,
             jti = Uuid.random().toString(),
@@ -57,6 +64,14 @@ class JwtGenerator(
             .withSubject(claims.userId.value.toString())
             .withJWTId(claims.jti)
             .withClaim(JwtClaims.CLAIM_EMAIL, claims.email)
+            .withClaim(
+                JwtClaims.CLAIM_TENANTS,
+                json.encodeToString(claims.tenantMemberships)
+            )
+            .withClaim(
+                JwtClaims.CLAIM_FIRMS,
+                json.encodeToString(claims.firmMemberships)
+            )
             .withIssuedAt(Date.from(Instant.ofEpochSecond(claims.iat)))
             .withExpiresAt(Date.from(Instant.ofEpochSecond(claims.exp)))
             .sign(algorithm)

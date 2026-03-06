@@ -94,6 +94,7 @@ internal fun MobileItemsAccordion(
 @Composable
 internal fun MobileSourcesAccordion(
     state: DocumentReviewState.Content,
+    isAccountantReadOnly: Boolean,
     expanded: Boolean,
     onToggle: () -> Unit,
     onIntent: (DocumentReviewIntent) -> Unit,
@@ -149,18 +150,20 @@ internal fun MobileSourcesAccordion(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.textMuted,
             )
-            Row(horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)) {
-                TextButton(
-                    onClick = { onIntent(DocumentReviewIntent.ResolvePossibleMatchSame) },
-                    enabled = !state.isResolvingMatchReview,
-                ) {
-                    Text(stringResource(Res.string.cashflow_match_review_same_document))
-                }
-                TextButton(
-                    onClick = { onIntent(DocumentReviewIntent.ResolvePossibleMatchDifferent) },
-                    enabled = !state.isResolvingMatchReview,
-                ) {
-                    Text(stringResource(Res.string.cashflow_match_review_different_document))
+            if (!isAccountantReadOnly) {
+                Row(horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)) {
+                    TextButton(
+                        onClick = { onIntent(DocumentReviewIntent.ResolvePossibleMatchSame) },
+                        enabled = !state.isResolvingMatchReview,
+                    ) {
+                        Text(stringResource(Res.string.cashflow_match_review_same_document))
+                    }
+                    TextButton(
+                        onClick = { onIntent(DocumentReviewIntent.ResolvePossibleMatchDifferent) },
+                        enabled = !state.isResolvingMatchReview,
+                    ) {
+                        Text(stringResource(Res.string.cashflow_match_review_different_document))
+                    }
                 }
             }
         }

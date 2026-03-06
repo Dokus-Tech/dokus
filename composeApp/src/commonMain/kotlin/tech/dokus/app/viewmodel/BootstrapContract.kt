@@ -4,6 +4,7 @@ import androidx.compose.runtime.Immutable
 import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
+import tech.dokus.app.navigation.HomeNavigationCommand
 
 /**
  * Contract for the Bootstrap screen.
@@ -82,7 +83,7 @@ sealed interface BootstrapIntent : MVIIntent {
 // ============================================================================
 
 @Immutable
-sealed interface BootstrapAction : MVIAction {
+internal sealed interface BootstrapAction : MVIAction {
     /** User needs to log in */
     data object NavigateToLogin : BootstrapAction
 
@@ -96,5 +97,7 @@ sealed interface BootstrapAction : MVIAction {
     data object NavigateToTenantSelection : BootstrapAction
 
     /** Bootstrap complete, navigate to main app */
-    data object NavigateToMain : BootstrapAction
+    data class NavigateToMain(
+        val initialHomeCommand: HomeNavigationCommand? = null,
+    ) : BootstrapAction
 }

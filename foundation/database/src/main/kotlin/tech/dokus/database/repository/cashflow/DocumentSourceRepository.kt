@@ -4,6 +4,7 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.v1.core.ResultRow
+import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
@@ -119,7 +120,7 @@ class DocumentSourceRepository {
 
     suspend fun getById(tenantId: TenantId, sourceId: DocumentSourceId): DocumentSourceSummary? =
         newSuspendedTransaction {
-            (DocumentSourcesTable innerJoin DocumentBlobsTable)
+            DocumentSourcesTable.join(DocumentBlobsTable, JoinType.INNER, DocumentSourcesTable.blobId, DocumentBlobsTable.id)
                 .selectAll()
                 .where {
                     (DocumentSourcesTable.id eq UUID.fromString(sourceId.toString())) and
@@ -136,7 +137,7 @@ class DocumentSourceRepository {
     ): List<DocumentSourceSummary> = newSuspendedTransaction {
         val tenantUuid = UUID.fromString(tenantId.toString())
         val docUuid = UUID.fromString(documentId.toString())
-        val rows = (DocumentSourcesTable innerJoin DocumentBlobsTable)
+        val rows = DocumentSourcesTable.join(DocumentBlobsTable, JoinType.INNER, DocumentSourcesTable.blobId, DocumentBlobsTable.id)
             .selectAll()
             .where {
                 (DocumentSourcesTable.tenantId eq tenantUuid) and
@@ -183,7 +184,7 @@ class DocumentSourceRepository {
         tenantId: TenantId,
         inputHash: String
     ): DocumentId? = newSuspendedTransaction {
-        (DocumentSourcesTable innerJoin DocumentBlobsTable)
+        DocumentSourcesTable.join(DocumentBlobsTable, JoinType.INNER, DocumentSourcesTable.blobId, DocumentBlobsTable.id)
             .selectAll()
             .where {
                 (DocumentSourcesTable.tenantId eq UUID.fromString(tenantId.toString())) and
@@ -200,7 +201,7 @@ class DocumentSourceRepository {
         contentHash: String,
         excludeSourceId: DocumentSourceId? = null
     ): DocumentId? = newSuspendedTransaction {
-        (DocumentSourcesTable innerJoin DocumentBlobsTable)
+        DocumentSourcesTable.join(DocumentBlobsTable, JoinType.INNER, DocumentSourcesTable.blobId, DocumentBlobsTable.id)
             .selectAll()
             .where {
                 var where = (DocumentSourcesTable.tenantId eq UUID.fromString(tenantId.toString())) and
@@ -221,7 +222,7 @@ class DocumentSourceRepository {
         identityKeyHash: String,
         excludeDocumentId: DocumentId? = null
     ): DocumentId? = newSuspendedTransaction {
-        (DocumentSourcesTable innerJoin DocumentBlobsTable)
+        DocumentSourcesTable.join(DocumentBlobsTable, JoinType.INNER, DocumentSourcesTable.blobId, DocumentBlobsTable.id)
             .selectAll()
             .where {
                 var where = (DocumentSourcesTable.tenantId eq UUID.fromString(tenantId.toString())) and
@@ -247,7 +248,7 @@ class DocumentSourceRepository {
         maxDistance: Int = 2
     ): List<FuzzySourceCandidate> = newSuspendedTransaction {
         val tenantUuid = UUID.fromString(tenantId.toString())
-        val candidates = (DocumentSourcesTable innerJoin DocumentBlobsTable)
+        val candidates = DocumentSourcesTable.join(DocumentBlobsTable, JoinType.INNER, DocumentSourcesTable.blobId, DocumentBlobsTable.id)
             .selectAll()
             .where {
                 var where = (DocumentSourcesTable.tenantId eq tenantUuid) and

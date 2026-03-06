@@ -24,7 +24,7 @@ class NavigationDestinationPolicyTest {
     fun `HomeDestination members are singletons`() {
         assertIs<HomeDestination>(HomeDestination.Team)
         assertIs<HomeDestination>(HomeDestination.Contacts)
-        assertIs<HomeDestination>(HomeDestination.Accountant)
+        assertIs<HomeDestination>(HomeDestination.ConsoleClients)
         assertIs<HomeDestination>(HomeDestination.Documents)
     }
 

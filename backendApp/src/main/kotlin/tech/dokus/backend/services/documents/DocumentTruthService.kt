@@ -1,6 +1,7 @@
 package tech.dokus.backend.services.documents
 
 import io.micrometer.core.instrument.Metrics
+import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
@@ -28,6 +29,7 @@ import tech.dokus.domain.enums.DocumentMatchReviewStatus
 import tech.dokus.domain.enums.DocumentMatchType
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentSourceStatus
+import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.ids.DocumentId
@@ -54,7 +56,7 @@ import java.util.UUID
 data class DocumentIntakeServiceResult(
     val documentId: DocumentId,
     val sourceId: DocumentSourceId,
-    val runId: tech.dokus.domain.ids.IngestionRunId?,
+    val runId: IngestionRunId?,
     val outcome: DocumentIntakeOutcome,
     val linkedDocumentId: DocumentId? = null,
     val reviewId: DocumentMatchReviewId? = null,
@@ -142,7 +144,8 @@ class DocumentTruthService(
             val tenantUuid = UUID.fromString(tenantId.toString())
 
             // Check for existing linked source with same input hash
-            val existingDocId = (DocumentSourcesTable innerJoin DocumentBlobsTable)
+            val existingDocId = DocumentSourcesTable
+                .join(DocumentBlobsTable, JoinType.INNER, DocumentSourcesTable.blobId, DocumentBlobsTable.id)
                 .selectAll()
                 .where {
                     (DocumentSourcesTable.tenantId eq tenantUuid) and
@@ -247,7 +250,7 @@ class DocumentTruthService(
                     val upload = storageService.uploadDocument(
                         tenantId = tenantId,
                         prefix = "peppol",
-                        filename = "peppol-${sourceId}.xml",
+                        filename = "peppol-$sourceId.xml",
                         data = xmlBytes,
                         contentType = "application/xml"
                     )
@@ -571,7 +574,7 @@ class DocumentTruthService(
 
         val linkedCount = sourceRepository.countLinkedSources(tenantId, documentId)
         val draft = draftRepository.getByDocumentId(documentId, tenantId)
-        val isConfirmed = draft?.documentStatus == tech.dokus.domain.enums.DocumentStatus.Confirmed
+        val isConfirmed = draft?.documentStatus == DocumentStatus.Confirmed
 
         if (linkedCount <= 1 && isConfirmed && !confirmLastOnConfirmed) {
             return SourceDeleteResult(

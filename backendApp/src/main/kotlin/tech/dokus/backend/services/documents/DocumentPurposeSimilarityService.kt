@@ -56,7 +56,12 @@ class DocumentPurposeSimilarityService(
                 confirmedOnly = true
             )
         }.onFailure { error ->
-            logger.warn("Purpose similarity retrieval failed for tenant={} type={}: {}", tenantId, documentType, error.message)
+            logger.warn(
+                "Purpose similarity retrieval failed for tenant={} type={}: {}",
+                tenantId,
+                documentType,
+                error.message
+            )
         }.getOrElse { emptyList() }
     }
 

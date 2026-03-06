@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -230,8 +231,9 @@ private fun DocumentsToolbar(
                 needsAttentionCount = state.needsAttentionCount,
                 confirmedCount = state.confirmedCount,
                 onFilterSelected = { onIntent(DocumentsIntent.UpdateFilter(it)) },
-                modifier = Modifier.weight(1f)
             )
+
+            Spacer(modifier = Modifier.weight(1f))
 
             PPrimaryButton(
                 text = stringResource(Res.string.documents_upload),

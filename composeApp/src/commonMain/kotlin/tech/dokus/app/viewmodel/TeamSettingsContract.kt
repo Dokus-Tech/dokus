@@ -7,10 +7,13 @@ import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.enums.UserRole
 import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.FirmId
 import tech.dokus.domain.ids.InvitationId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.TeamMember
 import tech.dokus.domain.model.TenantInvitation
+import tech.dokus.domain.model.auth.BookkeeperFirmSearchItem
+import tech.dokus.domain.model.auth.TenantBookkeeperAccessItem
 import tech.dokus.foundation.app.state.DokusState
 
 /**
@@ -60,6 +63,13 @@ sealed interface TeamSettingsState : MVIState, DokusState<Nothing> {
         val invitationsLoading: Boolean = false,
         val inviteEmail: String = "",
         val inviteRole: UserRole = UserRole.Editor,
+        val bookkeeperAccess: List<TenantBookkeeperAccessItem> = emptyList(),
+        val bookkeeperAccessLoading: Boolean = false,
+        val bookkeeperSearchQuery: String = "",
+        val bookkeeperSearchResults: List<BookkeeperFirmSearchItem> = emptyList(),
+        val bookkeeperSearchLoading: Boolean = false,
+        val selectedBookkeeperFirmId: FirmId? = null,
+        val isCurrentUserOwner: Boolean = false,
         val actionState: ActionState = ActionState.Idle,
         val currentUserId: UserId? = null,
         val maxSeats: Int = 3,
@@ -129,6 +139,24 @@ sealed interface TeamSettingsIntent : MVIIntent {
     /** Transfer workspace ownership to a member */
     data class TransferOwnership(val newOwnerId: UserId) : TeamSettingsIntent
 
+    /** Update bookkeeper firm search input */
+    data class UpdateBookkeeperSearchQuery(val query: String) : TeamSettingsIntent
+
+    /** Execute bookkeeper firm search */
+    data object SearchBookkeeperFirms : TeamSettingsIntent
+
+    /** Select one firm result for grant action */
+    data class SelectBookkeeperFirm(val firmId: FirmId?) : TeamSettingsIntent
+
+    /** Grant current tenant access to selected bookkeeper firm */
+    data object GrantBookkeeperAccess : TeamSettingsIntent
+
+    /** Revoke existing firm access for current tenant */
+    data class RevokeBookkeeperAccess(val firmId: FirmId) : TeamSettingsIntent
+
+    /** Reset bookkeeper search and selection fields */
+    data object ResetBookkeeperAccessForm : TeamSettingsIntent
+
     /** Reset action state to idle */
     data object ResetActionState : TeamSettingsIntent
 }
@@ -148,6 +176,9 @@ sealed interface TeamSettingsAction : MVIAction {
 
     /** Dismiss the invite dialog */
     data object DismissInviteDialog : TeamSettingsAction
+
+    /** Dismiss the grant-bookkeeper dialog */
+    data object DismissBookkeeperDialog : TeamSettingsAction
 }
 
 enum class TeamSettingsSuccess {
@@ -156,4 +187,6 @@ enum class TeamSettingsSuccess {
     RoleUpdated,
     MemberRemoved,
     OwnershipTransferred,
+    BookkeeperAccessGranted,
+    BookkeeperAccessRevoked,
 }

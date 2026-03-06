@@ -1,6 +1,7 @@
 package tech.dokus.app
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
@@ -9,11 +10,15 @@ import tech.dokus.app.local.AppModulesInitializer
 import tech.dokus.app.local.AppModulesProvided
 import tech.dokus.app.local.KoinProvided
 import tech.dokus.app.navigation.DokusNavHost
+import tech.dokus.app.navigation.HomeNavigationCommand
+import tech.dokus.app.navigation.HomeNavigationCommandBus
 import tech.dokus.app.navigation.local.RootNavControllerProvided
 import tech.dokus.foundation.app.AppDataInitializer
+import tech.dokus.foundation.app.local.LocalBookkeeperConsoleCallback
 import tech.dokus.foundation.app.navigationProviders
 import tech.dokus.foundation.app.network.ServerConnectionMonitor
 import tech.dokus.foundation.app.network.ServerConnectionProvided
+import tech.dokus.foundation.app.shell.WorkspaceContextStore
 import tech.dokus.foundation.aura.local.ScreenSizeProvided
 import tech.dokus.foundation.aura.local.ThemeManagerProvided
 import tech.dokus.foundation.aura.style.ThemeManager
@@ -43,13 +48,22 @@ fun App(
                     Themed {
                         AppModulesInitializer(appDataInitializer) {
                             ScreenSizeProvided {
-                                RootNavControllerProvided(navController) {
-                                    NavControllerProvided(navController) {
-                                        DokusNavHost(
-                                            navController = navController,
-                                            navigationProvider = navigationProviders,
-                                            onNavHostReady = onNavHostReady
+                                CompositionLocalProvider(
+                                    LocalBookkeeperConsoleCallback provides {
+                                        WorkspaceContextStore.switchToFirmWorkspace()
+                                        HomeNavigationCommandBus.dispatch(
+                                            HomeNavigationCommand.OpenConsoleClients,
                                         )
+                                    },
+                                ) {
+                                    RootNavControllerProvided(navController) {
+                                        NavControllerProvided(navController) {
+                                            DokusNavHost(
+                                                navController = navController,
+                                                navigationProvider = navigationProviders,
+                                                onNavHostReady = onNavHostReady
+                                            )
+                                        }
                                     }
                                 }
                             }

@@ -33,8 +33,8 @@ import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.processor.ProcessorIngestionRepository
 import tech.dokus.domain.enums.ContactLinkSource
-import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentSource
+import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.model.BankStatementDraftData
 import tech.dokus.domain.model.contact.ContactResolution

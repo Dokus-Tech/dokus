@@ -2,6 +2,7 @@ package tech.dokus.foundation.app.network
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalInspectionMode
 import org.koin.compose.koinInject
 import tech.dokus.domain.config.DynamicDokusEndpointProvider
 
@@ -11,6 +12,7 @@ import tech.dokus.domain.config.DynamicDokusEndpointProvider
  */
 @Composable
 fun rememberResolvedApiUrl(url: String?): String? {
+    if (LocalInspectionMode.current) return url
     val endpointProvider = koinInject<DynamicDokusEndpointProvider>()
     val endpoint = endpointProvider.currentEndpointSnapshot()
     return remember(url, endpoint.host, endpoint.port, endpoint.protocol) {

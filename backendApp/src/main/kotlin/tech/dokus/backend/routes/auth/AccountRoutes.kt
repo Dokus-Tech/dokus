@@ -15,14 +15,18 @@ import org.koin.ktor.ext.inject
 import tech.dokus.backend.services.auth.AuthService
 import tech.dokus.backend.services.auth.SessionContext
 import tech.dokus.backend.services.auth.SurfaceResolver
+import tech.dokus.database.repository.auth.FirmRepository
+import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.domain.DeviceType
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.auth.AccountMeResponse
 import tech.dokus.domain.model.auth.ChangePasswordRequest
 import tech.dokus.domain.model.auth.DeactivateUserRequest
+import tech.dokus.domain.model.auth.FirmWorkspaceSummary
 import tech.dokus.domain.model.auth.LogoutRequest
 import tech.dokus.domain.model.auth.SelectTenantRequest
+import tech.dokus.domain.model.auth.TenantWorkspaceSummary
 import tech.dokus.domain.model.auth.UpdateProfileRequest
 import tech.dokus.domain.routes.Account
 import tech.dokus.foundation.backend.security.authenticateJwt
@@ -40,6 +44,8 @@ import tech.dokus.foundation.backend.utils.extractClientIpAddress
 internal fun Route.accountRoutes() {
     val authService by inject<AuthService>()
     val userRepository by inject<UserRepository>()
+    val tenantRepository by inject<TenantRepository>()
+    val firmRepository by inject<FirmRepository>()
 
     authenticateJwt {
         /**
@@ -50,14 +56,51 @@ internal fun Route.accountRoutes() {
             val principal = dokusPrincipal
             val user = userRepository.findById(principal.userId)
                 ?: throw DokusException.NotAuthenticated("User not found")
-            val memberships = userRepository.getUserTenants(principal.userId)
-            val surface = SurfaceResolver.resolve(memberships)
+            val tenantMemberships = userRepository.getUserTenants(principal.userId)
+                .filter { it.isActive }
+            val firmsMemberships = firmRepository.listUserMemberships(principal.userId)
+                .filter { it.isActive }
+            val surface = SurfaceResolver.resolve(
+                tenantMemberships = tenantMemberships,
+                firmMemberships = firmsMemberships
+            )
+
+            val tenantsById = tenantRepository.findByIds(tenantMemberships.map { it.tenantId })
+                .associateBy { it.id }
+            val tenantSummaries = tenantMemberships.mapNotNull { membership ->
+                val tenant = tenantsById[membership.tenantId] ?: return@mapNotNull null
+                TenantWorkspaceSummary(
+                    id = tenant.id,
+                    name = tenant.displayName,
+                    vatNumber = tenant.vatNumber,
+                    role = membership.role,
+                    type = tenant.type
+                )
+            }
+
+            val firmsById = firmRepository.listFirmsByIds(firmsMemberships.map { it.firmId })
+                .associateBy { it.id }
+            val clientCountByFirmId = firmRepository.countActiveClientsByFirmIds(
+                firmsMemberships.map { it.firmId }
+            )
+            val firmSummaries = firmsMemberships.mapNotNull { membership ->
+                val firm = firmsById[membership.firmId] ?: return@mapNotNull null
+                FirmWorkspaceSummary(
+                    id = firm.id,
+                    name = firm.name,
+                    vatNumber = firm.vatNumber,
+                    role = membership.role,
+                    clientCount = clientCountByFirmId[membership.firmId] ?: 0
+                )
+            }
 
             call.respond(
                 HttpStatusCode.OK,
                 AccountMeResponse(
                     user = user,
-                    surface = surface
+                    surface = surface,
+                    tenants = tenantSummaries,
+                    firms = firmSummaries
                 )
             )
         }

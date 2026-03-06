@@ -7,6 +7,8 @@ import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.User
+import tech.dokus.domain.model.auth.FirmWorkspaceSummary
+import tech.dokus.domain.model.auth.SurfaceAvailability
 import tech.dokus.foundation.app.state.DokusState
 
 /**
@@ -33,6 +35,8 @@ sealed interface HomeState : MVIState {
     data class Ready(
         val tenantState: DokusState<Tenant> = DokusState.idle(),
         val userState: DokusState<User> = DokusState.idle(),
+        val surfaceAvailability: SurfaceAvailability? = null,
+        val firms: List<FirmWorkspaceSummary> = emptyList(),
         val isLoggingOut: Boolean = false,
     ) : HomeState
 }

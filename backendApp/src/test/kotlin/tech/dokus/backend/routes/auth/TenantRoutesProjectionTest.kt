@@ -44,11 +44,11 @@ class TenantRoutesProjectionTest {
 
         val projected = projectTenantForMembership(
             tenant = tenant,
-            role = UserRole.Accountant,
+            role = UserRole.Viewer,
             avatar = avatar
         )
 
-        assertEquals(UserRole.Accountant, projected.role)
+        assertEquals(UserRole.Viewer, projected.role)
         assertEquals(avatar, projected.avatar)
         assertEquals(tenant.id, projected.id)
         assertEquals(tenant.displayName, projected.displayName)

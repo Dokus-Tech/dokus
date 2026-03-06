@@ -15,11 +15,15 @@ import tech.dokus.backend.security.requireTenantId
 import tech.dokus.backend.services.auth.TeamService
 import tech.dokus.domain.enums.InvitationStatus
 import tech.dokus.domain.enums.UserRole
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.InvitationId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.CreateInvitationRequest
 import tech.dokus.domain.model.TransferOwnershipRequest
 import tech.dokus.domain.model.UpdateMemberRoleRequest
+import tech.dokus.domain.model.auth.BookkeeperFirmSearchItem
+import tech.dokus.domain.model.auth.GrantBookkeeperAccessRequest
+import tech.dokus.domain.model.auth.GrantBookkeeperAccessResponse
 import tech.dokus.domain.routes.Team
 import tech.dokus.foundation.backend.security.authenticateJwt
 import tech.dokus.foundation.backend.security.dokusPrincipal
@@ -199,6 +203,102 @@ internal fun Route.teamRoutes() {
                         mapOf("error" to (error.message ?: "Failed to cancel invitation"))
                     )
                 }
+        }
+
+        // ================================================================
+        // BOOKKEEPER ACCESS (FIRM LINKS)
+        // ================================================================
+
+        /**
+         * GET /api/v1/team/bookkeepers/search?query=...&limit=...
+         * Search existing firms for granting access.
+         * Requires Owner role.
+         */
+        get<Team.Bookkeepers.Search> { route ->
+            val tenantId = requireTenantAccess().requireRole(UserRole.Owner).tenantId
+            val query = route.query.trim()
+            if (query.length < 2) {
+                call.respond(HttpStatusCode.OK, emptyList<BookkeeperFirmSearchItem>())
+                return@get
+            }
+
+            val results = teamService.searchBookkeeperFirms(
+                tenantId = tenantId,
+                query = query,
+                limit = route.limit.coerceIn(1, 50),
+            )
+            call.respond(HttpStatusCode.OK, results)
+        }
+
+        /**
+         * GET /api/v1/team/bookkeepers/access
+         * List active firm access links for current tenant.
+         * Requires Owner role.
+         */
+        get<Team.Bookkeepers.Access> {
+            val tenantId = requireTenantAccess().requireRole(UserRole.Owner).tenantId
+            val access = teamService.listBookkeeperAccess(tenantId)
+            call.respond(HttpStatusCode.OK, access)
+        }
+
+        /**
+         * POST /api/v1/team/bookkeepers/access
+         * Grant tenant access to a firm.
+         * Requires Owner role.
+         */
+        post<Team.Bookkeepers.Access> {
+            val principal = dokusPrincipal
+            val tenantId = requireTenantAccess().requireRole(UserRole.Owner).tenantId
+            val request = call.receive<GrantBookkeeperAccessRequest>()
+
+            teamService.grantBookkeeperAccess(
+                tenantId = tenantId,
+                firmId = request.firmId,
+                grantedBy = principal.userId,
+            ).fold(
+                onSuccess = { activated ->
+                    call.respond(
+                        HttpStatusCode.OK,
+                        GrantBookkeeperAccessResponse(
+                            firmId = request.firmId,
+                            tenantId = tenantId,
+                            activated = activated
+                        )
+                    )
+                },
+                onFailure = { error ->
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        mapOf("error" to (error.message ?: "Failed to grant access"))
+                    )
+                }
+            )
+        }
+
+        /**
+         * DELETE /api/v1/team/bookkeepers/access/{firmId}
+         * Revoke active firm access for the tenant.
+         * Requires Owner role.
+         */
+        delete<Team.Bookkeepers.Access.ByFirm> { route ->
+            val tenantId = requireTenantAccess().requireRole(UserRole.Owner).tenantId
+            teamService.revokeBookkeeperAccess(
+                tenantId = tenantId,
+                firmId = route.firmId,
+            ).fold(
+                onSuccess = { revoked ->
+                    if (!revoked) {
+                        throw DokusException.NotFound("Active firm access not found")
+                    }
+                    call.respond(HttpStatusCode.NoContent)
+                },
+                onFailure = { error ->
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        mapOf("error" to (error.message ?: "Failed to revoke access"))
+                    )
+                }
+            )
         }
     }
 }

@@ -216,6 +216,7 @@ private fun NoPreviewPlaceholder(modifier: Modifier = Modifier) {
 @Composable
 internal fun DetailsTabContent(
     state: DocumentReviewState.Content,
+    isAccountantReadOnly: Boolean,
     onIntent: (DocumentReviewIntent) -> Unit,
     onCorrectContact: () -> Unit,
     onCreateContact: () -> Unit,
@@ -239,7 +240,11 @@ internal fun DetailsTabContent(
             AnalysisFailedBanner(
                 reason = state.failureReason,
                 isRetrying = state.isProcessing,
-                onRetry = { onIntent(DocumentReviewIntent.RetryAnalysis) },
+                onRetry = {
+                    if (!isAccountantReadOnly) {
+                        onIntent(DocumentReviewIntent.RetryAnalysis)
+                    }
+                },
                 onContinueManually = { onIntent(DocumentReviewIntent.DismissFailureBanner) },
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -251,12 +256,14 @@ internal fun DetailsTabContent(
             onIntent = onIntent,
             onCorrectContact = onCorrectContact,
             onCreateContact = onCreateContact,
+            isAccountantReadOnly = isAccountantReadOnly,
             modifier = Modifier.fillMaxWidth()
         )
 
         // Document details section (fact display, not form)
         InvoiceDetailsCard(
             state = state,
+            isAccountantReadOnly = isAccountantReadOnly,
             onIntent = onIntent,
             modifier = Modifier.fillMaxWidth()
         )
@@ -266,8 +273,16 @@ internal fun DetailsTabContent(
         )
         SourcesCard(
             state = state,
-            onResolveSame = { onIntent(DocumentReviewIntent.ResolvePossibleMatchSame) },
-            onResolveDifferent = { onIntent(DocumentReviewIntent.ResolvePossibleMatchDifferent) },
+            onResolveSame = {
+                if (!isAccountantReadOnly) {
+                    onIntent(DocumentReviewIntent.ResolvePossibleMatchSame)
+                }
+            },
+            onResolveDifferent = {
+                if (!isAccountantReadOnly) {
+                    onIntent(DocumentReviewIntent.ResolvePossibleMatchDifferent)
+                }
+            },
             modifier = Modifier.fillMaxWidth()
         )
 

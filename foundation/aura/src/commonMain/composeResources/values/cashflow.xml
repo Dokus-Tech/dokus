@@ -137,6 +137,7 @@
     <string name="documents_filter_failed">Failed</string>
     <string name="documents_filter_rejected">Rejected</string>
     <string name="documents_upload">Upload</string>
+    <string name="documents_back_to_clients">Back to clients</string>
     <string name="documents_drop_to_upload">Drop files here to upload</string>
     <string name="documents_local_status_uploading">Uploading...</string>
     <string name="documents_local_status_preparing_document">Preparing document...</string>

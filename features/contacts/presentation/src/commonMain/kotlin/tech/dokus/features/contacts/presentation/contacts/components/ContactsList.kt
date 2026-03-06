@@ -42,6 +42,8 @@ import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.ImageLoader
@@ -56,9 +58,14 @@ import tech.dokus.aura.resources.contacts_doc_count_plural
 import tech.dokus.aura.resources.contacts_doc_count_single
 import tech.dokus.aura.resources.contacts_empty
 import tech.dokus.aura.resources.contacts_vendor
+import tech.dokus.domain.Email
+import tech.dokus.domain.Name
 import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.domain.model.contact.DerivedContactRoles
 import tech.dokus.foundation.app.network.rememberAuthenticatedImageLoader
 import tech.dokus.foundation.app.network.rememberResolvedApiUrl
 import tech.dokus.foundation.app.state.DokusState
@@ -77,6 +84,9 @@ import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.borderAmber
 import tech.dokus.foundation.aura.style.surfaceHover
 import tech.dokus.foundation.aura.style.textMuted
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 // UI dimension constants
 private val ErrorPaddingVertical = Constraints.Spacing.xxxLarge
@@ -546,23 +556,21 @@ private fun ContactsLoadingMoreIndicator(
 // PREVIEWS
 // ============================================================================
 
-@androidx.compose.ui.tooling.preview.Preview
+@Preview
 @Composable
 private fun ContactsListPreview(
-    @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
 ) {
     val now = kotlinx.datetime.LocalDateTime(2026, 1, 15, 10, 0)
     val contacts = listOf(
         ContactDto(
-            id = tech.dokus.domain.ids.ContactId.generate(),
-            tenantId = tech.dokus.domain.ids.TenantId.generate(),
-            name = tech.dokus.domain.Name("Acme Corporation"),
-            email = tech.dokus.domain.Email("info@acme.be"),
-            vatNumber = tech.dokus.domain.ids.VatNumber("BE0123456789"),
+            id = ContactId.generate(),
+            tenantId = TenantId.generate(),
+            name = Name("Acme Corporation"),
+            email = Email("info@acme.be"),
+            vatNumber = VatNumber("BE0123456789"),
             isActive = true,
-            derivedRoles = tech.dokus.domain.model.contact.DerivedContactRoles(
+            derivedRoles = DerivedContactRoles(
                 isCustomer = true,
                 isSupplier = false
             ),
@@ -570,12 +578,12 @@ private fun ContactsListPreview(
             updatedAt = now
         ),
         ContactDto(
-            id = tech.dokus.domain.ids.ContactId.generate(),
-            tenantId = tech.dokus.domain.ids.TenantId.generate(),
-            name = tech.dokus.domain.Name("TechStart BVBA"),
-            email = tech.dokus.domain.Email("hello@techstart.be"),
+            id = ContactId.generate(),
+            tenantId = TenantId.generate(),
+            name = Name("TechStart BVBA"),
+            email = Email("hello@techstart.be"),
             isActive = true,
-            derivedRoles = tech.dokus.domain.model.contact.DerivedContactRoles(
+            derivedRoles = DerivedContactRoles(
                 isCustomer = true,
                 isSupplier = true
             ),
@@ -583,7 +591,7 @@ private fun ContactsListPreview(
             updatedAt = now
         )
     )
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    TestWrapper(parameters) {
         ContactsList(
             state = DokusState.success(
                 PaginationState(

@@ -29,6 +29,7 @@ import tech.dokus.foundation.aura.tooling.TestWrapper
 @Composable
 internal fun MobileCanonicalContent(
     state: DocumentReviewState.Content,
+    isAccountantReadOnly: Boolean,
     onIntent: (DocumentReviewIntent) -> Unit,
     onBackClick: () -> Unit,
     onOpenSource: (DocumentSourceId) -> Unit,
@@ -65,6 +66,7 @@ internal fun MobileCanonicalContent(
             MobileAmountHeroCard(state = state)
             MobilePaymentStateCard(
                 state = state,
+                isAccountantReadOnly = isAccountantReadOnly,
                 onIntent = onIntent,
             )
 
@@ -76,6 +78,7 @@ internal fun MobileCanonicalContent(
 
             MobileSourcesAccordion(
                 state = state,
+                isAccountantReadOnly = isAccountantReadOnly,
                 expanded = accordionState["sources"] == true,
                 onToggle = { accordionState["sources"] = accordionState["sources"] != true },
                 onIntent = onIntent,
@@ -107,6 +110,7 @@ private fun MobileCanonicalContentPaidPreview(
     TestWrapper(parameters) {
         MobileCanonicalContent(
             state = previewReviewContentState(entryStatus = CashflowEntryStatus.Paid),
+            isAccountantReadOnly = false,
             onIntent = {},
             onBackClick = {},
             onOpenSource = {},
@@ -126,6 +130,7 @@ private fun MobileCanonicalContentAutoPaidPreview(
                 entryStatus = CashflowEntryStatus.Paid,
                 autoPaymentStatus = previewAutoPaymentStatus(canUndo = true),
             ),
+            isAccountantReadOnly = false,
             onIntent = {},
             onBackClick = {},
             onOpenSource = {},
@@ -142,6 +147,7 @@ private fun MobileCanonicalContentUnpaidPreview(
     TestWrapper(parameters) {
         MobileCanonicalContent(
             state = previewReviewContentState(entryStatus = CashflowEntryStatus.Open),
+            isAccountantReadOnly = false,
             onIntent = {},
             onBackClick = {},
             onOpenSource = {},
@@ -158,6 +164,7 @@ private fun MobileCanonicalContentOverduePreview(
     TestWrapper(parameters) {
         MobileCanonicalContent(
             state = previewReviewContentState(entryStatus = CashflowEntryStatus.Overdue),
+            isAccountantReadOnly = false,
             onIntent = {},
             onBackClick = {},
             onOpenSource = {},
@@ -174,6 +181,7 @@ private fun MobileCanonicalContentReviewPreview(
     TestWrapper(parameters) {
         MobileCanonicalContent(
             state = previewReviewContentState(entryStatus = null, isDocumentConfirmed = false),
+            isAccountantReadOnly = false,
             onIntent = {},
             onBackClick = {},
             onOpenSource = {},

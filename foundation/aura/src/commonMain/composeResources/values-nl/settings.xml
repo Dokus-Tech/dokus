@@ -114,6 +114,7 @@
     <string name="workspace_type_freelancer">Freelancer</string>
     <string name="workspace_create_failed">Werkruimte maken mislukt</string>
     <string name="workspace_select_failed">Werkruimte selecteren mislukt</string>
+    <string name="workspace_bookkeeper_console">Boekhoudersconsole</string>
     <string name="workspace_settings_load_failed">Werkruimte-instellingen laden mislukt</string>
     <string name="workspace_company_logo">Bedrijfslogo</string>
     <string name="workspace_avatar_upload_failed">Bedrijfslogo uploaden mislukt</string>

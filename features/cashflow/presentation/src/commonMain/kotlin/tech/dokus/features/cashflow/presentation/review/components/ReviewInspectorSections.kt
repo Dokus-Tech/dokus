@@ -171,6 +171,7 @@ internal fun InspectorContactSection(state: DocumentReviewState.Content) {
 @Composable
 internal fun InspectorSourcesSection(
     state: DocumentReviewState.Content,
+    isAccountantReadOnly: Boolean,
     onIntent: (DocumentReviewIntent) -> Unit,
     showSourceList: Boolean = true,
 ) {
@@ -213,18 +214,20 @@ internal fun InspectorSourcesSection(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.textMuted,
             )
-            Row(horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)) {
-                TextButton(
-                    onClick = { onIntent(DocumentReviewIntent.ResolvePossibleMatchSame) },
-                    enabled = !state.isResolvingMatchReview,
-                ) {
-                    Text(stringResource(Res.string.cashflow_match_review_same_document))
-                }
-                TextButton(
-                    onClick = { onIntent(DocumentReviewIntent.ResolvePossibleMatchDifferent) },
-                    enabled = !state.isResolvingMatchReview,
-                ) {
-                    Text(stringResource(Res.string.cashflow_match_review_different_document))
+            if (!isAccountantReadOnly) {
+                Row(horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)) {
+                    TextButton(
+                        onClick = { onIntent(DocumentReviewIntent.ResolvePossibleMatchSame) },
+                        enabled = !state.isResolvingMatchReview,
+                    ) {
+                        Text(stringResource(Res.string.cashflow_match_review_same_document))
+                    }
+                    TextButton(
+                        onClick = { onIntent(DocumentReviewIntent.ResolvePossibleMatchDifferent) },
+                        enabled = !state.isResolvingMatchReview,
+                    ) {
+                        Text(stringResource(Res.string.cashflow_match_review_different_document))
+                    }
                 }
             }
             hasContent = true
@@ -282,6 +285,7 @@ internal fun InspectorSourcesSection(
 @Composable
 internal fun InspectorPaymentSection(
     state: DocumentReviewState.Content,
+    isAccountantReadOnly: Boolean,
     onIntent: (DocumentReviewIntent) -> Unit,
 ) {
     val autoPaymentStatus = (state.autoPaymentStatus as? DokusState.Success<*>)?.data as? AutoPaymentStatusDto
@@ -366,7 +370,7 @@ internal fun InspectorPaymentSection(
                     }
                 } else {
                     InspectorValueRow(stringResource(Res.string.document_section_payment), stringResource(Res.string.payment_no_payment_recorded))
-                    if (state.canRecordPayment) {
+                    if (!isAccountantReadOnly && state.canRecordPayment) {
                         OutlinedButton(
                             onClick = { onIntent(DocumentReviewIntent.OpenPaymentSheet) },
                             modifier = Modifier.fillMaxWidth(),
@@ -383,7 +387,7 @@ internal fun InspectorPaymentSection(
 
             is DokusState.Error<*> -> {
                 InspectorValueRow(stringResource(Res.string.document_section_payment), stringResource(Res.string.payment_unable_to_load))
-                if (state.canRecordPayment) {
+                if (!isAccountantReadOnly && state.canRecordPayment) {
                     OutlinedButton(
                         onClick = { onIntent(DocumentReviewIntent.OpenPaymentSheet) },
                         modifier = Modifier.fillMaxWidth(),
@@ -395,7 +399,7 @@ internal fun InspectorPaymentSection(
 
             is DokusState.Idle<*> -> {
                 InspectorValueRow(stringResource(Res.string.document_section_payment), stringResource(Res.string.payment_no_payment_recorded))
-                if (state.canRecordPayment) {
+                if (!isAccountantReadOnly && state.canRecordPayment) {
                     OutlinedButton(
                         onClick = { onIntent(DocumentReviewIntent.OpenPaymentSheet) },
                         modifier = Modifier.fillMaxWidth(),

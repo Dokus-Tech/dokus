@@ -9,8 +9,10 @@ import pro.respawn.flowmvi.plugins.init
 import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
+import tech.dokus.domain.ids.FirmId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.features.auth.usecases.ListMyTenantsUseCase
+import tech.dokus.features.auth.usecases.GetAccountMeUseCase
+import tech.dokus.features.auth.usecases.RefreshSessionNowUseCase
 import tech.dokus.features.auth.usecases.SelectTenantUseCase
 import tech.dokus.foundation.platform.Logger
 
@@ -19,13 +21,12 @@ internal typealias WorkspaceSelectCtx =
 
 /**
  * Container for Workspace Selection screen using FlowMVI.
- * Manages loading available tenants and processing tenant selection.
- *
- * Use with Koin's `container<>` DSL for automatic ViewModel wrapping and lifecycle management.
+ * Loads available tenant/firms from account/me and handles workspace selection.
  */
 internal class WorkspaceSelectContainer(
-    private val listMyTenants: ListMyTenantsUseCase,
+    private val getAccountMeUseCase: GetAccountMeUseCase,
     private val selectTenantUseCase: SelectTenantUseCase,
+    private val refreshSessionNowUseCase: RefreshSessionNowUseCase,
 ) : Container<WorkspaceSelectState, WorkspaceSelectIntent, WorkspaceSelectAction> {
 
     private val logger = Logger.forClass<WorkspaceSelectContainer>()
@@ -33,34 +34,39 @@ internal class WorkspaceSelectContainer(
     override val store: Store<WorkspaceSelectState, WorkspaceSelectIntent, WorkspaceSelectAction> =
         store(WorkspaceSelectState.Loading) {
             init {
-                handleLoadTenants()
+                handleLoadWorkspaces()
             }
             reduce { intent ->
                 when (intent) {
-                    is WorkspaceSelectIntent.LoadTenants -> handleLoadTenants()
+                    WorkspaceSelectIntent.LoadWorkspaces -> handleLoadWorkspaces()
                     is WorkspaceSelectIntent.SelectTenant -> handleSelectTenant(intent.tenantId)
+                    is WorkspaceSelectIntent.SelectFirm -> handleSelectFirm(intent.firmId)
                 }
             }
         }
 
-    private suspend fun WorkspaceSelectCtx.handleLoadTenants() {
+    private suspend fun WorkspaceSelectCtx.handleLoadWorkspaces() {
         updateState { WorkspaceSelectState.Loading }
 
-        logger.d { "Loading available tenants" }
-        listMyTenants().fold(
-            onSuccess = { tenants ->
-                logger.i { "Loaded ${tenants.size} tenants" }
+        logger.d { "Loading available workspaces from account/me" }
+        getAccountMeUseCase().fold(
+            onSuccess = { accountMe ->
+                val tenants = accountMe.tenants.sortedBy { it.name.value.lowercase() }
+                val firms = accountMe.firms.sortedBy { it.name.value.lowercase() }
+                logger.i { "Loaded ${tenants.size} tenant(s) and ${firms.size} firm(s)" }
                 updateState {
-                    WorkspaceSelectState.Content(data = tenants)
+                    WorkspaceSelectState.Content(
+                        tenants = tenants,
+                        firms = firms,
+                    )
                 }
             },
             onFailure = { error ->
-                logger.e(error) { "Failed to load tenants" }
-                val exception = error.asDokusException
+                logger.e(error) { "Failed to load workspaces" }
                 updateState {
                     WorkspaceSelectState.Error(
-                        exception = exception,
-                        retryHandler = { intent(WorkspaceSelectIntent.LoadTenants) }
+                        exception = error.asDokusException,
+                        retryHandler = { intent(WorkspaceSelectIntent.LoadWorkspaces) }
                     )
                 }
             }
@@ -70,11 +76,13 @@ internal class WorkspaceSelectContainer(
     private suspend fun WorkspaceSelectCtx.handleSelectTenant(tenantId: TenantId) {
         withState<WorkspaceSelectState.Content, _> {
             val currentTenants = tenants
+            val currentFirms = firms
 
             updateState {
-                WorkspaceSelectState.Selecting(
+                WorkspaceSelectState.SelectingTenant(
                     tenants = currentTenants,
-                    selectedTenantId = tenantId
+                    firms = currentFirms,
+                    selectedTenantId = tenantId,
                 )
             }
 
@@ -92,13 +100,48 @@ internal class WorkspaceSelectContainer(
                     } else {
                         exception
                     }
-                    action(
-                        WorkspaceSelectAction.ShowSelectionError(
-                            displayException
-                        )
-                    )
+                    action(WorkspaceSelectAction.ShowSelectionError(displayException))
                     updateState {
-                        WorkspaceSelectState.Content(data = currentTenants)
+                        WorkspaceSelectState.Content(
+                            tenants = currentTenants,
+                            firms = currentFirms,
+                        )
+                    }
+                }
+            )
+        }
+    }
+
+    private suspend fun WorkspaceSelectCtx.handleSelectFirm(firmId: FirmId) {
+        withState<WorkspaceSelectState.Content, _> {
+            val currentTenants = tenants
+            val currentFirms = firms
+            updateState {
+                WorkspaceSelectState.SelectingFirm(
+                    tenants = currentTenants,
+                    firms = currentFirms,
+                    selectedFirmId = firmId,
+                )
+            }
+
+            refreshSessionNowUseCase().fold(
+                onSuccess = {
+                    action(WorkspaceSelectAction.NavigateToBookkeeperConsole(firmId))
+                },
+                onFailure = { error ->
+                    logger.e(error) { "Failed to refresh session before firm navigation: $firmId" }
+                    val exception = error.asDokusException
+                    val displayException = if (exception is DokusException.Unknown) {
+                        DokusException.WorkspaceSelectFailed
+                    } else {
+                        exception
+                    }
+                    action(WorkspaceSelectAction.ShowSelectionError(displayException))
+                    updateState {
+                        WorkspaceSelectState.Content(
+                            tenants = currentTenants,
+                            firms = currentFirms,
+                        )
                     }
                 }
             )

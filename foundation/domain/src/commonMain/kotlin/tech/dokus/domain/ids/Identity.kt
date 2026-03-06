@@ -22,6 +22,20 @@ value class TenantId(val value: Uuid) {
 @OptIn(ExperimentalUuidApi::class)
 @Serializable
 @JvmInline
+value class FirmId(val value: Uuid) {
+    constructor(value: String) : this(Uuid.parse(value))
+
+    override fun toString(): String = value.toString()
+
+    companion object {
+        fun generate(): FirmId = FirmId(Uuid.random())
+        fun parse(value: String): FirmId = FirmId(Uuid.parse(value))
+    }
+}
+
+@OptIn(ExperimentalUuidApi::class)
+@Serializable
+@JvmInline
 value class AddressId(val value: Uuid) {
     constructor(value: String) : this(Uuid.parse(value))
 

@@ -27,6 +27,8 @@ import tech.dokus.features.auth.datasource.TenantRemoteDataSourceImpl
 import tech.dokus.features.auth.gateway.AuthGateway
 import tech.dokus.features.auth.gateway.TeamInvitationsGateway
 import tech.dokus.features.auth.gateway.TeamInvitationsGatewayImpl
+import tech.dokus.features.auth.gateway.TeamBookkeeperAccessGateway
+import tech.dokus.features.auth.gateway.TeamBookkeeperAccessGatewayImpl
 import tech.dokus.features.auth.gateway.TeamMembersGateway
 import tech.dokus.features.auth.gateway.TeamMembersGatewayImpl
 import tech.dokus.features.auth.gateway.TeamOwnershipGateway
@@ -49,8 +51,12 @@ import tech.dokus.features.auth.usecases.ConnectToServerUseCase
 import tech.dokus.features.auth.usecases.ConnectToServerUseCaseImpl
 import tech.dokus.features.auth.usecases.CreateInvitationUseCase
 import tech.dokus.features.auth.usecases.CreateInvitationUseCaseImpl
+import tech.dokus.features.auth.usecases.GrantBookkeeperAccessUseCase
+import tech.dokus.features.auth.usecases.GrantBookkeeperAccessUseCaseImpl
 import tech.dokus.features.auth.usecases.CreateTenantUseCase
 import tech.dokus.features.auth.usecases.CreateTenantUseCaseImpl
+import tech.dokus.features.auth.usecases.CreateFirmUseCase
+import tech.dokus.features.auth.usecases.CreateFirmUseCaseImpl
 import tech.dokus.features.auth.usecases.ChangePasswordUseCase
 import tech.dokus.features.auth.usecases.ChangePasswordUseCaseImpl
 import tech.dokus.features.auth.usecases.DeleteWorkspaceAvatarUseCase
@@ -63,6 +69,8 @@ import tech.dokus.features.auth.usecases.GetAccountMeUseCase
 import tech.dokus.features.auth.usecases.GetAccountMeUseCaseImpl
 import tech.dokus.features.auth.usecases.GetCurrentUserUseCase
 import tech.dokus.features.auth.usecases.GetCurrentUserUseCaseImpl
+import tech.dokus.features.auth.usecases.RefreshSessionNowUseCase
+import tech.dokus.features.auth.usecases.RefreshSessionNowUseCaseImpl
 import tech.dokus.features.auth.usecases.GetInvoiceNumberPreviewUseCase
 import tech.dokus.features.auth.usecases.GetInvoiceNumberPreviewUseCaseImpl
 import tech.dokus.features.auth.usecases.GetLastSelectedTenantIdUseCase
@@ -77,6 +85,14 @@ import tech.dokus.features.auth.usecases.ListMyTenantsUseCase
 import tech.dokus.features.auth.usecases.ListMyTenantsUseCaseImpl
 import tech.dokus.features.auth.usecases.ListSessionsUseCase
 import tech.dokus.features.auth.usecases.ListSessionsUseCaseImpl
+import tech.dokus.features.auth.usecases.ListConsoleClientsUseCase
+import tech.dokus.features.auth.usecases.ListConsoleClientsUseCaseImpl
+import tech.dokus.features.auth.usecases.ListConsoleClientDocumentsUseCase
+import tech.dokus.features.auth.usecases.ListConsoleClientDocumentsUseCaseImpl
+import tech.dokus.features.auth.usecases.GetConsoleClientDocumentUseCase
+import tech.dokus.features.auth.usecases.GetConsoleClientDocumentUseCaseImpl
+import tech.dokus.features.auth.usecases.ListBookkeeperAccessUseCase
+import tech.dokus.features.auth.usecases.ListBookkeeperAccessUseCaseImpl
 import tech.dokus.features.auth.usecases.ListPendingInvitationsUseCase
 import tech.dokus.features.auth.usecases.ListPendingInvitationsUseCaseImpl
 import tech.dokus.features.auth.usecases.ListTeamMembersUseCase
@@ -102,8 +118,12 @@ import tech.dokus.features.auth.usecases.RevokeSessionUseCaseImpl
 import tech.dokus.features.auth.usecases.SearchCompanyUseCaseImpl
 import tech.dokus.features.auth.usecases.SelectTenantUseCase
 import tech.dokus.features.auth.usecases.SelectTenantUseCaseImpl
+import tech.dokus.features.auth.usecases.SearchBookkeeperFirmsUseCase
+import tech.dokus.features.auth.usecases.SearchBookkeeperFirmsUseCaseImpl
 import tech.dokus.features.auth.usecases.TransferWorkspaceOwnershipUseCase
 import tech.dokus.features.auth.usecases.TransferWorkspaceOwnershipUseCaseImpl
+import tech.dokus.features.auth.usecases.RevokeBookkeeperAccessUseCase
+import tech.dokus.features.auth.usecases.RevokeBookkeeperAccessUseCaseImpl
 import tech.dokus.features.auth.usecases.UpdateProfileUseCase
 import tech.dokus.features.auth.usecases.UpdateProfileUseCaseImpl
 import tech.dokus.features.auth.usecases.UpdateTeamMemberRoleUseCase
@@ -168,6 +188,7 @@ val authDataModule = module {
     singleOf(::TeamMembersGatewayImpl) bind TeamMembersGateway::class
     singleOf(::TeamInvitationsGatewayImpl) bind TeamInvitationsGateway::class
     singleOf(::TeamOwnershipGatewayImpl) bind TeamOwnershipGateway::class
+    singleOf(::TeamBookkeeperAccessGatewayImpl) bind TeamBookkeeperAccessGateway::class
 }
 
 val authDomainModule = module {
@@ -180,7 +201,11 @@ val authDomainModule = module {
     singleOf(::VerifyEmailUseCaseImpl) bind VerifyEmailUseCase::class
     singleOf(::ResendVerificationEmailUseCaseImpl) bind ResendVerificationEmailUseCase::class
     singleOf(::GetAccountMeUseCaseImpl) bind GetAccountMeUseCase::class
+    singleOf(::RefreshSessionNowUseCaseImpl) bind RefreshSessionNowUseCase::class
     singleOf(::GetCurrentUserUseCaseImpl) bind GetCurrentUserUseCase::class
+    singleOf(::ListConsoleClientsUseCaseImpl) bind ListConsoleClientsUseCase::class
+    singleOf(::ListConsoleClientDocumentsUseCaseImpl) bind ListConsoleClientDocumentsUseCase::class
+    singleOf(::GetConsoleClientDocumentUseCaseImpl) bind GetConsoleClientDocumentUseCase::class
     singleOf(::WatchCurrentUserUseCaseImpl) bind WatchCurrentUserUseCase::class
     singleOf(::UpdateProfileUseCaseImpl) bind UpdateProfileUseCase::class
     singleOf(::ChangePasswordUseCaseImpl) bind ChangePasswordUseCase::class
@@ -189,6 +214,7 @@ val authDomainModule = module {
     singleOf(::RevokeOtherSessionsUseCaseImpl) bind RevokeOtherSessionsUseCase::class
     singleOf(::HasFreelancerTenantUseCaseImpl) bind HasFreelancerTenantUseCase::class
     singleOf(::CreateTenantUseCaseImpl) bind CreateTenantUseCase::class
+    singleOf(::CreateFirmUseCaseImpl) bind CreateFirmUseCase::class
     singleOf(::ListMyTenantsUseCaseImpl) bind ListMyTenantsUseCase::class
     singleOf(::GetInvoiceNumberPreviewUseCaseImpl) bind GetInvoiceNumberPreviewUseCase::class
     singleOf(::GetTenantSettingsUseCaseImpl) bind GetTenantSettingsUseCase::class
@@ -203,6 +229,10 @@ val authDomainModule = module {
     singleOf(::UpdateTeamMemberRoleUseCaseImpl) bind UpdateTeamMemberRoleUseCase::class
     singleOf(::RemoveTeamMemberUseCaseImpl) bind RemoveTeamMemberUseCase::class
     singleOf(::TransferWorkspaceOwnershipUseCaseImpl) bind TransferWorkspaceOwnershipUseCase::class
+    singleOf(::SearchBookkeeperFirmsUseCaseImpl) bind SearchBookkeeperFirmsUseCase::class
+    singleOf(::ListBookkeeperAccessUseCaseImpl) bind ListBookkeeperAccessUseCase::class
+    singleOf(::GrantBookkeeperAccessUseCaseImpl) bind GrantBookkeeperAccessUseCase::class
+    singleOf(::RevokeBookkeeperAccessUseCaseImpl) bind RevokeBookkeeperAccessUseCase::class
     singleOf(::GetCurrentTenantUseCaseImpl) bind GetCurrentTenantUseCase::class
     singleOf(::WatchCurrentTenantUseCaseImpl) bind WatchCurrentTenantUseCase::class
     singleOf(::GetCurrentTenantIdUseCaseImpl) bind GetCurrentTenantIdUseCase::class

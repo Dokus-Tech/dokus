@@ -9,13 +9,19 @@ import tech.dokus.domain.Password
 import tech.dokus.domain.enums.Language
 import tech.dokus.domain.enums.SubscriptionTier
 import tech.dokus.domain.enums.TenantType
+import tech.dokus.domain.ids.FirmId
 import tech.dokus.domain.ids.SessionId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.Tenant
+import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.UpsertTenantAddressRequest
 import tech.dokus.domain.model.User
+import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.model.auth.AccountMeResponse
+import tech.dokus.domain.model.auth.ConsoleClientSummary
+import tech.dokus.domain.model.auth.CreateFirmRequest
+import tech.dokus.domain.model.auth.CreateFirmResponse
 import tech.dokus.domain.model.auth.LoginRequest
 import tech.dokus.domain.model.auth.RegisterRequest
 import tech.dokus.domain.model.auth.SessionDto
@@ -48,6 +54,25 @@ interface AuthGateway {
     suspend fun hasFreelancerTenant(): Result<Boolean>
 
     suspend fun getAccountMe(): Result<AccountMeResponse>
+
+    suspend fun refreshSessionNow(): Result<Unit>
+
+    suspend fun createFirm(request: CreateFirmRequest): Result<CreateFirmResponse>
+
+    suspend fun listConsoleClients(firmId: FirmId): Result<List<ConsoleClientSummary>>
+
+    suspend fun listConsoleClientDocuments(
+        firmId: FirmId,
+        tenantId: TenantId,
+        page: Int = 0,
+        limit: Int = 20,
+    ): Result<PaginatedResponse<DocumentRecordDto>>
+
+    suspend fun getConsoleClientDocument(
+        firmId: FirmId,
+        tenantId: TenantId,
+        documentId: String,
+    ): Result<DocumentRecordDto>
 
     suspend fun getCurrentUser(): Result<User>
 

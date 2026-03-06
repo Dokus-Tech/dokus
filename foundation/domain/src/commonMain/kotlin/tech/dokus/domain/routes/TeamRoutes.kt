@@ -3,6 +3,7 @@ package tech.dokus.domain.routes
 import io.ktor.resources.*
 import kotlinx.serialization.Serializable
 import tech.dokus.domain.enums.InvitationStatus
+import tech.dokus.domain.ids.FirmId
 
 /**
  * Type-safe route definitions for Team Management API.
@@ -66,5 +67,44 @@ class Team {
         @Serializable
         @Resource("{id}")
         class Id(val parent: Invitations, val id: String)
+    }
+
+    /**
+     * Company-manager firm access management for bookkeepers.
+     */
+    @Serializable
+    @Resource("bookkeepers")
+    class Bookkeepers(val parent: Team = Team()) {
+        /**
+         * GET /api/v1/team/bookkeepers/search?query=...&limit=...
+         * Search existing firms by name/VAT.
+         */
+        @Serializable
+        @Resource("search")
+        class Search(
+            val parent: Bookkeepers = Bookkeepers(),
+            val query: String = "",
+            val limit: Int = 20,
+        )
+
+        /**
+         * GET/POST /api/v1/team/bookkeepers/access
+         * List current active firm access relations for the tenant.
+         * Grant firm access to the tenant.
+         */
+        @Serializable
+        @Resource("access")
+        class Access(val parent: Bookkeepers = Bookkeepers()) {
+            /**
+             * DELETE /api/v1/team/bookkeepers/access/{firmId}
+             * Revoke active firm access.
+             */
+            @Serializable
+            @Resource("{firmId}")
+            class ByFirm(
+                val parent: Access = Access(),
+                val firmId: FirmId,
+            )
+        }
     }
 }

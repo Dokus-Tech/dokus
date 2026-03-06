@@ -43,11 +43,11 @@ class MoreScreenCallbackContractTest {
     }
 
     @Test
-    fun `accountant dispatches to root callback`() {
+    fun `console clients dispatches to root callback`() {
         var rootCallCount = 0
 
         dispatchMoreNavigation(
-            destination = HomeDestination.Accountant,
+            destination = HomeDestination.ConsoleClients,
             onNavigateRoot = { rootCallCount++ }
         )
 

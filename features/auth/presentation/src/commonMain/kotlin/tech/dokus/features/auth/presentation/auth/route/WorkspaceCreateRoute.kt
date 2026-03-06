@@ -9,7 +9,10 @@ import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.features.auth.mvi.WorkspaceCreateAction
 import tech.dokus.features.auth.mvi.WorkspaceCreateContainer
 import tech.dokus.features.auth.presentation.auth.screen.WorkspaceCreateScreen
+import tech.dokus.foundation.app.local.LocalBookkeeperConsoleCallback
+import tech.dokus.foundation.app.shell.WorkspaceContextStore
 import tech.dokus.foundation.app.mvi.container
+import tech.dokus.navigation.destinations.CoreDestination
 import tech.dokus.navigation.destinations.SettingsDestination
 import tech.dokus.navigation.local.LocalNavController
 import tech.dokus.navigation.replace
@@ -19,11 +22,26 @@ internal fun WorkspaceCreateRoute(
     container: WorkspaceCreateContainer = container()
 ) {
     val navController = LocalNavController.current
+    val bcCallback = LocalBookkeeperConsoleCallback.current
     var triggerWarp by remember { mutableStateOf(false) }
+    var pendingConsoleNavigation by remember { mutableStateOf(false) }
+    var shouldOpenPeppolOnComplete by remember { mutableStateOf(false) }
 
+    // WorkspaceContextStore is mutated here because the route is the coordination
+    // point between the auth flow action and the app shell's surface context.
+    // The container emits the navigation action; the route translates it into a
+    // global context switch before triggering the warp animation.
     val state by container.store.subscribe { action ->
         when (action) {
             WorkspaceCreateAction.NavigateHome -> {
+                WorkspaceContextStore.selectTenantWorkspace()
+                shouldOpenPeppolOnComplete = true
+                triggerWarp = true
+            }
+            is WorkspaceCreateAction.NavigateToBookkeeperConsole -> {
+                WorkspaceContextStore.selectFirmWorkspace(action.firmId)
+                pendingConsoleNavigation = true
+                shouldOpenPeppolOnComplete = false
                 triggerWarp = true
             }
             WorkspaceCreateAction.NavigateBack -> navController.navigateUp()
@@ -39,8 +57,19 @@ internal fun WorkspaceCreateRoute(
         onNavigateUp = { navController.navigateUp() },
         triggerWarp = triggerWarp,
         onWarpComplete = {
+            if (pendingConsoleNavigation) {
+                pendingConsoleNavigation = false
+                triggerWarp = false
+                bcCallback?.invoke()
+                navController.replace(CoreDestination.Home)
+                return@WorkspaceCreateScreen
+            }
+
             triggerWarp = false
-            navController.replace(SettingsDestination.PeppolRegistration)
+            if (shouldOpenPeppolOnComplete) {
+                shouldOpenPeppolOnComplete = false
+                navController.replace(SettingsDestination.PeppolRegistration)
+            }
         },
     )
 }

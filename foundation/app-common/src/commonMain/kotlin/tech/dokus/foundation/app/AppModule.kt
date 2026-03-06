@@ -28,6 +28,12 @@ enum class SettingsPriority(val order: Int) {
 }
 
 @Immutable
+enum class NavContext {
+    TENANT,
+    FIRM,
+}
+
+@Immutable
 data class ModuleSettingsGroup(
     val title: StringResource,
     val sections: List<ModuleSettingsSection>,
@@ -47,6 +53,7 @@ data class ModuleNavGroup(
     val sectionId: String,
     val sectionTitle: StringResource,
     val sectionIcon: DrawableResource,
+    val navContext: NavContext = NavContext.TENANT,
     val sectionOrder: Int = 0,
     val sectionDefaultExpanded: Boolean = false,
     val items: List<NavItem>,

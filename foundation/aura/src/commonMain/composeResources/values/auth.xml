@@ -41,6 +41,7 @@
     <string name="auth_workspace_type_prompt">Choose your workspace type</string>
     <string name="auth_workspace_type_company_description">For registered companies</string>
     <string name="auth_workspace_type_freelancer_description">For individual freelancers</string>
+    <string name="auth_workspace_type_bookkeeper_description">For accounting firms and bookkeepers</string>
     <string name="auth_workspace_type_unavailable">Freelancer workspace already exists</string>
     <string name="auth_your_name">Your name</string>
     <string name="auth_company_name_prompt">Company name</string>
@@ -48,8 +49,17 @@
     <string name="auth_company_name_label">Company name</string>
     <string name="auth_company_name_searching">Searching...</string>
     <string name="auth_company_lookup_failed">Company lookup failed</string>
+    <string name="auth_company_lookup_prompt">Find your company</string>
+    <string name="auth_company_lookup_subtitle">Search by name or VAT number</string>
+    <string name="auth_company_lookup_results_count">%1$d results in KBO/CBE</string>
+    <string name="auth_company_lookup_idle_line_1">Start typing to search</string>
+    <string name="auth_company_lookup_idle_line_2">the Belgian company registry</string>
+    <string name="auth_company_lookup_not_found_title">&quot;%1$s&quot; not found</string>
+    <string name="auth_company_lookup_not_found_subtitle">Not in the Belgian company registry</string>
     <string name="auth_business_details">Business details</string>
     <string name="auth_business_details_subtitle">Add VAT and address information</string>
+    <string name="auth_registered_address">Address</string>
+    <string name="auth_vat_number_prefixed">VAT Number</string>
 
     <!-- Entity Confirmation -->
     <string name="auth_entity_single_prompt">Is this your company?</string>

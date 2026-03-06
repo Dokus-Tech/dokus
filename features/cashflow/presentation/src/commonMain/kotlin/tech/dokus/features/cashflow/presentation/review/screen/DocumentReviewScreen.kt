@@ -29,6 +29,7 @@ import tech.dokus.foundation.aura.tooling.TestWrapper
 internal fun DocumentReviewScreen(
     state: DocumentReviewState,
     isLargeScreen: Boolean,
+    isAccountantReadOnly: Boolean,
     onIntent: (DocumentReviewIntent) -> Unit,
     onBackClick: () -> Unit,
     onOpenChat: () -> Unit,
@@ -46,6 +47,7 @@ internal fun DocumentReviewScreen(
                 ReviewTopBar(
                     state = state,
                     isLargeScreen = isLargeScreen,
+                    isAccountantReadOnly = isAccountantReadOnly,
                     onBackClick = onBackClick,
                     onChatClick = onOpenChat,
                     onConfirmClick = { onIntent(DocumentReviewIntent.Confirm) },
@@ -65,6 +67,7 @@ internal fun DocumentReviewScreen(
         ReviewContent(
             state = state,
             isLargeScreen = isLargeScreen,
+            isAccountantReadOnly = isAccountantReadOnly,
             contentPadding = contentPadding,
             onIntent = onIntent,
             onCorrectContact = onCorrectContact,
@@ -84,6 +87,7 @@ private fun DocumentReviewScreenLoadingPreview(
         DocumentReviewScreen(
             state = DocumentReviewState.Loading(),
             isLargeScreen = false,
+            isAccountantReadOnly = false,
             onIntent = {},
             onBackClick = {},
             onOpenChat = {},
@@ -104,6 +108,7 @@ private fun DocumentReviewScreenDesktopOpenPreview(
         DocumentReviewScreen(
             state = previewReviewContentState(entryStatus = CashflowEntryStatus.Open),
             isLargeScreen = true,
+            isAccountantReadOnly = false,
             onIntent = {},
             onBackClick = {},
             onOpenChat = {},
@@ -132,6 +137,7 @@ private fun DocumentReviewScreenDesktopSourcePreview(
         DocumentReviewScreen(
             state = baseState.copy(sourceViewerState = sourceViewerState),
             isLargeScreen = true,
+            isAccountantReadOnly = false,
             onIntent = {},
             onBackClick = {},
             onOpenChat = {},
@@ -152,6 +158,7 @@ private fun DocumentReviewScreenDesktopPaidPreview(
         DocumentReviewScreen(
             state = previewReviewContentState(entryStatus = CashflowEntryStatus.Paid),
             isLargeScreen = true,
+            isAccountantReadOnly = false,
             onIntent = {},
             onBackClick = {},
             onOpenChat = {},

@@ -18,6 +18,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import kotlinx.coroutines.delay
+import tech.dokus.domain.DisplayName
+import tech.dokus.domain.enums.FirmRole
+import tech.dokus.domain.enums.TenantType
+import tech.dokus.domain.enums.UserRole
+import tech.dokus.domain.ids.FirmId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.model.auth.FirmWorkspaceSummary
+import tech.dokus.domain.model.auth.TenantWorkspaceSummary
 import tech.dokus.features.auth.mvi.WorkspaceSelectIntent
 import tech.dokus.features.auth.mvi.WorkspaceSelectState
 import tech.dokus.features.auth.presentation.auth.components.WorkspaceSelectionBody
@@ -64,8 +73,11 @@ internal fun WorkspaceSelectScreen(
                 OnboardingCenteredShell {
                     WorkspaceSelectionBody(
                         state = state,
-                        onTenantClick = { tenant ->
-                            onIntent(WorkspaceSelectIntent.SelectTenant(tenant.id))
+                        onTenantClick = { tenantId ->
+                            onIntent(WorkspaceSelectIntent.SelectTenant(tenantId))
+                        },
+                        onFirmClick = { firmId ->
+                            onIntent(WorkspaceSelectIntent.SelectFirm(firmId))
                         },
                         onAddTenantClick = onAddTenantClick,
                     )
@@ -83,6 +95,28 @@ internal fun WorkspaceSelectScreen(
     }
 }
 
+private fun previewTenant(
+    name: String,
+    role: UserRole,
+): TenantWorkspaceSummary = TenantWorkspaceSummary(
+    id = TenantId.generate(),
+    name = DisplayName(name),
+    vatNumber = VatNumber("BE0123456789"),
+    role = role,
+    type = TenantType.Company,
+)
+
+private fun previewFirm(
+    name: String,
+    count: Int,
+): FirmWorkspaceSummary = FirmWorkspaceSummary(
+    id = FirmId.generate(),
+    name = DisplayName(name),
+    vatNumber = VatNumber("BE0123456789"),
+    role = FirmRole.Owner,
+    clientCount = count,
+)
+
 @androidx.compose.ui.tooling.preview.Preview
 @Composable
 private fun WorkspaceSelectScreenPreview(
@@ -92,7 +126,37 @@ private fun WorkspaceSelectScreenPreview(
 ) {
     tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
         WorkspaceSelectScreen(
-            state = WorkspaceSelectState.Content(data = emptyList()),
+            state = WorkspaceSelectState.Content(
+                tenants = listOf(
+                    previewTenant("Dokus Tech", UserRole.Owner),
+                    previewTenant("Client Corp", UserRole.Admin),
+                ),
+                firms = listOf(previewFirm("Kantoor Boonen", 8)),
+            ),
+            onIntent = {},
+            onAddTenantClick = {},
+            triggerWarp = false,
+            onWarpComplete = {},
+        )
+    }
+}
+
+@androidx.compose.ui.tooling.preview.Preview(name = "Workspace Select Desktop", widthDp = 1366, heightDp = 900)
+@Composable
+private fun WorkspaceSelectScreenDesktopPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class,
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters,
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        WorkspaceSelectScreen(
+            state = WorkspaceSelectState.Content(
+                tenants = listOf(
+                    previewTenant("Dokus Tech", UserRole.Owner),
+                    previewTenant("Client Corp", UserRole.Editor),
+                ),
+                firms = emptyList(),
+            ),
             onIntent = {},
             onAddTenantClick = {},
             triggerWarp = false,

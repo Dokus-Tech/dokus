@@ -16,6 +16,7 @@ import tech.dokus.backend.services.auth.AuthService
 import tech.dokus.backend.services.auth.EmailService
 import tech.dokus.backend.services.auth.EmailTemplateRenderer
 import tech.dokus.backend.services.auth.EmailVerificationService
+import tech.dokus.backend.services.auth.FirmInviteTokenService
 import tech.dokus.backend.services.auth.PasswordResetService
 import tech.dokus.backend.services.auth.RateLimitServiceInterface
 import tech.dokus.backend.services.auth.RedisRateLimitService
@@ -207,6 +208,8 @@ private val cryptoModule = module {
 }
 
 private fun authModule() = module {
+    singleOf(::FirmInviteTokenService)
+
     single<EmailService> {
         ResendEmailService(get())
     }
@@ -254,6 +257,7 @@ private fun authModule() = module {
         val authConfig = get<AuthConfig>()
         AuthService(
             userRepository = get(),
+            firmRepository = get(),
             jwtGenerator = get(),
             refreshTokenRepository = get(),
             rateLimitService = get(),
@@ -265,7 +269,7 @@ private fun authModule() = module {
         )
     }
 
-    single { TeamService(get(), get(), get()) }
+    single { TeamService(get(), get(), get(), get()) }
 
     single {
         val config = get<Config>()

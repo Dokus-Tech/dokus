@@ -4,14 +4,20 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDateTime
 import tech.dokus.domain.enums.InvitationStatus
 import tech.dokus.domain.enums.UserRole
+import tech.dokus.domain.ids.FirmId
 import tech.dokus.domain.ids.InvitationId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.CreateInvitationRequest
 import tech.dokus.domain.model.TeamMember
 import tech.dokus.domain.model.TenantInvitation
+import tech.dokus.domain.model.auth.BookkeeperFirmSearchItem
+import tech.dokus.domain.model.auth.GrantBookkeeperAccessResponse
+import tech.dokus.domain.model.auth.TenantBookkeeperAccessItem
 import tech.dokus.domain.Email
+import tech.dokus.domain.DisplayName
 import tech.dokus.domain.Name
+import tech.dokus.domain.ids.VatNumber
 import tech.dokus.features.auth.datasource.TeamRemoteDataSource
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -79,6 +85,47 @@ class TeamGatewayImplsTest {
         assertEquals(newOwnerId, remote.lastTransferredOwnerId)
     }
 
+    @Test
+    fun teamBookkeeperAccessGatewayDelegatesSearchGrantListAndRevoke() = runTest {
+        val remote = FakeTeamRemoteDataSource()
+        val firmId = FirmId.parse("00000000-0000-0000-0000-000000000099")
+        val searchItem = BookkeeperFirmSearchItem(
+            firmId = firmId,
+            name = DisplayName("Kantoor Boonen"),
+            vatNumber = VatNumber("BE0777887045"),
+            alreadyConnected = false,
+        )
+        val accessItem = TenantBookkeeperAccessItem(
+            firmId = firmId,
+            firmName = DisplayName("Kantoor Boonen"),
+            vatNumber = VatNumber("BE0777887045"),
+            grantedAt = LocalDateTime(2026, 1, 10, 12, 0),
+        )
+        val grantResponse = GrantBookkeeperAccessResponse(
+            firmId = firmId,
+            tenantId = TenantId.parse("00000000-0000-0000-0000-000000000003"),
+            activated = true,
+        )
+        remote.searchBookkeeperFirmsResult = Result.success(listOf(searchItem))
+        remote.listBookkeeperAccessResult = Result.success(listOf(accessItem))
+        remote.grantBookkeeperAccessResult = Result.success(grantResponse)
+        remote.revokeBookkeeperAccessResult = Result.success(Unit)
+
+        val gateway = TeamBookkeeperAccessGatewayImpl(remote)
+
+        assertEquals(listOf(searchItem), gateway.searchBookkeeperFirms("kantoor", 10).getOrNull())
+        assertEquals(Pair("kantoor", 10), remote.lastBookkeeperSearchArgs)
+
+        assertEquals(listOf(accessItem), gateway.listBookkeeperAccess().getOrNull())
+        assertTrue(remote.listBookkeeperAccessCalled)
+
+        assertEquals(grantResponse, gateway.grantBookkeeperAccess(firmId).getOrNull())
+        assertEquals(firmId, remote.lastGrantedFirmId)
+
+        assertTrue(gateway.revokeBookkeeperAccess(firmId).isSuccess)
+        assertEquals(firmId, remote.lastRevokedFirmId)
+    }
+
     private fun sampleTeamMember(): TeamMember {
         return TeamMember(
             userId = UserId.parse("00000000-0000-0000-0000-000000000001"),
@@ -131,6 +178,19 @@ class TeamGatewayImplsTest {
         var lastTransferredOwnerId: UserId? = null
         var transferOwnershipResult: Result<Unit> = Result.success(Unit)
 
+        var lastBookkeeperSearchArgs: Pair<String, Int>? = null
+        var searchBookkeeperFirmsResult: Result<List<BookkeeperFirmSearchItem>> = Result.success(emptyList())
+
+        var listBookkeeperAccessCalled = false
+        var listBookkeeperAccessResult: Result<List<TenantBookkeeperAccessItem>> = Result.success(emptyList())
+
+        var lastGrantedFirmId: FirmId? = null
+        var grantBookkeeperAccessResult: Result<GrantBookkeeperAccessResponse> =
+            Result.failure(IllegalStateException("missing"))
+
+        var lastRevokedFirmId: FirmId? = null
+        var revokeBookkeeperAccessResult: Result<Unit> = Result.success(Unit)
+
         override suspend fun listTeamMembers(): Result<List<TeamMember>> {
             listMembersCalled = true
             return listTeamMembersResult
@@ -166,6 +226,29 @@ class TeamGatewayImplsTest {
         override suspend fun transferOwnership(newOwnerId: UserId): Result<Unit> {
             lastTransferredOwnerId = newOwnerId
             return transferOwnershipResult
+        }
+
+        override suspend fun searchBookkeeperFirms(
+            query: String,
+            limit: Int
+        ): Result<List<BookkeeperFirmSearchItem>> {
+            lastBookkeeperSearchArgs = query to limit
+            return searchBookkeeperFirmsResult
+        }
+
+        override suspend fun listBookkeeperAccess(): Result<List<TenantBookkeeperAccessItem>> {
+            listBookkeeperAccessCalled = true
+            return listBookkeeperAccessResult
+        }
+
+        override suspend fun grantBookkeeperAccess(firmId: FirmId): Result<GrantBookkeeperAccessResponse> {
+            lastGrantedFirmId = firmId
+            return grantBookkeeperAccessResult
+        }
+
+        override suspend fun revokeBookkeeperAccess(firmId: FirmId): Result<Unit> {
+            lastRevokedFirmId = firmId
+            return revokeBookkeeperAccessResult
         }
     }
 }

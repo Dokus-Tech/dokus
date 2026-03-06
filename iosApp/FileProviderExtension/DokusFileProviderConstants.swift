@@ -63,7 +63,6 @@ enum DokusLifecycleFolder: String, CaseIterable {
 enum DokusWorkspaceRole: String {
     case owner = "OWNER"
     case admin = "ADMIN"
-    case accountant = "ACCOUNTANT"
     case editor = "EDITOR"
     case viewer = "VIEWER"
 
@@ -71,7 +70,7 @@ enum DokusWorkspaceRole: String {
         switch self {
         case .owner, .admin, .editor:
             return true
-        case .accountant, .viewer:
+        case .viewer:
             return false
         }
     }

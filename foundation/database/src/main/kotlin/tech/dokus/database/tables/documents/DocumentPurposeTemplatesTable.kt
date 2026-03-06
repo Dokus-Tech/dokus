@@ -25,6 +25,5 @@ object DocumentPurposeTemplatesTable : UUIDTable("document_purpose_templates") {
 
     init {
         uniqueIndex(tenantId, counterpartyKey, documentType)
-        index(false, tenantId, counterpartyKey, documentType)
     }
 }

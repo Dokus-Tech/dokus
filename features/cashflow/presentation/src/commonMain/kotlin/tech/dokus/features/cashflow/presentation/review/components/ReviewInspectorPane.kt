@@ -45,6 +45,7 @@ import tech.dokus.features.cashflow.presentation.review.colorized as financialSt
 @Composable
 internal fun ReviewInspectorPane(
     state: DocumentReviewState.Content,
+    isAccountantReadOnly: Boolean,
     onIntent: (DocumentReviewIntent) -> Unit,
     onCorrectContact: () -> Unit,
     onCreateContact: () -> Unit,
@@ -57,6 +58,7 @@ internal fun ReviewInspectorPane(
     ) {
         InspectorHeader(
             state = state,
+            isAccountantReadOnly = isAccountantReadOnly,
             onIntent = onIntent,
             modifier = Modifier
                 .fillMaxWidth()
@@ -91,22 +93,26 @@ internal fun ReviewInspectorPane(
             InspectorAmountSection(state = state)
             InspectorSourcesSection(
                 state = state,
+                isAccountantReadOnly = isAccountantReadOnly,
                 onIntent = onIntent,
                 showSourceList = false,
             )
             InspectorPaymentSection(
                 state = state,
+                isAccountantReadOnly = isAccountantReadOnly,
                 onIntent = onIntent,
             )
         }
 
-        OutlinedButton(
-            onClick = { onIntent(DocumentReviewIntent.RequestAmendment) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(Constraints.Spacing.medium),
-        ) {
-            Text("Request amendment")
+        if (!isAccountantReadOnly) {
+            OutlinedButton(
+                onClick = { onIntent(DocumentReviewIntent.RequestAmendment) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(Constraints.Spacing.medium),
+            ) {
+                Text("Request amendment")
+            }
         }
     }
 }
@@ -131,6 +137,7 @@ private fun InspectorFactGroupCard(
 @Composable
 private fun InspectorHeader(
     state: DocumentReviewState.Content,
+    isAccountantReadOnly: Boolean,
     onIntent: (DocumentReviewIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -146,7 +153,7 @@ private fun InspectorHeader(
             CompressedStatusLine(state)
         }
 
-        if (!state.isDocumentConfirmed && !state.isDocumentRejected &&
+        if (!isAccountantReadOnly && !state.isDocumentConfirmed && !state.isDocumentRejected &&
             state.financialStatus == ReviewFinancialStatus.Review
         ) {
             Button(
@@ -156,7 +163,7 @@ private fun InspectorHeader(
             ) {
                 Text("Confirm document")
             }
-        } else if (state.canRecordPayment) {
+        } else if (!isAccountantReadOnly && state.canRecordPayment) {
             OutlinedButton(
                 onClick = { onIntent(DocumentReviewIntent.OpenPaymentSheet) },
                 modifier = Modifier.fillMaxWidth(),
@@ -222,6 +229,7 @@ private fun ReviewInspectorPanePaidPreview(
     TestWrapper(parameters) {
         ReviewInspectorPane(
             state = previewReviewContentState(entryStatus = CashflowEntryStatus.Paid),
+            isAccountantReadOnly = false,
             onIntent = {},
             onCorrectContact = {},
             onCreateContact = {},
@@ -240,6 +248,7 @@ private fun ReviewInspectorPaneAutoPaidPreview(
                 entryStatus = CashflowEntryStatus.Paid,
                 autoPaymentStatus = previewAutoPaymentStatus(canUndo = true),
             ),
+            isAccountantReadOnly = false,
             onIntent = {},
             onCorrectContact = {},
             onCreateContact = {},
@@ -255,6 +264,7 @@ private fun ReviewInspectorPaneUnpaidPreview(
     TestWrapper(parameters) {
         ReviewInspectorPane(
             state = previewReviewContentState(entryStatus = CashflowEntryStatus.Open),
+            isAccountantReadOnly = false,
             onIntent = {},
             onCorrectContact = {},
             onCreateContact = {},
@@ -270,6 +280,7 @@ private fun ReviewInspectorPaneOverduePreview(
     TestWrapper(parameters) {
         ReviewInspectorPane(
             state = previewReviewContentState(entryStatus = CashflowEntryStatus.Overdue),
+            isAccountantReadOnly = false,
             onIntent = {},
             onCorrectContact = {},
             onCreateContact = {},
@@ -285,6 +296,7 @@ private fun ReviewInspectorPaneReviewPreview(
     TestWrapper(parameters) {
         ReviewInspectorPane(
             state = previewReviewContentState(entryStatus = null, isDocumentConfirmed = false),
+            isAccountantReadOnly = false,
             onIntent = {},
             onCorrectContact = {},
             onCreateContact = {},

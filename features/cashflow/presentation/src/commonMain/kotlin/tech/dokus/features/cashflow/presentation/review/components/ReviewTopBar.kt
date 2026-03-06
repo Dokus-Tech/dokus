@@ -53,6 +53,7 @@ private val StatusDotSize = 6.dp
 internal fun ReviewTopBar(
     state: DocumentReviewState,
     isLargeScreen: Boolean,
+    isAccountantReadOnly: Boolean,
     onBackClick: () -> Unit,
     onChatClick: () -> Unit,
     onConfirmClick: () -> Unit,
@@ -89,6 +90,7 @@ internal fun ReviewTopBar(
             actions = {
                 val showActions = content != null &&
                     isLargeScreen &&
+                    !isAccountantReadOnly &&
                     !content.isDocumentConfirmed &&
                     !content.isDocumentRejected
                 if (showActions) {
@@ -235,6 +237,7 @@ private fun ReviewTopBarPreview(
         ReviewTopBar(
             state = DocumentReviewState.Loading(),
             isLargeScreen = false,
+            isAccountantReadOnly = false,
             onBackClick = {},
             onChatClick = {},
             onConfirmClick = {},

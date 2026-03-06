@@ -65,6 +65,7 @@ private val DesktopInspectorWidth = Constraints.DocumentDetail.inspectorWidth + 
 internal fun ReviewContent(
     state: DocumentReviewState,
     isLargeScreen: Boolean,
+    isAccountantReadOnly: Boolean,
     contentPadding: PaddingValues,
     onIntent: (DocumentReviewIntent) -> Unit,
     onCorrectContact: (CounterpartyInfo) -> Unit,
@@ -83,6 +84,7 @@ internal fun ReviewContent(
             if (isLargeScreen) {
                 DesktopReviewContent(
                     state = state,
+                    isAccountantReadOnly = isAccountantReadOnly,
                     contentPadding = contentPadding,
                     onIntent = onIntent,
                     onCorrectContact = onCorrectContact,
@@ -91,6 +93,7 @@ internal fun ReviewContent(
             } else {
                 MobileReviewContent(
                     state = state,
+                    isAccountantReadOnly = isAccountantReadOnly,
                     contentPadding = contentPadding,
                     onIntent = onIntent,
                     onBackClick = onBackClick,
@@ -197,6 +200,7 @@ private fun AwaitingExtractionContent(
 @Composable
 private fun DesktopReviewContent(
     state: DocumentReviewState.Content,
+    isAccountantReadOnly: Boolean,
     contentPadding: PaddingValues,
     onIntent: (DocumentReviewIntent) -> Unit,
     onCorrectContact: (CounterpartyInfo) -> Unit,
@@ -218,6 +222,7 @@ private fun DesktopReviewContent(
         )
         ReviewInspectorPane(
             state = state,
+            isAccountantReadOnly = isAccountantReadOnly,
             onIntent = onIntent,
             onCorrectContact = { onCorrectContact(counterpartyInfo(state)) },
             onCreateContact = { onCreateContact(counterpartyInfo(state)) },
@@ -366,6 +371,7 @@ private fun sourceTabs(sources: List<DocumentSourceDto>): List<SourceTabItem> {
 @Composable
 private fun MobileReviewContent(
     state: DocumentReviewState.Content,
+    isAccountantReadOnly: Boolean,
     contentPadding: PaddingValues,
     onIntent: (DocumentReviewIntent) -> Unit,
     onBackClick: () -> Unit,
@@ -385,6 +391,7 @@ private fun MobileReviewContent(
 
     MobileCanonicalContent(
         state = state,
+        isAccountantReadOnly = isAccountantReadOnly,
         onIntent = onIntent,
         onBackClick = onBackClick,
         onOpenSource = onOpenSource,

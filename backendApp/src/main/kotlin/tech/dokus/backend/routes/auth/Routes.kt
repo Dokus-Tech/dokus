@@ -13,6 +13,7 @@ fun Application.configureAuthRoutes() {
 
         // Authenticated routes
         accountRoutes()
+        firmRoutes()
         tenantRoutes()
         consoleRoutes()
         avatarRoutes()
