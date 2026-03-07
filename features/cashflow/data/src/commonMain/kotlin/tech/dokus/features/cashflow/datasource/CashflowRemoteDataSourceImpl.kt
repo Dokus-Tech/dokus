@@ -7,9 +7,9 @@ package tech.dokus.features.cashflow.datasource
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.onUpload
-import tech.dokus.domain.exceptions.DokusException
 import io.ktor.client.plugins.resources.delete
 import io.ktor.client.plugins.resources.get
+import io.ktor.client.plugins.resources.href
 import io.ktor.client.plugins.resources.patch
 import io.ktor.client.plugins.resources.post
 import io.ktor.client.plugins.resources.put
@@ -20,6 +20,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
+import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
 import tech.dokus.domain.config.DynamicDokusEndpointProvider
@@ -37,6 +38,7 @@ import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.enums.PeppolStatus
 import tech.dokus.domain.enums.PeppolTransmissionDirection
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.AttachmentId
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
@@ -62,7 +64,9 @@ import tech.dokus.domain.model.DocumentIngestionDto
 import tech.dokus.domain.model.DocumentIntakeResult
 import tech.dokus.domain.model.DocumentPagesResponse
 import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentRecordStreamEvent
 import tech.dokus.domain.model.DocumentSourceDto
+import tech.dokus.domain.model.DocumentStreamEventNames
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.PeppolConnectRequest
 import tech.dokus.domain.model.PeppolConnectResponse
@@ -91,6 +95,10 @@ import tech.dokus.domain.routes.Documents
 import tech.dokus.domain.routes.Expenses
 import tech.dokus.domain.routes.Invoices
 import tech.dokus.domain.routes.Peppol
+import tech.dokus.domain.utils.json
+import tech.dokus.foundation.app.network.KtorSseEventCollector
+import tech.dokus.foundation.app.network.SseEventCollector
+import tech.dokus.foundation.app.network.observeSseEvents
 
 /** Limit for fetching a single Peppol transmission for an invoice */
 private const val SingleTransmissionLimit = 1
@@ -102,7 +110,8 @@ private const val SingleTransmissionLimit = 1
 @Suppress("LargeClass") // Single API facade; split would add indirection without reducing IO surface.
 internal class CashflowRemoteDataSourceImpl(
     private val httpClient: HttpClient,
-    private val endpointProvider: DynamicDokusEndpointProvider
+    private val endpointProvider: DynamicDokusEndpointProvider,
+    private val sseEventCollector: SseEventCollector = KtorSseEventCollector,
 ) : CashflowRemoteDataSource {
 
     // ============================================================================
@@ -617,10 +626,50 @@ internal class CashflowRemoteDataSourceImpl(
         }
     }
 
+    override fun observeDocumentCollectionChanges(): Flow<Unit> {
+        val eventsResource = Documents.Events()
+        return observeSseEvents(
+            httpClient = httpClient,
+            request = {
+                httpClient.href(eventsResource, url)
+            },
+            decodeEvent = { event ->
+                when (event.event) {
+                    DocumentStreamEventNames.CollectionChanged -> Unit
+                    else -> null
+                }
+            },
+            sseEventCollector = sseEventCollector
+        )
+    }
+
     override suspend fun getDocumentRecord(documentId: DocumentId): Result<DocumentRecordDto> {
         return runCatching {
             httpClient.get(Documents.Id(id = documentId.toString())).body()
         }
+    }
+
+    override fun observeDocumentRecordEvents(documentId: DocumentId): Flow<DocumentRecordStreamEvent> {
+        val documentRoute = Documents.Id(id = documentId.toString())
+        val eventsResource = Documents.Id.Events(parent = documentRoute)
+        return observeSseEvents(
+            httpClient = httpClient,
+            request = {
+                httpClient.href(eventsResource, url)
+            },
+            decodeEvent = { event ->
+                when (event.event) {
+                    DocumentStreamEventNames.Snapshot -> event.data?.let { payload ->
+                        runCatching { json.decodeFromString(DocumentRecordDto.serializer(), payload) }
+                            .getOrNull()
+                            ?.let { DocumentRecordStreamEvent.Snapshot(record = it) }
+                    }
+                    DocumentStreamEventNames.Deleted -> DocumentRecordStreamEvent.Deleted
+                    else -> null
+                }
+            },
+            sseEventCollector = sseEventCollector
+        )
     }
 
     override suspend fun getDocumentDraft(documentId: DocumentId): Result<DocumentDraftDto> {

@@ -45,8 +45,12 @@ import tech.dokus.backend.services.documents.AutoConfirmPolicy
 import tech.dokus.backend.services.documents.ContactResolutionService
 import tech.dokus.backend.services.documents.DocumentPurposeService
 import tech.dokus.backend.services.documents.DocumentPurposeSimilarityService
+import tech.dokus.backend.services.documents.DocumentRecordLoader
 import tech.dokus.backend.services.documents.DocumentTruthService
 import tech.dokus.backend.services.documents.StorageDocumentFetcher
+import tech.dokus.backend.services.documents.sse.DocumentCollectionEventHub
+import tech.dokus.backend.services.documents.sse.DocumentSnapshotEventHub
+import tech.dokus.backend.services.documents.sse.DocumentSsePublisher
 import tech.dokus.backend.services.documents.confirmation.CreditNoteConfirmationService
 import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
 import tech.dokus.backend.services.documents.confirmation.InvoiceConfirmationService
@@ -294,6 +298,10 @@ private fun cashflowModule() = module {
     single { CreditNoteConfirmationService(get(), get(), get(), get()) }
     single { DocumentConfirmationDispatcher(get(), get(), get(), get()) }
     single { DocumentTruthService(get(), get(), get(), get(), get(), get(), get()) }
+    singleOf(::DocumentCollectionEventHub)
+    singleOf(::DocumentSnapshotEventHub)
+    singleOf(::DocumentSsePublisher)
+    singleOf(::DocumentRecordLoader)
     singleOf(::CashflowProjectionReconciliationWorker)
 
     // PDF

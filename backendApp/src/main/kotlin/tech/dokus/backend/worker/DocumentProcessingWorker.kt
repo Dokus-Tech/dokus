@@ -22,11 +22,13 @@ import kotlinx.coroutines.withTimeout
 import org.slf4j.MDC
 import tech.dokus.backend.services.documents.AutoConfirmPolicy
 import tech.dokus.backend.services.documents.ContactResolutionService
+import tech.dokus.backend.services.documents.DocumentIntakeServiceResult
 import tech.dokus.backend.services.documents.DocumentPurposeService
 import tech.dokus.backend.services.documents.DocumentTruthService
 import tech.dokus.backend.services.cashflow.BankStatementMatchingService
 import tech.dokus.backend.services.cashflow.InvoiceBankAutomationService
 import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
+import tech.dokus.backend.services.documents.sse.DocumentSsePublisher
 import tech.dokus.database.entity.IngestionItemEntity
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.auth.UserRepository
@@ -35,7 +37,9 @@ import tech.dokus.database.repository.processor.ProcessorIngestionRepository
 import tech.dokus.domain.enums.ContactLinkSource
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentStatus
+import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
+import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.BankStatementDraftData
 import tech.dokus.domain.model.contact.ContactResolution
 import tech.dokus.domain.processing.DocumentProcessingConstants
@@ -69,7 +73,7 @@ import kotlin.time.Duration
  * - Example-based few-shot learning for repeat vendors
  */
 @Suppress("LongParameterList")
-class DocumentProcessingWorker(
+internal class DocumentProcessingWorker(
     private val ingestionRepository: ProcessorIngestionRepository,
     private val processingAgent: DocumentProcessingAgent,
     private val contactResolutionService: ContactResolutionService,
@@ -80,6 +84,7 @@ class DocumentProcessingWorker(
     private val invoiceBankAutomationService: InvoiceBankAutomationService,
     private val autoConfirmPolicy: AutoConfirmPolicy,
     private val confirmationDispatcher: DocumentConfirmationDispatcher,
+    private val documentSsePublisher: DocumentSsePublisher,
     private val config: ProcessorConfig,
     private val tenantRepository: TenantRepository,
     private val userRepository: UserRepository,
@@ -153,9 +158,15 @@ class DocumentProcessingWorker(
     ) {
         // Recover any runs stuck in Processing from a previous crash
         runSuspendCatching {
-            val recovered = ingestionRepository.recoverStaleRuns()
-            if (recovered > 0) {
-                logger.info("Recovered $recovered stale ingestion run(s) (marked as Failed)")
+            val recoveredRuns = ingestionRepository.recoverStaleRunsDetailed()
+            if (recoveredRuns.isNotEmpty()) {
+                recoveredRuns.forEach { recoveredRun ->
+                    documentSsePublisher.publishDocumentChanged(
+                        tenantId = recoveredRun.tenantId,
+                        documentId = recoveredRun.documentId
+                    )
+                }
+                logger.info("Recovered ${recoveredRuns.size} stale ingestion run(s) (marked as Failed)")
             }
         }.onFailure { e ->
             logger.error("Failed to recover stale runs", e)
@@ -194,6 +205,7 @@ class DocumentProcessingWorker(
                                 attemptResult = AttemptResult.SkippedAlreadyClaimed
                                 return@withPermit
                             }
+                            documentSsePublisher.publishDocumentChanged(ingestion.tenantId, ingestion.documentId)
                             attemptResult = processIngestionRunWithTimeout(ingestion, timeout)
                         } catch (e: CancellationException) {
                             if (!isRunning.get()) throw e
@@ -203,8 +215,10 @@ class DocumentProcessingWorker(
                                 e
                             )
                             markRunFailedSafely(
-                                ingestion.runId,
-                                "Processing cancelled: ${e.message ?: "Unknown cancellation"}"
+                                runId = ingestion.runId,
+                                tenantId = ingestion.tenantId,
+                                documentId = ingestion.documentId,
+                                message = "Processing cancelled: ${e.message ?: "Unknown cancellation"}"
                             )
                             attemptResult = AttemptResult.FailedCancelled
                         } catch (e: Exception) {
@@ -215,8 +229,10 @@ class DocumentProcessingWorker(
                             )
                             val providerFailure = isProviderFailure(e)
                             markRunFailedSafely(
-                                ingestion.runId,
-                                if (providerFailure) {
+                                runId = ingestion.runId,
+                                tenantId = ingestion.tenantId,
+                                documentId = ingestion.documentId,
+                                message = if (providerFailure) {
                                     "Processing provider error: ${e.message ?: "Unknown provider error"}"
                                 } else {
                                     "Processing error: ${e.message ?: "Unknown error"}"
@@ -268,7 +284,12 @@ class DocumentProcessingWorker(
                 timeout,
                 e
             )
-            markRunFailedSafely(ingestion.runId, timeoutMessage)
+            markRunFailedSafely(
+                runId = ingestion.runId,
+                tenantId = ingestion.tenantId,
+                documentId = ingestion.documentId,
+                message = timeoutMessage
+            )
             AttemptResult.FailedTimeout
         } finally {
             // Defensive cleanup: processIngestionRun sets MDC keys and clears them in its own
@@ -280,10 +301,18 @@ class DocumentProcessingWorker(
         }
     }
 
-    private suspend fun markRunFailedSafely(runId: IngestionRunId, message: String) {
+    private suspend fun markRunFailedSafely(
+        runId: IngestionRunId,
+        tenantId: TenantId,
+        documentId: DocumentId,
+        message: String
+    ) {
         withContext(NonCancellable) {
             try {
-                ingestionRepository.markAsFailed(runId.toString(), message)
+                val didMarkFail = ingestionRepository.markAsFailed(runId.toString(), message)
+                if (didMarkFail) {
+                    documentSsePublisher.publishDocumentChanged(tenantId, documentId)
+                }
             } catch (markError: Exception) {
                 logger.error("Failed to mark ingestion run {} as failed", runId, markError)
             }
@@ -390,7 +419,12 @@ class DocumentProcessingWorker(
                     documentId,
                     errorMessage
                 )
-                markRunFailedSafely(runId, errorMessage)
+                markRunFailedSafely(
+                    runId = runId,
+                    tenantId = parsedTenantId,
+                    documentId = documentId,
+                    message = errorMessage
+                )
                 return AttemptResult.FailedValidation
             }
 
@@ -436,6 +470,11 @@ class DocumentProcessingWorker(
                         matchOutcome.outcome,
                         matchOutcome.documentId
                     )
+                    publishResolvedDocumentState(
+                        tenantId = parsedTenantId,
+                        originalDocumentId = documentId,
+                        matchOutcome = matchOutcome
+                    )
                     return AttemptResult.Succeeded
                 }
 
@@ -473,6 +512,7 @@ class DocumentProcessingWorker(
                         bankProcessing.discardedRows.size,
                         targetStatus
                     )
+                    documentSsePublisher.publishDocumentChanged(parsedTenantId, documentId)
                     return AttemptResult.Succeeded
                 }
 
@@ -610,18 +650,26 @@ class DocumentProcessingWorker(
                     }
                 }
             }
+            documentSsePublisher.publishDocumentChanged(parsedTenantId, documentId)
             return AttemptResult.Succeeded
         } catch (e: CancellationException) {
             if (!isRunning.get()) throw e
             logger.error("Unexpected cancellation while processing document $documentId", e)
-            markRunFailedSafely(runId, "Processing cancelled: ${e.message ?: "Unknown cancellation"}")
+            markRunFailedSafely(
+                runId = runId,
+                tenantId = tenantId,
+                documentId = documentId,
+                message = "Processing cancelled: ${e.message ?: "Unknown cancellation"}"
+            )
             return AttemptResult.FailedCancelled
         } catch (e: Exception) {
             val providerFailure = isProviderFailure(e)
             logger.error("Unexpected error processing document $documentId", e)
             markRunFailedSafely(
-                runId,
-                if (providerFailure) {
+                runId = runId,
+                tenantId = tenantId,
+                documentId = documentId,
+                message = if (providerFailure) {
                     "Processing provider error: ${e.message ?: "Unknown provider error"}"
                 } else {
                     "Processing error: ${e.message ?: "Unknown error"}"
@@ -632,6 +680,24 @@ class DocumentProcessingWorker(
             MDC.remove("runId")
             MDC.remove("documentId")
             MDC.remove("tenantId")
+        }
+    }
+
+    private fun publishResolvedDocumentState(
+        tenantId: TenantId,
+        originalDocumentId: DocumentId,
+        matchOutcome: DocumentIntakeServiceResult,
+    ) {
+        if (matchOutcome.orphanedDocumentId == originalDocumentId) {
+            documentSsePublisher.publishDocumentDeleted(tenantId, originalDocumentId)
+        } else if (matchOutcome.documentId != originalDocumentId) {
+            documentSsePublisher.publishDocumentChanged(tenantId, originalDocumentId)
+        }
+
+        if (matchOutcome.orphanedDocumentId == matchOutcome.documentId) {
+            documentSsePublisher.publishDocumentDeleted(tenantId, matchOutcome.documentId)
+        } else if (matchOutcome.documentId != originalDocumentId) {
+            documentSsePublisher.publishDocumentChanged(tenantId, matchOutcome.documentId)
         }
     }
 }

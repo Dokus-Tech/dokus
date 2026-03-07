@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory
 import tech.dokus.backend.routes.cashflow.documents.addDownloadUrl
 import tech.dokus.backend.security.requireTenantId
 import tech.dokus.backend.services.documents.DocumentTruthService
+import tech.dokus.backend.services.documents.sse.DocumentSsePublisher
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.domain.enums.DocumentIntakeOutcome
 import tech.dokus.domain.enums.DocumentSource
@@ -36,6 +37,7 @@ internal fun Route.documentUploadRoutes() {
     val minioStorage by inject<MinioDocumentStorageService>()
     val documentRepository by inject<DocumentRepository>()
     val truthService by inject<DocumentTruthService>()
+    val documentSsePublisher by inject<DocumentSsePublisher>()
     val uploadValidator by inject<DocumentUploadValidator>()
     val logger = LoggerFactory.getLogger("DocumentUploadRoutes")
 
@@ -55,6 +57,7 @@ internal fun Route.documentUploadRoutes() {
                 fileBytes = payload.fileBytes,
                 sourceChannel = DocumentSource.Upload
             )
+            documentSsePublisher.publishDocumentChanged(tenantId, intake.documentId)
 
             val document = documentRepository.getById(tenantId, intake.documentId)
                 ?: throw DokusException.InternalError("Failed to retrieve intake document")

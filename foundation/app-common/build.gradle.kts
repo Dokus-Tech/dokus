@@ -95,7 +95,7 @@ kotlin {
         commonTest.dependencies {
             implementation(libs.kotlin.test)
             implementation(libs.kotlinx.coroutinesTest)
-            implementation("io.ktor:ktor-client-mock:${libs.versions.ktor.get()}")
+            implementation(libs.ktor.client.mock)
         }
         desktopMain.dependencies {
             implementation(libs.ktor.client.cio)
@@ -109,9 +109,9 @@ kotlin {
         }
         wasmJsMain.dependencies {
             implementation(libs.sqldelight.wasm)
-            implementation(npm("@cashapp/sqldelight-sqljs-worker", "2.1.0"))
-            implementation(npm("sql.js", "1.8.0"))
-            implementation(devNpm("copy-webpack-plugin", "9.1.0"))
+            implementation(npm("@cashapp/sqldelight-sqljs-worker", libs.versions.sqldelight.sqljs.worker.get()))
+            implementation(npm("sql.js", libs.versions.sqljs.get()))
+            implementation(devNpm("copy-webpack-plugin", libs.versions.copy.webpack.plugin.get()))
             implementation(libs.ktor.client.wasm)
         }
     }

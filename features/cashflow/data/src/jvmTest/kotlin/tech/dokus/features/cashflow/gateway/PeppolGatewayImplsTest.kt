@@ -9,9 +9,11 @@ import tech.dokus.domain.model.PeppolConnectStatus
 import tech.dokus.domain.enums.PeppolDocumentType
 import tech.dokus.domain.enums.PeppolStatus
 import tech.dokus.domain.enums.PeppolTransmissionDirection
+import tech.dokus.domain.ids.AddressId
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.PeppolTransmissionId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.Address
 import tech.dokus.domain.model.PeppolConnectRequest
 import tech.dokus.domain.model.PeppolConnectResponse
 import tech.dokus.domain.model.PeppolInboxPollResponse
@@ -32,25 +34,28 @@ class PeppolGatewayImplsTest {
     fun peppolConnectionGatewayDelegates() = runBlocking {
         val remote = mockk<CashflowRemoteDataSource>()
         val request = PeppolConnectRequest(
-            apiKey = "key",
-            apiSecret = "secret",
-            isEnabled = true,
-            testMode = false
+            companyAddress = Address(
+                id = AddressId.parse("00000000-0000-0000-0000-000000000040"),
+                tenantId = TenantId("00000000-0000-0000-0000-000000000041"),
+                streetLine1 = "Main Street 1",
+                city = "Brussels",
+                postalCode = "1000",
+                country = "BE",
+                createdAt = LocalDateTime(2024, 1, 1, 0, 0),
+                updatedAt = LocalDateTime(2024, 1, 1, 0, 0)
+            )
         )
         val response = PeppolConnectResponse(status = PeppolConnectStatus.Connected)
         coEvery { remote.connectPeppol(request) } returns Result.success(response)
         coEvery { remote.getPeppolSettings() } returns Result.success(null)
-        coEvery { remote.deletePeppolSettings() } returns Result.success(Unit)
 
         val gateway = PeppolConnectionGatewayImpl(remote)
 
         assertEquals(response, gateway.connectPeppol(request).getOrNull())
         assertEquals(null, gateway.getPeppolSettings().getOrNull())
-        assertTrue(gateway.deletePeppolSettings().isSuccess)
 
         coVerify { remote.connectPeppol(request) }
         coVerify { remote.getPeppolSettings() }
-        coVerify { remote.deletePeppolSettings() }
     }
 
     @Test

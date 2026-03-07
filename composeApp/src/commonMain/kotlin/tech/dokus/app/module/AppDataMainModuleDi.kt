@@ -1,6 +1,7 @@
 package tech.dokus.app.module
 
 import io.ktor.client.HttpClient
+import io.ktor.client.plugins.sse.SSE
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 import tech.dokus.domain.config.DynamicDokusEndpointProvider
@@ -55,6 +56,12 @@ private val networkModule = module {
                 tokenManager.onAuthenticationFailed()
                 authManager.onAuthenticationFailed()
             }
-        )
+        ) {
+            install(SSE) {
+                // Reconnection is handled by restartableFlow (SseFlow.kt).
+                // Setting 0 prevents Ktor from competing with the backoff logic.
+                maxReconnectionAttempts = 0
+            }
+        }
     }
 }

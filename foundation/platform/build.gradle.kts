@@ -47,7 +47,7 @@ kotlin {
             implementation(libs.kotlinx.coroutines.swing)
         }
         wasmJsMain.dependencies {
-            implementation("org.jetbrains.kotlinx:kotlinx-browser:0.2")
+            implementation(libs.kotlinx.browser)
         }
     }
 }

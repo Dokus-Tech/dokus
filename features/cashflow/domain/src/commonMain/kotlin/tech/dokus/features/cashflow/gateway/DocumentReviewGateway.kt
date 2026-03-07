@@ -1,5 +1,6 @@
 package tech.dokus.features.cashflow.gateway
 
+import kotlinx.coroutines.flow.Flow
 import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
@@ -8,6 +9,7 @@ import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.model.DocumentMatchResolutionDecision
 import tech.dokus.domain.model.DocumentPagesResponse
 import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentRecordStreamEvent
 import tech.dokus.domain.model.RejectDocumentRequest
 import tech.dokus.domain.model.UpdateDraftRequest
 import tech.dokus.domain.model.ReprocessRequest
@@ -19,6 +21,7 @@ import tech.dokus.domain.model.UpdateDraftResponse
  */
 interface DocumentReviewGateway {
     suspend fun getDocumentRecord(documentId: DocumentId): Result<DocumentRecordDto>
+    fun observeDocumentRecordEvents(documentId: DocumentId): Flow<DocumentRecordStreamEvent>
 
     suspend fun updateDocumentDraft(
         documentId: DocumentId,

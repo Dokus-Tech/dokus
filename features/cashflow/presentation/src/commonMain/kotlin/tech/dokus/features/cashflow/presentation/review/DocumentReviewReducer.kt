@@ -10,6 +10,7 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.model.BankStatementDraftData
 import tech.dokus.domain.model.CreditNoteDraftData
+import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.FinancialLineItem
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
@@ -90,6 +91,9 @@ internal class DocumentReviewReducer(
 
     suspend fun DocumentReviewCtx.handleRefresh() =
         with(loader) { handleRefresh() }
+
+    suspend fun DocumentReviewCtx.handleApplyRemoteSnapshot(record: DocumentRecordDto) =
+        with(loader) { handleApplyRemoteSnapshot(record) }
 
     suspend fun DocumentReviewCtx.handleSelectDocumentType(type: DocumentType) {
         var shouldPersist = false

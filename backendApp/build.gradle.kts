@@ -48,6 +48,7 @@ dependencies {
     implementation(libs.ktor.server.openapi)
     implementation(libs.ktor.server.swagger)
     implementation(libs.ktor.server.resources)
+    implementation(libs.ktor.server.sse)
 
     // Ktor Client (for external API calls)
     implementation(libs.ktor.client.core)

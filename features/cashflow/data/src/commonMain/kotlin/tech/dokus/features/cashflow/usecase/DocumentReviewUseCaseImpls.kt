@@ -1,5 +1,6 @@
 package tech.dokus.features.cashflow.usecase
 
+import kotlinx.coroutines.flow.Flow
 import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
@@ -8,6 +9,7 @@ import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.model.DocumentMatchResolutionDecision
 import tech.dokus.domain.model.DocumentPagesResponse
 import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentRecordStreamEvent
 import tech.dokus.domain.model.RejectDocumentRequest
 import tech.dokus.domain.model.UpdateDraftRequest
 import tech.dokus.domain.model.ReprocessRequest
@@ -19,6 +21,7 @@ import tech.dokus.features.cashflow.usecases.GetDocumentPagesUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentRecordUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentSourceContentUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentSourcePagesUseCase
+import tech.dokus.features.cashflow.usecases.ObserveDocumentRecordEventsUseCase
 import tech.dokus.features.cashflow.usecases.RejectDocumentUseCase
 import tech.dokus.features.cashflow.usecases.ReprocessDocumentUseCase
 import tech.dokus.features.cashflow.usecases.ResolveDocumentMatchReviewUseCase
@@ -30,6 +33,14 @@ internal class GetDocumentRecordUseCaseImpl(
 ) : GetDocumentRecordUseCase {
     override suspend fun invoke(documentId: DocumentId): Result<DocumentRecordDto> {
         return documentReviewGateway.getDocumentRecord(documentId)
+    }
+}
+
+internal class ObserveDocumentRecordEventsUseCaseImpl(
+    private val documentReviewGateway: DocumentReviewGateway
+) : ObserveDocumentRecordEventsUseCase {
+    override fun invoke(documentId: DocumentId): Flow<DocumentRecordStreamEvent> {
+        return documentReviewGateway.observeDocumentRecordEvents(documentId)
     }
 }
 

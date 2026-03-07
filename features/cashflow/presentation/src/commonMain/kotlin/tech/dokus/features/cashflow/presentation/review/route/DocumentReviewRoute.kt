@@ -12,8 +12,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.currentBackStackEntryAsState
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collect
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.domain.model.DocumentRecordStreamEvent
 import org.koin.core.parameter.parametersOf
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
@@ -33,6 +34,7 @@ import tech.dokus.features.cashflow.presentation.review.DocumentReviewAction
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewContainer
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewQueueState
+import tech.dokus.features.cashflow.presentation.review.DocumentReviewRouteContext
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewSuccess
 import tech.dokus.features.cashflow.presentation.review.components.ContactEditSheet
@@ -43,6 +45,8 @@ import tech.dokus.features.cashflow.presentation.review.components.RejectDocumen
 import tech.dokus.features.cashflow.presentation.review.components.SourceEvidenceDialog
 import tech.dokus.features.cashflow.presentation.review.screen.DocumentReviewScreen
 import tech.dokus.features.contacts.usecases.ListContactsUseCase
+import tech.dokus.features.cashflow.usecases.ObserveDocumentCollectionChangesUseCase
+import tech.dokus.features.cashflow.usecases.ObserveDocumentRecordEventsUseCase
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.app.shell.LocalUserAccessContext
 import tech.dokus.foundation.app.state.DokusState
@@ -62,13 +66,16 @@ private const val CONTACT_RESULT_KEY = "documentReview_contactId"
 @Composable
 internal fun DocumentReviewRoute(
     route: CashFlowDestination.DocumentReview,
+    routeContext: DocumentReviewRouteContext? = route.toRouteContextOrNull(),
     container: DocumentReviewContainer = container {
         parametersOf(
             DocumentId.parse(route.documentId),
-            route.toRouteContextOrNull(),
+            routeContext,
         )
     },
     listContacts: ListContactsUseCase = org.koin.compose.koinInject(),
+    observeDocumentRecordEvents: ObserveDocumentRecordEventsUseCase = org.koin.compose.koinInject(),
+    observeDocumentCollectionChanges: ObserveDocumentCollectionChangesUseCase = org.koin.compose.koinInject(),
 ) {
     val accessContext = LocalUserAccessContext.current
     val isAccountantReadOnly = accessContext.isBookkeeperConsoleDrillDown
@@ -152,18 +159,30 @@ internal fun DocumentReviewRoute(
         }
     }
 
-    // Auto-poll every 3s while processing so the UI transitions when extraction completes/fails
-    val shouldPoll = when (state) {
-        is DocumentReviewState.AwaitingExtraction -> true
-        is DocumentReviewState.Content -> (state as DocumentReviewState.Content).isProcessing
-        else -> false
+    val detailStreamDocumentId = when (state) {
+        is DocumentReviewState.AwaitingExtraction -> (state as DocumentReviewState.AwaitingExtraction).documentId
+        is DocumentReviewState.Content -> (state as DocumentReviewState.Content).documentId
+        else -> null
     }
 
-    LaunchedEffect(shouldPoll) {
-        if (!shouldPoll) return@LaunchedEffect
-        while (true) {
-            delay(3_000L)
-            dispatchIntent(DocumentReviewIntent.Refresh)
+    LaunchedEffect(detailStreamDocumentId) {
+        val activeDocumentId = detailStreamDocumentId ?: return@LaunchedEffect
+        observeDocumentRecordEvents(activeDocumentId).collect { event ->
+            when (event) {
+                is DocumentRecordStreamEvent.Snapshot -> {
+                    dispatchIntent(DocumentReviewIntent.ApplyRemoteSnapshot(event.record))
+                }
+                DocumentRecordStreamEvent.Deleted -> {
+                    dispatchIntent(DocumentReviewIntent.HandleRemoteDeletion)
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(routeContext) {
+        if (routeContext == null) return@LaunchedEffect
+        observeDocumentCollectionChanges().collect {
+            dispatchIntent(DocumentReviewIntent.RefreshQueue)
         }
     }
 

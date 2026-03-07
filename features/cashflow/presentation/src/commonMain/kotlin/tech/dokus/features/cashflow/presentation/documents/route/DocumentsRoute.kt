@@ -13,6 +13,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.currentBackStackEntryAsState
+import kotlinx.coroutines.flow.collect
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
@@ -36,6 +37,7 @@ import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsState
 import tech.dokus.features.cashflow.presentation.documents.screen.DocumentsScreen
 import tech.dokus.features.cashflow.presentation.review.route.toRouteFilterToken
 import tech.dokus.features.cashflow.usecases.GetDocumentRecordUseCase
+import tech.dokus.features.cashflow.usecases.ObserveDocumentCollectionChangesUseCase
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.app.network.ConnectionSnackbarEffect
 import tech.dokus.foundation.app.shell.HomeShellTopBarConfig
@@ -53,6 +55,7 @@ internal fun DocumentsRoute(
     documentsContainer: DocumentsContainer = container(),
     uploadContainer: AddDocumentContainer = container(),
     getDocumentRecord: GetDocumentRecordUseCase = koinInject(),
+    observeDocumentCollectionChanges: ObserveDocumentCollectionChangesUseCase = koinInject(),
 ) {
     val navController = LocalNavController.current
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -198,6 +201,12 @@ internal fun DocumentsRoute(
             },
             onRefreshRequested = onDocumentsChanged,
         )
+    }
+
+    LaunchedEffect(Unit) {
+        observeDocumentCollectionChanges().collect {
+            onDocumentsChanged()
+        }
     }
 
     Box(

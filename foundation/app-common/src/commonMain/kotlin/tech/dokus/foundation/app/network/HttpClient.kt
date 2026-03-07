@@ -48,7 +48,8 @@ fun createDynamicAuthenticatedHttpClient(
     endpointProvider: DynamicDokusEndpointProvider,
     tokenManager: TokenManager,
     connectionMonitor: ServerConnectionMonitor? = null,
-    onAuthenticationFailed: suspend () -> Unit = {}
+    onAuthenticationFailed: suspend () -> Unit = {},
+    block: HttpClientConfig<*>.() -> Unit = {},
 ) = createDynamicBaseHttpClient(endpointProvider, connectionMonitor) {
     withDynamicBearerAuth(tokenManager)
     withSelectedTenantHeader(tokenManager)
@@ -57,4 +58,5 @@ fun createDynamicAuthenticatedHttpClient(
         onAuthenticationFailed = onAuthenticationFailed,
         maxRetries = 1
     )
+    block()
 }
