@@ -3,11 +3,110 @@ import FileProvider
 import UniformTypeIdentifiers
 import CryptoKit
 
+struct DokusFileProviderItemState {
+    let isUploaded: Bool
+    let isUploading: Bool
+    let uploadingError: NSError?
+    let isDownloaded: Bool
+    let isDownloading: Bool
+    let downloadingError: NSError?
+    let isMostRecentVersionDownloaded: Bool
+
+    static let placeholder = DokusFileProviderItemState(
+        isUploaded: true,
+        isUploading: false,
+        uploadingError: nil,
+        isDownloaded: false,
+        isDownloading: false,
+        downloadingError: nil,
+        isMostRecentVersionDownloaded: false
+    )
+
+    static let materializedContainer = DokusFileProviderItemState(
+        isUploaded: true,
+        isUploading: false,
+        uploadingError: nil,
+        isDownloaded: true,
+        isDownloading: false,
+        downloadingError: nil,
+        isMostRecentVersionDownloaded: true
+    )
+}
+
+struct DokusPendingFileProviderItemState: Hashable {
+    let itemIdentifier: NSFileProviderItemIdentifier
+    let isUploaded: Bool
+    let isUploading: Bool
+    let uploadingErrorCode: Int?
+    let uploadingErrorDomain: String?
+    let uploadingErrorDescription: String?
+    let isDownloaded: Bool
+    let isDownloading: Bool
+    let downloadingErrorCode: Int?
+    let downloadingErrorDomain: String?
+    let downloadingErrorDescription: String?
+    let isMostRecentVersionDownloaded: Bool
+
+    init(item: any NSFileProviderItem) {
+        let uploadingError = (item.uploadingError ?? nil).map { $0 as NSError }
+        let downloadingError = (item.downloadingError ?? nil).map { $0 as NSError }
+        self.itemIdentifier = item.itemIdentifier
+        self.isUploaded = item.isUploaded ?? true
+        self.isUploading = item.isUploading ?? false
+        self.uploadingErrorCode = uploadingError?.code
+        self.uploadingErrorDomain = uploadingError?.domain
+        self.uploadingErrorDescription = uploadingError?.localizedDescription
+        self.isDownloaded = item.isDownloaded ?? false
+        self.isDownloading = item.isDownloading ?? false
+        self.downloadingErrorCode = downloadingError?.code
+        self.downloadingErrorDomain = downloadingError?.domain
+        self.downloadingErrorDescription = downloadingError?.localizedDescription
+        self.isMostRecentVersionDownloaded = item.isMostRecentVersionDownloaded ?? false
+    }
+
+    private func makeError(
+        domain: String?,
+        code: Int?,
+        description: String?
+    ) -> NSError? {
+        guard let domain, let code else {
+            return nil
+        }
+        var userInfo: [String: Any] = [:]
+        if let description {
+            userInfo[NSLocalizedDescriptionKey] = description
+        }
+        return NSError(domain: domain, code: code, userInfo: userInfo)
+    }
+
+    var itemState: DokusFileProviderItemState {
+        DokusFileProviderItemState(
+            isUploaded: isUploaded,
+            isUploading: isUploading,
+            uploadingError: makeError(
+                domain: uploadingErrorDomain,
+                code: uploadingErrorCode,
+                description: uploadingErrorDescription
+            ),
+            isDownloaded: isDownloaded,
+            isDownloading: isDownloading,
+            downloadingError: makeError(
+                domain: downloadingErrorDomain,
+                code: downloadingErrorCode,
+                description: downloadingErrorDescription
+            ),
+            isMostRecentVersionDownloaded: isMostRecentVersionDownloaded
+        )
+    }
+}
+
 final class DokusFileProviderItem: NSObject, NSFileProviderItem {
     private let projected: DokusProjectedItem
+    private let state: DokusFileProviderItemState
 
-    init(projected: DokusProjectedItem) {
+    init(projected: DokusProjectedItem, state: DokusFileProviderItemState = .placeholder) {
         self.projected = projected
+        self.state = state
     }
 
     var itemIdentifier: NSFileProviderItemIdentifier {
@@ -70,11 +169,31 @@ final class DokusFileProviderItem: NSObject, NSFileProviderItem {
     }
 
     var isDownloaded: Bool {
-        false
+        state.isDownloaded
+    }
+
+    var isUploaded: Bool {
+        state.isUploaded
+    }
+
+    var isUploading: Bool {
+        state.isUploading
+    }
+
+    var uploadingError: Error? {
+        state.uploadingError
+    }
+
+    var isDownloading: Bool {
+        state.isDownloading
+    }
+
+    var downloadingError: Error? {
+        state.downloadingError
     }
 
     var isMostRecentVersionDownloaded: Bool {
-        false
+        state.isMostRecentVersionDownloaded
     }
 }
 

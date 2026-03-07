@@ -43,7 +43,7 @@ final class DokusFileProviderEnumerator: NSObject, NSFileProviderEnumerator {
                 }
 
                 let end = min(children.count, offset + pageSize)
-                let batch = children[offset..<end].map(DokusFileProviderItem.init(projected:))
+                let batch = await runtime.fileProviderItems(from: Array(children[offset..<end]))
                 observer.didEnumerate(batch)
 
                 if end >= children.count {
@@ -91,7 +91,7 @@ final class DokusFileProviderEnumerator: NSObject, NSFileProviderEnumerator {
                     let wasInScope = wasInScopeBeforeChange(identifier, changeSet: changeSet)
                     if let projected = try? await runtime.item(for: identifier, forceRefresh: false) {
                         if isInScopeNow(projected) {
-                            updatedItems.append(DokusFileProviderItem(projected: projected))
+                            updatedItems.append(await runtime.fileProviderItem(from: projected))
                         } else if wasInScope {
                             appendDeleted(identifier)
                         }
@@ -173,7 +173,7 @@ final class DokusFileProviderEnumerator: NSObject, NSFileProviderEnumerator {
 
     private func isInScopeNow(_ item: DokusProjectedItem) -> Bool {
         if containerItemIdentifier == .workingSet {
-            return !item.isFolder && item.identifier != .rootContainer
+            return item.identifier != .rootContainer && item.identifier != .workingSet
         }
         if containerItemIdentifier == .rootContainer {
             return item.identifier != .rootContainer && item.identifier != .workingSet
@@ -190,7 +190,7 @@ final class DokusFileProviderEnumerator: NSObject, NSFileProviderEnumerator {
     ) -> Bool {
         let previousWasFolder = changeSet.previousWasFolder(identifier)
         if containerItemIdentifier == .workingSet {
-            return previousWasFolder == false
+            return identifier != .rootContainer && identifier != .workingSet
         }
         if containerItemIdentifier == .rootContainer {
             return identifier != .rootContainer && identifier != .workingSet

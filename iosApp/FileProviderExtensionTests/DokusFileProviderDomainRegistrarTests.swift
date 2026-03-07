@@ -1,5 +1,6 @@
 import XCTest
 import FileProvider
+import UniformTypeIdentifiers
 
 final class DokusFileProviderDomainRegistrarTests: XCTestCase {
     private let managedPrefix = "vision.invoid.dokus.fileprovider"
@@ -795,7 +796,7 @@ final class DokusFileProviderMaterializedContainerTests: XCTestCase {
             kind: .typedFolder(workspaceId: "ws-1", folder: .receiptsIn)
         )
 
-        await runtime.replaceMaterializedContainers(with: Set([materializedParent]))
+        await runtime.replaceMaterializedItems(with: Set([materializedParent]))
 
         let shouldSignal = await runtime.shouldSignalWorkingSet(currentParentIdentifier: materializedParent)
         let shouldNotSignal = await runtime.shouldSignalWorkingSet(currentParentIdentifier: otherParent)
@@ -804,10 +805,160 @@ final class DokusFileProviderMaterializedContainerTests: XCTestCase {
         XCTAssertFalse(shouldNotSignal)
     }
 
+    func testMaterializedItemsMarkDocumentsAsCurrent() async {
+        let runtime = DokusFileProviderRuntime(
+            apiClient: makeRuntimeAPIClient(),
+            domainIdentifier: "tests.materialized.\(UUID().uuidString)",
+            workspaceId: nil,
+            domainDisplayName: "Dokus"
+        )
+        let document = makeProjectedDocument(
+            workspaceId: "ws-1",
+            documentId: "doc-1",
+            parentIdentifier: DokusItemIdentifierCodec.encode(
+                kind: .lifecycleFolder(workspaceId: "ws-1", folder: .inbox)
+            )
+        )
+
+        await runtime.replaceMaterializedItems(with: Set([document.identifier]))
+
+        let item = await runtime.fileProviderItem(from: document)
+
+        XCTAssertTrue(item.isUploaded)
+        XCTAssertTrue(item.isDownloaded)
+        XCTAssertTrue(item.isMostRecentVersionDownloaded)
+    }
+
+    func testPendingItemsOverrideReportedSyncState() async {
+        let runtime = DokusFileProviderRuntime(
+            apiClient: makeRuntimeAPIClient(),
+            domainIdentifier: "tests.pending.\(UUID().uuidString)",
+            workspaceId: nil,
+            domainDisplayName: "Dokus"
+        )
+        let document = makeProjectedDocument(
+            workspaceId: "ws-1",
+            documentId: "doc-2",
+            parentIdentifier: DokusItemIdentifierCodec.encode(
+                kind: .typedFolder(workspaceId: "ws-1", folder: .invoicesIn)
+            )
+        )
+        let pendingSnapshot = DokusPendingFileProviderItemState(
+            item: DokusFileProviderItem(
+                projected: document,
+                state: DokusFileProviderItemState(
+                    isUploaded: false,
+                    isUploading: false,
+                    uploadingError: nil,
+                    isDownloaded: false,
+                    isDownloading: true,
+                    downloadingError: NSError(
+                        domain: NSFileProviderErrorDomain,
+                        code: NSFileProviderError.serverUnreachable.rawValue,
+                        userInfo: [NSLocalizedDescriptionKey: "Network unavailable"]
+                    ),
+                    isMostRecentVersionDownloaded: false
+                )
+            )
+        )
+
+        await runtime.replacePendingItems(with: [pendingSnapshot])
+
+        let item = await runtime.fileProviderItem(from: document)
+        let downloadingError = item.downloadingError as NSError?
+
+        XCTAssertFalse(item.isUploaded)
+        XCTAssertTrue(item.isDownloading)
+        XCTAssertEqual(downloadingError?.domain, NSFileProviderErrorDomain)
+        XCTAssertEqual(downloadingError?.code, NSFileProviderError.serverUnreachable.rawValue)
+        XCTAssertFalse(item.isMostRecentVersionDownloaded)
+    }
+
+    func testWorkingSetIncludesFoldersAndDocuments() async throws {
+        let runtime = DokusFileProviderRuntime(
+            apiClient: makeWorkingSetRuntimeAPIClient(),
+            domainIdentifier: "tests.working-set.\(UUID().uuidString)",
+            workspaceId: "ws-1",
+            domainDisplayName: "Dokus"
+        )
+
+        let workingSetItems = try await runtime.children(for: .workingSet, forceRefresh: true)
+
+        XCTAssertTrue(workingSetItems.contains(where: \.isFolder))
+        XCTAssertTrue(workingSetItems.contains(where: { !$0.isFolder }))
+    }
+
     private func makeRuntimeAPIClient() -> DokusFileProviderAPIClient {
         let store = InMemoryStringStore(values: [
             DokusFileProviderConstants.accessTokenKey: makeJwt(expiration: Date().timeIntervalSince1970 + 3600),
             DokusFileProviderConstants.refreshTokenKey: "refresh-token"
+        ])
+        let defaults = makeIsolatedUserDefaults()
+        let sessionProvider = DokusFileProviderSessionProvider(
+            keychain: store,
+            defaults: defaults,
+            session: makeInterceptedSession()
+        )
+        return DokusFileProviderAPIClient(
+            sessionProvider: sessionProvider,
+            session: makeInterceptedSession()
+        )
+    }
+
+    private func makeWorkingSetRuntimeAPIClient() -> DokusFileProviderAPIClient {
+        FileProviderTestURLProtocol.requestHandler = { request in
+            switch request.url?.path {
+            case "/api/v1/tenants":
+                return try httpJSONResponse(
+                    for: request,
+                    body: [
+                        ["id": "ws-1", "displayName": "Invoid BV", "role": "OWNER"]
+                    ]
+                )
+            case "/api/v1/documents":
+                return try httpJSONResponse(
+                    for: request,
+                    body: [
+                        "items": [
+                            [
+                                "document": [
+                                    "id": "doc-1",
+                                    "filename": "invoice.pdf",
+                                    "contentType": "application/pdf",
+                                    "sizeBytes": 1234,
+                                    "uploadedAt": "2026-03-01T10:00:00",
+                                    "downloadUrl": "https://files.example.com/doc-1.pdf"
+                                ],
+                                "draft": [
+                                    "documentStatus": "CONFIRMED",
+                                    "documentType": "INVOICE",
+                                    "direction": "INBOUND",
+                                    "updatedAt": "2026-03-02T11:00:00",
+                                    "extractedData": [
+                                        "seller": ["name": "Acme BV"],
+                                        "invoiceNumber": "INV-2026-001"
+                                    ]
+                                ],
+                                "latestIngestion": [
+                                    "status": "SUCCEEDED",
+                                    "finishedAt": "2026-03-02T11:00:00"
+                                ]
+                            ]
+                        ],
+                        "total": 1,
+                        "limit": 200,
+                        "offset": 0
+                    ]
+                )
+            default:
+                return try httpDataResponse(for: request, statusCode: 404)
+            }
+        }
+
+        let store = InMemoryStringStore(values: [
+            DokusFileProviderConstants.accessTokenKey: makeJwt(expiration: Date().timeIntervalSince1970 + 3600),
+            DokusFileProviderConstants.refreshTokenKey: "refresh-token",
+            DokusFileProviderConstants.lastSelectedTenantKey: "ws-1"
         ])
         let defaults = makeIsolatedUserDefaults()
         let sessionProvider = DokusFileProviderSessionProvider(
@@ -985,6 +1136,31 @@ private func base64URLEncodedJSON(_ object: Any) -> String {
         .replacingOccurrences(of: "+", with: "-")
         .replacingOccurrences(of: "/", with: "_")
         .replacingOccurrences(of: "=", with: "")
+}
+
+private func makeProjectedDocument(
+    workspaceId: String,
+    documentId: String,
+    parentIdentifier: NSFileProviderItemIdentifier
+) -> DokusProjectedItem {
+    DokusProjectedItem(
+        identifier: DokusItemIdentifierCodec.encode(
+            kind: .document(workspaceId: workspaceId, documentId: documentId)
+        ),
+        parentIdentifier: parentIdentifier,
+        filename: "\(documentId).pdf",
+        contentType: .pdf,
+        isFolder: false,
+        capabilities: [.allowsReading],
+        contentPolicy: .inherited,
+        documentSize: 1024,
+        creationDate: Date(timeIntervalSince1970: 1_700_000_000),
+        contentModificationDate: Date(timeIntervalSince1970: 1_700_000_100),
+        childItemCount: nil,
+        workspaceId: workspaceId,
+        documentId: documentId,
+        placement: .typed(.invoicesIn)
+    )
 }
 
 private extension URLRequest {

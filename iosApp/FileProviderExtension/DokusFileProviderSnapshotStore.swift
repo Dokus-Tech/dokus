@@ -272,7 +272,7 @@ final class DokusFileProviderSnapshotStore {
     }
 }
 
-final class DokusFileProviderMaterializedContainerStore {
+final class DokusFileProviderMaterializedSetStore {
     private struct PersistedState: Codable {
         let identifiers: [String]
     }

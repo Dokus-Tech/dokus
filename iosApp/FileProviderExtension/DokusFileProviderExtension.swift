@@ -63,13 +63,13 @@ final class DokusFileProviderExtension: NSObject, NSFileProviderReplicatedExtens
         let task = Task {
             do {
                 DokusFileProviderLog.extension.debug("item request identifier=\(identifier.rawValue, privacy: .public)")
-                let projected = try await runtime.item(for: identifier, forceRefresh: false)
+                let item = try await runtime.fileProviderItem(for: identifier, forceRefresh: false)
                 guard !progress.isCancelled else {
                     completionHandler(nil, NSError(domain: NSCocoaErrorDomain, code: NSUserCancelledError))
                     return
                 }
                 progress.completedUnitCount = 100
-                completionHandler(DokusFileProviderItem(projected: projected), nil)
+                completionHandler(item, nil)
             } catch let error as DokusFileProviderError {
                 DokusFileProviderLog.extension.error(
                     "item request failed identifier=\(identifier.rawValue, privacy: .public) error=\(error.localizedDescription, privacy: .public)"
@@ -100,7 +100,7 @@ final class DokusFileProviderExtension: NSObject, NSFileProviderReplicatedExtens
         let task = Task {
             do {
                 DokusFileProviderLog.extension.debug("fetchContents request identifier=\(itemIdentifier.rawValue, privacy: .public)")
-                let projected = try await runtime.item(for: itemIdentifier, forceRefresh: false)
+                let item = try await runtime.fileProviderItem(for: itemIdentifier, forceRefresh: false)
                 let temporaryDirectoryURL = fileProviderTemporaryDirectoryURL()
                 let fileURL = try await runtime.fetchContents(
                     itemIdentifier: itemIdentifier,
@@ -114,7 +114,7 @@ final class DokusFileProviderExtension: NSObject, NSFileProviderReplicatedExtens
                     completionHandler(nil, nil, NSError(domain: NSCocoaErrorDomain, code: NSUserCancelledError))
                     return
                 }
-                completionHandler(fileURL, DokusFileProviderItem(projected: projected), nil)
+                completionHandler(fileURL, item, nil)
                 resolveDomainErrorsIfNeeded(source: "fetchContents")
             } catch is CancellationError {
                 completionHandler(nil, nil, NSError(domain: NSCocoaErrorDomain, code: NSUserCancelledError))
@@ -224,7 +224,7 @@ final class DokusFileProviderExtension: NSObject, NSFileProviderReplicatedExtens
                         progress: progress
                     )
                 )
-                completionHandler(DokusFileProviderItem(projected: created), [], false, nil)
+                completionHandler(await runtime.fileProviderItem(from: created), [], false, nil)
                 resolveDomainErrorsIfNeeded(source: "createItem")
                 signalWorkingSetIfNeeded(
                     source: "createItem",
@@ -329,10 +329,33 @@ final class DokusFileProviderExtension: NSObject, NSFileProviderReplicatedExtens
 
         Task {
             let materializedIdentifiers = await providerManager.materializedItemIdentifiers()
-            await runtime.replaceMaterializedContainers(with: materializedIdentifiers)
+            await runtime.replaceMaterializedItems(with: materializedIdentifiers)
             DokusFileProviderLog.runtime.debug(
                 "materializedItemsDidChange completed domainId=\(domainIdentifier, privacy: .public) count=\(materializedIdentifiers.count, privacy: .public)"
             )
+            completionHandler()
+        }
+    }
+
+    func pendingItemsDidChange(completionHandler: @escaping () -> Void) {
+        let domainIdentifier = domain.identifier.rawValue
+        guard let providerManager else {
+            DokusFileProviderLog.runtime.debug(
+                "pendingItemsDidChange skipped domainId=\(domainIdentifier, privacy: .public) reason=noManager"
+            )
+            completionHandler()
+            return
+        }
+
+        Task {
+            let pendingItems = await providerManager.pendingItemStates()
+            await runtime.replacePendingItems(with: pendingItems)
+            DokusFileProviderLog.runtime.debug(
+                "pendingItemsDidChange completed domainId=\(domainIdentifier, privacy: .public) count=\(pendingItems.count, privacy: .public)"
+            )
+            if pendingItems.isEmpty {
+                resolveDomainErrorsIfNeeded(source: "pendingItemsDidChange")
+            }
             completionHandler()
         }
     }
@@ -364,6 +387,13 @@ final class DokusFileProviderExtension: NSObject, NSFileProviderReplicatedExtens
             return
         }
         Task {
+            let pendingItems = await providerManager.pendingItemStates()
+            await runtime.replacePendingItems(with: pendingItems)
+            if !pendingItems.isEmpty {
+                DokusFileProviderLog.domainHealth.debug(
+                    "resolveDomainErrors continuing with pending items domainId=\(domainIdentifier, privacy: .public) source=\(source, privacy: .public) pendingCount=\(pendingItems.count, privacy: .public)"
+                )
+            }
             await errorResolver.resolveDomainErrorsIfNeeded(
                 manager: providerManager,
                 domainIdentifier: domainIdentifier,
@@ -457,6 +487,7 @@ protocol DokusFileProviderManagerHandling: DokusFileProviderTaskRegistering {
     func signalErrorResolved(_ error: NSError) async -> NSError?
     func signalWorkingSet() async
     func materializedItemIdentifiers() async -> Set<NSFileProviderItemIdentifier>
+    func pendingItemStates() async -> [DokusPendingFileProviderItemState]
 }
 
 private final class DokusSystemFileProviderManager: DokusFileProviderManagerHandling {
@@ -517,6 +548,26 @@ private final class DokusSystemFileProviderManager: DokusFileProviderManagerHand
         return identifiers
     }
 
+    func pendingItemStates() async -> [DokusPendingFileProviderItemState] {
+        let enumerator = manager.enumeratorForPendingItems()
+        var page = NSFileProviderPage(rawValue: Data())
+        var items: [DokusPendingFileProviderItemState] = []
+
+        while true {
+            let result = await enumeratePendingPage(
+                enumerator: enumerator,
+                startingAt: page
+            )
+            items.append(contentsOf: result.items)
+            guard let nextPage = result.nextPage else {
+                break
+            }
+            page = nextPage
+        }
+
+        return items
+    }
+
     private func enumeratePage(
         enumerator: NSFileProviderEnumerator,
         startingAt page: NSFileProviderPage
@@ -524,6 +575,18 @@ private final class DokusSystemFileProviderManager: DokusFileProviderManagerHand
         await withCheckedContinuation { continuation in
             let observer = DokusMaterializedEnumerationObserver { identifiers, nextPage in
                 continuation.resume(returning: (identifiers, nextPage))
+            }
+            enumerator.enumerateItems(for: observer, startingAt: page)
+        }
+    }
+
+    private func enumeratePendingPage(
+        enumerator: NSFileProviderEnumerator,
+        startingAt page: NSFileProviderPage
+    ) async -> (items: [DokusPendingFileProviderItemState], nextPage: NSFileProviderPage?) {
+        await withCheckedContinuation { continuation in
+            let observer = DokusPendingEnumerationObserver { items, nextPage in
+                continuation.resume(returning: (items, nextPage))
             }
             enumerator.enumerateItems(for: observer, startingAt: page)
         }
@@ -549,6 +612,30 @@ private final class DokusMaterializedEnumerationObserver: NSObject, NSFileProvid
     func finishEnumeratingWithError(_ error: Error) {
         DokusFileProviderLog.runtime.warning(
             "materialized enumeration failed error=\(String(describing: error), privacy: .public)"
+        )
+        onFinish([], nil)
+    }
+}
+
+private final class DokusPendingEnumerationObserver: NSObject, NSFileProviderEnumerationObserver {
+    private var items: [DokusPendingFileProviderItemState] = []
+    private let onFinish: ([DokusPendingFileProviderItemState], NSFileProviderPage?) -> Void
+
+    init(onFinish: @escaping ([DokusPendingFileProviderItemState], NSFileProviderPage?) -> Void) {
+        self.onFinish = onFinish
+    }
+
+    func didEnumerate(_ updatedItems: [any NSFileProviderItem]) {
+        items.append(contentsOf: updatedItems.map(DokusPendingFileProviderItemState.init(item:)))
+    }
+
+    func finishEnumerating(upTo nextPage: NSFileProviderPage?) {
+        onFinish(items, nextPage)
+    }
+
+    func finishEnumeratingWithError(_ error: Error) {
+        DokusFileProviderLog.runtime.warning(
+            "pending enumeration failed error=\(String(describing: error), privacy: .public)"
         )
         onFinish([], nil)
     }
