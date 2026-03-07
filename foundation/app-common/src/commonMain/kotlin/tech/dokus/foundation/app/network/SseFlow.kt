@@ -7,6 +7,7 @@ import io.ktor.sse.ServerSentEvent
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.mapNotNull
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -51,15 +52,27 @@ fun <T> observeSseEvents(
                     request = request,
                     onConnected = {},
                     onEvent = { event ->
+                        emit(SseObservation.Activity)
+
                         val decodedEvent = decodeEvent(event)
                         if (decodedEvent != null) {
-                            emit(decodedEvent)
+                            emit(SseObservation.Value(decodedEvent))
                         }
                     },
                 )
             }
         },
-    )
+    ).mapNotNull { observation ->
+        when (observation) {
+            SseObservation.Activity -> null
+            is SseObservation.Value -> observation.value
+        }
+    }
 }
 
 val defaultSseStaleTimeout: Duration = 30.seconds
+
+private sealed interface SseObservation<out T> {
+    data object Activity : SseObservation<Nothing>
+    data class Value<T>(val value: T) : SseObservation<T>
+}

@@ -8,8 +8,13 @@ import io.ktor.server.resources.post
 import io.ktor.server.response.*
 import io.ktor.server.routing.Route
 import io.ktor.server.sse.heartbeat
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.takeWhile
+import kotlinx.coroutines.flow.onSubscription
+import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -224,12 +229,20 @@ internal fun Route.documentRecordRoutes() {
         get<Documents.Id.Events> { route ->
             val tenantId = requireTenantId()
             val documentId = DocumentId.parse(route.parent.id)
-            val initialRecord = documentRecordLoader.load(tenantId, documentId)
+            documentRecordLoader.load(tenantId, documentId)
                 ?: throw DokusException.NotFound("Document not found")
 
             call.respondSse {
                 heartbeat {
                     period = defaultSseHeartbeatPeriod
+                }
+
+                suspend fun sendDeletedEvent() {
+                    sendJsonEvent(
+                        event = DocumentStreamEventNames.Deleted,
+                        payload = DocumentDeletedEventDto(documentId),
+                        encode = { json.encodeToString(DocumentDeletedEventDto.serializer(), it) }
+                    )
                 }
 
                 suspend fun sendSnapshotOrDeleted(): Boolean {
@@ -242,36 +255,51 @@ internal fun Route.documentRecordRoutes() {
                         )
                         true
                     } else {
-                        sendJsonEvent(
-                            event = DocumentStreamEventNames.Deleted,
-                            payload = DocumentDeletedEventDto(documentId),
-                            encode = { json.encodeToString(DocumentDeletedEventDto.serializer(), it) }
-                        )
+                        sendDeletedEvent()
                         false
                     }
                 }
 
-                sendJsonEvent(
-                    event = DocumentStreamEventNames.Snapshot,
-                    payload = initialRecord,
-                    encode = { json.encodeToString(DocumentRecordDto.serializer(), it) }
-                )
+                val signalQueue = Channel<DocumentSnapshotSignal>(capacity = Channel.BUFFERED)
+                val subscriptionReady = CompletableDeferred<Unit>()
+                val signalCollector = launch(start = CoroutineStart.UNDISPATCHED) {
+                    documentSnapshotEventHub.eventsFor(tenantId, documentId)
+                        .onSubscription { subscriptionReady.complete(Unit) }
+                        .collect { signalQueue.send(it) }
+                }
 
-                documentSnapshotEventHub.eventsFor(tenantId, documentId)
-                    .takeWhile { signal ->
-                        when (signal) {
-                            DocumentSnapshotSignal.Changed -> sendSnapshotOrDeleted()
+                try {
+                    subscriptionReady.await()
+
+                    // Re-read after the subscription is active so updates/deletes in the setup window
+                    // are reflected either in this first payload or in the buffered signal queue.
+                    val initialRecord = documentRecordLoader.load(tenantId, documentId)
+                    if (initialRecord == null) {
+                        sendDeletedEvent()
+                        return@respondSse
+                    }
+
+                    sendJsonEvent(
+                        event = DocumentStreamEventNames.Snapshot,
+                        payload = initialRecord,
+                        encode = { json.encodeToString(DocumentRecordDto.serializer(), it) }
+                    )
+
+                    while (true) {
+                        when (signalQueue.receive()) {
+                            DocumentSnapshotSignal.Changed -> {
+                                if (!sendSnapshotOrDeleted()) break
+                            }
                             DocumentSnapshotSignal.Deleted -> {
-                                sendJsonEvent(
-                                    event = DocumentStreamEventNames.Deleted,
-                                    payload = DocumentDeletedEventDto(documentId),
-                                    encode = { json.encodeToString(DocumentDeletedEventDto.serializer(), it) }
-                                )
-                                false
+                                sendDeletedEvent()
+                                break
                             }
                         }
                     }
-                    .collect()
+                } finally {
+                    signalCollector.cancelAndJoin()
+                    signalQueue.close()
+                }
             }
         }
 

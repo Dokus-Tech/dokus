@@ -6,8 +6,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -31,7 +31,7 @@ private data class DocumentSnapshotKey(
 internal class DocumentCollectionEventHub {
     private val streams = ConcurrentHashMap<TenantId, MutableSharedFlow<DocumentCollectionChangedEventDto>>()
 
-    fun eventsFor(tenantId: TenantId): Flow<DocumentCollectionChangedEventDto> = streamFor(tenantId).asSharedFlow()
+    fun eventsFor(tenantId: TenantId): SharedFlow<DocumentCollectionChangedEventDto> = streamFor(tenantId).asSharedFlow()
 
     fun publish(
         tenantId: TenantId,
@@ -58,7 +58,7 @@ internal class DocumentSnapshotEventHub {
     fun eventsFor(
         tenantId: TenantId,
         documentId: DocumentId,
-    ): Flow<DocumentSnapshotSignal> {
+    ): SharedFlow<DocumentSnapshotSignal> {
         val key = DocumentSnapshotKey(tenantId, documentId)
         return streams.getOrPut(key) {
             createFlow().also { flow -> scheduleEviction(key, flow) }
