@@ -6,6 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -31,23 +32,21 @@ private data class DocumentSnapshotKey(
 internal class DocumentCollectionEventHub {
     private val streams = ConcurrentHashMap<TenantId, MutableSharedFlow<DocumentCollectionChangedEventDto>>()
 
-    fun eventsFor(tenantId: TenantId): SharedFlow<DocumentCollectionChangedEventDto> = streamFor(tenantId).asSharedFlow()
-
     fun publish(
         tenantId: TenantId,
         event: DocumentCollectionChangedEventDto,
     ) {
-        streamFor(tenantId).tryEmit(event)
+        streams[tenantId]?.tryEmit(event)
     }
 
-    private fun streamFor(tenantId: TenantId): MutableSharedFlow<DocumentCollectionChangedEventDto> {
+    fun eventsFor(tenantId: TenantId): SharedFlow<DocumentCollectionChangedEventDto> {
         return streams.getOrPut(tenantId) {
             MutableSharedFlow(
                 replay = 0,
                 extraBufferCapacity = DefaultBufferCapacity,
                 onBufferOverflow = BufferOverflow.DROP_OLDEST,
             )
-        }
+        }.asSharedFlow()
     }
 }
 
@@ -60,8 +59,8 @@ internal class DocumentSnapshotEventHub {
         documentId: DocumentId,
     ): SharedFlow<DocumentSnapshotSignal> {
         val key = DocumentSnapshotKey(tenantId, documentId)
-        return streams.getOrPut(key) {
-            createFlow().also { flow -> scheduleEviction(key, flow) }
+        return streams.computeIfAbsent(key) { k ->
+            createFlow().also { flow -> scheduleEviction(k, flow) }
         }.asSharedFlow()
     }
 
@@ -92,7 +91,13 @@ internal class DocumentSnapshotEventHub {
     private fun scheduleEviction(key: DocumentSnapshotKey, flow: MutableSharedFlow<DocumentSnapshotSignal>) {
         scope.launch {
             while (true) {
-                flow.subscriptionCount.first { it > 0 }
+                val subscribed = withTimeoutOrNull(EvictionDelay) {
+                    flow.subscriptionCount.first { it > 0 }
+                }
+                if (subscribed == null) {
+                    streams.remove(key, flow)
+                    break
+                }
                 flow.subscriptionCount.first { it == 0 }
                 delay(EvictionDelay)
                 if (flow.subscriptionCount.value == 0) {

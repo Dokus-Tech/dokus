@@ -696,7 +696,7 @@ internal class DocumentProcessingWorker(
 
         if (matchOutcome.orphanedDocumentId == matchOutcome.documentId) {
             documentSsePublisher.publishDocumentDeleted(tenantId, matchOutcome.documentId)
-        } else {
+        } else if (matchOutcome.documentId != originalDocumentId) {
             documentSsePublisher.publishDocumentChanged(tenantId, matchOutcome.documentId)
         }
     }

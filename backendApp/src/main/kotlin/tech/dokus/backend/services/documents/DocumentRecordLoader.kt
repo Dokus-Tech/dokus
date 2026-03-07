@@ -20,7 +20,7 @@ import tech.dokus.foundation.backend.storage.DocumentStorageService
 import tech.dokus.foundation.backend.utils.loggerFor
 
 @Suppress("LongParameterList")
-class DocumentRecordLoader(
+internal class DocumentRecordLoader(
     private val documentRepository: DocumentRepository,
     private val draftRepository: DocumentDraftRepository,
     private val ingestionRepository: DocumentIngestionRunRepository,

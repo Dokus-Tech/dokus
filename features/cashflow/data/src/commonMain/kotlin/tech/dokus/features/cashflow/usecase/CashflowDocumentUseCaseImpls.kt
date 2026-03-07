@@ -1,5 +1,6 @@
 package tech.dokus.features.cashflow.usecase
 
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.conflate
@@ -83,6 +84,7 @@ internal class WatchPendingDocumentsUseCaseImpl(
 internal class ObserveDocumentCollectionChangesUseCaseImpl(
     private val cashflowRemoteDataSource: CashflowRemoteDataSource
 ) : ObserveDocumentCollectionChangesUseCase {
+    @OptIn(FlowPreview::class)
     override fun invoke(): Flow<Unit> {
         return cashflowRemoteDataSource.observeDocumentCollectionChanges()
             .conflate()
@@ -137,9 +139,15 @@ internal class SubmitInvoiceWithDeliveryUseCaseImpl(
                 cashflowRemoteDataSource.sendInvoiceViaPeppol(invoice.id)
                     .fold(
                         onSuccess = { SubmitInvoiceWithDeliveryResult.PeppolQueued(invoice.id) },
-                        onFailure = { SubmitInvoiceWithDeliveryResult.DeliveryFailed(invoice.id, it.message ?: "PEPPOL delivery failed") }
+                        onFailure = {
+                            SubmitInvoiceWithDeliveryResult.DeliveryFailed(
+                                invoice.id,
+                                it.message ?: "PEPPOL delivery failed"
+                            )
+                        }
                     )
             }
+
             InvoiceDeliveryMethod.PdfExport -> {
                 cashflowRemoteDataSource.generateInvoicePdf(invoice.id)
                     .fold(
@@ -149,7 +157,12 @@ internal class SubmitInvoiceWithDeliveryUseCaseImpl(
                                 downloadUrl = url
                             )
                         },
-                        onFailure = { SubmitInvoiceWithDeliveryResult.DeliveryFailed(invoice.id, it.message ?: "PDF generation failed") }
+                        onFailure = {
+                            SubmitInvoiceWithDeliveryResult.DeliveryFailed(
+                                invoice.id,
+                                it.message ?: "PDF generation failed"
+                            )
+                        }
                     )
             }
         }

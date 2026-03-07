@@ -161,10 +161,7 @@ internal fun DocumentReviewRoute(
 
     val detailStreamDocumentId = when (state) {
         is DocumentReviewState.AwaitingExtraction -> (state as DocumentReviewState.AwaitingExtraction).documentId
-        is DocumentReviewState.Content -> {
-            val content = state as DocumentReviewState.Content
-            content.documentId.takeIf { content.isProcessing }
-        }
+        is DocumentReviewState.Content -> (state as DocumentReviewState.Content).documentId
         else -> null
     }
 

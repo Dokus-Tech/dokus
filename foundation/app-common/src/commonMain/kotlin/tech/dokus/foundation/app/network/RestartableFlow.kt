@@ -60,13 +60,14 @@ fun <T> restartableFlow(
         val watchdog = staleTimeout?.let { timeout ->
             launch {
                 while (isActive) {
-                    delay(timeout)
-                    if (lastEmissionMark.elapsedNow() >= timeout) {
+                    val elapsed = lastEmissionMark.elapsedNow()
+                    if (elapsed >= timeout) {
                         val timeoutException = CancellationException("Upstream stalled after $timeout")
                         failure = timeoutException
                         collector.cancel(timeoutException)
                         break
                     }
+                    delay(timeout - elapsed)
                 }
             }
         }
@@ -89,6 +90,5 @@ private fun backoffDelay(
     max: Duration,
 ): Duration {
     val step = min(attempt.toInt(), 6)
-    val delayMs = base.inWholeMilliseconds * (1L shl step)
-    return min(delayMs, max.inWholeMilliseconds).milliseconds
+    return minOf(base * (1 shl step), max)
 }

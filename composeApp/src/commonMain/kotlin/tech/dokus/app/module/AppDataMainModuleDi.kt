@@ -58,6 +58,8 @@ private val networkModule = module {
             }
         ) {
             install(SSE) {
+                // Reconnection is handled by restartableFlow (SseFlow.kt).
+                // Setting 0 prevents Ktor from competing with the backoff logic.
                 maxReconnectionAttempts = 0
             }
         }

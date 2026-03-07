@@ -350,9 +350,6 @@ class ProcessorIngestionRepository {
             staleRuns
         }
 
-    @OptIn(ExperimentalTime::class)
-    suspend fun recoverStaleRuns(): Int = recoverStaleRunsDetailed().size
-
     /**
      * Update the indexing status for an ingestion run.
      *

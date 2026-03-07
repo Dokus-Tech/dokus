@@ -31,16 +31,4 @@ suspend fun <T> ServerSSESession.sendJsonEvent(
     )
 }
 
-suspend fun ServerSSESession.sendEvent(
-    event: String,
-    data: String? = null,
-) {
-    send(
-        ServerSentEvent(
-            event = event,
-            data = data,
-        )
-    )
-}
-
 val defaultSseHeartbeatPeriod: Duration = 15.seconds

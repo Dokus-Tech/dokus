@@ -208,7 +208,7 @@ val cashflowNetworkModule = module {
     singleOf(::GetPeppolActivityUseCaseImpl) bind GetPeppolActivityUseCase::class
 
     // Cashflow documents
-    factory<ObserveDocumentCollectionChangesUseCase> { ObserveDocumentCollectionChangesUseCaseImpl(get()) }
+    singleOf(::ObserveDocumentCollectionChangesUseCaseImpl) bind ObserveDocumentCollectionChangesUseCase::class
     factory<WatchPendingDocumentsUseCase> { WatchPendingDocumentsUseCaseImpl(get(), get()) }
     factory<SubmitInvoiceUseCase> { SubmitInvoiceUseCaseImpl(get()) }
     factory<SubmitInvoiceWithDeliveryUseCase> { SubmitInvoiceWithDeliveryUseCaseImpl(get()) }

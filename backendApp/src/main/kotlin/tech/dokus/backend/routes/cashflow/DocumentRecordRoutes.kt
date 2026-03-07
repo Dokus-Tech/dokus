@@ -229,8 +229,6 @@ internal fun Route.documentRecordRoutes() {
         get<Documents.Id.Events> { route ->
             val tenantId = requireTenantId()
             val documentId = DocumentId.parse(route.parent.id)
-            documentRecordLoader.load(tenantId, documentId)
-                ?: throw DokusException.NotFound("Document not found")
 
             call.respondSse {
                 heartbeat {
