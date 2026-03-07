@@ -30,8 +30,6 @@ import tech.dokus.foundation.backend.utils.loggerFor
 
 private val logger = loggerFor("AvatarRoutes")
 
-private const val AvatarPresenceProbeSize = "small"
-
 internal fun Route.avatarRoutes() {
     val tenantRepository by inject<TenantRepository>()
     val userRepository by inject<UserRepository>()
@@ -70,15 +68,11 @@ internal fun Route.avatarRoutes() {
             val tenantId = parseTenantId(route.parent.id)
             requireTenantMembership(userRepository, principal.userId, tenantId)
 
-            val storageKey = ensureAvatarMetadataAvailable(
+            ensureAvatarMetadataAvailable(
                 storageKey = tenantRepository.getAvatarStorageKey(tenantId),
                 avatarStorageService = avatarStorageService,
                 ownerLabel = "tenant: $tenantId"
             )
-
-            if (storageKey.isBlank()) {
-                throw DokusException.NotFound("No avatar set")
-            }
 
             call.respond(HttpStatusCode.OK, businessProfileService.buildTenantAvatarThumbnail(tenantId))
         }
@@ -88,11 +82,11 @@ internal fun Route.avatarRoutes() {
             val tenantId = parseTenantId(route.id)
             requireTenantMembership(userRepository, principal.userId, tenantId)
 
-            val imageBytes = loadTenantAvatarImageBytes(
-                tenantId = tenantId,
+            val imageBytes = loadAvatarImageBytes(
+                storageKey = tenantRepository.getAvatarStorageKey(tenantId),
                 size = route.size,
-                tenantRepository = tenantRepository,
-                avatarStorageService = avatarStorageService
+                avatarStorageService = avatarStorageService,
+                ownerLabel = "tenant: $tenantId"
             )
 
             call.respondBytes(
@@ -163,11 +157,11 @@ internal fun Route.avatarRoutes() {
 
         get<Users.AvatarImageById> { route ->
             val userId = parseUserId(route.id)
-            val imageBytes = loadUserAvatarImageBytes(
-                userId = userId,
+            val imageBytes = loadAvatarImageBytes(
+                storageKey = userRepository.getAvatarStorageKey(userId),
                 size = route.size,
-                userRepository = userRepository,
-                avatarStorageService = avatarStorageService
+                avatarStorageService = avatarStorageService,
+                ownerLabel = "user: $userId"
             )
 
             call.respondBytes(
@@ -226,7 +220,7 @@ private fun parseUserId(rawValue: String): UserId =
     runCatching { UserId.parse(rawValue) }
         .getOrElse { throw DokusException.BadRequest("Invalid user id in path") }
 
-private data class AvatarUploadPayload(
+private class AvatarUploadPayload(
     val fileBytes: ByteArray,
     val contentType: String
 )
@@ -277,60 +271,36 @@ private suspend fun ensureAvatarMetadataAvailable(
     storageKey: String?,
     avatarStorageService: AvatarStorageService,
     ownerLabel: String
-): String {
-    val resolvedStorageKey = storageKey ?: throw DokusException.NotFound("No avatar set")
-    if (avatarStorageService.getAvatarBytes(resolvedStorageKey, AvatarPresenceProbeSize) == null) {
+) {
+    val resolvedStorageKey = storageKey
+        ?.takeIf { it.isNotBlank() }
+        ?: throw DokusException.NotFound("No avatar set")
+    if (!avatarStorageService.avatarExists(resolvedStorageKey)) {
+        logger.debug(
+            "Missing avatar object for owner={}, reason=storage_missing",
+            ownerLabel,
+        )
+        throw DokusException.NotFound("Avatar not found in storage")
+    }
+}
+
+private suspend fun loadAvatarImageBytes(
+    storageKey: String?,
+    size: String,
+    avatarStorageService: AvatarStorageService,
+    ownerLabel: String
+): ByteArray {
+    val normalizedSize = avatarStorageService.normalizeSize(size)
+        ?: throw DokusException.BadRequest("Avatar size must be one of: small, medium, large")
+
+    val resolvedKey = storageKey
+        ?: throw DokusException.NotFound("No avatar set")
+
+    val imageBytes = avatarStorageService.getAvatarBytes(resolvedKey, normalizedSize)
+    if (imageBytes == null) {
         logger.debug(
             "Missing avatar object for owner={}, size={}, reason=storage_missing",
             ownerLabel,
-            AvatarPresenceProbeSize
-        )
-        throw DokusException.NotFound("Avatar not found in storage")
-    }
-    return resolvedStorageKey
-}
-
-private suspend fun loadTenantAvatarImageBytes(
-    tenantId: TenantId,
-    size: String,
-    tenantRepository: TenantRepository,
-    avatarStorageService: AvatarStorageService
-): ByteArray {
-    val normalizedSize = avatarStorageService.normalizeSize(size)
-        ?: throw DokusException.BadRequest("Avatar size must be one of: small, medium, large")
-
-    val storageKey = tenantRepository.getAvatarStorageKey(tenantId)
-        ?: throw DokusException.NotFound("No avatar set")
-
-    val imageBytes = avatarStorageService.getAvatarBytes(storageKey, normalizedSize)
-    if (imageBytes == null) {
-        logger.debug(
-            "Missing tenant avatar object for tenant={}, size={}, reason=storage_missing",
-            tenantId,
-            normalizedSize
-        )
-        throw DokusException.NotFound("Avatar not found in storage")
-    }
-    return imageBytes
-}
-
-private suspend fun loadUserAvatarImageBytes(
-    userId: UserId,
-    size: String,
-    userRepository: UserRepository,
-    avatarStorageService: AvatarStorageService
-): ByteArray {
-    val normalizedSize = avatarStorageService.normalizeSize(size)
-        ?: throw DokusException.BadRequest("Avatar size must be one of: small, medium, large")
-
-    val storageKey = userRepository.getAvatarStorageKey(userId)
-        ?: throw DokusException.NotFound("No avatar set")
-
-    val imageBytes = avatarStorageService.getAvatarBytes(storageKey, normalizedSize)
-    if (imageBytes == null) {
-        logger.debug(
-            "Missing user avatar object for user={}, size={}, reason=storage_missing",
-            userId,
             normalizedSize
         )
         throw DokusException.NotFound("Avatar not found in storage")

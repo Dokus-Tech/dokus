@@ -55,7 +55,7 @@ class AvatarRoutesUserScopedTest {
         businessProfileService = mockk(relaxed = true)
     ) { userRepository, _, avatarStorageService, _ ->
         coEvery { userRepository.getAvatarStorageKey(TEST_OTHER_USER_ID) } returns "avatars/users/$TEST_OTHER_USER_ID/test"
-        coEvery { avatarStorageService.getAvatarBytes("avatars/users/$TEST_OTHER_USER_ID/test", "small") } returns byteArrayOf(1)
+        coEvery { avatarStorageService.avatarExists("avatars/users/$TEST_OTHER_USER_ID/test") } returns true
 
         val response = authenticatedGet("/api/v1/users/$TEST_OTHER_USER_ID/avatar")
 

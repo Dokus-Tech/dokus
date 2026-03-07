@@ -22,8 +22,6 @@ fun UserAvatarImage(
     fontSize: TextUnit = TextUnit.Unspecified,
     contentDescription: String? = null,
 ) {
-    val shape = RoundedCornerShape(radius)
-
     if (avatarUrl == null) {
         MonogramAvatar(
             initials = initials,
@@ -38,59 +36,36 @@ fun UserAvatarImage(
 
     val imageModifier = modifier
         .size(size)
-        .clip(shape)
+        .clip(RoundedCornerShape(radius))
 
-    if (imageLoader == null) {
+    val fallback: @Composable () -> Unit = {
+        MonogramAvatar(
+            initials = initials,
+            size = size,
+            radius = radius,
+            fontSize = fontSize,
+            contentDescription = contentDescription,
+        )
+    }
+
+    if (imageLoader != null) {
+        SubcomposeAsyncImage(
+            model = avatarUrl,
+            imageLoader = imageLoader,
+            contentDescription = contentDescription,
+            contentScale = ContentScale.Crop,
+            modifier = imageModifier,
+            loading = { fallback() },
+            error = { fallback() }
+        )
+    } else {
         SubcomposeAsyncImage(
             model = avatarUrl,
             contentDescription = contentDescription,
             contentScale = ContentScale.Crop,
             modifier = imageModifier,
-            loading = {
-                MonogramAvatar(
-                    initials = initials,
-                    size = size,
-                    radius = radius,
-                    fontSize = fontSize,
-                    contentDescription = contentDescription,
-                )
-            },
-            error = {
-                MonogramAvatar(
-                    initials = initials,
-                    size = size,
-                    radius = radius,
-                    fontSize = fontSize,
-                    contentDescription = contentDescription,
-                )
-            }
+            loading = { fallback() },
+            error = { fallback() }
         )
-        return
     }
-
-    SubcomposeAsyncImage(
-        model = avatarUrl,
-        imageLoader = imageLoader,
-        contentDescription = contentDescription,
-        contentScale = ContentScale.Crop,
-        modifier = imageModifier,
-        loading = {
-            MonogramAvatar(
-                initials = initials,
-                size = size,
-                radius = radius,
-                fontSize = fontSize,
-                contentDescription = contentDescription,
-            )
-        },
-        error = {
-            MonogramAvatar(
-                initials = initials,
-                size = size,
-                radius = radius,
-                fontSize = fontSize,
-                contentDescription = contentDescription,
-            )
-        }
-    )
 }

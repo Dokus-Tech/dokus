@@ -46,11 +46,14 @@ class TeamService(
         logger.debug("Listing team members for tenant {}", tenantId)
 
         val usersInTenant = userRepository.listByTenant(tenantId, activeOnly = true)
+        val avatarKeys = userRepository.getAvatarStorageKeys(usersInTenant.map { it.user.id })
 
         return usersInTenant.map { userInTenant ->
-            val avatar = userRepository.getAvatarStorageKey(userInTenant.user.id)
-                ?.takeIf { it.isNotBlank() }
-                ?.let { buildUserAvatarThumbnail(userInTenant.user.id) }
+            val avatar = if (userInTenant.user.id in avatarKeys) {
+                buildUserAvatarThumbnail(userInTenant.user.id)
+            } else {
+                null
+            }
             TeamMember(
                 userId = userInTenant.user.id,
                 email = userInTenant.user.email,

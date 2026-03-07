@@ -175,6 +175,12 @@ class AvatarStorageService(
             )
         }
 
+    suspend fun avatarExists(storageKeyPrefix: String): Boolean =
+        withContext(Dispatchers.IO) {
+            val key = buildAvatarObjectKey(storageKeyPrefix, "small")
+            storage.exists(key)
+        }
+
     suspend fun getAvatarBytes(storageKeyPrefix: String, size: String): ByteArray? =
         withContext(Dispatchers.IO) {
             val key = buildAvatarObjectKey(storageKeyPrefix, size)

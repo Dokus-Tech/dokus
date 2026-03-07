@@ -6,8 +6,10 @@ import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.toStdlibInstant
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.insertAndGetId
+import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
 import tech.dokus.database.mapper.UserMappers.toTenantMembership
@@ -282,10 +284,25 @@ class UserRepository(
     suspend fun getAvatarStorageKey(userId: UserId): String? = dbQuery {
         val javaUuid = userId.value.toJavaUuid()
         UsersTable
-            .selectAll()
+            .select(UsersTable.avatarStorageKey)
             .where { UsersTable.id eq javaUuid }
             .singleOrNull()
             ?.get(UsersTable.avatarStorageKey)
+    }
+
+    suspend fun getAvatarStorageKeys(userIds: List<UserId>): Map<UserId, String> = dbQuery {
+        if (userIds.isEmpty()) return@dbQuery emptyMap()
+        val javaUuids = userIds.map { it.value.toJavaUuid() }
+        UsersTable
+            .select(UsersTable.id, UsersTable.avatarStorageKey)
+            .where { UsersTable.id inList javaUuids }
+            .mapNotNull { row ->
+                val key = row[UsersTable.avatarStorageKey]
+                    ?.takeIf { it.isNotBlank() }
+                    ?: return@mapNotNull null
+                UserId(row[UsersTable.id].value.toString()) to key
+            }
+            .toMap()
     }
 
     suspend fun deactivate(userId: UserId, reason: String?) = dbQuery {

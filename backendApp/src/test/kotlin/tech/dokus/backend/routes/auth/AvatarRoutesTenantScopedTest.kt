@@ -85,7 +85,7 @@ class AvatarRoutesTenantScopedTest {
         val tenantId = TenantId.generate()
         coEvery { userRepository.getMembership(TEST_USER_ID, tenantId) } returns membership(tenantId)
         coEvery { tenantRepository.getAvatarStorageKey(tenantId) } returns "avatars/tenants/$tenantId/test"
-        coEvery { avatarStorageService.getAvatarBytes("avatars/tenants/$tenantId/test", "small") } returns byteArrayOf(9)
+        coEvery { avatarStorageService.avatarExists("avatars/tenants/$tenantId/test") } returns true
         every {
             businessProfileService.buildTenantAvatarThumbnail(tenantId)
         } returns Thumbnail(
