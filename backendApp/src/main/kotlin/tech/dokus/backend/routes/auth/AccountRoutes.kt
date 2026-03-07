@@ -16,6 +16,7 @@ import tech.dokus.backend.services.auth.AuthService
 import tech.dokus.backend.services.auth.SessionContext
 import tech.dokus.backend.services.auth.SurfaceResolver
 import tech.dokus.backend.services.avatar.projectUserAvatar
+import tech.dokus.backend.services.business.BusinessProfileService
 import tech.dokus.database.repository.auth.FirmRepository
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.auth.UserRepository
@@ -47,6 +48,7 @@ internal fun Route.accountRoutes() {
     val userRepository by inject<UserRepository>()
     val tenantRepository by inject<TenantRepository>()
     val firmRepository by inject<FirmRepository>()
+    val businessProfileService by inject<BusinessProfileService>()
 
     authenticateJwt {
         /**
@@ -69,6 +71,7 @@ internal fun Route.accountRoutes() {
 
             val tenantsById = tenantRepository.findByIds(tenantMemberships.map { it.tenantId })
                 .associateBy { it.id }
+            val tenantAvatarKeys = tenantRepository.getAvatarStorageKeys(tenantMemberships.map { it.tenantId })
             val tenantSummaries = tenantMemberships.mapNotNull { membership ->
                 val tenant = tenantsById[membership.tenantId] ?: return@mapNotNull null
                 TenantWorkspaceSummary(
@@ -76,7 +79,12 @@ internal fun Route.accountRoutes() {
                     name = tenant.displayName,
                     vatNumber = tenant.vatNumber,
                     role = membership.role,
-                    type = tenant.type
+                    type = tenant.type,
+                    avatar = if (tenant.id in tenantAvatarKeys) {
+                        businessProfileService.buildTenantAvatarThumbnail(tenant.id)
+                    } else {
+                        null
+                    }
                 )
             }
 
