@@ -16,6 +16,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
+import tech.dokus.domain.currentDeviceType
 import tech.dokus.domain.ids.SessionId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.FirmId
@@ -115,7 +116,12 @@ internal class AccountRemoteDataSourceImpl(
         return runCatching {
             httpClient.put(Account.ActiveTenant()) {
                 contentType(ContentType.Application.Json)
-                setBody(SelectTenantRequest(tenantId = tenantId))
+                setBody(
+                    SelectTenantRequest(
+                        tenantId = tenantId,
+                        deviceType = currentDeviceType(),
+                    )
+                )
             }.body()
         }
     }

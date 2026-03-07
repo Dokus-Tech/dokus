@@ -8,6 +8,7 @@ package tech.dokus.features.auth.utils
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.longOrNull
+import tech.dokus.domain.ids.SessionId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.auth.JwtClaims
 import tech.dokus.domain.model.auth.TokenStatus
@@ -56,12 +57,17 @@ class JwtDecoder {
             val iat = jsonObject[JwtClaims.CLAIM_IAT]?.jsonPrimitive?.longOrNull ?: return null
             val exp = jsonObject[JwtClaims.CLAIM_EXP]?.jsonPrimitive?.longOrNull ?: return null
             val jti = jsonObject[JwtClaims.CLAIM_JTI]?.jsonPrimitive?.content ?: return null
+            val sessionId = jsonObject[JwtClaims.CLAIM_SESSION_ID]
+                ?.jsonPrimitive
+                ?.content
+                ?.let { runCatching { SessionId(it) }.getOrNull() }
             val iss = jsonObject[JwtClaims.CLAIM_ISS]?.jsonPrimitive?.content ?: JwtClaims.ISS_DEFAULT
             val aud = jsonObject[JwtClaims.CLAIM_AUD]?.jsonPrimitive?.content ?: JwtClaims.AUD_DEFAULT
 
             JwtClaims(
                 userId = UserId(userIdStr),
                 email = email,
+                sessionId = sessionId,
                 iat = iat,
                 exp = exp,
                 jti = jti,

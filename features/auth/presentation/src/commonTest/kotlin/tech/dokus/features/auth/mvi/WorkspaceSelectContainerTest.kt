@@ -5,9 +5,10 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import pro.respawn.flowmvi.test.subscribeAndTest
 import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.model.auth.AccountMeResponse
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.Tenant
-import tech.dokus.features.auth.usecases.ListMyTenantsUseCase
+import tech.dokus.features.auth.usecases.GetAccountMeUseCase
+import tech.dokus.features.auth.usecases.RefreshSessionNowUseCase
 import tech.dokus.features.auth.usecases.SelectTenantUseCase
 import kotlin.test.Test
 import kotlin.test.assertIs
@@ -18,10 +19,11 @@ class WorkspaceSelectContainerTest {
     @Test
     fun `unauthenticated tenants load resolves to auth error state for global logout handler`() = runTest {
         val container = WorkspaceSelectContainer(
-            listMyTenants = FakeListMyTenantsUseCase(
+            getAccountMeUseCase = FakeGetAccountMeUseCase(
                 Result.failure(DokusException.NotAuthenticated("Authentication required"))
             ),
-            selectTenantUseCase = FakeSelectTenantUseCase()
+            selectTenantUseCase = FakeSelectTenantUseCase(),
+            refreshSessionNowUseCase = FakeRefreshSessionNowUseCase()
         )
 
         container.store.subscribeAndTest {
@@ -32,12 +34,16 @@ class WorkspaceSelectContainerTest {
     }
 }
 
-private class FakeListMyTenantsUseCase(
-    private val result: Result<List<Tenant>>
-) : ListMyTenantsUseCase {
-    override suspend fun invoke(): Result<List<Tenant>> = result
+private class FakeGetAccountMeUseCase(
+    private val result: Result<AccountMeResponse>
+) : GetAccountMeUseCase {
+    override suspend fun invoke(): Result<AccountMeResponse> = result
 }
 
 private class FakeSelectTenantUseCase : SelectTenantUseCase {
     override suspend fun invoke(tenantId: TenantId): Result<Unit> = Result.success(Unit)
+}
+
+private class FakeRefreshSessionNowUseCase : RefreshSessionNowUseCase {
+    override suspend fun invoke(): Result<Unit> = Result.success(Unit)
 }

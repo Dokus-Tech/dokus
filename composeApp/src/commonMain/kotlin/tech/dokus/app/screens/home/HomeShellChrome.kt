@@ -342,12 +342,20 @@ internal fun DesktopShellTopBar(
     topBarConfig: HomeShellTopBarConfig,
     modifier: Modifier = Modifier,
 ) {
-    DesktopShellTopBarFrame(
-        actions = topBarConfig.actions,
-        modifier = modifier
-    ) {
-        when (val mode = topBarConfig.mode) {
-            is HomeShellTopBarMode.Title -> {
+    when (val mode = topBarConfig.mode) {
+        HomeShellTopBarMode.Transparent -> {
+            Box(
+                modifier = modifier
+                    .fillMaxWidth()
+                    .height(DesktopShellTopBarHeight)
+            )
+        }
+
+        is HomeShellTopBarMode.Title -> {
+            DesktopShellTopBarFrame(
+                actions = topBarConfig.actions,
+                modifier = modifier
+            ) {
                 Column {
                     Text(
                         text = mode.title,
@@ -520,6 +528,20 @@ private fun MobileShellTopBarPreview(
                 tierLabel = "Core"
             ),
             onProfileClick = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun DesktopTransparentShellTopBarPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        DesktopShellTopBar(
+            topBarConfig = HomeShellTopBarConfig(
+                mode = HomeShellTopBarMode.Transparent
+            )
         )
     }
 }

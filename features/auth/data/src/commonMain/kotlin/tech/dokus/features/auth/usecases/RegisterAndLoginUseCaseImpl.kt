@@ -5,6 +5,7 @@ package tech.dokus.features.auth.usecases
 import tech.dokus.domain.Email
 import tech.dokus.domain.Name
 import tech.dokus.domain.Password
+import tech.dokus.domain.currentDeviceType
 import tech.dokus.domain.model.auth.RegisterRequest
 import tech.dokus.features.auth.gateway.AuthGateway
 import tech.dokus.foundation.platform.Logger
@@ -81,7 +82,8 @@ class RegisterAndLoginUseCaseImpl(
             email = email,
             password = password,
             firstName = firstName,
-            lastName = lastName
+            lastName = lastName,
+            deviceType = currentDeviceType(),
         )
 
         // Perform registration (auto-login handled by repository)

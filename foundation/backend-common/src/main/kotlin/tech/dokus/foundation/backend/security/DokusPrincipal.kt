@@ -1,6 +1,7 @@
 package tech.dokus.foundation.backend.security
 
 import io.ktor.server.auth.Principal
+import tech.dokus.domain.ids.SessionId
 import tech.dokus.domain.model.auth.JwtFirmMembershipClaim
 import tech.dokus.domain.model.auth.JwtTenantMembershipClaim
 import tech.dokus.domain.ids.UserId
@@ -20,6 +21,7 @@ data class DokusPrincipal(
     val globalRoles: Set<String> = emptySet(),
     val tenantMemberships: List<JwtTenantMembershipClaim> = emptyList(),
     val firmMemberships: List<JwtFirmMembershipClaim> = emptyList(),
+    val sessionId: SessionId? = null,
     val sessionJti: String? = null
 ) : Principal {
 
@@ -52,6 +54,7 @@ data class DokusPrincipal(
                 globalRoles = authInfo.globalRoles,
                 tenantMemberships = authInfo.tenantMemberships,
                 firmMemberships = authInfo.firmMemberships,
+                sessionId = authInfo.sessionId,
                 sessionJti = authInfo.sessionJti
             )
         }

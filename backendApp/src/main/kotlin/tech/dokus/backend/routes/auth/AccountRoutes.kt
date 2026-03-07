@@ -21,6 +21,7 @@ import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.domain.DeviceType
 import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.SessionId
 import tech.dokus.domain.model.auth.AccountMeResponse
 import tech.dokus.domain.model.auth.ChangePasswordRequest
 import tech.dokus.domain.model.auth.DeactivateUserRequest
@@ -140,8 +141,9 @@ internal fun Route.accountRoutes() {
             val response = authService.selectOrganization(
                 userId = principal.userId,
                 tenantId = request.tenantId,
+                currentSessionId = principal.currentSessionId(),
                 sessionContext = SessionContext(
-                    deviceType = DeviceType.fromAgent(userAgent),
+                    deviceType = request.deviceType ?: DeviceType.fromAgent(userAgent),
                     ipAddress = call.extractClientIpAddress(),
                     userAgent = userAgent
                 )
@@ -156,8 +158,13 @@ internal fun Route.accountRoutes() {
          * Logout user and revoke tokens
          */
         post<Account.Logout> {
+            val principal = dokusPrincipal
             val request = call.receive<LogoutRequest>()
-            authService.logout(request).getOrThrow()
+            authService.logout(
+                userId = principal.userId,
+                currentSessionId = principal.currentSessionId(),
+                request = request
+            ).getOrThrow()
             call.respond(HttpStatusCode.NoContent)
         }
 
@@ -182,7 +189,7 @@ internal fun Route.accountRoutes() {
                 userId = principal.userId,
                 currentPassword = request.currentPassword,
                 newPassword = request.newPassword,
-                currentSessionJti = principal.sessionJti
+                currentSessionId = principal.currentSessionId()
             ).getOrThrow()
             call.respond(HttpStatusCode.NoContent)
         }
@@ -195,7 +202,7 @@ internal fun Route.accountRoutes() {
             val principal = dokusPrincipal
             val sessions = authService.listSessions(
                 userId = principal.userId,
-                currentSessionJti = principal.sessionJti
+                currentSessionId = principal.currentSessionId()
             ).getOrThrow()
             call.respond(HttpStatusCode.OK, sessions)
         }
@@ -221,9 +228,15 @@ internal fun Route.accountRoutes() {
             val principal = dokusPrincipal
             authService.revokeOtherSessions(
                 userId = principal.userId,
-                currentSessionJti = principal.sessionJti
+                currentSessionId = principal.currentSessionId()
             ).getOrThrow()
             call.respond(HttpStatusCode.NoContent)
         }
+    }
+}
+
+private fun tech.dokus.foundation.backend.security.DokusPrincipal.currentSessionId(): SessionId? {
+    return sessionId ?: sessionJti?.let { jti ->
+        runCatching { SessionId(jti) }.getOrNull()
     }
 }

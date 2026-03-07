@@ -42,6 +42,8 @@ enum class DeviceType(override val dbValue: String) : DbEnum {
 
 expect val DeviceType.Companion.current: DeviceType
 
+fun currentDeviceType(): DeviceType = DeviceType.current
+
 val DeviceType.isWeb: Boolean get() = this == DeviceType.Web
 val DeviceType.isDesktop: Boolean get() = this == DeviceType.Desktop
 val DeviceType.isMobile: Boolean get() = this == DeviceType.Android || this == DeviceType.Ios

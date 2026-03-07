@@ -20,6 +20,7 @@ import tech.dokus.domain.Email
 import tech.dokus.domain.Name
 import tech.dokus.domain.Password
 import tech.dokus.domain.enums.UserRole
+import tech.dokus.domain.ids.SessionId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.TenantMembership
@@ -60,14 +61,25 @@ class AuthServiceWelcomeFlowTest {
         val user = testUser()
 
         coEvery { userRepository.register(any(), any(), any(), any()) } returns user
-        coEvery { jwtGenerator.generateClaims(any(), any(), any(), any()) } returns testClaims(user.id)
+        coEvery { jwtGenerator.generateClaims(any(), any(), any(), any(), any()) } returns testClaims(user.id)
         coEvery { jwtGenerator.generateTokens(any()) } returns LoginResponse(
             accessToken = "access",
             refreshToken = "refresh",
             expiresIn = 3600
         )
         coEvery {
-            refreshTokenRepository.saveRefreshToken(any(), any(), any(), any(), any(), any(), any(), any())
+            refreshTokenRepository.saveRefreshToken(
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any()
+            )
         } returns Result.success(Unit)
         coEvery { userRepository.recordSuccessfulLogin(any(), any()) } returns true
         coEvery { emailVerificationService.sendVerificationEmail(any(), any()) } returns Result.success(Unit)
@@ -107,7 +119,7 @@ class AuthServiceWelcomeFlowTest {
                 updatedAt = Clock.System.now().toLocalDateTime(TimeZone.UTC)
             )
         )
-        coEvery { jwtGenerator.generateClaims(any(), any(), any(), any()) } returns testClaims(user.id)
+        coEvery { jwtGenerator.generateClaims(any(), any(), any(), any(), any()) } returns testClaims(user.id)
         coEvery { jwtGenerator.generateTokens(any()) } returns LoginResponse(
             accessToken = "access",
             refreshToken = "refresh",
@@ -115,7 +127,18 @@ class AuthServiceWelcomeFlowTest {
         )
         coEvery { refreshTokenRepository.countActiveForUser(user.id) } returns 0
         coEvery {
-            refreshTokenRepository.saveRefreshToken(any(), any(), any(), any(), any(), any(), any(), any())
+            refreshTokenRepository.saveRefreshToken(
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any()
+            )
         } returns Result.success(Unit)
         coEvery { rateLimitService.resetLoginAttempts(any()) } returns Unit
         coEvery { userRepository.recordSuccessfulLogin(any(), any()) } returns true
@@ -166,22 +189,36 @@ class AuthServiceWelcomeFlowTest {
                 updatedAt = Clock.System.now().toLocalDateTime(TimeZone.UTC)
             )
         )
-        coEvery { jwtGenerator.generateClaims(any(), any(), any(), any()) } returns testClaims(user.id)
+        coEvery { jwtGenerator.generateClaims(any(), any(), any(), any(), any()) } returns testClaims(user.id)
         coEvery { jwtGenerator.generateTokens(any()) } returns LoginResponse(
             accessToken = "access",
             refreshToken = "refresh",
             expiresIn = 3600
         )
-        coEvery { refreshTokenRepository.countActiveForUser(user.id) } returns 0
         coEvery {
-            refreshTokenRepository.saveRefreshToken(any(), any(), any(), any(), any(), any(), any(), any())
+            refreshTokenRepository.saveRefreshToken(
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any()
+            )
         } returns Result.success(Unit)
         coEvery { userRepository.hasFirstSignIn(user.id) } returns true
         coEvery { userRepository.hasWelcomeEmailSent(user.id) } returns false
         coEvery { welcomeEmailService.scheduleIfEligible(user.id, tenantId) } returns Result.success(Unit)
 
         val result = runBlocking {
-            authService.selectOrganization(user.id, tenantId)
+            authService.selectOrganization(
+                userId = user.id,
+                tenantId = tenantId,
+                currentSessionId = SessionId("11111111-1111-1111-1111-111111111111")
+            )
         }
 
         assertTrue(result.isSuccess)
@@ -208,9 +245,10 @@ class AuthServiceWelcomeFlowTest {
         return JwtClaims(
             userId = userId,
             email = "welcome@test.dokus",
+            sessionId = SessionId("99999999-9999-9999-9999-999999999999"),
             iat = nowSeconds,
             exp = nowSeconds + 3600,
-            jti = "test-jti"
+            jti = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
         )
     }
 }

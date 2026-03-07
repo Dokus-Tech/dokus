@@ -83,6 +83,25 @@ class HomeShellTopBarResolverTest {
     }
 
     @Test
+    fun `registered config is resolved for non navigation routes`() {
+        val registered = mapOf(
+            "home/profile" to HomeShellTopBarConfig(
+                mode = HomeShellTopBarMode.Transparent
+            )
+        )
+
+        val resolved = resolveHomeShellTopBarConfig(
+            route = "home/profile",
+            allNavItems = testNavItems,
+            sortedRoutes = testSortedRoutes,
+            registeredConfigs = registered,
+            fallback = ::fallbackConfig
+        )
+
+        assertEquals(HomeShellTopBarMode.Transparent, resolved?.mode)
+    }
+
+    @Test
     fun `clearing route registration restores default config`() {
         val registered = mutableMapOf(
             "cashflow" to HomeShellTopBarConfig(
@@ -124,6 +143,28 @@ class HomeShellTopBarResolverTest {
         )
 
         assertNull(resolved)
+    }
+
+    @Test
+    fun `registered config overrides routes whose nav item disables shell top bar`() {
+        val registered = mapOf(
+            "contacts" to HomeShellTopBarConfig(
+                mode = HomeShellTopBarMode.Title("Contacts Override")
+            )
+        )
+
+        val resolved = resolveHomeShellTopBarConfig(
+            route = "contacts",
+            allNavItems = testNavItems,
+            sortedRoutes = testSortedRoutes,
+            registeredConfigs = registered,
+            fallback = ::fallbackConfig
+        )
+
+        assertEquals(
+            expected = "Contacts Override",
+            actual = (resolved?.mode as HomeShellTopBarMode.Title).title
+        )
     }
 
     private fun fallbackConfig(normalizedRoute: String, default: ShellTopBarDefault): HomeShellTopBarConfig? {
