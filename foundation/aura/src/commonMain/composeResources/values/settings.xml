@@ -43,6 +43,7 @@
     <string name="profile_first_name">First Name</string>
     <string name="profile_last_name">Last Name</string>
     <string name="profile_email">Email</string>
+    <string name="profile_avatar">Profile photo</string>
     <string name="profile_email_verification">Email Verification</string>
     <string name="profile_email_verified">Verified</string>
     <string name="profile_email_not_verified">Not verified</string>
@@ -111,6 +112,8 @@
     <string name="workspace_select_failed">Failed to select workspace</string>
     <string name="workspace_bookkeeper_console">Bookkeeper Console</string>
     <string name="workspace_settings_load_failed">Failed to load workspace settings</string>
+    <string name="profile_avatar_upload_failed">Failed to upload profile avatar</string>
+    <string name="profile_avatar_delete_failed">Failed to delete profile avatar</string>
     <string name="workspace_company_logo">Company logo</string>
     <string name="workspace_avatar_upload_failed">Failed to upload company logo</string>
     <string name="workspace_avatar_delete_failed">Failed to delete company logo</string>

@@ -128,7 +128,8 @@ data class User(
     val isActive: Boolean = true,
     val lastLoginAt: LocalDateTime? = null,
     val createdAt: LocalDateTime,
-    val updatedAt: LocalDateTime
+    val updatedAt: LocalDateTime,
+    val avatar: Thumbnail? = null,
 )
 
 /**
@@ -170,7 +171,8 @@ data class TeamMember(
     val lastName: Name?,
     val role: UserRole,
     val joinedAt: LocalDateTime,
-    val lastActiveAt: LocalDateTime?
+    val lastActiveAt: LocalDateTime?,
+    val avatar: Thumbnail? = null,
 ) {
     val fullName: String
         get() = listOfNotNull(firstName?.value, lastName?.value)

@@ -4,16 +4,20 @@ import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
+import pro.respawn.flowmvi.dsl.updateStateImmediate
 import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.init
 import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.domain.Name
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
+import tech.dokus.features.auth.usecases.DeleteUserAvatarUseCase
 import tech.dokus.features.auth.usecases.GetCurrentUserUseCase
 import tech.dokus.features.auth.usecases.ResendVerificationEmailUseCase
+import tech.dokus.features.auth.usecases.UploadUserAvatarUseCase
 import tech.dokus.features.auth.usecases.UpdateProfileUseCase
 import tech.dokus.features.auth.usecases.WatchCurrentUserUseCase
+import tech.dokus.foundation.app.picker.inferImageContentType
 import tech.dokus.foundation.platform.Logger
 
 internal typealias ProfileSettingsCtx =
@@ -28,6 +32,8 @@ internal typealias ProfileSettingsCtx =
 class ProfileSettingsContainer(
     private val getCurrentUser: GetCurrentUserUseCase,
     private val updateProfile: UpdateProfileUseCase,
+    private val uploadUserAvatar: UploadUserAvatarUseCase,
+    private val deleteUserAvatar: DeleteUserAvatarUseCase,
     private val watchCurrentUserUseCase: WatchCurrentUserUseCase,
     private val resendVerificationEmailUseCase: ResendVerificationEmailUseCase,
 ) : Container<ProfileSettingsState, ProfileSettingsIntent, ProfileSettingsAction> {
@@ -52,6 +58,9 @@ class ProfileSettingsContainer(
                     is ProfileSettingsIntent.UpdateFirstName -> handleUpdateFirstName(intent.value)
                     is ProfileSettingsIntent.UpdateLastName -> handleUpdateLastName(intent.value)
                     is ProfileSettingsIntent.SaveClicked -> handleSave()
+                    is ProfileSettingsIntent.UploadAvatar -> handleUploadAvatar(intent.imageBytes, intent.filename)
+                    is ProfileSettingsIntent.DeleteAvatar -> handleDeleteAvatar()
+                    is ProfileSettingsIntent.ResetAvatarState -> handleResetAvatarState()
                     is ProfileSettingsIntent.ResendVerificationClicked -> handleResendVerification()
                     is ProfileSettingsIntent.ChangePasswordClicked -> handleChangePassword()
                     is ProfileSettingsIntent.MySessionsClicked -> handleMySessions()
@@ -182,6 +191,89 @@ class ProfileSettingsContainer(
                     action(ProfileSettingsAction.ShowVerificationEmailError(error.asDokusException))
                 }
             )
+        }
+    }
+
+    private suspend fun ProfileSettingsCtx.handleUploadAvatar(imageBytes: ByteArray, filename: String) {
+        withState<ProfileSettingsState.Viewing, _> {
+            val currentUser = user
+            updateState { copy(avatarState = ProfileSettingsState.AvatarState.Uploading(0f)) }
+
+            uploadUserAvatar(
+                userId = currentUser.id,
+                imageBytes = imageBytes,
+                filename = filename,
+                contentType = inferImageContentType(filename),
+                onProgress = { progress ->
+                    updateStateImmediate {
+                        when (this) {
+                            is ProfileSettingsState.Viewing -> copy(
+                                avatarState = ProfileSettingsState.AvatarState.Uploading(progress)
+                            )
+                            else -> this
+                        }
+                    }
+                }
+            ).fold(
+                onSuccess = { avatar ->
+                    watchCurrentUserUseCase.refresh()
+                    updateState {
+                        copy(
+                            user = currentUser.copy(avatar = avatar),
+                            avatarState = ProfileSettingsState.AvatarState.Success
+                        )
+                    }
+                },
+                onFailure = { error ->
+                    val exception = error.asDokusException
+                    val displayException = if (exception is DokusException.Unknown) {
+                        DokusException.ProfileAvatarUploadFailed
+                    } else {
+                        exception
+                    }
+                    updateState {
+                        copy(avatarState = ProfileSettingsState.AvatarState.Error(displayException))
+                    }
+                    action(ProfileSettingsAction.ShowAvatarError(displayException))
+                }
+            )
+        }
+    }
+
+    private suspend fun ProfileSettingsCtx.handleDeleteAvatar() {
+        withState<ProfileSettingsState.Viewing, _> {
+            val currentUser = user
+            updateState { copy(avatarState = ProfileSettingsState.AvatarState.Deleting) }
+
+            deleteUserAvatar(currentUser.id).fold(
+                onSuccess = {
+                    watchCurrentUserUseCase.refresh()
+                    updateState {
+                        copy(
+                            user = currentUser.copy(avatar = null),
+                            avatarState = ProfileSettingsState.AvatarState.Idle
+                        )
+                    }
+                },
+                onFailure = { error ->
+                    val exception = error.asDokusException
+                    val displayException = if (exception is DokusException.Unknown) {
+                        DokusException.ProfileAvatarDeleteFailed
+                    } else {
+                        exception
+                    }
+                    updateState {
+                        copy(avatarState = ProfileSettingsState.AvatarState.Error(displayException))
+                    }
+                    action(ProfileSettingsAction.ShowAvatarError(displayException))
+                }
+            )
+        }
+    }
+
+    private suspend fun ProfileSettingsCtx.handleResetAvatarState() {
+        withState<ProfileSettingsState.Viewing, _> {
+            updateState { copy(avatarState = ProfileSettingsState.AvatarState.Idle) }
         }
     }
 

@@ -59,6 +59,8 @@ import tech.dokus.features.auth.usecases.CreateFirmUseCase
 import tech.dokus.features.auth.usecases.CreateFirmUseCaseImpl
 import tech.dokus.features.auth.usecases.ChangePasswordUseCase
 import tech.dokus.features.auth.usecases.ChangePasswordUseCaseImpl
+import tech.dokus.features.auth.usecases.DeleteUserAvatarUseCase
+import tech.dokus.features.auth.usecases.DeleteUserAvatarUseCaseImpl
 import tech.dokus.features.auth.usecases.DeleteWorkspaceAvatarUseCase
 import tech.dokus.features.auth.usecases.DeleteWorkspaceAvatarUseCaseImpl
 import tech.dokus.features.auth.usecases.GetCurrentTenantIdUseCase
@@ -130,6 +132,8 @@ import tech.dokus.features.auth.usecases.UpdateTeamMemberRoleUseCase
 import tech.dokus.features.auth.usecases.UpdateTeamMemberRoleUseCaseImpl
 import tech.dokus.features.auth.usecases.UpdateTenantSettingsUseCase
 import tech.dokus.features.auth.usecases.UpdateTenantSettingsUseCaseImpl
+import tech.dokus.features.auth.usecases.UploadUserAvatarUseCase
+import tech.dokus.features.auth.usecases.UploadUserAvatarUseCaseImpl
 import tech.dokus.features.auth.usecases.UploadWorkspaceAvatarUseCase
 import tech.dokus.features.auth.usecases.UploadWorkspaceAvatarUseCaseImpl
 import tech.dokus.features.auth.usecases.ValidateServerUseCase
@@ -208,6 +212,8 @@ val authDomainModule = module {
     singleOf(::GetConsoleClientDocumentUseCaseImpl) bind GetConsoleClientDocumentUseCase::class
     singleOf(::WatchCurrentUserUseCaseImpl) bind WatchCurrentUserUseCase::class
     singleOf(::UpdateProfileUseCaseImpl) bind UpdateProfileUseCase::class
+    singleOf(::UploadUserAvatarUseCaseImpl) bind UploadUserAvatarUseCase::class
+    singleOf(::DeleteUserAvatarUseCaseImpl) bind DeleteUserAvatarUseCase::class
     singleOf(::ChangePasswordUseCaseImpl) bind ChangePasswordUseCase::class
     singleOf(::ListSessionsUseCaseImpl) bind ListSessionsUseCase::class
     singleOf(::RevokeSessionUseCaseImpl) bind RevokeSessionUseCase::class

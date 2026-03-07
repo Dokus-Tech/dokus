@@ -4,6 +4,7 @@ package tech.dokus.backend.services.auth
 
 import com.auth0.jwt.JWT
 import kotlinx.datetime.Instant
+import tech.dokus.backend.services.avatar.projectUserAvatar
 import tech.dokus.database.repository.auth.FirmRepository
 import tech.dokus.database.repository.auth.RefreshTokenRepository
 import tech.dokus.database.repository.auth.RevokedSessionInfo
@@ -673,7 +674,7 @@ class AuthService(
             ?: throw DokusException.InternalError("Failed to fetch updated user")
 
         logger.info("Profile updated successfully for user: ${userId.value}")
-        Result.success(updatedUser)
+        Result.success(userRepository.projectUserAvatar(updatedUser))
     } catch (e: DokusException) {
         logger.error("Profile update failed: ${e.errorCode} for user: ${userId.value}", e)
         Result.failure(e)

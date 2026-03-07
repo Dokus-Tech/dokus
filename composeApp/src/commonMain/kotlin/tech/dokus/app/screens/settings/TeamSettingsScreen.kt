@@ -87,8 +87,11 @@ import tech.dokus.domain.model.TeamMember
 import tech.dokus.domain.model.TenantInvitation
 import tech.dokus.domain.model.auth.BookkeeperFirmSearchItem
 import tech.dokus.domain.model.auth.TenantBookkeeperAccessItem
+import tech.dokus.foundation.app.network.rememberAuthenticatedImageLoader
+import tech.dokus.foundation.app.network.rememberResolvedApiUrl
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.MonogramAvatar
+import tech.dokus.foundation.aura.components.UserAvatarImage
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.common.DokusSelectableRowGroup
 import tech.dokus.foundation.aura.components.common.PTopAppBar
@@ -391,12 +394,20 @@ private fun OwnerHero(
     modifier: Modifier = Modifier,
 ) {
     val initials = memberInitials(owner)
+    val avatarUrl = rememberResolvedApiUrl(owner.avatar?.medium)
+    val imageLoader = rememberAuthenticatedImageLoader()
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier.fillMaxWidth(),
     ) {
-        MonogramAvatar(initials = initials, size = 64.dp, radius = 20.dp)
+        UserAvatarImage(
+            avatarUrl = avatarUrl,
+            initials = initials,
+            size = 64.dp,
+            radius = 20.dp,
+            imageLoader = imageLoader,
+        )
         Spacer(Modifier.height(12.dp))
         Text(
             text = owner.fullName,
@@ -436,6 +447,8 @@ private fun MemberRow(
     onRemove: (() -> Unit)? = null,
 ) {
     val initials = memberInitials(member)
+    val avatarUrl = rememberResolvedApiUrl(member.avatar?.small)
+    val imageLoader = rememberAuthenticatedImageLoader()
 
     Column {
         Row(
@@ -444,7 +457,13 @@ private fun MemberRow(
                 .padding(horizontal = 18.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            MonogramAvatar(initials = initials, size = 34.dp, radius = 10.dp)
+            UserAvatarImage(
+                avatarUrl = avatarUrl,
+                initials = initials,
+                size = 34.dp,
+                radius = 10.dp,
+                imageLoader = imageLoader,
+            )
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {

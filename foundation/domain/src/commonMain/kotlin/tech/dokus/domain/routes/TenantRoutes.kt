@@ -36,25 +36,17 @@ class Tenants {
      */
     @Serializable
     @Resource("{id}")
-    class Id(val parent: Tenants = Tenants(), val id: String)
-
-    /**
-     * POST/GET/DELETE /api/v1/tenants/avatar
-     * POST - Upload company avatar (multipart form data)
-     * GET - Get current avatar URLs
-     * DELETE - Remove company avatar
-     */
-    @Serializable
-    @Resource("avatar")
-    class Avatar(val parent: Tenants = Tenants())
-
-    /**
-     * GET /api/v1/tenants/avatar/{size}.webp
-     * Stream tenant avatar image by size.
-     */
-    @Serializable
-    @Resource("avatar/{size}.webp")
-    class AvatarImage(val parent: Tenants = Tenants(), val size: String)
+    class Id(val parent: Tenants = Tenants(), val id: String) {
+        /**
+         * POST/GET/DELETE /api/v1/tenants/{id}/avatar
+         * POST - Upload company avatar (multipart form data)
+         * GET - Get avatar URLs
+         * DELETE - Remove company avatar
+         */
+        @Serializable
+        @Resource("avatar")
+        class Avatar(val parent: Id)
+    }
 
     /**
      * GET /api/v1/tenants/{id}/avatar/{size}.webp

@@ -69,6 +69,7 @@ import tech.dokus.foundation.aura.components.AvatarShape
 import tech.dokus.foundation.aura.components.AvatarSize
 import tech.dokus.foundation.aura.components.CompanyAvatarImage
 import tech.dokus.foundation.aura.components.MonogramAvatar
+import tech.dokus.foundation.aura.components.UserAvatarImage
 import tech.dokus.foundation.aura.components.common.ShimmerBox
 import tech.dokus.foundation.aura.components.common.ShimmerLine
 import tech.dokus.foundation.aura.components.navigation.ProfilePopover
@@ -90,6 +91,7 @@ internal data class HomeShellProfileData(
     val fullName: String,
     val email: String,
     val tierLabel: String?,
+    val avatar: tech.dokus.domain.model.common.Thumbnail? = null,
 ) {
     val initials: String
         get() = fullName
@@ -266,13 +268,18 @@ private fun DesktopProfileMenuButton(
     val sizing = MaterialTheme.dokusSizing
     var popoverVisible by remember { mutableStateOf(false) }
     val initials = profileData?.initials ?: ""
+    val smallAvatarUrl = rememberResolvedApiUrl(profileData?.avatar?.small)
+    val mediumAvatarUrl = rememberResolvedApiUrl(profileData?.avatar?.medium)
+    val imageLoader = rememberAuthenticatedImageLoader()
 
     Box {
-        MonogramAvatar(
+        UserAvatarImage(
+            avatarUrl = smallAvatarUrl,
             initials = initials,
             size = sizing.avatarExtraSmall,
             radius = sizing.avatarExtraSmall / 4,
             modifier = Modifier.clickable { popoverVisible = true },
+            imageLoader = imageLoader,
             contentDescription = stringResource(Res.string.a11y_profile_menu),
         )
 
@@ -282,11 +289,13 @@ private fun DesktopProfileMenuButton(
             userName = profileData?.fullName ?: "",
             userEmail = profileData?.email ?: "",
             userInitials = initials,
+            userAvatarUrl = mediumAvatarUrl,
             tierLabel = profileData?.tierLabel ?: "",
             onProfileClick = onProfileClick,
             onLogoutClick = {
                 if (!isLoggingOut) onLogoutClick()
             },
+            imageLoader = imageLoader,
         )
     }
 }
@@ -369,6 +378,8 @@ internal fun MobileShellTopBar(
 ) {
     val effects = MaterialTheme.dokusEffects
     val sizing = MaterialTheme.dokusSizing
+    val avatarUrl = rememberResolvedApiUrl(profileData?.avatar?.small)
+    val imageLoader = rememberAuthenticatedImageLoader()
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -377,11 +388,13 @@ internal fun MobileShellTopBar(
         TopAppBar(
             title = { DokusLogo.Full() },
             actions = {
-                MonogramAvatar(
+                UserAvatarImage(
+                    avatarUrl = avatarUrl,
                     initials = profileData?.initials ?: "",
                     size = sizing.avatarExtraSmall,
                     radius = sizing.avatarExtraSmall / 4,
                     modifier = Modifier.clickable(onClick = onProfileClick),
+                    imageLoader = imageLoader,
                     contentDescription = stringResource(Res.string.a11y_profile_menu),
                 )
             },

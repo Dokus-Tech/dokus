@@ -2,6 +2,7 @@ package tech.dokus.backend.routes.auth
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
+import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.statement.bodyAsBytes
@@ -22,20 +23,13 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.datetime.Clock
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import org.junit.jupiter.api.Test
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
 import tech.dokus.backend.services.business.BusinessProfileService
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.auth.UserRepository
-import tech.dokus.domain.enums.UserRole
-import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
-import tech.dokus.domain.model.common.Thumbnail
-import tech.dokus.domain.model.TenantMembership
 import tech.dokus.domain.model.auth.JwtClaims
 import tech.dokus.domain.utils.json
 import tech.dokus.foundation.backend.config.JwtConfig
@@ -51,88 +45,72 @@ import kotlin.test.assertTrue
 import kotlin.uuid.ExperimentalUuidApi
 
 @OptIn(ExperimentalUuidApi::class)
-class AvatarRoutesTenantScopedTest {
+class AvatarRoutesUserScopedTest {
 
     @Test
-    fun `tenant-scoped avatar endpoint succeeds for active member without tenant header`() = avatarRoutesTestApplication(
+    fun `user avatar metadata endpoint returns canonical thumbnail for authenticated reader`() = avatarRoutesTestApplication(
         userRepository = mockk(),
         tenantRepository = mockk(),
         avatarStorageService = mockk(),
         businessProfileService = mockk(relaxed = true)
-    ) { userRepository, tenantRepository, avatarStorageService, _ ->
-        val tenantId = TenantId.generate()
-        val imageBytes = byteArrayOf(1, 2, 3, 4)
-        coEvery { userRepository.getMembership(TEST_USER_ID, tenantId) } returns membership(tenantId)
-        every { avatarStorageService.normalizeSize("small") } returns "small"
-        coEvery { tenantRepository.getAvatarStorageKey(tenantId) } returns "avatars/test"
-        coEvery { avatarStorageService.getAvatarBytes("avatars/test", "small") } returns imageBytes
+    ) { userRepository, _, avatarStorageService, _ ->
+        coEvery { userRepository.getAvatarStorageKey(TEST_OTHER_USER_ID) } returns "avatars/users/$TEST_OTHER_USER_ID/test"
+        coEvery { avatarStorageService.avatarExists("avatars/users/$TEST_OTHER_USER_ID/test") } returns true
 
-        val response = authenticatedGet("/api/v1/tenants/$tenantId/avatar/small.webp")
+        val response = authenticatedGet("/api/v1/users/$TEST_OTHER_USER_ID/avatar")
+
+        assertEquals(HttpStatusCode.OK, response.status)
+        assertTrue(response.bodyAsText().contains("/api/v1/users/$TEST_OTHER_USER_ID/avatar/small.webp"))
+        coVerify(exactly = 1) { userRepository.getAvatarStorageKey(TEST_OTHER_USER_ID) }
+        coVerify(exactly = 0) { userRepository.getMembership(any(), any()) }
+    }
+
+    @Test
+    fun `user avatar image endpoint succeeds for authenticated reader`() = avatarRoutesTestApplication(
+        userRepository = mockk(),
+        tenantRepository = mockk(),
+        avatarStorageService = mockk(),
+        businessProfileService = mockk(relaxed = true)
+    ) { userRepository, _, avatarStorageService, _ ->
+        val imageBytes = byteArrayOf(4, 3, 2, 1)
+        every { avatarStorageService.normalizeSize("small") } returns "small"
+        coEvery { userRepository.getAvatarStorageKey(TEST_OTHER_USER_ID) } returns "avatars/users/$TEST_OTHER_USER_ID/test"
+        coEvery { avatarStorageService.getAvatarBytes("avatars/users/$TEST_OTHER_USER_ID/test", "small") } returns imageBytes
+
+        val response = authenticatedGet("/api/v1/users/$TEST_OTHER_USER_ID/avatar/small.webp")
 
         assertEquals(HttpStatusCode.OK, response.status)
         assertContentEquals(imageBytes, response.bodyAsBytes())
-        coVerify(exactly = 1) { userRepository.getMembership(TEST_USER_ID, tenantId) }
-        coVerify(exactly = 1) { tenantRepository.getAvatarStorageKey(tenantId) }
+        coVerify(exactly = 1) { userRepository.getAvatarStorageKey(TEST_OTHER_USER_ID) }
+        coVerify(exactly = 0) { userRepository.getMembership(any(), any()) }
     }
 
     @Test
-    fun `tenant avatar metadata endpoint returns canonical thumbnail for active member`() = avatarRoutesTestApplication(
+    fun `user avatar metadata endpoint returns not found when avatar is missing`() = avatarRoutesTestApplication(
         userRepository = mockk(),
         tenantRepository = mockk(),
         avatarStorageService = mockk(),
         businessProfileService = mockk(relaxed = true)
-    ) { userRepository, tenantRepository, avatarStorageService, businessProfileService ->
-        val tenantId = TenantId.generate()
-        coEvery { userRepository.getMembership(TEST_USER_ID, tenantId) } returns membership(tenantId)
-        coEvery { tenantRepository.getAvatarStorageKey(tenantId) } returns "avatars/tenants/$tenantId/test"
-        coEvery { avatarStorageService.avatarExists("avatars/tenants/$tenantId/test") } returns true
-        every {
-            businessProfileService.buildTenantAvatarThumbnail(tenantId)
-        } returns Thumbnail(
-            small = "/api/v1/tenants/$tenantId/avatar/small.webp",
-            medium = "/api/v1/tenants/$tenantId/avatar/medium.webp",
-            large = "/api/v1/tenants/$tenantId/avatar/large.webp"
-        )
+    ) { userRepository, _, _, _ ->
+        coEvery { userRepository.getAvatarStorageKey(TEST_OTHER_USER_ID) } returns null
 
-        val response = authenticatedGet("/api/v1/tenants/$tenantId/avatar")
-
-        assertEquals(HttpStatusCode.OK, response.status)
-        assertTrue(response.bodyAsText().contains("/api/v1/tenants/$tenantId/avatar/small.webp"))
-        coVerify(exactly = 1) { userRepository.getMembership(TEST_USER_ID, tenantId) }
-        coVerify(exactly = 1) { tenantRepository.getAvatarStorageKey(tenantId) }
-    }
-
-    @Test
-    fun `tenant-scoped avatar endpoint returns forbidden for non-member`() = avatarRoutesTestApplication(
-        userRepository = mockk(),
-        tenantRepository = mockk(),
-        avatarStorageService = mockk(),
-        businessProfileService = mockk(relaxed = true)
-    ) { userRepository, tenantRepository, _, _ ->
-        val tenantId = TenantId.generate()
-        coEvery { userRepository.getMembership(TEST_USER_ID, tenantId) } returns null
-
-        val response = authenticatedGet("/api/v1/tenants/$tenantId/avatar/small.webp")
-
-        assertEquals(HttpStatusCode.Forbidden, response.status)
-        coVerify(exactly = 0) { tenantRepository.getAvatarStorageKey(any()) }
-    }
-
-    @Test
-    fun `tenant-scoped avatar endpoint returns not found when avatar is missing`() = avatarRoutesTestApplication(
-        userRepository = mockk(),
-        tenantRepository = mockk(),
-        avatarStorageService = mockk(),
-        businessProfileService = mockk(relaxed = true)
-    ) { userRepository, tenantRepository, avatarStorageService, _ ->
-        val tenantId = TenantId.generate()
-        coEvery { userRepository.getMembership(TEST_USER_ID, tenantId) } returns membership(tenantId)
-        every { avatarStorageService.normalizeSize("small") } returns "small"
-        coEvery { tenantRepository.getAvatarStorageKey(tenantId) } returns null
-
-        val response = authenticatedGet("/api/v1/tenants/$tenantId/avatar/small.webp")
+        val response = authenticatedGet("/api/v1/users/$TEST_OTHER_USER_ID/avatar")
 
         assertEquals(HttpStatusCode.NotFound, response.status)
+    }
+
+    @Test
+    fun `user avatar delete endpoint returns forbidden for different authenticated user`() = avatarRoutesTestApplication(
+        userRepository = mockk(),
+        tenantRepository = mockk(),
+        avatarStorageService = mockk(),
+        businessProfileService = mockk(relaxed = true)
+    ) { userRepository, _, avatarStorageService, _ ->
+        val response = authenticatedDelete("/api/v1/users/$TEST_OTHER_USER_ID/avatar")
+
+        assertEquals(HttpStatusCode.Forbidden, response.status)
+        coVerify(exactly = 0) { userRepository.getAvatarStorageKey(any()) }
+        coVerify(exactly = 0) { avatarStorageService.deleteAvatar(any()) }
     }
 
     private fun avatarRoutesTestApplication(
@@ -206,20 +184,8 @@ class AvatarRoutesTenantScopedTest {
         header(HttpHeaders.Authorization, "Bearer ${testAccessToken()}")
     }
 
-    private fun membership(
-        tenantId: TenantId,
-        role: UserRole = UserRole.Owner,
-        isActive: Boolean = true
-    ): TenantMembership {
-        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-        return TenantMembership(
-            userId = TEST_USER_ID,
-            tenantId = tenantId,
-            role = role,
-            isActive = isActive,
-            createdAt = now,
-            updatedAt = now
-        )
+    private suspend fun ApplicationTestBuilder.authenticatedDelete(path: String) = client.delete(path) {
+        header(HttpHeaders.Authorization, "Bearer ${testAccessToken()}")
     }
 
     private fun testJwtConfig(): JwtConfig = JwtConfig(
@@ -245,6 +211,7 @@ class AvatarRoutesTenantScopedTest {
 
     companion object {
         private val TEST_USER_ID = UserId("00000000-0000-0000-0000-000000000111")
+        private val TEST_OTHER_USER_ID = UserId("00000000-0000-0000-0000-000000000222")
         private const val TEST_JWT_SECRET = "avatar-routes-test-secret"
         private const val TEST_JWT_ISSUER = "avatar-routes-test"
         private const val TEST_JWT_AUDIENCE = "avatar-routes-test-audience"

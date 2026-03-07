@@ -34,6 +34,7 @@ import tech.dokus.features.auth.presentation.auth.components.ProfileSavingSectio
 import tech.dokus.features.auth.presentation.auth.components.SecurityCard
 import tech.dokus.features.auth.presentation.auth.components.ServerCard
 import tech.dokus.features.auth.presentation.auth.components.VersionFooter
+import tech.dokus.foundation.app.picker.rememberImagePicker
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.local.LocalScreenSize
@@ -102,6 +103,10 @@ fun ProfileSettingsContent(
     onLogout: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val avatarPicker = rememberImagePicker { pickedImage ->
+        onIntent(ProfileSettingsIntent.UploadAvatar(pickedImage.bytes, pickedImage.name))
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -126,7 +131,13 @@ fun ProfileSettingsContent(
                 }
 
                 is ProfileSettingsState.Viewing -> {
-                    ProfileHero(user = state.user)
+                    ProfileHero(
+                        user = state.user,
+                        avatarState = state.avatarState,
+                        onUploadAvatar = { avatarPicker.launch() },
+                        onDeleteAvatar = { onIntent(ProfileSettingsIntent.DeleteAvatar) },
+                        onResetAvatarState = { onIntent(ProfileSettingsIntent.ResetAvatarState) },
+                    )
                     AccountCard(
                         user = state.user,
                         isResendingVerification = state.isResendingVerification,

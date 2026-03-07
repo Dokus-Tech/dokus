@@ -5,6 +5,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.PartData
 import io.ktor.http.content.forEachPart
 import io.ktor.http.content.streamProvider
+import io.ktor.server.application.ApplicationCall
 import io.ktor.server.request.receiveMultipart
 import io.ktor.server.resources.delete
 import io.ktor.server.resources.get
@@ -13,14 +14,15 @@ import io.ktor.server.response.respond
 import io.ktor.server.response.respondBytes
 import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
-import tech.dokus.backend.security.requireTenantId
+import tech.dokus.backend.services.avatar.buildUserAvatarThumbnail
 import tech.dokus.backend.services.business.BusinessProfileService
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.AvatarUploadResponse
+import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.routes.Tenants
+import tech.dokus.domain.routes.Users
 import tech.dokus.foundation.backend.security.authenticateJwt
 import tech.dokus.foundation.backend.security.dokusPrincipal
 import tech.dokus.foundation.backend.storage.AvatarStorageService
@@ -28,14 +30,6 @@ import tech.dokus.foundation.backend.utils.loggerFor
 
 private val logger = loggerFor("AvatarRoutes")
 
-/**
- * Avatar routes for company logo management.
- *
- * Endpoints:
- * - POST /api/v1/tenants/avatar - Upload avatar (multipart/form-data)
- * - GET /api/v1/tenants/avatar - Get current avatar URLs
- * - DELETE /api/v1/tenants/avatar - Remove avatar
- */
 internal fun Route.avatarRoutes() {
     val tenantRepository by inject<TenantRepository>()
     val userRepository by inject<UserRepository>()
@@ -43,116 +37,56 @@ internal fun Route.avatarRoutes() {
     val businessProfileService by inject<BusinessProfileService>()
 
     authenticateJwt {
-        /**
-         * POST /api/v1/tenants/avatar
-         * Upload a company avatar image.
-         * Expects multipart form data with a single "file" field.
-         */
-        post<Tenants.Avatar> {
-            val tenantId = requireTenantId()
+        post<Tenants.Id.Avatar> { route ->
+            val principal = dokusPrincipal
+            val tenantId = parseTenantId(route.parent.id)
+            requireTenantMembership(userRepository, principal.userId, tenantId)
 
             logger.info("Avatar upload request for tenant: $tenantId")
 
-            // Parse multipart data
-            val multipart = call.receiveMultipart()
-            var fileBytes: ByteArray? = null
-            var contentType: String? = null
-            var filename: String? = null
+            val upload = call.receiveAvatarUploadPayload()
+            deleteExistingAvatarIfPresent(
+                storageKey = tenantRepository.getAvatarStorageKey(tenantId),
+                avatarStorageService = avatarStorageService,
+                ownerLabel = "tenant: $tenantId"
+            )
 
-            multipart.forEachPart { part ->
-                when (part) {
-                    is PartData.FileItem -> {
-                        if (part.name == "file") {
-                            contentType = part.contentType?.toString()
-                            filename = part.originalFileName
-                            fileBytes = part.streamProvider().readBytes()
-                        }
-                    }
-
-                    else -> {}
-                }
-                part.dispose()
-            }
-
-            if (fileBytes == null || contentType == null) {
-                throw DokusException.BadRequest("No image file provided")
-            }
-
-            // Delete existing avatar if any
-            val existingKey = tenantRepository.getAvatarStorageKey(tenantId)
-            if (existingKey != null) {
-                logger.info("Deleting existing avatar for tenant: $tenantId")
-                try {
-                    avatarStorageService.deleteAvatar(existingKey)
-                } catch (e: Exception) {
-                    logger.warn("Failed to delete existing avatar", e)
-                }
-            }
-
-            // Upload new avatar
             val result = try {
-                avatarStorageService.uploadAvatar(tenantId, fileBytes, contentType!!)
-            } catch (e: IllegalArgumentException) {
-                throw DokusException.BadRequest(e.message ?: "Invalid image")
+                avatarStorageService.uploadAvatar(tenantId, upload.fileBytes, upload.contentType)
+            } catch (error: IllegalArgumentException) {
+                throw DokusException.BadRequest(error.message ?: "Invalid image")
             }
 
-            // Save storage key to database
             tenantRepository.updateAvatarStorageKey(tenantId, result.storageKeyPrefix)
             businessProfileService.markTenantAvatarUploaded(tenantId, result.storageKeyPrefix)
 
-            logger.info("Avatar uploaded successfully for tenant: $tenantId, key=${result.storageKeyPrefix}")
-
-            val response = AvatarUploadResponse(
-                avatar = businessProfileService.buildTenantAvatarThumbnail(tenantId),
-                storageKey = result.storageKeyPrefix,
-                tenantId = tenantId
-            )
-            call.respond(HttpStatusCode.Created, response)
+            call.respond(HttpStatusCode.Created, businessProfileService.buildTenantAvatarThumbnail(tenantId))
         }
 
-        /**
-         * GET /api/v1/tenants/avatar
-         * Get current avatar URLs for the tenant.
-         * Returns 404 if no avatar is set.
-         */
-        get<Tenants.Avatar> {
-            val tenantId = requireTenantId()
-
-            val storageKey = tenantRepository.getAvatarStorageKey(tenantId)
-            if (storageKey == null) {
-                throw DokusException.NotFound("No avatar set")
-            }
-            if (avatarStorageService.getAvatarBytes(storageKey, "small") == null) {
-                logger.debug(
-                    "Missing tenant avatar object for tenant={}, size=small, reason=storage_missing",
-                    tenantId
-                )
-                throw DokusException.NotFound("Avatar not found in storage")
-            }
-
-            val avatar = businessProfileService.buildTenantAvatarThumbnail(tenantId)
-
-            call.respond(HttpStatusCode.OK, avatar)
-        }
-
-        /**
-         * GET /api/v1/tenants/{id}/avatar/{size}.webp
-         * Stream a tenant avatar image for a specific tenant.
-         */
-        get<Tenants.AvatarImageById> { route ->
-            val tenantId = runCatching { TenantId.parse(route.id) }
-                .getOrElse { throw DokusException.BadRequest("Invalid tenant id in path") }
+        get<Tenants.Id.Avatar> { route ->
             val principal = dokusPrincipal
-            val membership = userRepository.getMembership(principal.userId, tenantId)
-            if (membership == null || !membership.isActive) {
-                throw DokusException.NotAuthorized("You do not have access to tenant $tenantId")
-            }
+            val tenantId = parseTenantId(route.parent.id)
+            requireTenantMembership(userRepository, principal.userId, tenantId)
 
-            val imageBytes = loadTenantAvatarImageBytes(
-                tenantId = tenantId,
+            ensureAvatarMetadataAvailable(
+                storageKey = tenantRepository.getAvatarStorageKey(tenantId),
+                avatarStorageService = avatarStorageService,
+                ownerLabel = "tenant: $tenantId"
+            )
+
+            call.respond(HttpStatusCode.OK, businessProfileService.buildTenantAvatarThumbnail(tenantId))
+        }
+
+        get<Tenants.AvatarImageById> { route ->
+            val principal = dokusPrincipal
+            val tenantId = parseTenantId(route.id)
+            requireTenantMembership(userRepository, principal.userId, tenantId)
+
+            val imageBytes = loadAvatarImageBytes(
+                storageKey = tenantRepository.getAvatarStorageKey(tenantId),
                 size = route.size,
-                tenantRepository = tenantRepository,
-                avatarStorageService = avatarStorageService
+                avatarStorageService = avatarStorageService,
+                ownerLabel = "tenant: $tenantId"
             )
 
             call.respondBytes(
@@ -162,32 +96,10 @@ internal fun Route.avatarRoutes() {
             )
         }
 
-        /**
-         * GET /api/v1/tenants/avatar/{size}.webp
-         * Stream a tenant avatar image from backend storage.
-         */
-        get<Tenants.AvatarImage> { route ->
-            val tenantId = requireTenantId()
-            val imageBytes = loadTenantAvatarImageBytes(
-                tenantId = tenantId,
-                size = route.size,
-                tenantRepository = tenantRepository,
-                avatarStorageService = avatarStorageService
-            )
-
-            call.respondBytes(
-                bytes = imageBytes,
-                contentType = ContentType("image", "webp"),
-                status = HttpStatusCode.OK
-            )
-        }
-
-        /**
-         * DELETE /api/v1/tenants/avatar
-         * Remove the company avatar.
-         */
-        delete<Tenants.Avatar> {
-            val tenantId = requireTenantId()
+        delete<Tenants.Id.Avatar> { route ->
+            val principal = dokusPrincipal
+            val tenantId = parseTenantId(route.parent.id)
+            requireTenantMembership(userRepository, principal.userId, tenantId)
 
             val storageKey = tenantRepository.getAvatarStorageKey(tenantId)
             if (storageKey == null) {
@@ -195,41 +107,200 @@ internal fun Route.avatarRoutes() {
                 return@delete
             }
 
-            logger.info("Deleting avatar for tenant: $tenantId")
+            deleteExistingAvatarIfPresent(
+                storageKey = storageKey,
+                avatarStorageService = avatarStorageService,
+                ownerLabel = "tenant: $tenantId"
+            )
 
-            // Delete from storage
-            try {
-                avatarStorageService.deleteAvatar(storageKey)
-            } catch (e: Exception) {
-                logger.warn("Failed to delete avatar from storage", e)
-            }
-
-            // Clear from database
             tenantRepository.updateAvatarStorageKey(tenantId, null)
             businessProfileService.markTenantAvatarDeleted(tenantId)
+
+            call.respond(HttpStatusCode.NoContent)
+        }
+
+        post<Users.Id.Avatar> { route ->
+            val principal = dokusPrincipal
+            val userId = parseUserId(route.parent.id)
+            requireSelf(principal.userId, userId)
+
+            logger.info("Avatar upload request for user: $userId")
+
+            val upload = call.receiveAvatarUploadPayload()
+            deleteExistingAvatarIfPresent(
+                storageKey = userRepository.getAvatarStorageKey(userId),
+                avatarStorageService = avatarStorageService,
+                ownerLabel = "user: $userId"
+            )
+
+            val result = try {
+                avatarStorageService.uploadUserAvatar(userId, upload.fileBytes, upload.contentType)
+            } catch (error: IllegalArgumentException) {
+                throw DokusException.BadRequest(error.message ?: "Invalid image")
+            }
+
+            userRepository.updateAvatarStorageKey(userId, result.storageKeyPrefix)
+
+            call.respond(HttpStatusCode.Created, buildUserAvatarThumbnail(userId))
+        }
+
+        get<Users.Id.Avatar> { route ->
+            val userId = parseUserId(route.parent.id)
+            ensureAvatarMetadataAvailable(
+                storageKey = userRepository.getAvatarStorageKey(userId),
+                avatarStorageService = avatarStorageService,
+                ownerLabel = "user: $userId"
+            )
+
+            call.respond(HttpStatusCode.OK, buildUserAvatarThumbnail(userId))
+        }
+
+        get<Users.AvatarImageById> { route ->
+            val userId = parseUserId(route.id)
+            val imageBytes = loadAvatarImageBytes(
+                storageKey = userRepository.getAvatarStorageKey(userId),
+                size = route.size,
+                avatarStorageService = avatarStorageService,
+                ownerLabel = "user: $userId"
+            )
+
+            call.respondBytes(
+                bytes = imageBytes,
+                contentType = ContentType("image", "webp"),
+                status = HttpStatusCode.OK
+            )
+        }
+
+        delete<Users.Id.Avatar> { route ->
+            val principal = dokusPrincipal
+            val userId = parseUserId(route.parent.id)
+            requireSelf(principal.userId, userId)
+
+            val storageKey = userRepository.getAvatarStorageKey(userId)
+            if (storageKey == null) {
+                call.respond(HttpStatusCode.NoContent)
+                return@delete
+            }
+
+            deleteExistingAvatarIfPresent(
+                storageKey = storageKey,
+                avatarStorageService = avatarStorageService,
+                ownerLabel = "user: $userId"
+            )
+
+            userRepository.updateAvatarStorageKey(userId, null)
 
             call.respond(HttpStatusCode.NoContent)
         }
     }
 }
 
-private suspend fun loadTenantAvatarImageBytes(
-    tenantId: TenantId,
+private suspend fun requireTenantMembership(
+    userRepository: UserRepository,
+    userId: UserId,
+    tenantId: TenantId
+) {
+    val membership = userRepository.getMembership(userId, tenantId)
+    if (membership == null || !membership.isActive) {
+        throw DokusException.NotAuthorized("You do not have access to tenant $tenantId")
+    }
+}
+
+private fun requireSelf(principalUserId: UserId, routeUserId: UserId) {
+    if (principalUserId != routeUserId) {
+        throw DokusException.NotAuthorized("You can only manage your own avatar")
+    }
+}
+
+private fun parseTenantId(rawValue: String): TenantId =
+    runCatching { TenantId.parse(rawValue) }
+        .getOrElse { throw DokusException.BadRequest("Invalid tenant id in path") }
+
+private fun parseUserId(rawValue: String): UserId =
+    runCatching { UserId.parse(rawValue) }
+        .getOrElse { throw DokusException.BadRequest("Invalid user id in path") }
+
+private class AvatarUploadPayload(
+    val fileBytes: ByteArray,
+    val contentType: String
+)
+
+private suspend fun ApplicationCall.receiveAvatarUploadPayload(): AvatarUploadPayload {
+    val multipart = receiveMultipart()
+    var fileBytes: ByteArray? = null
+    var contentType: String? = null
+
+    multipart.forEachPart { part ->
+        when (part) {
+            is PartData.FileItem -> {
+                if (part.name == "file") {
+                    contentType = part.contentType?.toString()
+                    fileBytes = part.streamProvider().readBytes()
+                }
+            }
+
+            else -> {}
+        }
+        part.dispose()
+    }
+
+    val resolvedBytes = fileBytes ?: throw DokusException.BadRequest("No image file provided")
+    val resolvedContentType = contentType ?: throw DokusException.BadRequest("No image file provided")
+    return AvatarUploadPayload(
+        fileBytes = resolvedBytes,
+        contentType = resolvedContentType
+    )
+}
+
+private suspend fun deleteExistingAvatarIfPresent(
+    storageKey: String?,
+    avatarStorageService: AvatarStorageService,
+    ownerLabel: String
+) {
+    if (storageKey == null) return
+
+    logger.info("Deleting existing avatar for $ownerLabel")
+    try {
+        avatarStorageService.deleteAvatar(storageKey)
+    } catch (error: Exception) {
+        logger.warn("Failed to delete existing avatar for $ownerLabel", error)
+    }
+}
+
+private suspend fun ensureAvatarMetadataAvailable(
+    storageKey: String?,
+    avatarStorageService: AvatarStorageService,
+    ownerLabel: String
+) {
+    val resolvedStorageKey = storageKey
+        ?.takeIf { it.isNotBlank() }
+        ?: throw DokusException.NotFound("No avatar set")
+    if (!avatarStorageService.avatarExists(resolvedStorageKey)) {
+        logger.debug(
+            "Missing avatar object for owner={}, reason=storage_missing",
+            ownerLabel,
+        )
+        throw DokusException.NotFound("Avatar not found in storage")
+    }
+}
+
+private suspend fun loadAvatarImageBytes(
+    storageKey: String?,
     size: String,
-    tenantRepository: TenantRepository,
-    avatarStorageService: AvatarStorageService
+    avatarStorageService: AvatarStorageService,
+    ownerLabel: String
 ): ByteArray {
     val normalizedSize = avatarStorageService.normalizeSize(size)
         ?: throw DokusException.BadRequest("Avatar size must be one of: small, medium, large")
 
-    val storageKey = tenantRepository.getAvatarStorageKey(tenantId)
+    val resolvedKey = storageKey
         ?: throw DokusException.NotFound("No avatar set")
 
-    val imageBytes = avatarStorageService.getAvatarBytes(storageKey, normalizedSize)
+    val imageBytes = avatarStorageService.getAvatarBytes(resolvedKey, normalizedSize)
     if (imageBytes == null) {
         logger.debug(
-            "Missing tenant avatar object for tenant={}, size={}, reason=storage_missing",
-            tenantId,
+            "Missing avatar object for owner={}, size={}, reason=storage_missing",
+            ownerLabel,
             normalizedSize
         )
         throw DokusException.NotFound("Avatar not found in storage")

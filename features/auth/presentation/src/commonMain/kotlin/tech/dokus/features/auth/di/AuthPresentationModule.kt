@@ -89,6 +89,8 @@ val authPresentationModule = module {
         ProfileSettingsContainer(
             getCurrentUser = get(),
             updateProfile = get(),
+            uploadUserAvatar = get(),
+            deleteUserAvatar = get(),
             watchCurrentUserUseCase = get(),
             resendVerificationEmailUseCase = get()
         )

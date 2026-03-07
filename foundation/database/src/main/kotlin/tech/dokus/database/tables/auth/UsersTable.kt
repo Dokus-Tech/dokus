@@ -19,6 +19,7 @@ object UsersTable : UUIDTable("users") {
     // Profile
     val firstName = varchar("first_name", 100)
     val lastName = varchar("last_name", 100)
+    val avatarStorageKey = varchar("avatar_storage_key", 500).nullable()
 
     // Email verification
     val emailVerified = bool("email_verified").default(false)

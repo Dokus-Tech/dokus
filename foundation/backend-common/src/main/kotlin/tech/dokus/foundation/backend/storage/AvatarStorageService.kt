@@ -5,6 +5,7 @@ import com.sksamuel.scrimage.webp.WebpWriter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.common.Thumbnail
 import tech.dokus.foundation.backend.utils.loggerFor
 import java.util.UUID
@@ -76,15 +77,38 @@ class AvatarStorageService(
         tenantId: TenantId,
         imageData: ByteArray,
         contentType: String
+    ): AvatarUploadResult = uploadAvatar(
+        ownerStoragePrefix = "$AVATAR_PREFIX/tenants/$tenantId",
+        ownerLogLabel = "tenant: $tenantId",
+        imageData = imageData,
+        contentType = contentType
+    )
+
+    suspend fun uploadUserAvatar(
+        userId: UserId,
+        imageData: ByteArray,
+        contentType: String
+    ): AvatarUploadResult = uploadAvatar(
+        ownerStoragePrefix = "$AVATAR_PREFIX/users/$userId",
+        ownerLogLabel = "user: $userId",
+        imageData = imageData,
+        contentType = contentType
+    )
+
+    private suspend fun uploadAvatar(
+        ownerStoragePrefix: String,
+        ownerLogLabel: String,
+        imageData: ByteArray,
+        contentType: String
     ): AvatarUploadResult = withContext(Dispatchers.IO) {
-        logger.info("Uploading avatar for tenant: $tenantId, size=${imageData.size}, contentType=$contentType")
+        logger.info("Uploading avatar for $ownerLogLabel, size=${imageData.size}, contentType=$contentType")
 
         // Validate input
         validateImage(imageData, contentType)
 
         // Generate unique key prefix for this avatar
         val uuid = UUID.randomUUID().toString()
-        val keyPrefix = "$AVATAR_PREFIX/$tenantId/$uuid"
+        val keyPrefix = "$ownerStoragePrefix/$uuid"
 
         // Load and process image
         val originalImage = ImmutableImage.loader().fromBytes(imageData)
@@ -114,7 +138,7 @@ class AvatarStorageService(
             large = urls["large"]!!
         )
 
-        logger.info("Avatar uploaded successfully: tenant=$tenantId, keyPrefix=$keyPrefix, totalBytes=$totalBytes")
+        logger.info("Avatar uploaded successfully: owner=$ownerLogLabel, keyPrefix=$keyPrefix, totalBytes=$totalBytes")
 
         AvatarUploadResult(
             storageKeyPrefix = keyPrefix,
@@ -149,6 +173,12 @@ class AvatarStorageService(
                 medium = urls["medium"]!!,
                 large = urls["large"]!!
             )
+        }
+
+    suspend fun avatarExists(storageKeyPrefix: String): Boolean =
+        withContext(Dispatchers.IO) {
+            val key = buildAvatarObjectKey(storageKeyPrefix, "small")
+            storage.exists(key)
         }
 
     suspend fun getAvatarBytes(storageKeyPrefix: String, size: String): ByteArray? =

@@ -106,6 +106,7 @@ fun ProfileSettingsRoute(
             is ProfileSettingsAction.ShowSaveError -> pendingError = action.error
             ProfileSettingsAction.ShowVerificationEmailSent -> pendingVerificationSent = true
             is ProfileSettingsAction.ShowVerificationEmailError -> pendingError = action.error
+            is ProfileSettingsAction.ShowAvatarError -> pendingError = action.error
             ProfileSettingsAction.NavigateToChangePassword -> navController.navigateTo(AuthDestination.ChangePassword)
             ProfileSettingsAction.NavigateToMySessions -> navController.navigateTo(AuthDestination.MySessions)
             ProfileSettingsAction.NavigateBack -> navController.navigateUp()

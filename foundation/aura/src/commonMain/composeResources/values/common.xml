@@ -134,4 +134,5 @@
 
     <!-- Company Avatar -->
     <string name="company_avatar_content_description">Company avatar</string>
+    <string name="user_avatar_content_description">User avatar</string>
 </resources>

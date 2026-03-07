@@ -536,7 +536,8 @@ private fun buildProfileData(
     return HomeShellProfileData(
         fullName = fullName,
         email = user.email.value,
-        tierLabel = tierLabel
+        tierLabel = tierLabel,
+        avatar = user.avatar
     )
 }
 
