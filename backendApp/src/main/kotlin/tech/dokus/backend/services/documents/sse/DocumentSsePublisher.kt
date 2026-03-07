@@ -1,13 +1,20 @@
 package tech.dokus.backend.services.documents.sse
 
 import java.util.concurrent.ConcurrentHashMap
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.DocumentCollectionChangedEventDto
+import kotlin.time.Duration.Companion.seconds
 
 private const val DefaultBufferCapacity = 32
 
@@ -45,35 +52,59 @@ internal class DocumentCollectionEventHub {
 }
 
 internal class DocumentSnapshotEventHub {
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val streams = ConcurrentHashMap<DocumentSnapshotKey, MutableSharedFlow<DocumentSnapshotSignal>>()
 
     fun eventsFor(
         tenantId: TenantId,
         documentId: DocumentId,
-    ): Flow<DocumentSnapshotSignal> = streamFor(DocumentSnapshotKey(tenantId, documentId)).asSharedFlow()
+    ): Flow<DocumentSnapshotSignal> {
+        val key = DocumentSnapshotKey(tenantId, documentId)
+        return streams.getOrPut(key) {
+            createFlow().also { flow -> scheduleEviction(key, flow) }
+        }.asSharedFlow()
+    }
 
     fun publishChanged(
         tenantId: TenantId,
         documentId: DocumentId,
     ) {
-        streamFor(DocumentSnapshotKey(tenantId, documentId)).tryEmit(DocumentSnapshotSignal.Changed)
+        val key = DocumentSnapshotKey(tenantId, documentId)
+        streams[key]?.tryEmit(DocumentSnapshotSignal.Changed)
     }
 
     fun publishDeleted(
         tenantId: TenantId,
         documentId: DocumentId,
     ) {
-        streamFor(DocumentSnapshotKey(tenantId, documentId)).tryEmit(DocumentSnapshotSignal.Deleted)
+        val key = DocumentSnapshotKey(tenantId, documentId)
+        streams[key]?.tryEmit(DocumentSnapshotSignal.Deleted)
     }
 
-    private fun streamFor(key: DocumentSnapshotKey): MutableSharedFlow<DocumentSnapshotSignal> {
-        return streams.getOrPut(key) {
-            MutableSharedFlow(
-                replay = 0,
-                extraBufferCapacity = DefaultBufferCapacity,
-                onBufferOverflow = BufferOverflow.DROP_OLDEST,
-            )
+    private fun createFlow(): MutableSharedFlow<DocumentSnapshotSignal> {
+        return MutableSharedFlow(
+            replay = 0,
+            extraBufferCapacity = DefaultBufferCapacity,
+            onBufferOverflow = BufferOverflow.DROP_OLDEST,
+        )
+    }
+
+    private fun scheduleEviction(key: DocumentSnapshotKey, flow: MutableSharedFlow<DocumentSnapshotSignal>) {
+        scope.launch {
+            while (true) {
+                flow.subscriptionCount.first { it > 0 }
+                flow.subscriptionCount.first { it == 0 }
+                delay(EvictionDelay)
+                if (flow.subscriptionCount.value == 0) {
+                    streams.remove(key, flow)
+                    break
+                }
+            }
         }
+    }
+
+    companion object {
+        private val EvictionDelay = 30.seconds
     }
 }
 
@@ -103,19 +134,4 @@ internal class DocumentSsePublisher(
         )
     }
 
-    fun publishDocumentsChanged(
-        tenantId: TenantId,
-        documentIds: Iterable<DocumentId>,
-    ) {
-        val uniqueDocumentIds = documentIds.toSet()
-        if (uniqueDocumentIds.isEmpty()) return
-
-        uniqueDocumentIds.forEach { documentId ->
-            documentSnapshotEventHub.publishChanged(tenantId, documentId)
-        }
-        documentCollectionEventHub.publish(
-            tenantId = tenantId,
-            event = DocumentCollectionChangedEventDto(documentId = uniqueDocumentIds.singleOrNull()),
-        )
-    }
 }

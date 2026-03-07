@@ -12,7 +12,6 @@ import kotlin.math.min
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
-import kotlin.time.DurationUnit
 import kotlin.time.TimeSource
 
 fun <T> restartableFlow(
@@ -30,8 +29,12 @@ fun <T> restartableFlow(
     while (isActive) {
         onStart?.invoke(this)
 
-        val upstream = runCatching { source() }.getOrElse { failure ->
-            onFailure(failure)
+        val upstream = try {
+            source()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            onFailure(e)
             onRestart()
             attempt++
             delay(backoffDelay(attempt, backoffBase, backoffMax))
@@ -84,8 +87,8 @@ private fun backoffDelay(
     attempt: Long,
     base: Duration,
     max: Duration,
-): Long {
+): Duration {
     val step = min(attempt.toInt(), 6)
-    val delayMs = base.toLong(DurationUnit.MILLISECONDS) * (1L shl step)
-    return min(delayMs, max.toLong(DurationUnit.MILLISECONDS))
+    val delayMs = base.inWholeMilliseconds * (1L shl step)
+    return min(delayMs, max.inWholeMilliseconds).milliseconds
 }

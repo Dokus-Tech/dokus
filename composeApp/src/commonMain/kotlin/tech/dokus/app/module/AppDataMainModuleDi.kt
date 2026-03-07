@@ -18,7 +18,6 @@ import tech.dokus.foundation.app.network.createDynamicAuthenticatedHttpClient
 import tech.dokus.foundation.app.network.createDynamicBaseHttpClient
 import tech.dokus.foundation.platform.Logger
 import tech.dokus.foundation.platform.platformModule
-import kotlin.time.Duration.Companion.seconds
 
 internal object AppDataMainModuleDi : AppDataModuleDi {
     override val platform = platformModule
@@ -59,8 +58,7 @@ private val networkModule = module {
             }
         ) {
             install(SSE) {
-                maxReconnectionAttempts = 10
-                reconnectionTime = 3.seconds
+                maxReconnectionAttempts = 0
             }
         }
     }

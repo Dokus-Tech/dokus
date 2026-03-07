@@ -50,7 +50,10 @@ internal class DocumentReviewLoader(
 
     suspend fun DocumentReviewCtx.handleApplyRemoteSnapshot(record: DocumentRecordDto) {
         val routeSnapshot = currentRouteSnapshot()
-        val activeDocumentId = routeSnapshot.activeDocumentId ?: return
+        val activeDocumentId = routeSnapshot.activeDocumentId ?: run {
+            logger.d { "Dropping remote snapshot: no active document in current state" }
+            return
+        }
         if (activeDocumentId != record.document.id) return
 
         logger.d { "Applying remote snapshot for document: $activeDocumentId" }

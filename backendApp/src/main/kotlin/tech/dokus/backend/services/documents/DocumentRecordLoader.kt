@@ -1,6 +1,5 @@
 package tech.dokus.backend.services.documents
 
-import org.slf4j.LoggerFactory
 import tech.dokus.backend.routes.cashflow.documents.addDownloadUrl
 import tech.dokus.backend.routes.cashflow.documents.findConfirmedEntity
 import tech.dokus.backend.routes.cashflow.documents.toDto
@@ -18,6 +17,7 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.foundation.backend.storage.DocumentStorageService
+import tech.dokus.foundation.backend.utils.loggerFor
 
 @Suppress("LongParameterList")
 class DocumentRecordLoader(
@@ -31,7 +31,7 @@ class DocumentRecordLoader(
     private val truthService: DocumentTruthService,
     private val documentStorageService: DocumentStorageService,
 ) {
-    private val logger = LoggerFactory.getLogger("DocumentRecordLoader")
+    private val logger = loggerFor<DocumentRecordLoader>()
 
     suspend fun load(
         tenantId: TenantId,

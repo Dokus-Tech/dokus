@@ -8,7 +8,8 @@ import io.ktor.server.resources.post
 import io.ktor.server.response.*
 import io.ktor.server.routing.Route
 import io.ktor.server.sse.heartbeat
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.takeWhile
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -83,6 +84,8 @@ import tech.dokus.foundation.backend.storage.DocumentStorageService as MinioDocu
  * - GET /api/v1/documents/{id}/ingestions - Get ingestion history
  * - POST /api/v1/documents/{id}/reprocess - Reprocess document (idempotent)
  * - POST /api/v1/documents/{id}/confirm - Confirm using latest draft (transactional + idempotent)
+ * - GET /api/v1/documents/events (SSE) - Collection change notifications
+ * - GET /api/v1/documents/{id}/events (SSE) - Document snapshot stream
  */
 internal fun Route.documentRecordRoutes() {
     val documentRepository by inject<DocumentRepository>()
@@ -254,23 +257,21 @@ internal fun Route.documentRecordRoutes() {
                     encode = { json.encodeToString(DocumentRecordDto.serializer(), it) }
                 )
 
-                documentSnapshotEventHub.eventsFor(tenantId, documentId).collect { signal ->
-                    val shouldStayOpen = when (signal) {
-                        DocumentSnapshotSignal.Changed -> sendSnapshotOrDeleted()
-                        DocumentSnapshotSignal.Deleted -> {
-                            sendJsonEvent(
-                                event = DocumentStreamEventNames.Deleted,
-                                payload = DocumentDeletedEventDto(documentId),
-                                encode = { json.encodeToString(DocumentDeletedEventDto.serializer(), it) }
-                            )
-                            false
+                documentSnapshotEventHub.eventsFor(tenantId, documentId)
+                    .takeWhile { signal ->
+                        when (signal) {
+                            DocumentSnapshotSignal.Changed -> sendSnapshotOrDeleted()
+                            DocumentSnapshotSignal.Deleted -> {
+                                sendJsonEvent(
+                                    event = DocumentStreamEventNames.Deleted,
+                                    payload = DocumentDeletedEventDto(documentId),
+                                    encode = { json.encodeToString(DocumentDeletedEventDto.serializer(), it) }
+                                )
+                                false
+                            }
                         }
                     }
-                    if (!shouldStayOpen) {
-                        close()
-                        cancel("document stream closed")
-                    }
-                }
+                    .collect()
             }
         }
 

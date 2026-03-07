@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.currentBackStackEntryAsState
 import kotlinx.coroutines.flow.collect
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.domain.model.DocumentRecordStreamEvent
 import org.koin.core.parameter.parametersOf
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
@@ -171,10 +172,10 @@ internal fun DocumentReviewRoute(
         val activeDocumentId = detailStreamDocumentId ?: return@LaunchedEffect
         observeDocumentRecordEvents(activeDocumentId).collect { event ->
             when (event) {
-                is tech.dokus.domain.model.DocumentRecordStreamEvent.Snapshot -> {
+                is DocumentRecordStreamEvent.Snapshot -> {
                     dispatchIntent(DocumentReviewIntent.ApplyRemoteSnapshot(event.record))
                 }
-                tech.dokus.domain.model.DocumentRecordStreamEvent.Deleted -> {
+                DocumentRecordStreamEvent.Deleted -> {
                     dispatchIntent(DocumentReviewIntent.HandleRemoteDeletion)
                 }
             }

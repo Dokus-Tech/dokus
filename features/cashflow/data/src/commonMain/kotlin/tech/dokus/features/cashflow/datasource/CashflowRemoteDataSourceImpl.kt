@@ -660,9 +660,9 @@ internal class CashflowRemoteDataSourceImpl(
             decodeEvent = { event ->
                 when (event.event) {
                     DocumentStreamEventNames.Snapshot -> event.data?.let { payload ->
-                        DocumentRecordStreamEvent.Snapshot(
-                            record = json.decodeFromString(DocumentRecordDto.serializer(), payload)
-                        )
+                        runCatching { json.decodeFromString(DocumentRecordDto.serializer(), payload) }
+                            .getOrNull()
+                            ?.let { DocumentRecordStreamEvent.Snapshot(record = it) }
                     }
                     DocumentStreamEventNames.Deleted -> DocumentRecordStreamEvent.Deleted
                     else -> null
