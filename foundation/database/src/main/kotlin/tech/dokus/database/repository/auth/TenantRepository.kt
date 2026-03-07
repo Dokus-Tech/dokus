@@ -5,7 +5,6 @@ import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.plus
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.insertAndGetId
-import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
 import tech.dokus.database.mapper.TenantMappers.toTenant
@@ -199,22 +198,6 @@ class TenantRepository {
             .where { TenantSettingsTable.tenantId eq javaUuid }
             .singleOrNull()
             ?.get(TenantSettingsTable.companyLogoUrl)
-    }
-
-    suspend fun getAvatarStorageKeys(tenantIds: List<TenantId>): Map<TenantId, String> = dbQuery {
-        if (tenantIds.isEmpty()) return@dbQuery emptyMap()
-
-        val javaUuids = tenantIds.map { it.value.toJavaUuid() }
-        TenantSettingsTable
-            .select(TenantSettingsTable.tenantId, TenantSettingsTable.companyLogoUrl)
-            .where { TenantSettingsTable.tenantId inList javaUuids }
-            .mapNotNull { row ->
-                val key = row[TenantSettingsTable.companyLogoUrl]
-                    ?.takeIf { it.isNotBlank() }
-                    ?: return@mapNotNull null
-                TenantId(row[TenantSettingsTable.tenantId].value.toKotlinUuid()) to key
-            }
-            .toMap()
     }
 
     suspend fun updateWebsiteUrl(tenantId: TenantId, websiteUrl: String?): Unit = dbQuery {

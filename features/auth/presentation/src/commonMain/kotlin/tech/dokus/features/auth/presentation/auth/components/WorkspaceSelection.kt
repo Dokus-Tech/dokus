@@ -126,7 +126,6 @@ private fun WorkspaceTile(
                 modifier = Modifier.widthInWorkspaceItem(),
                 initial = entry.summary.name.initialOrEmpty,
                 label = entry.summary.name.value,
-                avatarUrl = rememberResolvedApiUrl(entry.summary.avatar?.medium),
                 badge = stringResource(
                     Res.string.console_clients_count,
                     entry.summary.clientCount,
@@ -142,7 +141,7 @@ private fun WorkspaceTile(
                 modifier = Modifier.widthInWorkspaceItem(),
                 initial = entry.summary.name.initialOrEmpty,
                 label = entry.summary.name.value,
-                avatarUrl = rememberResolvedApiUrl(entry.summary.avatar?.medium),
+                avatarUrl = rememberResolvedApiUrl(predictedTenantAvatarPath(entry.summary.id)),
                 badge = entry.summary.role.localized,
                 imageLoader = imageLoader,
             ) {
@@ -151,6 +150,9 @@ private fun WorkspaceTile(
         }
     }
 }
+
+private fun predictedTenantAvatarPath(tenantId: TenantId): String =
+    "/api/v1/tenants/$tenantId/avatar/medium.webp"
 
 private sealed interface WorkspaceEntry {
     val sortName: String
