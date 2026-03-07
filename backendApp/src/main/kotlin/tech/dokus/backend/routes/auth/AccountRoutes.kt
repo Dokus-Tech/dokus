@@ -21,7 +21,6 @@ import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.domain.DeviceType
 import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.domain.ids.SessionId
 import tech.dokus.domain.model.auth.AccountMeResponse
 import tech.dokus.domain.model.auth.ChangePasswordRequest
 import tech.dokus.domain.model.auth.DeactivateUserRequest
@@ -143,7 +142,7 @@ internal fun Route.accountRoutes() {
                 tenantId = request.tenantId,
                 currentSessionId = principal.currentSessionId(),
                 sessionContext = SessionContext(
-                    deviceType = request.deviceType ?: DeviceType.fromAgent(userAgent),
+                    deviceType = DeviceType.resolveFromHintOrAgent(request.deviceType, userAgent),
                     ipAddress = call.extractClientIpAddress(),
                     userAgent = userAgent
                 )
@@ -232,11 +231,5 @@ internal fun Route.accountRoutes() {
             ).getOrThrow()
             call.respond(HttpStatusCode.NoContent)
         }
-    }
-}
-
-private fun tech.dokus.foundation.backend.security.DokusPrincipal.currentSessionId(): SessionId? {
-    return sessionId ?: sessionJti?.let { jti ->
-        runCatching { SessionId(jti) }.getOrNull()
     }
 }

@@ -42,6 +42,16 @@ data class DokusPrincipal(
     fun hasAllRoles(vararg roles: String): Boolean =
         roles.all { this.globalRoles.contains(it) }
 
+    /**
+     * Resolves the stable session identity, falling back to the JWT's JTI
+     * for tokens issued before session identity tracking was added.
+     */
+    fun currentSessionId(): SessionId? {
+        return sessionId ?: sessionJti?.let { jti ->
+            runCatching { SessionId(jti) }.getOrNull()
+        }
+    }
+
     companion object {
         /**
          * Create DokusPrincipal from AuthenticationInfo

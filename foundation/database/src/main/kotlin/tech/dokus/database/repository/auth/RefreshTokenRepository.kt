@@ -9,6 +9,7 @@ import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.greater
+import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.isNull
 import org.jetbrains.exposed.v1.core.less
 import org.jetbrains.exposed.v1.core.or
@@ -67,6 +68,14 @@ data class RevokedSessionInfo(
     val accessTokenJti: String?,
     val accessTokenExpiresAt: Instant?
 )
+
+/**
+ * Result of a session revocation operation.
+ */
+sealed class SessionRevocationResult {
+    data class Revoked(val sessions: List<RevokedSessionInfo>) : SessionRevocationResult()
+    data object NotFound : SessionRevocationResult()
+}
 
 private data class ActiveTokenRow(
     val rowId: JavaUuid,
@@ -276,17 +285,22 @@ class RefreshTokenRepository {
     suspend fun revokeSessionById(
         userId: UserId,
         sessionId: SessionId
-    ): Result<List<RevokedSessionInfo>> = runCatching {
+    ): SessionRevocationResult = try {
         dbQuery {
             val activeRows = getActiveTokenRowsInTx(userId)
             val toRevoke = activeRows.filter { matchesDisplayedSessionId(it.token, sessionId) }
-            revokeRows(toRevoke)
+            if (toRevoke.isEmpty()) {
+                SessionRevocationResult.NotFound
+            } else {
+                SessionRevocationResult.Revoked(revokeRows(toRevoke))
+            }
         }
-    }.onFailure { error ->
+    } catch (error: Exception) {
         logger.error(
             "Failed to revoke session $sessionId for user ${userId.value}",
             error
         )
+        throw error
     }
 
     /**
@@ -297,7 +311,7 @@ class RefreshTokenRepository {
     suspend fun revokeOtherSessions(
         userId: UserId,
         currentSessionId: SessionId
-    ): Result<List<RevokedSessionInfo>> = runCatching {
+    ): SessionRevocationResult = try {
         dbQuery {
             val activeRows = getActiveTokenRowsInTx(userId)
             val hasCurrentSessionRecord = activeRows.any {
@@ -321,13 +335,14 @@ class RefreshTokenRepository {
                 }
             }
 
-            revokeRows(toRevoke)
+            SessionRevocationResult.Revoked(revokeRows(toRevoke))
         }
-    }.onFailure { error ->
+    } catch (error: Exception) {
         logger.error(
             "Failed to revoke other sessions for user ${userId.value}",
             error
         )
+        throw error
     }
 
     /**
@@ -336,21 +351,26 @@ class RefreshTokenRepository {
     suspend fun revokeCurrentSession(
         userId: UserId,
         currentSessionId: SessionId
-    ): Result<List<RevokedSessionInfo>> = runCatching {
+    ): SessionRevocationResult = try {
         dbQuery {
             val activeRows = getActiveTokenRowsInTx(userId)
             val toRevoke = activeRows.filter {
                 matchesCurrentSessionIdentity(it.token, currentSessionId)
             }
-            revokeRows(toRevoke)
+            if (toRevoke.isEmpty()) {
+                SessionRevocationResult.NotFound
+            } else {
+                SessionRevocationResult.Revoked(revokeRows(toRevoke))
+            }
         }
-    }.onFailure { error ->
+    } catch (error: Exception) {
         logger.error(
             "Failed to revoke current session {} for user {}",
             currentSessionId,
             userId.value,
             error
         )
+        throw error
     }
 
     /**
@@ -504,13 +524,10 @@ class RefreshTokenRepository {
             .map { it.rowId }
             .toSet()
 
-        supersededLegacyIds.forEach { rowId ->
-            RefreshTokensTable.update({ RefreshTokensTable.id eq rowId }) {
+        if (supersededLegacyIds.isNotEmpty()) {
+            RefreshTokensTable.update({ RefreshTokensTable.id inList supersededLegacyIds }) {
                 it[RefreshTokensTable.isRevoked] = true
             }
-        }
-
-        if (supersededLegacyIds.isNotEmpty()) {
             logger.info(
                 "Revoked {} superseded legacy refresh-token rows during active-session cleanup",
                 supersededLegacyIds.size
@@ -521,17 +538,12 @@ class RefreshTokenRepository {
     }
 
     private fun revokeRows(rows: List<ActiveTokenRow>): List<RevokedSessionInfo> {
-        val revoked = mutableListOf<RevokedSessionInfo>()
-        rows.forEach { row ->
-            val updated = RefreshTokensTable.update({ RefreshTokensTable.id eq row.rowId }) {
-                it[RefreshTokensTable.isRevoked] = true
-            }
-
-            if (updated > 0) {
-                revoked += row.token.toRevokedSessionInfo()
-            }
+        if (rows.isEmpty()) return emptyList()
+        val rowIds = rows.map { it.rowId }
+        RefreshTokensTable.update({ RefreshTokensTable.id inList rowIds }) {
+            it[RefreshTokensTable.isRevoked] = true
         }
-        return revoked
+        return rows.map { it.token.toRevokedSessionInfo() }
     }
 
     private fun toActiveTokenRow(row: org.jetbrains.exposed.v1.core.ResultRow): ActiveTokenRow {

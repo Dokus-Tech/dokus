@@ -8,6 +8,7 @@ import tech.dokus.backend.services.avatar.projectUserAvatar
 import tech.dokus.database.repository.auth.FirmRepository
 import tech.dokus.database.repository.auth.RefreshTokenRepository
 import tech.dokus.database.repository.auth.RevokedSessionInfo
+import tech.dokus.database.repository.auth.SessionRevocationResult
 import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.domain.DeviceType
 import tech.dokus.domain.Password
@@ -408,18 +409,22 @@ class AuthService(
         blacklistAccessToken(request.sessionToken)
 
         currentSessionId?.let { sessionId ->
-            refreshTokenRepository.revokeCurrentSession(userId, sessionId)
-                .onFailure { error ->
-                    logger.warn("Failed to revoke current session during logout: ${error.message}")
+            try {
+                when (val result = refreshTokenRepository.revokeCurrentSession(userId, sessionId)) {
+                    is SessionRevocationResult.NotFound ->
+                        logger.warn("Current session not found during logout for user {}", userId.value)
+                    is SessionRevocationResult.Revoked -> {
+                        result.sessions.forEach { blacklistRevokedSession(it) }
+                        logger.info(
+                            "Successfully revoked {} session rows during logout for user {}",
+                            result.sessions.size,
+                            userId.value
+                        )
+                    }
                 }
-                .onSuccess { revokedSessions ->
-                    blacklistRevokedSessions(revokedSessions)
-                    logger.info(
-                        "Successfully revoked {} session rows during logout for user {}",
-                        revokedSessions.size,
-                        userId.value
-                    )
-                }
+            } catch (error: Exception) {
+                logger.warn("Failed to revoke current session during logout: ${error.message}")
+            }
         } ?: request.refreshToken?.let { token ->
             refreshTokenRepository.revokeToken(token)
                 .onFailure { error ->
@@ -475,12 +480,6 @@ class AuthService(
             }.onFailure { error ->
                 logger.warn("Failed to track access token for user {}", userId.value, error)
             }
-        }
-    }
-
-    private suspend fun blacklistRevokedSessions(revokedSessions: List<RevokedSessionInfo>) {
-        revokedSessions.forEach { revoked ->
-            blacklistRevokedSession(revoked)
         }
     }
 
@@ -569,16 +568,13 @@ class AuthService(
         // Update password first - if revocation fails, user can manually revoke via sessions UI.
         userRepository.updatePassword(userId, newPassword.value)
 
-        val revokedSessions = refreshTokenRepository.revokeOtherSessions(userId, activeSessionId)
-            .getOrElse { error ->
-                throw DokusException.InternalError(
-                    error.message ?: "Failed to revoke other sessions after password change"
-                )
-            }
+        val result = refreshTokenRepository.revokeOtherSessions(userId, activeSessionId)
+        if (result is SessionRevocationResult.Revoked) {
+            result.sessions.forEach { blacklistRevokedSession(it) }
+            logger.info("Password changed and {} sessions revoked for user {}", result.sessions.size, userId.value)
+        }
 
-        blacklistRevokedSessions(revokedSessions)
         rateLimitService.resetLoginAttempts(rateLimitKey)
-        logger.info("Password changed and {} sessions revoked for user {}", revokedSessions.size, userId.value)
         Result.success(Unit)
     } catch (e: DokusException) {
         logger.warn("Change password failed: {} for user {}", e.errorCode, userId.value)
@@ -602,15 +598,12 @@ class AuthService(
         userId: UserId,
         sessionId: SessionId
     ): Result<Unit> = try {
-        val revokedSessions = refreshTokenRepository.revokeSessionById(userId, sessionId)
-            .getOrElse { error ->
-                throw DokusException.InternalError(error.message ?: "Failed to revoke session")
-            }
-        if (revokedSessions.isEmpty()) {
-            throw DokusException.NotFound("Session not found")
+        when (val result = refreshTokenRepository.revokeSessionById(userId, sessionId)) {
+            is SessionRevocationResult.NotFound ->
+                throw DokusException.NotFound("Session not found")
+            is SessionRevocationResult.Revoked ->
+                result.sessions.forEach { blacklistRevokedSession(it) }
         }
-
-        blacklistRevokedSessions(revokedSessions)
         Result.success(Unit)
     } catch (e: DokusException) {
         Result.failure(e)
@@ -626,12 +619,11 @@ class AuthService(
         val activeSessionId = currentSessionId
             ?: throw DokusException.SessionInvalid("Current session identity is missing")
 
-        val revokedSessions = refreshTokenRepository.revokeOtherSessions(userId, activeSessionId)
-            .getOrElse { error ->
-                throw DokusException.InternalError(error.message ?: "Failed to revoke other sessions")
-            }
+        val result = refreshTokenRepository.revokeOtherSessions(userId, activeSessionId)
+        if (result is SessionRevocationResult.Revoked) {
+            result.sessions.forEach { blacklistRevokedSession(it) }
+        }
 
-        blacklistRevokedSessions(revokedSessions)
         Result.success(Unit)
     } catch (e: DokusException) {
         Result.failure(e)

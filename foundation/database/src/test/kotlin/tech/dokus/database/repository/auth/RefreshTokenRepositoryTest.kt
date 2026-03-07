@@ -185,7 +185,8 @@ class RefreshTokenRepositoryTest {
             accessTokenJti = "cccccccc-cccc-cccc-cccc-cccccccccccc"
         )
 
-        val revoked = repository.revokeSessionById(userId, sessionId).getOrThrow()
+        val result = repository.revokeSessionById(userId, sessionId)
+        val revoked = (result as SessionRevocationResult.Revoked).sessions
 
         assertEquals(2, revoked.size)
         assertTrue(isRevoked(firstRowId))
@@ -226,7 +227,8 @@ class RefreshTokenRepositoryTest {
             accessTokenJti = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
         )
 
-        val revoked = repository.revokeOtherSessions(userId, currentSessionId).getOrThrow()
+        val result = repository.revokeOtherSessions(userId, currentSessionId)
+        val revoked = (result as SessionRevocationResult.Revoked).sessions
 
         assertEquals(2, revoked.size)
         assertTrue(revoked.any { it.sessionId == SessionId(legacyTokenId.toString()) })
@@ -261,7 +263,8 @@ class RefreshTokenRepositoryTest {
             accessTokenJti = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
         )
 
-        val revoked = repository.revokeOtherSessions(userId, currentSessionId).getOrThrow()
+        val result = repository.revokeOtherSessions(userId, currentSessionId)
+        val revoked = (result as SessionRevocationResult.Revoked).sessions
 
         assertEquals(1, revoked.size)
         assertEquals(otherSessionId, revoked.single().sessionId)

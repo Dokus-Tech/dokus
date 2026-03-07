@@ -37,6 +37,10 @@ enum class DeviceType(override val dbValue: String) : DbEnum {
                 else -> Desktop
             }
         }
+
+        /** Use the client-provided hint if available, otherwise detect from user-agent. */
+        fun resolveFromHintOrAgent(hint: DeviceType?, userAgent: String?): DeviceType =
+            hint ?: fromAgent(userAgent)
     }
 }
 

@@ -18,6 +18,7 @@ import tech.dokus.backend.services.auth.WelcomeEmailService
 import tech.dokus.database.repository.auth.FirmRepository
 import tech.dokus.database.repository.auth.RefreshTokenRepository
 import tech.dokus.database.repository.auth.RevokedSessionInfo
+import tech.dokus.database.repository.auth.SessionRevocationResult
 import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.domain.Email
 import tech.dokus.domain.Name
@@ -73,7 +74,7 @@ class AuthServiceSessionManagementTest {
         coEvery { userRepository.verifyCredentials(user.email.value, "CurrentPass123!") } returns user
         coJustRun { userRepository.updatePassword(user.id, "NewPass123!") }
         coEvery { refreshTokenRepository.revokeOtherSessions(user.id, currentSessionId) } returns
-            Result.success(listOf(revokedSession))
+            SessionRevocationResult.Revoked(listOf(revokedSession))
         coJustRun { tokenBlacklistService.blacklistToken(any(), any()) }
 
         val result = runBlocking {
@@ -172,7 +173,7 @@ class AuthServiceSessionManagementTest {
         )
 
         coEvery { refreshTokenRepository.revokeSessionById(userId, sessionId) } returns
-            Result.success(listOf(revoked))
+            SessionRevocationResult.Revoked(listOf(revoked))
         coJustRun { tokenBlacklistService.blacklistToken(any(), any()) }
 
         val result = runBlocking {
@@ -195,7 +196,7 @@ class AuthServiceSessionManagementTest {
         )
 
         coEvery { refreshTokenRepository.revokeOtherSessions(userId, currentSessionId) } returns
-            Result.success(listOf(revoked))
+            SessionRevocationResult.Revoked(listOf(revoked))
         coJustRun { tokenBlacklistService.blacklistToken(any(), any()) }
 
         val result = runBlocking {
