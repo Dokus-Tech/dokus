@@ -18,7 +18,6 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.Address
-import tech.dokus.domain.model.AvatarUploadResponse
 import tech.dokus.domain.model.CreateTenantRequest
 import tech.dokus.domain.model.InvoiceNumberPreviewResponse
 import tech.dokus.domain.model.Tenant
@@ -96,14 +95,15 @@ internal class TenantRemoteDataSourceImpl(
     // ===== Avatar Operations =====
 
     override suspend fun uploadAvatar(
+        tenantId: TenantId,
         imageBytes: ByteArray,
         filename: String,
         contentType: String,
         onProgress: (Float) -> Unit
-    ): Result<AvatarUploadResponse> {
+    ): Result<Thumbnail> {
         return runCatching {
             httpClient.submitFormWithBinaryData(
-                url = "/api/v1/tenants/avatar",
+                url = "/api/v1/tenants/$tenantId/avatar",
                 formData = formData {
                     append(
                         key = "file",
@@ -130,9 +130,13 @@ internal class TenantRemoteDataSourceImpl(
         }
     }
 
-    override suspend fun getAvatar(): Result<Thumbnail?> {
+    override suspend fun getAvatar(tenantId: TenantId): Result<Thumbnail?> {
         return runCatching {
-            val response: HttpResponse = httpClient.get(Tenants.Avatar())
+            val response: HttpResponse = httpClient.get(
+                Tenants.Id.Avatar(
+                    parent = Tenants.Id(id = tenantId.value.toString())
+                )
+            )
             if (response.status == HttpStatusCode.NotFound) {
                 null
             } else {
@@ -141,9 +145,13 @@ internal class TenantRemoteDataSourceImpl(
         }
     }
 
-    override suspend fun deleteAvatar(): Result<Unit> {
+    override suspend fun deleteAvatar(tenantId: TenantId): Result<Unit> {
         return runCatching {
-            httpClient.delete(Tenants.Avatar())
+            httpClient.delete(
+                Tenants.Id.Avatar(
+                    parent = Tenants.Id(id = tenantId.value.toString())
+                )
+            )
         }
     }
 

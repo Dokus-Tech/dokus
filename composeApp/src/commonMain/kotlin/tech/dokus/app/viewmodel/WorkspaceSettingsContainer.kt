@@ -22,6 +22,7 @@ import tech.dokus.features.auth.usecases.UploadWorkspaceAvatarUseCase
 import tech.dokus.features.auth.usecases.WatchCurrentTenantUseCase
 import tech.dokus.features.cashflow.usecases.GetPeppolActivityUseCase
 import tech.dokus.features.cashflow.usecases.GetPeppolRegistrationUseCase
+import tech.dokus.foundation.app.picker.inferImageContentType
 import tech.dokus.foundation.platform.Logger
 
 internal typealias WorkspaceSettingsCtx =
@@ -328,14 +329,11 @@ internal class WorkspaceSettingsContainer(
                 copy(avatarState = WorkspaceSettingsState.Content.AvatarState.Uploading(0f))
             }
 
-            val contentType = when {
-                filename.endsWith(".png", ignoreCase = true) -> "image/png"
-                filename.endsWith(".gif", ignoreCase = true) -> "image/gif"
-                filename.endsWith(".webp", ignoreCase = true) -> "image/webp"
-                else -> "image/jpeg"
-            }
+            val tenantId = tenant.id
+            val contentType = inferImageContentType(filename)
 
             uploadWorkspaceAvatar(
+                tenantId = tenantId,
                 imageBytes = imageBytes,
                 filename = filename,
                 contentType = contentType,
@@ -349,7 +347,7 @@ internal class WorkspaceSettingsContainer(
                     watchCurrentTenantUseCase.refresh()
                     updateState {
                         copy(
-                            currentAvatar = response.avatar,
+                            currentAvatar = response,
                             avatarState = WorkspaceSettingsState.Content.AvatarState.Success
                         )
                     }
@@ -378,7 +376,7 @@ internal class WorkspaceSettingsContainer(
                 copy(avatarState = WorkspaceSettingsState.Content.AvatarState.Deleting)
             }
 
-            deleteWorkspaceAvatar().fold(
+            deleteWorkspaceAvatar(tenant.id).fold(
                 onSuccess = {
                     logger.i { "Avatar deleted" }
                     watchCurrentTenantUseCase.refresh()

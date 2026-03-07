@@ -15,7 +15,6 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.Address
-import tech.dokus.domain.model.AvatarUploadResponse
 import tech.dokus.domain.model.CreateTenantRequest
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.TenantSettings
@@ -430,6 +429,17 @@ private class FakeAccountRemoteDataSource : AccountRemoteDataSource {
     override suspend fun updateProfile(request: tech.dokus.domain.model.auth.UpdateProfileRequest): Result<User> =
         Result.failure(IllegalStateException("not needed"))
 
+    override suspend fun uploadUserAvatar(
+        userId: UserId,
+        imageBytes: ByteArray,
+        filename: String,
+        contentType: String,
+        onProgress: (Float) -> Unit
+    ): Result<Thumbnail> = Result.failure(IllegalStateException("not needed"))
+
+    override suspend fun deleteUserAvatar(userId: UserId): Result<Unit> =
+        Result.failure(IllegalStateException("not needed"))
+
     override suspend fun deactivateAccount(request: tech.dokus.domain.model.auth.DeactivateUserRequest): Result<Unit> =
         Result.failure(IllegalStateException("not needed"))
 
@@ -512,16 +522,17 @@ private class FakeTenantRemoteDataSource : TenantRemoteDataSource {
         Result.failure(IllegalStateException("not needed"))
 
     override suspend fun uploadAvatar(
+        tenantId: TenantId,
         imageBytes: ByteArray,
         filename: String,
         contentType: String,
         onProgress: (Float) -> Unit
-    ): Result<AvatarUploadResponse> = Result.failure(IllegalStateException("not needed"))
+    ): Result<Thumbnail> = Result.failure(IllegalStateException("not needed"))
 
-    override suspend fun getAvatar(): Result<Thumbnail?> =
+    override suspend fun getAvatar(tenantId: TenantId): Result<Thumbnail?> =
         Result.failure(IllegalStateException("not needed"))
 
-    override suspend fun deleteAvatar(): Result<Unit> =
+    override suspend fun deleteAvatar(tenantId: TenantId): Result<Unit> =
         Result.failure(IllegalStateException("not needed"))
 
     override suspend fun getInvoiceNumberPreview(): Result<String> =

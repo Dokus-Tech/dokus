@@ -266,6 +266,28 @@ class UserRepository(
             logger.info("Updated profile for user $userId")
         }
 
+    suspend fun updateAvatarStorageKey(userId: UserId, avatarStorageKey: String?): Unit = dbQuery {
+        val javaUuid = userId.value.toJavaUuid()
+        val updated = UsersTable.update({ UsersTable.id eq javaUuid }) {
+            it[UsersTable.avatarStorageKey] = avatarStorageKey
+        }
+
+        if (updated == 0) {
+            throw IllegalArgumentException("User not found: $userId")
+        }
+
+        logger.info("Updated avatar for user: $userId, key=$avatarStorageKey")
+    }
+
+    suspend fun getAvatarStorageKey(userId: UserId): String? = dbQuery {
+        val javaUuid = userId.value.toJavaUuid()
+        UsersTable
+            .selectAll()
+            .where { UsersTable.id eq javaUuid }
+            .singleOrNull()
+            ?.get(UsersTable.avatarStorageKey)
+    }
+
     suspend fun deactivate(userId: UserId, reason: String?) = dbQuery {
         val javaUuid = userId.value.toJavaUuid()
         val updated = UsersTable.update({ UsersTable.id eq javaUuid }) {

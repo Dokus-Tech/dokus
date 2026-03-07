@@ -1,5 +1,6 @@
 package tech.dokus.features.auth.gateway
 
+import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.TenantSettings
 import tech.dokus.features.auth.datasource.TenantRemoteDataSource
 
@@ -15,16 +16,18 @@ internal class WorkspaceSettingsGatewayImpl(
     }
 
     override suspend fun uploadAvatar(
+        tenantId: TenantId,
         imageBytes: ByteArray,
         filename: String,
         contentType: String,
         onProgress: (Float) -> Unit
     ) = tenantRemoteDataSource.uploadAvatar(
+        tenantId = tenantId,
         imageBytes = imageBytes,
         filename = filename,
         contentType = contentType,
         onProgress = onProgress
     )
 
-    override suspend fun deleteAvatar() = tenantRemoteDataSource.deleteAvatar()
+    override suspend fun deleteAvatar(tenantId: TenantId) = tenantRemoteDataSource.deleteAvatar(tenantId)
 }

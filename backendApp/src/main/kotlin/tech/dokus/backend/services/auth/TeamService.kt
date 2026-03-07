@@ -3,6 +3,7 @@ package tech.dokus.backend.services.auth
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import tech.dokus.backend.services.avatar.buildUserAvatarThumbnail
 import tech.dokus.database.repository.auth.FirmRepository
 import tech.dokus.database.repository.auth.InvitationRepository
 import tech.dokus.database.repository.auth.TenantRepository
@@ -47,6 +48,9 @@ class TeamService(
         val usersInTenant = userRepository.listByTenant(tenantId, activeOnly = true)
 
         return usersInTenant.map { userInTenant ->
+            val avatar = userRepository.getAvatarStorageKey(userInTenant.user.id)
+                ?.takeIf { it.isNotBlank() }
+                ?.let { buildUserAvatarThumbnail(userInTenant.user.id) }
             TeamMember(
                 userId = userInTenant.user.id,
                 email = userInTenant.user.email,
@@ -54,7 +58,8 @@ class TeamService(
                 lastName = userInTenant.user.lastName,
                 role = userInTenant.role,
                 joinedAt = userInTenant.user.createdAt, // TODO: Use membership createdAt
-                lastActiveAt = userInTenant.user.lastLoginAt
+                lastActiveAt = userInTenant.user.lastLoginAt,
+                avatar = avatar
             )
         }
     }

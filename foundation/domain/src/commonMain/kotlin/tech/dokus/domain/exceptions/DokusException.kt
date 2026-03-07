@@ -902,6 +902,26 @@ sealed class DokusException(
         override val message: String? = "Failed to save profile"
     }
 
+    @Serializable
+    @SerialName("DokusException.ProfileAvatarUploadFailed")
+    data object ProfileAvatarUploadFailed : DokusException(
+        httpStatusCode = 500,
+        errorCode = "PROFILE_AVATAR_UPLOAD_FAILED",
+        recoverable = true,
+    ) {
+        override val message: String? = "Failed to upload avatar"
+    }
+
+    @Serializable
+    @SerialName("DokusException.ProfileAvatarDeleteFailed")
+    data object ProfileAvatarDeleteFailed : DokusException(
+        httpStatusCode = 500,
+        errorCode = "PROFILE_AVATAR_DELETE_FAILED",
+        recoverable = true,
+    ) {
+        override val message: String? = "Failed to delete avatar"
+    }
+
     // 500 Internal Server Error - Chat Operations
     @Serializable
     @SerialName("DokusException.ChatLoadConversationFailed")

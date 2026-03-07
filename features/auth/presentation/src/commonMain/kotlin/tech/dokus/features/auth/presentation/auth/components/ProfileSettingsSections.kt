@@ -1,5 +1,8 @@
 package tech.dokus.features.auth.presentation.auth.components
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,9 +13,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -25,6 +31,9 @@ import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_change
+import tech.dokus.aura.resources.action_remove
+import tech.dokus.aura.resources.action_upload
 import tech.dokus.aura.resources.common_empty_value
 import tech.dokus.aura.resources.profile_cancel
 import tech.dokus.aura.resources.profile_change_password
@@ -52,20 +61,26 @@ import tech.dokus.aura.resources.profile_version_footer
 import tech.dokus.aura.resources.profile_resend_verification
 import tech.dokus.aura.resources.profile_save
 import tech.dokus.aura.resources.profile_sessions
+import tech.dokus.aura.resources.state_removing
+import tech.dokus.aura.resources.state_uploading
+import tech.dokus.aura.resources.user_avatar_content_description
 import tech.dokus.domain.Name
 import tech.dokus.domain.config.ServerConfig
 import tech.dokus.domain.model.User
 import tech.dokus.features.auth.mvi.ProfileSettingsState
+import tech.dokus.foundation.app.network.rememberAuthenticatedImageLoader
+import tech.dokus.foundation.app.network.rememberResolvedApiUrl
 import tech.dokus.foundation.aura.components.DokusCardSurface
-import tech.dokus.foundation.aura.components.MonogramAvatar
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.PPrimaryButton
+import tech.dokus.foundation.aura.components.UserAvatarImage
 import tech.dokus.foundation.aura.components.badges.TierBadge
 import tech.dokus.foundation.aura.components.fields.PTextFieldName
 import tech.dokus.foundation.aura.components.settings.SettingsRow
 import tech.dokus.foundation.aura.components.status.StatusDot
 import tech.dokus.foundation.aura.components.status.StatusDotType
 import tech.dokus.foundation.aura.components.text.DokusLabel
+import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.style.textFaint
 import tech.dokus.foundation.aura.style.textMuted
 
@@ -79,16 +94,31 @@ import tech.dokus.foundation.aura.style.textMuted
 @Composable
 internal fun ProfileHero(
     user: User,
+    avatarState: ProfileSettingsState.AvatarState,
+    onUploadAvatar: () -> Unit,
+    onDeleteAvatar: () -> Unit,
+    onResetAvatarState: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val name = userDisplayName(user)
     val initials = userInitials(user)
+    val avatarUrl = rememberResolvedApiUrl(user.avatar?.medium)
+    val imageLoader = rememberAuthenticatedImageLoader()
+    val avatarActionsEnabled = avatarState !is ProfileSettingsState.AvatarState.Uploading &&
+        avatarState !is ProfileSettingsState.AvatarState.Deleting
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier.fillMaxWidth().padding(bottom = 14.dp),
     ) {
-        MonogramAvatar(initials = initials, size = 72.dp, radius = 22.dp)
+        UserAvatarImage(
+            avatarUrl = avatarUrl,
+            initials = initials,
+            size = 72.dp,
+            radius = 22.dp,
+            imageLoader = imageLoader,
+            contentDescription = stringResource(Res.string.user_avatar_content_description),
+        )
         Spacer(Modifier.height(14.dp))
         Text(
             text = name,
@@ -107,6 +137,101 @@ internal fun ProfileHero(
             TierBadge(label = "Core")
             TierBadge(label = "Owner")
         }
+        Spacer(Modifier.height(8.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            TextButton(
+                onClick = onUploadAvatar,
+                enabled = avatarActionsEnabled
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = null,
+                )
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    text = if (user.avatar != null) {
+                        stringResource(Res.string.action_change)
+                    } else {
+                        stringResource(Res.string.action_upload)
+                    }
+                )
+            }
+
+            if (user.avatar != null) {
+                TextButton(
+                    onClick = onDeleteAvatar,
+                    enabled = avatarActionsEnabled
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = null,
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(text = stringResource(Res.string.action_remove))
+                }
+            }
+        }
+        ProfileAvatarStateIndicator(
+            avatarState = avatarState,
+            onResetState = onResetAvatarState,
+        )
+    }
+}
+
+@Composable
+private fun ProfileAvatarStateIndicator(
+    avatarState: ProfileSettingsState.AvatarState,
+    onResetState: () -> Unit,
+) {
+    when (avatarState) {
+        is ProfileSettingsState.AvatarState.Uploading -> {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                CircularProgressIndicator(
+                    progress = { avatarState.progress },
+                    modifier = Modifier.height(16.dp).width(16.dp)
+                )
+                Text(
+                    text = stringResource(Res.string.state_uploading),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+        }
+
+        is ProfileSettingsState.AvatarState.Deleting -> {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                CircularProgressIndicator(
+                    modifier = Modifier.height(16.dp).width(16.dp)
+                )
+                Text(
+                    text = stringResource(Res.string.state_removing),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+        }
+
+        is ProfileSettingsState.AvatarState.Error -> {
+            Text(
+                text = avatarState.error.localized,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+            )
+        }
+
+        ProfileSettingsState.AvatarState.Success -> {
+            LaunchedEffect(Unit) {
+                onResetState()
+            }
+        }
+
+        ProfileSettingsState.AvatarState.Idle -> Unit
     }
 }
 
@@ -505,7 +630,13 @@ private fun ProfileHeroPreview(
     ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
 ) {
     tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
-        ProfileHero(user = previewUser)
+        ProfileHero(
+            user = previewUser,
+            avatarState = ProfileSettingsState.AvatarState.Idle,
+            onUploadAvatar = {},
+            onDeleteAvatar = {},
+            onResetAvatarState = {},
+        )
     }
 }
 

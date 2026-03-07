@@ -20,11 +20,13 @@ import tech.dokus.domain.enums.TenantType
 import tech.dokus.domain.ids.FirmId
 import tech.dokus.domain.ids.SessionId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.UpsertTenantAddressRequest
 import tech.dokus.domain.model.User
+import tech.dokus.domain.model.common.Thumbnail
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.model.auth.CreateFirmRequest
 import tech.dokus.domain.model.auth.FirmWorkspaceSummary
@@ -140,6 +142,34 @@ internal class UpdateProfileUseCaseImpl(
 ) : UpdateProfileUseCase {
     override suspend fun invoke(firstName: Name?, lastName: Name?): Result<User> {
         return authGateway.updateProfile(firstName, lastName)
+    }
+}
+
+internal class UploadUserAvatarUseCaseImpl(
+    private val authGateway: AuthGateway
+) : UploadUserAvatarUseCase {
+    override suspend fun invoke(
+        userId: UserId,
+        imageBytes: ByteArray,
+        filename: String,
+        contentType: String,
+        onProgress: (Float) -> Unit
+    ): Result<Thumbnail> {
+        return authGateway.uploadUserAvatar(
+            userId = userId,
+            imageBytes = imageBytes,
+            filename = filename,
+            contentType = contentType,
+            onProgress = onProgress
+        )
+    }
+}
+
+internal class DeleteUserAvatarUseCaseImpl(
+    private val authGateway: AuthGateway
+) : DeleteUserAvatarUseCase {
+    override suspend fun invoke(userId: UserId): Result<Unit> {
+        return authGateway.deleteUserAvatar(userId)
     }
 }
 

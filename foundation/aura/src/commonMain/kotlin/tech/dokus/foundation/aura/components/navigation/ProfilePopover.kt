@@ -39,11 +39,12 @@ import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import coil3.ImageLoader
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.profile_logout
 import tech.dokus.aura.resources.profile_popover_profile
-import tech.dokus.foundation.aura.components.MonogramAvatar
+import tech.dokus.foundation.aura.components.UserAvatarImage
 import tech.dokus.foundation.aura.components.badges.TierBadge
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.surfaceHover
@@ -82,10 +83,12 @@ fun ProfilePopover(
     userName: String,
     userEmail: String,
     userInitials: String,
+    userAvatarUrl: String?,
     tierLabel: String,
     onProfileClick: () -> Unit,
     onLogoutClick: () -> Unit,
     modifier: Modifier = Modifier,
+    imageLoader: ImageLoader? = null,
 ) {
     if (isVisible) {
         // Backdrop to catch outside clicks
@@ -125,6 +128,7 @@ fun ProfilePopover(
                         userName = userName,
                         userEmail = userEmail,
                         userInitials = userInitials,
+                        userAvatarUrl = userAvatarUrl,
                         tierLabel = tierLabel,
                         onProfileClick = {
                             onProfileClick()
@@ -134,6 +138,7 @@ fun ProfilePopover(
                             onLogoutClick()
                             onDismiss()
                         },
+                        imageLoader = imageLoader,
                     )
                 }
             }
@@ -146,9 +151,11 @@ private fun PopoverContent(
     userName: String,
     userEmail: String,
     userInitials: String,
+    userAvatarUrl: String?,
     tierLabel: String,
     onProfileClick: () -> Unit,
     onLogoutClick: () -> Unit,
+    imageLoader: ImageLoader?,
 ) {
     Surface(
         modifier = Modifier.width(PopoverWidth),
@@ -169,11 +176,13 @@ private fun PopoverContent(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium),
             ) {
-                MonogramAvatar(
+                UserAvatarImage(
+                    avatarUrl = userAvatarUrl,
                     initials = userInitials,
                     size = AvatarSize,
                     radius = AvatarRadius,
                     fontSize = MaterialTheme.typography.labelSmall.fontSize,
+                    imageLoader = imageLoader,
                 )
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
@@ -274,6 +283,7 @@ private fun ProfilePopoverPreview(
             userName = "John Doe",
             userEmail = "john.doe@dokus.be",
             userInitials = "JD",
+            userAvatarUrl = null,
             tierLabel = "Core",
             onProfileClick = {},
             onLogoutClick = {},

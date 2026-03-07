@@ -39,6 +39,7 @@ sealed interface ProfileSettingsState : MVIState, DokusState<User> {
     data class Viewing(
         val user: User,
         val isResendingVerification: Boolean = false,
+        val avatarState: AvatarState = AvatarState.Idle,
     ) : ProfileSettingsState
 
     /**
@@ -77,6 +78,15 @@ sealed interface ProfileSettingsState : MVIState, DokusState<User> {
         override val exception: DokusException,
         override val retryHandler: RetryHandler,
     ) : ProfileSettingsState, DokusState.Error<User>
+
+    @Immutable
+    sealed interface AvatarState {
+        data object Idle : AvatarState
+        data class Uploading(val progress: Float) : AvatarState
+        data object Deleting : AvatarState
+        data object Success : AvatarState
+        data class Error(val error: DokusException) : AvatarState
+    }
 }
 
 // ============================================================================
@@ -102,6 +112,15 @@ sealed interface ProfileSettingsIntent : MVIIntent {
 
     /** User clicked save button */
     data object SaveClicked : ProfileSettingsIntent
+
+    /** User selected a new avatar image */
+    data class UploadAvatar(val imageBytes: ByteArray, val filename: String) : ProfileSettingsIntent
+
+    /** User requested avatar deletion */
+    data object DeleteAvatar : ProfileSettingsIntent
+
+    /** Reset avatar state after transient feedback */
+    data object ResetAvatarState : ProfileSettingsIntent
 
     /** User requested verification email resend */
     data object ResendVerificationClicked : ProfileSettingsIntent
@@ -133,6 +152,9 @@ sealed interface ProfileSettingsAction : MVIAction {
 
     /** Verification email resend failed */
     data class ShowVerificationEmailError(val error: DokusException) : ProfileSettingsAction
+
+    /** Avatar mutation failed */
+    data class ShowAvatarError(val error: DokusException) : ProfileSettingsAction
 
     /** Navigate to change-password screen */
     data object NavigateToChangePassword : ProfileSettingsAction

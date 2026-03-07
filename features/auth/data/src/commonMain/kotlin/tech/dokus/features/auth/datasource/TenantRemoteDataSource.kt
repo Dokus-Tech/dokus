@@ -2,7 +2,6 @@ package tech.dokus.features.auth.datasource
 
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.Address
-import tech.dokus.domain.model.AvatarUploadResponse
 import tech.dokus.domain.model.CreateTenantRequest
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.TenantSettings
@@ -70,23 +69,24 @@ interface TenantRemoteDataSource {
      * @return Result containing the upload response with avatar URLs
      */
     suspend fun uploadAvatar(
+        tenantId: TenantId,
         imageBytes: ByteArray,
         filename: String,
         contentType: String,
         onProgress: (Float) -> Unit = {}
-    ): Result<AvatarUploadResponse>
+    ): Result<Thumbnail>
 
     /**
      * Get current avatar URLs for the tenant.
      * @return Result containing CompanyAvatar or null if no avatar is set
      */
-    suspend fun getAvatar(): Result<Thumbnail?>
+    suspend fun getAvatar(tenantId: TenantId): Result<Thumbnail?>
 
     /**
      * Delete the company avatar.
      * @return Result indicating success or failure
      */
-    suspend fun deleteAvatar(): Result<Unit>
+    suspend fun deleteAvatar(tenantId: TenantId): Result<Unit>
 
     /**
      * Preview the next invoice number without consuming it.

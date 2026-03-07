@@ -12,11 +12,13 @@ import tech.dokus.domain.enums.TenantType
 import tech.dokus.domain.ids.FirmId
 import tech.dokus.domain.ids.SessionId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.UpsertTenantAddressRequest
 import tech.dokus.domain.model.User
+import tech.dokus.domain.model.common.Thumbnail
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.model.auth.AccountMeResponse
 import tech.dokus.domain.model.auth.ConsoleClientSummary
@@ -77,6 +79,16 @@ interface AuthGateway {
     suspend fun getCurrentUser(): Result<User>
 
     suspend fun updateProfile(firstName: Name?, lastName: Name?): Result<User>
+
+    suspend fun uploadUserAvatar(
+        userId: UserId,
+        imageBytes: ByteArray,
+        filename: String,
+        contentType: String,
+        onProgress: (Float) -> Unit = {}
+    ): Result<Thumbnail>
+
+    suspend fun deleteUserAvatar(userId: UserId): Result<Unit>
 
     suspend fun logout()
 

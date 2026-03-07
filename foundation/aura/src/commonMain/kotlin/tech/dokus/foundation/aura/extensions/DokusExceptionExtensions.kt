@@ -92,6 +92,8 @@ import tech.dokus.aura.resources.exception_user_already_exists
 import tech.dokus.aura.resources.exception_user_not_found
 import tech.dokus.aura.resources.exception_validation_error
 import tech.dokus.aura.resources.exception_weak_password
+import tech.dokus.aura.resources.profile_avatar_delete_failed
+import tech.dokus.aura.resources.profile_avatar_upload_failed
 import tech.dokus.aura.resources.profile_save_error
 import tech.dokus.aura.resources.settings_save_failed
 import tech.dokus.aura.resources.team_email_required
@@ -247,6 +249,8 @@ val DokusException.localized: String
         is DokusException.WorkspaceSelectFailed -> stringResource(Res.string.workspace_select_failed)
         is DokusException.WorkspaceContextUnavailable -> stringResource(Res.string.workspace_context_unavailable)
         is DokusException.ProfileSaveFailed -> stringResource(Res.string.profile_save_error)
+        is DokusException.ProfileAvatarUploadFailed -> stringResource(Res.string.profile_avatar_upload_failed)
+        is DokusException.ProfileAvatarDeleteFailed -> stringResource(Res.string.profile_avatar_delete_failed)
         is DokusException.ChatLoadConversationFailed -> {
             val reasonText = reason?.takeIf { it.isNotBlank() }
                 ?: stringResource(Res.string.common_unknown)

@@ -1,8 +1,9 @@
 package tech.dokus.features.auth.usecases
 
+import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.Address
-import tech.dokus.domain.model.AvatarUploadResponse
 import tech.dokus.domain.model.TenantSettings
+import tech.dokus.domain.model.common.Thumbnail
 
 /**
  * Use case for loading tenant settings.
@@ -30,16 +31,17 @@ interface UpdateTenantSettingsUseCase {
  */
 interface UploadWorkspaceAvatarUseCase {
     suspend operator fun invoke(
+        tenantId: TenantId,
         imageBytes: ByteArray,
         filename: String,
         contentType: String,
         onProgress: (Float) -> Unit = {}
-    ): Result<AvatarUploadResponse>
+    ): Result<Thumbnail>
 }
 
 /**
  * Use case for deleting the workspace avatar.
  */
 interface DeleteWorkspaceAvatarUseCase {
-    suspend operator fun invoke(): Result<Unit>
+    suspend operator fun invoke(tenantId: TenantId): Result<Unit>
 }

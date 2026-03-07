@@ -2,20 +2,27 @@ package tech.dokus.features.auth.datasource
 
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.plugins.onUpload
 import io.ktor.client.plugins.resources.delete
 import io.ktor.client.plugins.resources.get
 import io.ktor.client.plugins.resources.patch
 import io.ktor.client.plugins.resources.post
 import io.ktor.client.plugins.resources.put
 import io.ktor.client.request.header
+import io.ktor.client.request.forms.formData
+import io.ktor.client.request.forms.submitFormWithBinaryData
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.Headers
+import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import tech.dokus.domain.ids.SessionId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.FirmId
+import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.User
+import tech.dokus.domain.model.common.Thumbnail
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.model.auth.AccountMeResponse
 import tech.dokus.domain.model.auth.ChangePasswordRequest
@@ -31,6 +38,7 @@ import tech.dokus.domain.model.auth.UpdateProfileRequest
 import tech.dokus.domain.routes.Account
 import tech.dokus.domain.routes.Console
 import tech.dokus.domain.routes.Firms
+import tech.dokus.domain.routes.Users
 
 /**
  * HTTP implementation of AccountRemoteDataSource.
@@ -127,6 +135,52 @@ internal class AccountRemoteDataSourceImpl(
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }.body()
+        }
+    }
+
+    override suspend fun uploadUserAvatar(
+        userId: UserId,
+        imageBytes: ByteArray,
+        filename: String,
+        contentType: String,
+        onProgress: (Float) -> Unit
+    ): Result<Thumbnail> {
+        return runCatching {
+            httpClient.submitFormWithBinaryData(
+                url = "/api/v1/users/$userId/avatar",
+                formData = formData {
+                    append(
+                        key = "file",
+                        value = imageBytes,
+                        headers = Headers.build {
+                            append(
+                                HttpHeaders.ContentDisposition,
+                                "form-data; name=\"file\"; filename=\"$filename\""
+                            )
+                            append(HttpHeaders.ContentType, contentType)
+                        }
+                    )
+                }
+            ) {
+                onUpload { bytesSentTotal, contentLength ->
+                    val progress = if (contentLength != null && contentLength > 0) {
+                        bytesSentTotal.toFloat() / contentLength.toFloat()
+                    } else {
+                        0f
+                    }
+                    onProgress(progress.coerceIn(0f, 1f))
+                }
+            }.body()
+        }
+    }
+
+    override suspend fun deleteUserAvatar(userId: UserId): Result<Unit> {
+        return runCatching {
+            httpClient.delete(
+                Users.Id.Avatar(
+                    parent = Users.Id(id = userId.toString())
+                )
+            )
         }
     }
 

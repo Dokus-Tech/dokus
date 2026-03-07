@@ -15,6 +15,7 @@ import org.koin.ktor.ext.inject
 import tech.dokus.backend.services.auth.AuthService
 import tech.dokus.backend.services.auth.SessionContext
 import tech.dokus.backend.services.auth.SurfaceResolver
+import tech.dokus.backend.services.avatar.projectUserAvatar
 import tech.dokus.database.repository.auth.FirmRepository
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.auth.UserRepository
@@ -56,6 +57,7 @@ internal fun Route.accountRoutes() {
             val principal = dokusPrincipal
             val user = userRepository.findById(principal.userId)
                 ?: throw DokusException.NotAuthenticated("User not found")
+            val projectedUser = userRepository.projectUserAvatar(user)
             val tenantMemberships = userRepository.getUserTenants(principal.userId)
                 .filter { it.isActive }
             val firmsMemberships = firmRepository.listUserMemberships(principal.userId)
@@ -97,7 +99,7 @@ internal fun Route.accountRoutes() {
             call.respond(
                 HttpStatusCode.OK,
                 AccountMeResponse(
-                    user = user,
+                    user = projectedUser,
                     surface = surface,
                     tenants = tenantSummaries,
                     firms = firmSummaries
