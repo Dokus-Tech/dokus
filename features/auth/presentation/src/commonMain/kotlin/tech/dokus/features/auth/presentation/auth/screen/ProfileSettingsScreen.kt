@@ -135,7 +135,6 @@ fun ProfileSettingsContent(
                         user = state.user,
                         avatarState = state.avatarState,
                         onUploadAvatar = { avatarPicker.launch() },
-                        onDeleteAvatar = { onIntent(ProfileSettingsIntent.DeleteAvatar) },
                         onResetAvatarState = { onIntent(ProfileSettingsIntent.ResetAvatarState) },
                     )
                     AccountCard(

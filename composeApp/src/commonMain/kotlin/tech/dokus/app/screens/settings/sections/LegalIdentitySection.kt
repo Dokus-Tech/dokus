@@ -9,18 +9,15 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import coil3.ImageLoader
 import org.jetbrains.compose.resources.stringResource
@@ -28,7 +25,6 @@ import tech.dokus.app.viewmodel.WorkspaceSettingsIntent
 import tech.dokus.app.viewmodel.WorkspaceSettingsState
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_change
-import tech.dokus.aura.resources.action_remove
 import tech.dokus.aura.resources.action_upload
 import tech.dokus.aura.resources.state_removing
 import tech.dokus.aura.resources.state_uploading
@@ -43,6 +39,7 @@ import tech.dokus.foundation.app.network.rememberResolvedApiUrl
 import tech.dokus.foundation.app.picker.FilePickerLauncher
 import tech.dokus.foundation.aura.components.AvatarSize
 import tech.dokus.foundation.aura.components.CompanyAvatarImage
+import tech.dokus.foundation.aura.components.EditableAvatarSurface
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
 import tech.dokus.foundation.aura.components.settings.DataRow
 import tech.dokus.foundation.aura.components.settings.DataRowStatus
@@ -51,6 +48,11 @@ import tech.dokus.foundation.aura.components.status.StatusDotType
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.style.textMuted
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
+
+private val EditableCompanyAvatarSize = 144.dp
 
 @Composable
 internal fun LegalIdentitySection(
@@ -68,7 +70,6 @@ internal fun LegalIdentitySection(
     avatarPicker: FilePickerLauncher,
 ) {
     val imageLoader = rememberAuthenticatedImageLoader()
-    val mediumAvatarUrl = rememberResolvedApiUrl(currentAvatar?.medium)
     val subtitle = if (!expanded) formState.legalName else null
 
     SettingsSection(
@@ -130,13 +131,11 @@ internal fun LegalIdentitySection(
 
             Spacer(Modifier.height(Constraints.Spacing.medium))
 
-            // Avatar section
             CompanyAvatarSection(
                 avatarState = avatarState,
                 currentAvatar = currentAvatar,
                 companyInitial = formState.companyName.take(1).ifBlank { "C" },
-                avatarPicker = avatarPicker,
-                onDeleteAvatar = { onIntent(WorkspaceSettingsIntent.DeleteAvatar) },
+                onUploadAvatar = { avatarPicker.launch() },
                 onResetAvatarState = { onIntent(WorkspaceSettingsIntent.ResetAvatarState) },
                 imageLoader = imageLoader
             )
@@ -165,28 +164,14 @@ internal fun LegalIdentitySection(
                 label = stringResource(Res.string.workspace_address),
                 value = formState.address,
             )
-
-            // Logo row
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = Constraints.Spacing.small),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = stringResource(Res.string.workspace_company_logo),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.textMuted,
-                    modifier = Modifier.width(140.dp),
-                )
-                CompanyAvatarImage(
-                    avatarUrl = mediumAvatarUrl,
-                    initial = formState.companyName.take(1).ifBlank { "C" },
-                    size = AvatarSize.Small,
-                    imageLoader = imageLoader,
-                    onClick = null,
-                )
-            }
+            CompanyAvatarSection(
+                avatarState = avatarState,
+                currentAvatar = currentAvatar,
+                companyInitial = formState.companyName.take(1).ifBlank { "C" },
+                onUploadAvatar = { avatarPicker.launch() },
+                onResetAvatarState = { onIntent(WorkspaceSettingsIntent.ResetAvatarState) },
+                imageLoader = imageLoader
+            )
         }
     }
 }
@@ -199,75 +184,49 @@ private fun CompanyAvatarSection(
     avatarState: WorkspaceSettingsState.Content.AvatarState,
     currentAvatar: Thumbnail?,
     companyInitial: String,
-    avatarPicker: FilePickerLauncher,
-    onDeleteAvatar: () -> Unit,
+    onUploadAvatar: () -> Unit,
     onResetAvatarState: () -> Unit,
     imageLoader: ImageLoader
 ) {
+    val isAvatarBusy =
+        avatarState is WorkspaceSettingsState.Content.AvatarState.Uploading ||
+            avatarState is WorkspaceSettingsState.Content.AvatarState.Deleting
+    val uploadProgress = (avatarState as? WorkspaceSettingsState.Content.AvatarState.Uploading)?.progress
+    val editDescription = stringResource(
+        if (currentAvatar != null) Res.string.action_change else Res.string.action_upload
+    )
+
     Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = Constraints.Spacing.small),
+        verticalAlignment = Alignment.Top,
     ) {
-        CompanyAvatarImage(
-            avatarUrl = rememberResolvedApiUrl(currentAvatar?.medium),
-            initial = companyInitial,
-            size = AvatarSize.Large,
-            imageLoader = imageLoader,
-            onClick = { avatarPicker.launch() }
+        Text(
+            text = stringResource(Res.string.workspace_company_logo),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.textMuted,
+            modifier = Modifier.width(140.dp),
         )
-
-        Spacer(Modifier.width(Constraints.Spacing.large))
-
         Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = stringResource(Res.string.workspace_company_logo),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.textMuted
-            )
-
-            Spacer(Modifier.height(Constraints.Spacing.xSmall))
-
-            // Avatar action buttons
-            val isActionInProgress =
-                avatarState is WorkspaceSettingsState.Content.AvatarState.Uploading ||
-                    avatarState is WorkspaceSettingsState.Content.AvatarState.Deleting
-            Row(horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)) {
-                TextButton(
-                    onClick = { avatarPicker.launch() },
-                    enabled = !isActionInProgress
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Edit,
-                        contentDescription = null,
-                        modifier = Modifier.size(Constraints.IconSize.small)
-                    )
-                    Spacer(Modifier.width(Constraints.Spacing.xSmall))
-                    Text(
-                        if (currentAvatar != null) {
-                            stringResource(Res.string.action_change)
-                        } else {
-                            stringResource(Res.string.action_upload)
-                        }
-                    )
-                }
-
-                if (currentAvatar != null) {
-                    TextButton(
-                        onClick = onDeleteAvatar,
-                        enabled = !isActionInProgress
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Delete,
-                            contentDescription = null,
-                            modifier = Modifier.size(Constraints.IconSize.small)
-                        )
-                        Spacer(Modifier.width(Constraints.Spacing.xSmall))
-                        Text(stringResource(Res.string.action_remove))
-                    }
-                }
+            EditableAvatarSurface(
+                onEditClick = onUploadAvatar,
+                editContentDescription = editDescription,
+                modifier = Modifier.size(EditableCompanyAvatarSize),
+                shape = MaterialTheme.shapes.medium,
+                enabled = !isAvatarBusy,
+                isBusy = isAvatarBusy,
+                progress = uploadProgress,
+            ) {
+                CompanyAvatarImage(
+                    avatarUrl = rememberResolvedApiUrl(currentAvatar?.medium),
+                    initial = companyInitial,
+                    size = AvatarSize.Large,
+                    sizeOverride = EditableCompanyAvatarSize,
+                    imageLoader = imageLoader,
+                    onClick = null,
+                )
             }
-
-            // Avatar upload/delete progress indicator
             AvatarStateIndicator(
                 avatarState = avatarState,
                 onResetState = onResetAvatarState
@@ -288,7 +247,8 @@ private fun AvatarStateIndicator(
         is WorkspaceSettingsState.Content.AvatarState.Uploading -> {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
+                horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
+                modifier = Modifier.padding(top = Constraints.Spacing.xSmall)
             ) {
                 CircularProgressIndicator(
                     progress = { avatarState.progress },
@@ -306,7 +266,8 @@ private fun AvatarStateIndicator(
         is WorkspaceSettingsState.Content.AvatarState.Deleting -> {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
+                horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
+                modifier = Modifier.padding(top = Constraints.Spacing.xSmall)
             ) {
                 CircularProgressIndicator(
                     modifier = Modifier.size(Constraints.IconSize.xSmall),
@@ -324,7 +285,8 @@ private fun AvatarStateIndicator(
             Text(
                 text = avatarState.error.localized,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.error
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(top = Constraints.Spacing.xSmall)
             )
         }
 
@@ -335,5 +297,22 @@ private fun AvatarStateIndicator(
         }
 
         else -> {}
+    }
+}
+
+@Preview
+@Composable
+private fun CompanyAvatarSectionPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        CompanyAvatarSection(
+            avatarState = WorkspaceSettingsState.Content.AvatarState.Idle,
+            currentAvatar = null,
+            companyInitial = "D",
+            onUploadAvatar = {},
+            onResetAvatarState = {},
+            imageLoader = rememberAuthenticatedImageLoader(),
+        )
     }
 }

@@ -82,18 +82,13 @@ fun CompanyAvatarImage(
     initial: String,
     size: AvatarSize = AvatarSize.Medium,
     shape: AvatarShape = AvatarShape.RoundedSquare,
+    sizeOverride: Dp? = null,
     imageLoader: ImageLoader? = null,
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null
 ) {
-    val clipShape = when (shape) {
-        AvatarShape.Circle -> CircleShape
-        AvatarShape.RoundedSquare -> when (size) {
-            AvatarSize.ExtraSmall -> MaterialTheme.shapes.extraSmall
-            AvatarSize.Small -> MaterialTheme.shapes.small
-            else -> MaterialTheme.shapes.medium
-        }
-    }
+    val resolvedSize = sizeOverride ?: size.value
+    val clipShape = avatarClipShape(size = resolvedSize, shape = shape)
 
     val clickModifier = if (onClick != null) {
         Modifier.clickable(onClick = onClick)
@@ -103,7 +98,7 @@ fun CompanyAvatarImage(
 
     Box(
         modifier = modifier
-            .size(size.value)
+            .size(resolvedSize)
             .clip(clipShape)
             .then(clickModifier),
         contentAlignment = Alignment.Center
@@ -116,19 +111,19 @@ fun CompanyAvatarImage(
                     contentDescription = stringResource(Res.string.company_avatar_content_description),
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
-                        .size(size.value)
+                        .size(resolvedSize)
                         .clip(clipShape),
                     loading = {
                         AvatarFallback(
                             initial = initial,
-                            size = size,
+                            size = resolvedSize,
                             shape = shape
                         )
                     },
                     error = {
                         AvatarFallback(
                             initial = initial,
-                            size = size,
+                            size = resolvedSize,
                             shape = shape
                         )
                     }
@@ -139,19 +134,19 @@ fun CompanyAvatarImage(
                     contentDescription = stringResource(Res.string.company_avatar_content_description),
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
-                        .size(size.value)
+                        .size(resolvedSize)
                         .clip(clipShape),
                     loading = {
                         AvatarFallback(
                             initial = initial,
-                            size = size,
+                            size = resolvedSize,
                             shape = shape
                         )
                     },
                     error = {
                         AvatarFallback(
                             initial = initial,
-                            size = size,
+                            size = resolvedSize,
                             shape = shape
                         )
                     }
@@ -160,7 +155,7 @@ fun CompanyAvatarImage(
         } else {
             AvatarFallback(
                 initial = initial,
-                size = size,
+                size = resolvedSize,
                 shape = shape
             )
         }
@@ -173,32 +168,19 @@ fun CompanyAvatarImage(
 @Composable
 private fun AvatarFallback(
     initial: String,
-    size: AvatarSize,
+    size: Dp,
     shape: AvatarShape
 ) {
-    val clipShape = when (shape) {
-        AvatarShape.Circle -> CircleShape
-        AvatarShape.RoundedSquare -> when (size) {
-            AvatarSize.ExtraSmall -> MaterialTheme.shapes.extraSmall
-            AvatarSize.Small -> MaterialTheme.shapes.small
-            else -> MaterialTheme.shapes.medium
-        }
-    }
+    val clipShape = avatarClipShape(size = size, shape = shape)
 
     val backgroundColor = MaterialTheme.colorScheme.primaryContainer
     val textColor = MaterialTheme.colorScheme.primary
 
-    val fontSize = when (size) {
-        AvatarSize.ExtraSmall -> FontSizeExtraSmall
-        AvatarSize.Small -> FontSizeSmall
-        AvatarSize.Medium -> FontSizeMedium
-        AvatarSize.Large -> FontSizeLarge
-        AvatarSize.ExtraLarge -> FontSizeExtraLarge
-    }
+    val fontSize = avatarFontSize(size)
 
     Box(
         modifier = Modifier
-            .size(size.value)
+            .size(size)
             .clip(clipShape)
             .background(backgroundColor),
         contentAlignment = Alignment.Center
@@ -210,6 +192,27 @@ private fun AvatarFallback(
             fontWeight = FontWeight.SemiBold
         )
     }
+}
+
+@Composable
+private fun avatarClipShape(
+    size: Dp,
+    shape: AvatarShape
+) = when (shape) {
+    AvatarShape.Circle -> CircleShape
+    AvatarShape.RoundedSquare -> when {
+        size <= AvatarSize.ExtraSmall.value -> MaterialTheme.shapes.extraSmall
+        size <= AvatarSize.Small.value -> MaterialTheme.shapes.small
+        else -> MaterialTheme.shapes.medium
+    }
+}
+
+private fun avatarFontSize(size: Dp) = when {
+    size <= AvatarSize.ExtraSmall.value -> FontSizeExtraSmall
+    size <= AvatarSize.Small.value -> FontSizeSmall
+    size <= AvatarSize.Medium.value -> FontSizeMedium
+    size <= AvatarSize.Large.value -> FontSizeLarge
+    else -> (size.value * 0.375f).sp
 }
 
 /**

@@ -1,8 +1,5 @@
 package tech.dokus.features.auth.presentation.auth.components
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,12 +8,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
@@ -32,7 +29,6 @@ import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_change
-import tech.dokus.aura.resources.action_remove
 import tech.dokus.aura.resources.action_upload
 import tech.dokus.aura.resources.common_empty_value
 import tech.dokus.aura.resources.profile_cancel
@@ -71,6 +67,7 @@ import tech.dokus.features.auth.mvi.ProfileSettingsState
 import tech.dokus.foundation.app.network.rememberAuthenticatedImageLoader
 import tech.dokus.foundation.app.network.rememberResolvedApiUrl
 import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.EditableAvatarSurface
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.UserAvatarImage
@@ -88,6 +85,9 @@ import tech.dokus.foundation.aura.style.textMuted
 // v2 Profile Sections
 // =============================================================================
 
+private val EditableProfileAvatarSize = 88.dp
+private val EditableProfileAvatarRadius = 28.dp
+
 /**
  * Profile hero: centered avatar, name, email, tier badges.
  */
@@ -96,7 +96,6 @@ internal fun ProfileHero(
     user: User,
     avatarState: ProfileSettingsState.AvatarState,
     onUploadAvatar: () -> Unit,
-    onDeleteAvatar: () -> Unit,
     onResetAvatarState: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -104,21 +103,35 @@ internal fun ProfileHero(
     val initials = userInitials(user)
     val avatarUrl = rememberResolvedApiUrl(user.avatar?.medium)
     val imageLoader = rememberAuthenticatedImageLoader()
-    val avatarActionsEnabled = avatarState !is ProfileSettingsState.AvatarState.Uploading &&
-        avatarState !is ProfileSettingsState.AvatarState.Deleting
+    val isAvatarBusy = avatarState is ProfileSettingsState.AvatarState.Uploading ||
+        avatarState is ProfileSettingsState.AvatarState.Deleting
+    val uploadProgress = (avatarState as? ProfileSettingsState.AvatarState.Uploading)?.progress
+    val editDescription = stringResource(
+        if (user.avatar != null) Res.string.action_change else Res.string.action_upload
+    )
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier.fillMaxWidth().padding(bottom = 14.dp),
     ) {
-        UserAvatarImage(
-            avatarUrl = avatarUrl,
-            initials = initials,
-            size = 72.dp,
-            radius = 22.dp,
-            imageLoader = imageLoader,
-            contentDescription = stringResource(Res.string.user_avatar_content_description),
-        )
+        EditableAvatarSurface(
+            onEditClick = onUploadAvatar,
+            editContentDescription = editDescription,
+            modifier = Modifier.size(EditableProfileAvatarSize),
+            shape = RoundedCornerShape(EditableProfileAvatarRadius),
+            enabled = !isAvatarBusy,
+            isBusy = isAvatarBusy,
+            progress = uploadProgress,
+        ) {
+            UserAvatarImage(
+                avatarUrl = avatarUrl,
+                initials = initials,
+                size = EditableProfileAvatarSize,
+                radius = EditableProfileAvatarRadius,
+                imageLoader = imageLoader,
+                contentDescription = stringResource(Res.string.user_avatar_content_description),
+            )
+        }
         Spacer(Modifier.height(14.dp))
         Text(
             text = name,
@@ -137,40 +150,6 @@ internal fun ProfileHero(
             TierBadge(label = "Core")
             TierBadge(label = "Owner")
         }
-        Spacer(Modifier.height(8.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            TextButton(
-                onClick = onUploadAvatar,
-                enabled = avatarActionsEnabled
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Edit,
-                    contentDescription = null,
-                )
-                Spacer(Modifier.width(6.dp))
-                Text(
-                    text = if (user.avatar != null) {
-                        stringResource(Res.string.action_change)
-                    } else {
-                        stringResource(Res.string.action_upload)
-                    }
-                )
-            }
-
-            if (user.avatar != null) {
-                TextButton(
-                    onClick = onDeleteAvatar,
-                    enabled = avatarActionsEnabled
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = null,
-                    )
-                    Spacer(Modifier.width(6.dp))
-                    Text(text = stringResource(Res.string.action_remove))
-                }
-            }
-        }
         ProfileAvatarStateIndicator(
             avatarState = avatarState,
             onResetState = onResetAvatarState,
@@ -188,6 +167,7 @@ private fun ProfileAvatarStateIndicator(
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.padding(top = 8.dp),
             ) {
                 CircularProgressIndicator(
                     progress = { avatarState.progress },
@@ -205,6 +185,7 @@ private fun ProfileAvatarStateIndicator(
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.padding(top = 8.dp),
             ) {
                 CircularProgressIndicator(
                     modifier = Modifier.height(16.dp).width(16.dp)
@@ -222,6 +203,7 @@ private fun ProfileAvatarStateIndicator(
                 text = avatarState.error.localized,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(top = 8.dp),
             )
         }
 
@@ -634,7 +616,6 @@ private fun ProfileHeroPreview(
             user = previewUser,
             avatarState = ProfileSettingsState.AvatarState.Idle,
             onUploadAvatar = {},
-            onDeleteAvatar = {},
             onResetAvatarState = {},
         )
     }
