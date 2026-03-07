@@ -50,6 +50,7 @@
 		F30401062EAD000100000001 /* DokusFileProviderAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30100172EAC000100000001 /* DokusFileProviderAPIClient.swift */; };
 		F30401072EAD000100000001 /* DokusFileProviderSessionProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30100182EAC000100000001 /* DokusFileProviderSessionProvider.swift */; };
 		F30401082EAD000100000001 /* DokusFileProviderError.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30100202EAC000100000001 /* DokusFileProviderError.swift */; };
+		F30401092EAD000100000001 /* DokusFileProviderRuntime.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30100132EAC000100000001 /* DokusFileProviderRuntime.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -602,6 +603,7 @@
 				F30401062EAD000100000001 /* DokusFileProviderAPIClient.swift in Sources */,
 				F30401072EAD000100000001 /* DokusFileProviderSessionProvider.swift in Sources */,
 				F30401082EAD000100000001 /* DokusFileProviderError.swift in Sources */,
+				F30401092EAD000100000001 /* DokusFileProviderRuntime.swift in Sources */,
 				F30201052EAC000100000001 /* DokusFileProviderSnapshotStore.swift in Sources */,
 				F30201042EAC000100000001 /* DokusFileProviderProjection.swift in Sources */,
 				F30201032EAC000100000001 /* DokusFileProviderConstants.swift in Sources */,

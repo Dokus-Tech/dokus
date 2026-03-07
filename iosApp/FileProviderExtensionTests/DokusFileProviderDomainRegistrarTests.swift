@@ -26,8 +26,12 @@ final class DokusFileProviderDomainRegistrarTests: XCTestCase {
             "Dokus — Invoid BV",
             "Dokus — TechFlow BVBA"
         ]))
-        XCTAssertEqual(manager.resolvedErrorsByDomainIdentifier["\(managedPrefix).ws.ws-1"]?.count, 3)
-        XCTAssertEqual(manager.resolvedErrorsByDomainIdentifier["\(managedPrefix).ws.ws-2"]?.count, 3)
+        XCTAssertEqual(manager.resolvedErrorsByDomainIdentifier["\(managedPrefix).ws.ws-1"]?.count, 4)
+        XCTAssertEqual(manager.resolvedErrorsByDomainIdentifier["\(managedPrefix).ws.ws-2"]?.count, 4)
+        XCTAssertEqual(Set(manager.signaledWorkingSetDomainIdentifiers), Set([
+            "\(managedPrefix).ws.ws-1",
+            "\(managedPrefix).ws.ws-2"
+        ]))
     }
 
     func testRemovesRevokedDomains() async {
@@ -133,46 +137,133 @@ final class DokusFileProviderDomainRegistrarTests: XCTestCase {
         XCTAssertEqual(byId["\(managedPrefix).ws.ws-b"], "Dokus — Acme (2)")
     }
 
+    func testDisconnectedDomainsAreReconnectedBeforeRefresh() async {
+        let manager = FakeDomainManager(domainStates: [
+            managedDomain(id: "ws-1", name: "Invoid BV", isDisconnected: true)
+        ])
+        let discovery = FakeWorkspaceDiscovery(state: .signedIn([
+            DokusWorkspaceDomain(id: "ws-1", name: "Invoid BV")
+        ]))
+        let registrar = DokusFileProviderDomainRegistrar(
+            domainManager: manager,
+            workspaceDiscovery: discovery
+        )
+
+        await registrar.synchronizeRegistrationNow()
+
+        XCTAssertEqual(manager.reconnectedDomainIdentifiers, ["\(managedPrefix).ws.ws-1"])
+        XCTAssertEqual(manager.signaledWorkingSetDomainIdentifiers, ["\(managedPrefix).ws.ws-1"])
+        XCTAssertEqual(manager.resolvedErrorsByDomainIdentifier["\(managedPrefix).ws.ws-1"]?.count, 4)
+    }
+
+    func testUserDisabledDomainsAreNotAutoHealed() async {
+        let manager = FakeDomainManager(domainStates: [
+            managedDomain(id: "ws-1", name: "Invoid BV", isUserEnabled: false)
+        ])
+        let discovery = FakeWorkspaceDiscovery(state: .signedIn([
+            DokusWorkspaceDomain(id: "ws-1", name: "Invoid BV")
+        ]))
+        let registrar = DokusFileProviderDomainRegistrar(
+            domainManager: manager,
+            workspaceDiscovery: discovery
+        )
+
+        await registrar.synchronizeRegistrationNow()
+
+        XCTAssertTrue(manager.reconnectedDomainIdentifiers.isEmpty)
+        XCTAssertTrue(manager.signaledWorkingSetDomainIdentifiers.isEmpty)
+        XCTAssertNil(manager.resolvedErrorsByDomainIdentifier["\(managedPrefix).ws.ws-1"])
+    }
+
     private func workspaceDomain(id: String, name: String) -> NSFileProviderDomain {
         NSFileProviderDomain(
             identifier: NSFileProviderDomainIdentifier("\(managedPrefix).ws.\(id)"),
             displayName: name
         )
     }
+
+    private func managedDomain(
+        id: String,
+        name: String,
+        isDisconnected: Bool = false,
+        isUserEnabled: Bool = true
+    ) -> DokusManagedFileProviderDomain {
+        DokusManagedFileProviderDomain(
+            domain: workspaceDomain(id: id, name: name),
+            isDisconnected: isDisconnected,
+            isUserEnabled: isUserEnabled
+        )
+    }
 }
 
 private final class FakeDomainManager: DokusFileProviderDomainManaging {
-    private(set) var domains: [NSFileProviderDomain]
+    private(set) var domainStates: [DokusManagedFileProviderDomain]
     private(set) var addedDomainIdentifiers: [String] = []
     private(set) var removedDomainIdentifiers: [String] = []
-    private(set) var signaledDomainIdentifiers: [String] = []
+    private(set) var signaledWorkingSetDomainIdentifiers: [String] = []
+    private(set) var reconnectedDomainIdentifiers: [String] = []
     private(set) var resolvedErrorsByDomainIdentifier: [String: [Int]] = [:]
 
-    init(domains: [NSFileProviderDomain]) {
-        self.domains = domains
+    var domains: [NSFileProviderDomain] {
+        domainStates.map(\.domain)
     }
 
-    func currentDomains() async -> [NSFileProviderDomain] {
-        domains
+    init(domains: [NSFileProviderDomain]) {
+        self.domainStates = domains.map {
+            DokusManagedFileProviderDomain(
+                domain: $0,
+                isDisconnected: false,
+                isUserEnabled: true
+            )
+        }
+    }
+
+    init(domainStates: [DokusManagedFileProviderDomain]) {
+        self.domainStates = domainStates
+    }
+
+    func currentDomains() async -> [DokusManagedFileProviderDomain] {
+        domainStates
     }
 
     func add(domain: NSFileProviderDomain) async {
         addedDomainIdentifiers.append(domain.identifier.rawValue)
-        domains.removeAll(where: { $0.identifier == domain.identifier })
-        domains.append(domain)
+        let existingState = domainStates.first(where: { $0.domain.identifier == domain.identifier })
+        domainStates.removeAll(where: { $0.domain.identifier == domain.identifier })
+        domainStates.append(
+            DokusManagedFileProviderDomain(
+                domain: domain,
+                isDisconnected: existingState?.isDisconnected ?? false,
+                isUserEnabled: existingState?.isUserEnabled ?? true
+            )
+        )
     }
 
     func remove(domain: NSFileProviderDomain) async {
         removedDomainIdentifiers.append(domain.identifier.rawValue)
-        domains.removeAll(where: { $0.identifier == domain.identifier })
+        domainStates.removeAll(where: { $0.domain.identifier == domain.identifier })
     }
 
-    func signalEnumerators(for domain: NSFileProviderDomain) async {
-        signaledDomainIdentifiers.append(domain.identifier.rawValue)
+    func signalWorkingSet(for domain: NSFileProviderDomain) async {
+        signaledWorkingSetDomainIdentifiers.append(domain.identifier.rawValue)
     }
 
     func signalErrorResolved(for domain: NSFileProviderDomain, error: NSError) async {
         resolvedErrorsByDomainIdentifier[domain.identifier.rawValue, default: []].append(error.code)
+    }
+
+    func reconnect(domain: NSFileProviderDomain) async {
+        reconnectedDomainIdentifiers.append(domain.identifier.rawValue)
+        domainStates = domainStates.map { current in
+            guard current.domain.identifier == domain.identifier else {
+                return current
+            }
+            return DokusManagedFileProviderDomain(
+                domain: current.domain,
+                isDisconnected: false,
+                isUserEnabled: current.isUserEnabled
+            )
+        }
     }
 }
 
@@ -539,7 +630,69 @@ final class DokusFileProviderAPIClientTests: XCTestCase {
         XCTAssertEqual(thumbnail, Data([0x89, 0x50, 0x4E, 0x47]))
     }
 
-    private func makeAPIClient(selectedTenantId: String?) -> DokusFileProviderAPIClient {
+    func testUploadAndDownloadTransfersRegisterTasksAndCompleteProgress() async throws {
+        let registrar = FakeTaskRegistrar()
+        let apiClient = makeAPIClient(selectedTenantId: workspaceId, taskRegistrar: registrar)
+        let downloadProgress = Progress(totalUnitCount: 100)
+        let uploadProgress = Progress(totalUnitCount: 100)
+        let sourceFileURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+            .appendingPathExtension("pdf")
+        try Data("%PDF-upload".utf8).write(to: sourceFileURL)
+        defer { try? FileManager.default.removeItem(at: sourceFileURL) }
+
+        FileProviderTestURLProtocol.requestHandler = { request in
+            switch (request.httpMethod, request.url?.path) {
+            case ("GET", "/api/v1/documents/doc-download/content"):
+                return try httpDataResponse(
+                    for: request,
+                    data: Data("%PDF-download".utf8),
+                    headers: ["Content-Type": "application/pdf"]
+                )
+            case ("POST", "/api/v1/documents/upload"):
+                return try httpJSONResponse(
+                    for: request,
+                    statusCode: 201,
+                    body: ["id": "doc-uploaded"]
+                )
+            default:
+                return try httpDataResponse(for: request, statusCode: 404)
+            }
+        }
+
+        let downloadDirectory = try makeTemporaryDirectory()
+        _ = try await apiClient.downloadDocument(
+            workspaceId: workspaceId,
+            record: makeRecord(documentId: "doc-download", downloadURL: nil),
+            temporaryDirectoryURL: downloadDirectory,
+            transfer: DokusFileProviderTransfer(
+                itemIdentifier: NSFileProviderItemIdentifier("download-item"),
+                progress: downloadProgress
+            )
+        )
+
+        let uploadedDocumentId = try await apiClient.uploadDocument(
+            workspaceId: workspaceId,
+            from: sourceFileURL,
+            filename: "scan.pdf",
+            mimeType: "application/pdf",
+            transfer: DokusFileProviderTransfer(
+                itemIdentifier: NSFileProviderItemIdentifier("pending-upload"),
+                progress: uploadProgress
+            )
+        )
+
+        XCTAssertEqual(uploadedDocumentId, "doc-uploaded")
+        XCTAssertEqual(Set(registrar.registeredIdentifiers), Set(["download-item", "pending-upload"]))
+        XCTAssertTrue(registrar.registeredTaskStates.allSatisfy { $0 == URLSessionTask.State.suspended.rawValue })
+        XCTAssertEqual(downloadProgress.completedUnitCount, 100)
+        XCTAssertEqual(uploadProgress.completedUnitCount, 100)
+    }
+
+    private func makeAPIClient(
+        selectedTenantId: String?,
+        taskRegistrar: DokusFileProviderTaskRegistering? = nil
+    ) -> DokusFileProviderAPIClient {
         let store = InMemoryStringStore(values: [
             DokusFileProviderConstants.accessTokenKey: makeJwt(expiration: Date().timeIntervalSince1970 + 3600),
             DokusFileProviderConstants.refreshTokenKey: "refresh-token"
@@ -555,7 +708,8 @@ final class DokusFileProviderAPIClientTests: XCTestCase {
         )
         return DokusFileProviderAPIClient(
             sessionProvider: sessionProvider,
-            session: makeInterceptedSession()
+            session: makeInterceptedSession(),
+            taskRegistrar: taskRegistrar
         )
     }
 
@@ -581,6 +735,93 @@ final class DokusFileProviderAPIClientTests: XCTestCase {
     }
 }
 
+final class DokusFileProviderTransferBindingTests: XCTestCase {
+    func testTransferBindingCancelsUnderlyingTaskAndTracksProgress() {
+        let progress = Progress(totalUnitCount: 100)
+        let task = FakeURLSessionTask()
+        let binding = DokusFileProviderTransferBinding(progress: progress, task: task)
+
+        task.exposedProgress.totalUnitCount = 100
+        task.exposedProgress.completedUnitCount = 45
+
+        XCTAssertEqual(progress.completedUnitCount, 45)
+
+        progress.cancel()
+
+        let timeout = Date().addingTimeInterval(1)
+        while !task.cancelled, Date() < timeout {
+            RunLoop.current.run(mode: .default, before: Date().addingTimeInterval(0.01))
+        }
+
+        XCTAssertTrue(task.cancelled)
+        binding.complete()
+        XCTAssertEqual(progress.completedUnitCount, 100)
+        binding.invalidate()
+    }
+}
+
+final class DokusFileProviderUnexpectedErrorMappingTests: XCTestCase {
+    func testUrlErrorsMapToReachabilityInsteadOfCannotSynchronize() {
+        let error = DokusUnexpectedFileProviderError.nsError(
+            from: URLError(.notConnectedToInternet)
+        )
+
+        XCTAssertEqual(error.domain, NSFileProviderErrorDomain)
+        XCTAssertEqual(error.code, NSFileProviderError.serverUnreachable.rawValue)
+    }
+
+    func testUnknownErrorsMapToInvalidServerResponse() {
+        let error = DokusUnexpectedFileProviderError.nsError(
+            from: NSError(domain: "tests.unknown", code: 1, userInfo: [NSLocalizedDescriptionKey: "broken payload"])
+        )
+
+        XCTAssertEqual(error.domain, NSFileProviderErrorDomain)
+        XCTAssertEqual(error.code, NSFileProviderError.cannotSynchronize.rawValue)
+    }
+}
+
+final class DokusFileProviderMaterializedContainerTests: XCTestCase {
+    func testWorkingSetSignalPolicyMatchesMaterializedParents() async {
+        let runtime = DokusFileProviderRuntime(
+            apiClient: makeRuntimeAPIClient(),
+            domainIdentifier: "tests.materialized.\(UUID().uuidString)",
+            workspaceId: nil,
+            domainDisplayName: "Dokus"
+        )
+        let materializedParent = DokusItemIdentifierCodec.encode(
+            kind: .typedFolder(workspaceId: "ws-1", folder: .invoicesIn)
+        )
+        let otherParent = DokusItemIdentifierCodec.encode(
+            kind: .typedFolder(workspaceId: "ws-1", folder: .receiptsIn)
+        )
+
+        await runtime.replaceMaterializedContainers(with: Set([materializedParent]))
+
+        let shouldSignal = await runtime.shouldSignalWorkingSet(currentParentIdentifier: materializedParent)
+        let shouldNotSignal = await runtime.shouldSignalWorkingSet(currentParentIdentifier: otherParent)
+
+        XCTAssertTrue(shouldSignal)
+        XCTAssertFalse(shouldNotSignal)
+    }
+
+    private func makeRuntimeAPIClient() -> DokusFileProviderAPIClient {
+        let store = InMemoryStringStore(values: [
+            DokusFileProviderConstants.accessTokenKey: makeJwt(expiration: Date().timeIntervalSince1970 + 3600),
+            DokusFileProviderConstants.refreshTokenKey: "refresh-token"
+        ])
+        let defaults = makeIsolatedUserDefaults()
+        let sessionProvider = DokusFileProviderSessionProvider(
+            keychain: store,
+            defaults: defaults,
+            session: makeInterceptedSession()
+        )
+        return DokusFileProviderAPIClient(
+            sessionProvider: sessionProvider,
+            session: makeInterceptedSession()
+        )
+    }
+}
+
 private final class InMemoryStringStore: DokusFileProviderStringStore, DokusWorkspaceStringStore {
     private var values: [String: String]
 
@@ -598,6 +839,29 @@ private final class InMemoryStringStore: DokusFileProviderStringStore, DokusWork
 
     func remove(_ key: String) {
         values.removeValue(forKey: key)
+    }
+}
+
+private final class FakeTaskRegistrar: DokusFileProviderTaskRegistering {
+    private(set) var registeredIdentifiers: [String] = []
+    private(set) var registeredTaskStates: [Int] = []
+
+    func register(task: URLSessionTask, for itemIdentifier: NSFileProviderItemIdentifier) {
+        registeredIdentifiers.append(itemIdentifier.rawValue)
+        registeredTaskStates.append(task.state.rawValue)
+    }
+}
+
+private final class FakeURLSessionTask: URLSessionTask, @unchecked Sendable {
+    let exposedProgress = Progress(totalUnitCount: 100)
+    private(set) var cancelled = false
+
+    override var progress: Progress {
+        exposedProgress
+    }
+
+    override func cancel() {
+        cancelled = true
     }
 }
 

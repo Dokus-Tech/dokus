@@ -1,6 +1,20 @@
 import Foundation
 import FileProvider
 
+private func dokusFileProviderStorageDirectory() -> URL {
+    let appGroup = Bundle.main.object(forInfoDictionaryKey: "DokusShareAppGroupIdentifier") as? String
+    let containerURL = FileManager.default.containerURL(
+        forSecurityApplicationGroupIdentifier: appGroup ?? DokusFileProviderConstants.appGroupIdentifier
+    ) ?? URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
+
+    let snapshotDirectory = containerURL.appendingPathComponent(
+        DokusFileProviderConstants.snapshotDirectoryName,
+        isDirectory: true
+    )
+    try? FileManager.default.createDirectory(at: snapshotDirectory, withIntermediateDirectories: true)
+    return snapshotDirectory
+}
+
 struct DokusChangeSet {
     let updatedIdentifiers: [NSFileProviderItemIdentifier]
     let deletedIdentifiers: [NSFileProviderItemIdentifier]
@@ -54,19 +68,8 @@ final class DokusFileProviderSnapshotStore {
     private let fileURL: URL
 
     init(domainIdentifier: String) {
-        let appGroup = Bundle.main.object(forInfoDictionaryKey: "DokusShareAppGroupIdentifier") as? String
-        let containerURL = FileManager.default.containerURL(
-            forSecurityApplicationGroupIdentifier: appGroup ?? DokusFileProviderConstants.appGroupIdentifier
-        ) ?? URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
-
-        let snapshotDirectory = containerURL.appendingPathComponent(
-            DokusFileProviderConstants.snapshotDirectoryName,
-            isDirectory: true
-        )
-        try? FileManager.default.createDirectory(at: snapshotDirectory, withIntermediateDirectories: true)
-
         let safeDomain = domainIdentifier.replacingOccurrences(of: ".", with: "_")
-        self.fileURL = snapshotDirectory.appendingPathComponent("snapshot-\(safeDomain).json")
+        self.fileURL = dokusFileProviderStorageDirectory().appendingPathComponent("snapshot-\(safeDomain).json")
     }
 
     func update(with projection: DokusProjection) -> Int64 {
@@ -266,5 +269,45 @@ final class DokusFileProviderSnapshotStore {
     private func saveState(_ state: SnapshotState) {
         guard let data = try? JSONEncoder().encode(state) else { return }
         try? data.write(to: fileURL, options: .atomic)
+    }
+}
+
+final class DokusFileProviderMaterializedContainerStore {
+    private struct PersistedState: Codable {
+        let identifiers: [String]
+    }
+
+    private let queue = DispatchQueue(label: "vision.invoid.dokus.fileprovider.materialized")
+    private let fileURL: URL
+
+    init(domainIdentifier: String) {
+        let safeDomain = domainIdentifier.replacingOccurrences(of: ".", with: "_")
+        self.fileURL = dokusFileProviderStorageDirectory().appendingPathComponent("materialized-\(safeDomain).json")
+    }
+
+    func identifiers() -> Set<NSFileProviderItemIdentifier> {
+        queue.sync {
+            guard
+                let data = try? Data(contentsOf: fileURL),
+                let state = try? JSONDecoder().decode(PersistedState.self, from: data)
+            else {
+                return []
+            }
+            return Set(state.identifiers.map { NSFileProviderItemIdentifier($0) })
+        }
+    }
+
+    func replace(with identifiers: Set<NSFileProviderItemIdentifier>) {
+        queue.sync {
+            let state = PersistedState(
+                identifiers: identifiers
+                    .map(\.rawValue)
+                    .sorted()
+            )
+            guard let data = try? JSONEncoder().encode(state) else {
+                return
+            }
+            try? data.write(to: fileURL, options: .atomic)
+        }
     }
 }

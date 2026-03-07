@@ -11,7 +11,8 @@ final class DokusFileProviderDomainRegistrar {
         static let resolvableFileProviderErrorCodes: [NSFileProviderError.Code] = [
             .notAuthenticated,
             .serverUnreachable,
-            .cannotSynchronize
+            .cannotSynchronize,
+            .excludedFromSync
         ]
         static let log = Logger(subsystem: "vision.invoid.dokus.fileprovider", category: "registrar")
     }
@@ -45,8 +46,8 @@ final class DokusFileProviderDomainRegistrar {
     func signalRefresh() {
         Task {
             let domains = await managedDomains()
-            for domain in domains {
-                await domainManager.signalEnumerators(for: domain)
+            for managed in domains {
+                await healAndSignalIfNeeded(managed)
             }
         }
     }
@@ -60,8 +61,14 @@ final class DokusFileProviderDomainRegistrar {
             workspaceState = try await workspaceDiscovery.workspaceState()
         } catch {
             Constants.log.error("workspace discovery failed error=\(String(describing: error), privacy: .public)")
-            for domain in currentManaged {
-                await domainManager.signalEnumerators(for: domain)
+            for managed in currentManaged {
+                guard managed.isUserEnabled else {
+                    Constants.log.debug(
+                        "skipping refresh for disabled domain id=\(managed.domain.identifier.rawValue, privacy: .public)"
+                    )
+                    continue
+                }
+                await domainManager.signalWorkingSet(for: managed.domain)
             }
             return
         }
@@ -70,7 +77,7 @@ final class DokusFileProviderDomainRegistrar {
         case .signedOut:
             Constants.log.debug("workspace state signedOut removing managed domains")
             for domain in currentManaged {
-                await domainManager.remove(domain: domain)
+                await domainManager.remove(domain: domain.domain)
             }
         case .signedIn(let workspaces):
             Constants.log.debug("workspace state signedIn workspaces=\(workspaces.count, privacy: .public)")
@@ -84,7 +91,7 @@ final class DokusFileProviderDomainRegistrar {
                     Constants.log.debug(
                         "removing stale domain id=\(current.identifier.rawValue, privacy: .public) displayName=\(current.displayName, privacy: .public)"
                     )
-                    await domainManager.remove(domain: current)
+                    await domainManager.remove(domain: current.domain)
                     continue
                 }
             }
@@ -97,9 +104,15 @@ final class DokusFileProviderDomainRegistrar {
                 await domainManager.add(domain: desired)
             }
 
+            let updatedManaged = await managedDomains()
+            let managedByIdentifier = Dictionary(
+                uniqueKeysWithValues: updatedManaged.map { ($0.domain.identifier.rawValue, $0) }
+            )
             for desired in desiredDomains {
-                await signalResolvableErrorsAsResolved(for: desired)
-                await domainManager.signalEnumerators(for: desired)
+                guard let managed = managedByIdentifier[desired.identifier.rawValue] else {
+                    continue
+                }
+                await healAndSignalIfNeeded(managed)
             }
         }
     }
@@ -117,10 +130,30 @@ final class DokusFileProviderDomainRegistrar {
         }
     }
 
-    private func managedDomains() async -> [NSFileProviderDomain] {
+    private func healAndSignalIfNeeded(_ managed: DokusManagedFileProviderDomain) async {
+        let domain = managed.domain
+        if !managed.isUserEnabled {
+            Constants.log.debug(
+                "leaving disabled domain untouched id=\(domain.identifier.rawValue, privacy: .public)"
+            )
+            return
+        }
+
+        if managed.isDisconnected {
+            Constants.log.warning(
+                "reconnecting disconnected domain id=\(domain.identifier.rawValue, privacy: .public)"
+            )
+            await domainManager.reconnect(domain: domain)
+        }
+
+        await signalResolvableErrorsAsResolved(for: domain)
+        await domainManager.signalWorkingSet(for: domain)
+    }
+
+    private func managedDomains() async -> [DokusManagedFileProviderDomain] {
         let allDomains = await domainManager.currentDomains()
         return allDomains.filter {
-            isManagedDomainIdentifier($0.identifier.rawValue)
+            isManagedDomainIdentifier($0.domain.identifier.rawValue)
         }
     }
 
@@ -172,19 +205,43 @@ final class DokusFileProviderDomainRegistrar {
     }
 }
 
+struct DokusManagedFileProviderDomain {
+    let domain: NSFileProviderDomain
+    let isDisconnected: Bool
+    let isUserEnabled: Bool
+
+    var identifier: NSFileProviderDomainIdentifier {
+        domain.identifier
+    }
+
+    var displayName: String {
+        domain.displayName
+    }
+}
+
 protocol DokusFileProviderDomainManaging {
-    func currentDomains() async -> [NSFileProviderDomain]
+    func currentDomains() async -> [DokusManagedFileProviderDomain]
     func add(domain: NSFileProviderDomain) async
     func remove(domain: NSFileProviderDomain) async
-    func signalEnumerators(for domain: NSFileProviderDomain) async
+    func signalWorkingSet(for domain: NSFileProviderDomain) async
     func signalErrorResolved(for domain: NSFileProviderDomain, error: NSError) async
+    func reconnect(domain: NSFileProviderDomain) async
 }
 
 private final class DokusSystemDomainManager: DokusFileProviderDomainManaging {
-    func currentDomains() async -> [NSFileProviderDomain] {
+    func currentDomains() async -> [DokusManagedFileProviderDomain] {
         await withCheckedContinuation { continuation in
             NSFileProviderManager.getDomainsWithCompletionHandler { domains, _ in
-                continuation.resume(returning: domains)
+                continuation.resume(
+                    returning: domains.map {
+                        DokusManagedFileProviderDomain(
+                            domain: $0,
+                            // iOS does not expose disconnected-state inspection on NSFileProviderDomain.
+                            isDisconnected: false,
+                            isUserEnabled: $0.userEnabled
+                        )
+                    }
+                )
             }
         }
     }
@@ -205,15 +262,9 @@ private final class DokusSystemDomainManager: DokusFileProviderDomainManaging {
         }
     }
 
-    func signalEnumerators(for domain: NSFileProviderDomain) async {
+    func signalWorkingSet(for domain: NSFileProviderDomain) async {
         guard let manager = NSFileProviderManager(for: domain) else {
             return
-        }
-
-        await withCheckedContinuation { continuation in
-            manager.signalEnumerator(for: .rootContainer) { _ in
-                continuation.resume()
-            }
         }
 
         await withCheckedContinuation { continuation in
@@ -233,5 +284,10 @@ private final class DokusSystemDomainManager: DokusFileProviderDomainManaging {
                 continuation.resume()
             }
         }
+    }
+
+    func reconnect(domain: NSFileProviderDomain) async {
+        // iOS does not expose reconnect on NSFileProviderManager.
+        return
     }
 }

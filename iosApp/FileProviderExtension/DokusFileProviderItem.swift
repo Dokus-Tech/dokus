@@ -30,6 +30,10 @@ final class DokusFileProviderItem: NSObject, NSFileProviderItem {
         projected.capabilities
     }
 
+    var contentPolicy: NSFileProviderContentPolicy {
+        projected.contentPolicy
+    }
+
     var documentSize: NSNumber? {
         guard let size = projected.documentSize else { return nil }
         return NSNumber(value: size)
