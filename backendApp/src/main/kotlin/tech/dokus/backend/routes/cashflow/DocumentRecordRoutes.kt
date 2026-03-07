@@ -7,6 +7,8 @@ import io.ktor.server.resources.patch
 import io.ktor.server.resources.post
 import io.ktor.server.response.*
 import io.ktor.server.routing.Route
+import io.ktor.server.sse.heartbeat
+import kotlinx.coroutines.cancel
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -21,8 +23,14 @@ import tech.dokus.backend.security.requireTenantId
 import tech.dokus.backend.services.cashflow.CashflowProjectionReconciliationService
 import tech.dokus.backend.services.cashflow.InvoiceBankAutomationService
 import tech.dokus.backend.services.documents.DocumentPurposeService
+import tech.dokus.backend.services.documents.DocumentRecordLoader
+import tech.dokus.backend.services.documents.DocumentIntakeServiceResult
 import tech.dokus.backend.services.documents.DocumentTruthService
 import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
+import tech.dokus.backend.services.documents.sse.DocumentCollectionEventHub
+import tech.dokus.backend.services.documents.sse.DocumentSnapshotEventHub
+import tech.dokus.backend.services.documents.sse.DocumentSnapshotSignal
+import tech.dokus.backend.services.documents.sse.DocumentSsePublisher
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.database.repository.cashflow.CreditNoteRepository
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
@@ -42,7 +50,10 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentMatchReviewId
 import tech.dokus.domain.ids.DocumentSourceId
+import tech.dokus.domain.model.DocumentCollectionChangedEventDto
+import tech.dokus.domain.model.DocumentDeletedEventDto
 import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentStreamEventNames
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.RejectDocumentRequest
 import tech.dokus.domain.model.ReprocessRequest
@@ -52,8 +63,12 @@ import tech.dokus.domain.model.UpdateDraftRequest
 import tech.dokus.domain.model.UpdateDraftResponse
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.routes.Documents
+import tech.dokus.domain.utils.json
 import tech.dokus.foundation.backend.security.authenticateJwt
 import tech.dokus.foundation.backend.security.dokusPrincipal
+import tech.dokus.foundation.backend.utils.defaultSseHeartbeatPeriod
+import tech.dokus.foundation.backend.utils.respondSse
+import tech.dokus.foundation.backend.utils.sendJsonEvent
 import tech.dokus.foundation.backend.storage.DocumentStorageService as MinioDocumentStorageService
 
 /**
@@ -84,6 +99,10 @@ internal fun Route.documentRecordRoutes() {
     val confirmationDispatcher by inject<DocumentConfirmationDispatcher>()
     val truthService by inject<DocumentTruthService>()
     val purposeService by inject<DocumentPurposeService>()
+    val documentRecordLoader by inject<DocumentRecordLoader>()
+    val documentCollectionEventHub by inject<DocumentCollectionEventHub>()
+    val documentSnapshotEventHub by inject<DocumentSnapshotEventHub>()
+    val documentSsePublisher by inject<DocumentSsePublisher>()
     val logger = LoggerFactory.getLogger("DocumentRecordRoutes")
 
     authenticateJwt {
@@ -164,6 +183,25 @@ internal fun Route.documentRecordRoutes() {
             )
         }
 
+        get<Documents.Events> {
+            val tenantId = requireTenantId()
+
+            call.respondSse {
+                heartbeat {
+                    period = defaultSseHeartbeatPeriod
+                }
+                documentCollectionEventHub.eventsFor(tenantId).collect { event ->
+                    sendJsonEvent(
+                        event = DocumentStreamEventNames.CollectionChanged,
+                        payload = event,
+                        encode = {
+                            json.encodeToString(DocumentCollectionChangedEventDto.serializer(), it)
+                        }
+                    )
+                }
+            }
+        }
+
         /**
          * GET /api/v1/documents/{id}
          * Get full document record.
@@ -174,60 +212,66 @@ internal fun Route.documentRecordRoutes() {
 
             logger.info("Getting document record: $documentId, tenant=$tenantId")
 
-            val document = documentRepository.getById(tenantId, documentId)
+            val record = documentRecordLoader.load(tenantId, documentId)
                 ?: throw DokusException.NotFound("Document not found")
-            val sources = truthService.listSources(tenantId, documentId)
-            val defaultSource = selectDefaultSource(sources)
-            val effectiveDocument = if (defaultSource != null) {
-                document.copy(
-                    filename = defaultSource.filename ?: document.filename,
-                    contentType = defaultSource.contentType,
-                    sizeBytes = defaultSource.sizeBytes,
-                    storageKey = defaultSource.storageKey,
-                    source = defaultSource.sourceChannel,
-                    uploadedAt = defaultSource.arrivalAt
-                )
-            } else {
-                document
-            }
 
-            val documentWithUrl = addDownloadUrl(effectiveDocument, minioStorage, logger)
-            val draft = draftRepository.getByDocumentId(documentId, tenantId)
-            val latestIngestion = ingestionRepository.getLatestForDocument(documentId, tenantId)
-            val pendingReview = truthService.getPendingReviewByDocument(tenantId, documentId)
-            val confirmedEntity = if (draft?.documentStatus == DocumentStatus.Confirmed) {
-                findConfirmedEntity(
-                    documentId,
-                    draft.documentType,
-                    tenantId,
-                    invoiceRepository,
-                    expenseRepository,
-                    creditNoteRepository
-                )
-            } else {
-                null
-            }
-            val cashflowEntryId = if (draft?.documentStatus == DocumentStatus.Confirmed) {
-                cashflowEntriesRepository.getByDocumentId(tenantId, documentId).getOrNull()?.id
-            } else {
-                null
-            }
+            call.respond(HttpStatusCode.OK, record)
+        }
 
-            call.respond(
-                HttpStatusCode.OK,
-                DocumentRecordDto(
-                    document = documentWithUrl,
-                    draft = draft?.toDto(),
-                    latestIngestion = latestIngestion?.toDto(
-                        includeRawExtraction = true,
-                        includeTrace = true
-                    ),
-                    confirmedEntity = confirmedEntity,
-                    cashflowEntryId = cashflowEntryId,
-                    pendingMatchReview = pendingReview?.toSummaryDto(),
-                    sources = sources.map { it.toDto() }
+        get<Documents.Id.Events> { route ->
+            val tenantId = requireTenantId()
+            val documentId = DocumentId.parse(route.parent.id)
+            val initialRecord = documentRecordLoader.load(tenantId, documentId)
+                ?: throw DokusException.NotFound("Document not found")
+
+            call.respondSse {
+                heartbeat {
+                    period = defaultSseHeartbeatPeriod
+                }
+
+                suspend fun sendSnapshotOrDeleted(): Boolean {
+                    val currentRecord = documentRecordLoader.load(tenantId, documentId)
+                    return if (currentRecord != null) {
+                        sendJsonEvent(
+                            event = DocumentStreamEventNames.Snapshot,
+                            payload = currentRecord,
+                            encode = { json.encodeToString(DocumentRecordDto.serializer(), it) }
+                        )
+                        true
+                    } else {
+                        sendJsonEvent(
+                            event = DocumentStreamEventNames.Deleted,
+                            payload = DocumentDeletedEventDto(documentId),
+                            encode = { json.encodeToString(DocumentDeletedEventDto.serializer(), it) }
+                        )
+                        false
+                    }
+                }
+
+                sendJsonEvent(
+                    event = DocumentStreamEventNames.Snapshot,
+                    payload = initialRecord,
+                    encode = { json.encodeToString(DocumentRecordDto.serializer(), it) }
                 )
-            )
+
+                documentSnapshotEventHub.eventsFor(tenantId, documentId).collect { signal ->
+                    val shouldStayOpen = when (signal) {
+                        DocumentSnapshotSignal.Changed -> sendSnapshotOrDeleted()
+                        DocumentSnapshotSignal.Deleted -> {
+                            sendJsonEvent(
+                                event = DocumentStreamEventNames.Deleted,
+                                payload = DocumentDeletedEventDto(documentId),
+                                encode = { json.encodeToString(DocumentDeletedEventDto.serializer(), it) }
+                            )
+                            false
+                        }
+                    }
+                    if (!shouldStayOpen) {
+                        close()
+                        cancel("document stream closed")
+                    }
+                }
+            }
         }
 
         /**
@@ -367,6 +411,11 @@ internal fun Route.documentRecordRoutes() {
                 throw DokusException.NotFound("Source not found")
             }
 
+            if (deleteResult.cascadedDocumentDelete) {
+                documentSsePublisher.publishDocumentDeleted(tenantId, documentId)
+            } else {
+                documentSsePublisher.publishDocumentChanged(tenantId, documentId)
+            }
             call.respond(HttpStatusCode.NoContent)
         }
 
@@ -408,6 +457,7 @@ internal fun Route.documentRecordRoutes() {
                 }
             }
 
+            documentSsePublisher.publishDocumentDeleted(tenantId, documentId)
             call.respond(HttpStatusCode.NoContent)
         }
 
@@ -487,6 +537,7 @@ internal fun Route.documentRecordRoutes() {
                     )
                 }
 
+                documentSsePublisher.publishDocumentChanged(tenantId, documentId)
                 call.respond(
                     HttpStatusCode.OK,
                     UpdateDraftResponse(
@@ -511,6 +562,7 @@ internal fun Route.documentRecordRoutes() {
                         purposePeriodMode = request.purposePeriodMode
                     )
                 }
+                documentSsePublisher.publishDocumentChanged(tenantId, documentId)
                 call.respond(HttpStatusCode.NoContent)
             }
         }
@@ -584,6 +636,7 @@ internal fun Route.documentRecordRoutes() {
                 overrideDpi = request.dpi,
             )
 
+            documentSsePublisher.publishDocumentChanged(tenantId, documentId)
             call.respond(
                 HttpStatusCode.Created,
                 ReprocessResponse(
@@ -651,20 +704,14 @@ internal fun Route.documentRecordRoutes() {
                                 "Failed to repair missing cashflow projection: ${it.message}"
                             )
                         }
-
-                    call.respond(
-                        HttpStatusCode.OK,
-                        DocumentRecordDto(
-                            document = documentWithUrl,
-                            draft = draft.toDto(),
-                            latestIngestion = latestIngestion?.toDto(
-                                includeRawExtraction = true,
-                                includeTrace = true
-                            ),
-                            confirmedEntity = confirmedEntity,
-                            cashflowEntryId = repairedEntryId
-                        )
+                    logger.debug(
+                        "Confirmed document already had projection: document={}, cashflowEntryId={}",
+                        documentId,
+                        repairedEntryId
                     )
+                    val existingRecord = documentRecordLoader.load(tenantId, documentId)
+                        ?: throw DokusException.NotFound("Document not found")
+                    call.respond(HttpStatusCode.OK, existingRecord)
                     return@post
                 }
 
@@ -728,24 +775,13 @@ internal fun Route.documentRecordRoutes() {
                 }
             }
 
-            // Return full record
-            val document = documentRepository.getById(tenantId, documentId)!!
-            val documentWithUrl = addDownloadUrl(document, minioStorage, logger)
-            val updatedDraft = draftRepository.getByDocumentId(documentId, tenantId)!!
-            val latestIngestion = ingestionRepository.getLatestForDocument(documentId, tenantId)
+            documentSsePublisher.publishDocumentChanged(tenantId, documentId)
+            val confirmedRecord = documentRecordLoader.load(tenantId, documentId)
+                ?: throw DokusException.NotFound("Document not found")
 
             call.respond(
                 if (existingEntityBeforeConfirm != null) HttpStatusCode.OK else HttpStatusCode.Created,
-                DocumentRecordDto(
-                    document = documentWithUrl,
-                    draft = updatedDraft.toDto(),
-                    latestIngestion = latestIngestion?.toDto(
-                        includeRawExtraction = true,
-                        includeTrace = true
-                    ),
-                    confirmedEntity = confirmationResult.entity,
-                    cashflowEntryId = confirmationResult.cashflowEntryId
-                )
+                confirmedRecord
             )
         }
 
@@ -766,28 +802,16 @@ internal fun Route.documentRecordRoutes() {
                 throw DokusException.BadRequest("Cannot reject a confirmed document")
             }
 
-            if (draft.documentStatus != DocumentStatus.Rejected) {
+            val didReject = draft.documentStatus != DocumentStatus.Rejected
+            if (didReject) {
                 draftRepository.rejectDraft(documentId, tenantId, request.reason)
+                documentSsePublisher.publishDocumentChanged(tenantId, documentId)
             }
 
-            val document = documentRepository.getById(tenantId, documentId)
+            val rejectedRecord = documentRecordLoader.load(tenantId, documentId)
                 ?: throw DokusException.NotFound("Document not found")
-            val documentWithUrl = addDownloadUrl(document, minioStorage, logger)
-            val updatedDraft = draftRepository.getByDocumentId(documentId, tenantId)!!
-            val latestIngestion = ingestionRepository.getLatestForDocument(documentId, tenantId)
 
-            call.respond(
-                HttpStatusCode.OK,
-                DocumentRecordDto(
-                    document = documentWithUrl,
-                    draft = updatedDraft.toDto(),
-                    latestIngestion = latestIngestion?.toDto(
-                        includeRawExtraction = true,
-                        includeTrace = true
-                    ),
-                    confirmedEntity = null
-                )
-            )
+            call.respond(HttpStatusCode.OK, rejectedRecord)
         }
 
         /**
@@ -807,60 +831,16 @@ internal fun Route.documentRecordRoutes() {
                 decision = request.decision
             ) ?: throw DokusException.NotFound("Match review not found")
 
-            val targetDocumentId = result.documentId
-            val document = documentRepository.getById(tenantId, targetDocumentId)
-                ?: throw DokusException.NotFound("Document not found")
-            val sources = truthService.listSources(tenantId, targetDocumentId)
-            val defaultSource = selectDefaultSource(sources)
-            val effectiveDocument = if (defaultSource != null) {
-                document.copy(
-                    filename = defaultSource.filename ?: document.filename,
-                    contentType = defaultSource.contentType,
-                    sizeBytes = defaultSource.sizeBytes,
-                    storageKey = defaultSource.storageKey,
-                    source = defaultSource.sourceChannel,
-                    uploadedAt = defaultSource.arrivalAt
-                )
-            } else {
-                document
-            }
-            val documentWithUrl = addDownloadUrl(effectiveDocument, minioStorage, logger)
-            val draft = draftRepository.getByDocumentId(targetDocumentId, tenantId)
-            val latestIngestion = ingestionRepository.getLatestForDocument(targetDocumentId, tenantId)
-            val pendingReview = truthService.getPendingReviewByDocument(tenantId, targetDocumentId)
-            val confirmedEntity = if (draft?.documentStatus == DocumentStatus.Confirmed) {
-                findConfirmedEntity(
-                    targetDocumentId,
-                    draft.documentType,
-                    tenantId,
-                    invoiceRepository,
-                    expenseRepository,
-                    creditNoteRepository
-                )
-            } else {
-                null
-            }
-            val cashflowEntryId = if (draft?.documentStatus == DocumentStatus.Confirmed) {
-                cashflowEntriesRepository.getByDocumentId(tenantId, targetDocumentId).getOrNull()?.id
-            } else {
-                null
-            }
-
-            call.respond(
-                HttpStatusCode.OK,
-                DocumentRecordDto(
-                    document = documentWithUrl,
-                    draft = draft?.toDto(),
-                    latestIngestion = latestIngestion?.toDto(
-                        includeRawExtraction = true,
-                        includeTrace = true
-                    ),
-                    confirmedEntity = confirmedEntity,
-                    cashflowEntryId = cashflowEntryId,
-                    pendingMatchReview = pendingReview?.toSummaryDto(),
-                    sources = sources.map { it.toDto() }
-                )
+            publishAffectedDocuments(
+                documentSsePublisher = documentSsePublisher,
+                tenantId = tenantId,
+                result = result
             )
+
+            val resolvedRecord = documentRecordLoader.load(tenantId, result.documentId)
+                ?: throw DokusException.NotFound("Document not found")
+
+            call.respond(HttpStatusCode.OK, resolvedRecord)
         }
     }
 }
@@ -871,4 +851,27 @@ internal fun isInboxLifecycle(status: IngestionStatus?): Boolean {
 
 private fun selectDefaultSource(sources: List<DocumentSourceSummary>): DocumentSourceSummary? {
     return selectDefaultSourceFromList(sources)
+}
+
+private fun publishAffectedDocuments(
+    documentSsePublisher: DocumentSsePublisher,
+    tenantId: tech.dokus.domain.ids.TenantId,
+    result: DocumentIntakeServiceResult,
+) {
+    val sourceDocumentId = result.sourceDocumentId
+    val targetDocumentId = result.documentId
+
+    if (sourceDocumentId != null && sourceDocumentId != targetDocumentId) {
+        if (result.orphanedDocumentId == sourceDocumentId) {
+            documentSsePublisher.publishDocumentDeleted(tenantId, sourceDocumentId)
+        } else {
+            documentSsePublisher.publishDocumentChanged(tenantId, sourceDocumentId)
+        }
+    }
+
+    if (result.orphanedDocumentId == targetDocumentId) {
+        documentSsePublisher.publishDocumentDeleted(tenantId, targetDocumentId)
+    } else {
+        documentSsePublisher.publishDocumentChanged(tenantId, targetDocumentId)
+    }
 }

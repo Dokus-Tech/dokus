@@ -120,6 +120,12 @@ internal class DocumentReviewContainer(
                     is DocumentReviewIntent.LoadMoreQueue -> {
                         loadQueuePage(reset = false)
                     }
+                    DocumentReviewIntent.RefreshQueue -> {
+                        loadQueuePage(reset = true)
+                    }
+                    DocumentReviewIntent.HandleRemoteDeletion -> {
+                        action(DocumentReviewAction.NavigateBack)
+                    }
                     else -> {
                         dispatchToReducer(intent)
                     }
@@ -133,6 +139,7 @@ internal class DocumentReviewContainer(
                 // === Data Loading ===
                 is DocumentReviewIntent.LoadDocument -> handleLoadDocument(intent.documentId)
                 is DocumentReviewIntent.Refresh -> handleRefresh()
+                is DocumentReviewIntent.ApplyRemoteSnapshot -> handleApplyRemoteSnapshot(intent.record)
 
                 // === Preview ===
                 is DocumentReviewIntent.LoadPreviewPages -> handleLoadPreviewPages()
@@ -212,7 +219,9 @@ internal class DocumentReviewContainer(
 
                 // handled before reducer
                 is DocumentReviewIntent.SelectQueueDocument,
-                DocumentReviewIntent.LoadMoreQueue -> Unit
+                DocumentReviewIntent.LoadMoreQueue,
+                DocumentReviewIntent.RefreshQueue,
+                DocumentReviewIntent.HandleRemoteDeletion -> Unit
             }
         }
     }
@@ -250,7 +259,16 @@ internal class DocumentReviewContainer(
         ).fold(
             onSuccess = { response ->
                 val loadedItems = response.items.map { it.toDocQueueItem() }
-                val mergedItems = mergeQueueItems(existingItems = existingItems, incomingItems = loadedItems)
+                val selectedDocumentId = currentSelectedDocumentId() ?: initialDocumentId
+                val mergedItems = if (reset) {
+                    preserveSelectedQueueItem(
+                        existingItems = existingItems,
+                        incomingItems = loadedItems,
+                        selectedDocumentId = selectedDocumentId,
+                    )
+                } else {
+                    mergeQueueItems(existingItems = existingItems, incomingItems = loadedItems)
+                }
                 updateQueueState {
                     (it ?: DocumentReviewQueueState(context = context)).copy(
                         items = mergedItems,
@@ -339,5 +357,15 @@ internal class DocumentReviewContainer(
         if (incomingItems.isEmpty()) return existingItems
         val existingIds = existingItems.asSequence().map { it.id }.toSet()
         return existingItems + incomingItems.filter { it.id !in existingIds }
+    }
+
+    private fun preserveSelectedQueueItem(
+        existingItems: List<DocQueueItem>,
+        incomingItems: List<DocQueueItem>,
+        selectedDocumentId: DocumentId,
+    ): List<DocQueueItem> {
+        if (incomingItems.any { it.id == selectedDocumentId }) return incomingItems
+        val selectedExisting = existingItems.firstOrNull { it.id == selectedDocumentId } ?: return incomingItems
+        return listOf(selectedExisting) + incomingItems
     }
 }

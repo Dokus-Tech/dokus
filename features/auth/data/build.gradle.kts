@@ -74,8 +74,8 @@ kotlin {
             implementation(libs.kotlinx.coroutines.swing)
         }
         wasmJsMain.dependencies {
-            implementation(devNpm("copy-webpack-plugin", "9.1.0"))
-            implementation("org.jetbrains.kotlinx:kotlinx-browser:0.2")
+            implementation(devNpm("copy-webpack-plugin", libs.versions.copy.webpack.plugin.get()))
+            implementation(libs.kotlinx.browser)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

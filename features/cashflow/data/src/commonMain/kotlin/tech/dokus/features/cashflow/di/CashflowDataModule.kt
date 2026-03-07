@@ -39,6 +39,8 @@ import tech.dokus.features.cashflow.usecase.GetDocumentPagesUseCaseImpl
 import tech.dokus.features.cashflow.usecase.GetDocumentRecordUseCaseImpl
 import tech.dokus.features.cashflow.usecase.GetDocumentSourceContentUseCaseImpl
 import tech.dokus.features.cashflow.usecase.GetDocumentSourcePagesUseCaseImpl
+import tech.dokus.features.cashflow.usecase.ObserveDocumentCollectionChangesUseCaseImpl
+import tech.dokus.features.cashflow.usecase.ObserveDocumentRecordEventsUseCaseImpl
 import tech.dokus.features.cashflow.usecase.GetPeppolSettingsUseCaseImpl
 import tech.dokus.features.cashflow.usecase.GetPeppolTransmissionForInvoiceUseCaseImpl
 import tech.dokus.features.cashflow.usecase.ListChatSessionsUseCaseImpl
@@ -85,6 +87,8 @@ import tech.dokus.features.cashflow.usecases.GetDocumentPagesUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentRecordUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentSourceContentUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentSourcePagesUseCase
+import tech.dokus.features.cashflow.usecases.ObserveDocumentCollectionChangesUseCase
+import tech.dokus.features.cashflow.usecases.ObserveDocumentRecordEventsUseCase
 import tech.dokus.features.cashflow.usecases.GetPeppolSettingsUseCase
 import tech.dokus.features.cashflow.usecases.GetPeppolTransmissionForInvoiceUseCase
 import tech.dokus.features.cashflow.usecases.ListChatSessionsUseCase
@@ -168,6 +172,7 @@ val cashflowNetworkModule = module {
 
     // Document review
     singleOf(::GetDocumentRecordUseCaseImpl) bind GetDocumentRecordUseCase::class
+    singleOf(::ObserveDocumentRecordEventsUseCaseImpl) bind ObserveDocumentRecordEventsUseCase::class
     singleOf(::UpdateDocumentDraftUseCaseImpl) bind UpdateDocumentDraftUseCase::class
     singleOf(::UpdateDocumentDraftContactUseCaseImpl) bind UpdateDocumentDraftContactUseCase::class
     singleOf(::ConfirmDocumentUseCaseImpl) bind ConfirmDocumentUseCase::class
@@ -203,7 +208,8 @@ val cashflowNetworkModule = module {
     singleOf(::GetPeppolActivityUseCaseImpl) bind GetPeppolActivityUseCase::class
 
     // Cashflow documents
-    factory<WatchPendingDocumentsUseCase> { WatchPendingDocumentsUseCaseImpl(get()) }
+    factory<ObserveDocumentCollectionChangesUseCase> { ObserveDocumentCollectionChangesUseCaseImpl(get()) }
+    factory<WatchPendingDocumentsUseCase> { WatchPendingDocumentsUseCaseImpl(get(), get()) }
     factory<SubmitInvoiceUseCase> { SubmitInvoiceUseCaseImpl(get()) }
     factory<SubmitInvoiceWithDeliveryUseCase> { SubmitInvoiceWithDeliveryUseCaseImpl(get()) }
     factory<GetLatestInvoiceForContactUseCase> { GetLatestInvoiceForContactUseCaseImpl(get()) }

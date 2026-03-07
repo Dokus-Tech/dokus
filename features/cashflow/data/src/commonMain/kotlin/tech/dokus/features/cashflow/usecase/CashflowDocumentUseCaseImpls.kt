@@ -2,8 +2,11 @@ package tech.dokus.features.cashflow.usecase
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.InvoiceDeliveryMethod
@@ -16,16 +19,20 @@ import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.features.cashflow.datasource.CashflowRemoteDataSource
 import tech.dokus.features.cashflow.usecases.GetContactPeppolStatusUseCase
 import tech.dokus.features.cashflow.usecases.GetLatestInvoiceForContactUseCase
+import tech.dokus.features.cashflow.usecases.ObserveDocumentCollectionChangesUseCase
 import tech.dokus.features.cashflow.usecases.SubmitInvoiceUseCase
 import tech.dokus.features.cashflow.usecases.SubmitInvoiceWithDeliveryResult
 import tech.dokus.features.cashflow.usecases.SubmitInvoiceWithDeliveryUseCase
 import tech.dokus.features.cashflow.usecases.WatchPendingDocumentsUseCase
 import tech.dokus.foundation.app.state.DokusState
+import kotlin.time.Duration.Companion.milliseconds
 
 private const val DefaultDocumentLimit = 100
+private val DocumentCollectionCoalesceWindow = 250.milliseconds
 
 internal class WatchPendingDocumentsUseCaseImpl(
-    private val cashflowRemoteDataSource: CashflowRemoteDataSource
+    private val cashflowRemoteDataSource: CashflowRemoteDataSource,
+    private val observeDocumentCollectionChanges: ObserveDocumentCollectionChangesUseCase
 ) : WatchPendingDocumentsUseCase {
     private val refreshTrigger = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
 
@@ -35,8 +42,12 @@ internal class WatchPendingDocumentsUseCaseImpl(
     ): Flow<DokusState<List<DocumentRecordDto>>> {
         require(limit > 0) { "Limit must be positive" }
 
-        return refreshTrigger
+        return merge(
+            refreshTrigger,
+            observeDocumentCollectionChanges()
+        )
             .onStart { emit(Unit) }
+            .conflate()
             .flatMapLatest {
                 flow {
                     emit(DokusState.loading())
@@ -66,6 +77,16 @@ internal class WatchPendingDocumentsUseCaseImpl(
 
     override fun refresh() {
         refreshTrigger.tryEmit(Unit)
+    }
+}
+
+internal class ObserveDocumentCollectionChangesUseCaseImpl(
+    private val cashflowRemoteDataSource: CashflowRemoteDataSource
+) : ObserveDocumentCollectionChangesUseCase {
+    override fun invoke(): Flow<Unit> {
+        return cashflowRemoteDataSource.observeDocumentCollectionChanges()
+            .conflate()
+            .debounce(DocumentCollectionCoalesceWindow)
     }
 }
 

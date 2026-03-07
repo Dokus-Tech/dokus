@@ -1,6 +1,7 @@
 package tech.dokus.app.module
 
 import io.ktor.client.HttpClient
+import io.ktor.client.plugins.sse.SSE
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 import tech.dokus.domain.config.DynamicDokusEndpointProvider
@@ -17,6 +18,7 @@ import tech.dokus.foundation.app.network.createDynamicAuthenticatedHttpClient
 import tech.dokus.foundation.app.network.createDynamicBaseHttpClient
 import tech.dokus.foundation.platform.Logger
 import tech.dokus.foundation.platform.platformModule
+import kotlin.time.Duration.Companion.seconds
 
 internal object AppDataMainModuleDi : AppDataModuleDi {
     override val platform = platformModule
@@ -55,6 +57,11 @@ private val networkModule = module {
                 tokenManager.onAuthenticationFailed()
                 authManager.onAuthenticationFailed()
             }
-        )
+        ) {
+            install(SSE) {
+                maxReconnectionAttempts = 10
+                reconnectionTime = 3.seconds
+            }
+        }
     }
 }

@@ -17,6 +17,7 @@ import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.json.decodeFromJsonElement
 import org.slf4j.LoggerFactory
 import tech.dokus.backend.services.documents.DocumentTruthService
+import tech.dokus.backend.services.documents.sse.DocumentSsePublisher
 import tech.dokus.backend.services.notifications.NotificationEmission
 import tech.dokus.backend.services.notifications.NotificationService
 import tech.dokus.database.repository.peppol.PeppolSettingsRepository
@@ -90,11 +91,12 @@ internal fun decodePeppolAttachmentBase64(encoded: String): ByteArray {
  * - Graceful shutdown support
  */
 @Suppress("TooGenericExceptionCaught", "LoopWithTooManyJumpStatements", "LongParameterList")
-class PeppolPollingWorker(
+internal class PeppolPollingWorker(
     private val peppolSettingsRepository: PeppolSettingsRepository,
     private val peppolService: PeppolService,
     private val documentTruthService: DocumentTruthService,
-    private val notificationService: NotificationService
+    private val notificationService: NotificationService,
+    private val documentSsePublisher: DocumentSsePublisher,
 ) {
     private val logger = LoggerFactory.getLogger(PeppolPollingWorker::class.java)
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
@@ -375,6 +377,7 @@ class PeppolPollingWorker(
             fileBytes = artifact.first,
             sourceChannel = DocumentSource.Peppol
         )
+        documentSsePublisher.publishDocumentChanged(tenantId, intake.documentId)
         val documentId = intake.documentId
 
         val structuredSnapshotJson = json.encodeToString(draftData)

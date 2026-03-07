@@ -32,6 +32,7 @@ dependencies {
     implementation(libs.ktor.server.forwarded.header)
     implementation(libs.ktor.server.hsts)
     implementation(libs.ktor.server.request.validation)
+    implementation(libs.ktor.server.sse)
 
     // Database - Exposed
     implementation(libs.exposed.core)

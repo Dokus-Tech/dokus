@@ -50,6 +50,12 @@ import kotlin.uuid.toKotlinUuid
  */
 class ProcessorIngestionRepository {
 
+    data class RecoveredIngestionRun(
+        val runId: IngestionRunId,
+        val documentId: DocumentId,
+        val tenantId: TenantId,
+    )
+
     /**
      * Find pending ingestion runs ready for processing.
      * Only picks up runs with status=Queued, ordered by queue time (FIFO).
@@ -306,13 +312,30 @@ class ProcessorIngestionRepository {
      *
      * @return Number of runs recovered
      */
-    @OptIn(ExperimentalTime::class)
-    suspend fun recoverStaleRuns(): Int =
+    @OptIn(ExperimentalTime::class, ExperimentalUuidApi::class)
+    suspend fun recoverStaleRunsDetailed(): List<RecoveredIngestionRun> =
         newSuspendedTransaction {
             val cutoff = (Clock.System.now() - DocumentProcessingConstants.INGESTION_RUN_TIMEOUT)
                 .toStdlibInstant()
                 .toLocalDateTime(TimeZone.Companion.UTC)
             val now = Clock.System.now().toStdlibInstant().toLocalDateTime(TimeZone.Companion.UTC)
+            val staleRuns = DocumentIngestionRunsTable
+                .selectAll()
+                .where {
+                    (DocumentIngestionRunsTable.status eq IngestionStatus.Processing) and
+                        (DocumentIngestionRunsTable.startedAt.isNull() or
+                            (DocumentIngestionRunsTable.startedAt lessEq cutoff))
+                }
+                .map { row ->
+                    RecoveredIngestionRun(
+                        runId = IngestionRunId(row[DocumentIngestionRunsTable.id].value.toKotlinUuid()),
+                        documentId = DocumentId(row[DocumentIngestionRunsTable.documentId].toKotlinUuid()),
+                        tenantId = TenantId(row[DocumentIngestionRunsTable.tenantId].toKotlinUuid()),
+                    )
+                }
+            if (staleRuns.isEmpty()) {
+                return@newSuspendedTransaction emptyList()
+            }
 
             DocumentIngestionRunsTable.update({
                 (DocumentIngestionRunsTable.status eq IngestionStatus.Processing) and
@@ -323,7 +346,12 @@ class ProcessorIngestionRepository {
                 it[finishedAt] = now
                 it[errorMessage] = DocumentProcessingConstants.INGESTION_TIMEOUT_ERROR_MESSAGE
             }
+
+            staleRuns
         }
+
+    @OptIn(ExperimentalTime::class)
+    suspend fun recoverStaleRuns(): Int = recoverStaleRunsDetailed().size
 
     /**
      * Update the indexing status for an ingestion run.

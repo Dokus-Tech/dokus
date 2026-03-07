@@ -13,6 +13,7 @@ import tech.dokus.backend.services.documents.ContactResolutionService
 import tech.dokus.backend.services.documents.DocumentPurposeService
 import tech.dokus.backend.services.documents.DocumentTruthService
 import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
+import tech.dokus.backend.services.documents.sse.DocumentSsePublisher
 import tech.dokus.database.entity.IngestionItemEntity
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.auth.UserRepository
@@ -43,6 +44,7 @@ class DocumentProcessingWorkerConcurrencyTest {
         val invoiceBankAutomationService = mockk<InvoiceBankAutomationService>(relaxed = true)
         val autoConfirmPolicy = mockk<AutoConfirmPolicy>(relaxed = true)
         val confirmationDispatcher = mockk<DocumentConfirmationDispatcher>(relaxed = true)
+        val documentSsePublisher = mockk<DocumentSsePublisher>(relaxed = true)
         val tenantRepository = mockk<TenantRepository>()
         val userRepository = mockk<UserRepository>()
 
@@ -60,7 +62,7 @@ class DocumentProcessingWorkerConcurrencyTest {
         val active = AtomicInteger(0)
         val maxObserved = AtomicInteger(0)
 
-        coEvery { ingestionRepository.recoverStaleRuns() } returns 0
+        coEvery { ingestionRepository.recoverStaleRunsDetailed() } returns emptyList()
         coEvery { ingestionRepository.findPendingForProcessing(10) } returns runs
         coEvery { ingestionRepository.markAsProcessing(any(), "koog-graph") } returns true
         coEvery { ingestionRepository.markAsFailed(any(), any()) } returns true
@@ -85,6 +87,7 @@ class DocumentProcessingWorkerConcurrencyTest {
             invoiceBankAutomationService = invoiceBankAutomationService,
             autoConfirmPolicy = autoConfirmPolicy,
             confirmationDispatcher = confirmationDispatcher,
+            documentSsePublisher = documentSsePublisher,
             config = ProcessorConfig(
                 pollingInterval = 1_000,
                 maxAttempts = 3,
@@ -113,6 +116,7 @@ class DocumentProcessingWorkerConcurrencyTest {
         val invoiceBankAutomationService = mockk<InvoiceBankAutomationService>(relaxed = true)
         val autoConfirmPolicy = mockk<AutoConfirmPolicy>(relaxed = true)
         val confirmationDispatcher = mockk<DocumentConfirmationDispatcher>(relaxed = true)
+        val documentSsePublisher = mockk<DocumentSsePublisher>(relaxed = true)
         val tenantRepository = mockk<TenantRepository>(relaxed = true)
         val userRepository = mockk<UserRepository>(relaxed = true)
 
@@ -125,7 +129,7 @@ class DocumentProcessingWorkerConcurrencyTest {
             contentType = "application/pdf"
         )
 
-        coEvery { ingestionRepository.recoverStaleRuns() } returns 0
+        coEvery { ingestionRepository.recoverStaleRunsDetailed() } returns emptyList()
         coEvery { ingestionRepository.findPendingForProcessing(10) } returns listOf(run)
         coEvery { ingestionRepository.markAsProcessing(run.runId.toString(), "koog-graph") } returns false
         coEvery { ingestionRepository.markAsFailed(any(), any()) } returns true
@@ -142,6 +146,7 @@ class DocumentProcessingWorkerConcurrencyTest {
             invoiceBankAutomationService = invoiceBankAutomationService,
             autoConfirmPolicy = autoConfirmPolicy,
             confirmationDispatcher = confirmationDispatcher,
+            documentSsePublisher = documentSsePublisher,
             config = ProcessorConfig(
                 pollingInterval = 1_000,
                 maxAttempts = 3,
@@ -172,6 +177,7 @@ class DocumentProcessingWorkerConcurrencyTest {
         val invoiceBankAutomationService = mockk<InvoiceBankAutomationService>(relaxed = true)
         val autoConfirmPolicy = mockk<AutoConfirmPolicy>(relaxed = true)
         val confirmationDispatcher = mockk<DocumentConfirmationDispatcher>(relaxed = true)
+        val documentSsePublisher = mockk<DocumentSsePublisher>(relaxed = true)
         val tenantRepository = mockk<TenantRepository>()
         val userRepository = mockk<UserRepository>(relaxed = true)
 
@@ -186,7 +192,7 @@ class DocumentProcessingWorkerConcurrencyTest {
             contentType = "application/pdf"
         )
 
-        coEvery { ingestionRepository.recoverStaleRuns() } returns 0
+        coEvery { ingestionRepository.recoverStaleRunsDetailed() } returns emptyList()
         coEvery { ingestionRepository.findPendingForProcessing(10) } returns listOf(run)
         coEvery { ingestionRepository.markAsProcessing(run.runId.toString(), "koog-graph") } returns true
         coEvery { ingestionRepository.markAsFailed(any(), any()) } returns true
@@ -205,6 +211,7 @@ class DocumentProcessingWorkerConcurrencyTest {
             invoiceBankAutomationService = invoiceBankAutomationService,
             autoConfirmPolicy = autoConfirmPolicy,
             confirmationDispatcher = confirmationDispatcher,
+            documentSsePublisher = documentSsePublisher,
             config = ProcessorConfig(
                 pollingInterval = 1_000,
                 maxAttempts = 3,

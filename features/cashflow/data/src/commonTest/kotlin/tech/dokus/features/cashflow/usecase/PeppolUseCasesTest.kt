@@ -9,6 +9,7 @@ import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.PeppolSettingsId
 import tech.dokus.domain.ids.PeppolTransmissionId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.Address
 import tech.dokus.domain.model.PeppolConnectRequest
 import tech.dokus.domain.model.PeppolConnectResponse
 import tech.dokus.domain.model.PeppolConnectStatus
@@ -39,10 +40,7 @@ class PeppolUseCasesTest {
 
         val useCase = ConnectPeppolUseCaseImpl(gateway)
         val request = PeppolConnectRequest(
-            apiKey = "key",
-            apiSecret = "secret",
-            isEnabled = true,
-            testMode = false
+            companyAddress = sampleAddress()
         )
 
         val result = useCase(request)
@@ -62,18 +60,6 @@ class PeppolUseCasesTest {
 
         assertTrue(gateway.getSettingsCalled)
         assertEquals(settings, result.getOrNull())
-    }
-
-    @Test
-    fun deletePeppolSettingsDelegatesToGateway() = runTest {
-        val gateway = FakePeppolGateway()
-        gateway.deleteSettingsResult = Result.success(Unit)
-
-        val useCase = DeletePeppolSettingsUseCaseImpl(gateway)
-        val result = useCase()
-
-        assertTrue(gateway.deleteSettingsCalled)
-        assertTrue(result.isSuccess)
     }
 
     @Test
@@ -186,6 +172,19 @@ class PeppolUseCasesTest {
         )
     }
 
+    private fun sampleAddress(): Address {
+        return Address(
+            id = tech.dokus.domain.ids.AddressId.parse("00000000-0000-0000-0000-000000000099"),
+            tenantId = TenantId("00000000-0000-0000-0000-000000000002"),
+            streetLine1 = "Main Street 1",
+            city = "Brussels",
+            postalCode = "1000",
+            country = "BE",
+            createdAt = LocalDateTime(2024, 1, 1, 0, 0),
+            updatedAt = LocalDateTime(2024, 1, 1, 0, 0)
+        )
+    }
+
     private fun sampleTransmission(): PeppolTransmissionDto {
         return PeppolTransmissionDto(
             id = PeppolTransmissionId.parse("00000000-0000-0000-0000-000000000003"),
@@ -217,9 +216,6 @@ class PeppolUseCasesTest {
         var getSettingsCalled: Boolean = false
         var settingsResult: Result<PeppolSettingsDto?> = Result.success(null)
 
-        var deleteSettingsCalled: Boolean = false
-        var deleteSettingsResult: Result<Unit> = Result.success(Unit)
-
         var lastListArgs: ListArgs? = null
         var listResult: Result<List<PeppolTransmissionDto>> = Result.success(emptyList())
 
@@ -246,11 +242,6 @@ class PeppolUseCasesTest {
         override suspend fun getPeppolSettings(): Result<PeppolSettingsDto?> {
             getSettingsCalled = true
             return settingsResult
-        }
-
-        override suspend fun deletePeppolSettings(): Result<Unit> {
-            deleteSettingsCalled = true
-            return deleteSettingsResult
         }
 
         override suspend fun listPeppolTransmissions(

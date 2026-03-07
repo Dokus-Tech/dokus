@@ -22,6 +22,10 @@ interface WatchPendingDocumentsUseCase {
     fun refresh()
 }
 
+interface ObserveDocumentCollectionChangesUseCase {
+    operator fun invoke(): Flow<Unit>
+}
+
 /**
  * Use case for submitting an invoice to the backend.
  */

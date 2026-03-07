@@ -58,10 +58,12 @@ data class DocumentIntakeServiceResult(
     val sourceId: DocumentSourceId,
     val runId: IngestionRunId?,
     val outcome: DocumentIntakeOutcome,
+    val sourceDocumentId: DocumentId? = null,
     val linkedDocumentId: DocumentId? = null,
     val reviewId: DocumentMatchReviewId? = null,
     val sourceCount: Int = 1,
-    val matchType: DocumentMatchType? = null
+    val matchType: DocumentMatchType? = null,
+    val orphanedDocumentId: DocumentId? = null,
 ) {
     fun toOutcomeDto(): DocumentIntakeOutcomeDto = DocumentIntakeOutcomeDto(
         outcome = outcome,
@@ -183,6 +185,7 @@ class DocumentTruthService(
                     sourceId = sourceId,
                     runId = null,
                     outcome = DocumentIntakeOutcome.LinkedToExisting,
+                    sourceDocumentId = existingDocId,
                     linkedDocumentId = existingDocId,
                     sourceCount = sourceCount,
                     matchType = DocumentMatchType.ExactFile
@@ -225,6 +228,7 @@ class DocumentTruthService(
                     sourceId = sourceId,
                     runId = runId,
                     outcome = DocumentIntakeOutcome.NewDocument,
+                    sourceDocumentId = documentId,
                     sourceCount = 1
                 )
             }
@@ -396,6 +400,7 @@ class DocumentTruthService(
             sourceId = resolvedSource.id,
             runId = null,
             outcome = DocumentIntakeOutcome.NewDocument,
+            sourceDocumentId = documentId,
             sourceCount = sourceCount
         )
         recordIntakeOutcome(resolvedSource.sourceChannel, result.outcome)
@@ -427,16 +432,18 @@ class DocumentTruthService(
                     matchType = source.matchType
                 )
                 val sourceCount = sourceRepository.countLinkedSources(tenantId, review.documentId)
-                deleteOrphanIfSafe(tenantId, source.documentId)
+                val orphanDeleted = deleteOrphanIfSafe(tenantId, source.documentId)
                 DocumentIntakeServiceResult(
                     documentId = review.documentId,
                     sourceId = source.id,
                     runId = null,
                     outcome = DocumentIntakeOutcome.LinkedToExisting,
+                    sourceDocumentId = source.documentId,
                     linkedDocumentId = review.documentId,
                     reviewId = reviewId,
                     sourceCount = sourceCount,
-                    matchType = source.matchType
+                    matchType = source.matchType,
+                    orphanedDocumentId = source.documentId.takeIf { orphanDeleted }
                 ).also {
                     logger.info(
                         "AUDIT review_resolved: decision=SAME tenant={} user={} review={} " +
@@ -515,15 +522,17 @@ class DocumentTruthService(
                         )
                     }
                 }
-                deleteOrphanIfSafe(tenantId, source.documentId)
+                val orphanDeleted = deleteOrphanIfSafe(tenantId, source.documentId)
 
                 DocumentIntakeServiceResult(
                     documentId = newDocumentId,
                     sourceId = source.id,
                     runId = null,
                     outcome = DocumentIntakeOutcome.NewDocument,
+                    sourceDocumentId = source.documentId,
                     reviewId = reviewId,
-                    sourceCount = 1
+                    sourceCount = 1,
+                    orphanedDocumentId = source.documentId.takeIf { orphanDeleted }
                 ).also {
                     logger.info(
                         "AUDIT review_resolved: decision=DIFFERENT tenant={} user={} review={} " +
@@ -632,16 +641,18 @@ class DocumentTruthService(
             status = DocumentSourceStatus.Linked,
             matchType = matchType
         )
-        deleteOrphanIfSafe(tenantId, sourceDocumentId)
+        val orphanDeleted = deleteOrphanIfSafe(tenantId, sourceDocumentId)
         val sourceCount = sourceRepository.countLinkedSources(tenantId, targetDocumentId)
         return DocumentIntakeServiceResult(
             documentId = targetDocumentId,
             sourceId = sourceId,
             runId = null,
             outcome = DocumentIntakeOutcome.LinkedToExisting,
+            sourceDocumentId = sourceDocumentId,
             linkedDocumentId = targetDocumentId,
             sourceCount = sourceCount,
-            matchType = matchType
+            matchType = matchType,
+            orphanedDocumentId = sourceDocumentId.takeIf { orphanDeleted }
         )
     }
 
@@ -670,17 +681,19 @@ class DocumentTruthService(
             aiSummary = summary,
             aiConfidence = aiConfidence
         )
-        deleteOrphanIfSafe(tenantId, sourceDocumentId)
+        val orphanDeleted = deleteOrphanIfSafe(tenantId, sourceDocumentId)
         val sourceCount = sourceRepository.countLinkedSources(tenantId, targetDocumentId)
         return DocumentIntakeServiceResult(
             documentId = targetDocumentId,
             sourceId = sourceId,
             runId = null,
             outcome = DocumentIntakeOutcome.PendingMatchReview,
+            sourceDocumentId = sourceDocumentId,
             linkedDocumentId = targetDocumentId,
             reviewId = reviewId,
             sourceCount = sourceCount,
-            matchType = matchType
+            matchType = matchType,
+            orphanedDocumentId = sourceDocumentId.takeIf { orphanDeleted }
         )
     }
 
@@ -689,7 +702,7 @@ class DocumentTruthService(
      * Called after source reassignment and source deletion paths to avoid
      * leaving source-less documents visible in listing queries.
      */
-    private suspend fun deleteOrphanIfSafe(tenantId: TenantId, documentId: DocumentId) {
+    private suspend fun deleteOrphanIfSafe(tenantId: TenantId, documentId: DocumentId): Boolean {
         val remainingSources = sourceRepository.countSources(
             tenantId = tenantId,
             documentId = documentId,
@@ -698,7 +711,9 @@ class DocumentTruthService(
         if (remainingSources == 0) {
             logger.info("Removing orphaned document after user action: {}", documentId)
             documentRepository.delete(tenantId, documentId)
+            return true
         }
+        return false
     }
 
     private data class IdentityDescriptor(

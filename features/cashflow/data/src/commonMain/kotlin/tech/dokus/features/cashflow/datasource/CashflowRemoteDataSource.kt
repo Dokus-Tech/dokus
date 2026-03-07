@@ -7,6 +7,7 @@
 package tech.dokus.features.cashflow.datasource
 
 import io.ktor.client.HttpClient
+import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDate
 import tech.dokus.domain.config.DynamicDokusEndpointProvider
 import tech.dokus.domain.enums.CashflowDirection
@@ -48,6 +49,7 @@ import tech.dokus.domain.model.DocumentIngestionDto
 import tech.dokus.domain.model.DocumentIntakeResult
 import tech.dokus.domain.model.DocumentPagesResponse
 import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentRecordStreamEvent
 import tech.dokus.domain.model.DocumentSourceDto
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.PeppolConnectRequest
@@ -469,11 +471,15 @@ interface CashflowRemoteDataSource {
         limit: Int = 20
     ): Result<PaginatedResponse<DocumentRecordDto>>
 
+    fun observeDocumentCollectionChanges(): Flow<Unit>
+
     /**
      * Get a document record by ID with full envelope (document + draft + latest ingestion + confirmed entity).
      * GET /api/v1/documents/{id}
      */
     suspend fun getDocumentRecord(documentId: DocumentId): Result<DocumentRecordDto>
+
+    fun observeDocumentRecordEvents(documentId: DocumentId): Flow<DocumentRecordStreamEvent>
 
     /**
      * Get the draft for a document.

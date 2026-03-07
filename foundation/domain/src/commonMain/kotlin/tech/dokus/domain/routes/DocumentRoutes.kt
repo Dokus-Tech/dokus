@@ -67,6 +67,14 @@ class Documents {
     class Upload(val parent: Documents = Documents())
 
     /**
+     * GET /api/v1/documents/events
+     * Stream tenant-wide document invalidation events.
+     */
+    @Serializable
+    @Resource("events")
+    class Events(val parent: Documents = Documents())
+
+    /**
      * /api/v1/documents/match-reviews/...
      */
     @Serializable
@@ -91,6 +99,14 @@ class Documents {
     @Serializable
     @Resource("{id}")
     class Id(val parent: Documents = Documents(), val id: String) {
+        /**
+         * GET /api/v1/documents/{id}/events
+         * Stream full document snapshots and delete notifications.
+         */
+        @Serializable
+        @Resource("events")
+        class Events(val parent: Id)
+
         /**
          * GET /api/v1/documents/{id}/content
          * Download raw document bytes for authenticated clients.

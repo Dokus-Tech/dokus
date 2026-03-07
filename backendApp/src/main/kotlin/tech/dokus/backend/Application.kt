@@ -5,6 +5,7 @@ import io.ktor.server.application.install
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.resources.Resources
+import io.ktor.server.sse.SSE
 import org.koin.ktor.ext.get
 import tech.dokus.backend.config.configureDependencyInjection
 import tech.dokus.backend.plugins.configureBackgroundWorkers
@@ -56,6 +57,7 @@ fun Application.module(appConfig: AppBaseConfig) {
 
     // Ktor plugins
     install(Resources)
+    install(SSE)
     configureSerialization()
     configureErrorHandling()
     configureSecurity(appConfig.security)

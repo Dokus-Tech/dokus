@@ -14,6 +14,7 @@ import tech.dokus.backend.services.documents.ContactResolutionService
 import tech.dokus.backend.services.documents.DocumentPurposeService
 import tech.dokus.backend.services.documents.DocumentTruthService
 import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
+import tech.dokus.backend.services.documents.sse.DocumentSsePublisher
 import tech.dokus.database.entity.IngestionItemEntity
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.auth.UserRepository
@@ -41,6 +42,7 @@ class DocumentProcessingWorkerTimeoutTest {
         val invoiceBankAutomationService = mockk<InvoiceBankAutomationService>(relaxed = true)
         val autoConfirmPolicy = mockk<AutoConfirmPolicy>(relaxed = true)
         val confirmationDispatcher = mockk<DocumentConfirmationDispatcher>(relaxed = true)
+        val documentSsePublisher = mockk<DocumentSsePublisher>(relaxed = true)
         val tenantRepository = mockk<TenantRepository>()
         val userRepository = mockk<UserRepository>()
 
@@ -61,7 +63,7 @@ class DocumentProcessingWorkerTimeoutTest {
             contentType = "application/pdf"
         )
 
-        coEvery { ingestionRepository.recoverStaleRuns() } returns 0
+        coEvery { ingestionRepository.recoverStaleRunsDetailed() } returns emptyList()
         coEvery { ingestionRepository.findPendingForProcessing(2) } returns listOf(firstRun, secondRun)
         coEvery { ingestionRepository.markAsProcessing(any(), "koog-graph") } returns true
         coEvery { ingestionRepository.markAsFailed(any(), any()) } returns true
@@ -84,6 +86,7 @@ class DocumentProcessingWorkerTimeoutTest {
             invoiceBankAutomationService = invoiceBankAutomationService,
             autoConfirmPolicy = autoConfirmPolicy,
             confirmationDispatcher = confirmationDispatcher,
+            documentSsePublisher = documentSsePublisher,
             config = ProcessorConfig(
                 pollingInterval = 1_000,
                 maxAttempts = 3,
