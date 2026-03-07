@@ -1,17 +1,57 @@
 import Foundation
+import FileProvider
 import UniformTypeIdentifiers
+
+protocol DokusFileProviderTaskRegistering: AnyObject {
+    func register(task: URLSessionTask, for itemIdentifier: NSFileProviderItemIdentifier)
+}
+
+struct DokusFileProviderTransfer {
+    let itemIdentifier: NSFileProviderItemIdentifier
+    let progress: Progress
+}
+
+final class DokusFileProviderTransferBinding {
+    private let progress: Progress
+    private var observation: NSKeyValueObservation?
+
+    init(progress: Progress, task: URLSessionTask) {
+        self.progress = progress
+        progress.totalUnitCount = 100
+        progress.completedUnitCount = 0
+        observation = task.progress.observe(\.fractionCompleted, options: [.initial, .new]) { [progress] taskProgress, _ in
+            let fraction = taskProgress.fractionCompleted.isFinite
+                ? min(max(taskProgress.fractionCompleted, 0), 1)
+                : 0
+            progress.completedUnitCount = Int64((fraction * 100).rounded())
+        }
+        progress.cancellationHandler = {
+            task.cancel()
+        }
+    }
+
+    func complete() {
+        progress.completedUnitCount = 100
+    }
+
+    func invalidate() {
+        observation = nil
+    }
+}
 
 final class DokusFileProviderAPIClient {
     private let sessionProvider: DokusFileProviderSessionProvider
     private let session: URLSession
+    private let taskRegistrar: DokusFileProviderTaskRegistering?
 
-    init(sessionProvider: DokusFileProviderSessionProvider) {
+    init(
+        sessionProvider: DokusFileProviderSessionProvider,
+        session: URLSession? = nil,
+        taskRegistrar: DokusFileProviderTaskRegistering? = nil
+    ) {
         self.sessionProvider = sessionProvider
-
-        let configuration = URLSessionConfiguration.ephemeral
-        configuration.timeoutIntervalForRequest = 60
-        configuration.timeoutIntervalForResource = 300
-        self.session = URLSession(configuration: configuration)
+        self.session = session ?? Self.makeSession()
+        self.taskRegistrar = taskRegistrar
     }
 
     func listWorkspaces() async throws -> [DokusWorkspace] {
@@ -71,6 +111,7 @@ final class DokusFileProviderAPIClient {
             var request = URLRequest(url: url)
             request.httpMethod = "GET"
             request.setValue("Bearer \(resolved.accessToken)", forHTTPHeaderField: "Authorization")
+            attachTenantHeader(workspaceId: workspaceId, to: &request)
 
             let data = try await dataForRequest(request)
             guard let object = try parseJsonObject(from: data) as? [String: Any] else {
@@ -104,7 +145,8 @@ final class DokusFileProviderAPIClient {
         workspaceId: String,
         from fileURL: URL,
         filename: String,
-        mimeType: String
+        mimeType: String,
+        transfer: DokusFileProviderTransfer? = nil
     ) async throws -> String {
         let resolved = try await sessionProvider.resolvedSession(workspaceId: workspaceId)
         let multipart = try buildMultipartBodyFile(
@@ -121,8 +163,9 @@ final class DokusFileProviderAPIClient {
         request.setValue("Bearer \(resolved.accessToken)", forHTTPHeaderField: "Authorization")
         request.setValue(multipart.contentType, forHTTPHeaderField: "Content-Type")
         request.setValue("\(multipart.contentLength)", forHTTPHeaderField: "Content-Length")
+        attachTenantHeader(workspaceId: workspaceId, to: &request)
 
-        let data = try await uploadDataForRequest(request, fromFile: multipart.fileURL)
+        let data = try await uploadDataForRequest(request, fromFile: multipart.fileURL, transfer: transfer)
         guard let object = try parseJsonObject(from: data) as? [String: Any] else {
             throw DokusFileProviderError.invalidServerResponse
         }
@@ -145,6 +188,7 @@ final class DokusFileProviderAPIClient {
         var request = URLRequest(url: url)
         request.httpMethod = "DELETE"
         request.setValue("Bearer \(resolved.accessToken)", forHTTPHeaderField: "Authorization")
+        attachTenantHeader(workspaceId: workspaceId, to: &request)
 
         _ = try await dataForRequest(request, allowNoContent: true)
     }
@@ -152,7 +196,8 @@ final class DokusFileProviderAPIClient {
     func downloadDocument(
         workspaceId: String,
         record: DokusDocumentRecord,
-        temporaryDirectoryURL: URL?
+        temporaryDirectoryURL: URL?,
+        transfer: DokusFileProviderTransfer? = nil
     ) async throws -> URL {
         let resolved = try await sessionProvider.resolvedSession(workspaceId: workspaceId)
         DokusFileProviderLog.api.debug(
@@ -163,7 +208,8 @@ final class DokusFileProviderAPIClient {
             let fileURL = try await downloadDocumentViaApi(
                 resolved: resolved,
                 record: record,
-                temporaryDirectoryURL: temporaryDirectoryURL
+                temporaryDirectoryURL: temporaryDirectoryURL,
+                transfer: transfer
             )
             let bytes = downloadedFileSize(for: fileURL)
             DokusFileProviderLog.api.debug(
@@ -223,7 +269,8 @@ final class DokusFileProviderAPIClient {
                 let fileURL = try await downloadFileForRequest(
                     request,
                     record: record,
-                    temporaryDirectoryURL: temporaryDirectoryURL
+                    temporaryDirectoryURL: temporaryDirectoryURL,
+                    transfer: transfer
                 )
                 let bytes = downloadedFileSize(for: fileURL)
                 DokusFileProviderLog.api.debug(
@@ -277,6 +324,7 @@ final class DokusFileProviderAPIClient {
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.setValue("Bearer \(resolved.accessToken)", forHTTPHeaderField: "Authorization")
+        attachTenantHeader(workspaceId: workspaceId, to: &request)
         DokusFileProviderLog.api.debug(
             "fetchThumbnail request workspaceId=\(workspaceId, privacy: .public) documentId=\(record.documentId, privacy: .public) dpi=\(dpi, privacy: .public)"
         )
@@ -286,17 +334,20 @@ final class DokusFileProviderAPIClient {
     private func downloadDocumentViaApi(
         resolved: DokusResolvedSession,
         record: DokusDocumentRecord,
-        temporaryDirectoryURL: URL?
+        temporaryDirectoryURL: URL?,
+        transfer: DokusFileProviderTransfer? = nil
     ) async throws -> URL {
         var request = URLRequest(
             url: resolved.baseURL.appendingPathQuery("/api/v1/documents/\(record.documentId)/content")
         )
         request.httpMethod = "GET"
         request.setValue("Bearer \(resolved.accessToken)", forHTTPHeaderField: "Authorization")
+        attachTenantHeader(workspaceId: record.workspaceId, to: &request)
         return try await downloadFileForRequest(
             request,
             record: record,
-            temporaryDirectoryURL: temporaryDirectoryURL
+            temporaryDirectoryURL: temporaryDirectoryURL,
+            transfer: transfer
         )
     }
 
@@ -331,6 +382,7 @@ final class DokusFileProviderAPIClient {
         var request = URLRequest(url: resolved.baseURL.appendingPathQuery("/api/v1/documents/\(record.documentId)"))
         request.httpMethod = "GET"
         request.setValue("Bearer \(resolved.accessToken)", forHTTPHeaderField: "Authorization")
+        attachTenantHeader(workspaceId: record.workspaceId, to: &request)
 
         let data = try await dataForRequest(request)
         guard
@@ -357,6 +409,20 @@ final class DokusFileProviderAPIClient {
         case .notAuthenticated, .unsupportedOperation, .noSuchItem:
             return false
         }
+    }
+
+    private static func makeSession() -> URLSession {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.timeoutIntervalForRequest = 60
+        configuration.timeoutIntervalForResource = 300
+        return URLSession(configuration: configuration)
+    }
+
+    private func attachTenantHeader(workspaceId: String, to request: inout URLRequest) {
+        request.setValue(
+            workspaceId,
+            forHTTPHeaderField: DokusFileProviderConstants.tenantHeaderName
+        )
     }
 
     private func shouldRetryDirectDownload(after error: DokusFileProviderError) -> Bool {
@@ -580,7 +646,11 @@ final class DokusFileProviderAPIClient {
         return response.0
     }
 
-    private func uploadDataForRequest(_ request: URLRequest, fromFile fileURL: URL) async throws -> Data {
+    private func uploadDataForRequest(
+        _ request: URLRequest,
+        fromFile fileURL: URL,
+        transfer: DokusFileProviderTransfer? = nil
+    ) async throws -> Data {
         let method = request.httpMethod ?? "POST"
         let requestURL = request.url
         let requestHost = requestURL?.host ?? "nil"
@@ -589,9 +659,32 @@ final class DokusFileProviderAPIClient {
             "HTTP upload method=\(method, privacy: .public) host=\(requestHost, privacy: .public) path=\(requestPath, privacy: .public) file=\(fileURL.path, privacy: .public)"
         )
 
+        var binding: DokusFileProviderTransferBinding?
+        defer {
+            binding?.invalidate()
+        }
+
         let response: (Data, URLResponse)
         do {
-            response = try await session.upload(for: request, fromFile: fileURL)
+            response = try await withCheckedThrowingContinuation { continuation in
+                let task = session.uploadTask(with: request, fromFile: fileURL) { data, urlResponse, error in
+                    if let error {
+                        continuation.resume(throwing: error)
+                        return
+                    }
+                    guard let data, let urlResponse else {
+                        continuation.resume(throwing: DokusFileProviderError.invalidServerResponse)
+                        return
+                    }
+                    continuation.resume(returning: (data, urlResponse))
+                }
+                binding = transfer.map {
+                    DokusFileProviderTransferBinding(progress: $0.progress, task: task)
+                }
+                self.registerTransferTaskIfNeeded(task: task, transfer: transfer)
+                task.resume()
+            }
+            binding?.complete()
         } catch {
             if let urlError = error as? URLError, urlError.code == .cancelled {
                 throw CancellationError()
@@ -632,7 +725,8 @@ final class DokusFileProviderAPIClient {
     private func downloadFileForRequest(
         _ request: URLRequest,
         record: DokusDocumentRecord,
-        temporaryDirectoryURL: URL?
+        temporaryDirectoryURL: URL?,
+        transfer: DokusFileProviderTransfer? = nil
     ) async throws -> URL {
         let method = request.httpMethod ?? "GET"
         let requestURL = request.url
@@ -642,9 +736,32 @@ final class DokusFileProviderAPIClient {
             "HTTP download method=\(method, privacy: .public) host=\(requestHost, privacy: .public) path=\(requestPath, privacy: .public)"
         )
 
+        var binding: DokusFileProviderTransferBinding?
+        defer {
+            binding?.invalidate()
+        }
+
         let response: (URL, URLResponse)
         do {
-            response = try await session.download(for: request)
+            response = try await withCheckedThrowingContinuation { continuation in
+                let task = session.downloadTask(with: request) { url, urlResponse, error in
+                    if let error {
+                        continuation.resume(throwing: error)
+                        return
+                    }
+                    guard let url, let urlResponse else {
+                        continuation.resume(throwing: DokusFileProviderError.invalidServerResponse)
+                        return
+                    }
+                    continuation.resume(returning: (url, urlResponse))
+                }
+                binding = transfer.map {
+                    DokusFileProviderTransferBinding(progress: $0.progress, task: task)
+                }
+                self.registerTransferTaskIfNeeded(task: task, transfer: transfer)
+                task.resume()
+            }
+            binding?.complete()
         } catch {
             if let urlError = error as? URLError, urlError.code == .cancelled {
                 throw CancellationError()
@@ -689,11 +806,36 @@ final class DokusFileProviderAPIClient {
         do {
             try FileManager.default.moveItem(at: response.0, to: destinationURL)
         } catch {
+            if !FileManager.default.fileExists(atPath: response.0.path) {
+                let data = try await dataForRequest(request)
+                try data.write(to: destinationURL, options: .atomic)
+                return destinationURL
+            }
+
             // Fallback for cross-volume temp locations.
-            try FileManager.default.copyItem(at: response.0, to: destinationURL)
-            try? FileManager.default.removeItem(at: response.0)
+            do {
+                try FileManager.default.copyItem(at: response.0, to: destinationURL)
+                try? FileManager.default.removeItem(at: response.0)
+            } catch {
+                if !FileManager.default.fileExists(atPath: response.0.path) {
+                    let data = try await dataForRequest(request)
+                    try data.write(to: destinationURL, options: .atomic)
+                    return destinationURL
+                }
+                throw error
+            }
         }
         return destinationURL
+    }
+
+    private func registerTransferTaskIfNeeded(
+        task: URLSessionTask,
+        transfer: DokusFileProviderTransfer?
+    ) {
+        guard let transfer, let taskRegistrar else {
+            return
+        }
+        taskRegistrar.register(task: task, for: transfer.itemIdentifier)
     }
 
     private func normalizedDpi(fromRequestedPixelSize requestedPixelSize: Int) -> Int {

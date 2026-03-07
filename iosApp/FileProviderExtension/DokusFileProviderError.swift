@@ -58,3 +58,19 @@ enum DokusFileProviderError: LocalizedError {
         }
     }
 }
+
+enum DokusUnexpectedFileProviderError {
+    static func nsError(from error: Error) -> NSError {
+        let nsError = error as NSError
+        if nsError.domain == NSFileProviderErrorDomain {
+            return nsError
+        }
+        if nsError.domain == NSURLErrorDomain {
+            return DokusFileProviderError.network(error.localizedDescription).nsError
+        }
+        if nsError.domain == NSCocoaErrorDomain || nsError.domain == NSPOSIXErrorDomain {
+            return nsError
+        }
+        return DokusFileProviderError.invalidServerResponse.nsError
+    }
+}

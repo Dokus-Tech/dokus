@@ -5,12 +5,16 @@ import UniformTypeIdentifiers
 actor DokusFileProviderRuntime {
     private let apiClient: DokusFileProviderAPIClient
     private let snapshotStore: DokusFileProviderSnapshotStore
+    private let materializedSetStore: DokusFileProviderMaterializedSetStore
     private let projectionBuilder = DokusProjectionBuilder()
     private let workspaceId: String?
     private let domainDisplayName: String
 
     private var cachedProjection: DokusProjection?
     private var cachedRecordsByKey: [String: DokusDocumentRecord] = [:]
+    private var materializedItemIdentifiers: Set<NSFileProviderItemIdentifier>
+    private var materializedContainerIdentifiers: Set<NSFileProviderItemIdentifier>
+    private var pendingItemsByIdentifier: [NSFileProviderItemIdentifier: DokusPendingFileProviderItemState] = [:]
     private var lastRefreshAt: Date?
 
     init(
@@ -21,8 +25,12 @@ actor DokusFileProviderRuntime {
     ) {
         self.apiClient = apiClient
         self.snapshotStore = DokusFileProviderSnapshotStore(domainIdentifier: domainIdentifier)
+        self.materializedSetStore = DokusFileProviderMaterializedSetStore(domainIdentifier: domainIdentifier)
         self.workspaceId = workspaceId
         self.domainDisplayName = domainDisplayName
+        let materializedIdentifiers = materializedSetStore.identifiers()
+        self.materializedItemIdentifiers = materializedIdentifiers
+        self.materializedContainerIdentifiers = Set(materializedIdentifiers.filter(Self.isContainerIdentifier))
     }
 
     func projection(forceRefresh: Bool) async throws -> DokusProjection {
@@ -60,11 +68,29 @@ actor DokusFileProviderRuntime {
         return item
     }
 
+    func fileProviderItem(
+        for identifier: NSFileProviderItemIdentifier,
+        forceRefresh: Bool = false
+    ) async throws -> DokusFileProviderItem {
+        let projected = try await item(for: identifier, forceRefresh: forceRefresh)
+        return fileProviderItem(from: projected)
+    }
+
+    func fileProviderItem(from projected: DokusProjectedItem) -> DokusFileProviderItem {
+        DokusFileProviderItem(projected: projected, state: itemState(for: projected))
+    }
+
+    func fileProviderItems(from projectedItems: [DokusProjectedItem]) -> [DokusFileProviderItem] {
+        projectedItems.map { projected in
+            fileProviderItem(from: projected)
+        }
+    }
+
     func children(for identifier: NSFileProviderItemIdentifier, forceRefresh: Bool) async throws -> [DokusProjectedItem] {
         let projection = try await self.projection(forceRefresh: forceRefresh)
         if identifier == .workingSet {
             return projection.itemsByIdentifier.values
-                .filter { !$0.isFolder && $0.identifier != .rootContainer }
+                .filter { $0.identifier != .rootContainer && $0.identifier != .workingSet }
                 .sorted(by: childComparator)
         }
         return projection.children(of: identifier).sorted(by: childComparator)
@@ -73,6 +99,38 @@ actor DokusFileProviderRuntime {
     func currentAnchor(forceRefresh: Bool) async throws -> NSFileProviderSyncAnchor? {
         _ = try await projection(forceRefresh: forceRefresh)
         return snapshotStore.currentAnchor()
+    }
+
+    func replaceMaterializedItems(with identifiers: Set<NSFileProviderItemIdentifier>) {
+        let containers = Set(identifiers.filter(Self.isContainerIdentifier))
+        materializedItemIdentifiers = identifiers
+        materializedContainerIdentifiers = containers
+        materializedSetStore.replace(with: identifiers)
+        DokusFileProviderLog.runtime.debug(
+            "materialized set updated itemCount=\(identifiers.count, privacy: .public) containerCount=\(containers.count, privacy: .public)"
+        )
+    }
+
+    func replacePendingItems(with pendingItems: [DokusPendingFileProviderItemState]) {
+        pendingItemsByIdentifier = Dictionary(
+            uniqueKeysWithValues: pendingItems.map { ($0.itemIdentifier, $0) }
+        )
+        DokusFileProviderLog.runtime.debug(
+            "pending set updated count=\(pendingItems.count, privacy: .public)"
+        )
+    }
+
+    func shouldSignalWorkingSet(
+        currentParentIdentifier: NSFileProviderItemIdentifier?,
+        previousParentIdentifier: NSFileProviderItemIdentifier? = nil
+    ) -> Bool {
+        if let currentParentIdentifier, materializedContainerIdentifiers.contains(currentParentIdentifier) {
+            return true
+        }
+        if let previousParentIdentifier, materializedContainerIdentifiers.contains(previousParentIdentifier) {
+            return true
+        }
+        return false
     }
 
     func changes(from anchor: NSFileProviderSyncAnchor?) async throws -> DokusChangeSet {
@@ -104,7 +162,8 @@ actor DokusFileProviderRuntime {
 
     func fetchContents(
         itemIdentifier: NSFileProviderItemIdentifier,
-        temporaryDirectoryURL: URL?
+        temporaryDirectoryURL: URL?,
+        transfer: DokusFileProviderTransfer? = nil
     ) async throws -> URL {
         let (workspaceId, record) = try await documentRecord(for: itemIdentifier, forceRefresh: false)
         DokusFileProviderLog.runtime.debug(
@@ -113,7 +172,8 @@ actor DokusFileProviderRuntime {
         return try await apiClient.downloadDocument(
             workspaceId: workspaceId,
             record: record,
-            temporaryDirectoryURL: temporaryDirectoryURL
+            temporaryDirectoryURL: temporaryDirectoryURL,
+            transfer: transfer
         )
     }
 
@@ -136,7 +196,8 @@ actor DokusFileProviderRuntime {
         to parentIdentifier: NSFileProviderItemIdentifier,
         filename: String,
         fileURL: URL,
-        mimeType: String
+        mimeType: String,
+        transfer: DokusFileProviderTransfer? = nil
     ) async throws -> DokusProjectedItem {
         guard let parentKind = DokusItemIdentifierCodec.decode(parentIdentifier) else {
             throw DokusFileProviderError.unsupportedOperation("Uploads are only allowed in Inbox")
@@ -149,7 +210,8 @@ actor DokusFileProviderRuntime {
             workspaceId: workspaceId,
             from: fileURL,
             filename: filename,
-            mimeType: mimeType
+            mimeType: mimeType,
+            transfer: transfer
         )
         DokusFileProviderLog.runtime.debug(
             "uploadDocument completed workspaceId=\(workspaceId, privacy: .public) documentId=\(documentId, privacy: .public) filename=\(filename, privacy: .public)"
@@ -184,6 +246,7 @@ actor DokusFileProviderRuntime {
             contentType: UTType.fromMimeType(mimeType),
             isFolder: false,
             capabilities: [.allowsReading, .allowsDeleting],
+            contentPolicy: .inherited,
             documentSize: (try? Data(contentsOf: fileURL).count).flatMap(Int64.init),
             creationDate: Date(),
             contentModificationDate: Date(),
@@ -194,7 +257,7 @@ actor DokusFileProviderRuntime {
         )
     }
 
-    func deleteDocument(itemIdentifier: NSFileProviderItemIdentifier) async throws {
+    func deleteDocument(itemIdentifier: NSFileProviderItemIdentifier) async throws -> NSFileProviderItemIdentifier {
         let item = try await self.item(for: itemIdentifier, forceRefresh: false)
         guard
             let workspaceId = item.workspaceId,
@@ -221,6 +284,7 @@ actor DokusFileProviderRuntime {
         DokusFileProviderLog.runtime.debug(
             "deleteDocument completed workspaceId=\(workspaceId, privacy: .public) documentId=\(documentId, privacy: .public)"
         )
+        return item.parentIdentifier
     }
 
     private func recordKey(workspaceId: String, documentId: String) -> String {
@@ -260,6 +324,43 @@ actor DokusFileProviderRuntime {
             return lhs.isFolder && !rhs.isFolder
         }
         return lhs.filename.localizedCaseInsensitiveCompare(rhs.filename) == .orderedAscending
+    }
+
+    private func itemState(for projected: DokusProjectedItem) -> DokusFileProviderItemState {
+        if let pendingState = pendingItemsByIdentifier[projected.identifier] {
+            return pendingState.itemState
+        }
+
+        if projected.isFolder {
+            return .materializedContainer
+        }
+
+        let isMaterialized = materializedItemIdentifiers.contains(projected.identifier)
+        return DokusFileProviderItemState(
+            isUploaded: true,
+            isUploading: false,
+            uploadingError: nil,
+            isDownloaded: isMaterialized,
+            isDownloading: false,
+            downloadingError: nil,
+            isMostRecentVersionDownloaded: isMaterialized
+        )
+    }
+
+    private static func isContainerIdentifier(_ identifier: NSFileProviderItemIdentifier) -> Bool {
+        if identifier == .rootContainer || identifier == .workingSet {
+            return true
+        }
+        guard let kind = DokusItemIdentifierCodec.decode(identifier) else {
+            return false
+        }
+
+        switch kind {
+        case .document:
+            return false
+        case .root, .workspace, .lifecycleFolder, .typedFolder, .yearFolder, .monthFolder:
+            return true
+        }
     }
 
     private func refreshProjection() async throws -> DokusProjection {

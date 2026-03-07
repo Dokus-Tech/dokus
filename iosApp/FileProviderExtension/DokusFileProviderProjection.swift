@@ -23,6 +23,7 @@ struct DokusProjectedItem {
     let contentType: UTType
     let isFolder: Bool
     let capabilities: NSFileProviderItemCapabilities
+    let contentPolicy: NSFileProviderContentPolicy
     let documentSize: Int64?
     let creationDate: Date?
     let contentModificationDate: Date?
@@ -166,6 +167,7 @@ final class DokusProjectionBuilder {
                         contentType: .folder,
                         isFolder: true,
                         capabilities: capabilities,
+                        contentPolicy: .inherited,
                         documentSize: nil,
                         creationDate: nil,
                         contentModificationDate: nil,
@@ -190,6 +192,7 @@ final class DokusProjectionBuilder {
                     contentType: .folder,
                     isFolder: true,
                     capabilities: [.allowsReading, .allowsContentEnumerating],
+                    contentPolicy: .inherited,
                     documentSize: nil,
                     creationDate: nil,
                     contentModificationDate: nil,
@@ -251,6 +254,7 @@ final class DokusProjectionBuilder {
                 contentType: .folder,
                 isFolder: true,
                 capabilities: [.allowsReading, .allowsContentEnumerating],
+                contentPolicy: .downloadLazilyAndEvictOnRemoteUpdate,
                 documentSize: nil,
                 creationDate: nil,
                 contentModificationDate: nil,
@@ -270,6 +274,7 @@ final class DokusProjectionBuilder {
             contentType: .folder,
             isFolder: true,
             capabilities: [.allowsReading, .allowsContentEnumerating],
+            contentPolicy: .inherited,
             documentSize: nil,
             creationDate: nil,
             contentModificationDate: nil,
@@ -338,6 +343,7 @@ final class DokusProjectionBuilder {
                             contentType: .folder,
                             isFolder: true,
                             capabilities: [.allowsReading, .allowsContentEnumerating],
+                            contentPolicy: .inherited,
                             documentSize: nil,
                             creationDate: nil,
                             contentModificationDate: nil,
@@ -367,6 +373,7 @@ final class DokusProjectionBuilder {
                             contentType: .folder,
                             isFolder: true,
                             capabilities: [.allowsReading, .allowsContentEnumerating],
+                            contentPolicy: .inherited,
                             documentSize: nil,
                             creationDate: nil,
                             contentModificationDate: nil,
@@ -409,6 +416,7 @@ final class DokusProjectionBuilder {
                     contentType: UTType.fromMimeType(record.contentType),
                     isFolder: false,
                     capabilities: capabilities,
+                    contentPolicy: .inherited,
                     documentSize: record.sizeBytes,
                     creationDate: record.issueDate ?? record.uploadedAt,
                     contentModificationDate: record.updatedAt ?? record.uploadedAt,

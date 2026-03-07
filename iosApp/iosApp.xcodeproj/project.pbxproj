@@ -47,6 +47,11 @@
 		F30401032EAD000100000001 /* DokusFileProviderDomainRegistrar.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30300112EAC000100000001 /* DokusFileProviderDomainRegistrar.swift */; };
 		F30401042EAD000100000001 /* DokusFileProviderDomainRegistrarTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30400122EAD000100000001 /* DokusFileProviderDomainRegistrarTests.swift */; };
 		F30401052EAD000100000001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F10100722EAA000100000001 /* Assets.xcassets */; };
+		F30401062EAD000100000001 /* DokusFileProviderAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30100172EAC000100000001 /* DokusFileProviderAPIClient.swift */; };
+		F30401072EAD000100000001 /* DokusFileProviderSessionProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30100182EAC000100000001 /* DokusFileProviderSessionProvider.swift */; };
+		F30401082EAD000100000001 /* DokusFileProviderError.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30100202EAC000100000001 /* DokusFileProviderError.swift */; };
+		F30401092EAD000100000001 /* DokusFileProviderRuntime.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30100132EAC000100000001 /* DokusFileProviderRuntime.swift */; };
+		F30401102EAD000100000001 /* DokusFileProviderItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30100142EAC000100000001 /* DokusFileProviderItem.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -596,6 +601,11 @@
 				F30401042EAD000100000001 /* DokusFileProviderDomainRegistrarTests.swift in Sources */,
 				F30401032EAD000100000001 /* DokusFileProviderDomainRegistrar.swift in Sources */,
 				F30401022EAD000100000001 /* DokusWorkspaceDiscoveryClient.swift in Sources */,
+				F30401062EAD000100000001 /* DokusFileProviderAPIClient.swift in Sources */,
+				F30401072EAD000100000001 /* DokusFileProviderSessionProvider.swift in Sources */,
+				F30401082EAD000100000001 /* DokusFileProviderError.swift in Sources */,
+				F30401102EAD000100000001 /* DokusFileProviderItem.swift in Sources */,
+				F30401092EAD000100000001 /* DokusFileProviderRuntime.swift in Sources */,
 				F30201052EAC000100000001 /* DokusFileProviderSnapshotStore.swift in Sources */,
 				F30201042EAC000100000001 /* DokusFileProviderProjection.swift in Sources */,
 				F30201032EAC000100000001 /* DokusFileProviderConstants.swift in Sources */,

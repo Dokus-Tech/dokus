@@ -20,7 +20,7 @@ actor DokusWorkspaceDiscoveryClient: DokusWorkspaceDiscovering {
         static let authService = "auth"
         static let accessTokenKey = "auth.access_token"
         static let refreshTokenKey = "auth.refresh_token"
-        static let tenantClaimKey = "tenant_id"
+        static let lastSelectedTenantKey = "auth.last_selected_tenant_id"
         static let tokenExpiryClaimKey = "exp"
         static let defaultServerBaseURL = "https://dokus.invoid.vision"
         static let serverBaseURLKey = "share.server.base_url"
@@ -31,29 +31,29 @@ actor DokusWorkspaceDiscoveryClient: DokusWorkspaceDiscovering {
     private struct TokenBundle {
         let accessToken: String
         let refreshToken: String
+        let selectedTenantId: String?
     }
 
-    private let keychain: DokusWorkspaceKeychainStore
+    private let keychain: DokusWorkspaceStringStore
     private let defaults: UserDefaults?
     private let session: URLSession
 
-    init() {
+    init(
+        keychain: DokusWorkspaceStringStore? = nil,
+        defaults: UserDefaults? = nil,
+        session: URLSession? = nil
+    ) {
         let appGroupIdentifier = Bundle.main.object(forInfoDictionaryKey: "DokusShareAppGroupIdentifier") as? String
         let keychainAccessGroup = Bundle.main.object(forInfoDictionaryKey: "DokusSharedKeychainAccessGroup") as? String
 
-        keychain = DokusWorkspaceKeychainStore(
+        self.keychain = keychain ?? DokusWorkspaceKeychainStore(
             service: Constants.authService,
             accessGroup: keychainAccessGroup
         )
-        defaults = UserDefaults(suiteName: appGroupIdentifier ?? Constants.appGroupIdentifier)
-
-        let configuration = URLSessionConfiguration.ephemeral
-        configuration.timeoutIntervalForRequest = 60
-        configuration.timeoutIntervalForResource = 300
-        if let appGroupIdentifier {
-            configuration.sharedContainerIdentifier = appGroupIdentifier
-        }
-        session = URLSession(configuration: configuration)
+        self.defaults = defaults ?? UserDefaults(
+            suiteName: appGroupIdentifier ?? Constants.appGroupIdentifier
+        )
+        self.session = session ?? Self.makeSession(appGroupIdentifier: appGroupIdentifier)
     }
 
     func workspaceState() async throws -> DokusWorkspaceDiscoveryState {
@@ -62,19 +62,22 @@ actor DokusWorkspaceDiscoveryClient: DokusWorkspaceDiscovering {
         }
 
         let refreshToken = keychain.string(for: Constants.refreshTokenKey)
+        var selectedTenantId = keychain.string(for: Constants.lastSelectedTenantKey)
         let baseURL = resolvedBaseURL()
 
         if needsRefresh(for: accessToken) {
             guard let refreshToken else {
                 return .signedOut
             }
+            let refreshTenantId = selectedTenantId
             let refreshed = try await refreshTokens(
                 baseURL: baseURL,
                 refreshToken: refreshToken,
-                tenantId: tenantIdFromClaims(token: accessToken)
+                tenantId: refreshTenantId
             )
-            persist(tokens: refreshed)
+            persist(tokens: refreshed, fallbackSelectedTenantId: refreshTenantId)
             accessToken = refreshed.accessToken
+            selectedTenantId = refreshed.selectedTenantId ?? refreshTenantId
         }
 
         do {
@@ -85,15 +88,26 @@ actor DokusWorkspaceDiscoveryClient: DokusWorkspaceDiscovering {
                 return .signedOut
             }
 
+            let refreshTenantId = selectedTenantId
             let refreshed = try await refreshTokens(
                 baseURL: baseURL,
                 refreshToken: refreshToken,
-                tenantId: tenantIdFromClaims(token: accessToken)
+                tenantId: refreshTenantId
             )
-            persist(tokens: refreshed)
+            persist(tokens: refreshed, fallbackSelectedTenantId: refreshTenantId)
             let workspaces = try await listWorkspaces(baseURL: baseURL, accessToken: refreshed.accessToken)
             return .signedIn(workspaces)
         }
+    }
+
+    private static func makeSession(appGroupIdentifier: String?) -> URLSession {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.timeoutIntervalForRequest = 60
+        configuration.timeoutIntervalForResource = 300
+        if let appGroupIdentifier {
+            configuration.sharedContainerIdentifier = appGroupIdentifier
+        }
+        return URLSession(configuration: configuration)
     }
 
     private func resolvedBaseURL() -> URL {
@@ -182,60 +196,18 @@ actor DokusWorkspaceDiscoveryClient: DokusWorkspaceDiscovering {
             throw DiscoveryError.notAuthenticated
         }
 
-        guard
-            let object = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
-            let accessToken = object["accessToken"] as? String,
-            let newRefreshToken = object["refreshToken"] as? String
-        else {
-            throw DiscoveryError.invalidResponse
-        }
-
-        return TokenBundle(accessToken: accessToken, refreshToken: newRefreshToken)
+        return try parseTokenBundle(from: data)
     }
 
-    private func persist(tokens: TokenBundle) {
+    private func persist(tokens: TokenBundle, fallbackSelectedTenantId: String?) {
         keychain.set(tokens.accessToken, for: Constants.accessTokenKey)
         keychain.set(tokens.refreshToken, for: Constants.refreshTokenKey)
-    }
-
-    private func decodeFlexibleString(_ value: Any?) -> String? {
-        if let string = value as? String, !string.isEmpty {
-            return string
+        let selectedTenantId = tokens.selectedTenantId ?? fallbackSelectedTenantId
+        if let selectedTenantId, !selectedTenantId.isEmpty {
+            keychain.set(selectedTenantId, for: Constants.lastSelectedTenantKey)
+        } else {
+            keychain.remove(Constants.lastSelectedTenantKey)
         }
-        if let number = value as? NSNumber {
-            return number.stringValue
-        }
-        if let dictionary = value as? [String: Any] {
-            if let nested = dictionary["value"] as? String, !nested.isEmpty {
-                return nested
-            }
-            if let nested = dictionary["id"] as? String, !nested.isEmpty {
-                return nested
-            }
-        }
-        return nil
-    }
-
-    private func tenantIdFromClaims(token: String) -> String? {
-        guard let payload = decodeJwtPayload(token: token) else {
-            return nil
-        }
-
-        if let tenantId = payload[Constants.tenantClaimKey] as? String, !tenantId.isEmpty {
-            return tenantId
-        }
-
-        if
-            let tenantsString = payload["tenants"] as? String,
-            let tenantsData = tenantsString.data(using: .utf8),
-            let tenantsObject = try? JSONSerialization.jsonObject(with: tenantsData) as? [[String: Any]],
-            let first = tenantsObject.first,
-            let tenantId = first[Constants.tenantClaimKey] as? String,
-            !tenantId.isEmpty {
-            return tenantId
-        }
-
-        return nil
     }
 
     private func needsRefresh(for token: String) -> Bool {
@@ -279,6 +251,40 @@ actor DokusWorkspaceDiscoveryClient: DokusWorkspaceDiscovering {
 
         return object
     }
+
+    private func parseTokenBundle(from data: Data) throws -> TokenBundle {
+        guard
+            let object = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
+            let accessToken = object["accessToken"] as? String,
+            let refreshToken = object["refreshToken"] as? String
+        else {
+            throw DiscoveryError.invalidResponse
+        }
+
+        return TokenBundle(
+            accessToken: accessToken,
+            refreshToken: refreshToken,
+            selectedTenantId: decodeFlexibleString(object["selectedTenantId"])
+        )
+    }
+
+    private func decodeFlexibleString(_ value: Any?) -> String? {
+        if let string = value as? String, !string.isEmpty {
+            return string
+        }
+        if let number = value as? NSNumber {
+            return number.stringValue
+        }
+        if let dictionary = value as? [String: Any] {
+            if let nested = dictionary["value"] as? String, !nested.isEmpty {
+                return nested
+            }
+            if let nested = dictionary["id"] as? String, !nested.isEmpty {
+                return nested
+            }
+        }
+        return nil
+    }
 }
 
 private enum DiscoveryError: Error {
@@ -287,7 +293,13 @@ private enum DiscoveryError: Error {
     case invalidResponse
 }
 
-private final class DokusWorkspaceKeychainStore {
+protocol DokusWorkspaceStringStore: AnyObject {
+    func string(for key: String) -> String?
+    func set(_ value: String, for key: String)
+    func remove(_ key: String)
+}
+
+private final class DokusWorkspaceKeychainStore: DokusWorkspaceStringStore {
     private let service: String
     private let accessGroup: String?
 
@@ -332,6 +344,10 @@ private final class DokusWorkspaceKeychainStore {
             addQuery[kSecValueData as String] = data
             SecItemAdd(addQuery as CFDictionary, nil)
         }
+    }
+
+    func remove(_ key: String) {
+        SecItemDelete(baseQuery(for: key) as CFDictionary)
     }
 
     private func baseQuery(for key: String) -> [String: Any] {
