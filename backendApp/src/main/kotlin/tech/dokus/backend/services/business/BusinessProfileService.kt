@@ -5,6 +5,7 @@ package tech.dokus.backend.services.business
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import tech.dokus.backend.services.avatar.projectAvatarThumbnail
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.business.BusinessProfileEnrichmentJobRepository
 import tech.dokus.database.repository.business.BusinessProfileRecord
@@ -19,6 +20,7 @@ import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.UpdateBusinessProfileRequest
 import tech.dokus.domain.model.common.Thumbnail
 import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.foundation.backend.storage.AvatarStorageService
 import tech.dokus.domain.utils.json
 import tech.dokus.foundation.backend.utils.loggerFor
 import tech.dokus.foundation.backend.utils.runSuspendCatching
@@ -42,14 +44,9 @@ class BusinessProfileService(
     private val profileRepository: BusinessProfileRepository,
     private val jobRepository: BusinessProfileEnrichmentJobRepository,
     private val tenantRepository: TenantRepository,
+    private val avatarStorageService: AvatarStorageService,
 ) {
     private val logger = loggerFor()
-
-    companion object {
-        private const val AVATAR_SIZE_SMALL = "small"
-        private const val AVATAR_SIZE_MEDIUM = "medium"
-        private const val AVATAR_SIZE_LARGE = "large"
-    }
 
     suspend fun enqueueTenant(tenantId: TenantId, triggerReason: String): Result<Unit> {
         return jobRepository.enqueueOrReset(
@@ -91,30 +88,22 @@ class BusinessProfileService(
             subjectType = BusinessProfileSubjectType.Contact,
             subjectIds = contacts.map { it.id.value }
         )
-        return contacts.map { contact ->
-            val profile = byId[contact.id.value]
-            val activities = profile?.businessActivitiesJson
-                ?.let { decodeActivities(it) }
-                .orEmpty()
-            val avatar = when {
-                profile == null -> null
-                profile.logoStorageKey.isNullOrBlank() -> {
-                    logger.debug(
-                        "No avatar in contact projection for tenant={}, contact={}, reason=no_logo_key",
-                        tenantId,
-                        contact.id
+        return buildList {
+            for (contact in contacts) {
+                val profile = byId[contact.id.value]
+                val activities = profile?.businessActivitiesJson
+                    ?.let { decodeActivities(it) }
+                    .orEmpty()
+                add(
+                    contact.copy(
+                        websiteUrl = profile?.websiteUrl,
+                        businessSummary = profile?.businessSummary,
+                        businessActivities = activities,
+                        businessProfileVerified = profile?.verificationState == BusinessProfileVerificationState.Verified,
+                        avatar = avatarStorageService.projectAvatarThumbnail(profile?.logoStorageKey)
                     )
-                    null
-                }
-                else -> buildContactAvatarThumbnail(contact.id.value)
+                )
             }
-            contact.copy(
-                websiteUrl = profile?.websiteUrl,
-                businessSummary = profile?.businessSummary,
-                businessActivities = activities,
-                businessProfileVerified = profile?.verificationState == BusinessProfileVerificationState.Verified,
-                avatar = avatar
-            )
         }
     }
 
@@ -126,17 +115,8 @@ class BusinessProfileService(
         return profileRepository.getBySubject(tenantId, subjectType, subjectId)?.logoStorageKey
     }
 
-    fun buildContactAvatarThumbnail(contactId: Uuid): Thumbnail = Thumbnail(
-        small = "/api/v1/contacts/$contactId/avatar/$AVATAR_SIZE_SMALL.webp",
-        medium = "/api/v1/contacts/$contactId/avatar/$AVATAR_SIZE_MEDIUM.webp",
-        large = "/api/v1/contacts/$contactId/avatar/$AVATAR_SIZE_LARGE.webp"
-    )
-
-    fun buildTenantAvatarThumbnail(tenantId: TenantId): Thumbnail = Thumbnail(
-        small = "/api/v1/tenants/$tenantId/avatar/$AVATAR_SIZE_SMALL.webp",
-        medium = "/api/v1/tenants/$tenantId/avatar/$AVATAR_SIZE_MEDIUM.webp",
-        large = "/api/v1/tenants/$tenantId/avatar/$AVATAR_SIZE_LARGE.webp"
-    )
+    suspend fun buildTenantAvatarThumbnail(tenantId: TenantId): Thumbnail? =
+        avatarStorageService.projectAvatarThumbnail(tenantRepository.getAvatarStorageKey(tenantId))
 
     suspend fun updateTenantProfile(
         tenantId: TenantId,
@@ -356,10 +336,7 @@ class BusinessProfileService(
             )
             null
         } else {
-            when (subjectType) {
-                BusinessProfileSubjectType.Contact -> buildContactAvatarThumbnail(subjectId)
-                BusinessProfileSubjectType.Tenant -> buildTenantAvatarThumbnail(tenantId)
-            }
+            avatarStorageService.projectAvatarThumbnail(profile.logoStorageKey)
         }
         return BusinessProfileProjection(
             websiteUrl = profile.websiteUrl,

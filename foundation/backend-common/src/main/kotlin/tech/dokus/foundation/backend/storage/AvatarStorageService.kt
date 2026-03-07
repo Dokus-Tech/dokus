@@ -55,6 +55,20 @@ class AvatarStorageService(
         return "${storageKeyPrefix}_$normalized.webp"
     }
 
+    suspend fun signAvatarUrls(storageKeyPrefix: String): Thumbnail =
+        withContext(Dispatchers.IO) {
+            val urls = AVATAR_SIZES.keys.associateWith { sizeName ->
+                val key = buildAvatarObjectKey(storageKeyPrefix, sizeName)
+                storage.getSignedUrl(key, defaultUrlExpiry)
+            }
+
+            Thumbnail(
+                small = urls["small"]!!,
+                medium = urls["medium"]!!,
+                large = urls["large"]!!
+            )
+        }
+
     /**
      * Result of avatar upload operation.
      */
@@ -113,8 +127,6 @@ class AvatarStorageService(
         // Load and process image
         val originalImage = ImmutableImage.loader().fromBytes(imageData)
 
-        // Generate and upload each size
-        val urls = mutableMapOf<String, String>()
         var totalBytes = 0L
 
         for ((sizeName, dimension) in AVATAR_SIZES) {
@@ -124,19 +136,12 @@ class AvatarStorageService(
 
             val key = "${keyPrefix}_$sizeName.webp"
             storage.put(key, webpData, CONTENT_TYPE_WEBP)
-
-            val url = storage.getSignedUrl(key, defaultUrlExpiry)
-            urls[sizeName] = url
             totalBytes += webpData.size
 
             logger.debug("Uploaded avatar size: $sizeName, key=$key, bytes=${webpData.size}")
         }
 
-        val avatar = Thumbnail(
-            small = urls["small"]!!,
-            medium = urls["medium"]!!,
-            large = urls["large"]!!
-        )
+        val avatar = signAvatarUrls(keyPrefix)
 
         logger.info("Avatar uploaded successfully: owner=$ownerLogLabel, keyPrefix=$keyPrefix, totalBytes=$totalBytes")
 
@@ -163,16 +168,7 @@ class AvatarStorageService(
                 return@withContext null
             }
 
-            val urls = AVATAR_SIZES.keys.associateWith { sizeName ->
-                val key = buildAvatarObjectKey(storageKeyPrefix, sizeName)
-                storage.getSignedUrl(key, defaultUrlExpiry)
-            }
-
-            Thumbnail(
-                small = urls["small"]!!,
-                medium = urls["medium"]!!,
-                large = urls["large"]!!
-            )
+            signAvatarUrls(storageKeyPrefix)
         }
 
     suspend fun avatarExists(storageKeyPrefix: String): Boolean =

@@ -85,19 +85,23 @@ class AvatarRoutesTenantScopedTest {
         val tenantId = TenantId.generate()
         coEvery { userRepository.getMembership(TEST_USER_ID, tenantId) } returns membership(tenantId)
         coEvery { tenantRepository.getAvatarStorageKey(tenantId) } returns "avatars/tenants/$tenantId/test"
-        coEvery { avatarStorageService.avatarExists("avatars/tenants/$tenantId/test") } returns true
-        every {
+        coEvery { avatarStorageService.getAvatarUrls("avatars/tenants/$tenantId/test") } returns Thumbnail(
+            small = "https://cdn.example/tenant-small.webp",
+            medium = "https://cdn.example/tenant-medium.webp",
+            large = "https://cdn.example/tenant-large.webp"
+        )
+        coEvery {
             businessProfileService.buildTenantAvatarThumbnail(tenantId)
         } returns Thumbnail(
-            small = "/api/v1/tenants/$tenantId/avatar/small.webp",
-            medium = "/api/v1/tenants/$tenantId/avatar/medium.webp",
-            large = "/api/v1/tenants/$tenantId/avatar/large.webp"
+            small = "https://cdn.example/tenant-small.webp",
+            medium = "https://cdn.example/tenant-medium.webp",
+            large = "https://cdn.example/tenant-large.webp"
         )
 
         val response = authenticatedGet("/api/v1/tenants/$tenantId/avatar")
 
         assertEquals(HttpStatusCode.OK, response.status)
-        assertTrue(response.bodyAsText().contains("/api/v1/tenants/$tenantId/avatar/small.webp"))
+        assertTrue(response.bodyAsText().contains("https://cdn.example/tenant-small.webp"))
         coVerify(exactly = 1) { userRepository.getMembership(TEST_USER_ID, tenantId) }
         coVerify(exactly = 1) { tenantRepository.getAvatarStorageKey(tenantId) }
     }

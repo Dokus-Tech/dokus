@@ -29,6 +29,7 @@ import tech.dokus.domain.model.auth.LoginRequest
 import tech.dokus.domain.model.auth.LoginResponse
 import tech.dokus.domain.model.auth.RegisterRequest
 import tech.dokus.foundation.backend.security.JwtGenerator
+import tech.dokus.foundation.backend.storage.AvatarStorageService
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -43,6 +44,7 @@ class AuthServiceWelcomeFlowTest {
     private val welcomeEmailService = mockk<WelcomeEmailService>()
     private val emailVerificationService = mockk<EmailVerificationService>()
     private val passwordResetService = mockk<PasswordResetService>()
+    private val avatarStorageService = mockk<AvatarStorageService>(relaxed = true)
 
     private val authService = AuthService(
         userRepository = userRepository,
@@ -52,7 +54,8 @@ class AuthServiceWelcomeFlowTest {
         rateLimitService = rateLimitService,
         welcomeEmailService = welcomeEmailService,
         emailVerificationService = emailVerificationService,
-        passwordResetService = passwordResetService
+        passwordResetService = passwordResetService,
+        avatarStorageService = avatarStorageService
     )
 
     @Test

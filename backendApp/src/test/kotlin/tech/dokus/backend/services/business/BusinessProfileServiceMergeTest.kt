@@ -16,17 +16,20 @@ import tech.dokus.database.repository.business.BusinessProfileRepository
 import tech.dokus.domain.enums.BusinessProfileSubjectType
 import tech.dokus.domain.enums.BusinessProfileVerificationState
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.foundation.backend.storage.AvatarStorageService
 import kotlin.uuid.Uuid
 
 class BusinessProfileServiceMergeTest {
     private val profileRepository = mockk<BusinessProfileRepository>()
     private val jobRepository = mockk<BusinessProfileEnrichmentJobRepository>()
     private val tenantRepository = mockk<TenantRepository>(relaxed = true)
+    private val avatarStorageService = mockk<AvatarStorageService>(relaxed = true)
 
     private val service = BusinessProfileService(
         profileRepository = profileRepository,
         jobRepository = jobRepository,
-        tenantRepository = tenantRepository
+        tenantRepository = tenantRepository,
+        avatarStorageService = avatarStorageService
     )
 
     @Test

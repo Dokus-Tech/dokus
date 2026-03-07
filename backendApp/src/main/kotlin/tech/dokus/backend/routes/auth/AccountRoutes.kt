@@ -15,6 +15,7 @@ import org.koin.ktor.ext.inject
 import tech.dokus.backend.services.auth.AuthService
 import tech.dokus.backend.services.auth.SessionContext
 import tech.dokus.backend.services.auth.SurfaceResolver
+import tech.dokus.backend.services.avatar.projectAvatarThumbnail
 import tech.dokus.backend.services.avatar.projectUserAvatar
 import tech.dokus.database.repository.auth.FirmRepository
 import tech.dokus.database.repository.auth.TenantRepository
@@ -32,6 +33,7 @@ import tech.dokus.domain.model.auth.UpdateProfileRequest
 import tech.dokus.domain.routes.Account
 import tech.dokus.foundation.backend.security.authenticateJwt
 import tech.dokus.foundation.backend.security.dokusPrincipal
+import tech.dokus.foundation.backend.storage.AvatarStorageService
 import tech.dokus.foundation.backend.utils.extractClientIpAddress
 
 /**
@@ -47,6 +49,7 @@ internal fun Route.accountRoutes() {
     val userRepository by inject<UserRepository>()
     val tenantRepository by inject<TenantRepository>()
     val firmRepository by inject<FirmRepository>()
+    val avatarStorageService by inject<AvatarStorageService>()
 
     authenticateJwt {
         /**
@@ -57,7 +60,7 @@ internal fun Route.accountRoutes() {
             val principal = dokusPrincipal
             val user = userRepository.findById(principal.userId)
                 ?: throw DokusException.NotAuthenticated("User not found")
-            val projectedUser = userRepository.projectUserAvatar(user)
+            val projectedUser = userRepository.projectUserAvatar(user, avatarStorageService)
             val tenantMemberships = userRepository.getUserTenants(principal.userId)
                 .filter { it.isActive }
             val firmsMemberships = firmRepository.listUserMemberships(principal.userId)
@@ -69,15 +72,22 @@ internal fun Route.accountRoutes() {
 
             val tenantsById = tenantRepository.findByIds(tenantMemberships.map { it.tenantId })
                 .associateBy { it.id }
-            val tenantSummaries = tenantMemberships.mapNotNull { membership ->
-                val tenant = tenantsById[membership.tenantId] ?: return@mapNotNull null
-                TenantWorkspaceSummary(
-                    id = tenant.id,
-                    name = tenant.displayName,
-                    vatNumber = tenant.vatNumber,
-                    role = membership.role,
-                    type = tenant.type
-                )
+            val tenantSummaries = buildList {
+                for (membership in tenantMemberships) {
+                    val tenant = tenantsById[membership.tenantId] ?: continue
+                    add(
+                        TenantWorkspaceSummary(
+                            id = tenant.id,
+                            name = tenant.displayName,
+                            vatNumber = tenant.vatNumber,
+                            role = membership.role,
+                            type = tenant.type,
+                            avatar = avatarStorageService.projectAvatarThumbnail(
+                                tenantRepository.getAvatarStorageKey(tenant.id)
+                            )
+                        )
+                    )
+                }
             }
 
             val firmsById = firmRepository.listFirmsByIds(firmsMemberships.map { it.firmId })

@@ -1,22 +1,18 @@
 package tech.dokus.backend.services.avatar
 
 import tech.dokus.database.repository.auth.UserRepository
-import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.User
 import tech.dokus.domain.model.common.Thumbnail
+import tech.dokus.foundation.backend.storage.AvatarStorageService
 
-private const val AvatarSizeSmall = "small"
-private const val AvatarSizeMedium = "medium"
-private const val AvatarSizeLarge = "large"
+suspend fun AvatarStorageService.projectAvatarThumbnail(storageKey: String?): Thumbnail? {
+    val resolvedStorageKey = storageKey?.takeIf { it.isNotBlank() } ?: return null
+    return signAvatarUrls(resolvedStorageKey)
+}
 
-fun buildUserAvatarThumbnail(userId: UserId): Thumbnail = Thumbnail(
-    small = "/api/v1/users/$userId/avatar/$AvatarSizeSmall.webp",
-    medium = "/api/v1/users/$userId/avatar/$AvatarSizeMedium.webp",
-    large = "/api/v1/users/$userId/avatar/$AvatarSizeLarge.webp"
-)
-
-suspend fun UserRepository.projectUserAvatar(user: User): User {
-    val storageKey = getAvatarStorageKey(user.id) ?: return user
-    if (storageKey.isBlank()) return user
-    return user.copy(avatar = buildUserAvatarThumbnail(user.id))
+suspend fun UserRepository.projectUserAvatar(
+    user: User,
+    avatarStorageService: AvatarStorageService
+): User {
+    return user.copy(avatar = avatarStorageService.projectAvatarThumbnail(getAvatarStorageKey(user.id)))
 }

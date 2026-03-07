@@ -30,6 +30,7 @@ import tech.dokus.backend.services.business.BusinessProfileService
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.domain.ids.UserId
+import tech.dokus.domain.model.common.Thumbnail
 import tech.dokus.domain.model.auth.JwtClaims
 import tech.dokus.domain.utils.json
 import tech.dokus.foundation.backend.config.JwtConfig
@@ -55,12 +56,16 @@ class AvatarRoutesUserScopedTest {
         businessProfileService = mockk(relaxed = true)
     ) { userRepository, _, avatarStorageService, _ ->
         coEvery { userRepository.getAvatarStorageKey(TEST_OTHER_USER_ID) } returns "avatars/users/$TEST_OTHER_USER_ID/test"
-        coEvery { avatarStorageService.avatarExists("avatars/users/$TEST_OTHER_USER_ID/test") } returns true
+        coEvery { avatarStorageService.getAvatarUrls("avatars/users/$TEST_OTHER_USER_ID/test") } returns Thumbnail(
+            small = "https://cdn.example/user-small.webp",
+            medium = "https://cdn.example/user-medium.webp",
+            large = "https://cdn.example/user-large.webp"
+        )
 
         val response = authenticatedGet("/api/v1/users/$TEST_OTHER_USER_ID/avatar")
 
         assertEquals(HttpStatusCode.OK, response.status)
-        assertTrue(response.bodyAsText().contains("/api/v1/users/$TEST_OTHER_USER_ID/avatar/small.webp"))
+        assertTrue(response.bodyAsText().contains("https://cdn.example/user-small.webp"))
         coVerify(exactly = 1) { userRepository.getAvatarStorageKey(TEST_OTHER_USER_ID) }
         coVerify(exactly = 0) { userRepository.getMembership(any(), any()) }
     }
