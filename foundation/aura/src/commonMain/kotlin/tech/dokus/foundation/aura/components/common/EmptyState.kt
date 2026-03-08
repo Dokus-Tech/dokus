@@ -1,4 +1,4 @@
-package tech.dokus.features.cashflow.presentation.common.components.empty
+package tech.dokus.foundation.aura.components.common
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,7 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
-import androidx.compose.ui.unit.dp
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.textFaint
 import tech.dokus.foundation.aura.style.textMuted
 import tech.dokus.foundation.aura.tooling.PreviewParameters
@@ -20,7 +20,7 @@ import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Composable
-internal fun DokusEmptyState(
+fun DokusEmptyState(
     title: String,
     subtitle: String? = null,
     modifier: Modifier = Modifier,
@@ -32,7 +32,7 @@ internal fun DokusEmptyState(
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
         ) {
             Text(
                 text = title,
@@ -47,17 +47,13 @@ internal fun DokusEmptyState(
                 )
             }
             if (action != null) {
-                Box(modifier = Modifier.padding(top = 4.dp)) {
+                Box(modifier = Modifier.padding(top = Constraints.Spacing.xSmall)) {
                     action()
                 }
             }
         }
     }
 }
-
-// =============================================================================
-// Previews
-// =============================================================================
 
 @Preview
 @Composable

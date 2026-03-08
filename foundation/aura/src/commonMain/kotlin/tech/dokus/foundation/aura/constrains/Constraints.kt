@@ -199,7 +199,3 @@ fun Modifier.withContentPadding(
     top = innerPadding.calculateTopPadding(),
 )
 
-@Composable
-fun ContentPaddingVertical() {
-    Spacer(modifier = Modifier.padding(vertical = Constraints.Spacing.large))
-}
