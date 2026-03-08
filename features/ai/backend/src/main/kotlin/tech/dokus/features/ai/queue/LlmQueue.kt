@@ -107,6 +107,7 @@ private class QueueEntry(
             throw e
         } catch (e: Exception) {
             req.result.completeExceptionally(e)
+            throw e
         }
     }
 
@@ -222,7 +223,12 @@ class LlmQueue private constructor(private val config: LlmQueueConfig) {
             lane.slot.value, lane.defaultPriority, lane.label, depth + 1, description
         )
 
-        return request.result.await()
+        return try {
+            request.result.await()
+        } catch (e: CancellationException) {
+            request.result.cancel(e)
+            throw e
+        }
     }
 
     /** Start the queue dispatcher. Call once on application startup. */
