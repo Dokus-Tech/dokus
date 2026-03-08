@@ -77,6 +77,7 @@ import tech.dokus.foundation.aura.style.textMuted
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
+import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.navigation.destinations.AuthDestination
 import tech.dokus.navigation.destinations.CashFlowDestination
 import tech.dokus.navigation.destinations.HomeDestination
@@ -463,9 +464,9 @@ private fun DocumentRecordDto.extractedTotalDouble(): Double? {
     }
 }
 
-private fun tech.dokus.domain.enums.DocumentSource.toUiSource(): UiDocumentSource {
+private fun DocumentSource.toUiSource(): UiDocumentSource {
     return when (this) {
-        tech.dokus.domain.enums.DocumentSource.Peppol -> UiDocumentSource.Peppol
+        DocumentSource.Peppol -> UiDocumentSource.Peppol
         else -> UiDocumentSource.Pdf
     }
 }

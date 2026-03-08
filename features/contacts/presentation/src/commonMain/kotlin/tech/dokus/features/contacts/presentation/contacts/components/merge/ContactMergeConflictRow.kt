@@ -20,6 +20,9 @@ import tech.dokus.aura.resources.contacts_email
 import tech.dokus.aura.resources.contacts_merge_source_archive
 import tech.dokus.aura.resources.contacts_merge_target_keep
 import tech.dokus.features.contacts.presentation.contacts.model.MergeFieldConflict
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Composable
 internal fun ContactMergeConflictRow(
@@ -85,10 +88,10 @@ internal fun ContactMergeConflictRow(
 @Composable
 private fun ContactMergeConflictRowPreview(
     @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+        PreviewParametersProvider::class
+    ) parameters: PreviewParameters
 ) {
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    TestWrapper(parameters) {
         ContactMergeConflictRow(
             conflict = MergeFieldConflict(
                 fieldName = "email",

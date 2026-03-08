@@ -13,6 +13,7 @@ import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
@@ -531,7 +532,7 @@ class BusinessWebsiteProbe(
             }
         }
 
-        fun walk(element: kotlinx.serialization.json.JsonElement): List<String> {
+        fun walk(element: JsonElement): List<String> {
             return when (element) {
                 is JsonObject -> {
                     val typeRaw = element["@type"]?.jsonPrimitive?.contentOrNull?.lowercase()

@@ -20,6 +20,7 @@ import tech.dokus.features.contacts.contactsDomainModule
 import tech.dokus.features.contacts.contactsNetworkModule
 import tech.dokus.foundation.app.AppModule
 import tech.dokus.foundation.app.NavContext
+import tech.dokus.foundation.app.ModuleNavGroup
 import tech.dokus.foundation.app.ModuleSettingsGroup
 import tech.dokus.foundation.app.diModules
 import tech.dokus.foundation.aura.model.DesktopNavPlacement
@@ -58,7 +59,7 @@ val List<AppModule>.diModules: List<Module>
 val List<AppModule>.homeNavigationProviders: List<NavigationProvider>
     get() = mapNotNull { it.homeNavigationProvider }
 
-private fun List<AppModule>.groupsFor(navContext: NavContext): List<tech.dokus.foundation.app.ModuleNavGroup> =
+private fun List<AppModule>.groupsFor(navContext: NavContext): List<ModuleNavGroup> =
     flatMap { it.navGroups }.filter { it.navContext == navContext }
 
 /** All nav items from all modules, flattened */

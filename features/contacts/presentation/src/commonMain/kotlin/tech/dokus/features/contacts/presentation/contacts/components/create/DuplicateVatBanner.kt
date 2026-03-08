@@ -25,6 +25,11 @@ import tech.dokus.aura.resources.action_view
 import tech.dokus.aura.resources.contacts_duplicate_exists
 import tech.dokus.features.contacts.mvi.DuplicateVatUi
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.VatNumber
 
 /**
  * Banner shown when a contact with the same VAT number already exists.
@@ -84,15 +89,15 @@ fun DuplicateVatBanner(
 @Composable
 private fun DuplicateVatBannerPreview(
     @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+        PreviewParametersProvider::class
+    ) parameters: PreviewParameters
 ) {
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    TestWrapper(parameters) {
         DuplicateVatBanner(
             duplicate = DuplicateVatUi(
-                contactId = tech.dokus.domain.ids.ContactId.generate(),
+                contactId = ContactId.generate(),
                 displayName = "Acme Corporation",
-                vatNumber = tech.dokus.domain.ids.VatNumber("BE0123456789")
+                vatNumber = VatNumber("BE0123456789")
             ),
             onViewContact = {}
         )

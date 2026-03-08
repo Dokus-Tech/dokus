@@ -31,6 +31,9 @@ import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.dialog.DokusDialog
 import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Dialog shown when soft duplicates are found during manual contact creation.
@@ -140,19 +143,19 @@ private fun DuplicateItem(
 @Composable
 private fun SoftDuplicateDialogPreview(
     @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+        PreviewParametersProvider::class
+    ) parameters: PreviewParameters
 ) {
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    TestWrapper(parameters) {
         SoftDuplicateDialog(
             duplicates = listOf(
                 SoftDuplicateUi(
-                    contactId = tech.dokus.domain.ids.ContactId.generate(),
+                    contactId = ContactId.generate(),
                     displayName = "Acme Corporation NV",
                     matchReason = SoftDuplicateReason.NameAndCountry
                 ),
                 SoftDuplicateUi(
-                    contactId = tech.dokus.domain.ids.ContactId.generate(),
+                    contactId = ContactId.generate(),
                     displayName = "ACME Corp",
                     matchReason = SoftDuplicateReason.Name
                 )

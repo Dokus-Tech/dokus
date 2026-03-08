@@ -1,8 +1,9 @@
-@file:OptIn(kotlin.uuid.ExperimentalUuidApi::class)
+@file:OptIn(ExperimentalUuidApi::class)
 
 package tech.dokus.backend.services.business
 
 import io.mockk.coEvery
+import kotlin.uuid.ExperimentalUuidApi
 import io.mockk.mockk
 import kotlin.test.Test
 import kotlin.test.assertEquals

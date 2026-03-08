@@ -3,6 +3,7 @@ package tech.dokus.database.repository.cashflow
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.insert
@@ -86,7 +87,7 @@ class DocumentPurposeTemplateRepository {
         }
     }
 
-    private fun org.jetbrains.exposed.v1.core.ResultRow.toTemplateSummary(): DocumentPurposeTemplateSummary {
+    private fun ResultRow.toTemplateSummary(): DocumentPurposeTemplateSummary {
         return DocumentPurposeTemplateSummary(
             tenantId = TenantId.parse(this[DocumentPurposeTemplatesTable.tenantId].toString()),
             counterpartyKey = this[DocumentPurposeTemplatesTable.counterpartyKey],

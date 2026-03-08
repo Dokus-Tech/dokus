@@ -1,6 +1,7 @@
 package tech.dokus.app.screens.console
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.hoverable
@@ -114,7 +115,7 @@ internal fun ConsoleExportScreen(
                         ) {
                             Canvas(modifier = Modifier.size(5.dp)) {
                                 if (isSelected) {
-                                    drawCircle(color = androidx.compose.ui.graphics.Color(0xFFD4A017))
+                                    drawCircle(color = Color(0xFFD4A017))
                                 }
                             }
                             Column(

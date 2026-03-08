@@ -6,6 +6,7 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
@@ -192,7 +193,7 @@ class BusinessProfileEnrichmentJobRepository {
         }
     }
 
-    private fun org.jetbrains.exposed.v1.core.ResultRow.toModel(): BusinessProfileEnrichmentJob = BusinessProfileEnrichmentJob(
+    private fun ResultRow.toModel(): BusinessProfileEnrichmentJob = BusinessProfileEnrichmentJob(
         id = this[BusinessProfileEnrichmentJobsTable.id].value.toKotlinUuid(),
         tenantId = TenantId(this[BusinessProfileEnrichmentJobsTable.tenantId].toKotlinUuid()),
         subjectType = this[BusinessProfileEnrichmentJobsTable.subjectType],

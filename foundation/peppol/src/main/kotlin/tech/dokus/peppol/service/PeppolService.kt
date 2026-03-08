@@ -1,5 +1,6 @@
 package tech.dokus.peppol.service
 
+import kotlin.time.Duration
 import kotlinx.datetime.Clock
 import tech.dokus.domain.Money
 import kotlinx.datetime.LocalDateTime
@@ -515,7 +516,7 @@ class PeppolService(
     /**
      * Check if a datetime is older than the specified duration.
      */
-    private fun isOlderThan(dateTime: LocalDateTime, duration: kotlin.time.Duration): Boolean {
+    private fun isOlderThan(dateTime: LocalDateTime, duration: Duration): Boolean {
         val threshold = Clock.System.now()
             .minus(duration)
             .toLocalDateTime(TimeZone.UTC)

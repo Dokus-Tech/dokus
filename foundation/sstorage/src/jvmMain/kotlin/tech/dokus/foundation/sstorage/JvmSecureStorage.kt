@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.serializer
 import tech.dokus.domain.utils.json
 import java.io.File
 import java.io.InputStream
@@ -409,7 +410,7 @@ internal class JVMSecureStorage(
         }
 
         override suspend fun writeTo(t: Map<String, String>, output: OutputStream) {
-            val jsonString = json.encodeToString(serializer = kotlinx.serialization.serializer(), t)
+            val jsonString = json.encodeToString(serializer = serializer(), t)
             val plainBytes = jsonString.encodeToByteArray()
             val encryptedBytes = encrypt(plainBytes)
             output.write(encryptedBytes)

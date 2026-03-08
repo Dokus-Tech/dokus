@@ -43,6 +43,7 @@ import tech.dokus.domain.model.UnifiedSearchResponse
 import tech.dokus.domain.model.UnifiedSearchScope
 import tech.dokus.domain.model.contact.CounterpartySnapshot
 import tech.dokus.domain.utils.json
+import kotlinx.serialization.json.Json
 import tech.dokus.foundation.backend.database.dbQuery
 import java.util.UUID
 
@@ -435,5 +436,5 @@ private val SearchStatuses = listOf(
     CashflowEntryStatus.Paid,
 )
 
-private inline fun <reified T> kotlinx.serialization.json.Json.decodeFromStringOrNull(value: String): T? =
+private inline fun <reified T> Json.decodeFromStringOrNull(value: String): T? =
     runCatching { decodeFromString<T>(value) }.getOrNull()

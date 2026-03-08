@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.ImageLoader
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.datetime.LocalDateTime
 import kotlinx.coroutines.flow.filter
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
@@ -561,7 +562,7 @@ private fun ContactsLoadingMoreIndicator(
 private fun ContactsListPreview(
     @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
 ) {
-    val now = kotlinx.datetime.LocalDateTime(2026, 1, 15, 10, 0)
+    val now = LocalDateTime(2026, 1, 15, 10, 0)
     val contacts = listOf(
         ContactDto(
             id = ContactId.generate(),

@@ -17,6 +17,7 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.InvoiceDraftData
+import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.ContactResolution
 import tech.dokus.domain.model.contact.CounterpartySnapshot
 import tech.dokus.foundation.backend.lookup.CbeApiClient
@@ -201,8 +202,8 @@ class ContactResolutionServiceTest {
         name: String,
         vat: String,
         source: ContactSource
-    ): tech.dokus.domain.model.contact.ContactDto {
-        return tech.dokus.domain.model.contact.ContactDto(
+    ): ContactDto {
+        return ContactDto(
             id = ContactId.parse(id),
             tenantId = tenantId,
             name = Name(name),

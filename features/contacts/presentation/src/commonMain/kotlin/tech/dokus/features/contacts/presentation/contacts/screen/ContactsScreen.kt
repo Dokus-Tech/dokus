@@ -52,8 +52,12 @@ import tech.dokus.foundation.aura.local.isLarge
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
+import tech.dokus.domain.Money
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.model.contact.DerivedContactRoles
+import tech.dokus.features.contacts.mvi.ContactDetailsState
 
 private val ContentPaddingHorizontal = 16.dp
 private val SpacingMedium = 12.dp
@@ -260,7 +264,7 @@ private fun ContactsDesktopMasterDetailPreview(
                     onCreateContact = {},
                     detailContent = {
                         ContactDetailsScreen(
-                            state = tech.dokus.features.contacts.mvi.ContactDetailsState.Content(
+                            state = ContactDetailsState.Content(
                                 contactId = contactId,
                                 contact = contacts.first(),
                                 activityState = DokusState.success(
@@ -269,8 +273,8 @@ private fun ContactsDesktopMasterDetailPreview(
                                 invoiceSnapshotState = DokusState.success(
                                     ContactInvoiceSnapshot(
                                         documentsCount = 2,
-                                        totalVolume = tech.dokus.domain.Money(53801),
-                                        outstanding = tech.dokus.domain.Money(24901),
+                                        totalVolume = Money(53801),
+                                        outstanding = Money(24901),
                                         recentDocuments = emptyList()
                                     )
                                 ),
@@ -342,9 +346,9 @@ private fun desktopPreviewContacts(now: LocalDateTime, selectedId: ContactId): L
             id = selectedId,
             tenantId = TenantId.generate(),
             name = Name("Coolblue België NV"),
-            vatNumber = tech.dokus.domain.ids.VatNumber("BE0867686774"),
+            vatNumber = VatNumber("BE0867686774"),
             invoiceCount = 2,
-            derivedRoles = tech.dokus.domain.model.contact.DerivedContactRoles(isVendor = true),
+            derivedRoles = DerivedContactRoles(isVendor = true),
             createdAt = now,
             updatedAt = now
         ),
@@ -352,9 +356,9 @@ private fun desktopPreviewContacts(now: LocalDateTime, selectedId: ContactId): L
             id = ContactId.generate(),
             tenantId = TenantId.generate(),
             name = Name("KBC Bank NV"),
-            vatNumber = tech.dokus.domain.ids.VatNumber("BE0462920226"),
+            vatNumber = VatNumber("BE0462920226"),
             invoiceCount = 4,
-            derivedRoles = tech.dokus.domain.model.contact.DerivedContactRoles(isVendor = true),
+            derivedRoles = DerivedContactRoles(isVendor = true),
             createdAt = now,
             updatedAt = now
         ),
@@ -362,9 +366,9 @@ private fun desktopPreviewContacts(now: LocalDateTime, selectedId: ContactId): L
             id = ContactId.generate(),
             tenantId = TenantId.generate(),
             name = Name("SRL Accounting & Tax"),
-            vatNumber = tech.dokus.domain.ids.VatNumber("BE0123456789"),
+            vatNumber = VatNumber("BE0123456789"),
             invoiceCount = 1,
-            derivedRoles = tech.dokus.domain.model.contact.DerivedContactRoles(isVendor = true),
+            derivedRoles = DerivedContactRoles(isVendor = true),
             createdAt = now,
             updatedAt = now
         )

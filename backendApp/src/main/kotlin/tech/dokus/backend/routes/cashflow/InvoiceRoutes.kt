@@ -1,6 +1,7 @@
 package tech.dokus.backend.routes.cashflow
 
 import io.ktor.http.HttpStatusCode
+import kotlinx.serialization.Serializable
 import io.ktor.server.request.receive
 import io.ktor.server.request.receiveNullable
 import io.ktor.server.resources.delete
@@ -193,5 +194,5 @@ internal fun Route.invoiceRoutes() {
 }
 
 // Request DTOs
-@kotlinx.serialization.Serializable
+@Serializable
 private data class InvoiceStatusRequest(val status: InvoiceStatus)

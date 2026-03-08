@@ -41,6 +41,20 @@ import tech.dokus.foundation.app.picker.rememberImagePicker
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.local.LocalScreenSize
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
+import tech.dokus.domain.Email
+import tech.dokus.domain.Name
+import tech.dokus.domain.ids.UserId
+import tech.dokus.domain.model.User
+import tech.dokus.features.auth.mvi.MySessionsState
+import androidx.compose.runtime.remember
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import kotlinx.datetime.LocalDateTime
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 private val MaxContentWidth = 440.dp
 private val ContentPaddingH = 16.dp
@@ -223,30 +237,30 @@ fun ProfileSettingsContent(
     }
 }
 
-@OptIn(kotlin.uuid.ExperimentalUuidApi::class)
-@androidx.compose.ui.tooling.preview.Preview(name = "Profile Settings Desktop Idle", widthDp = 1366, heightDp = 900)
+@OptIn(ExperimentalUuidApi::class)
+@Preview(name = "Profile Settings Desktop Idle", widthDp = 1366, heightDp = 900)
 @Composable
 private fun ProfileSettingsDesktopIdlePreview(
-    @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+    @PreviewParameter(
+        PreviewParametersProvider::class
+    ) parameters: PreviewParameters
 ) {
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    TestWrapper(parameters) {
         ProfileSettingsScreen(
             state = ProfileSettingsState.Viewing(
-                user = tech.dokus.domain.model.User(
-                    id = tech.dokus.domain.ids.UserId(kotlin.uuid.Uuid.parse("00000000-0000-0000-0000-000000000001")),
-                    email = tech.dokus.domain.Email("john@dokus.tech"),
-                    firstName = tech.dokus.domain.Name("John"),
-                    lastName = tech.dokus.domain.Name("Doe"),
+                user = User(
+                    id = UserId(Uuid.parse("00000000-0000-0000-0000-000000000001")),
+                    email = Email("john@dokus.tech"),
+                    firstName = Name("John"),
+                    lastName = Name("Doe"),
                     emailVerified = true,
-                    createdAt = kotlinx.datetime.LocalDateTime(2025, 1, 1, 0, 0),
-                    updatedAt = kotlinx.datetime.LocalDateTime(2025, 1, 1, 0, 0),
+                    createdAt = LocalDateTime(2025, 1, 1, 0, 0),
+                    updatedAt = LocalDateTime(2025, 1, 1, 0, 0),
                 ),
             ),
             currentServer = ServerConfig.Cloud,
             isLoggingOut = false,
-            snackbarHostState = androidx.compose.runtime.remember { SnackbarHostState() },
+            snackbarHostState = remember { SnackbarHostState() },
             onIntent = {},
             onResendVerification = {},
             onChangePassword = {},
@@ -257,7 +271,7 @@ private fun ProfileSettingsDesktopIdlePreview(
             detailPaneContent = {
                 ProfileDetailPaneHost(
                     selection = ProfileDetailSelection.None,
-                    sessionsState = tech.dokus.features.auth.mvi.MySessionsState.Loading,
+                    sessionsState = MySessionsState.Loading,
                     onSessionsIntent = {},
                 )
             }
@@ -265,30 +279,30 @@ private fun ProfileSettingsDesktopIdlePreview(
     }
 }
 
-@OptIn(kotlin.uuid.ExperimentalUuidApi::class)
-@androidx.compose.ui.tooling.preview.Preview(name = "Profile Settings Desktop Split", widthDp = 1366, heightDp = 900)
+@OptIn(ExperimentalUuidApi::class)
+@Preview(name = "Profile Settings Desktop Split", widthDp = 1366, heightDp = 900)
 @Composable
 private fun ProfileSettingsDesktopSplitPreview(
-    @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+    @PreviewParameter(
+        PreviewParametersProvider::class
+    ) parameters: PreviewParameters
 ) {
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    TestWrapper(parameters) {
         ProfileSettingsScreen(
             state = ProfileSettingsState.Viewing(
-                user = tech.dokus.domain.model.User(
-                    id = tech.dokus.domain.ids.UserId(kotlin.uuid.Uuid.parse("00000000-0000-0000-0000-000000000001")),
-                    email = tech.dokus.domain.Email("john@dokus.tech"),
-                    firstName = tech.dokus.domain.Name("John"),
-                    lastName = tech.dokus.domain.Name("Doe"),
+                user = User(
+                    id = UserId(Uuid.parse("00000000-0000-0000-0000-000000000001")),
+                    email = Email("john@dokus.tech"),
+                    firstName = Name("John"),
+                    lastName = Name("Doe"),
                     emailVerified = true,
-                    createdAt = kotlinx.datetime.LocalDateTime(2025, 1, 1, 0, 0),
-                    updatedAt = kotlinx.datetime.LocalDateTime(2025, 1, 1, 0, 0),
+                    createdAt = LocalDateTime(2025, 1, 1, 0, 0),
+                    updatedAt = LocalDateTime(2025, 1, 1, 0, 0),
                 ),
             ),
             currentServer = ServerConfig.Cloud,
             isLoggingOut = false,
-            snackbarHostState = androidx.compose.runtime.remember { SnackbarHostState() },
+            snackbarHostState = remember { SnackbarHostState() },
             onIntent = {},
             onResendVerification = {},
             onChangePassword = {},
@@ -299,7 +313,7 @@ private fun ProfileSettingsDesktopSplitPreview(
             detailPaneContent = {
                 ProfileDetailPaneHost(
                     selection = ProfileDetailSelection.Sessions,
-                    sessionsState = tech.dokus.features.auth.mvi.MySessionsState.Loaded(
+                    sessionsState = MySessionsState.Loaded(
                         sessions = previewSessions()
                     ),
                     onSessionsIntent = {},
@@ -310,25 +324,25 @@ private fun ProfileSettingsDesktopSplitPreview(
     }
 }
 
-@OptIn(kotlin.uuid.ExperimentalUuidApi::class)
-@androidx.compose.ui.tooling.preview.Preview
+@OptIn(ExperimentalUuidApi::class)
+@Preview
 @Composable
 private fun ProfileSettingsContentPreview(
-    @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+    @PreviewParameter(
+        PreviewParametersProvider::class
+    ) parameters: PreviewParameters
 ) {
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    TestWrapper(parameters) {
         ProfileSettingsContent(
             state = ProfileSettingsState.Viewing(
-                user = tech.dokus.domain.model.User(
-                    id = tech.dokus.domain.ids.UserId(kotlin.uuid.Uuid.parse("00000000-0000-0000-0000-000000000001")),
-                    email = tech.dokus.domain.Email("john@dokus.tech"),
-                    firstName = tech.dokus.domain.Name("John"),
-                    lastName = tech.dokus.domain.Name("Doe"),
+                user = User(
+                    id = UserId(Uuid.parse("00000000-0000-0000-0000-000000000001")),
+                    email = Email("john@dokus.tech"),
+                    firstName = Name("John"),
+                    lastName = Name("Doe"),
                     emailVerified = true,
-                    createdAt = kotlinx.datetime.LocalDateTime(2025, 1, 1, 0, 0),
-                    updatedAt = kotlinx.datetime.LocalDateTime(2025, 1, 1, 0, 0),
+                    createdAt = LocalDateTime(2025, 1, 1, 0, 0),
+                    updatedAt = LocalDateTime(2025, 1, 1, 0, 0),
                 ),
             ),
             currentServer = ServerConfig.Cloud,

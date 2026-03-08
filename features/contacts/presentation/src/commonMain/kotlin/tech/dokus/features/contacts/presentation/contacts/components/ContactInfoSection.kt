@@ -19,6 +19,16 @@ import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.DokusCard
 import tech.dokus.foundation.aura.components.DokusCardPadding
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.Name
+import tech.dokus.domain.Email
+import tech.dokus.domain.PhoneNumber
+import kotlinx.datetime.LocalDateTime
 
 @Composable
 internal fun ContactInfoSection(
@@ -70,20 +80,20 @@ internal fun ContactInfoSection(
 @Composable
 private fun ContactInfoSectionPreview(
     @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+        PreviewParametersProvider::class
+    ) parameters: PreviewParameters
 ) {
-    val now = kotlinx.datetime.LocalDateTime(2026, 1, 15, 10, 0)
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    val now = LocalDateTime(2026, 1, 15, 10, 0)
+    TestWrapper(parameters) {
         ContactInfoSection(
             state = DokusState.success(
                 ContactDto(
-                    id = tech.dokus.domain.ids.ContactId.generate(),
-                    tenantId = tech.dokus.domain.ids.TenantId.generate(),
-                    name = tech.dokus.domain.Name("Acme Corporation"),
-                    email = tech.dokus.domain.Email("info@acme.be"),
-                    phone = tech.dokus.domain.PhoneNumber("+32 2 123 45 67"),
-                    vatNumber = tech.dokus.domain.ids.VatNumber("BE0123456789"),
+                    id = ContactId.generate(),
+                    tenantId = TenantId.generate(),
+                    name = Name("Acme Corporation"),
+                    email = Email("info@acme.be"),
+                    phone = PhoneNumber("+32 2 123 45 67"),
+                    vatNumber = VatNumber("BE0123456789"),
                     defaultPaymentTerms = 30,
                     isActive = true,
                     createdAt = now,

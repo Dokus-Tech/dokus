@@ -31,6 +31,14 @@ import tech.dokus.aura.resources.contacts_merge_select_target_prompt
 import tech.dokus.aura.resources.contacts_searching
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.Name
+import kotlinx.datetime.LocalDateTime
 
 @Composable
 internal fun ContactMergeSelectTargetStep(
@@ -143,17 +151,17 @@ internal fun ContactMergeSelectTargetStep(
 @Composable
 private fun ContactMergeSelectTargetStepPreview(
     @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+        PreviewParametersProvider::class
+    ) parameters: PreviewParameters
 ) {
-    val now = kotlinx.datetime.LocalDateTime(2026, 1, 15, 10, 0)
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    val now = LocalDateTime(2026, 1, 15, 10, 0)
+    TestWrapper(parameters) {
         ContactMergeSelectTargetStep(
             sourceContact = ContactDto(
-                id = tech.dokus.domain.ids.ContactId.generate(),
-                tenantId = tech.dokus.domain.ids.TenantId.generate(),
-                name = tech.dokus.domain.Name("Old Company NV"),
-                vatNumber = tech.dokus.domain.ids.VatNumber("BE0123456789"),
+                id = ContactId.generate(),
+                tenantId = TenantId.generate(),
+                name = Name("Old Company NV"),
+                vatNumber = VatNumber("BE0123456789"),
                 createdAt = now,
                 updatedAt = now
             ),

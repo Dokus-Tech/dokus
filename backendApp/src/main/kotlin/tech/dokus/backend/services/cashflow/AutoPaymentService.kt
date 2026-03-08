@@ -1,6 +1,7 @@
 package tech.dokus.backend.services.cashflow
 
 import kotlinx.datetime.Clock
+import kotlinx.serialization.json.Json
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
@@ -556,7 +557,7 @@ class AutoPaymentService(
     private fun parseJsonArray(raw: String?): List<String> {
         if (raw.isNullOrBlank()) return emptyList()
         return try {
-            kotlinx.serialization.json.Json.decodeFromString<List<String>>(raw)
+            Json.decodeFromString<List<String>>(raw)
         } catch (_: Exception) {
             emptyList()
         }

@@ -15,6 +15,7 @@ import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.InvoiceDraftData
+import tech.dokus.domain.model.PartyDraft
 import tech.dokus.domain.model.contact.CounterpartySnapshot
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -78,7 +79,7 @@ class DocumentReviewStateDirectionTest {
             subtotalAmount = Money.from("100.00"),
             vatAmount = Money.from("21.00"),
             totalAmount = Money.from("121.00"),
-            seller = tech.dokus.domain.model.PartyDraft(name = sellerName)
+            seller = PartyDraft(name = sellerName)
         )
 
         val draft = DocumentDraftDto(

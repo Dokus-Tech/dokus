@@ -4,6 +4,7 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.toStdlibInstant
+import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
@@ -66,7 +67,7 @@ class ProcessorIngestionRepository {
             val sourceJoin = (DocumentIngestionRunsTable innerJoin DocumentsTable)
                 .join(
                     DocumentSourcesTable,
-                    joinType = org.jetbrains.exposed.v1.core.JoinType.LEFT,
+                    joinType = JoinType.LEFT,
                     additionalConstraint = {
                         (DocumentIngestionRunsTable.sourceId eq DocumentSourcesTable.id) and
                             (DocumentIngestionRunsTable.tenantId eq DocumentSourcesTable.tenantId)

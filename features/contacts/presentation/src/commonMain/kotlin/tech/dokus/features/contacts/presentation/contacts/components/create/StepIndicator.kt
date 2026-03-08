@@ -28,6 +28,9 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.contacts_step_confirm
 import tech.dokus.aura.resources.contacts_step_details
 import tech.dokus.aura.resources.contacts_step_search
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Step in the create contact flow.
@@ -197,10 +200,10 @@ private fun StepLine(
 @Composable
 private fun StepIndicatorPreview(
     @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+        PreviewParametersProvider::class
+    ) parameters: PreviewParameters
 ) {
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    TestWrapper(parameters) {
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             StepIndicator(currentStep = CreateContactStep.Search)
             StepIndicator(currentStep = CreateContactStep.Confirm)

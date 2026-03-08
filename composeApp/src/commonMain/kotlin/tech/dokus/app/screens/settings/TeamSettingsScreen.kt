@@ -111,6 +111,13 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
+import tech.dokus.domain.Email
+import tech.dokus.domain.Name
+import tech.dokus.domain.ids.FirmId
+import tech.dokus.domain.ids.UserId
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
+import org.jetbrains.compose.resources.StringResource
 
 private val MaxContentWidth = 400.dp
 private val ContentPaddingH = 16.dp
@@ -602,7 +609,7 @@ private fun BookkeeperAccessSection(
     isLoading: Boolean,
     isOwner: Boolean,
     onGrantClick: () -> Unit,
-    onRevokeClick: (tech.dokus.domain.ids.FirmId) -> Unit,
+    onRevokeClick: (FirmId) -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -700,10 +707,10 @@ private fun BookkeeperAccessSection(
 private fun GrantBookkeeperAccessDialog(
     query: String,
     results: List<BookkeeperFirmSearchItem>,
-    selectedFirmId: tech.dokus.domain.ids.FirmId?,
+    selectedFirmId: FirmId?,
     loading: Boolean,
     onQueryChange: (String) -> Unit,
-    onSelectFirm: (tech.dokus.domain.ids.FirmId) -> Unit,
+    onSelectFirm: (FirmId) -> Unit,
     onDismiss: () -> Unit,
     onGrant: () -> Unit,
 ) {
@@ -966,28 +973,28 @@ private fun formatDate(dateTime: LocalDateTime): String {
 // Previews
 // =============================================================================
 
-@OptIn(kotlin.uuid.ExperimentalUuidApi::class)
+@OptIn(ExperimentalUuidApi::class)
 @Preview
 @Composable
 private fun TeamSettingsContentPreview(
     @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
 ) {
-    val ownerId = tech.dokus.domain.ids.UserId(kotlin.uuid.Uuid.random())
+    val ownerId = UserId(Uuid.random())
     val sampleMembers = listOf(
         TeamMember(
             userId = ownerId,
-            email = tech.dokus.domain.Email("jane@dokus.be"),
-            firstName = tech.dokus.domain.Name("Jane"),
-            lastName = tech.dokus.domain.Name("Smith"),
+            email = Email("jane@dokus.be"),
+            firstName = Name("Jane"),
+            lastName = Name("Smith"),
             role = UserRole.Owner,
             joinedAt = LocalDateTime(2024, 6, 1, 10, 0),
             lastActiveAt = null,
         ),
         TeamMember(
-            userId = tech.dokus.domain.ids.UserId(kotlin.uuid.Uuid.random()),
-            email = tech.dokus.domain.Email("john@dokus.be"),
-            firstName = tech.dokus.domain.Name("John"),
-            lastName = tech.dokus.domain.Name("Doe"),
+            userId = UserId(Uuid.random()),
+            email = Email("john@dokus.be"),
+            firstName = Name("John"),
+            lastName = Name("Doe"),
             role = UserRole.Editor,
             joinedAt = LocalDateTime(2025, 1, 15, 14, 30),
             lastActiveAt = null,

@@ -37,6 +37,12 @@ import tech.dokus.foundation.aura.components.tiles.AddCompanyTile
 import tech.dokus.foundation.aura.components.tiles.CompanyTile
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.extensions.localized
+import coil3.ImageLoader
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 import tech.dokus.foundation.app.network.rememberAuthenticatedImageLoader
 import tech.dokus.foundation.app.network.rememberResolvedApiUrl
 
@@ -116,7 +122,7 @@ private fun StateDrivenContent(
 @Composable
 private fun WorkspaceTile(
     entry: WorkspaceEntry,
-    imageLoader: coil3.ImageLoader,
+    imageLoader: ImageLoader,
     onTenantClick: (TenantId) -> Unit,
     onFirmClick: (FirmId) -> Unit,
 ) {
@@ -242,14 +248,14 @@ private fun previewFirm(
     clientCount = count,
 )
 
-@androidx.compose.ui.tooling.preview.Preview
+@Preview
 @Composable
 private fun WorkspaceSelectionEmptyPreview(
-    @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class,
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters,
+    @PreviewParameter(
+        PreviewParametersProvider::class,
+    ) parameters: PreviewParameters,
 ) {
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    TestWrapper(parameters) {
         WorkspaceSelectionBody(
             state = WorkspaceSelectState.Content(
                 tenants = listOf(previewTenant("Dokus Tech", UserRole.Owner)),
@@ -262,14 +268,14 @@ private fun WorkspaceSelectionEmptyPreview(
     }
 }
 
-@androidx.compose.ui.tooling.preview.Preview
+@Preview
 @Composable
 private fun WorkspaceSelectionWithPracticePreview(
-    @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class,
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters,
+    @PreviewParameter(
+        PreviewParametersProvider::class,
+    ) parameters: PreviewParameters,
 ) {
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    TestWrapper(parameters) {
         WorkspaceSelectionBody(
             state = WorkspaceSelectState.Content(
                 tenants = listOf(
@@ -287,14 +293,14 @@ private fun WorkspaceSelectionWithPracticePreview(
     }
 }
 
-@androidx.compose.ui.tooling.preview.Preview(name = "Workspace Selection Desktop", widthDp = 1366, heightDp = 900)
+@Preview(name = "Workspace Selection Desktop", widthDp = 1366, heightDp = 900)
 @Composable
 private fun WorkspaceSelectionDesktopPreview(
-    @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class,
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters,
+    @PreviewParameter(
+        PreviewParametersProvider::class,
+    ) parameters: PreviewParameters,
 ) {
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    TestWrapper(parameters) {
         WorkspaceSelectionBody(
             state = WorkspaceSelectState.Content(
                 tenants = listOf(

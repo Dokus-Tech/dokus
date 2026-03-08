@@ -4,6 +4,7 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
@@ -272,7 +273,7 @@ class ImportedBankTransactionRepository {
         } > 0
     }
 
-    private fun org.jetbrains.exposed.v1.core.ResultRow.toDto(): ImportedBankTransactionDto {
+    private fun ResultRow.toDto(): ImportedBankTransactionDto {
         return ImportedBankTransactionDto(
             id = ImportedBankTransactionId.parse(this[ImportedBankTransactionsTable.id].value.toString()),
             tenantId = TenantId.parse(this[ImportedBankTransactionsTable.tenantId].toString()),

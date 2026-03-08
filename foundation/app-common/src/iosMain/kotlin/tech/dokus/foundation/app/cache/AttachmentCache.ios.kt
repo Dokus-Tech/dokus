@@ -2,6 +2,7 @@
 
 package tech.dokus.foundation.app.cache
 
+import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.allocArrayOf
@@ -44,7 +45,7 @@ actual fun readFile(path: String): ByteArray? {
     }
 }
 
-@OptIn(ExperimentalForeignApi::class, kotlinx.cinterop.BetaInteropApi::class)
+@OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
 actual fun writeFile(path: String, content: ByteArray) {
     try {
         val fileManager = NSFileManager.defaultManager

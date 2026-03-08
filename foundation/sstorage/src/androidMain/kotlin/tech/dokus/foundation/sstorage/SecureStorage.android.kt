@@ -20,6 +20,8 @@ import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
+import android.security.keystore.KeyGenParameterSpec
+import android.security.keystore.KeyProperties
 
 /**
  * Android implementation of SecureStorage using DataStore (Okio) with AES-GCM encryption.
@@ -72,11 +74,11 @@ internal class AndroidSecureStorage(
         val existing = ks.getKey(serviceName, null) as? SecretKey
         if (existing != null) return existing
         val keyGenerator = KeyGenerator.getInstance("AES", "AndroidKeyStore")
-        val purposes = android.security.keystore.KeyProperties.PURPOSE_ENCRYPT or
-            android.security.keystore.KeyProperties.PURPOSE_DECRYPT
-        val spec = android.security.keystore.KeyGenParameterSpec.Builder(serviceName, purposes)
-            .setBlockModes(android.security.keystore.KeyProperties.BLOCK_MODE_GCM)
-            .setEncryptionPaddings(android.security.keystore.KeyProperties.ENCRYPTION_PADDING_NONE)
+        val purposes = KeyProperties.PURPOSE_ENCRYPT or
+            KeyProperties.PURPOSE_DECRYPT
+        val spec = KeyGenParameterSpec.Builder(serviceName, purposes)
+            .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+            .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
             .setKeySize(AES_KEY_SIZE)
             .setUserAuthenticationRequired(false)
             .build()

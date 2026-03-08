@@ -8,6 +8,7 @@ import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
+import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.BankStatementDraftData
@@ -109,7 +110,7 @@ class DocumentReviewStateConfirmBlockersTest {
                 vatAmount = Money.from("21.00"),
                 totalAmount = Money.from("121.00"),
             ),
-            selectedContactId = tech.dokus.domain.ids.ContactId.parse("8d2af381-d2bc-4f7f-8d2d-fae6dcbecf77"),
+            selectedContactId = ContactId.parse("8d2af381-d2bc-4f7f-8d2d-fae6dcbecf77"),
         )
 
         assertTrue(state.isBlocking)
@@ -159,7 +160,7 @@ class DocumentReviewStateConfirmBlockersTest {
         draftData: DocumentDraftData,
         hasUnsavedChanges: Boolean = false,
         isSaving: Boolean = false,
-        selectedContactId: tech.dokus.domain.ids.ContactId? = null,
+        selectedContactId: ContactId? = null,
         counterpartyIntent: CounterpartyIntent = CounterpartyIntent.None,
     ): DocumentReviewState.Content {
         val tenantId = TenantId.parse("44e8ed5c-020a-4bbb-9439-ac85899c5589")

@@ -4,6 +4,7 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
@@ -171,7 +172,7 @@ class WelcomeEmailJobRepository {
         }
     }
 
-    private fun org.jetbrains.exposed.v1.core.ResultRow.toModel(): WelcomeEmailJob = WelcomeEmailJob(
+    private fun ResultRow.toModel(): WelcomeEmailJob = WelcomeEmailJob(
         id = this[WelcomeEmailJobsTable.id].value,
         userId = UserId(this[WelcomeEmailJobsTable.userId].toKotlinUuid()),
         tenantId = TenantId(this[WelcomeEmailJobsTable.tenantId].toKotlinUuid()),

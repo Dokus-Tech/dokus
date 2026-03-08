@@ -27,6 +27,11 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import tech.dokus.features.auth.mvi.MySessionsIntent
 import tech.dokus.features.auth.mvi.MySessionsState
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 private const val PaneAnimationDurationMs = 220
 
@@ -185,14 +190,14 @@ private fun IdlePlaceholderBackdrop(
     }
 }
 
-@androidx.compose.ui.tooling.preview.Preview(name = "Detail Pane Idle", widthDp = 520, heightDp = 760)
+@Preview(name = "Detail Pane Idle", widthDp = 520, heightDp = 760)
 @Composable
 private fun ProfileDetailPaneIdlePreview(
-    @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+    @PreviewParameter(
+        PreviewParametersProvider::class
+    ) parameters: PreviewParameters
 ) {
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    TestWrapper(parameters) {
         ProfileDetailPaneHost(
             selection = ProfileDetailSelection.None,
             sessionsState = MySessionsState.Loading,
@@ -201,14 +206,14 @@ private fun ProfileDetailPaneIdlePreview(
     }
 }
 
-@androidx.compose.ui.tooling.preview.Preview(name = "Detail Pane Sessions", widthDp = 520, heightDp = 760)
+@Preview(name = "Detail Pane Sessions", widthDp = 520, heightDp = 760)
 @Composable
 private fun ProfileDetailPaneSessionsPreview(
-    @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+    @PreviewParameter(
+        PreviewParametersProvider::class
+    ) parameters: PreviewParameters
 ) {
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    TestWrapper(parameters) {
         ProfileDetailPaneHost(
             selection = ProfileDetailSelection.Sessions,
             sessionsState = MySessionsState.Loaded(sessions = previewSessions()),

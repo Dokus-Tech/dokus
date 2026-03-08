@@ -47,6 +47,10 @@ import tech.dokus.foundation.aura.components.fields.PTextFieldPhone
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.extensions.localized
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
+import tech.dokus.domain.LegalName
 
 /**
  * Manual step content - add contact without VAT lookup.
@@ -328,15 +332,15 @@ private fun isFormValid(type: ClientType, data: ManualContactFormData): Boolean 
 @Composable
 private fun ManualStepContentPreview(
     @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+        PreviewParametersProvider::class
+    ) parameters: PreviewParameters
 ) {
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    TestWrapper(parameters) {
         ManualStepContent(
             state = CreateContactState.ManualStep(
                 contactType = ClientType.Business,
                 formData = ManualContactFormData(
-                    companyName = tech.dokus.domain.LegalName("Acme Corp")
+                    companyName = LegalName("Acme Corp")
                 )
             ),
             headerTitle = "New Contact",

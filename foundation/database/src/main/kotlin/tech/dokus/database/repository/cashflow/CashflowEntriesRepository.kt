@@ -8,6 +8,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.v1.core.JoinType
+import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
@@ -338,7 +339,7 @@ class CashflowEntriesRepository {
                     }
                     if (toDate != null) {
                         // End of day: next day at 00:00:00
-                        val nextDay = toDate.plus(kotlinx.datetime.DatePeriod(days = 1))
+                        val nextDay = toDate.plus(DatePeriod(days = 1))
                         val endOfDay = LocalDateTime(nextDay.year, nextDay.monthNumber, nextDay.dayOfMonth, 0, 0, 0)
                         query = query.andWhere { CashflowEntriesTable.paidAt less endOfDay }
                     }
@@ -458,7 +459,7 @@ class CashflowEntriesRepository {
     }
 
     private fun mapRowToEntry(
-        row: org.jetbrains.exposed.v1.core.ResultRow,
+        row: ResultRow,
         contactName: String? = null
     ): CashflowEntry {
         return CashflowEntry(

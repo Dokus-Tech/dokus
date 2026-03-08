@@ -1,6 +1,7 @@
 package tech.dokus.backend.routes.auth
 
 import io.ktor.http.HttpHeaders
+import kotlinx.serialization.Serializable
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.header
 import io.ktor.server.request.receive
@@ -117,7 +118,7 @@ internal fun Route.identityRoutes() {
     }
 }
 
-@kotlinx.serialization.Serializable
+@Serializable
 private data class PasswordResetRequest(
     val email: Email
 )

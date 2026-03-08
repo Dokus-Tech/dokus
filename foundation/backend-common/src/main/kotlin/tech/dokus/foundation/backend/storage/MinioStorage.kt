@@ -8,12 +8,14 @@ import io.minio.MinioClient
 import io.minio.PutObjectArgs
 import io.minio.RemoveObjectArgs
 import io.minio.StatObjectArgs
+import io.minio.errors.ErrorResponseException
 import io.minio.http.Method
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import tech.dokus.foundation.backend.config.MinioConfig
 import tech.dokus.foundation.backend.utils.loggerFor
 import java.io.ByteArrayInputStream
+import java.net.URL
 import java.io.InputStream
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
@@ -86,7 +88,7 @@ class MinioStorage(
             openStreamInternal(key).use { stream ->
                 stream.readAllBytes()
             }
-        } catch (e: io.minio.errors.ErrorResponseException) {
+        } catch (e: ErrorResponseException) {
             if (e.errorResponse().code() == "NoSuchKey") {
                 throw NoSuchElementException("Object not found: $key")
             }
@@ -98,7 +100,7 @@ class MinioStorage(
         logger.debug("Opening object stream: $key")
         try {
             openStreamInternal(key)
-        } catch (e: io.minio.errors.ErrorResponseException) {
+        } catch (e: ErrorResponseException) {
             if (e.errorResponse().code() == "NoSuchKey") {
                 throw NoSuchElementException("Object not found: $key")
             }
@@ -128,7 +130,7 @@ class MinioStorage(
                     .build()
             )
             true
-        } catch (e: io.minio.errors.ErrorResponseException) {
+        } catch (e: ErrorResponseException) {
             if (e.errorResponse().code() == "NoSuchKey") {
                 false
             } else {
@@ -201,7 +203,7 @@ class MinioStorage(
                     } else {
                         publicUrl
                     }
-                    val url = java.net.URL(normalizedUrl)
+                    val url = URL(normalizedUrl)
                     val baseUrl =
                         "${url.protocol}://${url.host}${if (url.port != -1) ":${url.port}" else ""}"
                     val path = url.path.takeIf { it.isNotEmpty() && it != "/" }

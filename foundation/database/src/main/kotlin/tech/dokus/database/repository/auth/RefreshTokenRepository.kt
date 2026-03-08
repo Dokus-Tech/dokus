@@ -3,8 +3,10 @@
 package tech.dokus.database.repository.auth
 
 import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
@@ -547,7 +549,7 @@ class RefreshTokenRepository {
         return rows.map { it.token.toRevokedSessionInfo() }
     }
 
-    private fun toActiveTokenRow(row: org.jetbrains.exposed.v1.core.ResultRow): ActiveTokenRow {
+    private fun toActiveTokenRow(row: ResultRow): ActiveTokenRow {
         val rowId = row[RefreshTokensTable.id].value
         val tokenId = rowId.toString()
         val storedSessionId = row[RefreshTokensTable.sessionId]?.let { SessionId(it.toString()) }
@@ -571,7 +573,7 @@ class RefreshTokenRepository {
         )
     }
 
-    private fun activeRowsFilter(userUuid: JavaUuid, currentTimeLocal: kotlinx.datetime.LocalDateTime) =
+    private fun activeRowsFilter(userUuid: JavaUuid, currentTimeLocal: LocalDateTime) =
         (RefreshTokensTable.userId eq userUuid) and
             (RefreshTokensTable.isRevoked eq false) and
             (RefreshTokensTable.expiresAt greater currentTimeLocal)

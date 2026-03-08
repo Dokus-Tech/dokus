@@ -45,6 +45,17 @@ import tech.dokus.foundation.app.network.rememberResolvedApiUrl
 import tech.dokus.foundation.aura.components.AvatarShape
 import tech.dokus.foundation.aura.components.AvatarSize
 import tech.dokus.foundation.aura.components.CompanyAvatarImage
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.Name
+import tech.dokus.domain.Email
+import tech.dokus.domain.PhoneNumber
+import tech.dokus.domain.model.contact.DerivedContactRoles
+import kotlinx.datetime.LocalDateTime
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -210,25 +221,25 @@ internal fun ContactInfoContent(
 @Composable
 private fun ContactInfoContentPreview(
     @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+        PreviewParametersProvider::class
+    ) parameters: PreviewParameters
 ) {
-    val now = kotlinx.datetime.LocalDateTime(2026, 1, 15, 10, 0)
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    val now = LocalDateTime(2026, 1, 15, 10, 0)
+    TestWrapper(parameters) {
         ContactInfoContent(
             contact = ContactDto(
-                id = tech.dokus.domain.ids.ContactId.generate(),
-                tenantId = tech.dokus.domain.ids.TenantId.generate(),
-                name = tech.dokus.domain.Name("Acme Corporation"),
-                email = tech.dokus.domain.Email("info@acme.be"),
-                phone = tech.dokus.domain.PhoneNumber("+32 2 123 45 67"),
-                vatNumber = tech.dokus.domain.ids.VatNumber("BE0123456789"),
+                id = ContactId.generate(),
+                tenantId = TenantId.generate(),
+                name = Name("Acme Corporation"),
+                email = Email("info@acme.be"),
+                phone = PhoneNumber("+32 2 123 45 67"),
+                vatNumber = VatNumber("BE0123456789"),
                 companyNumber = "0123.456.789",
                 contactPerson = "John Doe",
                 defaultPaymentTerms = 30,
                 tags = "client,vip",
                 isActive = true,
-                derivedRoles = tech.dokus.domain.model.contact.DerivedContactRoles(
+                derivedRoles = DerivedContactRoles(
                     isCustomer = true,
                     isSupplier = true
                 ),

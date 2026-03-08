@@ -22,6 +22,15 @@ import tech.dokus.features.contacts.usecases.ContactInvoiceSnapshot
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.OfflineOverlay
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.Name
+import tech.dokus.domain.Email
+import kotlinx.datetime.LocalDateTime
 
 private val SectionSpacing = 16.dp
 
@@ -107,20 +116,20 @@ internal fun ContactDetailsContent(
 @Composable
 private fun ContactDetailsContentPreview(
     @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+        PreviewParametersProvider::class
+    ) parameters: PreviewParameters
 ) {
-    val now = kotlinx.datetime.LocalDateTime(2026, 1, 15, 10, 0)
-    val contactId = tech.dokus.domain.ids.ContactId.generate()
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    val now = LocalDateTime(2026, 1, 15, 10, 0)
+    val contactId = ContactId.generate()
+    TestWrapper(parameters) {
         ContactDetailsContent(
             contactState = DokusState.success(
                 ContactDto(
                     id = contactId,
-                    tenantId = tech.dokus.domain.ids.TenantId.generate(),
-                    name = tech.dokus.domain.Name("Acme Corporation"),
-                    email = tech.dokus.domain.Email("info@acme.be"),
-                    vatNumber = tech.dokus.domain.ids.VatNumber("BE0123456789"),
+                    tenantId = TenantId.generate(),
+                    name = Name("Acme Corporation"),
+                    email = Email("info@acme.be"),
+                    vatNumber = VatNumber("BE0123456789"),
                     defaultPaymentTerms = 30,
                     isActive = true,
                     createdAt = now,

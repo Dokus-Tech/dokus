@@ -24,6 +24,7 @@ import tech.dokus.domain.model.PeppolResolution
 import tech.dokus.foundation.backend.database.dbQuery
 import tech.dokus.foundation.backend.utils.loggerFor
 import java.util.UUID
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 
 /**
@@ -221,7 +222,7 @@ class PeppolDirectoryCacheRepository {
         )
     }
 
-    private fun LocalDateTime.plusDuration(duration: kotlin.time.Duration): LocalDateTime {
+    private fun LocalDateTime.plusDuration(duration: Duration): LocalDateTime {
         val instant = Clock.System.now()
         val newInstant = instant + duration
         return newInstant.toLocalDateTime(TimeZone.UTC)

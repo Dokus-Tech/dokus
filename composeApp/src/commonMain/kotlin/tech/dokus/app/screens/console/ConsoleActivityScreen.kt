@@ -1,6 +1,8 @@
 package tech.dokus.app.screens.console
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -62,16 +64,16 @@ internal fun ConsoleActivityScreen(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             DokusCardSurface {
-                                androidx.compose.foundation.layout.Box(
+                                Box(
                                     modifier = Modifier
                                         .size(28.dp)
                                         .clip(MaterialTheme.shapes.small),
                                     contentAlignment = Alignment.Center,
                                 ) {
-                                    androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
+                                    Canvas(modifier = Modifier.fillMaxSize()) {
                                         drawRect(item.accent.copy(alpha = 0.14f))
                                     }
-                                    androidx.compose.foundation.Canvas(modifier = Modifier.size(8.dp)) {
+                                    Canvas(modifier = Modifier.size(8.dp)) {
                                         drawCircle(item.accent)
                                     }
                                 }

@@ -18,6 +18,7 @@ import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.domain.enums.InvoiceStatus
+import tech.dokus.domain.model.PeppolInboxPollResponse
 import tech.dokus.domain.enums.Permission
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.InvoiceId
@@ -316,7 +317,7 @@ internal fun Route.peppolRoutes() {
                 throw DokusException.BadRequest("Poll skipped - last poll was too recent")
             }
             // Return empty response - actual results come from worker
-            val pollResult = tech.dokus.domain.model.PeppolInboxPollResponse(
+            val pollResult = PeppolInboxPollResponse(
                 newDocuments = 0,
                 processedDocuments = emptyList()
             )

@@ -41,6 +41,10 @@ import tech.dokus.foundation.aura.components.DokusCardVariant
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.ShimmerLine
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
+import tech.dokus.domain.ids.ContactId
 
 // UI dimension constants
 private val SectionSpacing = Constraints.Spacing.large
@@ -270,14 +274,14 @@ private fun ActivitySummarySkeleton() {
 @Composable
 private fun ActivitySummarySectionPreview(
     @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+        PreviewParametersProvider::class
+    ) parameters: PreviewParameters
 ) {
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    TestWrapper(parameters) {
         ActivitySummarySection(
             state = DokusState.success(
-                tech.dokus.domain.model.contact.ContactActivitySummary(
-                    contactId = tech.dokus.domain.ids.ContactId.generate(),
+                ContactActivitySummary(
+                    contactId = ContactId.generate(),
                     invoiceCount = 12,
                     invoiceTotal = "15,430.00",
                     inboundInvoiceCount = 5,

@@ -8,6 +8,7 @@ import tech.dokus.domain.enums.PeppolTransmissionDirection
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.PeppolSettingsId
 import tech.dokus.domain.ids.PeppolTransmissionId
+import tech.dokus.domain.ids.PeppolId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.Address
 import tech.dokus.domain.model.PeppolConnectRequest
@@ -164,7 +165,7 @@ class PeppolUseCasesTest {
             id = PeppolSettingsId.parse("00000000-0000-0000-0000-000000000001"),
             tenantId = TenantId("00000000-0000-0000-0000-000000000002"),
             companyId = "company",
-            peppolId = tech.dokus.domain.ids.PeppolId("0208:BE0123456789"),
+            peppolId = PeppolId("0208:BE0123456789"),
             isEnabled = true,
             testMode = false,
             createdAt = LocalDateTime(2024, 1, 1, 0, 0),

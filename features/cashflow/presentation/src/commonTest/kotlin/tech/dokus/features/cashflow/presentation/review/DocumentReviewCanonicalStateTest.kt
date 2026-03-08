@@ -11,6 +11,7 @@ import tech.dokus.domain.enums.DocumentMatchReviewReasonType
 import tech.dokus.domain.enums.DocumentMatchReviewStatus
 import tech.dokus.domain.enums.DocumentMatchType
 import tech.dokus.domain.enums.DocumentSource
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.DocumentSourceStatus
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
@@ -268,7 +269,7 @@ class DocumentReviewCanonicalStateTest {
         amountGross = Money.from("121.00")!!,
         amountVat = Money.from("21.00")!!,
         remainingAmount = if (status == CashflowEntryStatus.Paid) Money.ZERO else Money.from("121.00")!!,
-        currency = tech.dokus.domain.enums.Currency.Eur,
+        currency = Currency.Eur,
         status = status,
         paidAt = if (status == CashflowEntryStatus.Paid) LocalDateTime(2026, 2, 15, 0, 0, 0) else null,
         contactId = null,

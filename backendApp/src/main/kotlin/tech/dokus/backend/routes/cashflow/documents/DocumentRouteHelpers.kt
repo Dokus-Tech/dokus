@@ -1,5 +1,6 @@
 package tech.dokus.backend.routes.cashflow.documents
 
+import kotlinx.serialization.json.JsonElement
 import tech.dokus.database.repository.cashflow.CreditNoteRepository
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentMatchReviewSummary
@@ -124,7 +125,7 @@ internal fun IngestionRunSummary.toDto(
     includeTrace: Boolean = false
 ): DocumentIngestionDto {
     val rawExtraction = if (includeRawExtraction) {
-        rawExtractionJson?.let { parseSafe<kotlinx.serialization.json.JsonElement>(it).getOrNull() }
+        rawExtractionJson?.let { parseSafe<JsonElement>(it).getOrNull() }
     } else {
         null
     }

@@ -1,6 +1,7 @@
 package tech.dokus.database.repository.cashflow
 
 import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.v1.core.ResultRow
@@ -37,7 +38,7 @@ data class DocumentSourceSummary(
     val blobId: DocumentBlobId,
     val peppolRawUblBlobId: DocumentBlobId? = null,
     val sourceChannel: DocumentSource,
-    val arrivalAt: kotlinx.datetime.LocalDateTime,
+    val arrivalAt: LocalDateTime,
     val contentHash: String?,
     val identityKeyHash: String?,
     val status: DocumentSourceStatus,
@@ -46,7 +47,7 @@ data class DocumentSourceSummary(
     val extractedSnapshotJson: String?,
     val peppolStructuredSnapshotJson: String? = null,
     val peppolSnapshotVersion: Int? = null,
-    val detachedAt: kotlinx.datetime.LocalDateTime?,
+    val detachedAt: LocalDateTime?,
     val normalizedSupplierVat: String?,
     val normalizedDocumentNumber: String?,
     val documentType: DocumentType?,

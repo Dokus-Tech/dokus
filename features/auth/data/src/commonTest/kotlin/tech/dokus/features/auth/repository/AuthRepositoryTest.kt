@@ -28,6 +28,8 @@ import tech.dokus.domain.model.auth.ConsoleClientSummary
 import tech.dokus.domain.model.auth.CreateFirmRequest
 import tech.dokus.domain.model.auth.CreateFirmResponse
 import tech.dokus.domain.model.auth.FirmWorkspaceSummary
+import tech.dokus.domain.enums.FirmRole
+import tech.dokus.domain.model.auth.DeactivateUserRequest
 import tech.dokus.domain.model.auth.LoginRequest
 import tech.dokus.domain.model.auth.LoginResponse
 import tech.dokus.domain.model.auth.LogoutRequest
@@ -35,6 +37,7 @@ import tech.dokus.domain.model.auth.RefreshTokenRequest
 import tech.dokus.domain.model.auth.RegisterRequest
 import tech.dokus.domain.model.auth.ResetPasswordRequest
 import tech.dokus.domain.model.auth.SessionDto
+import tech.dokus.domain.model.auth.UpdateProfileRequest
 import tech.dokus.domain.model.auth.SurfaceAvailability
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.model.common.Thumbnail
@@ -288,7 +291,7 @@ class AuthRepositoryTest {
                         id = FirmId("00000000-0000-0000-0000-000000000111"),
                         name = DisplayName("Kantoor Boonen"),
                         vatNumber = VatNumber("BE0777887045"),
-                        role = tech.dokus.domain.enums.FirmRole.Owner,
+                        role = FirmRole.Owner,
                         clientCount = 0
                     )
                 )
@@ -426,7 +429,7 @@ private class FakeAccountRemoteDataSource : AccountRemoteDataSource {
         return Result.success(Unit)
     }
 
-    override suspend fun updateProfile(request: tech.dokus.domain.model.auth.UpdateProfileRequest): Result<User> =
+    override suspend fun updateProfile(request: UpdateProfileRequest): Result<User> =
         Result.failure(IllegalStateException("not needed"))
 
     override suspend fun uploadUserAvatar(
@@ -440,7 +443,7 @@ private class FakeAccountRemoteDataSource : AccountRemoteDataSource {
     override suspend fun deleteUserAvatar(userId: UserId): Result<Unit> =
         Result.failure(IllegalStateException("not needed"))
 
-    override suspend fun deactivateAccount(request: tech.dokus.domain.model.auth.DeactivateUserRequest): Result<Unit> =
+    override suspend fun deactivateAccount(request: DeactivateUserRequest): Result<Unit> =
         Result.failure(IllegalStateException("not needed"))
 
     override suspend fun resendVerificationEmail(): Result<Unit> {

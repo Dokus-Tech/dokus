@@ -35,6 +35,13 @@ import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.DokusCardVariant
 import tech.dokus.foundation.aura.extensions.localized
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.Name
+import kotlinx.datetime.LocalDateTime
 
 @Composable
 internal fun ContactMergeConfirmationStep(
@@ -158,24 +165,24 @@ private fun ContactMergeCountRow(label: String, count: Long) {
 @Composable
 private fun ContactMergeConfirmationStepPreview(
     @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+        PreviewParametersProvider::class
+    ) parameters: PreviewParameters
 ) {
-    val now = kotlinx.datetime.LocalDateTime(2026, 1, 15, 10, 0)
-    val sourceId = tech.dokus.domain.ids.ContactId.generate()
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    val now = LocalDateTime(2026, 1, 15, 10, 0)
+    val sourceId = ContactId.generate()
+    TestWrapper(parameters) {
         ContactMergeConfirmationStep(
-            sourceContact = tech.dokus.domain.model.contact.ContactDto(
+            sourceContact = ContactDto(
                 id = sourceId,
-                tenantId = tech.dokus.domain.ids.TenantId.generate(),
-                name = tech.dokus.domain.Name("Old Company"),
+                tenantId = TenantId.generate(),
+                name = Name("Old Company"),
                 createdAt = now,
                 updatedAt = now
             ),
-            targetContact = tech.dokus.domain.model.contact.ContactDto(
-                id = tech.dokus.domain.ids.ContactId.generate(),
-                tenantId = tech.dokus.domain.ids.TenantId.generate(),
-                name = tech.dokus.domain.Name("Acme Corporation"),
+            targetContact = ContactDto(
+                id = ContactId.generate(),
+                tenantId = TenantId.generate(),
+                name = Name("Acme Corporation"),
                 createdAt = now,
                 updatedAt = now
             ),

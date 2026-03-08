@@ -33,6 +33,14 @@ import tech.dokus.foundation.aura.components.badges.RoleBadge
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.textFaint
 import tech.dokus.foundation.aura.style.textMuted
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.Name
+import kotlinx.datetime.LocalDateTime
 
 /**
  * Mobile contact card with monogram, metadata, and compact document count.
@@ -154,17 +162,17 @@ internal fun mapToUiRole(roles: DerivedContactRoles?): UiContactRole? {
 @Composable
 private fun ContactCardPreview(
     @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+        PreviewParametersProvider::class
+    ) parameters: PreviewParameters
 ) {
-    val now = kotlinx.datetime.LocalDateTime(2026, 1, 15, 10, 0)
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    val now = LocalDateTime(2026, 1, 15, 10, 0)
+    TestWrapper(parameters) {
         ContactCard(
             contact = ContactDto(
-                id = tech.dokus.domain.ids.ContactId.generate(),
-                tenantId = tech.dokus.domain.ids.TenantId.generate(),
-                name = tech.dokus.domain.Name("Acme Corporation"),
-                vatNumber = tech.dokus.domain.ids.VatNumber("BE0123456789"),
+                id = ContactId.generate(),
+                tenantId = TenantId.generate(),
+                name = Name("Acme Corporation"),
+                vatNumber = VatNumber("BE0123456789"),
                 derivedRoles = DerivedContactRoles(isSupplier = true),
                 invoiceCount = 5,
                 inboundInvoiceCount = 3,

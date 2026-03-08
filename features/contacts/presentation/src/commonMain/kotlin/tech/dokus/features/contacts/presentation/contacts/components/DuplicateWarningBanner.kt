@@ -33,6 +33,15 @@ import tech.dokus.features.contacts.mvi.DuplicateReason
 import tech.dokus.features.contacts.mvi.PotentialDuplicate
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
+import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.Name
+import tech.dokus.domain.Email
+import kotlinx.datetime.LocalDateTime
 
 /**
  * A warning banner displayed when potential duplicate contacts are detected
@@ -254,19 +263,19 @@ private fun DuplicateWarningActions(
 @Composable
 private fun DuplicateWarningBannerPreview(
     @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+        PreviewParametersProvider::class
+    ) parameters: PreviewParameters
 ) {
-    val now = kotlinx.datetime.LocalDateTime(2026, 1, 15, 10, 0)
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    val now = LocalDateTime(2026, 1, 15, 10, 0)
+    TestWrapper(parameters) {
         DuplicateWarningBanner(
             duplicates = listOf(
                 PotentialDuplicate(
-                    contact = tech.dokus.domain.model.contact.ContactDto(
-                        id = tech.dokus.domain.ids.ContactId.generate(),
-                        tenantId = tech.dokus.domain.ids.TenantId.generate(),
-                        name = tech.dokus.domain.Name("Acme Corporation"),
-                        email = tech.dokus.domain.Email("info@acme.be"),
+                    contact = ContactDto(
+                        id = ContactId.generate(),
+                        tenantId = TenantId.generate(),
+                        name = Name("Acme Corporation"),
+                        email = Email("info@acme.be"),
                         createdAt = now,
                         updatedAt = now
                     ),
