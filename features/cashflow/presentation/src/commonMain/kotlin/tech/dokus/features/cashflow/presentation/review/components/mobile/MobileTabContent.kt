@@ -52,7 +52,7 @@ import tech.dokus.features.cashflow.presentation.review.components.details.Count
 import tech.dokus.features.cashflow.presentation.review.components.details.InvoiceDetailsCard
 import tech.dokus.features.cashflow.presentation.review.components.details.PeppolStatusCard
 import tech.dokus.features.cashflow.presentation.review.components.details.SourcesCard
-import tech.dokus.features.cashflow.presentation.review.rememberAuthenticatedImageLoader
+import tech.dokus.foundation.app.network.rememberAuthenticatedImageLoader
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.constrains.Constraints

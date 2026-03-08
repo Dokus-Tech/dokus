@@ -32,6 +32,7 @@ import tech.dokus.aura.resources.cashflow_no_preview
 import tech.dokus.aura.resources.cashflow_page_plural
 import tech.dokus.aura.resources.cashflow_page_single
 import tech.dokus.aura.resources.state_loading
+import tech.dokus.foundation.app.network.rememberAuthenticatedImageLoader
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.common.DokusLoaderSize
