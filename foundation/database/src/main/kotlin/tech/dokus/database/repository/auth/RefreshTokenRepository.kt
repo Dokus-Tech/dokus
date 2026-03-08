@@ -12,7 +12,6 @@ import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.greater
 import org.jetbrains.exposed.v1.core.inList
-import org.jetbrains.exposed.v1.core.isNull
 import org.jetbrains.exposed.v1.core.less
 import org.jetbrains.exposed.v1.core.or
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
@@ -43,7 +42,7 @@ import kotlin.uuid.toJavaUuid
  */
 data class RefreshTokenInfo(
     val tokenId: String,
-    val storedSessionId: SessionId?,
+    val storedSessionId: SessionId,
     val sessionId: SessionId,
     val createdAt: Instant,
     val expiresAt: Instant,
@@ -85,15 +84,6 @@ private data class ActiveTokenRow(
     val token: RefreshTokenInfo,
 )
 
-private data class SessionFingerprint(
-    val deviceType: DeviceType,
-    val userAgent: String?,
-    val ipAddress: String?,
-) {
-    val isStrongEnough: Boolean
-        get() = !userAgent.isNullOrBlank() || !ipAddress.isNullOrBlank()
-}
-
 /**
  * Repository for managing JWT refresh tokens with persistence, rotation, and revocation.
  */
@@ -108,7 +98,7 @@ class RefreshTokenRepository {
         userId: UserId,
         token: String,
         expiresAt: Instant,
-        sessionId: SessionId? = null,
+        sessionId: SessionId,
         accessTokenJti: String? = null,
         accessTokenExpiresAt: Instant? = null,
         deviceType: DeviceType = DeviceType.Desktop,
@@ -142,7 +132,7 @@ class RefreshTokenRepository {
 
             RefreshTokensTable.insert {
                 it[RefreshTokensTable.userId] = userUuid
-                it[RefreshTokensTable.sessionId] = sessionId?.uuid?.toJavaUuid()
+                it[RefreshTokensTable.sessionId] = sessionId.uuid.toJavaUuid()
                 it[RefreshTokensTable.tokenHash] = tokenHash
                 it[RefreshTokensTable.expiresAt] = expiresAt.toLocalDateTime(TimeZone.UTC)
                 it[RefreshTokensTable.isRevoked] = false
@@ -157,7 +147,7 @@ class RefreshTokenRepository {
             logger.debug(
                 "Saved refresh token for user: {}, session: {}, token hash: {}, expires: {}",
                 userId.value,
-                sessionId ?: "legacy",
+                sessionId,
                 tokenHash.take(8),
                 expiresAt
             )
@@ -213,14 +203,10 @@ class RefreshTokenRepository {
                 "Validated and rotated refresh token for user: $userId, token ID: $tokenId"
             )
 
-            val storedSessionId = tokenRow[RefreshTokensTable.sessionId]?.let { SessionId(it.toString()) }
+            val storedSessionId = SessionId(tokenRow[RefreshTokensTable.sessionId].toString())
             ValidatedRefreshToken(
                 userId = UserId(userId.toString()),
-                sessionId = resolveStableSessionId(
-                    storedSessionId = storedSessionId,
-                    accessTokenJti = tokenRow[RefreshTokensTable.accessTokenJti],
-                    tokenId = tokenId.toString()
-                )
+                sessionId = storedSessionId
             )
         }
     }.onFailure { error ->
@@ -494,50 +480,12 @@ class RefreshTokenRepository {
 
     private fun getActiveTokenRowsInTx(userId: UserId): List<ActiveTokenRow> {
         val userUuid = userId.uuid.toJavaUuid()
-        val currentTime = now()
-        val currentTimeLocal = currentTime.toLocalDateTime(TimeZone.UTC)
-        val rows = RefreshTokensTable
+        val currentTimeLocal = now().toLocalDateTime(TimeZone.UTC)
+        return RefreshTokensTable
             .selectAll()
             .where { activeRowsFilter(userUuid, currentTimeLocal) }
             .orderBy(RefreshTokensTable.createdAt, SortOrder.DESC)
             .map(::toActiveTokenRow)
-
-        val supersededLegacyIds = cleanupSupersededLegacyRows(rows, currentTime)
-        return rows.filterNot { it.rowId in supersededLegacyIds }
-    }
-
-    private fun cleanupSupersededLegacyRows(
-        rows: List<ActiveTokenRow>,
-        currentTime: Instant
-    ): Set<JavaUuid> {
-        val stableRowsByFingerprint = rows
-            .filter { it.token.storedSessionId != null }
-            .groupBy { sessionFingerprint(it.token) }
-
-        val supersededLegacyIds = rows.asSequence()
-            .filter { it.token.storedSessionId == null }
-            .filter { legacy ->
-                val fingerprint = sessionFingerprint(legacy.token)
-                fingerprint.isStrongEnough &&
-                    (legacy.token.accessTokenExpiresAt?.let { it <= currentTime } == true) &&
-                    stableRowsByFingerprint[fingerprint]
-                        .orEmpty()
-                        .any { stable -> stable.token.createdAt > legacy.token.createdAt }
-            }
-            .map { it.rowId }
-            .toSet()
-
-        if (supersededLegacyIds.isNotEmpty()) {
-            RefreshTokensTable.update({ RefreshTokensTable.id inList supersededLegacyIds }) {
-                it[RefreshTokensTable.isRevoked] = true
-            }
-            logger.info(
-                "Revoked {} superseded legacy refresh-token rows during active-session cleanup",
-                supersededLegacyIds.size
-            )
-        }
-
-        return supersededLegacyIds
     }
 
     private fun revokeRows(rows: List<ActiveTokenRow>): List<RevokedSessionInfo> {
@@ -552,7 +500,7 @@ class RefreshTokenRepository {
     private fun toActiveTokenRow(row: ResultRow): ActiveTokenRow {
         val rowId = row[RefreshTokensTable.id].value
         val tokenId = rowId.toString()
-        val storedSessionId = row[RefreshTokensTable.sessionId]?.let { SessionId(it.toString()) }
+        val storedSessionId = SessionId(row[RefreshTokensTable.sessionId].toString())
         val accessTokenJti = row[RefreshTokensTable.accessTokenJti]
 
         return ActiveTokenRow(
@@ -560,7 +508,7 @@ class RefreshTokenRepository {
             token = RefreshTokenInfo(
                 tokenId = tokenId,
                 storedSessionId = storedSessionId,
-                sessionId = displaySessionId(storedSessionId, tokenId),
+                sessionId = storedSessionId,
                 createdAt = row[RefreshTokensTable.createdAt].toKotlinxInstant(),
                 expiresAt = row[RefreshTokensTable.expiresAt].toKotlinxInstant(),
                 isRevoked = row[RefreshTokensTable.isRevoked],
@@ -579,14 +527,10 @@ class RefreshTokenRepository {
             (RefreshTokensTable.expiresAt greater currentTimeLocal)
 
     private fun currentSessionPredicate(currentSessionId: SessionId) =
-        (RefreshTokensTable.sessionId eq currentSessionId.uuid.toJavaUuid()) or
-            (
-                RefreshTokensTable.sessionId.isNull() and
-                    (RefreshTokensTable.accessTokenJti eq currentSessionId.toString())
-                )
+        RefreshTokensTable.sessionId eq currentSessionId.uuid.toJavaUuid()
 
     private fun sessionIdentityKey(token: RefreshTokenInfo): String =
-        token.storedSessionId?.toString() ?: "legacy:${token.tokenId}"
+        token.storedSessionId.toString()
 
     private fun matchesDisplayedSessionId(token: RefreshTokenInfo, sessionId: SessionId): Boolean {
         return token.sessionId == sessionId
@@ -597,31 +541,7 @@ class RefreshTokenRepository {
         currentSessionId: SessionId?
     ): Boolean {
         currentSessionId ?: return false
-        return token.storedSessionId == currentSessionId ||
-            (token.storedSessionId == null && token.accessTokenJti == currentSessionId.toString())
-    }
-
-    private fun resolveStableSessionId(
-        storedSessionId: SessionId?,
-        accessTokenJti: String?,
-        tokenId: String
-    ): SessionId {
-        return storedSessionId
-            ?: accessTokenJti?.let { runCatching { SessionId(it) }.getOrNull() }
-            ?: SessionId(tokenId)
-    }
-
-    private fun displaySessionId(
-        storedSessionId: SessionId?,
-        tokenId: String
-    ): SessionId = storedSessionId ?: SessionId(tokenId)
-
-    private fun sessionFingerprint(token: RefreshTokenInfo): SessionFingerprint {
-        return SessionFingerprint(
-            deviceType = token.deviceType,
-            userAgent = token.userAgent?.trim(),
-            ipAddress = token.ipAddress?.trim()
-        )
+        return token.storedSessionId == currentSessionId
     }
 
     private fun RefreshTokenInfo.toRevokedSessionInfo(): RevokedSessionInfo {

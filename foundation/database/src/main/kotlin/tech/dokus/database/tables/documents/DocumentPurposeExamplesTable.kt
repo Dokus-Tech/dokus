@@ -38,12 +38,7 @@ object DocumentPurposeExamplesTable : UUIDTable("document_purpose_examples") {
         index(false, tenantId, counterpartyKey, documentType)
         index(false, tenantId, merchantToken, documentType)
 
-        // NOTE: HNSW index for vector similarity search should be created via SQL migration:
-        // CREATE INDEX CONCURRENTLY document_purpose_examples_embedding_idx
-        //   ON document_purpose_examples USING hnsw (embedding vector_cosine_ops)
-        //   WITH (m = 16, ef_construction = 64);
-        //
-        // Exposed doesn't support HNSW index creation natively, so this must be
-        // added to the Flyway migration script alongside the table creation.
+        // NOTE: HNSW index for vector similarity search is created via V2__special_indexes migration.
+        // Exposed doesn't support HNSW index creation natively.
     }
 }

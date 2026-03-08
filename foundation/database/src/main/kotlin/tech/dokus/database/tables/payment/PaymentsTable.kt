@@ -47,6 +47,6 @@ object PaymentsTable : UUIDTable("payments") {
     init {
         index(false, tenantId, paymentDate)
         index(false, tenantId, bankTransactionId)
-        // Partial unique indexes for duplicate prevention are defined in V9 migration
+        // Partial unique indexes for duplicate prevention are defined in V2__special_indexes migration
     }
 }
