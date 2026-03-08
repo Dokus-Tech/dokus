@@ -23,6 +23,7 @@ import tech.dokus.foundation.app.NavContext
 import tech.dokus.foundation.app.ModuleNavGroup
 import tech.dokus.foundation.app.ModuleSettingsGroup
 import tech.dokus.foundation.app.diModules
+import tech.dokus.foundation.app.network.imageLoaderModule
 import tech.dokus.foundation.aura.model.DesktopNavPlacement
 import tech.dokus.foundation.aura.model.MobileTabConfig
 import tech.dokus.foundation.aura.model.NavItem
@@ -43,6 +44,7 @@ private val conditionalModules = emptyList<AppModule>()
 val appModules: List<AppModule> = baseAppModules + conditionalModules
 
 private val appDataModules: List<Module> = listOf(
+    imageLoaderModule,
     authPlatformModule,
     authNetworkModule,
     authDataModule,
