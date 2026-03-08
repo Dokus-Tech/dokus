@@ -3,18 +3,21 @@ package tech.dokus.features.auth.presentation.auth.screen
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,6 +45,7 @@ import tech.dokus.foundation.aura.local.LocalScreenSize
 private val MaxContentWidth = 440.dp
 private val ContentPaddingH = 16.dp
 private val SectionSpacing = 14.dp
+private val DetailPaneWidth = 520.dp
 
 /**
  * Profile settings screen with top bar and navigation.
@@ -59,6 +63,7 @@ fun ProfileSettingsScreen(
     onChangeServer: () -> Unit,
     onResetToCloud: () -> Unit,
     onLogout: () -> Unit,
+    detailPaneContent: (@Composable () -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val isLargeScreen = LocalScreenSize.current.isLarge
@@ -69,19 +74,55 @@ fun ProfileSettingsScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { contentPadding ->
-        ProfileSettingsContent(
-            state = state,
-            currentServer = currentServer,
-            isLoggingOut = isLoggingOut,
-            onIntent = onIntent,
-            onResendVerification = onResendVerification,
-            onChangePassword = onChangePassword,
-            onMySessions = onMySessions,
-            onChangeServer = onChangeServer,
-            onResetToCloud = onResetToCloud,
-            onLogout = onLogout,
-            modifier = modifier.padding(contentPadding)
-        )
+        val contentModifier = modifier.padding(contentPadding)
+        if (isLargeScreen && detailPaneContent != null) {
+            Row(
+                modifier = contentModifier.fillMaxSize()
+            ) {
+                ProfileSettingsContent(
+                    state = state,
+                    currentServer = currentServer,
+                    isLoggingOut = isLoggingOut,
+                    onIntent = onIntent,
+                    onResendVerification = onResendVerification,
+                    onChangePassword = onChangePassword,
+                    onMySessions = onMySessions,
+                    onChangeServer = onChangeServer,
+                    onResetToCloud = onResetToCloud,
+                    onLogout = onLogout,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
+                    contentHorizontalAlignment = Alignment.End,
+                )
+                VerticalDivider(modifier = Modifier.padding(vertical = 16.dp))
+                Box(
+                    modifier = Modifier
+                        .width(DetailPaneWidth)
+                        .fillMaxHeight()
+                        .padding(start = 24.dp, end = 16.dp, top = 16.dp, bottom = 16.dp),
+                    contentAlignment = Alignment.TopStart
+                ) {
+                    Box(modifier = Modifier.fillMaxHeight()) {
+                        detailPaneContent()
+                    }
+                }
+            }
+        } else {
+            ProfileSettingsContent(
+                state = state,
+                currentServer = currentServer,
+                isLoggingOut = isLoggingOut,
+                onIntent = onIntent,
+                onResendVerification = onResendVerification,
+                onChangePassword = onChangePassword,
+                onMySessions = onMySessions,
+                onChangeServer = onChangeServer,
+                onResetToCloud = onResetToCloud,
+                onLogout = onLogout,
+                modifier = contentModifier
+            )
+        }
     }
 }
 
@@ -102,6 +143,7 @@ fun ProfileSettingsContent(
     onResetToCloud: () -> Unit,
     onLogout: () -> Unit,
     modifier: Modifier = Modifier,
+    contentHorizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
 ) {
     val avatarPicker = rememberImagePicker { pickedImage ->
         onIntent(ProfileSettingsIntent.UploadAvatar(pickedImage.bytes, pickedImage.name))
@@ -111,7 +153,7 @@ fun ProfileSettingsContent(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState()),
-        horizontalAlignment = Alignment.CenterHorizontally,
+        horizontalAlignment = contentHorizontalAlignment,
     ) {
         Column(
             modifier = Modifier
@@ -178,6 +220,93 @@ fun ProfileSettingsContent(
 
             Spacer(Modifier.height(8.dp))
         }
+    }
+}
+
+@OptIn(kotlin.uuid.ExperimentalUuidApi::class)
+@androidx.compose.ui.tooling.preview.Preview(name = "Profile Settings Desktop Idle", widthDp = 1366, heightDp = 900)
+@Composable
+private fun ProfileSettingsDesktopIdlePreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        ProfileSettingsScreen(
+            state = ProfileSettingsState.Viewing(
+                user = tech.dokus.domain.model.User(
+                    id = tech.dokus.domain.ids.UserId(kotlin.uuid.Uuid.parse("00000000-0000-0000-0000-000000000001")),
+                    email = tech.dokus.domain.Email("john@dokus.tech"),
+                    firstName = tech.dokus.domain.Name("John"),
+                    lastName = tech.dokus.domain.Name("Doe"),
+                    emailVerified = true,
+                    createdAt = kotlinx.datetime.LocalDateTime(2025, 1, 1, 0, 0),
+                    updatedAt = kotlinx.datetime.LocalDateTime(2025, 1, 1, 0, 0),
+                ),
+            ),
+            currentServer = ServerConfig.Cloud,
+            isLoggingOut = false,
+            snackbarHostState = androidx.compose.runtime.remember { SnackbarHostState() },
+            onIntent = {},
+            onResendVerification = {},
+            onChangePassword = {},
+            onMySessions = {},
+            onChangeServer = {},
+            onResetToCloud = {},
+            onLogout = {},
+            detailPaneContent = {
+                ProfileDetailPaneHost(
+                    selection = ProfileDetailSelection.None,
+                    sessionsState = tech.dokus.features.auth.mvi.MySessionsState.Loading,
+                    onSessionsIntent = {},
+                )
+            }
+        )
+    }
+}
+
+@OptIn(kotlin.uuid.ExperimentalUuidApi::class)
+@androidx.compose.ui.tooling.preview.Preview(name = "Profile Settings Desktop Split", widthDp = 1366, heightDp = 900)
+@Composable
+private fun ProfileSettingsDesktopSplitPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        ProfileSettingsScreen(
+            state = ProfileSettingsState.Viewing(
+                user = tech.dokus.domain.model.User(
+                    id = tech.dokus.domain.ids.UserId(kotlin.uuid.Uuid.parse("00000000-0000-0000-0000-000000000001")),
+                    email = tech.dokus.domain.Email("john@dokus.tech"),
+                    firstName = tech.dokus.domain.Name("John"),
+                    lastName = tech.dokus.domain.Name("Doe"),
+                    emailVerified = true,
+                    createdAt = kotlinx.datetime.LocalDateTime(2025, 1, 1, 0, 0),
+                    updatedAt = kotlinx.datetime.LocalDateTime(2025, 1, 1, 0, 0),
+                ),
+            ),
+            currentServer = ServerConfig.Cloud,
+            isLoggingOut = false,
+            snackbarHostState = androidx.compose.runtime.remember { SnackbarHostState() },
+            onIntent = {},
+            onResendVerification = {},
+            onChangePassword = {},
+            onMySessions = {},
+            onChangeServer = {},
+            onResetToCloud = {},
+            onLogout = {},
+            detailPaneContent = {
+                ProfileDetailPaneHost(
+                    selection = ProfileDetailSelection.Sessions,
+                    sessionsState = tech.dokus.features.auth.mvi.MySessionsState.Loaded(
+                        sessions = previewSessions()
+                    ),
+                    onSessionsIntent = {},
+                    nowEpochSeconds = SessionsPreviewNowEpochSeconds,
+                )
+            }
+        )
     }
 }
 

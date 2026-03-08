@@ -149,8 +149,9 @@ internal fun Route.accountRoutes() {
             val response = authService.selectOrganization(
                 userId = principal.userId,
                 tenantId = request.tenantId,
+                currentSessionId = principal.currentSessionId(),
                 sessionContext = SessionContext(
-                    deviceType = DeviceType.fromAgent(userAgent),
+                    deviceType = DeviceType.resolveFromHintOrAgent(request.deviceType, userAgent),
                     ipAddress = call.extractClientIpAddress(),
                     userAgent = userAgent
                 )
@@ -165,8 +166,13 @@ internal fun Route.accountRoutes() {
          * Logout user and revoke tokens
          */
         post<Account.Logout> {
+            val principal = dokusPrincipal
             val request = call.receive<LogoutRequest>()
-            authService.logout(request).getOrThrow()
+            authService.logout(
+                userId = principal.userId,
+                currentSessionId = principal.currentSessionId(),
+                request = request
+            ).getOrThrow()
             call.respond(HttpStatusCode.NoContent)
         }
 
@@ -191,7 +197,7 @@ internal fun Route.accountRoutes() {
                 userId = principal.userId,
                 currentPassword = request.currentPassword,
                 newPassword = request.newPassword,
-                currentSessionJti = principal.sessionJti
+                currentSessionId = principal.currentSessionId()
             ).getOrThrow()
             call.respond(HttpStatusCode.NoContent)
         }
@@ -204,7 +210,7 @@ internal fun Route.accountRoutes() {
             val principal = dokusPrincipal
             val sessions = authService.listSessions(
                 userId = principal.userId,
-                currentSessionJti = principal.sessionJti
+                currentSessionId = principal.currentSessionId()
             ).getOrThrow()
             call.respond(HttpStatusCode.OK, sessions)
         }
@@ -217,7 +223,8 @@ internal fun Route.accountRoutes() {
             val principal = dokusPrincipal
             authService.revokeSession(
                 userId = principal.userId,
-                sessionId = route.sessionId
+                sessionId = route.sessionId,
+                currentSessionId = principal.currentSessionId()
             ).getOrThrow()
             call.respond(HttpStatusCode.NoContent)
         }
@@ -230,7 +237,7 @@ internal fun Route.accountRoutes() {
             val principal = dokusPrincipal
             authService.revokeOtherSessions(
                 userId = principal.userId,
-                currentSessionJti = principal.sessionJti
+                currentSessionId = principal.currentSessionId()
             ).getOrThrow()
             call.respond(HttpStatusCode.NoContent)
         }

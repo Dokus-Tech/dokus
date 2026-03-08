@@ -9,6 +9,7 @@ import com.auth0.jwt.exceptions.JWTVerificationException
 import com.auth0.jwt.interfaces.DecodedJWT
 import com.auth0.jwt.interfaces.Payload
 import kotlinx.serialization.builtins.ListSerializer
+import tech.dokus.domain.ids.SessionId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.auth.AuthenticationInfo
 import tech.dokus.domain.model.auth.JwtClaims
@@ -95,6 +96,9 @@ class JwtValidator(
 
             // We don't store user's name/roles in current JWT; derive minimal values
             val name = email.substringBefore('@', email)
+            val sessionId = payload.getClaim(JwtClaims.CLAIM_SESSION_ID)
+                .asString()
+                ?.let { runCatching { SessionId(it) }.getOrNull() }
             val sessionJti = payload.getClaim(JwtClaims.CLAIM_JTI).asString()
 
             AuthenticationInfo(
@@ -104,6 +108,7 @@ class JwtValidator(
                 globalRoles = emptySet(),
                 tenantMemberships = tenantMemberships,
                 firmMemberships = firmMemberships,
+                sessionId = sessionId,
                 sessionJti = sessionJti
             )
         } catch (e: Exception) {

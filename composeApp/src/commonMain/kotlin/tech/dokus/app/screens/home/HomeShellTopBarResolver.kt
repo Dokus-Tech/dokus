@@ -13,10 +13,10 @@ internal fun resolveHomeShellTopBarConfig(
     fallback: (normalizedRoute: String, default: ShellTopBarDefault) -> HomeShellTopBarConfig?,
 ): HomeShellTopBarConfig? {
     val normalizedRoute = normalizeRoute(route, sortedRoutes) ?: return null
-    val navItem = allNavItems.find { it.destination.route == normalizedRoute } ?: return null
-    val default = navItem.shellTopBar ?: return null
     val registered = registeredConfigs[normalizedRoute]
     if (registered != null) return registered.takeIf { it.enabled }
+    val navItem = allNavItems.find { it.destination.route == normalizedRoute } ?: return null
+    val default = navItem.shellTopBar ?: return null
     return fallback(normalizedRoute, default)
 }
 
@@ -27,5 +27,5 @@ internal fun buildSortedRoutes(allNavItems: List<NavItem>): List<String> =
 /** Normalize a backstack route string to a known base route (strips query params and sub-paths). */
 internal fun normalizeRoute(route: String?, sortedRoutes: List<String>): String? {
     val cleaned = route?.substringBefore("?") ?: return null
-    return sortedRoutes.firstOrNull { cleaned == it || cleaned.startsWith("$it/") }
+    return sortedRoutes.firstOrNull { cleaned == it || cleaned.startsWith("$it/") } ?: cleaned
 }

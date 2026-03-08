@@ -18,6 +18,7 @@ import tech.dokus.backend.services.auth.WelcomeEmailService
 import tech.dokus.database.repository.auth.FirmRepository
 import tech.dokus.database.repository.auth.RefreshTokenRepository
 import tech.dokus.database.repository.auth.RevokedSessionInfo
+import tech.dokus.database.repository.auth.SessionRevocationResult
 import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.domain.Email
 import tech.dokus.domain.Name
@@ -60,7 +61,7 @@ class AuthServiceSessionManagementTest {
     @Test
     fun `change password with valid current password revokes other sessions`() {
         val user = testUser()
-        val currentSessionJti = "11111111-1111-1111-1111-111111111111"
+        val currentSessionId = SessionId("11111111-1111-1111-1111-111111111111")
         val revokedSession = RevokedSessionInfo(
             sessionId = SessionId("22222222-2222-2222-2222-222222222222"),
             accessTokenJti = "33333333-3333-3333-3333-333333333333",
@@ -72,8 +73,8 @@ class AuthServiceSessionManagementTest {
         coEvery { userRepository.findById(user.id) } returns user
         coEvery { userRepository.verifyCredentials(user.email.value, "CurrentPass123!") } returns user
         coJustRun { userRepository.updatePassword(user.id, "NewPass123!") }
-        coEvery { refreshTokenRepository.revokeOtherSessions(user.id, currentSessionJti) } returns
-            Result.success(listOf(revokedSession))
+        coEvery { refreshTokenRepository.revokeOtherSessions(user.id, currentSessionId) } returns
+            SessionRevocationResult.Revoked(listOf(revokedSession))
         coJustRun { tokenBlacklistService.blacklistToken(any(), any()) }
 
         val result = runBlocking {
@@ -81,13 +82,13 @@ class AuthServiceSessionManagementTest {
                 userId = user.id,
                 currentPassword = Password("CurrentPass123!"),
                 newPassword = Password("NewPass123!"),
-                currentSessionJti = currentSessionJti
+                currentSessionId = currentSessionId
             )
         }
 
         assertTrue(result.isSuccess)
         coVerify(exactly = 1) { userRepository.updatePassword(user.id, "NewPass123!") }
-        coVerify(exactly = 1) { refreshTokenRepository.revokeOtherSessions(user.id, currentSessionJti) }
+        coVerify(exactly = 1) { refreshTokenRepository.revokeOtherSessions(user.id, currentSessionId) }
         coVerify(exactly = 1) { tokenBlacklistService.blacklistToken(revokedSession.accessTokenJti!!, any()) }
     }
 
@@ -105,7 +106,7 @@ class AuthServiceSessionManagementTest {
                 userId = user.id,
                 currentPassword = Password("WrongPassword123!"),
                 newPassword = Password("NewPass123!"),
-                currentSessionJti = "11111111-1111-1111-1111-111111111111"
+                currentSessionId = SessionId("11111111-1111-1111-1111-111111111111")
             )
         }
 
@@ -128,7 +129,7 @@ class AuthServiceSessionManagementTest {
                 userId = user.id,
                 currentPassword = Password("CurrentPass123!"),
                 newPassword = Password("NewPass123!"),
-                currentSessionJti = null
+                currentSessionId = null
             )
         }
 
@@ -141,24 +142,24 @@ class AuthServiceSessionManagementTest {
     @Test
     fun `list sessions forwards current-session identity`() {
         val userId = UserId.generate()
-        val currentSessionJti = "11111111-1111-1111-1111-111111111111"
+        val currentSessionId = SessionId("11111111-1111-1111-1111-111111111111")
         val expectedSessions = listOf(
             SessionDto(
-                id = SessionId(currentSessionJti),
+                id = currentSessionId,
                 isCurrent = true,
                 deviceType = tech.dokus.domain.DeviceType.Desktop
             )
         )
 
-        coEvery { refreshTokenRepository.listActiveSessions(userId, currentSessionJti) } returns expectedSessions
+        coEvery { refreshTokenRepository.listActiveSessions(userId, currentSessionId) } returns expectedSessions
 
         val result = runBlocking {
-            authService.listSessions(userId, currentSessionJti)
+            authService.listSessions(userId, currentSessionId)
         }
 
         assertTrue(result.isSuccess)
         assertEquals(expectedSessions, result.getOrNull())
-        coVerify(exactly = 1) { refreshTokenRepository.listActiveSessions(userId, currentSessionJti) }
+        coVerify(exactly = 1) { refreshTokenRepository.listActiveSessions(userId, currentSessionId) }
     }
 
     @Test
@@ -171,7 +172,8 @@ class AuthServiceSessionManagementTest {
             accessTokenExpiresAt = Instant.fromEpochSeconds(1_900_000_000)
         )
 
-        coEvery { refreshTokenRepository.revokeSessionById(userId, sessionId) } returns Result.success(revoked)
+        coEvery { refreshTokenRepository.revokeSessionById(userId, sessionId) } returns
+            SessionRevocationResult.Revoked(listOf(revoked))
         coJustRun { tokenBlacklistService.blacklistToken(any(), any()) }
 
         val result = runBlocking {
@@ -184,25 +186,25 @@ class AuthServiceSessionManagementTest {
     }
 
     @Test
-    fun `revoke others keeps current session by using current jti filter`() {
+    fun `revoke others keeps current session by using stable session id`() {
         val userId = UserId.generate()
-        val currentSessionJti = "66666666-6666-6666-6666-666666666666"
+        val currentSessionId = SessionId("66666666-6666-6666-6666-666666666666")
         val revoked = RevokedSessionInfo(
             sessionId = SessionId("77777777-7777-7777-7777-777777777777"),
             accessTokenJti = "88888888-8888-8888-8888-888888888888",
             accessTokenExpiresAt = Instant.fromEpochSeconds(1_900_000_000)
         )
 
-        coEvery { refreshTokenRepository.revokeOtherSessions(userId, currentSessionJti) } returns
-            Result.success(listOf(revoked))
+        coEvery { refreshTokenRepository.revokeOtherSessions(userId, currentSessionId) } returns
+            SessionRevocationResult.Revoked(listOf(revoked))
         coJustRun { tokenBlacklistService.blacklistToken(any(), any()) }
 
         val result = runBlocking {
-            authService.revokeOtherSessions(userId, currentSessionJti)
+            authService.revokeOtherSessions(userId, currentSessionId)
         }
 
         assertTrue(result.isSuccess)
-        coVerify(exactly = 1) { refreshTokenRepository.revokeOtherSessions(userId, currentSessionJti) }
+        coVerify(exactly = 1) { refreshTokenRepository.revokeOtherSessions(userId, currentSessionId) }
         coVerify(exactly = 1) { tokenBlacklistService.blacklistToken(revoked.accessTokenJti!!, any()) }
     }
 

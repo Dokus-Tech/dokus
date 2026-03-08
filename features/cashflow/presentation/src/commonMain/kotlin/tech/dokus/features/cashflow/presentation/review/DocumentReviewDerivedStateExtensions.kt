@@ -1,10 +1,7 @@
 package tech.dokus.features.cashflow.presentation.review
 
-import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
 import kotlinx.datetime.daysUntil
-import kotlinx.datetime.todayIn
 import tech.dokus.domain.enums.DocumentMatchType
 import tech.dokus.domain.enums.DocumentSourceStatus
 import tech.dokus.domain.model.CashflowEntry
@@ -25,7 +22,6 @@ val DocumentReviewState.Content.overdueDays: Int?
     get() {
         if (financialStatus != ReviewFinancialStatus.Overdue) return null
         val dueDate = resolvedDueDate ?: return null
-        val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
         return if (dueDate < today) dueDate.daysUntil(today) else null
     }
 

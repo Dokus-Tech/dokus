@@ -8,6 +8,7 @@ import tech.dokus.backend.services.avatar.projectUserAvatar
 import tech.dokus.database.repository.auth.FirmRepository
 import tech.dokus.database.repository.auth.RefreshTokenRepository
 import tech.dokus.database.repository.auth.RevokedSessionInfo
+import tech.dokus.database.repository.auth.SessionRevocationResult
 import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.domain.DeviceType
 import tech.dokus.domain.Password
@@ -32,6 +33,7 @@ import tech.dokus.foundation.backend.database.now
 import tech.dokus.foundation.backend.security.JwtGenerator
 import tech.dokus.foundation.backend.security.TokenBlacklistService
 import tech.dokus.foundation.backend.utils.loggerFor
+import tech.dokus.foundation.backend.utils.runSuspendCatching
 import kotlin.time.Duration.Companion.days
 import kotlin.uuid.ExperimentalUuidApi
 import java.time.Instant as JavaInstant
@@ -63,7 +65,9 @@ class AuthService(
 
     suspend fun login(
         request: LoginRequest,
-        sessionContext: SessionContext = SessionContext(deviceType = request.deviceType)
+        sessionContext: SessionContext = SessionContext(
+            deviceType = request.deviceType ?: DeviceType.Desktop
+        )
     ): Result<LoginResponse> = try {
         logger.debug("Login attempt for email: ${request.email.value}")
 
@@ -88,6 +92,7 @@ class AuthService(
 
         val userId = user.id
         val loginTime = now()
+        val sessionId = SessionId.generate()
 
         val memberships = userRepository.getUserTenants(userId)
         val selectedTenantId = resolveDefaultTenantId(memberships)
@@ -96,7 +101,8 @@ class AuthService(
             userId = userId,
             email = user.email.value,
             tenantMemberships = memberships.toJwtTenantClaims(),
-            firmMemberships = firmRepository.listUserMemberships(userId).toJwtFirmClaims()
+            firmMemberships = firmRepository.listUserMemberships(userId).toJwtFirmClaims(),
+            sessionId = sessionId
         )
 
         val response = jwtGenerator.generateTokens(claims).copy(
@@ -119,6 +125,7 @@ class AuthService(
             userId = userId,
             token = response.refreshToken,
             expiresAt = (now() + JwtClaims.REFRESH_TOKEN_EXPIRY_DAYS.days),
+            sessionId = sessionId,
             accessTokenJti = claims.jti,
             accessTokenExpiresAt = Instant.fromEpochSeconds(claims.exp),
             deviceType = sessionContext.deviceType,
@@ -157,7 +164,9 @@ class AuthService(
 
     suspend fun register(
         request: RegisterRequest,
-        sessionContext: SessionContext = SessionContext()
+        sessionContext: SessionContext = SessionContext(
+            deviceType = request.deviceType ?: DeviceType.Desktop
+        )
     ): Result<LoginResponse> = try {
         logger.debug("Registration attempt for email: ${request.email.value}")
 
@@ -171,13 +180,15 @@ class AuthService(
         )
 
         val userId = user.id
+        val sessionId = SessionId.generate()
 
         // User starts with no tenants
         val claims = jwtGenerator.generateClaims(
             userId = userId,
             email = user.email.value,
             tenantMemberships = emptyList(),
-            firmMemberships = emptyList()
+            firmMemberships = emptyList(),
+            sessionId = sessionId
         )
 
         val response = jwtGenerator.generateTokens(claims).copy(
@@ -188,6 +199,7 @@ class AuthService(
             userId = userId,
             token = response.refreshToken,
             expiresAt = (now() + JwtClaims.REFRESH_TOKEN_EXPIRY_DAYS.days),
+            sessionId = sessionId,
             accessTokenJti = claims.jti,
             accessTokenExpiresAt = Instant.fromEpochSeconds(claims.exp),
             deviceType = sessionContext.deviceType,
@@ -226,11 +238,13 @@ class AuthService(
 
     suspend fun refreshToken(
         request: RefreshTokenRequest,
-        sessionContext: SessionContext = SessionContext(deviceType = request.deviceType)
+        sessionContext: SessionContext = SessionContext(
+            deviceType = request.deviceType ?: DeviceType.Desktop
+        )
     ): Result<LoginResponse> = try {
         logger.debug("Token refresh attempt")
 
-        val userId = refreshTokenRepository.validateAndRotate(request.refreshToken)
+        val validatedRefreshToken = refreshTokenRepository.validateAndRotate(request.refreshToken)
             .getOrElse { error ->
                 logger.warn("Token refresh failed: ${error.message}")
                 when (error) {
@@ -239,6 +253,7 @@ class AuthService(
                     else -> throw DokusException.RefreshTokenExpired()
                 }
             }
+        val userId = validatedRefreshToken.userId
 
         val user = userRepository.findById(userId)
             ?: run {
@@ -265,7 +280,8 @@ class AuthService(
             userId = userId,
             email = user.email.value,
             tenantMemberships = memberships.toJwtTenantClaims(),
-            firmMemberships = firmRepository.listUserMemberships(userId).toJwtFirmClaims()
+            firmMemberships = firmRepository.listUserMemberships(userId).toJwtFirmClaims(),
+            sessionId = validatedRefreshToken.sessionId
         )
 
         val response = jwtGenerator.generateTokens(claims).copy(
@@ -276,6 +292,7 @@ class AuthService(
             userId = userId,
             token = response.refreshToken,
             expiresAt = (now() + JwtClaims.REFRESH_TOKEN_EXPIRY_DAYS.days),
+            sessionId = validatedRefreshToken.sessionId,
             accessTokenJti = claims.jti,
             accessTokenExpiresAt = Instant.fromEpochSeconds(claims.exp),
             deviceType = sessionContext.deviceType,
@@ -301,6 +318,7 @@ class AuthService(
     suspend fun selectOrganization(
         userId: UserId,
         tenantId: TenantId,
+        currentSessionId: SessionId?,
         sessionContext: SessionContext = SessionContext()
     ): Result<LoginResponse> = try {
         logger.debug("Selecting tenant $tenantId for user $userId")
@@ -317,36 +335,32 @@ class AuthService(
             memberships = memberships,
             selectedTenantId = tenantId
         ) ?: throw DokusException.NotAuthorized("User is not a member of tenant $tenantId")
+        val activeSessionId = currentSessionId
+            ?: throw DokusException.SessionInvalid("Current session identity is missing")
 
         val claims = jwtGenerator.generateClaims(
             userId = userId,
             email = user.email.value,
             tenantMemberships = memberships.toJwtTenantClaims(),
-            firmMemberships = firmRepository.listUserMemberships(userId).toJwtFirmClaims()
+            firmMemberships = firmRepository.listUserMemberships(userId).toJwtFirmClaims(),
+            sessionId = activeSessionId
         )
 
         val response = jwtGenerator.generateTokens(claims).copy(
             selectedTenantId = selectedTenantId
         )
 
-        // Enforce concurrent session limit by revoking oldest session if needed
-        val activeSessions = refreshTokenRepository.countActiveForUser(userId)
-        if (activeSessions >= maxConcurrentSessions) {
-            logger.info("User ${userId.value} at session limit during tenant selection, revoking oldest session")
-            refreshTokenRepository.revokeOldestForUser(userId).onFailure { error ->
-                logger.warn("Failed to revoke oldest session for user: ${userId.value}", error)
-            }
-        }
-
         refreshTokenRepository.saveRefreshToken(
             userId = userId,
             token = response.refreshToken,
             expiresAt = (now() + JwtClaims.REFRESH_TOKEN_EXPIRY_DAYS.days),
+            sessionId = activeSessionId,
             accessTokenJti = claims.jti,
             accessTokenExpiresAt = Instant.fromEpochSeconds(claims.exp),
             deviceType = sessionContext.deviceType,
             ipAddress = sessionContext.ipAddress,
-            userAgent = sessionContext.userAgent
+            userAgent = sessionContext.userAgent,
+            replaceExistingSessionIdentity = currentSessionId
         ).onFailure { error ->
             logger.error(
                 "Failed to save refresh token after tenant selection for user: ${userId.value}",
@@ -380,19 +394,41 @@ class AuthService(
         Result.failure(DokusException.InternalError(e.message ?: "Tenant selection failed"))
     }
 
-    suspend fun logout(request: LogoutRequest): Result<Unit> = try {
+    suspend fun logout(
+        userId: UserId,
+        currentSessionId: SessionId?,
+        request: LogoutRequest
+    ): Result<Unit> = try {
         logger.info("Logout request received")
 
         // Blacklist the access token (sessionToken) to prevent further use
         blacklistAccessToken(request.sessionToken)
 
-        // Revoke the refresh token
-        request.refreshToken?.let { token ->
-            refreshTokenRepository.revokeToken(token).onFailure { error ->
-                logger.warn("Failed to revoke refresh token during logout: ${error.message}")
-            }.onSuccess {
-                logger.info("Successfully revoked refresh token during logout")
+        currentSessionId?.let { sessionId ->
+            try {
+                when (val result = refreshTokenRepository.revokeCurrentSession(userId, sessionId)) {
+                    is SessionRevocationResult.NotFound ->
+                        logger.warn("Current session not found during logout for user {}", userId.value)
+                    is SessionRevocationResult.Revoked -> {
+                        result.sessions.forEach { blacklistRevokedSession(it) }
+                        logger.info(
+                            "Successfully revoked {} session rows during logout for user {}",
+                            result.sessions.size,
+                            userId.value
+                        )
+                    }
+                }
+            } catch (error: Exception) {
+                logger.warn("Failed to revoke current session during logout: ${error.message}")
             }
+        } ?: request.refreshToken?.let { token ->
+            refreshTokenRepository.revokeToken(token)
+                .onFailure { error ->
+                    logger.warn("Failed to revoke refresh token during logout: ${error.message}")
+                }
+                .onSuccess {
+                    logger.info("Successfully revoked refresh token during logout")
+                }
         }
 
         logger.info("Logout successful")
@@ -431,7 +467,7 @@ class AuthService(
 
     private suspend fun trackAccessToken(userId: UserId, claims: JwtClaims) {
         tokenBlacklistService?.let { blacklist ->
-            runCatching {
+            runSuspendCatching {
                 blacklist.trackUserToken(
                     userId = userId,
                     jti = claims.jti,
@@ -443,17 +479,11 @@ class AuthService(
         }
     }
 
-    private suspend fun blacklistRevokedSessions(revokedSessions: List<RevokedSessionInfo>) {
-        revokedSessions.forEach { revoked ->
-            blacklistRevokedSession(revoked)
-        }
-    }
-
     private suspend fun blacklistRevokedSession(revoked: RevokedSessionInfo) {
         val jti = revoked.accessTokenJti ?: return
         val expiresAt = revoked.accessTokenExpiresAt ?: return
         tokenBlacklistService?.let { blacklist ->
-            runCatching {
+            runSuspendCatching {
                 blacklist.blacklistToken(
                     jti = jti,
                     expiresAt = JavaInstant.ofEpochSecond(
@@ -502,7 +532,7 @@ class AuthService(
         userId: UserId,
         currentPassword: Password,
         newPassword: Password,
-        currentSessionJti: String?
+        currentSessionId: SessionId?
     ): Result<Unit> = try {
         logger.info("Change password request for user {}", userId.value)
 
@@ -525,8 +555,7 @@ class AuthService(
             throw DokusException.InvalidCredentials("Current password is incorrect")
         }
 
-        val activeSessionJti = currentSessionJti
-            ?.takeIf { it.isNotBlank() }
+        val activeSessionId = currentSessionId
             ?: throw DokusException.SessionInvalid("Current session identity is missing")
 
         newPassword.validOrThrows
@@ -535,16 +564,13 @@ class AuthService(
         // Update password first - if revocation fails, user can manually revoke via sessions UI.
         userRepository.updatePassword(userId, newPassword.value)
 
-        val revokedSessions = refreshTokenRepository.revokeOtherSessions(userId, activeSessionJti)
-            .getOrElse { error ->
-                throw DokusException.InternalError(
-                    error.message ?: "Failed to revoke other sessions after password change"
-                )
-            }
+        val result = refreshTokenRepository.revokeOtherSessions(userId, activeSessionId)
+        if (result is SessionRevocationResult.Revoked) {
+            result.sessions.forEach { blacklistRevokedSession(it) }
+            logger.info("Password changed and {} sessions revoked for user {}", result.sessions.size, userId.value)
+        }
 
-        blacklistRevokedSessions(revokedSessions)
         rateLimitService.resetLoginAttempts(rateLimitKey)
-        logger.info("Password changed and {} sessions revoked for user {}", revokedSessions.size, userId.value)
         Result.success(Unit)
     } catch (e: DokusException) {
         logger.warn("Change password failed: {} for user {}", e.errorCode, userId.value)
@@ -556,9 +582,9 @@ class AuthService(
 
     suspend fun listSessions(
         userId: UserId,
-        currentSessionJti: String?
+        currentSessionId: SessionId?
     ): Result<List<SessionDto>> = try {
-        Result.success(refreshTokenRepository.listActiveSessions(userId, currentSessionJti))
+        Result.success(refreshTokenRepository.listActiveSessions(userId, currentSessionId))
     } catch (e: Exception) {
         logger.error("Failed to list sessions for user {}", userId.value, e)
         Result.failure(DokusException.InternalError("Failed to list sessions"))
@@ -566,15 +592,18 @@ class AuthService(
 
     suspend fun revokeSession(
         userId: UserId,
-        sessionId: SessionId
+        sessionId: SessionId,
+        currentSessionId: SessionId? = null
     ): Result<Unit> = try {
-        val revoked = refreshTokenRepository.revokeSessionById(userId, sessionId)
-            .getOrElse { error ->
-                throw DokusException.InternalError(error.message ?: "Failed to revoke session")
-            }
-            ?: throw DokusException.NotFound("Session not found")
-
-        blacklistRevokedSession(revoked)
+        if (currentSessionId != null && sessionId == currentSessionId) {
+            throw DokusException.BadRequest("Cannot revoke current session. Use logout instead.")
+        }
+        when (val result = refreshTokenRepository.revokeSessionById(userId, sessionId)) {
+            is SessionRevocationResult.NotFound ->
+                throw DokusException.NotFound("Session not found")
+            is SessionRevocationResult.Revoked ->
+                result.sessions.forEach { blacklistRevokedSession(it) }
+        }
         Result.success(Unit)
     } catch (e: DokusException) {
         Result.failure(e)
@@ -585,18 +614,16 @@ class AuthService(
 
     suspend fun revokeOtherSessions(
         userId: UserId,
-        currentSessionJti: String?
+        currentSessionId: SessionId?
     ): Result<Unit> = try {
-        val activeSessionJti = currentSessionJti
-            ?.takeIf { it.isNotBlank() }
+        val activeSessionId = currentSessionId
             ?: throw DokusException.SessionInvalid("Current session identity is missing")
 
-        val revokedSessions = refreshTokenRepository.revokeOtherSessions(userId, activeSessionJti)
-            .getOrElse { error ->
-                throw DokusException.InternalError(error.message ?: "Failed to revoke other sessions")
-            }
+        val result = refreshTokenRepository.revokeOtherSessions(userId, activeSessionId)
+        if (result is SessionRevocationResult.Revoked) {
+            result.sessions.forEach { blacklistRevokedSession(it) }
+        }
 
-        blacklistRevokedSessions(revokedSessions)
         Result.success(Unit)
     } catch (e: DokusException) {
         Result.failure(e)

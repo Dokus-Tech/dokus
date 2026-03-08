@@ -4,6 +4,7 @@ import kotlinx.serialization.Serializable
 import tech.dokus.domain.enums.FirmRole
 import tech.dokus.domain.enums.UserRole
 import tech.dokus.domain.ids.FirmId
+import tech.dokus.domain.ids.SessionId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 
@@ -25,6 +26,7 @@ data class JwtClaims(
     val email: String,
     val tenantMemberships: List<JwtTenantMembershipClaim> = emptyList(),
     val firmMemberships: List<JwtFirmMembershipClaim> = emptyList(),
+    val sessionId: SessionId? = null,
     val iat: Long,
     val exp: Long,
     val jti: String,
@@ -36,6 +38,7 @@ data class JwtClaims(
         const val CLAIM_EMAIL = "email"
         const val CLAIM_TENANTS = "tenants"
         const val CLAIM_FIRMS = "firms"
+        const val CLAIM_SESSION_ID = "session_id"
         const val CLAIM_IAT = "iat"
         const val CLAIM_EXP = "exp"
         const val CLAIM_JTI = "jti"

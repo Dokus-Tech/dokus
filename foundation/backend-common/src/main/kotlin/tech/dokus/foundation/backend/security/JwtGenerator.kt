@@ -40,6 +40,7 @@ class JwtGenerator(
         email: String,
         tenantMemberships: List<JwtTenantMembershipClaim> = emptyList(),
         firmMemberships: List<JwtFirmMembershipClaim> = emptyList(),
+        sessionId: tech.dokus.domain.ids.SessionId? = null,
     ): JwtClaims {
         val nowTime = now()
         val accessExpiry = nowTime + JwtClaims.ACCESS_TOKEN_EXPIRY_SECONDS.seconds
@@ -49,6 +50,7 @@ class JwtGenerator(
             email = email,
             tenantMemberships = tenantMemberships,
             firmMemberships = firmMemberships,
+            sessionId = sessionId,
             iat = nowTime.epochSeconds,
             exp = accessExpiry.epochSeconds,
             jti = Uuid.random().toString(),
@@ -64,6 +66,9 @@ class JwtGenerator(
             .withSubject(claims.userId.value.toString())
             .withJWTId(claims.jti)
             .withClaim(JwtClaims.CLAIM_EMAIL, claims.email)
+            .apply {
+                claims.sessionId?.let { withClaim(JwtClaims.CLAIM_SESSION_ID, it.toString()) }
+            }
             .withClaim(
                 JwtClaims.CLAIM_TENANTS,
                 json.encodeToString(claims.tenantMemberships)

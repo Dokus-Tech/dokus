@@ -82,6 +82,18 @@
     <string name="profile_current_session">Current session</string>
     <string name="profile_session_revoked">Session revoked</string>
     <string name="profile_sessions_revoke_others_success">Other sessions revoked</string>
+    <string name="profile_sessions_this_device">This device</string>
+    <string name="profile_sessions_review_action">Review active sessions</string>
+
+    <!-- Session Presentation Labels -->
+    <string name="session_device_web">Web session</string>
+    <string name="session_device_ipad">iPad</string>
+    <string name="session_device_iphone">iPhone</string>
+    <string name="session_last_seen_online">online</string>
+    <string name="session_last_seen_just_now">just now</string>
+    <string name="session_last_seen_minutes_ago">%1$dm ago</string>
+    <string name="session_last_seen_hours_ago">%1$dh ago</string>
+    <string name="session_last_seen_days_ago">%1$dd ago</string>
 
     <!-- Workspace Settings -->
     <string name="workspace_settings_title">Company Details</string>

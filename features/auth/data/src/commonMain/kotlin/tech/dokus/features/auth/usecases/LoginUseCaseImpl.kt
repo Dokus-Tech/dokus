@@ -2,6 +2,7 @@ package tech.dokus.features.auth.usecases
 
 import tech.dokus.domain.Email
 import tech.dokus.domain.Password
+import tech.dokus.domain.currentDeviceType
 import tech.dokus.domain.model.auth.LoginRequest
 import tech.dokus.features.auth.gateway.AuthGateway
 import tech.dokus.foundation.platform.Logger
@@ -53,7 +54,8 @@ class LoginUseCaseImpl(
         val request = LoginRequest(
             email = email,
             password = password,
-            rememberMe = true
+            rememberMe = true,
+            deviceType = currentDeviceType(),
         )
 
         // Perform login

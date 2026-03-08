@@ -12,18 +12,25 @@ import androidx.compose.runtime.setValue
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
+import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.profile_verification_email_sent
 import tech.dokus.aura.resources.profile_reset_to_cloud_failed
 import tech.dokus.aura.resources.profile_save_success
+import tech.dokus.aura.resources.profile_session_revoked
+import tech.dokus.aura.resources.profile_sessions_revoke_others_success
+import tech.dokus.aura.resources.profile_settings_title
+import tech.dokus.aura.resources.profile_verification_email_sent
 import tech.dokus.domain.config.ServerConfigManager
 import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.aura.resources.profile_settings_title
-import tech.dokus.aura.resources.profile_subtitle
 import tech.dokus.features.auth.mvi.ProfileSettingsAction
 import tech.dokus.features.auth.mvi.ProfileSettingsContainer
 import tech.dokus.features.auth.mvi.ProfileSettingsIntent
+import tech.dokus.features.auth.mvi.MySessionsAction
+import tech.dokus.features.auth.mvi.MySessionsContainer
+import tech.dokus.features.auth.mvi.MySessionsIntent
+import tech.dokus.features.auth.presentation.auth.screen.ProfileDetailPaneHost
+import tech.dokus.features.auth.presentation.auth.screen.ProfileDetailSelection
 import tech.dokus.features.auth.presentation.auth.screen.ProfileSettingsScreen
 import tech.dokus.features.auth.usecases.ConnectToServerUseCase
 import tech.dokus.features.auth.usecases.LogoutUseCase
@@ -32,8 +39,11 @@ import tech.dokus.foundation.app.shell.HomeShellTopBarConfig
 import tech.dokus.foundation.app.shell.HomeShellTopBarMode
 import tech.dokus.foundation.app.shell.RegisterHomeShellTopBar
 import tech.dokus.foundation.aura.extensions.localized
+import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.platform.Logger
 import tech.dokus.navigation.destinations.AuthDestination
+import tech.dokus.navigation.destinations.HomeDestination
+import tech.dokus.navigation.destinations.route
 import tech.dokus.navigation.local.LocalNavController
 import tech.dokus.navigation.navigateTo
 
@@ -49,24 +59,32 @@ fun ProfileSettingsRoute(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val currentServer by serverConfigManager.currentServer.collectAsState()
+    val isLargeScreen = LocalScreenSize.current.isLarge
 
     var pendingSuccess by remember { mutableStateOf(false) }
     var pendingVerificationSent by remember { mutableStateOf(false) }
+    var pendingSessionsMessage by remember { mutableStateOf<String?>(null) }
     var pendingError by remember { mutableStateOf<DokusException?>(null) }
     var isLoggingOut by remember { mutableStateOf(false) }
+    var activeDetailPane by remember { mutableStateOf<ProfileDetailSelection>(ProfileDetailSelection.None) }
 
-    // Register shell top bar for desktop (Profile is inside home NavHost)
+    LaunchedEffect(isLargeScreen) {
+        if (!isLargeScreen) {
+            activeDetailPane = ProfileDetailSelection.None
+        }
+    }
+
     val profileTitle = stringResource(Res.string.profile_settings_title)
-    val profileSubtitle = stringResource(Res.string.profile_subtitle)
     RegisterHomeShellTopBar(
-        route = "home/profile",
-        config = remember(profileTitle, profileSubtitle) {
-            HomeShellTopBarConfig(
-                mode = HomeShellTopBarMode.Title(
-                    title = profileTitle,
-                    subtitle = profileSubtitle
+        route = HomeDestination.Profile.route,
+        config = remember(isLargeScreen, profileTitle) {
+            if (!isLargeScreen) {
+                null
+            } else {
+                HomeShellTopBarConfig(
+                    mode = HomeShellTopBarMode.Title(title = profileTitle),
                 )
-            )
+            }
         }
     )
 
@@ -77,6 +95,8 @@ fun ProfileSettingsRoute(
     }
     val resetToCloudFailedMessage = stringResource(Res.string.profile_reset_to_cloud_failed)
     val verificationSentMessage = stringResource(Res.string.profile_verification_email_sent)
+    val sessionRevokedMessage = stringResource(Res.string.profile_session_revoked)
+    val revokeOthersMessage = stringResource(Res.string.profile_sessions_revoke_others_success)
     val errorMessage = pendingError?.localized
 
     LaunchedEffect(saveSuccessMessage) {
@@ -100,6 +120,13 @@ fun ProfileSettingsRoute(
         }
     }
 
+    LaunchedEffect(pendingSessionsMessage) {
+        pendingSessionsMessage?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            pendingSessionsMessage = null
+        }
+    }
+
     val state by container.store.subscribe { action ->
         when (action) {
             ProfileSettingsAction.ShowSaveSuccess -> pendingSuccess = true
@@ -108,10 +135,48 @@ fun ProfileSettingsRoute(
             is ProfileSettingsAction.ShowVerificationEmailError -> pendingError = action.error
             is ProfileSettingsAction.ShowAvatarError -> pendingError = action.error
             ProfileSettingsAction.NavigateToChangePassword -> navController.navigateTo(AuthDestination.ChangePassword)
-            ProfileSettingsAction.NavigateToMySessions -> navController.navigateTo(AuthDestination.MySessions)
+            ProfileSettingsAction.NavigateToMySessions -> {
+                if (isLargeScreen) {
+                    activeDetailPane = ProfileDetailSelection.Sessions
+                } else {
+                    navController.navigateTo(AuthDestination.MySessions)
+                }
+            }
             ProfileSettingsAction.NavigateBack -> navController.navigateUp()
         }
     }
+
+    var sessionsStateHolder: tech.dokus.features.auth.mvi.MySessionsState? = null
+    var sessionsOnIntent: ((MySessionsIntent) -> Unit)? = null
+    if (isLargeScreen) {
+        val sessionsContainer: MySessionsContainer = container()
+        val sessionsState by sessionsContainer.store.subscribe(DefaultLifecycle) { action ->
+            when (action) {
+                MySessionsAction.NavigateBack -> activeDetailPane = ProfileDetailSelection.None
+                MySessionsAction.ShowSessionRevoked -> pendingSessionsMessage = sessionRevokedMessage
+                MySessionsAction.ShowRevokeOthersSuccess -> pendingSessionsMessage = revokeOthersMessage
+                is MySessionsAction.ShowError -> {
+                    if (activeDetailPane is ProfileDetailSelection.Sessions) {
+                        pendingError = action.error
+                    }
+                }
+            }
+        }
+        sessionsStateHolder = sessionsState
+        sessionsOnIntent = { intent -> sessionsContainer.store.intent(intent) }
+    }
+    val detailPaneContent: (@Composable () -> Unit)? =
+        if (isLargeScreen) {
+            {
+                ProfileDetailPaneHost(
+                    selection = activeDetailPane,
+                    sessionsState = checkNotNull(sessionsStateHolder),
+                    onSessionsIntent = checkNotNull(sessionsOnIntent),
+                )
+            }
+        } else {
+            null
+        }
 
     ProfileSettingsScreen(
         state = state,
@@ -121,7 +186,17 @@ fun ProfileSettingsRoute(
         onIntent = { container.store.intent(it) },
         onResendVerification = { container.store.intent(ProfileSettingsIntent.ResendVerificationClicked) },
         onChangePassword = { container.store.intent(ProfileSettingsIntent.ChangePasswordClicked) },
-        onMySessions = { container.store.intent(ProfileSettingsIntent.MySessionsClicked) },
+        onMySessions = {
+            if (isLargeScreen) {
+                activeDetailPane = if (activeDetailPane is ProfileDetailSelection.Sessions) {
+                    ProfileDetailSelection.None
+                } else {
+                    ProfileDetailSelection.Sessions
+                }
+            } else {
+                container.store.intent(ProfileSettingsIntent.MySessionsClicked)
+            }
+        },
         onChangeServer = { navController.navigateTo(AuthDestination.ServerConnection()) },
         onResetToCloud = {
             scope.launch {
@@ -155,6 +230,7 @@ fun ProfileSettingsRoute(
                     }
                 )
             }
-        }
+        },
+        detailPaneContent = detailPaneContent
     )
 }

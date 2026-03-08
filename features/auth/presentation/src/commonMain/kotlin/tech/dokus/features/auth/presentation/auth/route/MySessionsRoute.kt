@@ -13,10 +13,12 @@ import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.profile_session_revoked
 import tech.dokus.aura.resources.profile_sessions_revoke_others_success
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.features.auth.mvi.MySessionsAction
 import tech.dokus.features.auth.mvi.MySessionsContainer
 import tech.dokus.features.auth.presentation.auth.screen.MySessionsScreen
 import tech.dokus.foundation.app.mvi.container
+import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.navigation.local.LocalNavController
 
 @Composable
@@ -25,14 +27,17 @@ fun MySessionsRoute() {
     val navController = LocalNavController.current
     val snackbarHostState = remember { SnackbarHostState() }
     var pendingMessage by remember { mutableStateOf<String?>(null) }
+    var pendingError by remember { mutableStateOf<DokusException?>(null) }
     val sessionRevokedMessage = stringResource(Res.string.profile_session_revoked)
     val revokeOthersMessage = stringResource(Res.string.profile_sessions_revoke_others_success)
+    val errorMessage = pendingError?.localized
 
     val state by container.store.subscribe(DefaultLifecycle) { action ->
         when (action) {
             MySessionsAction.NavigateBack -> navController.navigateUp()
             MySessionsAction.ShowSessionRevoked -> pendingMessage = sessionRevokedMessage
             MySessionsAction.ShowRevokeOthersSuccess -> pendingMessage = revokeOthersMessage
+            is MySessionsAction.ShowError -> pendingError = action.error
         }
     }
 
@@ -40,6 +45,13 @@ fun MySessionsRoute() {
         pendingMessage?.let {
             snackbarHostState.showSnackbar(it)
             pendingMessage = null
+        }
+    }
+
+    LaunchedEffect(errorMessage) {
+        if (errorMessage != null) {
+            snackbarHostState.showSnackbar(errorMessage)
+            pendingError = null
         }
     }
 

@@ -105,6 +105,32 @@ The project follows a feature-based modular architecture:
 4. **Testing**: Limited test coverage exists; server tests are in `/server/{module}/src/test/kotlin/`
 5. **Server modules**: Currently commented out in settings.gradle.kts; uncomment if server work is needed
 
+## Compose UI Conventions
+
+### Design Tokens
+Never use hardcoded `dp` values. Use `Constraints.*` tokens from `foundation/aura/constrains/Constraints.kt`:
+- **Spacing**: `xxSmall`(2), `xSmall`(4), `small`(8), `medium`(12), `large`(16), `xLarge`(24), `xxLarge`(32), `xxxLarge`(48)
+- **IconSize**: `xSmall`(16), `small`(18), `smallMedium`(20), `medium`(24), `large`(32), `xLarge`(48), `xxLarge`(64)
+- **AvatarSize**: `extraSmall`(24), `small`(32), `medium`(64), `tile`(72), `large`(128), `extraLarge`(256)
+- **Stroke**: `thin`(1)
+
+When a value doesn't exactly match a token, snap to the nearest one.
+
+### Extension Conventions
+Enum display mappings live in `foundation/aura/extensions/` and follow two patterns:
+- **`.iconized`**: `val EnumType.iconized: ImageVector` — non-composable `get()` returning an icon
+- **`.localized`**: `val EnumType.localized: String` — `@Composable get()` using `stringResource()`
+
+### String Resources
+All user-facing text must use `stringResource(Res.string.xxx)`. Resources are in `foundation/aura/src/commonMain/composeResources/values/`. **Check for existing keys before adding new ones** — duplicate keys across xml files cause runtime crashes.
+
+### Previews
+- **No `Clock.System` or dynamic dates** in previews — pass fixed values so Roborazzi snapshot tests are deterministic
+- Prefer `String` parameters over domain types (`LocalDate`, `Int`) for display-only values — follows Compose state hoisting best practices
+
+### Detail Pane Pattern
+For split-view screens with a right detail pane, use a **sealed interface** for pane selection (e.g., `ProfileDetailSelection`) with `AnimatedContent` host — not boolean flags. This keeps the architecture extensible for future panes.
+
 ## Environment Configuration
 
 The project has been simplified to support **two environments**:

@@ -5,10 +5,11 @@ import tech.dokus.foundation.app.shell.HomeShellTopBarMode
 import tech.dokus.foundation.aura.model.NavItem
 import tech.dokus.foundation.aura.model.ShellTopBarDefault
 import tech.dokus.navigation.destinations.HomeDestination
+import tech.dokus.navigation.destinations.route
 import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.chart_bar_trend_up
 import tech.dokus.aura.resources.cashflow
 import tech.dokus.aura.resources.cashflow_title
+import tech.dokus.aura.resources.chart_bar_trend_up
 import tech.dokus.aura.resources.file_text
 import tech.dokus.aura.resources.home_today
 import tech.dokus.aura.resources.nav_contacts
@@ -83,6 +84,47 @@ class HomeShellTopBarResolverTest {
     }
 
     @Test
+    fun `registered config is resolved for non navigation routes`() {
+        val registered = mapOf(
+            "home/profile" to HomeShellTopBarConfig(
+                mode = HomeShellTopBarMode.Title("Profile")
+            )
+        )
+
+        val resolved = resolveHomeShellTopBarConfig(
+            route = "home/profile",
+            allNavItems = testNavItems,
+            sortedRoutes = testSortedRoutes,
+            registeredConfigs = registered,
+            fallback = ::fallbackConfig
+        )
+
+        assertEquals(
+            expected = "Profile",
+            actual = (resolved?.mode as HomeShellTopBarMode.Title).title
+        )
+    }
+
+    @Test
+    fun `workspace details can still register transparent top bar`() {
+        val registered = mapOf(
+            HomeDestination.WorkspaceDetails.route to HomeShellTopBarConfig(
+                mode = HomeShellTopBarMode.Transparent
+            )
+        )
+
+        val resolved = resolveHomeShellTopBarConfig(
+            route = HomeDestination.WorkspaceDetails.route,
+            allNavItems = testNavItems,
+            sortedRoutes = testSortedRoutes,
+            registeredConfigs = registered,
+            fallback = ::fallbackConfig
+        )
+
+        assertEquals(HomeShellTopBarMode.Transparent, resolved?.mode)
+    }
+
+    @Test
     fun `clearing route registration restores default config`() {
         val registered = mutableMapOf(
             "cashflow" to HomeShellTopBarConfig(
@@ -124,6 +166,28 @@ class HomeShellTopBarResolverTest {
         )
 
         assertNull(resolved)
+    }
+
+    @Test
+    fun `registered config overrides routes whose nav item disables shell top bar`() {
+        val registered = mapOf(
+            "contacts" to HomeShellTopBarConfig(
+                mode = HomeShellTopBarMode.Title("Contacts Override")
+            )
+        )
+
+        val resolved = resolveHomeShellTopBarConfig(
+            route = "contacts",
+            allNavItems = testNavItems,
+            sortedRoutes = testSortedRoutes,
+            registeredConfigs = registered,
+            fallback = ::fallbackConfig
+        )
+
+        assertEquals(
+            expected = "Contacts Override",
+            actual = (resolved?.mode as HomeShellTopBarMode.Title).title
+        )
     }
 
     private fun fallbackConfig(normalizedRoute: String, default: ShellTopBarDefault): HomeShellTopBarConfig? {

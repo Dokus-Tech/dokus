@@ -38,4 +38,5 @@ sealed interface MySessionsAction : MVIAction {
     data object NavigateBack : MySessionsAction
     data object ShowSessionRevoked : MySessionsAction
     data object ShowRevokeOthersSuccess : MySessionsAction
+    data class ShowError(val error: DokusException) : MySessionsAction
 }

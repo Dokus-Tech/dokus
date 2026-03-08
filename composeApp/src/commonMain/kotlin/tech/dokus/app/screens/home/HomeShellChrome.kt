@@ -303,6 +303,7 @@ private fun DesktopProfileMenuButton(
 @Composable
 private fun DesktopShellTopBarFrame(
     actions: List<HomeShellTopBarAction>,
+    trailingText: String,
     modifier: Modifier = Modifier,
     leadingContent: @Composable RowScope.() -> Unit,
 ) {
@@ -324,11 +325,10 @@ private fun DesktopShellTopBarFrame(
             // Actions slot
             RouteTopBarActions(actions = actions)
 
-            // Date display
-            val dateText = formattedCurrentDate()
+            // Trailing label
             Spacer(modifier = Modifier.width(spacing.medium))
             Text(
-                text = dateText,
+                text = trailingText,
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.textFaint,
             )
@@ -341,13 +341,23 @@ private fun DesktopShellTopBarFrame(
 internal fun DesktopShellTopBar(
     topBarConfig: HomeShellTopBarConfig,
     modifier: Modifier = Modifier,
+    trailingText: String? = null,
 ) {
-    DesktopShellTopBarFrame(
-        actions = topBarConfig.actions,
-        modifier = modifier
-    ) {
-        when (val mode = topBarConfig.mode) {
-            is HomeShellTopBarMode.Title -> {
+    when (val mode = topBarConfig.mode) {
+        HomeShellTopBarMode.Transparent -> {
+            Box(
+                modifier = modifier
+                    .fillMaxWidth()
+                    .height(DesktopShellTopBarHeight)
+            )
+        }
+
+        is HomeShellTopBarMode.Title -> {
+            DesktopShellTopBarFrame(
+                actions = topBarConfig.actions,
+                trailingText = trailingText ?: formattedCurrentDate(),
+                modifier = modifier
+            ) {
                 Column {
                     Text(
                         text = mode.title,
@@ -449,9 +459,7 @@ private fun RowScope.RouteTopBarActions(
 /** Format current date as "18 Feb 2026" using localized month names. */
 @Composable
 private fun formattedCurrentDate(): String {
-    val today = remember {
-        Clock.System.todayIn(TimeZone.currentSystemDefault())
-    }
+    val today = remember { Clock.System.todayIn(TimeZone.currentSystemDefault()) }
     val monthName = shortMonthName(today.month)
     return "${today.day} $monthName ${today.year}"
 }
@@ -485,7 +493,8 @@ private fun DesktopShellTopBarTitleOnlyPreview(
         DesktopShellTopBar(
             topBarConfig = HomeShellTopBarConfig(
                 mode = HomeShellTopBarMode.Title(title = "Accountant")
-            )
+            ),
+            trailingText = "15 Jan 2026",
         )
     }
 }
@@ -502,7 +511,8 @@ private fun DesktopShellTopBarTitleSubtitlePreview(
                     title = "Cashflow",
                     subtitle = "Track incoming and outgoing payments"
                 )
-            )
+            ),
+            trailingText = "15 Jan 2026",
         )
     }
 }
@@ -520,6 +530,20 @@ private fun MobileShellTopBarPreview(
                 tierLabel = "Core"
             ),
             onProfileClick = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun DesktopTransparentShellTopBarPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        DesktopShellTopBar(
+            topBarConfig = HomeShellTopBarConfig(
+                mode = HomeShellTopBarMode.Transparent
+            )
         )
     }
 }
