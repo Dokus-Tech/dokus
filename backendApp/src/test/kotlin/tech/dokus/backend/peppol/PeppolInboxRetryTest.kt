@@ -1,5 +1,6 @@
 package tech.dokus.backend.peppol
 
+import io.ktor.client.HttpClient
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Clock
@@ -110,7 +111,7 @@ class PeppolInboxRetryTest {
         settingsRepository = PeppolSettingsRepository()
         transmissionRepository = PeppolTransmissionRepository()
 
-        val providerHttpClient = mockk<io.ktor.client.HttpClient>(relaxed = true)
+        val providerHttpClient = mockk<HttpClient>(relaxed = true)
         val providerFactory = PeppolProviderFactory(providerHttpClient)
 
         val inboxItem = PeppolInboxItem(

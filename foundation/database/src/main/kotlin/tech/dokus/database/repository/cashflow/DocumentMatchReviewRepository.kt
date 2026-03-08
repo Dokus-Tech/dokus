@@ -1,6 +1,7 @@
 package tech.dokus.database.repository.cashflow
 
 import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.v1.core.ResultRow
@@ -33,9 +34,9 @@ data class DocumentMatchReviewSummary(
     val aiConfidence: Double?,
     val status: DocumentMatchReviewStatus,
     val resolvedBy: UserId?,
-    val resolvedAt: kotlinx.datetime.LocalDateTime?,
-    val createdAt: kotlinx.datetime.LocalDateTime,
-    val updatedAt: kotlinx.datetime.LocalDateTime
+    val resolvedAt: LocalDateTime?,
+    val createdAt: LocalDateTime,
+    val updatedAt: LocalDateTime
 )
 
 @OptIn(ExperimentalUuidApi::class)

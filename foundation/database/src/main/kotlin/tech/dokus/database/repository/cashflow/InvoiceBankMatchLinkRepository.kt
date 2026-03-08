@@ -4,6 +4,7 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.isNull
@@ -178,7 +179,7 @@ class InvoiceBankMatchLinkRepository {
         } > 0
     }
 
-    private fun org.jetbrains.exposed.v1.core.ResultRow.toRecord(): InvoiceBankMatchLinkRecord {
+    private fun ResultRow.toRecord(): InvoiceBankMatchLinkRecord {
         return InvoiceBankMatchLinkRecord(
             id = this[InvoiceBankMatchLinksTable.id].value,
             tenantId = TenantId.parse(this[InvoiceBankMatchLinksTable.tenantId].toString()),

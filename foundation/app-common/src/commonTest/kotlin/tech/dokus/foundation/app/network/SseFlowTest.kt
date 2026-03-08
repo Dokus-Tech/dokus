@@ -1,6 +1,7 @@
 package tech.dokus.foundation.app.network
 
 import io.ktor.client.HttpClient
+import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.sse.ServerSentEvent
 import kotlinx.coroutines.awaitCancellation
@@ -26,7 +27,7 @@ class SseFlowTest {
             sseEventCollector = object : SseEventCollector {
                 override suspend fun collect(
                     httpClient: HttpClient,
-                    request: io.ktor.client.request.HttpRequestBuilder.() -> Unit,
+                    request: HttpRequestBuilder.() -> Unit,
                     onConnected: () -> Unit,
                     onEvent: suspend (ServerSentEvent) -> Unit,
                 ) {

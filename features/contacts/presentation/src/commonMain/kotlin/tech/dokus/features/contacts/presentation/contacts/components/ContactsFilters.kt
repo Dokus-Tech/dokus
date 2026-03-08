@@ -19,6 +19,9 @@ import tech.dokus.features.contacts.mvi.ContactActiveFilter
 import tech.dokus.features.contacts.mvi.ContactRoleFilter
 import tech.dokus.features.contacts.mvi.ContactSortOption
 import tech.dokus.foundation.aura.components.dropdown.PFilterDropdown
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Filter controls for the Contacts screen (desktop layout).
@@ -139,10 +142,10 @@ internal fun ContactsFiltersMobile(
 @Composable
 private fun ContactsFiltersPreview(
     @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+        PreviewParametersProvider::class
+    ) parameters: PreviewParameters
 ) {
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    TestWrapper(parameters) {
         ContactsFilters(
             selectedSortOption = ContactSortOption.Default,
             selectedRoleFilter = ContactRoleFilter.All,
@@ -158,10 +161,10 @@ private fun ContactsFiltersPreview(
 @Composable
 private fun ContactsFiltersMobilePreview(
     @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+        PreviewParametersProvider::class
+    ) parameters: PreviewParameters
 ) {
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    TestWrapper(parameters) {
         ContactsFiltersMobile(
             selectedSortOption = ContactSortOption.Default,
             selectedRoleFilter = ContactRoleFilter.All,

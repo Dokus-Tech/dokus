@@ -3,6 +3,7 @@
 package tech.dokus.database.repository.cashflow
 
 import org.jetbrains.exposed.v1.core.JoinType
+import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.alias
 import org.jetbrains.exposed.v1.core.and
@@ -391,7 +392,7 @@ internal object DocumentListingQuery {
     }
 }
 
-private fun org.jetbrains.exposed.v1.core.ResultRow.toIngestionRunSummary(): IngestionRunSummary {
+private fun ResultRow.toIngestionRunSummary(): IngestionRunSummary {
     return IngestionRunSummary(
         id = IngestionRunId.parse(this[DocumentIngestionRunsTable.id].toString()),
         documentId = DocumentId.parse(this[DocumentIngestionRunsTable.documentId].toString()),
@@ -409,7 +410,7 @@ private fun org.jetbrains.exposed.v1.core.ResultRow.toIngestionRunSummary(): Ing
     )
 }
 
-private fun org.jetbrains.exposed.v1.core.ResultRow.toDraftSummary(): DraftSummary {
+private fun ResultRow.toDraftSummary(): DraftSummary {
     return DraftSummary(
         documentId = DocumentId.parse(this[DocumentDraftsTable.documentId].toString()),
         tenantId = TenantId(this[DocumentDraftsTable.tenantId].toKotlinUuid()),

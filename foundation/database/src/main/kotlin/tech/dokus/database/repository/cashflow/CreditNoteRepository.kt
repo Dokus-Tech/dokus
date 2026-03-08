@@ -1,6 +1,7 @@
 package tech.dokus.database.repository.cashflow
 
 import kotlinx.datetime.LocalDate
+import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
@@ -278,7 +279,7 @@ class CreditNoteRepository {
         }
     }
 
-    private fun mapRowToDto(row: org.jetbrains.exposed.v1.core.ResultRow): FinancialDocumentDto.CreditNoteDto {
+    private fun mapRowToDto(row: ResultRow): FinancialDocumentDto.CreditNoteDto {
         return FinancialDocumentDto.CreditNoteDto(
             id = CreditNoteId.parse(row[CreditNotesTable.id].value.toString()),
             tenantId = TenantId.parse(row[CreditNotesTable.tenantId].toString()),

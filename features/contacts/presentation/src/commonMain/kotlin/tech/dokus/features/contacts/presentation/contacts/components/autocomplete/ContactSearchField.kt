@@ -34,6 +34,9 @@ import tech.dokus.aura.resources.contacts_selected
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.foundation.aura.components.PIcon
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * The text input field for the autocomplete component.
@@ -147,10 +150,10 @@ internal fun ContactSearchField(
 @Composable
 private fun ContactSearchFieldPreview(
     @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+        PreviewParametersProvider::class
+    ) parameters: PreviewParameters
 ) {
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    TestWrapper(parameters) {
         ContactSearchField(
             value = "Acme Corp",
             onValueChange = {},

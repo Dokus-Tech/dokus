@@ -53,6 +53,11 @@ import tech.dokus.foundation.aura.components.text.DokusLogo
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.local.isLarge
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 private val LeftPaneMaxWidth = 460.dp
 private val CenterPaneMaxWidth = 520.dp
@@ -324,14 +329,14 @@ private fun rememberOnboardingHeadlineFontFamily(): FontFamily {
     }
 }
 
-@androidx.compose.ui.tooling.preview.Preview
+@Preview
 @Composable
 private fun OnboardingSplitShellPreview(
-    @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class,
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters,
+    @PreviewParameter(
+        PreviewParametersProvider::class,
+    ) parameters: PreviewParameters,
 ) {
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    TestWrapper(parameters) {
         OnboardingSplitShell(brandVariant = OnboardingBrandVariant.Primary, copyrightYear = "2026") {
             DokusLogo.Full()
             Spacer(modifier = Modifier.height(Constraints.Spacing.large))
@@ -343,14 +348,14 @@ private fun OnboardingSplitShellPreview(
     }
 }
 
-@androidx.compose.ui.tooling.preview.Preview
+@Preview
 @Composable
 private fun OnboardingCenteredShellPreview(
-    @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class,
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters,
+    @PreviewParameter(
+        PreviewParametersProvider::class,
+    ) parameters: PreviewParameters,
 ) {
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    TestWrapper(parameters) {
         OnboardingCenteredShell(copyrightYear = "2026") {
             Text(
                 text = "Centered content",

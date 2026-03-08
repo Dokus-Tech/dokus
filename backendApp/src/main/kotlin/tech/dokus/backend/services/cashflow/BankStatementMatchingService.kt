@@ -1,5 +1,6 @@
 package tech.dokus.backend.services.cashflow
 
+import java.security.MessageDigest
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -415,7 +416,7 @@ class BankStatementMatchingService(
             structuredCommunication?.trim().orEmpty(),
             counterpartyName?.trim().orEmpty()
         ).joinToString("|")
-        return java.security.MessageDigest.getInstance("SHA-256")
+        return MessageDigest.getInstance("SHA-256")
             .digest(raw.toByteArray())
             .joinToString("") { "%02x".format(it) }
     }

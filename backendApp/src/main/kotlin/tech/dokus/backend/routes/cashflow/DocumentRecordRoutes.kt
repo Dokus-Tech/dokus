@@ -56,6 +56,7 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentMatchReviewId
 import tech.dokus.domain.ids.DocumentSourceId
+import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.DocumentCollectionChangedEventDto
 import tech.dokus.domain.model.DocumentDeletedEventDto
 import tech.dokus.domain.model.DocumentRecordDto
@@ -882,7 +883,7 @@ private fun selectDefaultSource(sources: List<DocumentSourceSummary>): DocumentS
 
 private fun publishAffectedDocuments(
     documentSsePublisher: DocumentSsePublisher,
-    tenantId: tech.dokus.domain.ids.TenantId,
+    tenantId: TenantId,
     result: DocumentIntakeServiceResult,
 ) {
     val sourceDocumentId = result.sourceDocumentId

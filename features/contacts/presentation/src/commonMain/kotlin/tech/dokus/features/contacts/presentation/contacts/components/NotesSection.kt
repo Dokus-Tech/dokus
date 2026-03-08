@@ -41,6 +41,13 @@ import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.DokusCardVariant
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.ShimmerLine
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.ContactNoteId
+import tech.dokus.domain.ids.TenantId
+import kotlinx.datetime.LocalDateTime
 
 // UI dimension constants
 private val SpacingSmall = 4.dp
@@ -283,27 +290,27 @@ private fun NotesSkeleton() {
 @Composable
 private fun NotesSectionPreview(
     @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+        PreviewParametersProvider::class
+    ) parameters: PreviewParameters
 ) {
-    val now = kotlinx.datetime.LocalDateTime(2026, 1, 15, 10, 0)
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    val now = LocalDateTime(2026, 1, 15, 10, 0)
+    TestWrapper(parameters) {
         NotesSection(
             state = DokusState.success(
                 listOf(
                     ContactNoteDto(
-                        id = tech.dokus.domain.ids.ContactNoteId.generate(),
-                        contactId = tech.dokus.domain.ids.ContactId.generate(),
-                        tenantId = tech.dokus.domain.ids.TenantId.generate(),
+                        id = ContactNoteId.generate(),
+                        contactId = ContactId.generate(),
+                        tenantId = TenantId.generate(),
                         content = "Called about invoice #2024-001. Will pay by end of month.",
                         authorName = "John Doe",
                         createdAt = now,
                         updatedAt = now
                     ),
                     ContactNoteDto(
-                        id = tech.dokus.domain.ids.ContactNoteId.generate(),
-                        contactId = tech.dokus.domain.ids.ContactId.generate(),
-                        tenantId = tech.dokus.domain.ids.TenantId.generate(),
+                        id = ContactNoteId.generate(),
+                        contactId = ContactId.generate(),
+                        tenantId = TenantId.generate(),
                         content = "Prefers email communication over phone.",
                         authorName = null,
                         createdAt = now,

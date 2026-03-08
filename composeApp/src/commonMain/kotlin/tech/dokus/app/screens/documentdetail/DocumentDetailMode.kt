@@ -51,6 +51,8 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 private val QueueWindowWidth = 220.dp
 
@@ -212,14 +214,14 @@ private fun DetailModeTitleBar(
 // Previews
 // =============================================================================
 
-@OptIn(kotlin.uuid.ExperimentalUuidApi::class)
+@OptIn(ExperimentalUuidApi::class)
 @Preview
 @Composable
 private fun DocumentDetailModePreview(
     @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
 ) {
-    val docId1 = DocumentId(kotlin.uuid.Uuid.random())
-    val docId2 = DocumentId(kotlin.uuid.Uuid.random())
+    val docId1 = DocumentId(Uuid.random())
+    val docId2 = DocumentId(Uuid.random())
     val sampleDocuments = listOf(
         DocQueueItem(
             id = docId1,

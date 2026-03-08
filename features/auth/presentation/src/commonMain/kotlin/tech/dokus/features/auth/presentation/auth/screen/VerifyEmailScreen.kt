@@ -24,6 +24,11 @@ import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.text.SectionTitle
 import tech.dokus.foundation.aura.constrains.Constraints
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Composable
 internal fun VerifyEmailScreen(
@@ -84,14 +89,14 @@ internal fun VerifyEmailScreen(
     }
 }
 
-@androidx.compose.ui.tooling.preview.Preview
+@Preview
 @Composable
 private fun VerifyEmailScreenSuccessPreview(
-    @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class,
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters,
+    @PreviewParameter(
+        PreviewParametersProvider::class,
+    ) parameters: PreviewParameters,
 ) {
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    TestWrapper(parameters) {
         VerifyEmailScreen(
             state = VerifyEmailState.Success,
             onContinue = {},

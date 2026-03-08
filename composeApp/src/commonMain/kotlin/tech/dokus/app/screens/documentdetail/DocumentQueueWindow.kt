@@ -30,6 +30,8 @@ import tech.dokus.foundation.aura.components.queue.DocQueueItemRow
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 /**
  * Document queue window — left 220dp glass panel in document detail mode.
@@ -83,15 +85,15 @@ internal fun DocumentQueueWindow(
 // Previews
 // =============================================================================
 
-@OptIn(kotlin.uuid.ExperimentalUuidApi::class)
+@OptIn(ExperimentalUuidApi::class)
 @Preview
 @Composable
 private fun DocumentQueueWindowPreview(
     @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
 ) {
-    val docId1 = DocumentId(kotlin.uuid.Uuid.random())
-    val docId2 = DocumentId(kotlin.uuid.Uuid.random())
-    val docId3 = DocumentId(kotlin.uuid.Uuid.random())
+    val docId1 = DocumentId(Uuid.random())
+    val docId2 = DocumentId(Uuid.random())
+    val docId3 = DocumentId(Uuid.random())
     val sampleDocuments = listOf(
         DocQueueItem(
             id = docId1,

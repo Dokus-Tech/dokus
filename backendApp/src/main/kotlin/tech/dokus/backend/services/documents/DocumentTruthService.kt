@@ -9,6 +9,7 @@ import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import tech.dokus.database.repository.cashflow.DocumentBlobCreatePayload
+import tech.dokus.database.repository.cashflow.DocumentCreatePayload
 import tech.dokus.database.repository.cashflow.DocumentBlobRepository
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
@@ -474,7 +475,7 @@ class DocumentTruthService(
 
                 val newDocumentId = documentRepository.create(
                     tenantId = tenantId,
-                    payload = tech.dokus.database.repository.cashflow.DocumentCreatePayload(
+                    payload = DocumentCreatePayload(
                         filename = source.filename ?: "document",
                         contentType = source.contentType,
                         sizeBytes = source.sizeBytes,

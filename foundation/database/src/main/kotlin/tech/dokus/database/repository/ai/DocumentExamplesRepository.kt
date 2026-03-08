@@ -1,7 +1,7 @@
 package tech.dokus.database.repository.ai
 
 import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.json.Json

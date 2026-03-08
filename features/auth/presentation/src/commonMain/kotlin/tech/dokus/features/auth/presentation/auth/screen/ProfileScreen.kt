@@ -10,6 +10,11 @@ import androidx.compose.ui.Modifier
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.profile_settings_title
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Composable
 fun ProfileScreen() {
@@ -23,14 +28,14 @@ fun ProfileScreen() {
     }
 }
 
-@androidx.compose.ui.tooling.preview.Preview
+@Preview
 @Composable
 private fun ProfileScreenPreview(
-    @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+    @PreviewParameter(
+        PreviewParametersProvider::class
+    ) parameters: PreviewParameters
 ) {
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    TestWrapper(parameters) {
         ProfileScreen()
     }
 }

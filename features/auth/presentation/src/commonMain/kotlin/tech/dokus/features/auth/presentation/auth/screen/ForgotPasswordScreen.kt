@@ -28,6 +28,11 @@ import tech.dokus.foundation.aura.components.fields.PTextFieldEmailDefaults
 import tech.dokus.foundation.aura.components.text.SectionTitle
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.extensions.dismissKeyboardOnTapOutside
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Composable
 internal fun ForgotPasswordScreen(
@@ -82,14 +87,14 @@ internal fun ForgotPasswordScreen(
     }
 }
 
-@androidx.compose.ui.tooling.preview.Preview
+@Preview
 @Composable
 private fun ForgotPasswordScreenPreview(
-    @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class,
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters,
+    @PreviewParameter(
+        PreviewParametersProvider::class,
+    ) parameters: PreviewParameters,
 ) {
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    TestWrapper(parameters) {
         ForgotPasswordScreen(
             state = ForgotPasswordState.Idle(),
             onIntent = {},

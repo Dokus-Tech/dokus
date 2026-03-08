@@ -57,6 +57,11 @@ import tech.dokus.foundation.aura.components.fields.PTextFieldPhone
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.extensions.localized
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
+import tech.dokus.domain.Name
+import tech.dokus.domain.Email
 
 // ============================================================================
 // CONTACT FORM FIELDS
@@ -431,14 +436,14 @@ private fun BusinessTypeSelector(
 @Composable
 private fun ContactFormFieldsPreview(
     @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+        PreviewParametersProvider::class
+    ) parameters: PreviewParameters
 ) {
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    TestWrapper(parameters) {
         ContactFormFields(
             formData = ContactFormData(
-                name = tech.dokus.domain.Name("Acme Corp"),
-                email = tech.dokus.domain.Email("info@acme.be"),
+                name = Name("Acme Corp"),
+                email = Email("info@acme.be"),
             ),
             onNameChange = {},
             onEmailChange = {},

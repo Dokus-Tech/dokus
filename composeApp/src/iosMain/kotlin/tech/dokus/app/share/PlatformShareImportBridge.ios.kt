@@ -2,6 +2,7 @@
 
 package tech.dokus.app.share
 
+import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.usePinned
@@ -20,7 +21,8 @@ private const val NameExtension = "name"
 private const val CountExtension = "count"
 private const val LatestBatchMarker = "latest.batch"
 
-@OptIn(ExperimentalForeignApi::class, kotlinx.cinterop.BetaInteropApi::class)
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
+@OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
 actual object PlatformShareImportBridge {
     actual suspend fun consumeBatch(batchId: String?): Result<List<SharedImportFile>> = runCatching {
         val fileManager = NSFileManager.defaultManager

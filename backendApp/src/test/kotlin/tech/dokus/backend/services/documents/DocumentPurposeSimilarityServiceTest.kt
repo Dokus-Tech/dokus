@@ -10,6 +10,7 @@ import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentPurposeSimilarityRepository
 import tech.dokus.database.repository.cashflow.DraftSummary
 import tech.dokus.domain.enums.CounterpartyIntent
+import tech.dokus.domain.enums.DocumentPurposeSource
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.DocumentId
@@ -114,7 +115,7 @@ class DocumentPurposeSimilarityServiceTest {
             aiDraftData = null,
             purposeBase = "ChatGPT subscription",
             purposeRendered = "OpenAI - ChatGPT subscription February 2026",
-            purposeSource = tech.dokus.domain.enums.DocumentPurposeSource.AiRag,
+            purposeSource = DocumentPurposeSource.AiRag,
             counterpartyKey = "contact:123",
             merchantToken = "openai",
             aiDraftSourceRunId = null,

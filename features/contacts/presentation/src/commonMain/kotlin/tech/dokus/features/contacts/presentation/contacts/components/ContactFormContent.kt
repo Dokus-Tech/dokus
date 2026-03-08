@@ -38,6 +38,9 @@ import tech.dokus.foundation.aura.components.PButtonVariant
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.components.text.SectionTitle
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 // ============================================================================
 // CONTACT FORM CONTENT
@@ -444,10 +447,10 @@ internal fun ContactFormActionButtonsCompact(
 @Composable
 private fun ContactFormContentPreview(
     @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+        PreviewParametersProvider::class
+    ) parameters: PreviewParameters
 ) {
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    TestWrapper(parameters) {
         ContactFormContent(
             isEditMode = false,
             formData = ContactFormData(),
@@ -485,10 +488,10 @@ private fun ContactFormContentPreview(
 @Composable
 private fun ContactFormActionButtonsPreview(
     @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+        PreviewParametersProvider::class
+    ) parameters: PreviewParameters
 ) {
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    TestWrapper(parameters) {
         ContactFormActionButtons(
             isEditMode = true,
             isSaving = false,

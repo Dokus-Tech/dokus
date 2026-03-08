@@ -1,8 +1,9 @@
-@file:OptIn(kotlin.uuid.ExperimentalUuidApi::class)
+@file:OptIn(ExperimentalUuidApi::class)
 
 package tech.dokus.backend.services.business
 
 import io.mockk.coEvery
+import kotlin.uuid.ExperimentalUuidApi
 import io.mockk.coJustRun
 import io.mockk.mockk
 import io.mockk.slot

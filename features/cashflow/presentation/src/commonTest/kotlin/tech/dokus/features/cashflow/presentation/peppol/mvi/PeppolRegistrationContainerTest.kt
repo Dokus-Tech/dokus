@@ -12,6 +12,7 @@ import tech.dokus.domain.enums.SubscriptionTier
 import tech.dokus.domain.enums.TenantStatus
 import tech.dokus.domain.enums.TenantType
 import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.PeppolIdVerificationResult
 import tech.dokus.domain.model.PeppolRegistrationDto
@@ -152,7 +153,7 @@ class PeppolRegistrationContainerTest {
     }
 
     private fun sampleTenant(): Tenant = Tenant(
-        id = tech.dokus.domain.ids.TenantId("00000000-0000-0000-0000-000000000001"),
+        id = TenantId("00000000-0000-0000-0000-000000000001"),
         type = TenantType.Company,
         legalName = LegalName("Dokus Ltd"),
         displayName = DisplayName("Dokus"),

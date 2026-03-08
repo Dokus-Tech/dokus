@@ -34,6 +34,9 @@ import tech.dokus.aura.resources.contacts_autocomplete_no_results
 import tech.dokus.aura.resources.contacts_autocomplete_no_results_for
 import tech.dokus.aura.resources.contacts_searching
 import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Dropdown showing search results and "Add new contact" option.
@@ -160,10 +163,10 @@ internal fun ContactDropdownMenu(
 @Composable
 private fun ContactDropdownMenuPreview(
     @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+        PreviewParametersProvider::class
+    ) parameters: PreviewParameters
 ) {
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    TestWrapper(parameters) {
         ContactDropdownMenu(
             searchQuery = "Acme",
             searchResults = emptyList(),

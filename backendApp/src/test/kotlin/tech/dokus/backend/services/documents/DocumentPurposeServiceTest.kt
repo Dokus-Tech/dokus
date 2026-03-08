@@ -15,6 +15,7 @@ import tech.dokus.domain.Money
 import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentPurposeSource
+import tech.dokus.domain.enums.PurposePeriodMode
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.ContactId
@@ -78,7 +79,7 @@ class DocumentPurposeServiceTest {
             counterpartyKey = "contact:$contactId",
             documentType = DocumentType.Invoice,
             purposeBase = "Model Y leasing",
-            periodMode = tech.dokus.domain.enums.PurposePeriodMode.ServicePeriod,
+            periodMode = PurposePeriodMode.ServicePeriod,
             confidence = 1.0,
             usageCount = 5
         )
@@ -88,7 +89,7 @@ class DocumentPurposeServiceTest {
             purposePeriodMonth = 2,
             purposeRendered = "KBC - Model Y leasing February 2026",
             purposeSource = DocumentPurposeSource.AiTemplate,
-            purposePeriodMode = tech.dokus.domain.enums.PurposePeriodMode.ServicePeriod
+            purposePeriodMode = PurposePeriodMode.ServicePeriod
         )
         coEvery { draftRepository.updatePurposeFields(any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns true
 
@@ -134,7 +135,7 @@ class DocumentPurposeServiceTest {
             purposePeriodMonth = 2,
             purposeRendered = "KBC - Model Y leasing February 2026",
             purposeSource = DocumentPurposeSource.AiRag,
-            purposePeriodMode = tech.dokus.domain.enums.PurposePeriodMode.IssueMonth
+            purposePeriodMode = PurposePeriodMode.IssueMonth
         )
         coEvery { draftRepository.updatePurposeFields(any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns true
 
@@ -180,7 +181,7 @@ class DocumentPurposeServiceTest {
             purposePeriodMonth = 2,
             purposeRendered = "OpenAI - ChatGPT subscription February 2026",
             purposeSource = DocumentPurposeSource.AiRag,
-            purposePeriodMode = tech.dokus.domain.enums.PurposePeriodMode.IssueMonth
+            purposePeriodMode = PurposePeriodMode.IssueMonth
         )
         coEvery { draftRepository.updatePurposeFields(any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns true
 
@@ -213,7 +214,7 @@ class DocumentPurposeServiceTest {
                 counterpartyKey = "contact:$contactId"
             ).copy(extractedData = invoiceDraft()),
             purpose = "Model Y leasing",
-            purposePeriodMode = tech.dokus.domain.enums.PurposePeriodMode.ServicePeriod
+            purposePeriodMode = PurposePeriodMode.ServicePeriod
         )
 
         coVerify(exactly = 1) {

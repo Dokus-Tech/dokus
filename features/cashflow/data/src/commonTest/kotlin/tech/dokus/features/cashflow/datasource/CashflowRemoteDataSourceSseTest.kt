@@ -1,6 +1,7 @@
 package tech.dokus.features.cashflow.datasource
 
 import io.ktor.client.HttpClient
+import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.plugins.resources.Resources
 import io.ktor.sse.ServerSentEvent
@@ -94,7 +95,7 @@ private class FakeSseEventCollector(
 ) : SseEventCollector {
     override suspend fun collect(
         httpClient: HttpClient,
-        request: io.ktor.client.request.HttpRequestBuilder.() -> Unit,
+        request: HttpRequestBuilder.() -> Unit,
         onConnected: () -> Unit,
         onEvent: suspend (ServerSentEvent) -> Unit,
     ) {

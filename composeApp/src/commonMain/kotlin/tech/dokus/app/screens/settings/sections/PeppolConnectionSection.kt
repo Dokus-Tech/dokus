@@ -45,6 +45,11 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
+import tech.dokus.domain.ids.PeppolRegistrationId
+import tech.dokus.domain.ids.TenantId
+import kotlinx.datetime.LocalDateTime
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 @Composable
 internal fun PeppolConnectionSection(
@@ -178,18 +183,18 @@ private fun PeppolConnectionSectionNotConfiguredPreview(
     }
 }
 
-@OptIn(kotlin.uuid.ExperimentalUuidApi::class)
+@OptIn(ExperimentalUuidApi::class)
 @Preview
 @Composable
 private fun PeppolConnectionSectionActivePreview(
     @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
 ) {
-    val now = kotlinx.datetime.LocalDateTime(2026, 2, 21, 12, 0)
+    val now = LocalDateTime(2026, 2, 21, 12, 0)
     TestWrapper(parameters) {
         PeppolConnectionSection(
             peppolRegistration = PeppolRegistrationDto(
-                id = tech.dokus.domain.ids.PeppolRegistrationId(kotlin.uuid.Uuid.random()),
-                tenantId = tech.dokus.domain.ids.TenantId(kotlin.uuid.Uuid.random()),
+                id = PeppolRegistrationId(Uuid.random()),
+                tenantId = TenantId(Uuid.random()),
                 peppolId = "0208:BE0123456789",
                 recommandCompanyId = null,
                 status = PeppolRegistrationStatus.Active,

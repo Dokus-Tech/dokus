@@ -1,6 +1,7 @@
 package tech.dokus.database.repository.peppol
 
 import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
@@ -151,7 +152,7 @@ class PeppolSettingsRepository {
      */
     suspend fun tryAcquireWebhookPollSlot(
         tenantId: TenantId,
-        now: kotlinx.datetime.LocalDateTime,
+        now: LocalDateTime,
         debounceSeconds: Long
     ): Result<Boolean> = runCatching {
         val threshold = now.toInstant(TimeZone.UTC)

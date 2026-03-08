@@ -3,6 +3,11 @@ package tech.dokus.features.auth.presentation.auth.screen
 import androidx.compose.runtime.Composable
 import tech.dokus.features.auth.presentation.auth.components.onboarding.OnboardingBrandPanel
 import tech.dokus.features.auth.presentation.auth.components.onboarding.OnboardingBrandVariant
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Composable
 internal fun SloganScreen(
@@ -11,14 +16,14 @@ internal fun SloganScreen(
     OnboardingBrandPanel(variant = variant)
 }
 
-@androidx.compose.ui.tooling.preview.Preview
+@Preview
 @Composable
 private fun SloganPreview(
-    @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class,
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters,
+    @PreviewParameter(
+        PreviewParametersProvider::class,
+    ) parameters: PreviewParameters,
 ) {
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    TestWrapper(parameters) {
         SloganScreen()
     }
 }

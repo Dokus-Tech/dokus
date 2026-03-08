@@ -1,6 +1,7 @@
 package tech.dokus.backend.plugins
 
 import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationStopping
 import kotlinx.coroutines.runBlocking
 import org.koin.ktor.ext.inject
 import tech.dokus.foundation.backend.database.DatabaseFactory
@@ -17,7 +18,7 @@ fun Application.configureDatabase() {
 }
 
 fun Application.configureGracefulDatabaseShutdown() {
-    monitor.subscribe(io.ktor.server.application.ApplicationStopping) {
+    monitor.subscribe(ApplicationStopping) {
         logger.info("Closing database connections...")
         runBlocking {
             val dbFactory by inject<DatabaseFactory>()

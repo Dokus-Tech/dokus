@@ -50,6 +50,13 @@ import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.fields.PTextFieldEmail
 import tech.dokus.foundation.aura.components.fields.PTextFieldPhone
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
+import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.LegalName
+import tech.dokus.domain.model.entity.EntityAddress
+import tech.dokus.domain.model.entity.EntityStatus
 
 /**
  * Confirm step content - review company data and add billing email.
@@ -286,23 +293,23 @@ private fun Country.localizedName(): String =
 @Composable
 private fun ConfirmStepContentPreview(
     @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+        PreviewParametersProvider::class
+    ) parameters: PreviewParameters
 ) {
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    TestWrapper(parameters) {
         ConfirmStepContent(
             state = CreateContactState.ConfirmStep(
                 selectedEntity = EntityLookup(
                     enterpriseNumber = "0123.456.789",
-                    vatNumber = tech.dokus.domain.ids.VatNumber("BE0123456789"),
-                    name = tech.dokus.domain.LegalName("Acme Corporation NV"),
-                    address = tech.dokus.domain.model.entity.EntityAddress(
+                    vatNumber = VatNumber("BE0123456789"),
+                    name = LegalName("Acme Corporation NV"),
+                    address = EntityAddress(
                         streetLine1 = "Rue de la Loi 16",
                         city = "Brussels",
                         postalCode = "1000",
                         country = Country.Belgium
                     ),
-                    status = tech.dokus.domain.model.entity.EntityStatus.Active
+                    status = EntityStatus.Active
                 )
             ),
             headerTitle = "New Contact",

@@ -4,14 +4,14 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import tech.dokus.features.ai.services.DocumentImageService.DocumentImage
 import tech.dokus.foundation.backend.cache.RedisClient
-import java.time.Duration
 import java.util.Base64
 import java.util.UUID
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
 class RedisDocumentImageCache(
     private val redisClient: RedisClient,
-    private val ttl: kotlin.time.Duration = 30.minutes
+    private val ttl: Duration = 30.minutes
 ) : DocumentImageCache {
 
     @Serializable
@@ -28,7 +28,7 @@ class RedisDocumentImageCache(
         runId: String?,
         images: List<DocumentImage>
     ): List<DocumentImageCache.ImageRef> {
-        val ttlJava = Duration.ofSeconds(ttl.inWholeSeconds)
+        val ttlJava = java.time.Duration.ofSeconds(ttl.inWholeSeconds)
         val refs = mutableListOf<DocumentImageCache.ImageRef>()
         for (image in images) {
             val imageId = buildId(documentId, runId)

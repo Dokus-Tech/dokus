@@ -1,6 +1,7 @@
 package tech.dokus.backend.routes.cashflow
 
 import io.ktor.http.HttpStatusCode
+import kotlinx.serialization.Serializable
 import io.ktor.server.request.receive
 import io.ktor.server.resources.delete
 import io.ktor.server.resources.get
@@ -91,13 +92,13 @@ internal fun Route.expenseRoutes() {
 }
 
 // Request/Response DTOs
-@kotlinx.serialization.Serializable
+@Serializable
 private data class CategorizeExpenseRequest(
     val merchant: String,
     val description: String? = null
 )
 
-@kotlinx.serialization.Serializable
+@Serializable
 private data class CategorizeExpenseResponse(
     val category: ExpenseCategory
 )

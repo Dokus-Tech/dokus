@@ -30,6 +30,9 @@ import tech.dokus.aura.resources.contacts_vendor
 import tech.dokus.domain.model.contact.DerivedContactRoles
 import tech.dokus.foundation.aura.components.common.ShimmerLine
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 // UI dimension constants
 private val InfoRowSpacing = Constraints.Spacing.medium
@@ -207,10 +210,10 @@ internal fun ContactInfoTagBadge(
 @Composable
 private fun ContactInfoRowPreview(
     @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+        PreviewParametersProvider::class
+    ) parameters: PreviewParameters
 ) {
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    TestWrapper(parameters) {
         ContactInfoRow(
             icon = Icons.Filled.Email,
             label = "Email",
@@ -223,10 +226,10 @@ private fun ContactInfoRowPreview(
 @Composable
 private fun ContactStatusLabelPreview(
     @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+        PreviewParametersProvider::class
+    ) parameters: PreviewParameters
 ) {
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    TestWrapper(parameters) {
         Column(verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)) {
             ContactStatusLabel(isActive = true)
             ContactStatusLabel(isActive = false)
@@ -238,10 +241,10 @@ private fun ContactStatusLabelPreview(
 @Composable
 private fun ContactInfoRoleBadgesPreview(
     @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+        PreviewParametersProvider::class
+    ) parameters: PreviewParameters
 ) {
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    TestWrapper(parameters) {
         Row(horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)) {
             ContactInfoRoleBadges(
                 roles = DerivedContactRoles(
@@ -258,10 +261,10 @@ private fun ContactInfoRoleBadgesPreview(
 @Composable
 private fun ContactInfoTagBadgePreview(
     @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+        PreviewParametersProvider::class
+    ) parameters: PreviewParameters
 ) {
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    TestWrapper(parameters) {
         Row(horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)) {
             ContactInfoTagBadge(text = "client")
             ContactInfoTagBadge(text = "vip")

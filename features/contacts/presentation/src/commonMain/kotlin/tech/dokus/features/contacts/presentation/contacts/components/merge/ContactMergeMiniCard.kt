@@ -29,6 +29,16 @@ import tech.dokus.aura.resources.contacts_email
 import tech.dokus.aura.resources.contacts_phone
 import tech.dokus.aura.resources.contacts_vat_number
 import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.Name
+import tech.dokus.domain.Email
+import tech.dokus.domain.PhoneNumber
+import kotlinx.datetime.LocalDateTime
 
 @Composable
 internal fun ContactMergeMiniCard(
@@ -111,21 +121,21 @@ private fun ContactMergeMiniRow(label: String, value: String) {
 @Composable
 private fun ContactMergeMiniCardPreview(
     @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+        PreviewParametersProvider::class
+    ) parameters: PreviewParameters
 ) {
-    val now = kotlinx.datetime.LocalDateTime(2026, 1, 15, 10, 0)
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    val now = LocalDateTime(2026, 1, 15, 10, 0)
+    TestWrapper(parameters) {
         ContactMergeMiniCard(
             contact = ContactDto(
-                id = tech.dokus.domain.ids.ContactId.generate(),
-                tenantId = tech.dokus.domain.ids.TenantId.generate(),
-                name = tech.dokus.domain.Name("Acme Corporation"),
-                email = tech.dokus.domain.Email("info@acme.be"),
-                vatNumber = tech.dokus.domain.ids.VatNumber("BE0123456789"),
+                id = ContactId.generate(),
+                tenantId = TenantId.generate(),
+                name = Name("Acme Corporation"),
+                email = Email("info@acme.be"),
+                vatNumber = VatNumber("BE0123456789"),
                 companyNumber = "0123.456.789",
                 contactPerson = "John Doe",
-                phone = tech.dokus.domain.PhoneNumber("+32 2 123 45 67"),
+                phone = PhoneNumber("+32 2 123 45 67"),
                 createdAt = now,
                 updatedAt = now
             ),

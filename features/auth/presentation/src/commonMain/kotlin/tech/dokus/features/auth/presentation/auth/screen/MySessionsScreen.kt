@@ -30,6 +30,12 @@ import tech.dokus.features.auth.mvi.MySessionsState
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.common.PTopAppBar
+import androidx.compose.runtime.remember
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 private const val PaneAnimationDurationMs = 220
 
@@ -117,31 +123,31 @@ internal fun MySessionsContent(
     }
 }
 
-@androidx.compose.ui.tooling.preview.Preview
+@Preview
 @Composable
 private fun MySessionsScreenPreview(
-    @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+    @PreviewParameter(
+        PreviewParametersProvider::class
+    ) parameters: PreviewParameters
 ) {
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    TestWrapper(parameters) {
         MySessionsScreen(
             state = MySessionsState.Loaded(sessions = previewSessions()),
-            snackbarHostState = androidx.compose.runtime.remember { SnackbarHostState() },
+            snackbarHostState = remember { SnackbarHostState() },
             onIntent = {},
             nowEpochSeconds = SessionsPreviewNowEpochSeconds,
         )
     }
 }
 
-@androidx.compose.ui.tooling.preview.Preview(name = "Sessions Desktop", widthDp = 1200, heightDp = 760)
+@Preview(name = "Sessions Desktop", widthDp = 1200, heightDp = 760)
 @Composable
 private fun MySessionsContentDesktopPreview(
-    @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+    @PreviewParameter(
+        PreviewParametersProvider::class
+    ) parameters: PreviewParameters
 ) {
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    TestWrapper(parameters) {
         Box(modifier = Modifier.fillMaxSize().padding(24.dp)) {
             MySessionsContent(
                 state = MySessionsState.Loaded(sessions = previewSessions()),

@@ -105,6 +105,7 @@ tasks.test {
 }
 
 tasks.shadowJar {
+    isZip64 = true
     manifest {
         attributes["Main-Class"] = "tech.dokus.backend.ApplicationKt"
     }

@@ -18,6 +18,7 @@ import tech.dokus.domain.enums.DocumentSourceStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentSourceId
+import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.routes.Documents
 import tech.dokus.foundation.backend.security.authenticateJwt
 
@@ -240,7 +241,7 @@ private data class PreviewSourceSelection(
 )
 
 private suspend fun resolveDefaultSourceForPreview(
-    tenantId: tech.dokus.domain.ids.TenantId,
+    tenantId: TenantId,
     documentId: DocumentId,
     documentRepository: DocumentRepository,
     sourceRepository: DocumentSourceRepository
@@ -261,7 +262,7 @@ private suspend fun resolveDefaultSourceForPreview(
 }
 
 private suspend fun resolveExplicitSourceForPreview(
-    tenantId: tech.dokus.domain.ids.TenantId,
+    tenantId: TenantId,
     documentId: DocumentId,
     sourceId: DocumentSourceId,
     documentRepository: DocumentRepository,

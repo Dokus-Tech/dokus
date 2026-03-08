@@ -8,6 +8,8 @@ import kotlinx.coroutines.test.runTest
 import pro.respawn.flowmvi.test.subscribeAndTest
 import tech.dokus.domain.enums.DocumentListFilter
 import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.enums.DocumentStatus
+import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentRecordDto
@@ -91,8 +93,8 @@ private class ExternalRefreshLoadDocumentRecordsUseCase : LoadDocumentRecordsUse
         page: Int,
         pageSize: Int,
         filter: DocumentListFilter?,
-        documentStatus: tech.dokus.domain.enums.DocumentStatus?,
-        ingestionStatus: tech.dokus.domain.enums.IngestionStatus?,
+        documentStatus: DocumentStatus?,
+        ingestionStatus: IngestionStatus?,
     ): Result<PaginatedResponse<DocumentRecordDto>> {
         val effectiveFilter = filter ?: DocumentListFilter.All
         if (pageSize == 1) {

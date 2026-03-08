@@ -34,6 +34,13 @@ import tech.dokus.aura.resources.contacts_merge_success_message
 import tech.dokus.aura.resources.contacts_merge_summary
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.ContactMergeResult
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.Name
+import kotlinx.datetime.LocalDateTime
 
 @Composable
 internal fun ContactMergeResultStep(
@@ -159,13 +166,13 @@ private fun ContactMergeReassignmentRow(
 @Composable
 private fun ContactMergeResultStepPreview(
     @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+        PreviewParametersProvider::class
+    ) parameters: PreviewParameters
 ) {
-    val now = kotlinx.datetime.LocalDateTime(2026, 1, 15, 10, 0)
-    val sourceId = tech.dokus.domain.ids.ContactId.generate()
-    val targetId = tech.dokus.domain.ids.ContactId.generate()
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    val now = LocalDateTime(2026, 1, 15, 10, 0)
+    val sourceId = ContactId.generate()
+    val targetId = ContactId.generate()
+    TestWrapper(parameters) {
         ContactMergeResultStep(
             result = ContactMergeResult(
                 sourceContactId = sourceId,
@@ -176,10 +183,10 @@ private fun ContactMergeResultStepPreview(
                 notesReassigned = 4,
                 sourceArchived = true
             ),
-            targetContact = tech.dokus.domain.model.contact.ContactDto(
+            targetContact = ContactDto(
                 id = targetId,
-                tenantId = tech.dokus.domain.ids.TenantId.generate(),
-                name = tech.dokus.domain.Name("Acme Corporation"),
+                tenantId = TenantId.generate(),
+                name = Name("Acme Corporation"),
                 createdAt = now,
                 updatedAt = now
             )

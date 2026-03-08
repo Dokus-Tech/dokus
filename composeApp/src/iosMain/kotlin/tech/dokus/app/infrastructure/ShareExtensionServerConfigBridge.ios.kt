@@ -6,6 +6,7 @@ import platform.Foundation.NSUserDefaults
 private const val DefaultAppGroupIdentifier = "group.vision.invoid.dokus.share"
 private const val ShareServerBaseUrlKey = "share.server.base_url"
 
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 internal actual object ShareExtensionServerConfigBridge {
     actual fun mirrorServerBaseUrl(baseUrl: String) {
         val trimmedBaseUrl = baseUrl.trim()

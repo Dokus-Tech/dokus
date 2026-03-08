@@ -39,6 +39,9 @@ import tech.dokus.features.contacts.mvi.EnrichmentSuggestion
 import tech.dokus.foundation.aura.components.dialog.DokusDialog
 import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 // UI dimension constants
 private val SpacingSmall = 4.dp
@@ -291,10 +294,10 @@ private fun SourceBadge(source: String) {
 @Composable
 private fun EnrichmentSuggestionsDialogPreview(
     @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+        PreviewParametersProvider::class
+    ) parameters: PreviewParameters
 ) {
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    TestWrapper(parameters) {
         EnrichmentSuggestionsDialog(
             suggestions = listOf(
                 EnrichmentSuggestion(

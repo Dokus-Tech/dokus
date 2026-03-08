@@ -342,7 +342,7 @@ internal class CashflowLedgerContainer(
             action(CashflowLedgerAction.NavigateToDocumentReview(entry.documentId.toString()))
         } else {
             // For entries without a document (e.g., manual entries), navigate to entity
-            action(CashflowLedgerAction.NavigateToEntity(entry.sourceType, entry.sourceId.toString()))
+            action(CashflowLedgerAction.NavigateToEntity(entry.sourceType, entry.sourceId))
         }
     }
 

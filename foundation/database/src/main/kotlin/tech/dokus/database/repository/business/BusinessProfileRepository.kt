@@ -6,6 +6,7 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.inList
@@ -145,7 +146,7 @@ class BusinessProfileRepository {
         }
     }
 
-    private fun org.jetbrains.exposed.v1.core.ResultRow.toRecord(tenantId: TenantId): BusinessProfileRecord = BusinessProfileRecord(
+    private fun ResultRow.toRecord(tenantId: TenantId): BusinessProfileRecord = BusinessProfileRecord(
         tenantId = tenantId,
         subjectType = this[BusinessProfilesTable.subjectType],
         subjectId = this[BusinessProfilesTable.subjectId].toKotlinUuid(),
