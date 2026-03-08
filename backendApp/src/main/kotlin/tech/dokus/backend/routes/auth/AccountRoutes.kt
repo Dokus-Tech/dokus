@@ -15,7 +15,6 @@ import org.koin.ktor.ext.inject
 import tech.dokus.backend.services.auth.AuthService
 import tech.dokus.backend.services.auth.SessionContext
 import tech.dokus.backend.services.auth.SurfaceResolver
-import tech.dokus.backend.services.avatar.projectAvatarThumbnail
 import tech.dokus.backend.services.avatar.projectUserAvatar
 import tech.dokus.database.repository.auth.FirmRepository
 import tech.dokus.database.repository.auth.TenantRepository
@@ -33,7 +32,6 @@ import tech.dokus.domain.model.auth.UpdateProfileRequest
 import tech.dokus.domain.routes.Account
 import tech.dokus.foundation.backend.security.authenticateJwt
 import tech.dokus.foundation.backend.security.dokusPrincipal
-import tech.dokus.foundation.backend.storage.AvatarStorageService
 import tech.dokus.foundation.backend.utils.extractClientIpAddress
 
 /**
@@ -49,7 +47,6 @@ internal fun Route.accountRoutes() {
     val userRepository by inject<UserRepository>()
     val tenantRepository by inject<TenantRepository>()
     val firmRepository by inject<FirmRepository>()
-    val avatarStorageService by inject<AvatarStorageService>()
 
     authenticateJwt {
         /**
@@ -60,7 +57,7 @@ internal fun Route.accountRoutes() {
             val principal = dokusPrincipal
             val user = userRepository.findById(principal.userId)
                 ?: throw DokusException.NotAuthenticated("User not found")
-            val projectedUser = userRepository.projectUserAvatar(user, avatarStorageService)
+            val projectedUser = userRepository.projectUserAvatar(user)
             val tenantMemberships = userRepository.getUserTenants(principal.userId)
                 .filter { it.isActive }
             val firmsMemberships = firmRepository.listUserMemberships(principal.userId)
@@ -82,9 +79,11 @@ internal fun Route.accountRoutes() {
                             vatNumber = tenant.vatNumber,
                             role = membership.role,
                             type = tenant.type,
-                            avatar = avatarStorageService.projectAvatarThumbnail(
-                                tenantRepository.getAvatarStorageKey(tenant.id)
-                            )
+                            avatar = tenantRepository.getAvatarStorageKey(tenant.id)
+                                ?.takeIf { it.isNotBlank() }
+                                ?.let { storageKey ->
+                                    buildWorkspaceAvatarThumbnail(tenant.id, storageKey)
+                                }
                         )
                     )
                 }
@@ -237,3 +236,11 @@ internal fun Route.accountRoutes() {
         }
     }
 }
+
+private fun buildWorkspaceAvatarThumbnail(
+    tenantId: tech.dokus.domain.ids.TenantId,
+    storageKey: String
+) = tech.dokus.backend.services.avatar.buildVersionedAvatarThumbnail(
+    basePath = "/api/v1/tenants/$tenantId/avatar",
+    storageKey = storageKey
+)

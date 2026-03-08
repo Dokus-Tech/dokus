@@ -22,21 +22,18 @@ import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.Firm
 import tech.dokus.domain.model.FirmAccess
-import tech.dokus.foundation.backend.storage.AvatarStorageService
 
 class TeamServiceBookkeeperAccessTest {
     private val userRepository = mockk<UserRepository>(relaxed = true)
     private val tenantRepository = mockk<TenantRepository>(relaxed = true)
     private val invitationRepository = mockk<InvitationRepository>(relaxed = true)
     private val firmRepository = mockk<FirmRepository>(relaxed = true)
-    private val avatarStorageService = mockk<AvatarStorageService>(relaxed = true)
 
     private val service = TeamService(
         userRepository = userRepository,
         tenantRepository = tenantRepository,
         invitationRepository = invitationRepository,
         firmRepository = firmRepository,
-        avatarStorageService = avatarStorageService,
     )
 
     @Test

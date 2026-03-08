@@ -3,7 +3,7 @@ package tech.dokus.backend.services.auth
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import tech.dokus.backend.services.avatar.projectAvatarThumbnail
+import tech.dokus.backend.services.avatar.buildUserAvatarThumbnail
 import tech.dokus.database.repository.auth.FirmRepository
 import tech.dokus.database.repository.auth.InvitationRepository
 import tech.dokus.database.repository.auth.TenantRepository
@@ -19,7 +19,6 @@ import tech.dokus.domain.model.TeamMember
 import tech.dokus.domain.model.TenantInvitation
 import tech.dokus.domain.model.auth.BookkeeperFirmSearchItem
 import tech.dokus.domain.model.auth.TenantBookkeeperAccessItem
-import tech.dokus.foundation.backend.storage.AvatarStorageService
 import tech.dokus.foundation.backend.utils.loggerFor
 import kotlin.time.Duration.Companion.days
 
@@ -32,7 +31,6 @@ class TeamService(
     private val tenantRepository: TenantRepository,
     private val invitationRepository: InvitationRepository,
     private val firmRepository: FirmRepository,
-    private val avatarStorageService: AvatarStorageService,
 ) {
     private val logger = loggerFor()
 
@@ -61,7 +59,8 @@ class TeamService(
                         role = userInTenant.role,
                         joinedAt = userInTenant.user.createdAt, // TODO: Use membership createdAt
                         lastActiveAt = userInTenant.user.lastLoginAt,
-                        avatar = avatarStorageService.projectAvatarThumbnail(avatarKeys[userInTenant.user.id])
+                        avatar = avatarKeys[userInTenant.user.id]
+                            ?.let { buildUserAvatarThumbnail(userInTenant.user.id, it) }
                     )
                 )
             }

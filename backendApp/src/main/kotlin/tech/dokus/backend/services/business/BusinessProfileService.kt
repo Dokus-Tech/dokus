@@ -5,7 +5,7 @@ package tech.dokus.backend.services.business
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import tech.dokus.backend.services.avatar.projectAvatarThumbnail
+import tech.dokus.backend.services.avatar.buildVersionedAvatarThumbnail
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.business.BusinessProfileEnrichmentJobRepository
 import tech.dokus.database.repository.business.BusinessProfileRecord
@@ -20,7 +20,6 @@ import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.UpdateBusinessProfileRequest
 import tech.dokus.domain.model.common.Thumbnail
 import tech.dokus.domain.model.contact.ContactDto
-import tech.dokus.foundation.backend.storage.AvatarStorageService
 import tech.dokus.domain.utils.json
 import tech.dokus.foundation.backend.utils.loggerFor
 import tech.dokus.foundation.backend.utils.runSuspendCatching
@@ -44,7 +43,6 @@ class BusinessProfileService(
     private val profileRepository: BusinessProfileRepository,
     private val jobRepository: BusinessProfileEnrichmentJobRepository,
     private val tenantRepository: TenantRepository,
-    private val avatarStorageService: AvatarStorageService,
 ) {
     private val logger = loggerFor()
 
@@ -100,7 +98,9 @@ class BusinessProfileService(
                         businessSummary = profile?.businessSummary,
                         businessActivities = activities,
                         businessProfileVerified = profile?.verificationState == BusinessProfileVerificationState.Verified,
-                        avatar = avatarStorageService.projectAvatarThumbnail(profile?.logoStorageKey)
+                        avatar = profile?.logoStorageKey
+                            ?.takeIf { it.isNotBlank() }
+                            ?.let { buildContactAvatarThumbnail(contact.id.value, it) }
                     )
                 )
             }
@@ -116,7 +116,15 @@ class BusinessProfileService(
     }
 
     suspend fun buildTenantAvatarThumbnail(tenantId: TenantId): Thumbnail? =
-        avatarStorageService.projectAvatarThumbnail(tenantRepository.getAvatarStorageKey(tenantId))
+        tenantRepository.getAvatarStorageKey(tenantId)
+            ?.takeIf { it.isNotBlank() }
+            ?.let { buildTenantAvatarThumbnail(tenantId, it) }
+
+    fun buildTenantAvatarThumbnail(tenantId: TenantId, storageKey: String): Thumbnail =
+        buildVersionedAvatarThumbnail("/api/v1/tenants/$tenantId/avatar", storageKey)
+
+    fun buildContactAvatarThumbnail(contactId: Uuid, storageKey: String): Thumbnail =
+        buildVersionedAvatarThumbnail("/api/v1/contacts/$contactId/avatar", storageKey)
 
     suspend fun updateTenantProfile(
         tenantId: TenantId,
@@ -327,7 +335,8 @@ class BusinessProfileService(
             subjectType = subjectType,
             subjectId = subjectId
         ) ?: return null
-        val avatar = if (profile.logoStorageKey.isNullOrBlank()) {
+        val storageKey = profile.logoStorageKey
+        val avatar = if (storageKey.isNullOrBlank()) {
             logger.debug(
                 "No avatar in business profile projection for tenant={}, subjectType={}, subjectId={}, reason=no_logo_key",
                 tenantId,
@@ -336,7 +345,10 @@ class BusinessProfileService(
             )
             null
         } else {
-            avatarStorageService.projectAvatarThumbnail(profile.logoStorageKey)
+            when (subjectType) {
+                BusinessProfileSubjectType.Contact -> buildContactAvatarThumbnail(subjectId, storageKey)
+                BusinessProfileSubjectType.Tenant -> buildTenantAvatarThumbnail(tenantId, storageKey)
+            }
         }
         return BusinessProfileProjection(
             websiteUrl = profile.websiteUrl,

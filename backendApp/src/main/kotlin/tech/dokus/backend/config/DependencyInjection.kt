@@ -268,13 +268,12 @@ private fun authModule() = module {
             welcomeEmailService = get(),
             emailVerificationService = get(),
             passwordResetService = get(),
-            avatarStorageService = get(),
             tokenBlacklistService = get(),
             maxConcurrentSessions = authConfig.maxConcurrentSessions
         )
     }
 
-    single { TeamService(get(), get(), get(), get(), get()) }
+    single { TeamService(get(), get(), get(), get()) }
 
     single {
         val config = get<Config>()

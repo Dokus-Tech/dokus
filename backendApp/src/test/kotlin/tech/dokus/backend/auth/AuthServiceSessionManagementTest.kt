@@ -29,7 +29,6 @@ import tech.dokus.domain.model.User
 import tech.dokus.domain.model.auth.SessionDto
 import tech.dokus.foundation.backend.security.JwtGenerator
 import tech.dokus.foundation.backend.security.TokenBlacklistService
-import tech.dokus.foundation.backend.storage.AvatarStorageService
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
@@ -44,7 +43,6 @@ class AuthServiceSessionManagementTest {
     private val welcomeEmailService = mockk<WelcomeEmailService>()
     private val emailVerificationService = mockk<EmailVerificationService>()
     private val passwordResetService = mockk<PasswordResetService>()
-    private val avatarStorageService = mockk<AvatarStorageService>(relaxed = true)
     private val tokenBlacklistService = mockk<TokenBlacklistService>()
 
     private val authService = AuthService(
@@ -56,7 +54,6 @@ class AuthServiceSessionManagementTest {
         welcomeEmailService = welcomeEmailService,
         emailVerificationService = emailVerificationService,
         passwordResetService = passwordResetService,
-        avatarStorageService = avatarStorageService,
         tokenBlacklistService = tokenBlacklistService
     )
 

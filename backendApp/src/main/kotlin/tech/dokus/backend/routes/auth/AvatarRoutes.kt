@@ -14,13 +14,13 @@ import io.ktor.server.response.respond
 import io.ktor.server.response.respondBytes
 import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
+import tech.dokus.backend.services.avatar.buildUserAvatarThumbnail
 import tech.dokus.backend.services.business.BusinessProfileService
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
-import tech.dokus.domain.model.common.Thumbnail
 import tech.dokus.domain.routes.Tenants
 import tech.dokus.domain.routes.Users
 import tech.dokus.foundation.backend.security.authenticateJwt
@@ -60,7 +60,10 @@ internal fun Route.avatarRoutes() {
             tenantRepository.updateAvatarStorageKey(tenantId, result.storageKeyPrefix)
             businessProfileService.markTenantAvatarUploaded(tenantId, result.storageKeyPrefix)
 
-            call.respond(HttpStatusCode.Created, result.avatar)
+            call.respond(
+                HttpStatusCode.Created,
+                businessProfileService.buildTenantAvatarThumbnail(tenantId, result.storageKeyPrefix)
+            )
         }
 
         get<Tenants.Id.Avatar> { route ->
@@ -68,13 +71,13 @@ internal fun Route.avatarRoutes() {
             val tenantId = parseTenantId(route.parent.id)
             requireTenantMembership(userRepository, principal.userId, tenantId)
 
-            val avatar = loadAvatarThumbnail(
+            val storageKey = ensureAvatarMetadataAvailable(
                 storageKey = tenantRepository.getAvatarStorageKey(tenantId),
                 avatarStorageService = avatarStorageService,
                 ownerLabel = "tenant: $tenantId"
             )
 
-            call.respond(HttpStatusCode.OK, avatar)
+            call.respond(HttpStatusCode.OK, businessProfileService.buildTenantAvatarThumbnail(tenantId, storageKey))
         }
 
         get<Tenants.AvatarImageById> { route ->
@@ -141,18 +144,18 @@ internal fun Route.avatarRoutes() {
 
             userRepository.updateAvatarStorageKey(userId, result.storageKeyPrefix)
 
-            call.respond(HttpStatusCode.Created, result.avatar)
+            call.respond(HttpStatusCode.Created, buildUserAvatarThumbnail(userId, result.storageKeyPrefix))
         }
 
         get<Users.Id.Avatar> { route ->
             val userId = parseUserId(route.parent.id)
-            val avatar = loadAvatarThumbnail(
+            val storageKey = ensureAvatarMetadataAvailable(
                 storageKey = userRepository.getAvatarStorageKey(userId),
                 avatarStorageService = avatarStorageService,
                 ownerLabel = "user: $userId"
             )
 
-            call.respond(HttpStatusCode.OK, avatar)
+            call.respond(HttpStatusCode.OK, buildUserAvatarThumbnail(userId, storageKey))
         }
 
         get<Users.AvatarImageById> { route ->
@@ -267,21 +270,22 @@ private suspend fun deleteExistingAvatarIfPresent(
     }
 }
 
-private suspend fun loadAvatarThumbnail(
+private suspend fun ensureAvatarMetadataAvailable(
     storageKey: String?,
     avatarStorageService: AvatarStorageService,
     ownerLabel: String
-) : Thumbnail {
+) : String {
     val resolvedStorageKey = storageKey
         ?.takeIf { it.isNotBlank() }
         ?: throw DokusException.NotFound("No avatar set")
-    return avatarStorageService.getAvatarUrls(resolvedStorageKey) ?: run {
+    if (!avatarStorageService.avatarExists(resolvedStorageKey)) {
         logger.debug(
             "Missing avatar object for owner={}, reason=storage_missing",
             ownerLabel,
         )
         throw DokusException.NotFound("Avatar not found in storage")
     }
+    return resolvedStorageKey
 }
 
 private suspend fun loadAvatarImageBytes(

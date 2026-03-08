@@ -23,10 +23,8 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.Tenant
-import tech.dokus.domain.model.common.Thumbnail
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.utils.json
-import tech.dokus.foundation.backend.storage.AvatarStorageService
 import kotlinx.datetime.LocalDateTime
 import kotlin.uuid.Uuid
 
@@ -34,13 +32,11 @@ class BusinessProfileServiceProjectionTest {
     private val profileRepository = mockk<BusinessProfileRepository>()
     private val jobRepository = mockk<BusinessProfileEnrichmentJobRepository>(relaxed = true)
     private val tenantRepository = mockk<TenantRepository>(relaxed = true)
-    private val avatarStorageService = mockk<AvatarStorageService>()
 
     private val service = BusinessProfileService(
         profileRepository = profileRepository,
         jobRepository = jobRepository,
-        tenantRepository = tenantRepository,
-        avatarStorageService = avatarStorageService
+        tenantRepository = tenantRepository
     )
 
     @Test
@@ -108,36 +104,26 @@ class BusinessProfileServiceProjectionTest {
                 subjectIds = listOf(contactId.value)
             )
         } returns mapOf(contactId.value to profile)
-        coEvery { avatarStorageService.signAvatarUrls("logo/contact-beta") } returns Thumbnail(
-            small = "https://cdn.example/contact-small.webp",
-            medium = "https://cdn.example/contact-medium.webp",
-            large = "https://cdn.example/contact-large.webp"
-        )
 
         val projected = service.projectContacts(tenantId, listOf(contact)).single()
         assertEquals("https://beta.example", projected.websiteUrl)
         assertEquals("Beta summary", projected.businessSummary)
         assertEquals(listOf("consulting"), projected.businessActivities)
         assertEquals(true, projected.businessProfileVerified)
-        assertEquals("https://cdn.example/contact-small.webp", projected.avatar?.small)
-        assertEquals("https://cdn.example/contact-medium.webp", projected.avatar?.medium)
-        assertEquals("https://cdn.example/contact-large.webp", projected.avatar?.large)
+        assertEquals("/api/v1/contacts/${contactId.value}/avatar/small.webp?v=contact-beta", projected.avatar?.small)
+        assertEquals("/api/v1/contacts/${contactId.value}/avatar/medium.webp?v=contact-beta", projected.avatar?.medium)
+        assertEquals("/api/v1/contacts/${contactId.value}/avatar/large.webp?v=contact-beta", projected.avatar?.large)
     }
 
     @Test
-    fun `build tenant avatar thumbnail signs storage key`() = kotlinx.coroutines.runBlocking {
+    fun `build tenant avatar thumbnail includes version query from storage key`() = kotlinx.coroutines.runBlocking {
         val tenantId = TenantId.generate()
         coEvery { tenantRepository.getAvatarStorageKey(tenantId) } returns "avatars/tenants/$tenantId/abc"
-        coEvery { avatarStorageService.signAvatarUrls("avatars/tenants/$tenantId/abc") } returns Thumbnail(
-            small = "https://cdn.example/tenant-small.webp",
-            medium = "https://cdn.example/tenant-medium.webp",
-            large = "https://cdn.example/tenant-large.webp"
-        )
 
         val thumbnail = service.buildTenantAvatarThumbnail(tenantId)
 
-        assertEquals("https://cdn.example/tenant-small.webp", thumbnail?.small)
-        assertEquals("https://cdn.example/tenant-medium.webp", thumbnail?.medium)
-        assertEquals("https://cdn.example/tenant-large.webp", thumbnail?.large)
+        assertEquals("/api/v1/tenants/$tenantId/avatar/small.webp?v=abc", thumbnail?.small)
+        assertEquals("/api/v1/tenants/$tenantId/avatar/medium.webp?v=abc", thumbnail?.medium)
+        assertEquals("/api/v1/tenants/$tenantId/avatar/large.webp?v=abc", thumbnail?.large)
     }
 }

@@ -30,7 +30,6 @@ import tech.dokus.domain.model.auth.SessionDto
 import tech.dokus.domain.model.auth.UpdateProfileRequest
 import tech.dokus.foundation.backend.database.now
 import tech.dokus.foundation.backend.security.JwtGenerator
-import tech.dokus.foundation.backend.storage.AvatarStorageService
 import tech.dokus.foundation.backend.security.TokenBlacklistService
 import tech.dokus.foundation.backend.utils.loggerFor
 import kotlin.time.Duration.Companion.days
@@ -52,7 +51,6 @@ class AuthService(
     private val welcomeEmailService: WelcomeEmailService,
     private val emailVerificationService: EmailVerificationService,
     private val passwordResetService: PasswordResetService,
-    private val avatarStorageService: AvatarStorageService,
     private val tokenBlacklistService: TokenBlacklistService? = null,
     private val maxConcurrentSessions: Int = DEFAULT_MAX_CONCURRENT_SESSIONS
 ) {
@@ -676,7 +674,7 @@ class AuthService(
             ?: throw DokusException.InternalError("Failed to fetch updated user")
 
         logger.info("Profile updated successfully for user: ${userId.value}")
-        Result.success(userRepository.projectUserAvatar(updatedUser, avatarStorageService))
+        Result.success(userRepository.projectUserAvatar(updatedUser))
     } catch (e: DokusException) {
         logger.error("Profile update failed: ${e.errorCode} for user: ${userId.value}", e)
         Result.failure(e)
