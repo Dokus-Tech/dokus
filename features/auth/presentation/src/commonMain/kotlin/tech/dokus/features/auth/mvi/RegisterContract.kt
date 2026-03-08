@@ -26,7 +26,7 @@ import tech.dokus.foundation.app.state.DokusState
 // ============================================================================
 
 @Immutable
-sealed interface RegisterState : MVIState, DokusState<Unit> {
+sealed interface RegisterState : MVIState {
     val email: Email
     val password: Password
     val firstName: Name
@@ -60,9 +60,9 @@ sealed interface RegisterState : MVIState, DokusState<Unit> {
         override val password: Password,
         override val firstName: Name,
         override val lastName: Name,
-        override val exception: DokusException,
-        override val retryHandler: RetryHandler,
-    ) : RegisterState, DokusState.Error<Unit>
+        val exception: DokusException,
+        val retryHandler: RetryHandler,
+    ) : RegisterState
 }
 
 // ============================================================================

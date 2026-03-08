@@ -15,10 +15,10 @@ import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.features.cashflow.usecases.LoadDocumentRecordsUseCase
+import tech.dokus.foundation.app.state.isLoading
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
-import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import kotlinx.datetime.LocalDateTime
 
@@ -44,23 +44,23 @@ class DocumentsContainerExternalRefreshTest {
         container.store.subscribeAndTest {
             advanceUntilIdle()
 
-            val initial = assertIs<DocumentsState.Content>(states.value)
-            assertFalse(initial.isRefreshing)
-            assertEquals(initialDocs.map { it.document.id }, initial.documents.data.map { it.document.id })
+            val initial = states.value
+            assertFalse(initial.documents.isLoading())
+            assertEquals(initialDocs.map { it.document.id }, initial.documents.lastData?.data?.map { it.document.id })
 
             emit(DocumentsIntent.ExternalDocumentsChanged)
             runCurrent()
 
-            val refreshing = assertIs<DocumentsState.Content>(states.value)
-            assertTrue(refreshing.isRefreshing)
-            assertEquals(initialDocs.map { it.document.id }, refreshing.documents.data.map { it.document.id })
+            val refreshing = states.value
+            assertTrue(refreshing.documents.isLoading())
+            assertEquals(initialDocs.map { it.document.id }, refreshing.documents.lastData?.data?.map { it.document.id })
 
             deferredRefresh.complete(Result.success(externalRefreshPageResponse(refreshedDocs)))
             advanceUntilIdle()
 
-            val updated = assertIs<DocumentsState.Content>(states.value)
-            assertFalse(updated.isRefreshing)
-            assertEquals(refreshedDocs.map { it.document.id }, updated.documents.data.map { it.document.id })
+            val updated = states.value
+            assertFalse(updated.documents.isLoading())
+            assertEquals(refreshedDocs.map { it.document.id }, updated.documents.lastData?.data?.map { it.document.id })
         }
     }
 }

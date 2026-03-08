@@ -68,7 +68,7 @@ private fun ChangePasswordContent(
     contentPadding: PaddingValues,
     onIntent: (ChangePasswordIntent) -> Unit
 ) {
-    val fieldsError = state.exceptionIfError()
+    val fieldsError = (state as? ChangePasswordState.Error)?.exception
     val isSubmitting = state is ChangePasswordState.Submitting
     val passwordsMatch = state.newPassword.value == state.confirmPassword.value
     val canSubmit = state.currentPassword.isValid &&

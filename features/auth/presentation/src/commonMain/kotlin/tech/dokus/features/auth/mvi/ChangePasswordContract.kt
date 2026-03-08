@@ -10,7 +10,7 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.foundation.app.state.DokusState
 
 @Immutable
-sealed interface ChangePasswordState : MVIState, DokusState<Unit> {
+sealed interface ChangePasswordState : MVIState {
     val currentPassword: Password
     val newPassword: Password
     val confirmPassword: Password
@@ -31,9 +31,9 @@ sealed interface ChangePasswordState : MVIState, DokusState<Unit> {
         override val currentPassword: Password,
         override val newPassword: Password,
         override val confirmPassword: Password,
-        override val exception: DokusException,
-        override val retryHandler: RetryHandler
-    ) : ChangePasswordState, DokusState.Error<Unit>
+        val exception: DokusException,
+        val retryHandler: RetryHandler
+    ) : ChangePasswordState
 }
 
 @Immutable

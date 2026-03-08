@@ -38,7 +38,7 @@ import tech.dokus.foundation.app.state.DokusState
 // ============================================================================
 
 @Immutable
-sealed interface ContactDetailsState : MVIState, DokusState<Nothing> {
+sealed interface ContactDetailsState : MVIState {
 
     /**
      * Loading state - initial data fetch in progress.
@@ -83,9 +83,9 @@ sealed interface ContactDetailsState : MVIState, DokusState<Nothing> {
      */
     data class Error(
         val contactId: ContactId,
-        override val exception: DokusException,
-        override val retryHandler: RetryHandler,
-    ) : ContactDetailsState, DokusState.Error<Nothing>
+        val exception: DokusException,
+        val retryHandler: RetryHandler,
+    ) : ContactDetailsState
 }
 
 // ============================================================================

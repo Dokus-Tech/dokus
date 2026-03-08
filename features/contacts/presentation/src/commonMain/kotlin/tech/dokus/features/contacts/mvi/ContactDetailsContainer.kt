@@ -273,9 +273,10 @@ internal class ContactDetailsContainer(
                 withState<ContactDetailsState.Content, _> {
                     updateState {
                         copy(
-                            activityState = DokusState.error(error) {
-                                intent(ContactDetailsIntent.Refresh)
-                            }
+                            activityState = DokusState.error(
+                                exception = error.asDokusException,
+                                retryHandler = { intent(ContactDetailsIntent.Refresh) }
+                            )
                         )
                     }
                 }
@@ -298,9 +299,10 @@ internal class ContactDetailsContainer(
                 withState<ContactDetailsState.Content, _> {
                     updateState {
                         copy(
-                            invoiceSnapshotState = DokusState.error(error) {
-                                intent(ContactDetailsIntent.Refresh)
-                            }
+                            invoiceSnapshotState = DokusState.error(
+                                exception = error.asDokusException,
+                                retryHandler = { intent(ContactDetailsIntent.Refresh) }
+                            )
                         )
                     }
                 }
@@ -323,9 +325,10 @@ internal class ContactDetailsContainer(
                 withState<ContactDetailsState.Content, _> {
                     updateState {
                         copy(
-                            peppolStatusState = DokusState.error(error) {
-                                intent(ContactDetailsIntent.Refresh)
-                            }
+                            peppolStatusState = DokusState.error(
+                                exception = error.asDokusException,
+                                retryHandler = { intent(ContactDetailsIntent.Refresh) }
+                            )
                         )
                     }
                 }
@@ -346,9 +349,10 @@ internal class ContactDetailsContainer(
                 withState<ContactDetailsState.Content, _> {
                     updateState {
                         copy(
-                            notesState = DokusState.error(error) {
-                                intent(ContactDetailsIntent.Refresh)
-                            }
+                            notesState = DokusState.error(
+                                exception = error.asDokusException,
+                                retryHandler = { intent(ContactDetailsIntent.Refresh) }
+                            )
                         )
                     }
                 }

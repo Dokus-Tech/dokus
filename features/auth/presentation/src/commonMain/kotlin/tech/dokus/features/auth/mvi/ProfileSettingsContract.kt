@@ -26,7 +26,7 @@ import tech.dokus.foundation.app.state.DokusState
 // ============================================================================
 
 @Immutable
-sealed interface ProfileSettingsState : MVIState, DokusState<User> {
+sealed interface ProfileSettingsState : MVIState {
 
     /**
      * Initial state - loading user profile.
@@ -75,9 +75,9 @@ sealed interface ProfileSettingsState : MVIState, DokusState<User> {
      * Error state with recovery option.
      */
     data class Error(
-        override val exception: DokusException,
-        override val retryHandler: RetryHandler,
-    ) : ProfileSettingsState, DokusState.Error<User>
+        val exception: DokusException,
+        val retryHandler: RetryHandler,
+    ) : ProfileSettingsState
 
     @Immutable
     sealed interface AvatarState {

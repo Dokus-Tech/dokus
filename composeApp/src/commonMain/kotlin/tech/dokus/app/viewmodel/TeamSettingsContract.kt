@@ -14,7 +14,6 @@ import tech.dokus.domain.model.TeamMember
 import tech.dokus.domain.model.TenantInvitation
 import tech.dokus.domain.model.auth.BookkeeperFirmSearchItem
 import tech.dokus.domain.model.auth.TenantBookkeeperAccessItem
-import tech.dokus.foundation.app.state.DokusState
 
 /**
  * Contract for Team Settings screen.
@@ -37,7 +36,7 @@ import tech.dokus.foundation.app.state.DokusState
 // ============================================================================
 
 @Immutable
-sealed interface TeamSettingsState : MVIState, DokusState<Nothing> {
+sealed interface TeamSettingsState : MVIState {
 
     /**
      * Initial loading state.
@@ -97,9 +96,9 @@ sealed interface TeamSettingsState : MVIState, DokusState<Nothing> {
      * @property retryHandler Handler to retry the failed operation
      */
     data class Error(
-        override val exception: DokusException,
-        override val retryHandler: RetryHandler,
-    ) : TeamSettingsState, DokusState.Error<Nothing>
+        val exception: DokusException,
+        val retryHandler: RetryHandler,
+    ) : TeamSettingsState
 }
 
 // ============================================================================

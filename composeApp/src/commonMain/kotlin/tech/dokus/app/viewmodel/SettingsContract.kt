@@ -7,7 +7,6 @@ import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.Tenant
-import tech.dokus.foundation.app.state.DokusState
 
 /**
  * Contract for the Settings screen.
@@ -27,12 +26,12 @@ import tech.dokus.foundation.app.state.DokusState
 // ============================================================================
 
 @Immutable
-sealed interface SettingsState : MVIState, DokusState<Tenant> {
+sealed interface SettingsState : MVIState {
 
     /**
      * Loading state - fetching current tenant.
      */
-    data object Loading : SettingsState, DokusState.Loading<Tenant>
+    data object Loading : SettingsState
 
     /**
      * Content state - tenant loaded and ready for display.
@@ -40,8 +39,8 @@ sealed interface SettingsState : MVIState, DokusState<Tenant> {
      * @property data The current tenant/workspace
      */
     data class Content(
-        override val data: Tenant,
-    ) : SettingsState, DokusState.Success<Tenant>
+        val data: Tenant,
+    ) : SettingsState
 
     /**
      * Error state - failed to load tenant.
@@ -50,9 +49,9 @@ sealed interface SettingsState : MVIState, DokusState<Tenant> {
      * @property retryHandler Handler to retry the failed operation
      */
     data class Error(
-        override val exception: DokusException,
-        override val retryHandler: RetryHandler,
-    ) : SettingsState, DokusState.Error<Tenant>
+        val exception: DokusException,
+        val retryHandler: RetryHandler,
+    ) : SettingsState
 }
 
 // ============================================================================

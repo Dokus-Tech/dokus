@@ -141,7 +141,7 @@ enum class DuplicateReason(val labelRes: StringResource) {
 // ============================================================================
 
 @Immutable
-sealed interface ContactFormState : MVIState, DokusState<Nothing> {
+sealed interface ContactFormState : MVIState {
 
     /**
      * Loading existing contact for edit mode.
@@ -205,9 +205,9 @@ sealed interface ContactFormState : MVIState, DokusState<Nothing> {
     data class Error(
         val contactId: ContactId?,
         val formData: ContactFormData,
-        override val exception: DokusException,
-        override val retryHandler: RetryHandler,
-    ) : ContactFormState, DokusState.Error<Nothing>
+        val exception: DokusException,
+        val retryHandler: RetryHandler,
+    ) : ContactFormState
 }
 
 // ============================================================================

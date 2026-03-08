@@ -57,7 +57,7 @@ internal fun RegisterScreen(
     val focusManager = LocalFocusManager.current
     val scope = rememberCoroutineScope()
 
-    val fieldsError = state.exceptionIfError()
+    val fieldsError = (state as? RegisterState.Error)?.exception
     val isLoading = state is RegisterState.Registering
 
     val fields = RegisterFormFields(

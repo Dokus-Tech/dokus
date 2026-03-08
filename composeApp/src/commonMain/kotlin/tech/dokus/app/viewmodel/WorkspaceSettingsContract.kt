@@ -12,7 +12,6 @@ import tech.dokus.domain.model.PeppolRegistrationDto
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.TenantSettings
 import tech.dokus.domain.model.common.Thumbnail
-import tech.dokus.foundation.app.state.DokusState
 
 /**
  * Contract for Workspace Settings screen.
@@ -36,7 +35,7 @@ import tech.dokus.foundation.app.state.DokusState
 // ============================================================================
 
 @Immutable
-sealed interface WorkspaceSettingsState : MVIState, DokusState<Nothing> {
+sealed interface WorkspaceSettingsState : MVIState {
 
     /**
      * Initial loading state.
@@ -137,9 +136,9 @@ sealed interface WorkspaceSettingsState : MVIState, DokusState<Nothing> {
      * @property retryHandler Handler to retry the failed operation
      */
     data class Error(
-        override val exception: DokusException,
-        override val retryHandler: RetryHandler,
-    ) : WorkspaceSettingsState, DokusState.Error<Nothing>
+        val exception: DokusException,
+        val retryHandler: RetryHandler,
+    ) : WorkspaceSettingsState
 }
 
 // ============================================================================

@@ -142,13 +142,12 @@ internal fun ContactsList(
     isDesktop: Boolean = false,
 ) {
     val listState = rememberLazyListState()
-
-    // Extract pagination state for infinite scroll (if available)
-    val paginationState = (state as? DokusState.Success)?.data
+    val paginationData = state.lastData
+    val contacts = paginationData?.data ?: emptyList()
 
     // Infinite scroll trigger
-    LaunchedEffect(listState, paginationState?.hasMorePages, state.isLoading()) {
-        if (paginationState == null) return@LaunchedEffect
+    LaunchedEffect(listState, paginationData?.hasMorePages, state.isLoading()) {
+        if (paginationData == null) return@LaunchedEffect
         snapshotFlow {
             val info = listState.layoutInfo
             (info.visibleItemsInfo.lastOrNull()?.index ?: 0) to info.totalItemsCount
@@ -156,41 +155,21 @@ internal fun ContactsList(
             .distinctUntilChanged()
             .filter { (last, total) ->
                 (last + 1) > (total - InfiniteScrollThreshold) &&
-                    paginationState.hasMorePages &&
+                    paginationData.hasMorePages &&
                     !state.isLoading()
             }
             .collect { onLoadMore() }
     }
 
-    when (state) {
-        is DokusState.Loading, is DokusState.Idle -> {
+    when {
+        state.isLoading() && paginationData == null -> {
             ContactsListSkeleton(
                 contentPadding = contentPadding,
                 modifier = modifier
             )
         }
 
-        is DokusState.Success -> {
-            if (state.data.data.isEmpty()) {
-                ContactsEmptyState(
-                    onAddContactClick = onAddContactClick,
-                    modifier = modifier.padding(contentPadding)
-                )
-            } else {
-                ContactsListContent(
-                    contacts = state.data.data,
-                    listState = listState,
-                    isLoadingMore = state.isLoading(),
-                    onContactClick = onContactClick,
-                    contentPadding = contentPadding,
-                    modifier = modifier,
-                    selectedContactId = selectedContactId,
-                    isDesktop = isDesktop,
-                )
-            }
-        }
-
-        is DokusState.Error -> {
+        state is DokusState.Error && contacts.isEmpty() -> {
             Box(
                 modifier = modifier
                     .fillMaxSize()
@@ -203,6 +182,26 @@ internal fun ContactsList(
                     retryHandler = state.retryHandler
                 )
             }
+        }
+
+        contacts.isEmpty() -> {
+            ContactsEmptyState(
+                onAddContactClick = onAddContactClick,
+                modifier = modifier.padding(contentPadding)
+            )
+        }
+
+        else -> {
+            ContactsListContent(
+                contacts = contacts,
+                listState = listState,
+                isLoadingMore = state.isLoading(),
+                onContactClick = onContactClick,
+                contentPadding = contentPadding,
+                modifier = modifier,
+                selectedContactId = selectedContactId,
+                isDesktop = isDesktop,
+            )
         }
     }
 }

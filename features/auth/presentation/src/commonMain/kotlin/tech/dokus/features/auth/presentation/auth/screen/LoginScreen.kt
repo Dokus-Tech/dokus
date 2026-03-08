@@ -58,7 +58,7 @@ internal fun LoginScreen(
     onRegister: () -> Unit,
 ) {
     val focusManager = LocalFocusManager.current
-    val fieldsError = state.exceptionIfError()
+    val fieldsError = (state as? LoginState.Error)?.exception
 
     val isLoading = state is LoginState.Authenticating
     val canLogin = state.email.isValid && state.password.isValid

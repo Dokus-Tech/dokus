@@ -6,7 +6,6 @@ import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.foundation.app.state.DokusState
 
 /**
  * Contract for the Peppol registration/settings flow.
@@ -30,7 +29,7 @@ data class PeppolSetupContext(
 )
 
 @Immutable
-sealed interface PeppolRegistrationState : MVIState, DokusState<Nothing> {
+sealed interface PeppolRegistrationState : MVIState {
 
     data object Loading : PeppolRegistrationState
 
@@ -71,9 +70,9 @@ sealed interface PeppolRegistrationState : MVIState, DokusState<Nothing> {
     ) : PeppolRegistrationState
 
     data class Error(
-        override val exception: DokusException,
-        override val retryHandler: RetryHandler
-    ) : PeppolRegistrationState, DokusState.Error<Nothing>
+        val exception: DokusException,
+        val retryHandler: RetryHandler,
+    ) : PeppolRegistrationState
 }
 
 // ============================================================================

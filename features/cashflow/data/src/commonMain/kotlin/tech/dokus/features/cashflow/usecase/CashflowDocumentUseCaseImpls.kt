@@ -64,7 +64,7 @@ internal class WatchPendingDocumentsUseCaseImpl(
                         )
                         val failed = result.exceptionOrNull()
                         if (failed != null) {
-                            emit(DokusState.error(failed.asDokusException) { refresh() })
+                            emit(DokusState.error(exception = failed.asDokusException, retryHandler = { refresh() }))
                             return@flow
                         }
                         collected += result.getOrThrow().items

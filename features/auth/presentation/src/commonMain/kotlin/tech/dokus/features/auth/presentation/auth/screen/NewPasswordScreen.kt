@@ -36,7 +36,7 @@ internal fun NewPasswordScreen(
     onIntent: (NewPasswordIntent) -> Unit,
     onNavigateUp: () -> Unit,
 ) {
-    val fieldsError = state.exceptionIfError()
+    val fieldsError = (state as? NewPasswordState.Error)?.exception
     val isSubmitting = state is NewPasswordState.Submitting
     val passwordsMatch = state.password.value == state.passwordConfirmation.value
     val canSubmit = state.password.isValid && state.passwordConfirmation.isValid && passwordsMatch && !isSubmitting

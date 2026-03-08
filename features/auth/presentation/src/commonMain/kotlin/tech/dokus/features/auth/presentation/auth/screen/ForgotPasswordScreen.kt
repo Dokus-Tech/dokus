@@ -40,7 +40,7 @@ internal fun ForgotPasswordScreen(
     onIntent: (ForgotPasswordIntent) -> Unit,
     onNavigateUp: () -> Unit,
 ) {
-    val fieldsError = state.exceptionIfError()
+    val fieldsError = (state as? ForgotPasswordState.Error)?.exception
     val isSubmitting = state is ForgotPasswordState.Submitting
     val canSubmit = state.email.isValid && !isSubmitting
 

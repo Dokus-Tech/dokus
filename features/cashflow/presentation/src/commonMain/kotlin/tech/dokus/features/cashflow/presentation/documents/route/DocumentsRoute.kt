@@ -145,21 +145,18 @@ internal fun DocumentsRoute(
         }
     }
 
-    val contentState = state as? DocumentsState.Content
     val localUploadRows = remember(
-        contentState?.filter,
-        contentState?.documents?.data,
+        state.filter,
+        state.documents.lastData?.data,
         uploadTasks,
         uploadedDocuments,
         knownRemoteDocumentIds
     ) {
-        val cs = contentState ?: return@remember emptyList()
-
         buildDocumentsLocalUploadRows(
-            filter = cs.filter,
+            filter = state.filter,
             uploadTasks = uploadTasks,
             uploadedDocuments = uploadedDocuments,
-            remoteDocuments = cs.documents.data,
+            remoteDocuments = state.documents.lastData?.data ?: emptyList(),
             knownRemoteDocumentIds = knownRemoteDocumentIds
         )
     }

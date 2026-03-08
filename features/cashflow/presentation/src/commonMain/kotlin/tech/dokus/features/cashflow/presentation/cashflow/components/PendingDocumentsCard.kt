@@ -131,7 +131,7 @@ fun PendingDocumentsCard(
                         PendingDocumentsLazyList(
                             documents = paginationState.data,
                             hasMorePages = paginationState.hasMorePages,
-                            isLoadingMore = paginationState.isLoadingMore,
+                            isLoadingMore = false,
                             onDocumentClick = onDocumentClick,
                             onLoadMore = onLoadMore,
                             modifier = Modifier.weight(1f)

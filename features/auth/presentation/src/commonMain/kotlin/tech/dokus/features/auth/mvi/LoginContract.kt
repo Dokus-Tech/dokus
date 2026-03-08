@@ -25,7 +25,7 @@ import tech.dokus.foundation.app.state.DokusState
 // ============================================================================
 
 @Immutable
-sealed interface LoginState : MVIState, DokusState<Unit> {
+sealed interface LoginState : MVIState {
     val email: Email
     val password: Password
 
@@ -51,9 +51,9 @@ sealed interface LoginState : MVIState, DokusState<Unit> {
     data class Error(
         override val email: Email,
         override val password: Password,
-        override val exception: DokusException,
-        override val retryHandler: RetryHandler,
-    ) : LoginState, DokusState.Error<Unit>
+        val exception: DokusException,
+        val retryHandler: RetryHandler,
+    ) : LoginState
 }
 
 // ============================================================================

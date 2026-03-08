@@ -52,11 +52,15 @@ import tech.dokus.features.cashflow.presentation.documents.model.DocumentsLocalU
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentFilter
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsIntent
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsState
+import tech.dokus.foundation.app.state.isLoading
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.common.DokusEmptyState
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import tech.dokus.foundation.aura.local.LocalScreenSize
+
+private val DocumentsState.documentItems: List<DocumentRecordDto>
+    get() = documents.lastData?.data ?: emptyList()
 
 private sealed interface DocumentsDisplayRow {
     data class Local(val row: DocumentsLocalUploadRow) : DocumentsDisplayRow
@@ -78,7 +82,7 @@ internal fun DocumentsScreen(
     modifier: Modifier = Modifier
 ) {
     val listState = rememberLazyListState()
-    val remoteDocuments = state.documents.data
+    val remoteDocuments = state.documentItems
     val isLargeScreen = LocalScreenSize.current.isLarge
     var handledDropScrollToken by remember { mutableIntStateOf(0) }
 
@@ -96,8 +100,8 @@ internal fun DocumentsScreen(
 
     val shouldLoadMore = rememberLoadMoreTrigger(
         listState = listState,
-        hasMore = state.documents.hasMorePages,
-        isLoading = state.documents.isLoadingMore,
+        hasMore = state.documents.lastData?.hasMorePages ?: false,
+        isLoading = state.documents.isLoading(),
         buffer = 3
     )
 
@@ -138,7 +142,7 @@ internal fun DocumentsScreen(
                 )
 
                 when {
-                    displayRows.isEmpty() && state.isRefreshing -> {
+                    displayRows.isEmpty() && state.documents.isLoading() -> {
                         Box(
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
@@ -147,8 +151,7 @@ internal fun DocumentsScreen(
                         }
                     }
 
-                    displayRows.isEmpty() &&
-                            state.filter == DocumentFilter.All -> {
+                    displayRows.isEmpty() && state.filter == DocumentFilter.All -> {
                         DokusEmptyState(
                             title = stringResource(Res.string.documents_empty_title),
                             modifier = Modifier.fillMaxSize()
@@ -167,8 +170,8 @@ internal fun DocumentsScreen(
                             DesktopDocumentsTable(
                                 displayRows = displayRows,
                                 listState = listState,
-                                isLoadingMore = state.documents.isLoadingMore,
-                                isRefreshing = state.isRefreshing,
+                                isLoadingMore = state.documents.isLoading(),
+                                isRefreshing = state.documents.isLoading(),
                                 isDropTargetActive = isDesktopDropTargetActive,
                                 dropHintText = stringResource(Res.string.documents_drop_to_upload),
                                 onOpenDocument = { documentId ->
@@ -185,8 +188,8 @@ internal fun DocumentsScreen(
                             MobileDocumentsList(
                                 displayRows = displayRows,
                                 listState = listState,
-                                isLoadingMore = state.documents.isLoadingMore,
-                                isRefreshing = state.isRefreshing,
+                                isLoadingMore = state.documents.isLoading(),
+                                isRefreshing = state.documents.isLoading(),
                                 onOpenDocument = { documentId ->
                                     onIntent(DocumentsIntent.OpenDocument(documentId))
                                 },
@@ -221,7 +224,7 @@ internal fun DocumentsScreen(
 
 @Composable
 private fun DocumentsToolbar(
-    state: DocumentsState.Content,
+    state: DocumentsState,
     totalCount: Int,
     isLargeScreen: Boolean,
     onIntent: (DocumentsIntent) -> Unit,

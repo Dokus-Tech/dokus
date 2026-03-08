@@ -17,28 +17,12 @@ import tech.dokus.aura.resources.contacts_sort_created_oldest
 import tech.dokus.aura.resources.contacts_sort_default
 import tech.dokus.aura.resources.contacts_sort_name_asc
 import tech.dokus.aura.resources.contacts_sort_name_desc
-import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.dropdown.FilterOption
-
-/**
- * Contract for the Contacts screen.
- *
- * The Contacts screen displays a list of contacts with:
- * - Pagination for loading more contacts
- * - Sort and filter options (role, active status, Peppol)
- * - Master-detail layout support (selectedContactId)
- * - Create contact form pane visibility (desktop)
- *
- * Flow:
- * 1. Loading → Initial data fetch
- * 2. Content → Contacts loaded, user can search/sort/filter/paginate
- * 3. Error → Failed to load with retry option (can fallback to cached data)
- */
 
 // ============================================================================
 // FILTER OPTIONS
@@ -79,47 +63,20 @@ enum class ContactActiveFilter(override val labelRes: StringResource) : FilterOp
 // ============================================================================
 
 @Immutable
-sealed interface ContactsState : MVIState, DokusState<Nothing> {
-
-    /**
-     * Loading state - initial data fetch in progress.
-     */
-    data object Loading : ContactsState
-
-    /**
-     * Content state - contacts loaded and ready for display.
-     *
-     * @property contacts Paginated list of contacts
-     * @property sortOption Current sort order
-     * @property roleFilter Current role filter (All, Customers, Vendors)
-     * @property activeFilter Current active status filter
-     * @property peppolFilter Current Peppol enabled filter (null = all)
-     * @property selectedContactId Selected contact for detail view in master-detail layout
-     * @property showCreateContactPane Whether the create contact form pane is visible (desktop)
-     */
-    data class Content(
-        val contacts: PaginationState<ContactDto>,
-        val sortOption: ContactSortOption = ContactSortOption.Default,
-        val roleFilter: ContactRoleFilter = ContactRoleFilter.All,
-        val activeFilter: ContactActiveFilter = ContactActiveFilter.All,
-        val peppolFilter: Boolean? = null,
-        val selectedContactId: ContactId? = null,
-        val showCreateContactPane: Boolean = false,
-    ) : ContactsState
-
-    /**
-     * Error state - failed to load initial data.
-     *
-     * @property exception The error that occurred
-     * @property retryHandler Handler to retry the failed operation
-     */
-    data class Error(
-        override val exception: DokusException,
-        override val retryHandler: RetryHandler,
-    ) : ContactsState, DokusState.Error<Nothing>
-
+data class ContactsState(
+    val contacts: DokusState<PaginationState<ContactDto>>,
+    val sortOption: ContactSortOption = ContactSortOption.Default,
+    val roleFilter: ContactRoleFilter = ContactRoleFilter.All,
+    val activeFilter: ContactActiveFilter = ContactActiveFilter.All,
+    val peppolFilter: Boolean? = null,
+    val selectedContactId: ContactId? = null,
+    val showCreateContactPane: Boolean = false,
+) : MVIState {
     companion object {
         const val PAGE_SIZE = 20
+        val initial by lazy {
+            ContactsState(contacts = DokusState.loading())
+        }
     }
 }
 

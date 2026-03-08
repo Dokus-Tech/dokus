@@ -7,7 +7,6 @@ import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.features.cashflow.presentation.cashflow.components.DroppedFile
-import tech.dokus.foundation.app.state.DokusState
 
 /**
  * Contract for document upload screen.
@@ -27,7 +26,7 @@ import tech.dokus.foundation.app.state.DokusState
 // ============================================================================
 
 @Immutable
-sealed interface AddDocumentState : MVIState, DokusState<Nothing> {
+sealed interface AddDocumentState : MVIState {
 
     /**
      * Initial state - ready to accept file uploads.
@@ -49,9 +48,9 @@ sealed interface AddDocumentState : MVIState, DokusState<Nothing> {
      * Error state with recovery option.
      */
     data class Error(
-        override val exception: DokusException,
-        override val retryHandler: RetryHandler,
-    ) : AddDocumentState, DokusState.Error<Nothing>
+        val exception: DokusException,
+        val retryHandler: RetryHandler,
+    ) : AddDocumentState
 }
 
 // ============================================================================

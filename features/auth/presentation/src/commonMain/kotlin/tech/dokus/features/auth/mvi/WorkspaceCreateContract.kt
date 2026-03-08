@@ -36,12 +36,12 @@ import tech.dokus.foundation.app.state.DokusState
 // ============================================================================
 
 @Immutable
-sealed interface WorkspaceCreateState : MVIState, DokusState<Nothing> {
+sealed interface WorkspaceCreateState : MVIState {
 
     /**
      * Initial loading state - fetching user info.
      */
-    data object Loading : WorkspaceCreateState, DokusState.Loading<Nothing>
+    data object Loading : WorkspaceCreateState
 
     /**
      * Wizard state - user is navigating through the wizard steps.
@@ -83,10 +83,10 @@ sealed interface WorkspaceCreateState : MVIState, DokusState<Nothing> {
      * Error state with recovery option.
      */
     data class Error(
-        override val exception: DokusException,
-        override val retryHandler: RetryHandler,
+        val exception: DokusException,
+        val retryHandler: RetryHandler,
         val previousWizardState: Wizard? = null,
-    ) : WorkspaceCreateState, DokusState.Error<Nothing>
+    ) : WorkspaceCreateState
 }
 
 // ============================================================================

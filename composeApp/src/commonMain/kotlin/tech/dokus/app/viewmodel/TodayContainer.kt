@@ -143,9 +143,10 @@ internal class TodayContainer(
                     logger.e(error) { "Failed to load tenant" }
                     updateState {
                         copy(
-                            tenantState = DokusState.error(error) {
-                                intent(TodayIntent.RefreshTenant)
-                            }
+                            tenantState = DokusState.error(
+                                exception = error,
+                                retryHandler = { intent(TodayIntent.RefreshTenant) },
+                            )
                         )
                     }
                 }
@@ -183,8 +184,7 @@ internal class TodayContainer(
                 data = visibleDocs,
                 currentPage = pendingVisibleCount / TodayState.PENDING_PAGE_SIZE,
                 pageSize = TodayState.PENDING_PAGE_SIZE,
-                hasMorePages = hasMore,
-                isLoadingMore = false
+                hasMorePages = hasMore
             )
 
             updateState {
@@ -221,9 +221,10 @@ internal class TodayContainer(
                 withState<TodayState.Content, _> {
                     updateState {
                         copy(
-                            notificationsState = DokusState.error(error) {
-                                intent(TodayIntent.LoadNotifications(filter))
-                            }
+                            notificationsState = DokusState.error(
+                                exception = error,
+                                retryHandler = { intent(TodayIntent.LoadNotifications(filter)) },
+                            )
                         )
                     }
                 }

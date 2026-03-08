@@ -23,6 +23,8 @@ import tech.dokus.features.contacts.usecases.GetCachedContactsUseCase
 import tech.dokus.features.contacts.usecases.ListContactsUseCase
 import tech.dokus.features.contacts.usecases.ListCustomersUseCase
 import tech.dokus.features.contacts.usecases.ListVendorsUseCase
+import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.platform.Logger
 
 internal typealias ContactsCtx = PipelineContext<ContactsState, ContactsIntent, ContactsAction>
@@ -38,11 +40,8 @@ internal class ContactsContainer(
 
     private val logger = Logger.forClass<ContactsContainer>()
 
-    private var loadedContacts: List<ContactDto> = emptyList()
-    private var paginationInfo = PaginationInfo()
-
     override val store: Store<ContactsState, ContactsIntent, ContactsAction> =
-        store(ContactsState.Loading) {
+        store(ContactsState.initial) {
             init {
                 handleRefresh()
             }
@@ -65,248 +64,174 @@ internal class ContactsContainer(
 
     private suspend fun ContactsCtx.handleRefresh() {
         logger.d { "Refreshing contacts data" }
-        loadedContacts = emptyList()
-        paginationInfo = PaginationInfo()
-        updateState { ContactsState.Loading }
-        loadPage(page = 0, reset = true, filterState = FilterState())
+        updateState { copy(contacts = contacts.asLoading) }
+        loadPage(page = 0, reset = true)
     }
 
     private suspend fun ContactsCtx.handleLoadMore() {
-        withState<ContactsState.Content, _> {
-            if (paginationInfo.isLoadingMore || !paginationInfo.hasMorePages) return@withState
+        withState {
+            val paginationState =
+                contacts.let { if (it.isSuccess()) it.data else return@withState }
 
-            paginationInfo = paginationInfo.copy(isLoadingMore = true)
-            updateState { copy(contacts = buildPaginationState()) }
+            if (!paginationState.hasMorePages) return@withState
 
-            val nextPage = paginationInfo.currentPage + 1
-            loadPage(
-                page = nextPage,
-                reset = false,
-                filterState = FilterState(
-                    roleFilter = roleFilter,
-                    activeFilter = activeFilter,
-                    peppolFilter = peppolFilter,
-                    sortOption = sortOption
-                )
-            )
+            updateState { copy(contacts = contacts.asLoading) }
+
+            val nextPage = paginationState.currentPage + 1
+            loadPage(page = nextPage, reset = false)
         }
     }
 
     private suspend fun ContactsCtx.handleUpdateSortOption(option: ContactSortOption) {
-        withState<ContactsState.Content, _> {
-            val sorted = applySorting(loadedContacts, option)
+        withState {
+            if (!contacts.isSuccess()) return@withState
+            val currentPagination = (contacts as DokusState.Success).data
+            val sorted = applySorting(currentPagination.data, option)
             updateState {
                 copy(
                     sortOption = option,
-                    contacts = contacts.copy(data = sorted)
+                    contacts = DokusState.success(currentPagination.copy(data = sorted))
                 )
             }
         }
     }
 
     private suspend fun ContactsCtx.handleUpdateRoleFilter(filter: ContactRoleFilter) {
-        withState<ContactsState.Content, _> {
-            loadedContacts = emptyList()
-            paginationInfo = PaginationInfo()
-
-            updateState {
-                copy(
-                    roleFilter = filter,
-                    contacts = PaginationState(pageSize = ContactsState.PAGE_SIZE)
-                )
-            }
-
-            loadPage(
-                page = 0,
-                reset = true,
-                filterState = FilterState(
-                    roleFilter = filter,
-                    activeFilter = activeFilter,
-                    peppolFilter = peppolFilter,
-                    sortOption = sortOption
-                )
-            )
-        }
+        updateState { copy(contacts = contacts.asLoading, roleFilter = filter) }
+        loadPage(page = 0, reset = true)
     }
 
     private suspend fun ContactsCtx.handleUpdateActiveFilter(filter: ContactActiveFilter) {
-        withState<ContactsState.Content, _> {
-            loadedContacts = emptyList()
-            paginationInfo = PaginationInfo()
-
-            updateState {
-                copy(
-                    activeFilter = filter,
-                    contacts = PaginationState(pageSize = ContactsState.PAGE_SIZE)
-                )
-            }
-
-            loadPage(
-                page = 0,
-                reset = true,
-                filterState = FilterState(
-                    roleFilter = roleFilter,
-                    activeFilter = filter,
-                    peppolFilter = peppolFilter,
-                    sortOption = sortOption
-                )
-            )
-        }
+        updateState { copy(contacts = contacts.asLoading, activeFilter = filter) }
+        loadPage(page = 0, reset = true)
     }
 
     private suspend fun ContactsCtx.handleUpdatePeppolFilter(enabled: Boolean?) {
-        withState<ContactsState.Content, _> {
-            loadedContacts = emptyList()
-            paginationInfo = PaginationInfo()
-
-            updateState {
-                copy(
-                    peppolFilter = enabled,
-                    contacts = PaginationState(pageSize = ContactsState.PAGE_SIZE)
-                )
-            }
-
-            loadPage(
-                page = 0,
-                reset = true,
-                filterState = FilterState(
-                    roleFilter = roleFilter,
-                    activeFilter = activeFilter,
-                    peppolFilter = enabled,
-                    sortOption = sortOption
-                )
-            )
-        }
+        updateState { copy(contacts = contacts.asLoading, peppolFilter = enabled) }
+        loadPage(page = 0, reset = true)
     }
 
     private suspend fun ContactsCtx.handleClearFilters() {
-        withState<ContactsState.Content, _> {
-            loadedContacts = emptyList()
-            paginationInfo = PaginationInfo()
-
-            updateState {
-                copy(
-                    sortOption = ContactSortOption.Default,
-                    roleFilter = ContactRoleFilter.All,
-                    activeFilter = ContactActiveFilter.All,
-                    peppolFilter = null,
-                    contacts = PaginationState(pageSize = ContactsState.PAGE_SIZE)
-                )
-            }
-
-            loadPage(page = 0, reset = true, filterState = FilterState())
+        updateState {
+            copy(
+                contacts = contacts.asLoading,
+                sortOption = ContactSortOption.Default,
+                roleFilter = ContactRoleFilter.All,
+                activeFilter = ContactActiveFilter.All,
+                peppolFilter = null,
+            )
         }
+        loadPage(page = 0, reset = true)
     }
 
     private suspend fun ContactsCtx.handleSelectContact(contactId: ContactId?) {
-        withState<ContactsState.Content, _> {
-            updateState { copy(selectedContactId = contactId) }
-        }
+        updateState { copy(selectedContactId = contactId) }
     }
 
     private suspend fun ContactsCtx.handleShowCreateContactPane() {
-        withState<ContactsState.Content, _> {
-            updateState { copy(showCreateContactPane = true) }
-        }
+        updateState { copy(showCreateContactPane = true) }
     }
 
     private suspend fun ContactsCtx.handleHideCreateContactPane() {
-        withState<ContactsState.Content, _> {
-            updateState { copy(showCreateContactPane = false) }
-        }
+        updateState { copy(showCreateContactPane = false) }
     }
 
-    private suspend fun ContactsCtx.loadPage(
-        page: Int,
-        reset: Boolean,
-        filterState: FilterState = FilterState()
-    ) {
-        val (roleFilter, activeFilter, peppolFilter, sortOption) = filterState
+    private suspend fun ContactsCtx.loadPage(page: Int, reset: Boolean) {
+        withState {
+            val activeFilterValue = when (activeFilter) {
+                ContactActiveFilter.All -> null
+                ContactActiveFilter.Active -> true
+                ContactActiveFilter.Inactive -> false
+            }
 
-        val activeFilterValue = when (activeFilter) {
-            ContactActiveFilter.All -> null
-            ContactActiveFilter.Active -> true
-            ContactActiveFilter.Inactive -> false
-        }
-
-        val result = when (roleFilter) {
-            ContactRoleFilter.All -> listContacts(
-                isActive = activeFilterValue,
-                limit = ContactsState.PAGE_SIZE,
-                offset = page * ContactsState.PAGE_SIZE
-            )
-            ContactRoleFilter.Customers -> listCustomers(
-                isActive = activeFilterValue ?: true,
-                limit = ContactsState.PAGE_SIZE,
-                offset = page * ContactsState.PAGE_SIZE
-            )
-            ContactRoleFilter.Vendors -> listVendors(
-                isActive = activeFilterValue ?: true,
-                limit = ContactsState.PAGE_SIZE,
-                offset = page * ContactsState.PAGE_SIZE
-            )
-        }
-
-        result.fold(
-            onSuccess = { contacts ->
-                logger.i { "Loaded ${contacts.size} contacts (page=$page)" }
-                loadedContacts = if (reset) contacts else loadedContacts + contacts
-                paginationInfo = paginationInfo.copy(
-                    currentPage = page,
-                    isLoadingMore = false,
-                    hasMorePages = contacts.size >= ContactsState.PAGE_SIZE
+            val result = when (roleFilter) {
+                ContactRoleFilter.All -> listContacts(
+                    isActive = activeFilterValue,
+                    limit = ContactsState.PAGE_SIZE,
+                    offset = page * ContactsState.PAGE_SIZE
                 )
+                ContactRoleFilter.Customers -> listCustomers(
+                    isActive = activeFilterValue ?: true,
+                    limit = ContactsState.PAGE_SIZE,
+                    offset = page * ContactsState.PAGE_SIZE
+                )
+                ContactRoleFilter.Vendors -> listVendors(
+                    isActive = activeFilterValue ?: true,
+                    limit = ContactsState.PAGE_SIZE,
+                    offset = page * ContactsState.PAGE_SIZE
+                )
+            }
 
-                cacheContactsToLocal(contacts)
+            result.fold(
+                onSuccess = { newContacts ->
+                    logger.i { "Loaded ${newContacts.size} contacts (page=$page)" }
+                    val allContacts = if (reset) {
+                        newContacts
+                    } else {
+                        (contacts.lastData?.data ?: emptyList()) + newContacts
+                    }
+                    val sorted = applySorting(allContacts, sortOption)
 
-                val sorted = applySorting(loadedContacts, sortOption)
-                updateState {
-                    when (this) {
-                        is ContactsState.Content -> copy(contacts = buildPaginationState(sorted))
-                        else -> ContactsState.Content(
-                            contacts = buildPaginationState(sorted),
-                            sortOption = sortOption,
-                            roleFilter = roleFilter,
-                            activeFilter = activeFilter,
-                            peppolFilter = peppolFilter
+                    cacheContactsToLocal(newContacts)
+
+                    updateState {
+                        copy(
+                            contacts = DokusState.success(
+                                PaginationState(
+                                    data = sorted,
+                                    currentPage = page,
+                                    pageSize = ContactsState.PAGE_SIZE,
+                                    hasMorePages = newContacts.size >= ContactsState.PAGE_SIZE
+                                )
+                            )
                         )
                     }
-                }
-            },
-            onFailure = { error ->
-                logger.e(error) { "Failed to load contacts from network" }
-                paginationInfo = paginationInfo.copy(isLoadingMore = false, hasMorePages = false)
+                },
+                onFailure = { error ->
+                    logger.e(error) { "Failed to load contacts from network" }
 
-                if (loadedContacts.isEmpty()) {
-                    val cachedContacts = loadFromCache()
-                    if (cachedContacts.isNotEmpty()) {
-                        loadedContacts = cachedContacts
-                        paginationInfo = paginationInfo.copy(currentPage = 0, hasMorePages = false)
-                        val sorted = applySorting(loadedContacts, sortOption)
-                        updateState {
-                            ContactsState.Content(
-                                contacts = buildPaginationState(sorted),
-                                sortOption = sortOption,
-                                roleFilter = roleFilter,
-                                activeFilter = activeFilter,
-                                peppolFilter = peppolFilter
-                            )
+                    if (contacts.lastData?.data.isNullOrEmpty()) {
+                        val cachedContacts = loadFromCache()
+                        if (cachedContacts.isNotEmpty()) {
+                            val sorted = applySorting(cachedContacts, sortOption)
+                            updateState {
+                                copy(
+                                    contacts = DokusState.success(
+                                        PaginationState(
+                                            data = sorted,
+                                            currentPage = 0,
+                                            pageSize = ContactsState.PAGE_SIZE,
+                                            hasMorePages = false
+                                        )
+                                    )
+                                )
+                            }
+                        } else {
+                            updateState {
+                                copy(
+                                    contacts = DokusState.error(
+                                        exception = error.asDokusException,
+                                        retryHandler = { intent(ContactsIntent.Refresh) },
+                                        lastData = contacts.lastData
+                                    )
+                                )
+                            }
                         }
                     } else {
                         updateState {
-                            ContactsState.Error(
-                                exception = error.asDokusException,
-                                retryHandler = { intent(ContactsIntent.Refresh) }
+                            copy(
+                                contacts = DokusState.error(
+                                    exception = error.asDokusException,
+                                    retryHandler = { intent(ContactsIntent.Refresh) },
+                                    lastData = contacts.lastData
+                                )
                             )
                         }
-                    }
-                } else {
-                    withState<ContactsState.Content, _> {
-                        updateState { copy(contacts = buildPaginationState()) }
+                        action(ContactsAction.ShowError(error.asDokusException))
                     }
                 }
-            }
-        )
+            )
+        }
     }
 
     private suspend fun loadFromCache(): List<ContactDto> {
@@ -343,27 +268,4 @@ internal class ContactsContainer(
             }
         }
     }
-
-    private fun buildPaginationState(data: List<ContactDto> = loadedContacts): PaginationState<ContactDto> {
-        return PaginationState(
-            data = data,
-            currentPage = paginationInfo.currentPage,
-            pageSize = ContactsState.PAGE_SIZE,
-            hasMorePages = paginationInfo.hasMorePages,
-            isLoadingMore = paginationInfo.isLoadingMore
-        )
-    }
-
-    private data class PaginationInfo(
-        val currentPage: Int = 0,
-        val isLoadingMore: Boolean = false,
-        val hasMorePages: Boolean = true
-    )
-
-    private data class FilterState(
-        val roleFilter: ContactRoleFilter = ContactRoleFilter.All,
-        val activeFilter: ContactActiveFilter = ContactActiveFilter.All,
-        val peppolFilter: Boolean? = null,
-        val sortOption: ContactSortOption = ContactSortOption.Default
-    )
 }

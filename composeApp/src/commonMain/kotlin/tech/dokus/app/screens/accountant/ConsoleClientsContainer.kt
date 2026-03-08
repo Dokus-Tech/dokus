@@ -143,9 +143,10 @@ internal class ConsoleClientsContainer(
                     updateState {
                         copy(
                             selectedClientTenantId = tenantId,
-                            documentsState = DokusState.error(exception) {
-                                intent(ConsoleClientsIntent.SelectClient(tenantId))
-                            },
+                            documentsState = DokusState.error(
+                                exception = exception,
+                                retryHandler = { intent(ConsoleClientsIntent.SelectClient(tenantId)) },
+                            ),
                             selectedDocument = null,
                             loadingDocumentId = null,
                         )

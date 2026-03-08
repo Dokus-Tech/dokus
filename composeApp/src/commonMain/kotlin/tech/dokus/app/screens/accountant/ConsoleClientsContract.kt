@@ -13,7 +13,7 @@ import tech.dokus.domain.model.auth.ConsoleClientSummary
 import tech.dokus.foundation.app.state.DokusState
 
 @Immutable
-sealed interface ConsoleClientsState : MVIState, DokusState<Nothing> {
+sealed interface ConsoleClientsState : MVIState {
 
     data object Loading : ConsoleClientsState
 
@@ -39,9 +39,9 @@ sealed interface ConsoleClientsState : MVIState, DokusState<Nothing> {
     }
 
     data class Error(
-        override val exception: DokusException,
-        override val retryHandler: RetryHandler,
-    ) : ConsoleClientsState, DokusState.Error<Nothing>
+        val exception: DokusException,
+        val retryHandler: RetryHandler,
+    ) : ConsoleClientsState
 }
 
 @Immutable

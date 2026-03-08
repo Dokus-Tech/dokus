@@ -31,7 +31,7 @@ import tech.dokus.foundation.app.state.DokusState
 // ============================================================================
 
 @Immutable
-sealed interface ServerConnectionState : MVIState, DokusState<Nothing> {
+sealed interface ServerConnectionState : MVIState {
     val protocol: String
     val host: String
     val port: String
@@ -85,9 +85,9 @@ sealed interface ServerConnectionState : MVIState, DokusState<Nothing> {
         override val protocol: String,
         override val host: String,
         override val port: String,
-        override val exception: DokusException,
-        override val retryHandler: RetryHandler,
-    ) : ServerConnectionState, DokusState.Error<Nothing>
+        val exception: DokusException,
+        val retryHandler: RetryHandler,
+    ) : ServerConnectionState
 }
 
 // ============================================================================

@@ -11,7 +11,7 @@ import tech.dokus.domain.model.auth.SessionDto
 import tech.dokus.foundation.app.state.DokusState
 
 @Immutable
-sealed interface MySessionsState : MVIState, DokusState<List<SessionDto>> {
+sealed interface MySessionsState : MVIState {
     data object Loading : MySessionsState
 
     data class Loaded(
@@ -20,9 +20,9 @@ sealed interface MySessionsState : MVIState, DokusState<List<SessionDto>> {
     ) : MySessionsState
 
     data class Error(
-        override val exception: DokusException,
-        override val retryHandler: RetryHandler
-    ) : MySessionsState, DokusState.Error<List<SessionDto>>
+        val exception: DokusException,
+        val retryHandler: RetryHandler
+    ) : MySessionsState
 }
 
 @Immutable

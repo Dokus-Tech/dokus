@@ -97,7 +97,7 @@ enum class ReviewFinancialStatus {
 }
 
 @Immutable
-sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
+sealed interface DocumentReviewState : MVIState {
 
     data class Loading(
         val queueState: DocumentReviewQueueState? = null,
@@ -338,9 +338,9 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
     }
 
     data class Error(
-        override val exception: DokusException,
-        override val retryHandler: RetryHandler,
-    ) : DocumentReviewState, DokusState.Error<Nothing>
+        val exception: DokusException,
+        val retryHandler: RetryHandler,
+    ) : DocumentReviewState
 }
 
 // =========================================================================

@@ -85,9 +85,8 @@ internal fun ContactsScreen(
     }
 ) {
     val isLargeScreen = LocalScreenSize.isLarge
-    val contentState = state as? ContactsState.Content
-    val selectedContactId = contentState?.selectedContactId
-    val contacts = contentState?.contacts?.data.orEmpty()
+    val selectedContactId = state.selectedContactId
+    val contacts = state.contacts.lastData?.data.orEmpty()
 
     LaunchedEffect(isLargeScreen, selectedContactId, contacts.firstOrNull()?.id) {
         if (!isLargeScreen) return@LaunchedEffect
@@ -96,11 +95,7 @@ internal fun ContactsScreen(
         onSelectContact(first)
     }
 
-    val contactsState: DokusState<PaginationState<ContactDto>> = when (state) {
-        is ContactsState.Loading -> DokusState.loading()
-        is ContactsState.Content -> DokusState.success(state.contacts)
-        is ContactsState.Error -> DokusState.error(state.exception, state.retryHandler)
-    }
+    val contactsState = state.contacts
 
     Scaffold(
         topBar = {
@@ -249,11 +244,13 @@ private fun ContactsDesktopMasterDetailPreview(
         ServerConnectionPreviewProvider {
             CompositionLocalProvider(LocalScreenSize provides ScreenSize.LARGE) {
                 ContactsScreen(
-                    state = ContactsState.Content(
-                        contacts = PaginationState(
-                            data = contacts,
-                            currentPage = 1,
-                            hasMorePages = true
+                    state = ContactsState(
+                        contacts = DokusState.success(
+                            PaginationState(
+                                data = contacts,
+                                currentPage = 1,
+                                hasMorePages = true
+                            )
                         ),
                         selectedContactId = contactId
                     ),
@@ -323,11 +320,13 @@ private fun ContactsMobileListPreview(
     TestWrapper(parameters) {
         ServerConnectionPreviewProvider {
             ContactsScreen(
-                state = ContactsState.Content(
-                    contacts = PaginationState(
-                        data = contacts,
-                        currentPage = 1,
-                        hasMorePages = false
+                state = ContactsState(
+                    contacts = DokusState.success(
+                        PaginationState(
+                            data = contacts,
+                            currentPage = 1,
+                            hasMorePages = false
+                        )
                     )
                 ),
                 snackbarHostState = remember { SnackbarHostState() },

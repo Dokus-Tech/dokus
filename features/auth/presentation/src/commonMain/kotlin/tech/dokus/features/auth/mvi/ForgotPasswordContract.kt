@@ -24,7 +24,7 @@ import tech.dokus.foundation.app.state.DokusState
 // ============================================================================
 
 @Immutable
-sealed interface ForgotPasswordState : MVIState, DokusState<Unit> {
+sealed interface ForgotPasswordState : MVIState {
     val email: Email
 
     /**
@@ -53,9 +53,9 @@ sealed interface ForgotPasswordState : MVIState, DokusState<Unit> {
      */
     data class Error(
         override val email: Email,
-        override val exception: DokusException,
-        override val retryHandler: RetryHandler,
-    ) : ForgotPasswordState, DokusState.Error<Unit>
+        val exception: DokusException,
+        val retryHandler: RetryHandler,
+    ) : ForgotPasswordState
 }
 
 // ============================================================================

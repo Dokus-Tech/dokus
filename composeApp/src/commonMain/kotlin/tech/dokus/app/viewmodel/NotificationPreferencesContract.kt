@@ -8,10 +8,9 @@ import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.enums.NotificationType
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.NotificationPreferenceDto
-import tech.dokus.foundation.app.state.DokusState
 
 @Immutable
-sealed interface NotificationPreferencesState : MVIState, DokusState<Nothing> {
+sealed interface NotificationPreferencesState : MVIState {
     data object Loading : NotificationPreferencesState
 
     @Immutable
@@ -29,9 +28,9 @@ sealed interface NotificationPreferencesState : MVIState, DokusState<Nothing> {
     }
 
     data class Error(
-        override val exception: DokusException,
-        override val retryHandler: RetryHandler,
-    ) : NotificationPreferencesState, DokusState.Error<Nothing>
+        val exception: DokusException,
+        val retryHandler: RetryHandler,
+    ) : NotificationPreferencesState
 }
 
 @Immutable

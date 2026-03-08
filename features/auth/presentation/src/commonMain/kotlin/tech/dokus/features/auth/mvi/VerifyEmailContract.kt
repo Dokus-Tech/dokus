@@ -9,15 +9,15 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.foundation.app.state.DokusState
 
 @Immutable
-sealed interface VerifyEmailState : MVIState, DokusState<Unit> {
+sealed interface VerifyEmailState : MVIState {
     data object Verifying : VerifyEmailState
 
     data object Success : VerifyEmailState
 
     data class Error(
-        override val exception: DokusException,
-        override val retryHandler: RetryHandler
-    ) : VerifyEmailState, DokusState.Error<Unit>
+        val exception: DokusException,
+        val retryHandler: RetryHandler
+    ) : VerifyEmailState
 }
 
 @Immutable

@@ -14,7 +14,6 @@ import tech.dokus.domain.model.ai.ChatScope
 import tech.dokus.domain.model.ai.ChatSessionId
 import tech.dokus.domain.model.ai.ChatSessionSummary
 import tech.dokus.domain.model.ai.MessageRole
-import tech.dokus.foundation.app.state.DokusState
 
 /**
  * Contract for the Chat screen.
@@ -44,7 +43,7 @@ import tech.dokus.foundation.app.state.DokusState
 // ============================================================================
 
 @Immutable
-sealed interface ChatState : MVIState, DokusState<Nothing> {
+sealed interface ChatState : MVIState {
 
     /**
      * Loading state - initializing chat configuration and session.
@@ -156,9 +155,9 @@ sealed interface ChatState : MVIState, DokusState<Nothing> {
      * @property retryHandler Handler to retry initialization
      */
     data class Error(
-        override val exception: DokusException,
-        override val retryHandler: RetryHandler,
-    ) : ChatState, DokusState.Error<Nothing>
+        val exception: DokusException,
+        val retryHandler: RetryHandler,
+    ) : ChatState
 }
 
 // ============================================================================

@@ -220,8 +220,8 @@ private fun SettingsMobileLayout(
     val appModules = LocalAppModules.current
     val settingsGroups = remember(appModules) { appModules.settingsGroupsCombined }
 
-    val currentTenant = if (state.isSuccess()) state.data else null
-    val isLoading = state.isLoading()
+    val currentTenant = (state as? SettingsState.Content)?.data
+    val isLoading = state is SettingsState.Loading
 
     Scaffold { contentPadding ->
         Column(
@@ -261,8 +261,8 @@ private fun SettingsNavigationPanel(
 ) {
     val spacing = MaterialTheme.dokusSpacing
 
-    val currentTenant = if (state.isSuccess()) state.data else null
-    val isLoading = state.isLoading()
+    val currentTenant = (state as? SettingsState.Content)?.data
+    val isLoading = state is SettingsState.Loading
 
     Column(
         modifier = Modifier

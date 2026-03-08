@@ -96,9 +96,10 @@ internal class HomeContainer(
                             withState<HomeState.Ready, _> {
                                 updateState {
                                     copy(
-                                        tenantState = DokusState.error(error) {
-                                            intent(HomeIntent.RefreshShellData)
-                                        }
+                                        tenantState = DokusState.error(
+                                            exception = error,
+                                            retryHandler = { intent(HomeIntent.RefreshShellData) },
+                                        )
                                     )
                                 }
                             }
@@ -122,9 +123,10 @@ internal class HomeContainer(
                         withState<HomeState.Ready, _> {
                             updateState {
                                 copy(
-                                    tenantState = DokusState.error(error) {
-                                        intent(HomeIntent.RefreshShellData)
-                                    }
+                                    tenantState = DokusState.error(
+                                        exception = error,
+                                        retryHandler = { intent(HomeIntent.RefreshShellData) },
+                                    )
                                 )
                             }
                         }
@@ -157,9 +159,10 @@ internal class HomeContainer(
                         withState<HomeState.Ready, _> {
                             updateState {
                                 copy(
-                                    userState = DokusState.error(error) {
-                                        intent(HomeIntent.RefreshShellData)
-                                    }
+                                    userState = DokusState.error(
+                                        exception = error,
+                                        retryHandler = { intent(HomeIntent.RefreshShellData) },
+                                    )
                                 )
                             }
                         }

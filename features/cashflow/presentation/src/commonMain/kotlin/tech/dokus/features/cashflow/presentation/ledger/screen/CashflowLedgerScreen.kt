@@ -64,6 +64,9 @@ import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowLedgerIntent
 import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowLedgerState
 import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowViewMode
 import tech.dokus.features.cashflow.presentation.ledger.mvi.DirectionFilter
+import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.app.state.isError
+import tech.dokus.foundation.app.state.isLoading
 import tech.dokus.foundation.aura.components.common.DokusErrorBanner
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.common.DokusLoaderSize
@@ -87,8 +90,8 @@ internal fun CashflowLedgerScreen(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         modifier = modifier
     ) {
-        when (state) {
-            is CashflowLedgerState.Loading -> {
+        when {
+            state.entries.isLoading() && state.entries.lastData == null -> {
                 CashflowLedgerSkeleton(
                     showHeader = isLargeScreen,
                     rowCount = 5,
@@ -98,19 +101,20 @@ internal fun CashflowLedgerScreen(
                 )
             }
 
-            is CashflowLedgerState.Content -> {
+            state.entries.isError() && state.entries.lastData == null -> {
+                val error = state.entries as DokusState.Error
+                DokusErrorBanner(
+                    exception = error.exception,
+                    retryHandler = error.retryHandler,
+                    modifier = Modifier.padding(16.dp),
+                )
+            }
+
+            else -> {
                 CashflowLedgerContent(
                     state = state,
                     onIntent = onIntent,
                     onCreateInvoiceClick = onCreateInvoiceClick
-                )
-            }
-
-            is CashflowLedgerState.Error -> {
-                DokusErrorBanner(
-                    exception = state.exception,
-                    retryHandler = state.retryHandler,
-                    modifier = Modifier.padding(16.dp),
                 )
             }
         }
@@ -120,18 +124,20 @@ internal fun CashflowLedgerScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CashflowLedgerContent(
-    state: CashflowLedgerState.Content,
+    state: CashflowLedgerState,
     onIntent: (CashflowLedgerIntent) -> Unit,
     onCreateInvoiceClick: (() -> Unit)? = null,
 ) {
     val listState = rememberLazyListState()
     val isLargeScreen = LocalScreenSize.current.isLarge
+    val entriesData = state.entries.lastData?.data ?: emptyList()
+    val isRefreshing = state.entries.isLoading()
 
     // Trigger load more when near bottom
     val shouldLoadMore = rememberLoadMoreTrigger(
         listState = listState,
-        hasMore = state.entries.hasMorePages,
-        isLoading = state.entries.isLoadingMore,
+        hasMore = state.entries.lastData?.hasMorePages ?: false,
+        isLoading = state.entries.isLoading(),
         buffer = 5
     )
 
@@ -142,8 +148,8 @@ private fun CashflowLedgerContent(
     }
 
     // Derive spark data from visible entries (up to 8 amounts)
-    val sparkData = remember(state.entries.data) {
-        state.entries.data
+    val sparkData = remember(entriesData) {
+        entriesData
             .take(8)
             .map { kotlin.math.abs(it.amountGross.toDouble()) }
     }
@@ -187,7 +193,7 @@ private fun CashflowLedgerContent(
                     }
                 ) {
                     // Table body OR empty state
-                    if (state.entries.data.isEmpty() && state.isRefreshing) {
+                    if (entriesData.isEmpty() && isRefreshing) {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -197,7 +203,7 @@ private fun CashflowLedgerContent(
                         ) {
                             DokusLoader(size = DokusLoaderSize.Small)
                         }
-                    } else if (state.entries.data.isEmpty() && !state.entries.isLoadingMore) {
+                    } else if (entriesData.isEmpty() && !isRefreshing) {
                         // Context-aware empty state based on current filters
                         val emptyStateTitle = getEmptyStateTitle(
                             viewMode = state.filters.viewMode,
@@ -226,7 +232,7 @@ private fun CashflowLedgerContent(
                             modifier = Modifier.weight(1f)
                         ) {
                             itemsIndexed(
-                                items = state.entries.data,
+                                items = entriesData,
                                 key = { _, entry -> entry.id.toString() }
                             ) { index, entry ->
                                 if (isLargeScreen) {
@@ -252,12 +258,12 @@ private fun CashflowLedgerContent(
                                 }
 
                                 // Dividers only between rows
-                                if (index < state.entries.data.size - 1) {
+                                if (index < entriesData.size - 1) {
                                     DokusTableDivider()
                                 }
                             }
 
-                            if (state.entries.isLoadingMore) {
+                            if (isRefreshing) {
                                 item {
                                     Box(
                                         modifier = Modifier
@@ -273,7 +279,7 @@ private fun CashflowLedgerContent(
                     }
                 }
 
-                if (state.isRefreshing && state.entries.data.isNotEmpty()) {
+                if (isRefreshing && entriesData.isNotEmpty()) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -287,7 +293,7 @@ private fun CashflowLedgerContent(
         }
 
         // Mobile actions bottom sheet
-        val actionsEntry = state.entries.data.find { it.id == state.actionsEntryId }
+        val actionsEntry = entriesData.find { it.id == state.actionsEntryId }
         if (!isLargeScreen && actionsEntry != null) {
             val sheetState = rememberModalBottomSheetState()
             ModalBottomSheet(
@@ -388,7 +394,7 @@ private fun CashflowLedgerScreenPreview(
 ) {
     TestWrapper(parameters) {
         CashflowLedgerScreen(
-            state = CashflowLedgerState.Loading,
+            state = CashflowLedgerState.initial,
             onIntent = {},
         )
     }
