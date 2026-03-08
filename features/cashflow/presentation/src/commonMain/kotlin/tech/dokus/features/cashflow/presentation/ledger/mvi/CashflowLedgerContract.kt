@@ -1,10 +1,7 @@
 package tech.dokus.features.cashflow.presentation.ledger.mvi
 
 import androidx.compose.runtime.Immutable
-import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.todayIn
 import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
@@ -13,7 +10,6 @@ import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.CashflowEntryId
-import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.foundation.app.state.DokusState
@@ -121,20 +117,6 @@ sealed interface CashflowLedgerIntent : MVIIntent {
 
     data class HighlightEntry(val entryId: CashflowEntryId?) : CashflowLedgerIntent
     data class OpenEntry(val entry: CashflowEntry) : CashflowLedgerIntent
-
-    // Detail pane intents
-    data class SelectEntry(val entryId: CashflowEntryId) : CashflowLedgerIntent
-    data object CloseDetailPane : CashflowLedgerIntent
-    data class UpdatePaymentDate(val date: LocalDate) : CashflowLedgerIntent
-    data class UpdatePaymentAmountText(val text: String) : CashflowLedgerIntent
-    data class UpdatePaymentNote(val note: String) : CashflowLedgerIntent
-    data object SubmitPayment : CashflowLedgerIntent
-    data class OpenDocument(val documentId: DocumentId) : CashflowLedgerIntent
-
-    // Payment options intents
-    data object TogglePaymentOptions : CashflowLedgerIntent
-    data object QuickMarkAsPaid : CashflowLedgerIntent
-    data object CancelPaymentOptions : CashflowLedgerIntent
 
     // Row actions menu intents
     data class ShowRowActions(val entryId: CashflowEntryId) : CashflowLedgerIntent
