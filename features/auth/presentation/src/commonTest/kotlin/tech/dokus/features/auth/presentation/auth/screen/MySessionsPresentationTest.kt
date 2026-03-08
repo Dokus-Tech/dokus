@@ -11,62 +11,35 @@ import kotlin.test.assertNull
 class MySessionsPresentationTest {
 
     @Test
-    fun `raw desktop user agent is hidden from user facing labels`() {
-        val session = session(
-            deviceType = DeviceType.Desktop,
-            userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_6_1) AppleWebKit/537.36 Chrome/127.0.0.0 Safari/537.36"
-        )
-
-        assertEquals("Desktop", session.userFacingPrimaryLabel())
-        assertNull(session.userFacingClientLabel())
-    }
-
-    @Test
-    fun `web sessions do not expose browser labels`() {
-        val session = session(
-            deviceType = DeviceType.Web,
-            userAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/127.0.0.0 Safari/537.36"
-        )
-
-        assertEquals("Web session", session.userFacingPrimaryLabel())
-        assertNull(session.userFacingClientLabel())
-    }
-
-    @Test
-    fun `telegram agent tokens are never exposed as the session label`() {
-        val session = session(
-            deviceType = DeviceType.Desktop,
-            userAgent = "TelegramDesktop/5.11 CFNetwork/1568.200.51 Darwin/24.1.0"
-        )
-
-        assertEquals("Desktop", session.userFacingPrimaryLabel())
-        assertNull(session.userFacingClientLabel())
-    }
-
-    @Test
-    fun `context label prefers location and relative activity`() {
+    fun `location label formats city and country`() {
         val session = session(
             location = IpLocationInfo(city = "Oostkamp", country = "Belgium"),
-            lastActivityAt = SessionsPreviewNowEpochSeconds - 172_800L,
         )
 
-        assertEquals(
-            "Oostkamp, Belgium • 2d ago",
-            session.userFacingContextLabel(nowEpochSeconds = SessionsPreviewNowEpochSeconds)
-        )
+        assertEquals("Oostkamp, Belgium", session.userFacingLocationLabel())
     }
 
     @Test
-    fun `context label falls back to ip when location is missing`() {
+    fun `location label falls back to ip when location is missing`() {
+        val session = session(ipAddress = "203.0.113.42")
+
+        assertEquals("203.0.113.42", session.userFacingLocationLabel())
+    }
+
+    @Test
+    fun `location label returns null when no location or ip`() {
+        val session = session(ipAddress = null, location = null)
+
+        assertNull(session.userFacingLocationLabel())
+    }
+
+    @Test
+    fun `location label formats city and region without country`() {
         val session = session(
-            ipAddress = "203.0.113.42",
-            lastActivityAt = SessionsPreviewNowEpochSeconds - 7_200L,
+            location = IpLocationInfo(city = "Bruges", region = "West Flanders"),
         )
 
-        assertEquals(
-            "203.0.113.42 • 2h ago",
-            session.userFacingContextLabel(nowEpochSeconds = SessionsPreviewNowEpochSeconds)
-        )
+        assertEquals("Bruges, West Flanders", session.userFacingLocationLabel())
     }
 
     @Test
@@ -78,6 +51,23 @@ class MySessionsPresentationTest {
 
         assertEquals(current.id, sections.currentSession?.id)
         assertEquals(listOf(other.id), sections.otherSessions.map(SessionDto::id))
+    }
+
+    @Test
+    fun `sections return null current session when none marked current`() {
+        val session1 = session(id = "00000000-0000-0000-0000-000000000001")
+        val session2 = session(id = "00000000-0000-0000-0000-000000000002")
+
+        val sections = listOf(session1, session2).toSessionSections()
+
+        assertNull(sections.currentSession)
+        assertEquals(2, sections.otherSessions.size)
+    }
+
+    @Test
+    fun `client label returns null`() {
+        val session = session()
+        assertNull(session.userFacingClientLabel())
     }
 }
 

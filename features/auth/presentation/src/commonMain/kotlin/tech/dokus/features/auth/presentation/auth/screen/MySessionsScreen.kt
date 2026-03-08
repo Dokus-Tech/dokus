@@ -1,14 +1,10 @@
 package tech.dokus.features.auth.presentation.auth.screen
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -117,62 +113,6 @@ internal fun MySessionsContent(
                     contentPadding = contentPadding,
                 )
             }
-        }
-    }
-}
-
-@Composable
-internal fun ProfileSessionsDetailPane(
-    showSessions: Boolean,
-    sessionsState: MySessionsState,
-    onIntent: (MySessionsIntent) -> Unit,
-    modifier: Modifier = Modifier,
-    nowEpochSeconds: Long = Clock.System.now().epochSeconds,
-) {
-    AnimatedContent(
-        targetState = showSessions,
-        modifier = modifier.fillMaxSize(),
-        transitionSpec = {
-            if (targetState) {
-                (
-                    fadeIn(animationSpec = tween(PaneAnimationDurationMs)) +
-                    slideInHorizontally(
-                        animationSpec = tween(PaneAnimationDurationMs),
-                        initialOffsetX = { it / 12 }
-                    )
-                ) togetherWith (
-                    fadeOut(animationSpec = tween(PaneAnimationDurationMs / 2)) +
-                    slideOutHorizontally(
-                        animationSpec = tween(PaneAnimationDurationMs / 2),
-                        targetOffsetX = { -it / 16 }
-                    )
-                )
-            } else {
-                (
-                    fadeIn(animationSpec = tween(PaneAnimationDurationMs)) +
-                    slideInHorizontally(
-                        animationSpec = tween(PaneAnimationDurationMs),
-                        initialOffsetX = { -it / 16 }
-                    )
-                ) togetherWith (
-                    fadeOut(animationSpec = tween(PaneAnimationDurationMs / 2)) +
-                    slideOutHorizontally(
-                        animationSpec = tween(PaneAnimationDurationMs / 2),
-                        targetOffsetX = { it / 12 }
-                    )
-                )
-            }
-        },
-        label = "ProfileSessionsDetailPane"
-    ) { isShowingSessions ->
-        if (isShowingSessions) {
-            MySessionsContent(
-                state = sessionsState,
-                onIntent = onIntent,
-                nowEpochSeconds = nowEpochSeconds,
-            )
-        } else {
-            DetailPaneIdlePlaceholder()
         }
     }
 }

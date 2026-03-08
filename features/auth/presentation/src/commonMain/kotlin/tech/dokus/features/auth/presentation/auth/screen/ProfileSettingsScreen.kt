@@ -255,7 +255,11 @@ private fun ProfileSettingsDesktopIdlePreview(
             onResetToCloud = {},
             onLogout = {},
             detailPaneContent = {
-                DetailPaneIdlePlaceholder()
+                ProfileDetailPaneHost(
+                    selection = ProfileDetailSelection.None,
+                    sessionsState = tech.dokus.features.auth.mvi.MySessionsState.Loading,
+                    onSessionsIntent = {},
+                )
             }
         )
     }
@@ -293,12 +297,12 @@ private fun ProfileSettingsDesktopSplitPreview(
             onResetToCloud = {},
             onLogout = {},
             detailPaneContent = {
-                ProfileSessionsDetailPane(
-                    showSessions = true,
+                ProfileDetailPaneHost(
+                    selection = ProfileDetailSelection.Sessions,
                     sessionsState = tech.dokus.features.auth.mvi.MySessionsState.Loaded(
                         sessions = previewSessions()
                     ),
-                    onIntent = {},
+                    onSessionsIntent = {},
                     nowEpochSeconds = SessionsPreviewNowEpochSeconds,
                 )
             }

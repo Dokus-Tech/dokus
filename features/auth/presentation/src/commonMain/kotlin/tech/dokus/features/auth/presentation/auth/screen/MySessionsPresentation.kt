@@ -1,6 +1,6 @@
 package tech.dokus.features.auth.presentation.auth.screen
 
-import kotlinx.datetime.Clock
+import androidx.compose.runtime.Composable
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -9,10 +9,21 @@ import kotlinx.datetime.format.MonthNames
 import kotlinx.datetime.format.Padding
 import kotlinx.datetime.format.char
 import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.session_device_ipad
+import tech.dokus.aura.resources.session_device_iphone
+import tech.dokus.aura.resources.session_device_web
+import tech.dokus.aura.resources.session_last_seen_days_ago
+import tech.dokus.aura.resources.session_last_seen_hours_ago
+import tech.dokus.aura.resources.session_last_seen_just_now
+import tech.dokus.aura.resources.session_last_seen_minutes_ago
+import tech.dokus.aura.resources.session_last_seen_online
 import tech.dokus.domain.DeviceType
 import tech.dokus.domain.ids.SessionId
 import tech.dokus.domain.model.auth.IpLocationInfo
 import tech.dokus.domain.model.auth.SessionDto
+import tech.dokus.foundation.aura.extensions.localized
 
 internal const val SessionsPreviewNowEpochSeconds: Long = 1_741_392_000L
 
@@ -30,13 +41,22 @@ internal fun List<SessionDto>.toSessionSections(): SessionSections {
     )
 }
 
+@Composable
 internal fun SessionDto.userFacingPrimaryLabel(): String {
     return when (deviceType) {
-        DeviceType.Web -> "Web session"
-        DeviceType.Ios -> if (userAgent.orEmpty().contains("ipad", ignoreCase = true)) "iPad" else "iPhone"
-        DeviceType.Android -> if (userAgent.orEmpty().contains("tablet", ignoreCase = true)) "Tablet" else "Android"
-        DeviceType.Tablet -> "Tablet"
-        DeviceType.Desktop -> "Desktop"
+        DeviceType.Web -> stringResource(Res.string.session_device_web)
+        DeviceType.Ios -> if (userAgent.orEmpty().contains("ipad", ignoreCase = true)) {
+            stringResource(Res.string.session_device_ipad)
+        } else {
+            stringResource(Res.string.session_device_iphone)
+        }
+        DeviceType.Android -> if (userAgent.orEmpty().contains("tablet", ignoreCase = true)) {
+            DeviceType.Tablet.localized
+        } else {
+            DeviceType.Android.localized
+        }
+        DeviceType.Tablet -> DeviceType.Tablet.localized
+        DeviceType.Desktop -> DeviceType.Desktop.localized
     }
 }
 
@@ -44,8 +64,9 @@ internal fun SessionDto.userFacingClientLabel(): String? {
     return null
 }
 
+@Composable
 internal fun SessionDto.userFacingContextLabel(
-    nowEpochSeconds: Long = Clock.System.now().epochSeconds
+    nowEpochSeconds: Long,
 ): String? {
     return listOfNotNull(
         userFacingLocationLabel(),
@@ -68,19 +89,20 @@ internal fun SessionDto.userFacingLocationLabel(): String? {
     }
 }
 
+@Composable
 internal fun SessionDto.userFacingLastSeenLabel(
-    nowEpochSeconds: Long = Clock.System.now().epochSeconds
+    nowEpochSeconds: Long,
 ): String? {
-    if (isCurrent) return "online"
+    if (isCurrent) return stringResource(Res.string.session_last_seen_online)
 
     val eventEpochSeconds = lastActivityAt ?: createdAt ?: return null
     val diffSeconds = (nowEpochSeconds - eventEpochSeconds).coerceAtLeast(0L)
 
     return when {
-        diffSeconds < 60L -> "just now"
-        diffSeconds < 3_600L -> "${diffSeconds / 60L}m ago"
-        diffSeconds < 86_400L -> "${diffSeconds / 3_600L}h ago"
-        diffSeconds < 604_800L -> "${diffSeconds / 86_400L}d ago"
+        diffSeconds < 60L -> stringResource(Res.string.session_last_seen_just_now)
+        diffSeconds < 3_600L -> stringResource(Res.string.session_last_seen_minutes_ago, diffSeconds / 60L)
+        diffSeconds < 86_400L -> stringResource(Res.string.session_last_seen_hours_ago, diffSeconds / 3_600L)
+        diffSeconds < 604_800L -> stringResource(Res.string.session_last_seen_days_ago, diffSeconds / 86_400L)
         else -> Instant
             .fromEpochSeconds(eventEpochSeconds)
             .toLocalDateTime(TimeZone.currentSystemDefault())

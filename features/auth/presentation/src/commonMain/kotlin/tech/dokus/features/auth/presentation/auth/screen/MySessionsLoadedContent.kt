@@ -3,20 +3,14 @@ package tech.dokus.features.auth.presentation.auth.screen
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,11 +21,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Language
-import androidx.compose.material.icons.filled.LaptopMac
-import androidx.compose.material.icons.filled.PhoneAndroid
-import androidx.compose.material.icons.filled.TabletMac
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -40,11 +29,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -63,14 +49,18 @@ import tech.dokus.domain.ids.SessionId
 import tech.dokus.domain.model.auth.SessionDto
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.DokusCardVariant
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.constrains.withContentPaddingForScrollable
+import tech.dokus.foundation.aura.extensions.iconized
 import tech.dokus.foundation.aura.style.textMuted
 
 private val SessionsListSpacing = 18.dp
 private val SessionRowPaddingH = 18.dp
-private val SessionRowPaddingV = 16.dp
+private val SessionRowPaddingV = Constraints.Spacing.large
 private val SessionIconSize = 44.dp
 private val SessionHeroIconSize = 56.dp
+private val SessionIconContentSize = 22.dp
+private val SessionHeroIconContentSize = 28.dp
 
 @Composable
 internal fun MySessionsLoadedContent(
@@ -97,7 +87,7 @@ internal fun MySessionsLoadedContent(
 
         sections.currentSession?.let { currentSession ->
             item(key = "current_session") {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium)) {
                     SessionSectionTitle(text = stringResource(Res.string.profile_sessions_this_device))
                     CurrentDeviceCard(
                         session = currentSession,
@@ -116,7 +106,7 @@ internal fun MySessionsLoadedContent(
                 enter = fadeIn(animationSpec = tween(180)) + expandVertically(animationSpec = tween(220)),
                 exit = fadeOut(animationSpec = tween(140)) + shrinkVertically(animationSpec = tween(180)),
             ) {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium)) {
                     SessionSectionTitle(text = stringResource(Res.string.profile_sessions_title))
                     OtherSessionsGroup(
                         sessions = sections.otherSessions,
@@ -146,93 +136,6 @@ internal fun MySessionsLoadedContent(
 }
 
 @Composable
-internal fun DetailPaneIdlePlaceholder(
-    modifier: Modifier = Modifier,
-) {
-    Box(modifier = modifier.fillMaxSize()) {
-        IdlePlaceholderBackdrop(modifier = Modifier.matchParentSize())
-    }
-}
-
-@Composable
-private fun IdlePlaceholderBackdrop(
-    modifier: Modifier = Modifier,
-) {
-    val transition = rememberInfiniteTransition(label = "IdlePlaceholderBackdrop")
-    val slowOffset by transition.animateFloat(
-        initialValue = -28f,
-        targetValue = 28f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 5200, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "SlowOffset"
-    )
-    val mediumOffset by transition.animateFloat(
-        initialValue = 22f,
-        targetValue = -18f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 4600, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "MediumOffset"
-    )
-    val alphaPulse by transition.animateFloat(
-        initialValue = 0.18f,
-        targetValue = 0.32f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 3200, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "AlphaPulse"
-    )
-
-    Box(modifier = modifier) {
-        Surface(
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(start = 48.dp, top = 64.dp)
-                .size(180.dp)
-                .graphicsLayer {
-                    translationX = slowOffset
-                    translationY = mediumOffset
-                    alpha = alphaPulse
-                },
-            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
-            shape = CircleShape,
-        ) {}
-
-        Surface(
-            modifier = Modifier
-                .align(Alignment.CenterEnd)
-                .padding(end = 44.dp)
-                .size(140.dp)
-                .graphicsLayer {
-                    translationX = -mediumOffset
-                    translationY = slowOffset * 0.5f
-                    alpha = alphaPulse * 0.9f
-                },
-            color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.07f),
-            shape = CircleShape,
-        ) {}
-
-        Surface(
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(start = 88.dp, bottom = 72.dp)
-                .size(110.dp)
-                .graphicsLayer {
-                    translationX = mediumOffset * 0.7f
-                    translationY = -slowOffset * 0.6f
-                    alpha = alphaPulse * 0.8f
-                },
-            color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.08f),
-            shape = CircleShape,
-        ) {}
-    }
-}
-
-@Composable
 private fun SessionsOverviewCard(
     modifier: Modifier = Modifier,
     action: (@Composable () -> Unit)? = null,
@@ -243,16 +146,16 @@ private fun SessionsOverviewCard(
     ) {
         Column(
             modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.large)
         ) {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.large),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 SessionIcon(
                     deviceType = DeviceType.Desktop,
                     containerSize = SessionHeroIconSize,
-                    iconSize = 28.dp,
+                    iconSize = SessionHeroIconContentSize,
                 )
                 Column(
                     modifier = Modifier.weight(1f),
@@ -369,17 +272,17 @@ private fun SessionRow(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = SessionRowPaddingH, vertical = SessionRowPaddingV),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.large),
         verticalAlignment = Alignment.Top
     ) {
         SessionIcon(deviceType = deviceType)
 
         Column(
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall)
         ) {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
@@ -461,8 +364,8 @@ private fun SessionDestructiveActionRow(
             )
             if (isLoading) {
                 CircularProgressIndicator(
-                    modifier = Modifier.size(18.dp),
-                    strokeWidth = 2.dp,
+                    modifier = Modifier.size(Constraints.IconSize.small),
+                    strokeWidth = Constraints.Stroke.thin,
                     color = MaterialTheme.colorScheme.primary
                 )
             }
@@ -474,7 +377,7 @@ private fun SessionDestructiveActionRow(
 private fun SessionIcon(
     deviceType: DeviceType,
     containerSize: Dp = SessionIconSize,
-    iconSize: Dp = 22.dp,
+    iconSize: Dp = SessionIconContentSize,
     modifier: Modifier = Modifier,
 ) {
     Surface(
@@ -487,20 +390,11 @@ private fun SessionIcon(
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = deviceType.icon(),
+                imageVector = deviceType.iconized,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.size(iconSize)
             )
         }
-    }
-}
-
-private fun DeviceType.icon(): ImageVector {
-    return when (this) {
-        DeviceType.Android, DeviceType.Ios -> Icons.Default.PhoneAndroid
-        DeviceType.Tablet -> Icons.Default.TabletMac
-        DeviceType.Web -> Icons.Default.Language
-        DeviceType.Desktop -> Icons.Default.LaptopMac
     }
 }

@@ -29,8 +29,9 @@ import tech.dokus.features.auth.mvi.ProfileSettingsIntent
 import tech.dokus.features.auth.mvi.MySessionsAction
 import tech.dokus.features.auth.mvi.MySessionsContainer
 import tech.dokus.features.auth.mvi.MySessionsIntent
+import tech.dokus.features.auth.presentation.auth.screen.ProfileDetailPaneHost
+import tech.dokus.features.auth.presentation.auth.screen.ProfileDetailSelection
 import tech.dokus.features.auth.presentation.auth.screen.ProfileSettingsScreen
-import tech.dokus.features.auth.presentation.auth.screen.ProfileSessionsDetailPane
 import tech.dokus.features.auth.usecases.ConnectToServerUseCase
 import tech.dokus.features.auth.usecases.LogoutUseCase
 import tech.dokus.foundation.app.mvi.container
@@ -65,11 +66,11 @@ fun ProfileSettingsRoute(
     var pendingSessionsMessage by remember { mutableStateOf<String?>(null) }
     var pendingError by remember { mutableStateOf<DokusException?>(null) }
     var isLoggingOut by remember { mutableStateOf(false) }
-    var showSessionsPane by remember { mutableStateOf(false) }
+    var activeDetailPane by remember { mutableStateOf<ProfileDetailSelection>(ProfileDetailSelection.None) }
 
     LaunchedEffect(isLargeScreen) {
         if (!isLargeScreen) {
-            showSessionsPane = false
+            activeDetailPane = ProfileDetailSelection.None
         }
     }
 
@@ -136,7 +137,7 @@ fun ProfileSettingsRoute(
             ProfileSettingsAction.NavigateToChangePassword -> navController.navigateTo(AuthDestination.ChangePassword)
             ProfileSettingsAction.NavigateToMySessions -> {
                 if (isLargeScreen) {
-                    showSessionsPane = true
+                    activeDetailPane = ProfileDetailSelection.Sessions
                 } else {
                     navController.navigateTo(AuthDestination.MySessions)
                 }
@@ -151,11 +152,11 @@ fun ProfileSettingsRoute(
         val sessionsContainer: MySessionsContainer = container()
         val sessionsState by sessionsContainer.store.subscribe(DefaultLifecycle) { action ->
             when (action) {
-                MySessionsAction.NavigateBack -> showSessionsPane = false
+                MySessionsAction.NavigateBack -> activeDetailPane = ProfileDetailSelection.None
                 MySessionsAction.ShowSessionRevoked -> pendingSessionsMessage = sessionRevokedMessage
                 MySessionsAction.ShowRevokeOthersSuccess -> pendingSessionsMessage = revokeOthersMessage
                 is MySessionsAction.ShowError -> {
-                    if (showSessionsPane) {
+                    if (activeDetailPane is ProfileDetailSelection.Sessions) {
                         pendingError = action.error
                     }
                 }
@@ -167,10 +168,10 @@ fun ProfileSettingsRoute(
     val detailPaneContent: (@Composable () -> Unit)? =
         if (isLargeScreen) {
             {
-                ProfileSessionsDetailPane(
-                    showSessions = showSessionsPane,
+                ProfileDetailPaneHost(
+                    selection = activeDetailPane,
                     sessionsState = checkNotNull(sessionsStateHolder),
-                    onIntent = checkNotNull(sessionsOnIntent),
+                    onSessionsIntent = checkNotNull(sessionsOnIntent),
                 )
             }
         } else {
@@ -187,7 +188,11 @@ fun ProfileSettingsRoute(
         onChangePassword = { container.store.intent(ProfileSettingsIntent.ChangePasswordClicked) },
         onMySessions = {
             if (isLargeScreen) {
-                showSessionsPane = !showSessionsPane
+                activeDetailPane = if (activeDetailPane is ProfileDetailSelection.Sessions) {
+                    ProfileDetailSelection.None
+                } else {
+                    ProfileDetailSelection.Sessions
+                }
             } else {
                 container.store.intent(ProfileSettingsIntent.MySessionsClicked)
             }
