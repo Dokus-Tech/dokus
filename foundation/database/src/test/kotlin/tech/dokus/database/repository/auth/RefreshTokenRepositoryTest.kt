@@ -212,11 +212,12 @@ class RefreshTokenRepositoryTest {
             sessionId = currentSessionId,
             accessTokenJti = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
         )
+        val legacySessionId = SessionId("33333333-3333-3333-3333-333333333333")
         insertRefreshToken(
             tokenId = legacyTokenId,
             userId = userUuid,
             tokenHash = "b".repeat(64),
-            sessionId = null,
+            sessionId = legacySessionId,
             accessTokenJti = null
         )
         insertRefreshToken(
@@ -231,7 +232,7 @@ class RefreshTokenRepositoryTest {
         val revoked = (result as SessionRevocationResult.Revoked).sessions
 
         assertEquals(2, revoked.size)
-        assertTrue(revoked.any { it.sessionId == SessionId(legacyTokenId.toString()) })
+        assertTrue(revoked.any { it.sessionId == legacySessionId })
         assertTrue(revoked.any { it.sessionId == otherSessionId })
         assertFalse(isRevoked(currentTokenId))
         assertTrue(isRevoked(legacyTokenId))
@@ -239,20 +240,21 @@ class RefreshTokenRepositoryTest {
     }
 
     @Test
-    fun `revokeOtherSessions keeps legacy rows when current session row is not identifiable`() = runBlocking {
+    fun `revokeOtherSessions revokes all sessions except current`() = runBlocking {
         val userUuid = UUID.randomUUID()
         val userId = UserId(userUuid.toKotlinUuid())
         val currentSessionId = SessionId("11111111-1111-1111-1111-111111111111")
         val otherSessionId = SessionId("22222222-2222-2222-2222-222222222222")
+        val thirdSessionId = SessionId("33333333-3333-3333-3333-333333333333")
 
         insertUser(userUuid)
-        val legacyTokenId = UUID.randomUUID()
+        val thirdTokenId = UUID.randomUUID()
         val otherTokenId = UUID.randomUUID()
         insertRefreshToken(
-            tokenId = legacyTokenId,
+            tokenId = thirdTokenId,
             userId = userUuid,
             tokenHash = "d".repeat(64),
-            sessionId = null,
+            sessionId = thirdSessionId,
             accessTokenJti = null
         )
         insertRefreshToken(
@@ -266,26 +268,27 @@ class RefreshTokenRepositoryTest {
         val result = repository.revokeOtherSessions(userId, currentSessionId)
         val revoked = (result as SessionRevocationResult.Revoked).sessions
 
-        assertEquals(1, revoked.size)
-        assertEquals(otherSessionId, revoked.single().sessionId)
-        assertFalse(isRevoked(legacyTokenId))
+        assertEquals(2, revoked.size)
+        assertTrue(revoked.any { it.sessionId == thirdSessionId })
+        assertTrue(revoked.any { it.sessionId == otherSessionId })
+        assertTrue(isRevoked(thirdTokenId))
         assertTrue(isRevoked(otherTokenId))
     }
 
     @Test
-    fun `listActiveSessions cleans up superseded legacy rows and marks current session`() = runBlocking {
+    fun `listActiveSessions groups by session and marks current session`() = runBlocking {
         val userUuid = UUID.randomUUID()
         val userId = UserId(userUuid.toKotlinUuid())
         val currentSessionId = SessionId("11111111-1111-1111-1111-111111111111")
         val otherSessionId = SessionId("22222222-2222-2222-2222-222222222222")
-        val legacyTokenId = UUID.randomUUID()
 
         insertUser(userUuid)
+        // Older token for same session — grouped with newer one, newest wins
         insertRefreshToken(
-            tokenId = legacyTokenId,
+            tokenId = UUID.randomUUID(),
             userId = userUuid,
             tokenHash = "a".repeat(64),
-            sessionId = null,
+            sessionId = currentSessionId,
             accessTokenJti = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
             accessTokenExpiresAt = pastInstant(),
             deviceType = DeviceType.Desktop,
@@ -311,6 +314,7 @@ class RefreshTokenRepositoryTest {
             sessionId = otherSessionId,
             accessTokenJti = "cccccccc-cccc-cccc-cccc-cccccccccccc"
         )
+        // Revoked — should not appear
         insertRefreshToken(
             tokenId = UUID.randomUUID(),
             userId = userUuid,
@@ -319,6 +323,7 @@ class RefreshTokenRepositoryTest {
             accessTokenJti = "dddddddd-dddd-dddd-dddd-dddddddddddd",
             isRevoked = true
         )
+        // Expired — should not appear
         insertRefreshToken(
             tokenId = UUID.randomUUID(),
             userId = userUuid,
@@ -334,7 +339,6 @@ class RefreshTokenRepositoryTest {
         assertEquals(currentSessionId, sessions.first().id)
         assertTrue(sessions.first().isCurrent)
         assertEquals(otherSessionId, sessions.last().id)
-        assertTrue(isRevoked(legacyTokenId))
     }
 
     private fun insertUser(userId: UUID) {
@@ -356,7 +360,7 @@ class RefreshTokenRepositoryTest {
         tokenId: UUID,
         userId: UUID,
         tokenHash: String,
-        sessionId: SessionId?,
+        sessionId: SessionId,
         accessTokenJti: String?,
         isRevoked: Boolean = false,
         expiresAt: Instant = futureInstant(),
@@ -370,7 +374,7 @@ class RefreshTokenRepositoryTest {
             RefreshTokensTable.insert {
                 it[id] = tokenId
                 it[RefreshTokensTable.userId] = userId
-                it[RefreshTokensTable.sessionId] = sessionId?.uuid?.toString()?.let(UUID::fromString)
+                it[RefreshTokensTable.sessionId] = UUID.fromString(sessionId.uuid.toString())
                 it[RefreshTokensTable.tokenHash] = tokenHash
                 it[RefreshTokensTable.expiresAt] = expiresAt.toLocalDateTime(TimeZone.UTC)
                 it[RefreshTokensTable.isRevoked] = isRevoked

@@ -271,7 +271,7 @@ private suspend fun ensureAvatarMetadataAvailable(
     storageKey: String?,
     avatarStorageService: AvatarStorageService,
     ownerLabel: String
-) : String {
+): String {
     val resolvedStorageKey = storageKey
         ?.takeIf { it.isNotBlank() }
         ?: throw DokusException.NotFound("No avatar set")

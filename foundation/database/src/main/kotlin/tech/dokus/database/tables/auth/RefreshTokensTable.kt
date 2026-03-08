@@ -15,7 +15,7 @@ import tech.dokus.foundation.backend.database.dbEnumeration
  */
 object RefreshTokensTable : UUIDTable("refresh_tokens") {
     val userId = reference("user_id", UsersTable, onDelete = ReferenceOption.CASCADE).index()
-    val sessionId = uuid("session_id").nullable().index()
+    val sessionId = uuid("session_id").index()
     val tokenHash = varchar("token_hash", 64).uniqueIndex()
     val expiresAt = datetime("expires_at").index()
     val isRevoked = bool("is_revoked").default(false)

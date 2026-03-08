@@ -7,7 +7,9 @@ import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.tables.auth.TenantTable
+import tech.dokus.database.tables.documents.DocumentBlobsTable
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
+import tech.dokus.database.tables.documents.DocumentSourcesTable
 import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.domain.enums.Language
 import tech.dokus.domain.enums.SubscriptionTier
@@ -46,7 +48,9 @@ class ProcessorIngestionRepositoryTest {
         transaction(database) {
             SchemaUtils.create(
                 TenantTable,
+                DocumentBlobsTable,
                 DocumentsTable,
+                DocumentSourcesTable,
                 DocumentIngestionRunsTable
             )
         }
@@ -84,6 +88,8 @@ class ProcessorIngestionRepositoryTest {
         transaction(database) {
             SchemaUtils.drop(
                 DocumentIngestionRunsTable,
+                DocumentSourcesTable,
+                DocumentBlobsTable,
                 DocumentsTable,
                 TenantTable
             )
