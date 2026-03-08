@@ -366,56 +366,6 @@ fun ChatSourceCitationList(
     }
 }
 
-/**
- * Convenience composable for a single source citation with minimal styling.
- * Use when showing inline citations directly after a message.
- *
- * @param documentName The name of the source document
- * @param pageNumber Optional page number reference
- * @param modifier Optional modifier for the component
- * @param onClick Optional callback when the citation is clicked
- */
-@Composable
-fun PInlineCitation(
-    documentName: String,
-    pageNumber: Int? = null,
-    modifier: Modifier = Modifier,
-    onClick: (() -> Unit)? = null
-) {
-    Row(
-        modifier = modifier
-            .clip(MaterialTheme.shapes.extraSmall)
-            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-            .then(
-                if (onClick != null) {
-                    Modifier.clickable { onClick() }
-                } else {
-                    Modifier
-                }
-            )
-            .padding(
-                horizontal = Constraints.Spacing.small,
-                vertical = Constraints.Spacing.xSmall
-            ),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = Icons.Default.Description,
-            contentDescription = null,
-            modifier = Modifier.size(Constraints.IconSize.xSmall),
-            tint = MaterialTheme.colorScheme.primary
-        )
-        Spacer(modifier = Modifier.width(Constraints.Spacing.xSmall))
-        Text(
-            text = if (pageNumber != null) "$documentName, p.$pageNumber" else documentName,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-    }
-}
-
 @Preview
 @Composable
 private fun ChatSourceCitationPreview(

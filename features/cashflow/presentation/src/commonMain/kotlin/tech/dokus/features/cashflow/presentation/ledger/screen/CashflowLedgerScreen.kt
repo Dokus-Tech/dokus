@@ -50,11 +50,10 @@ import tech.dokus.aura.resources.cashflow_empty_upcoming
 import tech.dokus.aura.resources.cashflow_empty_upcoming_hint
 import tech.dokus.aura.resources.cashflow_empty_upcoming_in
 import tech.dokus.aura.resources.cashflow_empty_upcoming_out
-import tech.dokus.features.cashflow.presentation.common.components.empty.DokusEmptyState
+import tech.dokus.foundation.aura.components.common.DokusEmptyState
 import tech.dokus.features.cashflow.presentation.common.components.pagination.rememberLoadMoreTrigger
 import tech.dokus.features.cashflow.presentation.common.components.table.DokusTableDivider
 import tech.dokus.features.cashflow.presentation.common.components.table.DokusTableSurface
-import tech.dokus.features.cashflow.presentation.ledger.components.CashflowDetailPane
 import tech.dokus.features.cashflow.presentation.ledger.components.CashflowLedgerHeaderRow
 import tech.dokus.features.cashflow.presentation.ledger.components.CashflowLedgerMobileRow
 import tech.dokus.features.cashflow.presentation.ledger.components.CashflowLedgerSkeleton
@@ -143,9 +142,6 @@ private fun CashflowLedgerContent(
             onIntent(CashflowLedgerIntent.LoadMore)
         }
     }
-
-    // Resolve selected entry from list
-    val selectedEntry = state.entries.data.find { it.id == state.selectedEntryId }
 
     // Derive spark data from visible entries (up to 8 amounts)
     val sparkData = remember(state.entries.data) {
@@ -291,23 +287,6 @@ private fun CashflowLedgerContent(
                 }
             }
         }
-
-        // Detail pane overlay
-        CashflowDetailPane(
-            isVisible = selectedEntry != null,
-            entry = selectedEntry,
-            paymentFormState = state.paymentFormState,
-            isFullScreen = !isLargeScreen,
-            onDismiss = { onIntent(CashflowLedgerIntent.CloseDetailPane) },
-            onPaymentDateChange = { onIntent(CashflowLedgerIntent.UpdatePaymentDate(it)) },
-            onPaymentAmountTextChange = { onIntent(CashflowLedgerIntent.UpdatePaymentAmountText(it)) },
-            onPaymentNoteChange = { onIntent(CashflowLedgerIntent.UpdatePaymentNote(it)) },
-            onSubmitPayment = { onIntent(CashflowLedgerIntent.SubmitPayment) },
-            onTogglePaymentOptions = { onIntent(CashflowLedgerIntent.TogglePaymentOptions) },
-            onQuickMarkAsPaid = { onIntent(CashflowLedgerIntent.QuickMarkAsPaid) },
-            onCancelPaymentOptions = { onIntent(CashflowLedgerIntent.CancelPaymentOptions) },
-            onOpenDocument = { onIntent(CashflowLedgerIntent.OpenDocument(it)) }
-        )
 
         // Mobile actions bottom sheet
         val actionsEntry = state.entries.data.find { it.id == state.actionsEntryId }

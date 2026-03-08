@@ -41,6 +41,7 @@ import tech.dokus.aura.resources.state_retry
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.DocumentPagePreviewDto
 import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.app.network.rememberAuthenticatedImageLoader
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.extensions.localized
 

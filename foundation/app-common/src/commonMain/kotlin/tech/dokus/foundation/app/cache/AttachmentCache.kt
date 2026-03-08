@@ -3,6 +3,7 @@ package tech.dokus.foundation.app.cache
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import tech.dokus.domain.ids.AttachmentId
+import tech.dokus.domain.utils.currentTimeMillis
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -70,7 +71,7 @@ class AttachmentCache(
 
         if (content != null) {
             // Update access time for LRU
-            accessTimes[attachmentId.toString()] = Clock.System.now().toEpochMilliseconds()
+            accessTimes[attachmentId.toString()] = currentTimeMillis
         }
 
         content
@@ -86,7 +87,7 @@ class AttachmentCache(
 
         val path = getFilePath(attachmentId)
         writeFile(path, content)
-        accessTimes[attachmentId.toString()] = Clock.System.now().toEpochMilliseconds()
+        accessTimes[attachmentId.toString()] = currentTimeMillis
     }
 
     /**

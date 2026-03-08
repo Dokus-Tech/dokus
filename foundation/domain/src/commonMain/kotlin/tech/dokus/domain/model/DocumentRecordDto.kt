@@ -1,15 +1,15 @@
 package tech.dokus.domain.model
 
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
+import tech.dokus.domain.enums.ContactLinkSource
 import tech.dokus.domain.enums.CounterpartyIntent
-import tech.dokus.domain.enums.DocumentRejectReason
-import tech.dokus.domain.enums.DocumentType
-import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentPurposeSource
+import tech.dokus.domain.enums.DocumentRejectReason
+import tech.dokus.domain.enums.DocumentStatus
+import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.enums.ProcessingOutcome
 import tech.dokus.domain.enums.PurposePeriodMode
@@ -19,10 +19,10 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
-import tech.dokus.domain.enums.ContactLinkSource
 import tech.dokus.domain.model.contact.CounterpartySnapshot
 import tech.dokus.domain.model.contact.MatchEvidence
 import tech.dokus.domain.model.contact.SuggestedContact
+import kotlin.time.Instant
 
 /**
  * Processing trace step for document ingestion.

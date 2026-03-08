@@ -11,6 +11,7 @@ import kotlinx.datetime.toInstant
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.domain.utils.currentTimeMillis
 import tech.dokus.domain.utils.json
 import tech.dokus.features.contacts.cache.ContactsCacheDatabase
 import kotlin.time.Clock
@@ -57,7 +58,7 @@ internal class ContactLocalDataSourceImpl(
 
     override suspend fun upsertAll(tenantId: TenantId, contacts: List<ContactDto>) {
         withContext(Dispatchers.Default) {
-            val now = Clock.System.now().toEpochMilliseconds()
+            val now = currentTimeMillis
             val tenantIdStr = tenantId.value.toString()
             database.transaction {
                 contacts.forEach { contact ->

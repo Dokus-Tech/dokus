@@ -12,7 +12,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.currentBackStackEntryAsState
-import kotlinx.coroutines.flow.collect
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.domain.model.DocumentRecordStreamEvent
 import org.koin.core.parameter.parametersOf

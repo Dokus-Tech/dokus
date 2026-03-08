@@ -13,6 +13,7 @@ import kotlinx.coroutines.launch
 /**
  * WASM/Web implementation of FilePickerLauncher using Calf.
  */
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 actual class FilePickerLauncher(
     private val launchAction: () -> Unit
 ) {

@@ -1,11 +1,11 @@
 package tech.dokus.domain.model
 
-import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.ExampleId
 import tech.dokus.domain.ids.TenantId
+import kotlin.time.Instant
 
 /**
  * A document example used for few-shot learning.

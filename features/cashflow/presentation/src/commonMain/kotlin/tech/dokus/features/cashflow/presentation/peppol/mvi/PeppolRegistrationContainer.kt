@@ -75,15 +75,7 @@ internal class PeppolRegistrationContainer(
             return
         }
 
-        val vatNumber = tenant.vatNumber ?: run {
-            updateState {
-                PeppolRegistrationState.Error(
-                    exception = DokusException.Validation.InvalidVatNumber,
-                    retryHandler = { intent(PeppolRegistrationIntent.Refresh) }
-                )
-            }
-            return
-        }
+        val vatNumber = tenant.vatNumber
 
         val computedPeppolId = "0208:${vatNumber.normalized}"
 

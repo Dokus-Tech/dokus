@@ -17,6 +17,7 @@ fun main() {
     }
 }
 
+@OptIn(ExperimentalWasmJsInterop::class)
 private fun emitStartupAuthDeepLink() {
     val currentUrl = window.location.href
     if (currentUrl.isBlank()) return

@@ -26,7 +26,7 @@ data class DocumentDeletionHandle(
     val fileName: String,
     val fileSize: Long,
     val job: Job,
-    val startedAt: Long = currentTimeMillis(),
+    val startedAt: Long = currentTimeMillis,
     val duration: Duration = 5.seconds,
     val resultDeferred: CompletableDeferred<Result<Unit>> = CompletableDeferred()
 ) {
@@ -34,7 +34,7 @@ data class DocumentDeletionHandle(
      * Returns the current progress fraction from 1.0 (just started) to 0.0 (expired).
      */
     fun progressFraction(): Float {
-        val elapsed = currentTimeMillis() - startedAt
+        val elapsed = currentTimeMillis - startedAt
         val remaining = duration.inWholeMilliseconds - elapsed
         return (remaining.toFloat() / duration.inWholeMilliseconds).coerceIn(0f, 1f)
     }

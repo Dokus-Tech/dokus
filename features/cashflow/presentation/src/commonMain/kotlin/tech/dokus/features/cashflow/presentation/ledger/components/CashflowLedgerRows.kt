@@ -72,6 +72,7 @@ import tech.dokus.foundation.aura.style.textMuted
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
+import kotlin.time.Clock
 
 private val TableRowHeight = Constraints.Height.input
 
@@ -402,7 +403,7 @@ private fun DaysLateBadge(
 @Composable
 private fun rememberToday(): LocalDate {
     return remember {
-        kotlinx.datetime.Clock.System.todayIn(TimeZone.currentSystemDefault())
+        Clock.System.todayIn(TimeZone.currentSystemDefault())
     }
 }
 

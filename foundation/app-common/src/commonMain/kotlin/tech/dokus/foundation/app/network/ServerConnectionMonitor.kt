@@ -3,6 +3,7 @@ package tech.dokus.foundation.app.network
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import tech.dokus.domain.utils.currentTimeMillis
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -35,7 +36,7 @@ class ServerConnectionMonitor {
      */
     fun reportSuccess() {
         _isConnected.value = true
-        _lastSuccessTime.value = Clock.System.now().toEpochMilliseconds()
+        _lastSuccessTime.value = currentTimeMillis
     }
 
     /**
