@@ -12,6 +12,7 @@ import tech.dokus.features.auth.usecases.ListSessionsUseCase
 import tech.dokus.features.auth.usecases.RevokeOtherSessionsUseCase
 import tech.dokus.features.auth.usecases.RevokeSessionUseCase
 import tech.dokus.foundation.platform.Logger
+import kotlin.time.Clock
 
 private typealias MySessionsCtx = PipelineContext<MySessionsState, MySessionsIntent, MySessionsAction>
 
@@ -127,7 +128,7 @@ internal class MySessionsContainer(
 }
 
 private fun List<SessionDto>.onlyActiveSessions(
-    nowEpochSeconds: Long = kotlin.time.Clock.System.now().epochSeconds
+    nowEpochSeconds: Long = Clock.System.now().epochSeconds
 ): List<SessionDto> {
     return filter { session ->
         val expiresAt = session.expiresAt

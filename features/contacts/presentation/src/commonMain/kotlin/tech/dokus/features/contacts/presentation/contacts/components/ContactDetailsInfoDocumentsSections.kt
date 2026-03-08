@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import kotlinx.datetime.Month
 import kotlinx.datetime.number
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
@@ -259,7 +260,7 @@ private fun formatAddress(contact: ContactDto): String {
 }
 
 private fun formatMonthDay(monthNumber: Int, day: Int): String {
-    val month = kotlinx.datetime.Month(monthNumber).name
+    val month = Month(monthNumber).name
         .take(3)
         .lowercase()
         .replaceFirstChar { it.uppercase() }
