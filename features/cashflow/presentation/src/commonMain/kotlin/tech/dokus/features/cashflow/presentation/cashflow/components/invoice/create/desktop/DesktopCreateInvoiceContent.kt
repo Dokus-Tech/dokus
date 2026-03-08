@@ -28,6 +28,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Calendar
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.number
 import tech.dokus.features.cashflow.mvi.CreateInvoiceIntent
 import tech.dokus.features.cashflow.mvi.CreateInvoiceState
 import tech.dokus.foundation.aura.components.PButton
@@ -377,6 +379,6 @@ private fun ReuseSuggestionStrip(
 internal fun formatDate(date: kotlinx.datetime.LocalDate?): String {
     if (date == null) return "--/--/----"
     val day = date.day.toString().padStart(2, '0')
-    val month = date.monthNumber.toString().padStart(2, '0')
+    val month = date.month.number.toString().padStart(2, '0')
     return "$day/$month/${date.year}"
 }

@@ -1,9 +1,9 @@
 package tech.dokus.app.screens.settings.components
 
-import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
 
 /**
  * Generate a preview of the invoice number format based on current settings.

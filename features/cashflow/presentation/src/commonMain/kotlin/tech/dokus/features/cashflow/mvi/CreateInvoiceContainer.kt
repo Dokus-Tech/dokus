@@ -24,6 +24,7 @@ import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.entity.EntityLookup
 import tech.dokus.domain.validators.ValidateOgmUseCase
 import tech.dokus.domain.usecases.SearchCompanyUseCase
+import tech.dokus.domain.utils.currentTimeMillis
 import tech.dokus.features.auth.usecases.GetCurrentTenantUseCase
 import tech.dokus.features.auth.usecases.GetInvoiceNumberPreviewUseCase
 import tech.dokus.features.auth.usecases.GetTenantSettingsUseCase
@@ -810,7 +811,7 @@ internal class CreateInvoiceContainer(
     }
 
     private fun generateStructuredCommunication(): String {
-        val base = Clock.System.now().toEpochMilliseconds().absoluteValue % 10_000_000_000L
+        val base = currentTimeMillis.absoluteValue % 10_000_000_000L
         return ValidateOgmUseCase.generate(base)
     }
 

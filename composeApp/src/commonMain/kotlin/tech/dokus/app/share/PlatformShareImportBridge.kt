@@ -5,6 +5,7 @@ package tech.dokus.app.share
  *
  * Used on iOS for App Group share extension batches.
  */
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 expect object PlatformShareImportBridge {
     suspend fun consumeBatch(batchId: String?): Result<List<SharedImportFile>>
 }

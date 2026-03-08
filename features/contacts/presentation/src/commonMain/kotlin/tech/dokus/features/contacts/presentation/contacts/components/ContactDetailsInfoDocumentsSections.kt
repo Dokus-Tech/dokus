@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import kotlinx.datetime.number
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.common_unknown
@@ -212,7 +213,7 @@ private fun RecentDocumentRow(document: ContactRecentInvoice) {
                 .background(statusStyle.color, CircleShape)
         )
         Text(
-            text = formatMonthDay(document.issueDate.monthNumber, document.issueDate.dayOfMonth),
+            text = formatMonthDay(document.issueDate.month.number, document.issueDate.day),
             style = MaterialTheme.typography.labelSmall.copy(
                 fontFamily = MaterialTheme.typography.labelLarge.fontFamily
             ),

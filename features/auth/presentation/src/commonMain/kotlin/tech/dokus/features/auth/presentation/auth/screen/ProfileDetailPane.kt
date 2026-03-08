@@ -32,6 +32,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
+import kotlin.time.Clock
 
 private const val PaneAnimationDurationMs = 220
 
@@ -53,7 +54,7 @@ internal fun ProfileDetailPaneHost(
     sessionsState: MySessionsState,
     onSessionsIntent: (MySessionsIntent) -> Unit,
     modifier: Modifier = Modifier,
-    nowEpochSeconds: Long = kotlinx.datetime.Clock.System.now().epochSeconds,
+    nowEpochSeconds: Long = Clock.System.now().epochSeconds,
 ) {
     AnimatedContent(
         targetState = selection,

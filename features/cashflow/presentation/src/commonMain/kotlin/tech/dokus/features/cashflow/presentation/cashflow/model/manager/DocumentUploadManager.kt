@@ -184,7 +184,7 @@ class DocumentUploadManager(
             fileName = task.fileName,
             fileSize = task.fileSize,
             job = job,
-            startedAt = currentTimeMillis(),
+            startedAt = currentTimeMillis,
             resultDeferred = resultDeferred
         )
 

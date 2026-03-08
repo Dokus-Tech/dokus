@@ -2,6 +2,7 @@
 <SmellBaseline>
   <ManuallySuppressedIssues>
     <ID>TooGenericExceptionCaught:TokenManager.kt$TokenManagerImpl$e: Exception</ID>
+    <ID>MaxLineLength:MySessionsContainer.kt$private</ID>
   </ManuallySuppressedIssues>
   <CurrentIssues>
     <ID>ArgumentListWrapping:AttachmentRoutes.kt$(DocumentUploadValidator.DEFAULT_MAX_FILE_SIZE_BYTES)</ID>

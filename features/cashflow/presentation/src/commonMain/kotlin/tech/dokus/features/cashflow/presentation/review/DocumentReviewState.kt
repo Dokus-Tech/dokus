@@ -1,11 +1,9 @@
 package tech.dokus.features.cashflow.presentation.review
 
 import androidx.compose.runtime.Immutable
-import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.daysUntil
 import kotlinx.datetime.todayIn
 import org.jetbrains.compose.resources.StringResource
 import pro.respawn.flowmvi.api.MVIState
@@ -17,10 +15,8 @@ import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentDirection
-import tech.dokus.domain.enums.DocumentMatchType
 import tech.dokus.domain.enums.DocumentRejectReason
 import tech.dokus.domain.enums.DocumentSource
-import tech.dokus.domain.enums.DocumentSourceStatus
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.IngestionStatus
@@ -29,18 +25,18 @@ import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentSourceId
+import tech.dokus.domain.model.AutoPaymentStatusDto
+import tech.dokus.domain.model.BankStatementDraftData
 import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.model.CreditNoteDraftData
-import tech.dokus.domain.model.BankStatementDraftData
-import tech.dokus.domain.model.AutoPaymentStatusDto
 import tech.dokus.domain.model.DocumentDraftData
-import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.ImportedBankTransactionDto
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.foundation.app.state.DokusState
+import kotlin.time.Clock
 
 /**
  * State for the reject document dialog.
@@ -280,7 +276,7 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
                     context != null -> context
                     counterparty != null -> counterparty
                     isProcessing -> "Processing document…"
-                    else -> document.document.filename ?: "Document"
+                    else -> document.document.filename
                 }
             }
 
@@ -433,23 +429,6 @@ private val DocumentDraftData.hasCoherentAmountsForConfirmation: Boolean
         }
     }
 
-/** Whether the draft passes basic review validation. */
-val DocumentDraftData.isReviewValid: Boolean
-    get() = when (this) {
-        is InvoiceDraftData -> issueDate != null && subtotalAmount != null
-        is ReceiptDraftData -> merchantName != null && date != null && totalAmount != null
-        is CreditNoteDraftData -> {
-            val resolvedCounterparty = when (direction) {
-                DocumentDirection.Inbound -> seller.name ?: counterpartyName
-                DocumentDirection.Outbound -> buyer.name ?: counterpartyName
-                DocumentDirection.Neutral,
-                DocumentDirection.Unknown -> buyer.name ?: seller.name ?: counterpartyName
-            }
-            resolvedCounterparty != null && issueDate != null && subtotalAmount != null
-        }
-        is BankStatementDraftData -> transactions.isNotEmpty()
-    }
-
 /** Whether a contact is required for this document type. */
 internal val DocumentDraftData?.isContactRequired: Boolean
     get() = this is InvoiceDraftData || this is CreditNoteDraftData
@@ -471,16 +450,6 @@ private val DocumentDraftData?.displayContextDescription: String?
         is ReceiptDraftData -> notes?.takeIf { it.isNotBlank() }
         is CreditNoteDraftData -> reason?.takeIf { it.isNotBlank() }
         is BankStatementDraftData -> notes?.takeIf { it.isNotBlank() }
-        null -> null
-    }
-
-/** Due date for attention signal. */
-private val DocumentDraftData?.dueDate: kotlinx.datetime.LocalDate?
-    get() = when (this) {
-        is InvoiceDraftData -> dueDate
-        is ReceiptDraftData -> null
-        is CreditNoteDraftData -> null
-        is BankStatementDraftData -> null
         null -> null
     }
 

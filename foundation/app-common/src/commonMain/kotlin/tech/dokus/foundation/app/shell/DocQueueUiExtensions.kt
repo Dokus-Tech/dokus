@@ -4,8 +4,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.number
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.cashflow_detail_days_overdue
 import tech.dokus.aura.resources.date_month_short_apr
 import tech.dokus.aura.resources.date_month_short_aug
 import tech.dokus.aura.resources.date_month_short_dec
@@ -18,12 +20,11 @@ import tech.dokus.aura.resources.date_month_short_may
 import tech.dokus.aura.resources.date_month_short_nov
 import tech.dokus.aura.resources.date_month_short_oct
 import tech.dokus.aura.resources.date_month_short_sep
-import tech.dokus.aura.resources.cashflow_detail_days_overdue
 import tech.dokus.aura.resources.document_detail_needs_review
 import tech.dokus.aura.resources.document_status_processing
 import tech.dokus.aura.resources.payable_invoice_status_overdue
-import tech.dokus.aura.resources.payable_invoice_status_pending
 import tech.dokus.aura.resources.payable_invoice_status_paid
+import tech.dokus.aura.resources.payable_invoice_status_pending
 import tech.dokus.foundation.aura.components.status.StatusDotType
 import tech.dokus.foundation.aura.style.statusConfirmed
 import tech.dokus.foundation.aura.style.statusError
@@ -74,7 +75,7 @@ val DocQueueItem.dateLocalized: String
 
 private val LocalDate.shortLocalized: String
     @Composable get() {
-        val monthName = when (monthNumber) {
+        val monthName = when (month.number) {
             1 -> stringResource(Res.string.date_month_short_jan)
             2 -> stringResource(Res.string.date_month_short_feb)
             3 -> stringResource(Res.string.date_month_short_mar)

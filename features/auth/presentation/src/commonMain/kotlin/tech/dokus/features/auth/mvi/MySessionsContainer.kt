@@ -1,6 +1,5 @@
 package tech.dokus.features.auth.mvi
 
-import kotlinx.datetime.Clock
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
@@ -127,11 +126,13 @@ internal class MySessionsContainer(
     }
 }
 
-private fun List<SessionDto>.onlyActiveSessions(nowEpochSeconds: Long = Clock.System.now().epochSeconds): List<SessionDto> {
+private fun List<SessionDto>.onlyActiveSessions(
+    nowEpochSeconds: Long = kotlin.time.Clock.System.now().epochSeconds
+): List<SessionDto> {
     return filter { session ->
         val expiresAt = session.expiresAt
         session.revokedAt == null &&
-            (expiresAt == null || expiresAt > nowEpochSeconds)
+                (expiresAt == null || expiresAt > nowEpochSeconds)
     }.sortedWith(
         compareByDescending<SessionDto> { it.isCurrent }
             .thenByDescending { it.lastActivityAt ?: it.createdAt ?: 0L }

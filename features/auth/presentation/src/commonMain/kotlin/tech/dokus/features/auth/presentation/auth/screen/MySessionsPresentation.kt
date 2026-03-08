@@ -1,7 +1,6 @@
 package tech.dokus.features.auth.presentation.auth.screen
 
 import androidx.compose.runtime.Composable
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
@@ -24,6 +23,7 @@ import tech.dokus.domain.ids.SessionId
 import tech.dokus.domain.model.auth.IpLocationInfo
 import tech.dokus.domain.model.auth.SessionDto
 import tech.dokus.foundation.aura.extensions.localized
+import kotlin.time.Instant
 
 internal const val SessionsPreviewNowEpochSeconds: Long = 1_741_392_000L
 

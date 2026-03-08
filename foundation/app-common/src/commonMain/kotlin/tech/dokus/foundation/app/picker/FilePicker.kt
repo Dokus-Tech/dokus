@@ -47,6 +47,7 @@ sealed class PickedFile {
  * - Desktop: AWT FileDialog with appropriate filters
  * - Android/iOS/Web: Uses Calf file picker with appropriate type
  */
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 expect class FilePickerLauncher {
     fun launch()
 }

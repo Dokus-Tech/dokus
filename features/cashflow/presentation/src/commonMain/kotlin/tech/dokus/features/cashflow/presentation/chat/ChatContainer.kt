@@ -7,7 +7,6 @@ package tech.dokus.features.cashflow.presentation.chat
 
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import pro.respawn.flowmvi.api.Container
@@ -27,13 +26,14 @@ import tech.dokus.domain.model.ai.ChatResponse
 import tech.dokus.domain.model.ai.ChatScope
 import tech.dokus.domain.model.ai.ChatSessionId
 import tech.dokus.domain.model.ai.MessageRole
+import tech.dokus.domain.utils.currentTimeMillis
 import tech.dokus.features.cashflow.usecases.GetChatConfigurationUseCase
 import tech.dokus.features.cashflow.usecases.GetChatSessionHistoryUseCase
 import tech.dokus.features.cashflow.usecases.ListChatSessionsUseCase
 import tech.dokus.features.cashflow.usecases.SendChatMessageUseCase
 import tech.dokus.foundation.platform.Logger
-import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 /** Maximum number of messages to load from session history */
 private const val SessionHistoryLimit = 100
@@ -473,7 +473,7 @@ internal class ChatContainer(
 
     @OptIn(kotlin.uuid.ExperimentalUuidApi::class, ExperimentalTime::class)
     private fun ChatState.Content.createOptimisticUserMessage(content: String): ChatMessageDto {
-        val nowInstant = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds())
+        val nowInstant = Instant.fromEpochMilliseconds(currentTimeMillis)
         val now = nowInstant.toLocalDateTime(TimeZone.currentSystemDefault())
 
         return ChatMessageDto(
