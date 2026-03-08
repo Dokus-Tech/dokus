@@ -24,6 +24,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -52,13 +54,6 @@ import tech.dokus.foundation.aura.components.text.DokusLogo
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.local.isLarge
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
-import tech.dokus.foundation.aura.tooling.PreviewParameters
-import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
-import tech.dokus.foundation.aura.tooling.TestWrapper
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
@@ -170,7 +165,10 @@ internal fun OnboardingCenteredShell(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = CenteredHorizontalPadding, vertical = Constraints.Spacing.xxLarge),
+                .padding(
+                    horizontal = CenteredHorizontalPadding,
+                    vertical = Constraints.Spacing.xxLarge
+                ),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
@@ -342,7 +340,10 @@ private fun OnboardingSplitShellPreview(
     ) parameters: PreviewParameters,
 ) {
     TestWrapper(parameters) {
-        OnboardingSplitShell(brandVariant = OnboardingBrandVariant.Primary, copyrightYear = "2026") {
+        OnboardingSplitShell(
+            brandVariant = OnboardingBrandVariant.Primary,
+            copyrightYear = "2026"
+        ) {
             DokusLogo.Full()
             Spacer(modifier = Modifier.height(Constraints.Spacing.large))
             Text(
