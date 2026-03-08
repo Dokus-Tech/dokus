@@ -54,14 +54,6 @@ import tech.dokus.foundation.aura.constrains.withContentPaddingForScrollable
 import tech.dokus.foundation.aura.extensions.iconized
 import tech.dokus.foundation.aura.style.textMuted
 
-private val SessionsListSpacing = 18.dp
-private val SessionRowPaddingH = 18.dp
-private val SessionRowPaddingV = Constraints.Spacing.large
-private val SessionIconSize = 44.dp
-private val SessionHeroIconSize = 56.dp
-private val SessionIconContentSize = 22.dp
-private val SessionHeroIconContentSize = 28.dp
-
 @Composable
 internal fun MySessionsLoadedContent(
     sessions: List<SessionDto>,
@@ -79,7 +71,7 @@ internal fun MySessionsLoadedContent(
             .fillMaxSize()
             .padding(contentPadding)
             .withContentPaddingForScrollable(),
-        verticalArrangement = Arrangement.spacedBy(SessionsListSpacing)
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.large)
     ) {
         item(key = "overview") {
             SessionsOverviewCard()
@@ -127,7 +119,7 @@ internal fun MySessionsLoadedContent(
                         text = stringResource(Res.string.profile_sessions_empty),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.textMuted,
-                        modifier = Modifier.padding(SessionRowPaddingH)
+                        modifier = Modifier.padding(Constraints.Spacing.large)
                     )
                 }
             }
@@ -154,8 +146,8 @@ private fun SessionsOverviewCard(
             ) {
                 SessionIcon(
                     deviceType = DeviceType.Desktop,
-                    containerSize = SessionHeroIconSize,
-                    iconSize = SessionHeroIconContentSize,
+                    containerSize = Constraints.AvatarSize.medium,
+                    iconSize = Constraints.IconSize.large,
                 )
                 Column(
                     modifier = Modifier.weight(1f),
@@ -271,7 +263,7 @@ private fun SessionRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = SessionRowPaddingH, vertical = SessionRowPaddingV),
+            .padding(Constraints.Spacing.large),
         horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.large),
         verticalAlignment = Alignment.Top
     ) {
@@ -353,7 +345,7 @@ private fun SessionDestructiveActionRow(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = SessionRowPaddingH, vertical = 14.dp),
+                .padding(horizontal = Constraints.Spacing.large, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -376,8 +368,8 @@ private fun SessionDestructiveActionRow(
 @Composable
 private fun SessionIcon(
     deviceType: DeviceType,
-    containerSize: Dp = SessionIconSize,
-    iconSize: Dp = SessionIconContentSize,
+    containerSize: Dp = Constraints.Spacing.xxxLarge,
+    iconSize: Dp = Constraints.IconSize.medium,
     modifier: Modifier = Modifier,
 ) {
     Surface(
