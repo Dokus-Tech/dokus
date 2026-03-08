@@ -42,7 +42,6 @@ import tech.dokus.domain.enums.TenantType
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.Address
 import tech.dokus.domain.model.Tenant
-import tech.dokus.domain.model.common.Thumbnail
 import tech.dokus.features.ai.agents.BusinessLogoFallbackAgent
 import tech.dokus.features.ai.agents.BusinessProfileContentExtractionAgent
 import tech.dokus.features.ai.models.BusinessLogoFallbackResult
@@ -415,7 +414,6 @@ class BusinessProfileEnrichmentWorkerTest {
             )
         } returns AvatarStorageService.AvatarUploadResult(
             storageKeyPrefix = "avatars/suggested-logo",
-            avatar = Thumbnail(small = "s", medium = "m", large = "l"),
             sizeBytes = logoPng.size.toLong()
         )
         coEvery { tenantRepository.updateAvatarStorageKey(job.tenantId, "avatars/suggested-logo") } returns Unit

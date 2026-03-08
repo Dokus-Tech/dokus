@@ -6,11 +6,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
-import tech.dokus.domain.model.common.Thumbnail
 import tech.dokus.foundation.backend.utils.loggerFor
 import java.util.UUID
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.hours
 
 /**
  * Service for handling company avatar uploads with automatic resizing.
@@ -24,7 +21,6 @@ import kotlin.time.Duration.Companion.hours
  */
 class AvatarStorageService(
     private val storage: ObjectStorage,
-    private val defaultUrlExpiry: Duration = 24.hours // Longer expiry for avatars
 ) {
     private val logger = loggerFor()
 
@@ -55,26 +51,11 @@ class AvatarStorageService(
         return "${storageKeyPrefix}_$normalized.webp"
     }
 
-    suspend fun signAvatarUrls(storageKeyPrefix: String): Thumbnail =
-        withContext(Dispatchers.IO) {
-            val urls = AVATAR_SIZES.keys.associateWith { sizeName ->
-                val key = buildAvatarObjectKey(storageKeyPrefix, sizeName)
-                storage.getSignedUrl(key, defaultUrlExpiry)
-            }
-
-            Thumbnail(
-                small = urls["small"]!!,
-                medium = urls["medium"]!!,
-                large = urls["large"]!!
-            )
-        }
-
     /**
      * Result of avatar upload operation.
      */
     data class AvatarUploadResult(
         val storageKeyPrefix: String,
-        val avatar: Thumbnail,
         val sizeBytes: Long
     )
 
@@ -84,7 +65,7 @@ class AvatarStorageService(
      * @param tenantId The tenant this avatar belongs to
      * @param imageData The original image bytes
      * @param contentType The MIME type of the original image
-     * @return Upload result with storage key prefix and presigned URLs
+     * @return Upload result with storage key prefix
      * @throws IllegalArgumentException if validation fails
      */
     suspend fun uploadAvatar(
@@ -141,35 +122,13 @@ class AvatarStorageService(
             logger.debug("Uploaded avatar size: $sizeName, key=$key, bytes=${webpData.size}")
         }
 
-        val avatar = signAvatarUrls(keyPrefix)
-
         logger.info("Avatar uploaded successfully: owner=$ownerLogLabel, keyPrefix=$keyPrefix, totalBytes=$totalBytes")
 
         AvatarUploadResult(
             storageKeyPrefix = keyPrefix,
-            avatar = avatar,
             sizeBytes = totalBytes
         )
     }
-
-    /**
-     * Get fresh presigned URLs for an existing avatar.
-     *
-     * @param storageKeyPrefix The key prefix stored in the database
-     * @return Fresh presigned URLs for all sizes, or null if avatar doesn't exist
-     */
-    suspend fun getAvatarUrls(storageKeyPrefix: String): Thumbnail? =
-        withContext(Dispatchers.IO) {
-            // Check if avatar exists by checking one of the sizes
-            val smallKey = buildAvatarObjectKey(storageKeyPrefix, "small")
-
-            if (!storage.exists(smallKey)) {
-                logger.debug("Avatar not found: $storageKeyPrefix")
-                return@withContext null
-            }
-
-            signAvatarUrls(storageKeyPrefix)
-        }
 
     suspend fun avatarExists(storageKeyPrefix: String): Boolean =
         withContext(Dispatchers.IO) {

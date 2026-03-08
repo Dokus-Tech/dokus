@@ -36,6 +36,38 @@ internal fun Route.avatarRoutes() {
     val avatarStorageService by inject<AvatarStorageService>()
     val businessProfileService by inject<BusinessProfileService>()
 
+    get<Tenants.AvatarImageById> { route ->
+        val tenantId = parseTenantId(route.id)
+        val imageBytes = loadAvatarImageBytes(
+            storageKey = tenantRepository.getAvatarStorageKey(tenantId),
+            size = route.size,
+            avatarStorageService = avatarStorageService,
+            ownerLabel = "tenant: $tenantId"
+        )
+
+        call.respondBytes(
+            bytes = imageBytes,
+            contentType = ContentType("image", "webp"),
+            status = HttpStatusCode.OK
+        )
+    }
+
+    get<Users.AvatarImageById> { route ->
+        val userId = parseUserId(route.id)
+        val imageBytes = loadAvatarImageBytes(
+            storageKey = userRepository.getAvatarStorageKey(userId),
+            size = route.size,
+            avatarStorageService = avatarStorageService,
+            ownerLabel = "user: $userId"
+        )
+
+        call.respondBytes(
+            bytes = imageBytes,
+            contentType = ContentType("image", "webp"),
+            status = HttpStatusCode.OK
+        )
+    }
+
     authenticateJwt {
         post<Tenants.Id.Avatar> { route ->
             val principal = dokusPrincipal
@@ -78,25 +110,6 @@ internal fun Route.avatarRoutes() {
             )
 
             call.respond(HttpStatusCode.OK, businessProfileService.buildTenantAvatarThumbnail(tenantId, storageKey))
-        }
-
-        get<Tenants.AvatarImageById> { route ->
-            val principal = dokusPrincipal
-            val tenantId = parseTenantId(route.id)
-            requireTenantMembership(userRepository, principal.userId, tenantId)
-
-            val imageBytes = loadAvatarImageBytes(
-                storageKey = tenantRepository.getAvatarStorageKey(tenantId),
-                size = route.size,
-                avatarStorageService = avatarStorageService,
-                ownerLabel = "tenant: $tenantId"
-            )
-
-            call.respondBytes(
-                bytes = imageBytes,
-                contentType = ContentType("image", "webp"),
-                status = HttpStatusCode.OK
-            )
         }
 
         delete<Tenants.Id.Avatar> { route ->
@@ -156,22 +169,6 @@ internal fun Route.avatarRoutes() {
             )
 
             call.respond(HttpStatusCode.OK, buildUserAvatarThumbnail(userId, storageKey))
-        }
-
-        get<Users.AvatarImageById> { route ->
-            val userId = parseUserId(route.id)
-            val imageBytes = loadAvatarImageBytes(
-                storageKey = userRepository.getAvatarStorageKey(userId),
-                size = route.size,
-                avatarStorageService = avatarStorageService,
-                ownerLabel = "user: $userId"
-            )
-
-            call.respondBytes(
-                bytes = imageBytes,
-                contentType = ContentType("image", "webp"),
-                status = HttpStatusCode.OK
-            )
         }
 
         delete<Users.Id.Avatar> { route ->

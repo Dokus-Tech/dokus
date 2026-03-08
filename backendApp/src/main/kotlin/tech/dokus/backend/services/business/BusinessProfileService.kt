@@ -115,6 +115,13 @@ class BusinessProfileService(
         return profileRepository.getBySubject(tenantId, subjectType, subjectId)?.logoStorageKey
     }
 
+    suspend fun getLogoStorageKey(
+        subjectType: BusinessProfileSubjectType,
+        subjectId: Uuid
+    ): String? {
+        return profileRepository.getLogoStorageKey(subjectType, subjectId)
+    }
+
     suspend fun buildTenantAvatarThumbnail(tenantId: TenantId): Thumbnail? =
         tenantRepository.getAvatarStorageKey(tenantId)
             ?.takeIf { it.isNotBlank() }
