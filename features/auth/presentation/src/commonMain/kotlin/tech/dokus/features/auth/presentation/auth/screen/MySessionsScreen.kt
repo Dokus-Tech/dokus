@@ -1,6 +1,5 @@
 package tech.dokus.features.auth.presentation.auth.screen
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -144,12 +143,14 @@ private fun MySessionsList(
             .withContentPaddingForScrollable(),
         verticalArrangement = Arrangement.spacedBy(SessionsListSpacing)
     ) {
-        item {
-            SessionsSummaryCard(
-                sessionCount = sessions.size,
-                isRevokingOthers = isRevokingOthers,
-                onRevokeOthers = onRevokeOthers
-            )
+        if (sessions.size > 1) {
+            item {
+                SessionsSummaryCard(
+                    sessionCount = sessions.size,
+                    isRevokingOthers = isRevokingOthers,
+                    onRevokeOthers = onRevokeOthers
+                )
+            }
         }
 
         if (sessions.isEmpty()) {
@@ -281,9 +282,7 @@ private fun SessionIcon(deviceType: DeviceType) {
         shape = MaterialTheme.shapes.medium
     ) {
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f)),
+            modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
             Icon(

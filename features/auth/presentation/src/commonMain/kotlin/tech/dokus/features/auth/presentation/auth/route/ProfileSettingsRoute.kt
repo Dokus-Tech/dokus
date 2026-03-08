@@ -154,11 +154,9 @@ fun ProfileSettingsRoute(
         }
     }
 
-    var sessionsStateHolder: tech.dokus.features.auth.mvi.MySessionsState? = null
-    var sessionsOnIntent: ((tech.dokus.features.auth.mvi.MySessionsIntent) -> Unit)? = null
-    if (isLargeScreen && showSessionsPane) {
-        val sessionsContainer: MySessionsContainer = container()
-        val sessionsState by sessionsContainer.store.subscribe(DefaultLifecycle) { action ->
+    val sessionsContainer: MySessionsContainer = container()
+    val sessionsState by sessionsContainer.store.subscribe(DefaultLifecycle) { action ->
+        if (showSessionsPane) {
             when (action) {
                 MySessionsAction.NavigateBack -> showSessionsPane = false
                 MySessionsAction.ShowSessionRevoked -> pendingSessionsMessage = sessionRevokedMessage
@@ -166,19 +164,12 @@ fun ProfileSettingsRoute(
                 is MySessionsAction.ShowError -> pendingError = action.error
             }
         }
-        sessionsStateHolder = sessionsState
-        sessionsOnIntent = { intent -> sessionsContainer.store.intent(intent) }
     }
     val detailPaneContent: (@Composable () -> Unit)? =
-        sessionsStateHolder?.let { sessionsState ->
-            sessionsOnIntent?.let { onSessionsIntent ->
-                {
-                    MySessionsContent(
-                        state = sessionsState,
-                        onIntent = onSessionsIntent
-                    )
-                }
-            }
+        if (isLargeScreen && showSessionsPane) {
+            { MySessionsContent(state = sessionsState, onIntent = { sessionsContainer.store.intent(it) }) }
+        } else {
+            null
         }
 
     ProfileSettingsScreen(

@@ -214,7 +214,8 @@ internal fun Route.accountRoutes() {
             val principal = dokusPrincipal
             authService.revokeSession(
                 userId = principal.userId,
-                sessionId = route.sessionId
+                sessionId = route.sessionId,
+                currentSessionId = principal.currentSessionId()
             ).getOrThrow()
             call.respond(HttpStatusCode.NoContent)
         }

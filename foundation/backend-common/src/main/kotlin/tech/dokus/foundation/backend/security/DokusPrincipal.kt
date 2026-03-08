@@ -43,8 +43,14 @@ data class DokusPrincipal(
         roles.all { this.globalRoles.contains(it) }
 
     /**
-     * Resolves the stable session identity, falling back to the JWT's JTI
-     * for tokens issued before session identity tracking was added.
+     * Resolves the stable session identity for the current request.
+     *
+     * - Modern tokens carry a dedicated [sessionId] claim — returned directly.
+     * - Pre-session-tracking tokens have no session claim; the method falls back
+     *   to parsing [sessionJti] (the JWT's JTI) as a UUID. If the JTI is not a
+     *   valid UUID, `null` is returned.
+     *
+     * Returns `null` when neither source yields a usable session identity.
      */
     fun currentSessionId(): SessionId? {
         return sessionId ?: sessionJti?.let { jti ->

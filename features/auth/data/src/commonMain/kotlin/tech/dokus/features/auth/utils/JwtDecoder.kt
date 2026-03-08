@@ -15,6 +15,7 @@ import tech.dokus.domain.model.auth.TokenStatus
 import tech.dokus.domain.utils.json
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
+import tech.dokus.foundation.platform.Logger
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -35,6 +36,7 @@ private const val Base64BlockSize = 4
 
 @OptIn(ExperimentalEncodingApi::class, ExperimentalTime::class)
 class JwtDecoder {
+    private val logger = Logger.forClass<JwtDecoder>()
 
     fun decode(token: String): JwtClaims? {
         return try {
@@ -75,7 +77,7 @@ class JwtDecoder {
                 aud = aud
             )
         } catch (e: Exception) {
-            println("JWT decode error: $e")
+            logger.e(e) { "JWT decode error" }
             null
         }
     }

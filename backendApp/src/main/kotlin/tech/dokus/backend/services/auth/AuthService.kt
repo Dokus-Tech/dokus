@@ -33,6 +33,7 @@ import tech.dokus.foundation.backend.database.now
 import tech.dokus.foundation.backend.security.JwtGenerator
 import tech.dokus.foundation.backend.security.TokenBlacklistService
 import tech.dokus.foundation.backend.utils.loggerFor
+import tech.dokus.foundation.backend.utils.runSuspendCatching
 import kotlin.time.Duration.Companion.days
 import kotlin.uuid.ExperimentalUuidApi
 import java.time.Instant as JavaInstant
@@ -334,13 +335,8 @@ class AuthService(
             memberships = memberships,
             selectedTenantId = tenantId
         ) ?: throw DokusException.NotAuthorized("User is not a member of tenant $tenantId")
-        val activeSessionId = currentSessionId ?: SessionId.generate().also {
-            logger.warn(
-                "Current session identity missing during tenant selection for user {}, issuing replacement session {}",
-                userId.value,
-                it
-            )
-        }
+        val activeSessionId = currentSessionId
+            ?: throw DokusException.SessionInvalid("Current session identity is missing")
 
         val claims = jwtGenerator.generateClaims(
             userId = userId,
@@ -471,7 +467,7 @@ class AuthService(
 
     private suspend fun trackAccessToken(userId: UserId, claims: JwtClaims) {
         tokenBlacklistService?.let { blacklist ->
-            runCatching {
+            runSuspendCatching {
                 blacklist.trackUserToken(
                     userId = userId,
                     jti = claims.jti,
@@ -487,7 +483,7 @@ class AuthService(
         val jti = revoked.accessTokenJti ?: return
         val expiresAt = revoked.accessTokenExpiresAt ?: return
         tokenBlacklistService?.let { blacklist ->
-            runCatching {
+            runSuspendCatching {
                 blacklist.blacklistToken(
                     jti = jti,
                     expiresAt = JavaInstant.ofEpochSecond(
@@ -596,8 +592,12 @@ class AuthService(
 
     suspend fun revokeSession(
         userId: UserId,
-        sessionId: SessionId
+        sessionId: SessionId,
+        currentSessionId: SessionId? = null
     ): Result<Unit> = try {
+        if (currentSessionId != null && sessionId == currentSessionId) {
+            throw DokusException.BadRequest("Cannot revoke current session. Use logout instead.")
+        }
         when (val result = refreshTokenRepository.revokeSessionById(userId, sessionId)) {
             is SessionRevocationResult.NotFound ->
                 throw DokusException.NotFound("Session not found")

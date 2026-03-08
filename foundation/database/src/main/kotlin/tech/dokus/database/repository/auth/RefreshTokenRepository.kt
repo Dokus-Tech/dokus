@@ -26,6 +26,7 @@ import tech.dokus.domain.model.auth.SessionDto
 import tech.dokus.foundation.backend.database.dbQuery
 import tech.dokus.foundation.backend.database.now
 import tech.dokus.foundation.backend.utils.loggerFor
+import tech.dokus.foundation.backend.utils.runSuspendCatching
 import java.security.MessageDigest
 import java.util.UUID as JavaUuid
 import kotlin.uuid.ExperimentalUuidApi
@@ -112,7 +113,7 @@ class RefreshTokenRepository {
         ipAddress: String? = null,
         userAgent: String? = null,
         replaceExistingSessionIdentity: SessionId? = null,
-    ): Result<Unit> = runCatching {
+    ): Result<Unit> = runSuspendCatching {
         dbQuery {
             val userUuid = userId.uuid.toJavaUuid()
             val tokenHash = tokenHash(token)
@@ -166,7 +167,7 @@ class RefreshTokenRepository {
     /**
      * Validate a refresh token and rotate it to a new one.
      */
-    suspend fun validateAndRotate(oldToken: String): Result<ValidatedRefreshToken> = runCatching {
+    suspend fun validateAndRotate(oldToken: String): Result<ValidatedRefreshToken> = runSuspendCatching {
         dbQuery {
             val oldTokenHash = tokenHash(oldToken)
 
@@ -235,7 +236,7 @@ class RefreshTokenRepository {
     /**
      * Revoke a specific refresh token.
      */
-    suspend fun revokeToken(token: String): Result<Unit> = runCatching {
+    suspend fun revokeToken(token: String): Result<Unit> = runSuspendCatching {
         dbQuery {
             val tokenHash = tokenHash(token)
             val updated = RefreshTokensTable.update(
@@ -260,7 +261,7 @@ class RefreshTokenRepository {
     /**
      * Revoke all refresh tokens for a user.
      */
-    suspend fun revokeAllUserTokens(userId: UserId): Result<Unit> = runCatching {
+    suspend fun revokeAllUserTokens(userId: UserId): Result<Unit> = runSuspendCatching {
         dbQuery {
             val userUuid = userId.uuid.toJavaUuid()
 
@@ -376,7 +377,7 @@ class RefreshTokenRepository {
     /**
      * Clean up expired and revoked tokens.
      */
-    suspend fun cleanupExpiredTokens(): Result<Int> = runCatching {
+    suspend fun cleanupExpiredTokens(): Result<Int> = runSuspendCatching {
         dbQuery {
             val now = now().toLocalDateTime(TimeZone.UTC)
 
@@ -406,7 +407,7 @@ class RefreshTokenRepository {
     /**
      * Revoke the oldest active session for a user.
      */
-    suspend fun revokeOldestForUser(userId: UserId): Result<Unit> = runCatching {
+    suspend fun revokeOldestForUser(userId: UserId): Result<Unit> = runSuspendCatching {
         dbQuery {
             val oldestSession = getDistinctActiveSessionsInTx(userId)
                 .minByOrNull { it.createdAt }
