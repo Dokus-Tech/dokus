@@ -11,7 +11,6 @@ import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.domain.Name
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
-import tech.dokus.features.auth.usecases.DeleteUserAvatarUseCase
 import tech.dokus.features.auth.usecases.GetCurrentUserUseCase
 import tech.dokus.features.auth.usecases.ResendVerificationEmailUseCase
 import tech.dokus.features.auth.usecases.UploadUserAvatarUseCase
@@ -33,7 +32,6 @@ class ProfileSettingsContainer(
     private val getCurrentUser: GetCurrentUserUseCase,
     private val updateProfile: UpdateProfileUseCase,
     private val uploadUserAvatar: UploadUserAvatarUseCase,
-    private val deleteUserAvatar: DeleteUserAvatarUseCase,
     private val watchCurrentUserUseCase: WatchCurrentUserUseCase,
     private val resendVerificationEmailUseCase: ResendVerificationEmailUseCase,
 ) : Container<ProfileSettingsState, ProfileSettingsIntent, ProfileSettingsAction> {
@@ -59,7 +57,6 @@ class ProfileSettingsContainer(
                     is ProfileSettingsIntent.UpdateLastName -> handleUpdateLastName(intent.value)
                     is ProfileSettingsIntent.SaveClicked -> handleSave()
                     is ProfileSettingsIntent.UploadAvatar -> handleUploadAvatar(intent.imageBytes, intent.filename)
-                    is ProfileSettingsIntent.DeleteAvatar -> handleDeleteAvatar()
                     is ProfileSettingsIntent.ResetAvatarState -> handleResetAvatarState()
                     is ProfileSettingsIntent.ResendVerificationClicked -> handleResendVerification()
                     is ProfileSettingsIntent.ChangePasswordClicked -> handleChangePassword()
@@ -228,37 +225,6 @@ class ProfileSettingsContainer(
                     val exception = error.asDokusException
                     val displayException = if (exception is DokusException.Unknown) {
                         DokusException.ProfileAvatarUploadFailed
-                    } else {
-                        exception
-                    }
-                    updateState {
-                        copy(avatarState = ProfileSettingsState.AvatarState.Error(displayException))
-                    }
-                    action(ProfileSettingsAction.ShowAvatarError(displayException))
-                }
-            )
-        }
-    }
-
-    private suspend fun ProfileSettingsCtx.handleDeleteAvatar() {
-        withState<ProfileSettingsState.Viewing, _> {
-            val currentUser = user
-            updateState { copy(avatarState = ProfileSettingsState.AvatarState.Deleting) }
-
-            deleteUserAvatar(currentUser.id).fold(
-                onSuccess = {
-                    watchCurrentUserUseCase.refresh()
-                    updateState {
-                        copy(
-                            user = currentUser.copy(avatar = null),
-                            avatarState = ProfileSettingsState.AvatarState.Idle
-                        )
-                    }
-                },
-                onFailure = { error ->
-                    val exception = error.asDokusException
-                    val displayException = if (exception is DokusException.Unknown) {
-                        DokusException.ProfileAvatarDeleteFailed
                     } else {
                         exception
                     }

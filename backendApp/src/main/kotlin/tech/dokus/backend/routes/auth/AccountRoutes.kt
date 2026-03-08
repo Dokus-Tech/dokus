@@ -69,15 +69,24 @@ internal fun Route.accountRoutes() {
 
             val tenantsById = tenantRepository.findByIds(tenantMemberships.map { it.tenantId })
                 .associateBy { it.id }
-            val tenantSummaries = tenantMemberships.mapNotNull { membership ->
-                val tenant = tenantsById[membership.tenantId] ?: return@mapNotNull null
-                TenantWorkspaceSummary(
-                    id = tenant.id,
-                    name = tenant.displayName,
-                    vatNumber = tenant.vatNumber,
-                    role = membership.role,
-                    type = tenant.type
-                )
+            val tenantSummaries = buildList {
+                for (membership in tenantMemberships) {
+                    val tenant = tenantsById[membership.tenantId] ?: continue
+                    add(
+                        TenantWorkspaceSummary(
+                            id = tenant.id,
+                            name = tenant.displayName,
+                            vatNumber = tenant.vatNumber,
+                            role = membership.role,
+                            type = tenant.type,
+                            avatar = tenantRepository.getAvatarStorageKey(tenant.id)
+                                ?.takeIf { it.isNotBlank() }
+                                ?.let { storageKey ->
+                                    buildWorkspaceAvatarThumbnail(tenant.id, storageKey)
+                                }
+                        )
+                    )
+                }
             }
 
             val firmsById = firmRepository.listFirmsByIds(firmsMemberships.map { it.firmId })
@@ -234,3 +243,11 @@ internal fun Route.accountRoutes() {
         }
     }
 }
+
+private fun buildWorkspaceAvatarThumbnail(
+    tenantId: tech.dokus.domain.ids.TenantId,
+    storageKey: String
+) = tech.dokus.backend.services.avatar.buildVersionedAvatarThumbnail(
+    basePath = "/api/v1/tenants/$tenantId/avatar",
+    storageKey = storageKey
+)

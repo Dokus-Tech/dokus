@@ -5,8 +5,8 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import pro.respawn.flowmvi.test.subscribeAndTest
 import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.domain.model.auth.AccountMeResponse
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.auth.AccountMeResponse
 import tech.dokus.features.auth.usecases.GetAccountMeUseCase
 import tech.dokus.features.auth.usecases.RefreshSessionNowUseCase
 import tech.dokus.features.auth.usecases.SelectTenantUseCase
@@ -23,7 +23,7 @@ class WorkspaceSelectContainerTest {
                 Result.failure(DokusException.NotAuthenticated("Authentication required"))
             ),
             selectTenantUseCase = FakeSelectTenantUseCase(),
-            refreshSessionNowUseCase = FakeRefreshSessionNowUseCase()
+            refreshSessionNowUseCase = FakeRefreshSessionNowUseCase(),
         )
 
         container.store.subscribeAndTest {

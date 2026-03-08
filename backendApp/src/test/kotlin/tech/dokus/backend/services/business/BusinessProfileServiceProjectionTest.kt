@@ -110,19 +110,20 @@ class BusinessProfileServiceProjectionTest {
         assertEquals("Beta summary", projected.businessSummary)
         assertEquals(listOf("consulting"), projected.businessActivities)
         assertEquals(true, projected.businessProfileVerified)
-        assertEquals("/api/v1/contacts/${contactId.value}/avatar/small.webp", projected.avatar?.small)
-        assertEquals("/api/v1/contacts/${contactId.value}/avatar/medium.webp", projected.avatar?.medium)
-        assertEquals("/api/v1/contacts/${contactId.value}/avatar/large.webp", projected.avatar?.large)
+        assertEquals("/api/v1/contacts/${contactId.value}/avatar/small.webp?v=contact-beta", projected.avatar?.small)
+        assertEquals("/api/v1/contacts/${contactId.value}/avatar/medium.webp?v=contact-beta", projected.avatar?.medium)
+        assertEquals("/api/v1/contacts/${contactId.value}/avatar/large.webp?v=contact-beta", projected.avatar?.large)
     }
 
     @Test
-    fun `build tenant avatar thumbnail includes tenant id path`() {
+    fun `build tenant avatar thumbnail includes version query from storage key`() = kotlinx.coroutines.runBlocking {
         val tenantId = TenantId.generate()
+        coEvery { tenantRepository.getAvatarStorageKey(tenantId) } returns "avatars/tenants/$tenantId/abc"
 
         val thumbnail = service.buildTenantAvatarThumbnail(tenantId)
 
-        assertEquals("/api/v1/tenants/$tenantId/avatar/small.webp", thumbnail.small)
-        assertEquals("/api/v1/tenants/$tenantId/avatar/medium.webp", thumbnail.medium)
-        assertEquals("/api/v1/tenants/$tenantId/avatar/large.webp", thumbnail.large)
+        assertEquals("/api/v1/tenants/$tenantId/avatar/small.webp?v=abc", thumbnail?.small)
+        assertEquals("/api/v1/tenants/$tenantId/avatar/medium.webp?v=abc", thumbnail?.medium)
+        assertEquals("/api/v1/tenants/$tenantId/avatar/large.webp?v=abc", thumbnail?.large)
     }
 }
