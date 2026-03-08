@@ -14,6 +14,8 @@ import tech.dokus.features.ai.agents.DocumentProcessingAgent
 import tech.dokus.features.ai.config.AIModels
 import tech.dokus.features.ai.config.AIProviderFactory
 import tech.dokus.features.ai.config.ModelSet
+import tech.dokus.features.ai.queue.LlmModelSlot
+import tech.dokus.features.ai.queue.LlmQueue
 import tech.dokus.features.ai.prompts.ChatPrompt
 import tech.dokus.features.ai.services.ChunkingService
 import tech.dokus.features.ai.services.DocumentImageCache
@@ -34,6 +36,16 @@ fun aiModule() = module {
     // =========================================================================
     // AI Infrastructure
     // =========================================================================
+
+    // Shared LLM request queue with per-slot concurrency
+    single {
+        LlmQueue {
+            slot(LlmModelSlot.Vision) { concurrency = 1 }
+            slot(LlmModelSlot.Text) { concurrency = 1 }
+            slot(LlmModelSlot.Embedding) { concurrency = 3 }
+            maxQueueDepth = 50
+        }
+    }
 
     // Redis cache for vision image processing
     single<RedisClient>(named("ai-cache")) {

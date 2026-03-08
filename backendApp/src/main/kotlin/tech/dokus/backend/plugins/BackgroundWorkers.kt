@@ -16,6 +16,7 @@ import tech.dokus.backend.worker.PeppolOutboundWorker
 import tech.dokus.backend.worker.PeppolPollingWorker
 import tech.dokus.backend.worker.RateLimitCleanupWorker
 import tech.dokus.backend.worker.WelcomeEmailWorker
+import tech.dokus.features.ai.queue.LlmQueue
 import tech.dokus.foundation.backend.cache.RedisClient
 import tech.dokus.foundation.backend.utils.loggerFor
 import tech.dokus.peppol.service.PeppolWebhookSyncService
@@ -32,10 +33,13 @@ fun Application.configureBackgroundWorkers() {
     val peppolWebhookSyncService by inject<PeppolWebhookSyncService>()
     val cashflowProjectionReconciliationWorker by inject<CashflowProjectionReconciliationWorker>()
     val welcomeEmailWorker by inject<WelcomeEmailWorker>()
+    val llmQueue by inject<LlmQueue>()
 
     var webhookSyncJob: Job? = null
 
     monitor.subscribe(ApplicationStarted) {
+        logger.info("Starting LLM queue")
+        llmQueue.start()
         rateLimitCleanupWorker.start()
         logger.info("Starting document processing worker")
         processingWorker.start()
@@ -72,6 +76,7 @@ fun Application.configureBackgroundWorkers() {
 
     monitor.subscribe(ApplicationStopping) {
         webhookSyncJob?.cancel()
+        llmQueue.stop()
         processingWorker.stop()
         businessProfileEnrichmentWorker.stop()
         peppolPollingWorker.stop()

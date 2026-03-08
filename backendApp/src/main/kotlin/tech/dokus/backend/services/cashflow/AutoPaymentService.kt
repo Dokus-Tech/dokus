@@ -116,7 +116,9 @@ class AutoPaymentService(
         AutoPaymentStatusDto(
             matchStatus = link[InvoiceBankMatchLinksTable.status],
             paymentId = paymentRow?.let { PaymentId.parse(it[PaymentsTable.id].value.toString()) },
-            bankTransactionId = ImportedBankTransactionId.parse(link[InvoiceBankMatchLinksTable.importedBankTransactionId].toString()),
+            bankTransactionId = ImportedBankTransactionId.parse(
+                link[InvoiceBankMatchLinksTable.importedBankTransactionId].toString()
+            ),
             confidenceScore = link[InvoiceBankMatchLinksTable.confidenceScore]?.toDouble(),
             scoreMargin = link[InvoiceBankMatchLinksTable.scoreMargin]?.toDouble(),
             reasons = parseJsonArray(link[InvoiceBankMatchLinksTable.reasonsJson]),
@@ -124,9 +126,9 @@ class AutoPaymentService(
             matchedAt = link[InvoiceBankMatchLinksTable.matchedAt],
             autoPaidAt = link[InvoiceBankMatchLinksTable.autoPaidAt],
             canUndo =
-                link[InvoiceBankMatchLinksTable.status] == AutoMatchStatus.AutoPaid &&
-                    paymentRow != null &&
-                    nonReversedPayments == 1L
+            link[InvoiceBankMatchLinksTable.status] == AutoMatchStatus.AutoPaid &&
+                paymentRow != null &&
+                nonReversedPayments == 1L
         )
     }
 
@@ -229,7 +231,9 @@ class AutoPaymentService(
                 it[updatedAt] = now
             }
 
-            InvoiceBankMatchLinksTable.update({ InvoiceBankMatchLinksTable.id eq link[InvoiceBankMatchLinksTable.id].value }) {
+            InvoiceBankMatchLinksTable.update(
+                { InvoiceBankMatchLinksTable.id eq link[InvoiceBankMatchLinksTable.id].value }
+            ) {
                 it[status] = AutoMatchStatus.Reversed
                 it[reversedAt] = now
                 it[reversedByUserId] = actorUserId?.value?.toJavaUuid()

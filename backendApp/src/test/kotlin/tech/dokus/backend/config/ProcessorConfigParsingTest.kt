@@ -8,34 +8,19 @@ import kotlin.test.assertEquals
 class ProcessorConfigParsingTest {
 
     @Test
-    fun `fromConfig parses maxConcurrentRuns`() {
+    fun `fromConfig parses all fields`() {
         val config = ConfigFactory.parseString(
             """
             pollingInterval = 5000
             maxAttempts = 3
             batchSize = 10
-            maxConcurrentRuns = 4
             """.trimIndent()
         )
 
         val parsed = ProcessorConfig.fromConfig(config)
 
-        assertEquals(4, parsed.maxConcurrentRuns)
-    }
-
-    @Test
-    fun `fromConfig coerces maxConcurrentRuns below one`() {
-        val config = ConfigFactory.parseString(
-            """
-            pollingInterval = 5000
-            maxAttempts = 3
-            batchSize = 10
-            maxConcurrentRuns = 0
-            """.trimIndent()
-        )
-
-        val parsed = ProcessorConfig.fromConfig(config)
-
-        assertEquals(1, parsed.maxConcurrentRuns)
+        assertEquals(5000L, parsed.pollingInterval)
+        assertEquals(3, parsed.maxAttempts)
+        assertEquals(10, parsed.batchSize)
     }
 }
