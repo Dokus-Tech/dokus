@@ -82,6 +82,8 @@
     <string name="profile_current_session">Current session</string>
     <string name="profile_session_revoked">Session revoked</string>
     <string name="profile_sessions_revoke_others_success">Other sessions revoked</string>
+    <string name="profile_sessions_this_device">This device</string>
+    <string name="profile_sessions_review_action">Review active sessions</string>
 
     <!-- Workspace Settings -->
     <string name="workspace_settings_title">Company Details</string>
