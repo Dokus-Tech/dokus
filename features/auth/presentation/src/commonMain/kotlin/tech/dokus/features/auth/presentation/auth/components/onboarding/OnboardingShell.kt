@@ -84,7 +84,7 @@ private data class BrandCopy(
 internal fun OnboardingSplitShell(
     brandVariant: OnboardingBrandVariant,
     modifier: Modifier = Modifier,
-    yearOverride: Int? = null,
+    copyrightYear: String? = null,
     cardContent: @Composable ColumnScope.() -> Unit,
 ) {
     val isLarge = LocalScreenSize.isLarge
@@ -122,7 +122,7 @@ internal fun OnboardingSplitShell(
                     OnboardingBottomFooter(
                         modifier = Modifier.fillMaxWidth(),
                         alignCenter = true,
-                        yearOverride = yearOverride,
+                        copyrightYear = copyrightYear,
                     )
                 }
             }
@@ -151,7 +151,7 @@ internal fun OnboardingSplitShell(
 internal fun OnboardingCenteredShell(
     modifier: Modifier = Modifier,
     contentMaxWidth: Dp = CenterPaneMaxWidth,
-    yearOverride: Int? = null,
+    copyrightYear: String? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Box(modifier = modifier.fillMaxSize()) {
@@ -174,7 +174,7 @@ internal fun OnboardingCenteredShell(
                 content = content,
             )
 
-            OnboardingYearFooter(yearOverride = yearOverride)
+            OnboardingYearFooter(copyrightYear = copyrightYear)
         }
     }
 }
@@ -272,10 +272,10 @@ internal fun OnboardingBrandPanel(
 internal fun OnboardingBottomFooter(
     modifier: Modifier = Modifier,
     alignCenter: Boolean = false,
-    yearOverride: Int? = null,
+    copyrightYear: String? = null,
 ) {
-    val year = remember(yearOverride) {
-        yearOverride ?: Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).year
+    val year = copyrightYear ?: remember {
+        Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).year.toString()
     }
     val horizontalAlignment = if (alignCenter) Alignment.CenterHorizontally else Alignment.Start
     val textAlign = if (alignCenter) TextAlign.Center else TextAlign.Start
@@ -301,9 +301,9 @@ internal fun OnboardingBottomFooter(
 }
 
 @Composable
-internal fun OnboardingYearFooter(modifier: Modifier = Modifier, yearOverride: Int? = null) {
-    val year = remember(yearOverride) {
-        yearOverride ?: Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).year
+internal fun OnboardingYearFooter(modifier: Modifier = Modifier, copyrightYear: String? = null) {
+    val year = copyrightYear ?: remember {
+        Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).year.toString()
     }
     Text(
         text = stringResource(Res.string.auth_onboarding_copyright_format, year),
@@ -332,7 +332,7 @@ private fun OnboardingSplitShellPreview(
     ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters,
 ) {
     tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
-        OnboardingSplitShell(brandVariant = OnboardingBrandVariant.Primary, yearOverride = 2026) {
+        OnboardingSplitShell(brandVariant = OnboardingBrandVariant.Primary, copyrightYear = "2026") {
             DokusLogo.Full()
             Spacer(modifier = Modifier.height(Constraints.Spacing.large))
             Text(
@@ -351,7 +351,7 @@ private fun OnboardingCenteredShellPreview(
     ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters,
 ) {
     tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
-        OnboardingCenteredShell(yearOverride = 2026) {
+        OnboardingCenteredShell(copyrightYear = "2026") {
             Text(
                 text = "Centered content",
                 style = MaterialTheme.typography.headlineMedium,
