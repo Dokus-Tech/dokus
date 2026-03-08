@@ -29,8 +29,8 @@ import tech.dokus.aura.resources.action_continue
 import tech.dokus.aura.resources.profile_sessions_title
 import tech.dokus.features.auth.mvi.MySessionsIntent
 import tech.dokus.features.auth.mvi.MySessionsState
-import tech.dokus.foundation.aura.components.PPrimaryButton
-import tech.dokus.foundation.aura.components.common.DokusLoader
+import tech.dokus.features.auth.presentation.auth.components.MySessionsSkeleton
+import tech.dokus.foundation.aura.components.common.DokusErrorBanner
 import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
@@ -69,33 +69,23 @@ internal fun MySessionsContent(
 ) {
     when (state) {
         MySessionsState.Loading -> {
-            Box(
-                modifier = modifier
-                    .fillMaxSize()
-                    .padding(contentPadding),
-                contentAlignment = Alignment.Center
-            ) {
-                DokusLoader()
-            }
+            MySessionsSkeleton(
+                modifier = modifier.padding(contentPadding),
+            )
         }
 
         is MySessionsState.Error -> {
-            Box(
+            Column(
                 modifier = modifier
                     .fillMaxSize()
                     .padding(contentPadding),
-                contentAlignment = Alignment.Center
             ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(state.exception.message ?: "")
-                    Spacer(Modifier.height(12.dp))
-                    PPrimaryButton(
-                        text = stringResource(Res.string.action_continue),
-                        onClick = { onIntent(MySessionsIntent.Load) }
-                    )
-                }
+                DokusErrorBanner(
+                    exception = state.exception,
+                    retryHandler = state.retryHandler,
+                    modifier = Modifier.padding(16.dp),
+                )
+                MySessionsSkeleton()
             }
         }
 

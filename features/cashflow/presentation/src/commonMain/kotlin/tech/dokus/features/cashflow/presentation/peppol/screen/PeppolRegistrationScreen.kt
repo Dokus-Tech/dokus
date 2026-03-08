@@ -66,7 +66,7 @@ import tech.dokus.features.cashflow.presentation.peppol.mvi.PeppolRegistrationIn
 import tech.dokus.features.cashflow.presentation.peppol.mvi.PeppolRegistrationState
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.common.AnimatedCheck
-import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.aura.components.common.DokusErrorBanner
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.common.PCopyRow
 import tech.dokus.foundation.aura.components.common.WaitingIndicator
@@ -115,10 +115,10 @@ internal fun PeppolRegistrationScreen(
                     if (isPeppolSetupFlowError(state.exception)) {
                         SetupErrorContent(state, onIntent)
                     } else {
-                        DokusErrorContent(
+                        DokusErrorBanner(
                             exception = state.exception,
                             retryHandler = state.retryHandler,
-                            modifier = Modifier.fillMaxWidth().padding(Constraints.Spacing.large)
+                            modifier = Modifier.fillMaxWidth().padding(Constraints.Spacing.large),
                         )
                     }
                 }

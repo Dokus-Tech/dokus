@@ -35,14 +35,13 @@ import tech.dokus.app.viewmodel.WorkspaceSettingsIntent
 import tech.dokus.app.viewmodel.WorkspaceSettingsState
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.settings_saved_successfully
-import tech.dokus.aura.resources.state_retry
-import tech.dokus.aura.resources.workspace_settings_load_failed
 import tech.dokus.aura.resources.workspace_settings_title
+import tech.dokus.app.screens.settings.components.SettingsSkeleton
 import tech.dokus.foundation.app.picker.FilePickerLauncher
 import tech.dokus.foundation.app.picker.rememberImagePicker
-import tech.dokus.foundation.aura.components.PPrimaryButton
-import tech.dokus.foundation.aura.components.common.DokusLoader
+import tech.dokus.foundation.aura.components.common.DokusErrorBanner
 import tech.dokus.foundation.aura.components.common.PTopAppBar
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import androidx.compose.ui.tooling.preview.Preview
@@ -94,12 +93,10 @@ fun WorkspaceSettingsContent(
 
     when (state) {
         is WorkspaceSettingsState.Loading -> {
-            Box(
-                modifier = modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                DokusLoader()
-            }
+            SettingsSkeleton(
+                sectionCount = 5,
+                modifier = modifier,
+            )
         }
 
         is WorkspaceSettingsState.Content -> {
@@ -112,22 +109,13 @@ fun WorkspaceSettingsContent(
         }
 
         is WorkspaceSettingsState.Error -> {
-            Box(
-                modifier = modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = stringResource(Res.string.workspace_settings_load_failed),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.error
-                    )
-                    Spacer(Modifier.height(16.dp))
-                    PPrimaryButton(
-                        text = stringResource(Res.string.state_retry),
-                        onClick = { onIntent(WorkspaceSettingsIntent.Load) }
-                    )
-                }
+            Column(modifier = modifier) {
+                DokusErrorBanner(
+                    exception = state.exception,
+                    retryHandler = state.retryHandler,
+                    modifier = Modifier.padding(Constraints.Spacing.large),
+                )
+                SettingsSkeleton(sectionCount = 5)
             }
         }
     }

@@ -86,8 +86,8 @@ import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.badges.DocumentSource as BadgeDocumentSource
 import tech.dokus.foundation.aura.components.badges.SourceBadge
-import tech.dokus.foundation.aura.components.common.DokusErrorContent
-import tech.dokus.foundation.aura.components.common.DokusLoader
+import tech.dokus.app.screens.accountant.components.ConsoleClientsSkeleton
+import tech.dokus.foundation.aura.components.common.DokusErrorBanner
 import tech.dokus.foundation.aura.components.common.PSearchFieldCompact
 import tech.dokus.foundation.aura.components.dialog.DokusDialog
 import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
@@ -177,17 +177,17 @@ internal fun ConsoleClientsScreen(
         ) {
             when (state) {
                 ConsoleClientsState.Loading -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        DokusLoader()
-                    }
+                    ConsoleClientsSkeleton(modifier = Modifier.fillMaxSize())
                 }
 
                 is ConsoleClientsState.Error -> {
-                    DokusErrorContent(
-                        exception = state.exception,
-                        retryHandler = state.retryHandler,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        DokusErrorBanner(
+                            exception = state.exception,
+                            retryHandler = state.retryHandler,
+                        )
+                        ConsoleClientsSkeleton()
+                    }
                 }
 
                 is ConsoleClientsState.Content -> {
@@ -565,22 +565,20 @@ private fun ClientDetailContent(
 
         when (val documentsState = state.documentsState) {
             is DokusState.Loading -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    DokusLoader()
-                }
+                ConsoleClientsSkeleton(
+                    modifier = Modifier.fillMaxWidth().weight(1f),
+                )
             }
 
             is DokusState.Error -> {
-                DokusErrorContent(
-                    exception = documentsState.exception,
-                    retryHandler = documentsState.retryHandler,
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    DokusErrorBanner(
+                        exception = documentsState.exception,
+                        retryHandler = documentsState.retryHandler,
+                        modifier = Modifier.padding(Constraints.Spacing.large),
+                    )
+                    ConsoleClientsSkeleton()
+                }
             }
 
             is DokusState.Success -> {

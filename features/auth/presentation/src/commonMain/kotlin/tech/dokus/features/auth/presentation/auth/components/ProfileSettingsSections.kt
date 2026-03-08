@@ -526,22 +526,6 @@ internal fun ProfileSavingSection(
     }
 }
 
-@Composable
-internal fun ProfileErrorSection() {
-    DokusCardSurface(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text(
-                text = stringResource(Res.string.profile_load_failed),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.error
-            )
-        }
-    }
-}
-
 // =============================================================================
 // Helpers
 // =============================================================================
@@ -696,14 +680,3 @@ private fun VersionFooterPreview(
     }
 }
 
-@Preview
-@Composable
-private fun ProfileErrorSectionPreview(
-    @PreviewParameter(
-        PreviewParametersProvider::class
-    ) parameters: PreviewParameters
-) {
-    TestWrapper(parameters) {
-        ProfileErrorSection()
-    }
-}

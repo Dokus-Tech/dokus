@@ -10,8 +10,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
@@ -31,14 +31,14 @@ import tech.dokus.features.auth.presentation.auth.components.AccountCard
 import tech.dokus.features.auth.presentation.auth.components.DangerZoneCard
 import tech.dokus.features.auth.presentation.auth.components.LogOutCard
 import tech.dokus.features.auth.presentation.auth.components.ProfileEditingSection
-import tech.dokus.features.auth.presentation.auth.components.ProfileErrorSection
 import tech.dokus.features.auth.presentation.auth.components.ProfileHero
+import tech.dokus.features.auth.presentation.auth.components.ProfileSettingsSkeleton
 import tech.dokus.features.auth.presentation.auth.components.ProfileSavingSection
 import tech.dokus.features.auth.presentation.auth.components.SecurityCard
 import tech.dokus.features.auth.presentation.auth.components.ServerCard
 import tech.dokus.features.auth.presentation.auth.components.VersionFooter
 import tech.dokus.foundation.app.picker.rememberImagePicker
-import tech.dokus.foundation.aura.components.common.DokusLoader
+import tech.dokus.foundation.aura.components.common.DokusErrorBanner
 import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.tooling.PreviewParameters
@@ -178,12 +178,7 @@ fun ProfileSettingsContent(
         ) {
             when (state) {
                 ProfileSettingsState.Loading -> {
-                    Box(
-                        modifier = Modifier.fillMaxWidth().height(200.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        DokusLoader()
-                    }
+                    ProfileSettingsSkeleton()
                 }
 
                 is ProfileSettingsState.Viewing -> {
@@ -228,7 +223,11 @@ fun ProfileSettingsContent(
                 }
 
                 is ProfileSettingsState.Error -> {
-                    ProfileErrorSection()
+                    DokusErrorBanner(
+                        exception = state.exception,
+                        retryHandler = state.retryHandler,
+                    )
+                    ProfileSettingsSkeleton()
                 }
             }
 

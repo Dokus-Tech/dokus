@@ -92,7 +92,9 @@ import tech.dokus.foundation.app.network.rememberResolvedApiUrl
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.MonogramAvatar
 import tech.dokus.foundation.aura.components.UserAvatarImage
+import tech.dokus.foundation.aura.components.common.DokusErrorBanner
 import tech.dokus.foundation.aura.components.common.DokusLoader
+import tech.dokus.app.screens.settings.components.SettingsSkeleton
 import tech.dokus.foundation.aura.components.common.DokusSelectableRowGroup
 import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.components.badges.TierBadge
@@ -210,25 +212,15 @@ fun TeamSettingsContent(
         ) {
             when {
                 isLoading -> {
-                    Box(
-                        modifier = Modifier.fillMaxWidth().height(200.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        DokusLoader()
-                    }
+                    SettingsSkeleton(sectionCount = 2)
                 }
 
                 state is TeamSettingsState.Error -> {
-                    Box(
-                        modifier = Modifier.fillMaxWidth().height(200.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = stringResource(Res.string.team_load_failed),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
+                    DokusErrorBanner(
+                        exception = state.exception,
+                        retryHandler = state.retryHandler,
+                    )
+                    SettingsSkeleton(sectionCount = 2)
                 }
 
                 else -> {

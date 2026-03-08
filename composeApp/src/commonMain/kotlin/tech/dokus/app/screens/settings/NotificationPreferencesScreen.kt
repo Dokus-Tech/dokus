@@ -13,7 +13,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import tech.dokus.foundation.aura.components.common.DokusLoader
+import tech.dokus.foundation.aura.components.common.DokusErrorBanner
+import tech.dokus.app.screens.settings.components.SettingsSkeleton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -100,14 +101,10 @@ internal fun NotificationPreferencesContent(
 ) {
     when (state) {
         NotificationPreferencesState.Loading -> {
-            Box(
-                modifier = modifier
-                    .padding(contentPadding)
-                    .fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                DokusLoader()
-            }
+            SettingsSkeleton(
+                sectionCount = 3,
+                modifier = modifier.padding(contentPadding),
+            )
         }
 
         is NotificationPreferencesState.Content -> {
@@ -119,25 +116,13 @@ internal fun NotificationPreferencesContent(
         }
 
         is NotificationPreferencesState.Error -> {
-            Box(
-                modifier = modifier
-                    .padding(contentPadding)
-                    .fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = state.exception.message
-                            ?: stringResource(Res.string.notification_pref_load_failed),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.error
-                    )
-                    Spacer(Modifier.height(16.dp))
-                    PPrimaryButton(
-                        text = stringResource(Res.string.state_retry),
-                        onClick = { onIntent(NotificationPreferencesIntent.Load) }
-                    )
-                }
+            Column(modifier = modifier.padding(contentPadding)) {
+                DokusErrorBanner(
+                    exception = state.exception,
+                    retryHandler = state.retryHandler,
+                    modifier = Modifier.padding(Constraints.Spacing.large),
+                )
+                SettingsSkeleton(sectionCount = 3)
             }
         }
     }

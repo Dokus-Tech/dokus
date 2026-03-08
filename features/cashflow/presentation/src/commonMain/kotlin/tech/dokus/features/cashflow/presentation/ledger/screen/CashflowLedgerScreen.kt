@@ -64,7 +64,7 @@ import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowLedgerIntent
 import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowLedgerState
 import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowViewMode
 import tech.dokus.features.cashflow.presentation.ledger.mvi.DirectionFilter
-import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.aura.components.common.DokusErrorBanner
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import tech.dokus.foundation.aura.local.LocalScreenSize
@@ -107,13 +107,20 @@ internal fun CashflowLedgerScreen(
             }
 
             is CashflowLedgerState.Error -> {
-                DokusErrorContent(
-                    exception = state.exception,
-                    retryHandler = state.retryHandler,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp)
-                )
+                Column(modifier = Modifier.fillMaxSize()) {
+                    DokusErrorBanner(
+                        exception = state.exception,
+                        retryHandler = state.retryHandler,
+                        modifier = Modifier.padding(16.dp),
+                    )
+                    CashflowLedgerSkeleton(
+                        showHeader = isLargeScreen,
+                        rowCount = 5,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp),
+                    )
+                }
             }
         }
     }
