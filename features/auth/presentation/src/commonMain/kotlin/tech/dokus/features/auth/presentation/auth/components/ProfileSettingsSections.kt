@@ -57,7 +57,6 @@ import tech.dokus.aura.resources.profile_version_footer
 import tech.dokus.aura.resources.profile_resend_verification
 import tech.dokus.aura.resources.profile_save
 import tech.dokus.aura.resources.profile_sessions
-import tech.dokus.aura.resources.state_removing
 import tech.dokus.aura.resources.state_uploading
 import tech.dokus.aura.resources.user_avatar_content_description
 import tech.dokus.domain.Name
@@ -103,8 +102,7 @@ internal fun ProfileHero(
     val initials = userInitials(user)
     val avatarUrl = rememberResolvedApiUrl(user.avatar?.medium)
     val imageLoader = rememberAuthenticatedImageLoader()
-    val isAvatarBusy = avatarState is ProfileSettingsState.AvatarState.Uploading ||
-        avatarState is ProfileSettingsState.AvatarState.Deleting
+    val isAvatarBusy = avatarState is ProfileSettingsState.AvatarState.Uploading
     val uploadProgress = (avatarState as? ProfileSettingsState.AvatarState.Uploading)?.progress
     val editDescription = stringResource(
         if (user.avatar != null) Res.string.action_change else Res.string.action_upload
@@ -175,23 +173,6 @@ private fun ProfileAvatarStateIndicator(
                 )
                 Text(
                     text = stringResource(Res.string.state_uploading),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-            }
-        }
-
-        is ProfileSettingsState.AvatarState.Deleting -> {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.padding(top = 8.dp),
-            ) {
-                CircularProgressIndicator(
-                    modifier = Modifier.height(16.dp).width(16.dp)
-                )
-                Text(
-                    text = stringResource(Res.string.state_removing),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.primary,
                 )
