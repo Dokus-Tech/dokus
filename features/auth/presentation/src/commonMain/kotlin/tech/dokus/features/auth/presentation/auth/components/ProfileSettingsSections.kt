@@ -56,7 +56,7 @@ import tech.dokus.aura.resources.profile_server_label
 import tech.dokus.aura.resources.profile_server_reset_to_cloud
 import tech.dokus.aura.resources.profile_server_url
 import tech.dokus.aura.resources.profile_server_version
-import tech.dokus.aura.resources.profile_sessions_device_count
+import tech.dokus.aura.resources.profile_sessions_description
 import tech.dokus.aura.resources.profile_version_footer
 import tech.dokus.aura.resources.profile_resend_verification
 import tech.dokus.aura.resources.profile_save
@@ -305,7 +305,7 @@ internal fun SecurityCard(
             )
             SettingsRow(
                 label = stringResource(Res.string.profile_sessions),
-                value = stringResource(Res.string.profile_sessions_device_count),
+                value = stringResource(Res.string.profile_sessions_description),
                 chevron = true,
                 showDivider = false,
                 onClick = onMySessions,

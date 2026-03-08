@@ -1,5 +1,6 @@
 package tech.dokus.features.auth.mvi
 
+import kotlinx.datetime.Clock
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
@@ -7,6 +8,7 @@ import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.plugins.init
 import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.domain.exceptions.asDokusException
+import tech.dokus.domain.model.auth.SessionDto
 import tech.dokus.features.auth.usecases.ListSessionsUseCase
 import tech.dokus.features.auth.usecases.RevokeOtherSessionsUseCase
 import tech.dokus.features.auth.usecases.RevokeSessionUseCase
@@ -39,7 +41,11 @@ internal class MySessionsContainer(
     private suspend fun MySessionsCtx.load() {
         listSessionsUseCase().fold(
             onSuccess = { sessions ->
-                updateState { MySessionsState.Loaded(sessions = sessions) }
+                updateState {
+                    MySessionsState.Loaded(
+                        sessions = sessions.onlyActiveSessions()
+                    )
+                }
             },
             onFailure = { error ->
                 logger.e(error) { "Failed to load sessions" }
@@ -60,12 +66,24 @@ internal class MySessionsContainer(
                 this.intent(MySessionsIntent.Load)
             },
             onFailure = { error ->
+                val dokusError = error.asDokusException
                 logger.e(error) { "Failed to revoke session: ${intent.sessionId}" }
+                var keepLoadedState = false
                 updateState {
-                    MySessionsState.Error(
-                        exception = error.asDokusException,
-                        retryHandler = { this@revokeSession.intent(MySessionsIntent.Load) }
-                    )
+                    when (this) {
+                        is MySessionsState.Loaded -> {
+                            keepLoadedState = true
+                            this
+                        }
+
+                        else -> MySessionsState.Error(
+                            exception = dokusError,
+                            retryHandler = { this@revokeSession.intent(MySessionsIntent.Load) }
+                        )
+                    }
+                }
+                if (keepLoadedState) {
+                    action(MySessionsAction.ShowError(dokusError))
                 }
             }
         )
@@ -85,14 +103,38 @@ internal class MySessionsContainer(
                 intent(MySessionsIntent.Load)
             },
             onFailure = { error ->
+                val dokusError = error.asDokusException
                 logger.e(error) { "Failed to revoke other sessions" }
+                var keepLoadedState = false
                 updateState {
-                    MySessionsState.Error(
-                        exception = error.asDokusException,
-                        retryHandler = { intent(MySessionsIntent.Load) }
-                    )
+                    when (this) {
+                        is MySessionsState.Loaded -> {
+                            keepLoadedState = true
+                            copy(isRevokingOthers = false)
+                        }
+
+                        else -> MySessionsState.Error(
+                            exception = dokusError,
+                            retryHandler = { intent(MySessionsIntent.Load) }
+                        )
+                    }
+                }
+                if (keepLoadedState) {
+                    action(MySessionsAction.ShowError(dokusError))
                 }
             }
         )
     }
+}
+
+private fun List<SessionDto>.onlyActiveSessions(nowEpochSeconds: Long = Clock.System.now().epochSeconds): List<SessionDto> {
+    return filter { session ->
+        val expiresAt = session.expiresAt
+        session.revokedAt == null &&
+            (expiresAt == null || expiresAt > nowEpochSeconds)
+    }.sortedWith(
+        compareByDescending<SessionDto> { it.isCurrent }
+            .thenByDescending { it.lastActivityAt ?: it.createdAt ?: 0L }
+            .thenByDescending { it.createdAt ?: 0L }
+    )
 }

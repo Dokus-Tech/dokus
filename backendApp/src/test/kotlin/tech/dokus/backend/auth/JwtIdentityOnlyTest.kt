@@ -2,6 +2,7 @@ package tech.dokus.backend.auth
 
 import com.auth0.jwt.JWT
 import org.junit.jupiter.api.Test
+import tech.dokus.domain.ids.SessionId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.auth.JwtClaims
 import tech.dokus.foundation.backend.config.JwtConfig
@@ -42,24 +43,30 @@ class JwtIdentityOnlyTest {
         val generator = JwtGenerator(config)
         val validator = JwtValidator(config)
         val userId = UserId.generate()
+        val sessionId = SessionId.generate()
         val claims = generator.generateClaims(
             userId = userId,
-            email = "validator@test.dokus"
+            email = "validator@test.dokus",
+            sessionId = sessionId
         )
 
         val token = generator.generateTokens(claims).accessToken
+        val decoded = JWT.decode(token)
         val authInfo = validator.validateAndExtract(token)
 
         assertNotNull(authInfo)
+        assertEquals(sessionId.toString(), decoded.getClaim(JwtClaims.CLAIM_SESSION_ID).asString())
         assertEquals(userId, authInfo.userId)
         assertEquals("validator@test.dokus", authInfo.email)
         assertEquals("validator", authInfo.name)
         assertTrue(authInfo.globalRoles.isEmpty())
+        assertEquals(sessionId, authInfo.sessionId)
         assertEquals(claims.jti, authInfo.sessionJti)
 
         val principal = DokusPrincipal.fromAuthInfo(authInfo)
         assertEquals(userId, principal.userId)
         assertTrue(principal.globalRoles.isEmpty())
+        assertEquals(sessionId, principal.sessionId)
         assertEquals(claims.jti, principal.sessionJti)
     }
 

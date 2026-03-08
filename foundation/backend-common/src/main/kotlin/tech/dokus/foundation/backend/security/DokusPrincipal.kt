@@ -1,6 +1,7 @@
 package tech.dokus.foundation.backend.security
 
 import io.ktor.server.auth.Principal
+import tech.dokus.domain.ids.SessionId
 import tech.dokus.domain.model.auth.JwtFirmMembershipClaim
 import tech.dokus.domain.model.auth.JwtTenantMembershipClaim
 import tech.dokus.domain.ids.UserId
@@ -20,6 +21,7 @@ data class DokusPrincipal(
     val globalRoles: Set<String> = emptySet(),
     val tenantMemberships: List<JwtTenantMembershipClaim> = emptyList(),
     val firmMemberships: List<JwtFirmMembershipClaim> = emptyList(),
+    val sessionId: SessionId? = null,
     val sessionJti: String? = null
 ) : Principal {
 
@@ -40,6 +42,22 @@ data class DokusPrincipal(
     fun hasAllRoles(vararg roles: String): Boolean =
         roles.all { this.globalRoles.contains(it) }
 
+    /**
+     * Resolves the stable session identity for the current request.
+     *
+     * - Modern tokens carry a dedicated [sessionId] claim — returned directly.
+     * - Pre-session-tracking tokens have no session claim; the method falls back
+     *   to parsing [sessionJti] (the JWT's JTI) as a UUID. If the JTI is not a
+     *   valid UUID, `null` is returned.
+     *
+     * Returns `null` when neither source yields a usable session identity.
+     */
+    fun currentSessionId(): SessionId? {
+        return sessionId ?: sessionJti?.let { jti ->
+            runCatching { SessionId(jti) }.getOrNull()
+        }
+    }
+
     companion object {
         /**
          * Create DokusPrincipal from AuthenticationInfo
@@ -52,6 +70,7 @@ data class DokusPrincipal(
                 globalRoles = authInfo.globalRoles,
                 tenantMemberships = authInfo.tenantMemberships,
                 firmMemberships = authInfo.firmMemberships,
+                sessionId = authInfo.sessionId,
                 sessionJti = authInfo.sessionJti
             )
         }

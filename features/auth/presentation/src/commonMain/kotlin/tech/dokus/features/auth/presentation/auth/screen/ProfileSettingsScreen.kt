@@ -4,7 +4,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -15,6 +17,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -59,6 +62,7 @@ fun ProfileSettingsScreen(
     onChangeServer: () -> Unit,
     onResetToCloud: () -> Unit,
     onLogout: () -> Unit,
+    detailPaneContent: (@Composable () -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val isLargeScreen = LocalScreenSize.current.isLarge
@@ -69,19 +73,51 @@ fun ProfileSettingsScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { contentPadding ->
-        ProfileSettingsContent(
-            state = state,
-            currentServer = currentServer,
-            isLoggingOut = isLoggingOut,
-            onIntent = onIntent,
-            onResendVerification = onResendVerification,
-            onChangePassword = onChangePassword,
-            onMySessions = onMySessions,
-            onChangeServer = onChangeServer,
-            onResetToCloud = onResetToCloud,
-            onLogout = onLogout,
-            modifier = modifier.padding(contentPadding)
-        )
+        val contentModifier = modifier.padding(contentPadding)
+        if (isLargeScreen && detailPaneContent != null) {
+            Row(
+                modifier = contentModifier.fillMaxSize()
+            ) {
+                ProfileSettingsContent(
+                    state = state,
+                    currentServer = currentServer,
+                    isLoggingOut = isLoggingOut,
+                    onIntent = onIntent,
+                    onResendVerification = onResendVerification,
+                    onChangePassword = onChangePassword,
+                    onMySessions = onMySessions,
+                    onChangeServer = onChangeServer,
+                    onResetToCloud = onResetToCloud,
+                    onLogout = onLogout,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                )
+                VerticalDivider(modifier = Modifier.padding(vertical = 16.dp))
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .padding(horizontal = 24.dp, vertical = 16.dp)
+                ) {
+                    detailPaneContent()
+                }
+            }
+        } else {
+            ProfileSettingsContent(
+                state = state,
+                currentServer = currentServer,
+                isLoggingOut = isLoggingOut,
+                onIntent = onIntent,
+                onResendVerification = onResendVerification,
+                onChangePassword = onChangePassword,
+                onMySessions = onMySessions,
+                onChangeServer = onChangeServer,
+                onResetToCloud = onResetToCloud,
+                onLogout = onLogout,
+                modifier = contentModifier
+            )
+        }
     }
 }
 
@@ -179,6 +215,49 @@ fun ProfileSettingsContent(
 
             Spacer(Modifier.height(8.dp))
         }
+    }
+}
+
+@OptIn(kotlin.uuid.ExperimentalUuidApi::class)
+@androidx.compose.ui.tooling.preview.Preview(name = "Profile Settings Desktop Split", widthDp = 1366, heightDp = 900)
+@Composable
+private fun ProfileSettingsDesktopSplitPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
+    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+) {
+    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+        ProfileSettingsScreen(
+            state = ProfileSettingsState.Viewing(
+                user = tech.dokus.domain.model.User(
+                    id = tech.dokus.domain.ids.UserId(kotlin.uuid.Uuid.parse("00000000-0000-0000-0000-000000000001")),
+                    email = tech.dokus.domain.Email("john@dokus.tech"),
+                    firstName = tech.dokus.domain.Name("John"),
+                    lastName = tech.dokus.domain.Name("Doe"),
+                    emailVerified = true,
+                    createdAt = kotlinx.datetime.LocalDateTime(2025, 1, 1, 0, 0),
+                    updatedAt = kotlinx.datetime.LocalDateTime(2025, 1, 1, 0, 0),
+                ),
+            ),
+            currentServer = ServerConfig.Cloud,
+            isLoggingOut = false,
+            snackbarHostState = androidx.compose.runtime.remember { SnackbarHostState() },
+            onIntent = {},
+            onResendVerification = {},
+            onChangePassword = {},
+            onMySessions = {},
+            onChangeServer = {},
+            onResetToCloud = {},
+            onLogout = {},
+            detailPaneContent = {
+                MySessionsContent(
+                    state = tech.dokus.features.auth.mvi.MySessionsState.Loaded(
+                        sessions = previewSessions()
+                    ),
+                    onIntent = {},
+                )
+            }
+        )
     }
 }
 

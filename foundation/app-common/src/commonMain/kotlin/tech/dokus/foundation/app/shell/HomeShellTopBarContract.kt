@@ -18,6 +18,8 @@ data class HomeShellTopBarConfig(
 )
 
 sealed interface HomeShellTopBarMode {
+    data object Transparent : HomeShellTopBarMode
+
     data class Title(
         val title: String,
         val subtitle: String? = null,

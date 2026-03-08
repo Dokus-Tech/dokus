@@ -6,6 +6,7 @@ import tech.dokus.domain.Email
 import tech.dokus.domain.LegalName
 import tech.dokus.domain.Name
 import tech.dokus.domain.Password
+import tech.dokus.domain.currentDeviceType
 import tech.dokus.domain.enums.Language
 import tech.dokus.domain.enums.SubscriptionTier
 import tech.dokus.domain.enums.TenantType
@@ -454,6 +455,7 @@ class AuthRepository(
 
         val request = RefreshTokenRequest(
             refreshToken = refreshToken,
+            deviceType = currentDeviceType(),
             tenantId = tenantId
         )
         return identityDataSource.refreshToken(request)

@@ -2,10 +2,9 @@ package tech.dokus.domain.model.auth
 
 import kotlinx.serialization.Serializable
 import tech.dokus.domain.DeviceType
-import tech.dokus.domain.Email
 import tech.dokus.domain.Name
 import tech.dokus.domain.Password
-import tech.dokus.domain.current
+import tech.dokus.domain.Email
 import tech.dokus.domain.ids.TenantId
 
 @Serializable
@@ -13,7 +12,7 @@ data class LoginRequest(
     val email: Email,
     val password: Password,
     val rememberMe: Boolean = true,
-    val deviceType: DeviceType = DeviceType.current,
+    val deviceType: DeviceType? = null,
 )
 
 @Serializable
@@ -27,7 +26,7 @@ data class LoginResponse(
 @Serializable
 data class RefreshTokenRequest(
     val refreshToken: String,
-    val deviceType: DeviceType = DeviceType.current,
+    val deviceType: DeviceType? = null,
     val tenantId: TenantId? = null,
 )
 
@@ -48,6 +47,7 @@ data class RegisterRequest(
     val password: Password,
     val firstName: Name,
     val lastName: Name,
+    val deviceType: DeviceType? = null,
 )
 
 @Serializable
@@ -75,7 +75,8 @@ data class UpdateProfileRequest(
  */
 @Serializable
 data class SelectTenantRequest(
-    val tenantId: TenantId
+    val tenantId: TenantId,
+    val deviceType: DeviceType? = null,
 )
 
 /**

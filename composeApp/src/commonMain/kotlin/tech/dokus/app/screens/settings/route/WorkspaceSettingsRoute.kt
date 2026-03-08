@@ -19,7 +19,12 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.settings_saved_successfully
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.foundation.app.mvi.container
+import tech.dokus.foundation.app.shell.HomeShellTopBarConfig
+import tech.dokus.foundation.app.shell.HomeShellTopBarMode
+import tech.dokus.foundation.app.shell.RegisterHomeShellTopBar
 import tech.dokus.foundation.aura.extensions.localized
+import tech.dokus.navigation.destinations.HomeDestination
+import tech.dokus.navigation.destinations.route
 
 @Composable
 internal fun WorkspaceSettingsRoute(
@@ -28,6 +33,13 @@ internal fun WorkspaceSettingsRoute(
     val snackbarHostState = remember { SnackbarHostState() }
     var pendingSuccess by remember { mutableStateOf<WorkspaceSettingsSuccess?>(null) }
     var pendingError by remember { mutableStateOf<DokusException?>(null) }
+
+    RegisterHomeShellTopBar(
+        route = HomeDestination.WorkspaceDetails.route,
+        config = remember {
+            HomeShellTopBarConfig(mode = HomeShellTopBarMode.Transparent)
+        }
+    )
 
     val successMessage = pendingSuccess?.let { success ->
         when (success) {
