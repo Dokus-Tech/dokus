@@ -9,21 +9,24 @@ import tech.dokus.domain.exceptions.DokusException
  * Provides concrete implementations of the four DokusState variants. The base class exposes
  * `dataOrNull` for convenient access to data regardless of state (null in non-Success states).
  */
-sealed class DokusStateSimple<DataType>(val dataOrNull: DataType? = null) : DokusState<DataType> {
-    data class Idle<DataType>(private val nothing: Any? = null) :
+sealed class DokusStateSimple<DataType> : DokusState<DataType> {
+    data class Idle<DataType>(override val lastData: DataType? = null) :
         DokusStateSimple<DataType>(),
         DokusState.Idle<DataType>
 
-    data class Loading<DataType>(private val nothing: Any? = null) :
+    data class Loading<DataType>(override val lastData: DataType? = null) :
         DokusStateSimple<DataType>(),
         DokusState.Loading<DataType>
 
     data class Success<DataType>(override val data: DataType) :
-        DokusStateSimple<DataType>(data),
-        DokusState.Success<DataType>
+        DokusStateSimple<DataType>(),
+        DokusState.Success<DataType> {
+        override val lastData: DataType? = data
+    }
 
     data class Error<DataType>(
         override val exception: DokusException,
         override val retryHandler: RetryHandler,
+        override val lastData: DataType?
     ) : DokusStateSimple<DataType>(), DokusState.Error<DataType>
 }

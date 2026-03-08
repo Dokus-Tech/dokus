@@ -19,7 +19,7 @@ private fun DocumentsDesktopUploadHeaderPreview(
     @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
 ) {
     TestWrapper(parameters) {
-        DocumentsContent(
+        DocumentsScreen(
             state = previewContentState(),
             localUploadRows = previewLocalRows(),
             isDesktopDropTargetActive = false,
@@ -40,7 +40,7 @@ private fun DocumentsDesktopDropOverlayPreview(
     @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
 ) {
     TestWrapper(parameters) {
-        DocumentsContent(
+        DocumentsScreen(
             state = previewContentState(),
             localUploadRows = previewLocalRows(),
             isDesktopDropTargetActive = true,
@@ -61,7 +61,7 @@ private fun DocumentsMobileFabPreview(
     @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
 ) {
     TestWrapper(parameters) {
-        DocumentsContent(
+        DocumentsScreen(
             state = previewContentState(),
             localUploadRows = previewLocalRows(),
             isDesktopDropTargetActive = false,

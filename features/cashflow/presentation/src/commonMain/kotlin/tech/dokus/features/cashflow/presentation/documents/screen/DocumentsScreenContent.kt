@@ -18,6 +18,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -35,7 +38,6 @@ import tech.dokus.aura.resources.documents_filter_no_match
 import tech.dokus.aura.resources.documents_upload
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.DocumentRecordDto
-import tech.dokus.foundation.aura.components.common.DokusEmptyState
 import tech.dokus.features.cashflow.presentation.common.components.pagination.rememberLoadMoreTrigger
 import tech.dokus.features.cashflow.presentation.common.components.table.DokusTableDivider
 import tech.dokus.features.cashflow.presentation.common.components.table.DokusTableSurface
@@ -51,6 +53,7 @@ import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentFilter
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsIntent
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsState
 import tech.dokus.foundation.aura.components.PPrimaryButton
+import tech.dokus.foundation.aura.components.common.DokusEmptyState
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import tech.dokus.foundation.aura.local.LocalScreenSize
@@ -61,8 +64,9 @@ private sealed interface DocumentsDisplayRow {
 }
 
 @Composable
-internal fun DocumentsContent(
-    state: DocumentsState.Content,
+internal fun DocumentsScreen(
+    state: DocumentsState,
+    snackbarHostState: SnackbarHostState,
     localUploadRows: List<DocumentsLocalUploadRow>,
     isDesktopDropTargetActive: Boolean,
     desktopDropScrollToken: Int,
@@ -105,105 +109,111 @@ internal fun DocumentsContent(
 
     LaunchedEffect(desktopDropScrollToken, isLargeScreen, displayRows.size) {
         val shouldScroll = isLargeScreen &&
-            desktopDropScrollToken > handledDropScrollToken &&
-            displayRows.isNotEmpty()
+                desktopDropScrollToken > handledDropScrollToken &&
+                displayRows.isNotEmpty()
         if (shouldScroll) {
             listState.animateScrollToItem(0)
             handledDropScrollToken = desktopDropScrollToken
         }
     }
 
-    Box(modifier = modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            DocumentsToolbar(
-                state = state,
-                totalCount = totalCount,
-                isLargeScreen = isLargeScreen,
-                onIntent = onIntent,
-                onUploadClick = onUploadClick
-            )
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        modifier = modifier
+    ) {
 
-            when {
-                displayRows.isEmpty() && state.isRefreshing -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        DokusLoader(size = DokusLoaderSize.Small)
+        Box(modifier = modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(top = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                DocumentsToolbar(
+                    state = state,
+                    totalCount = totalCount,
+                    isLargeScreen = isLargeScreen,
+                    onIntent = onIntent,
+                    onUploadClick = onUploadClick
+                )
+
+                when {
+                    displayRows.isEmpty() && state.isRefreshing -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            DokusLoader(size = DokusLoaderSize.Small)
+                        }
                     }
-                }
 
-                displayRows.isEmpty() &&
-                    state.filter == DocumentFilter.All -> {
-                    DokusEmptyState(
-                        title = stringResource(Res.string.documents_empty_title),
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
-
-                displayRows.isEmpty() -> {
-                    DokusEmptyState(
-                        title = stringResource(Res.string.documents_filter_no_match),
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
-
-                else -> {
-                    if (isLargeScreen) {
-                        DesktopDocumentsTable(
-                            displayRows = displayRows,
-                            listState = listState,
-                            isLoadingMore = state.documents.isLoadingMore,
-                            isRefreshing = state.isRefreshing,
-                            isDropTargetActive = isDesktopDropTargetActive,
-                            dropHintText = stringResource(Res.string.documents_drop_to_upload),
-                            onOpenDocument = { documentId ->
-                                onIntent(DocumentsIntent.OpenDocument(documentId))
-                            },
-                            onRetryLocalUpload = onRetryLocalUpload,
-                            onDismissLocalUpload = onDismissLocalUpload,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(horizontal = 16.dp)
-                                .padding(bottom = 16.dp)
+                    displayRows.isEmpty() &&
+                            state.filter == DocumentFilter.All -> {
+                        DokusEmptyState(
+                            title = stringResource(Res.string.documents_empty_title),
+                            modifier = Modifier.fillMaxSize()
                         )
-                    } else {
-                        MobileDocumentsList(
-                            displayRows = displayRows,
-                            listState = listState,
-                            isLoadingMore = state.documents.isLoadingMore,
-                            isRefreshing = state.isRefreshing,
-                            onOpenDocument = { documentId ->
-                                onIntent(DocumentsIntent.OpenDocument(documentId))
-                            },
-                            onRetryLocalUpload = onRetryLocalUpload,
-                            onDismissLocalUpload = onDismissLocalUpload,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(horizontal = 16.dp)
+                    }
+
+                    displayRows.isEmpty() -> {
+                        DokusEmptyState(
+                            title = stringResource(Res.string.documents_filter_no_match),
+                            modifier = Modifier.fillMaxSize()
                         )
+                    }
+
+                    else -> {
+                        if (isLargeScreen) {
+                            DesktopDocumentsTable(
+                                displayRows = displayRows,
+                                listState = listState,
+                                isLoadingMore = state.documents.isLoadingMore,
+                                isRefreshing = state.isRefreshing,
+                                isDropTargetActive = isDesktopDropTargetActive,
+                                dropHintText = stringResource(Res.string.documents_drop_to_upload),
+                                onOpenDocument = { documentId ->
+                                    onIntent(DocumentsIntent.OpenDocument(documentId))
+                                },
+                                onRetryLocalUpload = onRetryLocalUpload,
+                                onDismissLocalUpload = onDismissLocalUpload,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(horizontal = 16.dp)
+                                    .padding(bottom = 16.dp)
+                            )
+                        } else {
+                            MobileDocumentsList(
+                                displayRows = displayRows,
+                                listState = listState,
+                                isLoadingMore = state.documents.isLoadingMore,
+                                isRefreshing = state.isRefreshing,
+                                onOpenDocument = { documentId ->
+                                    onIntent(DocumentsIntent.OpenDocument(documentId))
+                                },
+                                onRetryLocalUpload = onRetryLocalUpload,
+                                onDismissLocalUpload = onDismissLocalUpload,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(horizontal = 16.dp)
+                            )
+                        }
                     }
                 }
             }
-        }
 
-        if (!isLargeScreen) {
-            FloatingActionButton(
-                onClick = onMobileFabClick,
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(horizontal = 20.dp, vertical = 24.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = stringResource(Res.string.documents_upload),
-                    modifier = Modifier.size(20.dp)
-                )
+            if (!isLargeScreen) {
+                FloatingActionButton(
+                    onClick = onMobileFabClick,
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(horizontal = 20.dp, vertical = 24.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = stringResource(Res.string.documents_upload),
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
         }
     }

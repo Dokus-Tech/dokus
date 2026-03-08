@@ -1,19 +1,18 @@
-@file:Suppress("TooManyFunctions")
-
 package tech.dokus.features.cashflow.presentation.documents.mvi
 
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
-import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.init
 import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.domain.enums.DocumentListFilter
 import tech.dokus.domain.exceptions.asDokusException
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.features.cashflow.usecases.LoadDocumentRecordsUseCase
+import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.platform.Logger
 
 internal typealias DocumentsCtx = PipelineContext<DocumentsState, DocumentsIntent, DocumentsAction>
@@ -31,22 +30,14 @@ internal class DocumentsContainer(
 
     private val logger = Logger.forClass<DocumentsContainer>()
 
-    private var loadedDocuments: List<DocumentRecordDto> = emptyList()
-    private var paginationInfo = PaginationInfo()
-    private var currentFilter: DocumentFilter = DocumentFilter.All
-    private var needsAttentionCount: Int = 0
-    private var confirmedCount: Int = 0
-
     override val store: Store<DocumentsState, DocumentsIntent, DocumentsAction> =
-        store(DocumentsState.Loading) {
-            init {
-                handleRefresh(forceGlobalLoading = true)
-            }
+        store(DocumentsState.initial) {
+            init { handleRefresh() }
 
             reduce { intent ->
                 when (intent) {
-                    is DocumentsIntent.Refresh -> handleRefresh(forceGlobalLoading = false)
-                    is DocumentsIntent.ExternalDocumentsChanged -> handleRefresh(forceGlobalLoading = false)
+                    is DocumentsIntent.Refresh -> handleRefresh()
+                    is DocumentsIntent.ExternalDocumentsChanged -> handleRefresh()
                     is DocumentsIntent.LoadMore -> handleLoadMore()
                     is DocumentsIntent.UpdateFilter -> handleUpdateFilter(intent.filter)
                     is DocumentsIntent.OpenDocument -> handleOpenDocument(intent.documentId)
@@ -54,208 +45,141 @@ internal class DocumentsContainer(
             }
         }
 
-    private suspend fun DocumentsCtx.handleRefresh(forceGlobalLoading: Boolean) {
-        logger.d { "Refreshing documents" }
+    private suspend fun DocumentsCtx.handleRefresh() {
+        withState {
+            logger.d { "Refreshing documents" }
+            updateState { copy(documents = documents.asLoading) }
 
-        // Safe: intents are processed sequentially (parallelIntents = false)
-        var previousContent: DocumentsState.Content? = null
-        withState<DocumentsState.Content, _> {
-            previousContent = this
-        }
+            val needsAttentionCount = loadNeedsAttentionCount()
+            val confirmedCount = loadConfirmedCount()
 
-        val hasContent = previousContent != null
-        val showGlobalLoading = forceGlobalLoading || !hasContent
-
-        if (showGlobalLoading) {
-            updateState { DocumentsState.Loading }
-        } else {
-            val contentToRefresh = requireNotNull(previousContent)
-            updateState {
-                contentToRefresh.copy(isRefreshing = true)
-            }
-        }
-
-        val previousDocuments = loadedDocuments
-        val previousPaginationInfo = paginationInfo
-        val previousNeedsAttentionCount = needsAttentionCount
-        val previousConfirmedCount = confirmedCount
-
-        needsAttentionCount = loadNeedsAttentionCount()
-        confirmedCount = loadConfirmedCount()
-        loadDocumentRecords(
-            page = 0,
-            pageSize = PAGE_SIZE,
-            filter = currentFilter.toListFilter(),
-        ).fold(
-            onSuccess = { response ->
-                loadedDocuments = response.items
-                paginationInfo = paginationInfo.copy(
-                    currentPage = 0,
-                    isLoadingMore = false,
-                    hasMorePages = response.hasMore
-                )
-                updateState {
-                    DocumentsState.Content(
-                        documents = buildPaginationState(),
-                        filter = currentFilter,
-                        needsAttentionCount = this@DocumentsContainer.needsAttentionCount,
-                        confirmedCount = this@DocumentsContainer.confirmedCount,
-                        isRefreshing = false,
-                    )
-                }
-            },
-            onFailure = { error ->
-                logger.e(error) { "Failed to load documents" }
-                val dokusError = error.asDokusException
-                if (showGlobalLoading) {
-                    updateState {
-                        DocumentsState.Error(
-                            exception = dokusError,
-                            retryHandler = { intent(DocumentsIntent.Refresh) }
-                        )
-                    }
-                } else {
-                    loadedDocuments = previousDocuments
-                    paginationInfo = previousPaginationInfo
-                    needsAttentionCount = previousNeedsAttentionCount
-                    confirmedCount = previousConfirmedCount
-                    val contentToRestore = requireNotNull(previousContent)
-                    updateState {
-                        contentToRestore.copy(
-                            documents = buildPaginationState(),
-                            needsAttentionCount = this@DocumentsContainer.needsAttentionCount,
-                            confirmedCount = this@DocumentsContainer.confirmedCount,
-                            isRefreshing = false
-                        )
-                    }
-                    action(DocumentsAction.ShowError(dokusError))
-                }
-            }
-        )
-    }
-
-    private suspend fun DocumentsCtx.handleLoadMore() {
-        withState<DocumentsState.Content, _> {
-            if (paginationInfo.isLoadingMore || !paginationInfo.hasMorePages) return@withState
-
-            paginationInfo = paginationInfo.copy(isLoadingMore = true)
-            updateState { copy(documents = buildPaginationState()) }
-
-            val nextPage = paginationInfo.currentPage + 1
-            loadDocumentRecords(
-                page = nextPage,
-                pageSize = PAGE_SIZE,
-                filter = filter.toListFilter(),
-            ).fold(
-                onSuccess = { response ->
-                    loadedDocuments = loadedDocuments + response.items
-                    paginationInfo = paginationInfo.copy(
-                        currentPage = nextPage,
-                        isLoadingMore = false,
-                        hasMorePages = response.hasMore
-                    )
-                    updateState {
-                        copy(
-                            documents = buildPaginationState(),
-                            needsAttentionCount = this@DocumentsContainer.needsAttentionCount,
-                            confirmedCount = this@DocumentsContainer.confirmedCount
-                        )
-                    }
-                },
-                onFailure = { error ->
-                    logger.e(error) { "Failed to load more documents" }
-                    paginationInfo = paginationInfo.copy(
-                        isLoadingMore = false,
-                        hasMorePages = false
-                    )
-                    updateState { copy(documents = buildPaginationState()) }
-                }
-            )
-        }
-    }
-
-    private suspend fun DocumentsCtx.handleUpdateFilter(filter: DocumentFilter) {
-        val previousFilter = currentFilter
-        val previousDocuments = loadedDocuments
-        val previousPaginationInfo = paginationInfo
-
-        withState<DocumentsState.Content, _> {
-            currentFilter = filter
             updateState {
                 copy(
-                    filter = filter,
-                    isRefreshing = true
+                    needsAttentionCount = needsAttentionCount,
+                    confirmedCount = confirmedCount
                 )
             }
-
-            this@DocumentsContainer.needsAttentionCount = loadNeedsAttentionCount()
-            this@DocumentsContainer.confirmedCount = loadConfirmedCount()
             loadDocumentRecords(
                 page = 0,
                 pageSize = PAGE_SIZE,
                 filter = filter.toListFilter(),
             ).fold(
                 onSuccess = { response ->
-                    loadedDocuments = response.items
-                    paginationInfo = paginationInfo.copy(
-                        currentPage = 0,
-                        isLoadingMore = false,
-                        hasMorePages = response.hasMore
+                    val documents = DokusState.success(
+                        PaginationState(
+                            data = response.items,
+                            hasMorePages = response.hasMore,
+                            currentPage = 0,
+                            pageSize = PAGE_SIZE,
+                        )
                     )
                     updateState {
-                        copy(
-                            documents = buildPaginationState(),
-                            filter = filter,
-                            needsAttentionCount = this@DocumentsContainer.needsAttentionCount,
-                            confirmedCount = this@DocumentsContainer.confirmedCount,
-                            isRefreshing = false
-                        )
+                        copy(documents = documents)
                     }
                 },
                 onFailure = { error ->
-                    logger.e(error) { "Failed to filter documents" }
-                    currentFilter = previousFilter
-                    loadedDocuments = previousDocuments
-                    paginationInfo = previousPaginationInfo
+                    logger.e(error) { "Failed to load documents" }
+                    val dokusError = error.asDokusException
                     updateState {
                         copy(
-                            documents = buildPaginationState(),
-                            filter = previousFilter,
-                            needsAttentionCount = this@DocumentsContainer.needsAttentionCount,
-                            confirmedCount = this@DocumentsContainer.confirmedCount,
-                            isRefreshing = false
+                            documents = DokusState.error(
+                                exception = dokusError,
+                                retryHandler = { intent(DocumentsIntent.Refresh) },
+                                lastData = documents.lastData
+                            )
                         )
                     }
-                    action(DocumentsAction.ShowError(error.asDokusException))
                 }
             )
         }
     }
 
-    private suspend fun DocumentsCtx.handleOpenDocument(documentId: tech.dokus.domain.ids.DocumentId) {
-        action(
-            DocumentsAction.NavigateToDocumentReview(
-                documentId = documentId,
-                sourceFilter = currentFilter,
+    private suspend fun DocumentsCtx.handleLoadMore() {
+        withState {
+            // Only success state can load data. Otherwise, it's error or already loading
+            val paginationState =
+                documents.let { if (it.isSuccess()) it.data else return@withState }
+
+            updateState { copy(documents = documents.asLoading) }
+
+            val nextPage = paginationState.currentPage + 1
+            loadDocumentRecords(
+                page = nextPage,
+                pageSize = PAGE_SIZE,
+                filter = filter.toListFilter(),
+            ).fold(
+                onSuccess = { response ->
+                    val documents = DokusState.success(
+                        PaginationState(
+                            data = paginationState.data + response.items,
+                            hasMorePages = response.hasMore,
+                            currentPage = nextPage,
+                            pageSize = PAGE_SIZE,
+                        )
+                    )
+                    updateState { copy(documents = documents) }
+                },
+                onFailure = { error ->
+                    logger.e(error) { "Failed to load more documents" }
+                    val dokusError = error.asDokusException
+                    updateState {
+                        copy(
+                            documents = DokusState.error(
+                                exception = dokusError,
+                                retryHandler = { intent(DocumentsIntent.Refresh) },
+                                lastData = documents.lastData
+                            )
+                        )
+                    }
+                }
             )
-        )
+        }
     }
 
-    private fun buildPaginationState(): PaginationState<DocumentRecordDto> {
-        return PaginationState(
-            data = loadedDocuments,
-            currentPage = paginationInfo.currentPage,
+    private suspend fun DocumentsCtx.handleUpdateFilter(filter: DocumentFilter) {
+        updateState {
+            copy(documents = documents.asLoading, filter = filter)
+        }
+
+        loadDocumentRecords(
+            page = 0,
             pageSize = PAGE_SIZE,
-            hasMorePages = paginationInfo.hasMorePages,
-            isLoadingMore = paginationInfo.isLoadingMore
+            filter = filter.toListFilter(),
+        ).fold(
+            onSuccess = { response ->
+                val documents = DokusState.success(
+                    PaginationState(
+                        data = response.items,
+                        hasMorePages = response.hasMore,
+                        currentPage = 0,
+                        pageSize = PAGE_SIZE,
+                    )
+                )
+                updateState {
+                    copy(documents = documents)
+                }
+            },
+            onFailure = { error ->
+                logger.e(error) { "Failed to load documents" }
+                val dokusError = error.asDokusException
+                updateState {
+                    copy(
+                        documents = DokusState.error(
+                            exception = dokusError,
+                            retryHandler = { intent(DocumentsIntent.Refresh) },
+                            lastData = documents.lastData
+                        )
+                    )
+                }
+            }
         )
     }
 
-    private data class PaginationInfo(
-        val currentPage: Int = 0,
-        val isLoadingMore: Boolean = false,
-        val hasMorePages: Boolean = true
-    )
+    private suspend fun DocumentsCtx.handleOpenDocument(documentId: DocumentId) {
+        withState {
+            action(DocumentsAction.NavigateToDocumentReview(documentId, filter))
+        }
+    }
 
     private fun DocumentFilter.toListFilter(): DocumentListFilter = when (this) {
         DocumentFilter.All -> DocumentListFilter.All
@@ -268,7 +192,7 @@ internal class DocumentsContainer(
             page = 0,
             pageSize = 1,
             filter = DocumentListFilter.NeedsAttention
-        ).getOrNull() ?: return needsAttentionCount
+        ).getOrElse { return 0 }
 
         return response.total.coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
     }
@@ -278,7 +202,7 @@ internal class DocumentsContainer(
             page = 0,
             pageSize = 1,
             filter = DocumentListFilter.Confirmed
-        ).getOrNull() ?: return confirmedCount
+        ).getOrElse { return 0 }
 
         return response.total.coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
     }
