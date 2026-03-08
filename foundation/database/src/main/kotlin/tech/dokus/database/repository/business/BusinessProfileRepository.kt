@@ -9,6 +9,7 @@ import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.upsert
 import tech.dokus.database.tables.business.BusinessProfilesTable
@@ -79,6 +80,20 @@ class BusinessProfileRepository {
             .associate { row ->
                 row[BusinessProfilesTable.subjectId].toKotlinUuid() to row.toRecord(tenantId)
             }
+    }
+
+    suspend fun getLogoStorageKey(
+        subjectType: BusinessProfileSubjectType,
+        subjectId: Uuid,
+    ): String? = dbQuery {
+        BusinessProfilesTable
+            .select(BusinessProfilesTable.logoStorageKey)
+            .where {
+                (BusinessProfilesTable.subjectType eq subjectType) and
+                    (BusinessProfilesTable.subjectId eq subjectId.toJavaUuid())
+            }
+            .singleOrNull()
+            ?.get(BusinessProfilesTable.logoStorageKey)
     }
 
     suspend fun upsert(record: BusinessProfileRecord): Unit = dbQuery {

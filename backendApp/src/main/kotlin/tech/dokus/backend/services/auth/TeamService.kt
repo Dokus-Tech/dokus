@@ -48,22 +48,22 @@ class TeamService(
         val usersInTenant = userRepository.listByTenant(tenantId, activeOnly = true)
         val avatarKeys = userRepository.getAvatarStorageKeys(usersInTenant.map { it.user.id })
 
-        return usersInTenant.map { userInTenant ->
-            val avatar = if (userInTenant.user.id in avatarKeys) {
-                buildUserAvatarThumbnail(userInTenant.user.id)
-            } else {
-                null
+        return buildList {
+            for (userInTenant in usersInTenant) {
+                add(
+                    TeamMember(
+                        userId = userInTenant.user.id,
+                        email = userInTenant.user.email,
+                        firstName = userInTenant.user.firstName,
+                        lastName = userInTenant.user.lastName,
+                        role = userInTenant.role,
+                        joinedAt = userInTenant.user.createdAt, // TODO: Use membership createdAt
+                        lastActiveAt = userInTenant.user.lastLoginAt,
+                        avatar = avatarKeys[userInTenant.user.id]
+                            ?.let { buildUserAvatarThumbnail(userInTenant.user.id, it) }
+                    )
+                )
             }
-            TeamMember(
-                userId = userInTenant.user.id,
-                email = userInTenant.user.email,
-                firstName = userInTenant.user.firstName,
-                lastName = userInTenant.user.lastName,
-                role = userInTenant.role,
-                joinedAt = userInTenant.user.createdAt, // TODO: Use membership createdAt
-                lastActiveAt = userInTenant.user.lastLoginAt,
-                avatar = avatar
-            )
         }
     }
 

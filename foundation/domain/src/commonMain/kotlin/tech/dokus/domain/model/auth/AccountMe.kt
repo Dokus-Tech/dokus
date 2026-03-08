@@ -10,6 +10,7 @@ import tech.dokus.domain.ids.FirmId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.User
+import tech.dokus.domain.model.common.Thumbnail
 
 @Serializable
 enum class AppSurface {
@@ -37,6 +38,7 @@ data class TenantWorkspaceSummary(
     val vatNumber: VatNumber,
     val role: UserRole,
     val type: TenantType,
+    val avatar: Thumbnail? = null,
 )
 
 @Serializable

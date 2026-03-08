@@ -54,7 +54,7 @@ import kotlin.uuid.ExperimentalUuidApi
 class AvatarRoutesTenantScopedTest {
 
     @Test
-    fun `tenant-scoped avatar endpoint succeeds for active member without tenant header`() = avatarRoutesTestApplication(
+    fun `tenant avatar image endpoint is public`() = avatarRoutesTestApplication(
         userRepository = mockk(),
         tenantRepository = mockk(),
         avatarStorageService = mockk(),
@@ -62,16 +62,15 @@ class AvatarRoutesTenantScopedTest {
     ) { userRepository, tenantRepository, avatarStorageService, _ ->
         val tenantId = TenantId.generate()
         val imageBytes = byteArrayOf(1, 2, 3, 4)
-        coEvery { userRepository.getMembership(TEST_USER_ID, tenantId) } returns membership(tenantId)
         every { avatarStorageService.normalizeSize("small") } returns "small"
         coEvery { tenantRepository.getAvatarStorageKey(tenantId) } returns "avatars/test"
         coEvery { avatarStorageService.getAvatarBytes("avatars/test", "small") } returns imageBytes
 
-        val response = authenticatedGet("/api/v1/tenants/$tenantId/avatar/small.webp")
+        val response = unauthenticatedGet("/api/v1/tenants/$tenantId/avatar/small.webp")
 
         assertEquals(HttpStatusCode.OK, response.status)
         assertContentEquals(imageBytes, response.bodyAsBytes())
-        coVerify(exactly = 1) { userRepository.getMembership(TEST_USER_ID, tenantId) }
+        coVerify(exactly = 0) { userRepository.getMembership(any(), any()) }
         coVerify(exactly = 1) { tenantRepository.getAvatarStorageKey(tenantId) }
     }
 
@@ -87,23 +86,23 @@ class AvatarRoutesTenantScopedTest {
         coEvery { tenantRepository.getAvatarStorageKey(tenantId) } returns "avatars/tenants/$tenantId/test"
         coEvery { avatarStorageService.avatarExists("avatars/tenants/$tenantId/test") } returns true
         every {
-            businessProfileService.buildTenantAvatarThumbnail(tenantId)
+            businessProfileService.buildTenantAvatarThumbnail(tenantId, "avatars/tenants/$tenantId/test")
         } returns Thumbnail(
-            small = "/api/v1/tenants/$tenantId/avatar/small.webp",
-            medium = "/api/v1/tenants/$tenantId/avatar/medium.webp",
-            large = "/api/v1/tenants/$tenantId/avatar/large.webp"
+            small = "/api/v1/tenants/$tenantId/avatar/small.webp?v=test",
+            medium = "/api/v1/tenants/$tenantId/avatar/medium.webp?v=test",
+            large = "/api/v1/tenants/$tenantId/avatar/large.webp?v=test"
         )
 
         val response = authenticatedGet("/api/v1/tenants/$tenantId/avatar")
 
         assertEquals(HttpStatusCode.OK, response.status)
-        assertTrue(response.bodyAsText().contains("/api/v1/tenants/$tenantId/avatar/small.webp"))
+        assertTrue(response.bodyAsText().contains("/api/v1/tenants/$tenantId/avatar/small.webp?v=test"))
         coVerify(exactly = 1) { userRepository.getMembership(TEST_USER_ID, tenantId) }
         coVerify(exactly = 1) { tenantRepository.getAvatarStorageKey(tenantId) }
     }
 
     @Test
-    fun `tenant-scoped avatar endpoint returns forbidden for non-member`() = avatarRoutesTestApplication(
+    fun `tenant avatar metadata endpoint returns forbidden for non-member`() = avatarRoutesTestApplication(
         userRepository = mockk(),
         tenantRepository = mockk(),
         avatarStorageService = mockk(),
@@ -112,7 +111,7 @@ class AvatarRoutesTenantScopedTest {
         val tenantId = TenantId.generate()
         coEvery { userRepository.getMembership(TEST_USER_ID, tenantId) } returns null
 
-        val response = authenticatedGet("/api/v1/tenants/$tenantId/avatar/small.webp")
+        val response = authenticatedGet("/api/v1/tenants/$tenantId/avatar")
 
         assertEquals(HttpStatusCode.Forbidden, response.status)
         coVerify(exactly = 0) { tenantRepository.getAvatarStorageKey(any()) }
@@ -205,6 +204,8 @@ class AvatarRoutesTenantScopedTest {
     private suspend fun ApplicationTestBuilder.authenticatedGet(path: String) = client.get(path) {
         header(HttpHeaders.Authorization, "Bearer ${testAccessToken()}")
     }
+
+    private suspend fun ApplicationTestBuilder.unauthenticatedGet(path: String) = client.get(path)
 
     private fun membership(
         tenantId: TenantId,

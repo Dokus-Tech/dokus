@@ -44,7 +44,8 @@ import kotlin.uuid.ExperimentalUuidApi
  * - Peppol-specific operations
  * - Contact statistics
  *
- * All routes require JWT authentication and tenant context.
+ * Most routes require JWT authentication and tenant context.
+ * Public avatar image routes are served without authentication.
  */
 @OptIn(ExperimentalUuidApi::class)
 fun Route.contactRoutes() {
@@ -55,6 +56,37 @@ fun Route.contactRoutes() {
     val peppolResolver by inject<PeppolRecipientResolver>()
     val businessProfileService by inject<BusinessProfileService>()
     val avatarStorageService by inject<AvatarStorageService>()
+
+    /**
+     * GET /api/v1/contacts/{id}/avatar/{size}.webp
+     * Stream a contact avatar image from backend storage.
+     */
+    get<Contacts.Id.Avatar> { route ->
+        val contactId = ContactId.parse(route.parent.id)
+        val size = avatarStorageService.normalizeSize(route.size)
+            ?: throw DokusException.BadRequest("Avatar size must be one of: small, medium, large")
+
+        val storageKey = businessProfileService.getLogoStorageKey(
+            subjectType = BusinessProfileSubjectType.Contact,
+            subjectId = contactId.value
+        ) ?: throw DokusException.NotFound("Avatar not found")
+
+        val imageBytes = avatarStorageService.getAvatarBytes(storageKey, size)
+        if (imageBytes == null) {
+            logger.debug(
+                "Missing public contact avatar object for contact={}, size={}, reason=storage_missing",
+                contactId,
+                size
+            )
+            throw DokusException.NotFound("Avatar not found")
+        }
+
+        call.respondBytes(
+            bytes = imageBytes,
+            contentType = ContentType("image", "webp"),
+            status = HttpStatusCode.OK
+        )
+    }
 
     authenticateJwt {
         // ================================================================
@@ -196,44 +228,6 @@ fun Route.contactRoutes() {
                 ?: throw DokusException.NotFound("Contact not found")
 
             call.respond(HttpStatusCode.OK, contact)
-        }
-
-        /**
-         * GET /api/v1/contacts/{id}/avatar/{size}.webp
-         * Stream a contact avatar image from backend storage.
-         */
-        get<Contacts.Id.Avatar> { route ->
-            val tenantId = requireTenantId()
-            val contactId = ContactId.parse(route.parent.id)
-            val size = avatarStorageService.normalizeSize(route.size)
-                ?: throw DokusException.BadRequest("Avatar size must be one of: small, medium, large")
-
-            contactService.getContact(contactId, tenantId)
-                .getOrElse { throw DokusException.InternalError("Failed to fetch contact: ${it.message}") }
-                ?: throw DokusException.NotFound("Contact not found")
-
-            val storageKey = businessProfileService.getLogoStorageKey(
-                tenantId = tenantId,
-                subjectType = BusinessProfileSubjectType.Contact,
-                subjectId = contactId.value
-            ) ?: throw DokusException.NotFound("Avatar not found")
-
-            val imageBytes = avatarStorageService.getAvatarBytes(storageKey, size)
-            if (imageBytes == null) {
-                logger.debug(
-                    "Missing avatar object for tenant={}, contact={}, size={}, reason=storage_missing",
-                    tenantId,
-                    contactId,
-                    size
-                )
-                throw DokusException.NotFound("Avatar not found")
-            }
-
-            call.respondBytes(
-                bytes = imageBytes,
-                contentType = ContentType("image", "webp"),
-                status = HttpStatusCode.OK
-            )
         }
 
         /**

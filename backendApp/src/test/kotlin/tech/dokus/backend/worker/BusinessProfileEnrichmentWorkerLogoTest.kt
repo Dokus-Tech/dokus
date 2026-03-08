@@ -41,7 +41,6 @@ import tech.dokus.domain.enums.TenantType
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.Address
 import tech.dokus.domain.model.Tenant
-import tech.dokus.domain.model.common.Thumbnail
 import tech.dokus.features.ai.agents.BusinessLogoFallbackAgent
 import tech.dokus.features.ai.agents.BusinessProfileContentExtractionAgent
 import tech.dokus.features.ai.models.BusinessLogoFallbackCandidate
@@ -175,7 +174,6 @@ class BusinessProfileEnrichmentWorkerLogoTest {
             )
         } returns AvatarStorageService.AvatarUploadResult(
             storageKeyPrefix = "avatars/new-logo",
-            avatar = Thumbnail(small = "s", medium = "m", large = "l"),
             sizeBytes = largePng.size.toLong()
         )
         coEvery { tenantRepository.updateAvatarStorageKey(job.tenantId, "avatars/new-logo") } returns Unit
@@ -294,7 +292,6 @@ class BusinessProfileEnrichmentWorkerLogoTest {
             )
         } returns AvatarStorageService.AvatarUploadResult(
             storageKeyPrefix = "avatars/fallback-logo",
-            avatar = Thumbnail(small = "s", medium = "m", large = "l"),
             sizeBytes = faviconPng.size.toLong()
         )
         coEvery { tenantRepository.updateAvatarStorageKey(job.tenantId, "avatars/fallback-logo") } returns Unit
@@ -414,7 +411,6 @@ class BusinessProfileEnrichmentWorkerLogoTest {
             )
         } returns AvatarStorageService.AvatarUploadResult(
             storageKeyPrefix = "avatars/ai-fallback-logo",
-            avatar = Thumbnail(small = "s", medium = "m", large = "l"),
             sizeBytes = aiLogoPng.size.toLong()
         )
         coEvery { tenantRepository.updateAvatarStorageKey(job.tenantId, "avatars/ai-fallback-logo") } returns Unit

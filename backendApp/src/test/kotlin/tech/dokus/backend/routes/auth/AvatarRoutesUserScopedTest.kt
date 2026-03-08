@@ -60,13 +60,13 @@ class AvatarRoutesUserScopedTest {
         val response = authenticatedGet("/api/v1/users/$TEST_OTHER_USER_ID/avatar")
 
         assertEquals(HttpStatusCode.OK, response.status)
-        assertTrue(response.bodyAsText().contains("/api/v1/users/$TEST_OTHER_USER_ID/avatar/small.webp"))
+        assertTrue(response.bodyAsText().contains("/api/v1/users/$TEST_OTHER_USER_ID/avatar/small.webp?v=test"))
         coVerify(exactly = 1) { userRepository.getAvatarStorageKey(TEST_OTHER_USER_ID) }
         coVerify(exactly = 0) { userRepository.getMembership(any(), any()) }
     }
 
     @Test
-    fun `user avatar image endpoint succeeds for authenticated reader`() = avatarRoutesTestApplication(
+    fun `user avatar image endpoint is public`() = avatarRoutesTestApplication(
         userRepository = mockk(),
         tenantRepository = mockk(),
         avatarStorageService = mockk(),
@@ -77,7 +77,7 @@ class AvatarRoutesUserScopedTest {
         coEvery { userRepository.getAvatarStorageKey(TEST_OTHER_USER_ID) } returns "avatars/users/$TEST_OTHER_USER_ID/test"
         coEvery { avatarStorageService.getAvatarBytes("avatars/users/$TEST_OTHER_USER_ID/test", "small") } returns imageBytes
 
-        val response = authenticatedGet("/api/v1/users/$TEST_OTHER_USER_ID/avatar/small.webp")
+        val response = unauthenticatedGet("/api/v1/users/$TEST_OTHER_USER_ID/avatar/small.webp")
 
         assertEquals(HttpStatusCode.OK, response.status)
         assertContentEquals(imageBytes, response.bodyAsBytes())
@@ -183,6 +183,8 @@ class AvatarRoutesUserScopedTest {
     private suspend fun ApplicationTestBuilder.authenticatedGet(path: String) = client.get(path) {
         header(HttpHeaders.Authorization, "Bearer ${testAccessToken()}")
     }
+
+    private suspend fun ApplicationTestBuilder.unauthenticatedGet(path: String) = client.get(path)
 
     private suspend fun ApplicationTestBuilder.authenticatedDelete(path: String) = client.delete(path) {
         header(HttpHeaders.Authorization, "Bearer ${testAccessToken()}")

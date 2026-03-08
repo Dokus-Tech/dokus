@@ -83,7 +83,6 @@ sealed interface ProfileSettingsState : MVIState, DokusState<User> {
     sealed interface AvatarState {
         data object Idle : AvatarState
         data class Uploading(val progress: Float) : AvatarState
-        data object Deleting : AvatarState
         data object Success : AvatarState
         data class Error(val error: DokusException) : AvatarState
     }
@@ -115,9 +114,6 @@ sealed interface ProfileSettingsIntent : MVIIntent {
 
     /** User selected a new avatar image */
     data class UploadAvatar(val imageBytes: ByteArray, val filename: String) : ProfileSettingsIntent
-
-    /** User requested avatar deletion */
-    data object DeleteAvatar : ProfileSettingsIntent
 
     /** Reset avatar state after transient feedback */
     data object ResetAvatarState : ProfileSettingsIntent

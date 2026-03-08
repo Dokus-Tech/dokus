@@ -4,19 +4,24 @@ import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.User
 import tech.dokus.domain.model.common.Thumbnail
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
-private const val AvatarSizeSmall = "small"
-private const val AvatarSizeMedium = "medium"
-private const val AvatarSizeLarge = "large"
+fun buildVersionedAvatarThumbnail(basePath: String, storageKey: String): Thumbnail {
+    val normalizedStorageKey = storageKey.trim()
+    val version = normalizedStorageKey.substringAfterLast('/').ifBlank { normalizedStorageKey }
+    val encodedVersion = URLEncoder.encode(version, StandardCharsets.UTF_8)
+    return Thumbnail(
+        small = "$basePath/small.webp?v=$encodedVersion",
+        medium = "$basePath/medium.webp?v=$encodedVersion",
+        large = "$basePath/large.webp?v=$encodedVersion"
+    )
+}
 
-fun buildUserAvatarThumbnail(userId: UserId): Thumbnail = Thumbnail(
-    small = "/api/v1/users/$userId/avatar/$AvatarSizeSmall.webp",
-    medium = "/api/v1/users/$userId/avatar/$AvatarSizeMedium.webp",
-    large = "/api/v1/users/$userId/avatar/$AvatarSizeLarge.webp"
-)
+fun buildUserAvatarThumbnail(userId: UserId, storageKey: String): Thumbnail =
+    buildVersionedAvatarThumbnail("/api/v1/users/$userId/avatar", storageKey)
 
 suspend fun UserRepository.projectUserAvatar(user: User): User {
-    val storageKey = getAvatarStorageKey(user.id) ?: return user
-    if (storageKey.isBlank()) return user
-    return user.copy(avatar = buildUserAvatarThumbnail(user.id))
+    val storageKey = getAvatarStorageKey(user.id)?.takeIf { it.isNotBlank() } ?: return user
+    return user.copy(avatar = buildUserAvatarThumbnail(user.id, storageKey))
 }

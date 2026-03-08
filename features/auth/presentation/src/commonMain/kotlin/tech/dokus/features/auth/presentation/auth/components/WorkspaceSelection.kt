@@ -37,6 +37,8 @@ import tech.dokus.foundation.aura.components.tiles.AddCompanyTile
 import tech.dokus.foundation.aura.components.tiles.CompanyTile
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.extensions.localized
+import tech.dokus.foundation.app.network.rememberAuthenticatedImageLoader
+import tech.dokus.foundation.app.network.rememberResolvedApiUrl
 
 @Stable
 @Composable
@@ -87,35 +89,17 @@ private fun StateDrivenContent(
         -> {
             val contentState = state.toContentState()
             val sortedWorkspaceEntries = buildWorkspaceEntries(contentState)
+            val imageLoader = rememberAuthenticatedImageLoader()
 
             WorkspaceSection(
                 items = {
                     sortedWorkspaceEntries.forEach { entry ->
-                        when (entry) {
-                            is WorkspaceEntry.Firm -> {
-                                CompanyTile(
-                                    modifier = Modifier.widthInWorkspaceItem(),
-                                    initial = entry.summary.name.initialOrEmpty,
-                                    label = entry.summary.name.value,
-                                    badge = stringResource(
-                                        Res.string.console_clients_count,
-                                        entry.summary.clientCount,
-                                    ),
-                                ) {
-                                    onFirmClick(entry.summary.id)
-                                }
-                            }
-                            is WorkspaceEntry.Tenant -> {
-                                CompanyTile(
-                                    modifier = Modifier.widthInWorkspaceItem(),
-                                    initial = entry.summary.name.initialOrEmpty,
-                                    label = entry.summary.name.value,
-                                    badge = entry.summary.role.localized,
-                                ) {
-                                    onTenantClick(entry.summary.id)
-                                }
-                            }
-                        }
+                        WorkspaceTile(
+                            entry = entry,
+                            imageLoader = imageLoader,
+                            onTenantClick = onTenantClick,
+                            onFirmClick = onFirmClick,
+                        )
                     }
 
                     AddCompanyTile(
@@ -125,6 +109,44 @@ private fun StateDrivenContent(
                     )
                 },
             )
+        }
+    }
+}
+
+@Composable
+private fun WorkspaceTile(
+    entry: WorkspaceEntry,
+    imageLoader: coil3.ImageLoader,
+    onTenantClick: (TenantId) -> Unit,
+    onFirmClick: (FirmId) -> Unit,
+) {
+    when (entry) {
+        is WorkspaceEntry.Firm -> {
+            CompanyTile(
+                modifier = Modifier.widthInWorkspaceItem(),
+                initial = entry.summary.name.initialOrEmpty,
+                label = entry.summary.name.value,
+                badge = stringResource(
+                    Res.string.console_clients_count,
+                    entry.summary.clientCount,
+                ),
+                imageLoader = imageLoader,
+            ) {
+                onFirmClick(entry.summary.id)
+            }
+        }
+
+        is WorkspaceEntry.Tenant -> {
+            CompanyTile(
+                modifier = Modifier.widthInWorkspaceItem(),
+                initial = entry.summary.name.initialOrEmpty,
+                label = entry.summary.name.value,
+                avatarUrl = rememberResolvedApiUrl(entry.summary.avatar?.medium),
+                badge = entry.summary.role.localized,
+                imageLoader = imageLoader,
+            ) {
+                onTenantClick(entry.summary.id)
+            }
         }
     }
 }
