@@ -32,11 +32,6 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
-import tech.dokus.foundation.aura.tooling.PreviewParameters
-import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
-import tech.dokus.foundation.aura.tooling.TestWrapper
 import kotlin.time.Clock
 
 private const val PaneAnimationDurationMs = 220
@@ -68,32 +63,32 @@ internal fun ProfileDetailPaneHost(
             val isEntering = targetState !is ProfileDetailSelection.None
             if (isEntering) {
                 (
-                    fadeIn(animationSpec = tween(PaneAnimationDurationMs)) +
-                        slideInHorizontally(
-                            animationSpec = tween(PaneAnimationDurationMs),
-                            initialOffsetX = { it / 12 }
+                        fadeIn(animationSpec = tween(PaneAnimationDurationMs)) +
+                                slideInHorizontally(
+                                    animationSpec = tween(PaneAnimationDurationMs),
+                                    initialOffsetX = { it / 12 }
+                                )
+                        ) togetherWith (
+                        fadeOut(animationSpec = tween(PaneAnimationDurationMs / 2)) +
+                                slideOutHorizontally(
+                                    animationSpec = tween(PaneAnimationDurationMs / 2),
+                                    targetOffsetX = { -it / 16 }
+                                )
                         )
-                    ) togetherWith (
-                    fadeOut(animationSpec = tween(PaneAnimationDurationMs / 2)) +
-                        slideOutHorizontally(
-                            animationSpec = tween(PaneAnimationDurationMs / 2),
-                            targetOffsetX = { -it / 16 }
-                        )
-                    )
             } else {
                 (
-                    fadeIn(animationSpec = tween(PaneAnimationDurationMs)) +
-                        slideInHorizontally(
-                            animationSpec = tween(PaneAnimationDurationMs),
-                            initialOffsetX = { -it / 16 }
+                        fadeIn(animationSpec = tween(PaneAnimationDurationMs)) +
+                                slideInHorizontally(
+                                    animationSpec = tween(PaneAnimationDurationMs),
+                                    initialOffsetX = { -it / 16 }
+                                )
+                        ) togetherWith (
+                        fadeOut(animationSpec = tween(PaneAnimationDurationMs / 2)) +
+                                slideOutHorizontally(
+                                    animationSpec = tween(PaneAnimationDurationMs / 2),
+                                    targetOffsetX = { it / 12 }
+                                )
                         )
-                    ) togetherWith (
-                    fadeOut(animationSpec = tween(PaneAnimationDurationMs / 2)) +
-                        slideOutHorizontally(
-                            animationSpec = tween(PaneAnimationDurationMs / 2),
-                            targetOffsetX = { it / 12 }
-                        )
-                    )
             }
         },
         label = "ProfileDetailPaneHost"

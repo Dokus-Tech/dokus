@@ -3,7 +3,6 @@ package tech.dokus.features.auth.mvi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
-import kotlinx.datetime.Clock
 import pro.respawn.flowmvi.test.subscribeAndTest
 import tech.dokus.domain.DeviceType
 import tech.dokus.domain.exceptions.DokusException
@@ -16,6 +15,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
+import kotlin.time.Clock
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MySessionsContainerTest {

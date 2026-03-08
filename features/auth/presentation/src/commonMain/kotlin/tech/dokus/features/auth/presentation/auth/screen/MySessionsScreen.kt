@@ -17,8 +17,11 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
@@ -29,19 +32,10 @@ import tech.dokus.features.auth.mvi.MySessionsState
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.common.PTopAppBar
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 import kotlin.time.Clock
-import androidx.compose.runtime.remember
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
-import tech.dokus.foundation.aura.tooling.PreviewParameters
-import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
-import tech.dokus.foundation.aura.tooling.TestWrapper
-import androidx.compose.runtime.remember
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
-import tech.dokus.foundation.aura.tooling.PreviewParameters
-import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
-import tech.dokus.foundation.aura.tooling.TestWrapper
 
 private const val PaneAnimationDurationMs = 220
 
@@ -110,10 +104,10 @@ internal fun MySessionsContent(
                 visible = true,
                 modifier = modifier.fillMaxSize(),
                 enter = fadeIn(animationSpec = tween(PaneAnimationDurationMs)) +
-                    slideInVertically(
-                        animationSpec = tween(PaneAnimationDurationMs),
-                        initialOffsetY = { it / 10 }
-                    ),
+                        slideInVertically(
+                            animationSpec = tween(PaneAnimationDurationMs),
+                            initialOffsetY = { it / 10 }
+                        ),
                 exit = fadeOut(animationSpec = tween(PaneAnimationDurationMs / 2))
             ) {
                 MySessionsLoadedContent(
@@ -132,9 +126,7 @@ internal fun MySessionsContent(
 @Preview
 @Composable
 private fun MySessionsScreenPreview(
-    @PreviewParameter(
-        PreviewParametersProvider::class
-    ) parameters: PreviewParameters
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
 ) {
     TestWrapper(parameters) {
         MySessionsScreen(
@@ -149,9 +141,7 @@ private fun MySessionsScreenPreview(
 @Preview(name = "Sessions Desktop", widthDp = 1200, heightDp = 760)
 @Composable
 private fun MySessionsContentDesktopPreview(
-    @PreviewParameter(
-        PreviewParametersProvider::class
-    ) parameters: PreviewParameters
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
 ) {
     TestWrapper(parameters) {
         Box(modifier = Modifier.fillMaxSize().padding(24.dp)) {
