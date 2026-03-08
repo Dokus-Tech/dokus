@@ -15,18 +15,16 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
-import kotlinx.coroutines.sync.Semaphore
-import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.slf4j.MDC
+import tech.dokus.backend.services.cashflow.BankStatementMatchingService
+import tech.dokus.backend.services.cashflow.InvoiceBankAutomationService
 import tech.dokus.backend.services.documents.AutoConfirmPolicy
 import tech.dokus.backend.services.documents.ContactResolutionService
 import tech.dokus.backend.services.documents.DocumentIntakeServiceResult
 import tech.dokus.backend.services.documents.DocumentPurposeService
 import tech.dokus.backend.services.documents.DocumentTruthService
-import tech.dokus.backend.services.cashflow.BankStatementMatchingService
-import tech.dokus.backend.services.cashflow.InvoiceBankAutomationService
 import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
 import tech.dokus.backend.services.documents.sse.DocumentSsePublisher
 import tech.dokus.database.entity.IngestionItemEntity
@@ -51,6 +49,8 @@ import tech.dokus.features.ai.models.confidenceScore
 import tech.dokus.features.ai.models.toAuthoritativeCounterpartySnapshot
 import tech.dokus.features.ai.models.toDraftData
 import tech.dokus.features.ai.models.toProcessingOutcome
+import tech.dokus.features.ai.queue.LlmQueue
+import tech.dokus.features.ai.queue.documentProcessing
 import tech.dokus.features.ai.validation.CheckType
 import tech.dokus.foundation.backend.config.ProcessorConfig
 import tech.dokus.foundation.backend.utils.loggerFor
@@ -88,6 +88,7 @@ internal class DocumentProcessingWorker(
     private val config: ProcessorConfig,
     private val tenantRepository: TenantRepository,
     private val userRepository: UserRepository,
+    private val llmQueue: LlmQueue,
 ) {
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
@@ -116,7 +117,7 @@ internal class DocumentProcessingWorker(
 
         logger.info(
             "Starting worker (KOOG-GRAPH): interval=${config.pollingInterval}ms, " +
-                "batchSize=${config.batchSize}, maxConcurrentRuns=${config.maxConcurrentRuns}"
+                "batchSize=${config.batchSize}"
         )
 
         pollingJob = scope.launch {
@@ -185,72 +186,68 @@ internal class DocumentProcessingWorker(
         val queueDepthAtClaim = pending.size
         logger.info("Found ${pending.size} pending ingestion runs to process (queueDepthAtClaim=$queueDepthAtClaim)")
 
-        val semaphore = Semaphore(config.maxConcurrentRuns)
-
         supervisorScope {
             pending.map { ingestion ->
                 async {
                     if (!isRunning.get()) return@async
-                    semaphore.withPermit {
-                        val startedAtNanos = System.nanoTime()
-                        var attemptResult = AttemptResult.FailedUnexpected
-                        try {
-                            val claimed = ingestionRepository.markAsProcessing(ingestion.runId.toString(), "koog-graph")
-                            if (!claimed) {
-                                logger.info(
-                                    "Skipping ingestion run {} for document {} because it was already claimed",
-                                    ingestion.runId,
-                                    ingestion.documentId
-                                )
-                                attemptResult = AttemptResult.SkippedAlreadyClaimed
-                                return@withPermit
-                            }
-                            documentSsePublisher.publishDocumentChanged(ingestion.tenantId, ingestion.documentId)
-                            attemptResult = processIngestionRunWithTimeout(ingestion, timeout)
-                        } catch (e: CancellationException) {
-                            if (!isRunning.get()) throw e
-                            logger.error(
-                                "Unexpected cancellation while processing ingestion run ${ingestion.runId} " +
-                                    "for document ${ingestion.documentId}",
-                                e
+                    val startedAtNanos = System.nanoTime()
+                    var attemptResult = AttemptResult.FailedUnexpected
+                    try {
+                        val claimed = ingestionRepository.markAsProcessing(ingestion.runId.toString(), "koog-graph")
+                        if (!claimed) {
+                            logger.info(
+                                "Skipping ingestion run {} for document {} because it was already claimed",
+                                ingestion.runId,
+                                ingestion.documentId
                             )
-                            markRunFailedSafely(
-                                runId = ingestion.runId,
-                                tenantId = ingestion.tenantId,
-                                documentId = ingestion.documentId,
-                                message = "Processing cancelled: ${e.message ?: "Unknown cancellation"}"
-                            )
-                            attemptResult = AttemptResult.FailedCancelled
-                        } catch (e: Exception) {
-                            logger.error(
-                                "Failed to process ingestion run ${ingestion.runId} " +
-                                    "for document ${ingestion.documentId}",
-                                e
-                            )
-                            val providerFailure = isProviderFailure(e)
-                            markRunFailedSafely(
-                                runId = ingestion.runId,
-                                tenantId = ingestion.tenantId,
-                                documentId = ingestion.documentId,
-                                message = if (providerFailure) {
-                                    "Processing provider error: ${e.message ?: "Unknown provider error"}"
-                                } else {
-                                    "Processing error: ${e.message ?: "Unknown error"}"
-                                }
-                            )
-                            attemptResult = if (providerFailure) {
-                                AttemptResult.FailedProvider
-                            } else {
-                                AttemptResult.FailedUnexpected
-                            }
-                        } finally {
-                            logIngestionAttemptComplete(
-                                ingestion = ingestion,
-                                queueDepthAtClaim = queueDepthAtClaim,
-                                startedAtNanos = startedAtNanos,
-                                attemptResult = attemptResult
-                            )
+                            attemptResult = AttemptResult.SkippedAlreadyClaimed
+                            return@async
                         }
+                        documentSsePublisher.publishDocumentChanged(ingestion.tenantId, ingestion.documentId)
+                        attemptResult = processIngestionRunWithTimeout(ingestion, timeout)
+                    } catch (e: CancellationException) {
+                        if (!isRunning.get()) throw e
+                        logger.error(
+                            "Unexpected cancellation while processing ingestion run ${ingestion.runId} " +
+                                "for document ${ingestion.documentId}",
+                            e
+                        )
+                        markRunFailedSafely(
+                            runId = ingestion.runId,
+                            tenantId = ingestion.tenantId,
+                            documentId = ingestion.documentId,
+                            message = "Processing cancelled: ${e.message ?: "Unknown cancellation"}"
+                        )
+                        attemptResult = AttemptResult.FailedCancelled
+                    } catch (e: Exception) {
+                        logger.error(
+                            "Failed to process ingestion run ${ingestion.runId} " +
+                                "for document ${ingestion.documentId}",
+                            e
+                        )
+                        val providerFailure = isProviderFailure(e)
+                        markRunFailedSafely(
+                            runId = ingestion.runId,
+                            tenantId = ingestion.tenantId,
+                            documentId = ingestion.documentId,
+                            message = if (providerFailure) {
+                                "Processing provider error: ${e.message ?: "Unknown provider error"}"
+                            } else {
+                                "Processing error: ${e.message ?: "Unknown error"}"
+                            }
+                        )
+                        attemptResult = if (providerFailure) {
+                            AttemptResult.FailedProvider
+                        } else {
+                            AttemptResult.FailedUnexpected
+                        }
+                    } finally {
+                        logIngestionAttemptComplete(
+                            ingestion = ingestion,
+                            queueDepthAtClaim = queueDepthAtClaim,
+                            startedAtNanos = startedAtNanos,
+                            attemptResult = attemptResult
+                        )
                     }
                 }
             }.awaitAll()
@@ -328,12 +325,11 @@ internal class DocumentProcessingWorker(
         val processingTimeMs = (System.nanoTime() - startedAtNanos) / 1_000_000
         logger.info(
             "Ingestion attempt completed: runId={}, documentId={}, queueDepthAtClaim={}, processingTimeMs={}, " +
-                "maxConcurrentRuns={}, attemptResult={}",
+                "attemptResult={}",
             ingestion.runId,
             ingestion.documentId,
             queueDepthAtClaim,
             processingTimeMs,
-            config.maxConcurrentRuns,
             attemptResult.label
         )
     }
@@ -394,19 +390,21 @@ internal class DocumentProcessingWorker(
                 )
             }
 
-            val result = processingAgent.process(
-                AcceptDocumentInput(
-                    documentId = documentId,
-                    tenant = tenant,
-                    sourceChannel = sourceChannel,
-                    peppolStructuredSnapshotJson = ingestion.peppolStructuredSnapshotJson,
-                    peppolSnapshotVersion = ingestion.peppolSnapshotVersion,
-                    associatedPersonNames = personNames,
-                    userFeedback = ingestion.userFeedback,
-                    maxPagesOverride = ingestion.overrideMaxPages,
-                    dpiOverride = ingestion.overrideDpi
+            val result = llmQueue.documentProcessing("doc-extract:$documentId") {
+                processingAgent.process(
+                    AcceptDocumentInput(
+                        documentId = documentId,
+                        tenant = tenant,
+                        sourceChannel = sourceChannel,
+                        peppolStructuredSnapshotJson = ingestion.peppolStructuredSnapshotJson,
+                        peppolSnapshotVersion = ingestion.peppolSnapshotVersion,
+                        associatedPersonNames = personNames,
+                        userFeedback = ingestion.userFeedback,
+                        maxPagesOverride = ingestion.overrideMaxPages,
+                        dpiOverride = ingestion.overrideDpi
+                    )
                 )
-            )
+            }
 
             val counterpartyInvariantFailure = result.auditReport.criticalFailures.firstOrNull {
                 it.type == CheckType.COUNTERPARTY_INTEGRITY

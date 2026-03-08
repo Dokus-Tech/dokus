@@ -3,7 +3,6 @@ package tech.dokus.backend.worker
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import tech.dokus.backend.services.documents.AutoConfirmPolicy
@@ -24,85 +23,19 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.features.ai.agents.DocumentProcessingAgent
+import tech.dokus.features.ai.queue.LlmQueue
 import tech.dokus.foundation.backend.config.ProcessorConfig
-import java.util.concurrent.atomic.AtomicInteger
-import kotlin.test.assertEquals
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 class DocumentProcessingWorkerConcurrencyTest {
 
-    @Test
-    fun `maxConcurrentRuns caps parallel ingestion execution`() = runBlocking {
-        val ingestionRepository = mockk<ProcessorIngestionRepository>()
-        val processingAgent = mockk<DocumentProcessingAgent>()
-        val contactResolutionService = mockk<ContactResolutionService>(relaxed = true)
-        val purposeService = mockk<DocumentPurposeService>(relaxed = true)
-        val draftRepository = mockk<DocumentDraftRepository>(relaxed = true)
-        val documentTruthService = mockk<DocumentTruthService>(relaxed = true)
-        val bankStatementMatchingService = mockk<BankStatementMatchingService>(relaxed = true)
-        val invoiceBankAutomationService = mockk<InvoiceBankAutomationService>(relaxed = true)
-        val autoConfirmPolicy = mockk<AutoConfirmPolicy>(relaxed = true)
-        val confirmationDispatcher = mockk<DocumentConfirmationDispatcher>(relaxed = true)
-        val documentSsePublisher = mockk<DocumentSsePublisher>(relaxed = true)
-        val tenantRepository = mockk<TenantRepository>()
-        val userRepository = mockk<UserRepository>()
+    private fun testConfig() = ProcessorConfig(
+        pollingInterval = 1_000,
+        maxAttempts = 3,
+        batchSize = 10,
+    )
 
-        val runs = (1..4).map { idx ->
-            IngestionItemEntity(
-                runId = IngestionRunId.generate(),
-                documentId = DocumentId.generate(),
-                tenantId = TenantId.generate(),
-                storageKey = "docs/$idx.pdf",
-                filename = "$idx.pdf",
-                contentType = "application/pdf"
-            )
-        }
-
-        val active = AtomicInteger(0)
-        val maxObserved = AtomicInteger(0)
-
-        coEvery { ingestionRepository.recoverStaleRunsDetailed() } returns emptyList()
-        coEvery { ingestionRepository.findPendingForProcessing(10) } returns runs
-        coEvery { ingestionRepository.markAsProcessing(any(), "koog-graph") } returns true
-        coEvery { ingestionRepository.markAsFailed(any(), any()) } returns true
-        coEvery { processingAgent.process(any()) } throws AssertionError("processingAgent must not be invoked")
-        coEvery { userRepository.listByTenant(any(), activeOnly = true) } returns emptyList()
-        coEvery { tenantRepository.findById(any()) } coAnswers {
-            val current = active.incrementAndGet()
-            maxObserved.updateAndGet { previous -> maxOf(previous, current) }
-            delay(500.milliseconds)
-            active.decrementAndGet()
-            null
-        }
-
-        val worker = DocumentProcessingWorker(
-            ingestionRepository = ingestionRepository,
-            processingAgent = processingAgent,
-            contactResolutionService = contactResolutionService,
-            purposeService = purposeService,
-            documentTruthService = documentTruthService,
-            draftRepository = draftRepository,
-            bankStatementMatchingService = bankStatementMatchingService,
-            invoiceBankAutomationService = invoiceBankAutomationService,
-            autoConfirmPolicy = autoConfirmPolicy,
-            confirmationDispatcher = confirmationDispatcher,
-            documentSsePublisher = documentSsePublisher,
-            config = ProcessorConfig(
-                pollingInterval = 1_000,
-                maxAttempts = 3,
-                batchSize = 10,
-                maxConcurrentRuns = 1
-            ),
-            tenantRepository = tenantRepository,
-            userRepository = userRepository
-        )
-
-        worker.processBatchForTest(timeout = 5.seconds)
-
-        assertEquals(1, maxObserved.get())
-        coVerify(exactly = runs.size) { ingestionRepository.markAsProcessing(any(), "koog-graph") }
-    }
+    private fun testLlmQueue(): LlmQueue = LlmQueue().also { it.start() }
 
     @Test
     fun `run already claimed by another worker is skipped without side effects`() = runBlocking {
@@ -135,6 +68,7 @@ class DocumentProcessingWorkerConcurrencyTest {
         coEvery { ingestionRepository.markAsFailed(any(), any()) } returns true
         coEvery { processingAgent.process(any()) } throws AssertionError("processingAgent must not be invoked")
 
+        val llmQueue = testLlmQueue()
         val worker = DocumentProcessingWorker(
             ingestionRepository = ingestionRepository,
             processingAgent = processingAgent,
@@ -147,17 +81,17 @@ class DocumentProcessingWorkerConcurrencyTest {
             autoConfirmPolicy = autoConfirmPolicy,
             confirmationDispatcher = confirmationDispatcher,
             documentSsePublisher = documentSsePublisher,
-            config = ProcessorConfig(
-                pollingInterval = 1_000,
-                maxAttempts = 3,
-                batchSize = 10,
-                maxConcurrentRuns = 1
-            ),
+            config = testConfig(),
             tenantRepository = tenantRepository,
-            userRepository = userRepository
+            userRepository = userRepository,
+            llmQueue = llmQueue
         )
 
-        worker.processBatchForTest(timeout = 5.seconds)
+        try {
+            worker.processBatchForTest(timeout = 5.seconds)
+        } finally {
+            llmQueue.stop()
+        }
 
         coVerify(exactly = 1) { ingestionRepository.markAsProcessing(run.runId.toString(), "koog-graph") }
         coVerify(exactly = 0) { ingestionRepository.markAsFailed(any(), any()) }
@@ -200,6 +134,7 @@ class DocumentProcessingWorkerConcurrencyTest {
         coEvery { userRepository.listByTenant(run.tenantId, activeOnly = true) } returns emptyList()
         coEvery { processingAgent.process(any()) } throws IllegalStateException("stop after source resolution")
 
+        val llmQueue = testLlmQueue()
         val worker = DocumentProcessingWorker(
             ingestionRepository = ingestionRepository,
             processingAgent = processingAgent,
@@ -212,17 +147,17 @@ class DocumentProcessingWorkerConcurrencyTest {
             autoConfirmPolicy = autoConfirmPolicy,
             confirmationDispatcher = confirmationDispatcher,
             documentSsePublisher = documentSsePublisher,
-            config = ProcessorConfig(
-                pollingInterval = 1_000,
-                maxAttempts = 3,
-                batchSize = 10,
-                maxConcurrentRuns = 1
-            ),
+            config = testConfig(),
             tenantRepository = tenantRepository,
-            userRepository = userRepository
+            userRepository = userRepository,
+            llmQueue = llmQueue
         )
 
-        worker.processBatchForTest(timeout = 5.seconds)
+        try {
+            worker.processBatchForTest(timeout = 5.seconds)
+        } finally {
+            llmQueue.stop()
+        }
 
         coVerify(exactly = 1) {
             processingAgent.process(match { input -> input.sourceChannel == DocumentSource.Email })

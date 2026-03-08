@@ -15,6 +15,8 @@ import tech.dokus.domain.enums.BusinessProfileSubjectType
 import tech.dokus.features.ai.agents.BusinessLogoFallbackAgent
 import tech.dokus.features.ai.models.BusinessLogoFallbackInput
 import tech.dokus.features.ai.models.BusinessLogoFallbackPage
+import tech.dokus.features.ai.queue.LlmQueue
+import tech.dokus.features.ai.queue.businessEnrichment
 import tech.dokus.foundation.backend.storage.AvatarStorageService
 import tech.dokus.foundation.backend.utils.loggerFor
 import tech.dokus.foundation.backend.utils.runSuspendCatching
@@ -29,6 +31,7 @@ internal class BusinessProfileLogoResolver(
     private val avatarStorageService: AvatarStorageService,
     private val logoFallbackAgent: BusinessLogoFallbackAgent,
     private val logoSelectionService: BusinessLogoSelectionService,
+    private val llmQueue: LlmQueue,
 ) {
     private val logger = loggerFor()
 
@@ -88,17 +91,19 @@ internal class BusinessProfileLogoResolver(
                 null
             } else {
                 withTimeoutOrNull(aiBudgetMs) {
-                    runSuspendCatching { logoFallbackAgent.findLogoCandidates(aiInput) }
-                        .onFailure { error ->
-                            logger.warn(
-                                "Logo AI fallback failed for subjectType={}, subjectId={}, website={}, error={}",
-                                job.subjectType,
-                                job.subjectId,
-                                websiteUrl,
-                                error.message
-                            )
+                    runSuspendCatching {
+                        llmQueue.businessEnrichment("logo-fallback:${job.subjectId}") {
+                            logoFallbackAgent.findLogoCandidates(aiInput)
                         }
-                        .getOrNull()
+                    }.onFailure { error ->
+                        logger.warn(
+                            "Logo AI fallback failed for subjectType={}, subjectId={}, website={}, error={}",
+                            job.subjectType,
+                            job.subjectId,
+                            websiteUrl,
+                            error.message
+                        )
+                    }.getOrNull()
                 }
             }
             aiCallMs = ((System.nanoTime() - aiStartedAtNanos) / 1_000_000).coerceAtLeast(0)

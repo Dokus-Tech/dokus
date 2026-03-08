@@ -572,7 +572,8 @@ class BusinessProfileEnrichmentWorkerLogoTest {
             logoFallbackAgent = logoFallbackAgent,
             websiteProbe = websiteProbe,
             websiteRanker = websiteRanker,
-            logoSelectionService = BusinessLogoSelectionService(websiteProbe)
+            logoSelectionService = BusinessLogoSelectionService(websiteProbe),
+            llmQueue = tech.dokus.features.ai.queue.LlmQueue()
         )
     }
 

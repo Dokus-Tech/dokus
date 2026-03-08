@@ -17,6 +17,8 @@ import tech.dokus.features.ai.agents.BusinessProfileContentExtractionAgent
 import tech.dokus.features.ai.models.BusinessProfileContentExtractionInput
 import tech.dokus.features.ai.models.BusinessProfileContentExtractionResult
 import tech.dokus.features.ai.models.BusinessProfileContentPage
+import tech.dokus.features.ai.queue.LlmQueue
+import tech.dokus.features.ai.queue.businessEnrichment
 import tech.dokus.foundation.backend.config.BusinessProfileEnrichmentConfig
 import tech.dokus.foundation.backend.utils.loggerFor
 import tech.dokus.foundation.backend.utils.runSuspendCatching
@@ -36,6 +38,7 @@ internal class BusinessProfileEnrichmentJobProcessor(
     private val websiteRanker: BusinessWebsiteRanker,
     private val subjectContextLoader: BusinessSubjectContextLoader,
     private val logoResolver: BusinessProfileLogoResolver,
+    private val llmQueue: LlmQueue,
 ) {
     private val logger = loggerFor()
 
@@ -260,16 +263,18 @@ internal class BusinessProfileEnrichmentJobProcessor(
             }
         )
 
-        return runSuspendCatching { contentExtractionAgent.extract(input) }
-            .onFailure { error ->
-                logger.warn(
-                    "Content extraction failed for website={}, company={}, error={}",
-                    websiteUrl,
-                    context.name,
-                    error.message
-                )
+        return runSuspendCatching {
+            llmQueue.businessEnrichment("biz-content:${context.name}") {
+                contentExtractionAgent.extract(input)
             }
-            .getOrNull()
+        }.onFailure { error ->
+            logger.warn(
+                "Content extraction failed for website={}, company={}, error={}",
+                websiteUrl,
+                context.name,
+                error.message
+            )
+        }.getOrNull()
     }
 
     private fun isAggregatorOrSocialUrl(url: String): Boolean {

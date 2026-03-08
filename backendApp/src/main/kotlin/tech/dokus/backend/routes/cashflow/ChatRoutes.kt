@@ -34,6 +34,8 @@ import tech.dokus.domain.routes.Chat
 import tech.dokus.features.ai.agents.ChatAgent
 import tech.dokus.features.ai.agents.ConversationMessage
 import tech.dokus.features.ai.config.ModelSet
+import tech.dokus.features.ai.queue.LlmQueue
+import tech.dokus.features.ai.queue.chat
 import tech.dokus.foundation.backend.security.authenticateJwt
 import tech.dokus.foundation.backend.security.dokusPrincipal
 import tech.dokus.features.ai.agents.MessageRole as AgentMessageRole
@@ -57,6 +59,7 @@ internal fun Route.chatRoutes() {
     val documentRepository by inject<DocumentRepository>()
     val models by inject<ModelSet>()
     val chatAgent by inject<ChatAgent>()
+    val llmQueue by inject<LlmQueue>()
     val logger = LoggerFactory.getLogger("ChatRoutes")
 
     authenticateJwt {
@@ -97,6 +100,7 @@ internal fun Route.chatRoutes() {
                 userId = userId,
                 documentId = null,
                 chatAgent = chatAgent,
+                llmQueue = llmQueue,
                 chatRepository = chatRepository,
                 models = models,
                 logger = logger
@@ -161,6 +165,7 @@ internal fun Route.chatRoutes() {
                 userId = userId,
                 documentId = documentId,
                 chatAgent = chatAgent,
+                llmQueue = llmQueue,
                 chatRepository = chatRepository,
                 models = models,
                 logger = logger
@@ -307,6 +312,7 @@ private suspend fun processChat(
     userId: UserId,
     documentId: DocumentId?,
     chatAgent: ChatAgent,
+    llmQueue: LlmQueue,
     chatRepository: ChatRepository,
     models: ModelSet,
     logger: org.slf4j.Logger
@@ -377,17 +383,20 @@ private suspend fun processChat(
 
     logger.debug("Saved user message: id={}, session={}", userMessageId, sessionId)
 
-    // Generate AI response using ChatAgent
+    // Generate AI response using ChatAgent via LLM queue (interactive priority)
+    val sessionIdForDesc = sessionId
     val startTime = System.currentTimeMillis()
     val chatResult = try {
-        chatAgent.chat(
-            tenantId = tenantId,
-            question = request.message,
-            documentId = documentId,
-            conversationHistory = conversationHistory,
-            topK = request.maxChunks ?: ChatAgent.DEFAULT_TOP_K,
-            minSimilarity = request.minSimilarity ?: ChatAgent.DEFAULT_MIN_SIMILARITY
-        )
+        llmQueue.chat("chat:$sessionIdForDesc") {
+            chatAgent.chat(
+                tenantId = tenantId,
+                question = request.message,
+                documentId = documentId,
+                conversationHistory = conversationHistory,
+                topK = request.maxChunks ?: ChatAgent.DEFAULT_TOP_K,
+                minSimilarity = request.minSimilarity ?: ChatAgent.DEFAULT_MIN_SIMILARITY
+            )
+        }
     } catch (e: Exception) {
         logger.error("Chat agent failed", e)
         // Return a fallback response
