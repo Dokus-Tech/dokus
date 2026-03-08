@@ -9,7 +9,9 @@ import tech.dokus.database.tables.auth.TenantTable
 import tech.dokus.database.tables.auth.UsersTable
 import tech.dokus.database.tables.contacts.ContactsTable
 import tech.dokus.database.tables.documents.DocumentDraftsTable
+import tech.dokus.database.tables.documents.DocumentBlobsTable
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
+import tech.dokus.database.tables.documents.DocumentSourcesTable
 import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.domain.enums.ContactLinkSource
 import tech.dokus.domain.enums.Language
@@ -51,7 +53,9 @@ class DocumentDraftRepositoryTest {
             SchemaUtils.create(
                 TenantTable,
                 UsersTable,
+                DocumentBlobsTable,
                 DocumentsTable,
+                DocumentSourcesTable,
                 DocumentIngestionRunsTable,
                 ContactsTable,
                 DocumentDraftsTable
@@ -116,6 +120,8 @@ class DocumentDraftRepositoryTest {
                 DocumentDraftsTable,
                 ContactsTable,
                 DocumentIngestionRunsTable,
+                DocumentSourcesTable,
+                DocumentBlobsTable,
                 DocumentsTable,
                 UsersTable,
                 TenantTable
