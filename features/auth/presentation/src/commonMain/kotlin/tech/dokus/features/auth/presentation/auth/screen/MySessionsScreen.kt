@@ -126,9 +126,7 @@ internal fun MySessionsContent(
 @Preview
 @Composable
 private fun MySessionsScreenPreview(
-    @PreviewParameter(
-        PreviewParametersProvider::class
-    ) parameters: PreviewParameters
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
 ) {
     TestWrapper(parameters) {
         MySessionsScreen(
@@ -143,9 +141,7 @@ private fun MySessionsScreenPreview(
 @Preview(name = "Sessions Desktop", widthDp = 1200, heightDp = 760)
 @Composable
 private fun MySessionsContentDesktopPreview(
-    @PreviewParameter(
-        PreviewParametersProvider::class
-    ) parameters: PreviewParameters
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
 ) {
     TestWrapper(parameters) {
         Box(modifier = Modifier.fillMaxSize().padding(24.dp)) {
