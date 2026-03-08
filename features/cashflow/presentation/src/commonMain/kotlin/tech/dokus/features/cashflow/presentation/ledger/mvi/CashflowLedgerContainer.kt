@@ -4,7 +4,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -31,6 +30,7 @@ import tech.dokus.features.cashflow.usecases.GetCashflowOverviewUseCase
 import tech.dokus.features.cashflow.usecases.LoadCashflowEntriesUseCase
 import tech.dokus.features.cashflow.usecases.RecordCashflowPaymentUseCase
 import tech.dokus.foundation.platform.Logger
+import kotlin.time.Clock
 import tech.dokus.domain.enums.CashflowViewMode as DomainViewMode
 
 internal typealias CashflowLedgerCtx = PipelineContext<CashflowLedgerState, CashflowLedgerIntent, CashflowLedgerAction>
@@ -343,7 +343,7 @@ internal class CashflowLedgerContainer(
             if (entry.documentId != null) {
                 action(CashflowLedgerAction.NavigateToDocumentReview(entry.documentId.toString()))
             } else {
-                action(CashflowLedgerAction.NavigateToEntity(entry.sourceType, entry.sourceId.toString()))
+                action(CashflowLedgerAction.NavigateToEntity(entry.sourceType, entry.sourceId))
             }
         }
     }
@@ -393,7 +393,7 @@ internal class CashflowLedgerContainer(
         if (entry.documentId != null) {
             action(CashflowLedgerAction.NavigateToDocumentReview(entry.documentId.toString()))
         } else {
-            action(CashflowLedgerAction.NavigateToEntity(entry.sourceType, entry.sourceId.toString()))
+            action(CashflowLedgerAction.NavigateToEntity(entry.sourceType, entry.sourceId))
         }
     }
 
