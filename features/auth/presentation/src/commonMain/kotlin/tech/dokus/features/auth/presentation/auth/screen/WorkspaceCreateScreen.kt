@@ -61,6 +61,7 @@ internal fun WorkspaceCreateScreen(
     onNavigateUp: () -> Unit,
     triggerWarp: Boolean,
     onWarpComplete: () -> Unit,
+    yearOverride: Int? = null,
 ) {
     var isWarpActive by remember { mutableStateOf(false) }
     var shouldNavigate by remember { mutableStateOf(false) }
@@ -94,6 +95,7 @@ internal fun WorkspaceCreateScreen(
                 if (wizardState != null) {
                     OnboardingCenteredShell(
                         modifier = Modifier.dismissKeyboardOnTapOutside(),
+                        yearOverride = yearOverride,
                         contentMaxWidth = when (wizardState.step) {
                             WorkspaceWizardStep.CompanyName,
                             WorkspaceWizardStep.VatAndAddress -> WorkspaceCreateLookupShellMaxWidth
@@ -248,6 +250,7 @@ private fun WorkspaceCreateScreenPreview(
             onNavigateUp = {},
             triggerWarp = false,
             onWarpComplete = {},
+            yearOverride = 2026,
         )
     }
 }
@@ -266,6 +269,7 @@ private fun WorkspaceCreateScreenDesktopPreview(
             onNavigateUp = {},
             triggerWarp = false,
             onWarpComplete = {},
+            yearOverride = 2026,
         )
     }
 }

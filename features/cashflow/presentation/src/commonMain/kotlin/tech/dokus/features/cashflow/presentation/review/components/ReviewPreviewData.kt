@@ -221,6 +221,7 @@ internal fun previewReviewContentState(
         sourceViewerState = sourceViewerState,
         paymentSheetState = paymentSheetState,
         counterpartyIntent = CounterpartyIntent.None,
+        today = LocalDate(2026, 3, 1),
     )
 }
 

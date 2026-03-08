@@ -304,6 +304,7 @@ private fun DesktopProfileMenuButton(
 private fun DesktopShellTopBarFrame(
     actions: List<HomeShellTopBarAction>,
     modifier: Modifier = Modifier,
+    dateOverride: kotlinx.datetime.LocalDate? = null,
     leadingContent: @Composable RowScope.() -> Unit,
 ) {
     val spacing = MaterialTheme.dokusSpacing
@@ -325,7 +326,7 @@ private fun DesktopShellTopBarFrame(
             RouteTopBarActions(actions = actions)
 
             // Date display
-            val dateText = formattedCurrentDate()
+            val dateText = formattedCurrentDate(dateOverride)
             Spacer(modifier = Modifier.width(spacing.medium))
             Text(
                 text = dateText,
@@ -341,6 +342,7 @@ private fun DesktopShellTopBarFrame(
 internal fun DesktopShellTopBar(
     topBarConfig: HomeShellTopBarConfig,
     modifier: Modifier = Modifier,
+    dateOverride: kotlinx.datetime.LocalDate? = null,
 ) {
     when (val mode = topBarConfig.mode) {
         HomeShellTopBarMode.Transparent -> {
@@ -354,7 +356,8 @@ internal fun DesktopShellTopBar(
         is HomeShellTopBarMode.Title -> {
             DesktopShellTopBarFrame(
                 actions = topBarConfig.actions,
-                modifier = modifier
+                modifier = modifier,
+                dateOverride = dateOverride
             ) {
                 Column {
                     Text(
@@ -456,9 +459,9 @@ private fun RowScope.RouteTopBarActions(
 
 /** Format current date as "18 Feb 2026" using localized month names. */
 @Composable
-private fun formattedCurrentDate(): String {
-    val today = remember {
-        Clock.System.todayIn(TimeZone.currentSystemDefault())
+private fun formattedCurrentDate(dateOverride: kotlinx.datetime.LocalDate? = null): String {
+    val today = remember(dateOverride) {
+        dateOverride ?: Clock.System.todayIn(TimeZone.currentSystemDefault())
     }
     val monthName = shortMonthName(today.month)
     return "${today.day} $monthName ${today.year}"
@@ -484,6 +487,8 @@ private fun shortMonthName(month: Month): String = when (month) {
 // Previews
 // =============================================================================
 
+private val previewDate = kotlinx.datetime.LocalDate(2026, 1, 15)
+
 @Preview
 @Composable
 private fun DesktopShellTopBarTitleOnlyPreview(
@@ -493,7 +498,8 @@ private fun DesktopShellTopBarTitleOnlyPreview(
         DesktopShellTopBar(
             topBarConfig = HomeShellTopBarConfig(
                 mode = HomeShellTopBarMode.Title(title = "Accountant")
-            )
+            ),
+            dateOverride = previewDate,
         )
     }
 }
@@ -510,7 +516,8 @@ private fun DesktopShellTopBarTitleSubtitlePreview(
                     title = "Cashflow",
                     subtitle = "Track incoming and outgoing payments"
                 )
-            )
+            ),
+            dateOverride = previewDate,
         )
     }
 }

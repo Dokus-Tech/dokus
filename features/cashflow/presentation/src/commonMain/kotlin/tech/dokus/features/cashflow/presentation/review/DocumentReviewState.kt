@@ -156,6 +156,7 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
         val contactSheetContacts: DokusState<List<ContactDto>> = DokusState.idle(),
         val queueState: DocumentReviewQueueState? = null,
         val selectedQueueDocumentId: DocumentId? = null,
+        val today: LocalDate = Clock.System.todayIn(TimeZone.currentSystemDefault()),
     ) : DocumentReviewState {
 
         /** True when AI extraction is still in progress (Queued or Processing). */
@@ -309,7 +310,6 @@ sealed interface DocumentReviewState : MVIState, DokusState<Nothing> {
             get() {
                 if (isProcessing || hasAttention) return ReviewFinancialStatus.Review
                 val entry = (cashflowEntryState as? DokusState.Success<CashflowEntry>)?.data
-                val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
                 val isOverdueByDueDate = isDocumentConfirmed &&
                     (resolvedDueDate?.let { it < today } == true)
                 return when (entry?.status) {
