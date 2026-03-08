@@ -111,7 +111,12 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     testOptions {
-        unitTests.isIncludeAndroidResources = true
+        unitTests {
+            isIncludeAndroidResources = true
+            all {
+                it.systemProperties["robolectric.pixelCopyRenderMode"] = "hardware"
+            }
+        }
     }
 }
 
