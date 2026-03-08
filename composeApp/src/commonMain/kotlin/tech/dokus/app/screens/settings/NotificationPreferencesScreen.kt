@@ -118,14 +118,11 @@ internal fun NotificationPreferencesContent(
         }
 
         is NotificationPreferencesState.Error -> {
-            Column(modifier = modifier.padding(contentPadding)) {
-                DokusErrorBanner(
-                    exception = state.exception,
-                    retryHandler = state.retryHandler,
-                    modifier = Modifier.padding(Constraints.Spacing.large),
-                )
-                SettingsSkeleton(sectionCount = 3)
-            }
+            DokusErrorBanner(
+                exception = state.exception,
+                retryHandler = state.retryHandler,
+                modifier = modifier.padding(contentPadding).padding(Constraints.Spacing.large),
+            )
         }
     }
 }

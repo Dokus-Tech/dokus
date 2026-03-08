@@ -77,18 +77,11 @@ internal fun MySessionsContent(
         }
 
         is MySessionsState.Error -> {
-            Column(
-                modifier = modifier
-                    .fillMaxSize()
-                    .padding(contentPadding),
-            ) {
-                DokusErrorBanner(
-                    exception = state.exception,
-                    retryHandler = state.retryHandler,
-                    modifier = Modifier.padding(16.dp),
-                )
-                MySessionsSkeleton()
-            }
+            DokusErrorBanner(
+                exception = state.exception,
+                retryHandler = state.retryHandler,
+                modifier = modifier.padding(contentPadding).padding(16.dp),
+            )
         }
 
         is MySessionsState.Loaded -> {

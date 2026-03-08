@@ -222,7 +222,6 @@ fun TeamSettingsContent(
                         exception = state.exception,
                         retryHandler = state.retryHandler,
                     )
-                    SettingsSkeleton(sectionCount = 2)
                 }
 
                 else -> {

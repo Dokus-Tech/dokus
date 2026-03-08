@@ -50,14 +50,11 @@ internal fun DocumentsScreen(
                 }
 
                 is DocumentsState.Error -> {
-                    Column(modifier = Modifier.fillMaxSize()) {
-                        DokusErrorBanner(
-                            exception = state.exception,
-                            retryHandler = state.retryHandler,
-                            modifier = Modifier.padding(16.dp),
-                        )
-                        DocumentsSkeleton()
-                    }
+                    DokusErrorBanner(
+                        exception = state.exception,
+                        retryHandler = state.retryHandler,
+                        modifier = Modifier.padding(16.dp),
+                    )
                 }
 
                 is DocumentsState.Content -> {

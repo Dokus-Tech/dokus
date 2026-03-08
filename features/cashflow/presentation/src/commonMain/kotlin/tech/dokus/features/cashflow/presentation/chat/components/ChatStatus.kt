@@ -55,24 +55,16 @@ internal fun ErrorContent(
     error: ChatState.Error,
     contentPadding: PaddingValues,
 ) {
-    Column(
+    Box(
         modifier = androidx.compose.ui.Modifier
             .fillMaxSize()
             .padding(contentPadding)
             .padding(Constraints.Spacing.large),
-        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.large),
     ) {
         DokusErrorBanner(
             exception = error.exception,
             retryHandler = error.retryHandler,
         )
-        // Chat message skeleton
-        repeat(3) {
-            ShimmerLine(
-                modifier = androidx.compose.ui.Modifier
-                    .fillMaxWidth(if (it % 2 == 0) 0.7f else 0.5f),
-            )
-        }
     }
 }
 

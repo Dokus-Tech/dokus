@@ -109,14 +109,11 @@ fun WorkspaceSettingsContent(
         }
 
         is WorkspaceSettingsState.Error -> {
-            Column(modifier = modifier) {
-                DokusErrorBanner(
-                    exception = state.exception,
-                    retryHandler = state.retryHandler,
-                    modifier = Modifier.padding(Constraints.Spacing.large),
-                )
-                SettingsSkeleton(sectionCount = 5)
-            }
+            DokusErrorBanner(
+                exception = state.exception,
+                retryHandler = state.retryHandler,
+                modifier = modifier.padding(Constraints.Spacing.large),
+            )
         }
     }
 }

@@ -196,18 +196,6 @@ fun ProfileSettingsContent(
                         onResendVerification = onResendVerification,
                         onEditClick = { onIntent(ProfileSettingsIntent.StartEditing) },
                     )
-                    SecurityCard(
-                        onChangePassword = onChangePassword,
-                        onMySessions = onMySessions,
-                    )
-                    ServerCard(
-                        currentServer = currentServer,
-                        onChangeServer = onChangeServer,
-                        onResetToCloud = onResetToCloud,
-                    )
-                    DangerZoneCard()
-                    LogOutCard(isLoggingOut = isLoggingOut, onLogout = onLogout)
-                    VersionFooter()
                 }
 
                 is ProfileSettingsState.Editing -> {
@@ -229,8 +217,23 @@ fun ProfileSettingsContent(
                         exception = state.exception,
                         retryHandler = state.retryHandler,
                     )
-                    ProfileSettingsSkeleton()
                 }
+            }
+
+            // Independent sections — always visible regardless of state
+            if (state !is ProfileSettingsState.Editing && state !is ProfileSettingsState.Saving) {
+                SecurityCard(
+                    onChangePassword = onChangePassword,
+                    onMySessions = onMySessions,
+                )
+                ServerCard(
+                    currentServer = currentServer,
+                    onChangeServer = onChangeServer,
+                    onResetToCloud = onResetToCloud,
+                )
+                DangerZoneCard()
+                LogOutCard(isLoggingOut = isLoggingOut, onLogout = onLogout)
+                VersionFooter()
             }
 
             Spacer(Modifier.height(8.dp))

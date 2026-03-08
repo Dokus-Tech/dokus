@@ -107,20 +107,11 @@ internal fun CashflowLedgerScreen(
             }
 
             is CashflowLedgerState.Error -> {
-                Column(modifier = Modifier.fillMaxSize()) {
-                    DokusErrorBanner(
-                        exception = state.exception,
-                        retryHandler = state.retryHandler,
-                        modifier = Modifier.padding(16.dp),
-                    )
-                    CashflowLedgerSkeleton(
-                        showHeader = isLargeScreen,
-                        rowCount = 5,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(horizontal = 16.dp),
-                    )
-                }
+                DokusErrorBanner(
+                    exception = state.exception,
+                    retryHandler = state.retryHandler,
+                    modifier = Modifier.padding(16.dp),
+                )
             }
         }
     }

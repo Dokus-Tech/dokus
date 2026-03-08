@@ -181,13 +181,10 @@ internal fun ConsoleClientsScreen(
                 }
 
                 is ConsoleClientsState.Error -> {
-                    Column(modifier = Modifier.fillMaxSize()) {
-                        DokusErrorBanner(
-                            exception = state.exception,
-                            retryHandler = state.retryHandler,
-                        )
-                        ConsoleClientsSkeleton()
-                    }
+                    DokusErrorBanner(
+                        exception = state.exception,
+                        retryHandler = state.retryHandler,
+                    )
                 }
 
                 is ConsoleClientsState.Content -> {
@@ -571,14 +568,11 @@ private fun ClientDetailContent(
             }
 
             is DokusState.Error -> {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    DokusErrorBanner(
-                        exception = documentsState.exception,
-                        retryHandler = documentsState.retryHandler,
-                        modifier = Modifier.padding(Constraints.Spacing.large),
-                    )
-                    ConsoleClientsSkeleton()
-                }
+                DokusErrorBanner(
+                    exception = documentsState.exception,
+                    retryHandler = documentsState.retryHandler,
+                    modifier = Modifier.fillMaxWidth().padding(Constraints.Spacing.large),
+                )
             }
 
             is DokusState.Success -> {
