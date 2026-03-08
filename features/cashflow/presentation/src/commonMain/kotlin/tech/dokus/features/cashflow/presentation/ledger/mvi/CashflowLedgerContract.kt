@@ -84,30 +84,6 @@ data class CashflowSummary(
 }
 
 /**
- * Payment form state for recording payments against cashflow entries.
- *
- * Uses amountText + amount pattern: TextField always updates amountText,
- * parsing updates amount when valid. Validate only on submit.
- */
-@Immutable
-data class PaymentFormState(
-    val paidAt: LocalDate = Clock.System.todayIn(TimeZone.currentSystemDefault()),
-    val amountText: String = "",
-    val amount: Money? = null,
-    val note: String = "",
-    val isSubmitting: Boolean = false,
-    val amountError: String? = null,
-    val isOptionsExpanded: Boolean = false
-) {
-    companion object {
-        fun withAmount(amount: Money): PaymentFormState = PaymentFormState(
-            amountText = amount.toDisplayString(),
-            amount = amount
-        )
-    }
-}
-
-/**
  * State for CashflowLedgerScreen.
  */
 @Immutable
@@ -122,8 +98,6 @@ sealed interface CashflowLedgerState : MVIState, DokusState<Nothing> {
         val balance: BalanceState? = null, // null when no banking integration
         val highlightedEntryId: CashflowEntryId? = null,
         val isRefreshing: Boolean = false,
-        val selectedEntryId: CashflowEntryId? = null,
-        val paymentFormState: PaymentFormState = PaymentFormState(),
         val actionsEntryId: CashflowEntryId? = null // Which row's action menu is open
     ) : CashflowLedgerState
 
