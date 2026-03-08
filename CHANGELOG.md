@@ -4,10 +4,60 @@ All notable changes to Dokus are documented in this file.
 
 The format follows Keep a Changelog principles with pragmatic release summaries.
 
-## [Unreleased]
+## [0.2.0] - 2026-03-08
+
+### Added
+- End-to-end authentication flow with multi-tenant access refactor (#175, #185).
+- Unified user avatar endpoints, UI rendering, and profile avatar support (#202, #204).
+- Tenant-scoped avatar URLs for workspace selection (#194).
+- Bank transaction auto-matching and auto-pay automation (#198).
+- Document SSE streams and real-time consumers (#201).
+- Backend-driven personalized search suggestions (#184).
+- LLM priority queue for AI inference orchestration (#205).
+- AI document classification with image fetching (#162).
+- AI fixture recorder for extraction testing (#161).
+- AI-assisted logo fallback with observability budgeting (#193).
+- Dedicated purpose similarity index and SERVICE_PERIOD heuristics (#196).
+- Lease invoice handling safeguards (#164).
+- Company manager and bookkeeper access flows with console CTA (#199).
+- Console availability flags and clients API (#187).
+- iOS FileProvider integration and backend role metadata (#171).
+- Resend email key configuration for notifications (#170).
+- Vercel SPA deployment workflow with analytics and speed insights (#163, #165).
+- Platform-aware Coil image loader with disk and memory caching via Koin (#209).
 
 ### Changed
-- Documentation refresh and cleanup.
+- Design system v2 overhaul (#179).
+- Custom DokusLoader replacing circular progress indicators (#178).
+- Document review UI and persistence behavior aligned (#197).
+- Document workflow filters and PEPPOL auto-confirm policy aligned (#167).
+- Documents upload UX flow refactored (#192).
+- Authoritative counterparty extraction with self-healing token contacts (#169).
+- Workspace and profile controls moved into home shell (#172).
+- Session management stabilized with desktop shell chrome alignment (#203).
+- Main tab state transitions stabilized (#188).
+- Offline bootstrap resilience improved (#182).
+- Recommand webhook flow hardened with debounced polling (#181).
+- Document ingestion concurrency and LM Studio timeout tuned (#191).
+- Peppol outage handling with recoverable skip path (#190).
+- Production app links and email verification assets updated (#183).
+- Vercel observability scripts conditionalized (#166).
+- Codebase-wide cleanup of inline qualified names replaced with proper imports (#210).
+
+### Fixed
+- Desktop invoice sender identity and selected client UI (#186).
+- iOS Files tenant headers and session state (#200).
+- Share extension upload errors (#168).
+- Force logout on unrecoverable auth failures (#195).
+- Document processing hang prevention (#173).
+
+### Internal
+- Library dependency updates (#207).
+- Deprecated components cleanup (#208).
+- Database migration files cleanup (#206).
+- Navigation changes cleanup (#177).
+- Screenshot updates (#211).
+- Compose UI best-practices documentation (#180).
 
 ## [0.1.17] - 2026-01-23
 
