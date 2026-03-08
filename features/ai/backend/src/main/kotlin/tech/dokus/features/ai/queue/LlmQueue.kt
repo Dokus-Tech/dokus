@@ -25,7 +25,13 @@ import kotlin.time.TimeSource
 // Builder DSL
 // ---------------------------------------------------------------------------
 
+/** Scope marker for [LlmQueue] builder DSL. Prevents implicit receiver leaking. */
+@DslMarker
+@Target(AnnotationTarget.CLASS)
+annotation class LlmQueueDsl
+
 /** Builder for [LlmQueue]. Use via [LlmQueue] factory function. */
+@LlmQueueDsl
 class LlmQueueBuilder {
     /** Maximum queued requests per slot before rejecting. Safety valve. */
     var maxQueueDepth: Int = 50
@@ -45,6 +51,7 @@ class LlmQueueBuilder {
     )
 }
 
+@LlmQueueDsl
 class SlotConfigBuilder {
     /** Max concurrent executions for this slot. Default 1. */
     var concurrency: Int = 1

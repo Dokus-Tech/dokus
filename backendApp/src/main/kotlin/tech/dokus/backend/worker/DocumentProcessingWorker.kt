@@ -152,7 +152,7 @@ internal class DocumentProcessingWorker(
 
     /**
      * Process a batch of pending ingestion runs concurrently.
-     * Queue fetch size is controlled by batchSize and execution parallelism by maxConcurrentRuns.
+     * Queue fetch size is controlled by batchSize. LLM concurrency is managed by [LlmQueue].
      */
     private suspend fun processBatch(
         timeout: Duration = DocumentProcessingConstants.INGESTION_RUN_TIMEOUT
