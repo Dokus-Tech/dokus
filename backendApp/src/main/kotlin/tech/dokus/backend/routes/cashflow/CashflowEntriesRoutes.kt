@@ -8,8 +8,8 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
 import tech.dokus.backend.security.requireTenantId
-import tech.dokus.backend.services.cashflow.BankStatementMatchingService
 import tech.dokus.backend.services.cashflow.AutoPaymentService
+import tech.dokus.backend.services.cashflow.BankStatementMatchingService
 import tech.dokus.backend.services.cashflow.CashflowEntriesService
 import tech.dokus.backend.services.cashflow.CashflowPaymentService
 import tech.dokus.domain.enums.CashflowEntryStatus
@@ -146,8 +146,10 @@ internal fun Route.cashflowEntriesRoutes() {
                 entryId = entryId,
                 request = request
             ).getOrElse { error ->
-                throw (error as? DokusException
-                    ?: DokusException.InternalError("Failed to record payment: ${error.message}"))
+                throw (
+                    error as? DokusException
+                        ?: DokusException.InternalError("Failed to record payment: ${error.message}")
+                    )
             }
 
             call.respond(HttpStatusCode.OK, updatedEntry)
@@ -209,8 +211,10 @@ internal fun Route.cashflowEntriesRoutes() {
                 actorUserId = dokusPrincipal.userId,
                 reason = request.reason
             ).getOrElse { error ->
-                throw (error as? DokusException
-                    ?: DokusException.InternalError("Failed to undo auto payment: ${error.message}"))
+                throw (
+                    error as? DokusException
+                        ?: DokusException.InternalError("Failed to undo auto payment: ${error.message}")
+                    )
             }
 
             call.respond(HttpStatusCode.OK, updatedEntry)

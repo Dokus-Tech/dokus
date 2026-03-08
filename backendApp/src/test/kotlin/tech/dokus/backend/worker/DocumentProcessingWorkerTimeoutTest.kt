@@ -24,6 +24,8 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.features.ai.agents.DocumentProcessingAgent
+import tech.dokus.features.ai.queue.LlmModelSlot
+import tech.dokus.features.ai.queue.LlmQueue
 import tech.dokus.foundation.backend.config.ProcessorConfig
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -75,6 +77,10 @@ class DocumentProcessingWorkerTimeoutTest {
         coEvery { tenantRepository.findById(secondRun.tenantId) } returns null
         coEvery { userRepository.listByTenant(any(), activeOnly = true) } returns emptyList()
 
+        val llmQueue = LlmQueue {
+            slot(LlmModelSlot.Vision) { concurrency = 1 }
+            slot(LlmModelSlot.Text) { concurrency = 1 }
+        }.also { it.start() }
         val worker = DocumentProcessingWorker(
             ingestionRepository = ingestionRepository,
             processingAgent = processingAgent,
@@ -91,14 +97,18 @@ class DocumentProcessingWorkerTimeoutTest {
                 pollingInterval = 1_000,
                 maxAttempts = 3,
                 batchSize = 2,
-                maxConcurrentRuns = 2
             ),
             tenantRepository = tenantRepository,
-            userRepository = userRepository
+            userRepository = userRepository,
+            llmQueue = llmQueue
         )
 
-        withTimeout(2.seconds) {
-            worker.processBatchForTest(timeout = 75.milliseconds)
+        try {
+            withTimeout(2.seconds) {
+                worker.processBatchForTest(timeout = 75.milliseconds)
+            }
+        } finally {
+            llmQueue.stop()
         }
 
         coVerify(exactly = 2) { ingestionRepository.markAsProcessing(any(), "koog-graph") }

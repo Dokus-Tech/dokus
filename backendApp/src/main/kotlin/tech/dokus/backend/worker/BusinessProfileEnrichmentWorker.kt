@@ -30,6 +30,7 @@ import tech.dokus.database.repository.contacts.ContactAddressRepository
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.features.ai.agents.BusinessLogoFallbackAgent
 import tech.dokus.features.ai.agents.BusinessProfileContentExtractionAgent
+import tech.dokus.features.ai.queue.LlmQueue
 import tech.dokus.foundation.backend.config.BusinessProfileEnrichmentConfig
 import tech.dokus.foundation.backend.storage.AvatarStorageService
 import tech.dokus.foundation.backend.utils.loggerFor
@@ -57,6 +58,7 @@ class BusinessProfileEnrichmentWorker(
     websiteProbe: BusinessWebsiteProbe,
     websiteRanker: BusinessWebsiteRanker,
     logoSelectionService: BusinessLogoSelectionService,
+    llmQueue: LlmQueue,
 ) {
     private companion object {
         val MinStaleProcessingLease: Duration = LogoPipelineTotalBudgetMs.milliseconds + 5.minutes
@@ -73,7 +75,8 @@ class BusinessProfileEnrichmentWorker(
         tenantRepository = tenantRepository,
         avatarStorageService = avatarStorageService,
         logoFallbackAgent = logoFallbackAgent,
-        logoSelectionService = logoSelectionService
+        logoSelectionService = logoSelectionService,
+        llmQueue = llmQueue
     )
     private val jobProcessor = BusinessProfileEnrichmentJobProcessor(
         config = config,
@@ -83,7 +86,8 @@ class BusinessProfileEnrichmentWorker(
         websiteProbe = websiteProbe,
         websiteRanker = websiteRanker,
         subjectContextLoader = subjectContextLoader,
-        logoResolver = logoResolver
+        logoResolver = logoResolver,
+        llmQueue = llmQueue
     )
     private val logger = loggerFor()
     private var scope = CoroutineScope(Dispatchers.Default + SupervisorJob())

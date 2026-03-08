@@ -28,9 +28,9 @@ import tech.dokus.backend.routes.cashflow.documents.updateDraftCounterparty
 import tech.dokus.backend.security.requireTenantId
 import tech.dokus.backend.services.cashflow.CashflowProjectionReconciliationService
 import tech.dokus.backend.services.cashflow.InvoiceBankAutomationService
+import tech.dokus.backend.services.documents.DocumentIntakeServiceResult
 import tech.dokus.backend.services.documents.DocumentPurposeService
 import tech.dokus.backend.services.documents.DocumentRecordLoader
-import tech.dokus.backend.services.documents.DocumentIntakeServiceResult
 import tech.dokus.backend.services.documents.DocumentTruthService
 import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
 import tech.dokus.backend.services.documents.sse.DocumentCollectionEventHub

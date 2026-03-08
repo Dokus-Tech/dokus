@@ -22,8 +22,6 @@ import tech.dokus.database.repository.cashflow.InvoiceBankMatchLinkRepository
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.database.tables.cashflow.InvoicesTable
 import tech.dokus.domain.Money
-import tech.dokus.domain.enums.AutoMatchStatus
-import tech.dokus.domain.enums.AutoPaymentDecision
 import tech.dokus.domain.enums.AutoPaymentTriggerSource
 import tech.dokus.domain.enums.CashflowDirection
 import tech.dokus.domain.enums.InvoiceStatus
@@ -103,7 +101,9 @@ class InvoiceBankAutomationService(
     ) {
         val entry = cashflowEntriesRepository.getEntry(entryId, tenantId).getOrNull() ?: return
         if (entry.sourceType != tech.dokus.domain.enums.CashflowSourceType.Invoice) return
-        val fromDate = Clock.System.now().toLocalDateTime(TimeZone.UTC).date.minus(DatePeriod(days = RECENT_TX_WINDOW_DAYS))
+        val fromDate = Clock.System.now().toLocalDateTime(
+            TimeZone.UTC
+        ).date.minus(DatePeriod(days = RECENT_TX_WINDOW_DAYS))
         val transactions = importedBankTransactionRepository.listRecentCandidatePool(tenantId, fromDate)
         runMatchingAndAutomation(
             tenantId = tenantId,
@@ -120,7 +120,9 @@ class InvoiceBankAutomationService(
         val entries = cashflowEntriesRepository.listOpenInvoiceEntriesByContact(tenantId, contactId)
             .getOrDefault(emptyList())
         if (entries.isEmpty()) return
-        val fromDate = Clock.System.now().toLocalDateTime(TimeZone.UTC).date.minus(DatePeriod(days = RECENT_TX_WINDOW_DAYS))
+        val fromDate = Clock.System.now().toLocalDateTime(
+            TimeZone.UTC
+        ).date.minus(DatePeriod(days = RECENT_TX_WINDOW_DAYS))
         val transactions = importedBankTransactionRepository.listRecentCandidatePool(tenantId, fromDate)
         runMatchingAndAutomation(
             tenantId = tenantId,

@@ -347,7 +347,9 @@ class BankStatementMatchingService(
         dueDaysDistance: Int,
         nameSimilarity: Double
     ): String {
-        return """{"exactAmount":$exactAmount,"structuredMatch":$structuredMatch,"ibanMatch":$ibanMatch,"vatMatch":$vatMatch,"amountDeltaMinor":$amountDelta,"dueDaysDistance":$dueDaysDistance,"nameSimilarity":${"%.4f".format(nameSimilarity)}}"""
+        return """{"exactAmount":$exactAmount,"structuredMatch":$structuredMatch,"ibanMatch":$ibanMatch,"vatMatch":$vatMatch,"amountDeltaMinor":$amountDelta,"dueDaysDistance":$dueDaysDistance,"nameSimilarity":${"%.4f".format(
+            nameSimilarity
+        )}}"""
     }
 
     private fun isSignCoherent(amount: Money, direction: CashflowDirection): Boolean {

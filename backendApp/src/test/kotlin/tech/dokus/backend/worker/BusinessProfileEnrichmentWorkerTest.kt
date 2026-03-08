@@ -528,7 +528,10 @@ class BusinessProfileEnrichmentWorkerTest {
             logoFallbackAgent = logoFallbackAgent,
             websiteProbe = websiteProbe,
             websiteRanker = websiteRanker,
-            logoSelectionService = BusinessLogoSelectionService(websiteProbe)
+            logoSelectionService = BusinessLogoSelectionService(websiteProbe),
+            llmQueue = tech.dokus.features.ai.queue.LlmQueue {
+                slot(tech.dokus.features.ai.queue.LlmModelSlot.Text) { concurrency = 1 }
+            }.also { it.start() }
         )
     }
 
