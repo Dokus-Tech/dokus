@@ -27,6 +27,8 @@ import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_continue
 import tech.dokus.aura.resources.profile_sessions_title
+import tech.dokus.domain.asbtractions.RetryHandler
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.features.auth.mvi.MySessionsIntent
 import tech.dokus.features.auth.mvi.MySessionsState
 import tech.dokus.features.auth.presentation.auth.components.MySessionsSkeleton
@@ -124,6 +126,35 @@ private fun MySessionsScreenPreview(
             snackbarHostState = remember { SnackbarHostState() },
             onIntent = {},
             nowEpochSeconds = SessionsPreviewNowEpochSeconds,
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun MySessionsLoadingPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
+) {
+    TestWrapper(parameters) {
+        MySessionsContent(
+            state = MySessionsState.Loading,
+            onIntent = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun MySessionsErrorPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
+) {
+    TestWrapper(parameters) {
+        MySessionsContent(
+            state = MySessionsState.Error(
+                exception = DokusException.ConnectionError(),
+                retryHandler = RetryHandler { },
+            ),
+            onIntent = {},
         )
     }
 }

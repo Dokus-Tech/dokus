@@ -81,7 +81,9 @@ import tech.dokus.aura.resources.team_since
 import tech.dokus.aura.resources.team_transfer_confirm
 import tech.dokus.aura.resources.team_transfer_ownership
 import tech.dokus.aura.resources.team_you
+import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.enums.UserRole
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.InvitationId
 import tech.dokus.domain.model.TeamMember
 import tech.dokus.domain.model.TenantInvitation
@@ -964,6 +966,43 @@ private fun formatDate(dateTime: LocalDateTime): String {
 // =============================================================================
 // Previews
 // =============================================================================
+
+@Preview
+@Composable
+private fun TeamSettingsLoadingPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
+) {
+    TestWrapper(parameters) {
+        TeamSettingsContent(
+            state = TeamSettingsState.Loading,
+            showInviteDialog = false,
+            onShowInviteDialog = {},
+            showBookkeeperDialog = false,
+            onShowBookkeeperDialog = {},
+            onIntent = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun TeamSettingsErrorPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
+) {
+    TestWrapper(parameters) {
+        TeamSettingsContent(
+            state = TeamSettingsState.Error(
+                exception = DokusException.ConnectionError(),
+                retryHandler = RetryHandler { },
+            ),
+            showInviteDialog = false,
+            onShowInviteDialog = {},
+            showBookkeeperDialog = false,
+            onShowBookkeeperDialog = {},
+            onIntent = {},
+        )
+    }
+}
 
 @OptIn(ExperimentalUuidApi::class)
 @Preview

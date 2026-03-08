@@ -17,6 +17,8 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.chat_loading
+import tech.dokus.domain.asbtractions.RetryHandler
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.features.cashflow.presentation.chat.ChatState
 import tech.dokus.foundation.aura.components.common.DokusErrorBanner
 import tech.dokus.foundation.aura.components.common.DokusLoader
@@ -81,5 +83,21 @@ private fun LoadingContentPreview(
 ) {
     TestWrapper(parameters) {
         LoadingContent(contentPadding = PaddingValues(0.dp))
+    }
+}
+
+@Preview
+@Composable
+private fun ErrorContentPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
+) {
+    TestWrapper(parameters) {
+        ErrorContent(
+            error = ChatState.Error(
+                exception = DokusException.ConnectionError(),
+                retryHandler = RetryHandler { },
+            ),
+            contentPadding = PaddingValues(0.dp),
+        )
     }
 }

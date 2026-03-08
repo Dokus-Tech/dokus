@@ -38,6 +38,8 @@ import tech.dokus.features.auth.presentation.auth.components.SecurityCard
 import tech.dokus.features.auth.presentation.auth.components.ServerCard
 import tech.dokus.features.auth.presentation.auth.components.VersionFooter
 import tech.dokus.foundation.app.picker.rememberImagePicker
+import tech.dokus.domain.asbtractions.RetryHandler
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.foundation.aura.components.common.DokusErrorBanner
 import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.local.LocalScreenSize
@@ -233,6 +235,51 @@ fun ProfileSettingsContent(
 
             Spacer(Modifier.height(8.dp))
         }
+    }
+}
+
+@Preview
+@Composable
+private fun ProfileSettingsLoadingPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
+) {
+    TestWrapper(parameters) {
+        ProfileSettingsContent(
+            state = ProfileSettingsState.Loading,
+            currentServer = ServerConfig.Cloud,
+            isLoggingOut = false,
+            onIntent = {},
+            onResendVerification = {},
+            onChangePassword = {},
+            onMySessions = {},
+            onChangeServer = {},
+            onResetToCloud = {},
+            onLogout = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun ProfileSettingsErrorPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
+) {
+    TestWrapper(parameters) {
+        ProfileSettingsContent(
+            state = ProfileSettingsState.Error(
+                exception = DokusException.ConnectionError(),
+                retryHandler = RetryHandler { },
+            ),
+            currentServer = ServerConfig.Cloud,
+            isLoggingOut = false,
+            onIntent = {},
+            onResendVerification = {},
+            onChangePassword = {},
+            onMySessions = {},
+            onChangeServer = {},
+            onResetToCloud = {},
+            onLogout = {},
+        )
     }
 }
 

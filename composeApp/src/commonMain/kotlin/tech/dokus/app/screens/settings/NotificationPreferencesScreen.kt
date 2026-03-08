@@ -46,7 +46,9 @@ import tech.dokus.aura.resources.notification_pref_section_peppol
 import tech.dokus.aura.resources.notification_pref_subtitle
 import tech.dokus.aura.resources.settings_notifications
 import tech.dokus.aura.resources.state_retry
+import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.enums.NotificationType
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.NotificationPreferenceDto
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.components.PPrimaryButton
@@ -360,6 +362,35 @@ private fun RequiredBadge() {
 // =============================================================================
 // Previews
 // =============================================================================
+
+@Preview
+@Composable
+private fun NotificationPreferencesLoadingPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
+) {
+    TestWrapper(parameters) {
+        NotificationPreferencesContent(
+            state = NotificationPreferencesState.Loading,
+            onIntent = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun NotificationPreferencesErrorPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
+) {
+    TestWrapper(parameters) {
+        NotificationPreferencesContent(
+            state = NotificationPreferencesState.Error(
+                exception = DokusException.ConnectionError(),
+                retryHandler = RetryHandler { },
+            ),
+            onIntent = {},
+        )
+    }
+}
 
 @Preview
 @Composable
