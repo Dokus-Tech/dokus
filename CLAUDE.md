@@ -384,6 +384,58 @@ suspend fun createInvoice(...) = transaction {
 
 See `docs/DATABASE.md` and `docs/SECURITY.md` for complete details.
 
+### Kotlin Backend Patterns
+
+**Concurrency rules:**
+
+1. **Never use `mutableMapOf` for shared state** — plain `HashMap` is not thread-safe. Pre-initialize from config or use `ConcurrentHashMap`.
+
+```kotlin
+// ❌ WRONG - race condition with concurrent getOrPut
+private val slots = mutableMapOf<Key, Semaphore>()
+fun access(key: Key) = slots.getOrPut(key) { Semaphore(1) }
+
+// ✅ CORRECT - pre-initialize, effectively immutable
+private val slots: Map<Key, Semaphore> = config.keys.associateWith { Semaphore(1) }
+```
+
+2. **Never `peek()` then `poll()` on concurrent queues** — another thread can modify the queue between calls, causing the polled item to differ from the peeked item. Use `poll()` only.
+
+3. **Use `runSuspendCatching`** instead of `runCatching` in suspend functions (see `backendApp/.../util/RunSuspendCatching.kt`) to avoid swallowing `CancellationException`.
+
+4. **Clean up resources in `stop()`** — close channels, cancel scopes, clear queues.
+
+**DSL rules:**
+
+1. **Always annotate DSL builders with `@DslMarker`** — prevents implicit receiver leaking in nested lambdas. See `RedisDsl.kt` and `LlmQueueDsl` for examples.
+
+```kotlin
+@DslMarker
+@Target(AnnotationTarget.CLASS)
+annotation class MyDsl
+
+@MyDsl
+class MyBuilder { ... }
+```
+
+**Type safety rules:**
+
+1. **Keep value classes at API boundaries** — don't convert `LlmModelSlot`, `TenantId`, etc. to raw strings in data classes, metrics, or DTOs. Convert to strings only at serialization time.
+2. **Use existing value classes** (`Name`, `VatNumber`, `Money`, `TenantId`, etc.) instead of raw `String`/`Double`.
+3. **Never use `Pair`** — use small data classes or typealias instead.
+
+**LLM Queue:**
+
+All AI inference goes through `LlmQueue` (at `features/ai/queue/`). Wrap LLM agent calls with the appropriate extension:
+
+```kotlin
+llmQueue.documentProcessing("doc:$id") { processingAgent.process(input) }
+llmQueue.chat("chat:$sessionId") { chatAgent.chat(...) }
+llmQueue.businessEnrichment("biz:$name") { extractionAgent.extract(input) }
+```
+
+New AI consumers should add a lane to `LlmLane.kt` and an extension to `LlmQueueExtensions.kt`.
+
 ## Standard Workflow
 1. First think through the problem, read the codebase for relevant files, and write a plan to tasks/todo.md.
 2. The plan should have a list of todo items that you can
