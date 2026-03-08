@@ -384,10 +384,9 @@ private suspend fun processChat(
     logger.debug("Saved user message: id={}, session={}", userMessageId, sessionId)
 
     // Generate AI response using ChatAgent via LLM queue (interactive priority)
-    val sessionIdForDesc = sessionId
     val startTime = System.currentTimeMillis()
     val chatResult = try {
-        llmQueue.chat("chat:$sessionIdForDesc") {
+        llmQueue.chat("chat:$sessionId") {
             chatAgent.chat(
                 tenantId = tenantId,
                 question = request.message,

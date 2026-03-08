@@ -23,6 +23,7 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.features.ai.agents.DocumentProcessingAgent
+import tech.dokus.features.ai.queue.LlmModelSlot
 import tech.dokus.features.ai.queue.LlmQueue
 import tech.dokus.foundation.backend.config.ProcessorConfig
 import kotlin.time.Duration.Companion.seconds
@@ -35,7 +36,10 @@ class DocumentProcessingWorkerConcurrencyTest {
         batchSize = 10,
     )
 
-    private fun testLlmQueue(): LlmQueue = LlmQueue().also { it.start() }
+    private fun testLlmQueue(): LlmQueue = LlmQueue {
+        slot(LlmModelSlot.Vision) { concurrency = 1 }
+        slot(LlmModelSlot.Text) { concurrency = 1 }
+    }.also { it.start() }
 
     @Test
     fun `run already claimed by another worker is skipped without side effects`() = runBlocking {

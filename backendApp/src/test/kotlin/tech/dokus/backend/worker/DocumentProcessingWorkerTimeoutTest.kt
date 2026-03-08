@@ -24,6 +24,7 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.features.ai.agents.DocumentProcessingAgent
+import tech.dokus.features.ai.queue.LlmModelSlot
 import tech.dokus.features.ai.queue.LlmQueue
 import tech.dokus.foundation.backend.config.ProcessorConfig
 import kotlin.time.Duration.Companion.milliseconds
@@ -76,7 +77,10 @@ class DocumentProcessingWorkerTimeoutTest {
         coEvery { tenantRepository.findById(secondRun.tenantId) } returns null
         coEvery { userRepository.listByTenant(any(), activeOnly = true) } returns emptyList()
 
-        val llmQueue = LlmQueue().also { it.start() }
+        val llmQueue = LlmQueue {
+            slot(LlmModelSlot.Vision) { concurrency = 1 }
+            slot(LlmModelSlot.Text) { concurrency = 1 }
+        }.also { it.start() }
         val worker = DocumentProcessingWorker(
             ingestionRepository = ingestionRepository,
             processingAgent = processingAgent,

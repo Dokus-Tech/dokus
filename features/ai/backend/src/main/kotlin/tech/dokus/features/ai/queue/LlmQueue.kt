@@ -123,8 +123,8 @@ data class LlmQueueMetrics(
     val totalSubmitted: Long,
     val totalCompleted: Long,
     val totalFailed: Long,
-    val queueDepthPerSlot: Map<String, Int>,
-    val activePerSlot: Map<String, Int>,
+    val queueDepthPerSlot: Map<LlmModelSlot, Int>,
+    val activePerSlot: Map<LlmModelSlot, Int>,
 )
 
 // ---------------------------------------------------------------------------
@@ -167,14 +167,17 @@ class LlmQueue private constructor(private val config: LlmQueueConfig) {
         Dispatchers.Default + SupervisorJob() + CoroutineName("LlmQueue")
     )
 
-    private val slotSemaphores = mutableMapOf<LlmModelSlot, Semaphore>()
-    private val slotQueues = mutableMapOf<LlmModelSlot, PriorityBlockingQueue<QueueEntry>>()
+    private val slotSemaphores: Map<LlmModelSlot, Semaphore> =
+        config.slotConfigs.mapValues { (_, cfg) -> Semaphore(cfg.concurrency) }
+    private val slotQueues: Map<LlmModelSlot, PriorityBlockingQueue<QueueEntry>> =
+        config.slotConfigs.mapValues { PriorityBlockingQueue(16) }
     private val signal = Channel<Unit>(Channel.CONFLATED)
 
     private val totalSubmitted = AtomicLong(0)
     private val totalCompleted = AtomicLong(0)
     private val totalFailed = AtomicLong(0)
-    private val activePerSlot = mutableMapOf<LlmModelSlot, AtomicInteger>()
+    private val activePerSlot: Map<LlmModelSlot, AtomicInteger> =
+        config.slotConfigs.mapValues { AtomicInteger(0) }
 
     private var dispatcherJob: Job? = null
 
@@ -203,7 +206,8 @@ class LlmQueue private constructor(private val config: LlmQueueConfig) {
             work = work,
         )
 
-        val queue = slotQueues.getOrPut(lane.slot) { PriorityBlockingQueue(16) }
+        val queue = slotQueues[lane.slot]
+            ?: error("No queue configured for slot '${lane.slot.value}'. Configure it via LlmQueue { slot(...) {} }.")
         val depth = queue.size
         if (depth >= config.maxQueueDepth) {
             throw LlmQueueFullException(lane.slot, depth)
@@ -218,12 +222,7 @@ class LlmQueue private constructor(private val config: LlmQueueConfig) {
             lane.slot.value, lane.defaultPriority, lane.label, depth + 1, description
         )
 
-        return try {
-            request.result.await()
-        } catch (e: CancellationException) {
-            queue.removeIf { it.description == description && it.isCancelled() }
-            throw e
-        }
+        return request.result.await()
     }
 
     /** Start the queue dispatcher. Call once on application startup. */
@@ -249,6 +248,7 @@ class LlmQueue private constructor(private val config: LlmQueueConfig) {
         logger.info("Stopping LlmQueue...")
         dispatcherJob?.cancel()
         dispatcherJob = null
+        signal.close()
         scope.coroutineContext[Job]?.cancel()
         slotQueues.values.forEach { queue ->
             queue.forEach { it.cancel() }
@@ -262,8 +262,8 @@ class LlmQueue private constructor(private val config: LlmQueueConfig) {
         totalSubmitted = totalSubmitted.get(),
         totalCompleted = totalCompleted.get(),
         totalFailed = totalFailed.get(),
-        queueDepthPerSlot = slotQueues.mapKeys { it.key.value }.mapValues { it.value.size },
-        activePerSlot = activePerSlot.mapKeys { it.key.value }.mapValues { it.value.get() },
+        queueDepthPerSlot = slotQueues.mapValues { it.value.size },
+        activePerSlot = activePerSlot.mapValues { it.value.get() },
     )
 
     // =========================================================================
@@ -272,24 +272,21 @@ class LlmQueue private constructor(private val config: LlmQueueConfig) {
 
     private fun dispatchReadyRequests() {
         for ((slot, queue) in slotQueues) {
-            val semaphore = slotSemaphores.getOrPut(slot) {
-                Semaphore(config.concurrencyFor(slot))
-            }
-            val active = activePerSlot.getOrPut(slot) { AtomicInteger(0) }
+            val semaphore = slotSemaphores[slot] ?: continue
+            val active = activePerSlot[slot] ?: continue
 
             while (true) {
-                val entry = queue.peek() ?: break
-
-                if (entry.isCancelled()) {
-                    queue.poll()
-                    continue
-                }
-
                 if (!semaphore.tryAcquire()) break
 
-                queue.poll() ?: run {
+                val entry = queue.poll()
+                if (entry == null) {
                     semaphore.release()
                     break
+                }
+
+                if (entry.isCancelled()) {
+                    semaphore.release()
+                    continue
                 }
 
                 active.incrementAndGet()
