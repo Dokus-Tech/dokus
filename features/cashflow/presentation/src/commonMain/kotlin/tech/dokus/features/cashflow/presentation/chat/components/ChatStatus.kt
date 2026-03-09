@@ -63,6 +63,7 @@ internal fun ErrorContent(
         DokusErrorContent(
             exception = exception,
             retryHandler = retryHandler,
+            modifier = Modifier.fillMaxSize(),
         )
     }
 }

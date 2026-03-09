@@ -187,6 +187,7 @@ internal fun ConsoleClientsScreen(
                     DokusErrorContent(
                         exception = clientsState.exception,
                         retryHandler = clientsState.retryHandler,
+                        modifier = Modifier.fillMaxSize(),
                     )
                 }
 
@@ -578,7 +579,7 @@ private fun ClientDetailContent(
                 DokusErrorContent(
                     exception = documentsState.exception,
                     retryHandler = documentsState.retryHandler,
-                    modifier = Modifier.fillMaxWidth().padding(Constraints.Spacing.large),
+                    modifier = Modifier.fillMaxSize(),
                 )
             }
 

@@ -107,7 +107,7 @@ fun WorkspaceSettingsContent(
             DokusErrorContent(
                 exception = workspaceData.exception,
                 retryHandler = workspaceData.retryHandler,
-                modifier = modifier.padding(Constraints.Spacing.large),
+                modifier = Modifier.fillMaxSize(),
             )
         }
 

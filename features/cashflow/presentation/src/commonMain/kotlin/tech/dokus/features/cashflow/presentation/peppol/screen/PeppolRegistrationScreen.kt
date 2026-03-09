@@ -118,7 +118,7 @@ internal fun PeppolRegistrationScreen(
                         DokusErrorContent(
                             exception = error,
                             retryHandler = state.setupContext.retryHandler,
-                            modifier = Modifier.fillMaxWidth().padding(Constraints.Spacing.large),
+                            modifier = Modifier.fillMaxSize(),
                         )
                     }
                 }

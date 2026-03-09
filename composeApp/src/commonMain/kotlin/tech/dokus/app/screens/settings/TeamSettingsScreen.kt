@@ -5,7 +5,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -35,6 +34,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
@@ -45,6 +46,7 @@ import kotlinx.datetime.format.MonthNames
 import kotlinx.datetime.format.Padding
 import kotlinx.datetime.format.char
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.app.screens.settings.components.SettingsSkeleton
 import tech.dokus.app.viewmodel.TeamData
 import tech.dokus.app.viewmodel.TeamSettingsActionState
 import tech.dokus.app.viewmodel.TeamSettingsIntent
@@ -54,24 +56,23 @@ import tech.dokus.aura.resources.action_confirm
 import tech.dokus.aura.resources.action_save
 import tech.dokus.aura.resources.cancel
 import tech.dokus.aura.resources.state_sending
+import tech.dokus.aura.resources.team_bookkeeper_access_connected_label
+import tech.dokus.aura.resources.team_bookkeeper_access_dialog_title
+import tech.dokus.aura.resources.team_bookkeeper_access_empty
+import tech.dokus.aura.resources.team_bookkeeper_access_grant
+import tech.dokus.aura.resources.team_bookkeeper_access_no_results
+import tech.dokus.aura.resources.team_bookkeeper_access_owner_only
+import tech.dokus.aura.resources.team_bookkeeper_access_revoke
+import tech.dokus.aura.resources.team_bookkeeper_access_search_placeholder
+import tech.dokus.aura.resources.team_bookkeeper_access_subtitle
+import tech.dokus.aura.resources.team_bookkeeper_access_title
 import tech.dokus.aura.resources.team_cancel_invitation
 import tech.dokus.aura.resources.team_cancel_invitation_confirm
 import tech.dokus.aura.resources.team_change_role
-import tech.dokus.aura.resources.team_bookkeeper_access_title
-import tech.dokus.aura.resources.team_bookkeeper_access_subtitle
-import tech.dokus.aura.resources.team_bookkeeper_access_empty
-import tech.dokus.aura.resources.team_bookkeeper_access_grant
-import tech.dokus.aura.resources.team_bookkeeper_access_search_placeholder
-import tech.dokus.aura.resources.team_bookkeeper_access_no_results
-import tech.dokus.aura.resources.team_bookkeeper_access_revoke
-import tech.dokus.aura.resources.team_bookkeeper_access_connected_label
-import tech.dokus.aura.resources.team_bookkeeper_access_owner_only
-import tech.dokus.aura.resources.team_bookkeeper_access_dialog_title
 import tech.dokus.aura.resources.team_footer_note
 import tech.dokus.aura.resources.team_invite_email
 import tech.dokus.aura.resources.team_invite_member
 import tech.dokus.aura.resources.team_invite_role
-import tech.dokus.aura.resources.team_load_failed
 import tech.dokus.aura.resources.team_owner_badge
 import tech.dokus.aura.resources.team_pending_label
 import tech.dokus.aura.resources.team_remove_confirm
@@ -83,10 +84,13 @@ import tech.dokus.aura.resources.team_since
 import tech.dokus.aura.resources.team_transfer_confirm
 import tech.dokus.aura.resources.team_transfer_ownership
 import tech.dokus.aura.resources.team_you
+import tech.dokus.domain.Email
+import tech.dokus.domain.Name
 import tech.dokus.domain.enums.UserRole
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.FirmId
 import tech.dokus.domain.ids.InvitationId
+import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.TeamMember
 import tech.dokus.domain.model.TenantInvitation
 import tech.dokus.domain.model.auth.BookkeeperFirmSearchItem
@@ -100,12 +104,11 @@ import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.MonogramAvatar
 import tech.dokus.foundation.aura.components.UserAvatarImage
+import tech.dokus.foundation.aura.components.badges.TierBadge
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.DokusLoader
-import tech.dokus.app.screens.settings.components.SettingsSkeleton
 import tech.dokus.foundation.aura.components.common.DokusSelectableRowGroup
 import tech.dokus.foundation.aura.components.common.PTopAppBar
-import tech.dokus.foundation.aura.components.badges.TierBadge
 import tech.dokus.foundation.aura.components.dialog.DokusDialog
 import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
@@ -113,20 +116,13 @@ import tech.dokus.foundation.aura.components.status.StatusDot
 import tech.dokus.foundation.aura.components.status.StatusDotType
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.local.LocalScreenSize
-import tech.dokus.foundation.aura.style.surfaceHover
 import tech.dokus.foundation.aura.style.textFaint
 import tech.dokus.foundation.aura.style.textMuted
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
-import tech.dokus.domain.Email
-import tech.dokus.domain.Name
-import tech.dokus.domain.ids.UserId
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
-import org.jetbrains.compose.resources.StringResource
 
 private val MaxContentWidth = 400.dp
 private val ContentPaddingH = 16.dp
@@ -191,12 +187,105 @@ fun TeamSettingsContent(
         onIntent(TeamSettingsIntent.SearchBookkeeperFirms)
     }
 
+
+    // Invite Dialog
+    if (showInviteDialog) {
+        InviteDialog(
+            email = state.inviteEmail,
+            role = state.inviteRole,
+            isInviting = isInviting,
+            onEmailChange = { onIntent(TeamSettingsIntent.UpdateInviteEmail(it)) },
+            onRoleChange = { onIntent(TeamSettingsIntent.UpdateInviteRole(it)) },
+            onDismiss = {
+                onShowInviteDialog(false)
+                onIntent(TeamSettingsIntent.ResetInviteForm)
+            },
+            onInvite = { onIntent(TeamSettingsIntent.SendInvitation) }
+        )
+    }
+
+    if (showBookkeeperDialog && state.teamData is DokusState.Success) {
+        GrantBookkeeperAccessDialog(
+            query = state.bookkeeperSearchQuery,
+            results = state.bookkeeperSearchResults,
+            selectedFirmId = state.selectedBookkeeperFirmId,
+            loading = state.bookkeeperSearchLoading,
+            onQueryChange = { onIntent(TeamSettingsIntent.UpdateBookkeeperSearchQuery(it)) },
+            onSelectFirm = { onIntent(TeamSettingsIntent.SelectBookkeeperFirm(it)) },
+            onDismiss = {
+                onShowBookkeeperDialog(false)
+                onIntent(TeamSettingsIntent.ResetBookkeeperAccessForm)
+            },
+            onGrant = { onIntent(TeamSettingsIntent.GrantBookkeeperAccess) },
+        )
+    }
+
+    // Cancel Invitation Confirmation Dialog
+    showCancelInvitationDialog?.let { invitationId ->
+        ConfirmationDialog(
+            title = stringResource(Res.string.team_cancel_invitation),
+            message = stringResource(Res.string.team_cancel_invitation_confirm),
+            onDismiss = { showCancelInvitationDialog = null },
+            onConfirm = {
+                onIntent(TeamSettingsIntent.CancelInvitation(invitationId))
+                showCancelInvitationDialog = null
+            }
+        )
+    }
+
+    // Remove Confirmation Dialog
+    showRemoveConfirmDialog?.let { member ->
+        ConfirmationDialog(
+            title = stringResource(Res.string.team_remove_member),
+            message = stringResource(Res.string.team_remove_confirm),
+            onDismiss = { showRemoveConfirmDialog = null },
+            onConfirm = {
+                onIntent(TeamSettingsIntent.RemoveMember(member.userId))
+                showRemoveConfirmDialog = null
+            }
+        )
+    }
+
+    // Change Role Dialog
+    showChangeRoleDialog?.let { member ->
+        ChangeRoleDialog(
+            currentRole = member.role,
+            onDismiss = { showChangeRoleDialog = null },
+            onRoleSelected = { newRole ->
+                onIntent(TeamSettingsIntent.UpdateMemberRole(member.userId, newRole))
+                showChangeRoleDialog = null
+            }
+        )
+    }
+
+    // Transfer Ownership Dialog
+    showTransferOwnershipDialog?.let { member ->
+        ConfirmationDialog(
+            title = stringResource(Res.string.team_transfer_ownership),
+            message = stringResource(Res.string.team_transfer_confirm),
+            onDismiss = { showTransferOwnershipDialog = null },
+            onConfirm = {
+                onIntent(TeamSettingsIntent.TransferOwnership(member.userId))
+                showTransferOwnershipDialog = null
+            }
+        )
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
+        if (state.teamData.isError()) {
+            DokusErrorContent(
+                exception = state.teamData.exception,
+                retryHandler = state.teamData.retryHandler,
+                modifier = Modifier.fillMaxSize(),
+            )
+            return@Column
+        }
+
         Column(
             modifier = Modifier
                 .widthIn(max = MaxContentWidth)
@@ -207,13 +296,6 @@ fun TeamSettingsContent(
             when {
                 state.teamData.isLoading() -> {
                     SettingsSkeleton(sectionCount = 2)
-                }
-
-                state.teamData.isError() -> {
-                    DokusErrorContent(
-                        exception = state.teamData.exception,
-                        retryHandler = state.teamData.retryHandler,
-                    )
                 }
 
                 state.teamData.isSuccess() -> {
@@ -298,89 +380,6 @@ fun TeamSettingsContent(
             Spacer(Modifier.height(8.dp))
         }
     }
-
-    // Invite Dialog
-    if (showInviteDialog) {
-        InviteDialog(
-            email = state.inviteEmail,
-            role = state.inviteRole,
-            isInviting = isInviting,
-            onEmailChange = { onIntent(TeamSettingsIntent.UpdateInviteEmail(it)) },
-            onRoleChange = { onIntent(TeamSettingsIntent.UpdateInviteRole(it)) },
-            onDismiss = {
-                onShowInviteDialog(false)
-                onIntent(TeamSettingsIntent.ResetInviteForm)
-            },
-            onInvite = { onIntent(TeamSettingsIntent.SendInvitation) }
-        )
-    }
-
-    if (showBookkeeperDialog && state.teamData is DokusState.Success) {
-        GrantBookkeeperAccessDialog(
-            query = state.bookkeeperSearchQuery,
-            results = state.bookkeeperSearchResults,
-            selectedFirmId = state.selectedBookkeeperFirmId,
-            loading = state.bookkeeperSearchLoading,
-            onQueryChange = { onIntent(TeamSettingsIntent.UpdateBookkeeperSearchQuery(it)) },
-            onSelectFirm = { onIntent(TeamSettingsIntent.SelectBookkeeperFirm(it)) },
-            onDismiss = {
-                onShowBookkeeperDialog(false)
-                onIntent(TeamSettingsIntent.ResetBookkeeperAccessForm)
-            },
-            onGrant = { onIntent(TeamSettingsIntent.GrantBookkeeperAccess) },
-        )
-    }
-
-    // Cancel Invitation Confirmation Dialog
-    showCancelInvitationDialog?.let { invitationId ->
-        ConfirmationDialog(
-            title = stringResource(Res.string.team_cancel_invitation),
-            message = stringResource(Res.string.team_cancel_invitation_confirm),
-            onDismiss = { showCancelInvitationDialog = null },
-            onConfirm = {
-                onIntent(TeamSettingsIntent.CancelInvitation(invitationId))
-                showCancelInvitationDialog = null
-            }
-        )
-    }
-
-    // Remove Confirmation Dialog
-    showRemoveConfirmDialog?.let { member ->
-        ConfirmationDialog(
-            title = stringResource(Res.string.team_remove_member),
-            message = stringResource(Res.string.team_remove_confirm),
-            onDismiss = { showRemoveConfirmDialog = null },
-            onConfirm = {
-                onIntent(TeamSettingsIntent.RemoveMember(member.userId))
-                showRemoveConfirmDialog = null
-            }
-        )
-    }
-
-    // Change Role Dialog
-    showChangeRoleDialog?.let { member ->
-        ChangeRoleDialog(
-            currentRole = member.role,
-            onDismiss = { showChangeRoleDialog = null },
-            onRoleSelected = { newRole ->
-                onIntent(TeamSettingsIntent.UpdateMemberRole(member.userId, newRole))
-                showChangeRoleDialog = null
-            }
-        )
-    }
-
-    // Transfer Ownership Dialog
-    showTransferOwnershipDialog?.let { member ->
-        ConfirmationDialog(
-            title = stringResource(Res.string.team_transfer_ownership),
-            message = stringResource(Res.string.team_transfer_confirm),
-            onDismiss = { showTransferOwnershipDialog = null },
-            onConfirm = {
-                onIntent(TeamSettingsIntent.TransferOwnership(member.userId))
-                showTransferOwnershipDialog = null
-            }
-        )
-    }
 }
 
 // =============================================================================
@@ -421,7 +420,10 @@ private fun OwnerHero(
             color = MaterialTheme.colorScheme.textMuted,
         )
         Spacer(Modifier.height(8.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             TierBadge(label = stringResource(Res.string.team_owner_badge))
             Text(
                 text = stringResource(Res.string.team_since, formatDate(owner.joinedAt)),

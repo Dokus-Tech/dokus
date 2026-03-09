@@ -117,7 +117,7 @@ internal fun NotificationPreferencesContent(
             DokusErrorContent(
                 exception = state.preferences.exception,
                 retryHandler = state.preferences.retryHandler,
-                modifier = modifier.padding(contentPadding).padding(Constraints.Spacing.large),
+                modifier = Modifier.fillMaxSize().padding(contentPadding),
             )
         }
 

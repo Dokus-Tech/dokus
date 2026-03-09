@@ -192,6 +192,7 @@ fun ProfileSettingsContent(
                     DokusErrorContent(
                         exception = state.user.exception,
                         retryHandler = state.user.retryHandler,
+                        modifier = Modifier.fillMaxSize(),
                     )
                 }
 

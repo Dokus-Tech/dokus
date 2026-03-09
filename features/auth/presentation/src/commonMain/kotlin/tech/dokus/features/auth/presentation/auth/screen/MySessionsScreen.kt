@@ -78,7 +78,7 @@ internal fun MySessionsContent(
             DokusErrorContent(
                 exception = state.sessions.exception,
                 retryHandler = state.sessions.retryHandler,
-                modifier = modifier.padding(contentPadding).padding(16.dp),
+                modifier = Modifier.fillMaxSize().padding(contentPadding),
             )
         }
 
