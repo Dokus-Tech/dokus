@@ -42,7 +42,7 @@ fun PTopAppBar(
         TopAppBar(
             navigationIcon = {
                 val canNavigateBack = navController != null &&
-                    navController.previousBackStackEntry != null
+                        navController.previousBackStackEntry != null
                 val showNav = showBackButton && (onBackClick != null || canNavigateBack)
                 if (!showNav) return@TopAppBar
                 IconButton(
@@ -89,8 +89,8 @@ fun PTopAppBar(
     navController: NavController? = LocalNavController.current,
     showBackButton: Boolean = true,
     onBackClick: (() -> Unit)? = null,
+    modifier: Modifier = Modifier,
     actions: @Composable RowScope.() -> Unit = {},
-    modifier: Modifier = Modifier
 ) {
     PTopAppBar(
         title = stringResource(resource = title),

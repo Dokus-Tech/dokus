@@ -89,7 +89,6 @@ import tech.dokus.foundation.aura.tooling.TestWrapper
 import tech.dokus.foundation.aura.components.badges.ContactRole as UiContactRole
 
 // UI dimension constants
-private val ErrorPaddingVertical = Constraints.Spacing.xxxLarge
 private val ListItemSpacing = Constraints.Spacing.medium
 private val EmptyStatePadding = Constraints.Spacing.xxLarge
 private val EmptyStateIconSize = Constraints.IconSize.xxLarge
@@ -155,8 +154,8 @@ internal fun ContactsList(
             .distinctUntilChanged()
             .filter { (last, total) ->
                 (last + 1) > (total - InfiniteScrollThreshold) &&
-                    paginationData.hasMorePages &&
-                    !state.isLoading()
+                        paginationData.hasMorePages &&
+                        !state.isLoading()
             }
             .collect { onLoadMore() }
     }
@@ -169,19 +168,12 @@ internal fun ContactsList(
             )
         }
 
-        state is DokusState.Error && contacts.isEmpty() -> {
-            Box(
-                modifier = modifier
-                    .fillMaxSize()
-                    .padding(contentPadding)
-                    .padding(vertical = ErrorPaddingVertical),
-                contentAlignment = Alignment.Center
-            ) {
-                DokusErrorContent(
-                    exception = state.exception,
-                    retryHandler = state.retryHandler
-                )
-            }
+        state is DokusState.Error -> {
+            DokusErrorContent(
+                exception = state.exception,
+                retryHandler = state.retryHandler,
+                modifier = Modifier.fillMaxSize()
+            )
         }
 
         contacts.isEmpty() -> {
@@ -226,7 +218,9 @@ private fun ContactsListContent(
         modifier = modifier.fillMaxSize(),
         state = listState,
         contentPadding = contentPadding,
-        verticalArrangement = if (isDesktop) Arrangement.Top else Arrangement.spacedBy(ListItemSpacing)
+        verticalArrangement = if (isDesktop) Arrangement.Top else Arrangement.spacedBy(
+            ListItemSpacing
+        )
     ) {
         items(
             items = contacts,
