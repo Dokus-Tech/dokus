@@ -6,7 +6,6 @@ import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.domain.Money
-import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.CashflowEntryId
@@ -83,24 +82,19 @@ data class CashflowSummary(
  * State for CashflowLedgerScreen.
  */
 @Immutable
-sealed interface CashflowLedgerState : MVIState, DokusState<Nothing> {
-
-    data object Loading : CashflowLedgerState
-
-    data class Content(
-        val entries: PaginationState<CashflowEntry>,
-        val filters: CashflowFilters = CashflowFilters(),
-        val summary: CashflowSummary = CashflowSummary.EMPTY,
-        val balance: BalanceState? = null, // null when no banking integration
-        val highlightedEntryId: CashflowEntryId? = null,
-        val isRefreshing: Boolean = false,
-        val actionsEntryId: CashflowEntryId? = null // Which row's action menu is open
-    ) : CashflowLedgerState
-
-    data class Error(
-        override val exception: DokusException,
-        override val retryHandler: RetryHandler
-    ) : CashflowLedgerState, DokusState.Error<Nothing>
+data class CashflowLedgerState(
+    val entries: DokusState<PaginationState<CashflowEntry>>,
+    val filters: CashflowFilters = CashflowFilters(),
+    val summary: CashflowSummary = CashflowSummary.EMPTY,
+    val balance: BalanceState? = null,
+    val highlightedEntryId: CashflowEntryId? = null,
+    val actionsEntryId: CashflowEntryId? = null,
+) : MVIState {
+    companion object {
+        val initial by lazy {
+            CashflowLedgerState(entries = DokusState.loading())
+        }
+    }
 }
 
 /**

@@ -5,7 +5,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -35,6 +34,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
@@ -45,6 +46,9 @@ import kotlinx.datetime.format.MonthNames
 import kotlinx.datetime.format.Padding
 import kotlinx.datetime.format.char
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.app.screens.settings.components.SettingsSkeleton
+import tech.dokus.app.viewmodel.TeamData
+import tech.dokus.app.viewmodel.TeamSettingsActionState
 import tech.dokus.app.viewmodel.TeamSettingsIntent
 import tech.dokus.app.viewmodel.TeamSettingsState
 import tech.dokus.aura.resources.Res
@@ -52,24 +56,23 @@ import tech.dokus.aura.resources.action_confirm
 import tech.dokus.aura.resources.action_save
 import tech.dokus.aura.resources.cancel
 import tech.dokus.aura.resources.state_sending
+import tech.dokus.aura.resources.team_bookkeeper_access_connected_label
+import tech.dokus.aura.resources.team_bookkeeper_access_dialog_title
+import tech.dokus.aura.resources.team_bookkeeper_access_empty
+import tech.dokus.aura.resources.team_bookkeeper_access_grant
+import tech.dokus.aura.resources.team_bookkeeper_access_no_results
+import tech.dokus.aura.resources.team_bookkeeper_access_owner_only
+import tech.dokus.aura.resources.team_bookkeeper_access_revoke
+import tech.dokus.aura.resources.team_bookkeeper_access_search_placeholder
+import tech.dokus.aura.resources.team_bookkeeper_access_subtitle
+import tech.dokus.aura.resources.team_bookkeeper_access_title
 import tech.dokus.aura.resources.team_cancel_invitation
 import tech.dokus.aura.resources.team_cancel_invitation_confirm
 import tech.dokus.aura.resources.team_change_role
-import tech.dokus.aura.resources.team_bookkeeper_access_title
-import tech.dokus.aura.resources.team_bookkeeper_access_subtitle
-import tech.dokus.aura.resources.team_bookkeeper_access_empty
-import tech.dokus.aura.resources.team_bookkeeper_access_grant
-import tech.dokus.aura.resources.team_bookkeeper_access_search_placeholder
-import tech.dokus.aura.resources.team_bookkeeper_access_no_results
-import tech.dokus.aura.resources.team_bookkeeper_access_revoke
-import tech.dokus.aura.resources.team_bookkeeper_access_connected_label
-import tech.dokus.aura.resources.team_bookkeeper_access_owner_only
-import tech.dokus.aura.resources.team_bookkeeper_access_dialog_title
 import tech.dokus.aura.resources.team_footer_note
 import tech.dokus.aura.resources.team_invite_email
 import tech.dokus.aura.resources.team_invite_member
 import tech.dokus.aura.resources.team_invite_role
-import tech.dokus.aura.resources.team_load_failed
 import tech.dokus.aura.resources.team_owner_badge
 import tech.dokus.aura.resources.team_pending_label
 import tech.dokus.aura.resources.team_remove_confirm
@@ -81,21 +84,31 @@ import tech.dokus.aura.resources.team_since
 import tech.dokus.aura.resources.team_transfer_confirm
 import tech.dokus.aura.resources.team_transfer_ownership
 import tech.dokus.aura.resources.team_you
+import tech.dokus.domain.Email
+import tech.dokus.domain.Name
 import tech.dokus.domain.enums.UserRole
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.FirmId
 import tech.dokus.domain.ids.InvitationId
+import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.TeamMember
 import tech.dokus.domain.model.TenantInvitation
 import tech.dokus.domain.model.auth.BookkeeperFirmSearchItem
 import tech.dokus.domain.model.auth.TenantBookkeeperAccessItem
 import tech.dokus.foundation.app.network.rememberAuthenticatedImageLoader
 import tech.dokus.foundation.app.network.rememberResolvedApiUrl
+import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.app.state.isError
+import tech.dokus.foundation.app.state.isLoading
+import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.MonogramAvatar
 import tech.dokus.foundation.aura.components.UserAvatarImage
+import tech.dokus.foundation.aura.components.badges.TierBadge
+import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.common.DokusSelectableRowGroup
 import tech.dokus.foundation.aura.components.common.PTopAppBar
-import tech.dokus.foundation.aura.components.badges.TierBadge
 import tech.dokus.foundation.aura.components.dialog.DokusDialog
 import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
@@ -103,21 +116,13 @@ import tech.dokus.foundation.aura.components.status.StatusDot
 import tech.dokus.foundation.aura.components.status.StatusDotType
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.local.LocalScreenSize
-import tech.dokus.foundation.aura.style.surfaceHover
 import tech.dokus.foundation.aura.style.textFaint
 import tech.dokus.foundation.aura.style.textMuted
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
-import tech.dokus.domain.Email
-import tech.dokus.domain.Name
-import tech.dokus.domain.ids.FirmId
-import tech.dokus.domain.ids.UserId
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
-import org.jetbrains.compose.resources.StringResource
 
 private val MaxContentWidth = 400.dp
 private val ContentPaddingH = 16.dp
@@ -174,144 +179,20 @@ fun TeamSettingsContent(
     var showTransferOwnershipDialog by remember { mutableStateOf<TeamMember?>(null) }
     var showCancelInvitationDialog by remember { mutableStateOf<InvitationId?>(null) }
 
-    // Extract data from state
-    val contentState = state as? TeamSettingsState.Content
-    val members = contentState?.members ?: emptyList()
-    val invitations = contentState?.invitations ?: emptyList()
-    val isLoading = state is TeamSettingsState.Loading
-    val inviteEmail = contentState?.inviteEmail ?: ""
-    val inviteRole = contentState?.inviteRole ?: UserRole.Editor
-    val isInviting = contentState?.actionState is TeamSettingsState.Content.ActionState.Inviting
-    val currentUserId = contentState?.currentUserId
-    val isCurrentUserOwner = contentState?.isCurrentUserOwner == true
+    val isInviting = state.actionState is TeamSettingsActionState.Inviting
 
-    val owner = members.find { it.role == UserRole.Owner }
-    val nonOwnerMembers = members.filter { it.role != UserRole.Owner }
-
-    val debouncedSearchQuery = contentState?.bookkeeperSearchQuery.orEmpty()
-    LaunchedEffect(showBookkeeperDialog, debouncedSearchQuery) {
+    LaunchedEffect(showBookkeeperDialog, state.bookkeeperSearchQuery) {
         if (!showBookkeeperDialog) return@LaunchedEffect
         delay(300)
         onIntent(TeamSettingsIntent.SearchBookkeeperFirms)
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState()),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Column(
-            modifier = Modifier
-                .widthIn(max = MaxContentWidth)
-                .padding(horizontal = ContentPaddingH)
-                .padding(top = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(SectionSpacing),
-        ) {
-            when {
-                isLoading -> {
-                    Box(
-                        modifier = Modifier.fillMaxWidth().height(200.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        DokusLoader()
-                    }
-                }
-
-                state is TeamSettingsState.Error -> {
-                    Box(
-                        modifier = Modifier.fillMaxWidth().height(200.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = stringResource(Res.string.team_load_failed),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
-                }
-
-                else -> {
-                    // Owner hero
-                    if (owner != null) {
-                        OwnerHero(owner = owner)
-                    }
-
-                    Spacer(Modifier.height(18.dp))
-
-                    // Members card
-                    DokusCardSurface(modifier = Modifier.fillMaxWidth()) {
-                        Column {
-                            // Owner row (always first in card)
-                            if (owner != null) {
-                                MemberRow(
-                                    member = owner,
-                                    isCurrentUser = currentUserId != null && owner.userId == currentUserId,
-                                    showDivider = nonOwnerMembers.isNotEmpty() || invitations.isNotEmpty(),
-                                )
-                            }
-
-                            // Other members
-                            nonOwnerMembers.forEachIndexed { index, member ->
-                                MemberRow(
-                                    member = member,
-                                    isCurrentUser = currentUserId != null && member.userId == currentUserId,
-                                    showDivider = index < nonOwnerMembers.lastIndex || invitations.isNotEmpty(),
-                                    onChangeRole = { showChangeRoleDialog = member },
-                                    onRemove = { showRemoveConfirmDialog = member },
-                                )
-                            }
-
-                            // Pending invitations
-                            invitations.forEachIndexed { index, invitation ->
-                                InvitationRow(
-                                    invitation = invitation,
-                                    showDivider = index < invitations.lastIndex,
-                                    onCancel = { showCancelInvitationDialog = invitation.id }
-                                )
-                            }
-
-                            // Invite row
-                            InviteRow(
-                                availableSeats = contentState?.availableSeats ?: 0,
-                                onClick = { onShowInviteDialog(true) },
-                            )
-                        }
-                    }
-
-                    DokusCardSurface(modifier = Modifier.fillMaxWidth()) {
-                        BookkeeperAccessSection(
-                            access = contentState?.bookkeeperAccess ?: emptyList(),
-                            isLoading = contentState?.bookkeeperAccessLoading ?: false,
-                            isOwner = isCurrentUserOwner,
-                            onGrantClick = { onShowBookkeeperDialog(true) },
-                            onRevokeClick = { firmId ->
-                                onIntent(TeamSettingsIntent.RevokeBookkeeperAccess(firmId))
-                            },
-                        )
-                    }
-
-                    // Footer note
-                    Text(
-                        text = stringResource(Res.string.team_footer_note, contentState?.maxSeats ?: 3),
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 20.dp),
-                        textAlign = TextAlign.Center,
-                        fontSize = 11.sp,
-                        lineHeight = 16.sp,
-                        color = MaterialTheme.colorScheme.textFaint,
-                    )
-                }
-            }
-
-            Spacer(Modifier.height(8.dp))
-        }
-    }
 
     // Invite Dialog
     if (showInviteDialog) {
         InviteDialog(
-            email = inviteEmail,
-            role = inviteRole,
+            email = state.inviteEmail,
+            role = state.inviteRole,
             isInviting = isInviting,
             onEmailChange = { onIntent(TeamSettingsIntent.UpdateInviteEmail(it)) },
             onRoleChange = { onIntent(TeamSettingsIntent.UpdateInviteRole(it)) },
@@ -323,12 +204,12 @@ fun TeamSettingsContent(
         )
     }
 
-    if (showBookkeeperDialog && contentState != null) {
+    if (showBookkeeperDialog && state.teamData is DokusState.Success) {
         GrantBookkeeperAccessDialog(
-            query = contentState.bookkeeperSearchQuery,
-            results = contentState.bookkeeperSearchResults,
-            selectedFirmId = contentState.selectedBookkeeperFirmId,
-            loading = contentState.bookkeeperSearchLoading,
+            query = state.bookkeeperSearchQuery,
+            results = state.bookkeeperSearchResults,
+            selectedFirmId = state.selectedBookkeeperFirmId,
+            loading = state.bookkeeperSearchLoading,
             onQueryChange = { onIntent(TeamSettingsIntent.UpdateBookkeeperSearchQuery(it)) },
             onSelectFirm = { onIntent(TeamSettingsIntent.SelectBookkeeperFirm(it)) },
             onDismiss = {
@@ -389,6 +270,116 @@ fun TeamSettingsContent(
             }
         )
     }
+
+    if (state.teamData.isError()) {
+        DokusErrorContent(
+            exception = state.teamData.exception,
+            retryHandler = state.teamData.retryHandler,
+            modifier = Modifier.fillMaxSize(),
+        )
+        return
+    }
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Column(
+            modifier = Modifier
+                .widthIn(max = MaxContentWidth)
+                .padding(horizontal = ContentPaddingH)
+                .padding(top = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(SectionSpacing),
+        ) {
+            when {
+                state.teamData.isLoading() -> {
+                    SettingsSkeleton(sectionCount = 2)
+                }
+
+                state.teamData.isSuccess() -> {
+                    val teamData = state.teamData.data
+                    val members = teamData.members
+                    val invitations = teamData.invitations
+                    val currentUserId = teamData.currentUserId
+                    val owner = members.find { it.role == UserRole.Owner }
+                    val nonOwnerMembers = members.filter { it.role != UserRole.Owner }
+
+                    // Owner hero
+                    if (owner != null) {
+                        OwnerHero(owner = owner)
+                    }
+
+                    Spacer(Modifier.height(18.dp))
+
+                    // Members card
+                    DokusCardSurface(modifier = Modifier.fillMaxWidth()) {
+                        Column {
+                            // Owner row (always first in card)
+                            if (owner != null) {
+                                MemberRow(
+                                    member = owner,
+                                    isCurrentUser = currentUserId != null && owner.userId == currentUserId,
+                                    showDivider = nonOwnerMembers.isNotEmpty() || invitations.isNotEmpty(),
+                                )
+                            }
+
+                            // Other members
+                            nonOwnerMembers.forEachIndexed { index, member ->
+                                MemberRow(
+                                    member = member,
+                                    isCurrentUser = currentUserId != null && member.userId == currentUserId,
+                                    showDivider = index < nonOwnerMembers.lastIndex || invitations.isNotEmpty(),
+                                    onChangeRole = { showChangeRoleDialog = member },
+                                    onRemove = { showRemoveConfirmDialog = member },
+                                )
+                            }
+
+                            // Pending invitations
+                            invitations.forEachIndexed { index, invitation ->
+                                InvitationRow(
+                                    invitation = invitation,
+                                    showDivider = index < invitations.lastIndex,
+                                    onCancel = { showCancelInvitationDialog = invitation.id }
+                                )
+                            }
+
+                            // Invite row
+                            InviteRow(
+                                availableSeats = teamData.availableSeats,
+                                onClick = { onShowInviteDialog(true) },
+                            )
+                        }
+                    }
+
+                    DokusCardSurface(modifier = Modifier.fillMaxWidth()) {
+                        BookkeeperAccessSection(
+                            access = teamData.bookkeeperAccess,
+                            isLoading = false,
+                            isOwner = teamData.isCurrentUserOwner,
+                            onGrantClick = { onShowBookkeeperDialog(true) },
+                            onRevokeClick = { firmId ->
+                                onIntent(TeamSettingsIntent.RevokeBookkeeperAccess(firmId))
+                            },
+                        )
+                    }
+
+                    // Footer note
+                    Text(
+                        text = stringResource(Res.string.team_footer_note, teamData.maxSeats),
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 20.dp),
+                        textAlign = TextAlign.Center,
+                        fontSize = 11.sp,
+                        lineHeight = 16.sp,
+                        color = MaterialTheme.colorScheme.textFaint,
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(8.dp))
+        }
+    }
 }
 
 // =============================================================================
@@ -429,7 +420,10 @@ private fun OwnerHero(
             color = MaterialTheme.colorScheme.textMuted,
         )
         Spacer(Modifier.height(8.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             TierBadge(label = stringResource(Res.string.team_owner_badge))
             Text(
                 text = stringResource(Res.string.team_since, formatDate(owner.joinedAt)),
@@ -973,6 +967,45 @@ private fun formatDate(dateTime: LocalDateTime): String {
 // Previews
 // =============================================================================
 
+@Preview
+@Composable
+private fun TeamSettingsLoadingPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
+) {
+    TestWrapper(parameters) {
+        TeamSettingsContent(
+            state = TeamSettingsState(teamData = DokusState.loading()),
+            showInviteDialog = false,
+            onShowInviteDialog = {},
+            showBookkeeperDialog = false,
+            onShowBookkeeperDialog = {},
+            onIntent = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun TeamSettingsErrorPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
+) {
+    TestWrapper(parameters) {
+        TeamSettingsContent(
+            state = TeamSettingsState(
+                teamData = DokusState.error(
+                    exception = DokusException.ConnectionError(),
+                    retryHandler = { },
+                )
+            ),
+            showInviteDialog = false,
+            onShowInviteDialog = {},
+            showBookkeeperDialog = false,
+            onShowBookkeeperDialog = {},
+            onIntent = {},
+        )
+    }
+}
+
 @OptIn(ExperimentalUuidApi::class)
 @Preview
 @Composable
@@ -1002,10 +1035,14 @@ private fun TeamSettingsContentPreview(
     )
     TestWrapper(parameters) {
         TeamSettingsContent(
-            state = TeamSettingsState.Content(
-                members = sampleMembers,
-                currentUserId = ownerId,
-                isCurrentUserOwner = true,
+            state = TeamSettingsState(
+                teamData = DokusState.success(
+                    TeamData(
+                        members = sampleMembers,
+                        currentUserId = ownerId,
+                        isCurrentUserOwner = true,
+                    )
+                )
             ),
             showInviteDialog = false,
             onShowInviteDialog = {},

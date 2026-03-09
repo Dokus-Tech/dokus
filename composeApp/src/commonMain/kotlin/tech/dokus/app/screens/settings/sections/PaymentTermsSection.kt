@@ -32,7 +32,7 @@ import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Composable
 internal fun PaymentTermsSection(
-    formState: WorkspaceSettingsState.Content.FormState,
+    formState: WorkspaceSettingsState.FormState,
     expanded: Boolean,
     onToggle: () -> Unit,
     editMode: Boolean,
@@ -109,7 +109,7 @@ private fun PaymentTermsSectionPreview(
 ) {
     TestWrapper(parameters) {
         PaymentTermsSection(
-            formState = WorkspaceSettingsState.Content.FormState(
+            formState = WorkspaceSettingsState.FormState(
                 defaultPaymentTerms = 30,
                 paymentTermsText = "Payment due within 30 days of invoice date.",
             ),

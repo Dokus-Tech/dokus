@@ -17,18 +17,18 @@ import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.init
 import pro.respawn.flowmvi.plugins.reduce
-import tech.dokus.domain.Money
 import tech.dokus.domain.config.BuildKonfig
 import tech.dokus.domain.enums.CashflowDirection
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.CashflowEntryId
-import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.model.CashflowPaymentRequest
 import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.features.cashflow.usecases.GetCashflowOverviewUseCase
 import tech.dokus.features.cashflow.usecases.LoadCashflowEntriesUseCase
 import tech.dokus.features.cashflow.usecases.RecordCashflowPaymentUseCase
+import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.platform.Logger
 import kotlin.time.Clock
 import tech.dokus.domain.enums.CashflowViewMode as DomainViewMode
@@ -54,14 +54,11 @@ internal class CashflowLedgerContainer(
 ) : Container<CashflowLedgerState, CashflowLedgerIntent, CashflowLedgerAction> {
 
     private val logger = Logger.forClass<CashflowLedgerContainer>()
-    private var loadedEntries: List<CashflowEntry> = emptyList()
-    private var paginationInfo = LocalPaginationInfo()
-    private var currentFilters = CashflowFilters()
     private var loadJob: Job? = null
     private var pendingHighlightEntryId: CashflowEntryId? = highlightEntryId
 
     override val store: Store<CashflowLedgerState, CashflowLedgerIntent, CashflowLedgerAction> =
-        store(CashflowLedgerState.Loading) {
+        store(CashflowLedgerState.initial) {
             init {
                 handleRefresh()
             }
@@ -74,7 +71,6 @@ internal class CashflowLedgerContainer(
                     is CashflowLedgerIntent.SetDirectionFilter -> handleSetDirectionFilter(intent.direction)
                     is CashflowLedgerIntent.HighlightEntry -> handleHighlightEntry(intent.entryId)
                     is CashflowLedgerIntent.OpenEntry -> handleOpenEntry(intent.entry)
-                    // Row actions menu intents
                     is CashflowLedgerIntent.ShowRowActions -> handleShowRowActions(intent.entryId)
                     is CashflowLedgerIntent.HideRowActions -> handleHideRowActions()
                     is CashflowLedgerIntent.RecordPaymentFor -> handleRecordPaymentFor(intent.entryId)
@@ -84,261 +80,67 @@ internal class CashflowLedgerContainer(
             }
         }
 
-    private suspend fun CashflowLedgerCtx.handleRefresh(
-        keepContentIfAvailable: Boolean = true,
-        fallbackFiltersOnFailure: CashflowFilters? = null,
-    ) {
+    private suspend fun CashflowLedgerCtx.handleRefresh() {
         loadJob?.cancel()
-        logger.d {
-            "Refreshing cashflow entries with viewMode=${currentFilters.viewMode}, direction=${currentFilters.direction}"
-        }
-
-        var previousContent: CashflowLedgerState.Content? = null
-        withState<CashflowLedgerState.Content, _> {
-            previousContent = this
-        }
-        val showInlineRefresh = keepContentIfAvailable && previousContent != null
-        // Safe: sequential intent processing prevents races with handleLoadMore
-        val previousEntries = loadedEntries
-        val previousPaginationInfo = paginationInfo
-
-        if (showInlineRefresh) {
-            val contentToRefresh = requireNotNull(previousContent)
-            updateState {
-                contentToRefresh.copy(
-                    filters = currentFilters,
-                    isRefreshing = true,
-                )
-            }
-        } else {
-            loadedEntries = emptyList()
-            paginationInfo = LocalPaginationInfo()
-            updateState { CashflowLedgerState.Loading }
-        }
-
-        val (fromDate, toDate) = getDateRangeForViewMode(currentFilters.viewMode)
-        val direction = mapDirectionFilter(currentFilters.direction)
-        val domainViewMode = mapViewModeToDomain(currentFilters.viewMode)
-
-        // Get statuses for API call - server now supports multi-status filtering
-        val apiStatuses = getStatusesForViewMode(currentFilters.viewMode)
-
-        // Parallel fetch: overview + entries
-        coroutineScope {
-            val overviewDeferred = async {
-                getCashflowOverview(
-                    viewMode = domainViewMode,
-                    fromDate = fromDate,
-                    toDate = toDate,
-                    direction = direction,
-                    statuses = apiStatuses
-                )
-            }
-            val entriesDeferred = async {
-                loadCashflowEntries(
-                    page = 0,
-                    pageSize = PAGE_SIZE,
-                    viewMode = domainViewMode,
-                    fromDate = fromDate,
-                    toDate = toDate,
-                    direction = direction,
-                    statuses = apiStatuses,
-                    sourceType = null
-                )
-            }
-
-            val overviewResult = overviewDeferred.await()
-            val entriesResult = entriesDeferred.await()
-
-            if (overviewResult.isSuccess && entriesResult.isSuccess) {
-                val overview = overviewResult.getOrThrow()
-                val response = entriesResult.getOrThrow()
-
-                // Server returns entries already filtered and sorted
-                loadedEntries = response.items
-                paginationInfo = paginationInfo.copy(
-                    currentPage = 0,
-                    isLoadingMore = false,
-                    hasMorePages = response.hasMore
-                )
-
-                val resolvedHighlightId = pendingHighlightEntryId?.let { requestedEntryId ->
-                    if (loadedEntries.none { it.id == requestedEntryId }) {
-                        val highlightEntry = loadCashflowEntries(
-                            page = 0,
-                            pageSize = 1,
-                            entryId = requestedEntryId
-                        ).getOrNull()?.items?.firstOrNull()
-
-                        if (highlightEntry != null) {
-                            loadedEntries = (listOf(highlightEntry) + loadedEntries).distinctBy { it.id }
-                        }
-                    }
-                    requestedEntryId.takeIf { id -> loadedEntries.any { it.id == id } }
-                }
-                pendingHighlightEntryId = null
-
-                // Summary comes from server - display directly
-                val summary = CashflowSummary(
-                    periodLabel = when (currentFilters.viewMode) {
-                        CashflowViewMode.Upcoming -> "NEXT 30 DAYS"
-                        CashflowViewMode.Overdue -> "OVERDUE"
-                        CashflowViewMode.History -> "LAST 30 DAYS"
-                    },
-                    netAmount = overview.netCashflow,
-                    totalIn = overview.cashIn.total,
-                    totalOut = overview.cashOut.total
-                )
-
-                updateState {
-                    val currentContent = this as? CashflowLedgerState.Content
-
-                    CashflowLedgerState.Content(
-                        entries = buildPaginationState(),
-                        filters = currentFilters,
-                        summary = summary,
-                        balance = getMockBalanceIfEnabled(),
-                        highlightedEntryId = resolvedHighlightId,
-                        isRefreshing = false,
-                        actionsEntryId = currentContent?.actionsEntryId?.takeIf { id ->
-                            loadedEntries.any { it.id == id }
-                        },
-                    )
-                }
-            } else {
-                // Handle error - prefer entries error if both failed
-                val error = entriesResult.exceptionOrNull() ?: overviewResult.exceptionOrNull()!!
-                logger.e(error) { "Failed to load cashflow entries or overview" }
-                val dokusError = error.asDokusException
-                if (showInlineRefresh) {
-                    loadedEntries = previousEntries
-                    paginationInfo = previousPaginationInfo
-                    fallbackFiltersOnFailure?.let { currentFilters = it }
-                    val contentToRestore = requireNotNull(previousContent)
-                    updateState {
-                        contentToRestore.copy(
-                            entries = buildPaginationState(),
-                            filters = currentFilters,
-                            isRefreshing = false,
-                            actionsEntryId = null
-                        )
-                    }
-                    action(CashflowLedgerAction.ShowError(dokusError))
-                } else {
-                    updateState {
-                        CashflowLedgerState.Error(
-                            exception = dokusError,
-                            retryHandler = { intent(CashflowLedgerIntent.Refresh) }
-                        )
-                    }
-                }
-            }
-        }
+        updateState { copy(entries = entries.asLoading) }
+        loadEntries(page = 0, reset = true)
     }
 
     private suspend fun CashflowLedgerCtx.handleLoadMore() {
-        withState<CashflowLedgerState.Content, _> {
-            if (paginationInfo.isLoadingMore || !paginationInfo.hasMorePages) return@withState
+        withState {
+            val paginationState =
+                entries.let { if (it.isSuccess()) it.data else return@withState }
 
-            val nextPage = paginationInfo.currentPage + 1
-            logger.d { "Loading more entries, page=$nextPage" }
+            if (!paginationState.hasMorePages) return@withState
 
-            paginationInfo = paginationInfo.copy(isLoadingMore = true)
-            updateState { copy(entries = buildPaginationState()) }
+            updateState { copy(entries = entries.asLoading) }
 
-            val (fromDate, toDate) = getDateRangeForViewMode(currentFilters.viewMode)
-            val direction = mapDirectionFilter(currentFilters.direction)
-            val domainViewMode = mapViewModeToDomain(currentFilters.viewMode)
-            val apiStatuses = getStatusesForViewMode(currentFilters.viewMode)
-
-            loadJob = launch {
-                loadCashflowEntries(
-                    page = nextPage,
-                    pageSize = PAGE_SIZE,
-                    viewMode = domainViewMode,
-                    fromDate = fromDate,
-                    toDate = toDate,
-                    direction = direction,
-                    statuses = apiStatuses,
-                    sourceType = null
-                ).fold(
-                    onSuccess = { response ->
-                        // Server returns entries already sorted
-                        loadedEntries = loadedEntries + response.items
-                        paginationInfo = paginationInfo.copy(
-                            currentPage = nextPage,
-                            isLoadingMore = false,
-                            hasMorePages = response.hasMore
-                        )
-
-                        // Summary stays the same (from overview endpoint), just update entries
-                        updateState { copy(entries = buildPaginationState()) }
-                    },
-                    onFailure = { error ->
-                        logger.e(error) { "Failed to load more entries" }
-                        paginationInfo = paginationInfo.copy(isLoadingMore = false)
-                        updateState { copy(entries = buildPaginationState()) }
-                        action(CashflowLedgerAction.ShowError(error.asDokusException))
-                    }
-                )
-            }
+            val nextPage = paginationState.currentPage + 1
+            loadEntries(page = nextPage, reset = false)
         }
     }
 
     private suspend fun CashflowLedgerCtx.handleSetViewMode(mode: CashflowViewMode) {
-        if (currentFilters.viewMode == mode) return
-        val previousFilters = currentFilters
-        currentFilters = currentFilters.copy(viewMode = mode)
-        handleRefresh(
-            keepContentIfAvailable = true,
-            fallbackFiltersOnFailure = previousFilters,
-        )
-    }
-
-    private suspend fun CashflowLedgerCtx.handleSetDirectionFilter(direction: DirectionFilter) {
-        if (currentFilters.direction == direction) return
-        val previousFilters = currentFilters
-        currentFilters = currentFilters.copy(direction = direction)
-        handleRefresh(
-            keepContentIfAvailable = true,
-            fallbackFiltersOnFailure = previousFilters,
-        )
-    }
-
-    private suspend fun CashflowLedgerCtx.handleHighlightEntry(entryId: CashflowEntryId?) {
-        withState<CashflowLedgerState.Content, _> {
-            updateState { copy(highlightedEntryId = entryId) }
+        withState {
+            if (filters.viewMode == mode) return@withState
+            loadJob?.cancel()
+            updateState { copy(entries = entries.asLoading, filters = filters.copy(viewMode = mode)) }
+            loadEntries(page = 0, reset = true)
         }
     }
 
-    private suspend fun CashflowLedgerCtx.handleOpenEntry(entry: CashflowEntry) {
-        // Primary action: Navigate to document review
+    private suspend fun CashflowLedgerCtx.handleSetDirectionFilter(direction: DirectionFilter) {
+        withState {
+            if (filters.direction == direction) return@withState
+            loadJob?.cancel()
+            updateState { copy(entries = entries.asLoading, filters = filters.copy(direction = direction)) }
+            loadEntries(page = 0, reset = true)
+        }
+    }
+
+    private suspend fun CashflowLedgerCtx.handleHighlightEntry(entryId: CashflowEntryId?) {
+        updateState { copy(highlightedEntryId = entryId) }
+    }
+
+    private suspend fun CashflowLedgerCtx.handleOpenEntry(entry: tech.dokus.domain.model.CashflowEntry) {
         if (entry.documentId != null) {
             action(CashflowLedgerAction.NavigateToDocumentReview(entry.documentId.toString()))
         } else {
-            // For entries without a document (e.g., manual entries), navigate to entity
             action(CashflowLedgerAction.NavigateToEntity(entry.sourceType, entry.sourceId))
         }
     }
 
-    // Row actions menu handlers
-
     private suspend fun CashflowLedgerCtx.handleShowRowActions(entryId: CashflowEntryId) {
-        withState<CashflowLedgerState.Content, _> {
-            updateState { copy(actionsEntryId = entryId) }
-        }
+        updateState { copy(actionsEntryId = entryId) }
     }
 
     private suspend fun CashflowLedgerCtx.handleHideRowActions() {
-        withState<CashflowLedgerState.Content, _> {
-            updateState { copy(actionsEntryId = null) }
-        }
+        updateState { copy(actionsEntryId = null) }
     }
 
     private suspend fun CashflowLedgerCtx.handleRecordPaymentFor(entryId: CashflowEntryId) {
-        // Close actions menu and navigate to document review (which has payment recording)
-        withState<CashflowLedgerState.Content, _> {
-            val entry = entries.data.find { it.id == entryId } ?: return@withState
+        withState {
+            val entry = entries.lastData?.data?.find { it.id == entryId } ?: return@withState
             updateState { copy(actionsEntryId = null) }
             if (entry.documentId != null) {
                 action(CashflowLedgerAction.NavigateToDocumentReview(entry.documentId.toString()))
@@ -349,14 +151,10 @@ internal class CashflowLedgerContainer(
     }
 
     private suspend fun CashflowLedgerCtx.handleMarkAsPaidQuick(entryId: CashflowEntryId) {
-        // Close actions menu first
-        withState<CashflowLedgerState.Content, _> {
+        withState {
             updateState { copy(actionsEntryId = null) }
-        }
 
-        // Then mark the entry as paid with full amount
-        withState<CashflowLedgerState.Content, _> {
-            val entry = entries.data.find { it.id == entryId } ?: return@withState
+            val entry = entries.lastData?.data?.find { it.id == entryId } ?: return@withState
             val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
 
             recordPayment(
@@ -368,13 +166,13 @@ internal class CashflowLedgerContainer(
                 )
             ).fold(
                 onSuccess = { updatedEntry ->
-                    val updatedList = entries.data.map {
+                    val currentPagination = entries.lastData ?: return@fold
+                    val updatedList = currentPagination.data.map {
                         if (it.id == updatedEntry.id) updatedEntry else it
                     }
-                    loadedEntries = loadedEntries.map {
-                        if (it.id == updatedEntry.id) updatedEntry else it
+                    updateState {
+                        copy(entries = DokusState.success(currentPagination.copy(data = updatedList)))
                     }
-                    updateState { copy(entries = entries.copy(data = updatedList)) }
                     action(CashflowLedgerAction.ShowPaymentSuccess(updatedEntry))
                 },
                 onFailure = { error ->
@@ -384,11 +182,8 @@ internal class CashflowLedgerContainer(
         }
     }
 
-    private suspend fun CashflowLedgerCtx.handleViewDocumentFor(entry: CashflowEntry) {
-        // Close actions menu and navigate to document
-        withState<CashflowLedgerState.Content, _> {
-            updateState { copy(actionsEntryId = null) }
-        }
+    private suspend fun CashflowLedgerCtx.handleViewDocumentFor(entry: tech.dokus.domain.model.CashflowEntry) {
+        updateState { copy(actionsEntryId = null) }
 
         if (entry.documentId != null) {
             action(CashflowLedgerAction.NavigateToDocumentReview(entry.documentId.toString()))
@@ -397,14 +192,162 @@ internal class CashflowLedgerContainer(
         }
     }
 
-    private fun buildPaginationState(): PaginationState<CashflowEntry> {
-        return PaginationState(
-            data = loadedEntries,
-            currentPage = paginationInfo.currentPage,
-            pageSize = PAGE_SIZE,
-            isLoadingMore = paginationInfo.isLoadingMore,
-            hasMorePages = paginationInfo.hasMorePages
-        )
+    private suspend fun CashflowLedgerCtx.loadEntries(page: Int, reset: Boolean) {
+        withState {
+            val viewMode = filters.viewMode
+            val direction = filters.direction
+            val (fromDate, toDate) = getDateRangeForViewMode(viewMode)
+            val mappedDirection = mapDirectionFilter(direction)
+            val domainViewMode = mapViewModeToDomain(viewMode)
+            val apiStatuses = getStatusesForViewMode(viewMode)
+
+            if (reset) {
+                logger.d { "Refreshing cashflow entries with viewMode=$viewMode, direction=$direction" }
+
+                coroutineScope {
+                    val overviewDeferred = async {
+                        getCashflowOverview(
+                            viewMode = domainViewMode,
+                            fromDate = fromDate,
+                            toDate = toDate,
+                            direction = mappedDirection,
+                            statuses = apiStatuses
+                        )
+                    }
+                    val entriesDeferred = async {
+                        loadCashflowEntries(
+                            page = 0,
+                            pageSize = PAGE_SIZE,
+                            viewMode = domainViewMode,
+                            fromDate = fromDate,
+                            toDate = toDate,
+                            direction = mappedDirection,
+                            statuses = apiStatuses,
+                            sourceType = null
+                        )
+                    }
+
+                    val overviewResult = overviewDeferred.await()
+                    val entriesResult = entriesDeferred.await()
+
+                    if (overviewResult.isSuccess && entriesResult.isSuccess) {
+                        val overview = overviewResult.getOrThrow()
+                        val response = entriesResult.getOrThrow()
+
+                        var newEntries = response.items
+
+                        val resolvedHighlightId = pendingHighlightEntryId?.let { requestedEntryId ->
+                            if (newEntries.none { it.id == requestedEntryId }) {
+                                val highlightEntry = loadCashflowEntries(
+                                    page = 0,
+                                    pageSize = 1,
+                                    entryId = requestedEntryId
+                                ).getOrNull()?.items?.firstOrNull()
+
+                                if (highlightEntry != null) {
+                                    newEntries = (listOf(highlightEntry) + newEntries).distinctBy { it.id }
+                                }
+                            }
+                            requestedEntryId.takeIf { id -> newEntries.any { it.id == id } }
+                        }
+                        pendingHighlightEntryId = null
+
+                        val summary = CashflowSummary(
+                            periodLabel = when (viewMode) {
+                                CashflowViewMode.Upcoming -> "NEXT 30 DAYS"
+                                CashflowViewMode.Overdue -> "OVERDUE"
+                                CashflowViewMode.History -> "LAST 30 DAYS"
+                            },
+                            netAmount = overview.netCashflow,
+                            totalIn = overview.cashIn.total,
+                            totalOut = overview.cashOut.total
+                        )
+
+                        updateState {
+                            copy(
+                                entries = DokusState.success(
+                                    PaginationState(
+                                        data = newEntries,
+                                        currentPage = 0,
+                                        pageSize = PAGE_SIZE,
+                                        hasMorePages = response.hasMore
+                                    )
+                                ),
+                                summary = summary,
+                                balance = getMockBalanceIfEnabled(),
+                                highlightedEntryId = resolvedHighlightId,
+                                actionsEntryId = actionsEntryId?.takeIf { id ->
+                                    newEntries.any { it.id == id }
+                                }
+                            )
+                        }
+                    } else {
+                        val error = entriesResult.exceptionOrNull() ?: overviewResult.exceptionOrNull()!!
+                        logger.e(error) { "Failed to load cashflow entries or overview" }
+                        val dokusError = error.asDokusException
+
+                        val hadData = entries.lastData != null
+                        updateState {
+                            copy(
+                                entries = DokusState.error(
+                                    exception = dokusError,
+                                    retryHandler = { intent(CashflowLedgerIntent.Refresh) },
+                                    lastData = entries.lastData
+                                )
+                            )
+                        }
+
+                        if (hadData) {
+                            action(CashflowLedgerAction.ShowError(dokusError))
+                        }
+                    }
+                }
+            } else {
+                logger.d { "Loading more entries, page=$page" }
+
+                loadJob = launch {
+                    loadCashflowEntries(
+                        page = page,
+                        pageSize = PAGE_SIZE,
+                        viewMode = domainViewMode,
+                        fromDate = fromDate,
+                        toDate = toDate,
+                        direction = mappedDirection,
+                        statuses = apiStatuses,
+                        sourceType = null
+                    ).fold(
+                        onSuccess = { response ->
+                            val previousData = entries.lastData?.data ?: emptyList()
+                            updateState {
+                                copy(
+                                    entries = DokusState.success(
+                                        PaginationState(
+                                            data = previousData + response.items,
+                                            currentPage = page,
+                                            pageSize = PAGE_SIZE,
+                                            hasMorePages = response.hasMore
+                                        )
+                                    )
+                                )
+                            }
+                        },
+                        onFailure = { error ->
+                            logger.e(error) { "Failed to load more entries" }
+                            updateState {
+                                copy(
+                                    entries = DokusState.error(
+                                        exception = error.asDokusException,
+                                        retryHandler = { intent(CashflowLedgerIntent.Refresh) },
+                                        lastData = entries.lastData
+                                    )
+                                )
+                            }
+                            action(CashflowLedgerAction.ShowError(error.asDokusException))
+                        }
+                    )
+                }
+            }
+        }
     }
 
     /**
@@ -424,9 +367,6 @@ internal class CashflowLedgerContainer(
 
     /**
      * Get status filters based on view mode.
-     * - Upcoming: Open, Overdue (money not yet moved)
-     * - Overdue: Open, Overdue (money not yet moved, due date in past)
-     * - History: Paid (money already moved)
      */
     private fun getStatusesForViewMode(viewMode: CashflowViewMode): List<CashflowEntryStatus> {
         return when (viewMode) {
@@ -436,9 +376,6 @@ internal class CashflowLedgerContainer(
         }
     }
 
-    /**
-     * Map DirectionFilter to CashflowDirection for API call.
-     */
     private fun mapDirectionFilter(filter: DirectionFilter): CashflowDirection? {
         return when (filter) {
             DirectionFilter.All -> null
@@ -447,9 +384,6 @@ internal class CashflowLedgerContainer(
         }
     }
 
-    /**
-     * Map local CashflowViewMode to domain CashflowViewMode for API call.
-     */
     private fun mapViewModeToDomain(viewMode: CashflowViewMode): DomainViewMode {
         return when (viewMode) {
             CashflowViewMode.Upcoming -> DomainViewMode.Upcoming
@@ -457,12 +391,6 @@ internal class CashflowLedgerContainer(
             CashflowViewMode.History -> DomainViewMode.History
         }
     }
-
-    private data class LocalPaginationInfo(
-        val currentPage: Int = 0,
-        val isLoadingMore: Boolean = false,
-        val hasMorePages: Boolean = true
-    )
 }
 
 /**
@@ -472,7 +400,7 @@ internal class CashflowLedgerContainer(
 private fun getMockBalanceIfEnabled(): BalanceState? {
     return if (BuildKonfig.SHOW_BALANCE_MOCK) {
         BalanceState(
-            amount = Money(1248234), // €12,482.34 (minor units = cents)
+            amount = tech.dokus.domain.Money(1248234),
             asOf = LocalDate(2026, 1, 15),
             accountName = "KBC"
         )

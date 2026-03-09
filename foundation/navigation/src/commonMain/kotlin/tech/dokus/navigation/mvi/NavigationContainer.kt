@@ -34,7 +34,7 @@ class NavigationContainer(
 ) : Container<NavigationState, NavigationIntent, NavigationAction> {
 
     override val store: Store<NavigationState, NavigationIntent, NavigationAction> =
-        store(NavigationState.Loading) {
+        store(NavigationState.initial) {
             reduce { intent ->
                 when (intent) {
                     is NavigationIntent.Initialize -> handleInitialize()
@@ -50,12 +50,14 @@ class NavigationContainer(
         }
 
         updateState {
-            NavigationState.Ready(expandedSections = expandedStates)
+            NavigationState(isReady = true, expandedSections = expandedStates)
         }
     }
 
     private suspend fun NavigationCtx.handleToggleSection(sectionId: String) {
-        withState<NavigationState.Ready, _> {
+        withState<NavigationState, _> {
+            if (!isReady) return@withState
+
             val currentlyExpanded = expandedSections[sectionId] ?: false
             val newExpanded = !currentlyExpanded
 
@@ -74,7 +76,7 @@ class NavigationContainer(
             prefsRepository.setSectionExpanded(sectionId, newExpanded)
 
             updateState {
-                NavigationState.Ready(expandedSections = newStates)
+                copy(expandedSections = newStates)
             }
         }
     }

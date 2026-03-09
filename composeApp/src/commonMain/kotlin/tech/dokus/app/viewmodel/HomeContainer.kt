@@ -44,7 +44,7 @@ internal class HomeContainer(
     private val logger = Logger.forClass<HomeContainer>()
 
     override val store: Store<HomeState, HomeIntent, HomeAction> =
-        store(HomeState.Ready()) {
+        store(HomeState.initial) {
             init {
                 launchObserveTenant()
                 launchObserveUser()
@@ -66,7 +66,7 @@ internal class HomeContainer(
 
     private suspend fun HomeCtx.handleRefreshShellData() {
         logger.d { "Refreshing home shell data" }
-        withState<HomeState.Ready, _> {
+        withState<HomeState, _> {
             updateState {
                 copy(
                     tenantState = DokusState.loading(),
@@ -86,32 +86,33 @@ internal class HomeContainer(
                     onSuccess = { tenant ->
                         if (tenant == null) {
                             if (shouldSuppressShellErrors()) {
-                                withState<HomeState.Ready, _> {
+                                withState<HomeState, _> {
                                     updateState { copy(tenantState = DokusState.idle()) }
                                 }
                                 return@fold
                             }
 
                             val error = DokusException.WorkspaceContextUnavailable
-                            withState<HomeState.Ready, _> {
+                            withState<HomeState, _> {
                                 updateState {
                                     copy(
-                                        tenantState = DokusState.error(error) {
-                                            intent(HomeIntent.RefreshShellData)
-                                        }
+                                        tenantState = DokusState.error(
+                                            exception = error,
+                                            retryHandler = { intent(HomeIntent.RefreshShellData) },
+                                        )
                                     )
                                 }
                             }
                             action(HomeAction.ShowError(error))
                         } else {
-                            withState<HomeState.Ready, _> {
+                            withState<HomeState, _> {
                                 updateState { copy(tenantState = DokusState.success(tenant)) }
                             }
                         }
                     },
                     onFailure = { throwable ->
                         if (shouldSuppressShellErrors()) {
-                            withState<HomeState.Ready, _> {
+                            withState<HomeState, _> {
                                 updateState { copy(tenantState = DokusState.idle()) }
                             }
                             return@fold
@@ -119,12 +120,13 @@ internal class HomeContainer(
 
                         val error = throwable.asDokusException
                         logger.e(error) { "Failed to observe current tenant for home shell" }
-                        withState<HomeState.Ready, _> {
+                        withState<HomeState, _> {
                             updateState {
                                 copy(
-                                    tenantState = DokusState.error(error) {
-                                        intent(HomeIntent.RefreshShellData)
-                                    }
+                                    tenantState = DokusState.error(
+                                        exception = error,
+                                        retryHandler = { intent(HomeIntent.RefreshShellData) },
+                                    )
                                 )
                             }
                         }
@@ -140,13 +142,13 @@ internal class HomeContainer(
             watchCurrentUserUseCase().collectLatest { userResult ->
                 userResult.fold(
                     onSuccess = { user ->
-                        withState<HomeState.Ready, _> {
+                        withState<HomeState, _> {
                             updateState { copy(userState = DokusState.success(user)) }
                         }
                     },
                     onFailure = { throwable ->
                         if (shouldSuppressShellErrors()) {
-                            withState<HomeState.Ready, _> {
+                            withState<HomeState, _> {
                                 updateState { copy(userState = DokusState.idle()) }
                             }
                             return@fold
@@ -154,12 +156,13 @@ internal class HomeContainer(
 
                         val error = throwable.asDokusException
                         logger.e(error) { "Failed to observe current user for home shell" }
-                        withState<HomeState.Ready, _> {
+                        withState<HomeState, _> {
                             updateState {
                                 copy(
-                                    userState = DokusState.error(error) {
-                                        intent(HomeIntent.RefreshShellData)
-                                    }
+                                    userState = DokusState.error(
+                                        exception = error,
+                                        retryHandler = { intent(HomeIntent.RefreshShellData) },
+                                    )
                                 )
                             }
                         }
@@ -171,7 +174,7 @@ internal class HomeContainer(
     }
 
     private suspend fun HomeCtx.handleLogout() {
-        withState<HomeState.Ready, _> {
+        withState<HomeState, _> {
             if (isLoggingOut) return@withState
 
             logger.d { "Logging out from home shell" }
@@ -194,7 +197,7 @@ internal class HomeContainer(
     private suspend fun HomeCtx.refreshSurfaceAvailability() {
         getAccountMeUseCase().fold(
             onSuccess = { accountMe ->
-                withState<HomeState.Ready, _> {
+                withState<HomeState, _> {
                     updateState {
                         copy(
                             surfaceAvailability = accountMe.surface,
@@ -211,7 +214,7 @@ internal class HomeContainer(
 
     private suspend fun HomeCtx.shouldSuppressShellErrors(): Boolean {
         var suppress = false
-        withState<HomeState.Ready, _> {
+        withState<HomeState, _> {
             suppress = isLoggingOut || surfaceAvailability.isBookkeeperConsoleOnly()
         }
         return suppress

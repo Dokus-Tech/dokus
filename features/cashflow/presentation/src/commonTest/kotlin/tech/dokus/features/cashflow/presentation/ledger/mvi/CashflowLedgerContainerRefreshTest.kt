@@ -26,10 +26,12 @@ import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.features.cashflow.usecases.GetCashflowOverviewUseCase
 import tech.dokus.features.cashflow.usecases.LoadCashflowEntriesUseCase
 import tech.dokus.features.cashflow.usecases.RecordCashflowPaymentUseCase
+import tech.dokus.foundation.app.state.isError
+import tech.dokus.foundation.app.state.isLoading
+import tech.dokus.foundation.app.state.isSuccess
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
-import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -67,34 +69,35 @@ class CashflowLedgerContainerRefreshTest {
         container.store.subscribeAndTest {
             advanceUntilIdle()
 
-            val initial = assertIs<CashflowLedgerState.Content>(states.value)
-            val initialEntryIds = initial.entries.data.map { it.id }
+            val initial = states.value
+            assertTrue(initial.entries.isSuccess())
+            val initialEntryIds = initial.entries.lastData?.data?.map { it.id }
             val initialSummary = initial.summary
 
             emit(CashflowLedgerIntent.SetViewMode(CashflowViewMode.Overdue))
             runCurrent()
 
-            val refreshing = assertIs<CashflowLedgerState.Content>(states.value)
-            assertTrue(refreshing.isRefreshing)
+            val refreshing = states.value
+            assertTrue(refreshing.entries.isLoading())
             assertEquals(CashflowViewMode.Overdue, refreshing.filters.viewMode)
-            assertEquals(initialEntryIds, refreshing.entries.data.map { it.id })
+            assertEquals(initialEntryIds, refreshing.entries.lastData?.data?.map { it.id })
             assertEquals(initialSummary, refreshing.summary)
 
             deferredOverview.complete(Result.success(cashflowOverview(net = -2500L, cashIn = 0L, cashOut = 2500L)))
             runCurrent()
 
-            val stillRefreshing = assertIs<CashflowLedgerState.Content>(states.value)
-            assertTrue(stillRefreshing.isRefreshing)
-            assertEquals(initialEntryIds, stillRefreshing.entries.data.map { it.id })
+            val stillRefreshing = states.value
+            assertTrue(stillRefreshing.entries.isLoading())
+            assertEquals(initialEntryIds, stillRefreshing.entries.lastData?.data?.map { it.id })
             assertEquals(initialSummary, stillRefreshing.summary)
 
             deferredEntries.complete(Result.success(pageResponse(overdueEntries)))
             advanceUntilIdle()
 
-            val updated = assertIs<CashflowLedgerState.Content>(states.value)
-            assertFalse(updated.isRefreshing)
+            val updated = states.value
+            assertFalse(updated.entries.isLoading())
             assertEquals(CashflowViewMode.Overdue, updated.filters.viewMode)
-            assertEquals(overdueEntries.map { it.id }, updated.entries.data.map { it.id })
+            assertEquals(overdueEntries.map { it.id }, updated.entries.lastData?.data?.map { it.id })
             assertEquals(Money(-2500L), updated.summary.netAmount)
             assertEquals(Money(0L), updated.summary.totalIn)
             assertEquals(Money(2500L), updated.summary.totalOut)
@@ -131,30 +134,30 @@ class CashflowLedgerContainerRefreshTest {
 
         container.store.subscribeAndTest {
             advanceUntilIdle()
-            val initial = assertIs<CashflowLedgerState.Content>(states.value)
-            val initialEntryIds = initial.entries.data.map { it.id }
+            val initial = states.value
+            val initialEntryIds = initial.entries.lastData?.data?.map { it.id }
 
             emit(CashflowLedgerIntent.SetDirectionFilter(DirectionFilter.Out))
             runCurrent()
 
-            val refreshing = assertIs<CashflowLedgerState.Content>(states.value)
-            assertTrue(refreshing.isRefreshing)
+            val refreshing = states.value
+            assertTrue(refreshing.entries.isLoading())
             assertEquals(DirectionFilter.Out, refreshing.filters.direction)
-            assertEquals(initialEntryIds, refreshing.entries.data.map { it.id })
+            assertEquals(initialEntryIds, refreshing.entries.lastData?.data?.map { it.id })
 
             deferredOverview.complete(Result.success(cashflowOverview(net = -3000L, cashIn = 0L, cashOut = 3000L)))
             deferredEntries.complete(Result.success(pageResponse(outEntries)))
             advanceUntilIdle()
 
-            val updated = assertIs<CashflowLedgerState.Content>(states.value)
-            assertFalse(updated.isRefreshing)
+            val updated = states.value
+            assertFalse(updated.entries.isLoading())
             assertEquals(DirectionFilter.Out, updated.filters.direction)
-            assertEquals(outEntries.map { it.id }, updated.entries.data.map { it.id })
+            assertEquals(outEntries.map { it.id }, updated.entries.lastData?.data?.map { it.id })
         }
     }
 
     @Test
-    fun `view mode change error rolls back to previous filters and entries`() = runTest {
+    fun `view mode change error preserves data and keeps new filter`() = runTest {
         val upcomingEntries = listOf(
             cashflowEntry("00000000-0000-0000-0000-000000000501", CashflowDirection.In, 5000L),
         )
@@ -181,25 +184,25 @@ class CashflowLedgerContainerRefreshTest {
         container.store.subscribeAndTest {
             advanceUntilIdle()
 
-            val initial = assertIs<CashflowLedgerState.Content>(states.value)
+            val initial = states.value
             assertEquals(CashflowViewMode.Upcoming, initial.filters.viewMode)
-            assertEquals(upcomingEntries.map { it.id }, initial.entries.data.map { it.id })
+            assertEquals(upcomingEntries.map { it.id }, initial.entries.lastData?.data?.map { it.id })
 
             emit(CashflowLedgerIntent.SetViewMode(CashflowViewMode.Overdue))
             runCurrent()
 
-            val refreshing = assertIs<CashflowLedgerState.Content>(states.value)
-            assertTrue(refreshing.isRefreshing)
+            val refreshing = states.value
+            assertTrue(refreshing.entries.isLoading())
             assertEquals(CashflowViewMode.Overdue, refreshing.filters.viewMode)
 
             deferredOverview.complete(Result.failure(RuntimeException("network error")))
             deferredEntries.complete(Result.failure(RuntimeException("network error")))
             advanceUntilIdle()
 
-            val restored = assertIs<CashflowLedgerState.Content>(states.value)
-            assertFalse(restored.isRefreshing)
-            assertEquals(CashflowViewMode.Upcoming, restored.filters.viewMode)
-            assertEquals(upcomingEntries.map { it.id }, restored.entries.data.map { it.id })
+            val errorState = states.value
+            assertTrue(errorState.entries.isError())
+            assertEquals(CashflowViewMode.Overdue, errorState.filters.viewMode)
+            assertEquals(upcomingEntries.map { it.id }, errorState.entries.lastData?.data?.map { it.id })
         }
     }
 }

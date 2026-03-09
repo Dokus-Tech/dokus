@@ -36,6 +36,8 @@ import tech.dokus.features.auth.presentation.auth.components.steps.TypeSelection
 import tech.dokus.features.auth.presentation.auth.components.steps.VatAndAddressStep
 import tech.dokus.features.auth.presentation.auth.model.WorkspaceCreateType
 import tech.dokus.features.auth.presentation.auth.model.WorkspaceWizardStep
+import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.features.auth.mvi.WorkspaceCreateUserInfo
 import tech.dokus.foundation.aura.components.background.WarpJumpEffect
 import tech.dokus.foundation.aura.extensions.dismissKeyboardOnTapOutside
 import tech.dokus.foundation.aura.tooling.PreviewParameters
@@ -81,10 +83,6 @@ internal fun WorkspaceCreateScreen(
         }
     }
 
-    val wizardState = state as? WorkspaceCreateState.Wizard
-    val isSubmitting =
-        state is WorkspaceCreateState.Loading || state is WorkspaceCreateState.Creating
-
     Scaffold {
         Box(modifier = Modifier.fillMaxSize()) {
             AnimatedVisibility(
@@ -92,11 +90,11 @@ internal fun WorkspaceCreateScreen(
                 enter = fadeIn(),
                 exit = fadeOut(animationSpec = tween(ContentFadeOutDurationMs)),
             ) {
-                if (wizardState != null) {
+                if (state.isReady) {
                     OnboardingCenteredShell(
                         modifier = Modifier.dismissKeyboardOnTapOutside(),
                         copyrightYear = copyrightYear,
-                        contentMaxWidth = when (wizardState.step) {
+                        contentMaxWidth = when (state.step) {
                             WorkspaceWizardStep.CompanyName,
                             WorkspaceWizardStep.VatAndAddress -> WorkspaceCreateLookupShellMaxWidth
 
@@ -104,8 +102,7 @@ internal fun WorkspaceCreateScreen(
                         },
                     ) {
                         WorkspaceCreateContent(
-                            wizardState = wizardState,
-                            isSubmitting = isSubmitting,
+                            state = state,
                             onIntent = onIntent,
                             onBackPress = onNavigateUp,
                             modifier = Modifier.fillMaxWidth(),
@@ -127,26 +124,25 @@ internal fun WorkspaceCreateScreen(
 
 @Composable
 private fun WorkspaceCreateContent(
-    wizardState: WorkspaceCreateState.Wizard,
-    isSubmitting: Boolean,
+    state: WorkspaceCreateState,
     onIntent: (WorkspaceCreateIntent) -> Unit,
     onBackPress: () -> Unit,
     modifier: Modifier,
 ) {
-    val steps = WorkspaceWizardStep.stepsForType(wizardState.workspaceType)
+    val steps = WorkspaceWizardStep.stepsForType(state.workspaceType)
     val pagerState = rememberPagerState(pageCount = { steps.size })
 
-    LaunchedEffect(wizardState.step) {
-        val targetPage = steps.indexOf(wizardState.step)
+    LaunchedEffect(state.step) {
+        val targetPage = steps.indexOf(state.step)
         if (targetPage >= 0 && targetPage != pagerState.currentPage) {
             pagerState.animateScrollToPage(targetPage)
         }
     }
 
-    LaunchedEffect(wizardState.step, wizardState.companyName.value) {
-        if (wizardState.step != WorkspaceWizardStep.CompanyName) return@LaunchedEffect
+    LaunchedEffect(state.step, state.companyName.value) {
+        if (state.step != WorkspaceWizardStep.CompanyName) return@LaunchedEffect
 
-        val query = wizardState.companyName.value.trim()
+        val query = state.companyName.value.trim()
         if (query.length < CompanyLookupMinCharacters) return@LaunchedEffect
 
         delay(CompanyLookupDebounceMs)
@@ -155,7 +151,7 @@ private fun WorkspaceCreateContent(
 
     Column(
         modifier = modifier.widthIn(
-            max = when (wizardState.step) {
+            max = when (state.step) {
                 WorkspaceWizardStep.TypeSelection -> WizardTypeSelectionMaxWidth
                 WorkspaceWizardStep.CompanyName -> WizardLookupMaxWidth
                 WorkspaceWizardStep.VatAndAddress -> WizardLookupMaxWidth
@@ -177,7 +173,7 @@ private fun WorkspaceCreateContent(
                 when (steps[page]) {
                     WorkspaceWizardStep.TypeSelection -> {
                         TypeSelectionStep(
-                            hasFreelancerWorkspace = wizardState.hasFreelancerWorkspace,
+                            hasFreelancerWorkspace = state.hasFreelancerWorkspace,
                             onTypeSelected = { type ->
                                 onIntent(WorkspaceCreateIntent.SelectType(type))
                                 onIntent(WorkspaceCreateIntent.NextClicked)
@@ -189,8 +185,8 @@ private fun WorkspaceCreateContent(
 
                     WorkspaceWizardStep.CompanyName -> {
                         CompanyNameStep(
-                            query = wizardState.companyName.value,
-                            lookupState = wizardState.lookupState,
+                            query = state.companyName.value,
+                            lookupState = state.lookupState,
                             onQueryChanged = { name ->
                                 onIntent(WorkspaceCreateIntent.UpdateCompanyName(LegalName(name)))
                             },
@@ -201,7 +197,7 @@ private fun WorkspaceCreateContent(
                                 onIntent(
                                     WorkspaceCreateIntent.UpdateCompanyName(
                                         LegalName(
-                                            wizardState.companyName.value
+                                            state.companyName.value
                                         )
                                     )
                                 )
@@ -213,11 +209,11 @@ private fun WorkspaceCreateContent(
 
                     WorkspaceWizardStep.VatAndAddress -> {
                         VatAndAddressStep(
-                            companyName = wizardState.companyName.value,
-                            vatNumber = wizardState.vatNumber,
-                            address = wizardState.address,
-                            canCreate = wizardState.canProceed,
-                            isSubmitting = isSubmitting,
+                            companyName = state.companyName.value,
+                            vatNumber = state.vatNumber,
+                            address = state.address,
+                            canCreate = state.canProceed,
+                            isSubmitting = state.isCreating,
                             onCompanyNameChanged = { name ->
                                 onIntent(WorkspaceCreateIntent.UpdateCompanyName(LegalName(name)))
                             },
@@ -245,7 +241,11 @@ private fun WorkspaceCreateScreenPreview(
 ) {
     TestWrapper(parameters) {
         WorkspaceCreateScreen(
-            state = WorkspaceCreateState.Wizard(),
+            state = WorkspaceCreateState(
+                userInfo = DokusState.success(
+                    WorkspaceCreateUserInfo(hasFreelancerWorkspace = false, userName = "John Doe")
+                ),
+            ),
             onIntent = {},
             onNavigateUp = {},
             triggerWarp = false,
@@ -262,7 +262,10 @@ private fun WorkspaceCreateScreenDesktopPreview(
 ) {
     TestWrapper(parameters) {
         WorkspaceCreateScreen(
-            state = WorkspaceCreateState.Wizard(
+            state = WorkspaceCreateState(
+                userInfo = DokusState.success(
+                    WorkspaceCreateUserInfo(hasFreelancerWorkspace = false, userName = "John Doe")
+                ),
                 workspaceType = WorkspaceCreateType.Bookkeeper,
             ),
             onIntent = {},

@@ -20,6 +20,10 @@ import tech.dokus.aura.resources.auth_verify_email_title
 import tech.dokus.features.auth.mvi.VerifyEmailState
 import tech.dokus.features.auth.presentation.auth.components.onboarding.OnboardingBrandVariant
 import tech.dokus.features.auth.presentation.auth.components.onboarding.OnboardingSplitShell
+import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.app.state.isError
+import tech.dokus.foundation.app.state.isLoading
+import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.text.SectionTitle
@@ -44,10 +48,11 @@ internal fun VerifyEmailScreen(
 
         Spacer(modifier = Modifier.height(Constraints.Spacing.small))
 
-        val message = when (state) {
-            VerifyEmailState.Verifying -> stringResource(Res.string.auth_verifying_email)
-            VerifyEmailState.Success -> stringResource(Res.string.auth_verify_email_success)
-            is VerifyEmailState.Error -> stringResource(Res.string.auth_verify_email_error)
+        val message = when {
+            state.verification.isLoading() -> stringResource(Res.string.auth_verifying_email)
+            state.verification.isSuccess() -> stringResource(Res.string.auth_verify_email_success)
+            state.verification.isError() -> stringResource(Res.string.auth_verify_email_error)
+            else -> ""
         }
 
         Text(
@@ -60,9 +65,9 @@ internal fun VerifyEmailScreen(
 
         Spacer(modifier = Modifier.height(Constraints.Spacing.xLarge))
 
-        when (state) {
-            VerifyEmailState.Verifying -> Unit
-            VerifyEmailState.Success -> {
+        when {
+            state.verification.isLoading() -> Unit
+            state.verification.isSuccess() -> {
                 PPrimaryButton(
                     text = stringResource(Res.string.auth_verify_email_continue),
                     onClick = onContinue,
@@ -70,7 +75,7 @@ internal fun VerifyEmailScreen(
                 )
             }
 
-            is VerifyEmailState.Error -> {
+            state.verification.isError() -> {
                 POutlinedButton(
                     text = stringResource(Res.string.auth_verify_email_retry),
                     onClick = onRetry,
@@ -98,7 +103,7 @@ private fun VerifyEmailScreenSuccessPreview(
 ) {
     TestWrapper(parameters) {
         VerifyEmailScreen(
-            state = VerifyEmailState.Success,
+            state = VerifyEmailState(verification = DokusState.success(Unit)),
             onContinue = {},
             onRetry = {},
         )

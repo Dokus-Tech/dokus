@@ -20,7 +20,7 @@ import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.ContactNoteDto
 import tech.dokus.features.contacts.usecases.ContactInvoiceSnapshot
 import tech.dokus.foundation.app.state.DokusState
-import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.aura.components.common.DokusErrorBanner
 import tech.dokus.foundation.aura.components.common.OfflineOverlay
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
@@ -51,64 +51,50 @@ internal fun ContactDetailsContent(
     onEditNote: (ContactNoteDto) -> Unit,
     onDeleteNote: (ContactNoteDto) -> Unit
 ) {
-    when (contactState) {
-        is DokusState.Error -> {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(contentPadding)
-                    .padding(32.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                DokusErrorContent(
-                    exception = contactState.exception,
-                    retryHandler = contactState.retryHandler
-                )
-            }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(contentPadding)
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(SectionSpacing)
+    ) {
+        if (contactState is DokusState.Error) {
+            DokusErrorBanner(
+                exception = contactState.exception,
+                retryHandler = contactState.retryHandler,
+            )
         }
 
-        else -> {
-            val contact = (contactState as? DokusState.Success)?.data
+        ContactHeroSection(
+            contactState = contactState,
+            peppolStatusState = peppolStatusState,
+            showInlineActions = showInlineActions,
+            hasEnrichmentSuggestions = hasEnrichmentSuggestions,
+            isOnline = isOnline,
+            onEditContact = onEditContact,
+            onMergeContact = onMergeContact,
+            onShowEnrichment = onShowEnrichment
+        )
 
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(contentPadding)
-                    .verticalScroll(rememberScrollState())
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(SectionSpacing)
-            ) {
-                ContactHeroSection(
-                    contactState = contactState,
-                    peppolStatusState = peppolStatusState,
-                    showInlineActions = showInlineActions,
-                    hasEnrichmentSuggestions = hasEnrichmentSuggestions,
-                    isOnline = isOnline,
-                    onEditContact = onEditContact,
-                    onMergeContact = onMergeContact,
-                    onShowEnrichment = onShowEnrichment
-                )
+        ContactStatsSection(invoiceSnapshotState = invoiceSnapshotState)
+        ContactInfoSectionCompact(contact = (contactState as? DokusState.Success)?.data)
+        RecentDocumentsSection(invoiceSnapshotState = invoiceSnapshotState)
 
-                ContactStatsSection(invoiceSnapshotState = invoiceSnapshotState)
-                ContactInfoSectionCompact(contact = contact)
-                RecentDocumentsSection(invoiceSnapshotState = invoiceSnapshotState)
-
-                OfflineOverlay(isOffline = !isOnline) {
-                    NotesSection(
-                        state = if (!isOnline && notesState is DokusState.Error) {
-                            DokusState.loading()
-                        } else {
-                            notesState
-                        },
-                        onAddNote = onAddNote,
-                        onEditNote = onEditNote,
-                        onDeleteNote = onDeleteNote
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-            }
+        OfflineOverlay(isOffline = !isOnline) {
+            NotesSection(
+                state = if (!isOnline && notesState is DokusState.Error) {
+                    DokusState.loading()
+                } else {
+                    notesState
+                },
+                onAddNote = onAddNote,
+                onEditNote = onEditNote,
+                onDeleteNote = onDeleteNote
+            )
         }
+
+        Spacer(modifier = Modifier.height(8.dp))
     }
 }
 

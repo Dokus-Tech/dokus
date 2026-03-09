@@ -28,7 +28,7 @@ import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Composable
 internal fun MobileCanonicalContent(
-    state: DocumentReviewState.Content,
+    state: DocumentReviewState,
     isAccountantReadOnly: Boolean,
     onIntent: (DocumentReviewIntent) -> Unit,
     onBackClick: () -> Unit,

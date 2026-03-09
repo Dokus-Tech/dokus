@@ -24,7 +24,7 @@ import tech.dokus.features.cashflow.presentation.review.colorized as financialSt
 
 @Composable
 internal fun MobileDocumentDetailTopBar(
-    state: DocumentReviewState.Content,
+    state: DocumentReviewState,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {

@@ -43,6 +43,7 @@ import tech.dokus.features.contacts.presentation.contacts.components.ContactForm
 import tech.dokus.features.contacts.presentation.contacts.components.ContactFormContent
 import tech.dokus.features.contacts.presentation.contacts.components.ContactFormFields
 import tech.dokus.features.contacts.presentation.contacts.components.DuplicateWarningBanner
+import tech.dokus.foundation.app.state.isLoading
 import tech.dokus.foundation.aura.components.dialog.DokusDialog
 import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
 import tech.dokus.foundation.aura.components.text.SectionTitle
@@ -80,67 +81,40 @@ internal fun ContactFormScreen(
         containerColor = MaterialTheme.colorScheme.background
     ) { contentPadding ->
         Box(modifier = Modifier.fillMaxSize()) {
-            when (state) {
-                is ContactFormState.LoadingContact -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(contentPadding),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        DokusLoader()
-                    }
+            // Show loading overlay when fetching existing contact for edit
+            if (state.isEditMode && state.originalContact.isLoading()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(contentPadding),
+                    contentAlignment = Alignment.Center
+                ) {
+                    DokusLoader()
                 }
-
-                is ContactFormState.Editing -> {
-                    if (state.ui.showDeleteConfirmation) {
-                        DeleteContactConfirmationDialog(
-                            contactName = state.formData.name.value,
-                            isDeleting = state.isDeleting,
-                            onConfirm = { onIntent(ContactFormIntent.Delete) }
-                        ) { onIntent(ContactFormIntent.HideDeleteConfirmation) }
-                    }
-                    if (isLargeScreen) {
-                        DesktopFormLayout(
-                            contentPadding = contentPadding,
-                            state = state,
-                            onBackPress = { onIntent(ContactFormIntent.Cancel) },
-                            onIntent = onIntent,
-                            onNavigateToDuplicate = onNavigateToDuplicate
-                        )
-                    } else {
-                        MobileFormLayout(
-                            contentPadding = contentPadding,
-                            state = state,
-                            onBackPress = { onIntent(ContactFormIntent.Cancel) },
-                            onIntent = onIntent,
-                            onNavigateToDuplicate = onNavigateToDuplicate
-                        )
-                    }
+            } else {
+                if (state.ui.showDeleteConfirmation) {
+                    DeleteContactConfirmationDialog(
+                        contactName = state.formData.name.value,
+                        isDeleting = state.isDeleting,
+                        onConfirm = { onIntent(ContactFormIntent.Delete) }
+                    ) { onIntent(ContactFormIntent.HideDeleteConfirmation) }
                 }
-
-                is ContactFormState.Error -> {
-                    val editingState = ContactFormState.Editing(
-                        contactId = state.contactId,
-                        formData = state.formData
+                if (isLargeScreen) {
+                    DesktopFormLayout(
+                        contentPadding = contentPadding,
+                        state = state,
+                        onBackPress = { onIntent(ContactFormIntent.Cancel) },
+                        onIntent = onIntent,
+                        onNavigateToDuplicate = onNavigateToDuplicate
                     )
-                    if (isLargeScreen) {
-                        DesktopFormLayout(
-                            contentPadding = contentPadding,
-                            state = editingState,
-                            onBackPress = { onIntent(ContactFormIntent.Cancel) },
-                            onIntent = onIntent,
-                            onNavigateToDuplicate = onNavigateToDuplicate
-                        )
-                    } else {
-                        MobileFormLayout(
-                            contentPadding = contentPadding,
-                            state = editingState,
-                            onBackPress = { onIntent(ContactFormIntent.Cancel) },
-                            onIntent = onIntent,
-                            onNavigateToDuplicate = onNavigateToDuplicate
-                        )
-                    }
+                } else {
+                    MobileFormLayout(
+                        contentPadding = contentPadding,
+                        state = state,
+                        onBackPress = { onIntent(ContactFormIntent.Cancel) },
+                        onIntent = onIntent,
+                        onNavigateToDuplicate = onNavigateToDuplicate
+                    )
                 }
             }
         }
@@ -154,7 +128,7 @@ internal fun ContactFormScreen(
 @Composable
 private fun DesktopFormLayout(
     contentPadding: PaddingValues,
-    state: ContactFormState.Editing,
+    state: ContactFormState,
     onBackPress: () -> Unit,
     onIntent: (ContactFormIntent) -> Unit,
     onNavigateToDuplicate: (ContactId) -> Unit
@@ -206,7 +180,7 @@ private fun DesktopFormLayout(
 @Composable
 private fun MobileFormLayout(
     contentPadding: PaddingValues,
-    state: ContactFormState.Editing,
+    state: ContactFormState,
     onBackPress: () -> Unit,
     onIntent: (ContactFormIntent) -> Unit,
     onNavigateToDuplicate: (ContactId) -> Unit
@@ -360,7 +334,7 @@ private fun ContactFormScreenPreview(
 ) {
     TestWrapper(parameters) {
         ContactFormScreen(
-            state = ContactFormState.Editing(),
+            state = ContactFormState(),
             snackbarHostState = remember { SnackbarHostState() },
             onIntent = {},
             onNavigateToDuplicate = {}

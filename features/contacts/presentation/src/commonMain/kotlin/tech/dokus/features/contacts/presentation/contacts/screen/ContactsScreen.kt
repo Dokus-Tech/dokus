@@ -1,6 +1,5 @@
 package tech.dokus.features.contacts.presentation.contacts.screen
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -8,16 +7,17 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.VerticalDivider
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -30,34 +30,40 @@ import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.contacts_add_contact
 import tech.dokus.aura.resources.contacts_select_contact
+import tech.dokus.aura.resources.contacts_title
+import tech.dokus.domain.Money
 import tech.dokus.domain.Name
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.PeppolStatusResponse
 import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.domain.model.contact.ContactActivitySummary
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.ContactNoteDto
+import tech.dokus.domain.model.contact.DerivedContactRoles
+import tech.dokus.features.contacts.mvi.ContactDetailsState
 import tech.dokus.features.contacts.mvi.ContactsIntent
 import tech.dokus.features.contacts.mvi.ContactsState
-import tech.dokus.features.contacts.presentation.contacts.components.ContactsHeaderActions
 import tech.dokus.features.contacts.presentation.contacts.components.ContactsList
 import tech.dokus.features.contacts.presentation.contacts.route.ContactDetailsRoute
 import tech.dokus.features.contacts.usecases.ContactInvoiceSnapshot
 import tech.dokus.foundation.app.network.LocalServerConnection
 import tech.dokus.foundation.app.network.ServerConnectionState
+import tech.dokus.foundation.app.network.rememberIsOnline
 import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.aura.components.PButton
+import tech.dokus.foundation.aura.components.PButtonVariant
+import tech.dokus.foundation.aura.components.PIconPosition
+import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.local.ScreenSize
 import tech.dokus.foundation.aura.local.isLarge
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
-import tech.dokus.domain.Money
-import tech.dokus.domain.ids.ContactId
-import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.ids.VatNumber
-import tech.dokus.domain.model.contact.DerivedContactRoles
-import tech.dokus.features.contacts.mvi.ContactDetailsState
 
 private val ContentPaddingHorizontal = 16.dp
 private val SpacingMedium = 12.dp
@@ -85,9 +91,10 @@ internal fun ContactsScreen(
     }
 ) {
     val isLargeScreen = LocalScreenSize.isLarge
-    val contentState = state as? ContactsState.Content
-    val selectedContactId = contentState?.selectedContactId
-    val contacts = contentState?.contacts?.data.orEmpty()
+    val selectedContactId = state.selectedContactId
+    val contacts = state.contacts.lastData?.data.orEmpty()
+
+    val isOnline = rememberIsOnline()
 
     LaunchedEffect(isLargeScreen, selectedContactId, contacts.firstOrNull()?.id) {
         if (!isLargeScreen) return@LaunchedEffect
@@ -96,22 +103,20 @@ internal fun ContactsScreen(
         onSelectContact(first)
     }
 
-    val contactsState: DokusState<PaginationState<ContactDto>> = when (state) {
-        is ContactsState.Loading -> DokusState.loading()
-        is ContactsState.Content -> DokusState.success(state.contacts)
-        is ContactsState.Error -> DokusState.error(state.exception, state.retryHandler)
-    }
+    val contactsState = state.contacts
 
     Scaffold(
         topBar = {
             if (!isLargeScreen) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = ContentPaddingHorizontal, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.End,
-                ) {
-                    ContactsHeaderActions(onAddContactClick = onCreateContact)
+                PTopAppBar(Res.string.contacts_title) {
+                    PButton(
+                        text = stringResource(Res.string.contacts_add_contact),
+                        variant = PButtonVariant.Outline,
+                        icon = Icons.Default.Add,
+                        iconPosition = PIconPosition.Trailing,
+                        onClick = onCreateContact,
+                        isEnabled = isOnline
+                    )
                 }
             }
         },
@@ -249,11 +254,13 @@ private fun ContactsDesktopMasterDetailPreview(
         ServerConnectionPreviewProvider {
             CompositionLocalProvider(LocalScreenSize provides ScreenSize.LARGE) {
                 ContactsScreen(
-                    state = ContactsState.Content(
-                        contacts = PaginationState(
-                            data = contacts,
-                            currentPage = 1,
-                            hasMorePages = true
+                    state = ContactsState(
+                        contacts = DokusState.success(
+                            PaginationState(
+                                data = contacts,
+                                currentPage = 1,
+                                hasMorePages = true
+                            )
                         ),
                         selectedContactId = contactId
                     ),
@@ -264,9 +271,9 @@ private fun ContactsDesktopMasterDetailPreview(
                     onCreateContact = {},
                     detailContent = {
                         ContactDetailsScreen(
-                            state = ContactDetailsState.Content(
+                            state = ContactDetailsState(
                                 contactId = contactId,
-                                contact = contacts.first(),
+                                contact = DokusState.success(contacts.first()),
                                 activityState = DokusState.success(
                                     ContactActivitySummary(contactId = contactId)
                                 ),
@@ -323,11 +330,13 @@ private fun ContactsMobileListPreview(
     TestWrapper(parameters) {
         ServerConnectionPreviewProvider {
             ContactsScreen(
-                state = ContactsState.Content(
-                    contacts = PaginationState(
-                        data = contacts,
-                        currentPage = 1,
-                        hasMorePages = false
+                state = ContactsState(
+                    contacts = DokusState.success(
+                        PaginationState(
+                            data = contacts,
+                            currentPage = 1,
+                            hasMorePages = false
+                        )
                     )
                 ),
                 snackbarHostState = remember { SnackbarHostState() },

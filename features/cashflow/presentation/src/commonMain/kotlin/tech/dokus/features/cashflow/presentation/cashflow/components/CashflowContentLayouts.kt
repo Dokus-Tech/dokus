@@ -19,6 +19,7 @@ import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.app.state.isLoading
 
 // Desktop layout constants
 private val DesktopContentPadding = 24.dp
@@ -69,7 +70,7 @@ fun DesktopCashflowContent(
     val paginationState = (documentsState as? DokusState.Success)?.data
 
     // Infinite scroll trigger
-    LaunchedEffect(listState, paginationState?.hasMorePages, paginationState?.isLoadingMore) {
+    LaunchedEffect(listState, paginationState?.hasMorePages, documentsState.isLoading()) {
         if (paginationState == null) return@LaunchedEffect
         snapshotFlow {
             val info = listState.layoutInfo
@@ -79,7 +80,7 @@ fun DesktopCashflowContent(
             .filter { (last, total) ->
                 (last + 1) > (total - InfiniteScrollThreshold) &&
                     paginationState.hasMorePages &&
-                    !paginationState.isLoadingMore
+                    !documentsState.isLoading()
             }
             .collect { onLoadMore() }
     }
@@ -153,7 +154,7 @@ fun MobileCashflowContent(
     val paginationState = (documentsState as? DokusState.Success)?.data
 
     // Infinite scroll trigger
-    LaunchedEffect(listState, paginationState?.hasMorePages, paginationState?.isLoadingMore) {
+    LaunchedEffect(listState, paginationState?.hasMorePages, documentsState.isLoading()) {
         if (paginationState == null) return@LaunchedEffect
         snapshotFlow {
             val info = listState.layoutInfo
@@ -163,7 +164,7 @@ fun MobileCashflowContent(
             .filter { (last, total) ->
                 (last + 1) > (total - InfiniteScrollThreshold) &&
                     paginationState.hasMorePages &&
-                    !paginationState.isLoadingMore
+                    !documentsState.isLoading()
             }
             .collect { onLoadMore() }
     }

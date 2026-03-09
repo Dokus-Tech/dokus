@@ -37,7 +37,7 @@ import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Composable
 internal fun MobileSourceViewerScreen(
-    contentState: DocumentReviewState.Content,
+    contentState: DocumentReviewState,
     viewerState: SourceEvidenceViewerState,
     onBack: () -> Unit,
     onToggleTechnicalDetails: () -> Unit,

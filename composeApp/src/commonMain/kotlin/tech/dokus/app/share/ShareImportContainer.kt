@@ -33,7 +33,7 @@ internal class ShareImportContainer(
     private var uploadSession: UploadSession? = null
 
     override val store: Store<ShareImportState, ShareImportIntent, ShareImportAction> =
-        store(ShareImportState.LoadingContext) {
+        store(ShareImportState.initial) {
             reduce { intent ->
                 when (intent) {
                     ShareImportIntent.Load -> handleLoad()
@@ -45,7 +45,7 @@ internal class ShareImportContainer(
         }
 
     private suspend fun ShareImportCtx.handleLoad() {
-        updateState { ShareImportState.LoadingContext }
+        updateState { ShareImportState() }
 
         val sharedFiles = if (activeFiles.isNotEmpty()) {
             activeFiles
@@ -55,10 +55,11 @@ internal class ShareImportContainer(
         if (sharedFiles.isEmpty()) {
             logger.w { "Share import opened without pending shared files" }
             updateState {
-                ShareImportState.Error(
+                copy(
+                    phase = ShareImportPhase.Error,
                     exception = DokusException.NotFound(),
                     retryHandler = null,
-                    canNavigateToLogin = false
+                    canNavigateToLogin = false,
                 )
             }
             return
@@ -69,10 +70,11 @@ internal class ShareImportContainer(
         if (!tokenManager.isAuthenticated.value) {
             logger.w { "Share import received while user is not authenticated" }
             updateState {
-                ShareImportState.Error(
+                copy(
+                    phase = ShareImportPhase.Error,
                     exception = DokusException.NotAuthenticated(),
                     retryHandler = null,
-                    canNavigateToLogin = true
+                    canNavigateToLogin = true,
                 )
             }
             return
@@ -108,10 +110,11 @@ internal class ShareImportContainer(
             .onFailure { error ->
                 logger.e(error) { "Failed to load workspaces for share import" }
                 updateState {
-                    ShareImportState.Error(
+                    copy(
+                        phase = ShareImportPhase.Error,
                         exception = DokusException.WorkspaceSelectFailed,
                         retryHandler = RetryHandler { intent(ShareImportIntent.Retry) },
-                        canNavigateToLogin = false
+                        canNavigateToLogin = false,
                     )
                 }
             }
@@ -120,10 +123,11 @@ internal class ShareImportContainer(
 
         if (workspaces.isEmpty()) {
             updateState {
-                ShareImportState.Error(
+                copy(
+                    phase = ShareImportPhase.Error,
                     exception = DokusException.WorkspaceSelectFailed,
                     retryHandler = RetryHandler { intent(ShareImportIntent.Retry) },
-                    canNavigateToLogin = false
+                    canNavigateToLogin = false,
                 )
             }
             return null
@@ -141,11 +145,12 @@ internal class ShareImportContainer(
 
         if (resolved == null) {
             updateState {
-                ShareImportState.Error(
+                copy(
+                    phase = ShareImportPhase.Error,
                     exception = DokusException.WorkspaceContextUnavailable,
                     retryHandler = RetryHandler { intent(ShareImportIntent.Retry) },
                     canNavigateToLogin = false,
-                    canOpenApp = true
+                    canOpenApp = true,
                 )
             }
             return null
@@ -158,10 +163,11 @@ internal class ShareImportContainer(
         val session = uploadSession
         if (session == null || session.files.isEmpty()) {
             updateState {
-                ShareImportState.Error(
+                copy(
+                    phase = ShareImportPhase.Error,
                     exception = DokusException.NotFound(),
                     retryHandler = null,
-                    canNavigateToLogin = false
+                    canNavigateToLogin = false,
                 )
             }
             return
@@ -176,10 +182,11 @@ internal class ShareImportContainer(
                 .onFailure { error ->
                     logger.e(error) { "Failed to switch workspace for share import: ${workspace.id}" }
                     updateState {
-                        ShareImportState.Error(
+                        copy(
+                            phase = ShareImportPhase.Error,
                             exception = DokusException.WorkspaceSelectFailed,
                             retryHandler = RetryHandler { intent(ShareImportIntent.Retry) },
-                            canNavigateToLogin = false
+                            canNavigateToLogin = false,
                         )
                     }
                     return
@@ -195,13 +202,14 @@ internal class ShareImportContainer(
             val uploadedCountBefore = session.statuses.count { it is UploadFileStatus.Uploaded }
             val currentFileIndex = index + 1
             updateState {
-                ShareImportState.Uploading(
+                copy(
+                    phase = ShareImportPhase.Uploading,
                     currentFileName = sharedFile.name,
                     currentFileIndex = currentFileIndex,
                     totalFiles = totalFiles,
                     workspaceName = workspace.displayName.value,
                     currentFileProgress = 0f,
-                    overallProgress = uploadedCountBefore.toFloat() / totalFiles.toFloat()
+                    overallProgress = uploadedCountBefore.toFloat() / totalFiles.toFloat(),
                 )
             }
 
@@ -215,13 +223,13 @@ internal class ShareImportContainer(
                     val overallProgress = (uploadedCountBefore.toFloat() + clampedProgress) / totalFiles.toFloat()
 
                     // Frequent progress updates can bypass suspended state transactions for responsiveness.
-                    updateStateImmediate<ShareImportState.Uploading, _> {
+                    updateStateImmediate {
                         copy(
                             currentFileName = sharedFile.name,
                             currentFileIndex = currentFileIndex,
                             totalFiles = totalFiles,
                             currentFileProgress = clampedProgress,
-                            overallProgress = overallProgress.coerceIn(0f, 1f)
+                            overallProgress = overallProgress.coerceIn(0f, 1f),
                         )
                     }
                 }
@@ -237,10 +245,11 @@ internal class ShareImportContainer(
                 val exception = (error as? DokusException) ?: DokusException.DocumentUploadFailed
                 session.statuses[index] = UploadFileStatus.Failed(exception)
                 updateState {
-                    ShareImportState.Error(
+                    copy(
+                        phase = ShareImportPhase.Error,
                         exception = exception,
                         retryHandler = RetryHandler { intent(ShareImportIntent.Retry) },
-                        canNavigateToLogin = false
+                        canNavigateToLogin = false,
                     )
                 }
                 return
@@ -256,22 +265,24 @@ internal class ShareImportContainer(
         if (uploadedDocumentIds.isEmpty()) {
             logger.w { "Share import completed with no uploaded document id" }
             updateState {
-                ShareImportState.Error(
+                copy(
+                    phase = ShareImportPhase.Error,
                     exception = DokusException.DocumentUploadFailed,
                     retryHandler = RetryHandler { intent(ShareImportIntent.Retry) },
-                    canNavigateToLogin = false
+                    canNavigateToLogin = false,
                 )
             }
             return
         }
 
         updateState {
-            ShareImportState.SuccessPulse(
+            copy(
+                phase = ShareImportPhase.Success,
                 primaryFileName = sharedFiles.first().name,
                 additionalFileCount = (sharedFiles.size - 1).coerceAtLeast(0),
                 uploadedCount = uploadedDocumentIds.size,
                 needsReviewCount = needsReviewCount,
-                uploadedDocumentIds = uploadedDocumentIds
+                uploadedDocumentIds = uploadedDocumentIds,
             )
         }
         delay(SuccessAnimationDelayMs)

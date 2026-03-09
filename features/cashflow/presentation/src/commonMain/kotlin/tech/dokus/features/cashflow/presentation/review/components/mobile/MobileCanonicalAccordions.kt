@@ -46,7 +46,7 @@ import tech.dokus.foundation.aura.style.textMuted
 
 @Composable
 internal fun MobileItemsAccordion(
-    state: DocumentReviewState.Content,
+    state: DocumentReviewState,
     expanded: Boolean,
     onToggle: () -> Unit,
 ) {
@@ -93,7 +93,7 @@ internal fun MobileItemsAccordion(
 
 @Composable
 internal fun MobileSourcesAccordion(
-    state: DocumentReviewState.Content,
+    state: DocumentReviewState,
     isAccountantReadOnly: Boolean,
     expanded: Boolean,
     onToggle: () -> Unit,
@@ -102,11 +102,11 @@ internal fun MobileSourcesAccordion(
 ) {
     MobileAccordionCard(
         title = "Sources",
-        count = state.document.sources.size,
+        count = state.documentRecord?.sources.orEmpty().size,
         expanded = expanded,
         onToggle = onToggle,
     ) {
-        state.document.sources.forEach { source ->
+        state.documentRecord?.sources.orEmpty().forEach { source ->
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -134,7 +134,7 @@ internal fun MobileSourcesAccordion(
             }
         }
 
-        state.document.pendingMatchReview?.let { pendingReview ->
+        state.documentRecord?.pendingMatchReview?.let { pendingReview ->
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             val reasonText = when (pendingReview.reasonType) {
                 DocumentMatchReviewReasonType.MaterialConflict -> {
@@ -198,7 +198,7 @@ internal fun MobileSourcesAccordion(
 
 @Composable
 internal fun MobileBankDetailsAccordion(
-    state: DocumentReviewState.Content,
+    state: DocumentReviewState,
     expanded: Boolean,
     onToggle: () -> Unit,
 ) {
@@ -220,7 +220,7 @@ internal fun MobileBankDetailsAccordion(
 
 @Composable
 internal fun MobileNotesAccordion(
-    state: DocumentReviewState.Content,
+    state: DocumentReviewState,
     expanded: Boolean,
     onToggle: () -> Unit,
 ) {
@@ -304,7 +304,7 @@ private fun MobileAccordionCard(
 
 @Composable
 private fun MobileTotalsBlock(
-    state: DocumentReviewState.Content,
+    state: DocumentReviewState,
     currencySign: String,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {

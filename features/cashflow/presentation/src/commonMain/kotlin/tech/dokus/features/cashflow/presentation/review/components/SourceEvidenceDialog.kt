@@ -49,7 +49,7 @@ private const val SourceDialogMaxHeightScale = 1.45f
 
 @Composable
 internal fun SourceEvidenceDialog(
-    contentState: DocumentReviewState.Content,
+    contentState: DocumentReviewState,
     viewerState: SourceEvidenceViewerState,
     onClose: () -> Unit,
     onToggleTechnicalDetails: () -> Unit,

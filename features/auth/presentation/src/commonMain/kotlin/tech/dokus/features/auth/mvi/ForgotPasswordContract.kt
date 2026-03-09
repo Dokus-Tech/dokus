@@ -5,57 +5,22 @@ import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.domain.Email
-import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.foundation.app.state.DokusState
-
-/**
- * Contract for Forgot Password screen.
- *
- * Flow:
- * 1. Idle → User enters email
- * 2. Submitting → Validating email and sending reset request
- * 3. Success → Navigate back (or show success message)
- * 4. Error → Display error with retry option
- */
 
 // ============================================================================
 // STATE
 // ============================================================================
 
 @Immutable
-sealed interface ForgotPasswordState : MVIState, DokusState<Unit> {
-    val email: Email
-
-    /**
-     * Initial state - user enters email.
-     */
-    data class Idle(
-        override val email: Email = Email(""),
-    ) : ForgotPasswordState
-
-    /**
-     * Submitting password reset request.
-     */
-    data class Submitting(
-        override val email: Email,
-    ) : ForgotPasswordState
-
-    /**
-     * Password reset email sent successfully.
-     */
-    data class Success(
-        override val email: Email,
-    ) : ForgotPasswordState
-
-    /**
-     * Error state with recovery option.
-     */
-    data class Error(
-        override val email: Email,
-        override val exception: DokusException,
-        override val retryHandler: RetryHandler,
-    ) : ForgotPasswordState, DokusState.Error<Unit>
+data class ForgotPasswordState(
+    val email: Email = Email(""),
+    val isSubmitting: Boolean = false,
+    val isSuccess: Boolean = false,
+    val error: DokusException? = null,
+) : MVIState {
+    companion object {
+        val initial by lazy { ForgotPasswordState() }
+    }
 }
 
 // ============================================================================

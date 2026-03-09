@@ -11,15 +11,10 @@ import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
-import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.reduce
-import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.ContactId
-import tech.dokus.domain.model.PeppolStatusResponse
-import tech.dokus.domain.model.contact.ContactActivitySummary
 import tech.dokus.domain.model.contact.ContactDto
-import tech.dokus.domain.model.contact.ContactNoteDto
 import tech.dokus.domain.model.contact.CreateContactNoteRequest
 import tech.dokus.domain.model.contact.UpdateContactNoteRequest
 import tech.dokus.features.auth.usecases.GetCurrentTenantIdUseCase
@@ -33,8 +28,9 @@ import tech.dokus.features.contacts.usecases.GetContactPeppolStatusUseCase
 import tech.dokus.features.contacts.usecases.GetContactUseCase
 import tech.dokus.features.contacts.usecases.ListContactNotesUseCase
 import tech.dokus.features.contacts.usecases.UpdateContactNoteUseCase
-import tech.dokus.features.contacts.usecases.ContactInvoiceSnapshot
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.platform.Logger
 
 internal typealias ContactDetailsCtx = PipelineContext<ContactDetailsState, ContactDetailsIntent, ContactDetailsAction>
@@ -78,7 +74,7 @@ internal class ContactDetailsContainer(
     private val logger = Logger.forClass<ContactDetailsContainer>()
 
     override val store: Store<ContactDetailsState, ContactDetailsIntent, ContactDetailsAction> =
-        store(ContactDetailsState.Loading(contactId)) {
+        store(ContactDetailsState(contactId = contactId)) {
             reduce { intent ->
                 when (intent) {
                     // Loading
@@ -126,7 +122,16 @@ internal class ContactDetailsContainer(
     private suspend fun ContactDetailsCtx.handleLoadContact(contactId: ContactId) {
         logger.d { "Loading contact details: $contactId" }
 
-        updateState { ContactDetailsState.Loading(contactId) }
+        updateState {
+            copy(
+                contactId = contactId,
+                contact = DokusState.loading(),
+                activityState = DokusState.loading(),
+                invoiceSnapshotState = DokusState.loading(),
+                peppolStatusState = DokusState.loading(),
+                notesState = DokusState.loading()
+            )
+        }
 
         val contact = loadContactData(contactId)
         if (contact == null) return
@@ -135,35 +140,32 @@ internal class ContactDetailsContainer(
     }
 
     private suspend fun ContactDetailsCtx.handleRefresh() {
-        withState<ContactDetailsState.Content, _> {
-            logger.d { "Refreshing contact details: $contactId" }
+        var capturedContactId: ContactId? = null
 
-            // Reset section states while keeping core contact visible.
-            updateState {
-                copy(
-                    activityState = DokusState.loading(),
-                    invoiceSnapshotState = DokusState.loading(),
-                    peppolStatusState = DokusState.loading(),
-                    notesState = DokusState.loading()
-                )
-            }
+        updateState {
+            capturedContactId = contactId
+            copy(
+                activityState = DokusState.loading(),
+                invoiceSnapshotState = DokusState.loading(),
+                peppolStatusState = DokusState.loading(),
+                notesState = DokusState.loading()
+            )
+        }
 
-            val refreshedContact = getContact(contactId)
-            refreshedContact.onSuccess { contact ->
-                transitionToContent(contactId, contact)
+        val currentContactId = capturedContactId ?: return
+        logger.d { "Refreshing contact details: $currentContactId" }
+
+        getContact(currentContactId).fold(
+            onSuccess = { contact ->
+                updateState { copy(contact = DokusState.success(contact)) }
                 cacheContact(contact)
-            }.onFailure { error ->
-                logger.e(error) { "Failed to refresh contact: $contactId" }
+            },
+            onFailure = { error ->
+                logger.e(error) { "Failed to refresh contact: $currentContactId" }
             }
+        )
 
-            loadDetailSections(contactId)
-        }
-
-        // Also handle refresh from error state
-        withState<ContactDetailsState.Error, _> {
-            logger.d { "Refreshing contact details from error: $contactId" }
-            handleLoadContact(contactId)
-        }
+        loadDetailSections(currentContactId)
     }
 
     /**
@@ -176,14 +178,14 @@ internal class ContactDetailsContainer(
         var resolvedContact: ContactDto? = cached
         if (cached != null) {
             logger.d { "Loaded contact from cache: ${cached.name}" }
-            transitionToContent(contactId, cached)
+            updateState { copy(contact = DokusState.success(cached)) }
         }
 
         // Then try network refresh
         getContact(contactId).fold(
             onSuccess = { contact ->
                 logger.i { "Loaded contact from network: ${contact.name}" }
-                transitionToContent(contactId, contact)
+                updateState { copy(contact = DokusState.success(contact)) }
                 // Update cache with fresh data
                 cacheContact(contact)
                 resolvedContact = contact
@@ -193,10 +195,11 @@ internal class ContactDetailsContainer(
                 // Only show error if we have no cached data
                 if (cached == null) {
                     updateState {
-                        ContactDetailsState.Error(
-                            contactId = contactId,
-                            exception = error.asDokusException,
-                            retryHandler = { intent(ContactDetailsIntent.Refresh) }
+                        copy(
+                            contact = DokusState.error(
+                                exception = error.asDokusException,
+                                retryHandler = { intent(ContactDetailsIntent.Refresh) }
+                            )
                         )
                     }
                 }
@@ -205,21 +208,6 @@ internal class ContactDetailsContainer(
         )
 
         return resolvedContact
-    }
-
-    /**
-     * Transition to Content state or update existing Content state.
-     */
-    private suspend fun ContactDetailsCtx.transitionToContent(contactId: ContactId, contact: ContactDto) {
-        updateState {
-            when (this) {
-                is ContactDetailsState.Content -> copy(contact = contact)
-                else -> ContactDetailsState.Content(
-                    contactId = contactId,
-                    contact = contact
-                )
-            }
-        }
     }
 
     /**
@@ -260,97 +248,85 @@ internal class ContactDetailsContainer(
         applyNotesResult(notesDeferred.await())
     }
 
-    private suspend fun ContactDetailsCtx.applyActivityResult(result: Result<ContactActivitySummary>) {
+    private suspend fun ContactDetailsCtx.applyActivityResult(result: Result<tech.dokus.domain.model.contact.ContactActivitySummary>) {
         result.fold(
             onSuccess = { activity ->
                 logger.i { "Loaded activity: invoices=${activity.invoiceCount}, inbound invoices=${activity.inboundInvoiceCount}" }
-                withState<ContactDetailsState.Content, _> {
-                    updateState { copy(activityState = DokusState.success(activity)) }
-                }
+                updateState { copy(activityState = DokusState.success(activity)) }
             },
             onFailure = { error ->
                 logger.e(error) { "Failed to load activity" }
-                withState<ContactDetailsState.Content, _> {
-                    updateState {
-                        copy(
-                            activityState = DokusState.error(error) {
-                                intent(ContactDetailsIntent.Refresh)
-                            }
+                updateState {
+                    copy(
+                        activityState = DokusState.error(
+                            exception = error.asDokusException,
+                            retryHandler = { intent(ContactDetailsIntent.Refresh) }
                         )
-                    }
+                    )
                 }
             }
         )
     }
 
     private suspend fun ContactDetailsCtx.applyInvoiceSnapshotResult(
-        result: Result<ContactInvoiceSnapshot>
+        result: Result<tech.dokus.features.contacts.usecases.ContactInvoiceSnapshot>
     ) {
         result.fold(
             onSuccess = { snapshot ->
                 logger.i { "Loaded invoice snapshot: docs=${snapshot.documentsCount}" }
-                withState<ContactDetailsState.Content, _> {
-                    updateState { copy(invoiceSnapshotState = DokusState.success(snapshot)) }
-                }
+                updateState { copy(invoiceSnapshotState = DokusState.success(snapshot)) }
             },
             onFailure = { error ->
                 logger.e(error) { "Failed to load invoice snapshot" }
-                withState<ContactDetailsState.Content, _> {
-                    updateState {
-                        copy(
-                            invoiceSnapshotState = DokusState.error(error) {
-                                intent(ContactDetailsIntent.Refresh)
-                            }
+                updateState {
+                    copy(
+                        invoiceSnapshotState = DokusState.error(
+                            exception = error.asDokusException,
+                            retryHandler = { intent(ContactDetailsIntent.Refresh) }
                         )
-                    }
+                    )
                 }
             }
         )
     }
 
     private suspend fun ContactDetailsCtx.applyPeppolStatusResult(
-        result: Result<PeppolStatusResponse>
+        result: Result<tech.dokus.domain.model.PeppolStatusResponse>
     ) {
         result.fold(
             onSuccess = { status ->
                 logger.i { "Loaded PEPPOL status: ${status.status}" }
-                withState<ContactDetailsState.Content, _> {
-                    updateState { copy(peppolStatusState = DokusState.success(status)) }
-                }
+                updateState { copy(peppolStatusState = DokusState.success(status)) }
             },
             onFailure = { error ->
                 logger.e(error) { "Failed to load PEPPOL status" }
-                withState<ContactDetailsState.Content, _> {
-                    updateState {
-                        copy(
-                            peppolStatusState = DokusState.error(error) {
-                                intent(ContactDetailsIntent.Refresh)
-                            }
+                updateState {
+                    copy(
+                        peppolStatusState = DokusState.error(
+                            exception = error.asDokusException,
+                            retryHandler = { intent(ContactDetailsIntent.Refresh) }
                         )
-                    }
+                    )
                 }
             }
         )
     }
 
-    private suspend fun ContactDetailsCtx.applyNotesResult(result: Result<List<ContactNoteDto>>) {
+    private suspend fun ContactDetailsCtx.applyNotesResult(result: Result<List<tech.dokus.domain.model.contact.ContactNoteDto>>) {
         result.fold(
             onSuccess = { notes ->
                 logger.i { "Loaded ${notes.size} notes" }
-                withState<ContactDetailsState.Content, _> {
-                    updateState { copy(notesState = DokusState.success(notes)) }
-                }
+                updateState { copy(notesState = DokusState.success(notes)) }
             },
             onFailure = { error ->
                 logger.e(error) { "Failed to load notes" }
-                withState<ContactDetailsState.Content, _> {
-                    updateState {
-                        copy(
-                            notesState = DokusState.error(error) {
-                                intent(ContactDetailsIntent.Refresh)
-                            }
+                updateState {
+                    copy(
+                        notesState = DokusState.error(
+                            exception = error.asDokusException,
+                            retryHandler = { intent(ContactDetailsIntent.Refresh) }
                         )
-                    }
+                    )
                 }
             }
         )
@@ -361,90 +337,76 @@ internal class ContactDetailsContainer(
     // ============================================================================
 
     private suspend fun ContactDetailsCtx.handleShowAddNoteDialog() {
-        withState<ContactDetailsState.Content, _> {
-            updateState {
-                copy(
-                    uiState = uiState.copy(
-                        showAddNoteDialog = true,
-                        noteContent = ""
-                    )
+        updateState {
+            copy(
+                uiState = uiState.copy(
+                    showAddNoteDialog = true,
+                    noteContent = ""
                 )
-            }
+            )
         }
     }
 
     private suspend fun ContactDetailsCtx.handleHideAddNoteDialog() {
-        withState<ContactDetailsState.Content, _> {
-            updateState {
-                copy(
-                    uiState = uiState.copy(
-                        showAddNoteDialog = false,
-                        noteContent = ""
-                    )
+        updateState {
+            copy(
+                uiState = uiState.copy(
+                    showAddNoteDialog = false,
+                    noteContent = ""
                 )
-            }
+            )
         }
     }
 
-    private suspend fun ContactDetailsCtx.handleShowEditNoteDialog(note: ContactNoteDto) {
-        withState<ContactDetailsState.Content, _> {
-            updateState {
-                copy(
-                    uiState = uiState.copy(
-                        showEditNoteDialog = true,
-                        editingNote = note,
-                        noteContent = note.content
-                    )
+    private suspend fun ContactDetailsCtx.handleShowEditNoteDialog(note: tech.dokus.domain.model.contact.ContactNoteDto) {
+        updateState {
+            copy(
+                uiState = uiState.copy(
+                    showEditNoteDialog = true,
+                    editingNote = note,
+                    noteContent = note.content
                 )
-            }
+            )
         }
     }
 
     private suspend fun ContactDetailsCtx.handleHideEditNoteDialog() {
-        withState<ContactDetailsState.Content, _> {
-            updateState {
-                copy(
-                    uiState = uiState.copy(
-                        showEditNoteDialog = false,
-                        editingNote = null,
-                        noteContent = ""
-                    )
+        updateState {
+            copy(
+                uiState = uiState.copy(
+                    showEditNoteDialog = false,
+                    editingNote = null,
+                    noteContent = ""
                 )
-            }
+            )
         }
     }
 
     private suspend fun ContactDetailsCtx.handleUpdateNoteContent(content: String) {
-        withState<ContactDetailsState.Content, _> {
-            updateState {
-                copy(uiState = uiState.copy(noteContent = content))
-            }
+        updateState {
+            copy(uiState = uiState.copy(noteContent = content))
         }
     }
 
-    private suspend fun ContactDetailsCtx.handleShowDeleteNoteConfirmation(note: ContactNoteDto) {
-        withState<ContactDetailsState.Content, _> {
-            updateState {
-                copy(
-                    uiState = uiState.copy(
-                        showDeleteNoteConfirmation = true,
-                        deletingNote = note
-                    )
+    private suspend fun ContactDetailsCtx.handleShowDeleteNoteConfirmation(note: tech.dokus.domain.model.contact.ContactNoteDto) {
+        updateState {
+            copy(
+                uiState = uiState.copy(
+                    showDeleteNoteConfirmation = true,
+                    deletingNote = note
                 )
-            }
+            )
         }
     }
 
     private suspend fun ContactDetailsCtx.handleHideDeleteNoteConfirmation() {
-        withState<ContactDetailsState.Content, _> {
-            updateState {
-                copy(
-                    uiState = uiState.copy(
-                        showDeleteNoteConfirmation = false,
-                        deletingNote = null
-                    )
+        updateState {
+            copy(
+                uiState = uiState.copy(
+                    showDeleteNoteConfirmation = false,
+                    deletingNote = null
                 )
-            }
+            )
         }
     }
 
@@ -453,52 +415,44 @@ internal class ContactDetailsContainer(
     // ============================================================================
 
     private suspend fun ContactDetailsCtx.handleShowNotesSidePanel() {
-        withState<ContactDetailsState.Content, _> {
-            updateState {
-                copy(uiState = uiState.copy(showNotesSidePanel = true))
-            }
+        updateState {
+            copy(uiState = uiState.copy(showNotesSidePanel = true))
         }
     }
 
     private suspend fun ContactDetailsCtx.handleHideNotesSidePanel() {
-        withState<ContactDetailsState.Content, _> {
-            updateState {
-                copy(
-                    uiState = uiState.copy(
-                        showNotesSidePanel = false,
-                        // Also reset any note editing state when closing
-                        showAddNoteDialog = false,
-                        showEditNoteDialog = false,
-                        editingNote = null,
-                        noteContent = ""
-                    )
+        updateState {
+            copy(
+                uiState = uiState.copy(
+                    showNotesSidePanel = false,
+                    // Also reset any note editing state when closing
+                    showAddNoteDialog = false,
+                    showEditNoteDialog = false,
+                    editingNote = null,
+                    noteContent = ""
                 )
-            }
+            )
         }
     }
 
     private suspend fun ContactDetailsCtx.handleShowNotesBottomSheet() {
-        withState<ContactDetailsState.Content, _> {
-            updateState {
-                copy(uiState = uiState.copy(showNotesBottomSheet = true))
-            }
+        updateState {
+            copy(uiState = uiState.copy(showNotesBottomSheet = true))
         }
     }
 
     private suspend fun ContactDetailsCtx.handleHideNotesBottomSheet() {
-        withState<ContactDetailsState.Content, _> {
-            updateState {
-                copy(
-                    uiState = uiState.copy(
-                        showNotesBottomSheet = false,
-                        // Also reset any note editing state when closing
-                        showAddNoteDialog = false,
-                        showEditNoteDialog = false,
-                        editingNote = null,
-                        noteContent = ""
-                    )
+        updateState {
+            copy(
+                uiState = uiState.copy(
+                    showNotesBottomSheet = false,
+                    // Also reset any note editing state when closing
+                    showAddNoteDialog = false,
+                    showEditNoteDialog = false,
+                    editingNote = null,
+                    noteContent = ""
                 )
-            }
+            )
         }
     }
 
@@ -507,144 +461,169 @@ internal class ContactDetailsContainer(
     // ============================================================================
 
     private suspend fun ContactDetailsCtx.handleAddNote() {
-        withState<ContactDetailsState.Content, _> {
-            val content = uiState.noteContent.trim()
+        var capturedContactId: ContactId? = null
+        var capturedContent: String? = null
 
-            if (content.isBlank()) {
-                logger.w { "Cannot add empty note" }
-                action(ContactDetailsAction.ShowError(DokusException.Validation.NoteContentRequired))
-                return@withState
-            }
-
-            updateState { copy(isSavingNote = true) }
-
-            logger.d { "Adding note for contact $contactId" }
-
-            val request = CreateContactNoteRequest(content = content)
-            createContactNote(contactId, request).fold(
-                onSuccess = { note ->
-                    logger.i { "Note added: ${note.id}" }
-                    updateState {
-                        copy(
-                            isSavingNote = false,
-                            uiState = uiState.copy(
-                                showAddNoteDialog = false,
-                                noteContent = ""
-                            )
-                        )
-                    }
-                    action(ContactDetailsAction.ShowSuccess(ContactDetailsSuccess.NoteAdded))
-                    // Reload notes to get updated list
-                    applyNotesResult(listContactNotes(contactId))
-                },
-                onFailure = { error ->
-                    logger.e(error) { "Failed to add note" }
-                    updateState { copy(isSavingNote = false) }
-                    val exception = error.asDokusException
-                    val displayException = if (exception is DokusException.Unknown) {
-                        DokusException.ContactNoteAddFailed
-                    } else {
-                        exception
-                    }
-                    action(ContactDetailsAction.ShowError(displayException))
-                }
-            )
+        withState {
+            if (!contact.isSuccess()) return@withState
+            capturedContactId = contactId
+            capturedContent = uiState.noteContent.trim()
         }
+
+        val noteContactId = capturedContactId ?: return
+        val content = capturedContent.orEmpty()
+        if (content.isBlank()) {
+            logger.w { "Cannot add empty note" }
+            action(ContactDetailsAction.ShowError(DokusException.Validation.NoteContentRequired))
+            return
+        }
+
+        updateState { copy(isSavingNote = true) }
+
+        logger.d { "Adding note for contact $noteContactId" }
+
+        val request = CreateContactNoteRequest(content = content)
+        createContactNote(noteContactId, request).fold(
+            onSuccess = { note ->
+                logger.i { "Note added: ${note.id}" }
+                updateState {
+                    copy(
+                        isSavingNote = false,
+                        uiState = uiState.copy(
+                            showAddNoteDialog = false,
+                            noteContent = ""
+                        )
+                    )
+                }
+                action(ContactDetailsAction.ShowSuccess(ContactDetailsSuccess.NoteAdded))
+                // Reload notes to get updated list
+                applyNotesResult(listContactNotes(noteContactId))
+            },
+            onFailure = { error ->
+                logger.e(error) { "Failed to add note" }
+                updateState { copy(isSavingNote = false) }
+                val exception = error.asDokusException
+                val displayException = if (exception is DokusException.Unknown) {
+                    DokusException.ContactNoteAddFailed
+                } else {
+                    exception
+                }
+                action(ContactDetailsAction.ShowError(displayException))
+            }
+        )
     }
 
     private suspend fun ContactDetailsCtx.handleUpdateNote() {
-        withState<ContactDetailsState.Content, _> {
-            val note = uiState.editingNote ?: return@withState
-            val content = uiState.noteContent.trim()
+        var capturedContactId: ContactId? = null
+        var capturedNote: tech.dokus.domain.model.contact.ContactNoteDto? = null
+        var capturedContent: String? = null
 
-            if (content.isBlank()) {
-                logger.w { "Cannot update note with empty content" }
-                action(ContactDetailsAction.ShowError(DokusException.Validation.NoteContentRequired))
-                return@withState
-            }
-
-            updateState { copy(isSavingNote = true) }
-
-            logger.d { "Updating note ${note.id}" }
-
-            val request = UpdateContactNoteRequest(content = content)
-            updateContactNote(contactId, note.id, request).fold(
-                onSuccess = { updatedNote ->
-                    logger.i { "Note updated: ${updatedNote.id}" }
-                    updateState {
-                        copy(
-                            isSavingNote = false,
-                            uiState = uiState.copy(
-                                showEditNoteDialog = false,
-                                editingNote = null,
-                                noteContent = ""
-                            )
-                        )
-                    }
-                    action(ContactDetailsAction.ShowSuccess(ContactDetailsSuccess.NoteUpdated))
-                    // Reload notes to get updated list
-                    applyNotesResult(listContactNotes(contactId))
-                },
-                onFailure = { error ->
-                    logger.e(error) { "Failed to update note" }
-                    updateState { copy(isSavingNote = false) }
-                    val exception = error.asDokusException
-                    val displayException = if (exception is DokusException.Unknown) {
-                        DokusException.ContactNoteUpdateFailed
-                    } else {
-                        exception
-                    }
-                    action(ContactDetailsAction.ShowError(displayException))
-                }
-            )
+        withState {
+            if (!contact.isSuccess()) return@withState
+            capturedContactId = contactId
+            capturedNote = uiState.editingNote
+            capturedContent = uiState.noteContent.trim()
         }
+
+        val noteContactId = capturedContactId ?: return
+        val note = capturedNote ?: return
+        val content = capturedContent.orEmpty()
+
+        if (content.isBlank()) {
+            logger.w { "Cannot update note with empty content" }
+            action(ContactDetailsAction.ShowError(DokusException.Validation.NoteContentRequired))
+            return
+        }
+
+        updateState { copy(isSavingNote = true) }
+
+        logger.d { "Updating note ${note.id}" }
+
+        val request = UpdateContactNoteRequest(content = content)
+        updateContactNote(noteContactId, note.id, request).fold(
+            onSuccess = { updatedNote ->
+                logger.i { "Note updated: ${updatedNote.id}" }
+                updateState {
+                    copy(
+                        isSavingNote = false,
+                        uiState = uiState.copy(
+                            showEditNoteDialog = false,
+                            editingNote = null,
+                            noteContent = ""
+                        )
+                    )
+                }
+                action(ContactDetailsAction.ShowSuccess(ContactDetailsSuccess.NoteUpdated))
+                // Reload notes to get updated list
+                applyNotesResult(listContactNotes(noteContactId))
+            },
+            onFailure = { error ->
+                logger.e(error) { "Failed to update note" }
+                updateState { copy(isSavingNote = false) }
+                val exception = error.asDokusException
+                val displayException = if (exception is DokusException.Unknown) {
+                    DokusException.ContactNoteUpdateFailed
+                } else {
+                    exception
+                }
+                action(ContactDetailsAction.ShowError(displayException))
+            }
+        )
     }
 
     private suspend fun ContactDetailsCtx.handleDeleteNote() {
-        withState<ContactDetailsState.Content, _> {
-            val note = uiState.deletingNote ?: return@withState
+        var capturedContactId: ContactId? = null
+        var capturedNote: tech.dokus.domain.model.contact.ContactNoteDto? = null
 
-            updateState { copy(isDeletingNote = true) }
-
-            logger.d { "Deleting note ${note.id}" }
-
-            deleteContactNote(contactId, note.id).fold(
-                onSuccess = {
-                    logger.i { "Note deleted: ${note.id}" }
-                    updateState {
-                        copy(
-                            isDeletingNote = false,
-                            uiState = uiState.copy(
-                                showDeleteNoteConfirmation = false,
-                                deletingNote = null
-                            )
-                        )
-                    }
-                    action(ContactDetailsAction.ShowSuccess(ContactDetailsSuccess.NoteDeleted))
-                    // Reload notes to get updated list
-                    applyNotesResult(listContactNotes(contactId))
-                },
-                onFailure = { error ->
-                    logger.e(error) { "Failed to delete note" }
-                    updateState {
-                        copy(
-                            isDeletingNote = false,
-                            uiState = uiState.copy(
-                                showDeleteNoteConfirmation = false,
-                                deletingNote = null
-                            )
-                        )
-                    }
-                    val exception = error.asDokusException
-                    val displayException = if (exception is DokusException.Unknown) {
-                        DokusException.ContactNoteDeleteFailed
-                    } else {
-                        exception
-                    }
-                    action(ContactDetailsAction.ShowError(displayException))
-                }
-            )
+        withState {
+            if (!contact.isSuccess()) return@withState
+            capturedContactId = contactId
+            capturedNote = uiState.deletingNote
         }
+
+        val noteContactId = capturedContactId ?: return
+        val note = capturedNote ?: return
+
+        updateState { copy(isDeletingNote = true) }
+
+        logger.d { "Deleting note ${note.id}" }
+
+        deleteContactNote(noteContactId, note.id).fold(
+            onSuccess = {
+                logger.i { "Note deleted: ${note.id}" }
+                updateState {
+                    copy(
+                        isDeletingNote = false,
+                        uiState = uiState.copy(
+                            showDeleteNoteConfirmation = false,
+                            deletingNote = null
+                        )
+                    )
+                }
+                action(ContactDetailsAction.ShowSuccess(ContactDetailsSuccess.NoteDeleted))
+                // Reload notes to get updated list
+                applyNotesResult(listContactNotes(noteContactId))
+            },
+            onFailure = { error ->
+                logger.e(error) { "Failed to delete note" }
+                updateState {
+                    copy(
+                        isDeletingNote = false,
+                        uiState = uiState.copy(
+                            showDeleteNoteConfirmation = false,
+                            deletingNote = null
+                        )
+                    )
+                }
+                val exception = error.asDokusException
+                val displayException = if (exception is DokusException.Unknown) {
+                    DokusException.ContactNoteDeleteFailed
+                } else {
+                    exception
+                }
+                action(ContactDetailsAction.ShowError(displayException))
+            }
+        )
     }
 
     // ============================================================================
@@ -652,18 +631,14 @@ internal class ContactDetailsContainer(
     // ============================================================================
 
     private suspend fun ContactDetailsCtx.handleShowMergeDialog() {
-        withState<ContactDetailsState.Content, _> {
-            updateState {
-                copy(uiState = uiState.copy(showMergeDialog = true))
-            }
+        updateState {
+            copy(uiState = uiState.copy(showMergeDialog = true))
         }
     }
 
     private suspend fun ContactDetailsCtx.handleHideMergeDialog() {
-        withState<ContactDetailsState.Content, _> {
-            updateState {
-                copy(uiState = uiState.copy(showMergeDialog = false))
-            }
+        updateState {
+            copy(uiState = uiState.copy(showMergeDialog = false))
         }
     }
 
@@ -672,47 +647,39 @@ internal class ContactDetailsContainer(
     // ============================================================================
 
     private suspend fun ContactDetailsCtx.handleShowEnrichmentPanel() {
-        withState<ContactDetailsState.Content, _> {
-            updateState {
-                copy(uiState = uiState.copy(showEnrichmentPanel = true))
-            }
+        updateState {
+            copy(uiState = uiState.copy(showEnrichmentPanel = true))
         }
     }
 
     private suspend fun ContactDetailsCtx.handleHideEnrichmentPanel() {
-        withState<ContactDetailsState.Content, _> {
-            updateState {
-                copy(uiState = uiState.copy(showEnrichmentPanel = false))
-            }
+        updateState {
+            copy(uiState = uiState.copy(showEnrichmentPanel = false))
         }
     }
 
     private suspend fun ContactDetailsCtx.handleApplyEnrichmentSuggestions(suggestions: List<EnrichmentSuggestion>) {
-        withState<ContactDetailsState.Content, _> {
-            if (suggestions.isEmpty()) {
-                logger.w { "No enrichment suggestions selected" }
-                return@withState
-            }
+        if (suggestions.isEmpty()) {
+            logger.w { "No enrichment suggestions selected" }
+            return
+        }
 
-            // Future implementation: Build UpdateContactRequest from selected suggestions
-            // and call contactRepository.updateContact
-            logger.d { "Applying ${suggestions.size} enrichment suggestions for $contactId" }
+        // Future implementation: Build UpdateContactRequest from selected suggestions
+        // and call contactRepository.updateContact
+        logger.d { "Applying ${suggestions.size} enrichment suggestions" }
 
-            // Remove applied suggestions from the list
+        updateState {
             val remainingSuggestions = enrichmentSuggestions.filterNot { it in suggestions }
-
-            updateState {
-                copy(
-                    enrichmentSuggestions = remainingSuggestions,
-                    uiState = uiState.copy(showEnrichmentPanel = false)
-                )
-            }
-
-            action(
-                ContactDetailsAction.ShowSuccess(
-                    ContactDetailsSuccess.EnrichmentApplied(suggestions.size)
-                )
+            copy(
+                enrichmentSuggestions = remainingSuggestions,
+                uiState = uiState.copy(showEnrichmentPanel = false)
             )
         }
+
+        action(
+            ContactDetailsAction.ShowSuccess(
+                ContactDetailsSuccess.EnrichmentApplied(suggestions.size)
+            )
+        )
     }
 }

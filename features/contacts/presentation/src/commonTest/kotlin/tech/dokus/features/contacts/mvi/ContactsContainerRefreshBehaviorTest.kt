@@ -12,9 +12,9 @@ import tech.dokus.features.contacts.usecases.GetCachedContactsUseCase
 import tech.dokus.features.contacts.usecases.ListContactsUseCase
 import tech.dokus.features.contacts.usecases.ListCustomersUseCase
 import tech.dokus.features.contacts.usecases.ListVendorsUseCase
+import tech.dokus.foundation.app.state.isSuccess
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -35,8 +35,9 @@ class ContactsContainerRefreshBehaviorTest {
         container.store.subscribeAndTest {
             advanceUntilIdle()
 
-            val state = assertIs<ContactsState.Content>(states.value)
-            assertTrue(state.contacts.data.isEmpty())
+            val state = states.value
+            assertTrue(state.contacts.isSuccess())
+            assertTrue(state.contacts.lastData?.data.orEmpty().isEmpty())
             assertEquals(1, listContacts.calls.size)
             assertEquals(null, listContacts.calls.single().isActive)
             assertEquals(ContactsState.PAGE_SIZE, listContacts.calls.single().limit)

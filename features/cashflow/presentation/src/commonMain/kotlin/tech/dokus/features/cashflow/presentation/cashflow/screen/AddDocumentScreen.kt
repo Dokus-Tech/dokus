@@ -79,7 +79,7 @@ internal fun AddDocumentScreen(
 
     var isQrDialogOpen by remember { mutableStateOf(false) }
 
-    val isUploading = state is AddDocumentState.Uploading
+    val isUploading = state.isUploading
 
     Scaffold { contentPadding ->
         Box(Modifier.withContentPadding(contentPadding, layoutDirection)) {

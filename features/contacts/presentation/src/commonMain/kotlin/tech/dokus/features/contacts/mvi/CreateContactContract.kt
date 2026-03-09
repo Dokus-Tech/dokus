@@ -1,7 +1,6 @@
 package tech.dokus.features.contacts.mvi
 
 import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.Stable
 import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
@@ -101,51 +100,50 @@ enum class SoftDuplicateReason {
 // STATE
 // ============================================================================
 
-@Stable
-sealed interface CreateContactState : MVIState {
+/**
+ * Discriminator for the current step in the Create Contact flow.
+ */
+enum class CreateContactStep {
+    Lookup,
+    Confirm,
+    Manual,
+}
 
-    /**
-     * Step 1: Business Lookup (default entry point)
-     *
-     * User searches by company name or VAT number.
-     * If VAT exists locally, shows hard block banner.
-     *
-     * Note: The search query is NOT stored in state to avoid TextField race conditions.
-     * The query is kept as local UI state and observed via snapshotFlow.
-     */
-    data class LookupStep(
-        val lookupState: LookupUiState = LookupUiState.Idle,
-        val duplicateVat: DuplicateVatUi? = null,
-    ) : CreateContactState
-
-    /**
-     * Step 2: Confirm selected company details.
-     *
-     * User reviews fetched company data and adds billing email.
-     */
-    data class ConfirmStep(
-        val selectedEntity: EntityLookup,
-        val billingEmail: Email = Email.Empty,
-        val phone: PhoneNumber = PhoneNumber.Empty,
-        val language: Language? = null,
-        val showAddressDetails: Boolean = false,
-        val isSubmitting: Boolean = false,
-        val emailError: DokusException? = null,
-    ) : CreateContactState
-
-    /**
-     * Alternative: Manual entry (no VAT lookup).
-     *
-     * User enters business or individual contact data manually.
-     * Soft duplicate check happens on submit only.
-     */
-    data class ManualStep(
-        val contactType: ClientType = ClientType.Business,
-        val formData: ManualContactFormData = ManualContactFormData(),
-        val isSubmitting: Boolean = false,
-        val showCountryPicker: Boolean = false,
-        val softDuplicates: List<SoftDuplicateUi>? = null,
-    ) : CreateContactState
+/**
+ * Flat state for the Create Contact flow.
+ *
+ * Flow:
+ * 1. Lookup (default) - Search by company name or VAT number
+ * 2. Confirm - Review fetched company data + add billing email
+ * 3. Manual (alternative) - Manual business/individual entry
+ *
+ * Note: The search query is NOT stored in state to avoid TextField race conditions.
+ * The query is kept as local UI state and observed via snapshotFlow.
+ */
+@Immutable
+data class CreateContactState(
+    val step: CreateContactStep = CreateContactStep.Lookup,
+    // Lookup step
+    val lookupState: LookupUiState = LookupUiState.Idle,
+    val duplicateVat: DuplicateVatUi? = null,
+    // Confirm step
+    val selectedEntity: EntityLookup? = null,
+    val billingEmail: Email = Email.Empty,
+    val phone: PhoneNumber = PhoneNumber.Empty,
+    val language: Language? = null,
+    val showAddressDetails: Boolean = false,
+    // Manual step
+    val contactType: ClientType = ClientType.Business,
+    val formData: ManualContactFormData = ManualContactFormData(),
+    val showCountryPicker: Boolean = false,
+    val softDuplicates: List<SoftDuplicateUi>? = null,
+    // Shared
+    val isSubmitting: Boolean = false,
+    val emailError: DokusException? = null,
+) : MVIState {
+    companion object {
+        val initial by lazy { CreateContactState() }
+    }
 }
 
 // ============================================================================

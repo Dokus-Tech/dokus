@@ -10,6 +10,7 @@ import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.app.notifications.NotificationRemoteDataSource
 import tech.dokus.domain.enums.NotificationType
 import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.platform.Logger
 
 internal typealias NotificationPreferencesCtx = PipelineContext<
@@ -25,7 +26,7 @@ internal class NotificationPreferencesContainer(
     private val logger = Logger.forClass<NotificationPreferencesContainer>()
 
     override val store: Store<NotificationPreferencesState, NotificationPreferencesIntent, NotificationPreferencesAction> =
-        store(NotificationPreferencesState.Loading) {
+        store(NotificationPreferencesState.initial) {
             init {
                 intent(NotificationPreferencesIntent.Load)
             }
@@ -41,23 +42,21 @@ internal class NotificationPreferencesContainer(
         }
 
     private suspend fun NotificationPreferencesCtx.handleLoad() {
-        updateState { NotificationPreferencesState.Loading }
+        updateState { copy(preferences = preferences.asLoading) }
 
         notificationRemoteDataSource.getPreferences().fold(
             onSuccess = { response ->
                 updateState {
-                    NotificationPreferencesState.Content(
-                        preferences = response.preferences.associateBy { it.type }
-                    )
+                    copy(preferences = DokusState.success(response.preferences.associateBy { it.type }))
                 }
             },
             onFailure = { error ->
                 logger.e(error) { "Failed to load notification preferences" }
                 updateState {
-                    NotificationPreferencesState.Error(
+                    copy(preferences = DokusState.error(
                         exception = error.toDokusException("Failed to load notification preferences"),
                         retryHandler = { intent(NotificationPreferencesIntent.Load) }
-                    )
+                    ))
                 }
             }
         )
@@ -67,15 +66,14 @@ internal class NotificationPreferencesContainer(
         type: NotificationType,
         enabled: Boolean
     ) {
-        var previousPreference = NotificationPreferencesState.Content(
-            preferences = emptyMap()
-        ).preferenceFor(type)
+        var previousPreference = NotificationPreferencesState().preferenceFor(type)
 
-        withState<NotificationPreferencesState.Content, _> {
+        withState {
+            val prefsMap = (preferences as? DokusState.Success)?.data ?: return@withState
             previousPreference = preferenceFor(type)
             updateState {
                 copy(
-                    preferences = preferences + (type to previousPreference.copy(emailEnabled = enabled)),
+                    preferences = DokusState.success(prefsMap + (type to previousPreference.copy(emailEnabled = enabled))),
                     updatingTypes = updatingTypes + type
                 )
             }
@@ -83,10 +81,11 @@ internal class NotificationPreferencesContainer(
 
         notificationRemoteDataSource.updatePreference(type, enabled).fold(
             onSuccess = { updated ->
-                withState<NotificationPreferencesState.Content, _> {
+                withState {
+                    val prefsMap = (preferences as? DokusState.Success)?.data ?: return@withState
                     updateState {
                         copy(
-                            preferences = preferences + (type to updated),
+                            preferences = DokusState.success(prefsMap + (type to updated)),
                             updatingTypes = updatingTypes - type
                         )
                     }
@@ -94,10 +93,11 @@ internal class NotificationPreferencesContainer(
             },
             onFailure = { error ->
                 logger.e(error) { "Failed to update notification preference for $type" }
-                withState<NotificationPreferencesState.Content, _> {
+                withState {
+                    val prefsMap = (preferences as? DokusState.Success)?.data ?: return@withState
                     updateState {
                         copy(
-                            preferences = preferences + (type to previousPreference),
+                            preferences = DokusState.success(prefsMap + (type to previousPreference)),
                             updatingTypes = updatingTypes - type
                         )
                     }

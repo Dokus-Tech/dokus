@@ -6,8 +6,8 @@ import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.plugins.init
 import pro.respawn.flowmvi.plugins.reduce
-import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.features.auth.usecases.VerifyEmailUseCase
+import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.platform.Logger
 
 private typealias VerifyEmailCtx = PipelineContext<VerifyEmailState, VerifyEmailIntent, VerifyEmailAction>
@@ -20,7 +20,7 @@ internal class VerifyEmailContainer(
     private val logger = Logger.forClass<VerifyEmailContainer>()
 
     override val store: Store<VerifyEmailState, VerifyEmailIntent, VerifyEmailAction> =
-        store(VerifyEmailState.Verifying) {
+        store(VerifyEmailState.initial) {
             init { intent(VerifyEmailIntent.Verify) }
 
             reduce { intent ->
@@ -31,17 +31,20 @@ internal class VerifyEmailContainer(
         }
 
     private suspend fun VerifyEmailCtx.handleVerify() {
+        updateState { copy(verification = verification.asLoading) }
         verifyEmailUseCase(token).fold(
             onSuccess = {
                 logger.i { "Email verification succeeded" }
-                updateState { VerifyEmailState.Success }
+                updateState { copy(verification = DokusState.success(Unit)) }
             },
             onFailure = { error ->
                 logger.e(error) { "Email verification failed" }
                 updateState {
-                    VerifyEmailState.Error(
-                        exception = error.asDokusException,
-                        retryHandler = { intent(VerifyEmailIntent.Verify) }
+                    copy(
+                        verification = DokusState.error(
+                            exception = error,
+                            retryHandler = { intent(VerifyEmailIntent.Verify) }
+                        )
                     )
                 }
             }

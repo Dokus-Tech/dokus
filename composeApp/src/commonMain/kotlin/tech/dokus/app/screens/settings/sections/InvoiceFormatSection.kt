@@ -56,7 +56,7 @@ private val InvoicePaddingOptions = listOf(
 
 @Composable
 internal fun InvoiceFormatSection(
-    formState: WorkspaceSettingsState.Content.FormState,
+    formState: WorkspaceSettingsState.FormState,
     expanded: Boolean,
     onToggle: () -> Unit,
     editMode: Boolean,
@@ -215,7 +215,7 @@ private fun InvoiceFormatSectionPreview(
 ) {
     TestWrapper(parameters) {
         InvoiceFormatSection(
-            formState = WorkspaceSettingsState.Content.FormState(
+            formState = WorkspaceSettingsState.FormState(
                 invoicePrefix = "INV",
                 invoiceIncludeYear = true,
                 invoicePadding = 4,

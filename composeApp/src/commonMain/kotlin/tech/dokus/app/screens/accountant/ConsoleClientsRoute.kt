@@ -23,6 +23,7 @@ import tech.dokus.foundation.app.shell.HomeShellTopBarConfig
 import tech.dokus.foundation.app.shell.HomeShellTopBarMode
 import tech.dokus.foundation.app.shell.LocalUserAccessContext
 import tech.dokus.foundation.app.shell.RegisterHomeShellTopBar
+import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.navigation.destinations.HomeDestination
 import tech.dokus.navigation.destinations.route
@@ -72,23 +73,26 @@ internal fun ConsoleClientsRoute(
 
     val defaultTitle = stringResource(Res.string.console_clients_overview_title)
     val periodLabel = stringResource(Res.string.console_requests_period_label)
-    val topBarContent = when (state) {
-        is ConsoleClientsState.Content -> {
-            val content = state as ConsoleClientsState.Content
-            val selectedClient = content.clients.firstOrNull { it.tenantId == content.selectedClientTenantId }
-            if (selectedClient != null) {
-                selectedClient.companyName.value to (selectedClient.vatNumber?.formatted ?: "")
-            } else {
-                defaultTitle to "${content.firmName} · ${stringResource(Res.string.console_clients_count, content.clients.size)}"
-            }
+    val clients = state.clients
+    val topBarTitle: String
+    val topBarSubtitle: String
+    if (clients.isSuccess()) {
+        val selectedClient = clients.data.firstOrNull { it.tenantId == state.selectedClientTenantId }
+        if (selectedClient != null) {
+            topBarTitle = selectedClient.companyName.value
+            topBarSubtitle = selectedClient.vatNumber?.formatted ?: ""
+        } else {
+            topBarTitle = defaultTitle
+            topBarSubtitle = "${state.firmName.orEmpty()} · ${stringResource(Res.string.console_clients_count, clients.data.size)}"
         }
-
-        else -> defaultTitle to ""
+    } else {
+        topBarTitle = defaultTitle
+        topBarSubtitle = ""
     }
     val topBarConfig = HomeShellTopBarConfig(
         mode = HomeShellTopBarMode.Title(
-            title = topBarContent.first,
-            subtitle = topBarContent.second.ifBlank { null },
+            title = topBarTitle,
+            subtitle = topBarSubtitle.ifBlank { null },
         ),
         actions = listOf(
             HomeShellTopBarAction.Text(

@@ -23,8 +23,6 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.VatNumber
-import tech.dokus.domain.model.contact.ContactAddressInput
-import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.model.contact.UpdateContactRequest
 import tech.dokus.features.contacts.usecases.CreateContactUseCase
@@ -35,6 +33,7 @@ import tech.dokus.features.contacts.usecases.UpdateContactUseCase
 import tech.dokus.features.contacts.mvi.extensions.toCreateRequest
 import tech.dokus.features.contacts.mvi.extensions.toFormData
 import tech.dokus.features.contacts.mvi.extensions.toUpdateRequest
+import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.platform.Logger
 
 internal typealias ContactFormCtx = PipelineContext<ContactFormState, ContactFormIntent, ContactFormAction>
@@ -84,11 +83,7 @@ internal class ContactFormContainer(
 
     override val store: Store<ContactFormState, ContactFormIntent, ContactFormAction> =
         store(
-            if (contactId != null) {
-                ContactFormState.LoadingContact(contactId)
-            } else {
-                ContactFormState.Editing()
-            }
+            ContactFormState(contactId = contactId)
         ) {
             reduce { intent ->
                 when (intent) {
@@ -157,21 +152,25 @@ internal class ContactFormContainer(
 
     private suspend fun ContactFormCtx.handleInitForCreate() {
         logger.d { "Initializing form for create" }
-        updateState { ContactFormState.Editing() }
+        updateState { ContactFormState() }
     }
 
     private suspend fun ContactFormCtx.handleInitForEdit(contactId: ContactId) {
         logger.d { "Initializing form for edit: $contactId" }
 
-        updateState { ContactFormState.LoadingContact(contactId) }
+        updateState {
+            copy(
+                contactId = contactId,
+                originalContact = DokusState.loading()
+            )
+        }
 
         getContact(contactId).fold(
             onSuccess = { contact ->
                 logger.i { "Loaded contact for editing: ${contact.name}" }
                 updateState {
-                    ContactFormState.Editing(
-                        contactId = contactId,
-                        originalContact = contact,
+                    copy(
+                        originalContact = DokusState.success(contact),
                         formData = contact.toFormData()
                     )
                 }
@@ -179,11 +178,11 @@ internal class ContactFormContainer(
             onFailure = { error ->
                 logger.e(error) { "Failed to load contact for editing" }
                 updateState {
-                    ContactFormState.Error(
-                        contactId = contactId,
-                        formData = ContactFormData(),
-                        exception = error.asDokusException,
-                        retryHandler = { intent(ContactFormIntent.InitForEdit(contactId)) }
+                    copy(
+                        originalContact = DokusState.error(
+                            exception = error.asDokusException,
+                            retryHandler = { intent(ContactFormIntent.InitForEdit(contactId)) }
+                        )
                     )
                 }
             }
@@ -305,26 +304,20 @@ internal class ContactFormContainer(
     // ============================================================================
 
     private suspend fun ContactFormCtx.handleShowCountryPicker() {
-        withState<ContactFormState.Editing, _> {
-            updateState {
-                copy(ui = ui.copy(showCountryPicker = true, countrySearchQuery = ""))
-            }
+        updateState {
+            copy(ui = ui.copy(showCountryPicker = true, countrySearchQuery = ""))
         }
     }
 
     private suspend fun ContactFormCtx.handleHideCountryPicker() {
-        withState<ContactFormState.Editing, _> {
-            updateState {
-                copy(ui = ui.copy(showCountryPicker = false, countrySearchQuery = ""))
-            }
+        updateState {
+            copy(ui = ui.copy(showCountryPicker = false, countrySearchQuery = ""))
         }
     }
 
     private suspend fun ContactFormCtx.handleUpdateCountrySearchQuery(value: String) {
-        withState<ContactFormState.Editing, _> {
-            updateState {
-                copy(ui = ui.copy(countrySearchQuery = value))
-            }
+        updateState {
+            copy(ui = ui.copy(countrySearchQuery = value))
         }
     }
 
@@ -333,18 +326,14 @@ internal class ContactFormContainer(
     // ============================================================================
 
     private suspend fun ContactFormCtx.handleShowBusinessTypePicker() {
-        withState<ContactFormState.Editing, _> {
-            updateState {
-                copy(ui = ui.copy(showBusinessTypePicker = true))
-            }
+        updateState {
+            copy(ui = ui.copy(showBusinessTypePicker = true))
         }
     }
 
     private suspend fun ContactFormCtx.handleHideBusinessTypePicker() {
-        withState<ContactFormState.Editing, _> {
-            updateState {
-                copy(ui = ui.copy(showBusinessTypePicker = false))
-            }
+        updateState {
+            copy(ui = ui.copy(showBusinessTypePicker = false))
         }
     }
 
@@ -353,18 +342,14 @@ internal class ContactFormContainer(
     // ============================================================================
 
     private suspend fun ContactFormCtx.handleShowDeleteConfirmation() {
-        withState<ContactFormState.Editing, _> {
-            updateState {
-                copy(ui = ui.copy(showDeleteConfirmation = true))
-            }
+        updateState {
+            copy(ui = ui.copy(showDeleteConfirmation = true))
         }
     }
 
     private suspend fun ContactFormCtx.handleHideDeleteConfirmation() {
-        withState<ContactFormState.Editing, _> {
-            updateState {
-                copy(ui = ui.copy(showDeleteConfirmation = false))
-            }
+        updateState {
+            copy(ui = ui.copy(showDeleteConfirmation = false))
         }
     }
 
@@ -373,9 +358,7 @@ internal class ContactFormContainer(
     // ============================================================================
 
     private suspend fun ContactFormCtx.handleDismissDuplicateWarnings() {
-        withState<ContactFormState.Editing, _> {
-            updateState { copy(duplicates = emptyList()) }
-        }
+        updateState { copy(duplicates = emptyList()) }
     }
 
     private suspend fun ContactFormCtx.checkDuplicatesDebounced() {
@@ -387,80 +370,82 @@ internal class ContactFormContainer(
     }
 
     private suspend fun ContactFormCtx.checkDuplicates() {
-        withState<ContactFormState.Editing, _> {
-            val form = formData
-            val editingId = contactId
+        lateinit var form: ContactFormData
+        var editingId: ContactId? = null
+        withState {
+            form = formData
+            editingId = contactId
+        }
 
-            // Skip check if no meaningful data to search
-            if (form.name.value.length < 2 && form.email.value.isBlank() && form.vatNumber.value.isBlank()) {
-                updateState { copy(duplicates = emptyList(), isDuplicateCheckInProgress = false) }
-                return@withState
-            }
+        // Skip check if no meaningful data to search
+        if (form.name.value.length < 2 && form.email.value.isBlank() && form.vatNumber.value.isBlank()) {
+            updateState { copy(duplicates = emptyList(), isDuplicateCheckInProgress = false) }
+            return
+        }
 
-            updateState { copy(isDuplicateCheckInProgress = true) }
+        updateState { copy(isDuplicateCheckInProgress = true) }
 
-            val foundDuplicates = mutableListOf<PotentialDuplicate>()
+        val foundDuplicates = mutableListOf<PotentialDuplicate>()
 
-            // Check by VAT number (highest confidence)
-            if (form.vatNumber.value.isNotBlank()) {
-                lookupContacts(
-                    query = form.vatNumber.value,
-                    isActive = true,
-                    limit = DuplicateVatSearchLimit
-                ).fold(
-                    onSuccess = { contacts ->
-                        contacts
-                            .filter { it.id != editingId && it.vatNumber?.value == form.vatNumber.value }
-                            .forEach { foundDuplicates.add(PotentialDuplicate(it, DuplicateReason.VatNumber)) }
-                    },
-                    onFailure = { /* ignore errors during duplicate check */ }
-                )
-            }
+        // Check by VAT number (highest confidence)
+        if (form.vatNumber.value.isNotBlank()) {
+            lookupContacts(
+                query = form.vatNumber.value,
+                isActive = true,
+                limit = DuplicateVatSearchLimit
+            ).fold(
+                onSuccess = { contacts ->
+                    contacts
+                        .filter { it.id != editingId && it.vatNumber?.value == form.vatNumber.value }
+                        .forEach { foundDuplicates.add(PotentialDuplicate(it, DuplicateReason.VatNumber)) }
+                },
+                onFailure = { /* ignore errors during duplicate check */ }
+            )
+        }
 
-            // Check by email (high confidence)
-            if (form.email.value.isNotBlank() && form.email.value.contains("@")) {
-                lookupContacts(
-                    query = form.email.value,
-                    isActive = true,
-                    limit = DuplicateEmailSearchLimit
-                ).fold(
-                    onSuccess = { contacts ->
-                        contacts
-                            .filter {
-                                it.id != editingId &&
-                                    it.email?.value.equals(form.email.value, ignoreCase = true)
-                            }
-                            .filter { dup -> foundDuplicates.none { it.contact.id == dup.id } }
-                            .forEach { foundDuplicates.add(PotentialDuplicate(it, DuplicateReason.Email)) }
-                    },
-                    onFailure = { /* ignore errors during duplicate check */ }
-                )
-            }
+        // Check by email (high confidence)
+        if (form.email.value.isNotBlank() && form.email.value.contains("@")) {
+            lookupContacts(
+                query = form.email.value,
+                isActive = true,
+                limit = DuplicateEmailSearchLimit
+            ).fold(
+                onSuccess = { contacts ->
+                    contacts
+                        .filter {
+                            it.id != editingId &&
+                                it.email?.value.equals(form.email.value, ignoreCase = true)
+                        }
+                        .filter { dup -> foundDuplicates.none { it.contact.id == dup.id } }
+                        .forEach { foundDuplicates.add(PotentialDuplicate(it, DuplicateReason.Email)) }
+                },
+                onFailure = { /* ignore errors during duplicate check */ }
+            )
+        }
 
-            // Check by name + country (medium confidence)
-            if (form.name.value.length >= MinDuplicateNameLength && form.country.isNotBlank()) {
-                lookupContacts(
-                    query = form.name.value,
-                    isActive = true,
-                    limit = DuplicateNameSearchLimit
-                ).fold(
-                    onSuccess = { contacts ->
-                        contacts
-                            .filter { it.id != editingId }
-                            .filter {
-                                it.name.value.equals(form.name.value, ignoreCase = true) &&
-                                    it.country.equals(form.country, ignoreCase = true)
-                            }
-                            .filter { dup -> foundDuplicates.none { it.contact.id == dup.id } }
-                            .forEach { foundDuplicates.add(PotentialDuplicate(it, DuplicateReason.NameAndCountry)) }
-                    },
-                    onFailure = { /* ignore errors during duplicate check */ }
-                )
-            }
+        // Check by name + country (medium confidence)
+        if (form.name.value.length >= MinDuplicateNameLength && form.country.isNotBlank()) {
+            lookupContacts(
+                query = form.name.value,
+                isActive = true,
+                limit = DuplicateNameSearchLimit
+            ).fold(
+                onSuccess = { contacts ->
+                    contacts
+                        .filter { it.id != editingId }
+                        .filter {
+                            it.name.value.equals(form.name.value, ignoreCase = true) &&
+                                it.country.equals(form.country, ignoreCase = true)
+                        }
+                        .filter { dup -> foundDuplicates.none { it.contact.id == dup.id } }
+                        .forEach { foundDuplicates.add(PotentialDuplicate(it, DuplicateReason.NameAndCountry)) }
+                },
+                onFailure = { /* ignore errors during duplicate check */ }
+            )
+        }
 
-            updateState {
-                copy(duplicates = foundDuplicates, isDuplicateCheckInProgress = false)
-            }
+        updateState {
+            copy(duplicates = foundDuplicates, isDuplicateCheckInProgress = false)
         }
     }
 
@@ -491,7 +476,7 @@ internal class ContactFormContainer(
     // ============================================================================
 
     private suspend fun ContactFormCtx.handleSave() {
-        withState<ContactFormState.Editing, _> {
+        withState {
             val errors = validateForm(formData)
 
             if (errors.isNotEmpty()) {
@@ -513,63 +498,50 @@ internal class ContactFormContainer(
     }
 
     private suspend fun ContactFormCtx.handleCreateContact() {
-        withState<ContactFormState.Editing, _> {
-            updateState { copy(isSaving = true) }
+        updateState { copy(isSaving = true) }
 
+        lateinit var request: CreateContactRequest
+        withState {
             logger.d { "Creating contact: ${formData.name}" }
-
-            val request = formData.toCreateRequest()
-
-            createContact(request).fold(
-                onSuccess = { contact ->
-                    logger.i { "Contact created: ${contact.id}" }
-                    updateState { copy(isSaving = false) }
-                    action(ContactFormAction.ShowSuccess(ContactFormSuccess.Created))
-                    action(ContactFormAction.NavigateToContact(contact.id))
-                },
-                onFailure = { error ->
-                    logger.e(error) { "Failed to create contact" }
-                    updateState {
-                        ContactFormState.Error(
-                            contactId = null,
-                            formData = formData,
-                            exception = error.asDokusException,
-                            retryHandler = { intent(ContactFormIntent.Save) }
-                        )
-                    }
-                }
-            )
+            request = formData.toCreateRequest()
         }
+
+        createContact(request).fold(
+            onSuccess = { contact ->
+                logger.i { "Contact created: ${contact.id}" }
+                updateState { copy(isSaving = false) }
+                action(ContactFormAction.ShowSuccess(ContactFormSuccess.Created))
+                action(ContactFormAction.NavigateToContact(contact.id))
+            },
+            onFailure = { error ->
+                logger.e(error) { "Failed to create contact" }
+                updateState { copy(isSaving = false) }
+                action(ContactFormAction.ShowError(error.asDokusException))
+            }
+        )
     }
 
     private suspend fun ContactFormCtx.handleUpdateContact(contactId: ContactId) {
-        withState<ContactFormState.Editing, _> {
-            updateState { copy(isSaving = true) }
+        updateState { copy(isSaving = true) }
 
-            logger.d { "Updating contact: $contactId" }
+        logger.d { "Updating contact: $contactId" }
 
-            val request = formData.toUpdateRequest()
+        lateinit var request: UpdateContactRequest
+        withState { request = formData.toUpdateRequest() }
 
-            updateContact(contactId, request).fold(
-                onSuccess = { contact ->
-                    logger.i { "Contact updated: ${contact.id}" }
-                    updateState { copy(isSaving = false) }
-                    action(ContactFormAction.ShowSuccess(ContactFormSuccess.Updated))
-                    action(ContactFormAction.NavigateToContact(contact.id))
-                },
-                onFailure = { error ->
-                    logger.e(error) { "Failed to update contact: $contactId" }
-                    updateState {
-                        ContactFormState.Error(
-                            contactId = contactId,
-                            formData = formData,
-                            exception = error.asDokusException,
-                            retryHandler = { intent(ContactFormIntent.Save) }
-                        )
-                    }
-                }
-            )
-        }
+        updateContact(contactId, request).fold(
+            onSuccess = { contact ->
+                logger.i { "Contact updated: ${contact.id}" }
+                updateState { copy(isSaving = false) }
+                action(ContactFormAction.ShowSuccess(ContactFormSuccess.Updated))
+                action(ContactFormAction.NavigateToContact(contact.id))
+            },
+            onFailure = { error ->
+                logger.e(error) { "Failed to update contact: $contactId" }
+                updateState { copy(isSaving = false) }
+                action(ContactFormAction.ShowError(error.asDokusException))
+            }
+        )
     }
 
     // ============================================================================
@@ -577,7 +549,7 @@ internal class ContactFormContainer(
     // ============================================================================
 
     private suspend fun ContactFormCtx.handleDelete() {
-        withState<ContactFormState.Editing, _> {
+        withState {
             val id = contactId ?: return@withState
 
             updateState {
@@ -616,20 +588,11 @@ internal class ContactFormContainer(
     // ============================================================================
 
     /**
-     * Helper to update form data in the Editing state.
+     * Helper to update form data fields.
      */
     private suspend fun ContactFormCtx.updateFormData(
         transform: ContactFormData.() -> ContactFormData
     ) {
-        updateState {
-            when (this) {
-                is ContactFormState.Editing -> copy(formData = formData.transform())
-                is ContactFormState.Error -> ContactFormState.Editing(
-                    contactId = contactId,
-                    formData = formData.transform()
-                )
-                else -> this
-            }
-        }
+        updateState { copy(formData = formData.transform()) }
     }
 }

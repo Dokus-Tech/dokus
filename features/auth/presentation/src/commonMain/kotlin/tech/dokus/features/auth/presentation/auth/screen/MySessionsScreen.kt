@@ -8,14 +8,11 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -25,12 +22,15 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.action_continue
 import tech.dokus.aura.resources.profile_sessions_title
 import tech.dokus.features.auth.mvi.MySessionsIntent
 import tech.dokus.features.auth.mvi.MySessionsState
-import tech.dokus.foundation.aura.components.PPrimaryButton
-import tech.dokus.foundation.aura.components.common.DokusLoader
+import tech.dokus.features.auth.presentation.auth.components.MySessionsSkeleton
+import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.app.state.isError
+import tech.dokus.foundation.app.state.isLoading
+import tech.dokus.foundation.app.state.isSuccess
+import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
@@ -67,39 +67,23 @@ internal fun MySessionsContent(
     contentPadding: PaddingValues = PaddingValues(0.dp),
     nowEpochSeconds: Long = Clock.System.now().epochSeconds,
 ) {
-    when (state) {
-        MySessionsState.Loading -> {
-            Box(
-                modifier = modifier
-                    .fillMaxSize()
-                    .padding(contentPadding),
-                contentAlignment = Alignment.Center
-            ) {
-                DokusLoader()
-            }
+    when {
+        state.sessions.isLoading() -> {
+            MySessionsSkeleton(
+                modifier = modifier.padding(contentPadding),
+            )
         }
 
-        is MySessionsState.Error -> {
-            Box(
-                modifier = modifier
-                    .fillMaxSize()
-                    .padding(contentPadding),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(state.exception.message ?: "")
-                    Spacer(Modifier.height(12.dp))
-                    PPrimaryButton(
-                        text = stringResource(Res.string.action_continue),
-                        onClick = { onIntent(MySessionsIntent.Load) }
-                    )
-                }
-            }
+        state.sessions.isError() -> {
+            DokusErrorContent(
+                exception = state.sessions.exception,
+                retryHandler = state.sessions.retryHandler,
+                modifier = Modifier.fillMaxSize().padding(contentPadding),
+            )
         }
 
-        is MySessionsState.Loaded -> {
+        state.sessions.isSuccess() -> {
+            val sessions = state.sessions.data
             AnimatedVisibility(
                 visible = true,
                 modifier = modifier.fillMaxSize(),
@@ -111,7 +95,7 @@ internal fun MySessionsContent(
                 exit = fadeOut(animationSpec = tween(PaneAnimationDurationMs / 2))
             ) {
                 MySessionsLoadedContent(
-                    sessions = state.sessions,
+                    sessions = sessions,
                     isRevokingOthers = state.isRevokingOthers,
                     nowEpochSeconds = nowEpochSeconds,
                     onRevokeSession = { onIntent(MySessionsIntent.RevokeSession(it)) },
@@ -130,10 +114,41 @@ private fun MySessionsScreenPreview(
 ) {
     TestWrapper(parameters) {
         MySessionsScreen(
-            state = MySessionsState.Loaded(sessions = previewSessions()),
+            state = MySessionsState(sessions = DokusState.success(previewSessions())),
             snackbarHostState = remember { SnackbarHostState() },
             onIntent = {},
             nowEpochSeconds = SessionsPreviewNowEpochSeconds,
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun MySessionsLoadingPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
+) {
+    TestWrapper(parameters) {
+        MySessionsContent(
+            state = MySessionsState.initial,
+            onIntent = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun MySessionsErrorPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
+) {
+    TestWrapper(parameters) {
+        MySessionsContent(
+            state = MySessionsState(
+                sessions = DokusState.error(
+                    exception = tech.dokus.domain.exceptions.DokusException.ConnectionError(),
+                    retryHandler = tech.dokus.domain.asbtractions.RetryHandler { },
+                ),
+            ),
+            onIntent = {},
         )
     }
 }
@@ -146,7 +161,7 @@ private fun MySessionsContentDesktopPreview(
     TestWrapper(parameters) {
         Box(modifier = Modifier.fillMaxSize().padding(24.dp)) {
             MySessionsContent(
-                state = MySessionsState.Loaded(sessions = previewSessions()),
+                state = MySessionsState(sessions = DokusState.success(previewSessions())),
                 onIntent = {},
                 nowEpochSeconds = SessionsPreviewNowEpochSeconds,
             )

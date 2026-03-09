@@ -87,7 +87,7 @@ class TodayContainerTest {
             TodayIntent.OpenNotification(notification) resultsIn TodayAction.NavigateToDocument(documentId.toString())
             testScope.advanceUntilIdle()
 
-            val content = assertIs<TodayState.Content>(states.value)
+            val content = assertIs<TodayState>(states.value)
             assertEquals(0, content.unreadNotificationCount)
             assertEquals(1, notificationDataSource.markReadCalls)
         }
@@ -140,13 +140,13 @@ class TodayContainerTest {
 
         container.store.subscribeAndTest {
             testScope.advanceUntilIdle()
-            val initial = assertIs<TodayState.Content>(states.value)
+            val initial = assertIs<TodayState>(states.value)
             assertEquals(2, initial.unreadNotificationCount)
 
             emit(TodayIntent.MarkAllNotificationsRead)
             testScope.advanceUntilIdle()
 
-            val updated = assertIs<TodayState.Content>(states.value)
+            val updated = assertIs<TodayState>(states.value)
             assertEquals(0, updated.unreadNotificationCount)
             assertEquals(1, notificationDataSource.markAllCalls)
         }

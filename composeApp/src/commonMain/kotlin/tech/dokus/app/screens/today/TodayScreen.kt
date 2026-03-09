@@ -129,8 +129,7 @@ internal fun TodayRoute(
         container.store.intent(TodayIntent.RefreshTenant)
     }
 
-    val contentState = state as? TodayState.Content
-    val documents = contentState?.allPendingDocuments ?: emptyList()
+    val documents = state.allPendingDocuments
 
     TodayScreen(
         documents = documents,

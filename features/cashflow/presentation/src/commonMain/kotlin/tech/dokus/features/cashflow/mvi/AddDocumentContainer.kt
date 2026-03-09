@@ -25,9 +25,9 @@ internal typealias AddDocumentCtx = PipelineContext<AddDocumentState, AddDocumen
  * The upload manager is shared across the app, so uploads persist when navigating
  * between screens or closing/reopening the upload sidebar.
  *
- * Note: The state managed by this Container is minimal (Idle/Uploading/Error) since
- * the detailed upload task state is exposed via [uploadTasks] StateFlow for direct
- * UI observation. This avoids duplicating state that the upload manager already manages.
+ * Note: The state managed by this Container is minimal since the detailed upload
+ * task state is exposed via [uploadTasks] StateFlow for direct UI observation.
+ * This avoids duplicating state that the upload manager already manages.
  *
  * Use with Koin's `container<>` DSL for automatic ViewModel wrapping and lifecycle management.
  */
@@ -54,7 +54,7 @@ internal class AddDocumentContainer(
     val deletionHandles: StateFlow<Map<String, DocumentDeletionHandle>> = uploadManager.deletionHandles
 
     override val store: Store<AddDocumentState, AddDocumentIntent, AddDocumentAction> =
-        store(AddDocumentState.Idle()) {
+        store(AddDocumentState.initial) {
             reduce { intent ->
                 when (intent) {
                     is AddDocumentIntent.SelectFile -> handleSelectFile()
@@ -75,17 +75,11 @@ internal class AddDocumentContainer(
         val hasCompletedUploads = tasks.any { it.status == UploadStatus.COMPLETED }
         val hasFailedUploads = tasks.any { it.status == UploadStatus.FAILED }
 
-        return if (hasActiveUploads) {
-            AddDocumentState.Uploading(
-                hasCompletedUploads = hasCompletedUploads,
-                hasFailedUploads = hasFailedUploads
-            )
-        } else {
-            AddDocumentState.Idle(
-                hasCompletedUploads = hasCompletedUploads,
-                hasFailedUploads = hasFailedUploads
-            )
-        }
+        return AddDocumentState(
+            isUploading = hasActiveUploads,
+            hasCompletedUploads = hasCompletedUploads,
+            hasFailedUploads = hasFailedUploads,
+        )
     }
 
     private suspend fun AddDocumentCtx.handleSelectFile() {
@@ -100,9 +94,10 @@ internal class AddDocumentContainer(
 
         // Update state to reflect uploading
         updateState {
-            AddDocumentState.Uploading(
+            copy(
+                isUploading = true,
                 hasCompletedUploads = uploadManager.uploadTasks.value.any { it.status == UploadStatus.COMPLETED },
-                hasFailedUploads = uploadManager.uploadTasks.value.any { it.status == UploadStatus.FAILED }
+                hasFailedUploads = uploadManager.uploadTasks.value.any { it.status == UploadStatus.FAILED },
             )
         }
     }

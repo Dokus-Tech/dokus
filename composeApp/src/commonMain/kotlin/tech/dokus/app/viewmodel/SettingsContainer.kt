@@ -5,9 +5,9 @@ import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.plugins.reduce
-import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.features.auth.usecases.GetCurrentTenantUseCase
+import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.platform.Logger
 
 internal typealias SettingsCtx = PipelineContext<SettingsState, SettingsIntent, SettingsAction>
@@ -27,7 +27,7 @@ internal class SettingsContainer(
     private val logger = Logger.forClass<SettingsContainer>()
 
     override val store: Store<SettingsState, SettingsIntent, SettingsAction> =
-        store(SettingsState.Loading) {
+        store(SettingsState.initial) {
             reduce { intent ->
                 when (intent) {
                     is SettingsIntent.Load -> handleLoad()
@@ -39,29 +39,25 @@ internal class SettingsContainer(
     private suspend fun SettingsCtx.handleLoad() {
         logger.d { "Loading current tenant" }
 
-        updateState { SettingsState.Loading }
+        updateState { copy(tenant = tenant.asLoading) }
 
         getCurrentTenantUseCase().fold(
             onSuccess = { tenant ->
                 logger.i { "Current tenant loaded: ${tenant?.displayName?.value}" }
-                if (tenant != null) {
-                    updateState { SettingsState.Content(data = tenant) }
-                    return@fold
-                }
                 updateState {
-                    SettingsState.Error(
-                        exception = DokusException.NotFound(),
+                    copy(tenant = if (tenant != null) DokusState.success(tenant) else DokusState.error(
+                        exception = tech.dokus.domain.exceptions.DokusException.NotFound(),
                         retryHandler = { intent(SettingsIntent.Load) }
-                    )
+                    ))
                 }
             },
             onFailure = { error ->
                 logger.e(error) { "Failed to load current tenant" }
                 updateState {
-                    SettingsState.Error(
+                    copy(tenant = DokusState.error(
                         exception = error.asDokusException,
                         retryHandler = { intent(SettingsIntent.Load) }
-                    )
+                    ))
                 }
             }
         )

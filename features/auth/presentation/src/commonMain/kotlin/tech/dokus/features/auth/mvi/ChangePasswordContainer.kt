@@ -20,7 +20,7 @@ internal class ChangePasswordContainer(
     private val logger = Logger.forClass<ChangePasswordContainer>()
 
     override val store: Store<ChangePasswordState, ChangePasswordIntent, ChangePasswordAction> =
-        store(ChangePasswordState.Idle()) {
+        store(ChangePasswordState.initial) {
             reduce { intent ->
                 when (intent) {
                     is ChangePasswordIntent.UpdateCurrentPassword -> updateCurrentPassword(intent.value)
@@ -34,43 +34,19 @@ internal class ChangePasswordContainer(
 
     private suspend fun ChangePasswordCtx.updateCurrentPassword(value: Password) {
         updateState {
-            when (this) {
-                is ChangePasswordState.Idle -> copy(currentPassword = value)
-                is ChangePasswordState.Submitting -> this
-                is ChangePasswordState.Error -> ChangePasswordState.Idle(
-                    currentPassword = value,
-                    newPassword = newPassword,
-                    confirmPassword = confirmPassword
-                )
-            }
+            if (isSubmitting) this else copy(currentPassword = value, error = null)
         }
     }
 
     private suspend fun ChangePasswordCtx.updateNewPassword(value: Password) {
         updateState {
-            when (this) {
-                is ChangePasswordState.Idle -> copy(newPassword = value)
-                is ChangePasswordState.Submitting -> this
-                is ChangePasswordState.Error -> ChangePasswordState.Idle(
-                    currentPassword = currentPassword,
-                    newPassword = value,
-                    confirmPassword = confirmPassword
-                )
-            }
+            if (isSubmitting) this else copy(newPassword = value, error = null)
         }
     }
 
     private suspend fun ChangePasswordCtx.updateConfirmPassword(value: Password) {
         updateState {
-            when (this) {
-                is ChangePasswordState.Idle -> copy(confirmPassword = value)
-                is ChangePasswordState.Submitting -> this
-                is ChangePasswordState.Error -> ChangePasswordState.Idle(
-                    currentPassword = currentPassword,
-                    newPassword = newPassword,
-                    confirmPassword = value
-                )
-            }
+            if (isSubmitting) this else copy(confirmPassword = value, error = null)
         }
     }
 
@@ -83,11 +59,7 @@ internal class ChangePasswordContainer(
             currentPassword = this.currentPassword
             newPassword = this.newPassword
             confirmPassword = this.confirmPassword
-            ChangePasswordState.Submitting(
-                currentPassword = this.currentPassword,
-                newPassword = this.newPassword,
-                confirmPassword = this.confirmPassword
-            )
+            copy(isSubmitting = true, error = null)
         }
 
         runCatching {
@@ -106,26 +78,14 @@ internal class ChangePasswordContainer(
                     onFailure = { error ->
                         logger.e(error) { "Failed to change password" }
                         updateState {
-                            ChangePasswordState.Error(
-                                currentPassword = currentPassword,
-                                newPassword = newPassword,
-                                confirmPassword = confirmPassword,
-                                exception = error.asDokusException,
-                                retryHandler = { intent(ChangePasswordIntent.SubmitClicked) }
-                            )
+                            copy(isSubmitting = false, error = error.asDokusException)
                         }
                     }
                 )
             },
             onFailure = { error ->
                 updateState {
-                    ChangePasswordState.Error(
-                        currentPassword = currentPassword,
-                        newPassword = newPassword,
-                        confirmPassword = confirmPassword,
-                        exception = error.asDokusException,
-                        retryHandler = { intent(ChangePasswordIntent.SubmitClicked) }
-                    )
+                    copy(isSubmitting = false, error = error.asDokusException)
                 }
             }
         )

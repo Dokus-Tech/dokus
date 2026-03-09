@@ -118,19 +118,20 @@ internal fun ContactDetailsRoute(
         },
     )
 
-    val contentState = state as? ContactDetailsState.Content
-    if (contentState?.uiState?.showMergeDialog == true) {
-        val activitySummary = (contentState.activityState as? DokusState.Success)?.data
-        ContactMergeDialogRoute(
-            sourceContact = contentState.contact,
-            sourceActivity = activitySummary,
-            onMergeComplete = { result ->
-                container.store.intent(ContactDetailsIntent.HideMergeDialog)
-                navController.navigateTo(
-                    ContactsDestination.ContactDetails(result.targetContactId.toString())
-                )
-            },
-            onDismiss = { container.store.intent(ContactDetailsIntent.HideMergeDialog) }
-        )
+    if (state.uiState.showMergeDialog) {
+        val contactData = (state.contact as? DokusState.Success)?.data
+        if (contactData != null) {
+            ContactMergeDialogRoute(
+                sourceContact = contactData,
+                sourceActivity = (state.activityState as? DokusState.Success)?.data,
+                onMergeComplete = { result ->
+                    container.store.intent(ContactDetailsIntent.HideMergeDialog)
+                    navController.navigateTo(
+                        ContactsDestination.ContactDetails(result.targetContactId.toString())
+                    )
+                },
+                onDismiss = { container.store.intent(ContactDetailsIntent.HideMergeDialog) }
+            )
+        }
     }
 }

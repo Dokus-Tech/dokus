@@ -32,6 +32,8 @@ import tech.dokus.features.auth.usecases.ListConsoleClientDocumentsUseCase
 import tech.dokus.features.auth.usecases.ListConsoleClientsUseCase
 import tech.dokus.foundation.app.shell.WorkspaceContextStore
 import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.app.state.isError
+import tech.dokus.foundation.app.state.isSuccess
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -87,20 +89,21 @@ class ConsoleClientsContainerTest {
             assertEquals(1, getAccountMeUseCase.invocations)
             assertEquals(listOf(firmId), listClientsUseCase.receivedFirmIds)
 
-            val loaded = assertIs<ConsoleClientsState.Content>(states.value)
+            val loaded = states.value
+            assertTrue(loaded.clients.isSuccess())
             assertEquals(
                 listOf(
                     TenantId("00000000-0000-0000-0000-000000000100"),
                     TenantId("00000000-0000-0000-0000-000000000200"),
                     TenantId("00000000-0000-0000-0000-000000000300"),
                 ),
-                loaded.clients.map { it.tenantId }
+                loaded.clients.data.map { it.tenantId }
             )
 
             emit(ConsoleClientsIntent.UpdateQuery("be01"))
             advanceUntilIdle()
 
-            val filtered = assertIs<ConsoleClientsState.Content>(states.value)
+            val filtered = states.value
             assertEquals(
                 listOf(TenantId("00000000-0000-0000-0000-000000000100")),
                 filtered.filteredClients.map { it.tenantId }
@@ -126,8 +129,9 @@ class ConsoleClientsContainerTest {
 
         container.store.subscribeAndTest {
             advanceUntilIdle()
-            val error = assertIs<ConsoleClientsState.Error>(states.value)
-            assertEquals(expectedError, error.exception)
+            val state = states.value
+            assertTrue(state.clients.isError())
+            assertEquals(expectedError, state.clients.exception)
         }
     }
 
@@ -156,7 +160,7 @@ class ConsoleClientsContainerTest {
             advanceUntilIdle()
 
             assertEquals(listOf(tenantId), documentsUseCase.receivedTenantIds)
-            val loaded = assertIs<ConsoleClientsState.Content>(states.value)
+            val loaded = states.value
             assertEquals(tenantId, loaded.selectedClientTenantId)
             val docsState = assertIs<DokusState.Success<List<DocumentRecordDto>>>(loaded.documentsState)
             assertEquals(2, docsState.data.size)
@@ -184,7 +188,7 @@ class ConsoleClientsContainerTest {
             advanceUntilIdle()
             ConsoleClientsIntent.SelectClient(tenantId) resultsIn ConsoleClientsAction.ShowError(expectedError)
 
-            val loaded = assertIs<ConsoleClientsState.Content>(states.value)
+            val loaded = states.value
             assertEquals(tenantId, loaded.selectedClientTenantId)
             val docsError = assertIs<DokusState.Error<List<DocumentRecordDto>>>(loaded.documentsState)
             assertEquals(expectedError, docsError.exception)
@@ -218,7 +222,7 @@ class ConsoleClientsContainerTest {
             emit(ConsoleClientsIntent.OpenDocument(record.document.id.toString()))
             advanceUntilIdle()
 
-            val loaded = assertIs<ConsoleClientsState.Content>(states.value)
+            val loaded = states.value
             assertEquals(record.document.id, loaded.selectedDocument?.document?.id)
             assertNull(loaded.loadingDocumentId)
             assertEquals(listOf(record.document.id.toString()), documentUseCase.receivedDocumentIds)

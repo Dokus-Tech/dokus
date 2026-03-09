@@ -15,10 +15,11 @@ import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.features.cashflow.usecases.LoadDocumentRecordsUseCase
+import tech.dokus.foundation.app.state.isError
+import tech.dokus.foundation.app.state.isLoading
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
-import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import kotlinx.datetime.LocalDateTime
 
@@ -46,28 +47,28 @@ class DocumentsContainerFilteringTest {
         container.store.subscribeAndTest {
             advanceUntilIdle()
 
-            val initial = assertIs<DocumentsState.Content>(states.value)
+            val initial = states.value
             assertEquals(DocumentFilter.All, initial.filter)
-            assertFalse(initial.isRefreshing)
-            assertEquals(allDocs.map { it.document.id }, initial.documents.data.map { it.document.id })
+            assertFalse(initial.documents.isLoading())
+            assertEquals(allDocs.map { it.document.id }, initial.documents.lastData?.data?.map { it.document.id })
 
             emit(DocumentsIntent.UpdateFilter(DocumentFilter.NeedsAttention))
             runCurrent()
 
-            val refreshing = assertIs<DocumentsState.Content>(states.value)
+            val refreshing = states.value
             assertEquals(DocumentFilter.NeedsAttention, refreshing.filter)
-            assertTrue(refreshing.isRefreshing)
-            assertEquals(allDocs.map { it.document.id }, refreshing.documents.data.map { it.document.id })
+            assertTrue(refreshing.documents.isLoading())
+            assertEquals(allDocs.map { it.document.id }, refreshing.documents.lastData?.data?.map { it.document.id })
 
             deferredNeedsAttentionResult.complete(Result.success(pageResponse(needsAttentionDocs)))
             advanceUntilIdle()
 
-            val updated = assertIs<DocumentsState.Content>(states.value)
-            assertFalse(updated.isRefreshing)
+            val updated = states.value
+            assertFalse(updated.documents.isLoading())
             assertEquals(DocumentFilter.NeedsAttention, updated.filter)
             assertEquals(
                 needsAttentionDocs.map { it.document.id },
-                updated.documents.data.map { it.document.id }
+                updated.documents.lastData?.data?.map { it.document.id }
             )
             assertEquals(39, updated.needsAttentionCount)
             assertEquals(25, updated.confirmedCount)
@@ -75,7 +76,7 @@ class DocumentsContainerFilteringTest {
     }
 
     @Test
-    fun `filter error rolls back to previous filter and documents`() = runTest {
+    fun `filter error preserves data and keeps new filter`() = runTest {
         val allDocs = listOf(documentRecord("00000000-0000-0000-0000-000000000101"))
 
         val loadDocuments = FakeLoadDocumentRecordsUseCase().apply {
@@ -94,23 +95,23 @@ class DocumentsContainerFilteringTest {
         container.store.subscribeAndTest {
             advanceUntilIdle()
 
-            val initial = assertIs<DocumentsState.Content>(states.value)
+            val initial = states.value
             assertEquals(DocumentFilter.All, initial.filter)
-            assertEquals(allDocs.map { it.document.id }, initial.documents.data.map { it.document.id })
+            assertEquals(allDocs.map { it.document.id }, initial.documents.lastData?.data?.map { it.document.id })
 
             emit(DocumentsIntent.UpdateFilter(DocumentFilter.NeedsAttention))
             runCurrent()
 
-            val refreshing = assertIs<DocumentsState.Content>(states.value)
-            assertTrue(refreshing.isRefreshing)
+            val refreshing = states.value
+            assertTrue(refreshing.documents.isLoading())
 
             deferredFailure.complete(Result.failure(RuntimeException("network error")))
             advanceUntilIdle()
 
-            val restored = assertIs<DocumentsState.Content>(states.value)
-            assertFalse(restored.isRefreshing)
-            assertEquals(DocumentFilter.All, restored.filter)
-            assertEquals(allDocs.map { it.document.id }, restored.documents.data.map { it.document.id })
+            val errorState = states.value
+            assertTrue(errorState.documents.isError())
+            assertEquals(DocumentFilter.NeedsAttention, errorState.filter)
+            assertEquals(allDocs.map { it.document.id }, errorState.documents.lastData?.data?.map { it.document.id })
         }
     }
 }

@@ -27,7 +27,7 @@ internal class NewPasswordContainer(
     private val logger = Logger.forClass<NewPasswordContainer>()
 
     override val store: Store<NewPasswordState, NewPasswordIntent, NewPasswordAction> =
-        store(NewPasswordState.Idle()) {
+        store(NewPasswordState.initial) {
             reduce { intent ->
                 when (intent) {
                     is NewPasswordIntent.UpdatePassword -> handleUpdatePassword(intent.value)
@@ -39,35 +39,13 @@ internal class NewPasswordContainer(
 
     private suspend fun NewPasswordCtx.handleUpdatePassword(value: Password) {
         updateState {
-            when (this) {
-                is NewPasswordState.Idle -> copy(password = value)
-                is NewPasswordState.Error -> NewPasswordState.Idle(
-                    password = value,
-                    passwordConfirmation = passwordConfirmation
-                )
-                is NewPasswordState.Success -> NewPasswordState.Idle(
-                    password = value,
-                    passwordConfirmation = passwordConfirmation
-                )
-                is NewPasswordState.Submitting -> this
-            }
+            if (isSubmitting) this else copy(password = value, error = null)
         }
     }
 
     private suspend fun NewPasswordCtx.handleUpdatePasswordConfirmation(value: Password) {
         updateState {
-            when (this) {
-                is NewPasswordState.Idle -> copy(passwordConfirmation = value)
-                is NewPasswordState.Error -> NewPasswordState.Idle(
-                    password = password,
-                    passwordConfirmation = value
-                )
-                is NewPasswordState.Success -> NewPasswordState.Idle(
-                    password = password,
-                    passwordConfirmation = value
-                )
-                is NewPasswordState.Submitting -> this
-            }
+            if (isSubmitting) this else copy(passwordConfirmation = value, error = null)
         }
     }
 
@@ -80,10 +58,7 @@ internal class NewPasswordContainer(
         updateState {
             password = this.password
             passwordConfirmation = this.passwordConfirmation
-            NewPasswordState.Submitting(
-                password = this.password,
-                passwordConfirmation = this.passwordConfirmation
-            )
+            copy(isSubmitting = true, error = null)
         }
 
         logger.d { "New password submission started" }
@@ -95,11 +70,9 @@ internal class NewPasswordContainer(
                 if (password.value != passwordConfirmation.value) {
                     logger.w { "Password confirmation does not match" }
                     updateState {
-                        NewPasswordState.Error(
-                            password = password,
-                            passwordConfirmation = passwordConfirmation,
-                            exception = DokusException.Validation.PasswordDoNotMatch,
-                            retryHandler = { intent(NewPasswordIntent.SubmitClicked) }
+                        copy(
+                            isSubmitting = false,
+                            error = DokusException.Validation.PasswordDoNotMatch,
                         )
                     }
                     return
@@ -107,11 +80,9 @@ internal class NewPasswordContainer(
 
                 if (resetToken.isBlank()) {
                     updateState {
-                        NewPasswordState.Error(
-                            password = password,
-                            passwordConfirmation = passwordConfirmation,
-                            exception = DokusException.PasswordResetTokenInvalid(),
-                            retryHandler = { intent(NewPasswordIntent.SubmitClicked) }
+                        copy(
+                            isSubmitting = false,
+                            error = DokusException.PasswordResetTokenInvalid(),
                         )
                     }
                     return
@@ -121,21 +92,16 @@ internal class NewPasswordContainer(
                     onSuccess = {
                         logger.i { "Password reset completed successfully" }
                         updateState {
-                            NewPasswordState.Success(
-                                password = password,
-                                passwordConfirmation = passwordConfirmation
-                            )
+                            copy(isSubmitting = false, isSuccess = true)
                         }
                         action(NewPasswordAction.NavigateBack)
                     },
                     onFailure = { error ->
                         logger.e(error) { "Password reset failed" }
                         updateState {
-                            NewPasswordState.Error(
-                                password = password,
-                                passwordConfirmation = passwordConfirmation,
-                                exception = error.asDokusException,
-                                retryHandler = { intent(NewPasswordIntent.SubmitClicked) }
+                            copy(
+                                isSubmitting = false,
+                                error = error.asDokusException,
                             )
                         }
                     }
@@ -144,11 +110,9 @@ internal class NewPasswordContainer(
             onFailure = { error ->
                 logger.e(error) { "New password validation failed" }
                 updateState {
-                    NewPasswordState.Error(
-                        password = password,
-                        passwordConfirmation = passwordConfirmation,
-                        exception = error.asDokusException,
-                        retryHandler = { intent(NewPasswordIntent.SubmitClicked) }
+                    copy(
+                        isSubmitting = false,
+                        error = error.asDokusException,
                     )
                 }
             }

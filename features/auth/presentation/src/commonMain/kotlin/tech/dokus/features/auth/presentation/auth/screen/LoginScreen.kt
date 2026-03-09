@@ -38,7 +38,6 @@ import tech.dokus.features.auth.mvi.LoginIntent
 import tech.dokus.features.auth.mvi.LoginState
 import tech.dokus.features.auth.presentation.auth.components.onboarding.OnboardingBrandVariant
 import tech.dokus.features.auth.presentation.auth.components.onboarding.OnboardingSplitShell
-import tech.dokus.foundation.app.state.exceptionIfError
 import tech.dokus.foundation.aura.components.DokusGlassSurface
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.fields.PTextFieldEmail
@@ -58,9 +57,9 @@ internal fun LoginScreen(
     onRegister: () -> Unit,
 ) {
     val focusManager = LocalFocusManager.current
-    val fieldsError = state.exceptionIfError()
+    val fieldsError = state.error
 
-    val isLoading = state is LoginState.Authenticating
+    val isLoading = state.isAuthenticating
     val canLogin = state.email.isValid && state.password.isValid
 
     OnboardingSplitShell(
@@ -221,7 +220,7 @@ private fun LoginScreenPreview(
 ) {
     tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
         LoginScreen(
-            state = LoginState.Idle(),
+            state = LoginState.initial,
             onIntent = {},
             onForgotPassword = {},
             onConnectToServer = {},

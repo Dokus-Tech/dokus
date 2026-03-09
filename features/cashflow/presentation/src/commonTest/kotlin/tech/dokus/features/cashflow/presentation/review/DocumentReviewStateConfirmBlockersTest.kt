@@ -19,6 +19,7 @@ import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
+import tech.dokus.foundation.app.state.DokusState
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -162,7 +163,7 @@ class DocumentReviewStateConfirmBlockersTest {
         isSaving: Boolean = false,
         selectedContactId: ContactId? = null,
         counterpartyIntent: CounterpartyIntent = CounterpartyIntent.None,
-    ): DocumentReviewState.Content {
+    ): DocumentReviewState {
         val tenantId = TenantId.parse("44e8ed5c-020a-4bbb-9439-ac85899c5589")
         val documentId = DocumentId.parse("e72f69a8-6913-4d8f-98e7-224db7f4133f")
         val now = LocalDateTime(2026, 2, 11, 0, 0, 0)
@@ -185,7 +186,7 @@ class DocumentReviewStateConfirmBlockersTest {
             updatedAt = now,
         )
 
-        val document = DocumentRecordDto(
+        val record = DocumentRecordDto(
             document = DocumentDto(
                 id = documentId,
                 tenantId = tenantId,
@@ -201,11 +202,17 @@ class DocumentReviewStateConfirmBlockersTest {
             confirmedEntity = null,
         )
 
-        return DocumentReviewState.Content(
-            documentId = documentId,
-            document = document,
-            draftData = draftData,
-            originalData = draftData,
+        return DocumentReviewState(
+            document = DokusState.success(
+                ReviewDocumentData(
+                    documentId = documentId,
+                    documentRecord = record,
+                    draftData = draftData,
+                    originalData = draftData,
+                    previewUrl = null,
+                    contactSuggestions = emptyList(),
+                )
+            ),
             hasUnsavedChanges = hasUnsavedChanges,
             isSaving = isSaving,
             isContactRequired = true,

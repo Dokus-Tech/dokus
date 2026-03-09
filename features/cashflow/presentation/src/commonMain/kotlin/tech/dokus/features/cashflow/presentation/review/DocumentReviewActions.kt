@@ -11,6 +11,7 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.DocumentDraftData
+import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.RejectDocumentRequest
 import tech.dokus.domain.model.UpdateDraftRequest
@@ -18,6 +19,7 @@ import tech.dokus.features.cashflow.usecases.ConfirmDocumentUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentRecordUseCase
 import tech.dokus.features.cashflow.usecases.RejectDocumentUseCase
 import tech.dokus.features.cashflow.usecases.UpdateDocumentDraftUseCase
+import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.platform.Logger
 
 internal class DocumentReviewActions(
@@ -38,7 +40,8 @@ internal class DocumentReviewActions(
 
     suspend fun DocumentReviewCtx.syncDraftImmediately() {
         var payload: DraftSyncPayload? = null
-        withState<DocumentReviewState.Content, _> {
+        withState {
+            val activeDocumentId = documentId ?: return@withState
             val updatedData = draftData ?: return@withState
             inlineDraftSyncToken += 1
             val token = inlineDraftSyncToken
@@ -51,7 +54,7 @@ internal class DocumentReviewActions(
             }
 
             payload = DraftSyncPayload(
-                documentId = documentId,
+                documentId = activeDocumentId,
                 draftData = updatedData,
                 token = token,
             )
@@ -69,11 +72,16 @@ internal class DocumentReviewActions(
                 onSuccess = { response ->
                     if (syncPayload.token != inlineDraftSyncToken) return@fold
                     inlineDraftSyncJob = null
-                    withState<DocumentReviewState.Content, _> {
+                    withState {
+                        val currentData = documentData ?: return@withState
                         updateState {
                             copy(
-                                draftData = response.extractedData,
-                                originalData = response.extractedData,
+                                document = DokusState.success(
+                                    currentData.copy(
+                                        draftData = response.extractedData,
+                                        originalData = response.extractedData,
+                                    )
+                                ),
                                 hasUnsavedChanges = false,
                                 isSaving = false,
                                 isContactRequired = response.extractedData.isContactRequired,
@@ -87,7 +95,7 @@ internal class DocumentReviewActions(
                     }
                     inlineDraftSyncJob = null
                     logger.e(error) { "Failed to persist draft correction: ${syncPayload.documentId}" }
-                    withState<DocumentReviewState.Content, _> {
+                    withState {
                         updateState {
                             copy(
                                 hasUnsavedChanges = true,
@@ -102,7 +110,7 @@ internal class DocumentReviewActions(
     }
 
     suspend fun DocumentReviewCtx.handleConfirm() {
-        withState<DocumentReviewState.Content, _> {
+        withState {
             if (!canConfirm) {
                 action(
                     DocumentReviewAction.ShowError(
@@ -112,6 +120,7 @@ internal class DocumentReviewActions(
                 return@withState
             }
 
+            val activeDocumentId = documentId ?: return@withState
             val updatedData = draftData
             if (updatedData == null) {
                 action(DocumentReviewAction.ShowError(DokusException.Validation.DocumentMissingFields))
@@ -122,30 +131,35 @@ internal class DocumentReviewActions(
             inlineDraftSyncJob?.cancel()
             inlineDraftSyncJob = null
 
-            logger.d { "Confirming document: $documentId" }
+            logger.d { "Confirming document: $activeDocumentId" }
             updateState { copy(isConfirming = true) }
 
             launch {
                 if (hasUnsavedChanges) {
                     val updateResult = updateDocumentDraft(
-                        documentId,
+                        activeDocumentId,
                         UpdateDraftRequest(extractedData = updatedData)
                     )
                     val updateFailure = updateResult.exceptionOrNull()
                     if (updateFailure != null) {
-                        logger.e(updateFailure) { "Failed to save draft before confirm: $documentId" }
-                        withState<DocumentReviewState.Content, _> {
+                        logger.e(updateFailure) { "Failed to save draft before confirm: $activeDocumentId" }
+                        withState {
                             updateState { copy(isConfirming = false) }
                         }
                         action(DocumentReviewAction.ShowError(updateFailure.asDokusException))
                         return@launch
                     }
                     val savedData = updateResult.getOrThrow().extractedData
-                    withState<DocumentReviewState.Content, _> {
+                    withState {
+                        val currentData = documentData ?: return@withState
                         updateState {
                             copy(
-                                draftData = savedData,
-                                originalData = savedData,
+                                document = DokusState.success(
+                                    currentData.copy(
+                                        draftData = savedData,
+                                        originalData = savedData,
+                                    )
+                                ),
                                 hasUnsavedChanges = false,
                                 isContactRequired = savedData.isContactRequired,
                             )
@@ -153,19 +167,24 @@ internal class DocumentReviewActions(
                     }
                 }
 
-                confirmDocument(documentId).fold(
+                confirmDocument(activeDocumentId).fold(
                     onSuccess = { record ->
                         val draft = record.draft
                         val isConfirmed = draft?.documentStatus == DocumentStatus.Confirmed
                         val isRejected = draft?.documentStatus == DocumentStatus.Rejected
                         val cashflowEntryId = record.cashflowEntryId
-                        withState<DocumentReviewState.Content, _> {
+                        withState {
+                            val currentData = documentData ?: return@withState
                             val linkedContactId = draft?.linkedContactId
                             updateState {
                                 copy(
-                                    document = record,
-                                    draftData = draft?.extractedData,
-                                    originalData = draft?.extractedData,
+                                    document = DokusState.success(
+                                        currentData.copy(
+                                            documentRecord = record,
+                                            draftData = draft?.extractedData,
+                                            originalData = draft?.extractedData,
+                                        )
+                                    ),
                                     hasUnsavedChanges = false,
                                     isConfirming = false,
                                     isDocumentConfirmed = isConfirmed,
@@ -190,8 +209,8 @@ internal class DocumentReviewActions(
                         action(DocumentReviewAction.ShowSuccess(DocumentReviewSuccess.DocumentConfirmed))
                     },
                     onFailure = { error ->
-                        logger.e(error) { "Failed to confirm document: $documentId" }
-                        withState<DocumentReviewState.Content, _> {
+                        logger.e(error) { "Failed to confirm document: $activeDocumentId" }
+                        withState {
                             updateState { copy(isConfirming = false) }
                         }
                         action(DocumentReviewAction.ShowError(error.asDokusException))
@@ -204,25 +223,20 @@ internal class DocumentReviewActions(
     // === Reject Dialog Handlers ===
 
     suspend fun DocumentReviewCtx.handleShowRejectDialog() {
-        withState<DocumentReviewState.Content, _> {
-            updateState { copy(rejectDialogState = RejectDialogState()) }
-        }
+        updateState { copy(rejectDialogState = RejectDialogState()) }
     }
 
     suspend fun DocumentReviewCtx.handleDismissRejectDialog() {
-        withState<DocumentReviewState.Content, _> {
-            updateState { copy(rejectDialogState = null) }
-        }
+        updateState { copy(rejectDialogState = null) }
     }
 
     suspend fun DocumentReviewCtx.handleSelectRejectReason(reason: DocumentRejectReason) {
-        withState<DocumentReviewState.Content, _> {
+        withState {
             rejectDialogState?.let { dialogState ->
                 updateState {
                     copy(
                         rejectDialogState = dialogState.copy(
                             selectedReason = reason,
-                            // Clear note if not "Other" reason
                             otherNote = if (reason == DocumentRejectReason.Other) dialogState.otherNote else ""
                         )
                     )
@@ -232,7 +246,7 @@ internal class DocumentReviewActions(
     }
 
     suspend fun DocumentReviewCtx.handleUpdateRejectNote(note: String) {
-        withState<DocumentReviewState.Content, _> {
+        withState {
             rejectDialogState?.let { dialogState ->
                 updateState {
                     copy(rejectDialogState = dialogState.copy(otherNote = note))
@@ -242,11 +256,11 @@ internal class DocumentReviewActions(
     }
 
     suspend fun DocumentReviewCtx.handleConfirmReject() {
-        withState<DocumentReviewState.Content, _> {
+        withState {
+            val activeDocumentId = documentId ?: return@withState
             val dialogState = rejectDialogState ?: return@withState
             val reason = dialogState.selectedReason
 
-            // Set loading state in dialog
             updateState {
                 copy(
                     isRejecting = true,
@@ -255,26 +269,29 @@ internal class DocumentReviewActions(
             }
 
             launch {
-                rejectDocument(documentId, RejectDocumentRequest(reason))
+                rejectDocument(activeDocumentId, RejectDocumentRequest(reason))
                     .fold(
                         onSuccess = { record ->
                             val draft = record.draft
-                            withState<DocumentReviewState.Content, _> {
+                            withState {
+                                val currentData = documentData ?: return@withState
                                 updateState {
                                     copy(
-                                        document = record,
+                                        document = DokusState.success(
+                                            currentData.copy(documentRecord = record)
+                                        ),
                                         isRejecting = false,
                                         isDocumentRejected = draft?.documentStatus == DocumentStatus.Rejected,
                                         isDocumentConfirmed = draft?.documentStatus == DocumentStatus.Confirmed,
-                                        rejectDialogState = null // Close dialog on success
+                                        rejectDialogState = null
                                     )
                                 }
                             }
                             action(DocumentReviewAction.NavigateBack)
                         },
                         onFailure = { error ->
-                            logger.e(error) { "Failed to reject document: $documentId" }
-                            withState<DocumentReviewState.Content, _> {
+                            logger.e(error) { "Failed to reject document: $activeDocumentId" }
+                            withState {
                                 updateState {
                                     copy(
                                         isRejecting = false,
@@ -290,21 +307,22 @@ internal class DocumentReviewActions(
     }
 
     suspend fun DocumentReviewCtx.handleOpenChat() {
-        withState<DocumentReviewState.Content, _> {
-            action(DocumentReviewAction.NavigateToChat(documentId))
+        withState {
+            val activeDocumentId = documentId ?: return@withState
+            action(DocumentReviewAction.NavigateToChat(activeDocumentId))
         }
     }
 
     suspend fun DocumentReviewCtx.handleViewCashflowEntry() {
-        withState<DocumentReviewState.Content, _> {
+        withState {
             val entryId = confirmedCashflowEntryId ?: return@withState
             action(DocumentReviewAction.NavigateToCashflowEntry(entryId))
         }
     }
 
     suspend fun DocumentReviewCtx.handleViewEntity() {
-        withState<DocumentReviewState.Content, _> {
-            val confirmedEntityId = document.confirmedEntity?.let { entity ->
+        withState {
+            val confirmedEntityId = documentRecord?.confirmedEntity?.let { entity ->
                 when (entity) {
                     is FinancialDocumentDto.InvoiceDto -> entity.id.toString()
                     is FinancialDocumentDto.ExpenseDto -> entity.id.toString()
@@ -329,12 +347,17 @@ internal class DocumentReviewActions(
         getDocumentRecord(documentId).fold(
             onSuccess = { record ->
                 val draft = record.draft
-                withState<DocumentReviewState.Content, _> {
+                withState {
+                    val currentData = documentData ?: return@withState
                     updateState {
                         copy(
-                            document = record,
-                            draftData = draft?.extractedData,
-                            originalData = draft?.extractedData,
+                            document = DokusState.success(
+                                currentData.copy(
+                                    documentRecord = record,
+                                    draftData = draft?.extractedData,
+                                    originalData = draft?.extractedData,
+                                )
+                            ),
                             isContactRequired = draft?.extractedData?.let {
                                 it.isContactRequired
                             } ?: isContactRequired,

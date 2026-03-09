@@ -158,7 +158,7 @@ class DocumentReviewCanonicalStateTest {
         cashflowEntryState: DokusState<CashflowEntry> = DokusState.idle(),
         sources: List<DocumentSourceDto> = emptyList(),
         pendingMatchReview: DocumentMatchReviewSummaryDto? = null,
-    ): DocumentReviewState.Content {
+    ): DocumentReviewState {
         val tenantId = TenantId.parse("44e8ed5c-020a-4bbb-9439-ac85899c5589")
         val documentId = DocumentId.parse("e72f69a8-6913-4d8f-98e7-224db7f4133f")
         val now = LocalDateTime(2026, 2, 11, 0, 0, 0)
@@ -218,11 +218,17 @@ class DocumentReviewCanonicalStateTest {
             sources = sources,
         )
 
-        return DocumentReviewState.Content(
-            documentId = documentId,
-            document = record,
-            draftData = draftData,
-            originalData = draftData,
+        return DocumentReviewState(
+            document = DokusState.success(
+                ReviewDocumentData(
+                    documentId = documentId,
+                    documentRecord = record,
+                    draftData = draftData,
+                    originalData = draftData,
+                    previewUrl = null,
+                    contactSuggestions = emptyList(),
+                )
+            ),
             selectedContactId = ContactId.generate(),
             contactSelectionState = ContactSelectionState.Selected,
             isContactRequired = true,

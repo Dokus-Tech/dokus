@@ -23,19 +23,12 @@ import tech.dokus.app.navigation.HomeNavigationCommand
 // ============================================================================
 
 @Immutable
-sealed interface BootstrapState : MVIState {
-
-    /**
-     * List of bootstrap steps showing progress.
-     */
-    val steps: List<BootstrapStep>
-
-    /**
-     * Loading state - performing bootstrap checks.
-     */
-    data class Loading(
-        override val steps: List<BootstrapStep> = BootstrapStep.initial,
-    ) : BootstrapState
+data class BootstrapState(
+    val steps: List<BootstrapStep> = BootstrapStep.initial,
+) : MVIState {
+    companion object {
+        val initial by lazy { BootstrapState() }
+    }
 }
 
 /**

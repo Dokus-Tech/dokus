@@ -46,6 +46,8 @@ import tech.dokus.features.cashflow.presentation.review.components.mobile.Mobile
 import tech.dokus.features.cashflow.presentation.review.components.mobile.PreviewTabContent
 import tech.dokus.features.cashflow.presentation.review.models.CounterpartyInfo
 import tech.dokus.features.cashflow.presentation.review.models.counterpartyInfo
+import tech.dokus.foundation.app.state.isError
+import tech.dokus.foundation.app.state.isLoading
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.DokusLoader
@@ -73,14 +75,15 @@ internal fun ReviewContent(
     onBackClick: () -> Unit,
     onOpenSource: (DocumentSourceId) -> Unit,
 ) {
-    when (state) {
-        is DocumentReviewState.Loading -> LoadingContent(contentPadding)
-        is DocumentReviewState.AwaitingExtraction -> AwaitingExtractionContent(
+    when {
+        state.document.isError() -> ErrorContent(state, contentPadding)
+        state.document.isLoading() || !state.hasContent -> LoadingContent(contentPadding)
+        state.isAwaitingExtraction -> AwaitingExtractionContent(
             state = state,
             contentPadding = contentPadding,
             isLargeScreen = isLargeScreen
         )
-        is DocumentReviewState.Content -> {
+        state.hasContent -> {
             if (isLargeScreen) {
                 DesktopReviewContent(
                     state = state,
@@ -101,7 +104,6 @@ internal fun ReviewContent(
                 )
             }
         }
-        is DocumentReviewState.Error -> ErrorContent(state, contentPadding)
     }
 }
 
@@ -129,7 +131,7 @@ private fun LoadingContent(contentPadding: PaddingValues) {
 
 @Composable
 private fun AwaitingExtractionContent(
-    state: DocumentReviewState.AwaitingExtraction,
+    state: DocumentReviewState,
     contentPadding: PaddingValues,
     isLargeScreen: Boolean,
 ) {
@@ -199,7 +201,7 @@ private fun AwaitingExtractionContent(
 
 @Composable
 private fun DesktopReviewContent(
-    state: DocumentReviewState.Content,
+    state: DocumentReviewState,
     isAccountantReadOnly: Boolean,
     contentPadding: PaddingValues,
     onIntent: (DocumentReviewIntent) -> Unit,
@@ -235,11 +237,11 @@ private fun DesktopReviewContent(
 
 @Composable
 private fun DesktopDocumentPane(
-    state: DocumentReviewState.Content,
+    state: DocumentReviewState,
     onIntent: (DocumentReviewIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val sourceIds = state.document.sources.map { it.id.toString() }.toSet()
+    val sourceIds = state.documentRecord?.sources.orEmpty().map { it.id.toString() }.toSet()
     val activeSourceId = state.sourceViewerState?.sourceId?.toString()
     val activeTabId = activeSourceId?.takeIf { it in sourceIds } ?: SummaryTabId
 
@@ -256,7 +258,7 @@ private fun DesktopDocumentPane(
         )
 
         SourceTabsPanel(
-            sources = state.document.sources,
+            sources = state.documentRecord?.sources.orEmpty(),
             activeTabId = activeTabId,
             onTabSelected = { selectedTabId ->
                 if (selectedTabId == activeTabId) return@SourceTabsPanel
@@ -370,7 +372,7 @@ private fun sourceTabs(sources: List<DocumentSourceDto>): List<SourceTabItem> {
 
 @Composable
 private fun MobileReviewContent(
-    state: DocumentReviewState.Content,
+    state: DocumentReviewState,
     isAccountantReadOnly: Boolean,
     contentPadding: PaddingValues,
     onIntent: (DocumentReviewIntent) -> Unit,
@@ -406,7 +408,7 @@ private fun MobileReviewContent(
 
 @Composable
 private fun MobileFallbackContent(
-    state: DocumentReviewState.Content,
+    state: DocumentReviewState,
     contentPadding: PaddingValues,
     onBackClick: () -> Unit,
 ) {
@@ -446,9 +448,10 @@ private fun MobileFallbackContent(
 
 @Composable
 private fun ErrorContent(
-    error: DocumentReviewState.Error,
+    state: DocumentReviewState,
     contentPadding: PaddingValues,
 ) {
+    val errorState = state.document as? tech.dokus.foundation.app.state.DokusState.Error
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -456,10 +459,12 @@ private fun ErrorContent(
             .padding(Constraints.Spacing.large),
         contentAlignment = Alignment.Center,
     ) {
-        DokusErrorContent(
-            exception = error.exception,
-            retryHandler = error.retryHandler
-        )
+        if (errorState != null) {
+            DokusErrorContent(
+                exception = errorState.exception,
+                retryHandler = errorState.retryHandler
+            )
+        }
     }
 }
 

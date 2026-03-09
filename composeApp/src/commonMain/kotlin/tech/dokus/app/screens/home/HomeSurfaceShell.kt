@@ -51,7 +51,7 @@ internal fun HomeSurfaceShell(
     appModules: List<AppModule>,
     rootNavController: NavController,
     isLargeScreen: Boolean,
-    shellState: HomeState.Ready,
+    shellState: HomeState,
     selectedFirm: FirmWorkspaceSummary?,
     profileData: HomeShellProfileData?,
     pendingHomeCommand: HomeNavigationEnvelope?,

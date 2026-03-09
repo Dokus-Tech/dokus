@@ -85,7 +85,7 @@ private fun DocumentReviewScreenLoadingPreview(
 ) {
     TestWrapper(parameters) {
         DocumentReviewScreen(
-            state = DocumentReviewState.Loading(),
+            state = DocumentReviewState(),
             isLargeScreen = false,
             isAccountantReadOnly = false,
             onIntent = {},
@@ -127,10 +127,11 @@ private fun DocumentReviewScreenDesktopSourcePreview(
 ) {
     TestWrapper(parameters) {
         val baseState = previewReviewContentState(entryStatus = CashflowEntryStatus.Open)
-        val peppolSourceId = baseState.document.sources
+        val sources = baseState.documentRecord?.sources.orEmpty()
+        val peppolSourceId = sources
             .firstOrNull { it.sourceChannel == DocumentSource.Peppol }
             ?.id
-            ?: baseState.document.sources.first().id
+            ?: sources.first().id
         val sourceViewerState = previewSourceEvidenceViewerState(sourceType = DocumentSource.Peppol)
             .copy(sourceId = peppolSourceId)
 

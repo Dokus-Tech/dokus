@@ -97,7 +97,7 @@ internal class DocumentReviewContainer(
 
     override val store: Store<DocumentReviewState, DocumentReviewIntent, DocumentReviewAction> =
         store(
-            DocumentReviewState.Loading(
+            DocumentReviewState(
                 queueState = routeContext?.let { DocumentReviewQueueState(context = it) },
                 selectedQueueDocumentId = routeContext?.let { initialDocumentId },
             )
@@ -112,7 +112,7 @@ internal class DocumentReviewContainer(
             reduce { intent ->
                 when (intent) {
                     is DocumentReviewIntent.SelectQueueDocument -> {
-                        updateSelectedQueueDocumentId(intent.documentId)
+                        updateState { copy(selectedQueueDocumentId = intent.documentId) }
                         with(reducer) {
                             handleLoadDocument(intent.documentId)
                         }
@@ -228,29 +228,52 @@ internal class DocumentReviewContainer(
 
     private suspend fun DocumentReviewCtx.loadQueuePage(reset: Boolean) {
         val context = routeContext ?: return
-        val queueState = currentQueueState() ?: DocumentReviewQueueState(context = context)
-        if (!reset && (queueState.isLoading || queueState.isLoadingMore || !queueState.hasMore)) {
-            return
-        }
-
-        val nextPage = if (reset) 0 else queueState.currentPage + 1
-        val existingItems = if (reset) emptyList() else queueState.items
-
-        updateQueueState {
-            val base = it ?: DocumentReviewQueueState(context = context)
-            if (reset) {
-                base.copy(
-                    items = existingItems,
-                    isLoading = true,
-                    isLoadingMore = false,
-                )
-            } else {
-                base.copy(
-                    isLoading = false,
-                    isLoadingMore = true,
-                )
+        withState {
+            val currentQueueState = queueState ?: DocumentReviewQueueState(context = context)
+            if (!reset && (currentQueueState.isLoading || currentQueueState.isLoadingMore || !currentQueueState.hasMore)) {
+                return@withState
             }
         }
+
+        val nextPage: Int
+        val existingItems: List<DocQueueItem>
+
+        withState {
+            val currentQueueState = queueState ?: DocumentReviewQueueState(context = context)
+            if (reset) {
+                updateState {
+                    val base = queueState ?: DocumentReviewQueueState(context = context)
+                    copy(
+                        queueState = base.copy(
+                            items = emptyList(),
+                            isLoading = true,
+                            isLoadingMore = false,
+                        )
+                    )
+                }
+            } else {
+                updateState {
+                    val base = queueState ?: DocumentReviewQueueState(context = context)
+                    copy(
+                        queueState = base.copy(
+                            isLoading = false,
+                            isLoadingMore = true,
+                        )
+                    )
+                }
+            }
+        }
+
+        // Read the computed values after state update
+        var page = 0
+        var items = emptyList<DocQueueItem>()
+        withState {
+            val qs = queueState ?: DocumentReviewQueueState(context = context)
+            page = if (reset) 0 else qs.currentPage + 1
+            items = if (reset) emptyList() else qs.items
+        }
+        nextPage = page
+        existingItems = items
 
         loadDocumentRecords(
             page = nextPage,
@@ -259,7 +282,10 @@ internal class DocumentReviewContainer(
         ).fold(
             onSuccess = { response ->
                 val loadedItems = response.items.map { it.toDocQueueItem() }
-                val selectedDocumentId = currentSelectedDocumentId() ?: initialDocumentId
+                var selectedDocumentId: DocumentId = initialDocumentId
+                withState {
+                    selectedDocumentId = this.selectedQueueDocumentId ?: initialDocumentId
+                }
                 val mergedItems = if (reset) {
                     preserveSelectedQueueItem(
                         existingItems = existingItems,
@@ -269,84 +295,36 @@ internal class DocumentReviewContainer(
                 } else {
                     mergeQueueItems(existingItems = existingItems, incomingItems = loadedItems)
                 }
-                updateQueueState {
-                    (it ?: DocumentReviewQueueState(context = context)).copy(
-                        items = mergedItems,
-                        currentPage = nextPage,
-                        hasMore = response.hasMore,
-                        isLoading = false,
-                        isLoadingMore = false,
+                updateState {
+                    copy(
+                        queueState = (queueState ?: DocumentReviewQueueState(context = context)).copy(
+                            items = mergedItems,
+                            currentPage = nextPage,
+                            hasMore = response.hasMore,
+                            isLoading = false,
+                            isLoadingMore = false,
+                        ),
                     )
                 }
-                ensureSelectedQueueDocumentId()
+                // Ensure selected document ID
+                withState {
+                    if (selectedQueueDocumentId == null) {
+                        updateState { copy(selectedQueueDocumentId = initialDocumentId) }
+                    }
+                }
             },
             onFailure = { error ->
                 logger.w(error) { "Failed to load document review queue page=$nextPage" }
-                updateQueueState {
-                    (it ?: DocumentReviewQueueState(context = context)).copy(
-                        isLoading = false,
-                        isLoadingMore = false,
+                updateState {
+                    copy(
+                        queueState = (queueState ?: DocumentReviewQueueState(context = context)).copy(
+                            isLoading = false,
+                            isLoadingMore = false,
+                        ),
                     )
                 }
             },
         )
-    }
-
-    private suspend fun DocumentReviewCtx.currentQueueState(): DocumentReviewQueueState? {
-        var queueState: DocumentReviewQueueState? = null
-        withState<DocumentReviewState.Loading, _> {
-            queueState = this.queueState
-        }
-        withState<DocumentReviewState.AwaitingExtraction, _> {
-            queueState = this.queueState
-        }
-        withState<DocumentReviewState.Content, _> {
-            queueState = this.queueState
-        }
-        return queueState
-    }
-
-    private suspend fun DocumentReviewCtx.currentSelectedDocumentId(): DocumentId? {
-        var selectedDocumentId: DocumentId? = null
-        withState<DocumentReviewState.Loading, _> {
-            selectedDocumentId = selectedQueueDocumentId
-        }
-        withState<DocumentReviewState.AwaitingExtraction, _> {
-            selectedDocumentId = selectedQueueDocumentId ?: documentId
-        }
-        withState<DocumentReviewState.Content, _> {
-            selectedDocumentId = selectedQueueDocumentId ?: documentId
-        }
-        return selectedDocumentId
-    }
-
-    private suspend fun DocumentReviewCtx.ensureSelectedQueueDocumentId() {
-        val selectedDocumentId = currentSelectedDocumentId() ?: initialDocumentId
-        updateSelectedQueueDocumentId(selectedDocumentId)
-    }
-
-    private suspend fun DocumentReviewCtx.updateQueueState(
-        transform: (DocumentReviewQueueState?) -> DocumentReviewQueueState?
-    ) {
-        updateState {
-            when (this) {
-                is DocumentReviewState.Loading -> copy(queueState = transform(queueState))
-                is DocumentReviewState.AwaitingExtraction -> copy(queueState = transform(queueState))
-                is DocumentReviewState.Content -> copy(queueState = transform(queueState))
-                is DocumentReviewState.Error -> this
-            }
-        }
-    }
-
-    private suspend fun DocumentReviewCtx.updateSelectedQueueDocumentId(documentId: DocumentId?) {
-        updateState {
-            when (this) {
-                is DocumentReviewState.Loading -> copy(selectedQueueDocumentId = documentId)
-                is DocumentReviewState.AwaitingExtraction -> copy(selectedQueueDocumentId = documentId)
-                is DocumentReviewState.Content -> copy(selectedQueueDocumentId = documentId)
-                is DocumentReviewState.Error -> this
-            }
-        }
     }
 
     private fun mergeQueueItems(

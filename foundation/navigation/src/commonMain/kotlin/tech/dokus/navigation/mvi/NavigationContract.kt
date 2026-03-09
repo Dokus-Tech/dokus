@@ -20,20 +20,13 @@ import pro.respawn.flowmvi.api.MVIState
 // ============================================================================
 
 @Immutable
-sealed interface NavigationState : MVIState {
-
-    /**
-     * Loading state while initializing preferences.
-     */
-    data object Loading : NavigationState
-
-    /**
-     * Ready state with expanded section states.
-     * @param expandedSections Map of section ID to expanded state
-     */
-    data class Ready(
-        val expandedSections: Map<String, Boolean> = emptyMap()
-    ) : NavigationState
+data class NavigationState(
+    val isReady: Boolean = false,
+    val expandedSections: Map<String, Boolean> = emptyMap(),
+) : MVIState {
+    companion object {
+        val initial by lazy { NavigationState() }
+    }
 }
 
 // ============================================================================

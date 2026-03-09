@@ -4,6 +4,7 @@ import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
+import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.init
 import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.domain.exceptions.asDokusException
@@ -11,6 +12,8 @@ import tech.dokus.domain.model.auth.SessionDto
 import tech.dokus.features.auth.usecases.ListSessionsUseCase
 import tech.dokus.features.auth.usecases.RevokeOtherSessionsUseCase
 import tech.dokus.features.auth.usecases.RevokeSessionUseCase
+import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.platform.Logger
 import kotlin.time.Clock
 
@@ -25,7 +28,7 @@ internal class MySessionsContainer(
     private val logger = Logger.forClass<MySessionsContainer>()
 
     override val store: Store<MySessionsState, MySessionsIntent, MySessionsAction> =
-        store(MySessionsState.Loading) {
+        store(MySessionsState.initial) {
             init { intent(MySessionsIntent.Load) }
 
             reduce { intent ->
@@ -42,18 +45,16 @@ internal class MySessionsContainer(
         listSessionsUseCase().fold(
             onSuccess = { sessions ->
                 updateState {
-                    MySessionsState.Loaded(
-                        sessions = sessions.onlyActiveSessions()
-                    )
+                    copy(sessions = DokusState.success(sessions.onlyActiveSessions()))
                 }
             },
             onFailure = { error ->
                 logger.e(error) { "Failed to load sessions" }
                 updateState {
-                    MySessionsState.Error(
+                    copy(sessions = DokusState.error(
                         exception = error.asDokusException,
                         retryHandler = { intent(MySessionsIntent.Load) }
-                    )
+                    ))
                 }
             }
         )
@@ -68,34 +69,24 @@ internal class MySessionsContainer(
             onFailure = { error ->
                 val dokusError = error.asDokusException
                 logger.e(error) { "Failed to revoke session: ${intent.sessionId}" }
-                var keepLoadedState = false
-                updateState {
-                    when (this) {
-                        is MySessionsState.Loaded -> {
-                            keepLoadedState = true
-                            this
+                withState {
+                    if (sessions.isSuccess()) {
+                        action(MySessionsAction.ShowError(dokusError))
+                    } else {
+                        updateState {
+                            copy(sessions = DokusState.error(
+                                exception = dokusError,
+                                retryHandler = { this@revokeSession.intent(MySessionsIntent.Load) }
+                            ))
                         }
-
-                        else -> MySessionsState.Error(
-                            exception = dokusError,
-                            retryHandler = { this@revokeSession.intent(MySessionsIntent.Load) }
-                        )
                     }
-                }
-                if (keepLoadedState) {
-                    action(MySessionsAction.ShowError(dokusError))
                 }
             }
         )
     }
 
     private suspend fun MySessionsCtx.revokeOthers() {
-        updateState {
-            when (this) {
-                is MySessionsState.Loaded -> copy(isRevokingOthers = true)
-                else -> this
-            }
-        }
+        updateState { copy(isRevokingOthers = true) }
 
         revokeOtherSessionsUseCase().fold(
             onSuccess = {
@@ -105,22 +96,18 @@ internal class MySessionsContainer(
             onFailure = { error ->
                 val dokusError = error.asDokusException
                 logger.e(error) { "Failed to revoke other sessions" }
-                var keepLoadedState = false
-                updateState {
-                    when (this) {
-                        is MySessionsState.Loaded -> {
-                            keepLoadedState = true
-                            copy(isRevokingOthers = false)
+                updateState { copy(isRevokingOthers = false) }
+                withState {
+                    if (sessions.isSuccess()) {
+                        action(MySessionsAction.ShowError(dokusError))
+                    } else {
+                        updateState {
+                            copy(sessions = DokusState.error(
+                                exception = dokusError,
+                                retryHandler = { intent(MySessionsIntent.Load) }
+                            ))
                         }
-
-                        else -> MySessionsState.Error(
-                            exception = dokusError,
-                            retryHandler = { intent(MySessionsIntent.Load) }
-                        )
                     }
-                }
-                if (keepLoadedState) {
-                    action(MySessionsAction.ShowError(dokusError))
                 }
             }
         )

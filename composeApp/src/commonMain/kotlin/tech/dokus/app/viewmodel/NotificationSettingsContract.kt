@@ -4,25 +4,19 @@ import androidx.compose.runtime.Immutable
 import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
-import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.enums.NotificationType
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.NotificationPreferenceDto
 import tech.dokus.foundation.app.state.DokusState
 
 @Immutable
-sealed interface NotificationSettingsState : MVIState, DokusState<Nothing> {
-    data object Loading : NotificationSettingsState
-
-    data class Content(
-        val preferences: List<NotificationPreferenceDto> = emptyList(),
-        val updatingTypes: Set<NotificationType> = emptySet(),
-    ) : NotificationSettingsState
-
-    data class Error(
-        override val exception: DokusException,
-        override val retryHandler: RetryHandler,
-    ) : NotificationSettingsState, DokusState.Error<Nothing>
+data class NotificationSettingsState(
+    val preferences: DokusState<List<NotificationPreferenceDto>> = DokusState.loading(),
+    val updatingTypes: Set<NotificationType> = emptySet(),
+) : MVIState {
+    companion object {
+        val initial by lazy { NotificationSettingsState() }
+    }
 }
 
 @Immutable

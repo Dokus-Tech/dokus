@@ -10,8 +10,11 @@ import tech.dokus.domain.model.auth.AccountMeResponse
 import tech.dokus.features.auth.usecases.GetAccountMeUseCase
 import tech.dokus.features.auth.usecases.RefreshSessionNowUseCase
 import tech.dokus.features.auth.usecases.SelectTenantUseCase
+import tech.dokus.foundation.app.state.exceptionIfError
+import tech.dokus.foundation.app.state.isError
 import kotlin.test.Test
 import kotlin.test.assertIs
+import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class WorkspaceSelectContainerTest {
@@ -28,8 +31,9 @@ class WorkspaceSelectContainerTest {
 
         container.store.subscribeAndTest {
             advanceUntilIdle()
-            val state = assertIs<WorkspaceSelectState.Error>(states.value)
-            assertIs<DokusException.NotAuthenticated>(state.exception)
+            val state = states.value
+            assertTrue(state.workspaces.isError())
+            assertIs<DokusException.NotAuthenticated>(state.workspaces.exceptionIfError())
         }
     }
 }

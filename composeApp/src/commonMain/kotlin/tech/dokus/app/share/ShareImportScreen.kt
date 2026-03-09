@@ -56,7 +56,7 @@ internal fun ShareImportScreen(
     val spacing = MaterialTheme.dokusSpacing
     val sizing = MaterialTheme.dokusSizing
     ShareImportBackHandler(
-        enabled = state is ShareImportState.Uploading || state is ShareImportState.SuccessPulse
+        enabled = state.phase == ShareImportPhase.Uploading || state.phase == ShareImportPhase.Success
     )
 
     Scaffold(
@@ -76,11 +76,11 @@ internal fun ShareImportScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            when (state) {
-                ShareImportState.LoadingContext -> LoadingContextContent()
-                is ShareImportState.Uploading -> UploadingContent(state)
-                is ShareImportState.SuccessPulse -> SuccessContent(state)
-                is ShareImportState.Error -> ErrorContent(state, onIntent)
+            when (state.phase) {
+                ShareImportPhase.LoadingContext -> LoadingContextContent()
+                ShareImportPhase.Uploading -> UploadingContent(state)
+                ShareImportPhase.Success -> SuccessContent(state)
+                ShareImportPhase.Error -> ErrorContent(state, onIntent)
             }
         }
     }
@@ -99,7 +99,7 @@ private fun LoadingContextContent() {
 }
 
 @Composable
-private fun UploadingContent(state: ShareImportState.Uploading) {
+private fun UploadingContent(state: ShareImportState) {
     val spacing = MaterialTheme.dokusSpacing
     val sizing = MaterialTheme.dokusSizing
     Text(
@@ -143,7 +143,7 @@ private fun UploadingContent(state: ShareImportState.Uploading) {
 }
 
 @Composable
-private fun SuccessContent(state: ShareImportState.SuccessPulse) {
+private fun SuccessContent(state: ShareImportState) {
     val spacing = MaterialTheme.dokusSpacing
     AnimatedCheck(play = true)
     Spacer(modifier = Modifier.height(spacing.large + spacing.xxSmall))
@@ -179,7 +179,7 @@ private fun SuccessContent(state: ShareImportState.SuccessPulse) {
 
 @Composable
 private fun ErrorContent(
-    state: ShareImportState.Error,
+    state: ShareImportState,
     onIntent: (ShareImportIntent) -> Unit
 ) {
     val spacing = MaterialTheme.dokusSpacing
@@ -190,7 +190,7 @@ private fun ErrorContent(
     )
     Spacer(modifier = Modifier.height(spacing.small))
     Text(
-        text = state.exception.localized,
+        text = state.exception?.localized.orEmpty(),
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         textAlign = TextAlign.Center
@@ -255,7 +255,8 @@ private fun ShareImportScreenUploadingPreview(
 ) {
     TestWrapper(parameters) {
         ShareImportScreen(
-            state = ShareImportState.Uploading(
+            state = ShareImportState(
+                phase = ShareImportPhase.Uploading,
                 currentFileName = "invoice-2026-001.pdf",
                 currentFileIndex = 1,
                 totalFiles = 3,
@@ -275,7 +276,8 @@ private fun ShareImportScreenSuccessPreview(
 ) {
     TestWrapper(parameters) {
         ShareImportScreen(
-            state = ShareImportState.SuccessPulse(
+            state = ShareImportState(
+                phase = ShareImportPhase.Success,
                 primaryFileName = "invoice-2026-001.pdf",
                 additionalFileCount = 2,
                 uploadedCount = 3,

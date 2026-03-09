@@ -13,7 +13,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import tech.dokus.foundation.aura.components.common.DokusLoader
+import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.app.state.isError
+import tech.dokus.foundation.app.state.isLoading
+import tech.dokus.foundation.app.state.isSuccess
+import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.app.screens.settings.components.SettingsSkeleton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -45,7 +50,9 @@ import tech.dokus.aura.resources.notification_pref_section_peppol
 import tech.dokus.aura.resources.notification_pref_subtitle
 import tech.dokus.aura.resources.settings_notifications
 import tech.dokus.aura.resources.state_retry
+import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.enums.NotificationType
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.NotificationPreferenceDto
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.components.PPrimaryButton
@@ -98,54 +105,35 @@ internal fun NotificationPreferencesContent(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
-    when (state) {
-        NotificationPreferencesState.Loading -> {
-            Box(
-                modifier = modifier
-                    .padding(contentPadding)
-                    .fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                DokusLoader()
-            }
+    when {
+        state.preferences.isLoading() -> {
+            SettingsSkeleton(
+                sectionCount = 3,
+                modifier = modifier.padding(contentPadding),
+            )
         }
 
-        is NotificationPreferencesState.Content -> {
+        state.preferences.isError() -> {
+            DokusErrorContent(
+                exception = state.preferences.exception,
+                retryHandler = state.preferences.retryHandler,
+                modifier = Modifier.fillMaxSize().padding(contentPadding),
+            )
+        }
+
+        state.preferences.isSuccess() -> {
             NotificationPreferencesContentScreen(
                 state = state,
                 onIntent = onIntent,
                 modifier = modifier.padding(contentPadding)
             )
         }
-
-        is NotificationPreferencesState.Error -> {
-            Box(
-                modifier = modifier
-                    .padding(contentPadding)
-                    .fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = state.exception.message
-                            ?: stringResource(Res.string.notification_pref_load_failed),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.error
-                    )
-                    Spacer(Modifier.height(16.dp))
-                    PPrimaryButton(
-                        text = stringResource(Res.string.state_retry),
-                        onClick = { onIntent(NotificationPreferencesIntent.Load) }
-                    )
-                }
-            }
-        }
     }
 }
 
 @Composable
 private fun NotificationPreferencesContentScreen(
-    state: NotificationPreferencesState.Content,
+    state: NotificationPreferencesState,
     onIntent: (NotificationPreferencesIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -242,7 +230,7 @@ private fun NotificationSection(
     expanded: Boolean,
     onToggle: () -> Unit,
     rows: List<NotificationType>,
-    state: NotificationPreferencesState.Content,
+    state: NotificationPreferencesState,
     onIntent: (NotificationPreferencesIntent) -> Unit,
     hint: String? = null,
 ) {
@@ -378,6 +366,37 @@ private fun RequiredBadge() {
 
 @Preview
 @Composable
+private fun NotificationPreferencesLoadingPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
+) {
+    TestWrapper(parameters) {
+        NotificationPreferencesContent(
+            state = NotificationPreferencesState(),
+            onIntent = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun NotificationPreferencesErrorPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
+) {
+    TestWrapper(parameters) {
+        NotificationPreferencesContent(
+            state = NotificationPreferencesState(
+                preferences = DokusState.error(
+                    exception = DokusException.ConnectionError(),
+                    retryHandler = RetryHandler { },
+                ),
+            ),
+            onIntent = {},
+        )
+    }
+}
+
+@Preview
+@Composable
 private fun NotificationPreferencesContentPreview(
     @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
 ) {
@@ -400,8 +419,8 @@ private fun NotificationPreferencesContentPreview(
     )
     TestWrapper(parameters) {
         NotificationPreferencesContent(
-            state = NotificationPreferencesState.Content(
-                preferences = samplePreferences,
+            state = NotificationPreferencesState(
+                preferences = DokusState.success(samplePreferences),
             ),
             onIntent = {},
         )

@@ -53,7 +53,7 @@ private val CanonicalPreviewWidth = Constraints.DocumentDetail.previewMaxWidth +
 
 @Composable
 internal fun CanonicalCenterPane(
-    state: DocumentReviewState.Content,
+    state: DocumentReviewState,
     onIntent: (DocumentReviewIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -89,7 +89,7 @@ internal fun CanonicalCenterPane(
         ) {
             CanonicalInvoiceDocumentCard(
                 draft = invoiceDraft,
-                counterpartyName = counterparty.name ?: state.document.document.filename,
+                counterpartyName = counterparty.name ?: state.documentRecord?.document?.filename ?: "",
                 counterpartyAddress = counterparty.address,
                 modifier = Modifier
                     .width(CanonicalPreviewWidth)
@@ -136,7 +136,7 @@ internal fun CanonicalCenterPane(
                         verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall),
                     ) {
                         Text(
-                            text = counterparty.name ?: state.document.document.filename,
+                            text = counterparty.name ?: state.documentRecord?.document?.filename ?: "",
                             style = MaterialTheme.typography.displaySmall.copy(fontSize = 20.sp),
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface,
@@ -258,7 +258,7 @@ private fun PdfFallbackCenter(
 
 @Composable
 private fun SourceViewerCenter(
-    contentState: DocumentReviewState.Content,
+    contentState: DocumentReviewState,
     viewerState: SourceEvidenceViewerState,
     onToggleTechnicalDetails: () -> Unit,
     onRetry: () -> Unit,

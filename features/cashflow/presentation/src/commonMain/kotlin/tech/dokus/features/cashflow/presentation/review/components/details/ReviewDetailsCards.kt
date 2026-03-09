@@ -71,7 +71,7 @@ import tech.dokus.foundation.aura.style.textMuted
  */
 @Composable
 internal fun CounterpartyCard(
-    state: DocumentReviewState.Content,
+    state: DocumentReviewState,
     onIntent: (DocumentReviewIntent) -> Unit,
     onCorrectContact: () -> Unit,
     onCreateContact: () -> Unit,
@@ -230,7 +230,7 @@ private fun PendingContactCard(
  */
 @Composable
 internal fun InvoiceDetailsCard(
-    state: DocumentReviewState.Content,
+    state: DocumentReviewState,
     isAccountantReadOnly: Boolean = false,
     onIntent: (DocumentReviewIntent) -> Unit,
     modifier: Modifier = Modifier,

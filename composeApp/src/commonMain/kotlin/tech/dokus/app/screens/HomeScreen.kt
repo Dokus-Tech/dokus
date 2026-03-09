@@ -123,7 +123,7 @@ internal fun HomeRoute(
         container.store.intent(HomeIntent.ScreenAppeared)
     }
 
-    val shellState = state as? HomeState.Ready ?: HomeState.Ready()
+    val shellState = state
     val surfaceAvailability = shellState.surfaceAvailability
     val tenant = (shellState.tenantState as? DokusState.Success<Tenant>)?.data
     val user = (shellState.userState as? DokusState.Success<User>)?.data

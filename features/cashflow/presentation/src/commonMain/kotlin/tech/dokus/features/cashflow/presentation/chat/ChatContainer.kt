@@ -31,6 +31,8 @@ import tech.dokus.features.cashflow.usecases.GetChatConfigurationUseCase
 import tech.dokus.features.cashflow.usecases.GetChatSessionHistoryUseCase
 import tech.dokus.features.cashflow.usecases.ListChatSessionsUseCase
 import tech.dokus.features.cashflow.usecases.SendChatMessageUseCase
+import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.platform.Logger
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -81,7 +83,7 @@ internal class ChatContainer(
     private var loadSessionsJob: Job? = null
 
     override val store: Store<ChatState, ChatIntent, ChatAction> =
-        store(ChatState.Loading) {
+        store(ChatState.initial) {
             reduce { intent ->
                 when (intent) {
                     // === Initialization ===
@@ -125,32 +127,40 @@ internal class ChatContainer(
 
     private suspend fun ChatCtx.handleInitSingleDocChat(docId: DocumentId) {
         logger.d { "Initializing single-doc chat for document: $docId" }
-        updateState { ChatState.Loading }
+        updateState { copy(session = DokusState.loading()) }
 
         // Load configuration
         val config = loadConfiguration()
 
         updateState {
-            ChatState.Content(
-                scope = ChatScope.SingleDoc,
-                documentId = docId,
-                documentName = null, // TODO: Fetch document name if needed
-                configuration = config
+            copy(
+                session = DokusState.success(
+                    ChatSessionData(
+                        scope = ChatScope.SingleDoc,
+                        documentId = docId,
+                        documentName = null, // TODO: Fetch document name if needed
+                        configuration = config
+                    )
+                )
             )
         }
     }
 
     private suspend fun ChatCtx.handleInitCrossDocChat() {
         logger.d { "Initializing cross-doc chat" }
-        updateState { ChatState.Loading }
+        updateState { copy(session = DokusState.loading()) }
 
         // Load configuration
         val config = loadConfiguration()
 
         updateState {
-            ChatState.Content(
-                scope = ChatScope.AllDocs,
-                configuration = config
+            copy(
+                session = DokusState.success(
+                    ChatSessionData(
+                        scope = ChatScope.AllDocs,
+                        configuration = config
+                    )
+                )
             )
         }
     }
@@ -158,7 +168,8 @@ internal class ChatContainer(
     private suspend fun ChatCtx.handleLoadSession(sessionId: ChatSessionId) {
         logger.d { "Loading session: $sessionId" }
 
-        withState<ChatState.Content, _> {
+        withState {
+            val data = (session as? DokusState.Success)?.data ?: return@withState
             updateState { copy(isSending = true) }
 
             getChatSessionHistoryUseCase(
@@ -171,11 +182,15 @@ internal class ChatContainer(
                     logger.i { "Loaded session with ${history.messages.size} messages" }
                     updateState {
                         copy(
-                            sessionId = sessionId,
-                            messages = history.messages,
-                            scope = history.session.scope,
-                            documentId = history.session.documentId,
-                            documentName = history.session.documentName,
+                            session = DokusState.success(
+                                data.copy(
+                                    sessionId = sessionId,
+                                    messages = history.messages,
+                                    scope = history.session.scope,
+                                    documentId = history.session.documentId,
+                                    documentName = history.session.documentName,
+                                )
+                            ),
                             isSending = false,
                             showSessionPicker = false
                         )
@@ -193,9 +208,10 @@ internal class ChatContainer(
     }
 
     private suspend fun ChatCtx.handleRefresh() {
-        withState<ChatState.Content, _> {
-            if (sessionId != null) {
-                handleLoadSession(sessionId)
+        withState {
+            val data = (session as? DokusState.Success)?.data ?: return@withState
+            if (data.sessionId != null) {
+                handleLoadSession(data.sessionId)
             }
         }
     }
@@ -205,19 +221,16 @@ internal class ChatContainer(
     // =========================================================================
 
     private suspend fun ChatCtx.handleUpdateInputText(text: String) {
-        withState<ChatState.Content, _> {
-            updateState { copy(inputText = text) }
-        }
+        updateState { copy(inputText = text) }
     }
 
     private suspend fun ChatCtx.handleClearInput() {
-        withState<ChatState.Content, _> {
-            updateState { copy(inputText = "") }
-        }
+        updateState { copy(inputText = "") }
     }
 
     private suspend fun ChatCtx.handleSendMessage() {
-        withState<ChatState.Content, _> {
+        withState {
+            val data = (session as? DokusState.Success)?.data ?: return@withState
             val message = inputText.trim()
             if (message.isBlank()) return@withState
             if (isSending) return@withState
@@ -225,12 +238,14 @@ internal class ChatContainer(
             logger.d { "Sending message: ${message.take(MessagePreviewLength)}..." }
 
             // Create optimistic user message
-            val optimisticUserMessage = createOptimisticUserMessage(message)
+            val optimisticUserMessage = data.createOptimisticUserMessage(message)
 
             // Update state with optimistic user message and clear input
             updateState {
                 copy(
-                    messages = messages + optimisticUserMessage,
+                    session = DokusState.success(
+                        data.copy(messages = data.messages + optimisticUserMessage)
+                    ),
                     inputText = "",
                     isSending = true
                 )
@@ -244,13 +259,16 @@ internal class ChatContainer(
 
             // Send message to API
             sendMessageJob = launch {
-                val docId = if (scope == ChatScope.SingleDoc) documentId else null
-                if (scope == ChatScope.SingleDoc && docId == null) {
+                val docId = if (data.scope == ChatScope.SingleDoc) data.documentId else null
+                if (data.scope == ChatScope.SingleDoc && docId == null) {
                     action(ChatAction.ShowError(DokusException.ChatNoDocumentSelected))
-                    withState<ChatState.Content, _> {
+                    withState {
+                        val currentData = (session as? DokusState.Success)?.data ?: return@withState
                         updateState {
                             copy(
-                                messages = messages.dropLast(1),
+                                session = DokusState.success(
+                                    currentData.copy(messages = currentData.messages.dropLast(1))
+                                ),
                                 isSending = false
                             )
                         }
@@ -260,9 +278,9 @@ internal class ChatContainer(
 
                 val result = sendChatMessageUseCase(
                     message = message,
-                    scope = scope,
+                    scope = data.scope,
                     documentId = docId,
-                    sessionId = sessionId
+                    sessionId = data.sessionId
                 )
 
                 handleSendMessageResult(result, optimisticUserMessage)
@@ -282,18 +300,23 @@ internal class ChatContainer(
                         "Citations: ${response.assistantMessage.citations?.size ?: 0}"
                 }
 
-                withState<ChatState.Content, _> {
+                withState {
+                    val data = (session as? DokusState.Success)?.data ?: return@withState
                     // Replace optimistic message with real user message
                     // and add assistant message
-                    val updatedMessages = messages
+                    val updatedMessages = data.messages
                         .dropLast(1) // Remove optimistic message
                         .plus(response.userMessage)
                         .plus(response.assistantMessage)
 
                     updateState {
                         copy(
-                            sessionId = response.sessionId,
-                            messages = updatedMessages,
+                            session = DokusState.success(
+                                data.copy(
+                                    sessionId = response.sessionId,
+                                    messages = updatedMessages,
+                                )
+                            ),
                             isSending = false
                         )
                     }
@@ -303,11 +326,14 @@ internal class ChatContainer(
             onFailure = { error ->
                 logger.e(error) { "Failed to send message" }
 
-                withState<ChatState.Content, _> {
+                withState {
+                    val data = (session as? DokusState.Success)?.data ?: return@withState
                     // Remove the optimistic message on failure
                     updateState {
                         copy(
-                            messages = messages.dropLast(1),
+                            session = DokusState.success(
+                                data.copy(messages = data.messages.dropLast(1))
+                            ),
                             inputText = optimisticUserMessage.content, // Restore message
                             isSending = false
                         )
@@ -326,14 +352,19 @@ internal class ChatContainer(
     private suspend fun ChatCtx.handleSwitchToSingleDoc(docId: DocumentId) {
         logger.d { "Switching to single-doc mode: $docId" }
 
-        withState<ChatState.Content, _> {
+        withState {
+            val data = (session as? DokusState.Success)?.data ?: return@withState
             // Clear current session and start fresh
             updateState {
                 copy(
-                    scope = ChatScope.SingleDoc,
-                    documentId = documentId,
-                    sessionId = null,
-                    messages = emptyList()
+                    session = DokusState.success(
+                        data.copy(
+                            scope = ChatScope.SingleDoc,
+                            documentId = data.documentId,
+                            sessionId = null,
+                            messages = emptyList()
+                        )
+                    )
                 )
             }
         }
@@ -342,15 +373,20 @@ internal class ChatContainer(
     private suspend fun ChatCtx.handleSwitchToCrossDoc() {
         logger.d { "Switching to cross-doc mode" }
 
-        withState<ChatState.Content, _> {
+        withState {
+            val data = (session as? DokusState.Success)?.data ?: return@withState
             // Clear current session and start fresh
             updateState {
                 copy(
-                    scope = ChatScope.AllDocs,
-                    documentId = null,
-                    documentName = null,
-                    sessionId = null,
-                    messages = emptyList()
+                    session = DokusState.success(
+                        data.copy(
+                            scope = ChatScope.AllDocs,
+                            documentId = null,
+                            documentName = null,
+                            sessionId = null,
+                            messages = emptyList()
+                        )
+                    )
                 )
             }
         }
@@ -361,7 +397,7 @@ internal class ChatContainer(
     // =========================================================================
 
     private suspend fun ChatCtx.handleToggleCitation(citationId: String) {
-        withState<ChatState.Content, _> {
+        withState {
             val updated = if (citationId in expandedCitationIds) {
                 expandedCitationIds - citationId
             } else {
@@ -372,16 +408,15 @@ internal class ChatContainer(
     }
 
     private suspend fun ChatCtx.handleExpandAllCitations() {
-        withState<ChatState.Content, _> {
-            val allCitationIds = allCitations.map { it.chunkId }.toSet()
+        withState {
+            val data = (session as? DokusState.Success)?.data ?: return@withState
+            val allCitationIds = data.allCitations.map { it.chunkId }.toSet()
             updateState { copy(expandedCitationIds = allCitationIds) }
         }
     }
 
     private suspend fun ChatCtx.handleCollapseAllCitations() {
-        withState<ChatState.Content, _> {
-            updateState { copy(expandedCitationIds = emptySet()) }
-        }
+        updateState { copy(expandedCitationIds = emptySet()) }
     }
 
     // =========================================================================
@@ -389,26 +424,27 @@ internal class ChatContainer(
     // =========================================================================
 
     private suspend fun ChatCtx.handleShowSessionPicker() {
-        withState<ChatState.Content, _> {
-            updateState { copy(showSessionPicker = true) }
-            handleLoadRecentSessions()
-        }
+        updateState { copy(showSessionPicker = true) }
+        handleLoadRecentSessions()
     }
 
     private suspend fun ChatCtx.handleHideSessionPicker() {
-        withState<ChatState.Content, _> {
-            updateState { copy(showSessionPicker = false) }
-        }
+        updateState { copy(showSessionPicker = false) }
     }
 
     private suspend fun ChatCtx.handleStartNewConversation() {
         logger.d { "Starting new conversation" }
 
-        withState<ChatState.Content, _> {
+        withState {
+            val data = (session as? DokusState.Success)?.data ?: return@withState
             updateState {
                 copy(
-                    sessionId = null,
-                    messages = emptyList(),
+                    session = DokusState.success(
+                        data.copy(
+                            sessionId = null,
+                            messages = emptyList(),
+                        )
+                    ),
                     expandedCitationIds = emptySet(),
                     showSessionPicker = false
                 )
@@ -418,20 +454,28 @@ internal class ChatContainer(
     }
 
     private suspend fun ChatCtx.handleLoadRecentSessions() {
-        withState<ChatState.Content, _> {
+        withState {
+            val data = (session as? DokusState.Success)?.data ?: return@withState
             loadSessionsJob?.cancel()
 
             loadSessionsJob = launch {
                 listChatSessionsUseCase(
-                    scope = scope.takeIf { it == ChatScope.AllDocs },
-                    documentId = documentId,
+                    scope = data.scope.takeIf { it == ChatScope.AllDocs },
+                    documentId = data.documentId,
                     page = 0,
                     limit = RecentSessionsLimit
                 ).fold(
                     onSuccess = { response ->
                         logger.d { "Loaded ${response.items.size} recent sessions" }
-                        withState<ChatState.Content, _> {
-                            updateState { copy(recentSessions = response.items) }
+                        withState {
+                            val currentData = (session as? DokusState.Success)?.data ?: return@withState
+                            updateState {
+                                copy(
+                                    session = DokusState.success(
+                                        currentData.copy(recentSessions = response.items)
+                                    )
+                                )
+                            }
                         }
                     },
                     onFailure = { error ->
@@ -472,7 +516,7 @@ internal class ChatContainer(
     }
 
     @OptIn(kotlin.uuid.ExperimentalUuidApi::class, ExperimentalTime::class)
-    private fun ChatState.Content.createOptimisticUserMessage(content: String): ChatMessageDto {
+    private fun ChatSessionData.createOptimisticUserMessage(content: String): ChatMessageDto {
         val nowInstant = Instant.fromEpochMilliseconds(currentTimeMillis)
         val now = nowInstant.toLocalDateTime(TimeZone.currentSystemDefault())
 

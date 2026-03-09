@@ -33,10 +33,11 @@ private fun CanonicalCenterPaneSourcePreview(
 ) {
     TestWrapper(parameters) {
         val baseState = previewReviewContentState(entryStatus = CashflowEntryStatus.Open)
-        val peppolSourceId = baseState.document.sources
+        val sources = baseState.documentRecord?.sources.orEmpty()
+        val peppolSourceId = sources
             .firstOrNull { it.sourceChannel == DocumentSource.Peppol }
             ?.id
-            ?: baseState.document.sources.first().id
+            ?: sources.first().id
         val sourceViewerState = previewSourceEvidenceViewerState(
             sourceType = DocumentSource.Peppol,
             previewState = DocumentPreviewState.NotPdf,

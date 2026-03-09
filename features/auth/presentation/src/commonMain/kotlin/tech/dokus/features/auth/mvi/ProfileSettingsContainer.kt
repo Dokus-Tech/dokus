@@ -5,7 +5,6 @@ import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.dsl.updateStateImmediate
-import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.init
 import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.domain.Name
@@ -17,6 +16,8 @@ import tech.dokus.features.auth.usecases.UploadUserAvatarUseCase
 import tech.dokus.features.auth.usecases.UpdateProfileUseCase
 import tech.dokus.features.auth.usecases.WatchCurrentUserUseCase
 import tech.dokus.foundation.app.picker.inferImageContentType
+import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.platform.Logger
 
 internal typealias ProfileSettingsCtx =
@@ -39,7 +40,7 @@ class ProfileSettingsContainer(
     private val logger = Logger.forClass<ProfileSettingsContainer>()
 
     override val store: Store<ProfileSettingsState, ProfileSettingsIntent, ProfileSettingsAction> =
-        store(ProfileSettingsState.Loading) {
+        store(ProfileSettingsState.initial) {
             configure {
                 name = "ProfileSettingsStore"
             }
@@ -68,18 +69,21 @@ class ProfileSettingsContainer(
 
     private suspend fun ProfileSettingsCtx.loadProfile() {
         logger.d { "Loading user profile" }
+        updateState { copy(user = user.asLoading) }
 
         getCurrentUser().fold(
             onSuccess = { user ->
                 logger.i { "User profile loaded: ${user.email.value}" }
-                updateState { ProfileSettingsState.Viewing(user = user) }
+                updateState { copy(user = DokusState.success(user)) }
             },
             onFailure = { error ->
                 logger.e(error) { "Failed to load user profile" }
                 updateState {
-                    ProfileSettingsState.Error(
-                        exception = error.asDokusException,
-                        retryHandler = { intent(ProfileSettingsIntent.LoadProfile) }
+                    copy(
+                        user = DokusState.error(
+                            exception = error.asDokusException,
+                            retryHandler = { intent(ProfileSettingsIntent.LoadProfile) }
+                        )
                     )
                 }
             }
@@ -87,59 +91,52 @@ class ProfileSettingsContainer(
     }
 
     private suspend fun ProfileSettingsCtx.handleStartEditing() {
-        withState<ProfileSettingsState.Viewing, _> {
+        withState {
+            if (!user.isSuccess()) return@withState
+            val currentUser = user.data
             logger.d { "Started editing profile" }
             updateState {
-                ProfileSettingsState.Editing(
-                    user = user,
-                    editFirstName = user.firstName ?: Name(""),
-                    editLastName = user.lastName ?: Name("")
+                copy(
+                    isEditing = true,
+                    editFirstName = currentUser.firstName ?: Name(""),
+                    editLastName = currentUser.lastName ?: Name(""),
                 )
             }
         }
     }
 
     private suspend fun ProfileSettingsCtx.handleCancelEditing() {
-        withState<ProfileSettingsState.Editing, _> {
-            logger.d { "Cancelled editing profile" }
-            updateState { ProfileSettingsState.Viewing(user = user) }
+        logger.d { "Cancelled editing profile" }
+        updateState {
+            copy(
+                isEditing = false,
+                editFirstName = Name.Empty,
+                editLastName = Name.Empty,
+            )
         }
     }
 
     private suspend fun ProfileSettingsCtx.handleUpdateFirstName(value: Name) {
         updateState {
-            when (this) {
-                is ProfileSettingsState.Editing -> copy(editFirstName = value)
-                else -> this
-            }
+            if (isEditing) copy(editFirstName = value) else this
         }
     }
 
     private suspend fun ProfileSettingsCtx.handleUpdateLastName(value: Name) {
         updateState {
-            when (this) {
-                is ProfileSettingsState.Editing -> copy(editLastName = value)
-                else -> this
-            }
+            if (isEditing) copy(editLastName = value) else this
         }
     }
 
     private suspend fun ProfileSettingsCtx.handleSave() {
-        withState<ProfileSettingsState.Editing, _> {
+        withState {
+            if (!isEditing || !user.isSuccess()) return@withState
             logger.d { "Saving profile" }
 
-            val currentUser = user
             val currentEditFirstName = editFirstName
             val currentEditLastName = editLastName
 
-            // Transition to saving state
-            updateState {
-                ProfileSettingsState.Saving(
-                    user = currentUser,
-                    editFirstName = currentEditFirstName,
-                    editLastName = currentEditLastName
-                )
-            }
+            updateState { copy(isSaving = true) }
 
             val firstName = currentEditFirstName.takeIf { it.value.isNotBlank() }
             val lastName = currentEditLastName.takeIf { it.value.isNotBlank() }
@@ -148,19 +145,20 @@ class ProfileSettingsContainer(
                 onSuccess = { updatedUser ->
                     logger.i { "Profile saved successfully" }
                     watchCurrentUserUseCase.refresh()
-                    updateState { ProfileSettingsState.Viewing(user = updatedUser) }
+                    updateState {
+                        copy(
+                            user = DokusState.success(updatedUser),
+                            isEditing = false,
+                            isSaving = false,
+                            editFirstName = Name.Empty,
+                            editLastName = Name.Empty,
+                        )
+                    }
                     action(ProfileSettingsAction.ShowSaveSuccess)
                 },
                 onFailure = { error ->
                     logger.e(error) { "Failed to save profile" }
-                    // Return to editing state on error
-                    updateState {
-                        ProfileSettingsState.Editing(
-                            user = currentUser,
-                            editFirstName = currentEditFirstName,
-                            editLastName = currentEditLastName
-                        )
-                    }
+                    updateState { copy(isSaving = false) }
                     val exception = error.asDokusException
                     val displayException = if (exception is DokusException.Unknown) {
                         DokusException.ProfileSaveFailed
@@ -174,8 +172,10 @@ class ProfileSettingsContainer(
     }
 
     private suspend fun ProfileSettingsCtx.handleResendVerification() {
-        withState<ProfileSettingsState.Viewing, _> {
-            if (user.emailVerified) return@withState
+        withState {
+            if (!user.isSuccess()) return@withState
+            val currentUser = user.data
+            if (currentUser.emailVerified) return@withState
 
             updateState { copy(isResendingVerification = true) }
             resendVerificationEmailUseCase().fold(
@@ -192,9 +192,10 @@ class ProfileSettingsContainer(
     }
 
     private suspend fun ProfileSettingsCtx.handleUploadAvatar(imageBytes: ByteArray, filename: String) {
-        withState<ProfileSettingsState.Viewing, _> {
-            val currentUser = user
-            updateState { copy(avatarState = ProfileSettingsState.AvatarState.Uploading(0f)) }
+        withState {
+            if (!user.isSuccess()) return@withState
+            val currentUser = user.data
+            updateState { copy(avatarState = AvatarState.Uploading(0f)) }
 
             uploadUserAvatar(
                 userId = currentUser.id,
@@ -203,12 +204,7 @@ class ProfileSettingsContainer(
                 contentType = inferImageContentType(filename),
                 onProgress = { progress ->
                     updateStateImmediate {
-                        when (this) {
-                            is ProfileSettingsState.Viewing -> copy(
-                                avatarState = ProfileSettingsState.AvatarState.Uploading(progress)
-                            )
-                            else -> this
-                        }
+                        copy(avatarState = AvatarState.Uploading(progress))
                     }
                 }
             ).fold(
@@ -216,8 +212,8 @@ class ProfileSettingsContainer(
                     watchCurrentUserUseCase.refresh()
                     updateState {
                         copy(
-                            user = currentUser.copy(avatar = avatar),
-                            avatarState = ProfileSettingsState.AvatarState.Success
+                            user = DokusState.success(currentUser.copy(avatar = avatar)),
+                            avatarState = AvatarState.Success,
                         )
                     }
                 },
@@ -229,7 +225,7 @@ class ProfileSettingsContainer(
                         exception
                     }
                     updateState {
-                        copy(avatarState = ProfileSettingsState.AvatarState.Error(displayException))
+                        copy(avatarState = AvatarState.Error(displayException))
                     }
                     action(ProfileSettingsAction.ShowAvatarError(displayException))
                 }
@@ -238,9 +234,7 @@ class ProfileSettingsContainer(
     }
 
     private suspend fun ProfileSettingsCtx.handleResetAvatarState() {
-        withState<ProfileSettingsState.Viewing, _> {
-            updateState { copy(avatarState = ProfileSettingsState.AvatarState.Idle) }
-        }
+        updateState { copy(avatarState = AvatarState.Idle) }
     }
 
     private suspend fun ProfileSettingsCtx.handleChangePassword() {

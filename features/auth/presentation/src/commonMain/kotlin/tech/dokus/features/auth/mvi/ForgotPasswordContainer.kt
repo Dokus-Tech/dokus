@@ -30,7 +30,7 @@ internal class ForgotPasswordContainer(
     private val logger = Logger.forClass<ForgotPasswordContainer>()
 
     override val store: Store<ForgotPasswordState, ForgotPasswordIntent, ForgotPasswordAction> =
-        store(ForgotPasswordState.Idle()) {
+        store(ForgotPasswordState.initial) {
             reduce { intent ->
                 when (intent) {
                     is ForgotPasswordIntent.UpdateEmail -> handleUpdateEmail(intent.value)
@@ -41,12 +41,7 @@ internal class ForgotPasswordContainer(
 
     private suspend fun ForgotPasswordCtx.handleUpdateEmail(value: Email) {
         updateState {
-            when (this) {
-                is ForgotPasswordState.Idle -> copy(email = value)
-                is ForgotPasswordState.Error -> ForgotPasswordState.Idle(email = value)
-                is ForgotPasswordState.Success -> ForgotPasswordState.Idle(email = value)
-                is ForgotPasswordState.Submitting -> this
-            }
+            copy(email = value, error = null)
         }
     }
 
@@ -57,7 +52,7 @@ internal class ForgotPasswordContainer(
         // Transition to submitting state and capture values
         updateState {
             email = this.email
-            ForgotPasswordState.Submitting(email = this.email)
+            copy(isSubmitting = true, error = null)
         }
 
         logger.d { "Password reset attempt started for email: ${email.value.take(EmailPreviewLength)}***" }
@@ -69,18 +64,14 @@ internal class ForgotPasswordContainer(
                     onSuccess = {
                         logger.i { "Password reset requested successfully" }
                         updateState {
-                            ForgotPasswordState.Success(email = email)
+                            copy(isSubmitting = false, isSuccess = true)
                         }
                         action(ForgotPasswordAction.NavigateBack)
                     },
                     onFailure = { error ->
                         logger.e(error) { "Password reset request failed" }
                         updateState {
-                            ForgotPasswordState.Error(
-                                email = email,
-                                exception = error.asDokusException,
-                                retryHandler = { intent(ForgotPasswordIntent.SubmitClicked) }
-                            )
+                            copy(isSubmitting = false, error = error.asDokusException)
                         }
                     }
                 )
@@ -88,11 +79,7 @@ internal class ForgotPasswordContainer(
             onFailure = { error ->
                 logger.e(error) { "Password reset validation failed" }
                 updateState {
-                    ForgotPasswordState.Error(
-                        email = email,
-                        exception = error.asDokusException,
-                        retryHandler = { intent(ForgotPasswordIntent.SubmitClicked) }
-                    )
+                    copy(isSubmitting = false, error = error.asDokusException)
                 }
             }
         )

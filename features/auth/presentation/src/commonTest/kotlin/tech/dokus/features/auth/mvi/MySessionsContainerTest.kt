@@ -11,6 +11,7 @@ import tech.dokus.domain.model.auth.SessionDto
 import tech.dokus.features.auth.usecases.ListSessionsUseCase
 import tech.dokus.features.auth.usecases.RevokeOtherSessionsUseCase
 import tech.dokus.features.auth.usecases.RevokeSessionUseCase
+import tech.dokus.foundation.app.state.DokusState
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -53,10 +54,13 @@ class MySessionsContainerTest {
         container.store.subscribeAndTest {
             advanceUntilIdle()
 
-            val loaded = assertIs<MySessionsState.Loaded>(states.value)
+            val state = states.value
+            val sessions = assertIs<DokusState.Success<*>>(state.sessions)
+            @Suppress("UNCHECKED_CAST")
+            val sessionList = sessions.data as List<SessionDto>
             assertEquals(
                 listOf(currentSession.id, activeOther.id),
-                loaded.sessions.map { it.id }
+                sessionList.map { it.id }
             )
         }
     }
@@ -79,9 +83,12 @@ class MySessionsContainerTest {
             emit(MySessionsIntent.RevokeOthers)
             advanceUntilIdle()
 
-            val loaded = assertIs<MySessionsState.Loaded>(states.value)
-            assertEquals(listOf(currentSession.id), loaded.sessions.map { it.id })
-            assertFalse(loaded.isRevokingOthers)
+            val state = states.value
+            val sessions = assertIs<DokusState.Success<*>>(state.sessions)
+            @Suppress("UNCHECKED_CAST")
+            val sessionList = sessions.data as List<SessionDto>
+            assertEquals(listOf(currentSession.id), sessionList.map { it.id })
+            assertFalse(state.isRevokingOthers)
         }
     }
 }

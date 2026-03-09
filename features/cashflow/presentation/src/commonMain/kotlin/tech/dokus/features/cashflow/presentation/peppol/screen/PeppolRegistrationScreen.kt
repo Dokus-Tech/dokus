@@ -61,9 +61,15 @@ import tech.dokus.aura.resources.peppol_reg_waiting_body
 import tech.dokus.aura.resources.peppol_reg_waiting_subtitle
 import tech.dokus.aura.resources.peppol_reg_waiting_title
 import tech.dokus.aura.resources.state_retry
+import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.features.cashflow.presentation.peppol.mvi.PeppolRegistrationIntent
+import tech.dokus.features.cashflow.presentation.peppol.mvi.PeppolRegistrationPhase
 import tech.dokus.features.cashflow.presentation.peppol.mvi.PeppolRegistrationState
+import tech.dokus.features.cashflow.presentation.peppol.mvi.PeppolSetupContext
+import tech.dokus.foundation.app.state.isError
+import tech.dokus.foundation.app.state.isLoading
+import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.common.AnimatedCheck
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
@@ -97,28 +103,62 @@ internal fun PeppolRegistrationScreen(
                 .limitWidthCenteredContent(),
             contentAlignment = Alignment.Center,
         ) {
-            when (state) {
-                PeppolRegistrationState.Loading -> LoadingContent()
-                is PeppolRegistrationState.Fresh -> FreshContent(state, onIntent)
-                is PeppolRegistrationState.Activating -> ActivatingContent(onIntent)
-                is PeppolRegistrationState.Active -> ActiveContent(state, onIntent)
-                is PeppolRegistrationState.Blocked -> BlockedContent(state, onIntent)
-                is PeppolRegistrationState.WaitingTransfer -> WaitingTransferContent(
-                    state,
-                    onIntent
-                )
+            when {
+                state.setupContext.isLoading() -> LoadingContent()
 
-                is PeppolRegistrationState.SendingOnly -> SendingOnlyContent(state, onIntent)
-                is PeppolRegistrationState.External -> ExternalContent(onIntent)
-                is PeppolRegistrationState.Failed -> FailedContent(state, onIntent)
-                is PeppolRegistrationState.Error -> {
-                    if (isPeppolSetupFlowError(state.exception)) {
-                        SetupErrorContent(state, onIntent)
+                state.setupContext.isError() -> {
+                    val error = state.setupContext.exception
+                    if (isPeppolSetupFlowError(error)) {
+                        SetupErrorContent(
+                            exception = error,
+                            retryHandler = state.setupContext.retryHandler,
+                            onIntent = onIntent,
+                        )
                     } else {
                         DokusErrorContent(
-                            exception = state.exception,
-                            retryHandler = state.retryHandler,
-                            modifier = Modifier.fillMaxWidth().padding(Constraints.Spacing.large)
+                            exception = error,
+                            retryHandler = state.setupContext.retryHandler,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
+                }
+
+                state.setupContext.isSuccess() -> {
+                    val context = state.setupContext.data
+                    when (state.phase) {
+                        PeppolRegistrationPhase.Fresh -> FreshContent(
+                            isEnabling = state.isWorking,
+                            onIntent = onIntent,
+                        )
+
+                        PeppolRegistrationPhase.Activating -> ActivatingContent(onIntent)
+
+                        PeppolRegistrationPhase.Active -> ActiveContent(
+                            context = context,
+                            onIntent = onIntent,
+                        )
+
+                        PeppolRegistrationPhase.Blocked -> BlockedContent(
+                            context = context,
+                            isWorking = state.isWorking,
+                            onIntent = onIntent,
+                        )
+
+                        PeppolRegistrationPhase.WaitingTransfer -> WaitingTransferContent(
+                            context = context,
+                            onIntent = onIntent,
+                        )
+
+                        PeppolRegistrationPhase.SendingOnly -> SendingOnlyContent(
+                            context = context,
+                            onIntent = onIntent,
+                        )
+
+                        PeppolRegistrationPhase.External -> ExternalContent(onIntent)
+
+                        PeppolRegistrationPhase.Failed -> FailedContent(
+                            isRetrying = state.isRetrying,
+                            onIntent = onIntent,
                         )
                     }
                 }
@@ -134,7 +174,7 @@ private fun LoadingContent() {
 
 @Composable
 private fun FreshContent(
-    state: PeppolRegistrationState.Fresh,
+    isEnabling: Boolean,
     onIntent: (PeppolRegistrationIntent) -> Unit,
 ) {
     PeppolCenteredFlow(
@@ -143,13 +183,13 @@ private fun FreshContent(
         subtitle = stringResource(Res.string.peppol_reg_fresh_subtitle),
         primary = {
             POutlinedButton(
-                text = if (state.isEnabling) {
+                text = if (isEnabling) {
                     stringResource(Res.string.peppol_reg_fresh_enabling)
                 } else {
                     stringResource(Res.string.peppol_reg_fresh_enable)
                 },
-                enabled = !state.isEnabling,
-                isLoading = state.isEnabling,
+                enabled = !isEnabling,
+                isLoading = isEnabling,
                 modifier = Modifier.fillMaxWidth(),
                 onClick = { onIntent(PeppolRegistrationIntent.EnablePeppol) }
             )
@@ -195,7 +235,7 @@ private fun ActivatingContent(
 
 @Composable
 private fun ActiveContent(
-    state: PeppolRegistrationState.Active,
+    context: PeppolSetupContext,
     onIntent: (PeppolRegistrationIntent) -> Unit,
 ) {
     var detailsExpanded by remember { mutableStateOf(false) }
@@ -216,7 +256,7 @@ private fun ActiveContent(
                 isExpanded = detailsExpanded,
                 onToggle = { detailsExpanded = !detailsExpanded }
             ) {
-                PCopyRow(label = stringResource(Res.string.peppol_reg_peppol_id), value = state.context.peppolId)
+                PCopyRow(label = stringResource(Res.string.peppol_reg_peppol_id), value = context.peppolId)
             }
         }
     )
@@ -224,7 +264,8 @@ private fun ActiveContent(
 
 @Composable
 private fun BlockedContent(
-    state: PeppolRegistrationState.Blocked,
+    context: PeppolSetupContext,
+    isWorking: Boolean,
     onIntent: (PeppolRegistrationIntent) -> Unit,
 ) {
     var transferExpanded by remember { mutableStateOf(false) }
@@ -245,15 +286,15 @@ private fun BlockedContent(
         primary = {
             POutlinedButton(
                 text = stringResource(Res.string.peppol_reg_transfer_inbox),
-                enabled = !state.isWorking,
-                isLoading = state.isWorking,
+                enabled = !isWorking,
+                isLoading = isWorking,
                 onClick = { onIntent(PeppolRegistrationIntent.WaitForTransfer) }
             )
         },
         secondary = {
             TextButton(
                 onClick = { onIntent(PeppolRegistrationIntent.EnableSendingOnly) },
-                enabled = !state.isWorking
+                enabled = !isWorking
             ) {
                 Text(
                     text = stringResource(Res.string.peppol_reg_enable_sending_only),
@@ -269,8 +310,8 @@ private fun BlockedContent(
                 onToggle = { transferExpanded = !transferExpanded }
             ) {
                 TransferEmailCard(
-                    companyName = state.context.companyName,
-                    peppolId = state.context.peppolId,
+                    companyName = context.companyName,
+                    peppolId = context.peppolId,
                 )
             }
         }
@@ -279,7 +320,7 @@ private fun BlockedContent(
 
 @Composable
 private fun WaitingTransferContent(
-    state: PeppolRegistrationState.WaitingTransfer,
+    context: PeppolSetupContext,
     onIntent: (PeppolRegistrationIntent) -> Unit,
 ) {
     var transferExpanded by remember { mutableStateOf(false) }
@@ -310,8 +351,8 @@ private fun WaitingTransferContent(
                 onToggle = { transferExpanded = !transferExpanded }
             ) {
                 TransferEmailCard(
-                    companyName = state.context.companyName,
-                    peppolId = state.context.peppolId,
+                    companyName = context.companyName,
+                    peppolId = context.peppolId,
                 )
             }
         }
@@ -320,7 +361,7 @@ private fun WaitingTransferContent(
 
 @Composable
 private fun SendingOnlyContent(
-    state: PeppolRegistrationState.SendingOnly,
+    context: PeppolSetupContext,
     onIntent: (PeppolRegistrationIntent) -> Unit,
 ) {
     var detailsExpanded by remember { mutableStateOf(false) }
@@ -341,7 +382,7 @@ private fun SendingOnlyContent(
                 isExpanded = detailsExpanded,
                 onToggle = { detailsExpanded = !detailsExpanded }
             ) {
-                PCopyRow(label = stringResource(Res.string.peppol_reg_peppol_id), value = state.context.peppolId)
+                PCopyRow(label = stringResource(Res.string.peppol_reg_peppol_id), value = context.peppolId)
             }
         }
     )
@@ -385,7 +426,7 @@ private fun ExternalContent(
 
 @Composable
 private fun FailedContent(
-    state: PeppolRegistrationState.Failed,
+    isRetrying: Boolean,
     onIntent: (PeppolRegistrationIntent) -> Unit,
 ) {
     PeppolCenteredFlow(
@@ -399,8 +440,8 @@ private fun FailedContent(
         primary = {
             POutlinedButton(
                 text = stringResource(Res.string.peppol_reg_failed_retry),
-                isLoading = state.isRetrying,
-                enabled = !state.isRetrying,
+                isLoading = isRetrying,
+                enabled = !isRetrying,
                 onClick = { onIntent(PeppolRegistrationIntent.Retry) }
             )
         },
@@ -419,11 +460,12 @@ private fun FailedContent(
 
 @Composable
 private fun SetupErrorContent(
-    state: PeppolRegistrationState.Error,
+    exception: DokusException,
+    retryHandler: RetryHandler,
     onIntent: (PeppolRegistrationIntent) -> Unit,
 ) {
-    val canRetry = shouldShowPeppolSetupRetry(state.exception)
-    var retryClicked by remember(state) { mutableStateOf(false) }
+    val canRetry = shouldShowPeppolSetupRetry(exception)
+    var retryClicked by remember(exception) { mutableStateOf(false) }
 
     PeppolCenteredFlow(
         icon = {
@@ -432,7 +474,7 @@ private fun SetupErrorContent(
             }
         },
         title = stringResource(Res.string.peppol_reg_failed_title),
-        subtitle = state.exception.localized,
+        subtitle = exception.localized,
         primary = {
             if (canRetry) {
                 POutlinedButton(
@@ -441,7 +483,7 @@ private fun SetupErrorContent(
                     enabled = !retryClicked,
                     onClick = {
                         retryClicked = true
-                        state.retryHandler.retry()
+                        retryHandler.retry()
                     }
                 )
             } else {
@@ -480,7 +522,7 @@ private fun PeppolRegistrationScreenPreview(
 ) {
     TestWrapper(parameters) {
         PeppolRegistrationScreen(
-            state = PeppolRegistrationState.Loading,
+            state = PeppolRegistrationState(),
             snackbarHostState = remember { SnackbarHostState() },
             onIntent = {},
         )

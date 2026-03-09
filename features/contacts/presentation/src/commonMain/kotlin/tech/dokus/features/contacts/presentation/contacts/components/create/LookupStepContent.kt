@@ -91,7 +91,7 @@ private const val MIN_SEARCH_LENGTH = 3
 @OptIn(FlowPreview::class)
 @Composable
 fun LookupStepContent(
-    state: CreateContactState.LookupStep,
+    state: CreateContactState,
     onIntent: (CreateContactIntent) -> Unit,
     headerTitle: String,
     isResolveFlow: Boolean,
@@ -629,7 +629,7 @@ private fun LookupStepContentPreview(
 ) {
     TestWrapper(parameters) {
         LookupStepContent(
-            state = CreateContactState.LookupStep(),
+            state = CreateContactState(),
             onIntent = {},
             headerTitle = "Add Contact",
             isResolveFlow = false,

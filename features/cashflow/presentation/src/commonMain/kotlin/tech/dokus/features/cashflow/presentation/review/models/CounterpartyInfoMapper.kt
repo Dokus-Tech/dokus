@@ -2,8 +2,8 @@ package tech.dokus.features.cashflow.presentation.review.models
 
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 
-internal fun counterpartyInfo(state: DocumentReviewState.Content): CounterpartyInfo {
-    val snapshot = state.document.draft?.counterpartySnapshot
+internal fun counterpartyInfo(state: DocumentReviewState): CounterpartyInfo {
+    val snapshot = state.documentRecord?.draft?.counterpartySnapshot
     if (snapshot == null) {
         return CounterpartyInfo(
             name = null,

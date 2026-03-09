@@ -93,7 +93,7 @@ import tech.dokus.features.cashflow.presentation.review.colorized as financialSt
 private val AmountAccentWidth = 3.5.dp
 
 @Composable
-internal fun InspectorAmountSection(state: DocumentReviewState.Content) {
+internal fun InspectorAmountSection(state: DocumentReviewState) {
     val total = state.totalAmount?.toDisplayString() ?: "\u2014"
     val currencySign = state.currencySign()
     val accentColor = when (state.financialStatus) {
@@ -143,7 +143,7 @@ internal fun InspectorAmountSection(state: DocumentReviewState.Content) {
 }
 
 @Composable
-internal fun InspectorTimelineSection(state: DocumentReviewState.Content) {
+internal fun InspectorTimelineSection(state: DocumentReviewState) {
     InspectorSectionCard(title = stringResource(Res.string.inspector_section_timeline)) {
         InspectorValueRow(stringResource(Res.string.inspector_label_issue_date), state.issueDate() ?: "\u2014")
         InspectorValueRow(stringResource(Res.string.inspector_label_due_date), state.dueDate() ?: "\u2014")
@@ -151,14 +151,14 @@ internal fun InspectorTimelineSection(state: DocumentReviewState.Content) {
 }
 
 @Composable
-internal fun InspectorReferenceSection(state: DocumentReviewState.Content) {
+internal fun InspectorReferenceSection(state: DocumentReviewState) {
     InspectorSectionCard(title = stringResource(Res.string.inspector_section_reference)) {
         InspectorValueRow(stringResource(Res.string.inspector_label_invoice_number), state.referenceNumber() ?: "\u2014")
     }
 }
 
 @Composable
-internal fun InspectorContactSection(state: DocumentReviewState.Content) {
+internal fun InspectorContactSection(state: DocumentReviewState) {
     val counterparty = counterpartyInfo(state)
     InspectorSectionCard(title = stringResource(Res.string.inspector_section_contact)) {
         InspectorValueRow(stringResource(Res.string.inspector_label_name), counterparty.name ?: stringResource(Res.string.common_unknown))
@@ -170,12 +170,12 @@ internal fun InspectorContactSection(state: DocumentReviewState.Content) {
 
 @Composable
 internal fun InspectorSourcesSection(
-    state: DocumentReviewState.Content,
+    state: DocumentReviewState,
     isAccountantReadOnly: Boolean,
     onIntent: (DocumentReviewIntent) -> Unit,
     showSourceList: Boolean = true,
 ) {
-    if (!showSourceList && state.document.pendingMatchReview == null && !state.hasCrossMatchedSources) {
+    if (!showSourceList && state.documentRecord?.pendingMatchReview == null && !state.hasCrossMatchedSources) {
         return
     }
 
@@ -183,10 +183,10 @@ internal fun InspectorSourcesSection(
         var hasContent = false
 
         if (showSourceList) {
-            if (state.document.sources.isEmpty()) {
+            if (state.documentRecord?.sources.orEmpty().isEmpty()) {
                 InspectorValueRow(stringResource(Res.string.inspector_label_source), stringResource(Res.string.inspector_no_sources))
             } else {
-                state.document.sources.forEach { source ->
+                state.documentRecord?.sources.orEmpty().forEach { source ->
                     SourceRow(
                         type = source.sourceChannel,
                         title = source.filename ?: source.sourceChannel.name,
@@ -197,7 +197,7 @@ internal fun InspectorSourcesSection(
             hasContent = true
         }
 
-        state.document.pendingMatchReview?.let { review ->
+        state.documentRecord?.pendingMatchReview?.let { review ->
             if (hasContent) {
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             }
@@ -284,7 +284,7 @@ internal fun InspectorSourcesSection(
 
 @Composable
 internal fun InspectorPaymentSection(
-    state: DocumentReviewState.Content,
+    state: DocumentReviewState,
     isAccountantReadOnly: Boolean,
     onIntent: (DocumentReviewIntent) -> Unit,
 ) {
@@ -525,42 +525,42 @@ private fun SourceRow(
     }
 }
 
-private fun DocumentReviewState.Content.referenceNumber(): String? = when (val data = draftData) {
+private fun DocumentReviewState.referenceNumber(): String? = when (val data = draftData) {
     is InvoiceDraftData -> data.invoiceNumber
     is CreditNoteDraftData -> data.creditNoteNumber
     else -> null
 }
 
-private fun DocumentReviewState.Content.issueDate(): String? = when (val data = draftData) {
+private fun DocumentReviewState.issueDate(): String? = when (val data = draftData) {
     is InvoiceDraftData -> data.issueDate?.toString()
     is CreditNoteDraftData -> data.issueDate?.toString()
     else -> null
 }
 
-private fun DocumentReviewState.Content.dueDate(): String? = when (val data = draftData) {
+private fun DocumentReviewState.dueDate(): String? = when (val data = draftData) {
     is InvoiceDraftData -> data.dueDate?.toString()
     else -> null
 }
 
-private fun DocumentReviewState.Content.subtotalAmount() = when (val data = draftData) {
+private fun DocumentReviewState.subtotalAmount() = when (val data = draftData) {
     is InvoiceDraftData -> data.subtotalAmount
     is CreditNoteDraftData -> data.subtotalAmount
     else -> null
 }
 
-private fun DocumentReviewState.Content.vatAmount() = when (val data = draftData) {
+private fun DocumentReviewState.vatAmount() = when (val data = draftData) {
     is InvoiceDraftData -> data.vatAmount
     is CreditNoteDraftData -> data.vatAmount
     else -> null
 }
 
-private fun DocumentReviewState.Content.currencySign(): String = when (val data = draftData) {
+private fun DocumentReviewState.currencySign(): String = when (val data = draftData) {
     is InvoiceDraftData -> data.currency.displaySign
     is CreditNoteDraftData -> data.currency.displaySign
     else -> "\u20AC"
 }
 
-private fun DocumentReviewState.Content.prefixedAmount(value: tech.dokus.domain.Money?): String =
+private fun DocumentReviewState.prefixedAmount(value: tech.dokus.domain.Money?): String =
     value?.let { "${currencySign()}${it.toDisplayString()}" } ?: "\u2014"
 
 private fun formatMatchReason(reason: String): String = when (reason) {

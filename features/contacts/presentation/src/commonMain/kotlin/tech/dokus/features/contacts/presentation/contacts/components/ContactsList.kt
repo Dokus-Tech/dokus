@@ -48,13 +48,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.ImageLoader
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.datetime.LocalDateTime
 import kotlinx.coroutines.flow.filter
+import kotlinx.datetime.LocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.contacts_add_first
 import tech.dokus.aura.resources.contacts_add_first_hint
-import tech.dokus.aura.resources.contacts_customer
 import tech.dokus.aura.resources.contacts_doc_count_plural
 import tech.dokus.aura.resources.contacts_doc_count_single
 import tech.dokus.aura.resources.contacts_empty
@@ -70,12 +69,11 @@ import tech.dokus.domain.model.contact.DerivedContactRoles
 import tech.dokus.foundation.app.network.rememberAuthenticatedImageLoader
 import tech.dokus.foundation.app.network.rememberResolvedApiUrl
 import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.app.state.isLoading
 import tech.dokus.foundation.aura.components.AvatarShape
 import tech.dokus.foundation.aura.components.AvatarSize
 import tech.dokus.foundation.aura.components.CompanyAvatarImage
 import tech.dokus.foundation.aura.components.DokusCardSurface
-import tech.dokus.foundation.aura.components.badges.ContactRole as UiContactRole
-import tech.dokus.foundation.aura.components.badges.RoleBadge
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.common.DokusLoaderSize
@@ -88,9 +86,9 @@ import tech.dokus.foundation.aura.style.textMuted
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
+import tech.dokus.foundation.aura.components.badges.ContactRole as UiContactRole
 
 // UI dimension constants
-private val ErrorPaddingVertical = Constraints.Spacing.xxxLarge
 private val ListItemSpacing = Constraints.Spacing.medium
 private val EmptyStatePadding = Constraints.Spacing.xxLarge
 private val EmptyStateIconSize = Constraints.IconSize.xxLarge
@@ -143,13 +141,12 @@ internal fun ContactsList(
     isDesktop: Boolean = false,
 ) {
     val listState = rememberLazyListState()
-
-    // Extract pagination state for infinite scroll (if available)
-    val paginationState = (state as? DokusState.Success)?.data
+    val paginationData = state.lastData
+    val contacts = paginationData?.data ?: emptyList()
 
     // Infinite scroll trigger
-    LaunchedEffect(listState, paginationState?.hasMorePages, paginationState?.isLoadingMore) {
-        if (paginationState == null) return@LaunchedEffect
+    LaunchedEffect(listState, paginationData?.hasMorePages, state.isLoading()) {
+        if (paginationData == null) return@LaunchedEffect
         snapshotFlow {
             val info = listState.layoutInfo
             (info.visibleItemsInfo.lastOrNull()?.index ?: 0) to info.totalItemsCount
@@ -157,53 +154,46 @@ internal fun ContactsList(
             .distinctUntilChanged()
             .filter { (last, total) ->
                 (last + 1) > (total - InfiniteScrollThreshold) &&
-                    paginationState.hasMorePages &&
-                    !paginationState.isLoadingMore
+                        paginationData.hasMorePages &&
+                        !state.isLoading()
             }
             .collect { onLoadMore() }
     }
 
-    when (state) {
-        is DokusState.Loading, is DokusState.Idle -> {
+    when {
+        state.isLoading() && paginationData == null -> {
             ContactsListSkeleton(
                 contentPadding = contentPadding,
                 modifier = modifier
             )
         }
 
-        is DokusState.Success -> {
-            if (state.data.data.isEmpty()) {
-                ContactsEmptyState(
-                    onAddContactClick = onAddContactClick,
-                    modifier = modifier.padding(contentPadding)
-                )
-            } else {
-                ContactsListContent(
-                    contacts = state.data.data,
-                    listState = listState,
-                    isLoadingMore = state.data.isLoadingMore,
-                    onContactClick = onContactClick,
-                    contentPadding = contentPadding,
-                    modifier = modifier,
-                    selectedContactId = selectedContactId,
-                    isDesktop = isDesktop,
-                )
-            }
+        state is DokusState.Error -> {
+            DokusErrorContent(
+                exception = state.exception,
+                retryHandler = state.retryHandler,
+                modifier = Modifier.fillMaxSize()
+            )
         }
 
-        is DokusState.Error -> {
-            Box(
-                modifier = modifier
-                    .fillMaxSize()
-                    .padding(contentPadding)
-                    .padding(vertical = ErrorPaddingVertical),
-                contentAlignment = Alignment.Center
-            ) {
-                DokusErrorContent(
-                    exception = state.exception,
-                    retryHandler = state.retryHandler
-                )
-            }
+        contacts.isEmpty() -> {
+            ContactsEmptyState(
+                onAddContactClick = onAddContactClick,
+                modifier = modifier.padding(contentPadding)
+            )
+        }
+
+        else -> {
+            ContactsListContent(
+                contacts = contacts,
+                listState = listState,
+                isLoadingMore = state.isLoading(),
+                onContactClick = onContactClick,
+                contentPadding = contentPadding,
+                modifier = modifier,
+                selectedContactId = selectedContactId,
+                isDesktop = isDesktop,
+            )
         }
     }
 }
@@ -228,7 +218,9 @@ private fun ContactsListContent(
         modifier = modifier.fillMaxSize(),
         state = listState,
         contentPadding = contentPadding,
-        verticalArrangement = if (isDesktop) Arrangement.Top else Arrangement.spacedBy(ListItemSpacing)
+        verticalArrangement = if (isDesktop) Arrangement.Top else Arrangement.spacedBy(
+            ListItemSpacing
+        )
     ) {
         items(
             items = contacts,

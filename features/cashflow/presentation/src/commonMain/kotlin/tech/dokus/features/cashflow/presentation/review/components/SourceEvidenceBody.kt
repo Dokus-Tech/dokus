@@ -39,7 +39,7 @@ import tech.dokus.foundation.aura.style.textMuted
 
 @Composable
 internal fun SourceEvidenceBody(
-    contentState: DocumentReviewState.Content,
+    contentState: DocumentReviewState,
     viewerState: SourceEvidenceViewerState,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
@@ -61,7 +61,7 @@ internal fun SourceEvidenceBody(
 
 @Composable
 private fun SourceCanonicalOrPdfPreview(
-    contentState: DocumentReviewState.Content,
+    contentState: DocumentReviewState,
     viewerState: SourceEvidenceViewerState,
     modifier: Modifier = Modifier,
 ) {
@@ -120,7 +120,7 @@ private fun SourceEmptyPreview(modifier: Modifier = Modifier) {
 
 @Composable
 private fun SourceStructuredEvidence(
-    contentState: DocumentReviewState.Content,
+    contentState: DocumentReviewState,
     sourceType: DocumentSource,
     modifier: Modifier = Modifier,
 ) {
@@ -141,7 +141,7 @@ private fun SourceStructuredEvidence(
 
         when (draft) {
             is InvoiceDraftData -> {
-                StructuredValue("Vendor", contentState.document.draft?.counterpartySnapshot?.name ?: "\u2014")
+                StructuredValue("Vendor", contentState.documentRecord?.draft?.counterpartySnapshot?.name ?: "\u2014")
                 StructuredValue("Invoice", draft.invoiceNumber ?: "\u2014")
                 StructuredValue("Date", draft.issueDate?.let { formatShortDate(it) } ?: "\u2014")
                 StructuredValue("Due", draft.dueDate?.let { formatShortDate(it) } ?: "\u2014")

@@ -23,6 +23,7 @@ import tech.dokus.features.auth.usecases.WatchCurrentTenantUseCase
 import tech.dokus.features.cashflow.usecases.GetPeppolActivityUseCase
 import tech.dokus.features.cashflow.usecases.GetPeppolRegistrationUseCase
 import tech.dokus.foundation.app.picker.inferImageContentType
+import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.platform.Logger
 
 internal typealias WorkspaceSettingsCtx =
@@ -55,7 +56,7 @@ internal class WorkspaceSettingsContainer(
     private val logger = Logger.forClass<WorkspaceSettingsContainer>()
 
     override val store: Store<WorkspaceSettingsState, WorkspaceSettingsIntent, WorkspaceSettingsAction> =
-        store(WorkspaceSettingsState.Loading) {
+        store(WorkspaceSettingsState.initial) {
             reduce { intent ->
                 when (intent) {
                     is WorkspaceSettingsIntent.Load -> handleLoad()
@@ -88,7 +89,7 @@ internal class WorkspaceSettingsContainer(
     private suspend fun WorkspaceSettingsCtx.handleLoad() {
         logger.d { "Loading workspace settings" }
 
-        updateState { WorkspaceSettingsState.Loading }
+        updateState { copy(workspaceData = workspaceData.asLoading) }
 
         val tenantResult = getCurrentTenantUseCase()
         val settingsResult = getTenantSettings()
@@ -106,14 +107,17 @@ internal class WorkspaceSettingsContainer(
         if (tenant != null && settings != null) {
             logger.i { "Workspace settings loaded for ${tenant.displayName.value}" }
             val formState = populateFormFromSettings(tenant, settings, address)
+            val data = WorkspaceSettingsState.WorkspaceData(
+                tenant = tenant,
+                settings = settings,
+                peppolRegistration = peppolRegistration,
+                peppolActivity = peppolActivity,
+            )
             updateState {
-                WorkspaceSettingsState.Content(
-                    tenant = tenant,
-                    settings = settings,
+                copy(
+                    workspaceData = DokusState.success(data),
                     form = formState,
                     currentAvatar = tenant.avatar,
-                    peppolRegistration = peppolRegistration,
-                    peppolActivity = peppolActivity,
                 )
             }
         } else {
@@ -121,9 +125,11 @@ internal class WorkspaceSettingsContainer(
                 ?: IllegalStateException("Failed to load workspace settings")
             logger.e(error) { "Failed to load workspace settings" }
             updateState {
-                WorkspaceSettingsState.Error(
-                    exception = error.asDokusException,
-                    retryHandler = { intent(WorkspaceSettingsIntent.Load) }
+                copy(
+                    workspaceData = DokusState.error(
+                        exception = error.asDokusException,
+                        retryHandler = { intent(WorkspaceSettingsIntent.Load) }
+                    )
                 )
             }
         }
@@ -133,8 +139,8 @@ internal class WorkspaceSettingsContainer(
         tenant: Tenant,
         settings: TenantSettings,
         address: Address?
-    ): WorkspaceSettingsState.Content.FormState {
-        return WorkspaceSettingsState.Content.FormState(
+    ): WorkspaceSettingsState.FormState {
+        return WorkspaceSettingsState.FormState(
             companyName = settings.companyName ?: tenant.displayName.value,
             legalName = tenant.legalName.value,
             vatNumber = tenant.vatNumber.value,
@@ -153,261 +159,250 @@ internal class WorkspaceSettingsContainer(
 
     // Form field update handlers
     private suspend fun WorkspaceSettingsCtx.handleUpdateCompanyName(value: String) {
-        withState<WorkspaceSettingsState.Content, _> {
-            updateState { copy(form = form.copy(companyName = value)) }
-        }
+        updateState { copy(form = form.copy(companyName = value)) }
     }
 
     private suspend fun WorkspaceSettingsCtx.handleUpdateVatNumber(value: String) {
-        withState<WorkspaceSettingsState.Content, _> {
-            updateState { copy(form = form.copy(vatNumber = value)) }
-        }
+        updateState { copy(form = form.copy(vatNumber = value)) }
     }
 
     private suspend fun WorkspaceSettingsCtx.handleUpdateIban(value: String) {
-        withState<WorkspaceSettingsState.Content, _> {
-            updateState { copy(form = form.copy(iban = value)) }
-        }
+        updateState { copy(form = form.copy(iban = value)) }
     }
 
     private suspend fun WorkspaceSettingsCtx.handleUpdateBic(value: String) {
-        withState<WorkspaceSettingsState.Content, _> {
-            updateState { copy(form = form.copy(bic = value)) }
-        }
+        updateState { copy(form = form.copy(bic = value)) }
     }
 
     private suspend fun WorkspaceSettingsCtx.handleUpdateAddress(value: String) {
-        withState<WorkspaceSettingsState.Content, _> {
-            updateState { copy(form = form.copy(address = value)) }
-        }
+        updateState { copy(form = form.copy(address = value)) }
     }
 
     private suspend fun WorkspaceSettingsCtx.handleUpdateInvoicePrefix(value: String) {
-        withState<WorkspaceSettingsState.Content, _> {
-            updateState { copy(form = form.copy(invoicePrefix = value)) }
-        }
+        updateState { copy(form = form.copy(invoicePrefix = value)) }
     }
 
     private suspend fun WorkspaceSettingsCtx.handleUpdateDefaultPaymentTerms(value: String) {
         val terms = value.toIntOrNull() ?: return
         if (terms in 0..MAX_PAYMENT_TERMS_DAYS) {
-            withState<WorkspaceSettingsState.Content, _> {
-                updateState { copy(form = form.copy(defaultPaymentTerms = terms)) }
-            }
+            updateState { copy(form = form.copy(defaultPaymentTerms = terms)) }
         }
     }
 
     private suspend fun WorkspaceSettingsCtx.handleUpdateInvoiceYearlyReset(value: Boolean) {
-        withState<WorkspaceSettingsState.Content, _> {
-            updateState { copy(form = form.copy(invoiceYearlyReset = value)) }
-        }
+        updateState { copy(form = form.copy(invoiceYearlyReset = value)) }
     }
 
     private suspend fun WorkspaceSettingsCtx.handleUpdateInvoicePadding(value: Int) {
-        withState<WorkspaceSettingsState.Content, _> {
-            updateState {
-                copy(
-                    form = form.copy(invoicePadding = value.coerceIn(MIN_INVOICE_PADDING, MAX_INVOICE_PADDING))
-                )
-            }
+        updateState {
+            copy(
+                form = form.copy(invoicePadding = value.coerceIn(MIN_INVOICE_PADDING, MAX_INVOICE_PADDING))
+            )
         }
     }
 
     private suspend fun WorkspaceSettingsCtx.handleUpdateInvoiceIncludeYear(value: Boolean) {
-        withState<WorkspaceSettingsState.Content, _> {
-            updateState { copy(form = form.copy(invoiceIncludeYear = value)) }
-        }
+        updateState { copy(form = form.copy(invoiceIncludeYear = value)) }
     }
 
     private suspend fun WorkspaceSettingsCtx.handleUpdateInvoiceTimezone(value: String) {
-        withState<WorkspaceSettingsState.Content, _> {
-            updateState { copy(form = form.copy(invoiceTimezone = value)) }
-        }
+        updateState { copy(form = form.copy(invoiceTimezone = value)) }
     }
 
     private suspend fun WorkspaceSettingsCtx.handleUpdatePaymentTermsText(value: String) {
-        withState<WorkspaceSettingsState.Content, _> {
-            updateState { copy(form = form.copy(paymentTermsText = value)) }
-        }
+        updateState { copy(form = form.copy(paymentTermsText = value)) }
     }
 
     // Section edit mode handlers
     private suspend fun WorkspaceSettingsCtx.handleEnterEditMode(
-        section: WorkspaceSettingsState.Content.EditingSection
+        section: WorkspaceSettingsState.EditingSection
     ) {
-        withState<WorkspaceSettingsState.Content, _> {
-            logger.d { "Entering edit mode for section: $section" }
-            updateState { copy(editingSection = section) }
-        }
+        logger.d { "Entering edit mode for section: $section" }
+        updateState { copy(editingSection = section) }
     }
 
     private suspend fun WorkspaceSettingsCtx.handleCancelEditMode() {
-        withState<WorkspaceSettingsState.Content, _> {
-            logger.d { "Cancelling edit mode" }
-            // Restore form state from original settings
-            val formState = populateFormFromSettings(tenant, settings, null)
-            updateState { copy(editingSection = null, form = formState) }
+        logger.d { "Cancelling edit mode" }
+        // Restore form state from original settings if workspace data is loaded
+        updateState {
+            val data = (workspaceData as? DokusState.Success<WorkspaceSettingsState.WorkspaceData>)?.data
+            if (data != null) {
+                val formState = populateFormFromSettings(data.tenant, data.settings, null)
+                copy(editingSection = null, form = formState)
+            } else {
+                copy(editingSection = null)
+            }
         }
     }
 
     private suspend fun WorkspaceSettingsCtx.handleSaveSection(
-        section: WorkspaceSettingsState.Content.EditingSection
+        section: WorkspaceSettingsState.EditingSection
     ) {
-        withState<WorkspaceSettingsState.Content, _> {
-            logger.d { "Saving section: $section" }
-            // For simplicity, use the same save logic as full save
-            // Future optimization: save only changed fields per section
-            handleSaveSettings()
-            // Exit edit mode on success
-            withState<WorkspaceSettingsState.Content, _> {
-                if (saveState is WorkspaceSettingsState.Content.SaveState.Success) {
-                    updateState { copy(editingSection = null) }
-                }
+        logger.d { "Saving section: $section" }
+        // For simplicity, use the same save logic as full save
+        // Future optimization: save only changed fields per section
+        handleSaveSettings()
+        // Exit edit mode on success
+        updateState {
+            if (saveState is WorkspaceSettingsState.SaveState.Success) {
+                copy(editingSection = null)
+            } else {
+                this
             }
         }
     }
 
     // Save operations
     private suspend fun WorkspaceSettingsCtx.handleSaveSettings() {
-        withState<WorkspaceSettingsState.Content, _> {
-            logger.d { "Saving workspace settings" }
-            updateState { copy(saveState = WorkspaceSettingsState.Content.SaveState.Saving) }
-
-            val updatedSettings = settings.copy(
-                companyName = form.companyName.ifBlank { null },
-                companyIban = form.iban.takeIf { it.isNotBlank() }?.let { Iban(it) },
-                companyBic = form.bic.takeIf { it.isNotBlank() }?.let { Bic(it) },
-                invoicePrefix = form.invoicePrefix.ifBlank { "INV" },
-                defaultPaymentTerms = form.defaultPaymentTerms,
-                invoiceYearlyReset = form.invoiceYearlyReset,
-                invoicePadding = form.invoicePadding,
-                invoiceIncludeYear = form.invoiceIncludeYear,
-                invoiceTimezone = form.invoiceTimezone,
-                paymentTermsText = form.paymentTermsText.ifBlank { null }
-            )
-
-            updateTenantSettings(updatedSettings).fold(
-                onSuccess = {
-                    logger.i { "Workspace settings saved" }
-                    watchCurrentTenantUseCase.refresh()
-                    updateState {
-                        copy(
-                            settings = updatedSettings,
-                            saveState = WorkspaceSettingsState.Content.SaveState.Success
-                        )
-                    }
-                    action(WorkspaceSettingsAction.ShowSuccess(WorkspaceSettingsSuccess.SettingsSaved))
-                },
-                onFailure = { error ->
-                    logger.e(error) { "Failed to save workspace settings" }
-                    val exception = error.asDokusException
-                    val displayException = if (exception is DokusException.Unknown) {
-                        DokusException.WorkspaceSettingsSaveFailed
-                    } else {
-                        exception
-                    }
-                    updateState {
-                        copy(saveState = WorkspaceSettingsState.Content.SaveState.Error(displayException))
-                    }
-                    action(WorkspaceSettingsAction.ShowError(displayException))
-                }
-            )
+        var currentData: WorkspaceSettingsState.WorkspaceData? = null
+        var currentForm: WorkspaceSettingsState.FormState? = null
+        withState {
+            currentData = (workspaceData as? DokusState.Success<WorkspaceSettingsState.WorkspaceData>)?.data
+            currentForm = form
         }
+        val data = currentData ?: return
+        val form = currentForm ?: return
+        logger.d { "Saving workspace settings" }
+        updateState { copy(saveState = WorkspaceSettingsState.SaveState.Saving) }
+
+        val settings = data.settings
+
+        val updatedSettings = settings.copy(
+            companyName = form.companyName.ifBlank { null },
+            companyIban = form.iban.takeIf { it.isNotBlank() }?.let { Iban(it) },
+            companyBic = form.bic.takeIf { it.isNotBlank() }?.let { Bic(it) },
+            invoicePrefix = form.invoicePrefix.ifBlank { "INV" },
+            defaultPaymentTerms = form.defaultPaymentTerms,
+            invoiceYearlyReset = form.invoiceYearlyReset,
+            invoicePadding = form.invoicePadding,
+            invoiceIncludeYear = form.invoiceIncludeYear,
+            invoiceTimezone = form.invoiceTimezone,
+            paymentTermsText = form.paymentTermsText.ifBlank { null }
+        )
+
+        updateTenantSettings(updatedSettings).fold(
+            onSuccess = {
+                logger.i { "Workspace settings saved" }
+                watchCurrentTenantUseCase.refresh()
+                updateState {
+                    copy(
+                        workspaceData = DokusState.success(data.copy(settings = updatedSettings)),
+                        saveState = WorkspaceSettingsState.SaveState.Success
+                    )
+                }
+                action(WorkspaceSettingsAction.ShowSuccess(WorkspaceSettingsSuccess.SettingsSaved))
+            },
+            onFailure = { error ->
+                logger.e(error) { "Failed to save workspace settings" }
+                val exception = error.asDokusException
+                val displayException = if (exception is DokusException.Unknown) {
+                    DokusException.WorkspaceSettingsSaveFailed
+                } else {
+                    exception
+                }
+                updateState {
+                    copy(saveState = WorkspaceSettingsState.SaveState.Error(displayException))
+                }
+                action(WorkspaceSettingsAction.ShowError(displayException))
+            }
+        )
     }
 
     private suspend fun WorkspaceSettingsCtx.handleResetSaveState() {
-        withState<WorkspaceSettingsState.Content, _> {
-            updateState { copy(saveState = WorkspaceSettingsState.Content.SaveState.Idle) }
-        }
+        updateState { copy(saveState = WorkspaceSettingsState.SaveState.Idle) }
     }
 
     // Avatar operations
     private suspend fun WorkspaceSettingsCtx.handleUploadAvatar(imageBytes: ByteArray, filename: String) {
-        withState<WorkspaceSettingsState.Content, _> {
-            logger.d { "Uploading avatar" }
-            updateState {
-                copy(avatarState = WorkspaceSettingsState.Content.AvatarState.Uploading(0f))
-            }
-
-            val tenantId = tenant.id
-            val contentType = inferImageContentType(filename)
-
-            uploadWorkspaceAvatar(
-                tenantId = tenantId,
-                imageBytes = imageBytes,
-                filename = filename,
-                contentType = contentType,
-                onProgress = { progress ->
-                    // Note: Progress updates would need to be handled differently in FlowMVI
-                    // For now, we just set the initial state
-                }
-            ).fold(
-                onSuccess = { response ->
-                    logger.i { "Avatar uploaded successfully" }
-                    watchCurrentTenantUseCase.refresh()
-                    updateState {
-                        copy(
-                            currentAvatar = response,
-                            avatarState = WorkspaceSettingsState.Content.AvatarState.Success
-                        )
-                    }
-                },
-                onFailure = { error ->
-                    logger.e(error) { "Failed to upload avatar" }
-                    val exception = error.asDokusException
-                    val displayException = if (exception is DokusException.Unknown) {
-                        DokusException.WorkspaceAvatarUploadFailed
-                    } else {
-                        exception
-                    }
-                    updateState {
-                        copy(avatarState = WorkspaceSettingsState.Content.AvatarState.Error(displayException))
-                    }
-                    action(WorkspaceSettingsAction.ShowError(displayException))
-                }
-            )
+        var avatarData: WorkspaceSettingsState.WorkspaceData? = null
+        withState {
+            avatarData = (workspaceData as? DokusState.Success<WorkspaceSettingsState.WorkspaceData>)?.data
         }
+        val currentData = avatarData ?: return
+        logger.d { "Uploading avatar" }
+        updateState {
+            copy(avatarState = WorkspaceSettingsState.AvatarState.Uploading(0f))
+        }
+
+        val tenantId = currentData.tenant.id
+        val contentType = inferImageContentType(filename)
+
+        uploadWorkspaceAvatar(
+            tenantId = tenantId,
+            imageBytes = imageBytes,
+            filename = filename,
+            contentType = contentType,
+            onProgress = { progress ->
+                // Note: Progress updates would need to be handled differently in FlowMVI
+                // For now, we just set the initial state
+            }
+        ).fold(
+            onSuccess = { response ->
+                logger.i { "Avatar uploaded successfully" }
+                watchCurrentTenantUseCase.refresh()
+                updateState {
+                    copy(
+                        currentAvatar = response,
+                        avatarState = WorkspaceSettingsState.AvatarState.Success
+                    )
+                }
+            },
+            onFailure = { error ->
+                logger.e(error) { "Failed to upload avatar" }
+                val exception = error.asDokusException
+                val displayException = if (exception is DokusException.Unknown) {
+                    DokusException.WorkspaceAvatarUploadFailed
+                } else {
+                    exception
+                }
+                updateState {
+                    copy(avatarState = WorkspaceSettingsState.AvatarState.Error(displayException))
+                }
+                action(WorkspaceSettingsAction.ShowError(displayException))
+            }
+        )
     }
 
     private suspend fun WorkspaceSettingsCtx.handleDeleteAvatar() {
-        withState<WorkspaceSettingsState.Content, _> {
-            logger.d { "Deleting avatar" }
-            updateState {
-                copy(avatarState = WorkspaceSettingsState.Content.AvatarState.Deleting)
-            }
-
-            deleteWorkspaceAvatar(tenant.id).fold(
-                onSuccess = {
-                    logger.i { "Avatar deleted" }
-                    watchCurrentTenantUseCase.refresh()
-                    updateState {
-                        copy(
-                            currentAvatar = null,
-                            avatarState = WorkspaceSettingsState.Content.AvatarState.Idle
-                        )
-                    }
-                },
-                onFailure = { error ->
-                    logger.e(error) { "Failed to delete avatar" }
-                    val exception = error.asDokusException
-                    val displayException = if (exception is DokusException.Unknown) {
-                        DokusException.WorkspaceAvatarDeleteFailed
-                    } else {
-                        exception
-                    }
-                    updateState {
-                        copy(avatarState = WorkspaceSettingsState.Content.AvatarState.Error(displayException))
-                    }
-                    action(WorkspaceSettingsAction.ShowError(displayException))
-                }
-            )
+        var deleteData: WorkspaceSettingsState.WorkspaceData? = null
+        withState {
+            deleteData = (workspaceData as? DokusState.Success<WorkspaceSettingsState.WorkspaceData>)?.data
         }
+        val currentData = deleteData ?: return
+        logger.d { "Deleting avatar" }
+        updateState {
+            copy(avatarState = WorkspaceSettingsState.AvatarState.Deleting)
+        }
+
+        deleteWorkspaceAvatar(currentData.tenant.id).fold(
+            onSuccess = {
+                logger.i { "Avatar deleted" }
+                watchCurrentTenantUseCase.refresh()
+                updateState {
+                    copy(
+                        currentAvatar = null,
+                        avatarState = WorkspaceSettingsState.AvatarState.Idle
+                    )
+                }
+            },
+            onFailure = { error ->
+                logger.e(error) { "Failed to delete avatar" }
+                val exception = error.asDokusException
+                val displayException = if (exception is DokusException.Unknown) {
+                    DokusException.WorkspaceAvatarDeleteFailed
+                } else {
+                    exception
+                }
+                updateState {
+                    copy(avatarState = WorkspaceSettingsState.AvatarState.Error(displayException))
+                }
+                action(WorkspaceSettingsAction.ShowError(displayException))
+            }
+        )
     }
 
     private suspend fun WorkspaceSettingsCtx.handleResetAvatarState() {
-        withState<WorkspaceSettingsState.Content, _> {
-            updateState { copy(avatarState = WorkspaceSettingsState.Content.AvatarState.Idle) }
-        }
+        updateState { copy(avatarState = WorkspaceSettingsState.AvatarState.Idle) }
     }
 }
 

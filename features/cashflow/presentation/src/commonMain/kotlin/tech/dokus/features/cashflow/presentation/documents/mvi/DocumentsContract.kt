@@ -4,7 +4,6 @@ import androidx.compose.runtime.Immutable
 import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
-import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.DocumentRecordDto
@@ -46,34 +45,23 @@ enum class DocumentFilter {
 // ============================================================================
 
 @Immutable
-sealed interface DocumentsState : MVIState, DokusState<Nothing> {
-
-    /**
-     * Loading state - initial data fetch in progress.
-     */
-    data object Loading : DocumentsState
-
-    /**
-     * Content state - documents loaded and ready for display.
-     */
-    data class Content(
-        val documents: PaginationState<DocumentRecordDto>,
-        val filter: DocumentFilter = DocumentFilter.All,
-        val needsAttentionCount: Int = 0,
-        val confirmedCount: Int = 0,
-        val isRefreshing: Boolean = false,
-    ) : DocumentsState
-
-    /**
-     * Error state - failed to load initial data.
-     */
-    data class Error(
-        override val exception: DokusException,
-        override val retryHandler: RetryHandler,
-    ) : DocumentsState, DokusState.Error<Nothing>
-
+data class DocumentsState(
+    val documents: DokusState<PaginationState<DocumentRecordDto>>,
+    val filter: DocumentFilter,
+    val needsAttentionCount: Int,
+    val confirmedCount: Int,
+) : MVIState {
     companion object {
         const val PAGE_SIZE = 20
+
+        val initial by lazy {
+            DocumentsState(
+                documents = DokusState.loading(),
+                filter = DocumentFilter.All,
+                needsAttentionCount = 0,
+                confirmedCount = 0
+            )
+        }
     }
 }
 

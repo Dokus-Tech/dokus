@@ -7,7 +7,6 @@ import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.domain.LegalName
-import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.FirmId
 import tech.dokus.domain.ids.VatNumber
@@ -17,76 +16,66 @@ import tech.dokus.features.auth.presentation.auth.model.LookupState
 import tech.dokus.features.auth.presentation.auth.model.WorkspaceCreateType
 import tech.dokus.features.auth.presentation.auth.model.WorkspaceWizardStep
 import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.app.state.isSuccess
 
 /**
  * Contract for Workspace Creation wizard screen.
  *
  * Flow:
- * 1. Loading → Initial loading of user info (check freelancer status, get username)
- * 2. Wizard → Multi-step wizard with states:
+ * 1. userInfo is loading → Initial loading of user info (check freelancer status, get username)
+ * 2. userInfo is success, !isCreating → Multi-step wizard with states:
  *    - TypeSelection → User selects Freelancer, Company, or Bookkeeper
  *    - CompanyName → User enters company/practice name (Company and Bookkeeper)
  *    - VatAndAddress → User enters VAT and address
- * 3. Creating → Workspace creation in progress
- * 4. Error → Error occurred with retry option
+ * 3. isCreating → Workspace creation in progress
+ * 4. error != null → Error occurred (form stays visible)
  */
 
 // ============================================================================
 // STATE
 // ============================================================================
 
+/**
+ * User info loaded during initialization.
+ */
+data class WorkspaceCreateUserInfo(
+    val hasFreelancerWorkspace: Boolean,
+    val userName: String,
+)
+
 @Immutable
-sealed interface WorkspaceCreateState : MVIState, DokusState<Nothing> {
+data class WorkspaceCreateState(
+    val userInfo: DokusState<WorkspaceCreateUserInfo> = DokusState.loading(),
+    val step: WorkspaceWizardStep = WorkspaceWizardStep.TypeSelection,
+    val workspaceType: WorkspaceCreateType = WorkspaceCreateType.Company,
+    val companyName: LegalName = LegalName.Empty,
+    val lookupState: LookupState = LookupState.Idle,
+    val selectedEntity: EntityLookup? = null,
+    val vatNumber: VatNumber = VatNumber(""),
+    val address: AddressFormState = AddressFormState(),
+    val isCreating: Boolean = false,
+    val error: DokusException? = null,
+) : MVIState {
 
-    /**
-     * Initial loading state - fetching user info.
-     */
-    data object Loading : WorkspaceCreateState, DokusState.Loading<Nothing>
+    val hasFreelancerWorkspace: Boolean
+        get() = (userInfo as? DokusState.Success)?.data?.hasFreelancerWorkspace ?: false
 
-    /**
-     * Wizard state - user is navigating through the wizard steps.
-     */
-    data class Wizard(
-        val step: WorkspaceWizardStep = WorkspaceWizardStep.TypeSelection,
-        val workspaceType: WorkspaceCreateType = WorkspaceCreateType.Company,
-        val hasFreelancerWorkspace: Boolean = false,
-        val userName: String = "",
-        val companyName: LegalName = LegalName.Empty,
-        val lookupState: LookupState = LookupState.Idle,
-        val selectedEntity: EntityLookup? = null,
-        val vatNumber: VatNumber = VatNumber(""),
-        val address: AddressFormState = AddressFormState(),
-    ) : WorkspaceCreateState {
+    val userName: String
+        get() = (userInfo as? DokusState.Success)?.data?.userName ?: ""
 
-        /** Whether the current step is valid and can proceed */
-        val canProceed: Boolean
-            get() = when (step) {
-                WorkspaceWizardStep.TypeSelection -> true
-                WorkspaceWizardStep.CompanyName -> companyName.isValid
-                WorkspaceWizardStep.VatAndAddress -> vatNumber.isValid && address.isValid
-            }
+    val isReady: Boolean get() = userInfo.isSuccess()
+
+    /** Whether the current step is valid and can proceed */
+    val canProceed: Boolean
+        get() = when (step) {
+            WorkspaceWizardStep.TypeSelection -> true
+            WorkspaceWizardStep.CompanyName -> companyName.isValid
+            WorkspaceWizardStep.VatAndAddress -> vatNumber.isValid && address.isValid
+        }
+
+    companion object {
+        val initial by lazy { WorkspaceCreateState() }
     }
-
-    /**
-     * Creating state - workspace creation in progress.
-     */
-    data class Creating(
-        val workspaceType: WorkspaceCreateType,
-        val companyName: LegalName,
-        val userName: String,
-        val vatNumber: VatNumber,
-        val address: AddressFormState,
-        val selectedEntity: EntityLookup?,
-    ) : WorkspaceCreateState
-
-    /**
-     * Error state with recovery option.
-     */
-    data class Error(
-        override val exception: DokusException,
-        override val retryHandler: RetryHandler,
-        val previousWizardState: Wizard? = null,
-    ) : WorkspaceCreateState, DokusState.Error<Nothing>
 }
 
 // ============================================================================

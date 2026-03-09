@@ -4,7 +4,6 @@ import androidx.compose.runtime.Immutable
 import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
-import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.ai.ChatCitation
@@ -43,122 +42,123 @@ import tech.dokus.foundation.app.state.DokusState
 // STATE
 // ============================================================================
 
+/**
+ * Loaded chat session data from the server.
+ *
+ * @property scope Current chat scope (SINGLE_DOC or ALL_DOCS)
+ * @property documentId Document ID for single-doc scope (null for cross-doc)
+ * @property documentName Document name for display (null for cross-doc)
+ * @property sessionId Current session ID (null if new conversation)
+ * @property messages List of messages in the current conversation
+ * @property configuration Chat configuration from server
+ * @property recentSessions Recent chat sessions for history display
+ */
 @Immutable
-sealed interface ChatState : MVIState, DokusState<Nothing> {
+data class ChatSessionData(
+    val scope: ChatScope,
+    val documentId: DocumentId? = null,
+    val documentName: String? = null,
+    val sessionId: ChatSessionId? = null,
+    val messages: List<ChatMessageDto> = emptyList(),
+    val configuration: ChatConfiguration = ChatConfiguration(),
+    val recentSessions: List<ChatSessionSummary> = emptyList(),
+) {
 
     /**
-     * Loading state - initializing chat configuration and session.
+     * Whether the chat is in single-document mode.
      */
-    data object Loading : ChatState
+    val isSingleDocMode: Boolean
+        get() = scope == ChatScope.SingleDoc
 
     /**
-     * Content state - chat is ready for interaction.
-     *
-     * @property scope Current chat scope (SINGLE_DOC or ALL_DOCS)
-     * @property documentId Document ID for single-doc scope (null for cross-doc)
-     * @property documentName Document name for display (null for cross-doc)
-     * @property sessionId Current session ID (null if new conversation)
-     * @property messages List of messages in the current conversation
-     * @property inputText Current text in the input field
-     * @property isSending Whether a message is being sent/processed
-     * @property configuration Chat configuration from server
-     * @property expandedCitationIds Set of citation IDs that are currently expanded
-     * @property recentSessions Recent chat sessions for history display
-     * @property showSessionPicker Whether to show session picker dialog
+     * Whether the chat is in cross-document mode.
      */
-    data class Content(
-        val scope: ChatScope,
-        val documentId: DocumentId? = null,
-        val documentName: String? = null,
-        val sessionId: ChatSessionId? = null,
-        val messages: List<ChatMessageDto> = emptyList(),
-        val inputText: String = "",
-        val isSending: Boolean = false,
-        val configuration: ChatConfiguration = ChatConfiguration(),
-        val expandedCitationIds: Set<String> = emptySet(),
-        val recentSessions: List<ChatSessionSummary> = emptyList(),
-        val showSessionPicker: Boolean = false,
-    ) : ChatState {
+    val isCrossDocMode: Boolean
+        get() = scope == ChatScope.AllDocs
 
-        /**
-         * Whether the send button should be enabled.
-         */
-        val canSend: Boolean
-            get() = inputText.isNotBlank() && !isSending
+    /**
+     * Whether this is a new conversation (no session ID yet).
+     */
+    val isNewConversation: Boolean
+        get() = sessionId == null
 
-        /**
-         * Whether the chat is in single-document mode.
-         */
-        val isSingleDocMode: Boolean
-            get() = scope == ChatScope.SingleDoc
+    /**
+     * Number of messages in the conversation.
+     */
+    val messageCount: Int
+        get() = messages.size
 
-        /**
-         * Whether the chat is in cross-document mode.
-         */
-        val isCrossDocMode: Boolean
-            get() = scope == ChatScope.AllDocs
+    /**
+     * User messages in the conversation.
+     */
+    val userMessages: List<ChatMessageDto>
+        get() = messages.filter { it.role == MessageRole.User }
 
-        /**
-         * Whether this is a new conversation (no session ID yet).
-         */
-        val isNewConversation: Boolean
-            get() = sessionId == null
+    /**
+     * Assistant messages in the conversation.
+     */
+    val assistantMessages: List<ChatMessageDto>
+        get() = messages.filter { it.role == MessageRole.Assistant }
 
-        /**
-         * Number of messages in the conversation.
-         */
-        val messageCount: Int
-            get() = messages.size
+    /**
+     * Whether there are any citations to display.
+     */
+    val hasCitations: Boolean
+        get() = messages.any { it.citations?.isNotEmpty() == true }
 
-        /**
-         * User messages in the conversation.
-         */
-        val userMessages: List<ChatMessageDto>
-            get() = messages.filter { it.role == MessageRole.User }
+    /**
+     * All citations from assistant messages.
+     */
+    val allCitations: List<ChatCitation>
+        get() = messages
+            .filter { it.role == MessageRole.Assistant }
+            .flatMap { it.citations ?: emptyList() }
 
-        /**
-         * Assistant messages in the conversation.
-         */
-        val assistantMessages: List<ChatMessageDto>
-            get() = messages.filter { it.role == MessageRole.Assistant }
+    /**
+     * Maximum message length from configuration.
+     */
+    val maxMessageLength: Int
+        get() = configuration.maxMessageLength
+}
 
-        /**
-         * Whether there are any citations to display.
-         */
-        val hasCitations: Boolean
-            get() = messages.any { it.citations?.isNotEmpty() == true }
+/**
+ * Flat data class state for the Chat screen.
+ *
+ * Network/loaded data is wrapped in [DokusState], UI state is top-level.
+ *
+ * @property session Chat session data (loading / success / error)
+ * @property inputText Current text in the input field
+ * @property isSending Whether a message is being sent/processed
+ * @property expandedCitationIds Set of citation IDs that are currently expanded
+ * @property showSessionPicker Whether to show session picker dialog
+ */
+@Immutable
+data class ChatState(
+    val session: DokusState<ChatSessionData> = DokusState.loading(),
+    val inputText: String = "",
+    val isSending: Boolean = false,
+    val expandedCitationIds: Set<String> = emptySet(),
+    val showSessionPicker: Boolean = false,
+) : MVIState {
 
-        /**
-         * All citations from assistant messages.
-         */
-        val allCitations: List<ChatCitation>
-            get() = messages
-                .filter { it.role == MessageRole.Assistant }
-                .flatMap { it.citations ?: emptyList() }
-
-        /**
-         * Maximum message length from configuration.
-         */
-        val maxMessageLength: Int
-            get() = configuration.maxMessageLength
-
-        /**
-         * Whether the current input exceeds the maximum length.
-         */
-        val isInputTooLong: Boolean
-            get() = inputText.length > maxMessageLength
+    companion object {
+        val initial by lazy { ChatState() }
     }
 
     /**
-     * Error state - failed to initialize chat.
-     *
-     * @property exception The error that occurred
-     * @property retryHandler Handler to retry initialization
+     * Whether the send button should be enabled.
      */
-    data class Error(
-        override val exception: DokusException,
-        override val retryHandler: RetryHandler,
-    ) : ChatState, DokusState.Error<Nothing>
+    val canSend: Boolean
+        get() = inputText.isNotBlank() && !isSending
+
+    /**
+     * Whether the current input exceeds the maximum length.
+     */
+    val isInputTooLong: Boolean
+        get() {
+            val data = (session as? DokusState.Success)?.data ?: return false
+            return inputText.length > data.maxMessageLength
+        }
 }
 
 // ============================================================================

@@ -30,7 +30,7 @@ import tech.dokus.foundation.aura.constrains.Constraints
  */
 @Composable
 internal fun AmountsCard(
-    state: DocumentReviewState.Content,
+    state: DocumentReviewState,
     onIntent: (DocumentReviewIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {

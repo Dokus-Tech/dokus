@@ -10,13 +10,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.chat_loading
-import tech.dokus.features.cashflow.presentation.chat.ChatState
+import tech.dokus.domain.asbtractions.RetryHandler
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.constrains.Constraints
@@ -27,7 +29,7 @@ import tech.dokus.foundation.aura.tooling.TestWrapper
 @Composable
 internal fun LoadingContent(contentPadding: PaddingValues) {
     Box(
-        modifier = androidx.compose.ui.Modifier
+        modifier = Modifier
             .fillMaxSize()
             .padding(contentPadding),
         contentAlignment = Alignment.Center
@@ -48,21 +50,18 @@ internal fun LoadingContent(contentPadding: PaddingValues) {
 
 @Composable
 internal fun ErrorContent(
-    error: ChatState.Error,
+    exception: DokusException,
+    retryHandler: RetryHandler,
     contentPadding: PaddingValues,
 ) {
-    Box(
-        modifier = androidx.compose.ui.Modifier
+    DokusErrorContent(
+        exception = exception,
+        retryHandler = retryHandler,
+        modifier = Modifier
             .fillMaxSize()
             .padding(contentPadding)
             .padding(Constraints.Spacing.large),
-        contentAlignment = Alignment.Center
-    ) {
-        DokusErrorContent(
-            exception = error.exception,
-            retryHandler = error.retryHandler
-        )
-    }
+    )
 }
 
 @Preview
@@ -72,5 +71,19 @@ private fun LoadingContentPreview(
 ) {
     TestWrapper(parameters) {
         LoadingContent(contentPadding = PaddingValues(0.dp))
+    }
+}
+
+@Preview
+@Composable
+private fun ErrorContentPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
+) {
+    TestWrapper(parameters) {
+        ErrorContent(
+            exception = DokusException.ConnectionError(),
+            retryHandler = RetryHandler { },
+            contentPadding = PaddingValues(0.dp),
+        )
     }
 }

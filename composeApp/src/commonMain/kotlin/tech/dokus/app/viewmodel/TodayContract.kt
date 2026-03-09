@@ -22,7 +22,7 @@ import tech.dokus.foundation.app.state.DokusState
  * - Notifications panel with filters
  *
  * All sub-states (tenant, pending docs, notifications) use [DokusState]
- * for async loading/error handling within the single [Content] state.
+ * for async loading/error handling within the single [TodayState].
  */
 
 // ============================================================================
@@ -30,33 +30,19 @@ import tech.dokus.foundation.app.state.DokusState
 // ============================================================================
 
 @Immutable
-sealed interface TodayState : MVIState {
-
-    /**
-     * Content state - the single working state for the Today screen.
-     *
-     * @property tenantState Loading state for current tenant
-     * @property currentAvatar Current workspace avatar
-     * @property pendingDocumentsState Loading state for pending documents (with pagination)
-     * @property allPendingDocuments Full list from server (used for client-side pagination)
-     * @property pendingVisibleCount Number of pending documents currently visible
-     * @property notificationsState Loading state for notifications
-     * @property unreadNotificationCount Badge count for unread notifications
-     * @property notificationFilter Currently selected notification filter tab
-     */
-    data class Content(
-        val tenantState: DokusState<Tenant?> = DokusState.idle(),
-        val currentAvatar: Thumbnail? = null,
-        val pendingDocumentsState: DokusState<PaginationState<DocumentRecordDto>> = DokusState.idle(),
-        val allPendingDocuments: List<DocumentRecordDto> = emptyList(),
-        val pendingVisibleCount: Int = PENDING_PAGE_SIZE,
-        val notificationsState: DokusState<List<NotificationDto>> = DokusState.idle(),
-        val unreadNotificationCount: Int = 0,
-        val notificationFilter: NotificationFilterTab = NotificationFilterTab.All,
-    ) : TodayState
-
+data class TodayState(
+    val tenantState: DokusState<Tenant?> = DokusState.idle(),
+    val currentAvatar: Thumbnail? = null,
+    val pendingDocumentsState: DokusState<PaginationState<DocumentRecordDto>> = DokusState.idle(),
+    val allPendingDocuments: List<DocumentRecordDto> = emptyList(),
+    val pendingVisibleCount: Int = PENDING_PAGE_SIZE,
+    val notificationsState: DokusState<List<NotificationDto>> = DokusState.idle(),
+    val unreadNotificationCount: Int = 0,
+    val notificationFilter: NotificationFilterTab = NotificationFilterTab.All,
+) : MVIState {
     companion object {
         const val PENDING_PAGE_SIZE = 5
+        val initial by lazy { TodayState() }
     }
 }
 

@@ -63,7 +63,8 @@ object PaginationStateCompanion {
         currentPage: Int,
         pageSize: Int
     ): PaginationState<T> {
-        val totalPages = if (allData.isEmpty() || pageSize <= 0) 1 else ((allData.size - 1) / pageSize) + 1
+        val totalPages =
+            if (allData.isEmpty() || pageSize <= 0) 1 else ((allData.size - 1) / pageSize) + 1
         val start = currentPage * pageSize
         val end = minOf(start + pageSize, allData.size)
         val pageData = if (start < allData.size) allData.subList(start, end) else emptyList()
@@ -71,7 +72,6 @@ object PaginationStateCompanion {
         return PaginationState(
             currentPage = currentPage,
             pageSize = pageSize,
-            isLoadingMore = false,
             hasMorePages = currentPage < totalPages - 1,
             data = pageData
         )

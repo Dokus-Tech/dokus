@@ -4,55 +4,21 @@ import androidx.compose.runtime.Immutable
 import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
-import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.Tenant
 import tech.dokus.foundation.app.state.DokusState
-
-/**
- * Contract for the Settings screen.
- *
- * The Settings screen displays:
- * - Current tenant/workspace information
- * - Navigation to various settings sections
- *
- * Flow:
- * 1. Loading -> Initial tenant fetch
- * 2. Content -> Tenant loaded, user can interact
- * 3. Error -> Failed to load with retry option
- */
 
 // ============================================================================
 // STATE
 // ============================================================================
 
 @Immutable
-sealed interface SettingsState : MVIState, DokusState<Tenant> {
-
-    /**
-     * Loading state - fetching current tenant.
-     */
-    data object Loading : SettingsState, DokusState.Loading<Tenant>
-
-    /**
-     * Content state - tenant loaded and ready for display.
-     *
-     * @property data The current tenant/workspace
-     */
-    data class Content(
-        override val data: Tenant,
-    ) : SettingsState, DokusState.Success<Tenant>
-
-    /**
-     * Error state - failed to load tenant.
-     *
-     * @property exception The error that occurred
-     * @property retryHandler Handler to retry the failed operation
-     */
-    data class Error(
-        override val exception: DokusException,
-        override val retryHandler: RetryHandler,
-    ) : SettingsState, DokusState.Error<Tenant>
+data class SettingsState(
+    val tenant: DokusState<Tenant> = DokusState.loading(),
+) : MVIState {
+    companion object {
+        val initial by lazy { SettingsState() }
+    }
 }
 
 // ============================================================================

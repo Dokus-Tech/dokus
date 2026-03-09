@@ -94,10 +94,6 @@ fun CashflowDocumentsTableSection(
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
-
-                if (paginationState.isLoadingMore) {
-                    LoadingMoreIndicator()
-                }
             }
 
             is DokusState.Error -> {
@@ -150,10 +146,6 @@ fun CashflowMobileDocumentsSection(
                         onDocumentClick = onDocumentClick,
                         modifier = Modifier.fillMaxWidth()
                     )
-                }
-
-                if (paginationState.isLoadingMore) {
-                    LoadingMoreIndicator()
                 }
             }
 

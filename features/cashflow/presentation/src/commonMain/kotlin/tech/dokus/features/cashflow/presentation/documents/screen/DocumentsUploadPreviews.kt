@@ -1,7 +1,9 @@
 package tech.dokus.features.cashflow.presentation.documents.screen
 
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -9,6 +11,7 @@ import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.features.cashflow.presentation.documents.model.DocumentsLocalUploadRow
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentFilter
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsState
+import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
@@ -19,8 +22,9 @@ private fun DocumentsDesktopUploadHeaderPreview(
     @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
 ) {
     TestWrapper(parameters) {
-        DocumentsContent(
+        DocumentsScreen(
             state = previewContentState(),
+            snackbarHostState = remember { SnackbarHostState() },
             localUploadRows = previewLocalRows(),
             isDesktopDropTargetActive = false,
             desktopDropScrollToken = 0,
@@ -40,8 +44,9 @@ private fun DocumentsDesktopDropOverlayPreview(
     @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
 ) {
     TestWrapper(parameters) {
-        DocumentsContent(
+        DocumentsScreen(
             state = previewContentState(),
+            snackbarHostState = remember { SnackbarHostState() },
             localUploadRows = previewLocalRows(),
             isDesktopDropTargetActive = true,
             desktopDropScrollToken = 0,
@@ -61,8 +66,9 @@ private fun DocumentsMobileFabPreview(
     @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
 ) {
     TestWrapper(parameters) {
-        DocumentsContent(
+        DocumentsScreen(
             state = previewContentState(),
+            snackbarHostState = remember { SnackbarHostState() },
             localUploadRows = previewLocalRows(),
             isDesktopDropTargetActive = false,
             desktopDropScrollToken = 0,
@@ -76,19 +82,19 @@ private fun DocumentsMobileFabPreview(
     }
 }
 
-private fun previewContentState(): DocumentsState.Content {
-    return DocumentsState.Content(
-        documents = PaginationState(
-            currentPage = 1,
-            pageSize = 20,
-            isLoadingMore = false,
-            hasMorePages = false,
-            data = emptyList()
+private fun previewContentState(): DocumentsState {
+    return DocumentsState(
+        documents = DokusState.success(
+            PaginationState(
+                currentPage = 1,
+                pageSize = 20,
+                hasMorePages = false,
+                data = emptyList()
+            )
         ),
         filter = DocumentFilter.All,
         needsAttentionCount = 1,
         confirmedCount = 8,
-        isRefreshing = false
     )
 }
 

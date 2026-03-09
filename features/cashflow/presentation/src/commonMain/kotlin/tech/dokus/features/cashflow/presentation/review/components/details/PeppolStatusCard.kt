@@ -17,10 +17,10 @@ import tech.dokus.foundation.aura.extensions.localized
 
 @Composable
 internal fun PeppolStatusCard(
-    state: DocumentReviewState.Content,
+    state: DocumentReviewState,
     modifier: Modifier = Modifier
 ) {
-    val invoice = state.document.confirmedEntity as? FinancialDocumentDto.InvoiceDto ?: return
+    val invoice = state.documentRecord?.confirmedEntity as? FinancialDocumentDto.InvoiceDto ?: return
     val shouldShow = invoice.peppolStatus != null ||
         invoice.peppolSentAt != null ||
         invoice.peppolId != null
