@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.HorizontalDivider
@@ -40,7 +41,7 @@ import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.features.banking.presentation.payments.components.PaymentFilterTabs
 import tech.dokus.features.banking.presentation.payments.components.PaymentsSkeleton
-import tech.dokus.features.banking.presentation.payments.components.TransactionDateHeader
+import tech.dokus.features.banking.presentation.payments.components.TransactionCard
 import tech.dokus.features.banking.presentation.payments.components.TransactionDetailPane
 import tech.dokus.features.banking.presentation.payments.components.TransactionHeaderRow
 import tech.dokus.features.banking.presentation.payments.components.TransactionRow
@@ -60,6 +61,7 @@ import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.local.ScreenSize
+import tech.dokus.foundation.aura.local.isLarge
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
@@ -92,6 +94,7 @@ private fun PaymentsContent(
     val txData = state.transactions.lastData?.data ?: emptyList()
     val isRefreshing = state.transactions.isLoading()
     val listState = rememberLazyListState()
+    val isLargeScreen = LocalScreenSize.isLarge
     val selectedTx = state.selectedTransactionId?.let { id ->
         txData.find { it.id == id }
     }
@@ -145,18 +148,16 @@ private fun PaymentsContent(
                 .fillMaxWidth()
                 .padding(bottom = Constraints.Spacing.large),
         ) {
-            // Transaction table
+            // Transaction list/table
             DokusCardSurface(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight(),
             ) {
                 when {
-                    // First load — no data yet
                     txData.isEmpty() && isRefreshing -> {
                         PaymentsSkeleton()
                     }
-                    // Error with no data
                     state.transactions.isError() -> {
                         DokusErrorContent(
                             exception = state.transactions.exception,
@@ -164,7 +165,6 @@ private fun PaymentsContent(
                             modifier = Modifier.fillMaxSize(),
                         )
                     }
-                    // Empty after successful load
                     txData.isEmpty() && state.transactions.isSuccess() -> {
                         DokusEmptyState(
                             title = stringResource(Res.string.banking_empty_title),
@@ -174,23 +174,34 @@ private fun PaymentsContent(
                                 .padding(Constraints.Spacing.xxLarge),
                         )
                     }
-                    // Data loaded
                     else -> {
-                        TransactionTable(
-                            transactions = txData,
-                            selectedTransactionId = state.selectedTransactionId,
-                            isRefreshing = isRefreshing,
-                            listState = listState,
-                            onSelectTransaction = { id ->
-                                onIntent(PaymentsIntent.SelectTransaction(id))
-                            },
-                        )
+                        if (isLargeScreen) {
+                            DesktopTransactionTable(
+                                transactions = txData,
+                                selectedTransactionId = state.selectedTransactionId,
+                                isRefreshing = isRefreshing,
+                                listState = listState,
+                                onSelectTransaction = { id ->
+                                    onIntent(PaymentsIntent.SelectTransaction(id))
+                                },
+                            )
+                        } else {
+                            MobileTransactionList(
+                                transactions = txData,
+                                selectedTransactionId = state.selectedTransactionId,
+                                isRefreshing = isRefreshing,
+                                listState = listState,
+                                onSelectTransaction = { id ->
+                                    onIntent(PaymentsIntent.SelectTransaction(id))
+                                },
+                            )
+                        }
                     }
                 }
             }
 
-            // Detail pane
-            if (selectedTx != null) {
+            // Detail pane (desktop only)
+            if (isLargeScreen && selectedTx != null) {
                 VerticalDivider()
                 TransactionDetailPane(
                     transaction = selectedTx,
@@ -215,64 +226,36 @@ private fun PaymentsContent(
     }
 }
 
+// =============================================================================
+// Desktop: single-row table with header
+// =============================================================================
+
 @Composable
-private fun TransactionTable(
+private fun DesktopTransactionTable(
     transactions: List<BankTransactionDto>,
     selectedTransactionId: BankTransactionId?,
     isRefreshing: Boolean,
     listState: LazyListState,
     onSelectTransaction: (BankTransactionId) -> Unit,
 ) {
-    // Group transactions by date for date headers
-    val grouped = remember(transactions) {
-        buildList {
-            var lastDate: LocalDate? = null
-            for (tx in transactions) {
-                if (tx.transactionDate != lastDate) {
-                    add(TransactionListItem.DateHeader(tx.transactionDate))
-                    lastDate = tx.transactionDate
-                }
-                add(TransactionListItem.Transaction(tx))
-            }
-        }
-    }
-
     Column(modifier = Modifier.fillMaxSize()) {
-        // Table header
         TransactionHeaderRow()
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
-        // Transaction list
         LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxSize(),
         ) {
-            itemsIndexed(
-                items = grouped,
-                key = { _, item ->
-                    when (item) {
-                        is TransactionListItem.DateHeader -> "date-${item.date}"
-                        is TransactionListItem.Transaction -> item.tx.id.toString()
-                    }
-                },
-            ) { _, item ->
-                when (item) {
-                    is TransactionListItem.DateHeader -> {
-                        TransactionDateHeader(
-                            label = formatShortDate(item.date),
-                        )
-                    }
-                    is TransactionListItem.Transaction -> {
-                        TransactionRow(
-                            transaction = item.tx,
-                            isSelected = item.tx.id == selectedTransactionId,
-                            onClick = { onSelectTransaction(item.tx.id) },
-                        )
-                        HorizontalDivider(
-                            color = MaterialTheme.colorScheme.outlineVariant,
-                        )
-                    }
-                }
+            items(
+                items = transactions,
+                key = { it.id.toString() },
+            ) { tx ->
+                TransactionRow(
+                    transaction = tx,
+                    isSelected = tx.id == selectedTransactionId,
+                    onClick = { onSelectTransaction(tx.id) },
+                )
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             }
 
             if (isRefreshing) {
@@ -291,9 +274,49 @@ private fun TransactionTable(
     }
 }
 
-private sealed interface TransactionListItem {
-    data class DateHeader(val date: LocalDate) : TransactionListItem
-    data class Transaction(val tx: BankTransactionDto) : TransactionListItem
+// =============================================================================
+// Mobile: card layout with date group headers
+// =============================================================================
+
+@Composable
+private fun MobileTransactionList(
+    transactions: List<BankTransactionDto>,
+    selectedTransactionId: BankTransactionId?,
+    isRefreshing: Boolean,
+    listState: LazyListState,
+    onSelectTransaction: (BankTransactionId) -> Unit,
+) {
+    LazyColumn(
+        state = listState,
+        modifier = Modifier.fillMaxSize(),
+    ) {
+        itemsIndexed(
+            items = transactions,
+            key = { _, tx -> tx.id.toString() },
+        ) { index, tx ->
+            TransactionCard(
+                transaction = tx,
+                isSelected = tx.id == selectedTransactionId,
+                onClick = { onSelectTransaction(tx.id) },
+            )
+            if (index < transactions.size - 1) {
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            }
+        }
+
+        if (isRefreshing) {
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(Constraints.Spacing.large),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    DokusLoader(size = DokusLoaderSize.Small)
+                }
+            }
+        }
+    }
 }
 
 // =============================================================================

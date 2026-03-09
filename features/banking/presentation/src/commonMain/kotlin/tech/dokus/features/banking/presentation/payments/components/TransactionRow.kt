@@ -3,12 +3,17 @@ package tech.dokus.features.banking.presentation.payments.components
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -211,26 +216,59 @@ internal fun TransactionRow(
 }
 
 /**
- * Date group separator row (e.g., "Mar 3").
+ * Mobile-friendly card layout: two lines (counterparty + date/status) with amount on the right.
  */
 @Composable
-internal fun TransactionDateHeader(
-    label: String,
+internal fun TransactionCard(
+    transaction: BankTransactionDto,
+    isSelected: Boolean,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Text(
-        text = label,
-        style = MaterialTheme.typography.labelSmall.copy(
-            fontWeight = FontWeight.SemiBold,
-            fontFamily = MaterialTheme.typography.labelLarge.fontFamily,
-        ),
-        color = MaterialTheme.colorScheme.textMuted,
-        modifier = modifier.padding(
-            start = Constraints.Spacing.large,
-            top = Constraints.Spacing.medium,
-            bottom = Constraints.Spacing.xSmall,
-        ),
-    )
+    val selectedBg = if (isSelected) {
+        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+    } else {
+        MaterialTheme.colorScheme.surface.copy(alpha = 0f)
+    }
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(selectedBg)
+            .clickable(onClick = onClick)
+            .padding(
+                horizontal = Constraints.Spacing.large,
+                vertical = Constraints.Spacing.medium,
+            ),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xxSmall),
+        ) {
+            Text(
+                text = transaction.counterpartyName ?: transaction.descriptionRaw ?: "\u2014",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = formatShortDate(transaction.transactionDate),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                TransactionStatusBadge(status = transaction.status)
+            }
+        }
+
+        Amt(minorUnits = transaction.signedAmount.minor)
+    }
 }
 
 @Composable
