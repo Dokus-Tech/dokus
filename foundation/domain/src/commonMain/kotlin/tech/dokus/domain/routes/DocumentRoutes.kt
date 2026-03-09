@@ -16,6 +16,7 @@ import tech.dokus.domain.enums.IngestionStatus
  * Canonical endpoints:
  * - POST /upload - Upload document (creates ingestion run with status=Queued)
  * - GET / - List documents with filters (uses Documents.List)
+ * - GET /counts - Get document badge counts for the operational inbox
      * - GET /{id} - Get full DocumentRecordDto
  * - GET /{id}/content - Download document bytes via API
  * - DELETE /{id} - Delete document (cascades to drafts, runs)
@@ -56,6 +57,14 @@ class Documents {
         val page: Int = 0,
         val limit: Int = 20
     )
+
+    /**
+     * GET /api/v1/documents/counts
+     * Return operational inbox badge counts without pagination.
+     */
+    @Serializable
+    @Resource("counts")
+    class Counts(val parent: Documents = Documents())
 
     /**
      * POST /api/v1/documents/upload

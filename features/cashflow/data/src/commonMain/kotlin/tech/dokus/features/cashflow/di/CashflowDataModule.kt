@@ -35,6 +35,7 @@ import tech.dokus.features.cashflow.usecase.ConnectPeppolUseCaseImpl
 import tech.dokus.features.cashflow.usecase.DeleteDocumentUseCaseImpl
 import tech.dokus.features.cashflow.usecase.GetChatConfigurationUseCaseImpl
 import tech.dokus.features.cashflow.usecase.GetChatSessionHistoryUseCaseImpl
+import tech.dokus.features.cashflow.usecase.GetDocumentCountsUseCaseImpl
 import tech.dokus.features.cashflow.usecase.GetDocumentPagesUseCaseImpl
 import tech.dokus.features.cashflow.usecase.GetDocumentRecordUseCaseImpl
 import tech.dokus.features.cashflow.usecase.GetDocumentSourceContentUseCaseImpl
@@ -83,6 +84,7 @@ import tech.dokus.features.cashflow.usecases.ConnectPeppolUseCase
 import tech.dokus.features.cashflow.usecases.DeleteDocumentUseCase
 import tech.dokus.features.cashflow.usecases.GetChatConfigurationUseCase
 import tech.dokus.features.cashflow.usecases.GetChatSessionHistoryUseCase
+import tech.dokus.features.cashflow.usecases.GetDocumentCountsUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentPagesUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentRecordUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentSourceContentUseCase
@@ -215,6 +217,7 @@ val cashflowNetworkModule = module {
     factory<GetLatestInvoiceForContactUseCase> { GetLatestInvoiceForContactUseCaseImpl(get()) }
     factory<GetContactPeppolStatusUseCase> { GetContactPeppolStatusUseCaseImpl(get()) }
     // Document records (for DocumentsScreen)
+    factory<GetDocumentCountsUseCase> { GetDocumentCountsUseCaseImpl(get()) }
     factory<LoadDocumentRecordsUseCase> { LoadDocumentRecordsUseCaseImpl(get()) }
 
     // Cashflow entries (for CashflowLedgerScreen)

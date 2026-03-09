@@ -10,6 +10,7 @@ import tech.dokus.domain.enums.DocumentListFilter
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.common.PaginationState
+import tech.dokus.features.cashflow.usecases.GetDocumentCountsUseCase
 import tech.dokus.features.cashflow.usecases.LoadDocumentRecordsUseCase
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.app.state.isSuccess
@@ -25,7 +26,8 @@ internal typealias DocumentsCtx = PipelineContext<DocumentsState, DocumentsInten
  * - Status filtering
  */
 internal class DocumentsContainer(
-    private val loadDocumentRecords: LoadDocumentRecordsUseCase
+    private val loadDocumentRecords: LoadDocumentRecordsUseCase,
+    private val getDocumentCounts: GetDocumentCountsUseCase,
 ) : Container<DocumentsState, DocumentsIntent, DocumentsAction> {
 
     private val logger = Logger.forClass<DocumentsContainer>()
@@ -50,15 +52,7 @@ internal class DocumentsContainer(
             logger.d { "Refreshing documents" }
             updateState { copy(documents = documents.asLoading) }
 
-            val needsAttentionCount = loadNeedsAttentionCount()
-            val confirmedCount = loadConfirmedCount()
-
-            updateState {
-                copy(
-                    needsAttentionCount = needsAttentionCount,
-                    confirmedCount = confirmedCount
-                )
-            }
+            loadCounts()
             loadDocumentRecords(
                 page = 0,
                 pageSize = PAGE_SIZE,
@@ -187,27 +181,24 @@ internal class DocumentsContainer(
         DocumentFilter.Confirmed -> DocumentListFilter.Confirmed
     }
 
-    private suspend fun loadNeedsAttentionCount(): Int {
-        val response = loadDocumentRecords(
-            page = 0,
-            pageSize = 1,
-            filter = DocumentListFilter.NeedsAttention
-        ).getOrElse { return 0 }
-
-        return response.total.coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
-    }
-
-    private suspend fun loadConfirmedCount(): Int {
-        val response = loadDocumentRecords(
-            page = 0,
-            pageSize = 1,
-            filter = DocumentListFilter.Confirmed
-        ).getOrElse { return 0 }
-
-        return response.total.coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
+    private suspend fun DocumentsCtx.loadCounts() {
+        getDocumentCounts()
+            .onSuccess { counts ->
+                updateState {
+                    copy(
+                        needsAttentionCount = counts.needsAttention.toUiCount(),
+                        confirmedCount = counts.confirmed.toUiCount()
+                    )
+                }
+            }
+            .onFailure { error ->
+                logger.e(error) { "Failed to load document counts" }
+            }
     }
 
     companion object {
         private const val PAGE_SIZE = 20
     }
 }
+
+private fun Long.toUiCount(): Int = coerceAtMost(Int.MAX_VALUE.toLong()).toInt()

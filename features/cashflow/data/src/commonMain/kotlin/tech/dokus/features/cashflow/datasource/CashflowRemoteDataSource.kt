@@ -44,6 +44,7 @@ import tech.dokus.domain.model.UndoAutoPaymentRequest
 import tech.dokus.domain.model.CreateExpenseRequest
 import tech.dokus.domain.model.CreateInvoiceRequest
 import tech.dokus.domain.model.DocumentDraftDto
+import tech.dokus.domain.model.DocumentCountsResponse
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentIngestionDto
 import tech.dokus.domain.model.DocumentIntakeResult
@@ -470,6 +471,12 @@ interface CashflowRemoteDataSource {
         page: Int = 0,
         limit: Int = 20
     ): Result<PaginatedResponse<DocumentRecordDto>>
+
+    /**
+     * Return full backend badge counts for the documents inbox.
+     * GET /api/v1/documents/counts
+     */
+    suspend fun getDocumentCounts(): Result<DocumentCountsResponse>
 
     fun observeDocumentCollectionChanges(): Flow<Unit>
 

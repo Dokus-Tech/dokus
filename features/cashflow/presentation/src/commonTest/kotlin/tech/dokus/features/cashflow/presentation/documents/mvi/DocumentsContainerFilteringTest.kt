@@ -11,9 +11,11 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.DocumentCountsResponse
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.common.PaginatedResponse
+import tech.dokus.features.cashflow.usecases.GetDocumentCountsUseCase
 import tech.dokus.features.cashflow.usecases.LoadDocumentRecordsUseCase
 import tech.dokus.foundation.app.state.isError
 import tech.dokus.foundation.app.state.isLoading
@@ -32,17 +34,15 @@ class DocumentsContainerFilteringTest {
         val needsAttentionDocs = listOf(documentRecord("00000000-0000-0000-0000-000000000201"))
 
         val loadDocuments = FakeLoadDocumentRecordsUseCase().apply {
-            countTotals[DocumentListFilter.NeedsAttention] = 39L
-            countTotals[DocumentListFilter.Confirmed] = 25L
-            enqueuePageResult(
-                filter = DocumentListFilter.All,
-                result = pageResponse(allDocs)
-            )
+            enqueuePageResult(filter = DocumentListFilter.All, result = pageResponse(allDocs))
+        }
+        val getDocumentCounts = FakeGetDocumentCountsUseCase().apply {
+            enqueueResult(DocumentCountsResponse(needsAttention = 39L, confirmed = 25L))
         }
         val deferredNeedsAttentionResult = CompletableDeferred<Result<PaginatedResponse<DocumentRecordDto>>>()
         loadDocuments.enqueuePageDeferred(DocumentListFilter.NeedsAttention, deferredNeedsAttentionResult)
 
-        val container = DocumentsContainer(loadDocuments)
+        val container = DocumentsContainer(loadDocuments, getDocumentCounts)
 
         container.store.subscribeAndTest {
             advanceUntilIdle()
@@ -50,6 +50,8 @@ class DocumentsContainerFilteringTest {
             val initial = states.value
             assertEquals(DocumentFilter.All, initial.filter)
             assertFalse(initial.documents.isLoading())
+            assertEquals(39, initial.needsAttentionCount)
+            assertEquals(25, initial.confirmedCount)
             assertEquals(allDocs.map { it.document.id }, initial.documents.lastData?.data?.map { it.document.id })
 
             emit(DocumentsIntent.UpdateFilter(DocumentFilter.NeedsAttention))
@@ -72,6 +74,7 @@ class DocumentsContainerFilteringTest {
             )
             assertEquals(39, updated.needsAttentionCount)
             assertEquals(25, updated.confirmedCount)
+            assertEquals(1, getDocumentCounts.callCount)
         }
     }
 
@@ -80,23 +83,23 @@ class DocumentsContainerFilteringTest {
         val allDocs = listOf(documentRecord("00000000-0000-0000-0000-000000000101"))
 
         val loadDocuments = FakeLoadDocumentRecordsUseCase().apply {
-            countTotals[DocumentListFilter.NeedsAttention] = 10L
-            countTotals[DocumentListFilter.Confirmed] = 5L
-            enqueuePageResult(
-                filter = DocumentListFilter.All,
-                result = pageResponse(allDocs)
-            )
+            enqueuePageResult(filter = DocumentListFilter.All, result = pageResponse(allDocs))
+        }
+        val getDocumentCounts = FakeGetDocumentCountsUseCase().apply {
+            enqueueResult(DocumentCountsResponse(needsAttention = 10L, confirmed = 5L))
         }
         val deferredFailure = CompletableDeferred<Result<PaginatedResponse<DocumentRecordDto>>>()
         loadDocuments.enqueuePageDeferred(DocumentListFilter.NeedsAttention, deferredFailure)
 
-        val container = DocumentsContainer(loadDocuments)
+        val container = DocumentsContainer(loadDocuments, getDocumentCounts)
 
         container.store.subscribeAndTest {
             advanceUntilIdle()
 
             val initial = states.value
             assertEquals(DocumentFilter.All, initial.filter)
+            assertEquals(10, initial.needsAttentionCount)
+            assertEquals(5, initial.confirmedCount)
             assertEquals(allDocs.map { it.document.id }, initial.documents.lastData?.data?.map { it.document.id })
 
             emit(DocumentsIntent.UpdateFilter(DocumentFilter.NeedsAttention))
@@ -112,12 +115,12 @@ class DocumentsContainerFilteringTest {
             assertTrue(errorState.documents.isError())
             assertEquals(DocumentFilter.NeedsAttention, errorState.filter)
             assertEquals(allDocs.map { it.document.id }, errorState.documents.lastData?.data?.map { it.document.id })
+            assertEquals(1, getDocumentCounts.callCount)
         }
     }
 }
 
 private class FakeLoadDocumentRecordsUseCase : LoadDocumentRecordsUseCase {
-    val countTotals: MutableMap<DocumentListFilter, Long> = mutableMapOf()
     private val pageResults: MutableMap<DocumentListFilter, ArrayDeque<CompletableDeferred<Result<PaginatedResponse<DocumentRecordDto>>>>> =
         mutableMapOf()
 
@@ -148,24 +151,29 @@ private class FakeLoadDocumentRecordsUseCase : LoadDocumentRecordsUseCase {
         ingestionStatus: IngestionStatus?,
     ): Result<PaginatedResponse<DocumentRecordDto>> {
         val effectiveFilter = filter ?: DocumentListFilter.All
-        if (pageSize == 1) {
-            return Result.success(
-                PaginatedResponse(
-                    items = emptyList(),
-                    total = countTotals[effectiveFilter] ?: 0L,
-                    limit = pageSize,
-                    offset = page,
-                    hasMore = false
-                )
-            )
-        }
-
         val queue = requireNotNull(pageResults[effectiveFilter]) {
             "No paged responses queued for filter=$effectiveFilter"
         }
         return requireNotNull(queue.removeFirstOrNull()) {
             "No remaining paged responses for filter=$effectiveFilter"
         }.await()
+    }
+}
+
+private class FakeGetDocumentCountsUseCase : GetDocumentCountsUseCase {
+    private val results: ArrayDeque<Result<DocumentCountsResponse>> = ArrayDeque()
+    var callCount: Int = 0
+        private set
+
+    fun enqueueResult(response: DocumentCountsResponse) {
+        results.addLast(Result.success(response))
+    }
+
+    override suspend fun invoke(): Result<DocumentCountsResponse> {
+        callCount += 1
+        return requireNotNull(results.removeFirstOrNull()) {
+            "No remaining count responses queued"
+        }
     }
 }
 

@@ -96,7 +96,8 @@ val cashflowViewModelModule = module {
     }
     container<DocumentsContainer, DocumentsState, DocumentsIntent, DocumentsAction> {
         DocumentsContainer(
-            loadDocumentRecords = get()
+            loadDocumentRecords = get(),
+            getDocumentCounts = get()
         )
     }
     container<CashflowLedgerContainer, CashflowLedgerState, CashflowLedgerIntent, CashflowLedgerAction> { (highlightEntryId: tech.dokus.domain.ids.CashflowEntryId?) ->
