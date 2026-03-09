@@ -19,6 +19,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import tech.dokus.domain.enums.BankTransactionStatus
 import tech.dokus.domain.model.BankTransactionDto
+import tech.dokus.foundation.aura.components.text.Amt
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.extensions.statusColor
@@ -81,15 +82,7 @@ internal fun TransactionRow(
         }
 
         // Right: amount
-        Text(
-            text = transaction.signedAmount.toDisplayString(),
-            style = MaterialTheme.typography.titleSmall,
-            color = if (transaction.signedAmount.isNegative) {
-                MaterialTheme.colorScheme.error
-            } else {
-                MaterialTheme.colorScheme.onSurface
-            },
-        )
+        Amt(minorUnits = transaction.signedAmount.minor)
     }
 }
 

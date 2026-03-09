@@ -41,8 +41,8 @@
     <string name="banking_action_confirm_match">Confirm match</string>
 
     <!-- Callout -->
-    <string name="banking_unresolved_callout">%d payments without documents</string>
-    <string name="banking_unresolved_amount">%s unresolved</string>
+    <string name="banking_unresolved_callout">%1$d payments without documents</string>
+    <string name="banking_unresolved_amount">%1$s unresolved</string>
 
     <!-- Empty / Error -->
     <string name="banking_empty_title">No transactions</string>

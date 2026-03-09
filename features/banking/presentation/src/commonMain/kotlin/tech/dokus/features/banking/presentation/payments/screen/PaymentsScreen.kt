@@ -21,9 +21,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.foundation.aura.local.LocalScreenSize
+import tech.dokus.foundation.aura.local.ScreenSize
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.banking_empty_subtitle
 import tech.dokus.aura.resources.banking_empty_title
@@ -199,14 +203,70 @@ private fun PaymentsContent(
     }
 }
 
+// =============================================================================
+// Previews
+// =============================================================================
+
 @Preview
 @Composable
-private fun PaymentsScreenPreview(
+private fun PaymentsScreenLoadingPreview(
     @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
 ) {
     TestWrapper(parameters) {
         PaymentsScreen(
             state = PaymentsState.initial,
+            onIntent = {},
+        )
+    }
+}
+
+@Preview(name = "Payments Desktop — Success", widthDp = 1366, heightDp = 900)
+@Composable
+private fun PaymentsScreenDesktopSuccessPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
+) {
+    TestWrapper(parameters) {
+        CompositionLocalProvider(LocalScreenSize provides ScreenSize.LARGE) {
+            PaymentsScreen(
+                state = previewPaymentsState(),
+                onIntent = {},
+            )
+        }
+    }
+}
+
+@Preview(name = "Payments Desktop — Error", widthDp = 1366, heightDp = 900)
+@Composable
+private fun PaymentsScreenDesktopErrorPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
+) {
+    TestWrapper(parameters) {
+        CompositionLocalProvider(LocalScreenSize provides ScreenSize.LARGE) {
+            PaymentsScreen(
+                state = PaymentsState(
+                    transactions = DokusState.error(
+                        exception = DokusException.ConnectionError(),
+                        retryHandler = {},
+                    ),
+                    summary = DokusState.error(
+                        exception = DokusException.ConnectionError(),
+                        retryHandler = {},
+                    ),
+                ),
+                onIntent = {},
+            )
+        }
+    }
+}
+
+@Preview(name = "Payments Mobile — Success", widthDp = 390, heightDp = 844)
+@Composable
+private fun PaymentsScreenMobileSuccessPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
+) {
+    TestWrapper(parameters) {
+        PaymentsScreen(
+            state = previewPaymentsState(),
             onIntent = {},
         )
     }

@@ -42,7 +42,7 @@ internal fun UnresolvedCallout(
         Text(
             text = stringResource(
                 Res.string.banking_unresolved_amount,
-                unresolvedAmount.toDisplayString(),
+                "€${unresolvedAmount.toDisplayString()}",
             ),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.statusWarning,
