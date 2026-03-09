@@ -128,6 +128,17 @@ All user-facing text must use `stringResource(Res.string.xxx)`. Resources are in
 - **No `Clock.System` or dynamic dates** in previews — pass fixed values so Roborazzi snapshot tests are deterministic
 - Prefer `String` parameters over domain types (`LocalDate`, `Int`) for display-only values — follows Compose state hoisting best practices
 
+### Layout Preservation on Loading/Error
+Loading and error states must **never** replace the entire screen layout. The Scaffold, top app bar, tabs, and navigation chrome always stay visible. Skeleton loaders and error content replace only the **content area** inside the existing layout — they live inside the `when { loading / error / success }` branch within the Scaffold's content lambda, never at the screen root level.
+
+### Error Components
+Two error components exist — choose based on whether the error **replaces** content or appears **alongside** it:
+- **`DokusErrorContent`** (`foundation/aura/components/common/ErrorBox.kt`): Full content replacement in `when { loading / error / success }` branches. Always pass `modifier = Modifier.fillMaxSize()` so it centers both horizontally and vertically (the default is only `fillMaxWidth()`). The Scaffold app bar stays visible — error content lives inside the content area.
+- **`DokusErrorBanner`** (`foundation/aura/components/common/ErrorBanner.kt`): Inline card-style banner shown alongside other content that continues rendering (e.g., detail screens with hero/stats sections, tables with summary+filters).
+
+### DokusState Contracts
+`DokusState.isSuccess()`, `isError()`, `isLoading()` have Kotlin contracts that smart-cast. After a contract check, access `.data`, `.exception`, `.retryHandler` directly — never use explicit `as DokusState.Success` casts.
+
 ### Detail Pane Pattern
 For split-view screens with a right detail pane, use a **sealed interface** for pane selection (e.g., `ProfileDetailSelection`) with `AnimatedContent` host — not boolean flags. This keeps the architecture extensible for future panes.
 
