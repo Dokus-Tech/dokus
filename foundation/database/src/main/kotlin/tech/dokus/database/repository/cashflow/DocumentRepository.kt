@@ -37,6 +37,11 @@ data class DocumentListPage<T>(
     val totalCount: Long
 )
 
+data class DocumentOperationalCounts(
+    val needsAttention: Long,
+    val confirmed: Long
+)
+
 data class DocumentCreatePayload(
     val filename: String,
     val contentType: String,
@@ -237,6 +242,28 @@ class DocumentRepository {
             ingestionStatus = ingestionStatus,
             page = page,
             limit = limit
+        )
+    }
+
+    suspend fun getOperationalCounts(
+        tenantId: TenantId
+    ): DocumentOperationalCounts {
+        DocumentIngestionRunRepository().recoverStaleProcessingRunsForTenant(tenantId)
+        return DocumentOperationalCounts(
+            needsAttention = DocumentListingQuery.countWithDraftsAndIngestion(
+                tenantId = tenantId,
+                filter = DocumentListFilter.NeedsAttention,
+                documentStatus = null,
+                documentType = null,
+                ingestionStatus = null
+            ),
+            confirmed = DocumentListingQuery.countWithDraftsAndIngestion(
+                tenantId = tenantId,
+                filter = DocumentListFilter.Confirmed,
+                documentStatus = null,
+                documentType = null,
+                ingestionStatus = null
+            )
         )
     }
 

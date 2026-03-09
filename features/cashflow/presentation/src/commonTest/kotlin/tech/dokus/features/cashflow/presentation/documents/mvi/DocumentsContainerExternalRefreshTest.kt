@@ -11,6 +11,7 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.DocumentCountsResponse
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.common.PaginatedResponse
@@ -31,21 +32,24 @@ class DocumentsContainerExternalRefreshTest {
         val refreshedDocs = listOf(externalRefreshDocumentRecord("00000000-0000-0000-0000-000000000202"))
 
         val loadDocuments = ExternalRefreshLoadDocumentRecordsUseCase().apply {
-            enqueuePageResult(
-                filter = DocumentListFilter.All,
-                result = externalRefreshPageResponse(initialDocs)
-            )
+            enqueuePageResult(filter = DocumentListFilter.All, result = externalRefreshPageResponse(initialDocs))
+        }
+        val getDocumentCounts = FakeGetDocumentCountsUseCase().apply {
+            enqueueResult(DocumentCountsResponse(needsAttention = 4L, confirmed = 7L))
+            enqueueResult(DocumentCountsResponse(needsAttention = 6L, confirmed = 9L))
         }
         val deferredRefresh = CompletableDeferred<Result<PaginatedResponse<DocumentRecordDto>>>()
         loadDocuments.enqueuePageDeferred(DocumentListFilter.All, deferredRefresh)
 
-        val container = DocumentsContainer(loadDocuments)
+        val container = DocumentsContainer(loadDocuments, getDocumentCounts)
 
         container.store.subscribeAndTest {
             advanceUntilIdle()
 
             val initial = states.value
             assertFalse(initial.documents.isLoading())
+            assertEquals(4, initial.needsAttentionCount)
+            assertEquals(7, initial.confirmedCount)
             assertEquals(initialDocs.map { it.document.id }, initial.documents.lastData?.data?.map { it.document.id })
 
             emit(DocumentsIntent.ExternalDocumentsChanged)
@@ -60,13 +64,15 @@ class DocumentsContainerExternalRefreshTest {
 
             val updated = states.value
             assertFalse(updated.documents.isLoading())
+            assertEquals(6, updated.needsAttentionCount)
+            assertEquals(9, updated.confirmedCount)
             assertEquals(refreshedDocs.map { it.document.id }, updated.documents.lastData?.data?.map { it.document.id })
+            assertEquals(2, getDocumentCounts.callCount)
         }
     }
 }
 
 private class ExternalRefreshLoadDocumentRecordsUseCase : LoadDocumentRecordsUseCase {
-    val countTotals: MutableMap<DocumentListFilter, Long> = mutableMapOf()
     private val pageResults: MutableMap<DocumentListFilter, ArrayDeque<CompletableDeferred<Result<PaginatedResponse<DocumentRecordDto>>>>> =
         mutableMapOf()
 
@@ -97,18 +103,6 @@ private class ExternalRefreshLoadDocumentRecordsUseCase : LoadDocumentRecordsUse
         ingestionStatus: IngestionStatus?,
     ): Result<PaginatedResponse<DocumentRecordDto>> {
         val effectiveFilter = filter ?: DocumentListFilter.All
-        if (pageSize == 1) {
-            return Result.success(
-                PaginatedResponse(
-                    items = emptyList(),
-                    total = countTotals[effectiveFilter] ?: 0L,
-                    limit = pageSize,
-                    offset = page,
-                    hasMore = false
-                )
-            )
-        }
-
         val queue = requireNotNull(pageResults[effectiveFilter]) {
             "No paged responses queued for filter=$effectiveFilter"
         }
