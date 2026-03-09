@@ -1,6 +1,7 @@
 package tech.dokus.features.banking.presentation.balances.screen
 
 import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalDate
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.BankAccountType
 import tech.dokus.domain.enums.BankProvider
@@ -8,6 +9,8 @@ import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.ids.BankConnectionId
 import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.AccountBalanceSeries
+import tech.dokus.domain.model.BalanceHistoryPoint
 import tech.dokus.domain.model.BalanceHistoryResponse
 import tech.dokus.domain.model.BankAccountSummary
 import tech.dokus.domain.model.BankConnectionDto
@@ -73,11 +76,52 @@ private val PreviewTransactionSummary = BankTransactionSummary(
     totalUnresolvedAmount = Money(842050),
 )
 
+private val PreviewBalanceHistory = BalanceHistoryResponse(
+    series = listOf(
+        AccountBalanceSeries(
+            connectionId = PreviewConnections[0].id,
+            accountName = "KBC Business",
+            points = listOf(
+                BalanceHistoryPoint(LocalDate(2026, 2, 7), Money(1200000)),
+                BalanceHistoryPoint(LocalDate(2026, 2, 11), Money(1230000)),
+                BalanceHistoryPoint(LocalDate(2026, 2, 15), Money(1180000)),
+                BalanceHistoryPoint(LocalDate(2026, 2, 19), Money(1250000)),
+                BalanceHistoryPoint(LocalDate(2026, 2, 23), Money(1320000)),
+                BalanceHistoryPoint(LocalDate(2026, 2, 27), Money(1380000)),
+                BalanceHistoryPoint(LocalDate(2026, 3, 3), Money(1350000)),
+                BalanceHistoryPoint(LocalDate(2026, 3, 7), Money(1438042)),
+            ),
+        ),
+        AccountBalanceSeries(
+            connectionId = PreviewConnections[1].id,
+            accountName = "Belfius Savings",
+            points = listOf(
+                BalanceHistoryPoint(LocalDate(2026, 2, 7), Money(340000)),
+                BalanceHistoryPoint(LocalDate(2026, 2, 11), Money(340000)),
+                BalanceHistoryPoint(LocalDate(2026, 2, 15), Money(340000)),
+                BalanceHistoryPoint(LocalDate(2026, 2, 19), Money(340000)),
+                BalanceHistoryPoint(LocalDate(2026, 2, 23), Money(340000)),
+                BalanceHistoryPoint(LocalDate(2026, 2, 27), Money(340000)),
+                BalanceHistoryPoint(LocalDate(2026, 3, 3), Money(340000)),
+                BalanceHistoryPoint(LocalDate(2026, 3, 7), Money(340000)),
+            ),
+        ),
+    ),
+    totalSeries = listOf(
+        BalanceHistoryPoint(LocalDate(2026, 2, 7), Money(1540000)),
+        BalanceHistoryPoint(LocalDate(2026, 2, 11), Money(1570000)),
+        BalanceHistoryPoint(LocalDate(2026, 2, 15), Money(1520000)),
+        BalanceHistoryPoint(LocalDate(2026, 2, 19), Money(1590000)),
+        BalanceHistoryPoint(LocalDate(2026, 2, 23), Money(1660000)),
+        BalanceHistoryPoint(LocalDate(2026, 2, 27), Money(1720000)),
+        BalanceHistoryPoint(LocalDate(2026, 3, 3), Money(1690000)),
+        BalanceHistoryPoint(LocalDate(2026, 3, 7), Money(1778042)),
+    ),
+)
+
 internal fun previewBalancesState() = BalancesState(
     connections = DokusState.success(PreviewConnections),
     summary = DokusState.success(PreviewSummary),
     transactionSummary = DokusState.success(PreviewTransactionSummary),
-    balanceHistory = DokusState.success(
-        BalanceHistoryResponse(series = emptyList(), totalSeries = emptyList())
-    ),
+    balanceHistory = DokusState.success(PreviewBalanceHistory),
 )

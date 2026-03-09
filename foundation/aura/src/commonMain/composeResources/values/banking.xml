@@ -75,6 +75,7 @@
     <string name="banking_balances_tab_90d">90d</string>
     <string name="banking_balances_tab_1y">1y</string>
     <string name="banking_balances_legend_total">Total</string>
+    <string name="banking_balances_no_chart_data">No data for this period</string>
     <string name="banking_balances_time_minutes_ago">%1$dm ago</string>
     <string name="banking_balances_time_hours_ago">%1$dh ago</string>
     <string name="banking_balances_time_days_ago">%1$dd ago</string>

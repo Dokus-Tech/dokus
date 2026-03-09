@@ -208,19 +208,4 @@ private fun DokusLineChartPreview(
     }
 }
 
-@Preview
-@Composable
-private fun DokusLineChartEmptyPreview(
-    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
-) {
-    TestWrapper(parameters) {
-        DokusLineChart(
-            series = emptyList(),
-            xLabels = emptyList(),
-            yLabels = emptyList(),
-            modifier = Modifier.fillMaxWidth().height(200.dp),
-        )
-    }
-}
-
 // endregion

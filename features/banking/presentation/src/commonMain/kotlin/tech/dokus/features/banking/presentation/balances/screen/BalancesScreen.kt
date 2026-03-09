@@ -278,9 +278,9 @@ private fun AccountTableRow(
                     fontWeight = FontWeight.Medium,
                     maxLines = 1,
                 )
-                if (connection.iban != null) {
+                connection.iban?.let { iban ->
                     Text(
-                        text = formatIban(connection.iban.value),
+                        text = formatIban(iban.value),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.textMuted,
                         maxLines = 1,
@@ -299,8 +299,8 @@ private fun AccountTableRow(
         // Balance + provider
         DokusTableCell(BalancesTableColumns.Balance) {
             Column(verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xxSmall)) {
-                if (connection.balance != null) {
-                    Amt(minorUnits = connection.balance.minor)
+                connection.balance?.let { balance ->
+                    Amt(minorUnits = balance.minor)
                 }
                 Text(
                     text = connection.provider.name,
@@ -313,9 +313,9 @@ private fun AccountTableRow(
 
         // Last sync
         DokusTableCell(BalancesTableColumns.LastSync) {
-            if (connection.lastSyncedAt != null) {
+            connection.lastSyncedAt?.let { syncedAt ->
                 Text(
-                    text = formatRelativeTime(connection.lastSyncedAt),
+                    text = formatRelativeTime(syncedAt),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.textMuted,
                     maxLines = 1,
@@ -371,9 +371,9 @@ private fun MobileAccountCard(
                 fontWeight = FontWeight.Medium,
                 maxLines = 1,
             )
-            if (connection.iban != null) {
+            connection.iban?.let { iban ->
                 Text(
-                    text = formatIban(connection.iban.value),
+                    text = formatIban(iban.value),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.textMuted,
                     maxLines = 1,
@@ -390,8 +390,8 @@ private fun MobileAccountCard(
             }
         }
 
-        if (connection.balance != null) {
-            Amt(minorUnits = connection.balance.minor)
+        connection.balance?.let { balance ->
+            Amt(minorUnits = balance.minor)
         }
     }
 }

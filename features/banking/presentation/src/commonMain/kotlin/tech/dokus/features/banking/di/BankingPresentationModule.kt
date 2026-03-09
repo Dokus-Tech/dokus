@@ -1,6 +1,10 @@
 package tech.dokus.features.banking.di
 
 import org.koin.dsl.module
+import tech.dokus.features.banking.presentation.balances.mvi.BalancesAction
+import tech.dokus.features.banking.presentation.balances.mvi.BalancesContainer
+import tech.dokus.features.banking.presentation.balances.mvi.BalancesIntent
+import tech.dokus.features.banking.presentation.balances.mvi.BalancesState
 import tech.dokus.features.banking.presentation.payments.mvi.PaymentsAction
 import tech.dokus.features.banking.presentation.payments.mvi.PaymentsContainer
 import tech.dokus.features.banking.presentation.payments.mvi.PaymentsIntent
@@ -14,6 +18,15 @@ val bankingViewModelModule = module {
             getTransactionSummary = get(),
             ignoreTransaction = get(),
             confirmTransaction = get(),
+        )
+    }
+
+    container<BalancesContainer, BalancesState, BalancesIntent, BalancesAction> {
+        BalancesContainer(
+            listConnections = get(),
+            getAccountSummary = get(),
+            getTransactionSummary = get(),
+            getBalanceHistory = get(),
         )
     }
 }

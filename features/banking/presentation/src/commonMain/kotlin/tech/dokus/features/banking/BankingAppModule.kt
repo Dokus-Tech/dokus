@@ -47,7 +47,6 @@ object BankingAppModule : AppModule {
                     titleRes = Res.string.banking_balances_title,
                     iconRes = Res.drawable.wallet_2,
                     destination = HomeDestination.Balances,
-                    comingSoon = true,
                     priority = 10,
                     shellTopBar = ShellTopBarDefault.Title,
                     subtitleRes = Res.string.banking_balances_subtitle,

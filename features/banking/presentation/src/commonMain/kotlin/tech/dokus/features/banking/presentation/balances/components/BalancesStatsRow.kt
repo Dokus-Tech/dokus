@@ -13,6 +13,8 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.banking_balances_stats_accounts
@@ -86,15 +88,11 @@ internal fun BalancesStatsRow(
 
 /**
  * Formats a [LocalDateTime] as a relative time string ("Xm ago", "Xh ago", "Xd ago").
- *
- * Uses a fixed reference point approach for previews. In production, the difference
- * is computed against the current time via kotlinx-datetime.
  */
 @Composable
 internal fun formatRelativeTime(dateTime: LocalDateTime): String {
-    // Compute difference in minutes using kotlinx-datetime
-    val now = kotlinx.datetime.Clock.System.now()
-    val instant = dateTime.toInstant(kotlinx.datetime.TimeZone.currentSystemDefault())
+    val now = kotlin.time.Clock.System.now()
+    val instant = dateTime.toInstant(TimeZone.currentSystemDefault())
     val durationMinutes = (now - instant).inWholeMinutes
 
     return when {

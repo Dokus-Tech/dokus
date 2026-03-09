@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.banking_balances_legend_total
+import tech.dokus.aura.resources.banking_balances_no_chart_data
 import tech.dokus.aura.resources.banking_balances_timeline_subtitle
 import tech.dokus.aura.resources.banking_balances_timeline_title
 import tech.dokus.domain.model.BalanceHistoryResponse
@@ -34,6 +35,7 @@ import tech.dokus.foundation.aura.components.charts.LineChartSeries
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.ShimmerBox
 import tech.dokus.foundation.aura.components.tabs.DokusTab
+import tech.dokus.foundation.aura.components.text.formatEuroCurrency
 import tech.dokus.foundation.aura.components.tabs.DokusTabs
 import tech.dokus.foundation.aura.components.text.Amt
 import tech.dokus.foundation.aura.constrains.Constraints
@@ -86,7 +88,7 @@ internal fun BalanceTimelineCard(
                         Text(
                             text = stringResource(
                                 Res.string.banking_balances_timeline_subtitle,
-                                summary.data.totalBalance.toDisplayString(),
+                                formatEuroCurrency(summary.data.totalBalance.minor / 100.0),
                                 accountCount,
                             ),
                             style = MaterialTheme.typography.bodySmall,
@@ -135,7 +137,7 @@ internal fun BalanceTimelineCard(
                             contentAlignment = Alignment.Center,
                         ) {
                             Text(
-                                text = "No data for this period",
+                                text = stringResource(Res.string.banking_balances_no_chart_data),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.textMuted,
                             )
