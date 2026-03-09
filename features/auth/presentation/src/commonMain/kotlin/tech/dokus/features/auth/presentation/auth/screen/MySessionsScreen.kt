@@ -83,7 +83,7 @@ internal fun MySessionsContent(
         }
 
         state.sessions.isSuccess() -> {
-            val sessions = (state.sessions as DokusState.Success).data
+            val sessions = state.sessions.data
             AnimatedVisibility(
                 visible = true,
                 modifier = modifier.fillMaxSize(),

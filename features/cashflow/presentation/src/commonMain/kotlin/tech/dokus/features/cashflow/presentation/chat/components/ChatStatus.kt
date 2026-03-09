@@ -54,18 +54,14 @@ internal fun ErrorContent(
     retryHandler: RetryHandler,
     contentPadding: PaddingValues,
 ) {
-    Box(
+    DokusErrorContent(
+        exception = exception,
+        retryHandler = retryHandler,
         modifier = Modifier
             .fillMaxSize()
             .padding(contentPadding)
             .padding(Constraints.Spacing.large),
-    ) {
-        DokusErrorContent(
-            exception = exception,
-            retryHandler = retryHandler,
-            modifier = Modifier.fillMaxSize(),
-        )
-    }
+    )
 }
 
 @Preview
