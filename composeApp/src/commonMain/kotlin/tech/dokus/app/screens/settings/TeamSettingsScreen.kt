@@ -271,21 +271,21 @@ fun TeamSettingsContent(
         )
     }
 
+    if (state.teamData.isError()) {
+        DokusErrorContent(
+            exception = state.teamData.exception,
+            retryHandler = state.teamData.retryHandler,
+            modifier = Modifier.fillMaxSize(),
+        )
+        return
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        if (state.teamData.isError()) {
-            DokusErrorContent(
-                exception = state.teamData.exception,
-                retryHandler = state.teamData.retryHandler,
-                modifier = Modifier.fillMaxSize(),
-            )
-            return@Column
-        }
-
         Column(
             modifier = Modifier
                 .widthIn(max = MaxContentWidth)
