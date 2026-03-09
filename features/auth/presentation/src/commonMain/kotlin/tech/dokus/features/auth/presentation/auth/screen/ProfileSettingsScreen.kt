@@ -43,7 +43,7 @@ import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.app.state.isError
 import tech.dokus.foundation.app.state.isLoading
 import tech.dokus.foundation.app.state.isSuccess
-import tech.dokus.foundation.aura.components.common.DokusErrorBanner
+import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.tooling.PreviewParameters
@@ -189,7 +189,7 @@ fun ProfileSettingsContent(
                 }
 
                 state.user.isError() -> {
-                    DokusErrorBanner(
+                    DokusErrorContent(
                         exception = state.user.exception,
                         retryHandler = state.user.retryHandler,
                     )

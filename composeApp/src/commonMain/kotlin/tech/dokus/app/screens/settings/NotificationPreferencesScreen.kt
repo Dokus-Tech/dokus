@@ -17,7 +17,7 @@ import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.app.state.isError
 import tech.dokus.foundation.app.state.isLoading
 import tech.dokus.foundation.app.state.isSuccess
-import tech.dokus.foundation.aura.components.common.DokusErrorBanner
+import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.app.screens.settings.components.SettingsSkeleton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -114,10 +114,9 @@ internal fun NotificationPreferencesContent(
         }
 
         state.preferences.isError() -> {
-            val error = state.preferences as DokusState.Error
-            DokusErrorBanner(
-                exception = error.exception,
-                retryHandler = error.retryHandler,
+            DokusErrorContent(
+                exception = state.preferences.exception,
+                retryHandler = state.preferences.retryHandler,
                 modifier = modifier.padding(contentPadding).padding(Constraints.Spacing.large),
             )
         }

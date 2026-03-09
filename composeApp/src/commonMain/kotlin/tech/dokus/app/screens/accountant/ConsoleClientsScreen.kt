@@ -89,7 +89,7 @@ import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.badges.DocumentSource as BadgeDocumentSource
 import tech.dokus.foundation.aura.components.badges.SourceBadge
 import tech.dokus.app.screens.accountant.components.ConsoleClientsSkeleton
-import tech.dokus.foundation.aura.components.common.DokusErrorBanner
+import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.PSearchFieldCompact
 import tech.dokus.foundation.aura.components.dialog.DokusDialog
 import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
@@ -184,7 +184,7 @@ internal fun ConsoleClientsScreen(
                 }
 
                 clientsState.isError() -> {
-                    DokusErrorBanner(
+                    DokusErrorContent(
                         exception = clientsState.exception,
                         retryHandler = clientsState.retryHandler,
                     )
@@ -575,7 +575,7 @@ private fun ClientDetailContent(
             }
 
             is DokusState.Error -> {
-                DokusErrorBanner(
+                DokusErrorContent(
                     exception = documentsState.exception,
                     retryHandler = documentsState.retryHandler,
                     modifier = Modifier.fillMaxWidth().padding(Constraints.Spacing.large),

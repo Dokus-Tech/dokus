@@ -100,7 +100,7 @@ import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.MonogramAvatar
 import tech.dokus.foundation.aura.components.UserAvatarImage
-import tech.dokus.foundation.aura.components.common.DokusErrorBanner
+import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.app.screens.settings.components.SettingsSkeleton
 import tech.dokus.foundation.aura.components.common.DokusSelectableRowGroup
@@ -210,7 +210,7 @@ fun TeamSettingsContent(
                 }
 
                 state.teamData.isError() -> {
-                    DokusErrorBanner(
+                    DokusErrorContent(
                         exception = state.teamData.exception,
                         retryHandler = state.teamData.retryHandler,
                     )

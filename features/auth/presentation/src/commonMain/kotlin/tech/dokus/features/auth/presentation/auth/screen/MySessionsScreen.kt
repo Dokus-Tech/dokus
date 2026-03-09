@@ -30,7 +30,7 @@ import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.app.state.isError
 import tech.dokus.foundation.app.state.isLoading
 import tech.dokus.foundation.app.state.isSuccess
-import tech.dokus.foundation.aura.components.common.DokusErrorBanner
+import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
@@ -75,10 +75,9 @@ internal fun MySessionsContent(
         }
 
         state.sessions.isError() -> {
-            val error = state.sessions as DokusState.Error
-            DokusErrorBanner(
-                exception = error.exception,
-                retryHandler = error.retryHandler,
+            DokusErrorContent(
+                exception = state.sessions.exception,
+                retryHandler = state.sessions.retryHandler,
                 modifier = modifier.padding(contentPadding).padding(16.dp),
             )
         }

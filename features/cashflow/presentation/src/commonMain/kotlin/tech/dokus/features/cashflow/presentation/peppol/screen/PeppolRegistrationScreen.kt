@@ -72,7 +72,7 @@ import tech.dokus.foundation.app.state.isLoading
 import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.common.AnimatedCheck
-import tech.dokus.foundation.aura.components.common.DokusErrorBanner
+import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.common.PCopyRow
 import tech.dokus.foundation.aura.components.common.WaitingIndicator
@@ -115,7 +115,7 @@ internal fun PeppolRegistrationScreen(
                             onIntent = onIntent,
                         )
                     } else {
-                        DokusErrorBanner(
+                        DokusErrorContent(
                             exception = error,
                             retryHandler = state.setupContext.retryHandler,
                             modifier = Modifier.fillMaxWidth().padding(Constraints.Spacing.large),

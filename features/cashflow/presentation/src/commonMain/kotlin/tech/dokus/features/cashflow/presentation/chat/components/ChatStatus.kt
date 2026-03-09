@@ -19,7 +19,7 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.chat_loading
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.foundation.aura.components.common.DokusErrorBanner
+import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.tooling.PreviewParameters
@@ -60,7 +60,7 @@ internal fun ErrorContent(
             .padding(contentPadding)
             .padding(Constraints.Spacing.large),
     ) {
-        DokusErrorBanner(
+        DokusErrorContent(
             exception = exception,
             retryHandler = retryHandler,
         )
