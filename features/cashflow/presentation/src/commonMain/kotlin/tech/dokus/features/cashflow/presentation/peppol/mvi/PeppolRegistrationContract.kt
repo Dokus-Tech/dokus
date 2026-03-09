@@ -45,7 +45,11 @@ data class PeppolRegistrationState(
     val isWorking: Boolean = false,
     val isRetrying: Boolean = false,
     val failureMessage: String? = null,
-) : MVIState
+) : MVIState {
+    companion object {
+        val initial by lazy { PeppolRegistrationState() }
+    }
+}
 
 // ============================================================================
 // INTENTS (User Actions)

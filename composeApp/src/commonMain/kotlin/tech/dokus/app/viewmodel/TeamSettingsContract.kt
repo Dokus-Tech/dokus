@@ -53,7 +53,11 @@ data class TeamSettingsState(
     val bookkeeperSearchLoading: Boolean = false,
     val selectedBookkeeperFirmId: FirmId? = null,
     val actionState: TeamSettingsActionState = TeamSettingsActionState.Idle,
-) : MVIState
+) : MVIState {
+    companion object {
+        val initial by lazy { TeamSettingsState() }
+    }
+}
 
 /**
  * State for team action operations.

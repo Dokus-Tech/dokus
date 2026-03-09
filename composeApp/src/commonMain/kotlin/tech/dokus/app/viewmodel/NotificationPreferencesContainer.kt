@@ -26,7 +26,7 @@ internal class NotificationPreferencesContainer(
     private val logger = Logger.forClass<NotificationPreferencesContainer>()
 
     override val store: Store<NotificationPreferencesState, NotificationPreferencesIntent, NotificationPreferencesAction> =
-        store(NotificationPreferencesState()) {
+        store(NotificationPreferencesState.initial) {
             init {
                 intent(NotificationPreferencesIntent.Load)
             }

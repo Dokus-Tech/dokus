@@ -35,6 +35,10 @@ data class ProfileSettingsState(
 
     val canSave: Boolean
         get() = isEditing && editFirstName.isValid && editLastName.isValid && hasChanges
+
+    companion object {
+        val initial by lazy { ProfileSettingsState() }
+    }
 }
 
 @Immutable

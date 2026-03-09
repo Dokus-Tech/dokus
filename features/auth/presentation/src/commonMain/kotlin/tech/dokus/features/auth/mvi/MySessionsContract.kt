@@ -13,7 +13,11 @@ import tech.dokus.foundation.app.state.DokusState
 data class MySessionsState(
     val sessions: DokusState<List<SessionDto>> = DokusState.loading(),
     val isRevokingOthers: Boolean = false,
-) : MVIState
+) : MVIState {
+    companion object {
+        val initial by lazy { MySessionsState() }
+    }
+}
 
 @Immutable
 sealed interface MySessionsIntent : MVIIntent {

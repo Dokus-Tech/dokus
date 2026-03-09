@@ -67,6 +67,10 @@ data class WorkspaceSettingsState(
             return data.peppolRegistration?.status == PeppolRegistrationStatus.Active
         }
 
+    companion object {
+        val initial by lazy { WorkspaceSettingsState() }
+    }
+
     /**
      * Loaded workspace data bundle.
      */

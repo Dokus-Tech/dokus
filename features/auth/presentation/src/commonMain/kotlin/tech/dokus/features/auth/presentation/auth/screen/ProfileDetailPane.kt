@@ -201,7 +201,7 @@ private fun ProfileDetailPaneIdlePreview(
     TestWrapper(parameters) {
         ProfileDetailPaneHost(
             selection = ProfileDetailSelection.None,
-            sessionsState = MySessionsState(),
+            sessionsState = MySessionsState.initial,
             onSessionsIntent = {},
         )
     }

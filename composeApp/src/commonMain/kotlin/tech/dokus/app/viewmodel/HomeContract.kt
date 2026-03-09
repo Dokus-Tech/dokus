@@ -33,7 +33,11 @@ data class HomeState(
     val surfaceAvailability: SurfaceAvailability? = null,
     val firms: List<FirmWorkspaceSummary> = emptyList(),
     val isLoggingOut: Boolean = false,
-) : MVIState
+) : MVIState {
+    companion object {
+        val initial by lazy { HomeState() }
+    }
+}
 
 // ============================================================================
 // INTENTS (User Actions)

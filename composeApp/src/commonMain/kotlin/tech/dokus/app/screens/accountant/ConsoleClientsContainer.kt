@@ -33,7 +33,7 @@ internal class ConsoleClientsContainer(
     private val logger = Logger.forClass<ConsoleClientsContainer>()
 
     override val store: Store<ConsoleClientsState, ConsoleClientsIntent, ConsoleClientsAction> =
-        store(ConsoleClientsState()) {
+        store(ConsoleClientsState.initial) {
             init {
                 handleRefresh()
             }

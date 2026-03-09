@@ -28,7 +28,7 @@ internal class MySessionsContainer(
     private val logger = Logger.forClass<MySessionsContainer>()
 
     override val store: Store<MySessionsState, MySessionsIntent, MySessionsAction> =
-        store(MySessionsState()) {
+        store(MySessionsState.initial) {
             init { intent(MySessionsIntent.Load) }
 
             reduce { intent ->

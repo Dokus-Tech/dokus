@@ -17,7 +17,11 @@ data class ForgotPasswordState(
     val isSubmitting: Boolean = false,
     val isSuccess: Boolean = false,
     val error: DokusException? = null,
-) : MVIState
+) : MVIState {
+    companion object {
+        val initial by lazy { ForgotPasswordState() }
+    }
+}
 
 // ============================================================================
 // INTENTS (User Actions)

@@ -31,7 +31,11 @@ data class RegisterState(
     val lastName: Name = Name(""),
     val isRegistering: Boolean = false,
     val error: DokusException? = null,
-) : MVIState
+) : MVIState {
+    companion object {
+        val initial by lazy { RegisterState() }
+    }
+}
 
 // ============================================================================
 // INTENTS (User Actions)

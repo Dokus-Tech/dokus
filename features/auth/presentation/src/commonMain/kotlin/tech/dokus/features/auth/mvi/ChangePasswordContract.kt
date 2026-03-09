@@ -14,7 +14,11 @@ data class ChangePasswordState(
     val confirmPassword: Password = Password(""),
     val isSubmitting: Boolean = false,
     val error: DokusException? = null
-) : MVIState
+) : MVIState {
+    companion object {
+        val initial by lazy { ChangePasswordState() }
+    }
+}
 
 @Immutable
 sealed interface ChangePasswordIntent : MVIIntent {

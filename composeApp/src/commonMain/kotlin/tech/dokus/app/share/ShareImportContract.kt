@@ -30,7 +30,11 @@ data class ShareImportState(
     val retryHandler: RetryHandler? = null,
     val canNavigateToLogin: Boolean = false,
     val canOpenApp: Boolean = false,
-) : MVIState
+) : MVIState {
+    companion object {
+        val initial by lazy { ShareImportState() }
+    }
+}
 
 @Immutable
 sealed interface ShareImportIntent : MVIIntent {

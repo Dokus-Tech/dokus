@@ -20,7 +20,7 @@ internal class VerifyEmailContainer(
     private val logger = Logger.forClass<VerifyEmailContainer>()
 
     override val store: Store<VerifyEmailState, VerifyEmailIntent, VerifyEmailAction> =
-        store(VerifyEmailState()) {
+        store(VerifyEmailState.initial) {
             init { intent(VerifyEmailIntent.Verify) }
 
             reduce { intent ->

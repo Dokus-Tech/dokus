@@ -220,9 +220,6 @@ private fun SettingsMobileLayout(
     val appModules = LocalAppModules.current
     val settingsGroups = remember(appModules) { appModules.settingsGroupsCombined }
 
-    val currentTenant = (state.tenant as? DokusState.Success)?.data
-    val isLoading = state.tenant.isLoading()
-
     Scaffold { contentPadding ->
         Column(
             modifier = Modifier
@@ -232,8 +229,8 @@ private fun SettingsMobileLayout(
                 .withContentPaddingForScrollable()
         ) {
             WorkspacePickerCard(
-                workspaceName = currentTenant?.displayName?.value,
-                isLoading = isLoading,
+                workspaceName = (state.tenant as? DokusState.Success)?.data?.displayName?.value,
+                isLoading = state.tenant.isLoading(),
                 onClick = onWorkspaceSelectClick,
             )
 

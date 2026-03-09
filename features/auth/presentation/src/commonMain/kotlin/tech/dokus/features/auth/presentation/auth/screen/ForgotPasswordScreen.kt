@@ -95,7 +95,7 @@ private fun ForgotPasswordScreenPreview(
 ) {
     TestWrapper(parameters) {
         ForgotPasswordScreen(
-            state = ForgotPasswordState(),
+            state = ForgotPasswordState.initial,
             onIntent = {},
             onNavigateUp = {},
         )

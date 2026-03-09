@@ -191,7 +191,7 @@ private fun ServerConnectionScreenPreview(
 ) {
     tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
         ServerConnectionScreen(
-            state = ServerConnectionState(),
+            state = ServerConnectionState.initial,
             currentServer = ServerConfig.Cloud,
             onIntent = {},
         )

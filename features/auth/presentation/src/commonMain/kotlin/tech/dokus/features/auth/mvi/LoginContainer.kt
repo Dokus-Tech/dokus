@@ -33,7 +33,7 @@ internal class LoginContainer(
     private val logger = Logger.forClass<LoginContainer>()
 
     override val store: Store<LoginState, LoginIntent, LoginAction> =
-        store(LoginState()) {
+        store(LoginState.initial) {
             reduce { intent ->
                 when (intent) {
                     is LoginIntent.UpdateEmail -> handleUpdateEmail(intent.value)

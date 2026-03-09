@@ -54,7 +54,7 @@ internal class AddDocumentContainer(
     val deletionHandles: StateFlow<Map<String, DocumentDeletionHandle>> = uploadManager.deletionHandles
 
     override val store: Store<AddDocumentState, AddDocumentIntent, AddDocumentAction> =
-        store(AddDocumentState()) {
+        store(AddDocumentState.initial) {
             reduce { intent ->
                 when (intent) {
                     is AddDocumentIntent.SelectFile -> handleSelectFile()

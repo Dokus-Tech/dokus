@@ -141,6 +141,10 @@ data class ChatState(
     val showSessionPicker: Boolean = false,
 ) : MVIState {
 
+    companion object {
+        val initial by lazy { ChatState() }
+    }
+
     /**
      * Whether the send button should be enabled.
      */

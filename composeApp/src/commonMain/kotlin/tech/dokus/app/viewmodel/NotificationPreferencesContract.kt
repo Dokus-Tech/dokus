@@ -22,6 +22,10 @@ data class NotificationPreferencesState(
             emailLocked = type.emailLocked
         )
     }
+
+    companion object {
+        val initial by lazy { NotificationPreferencesState() }
+    }
 }
 
 @Immutable

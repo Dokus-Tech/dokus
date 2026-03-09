@@ -25,7 +25,11 @@ import tech.dokus.app.navigation.HomeNavigationCommand
 @Immutable
 data class BootstrapState(
     val steps: List<BootstrapStep> = BootstrapStep.initial,
-) : MVIState
+) : MVIState {
+    companion object {
+        val initial by lazy { BootstrapState() }
+    }
+}
 
 /**
  * Represents a single step in the bootstrap process.

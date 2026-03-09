@@ -43,7 +43,7 @@ internal class TodayContainer(
     private val logger = Logger.forClass<TodayContainer>()
 
     override val store: Store<TodayState, TodayIntent, TodayAction> =
-        store(TodayState()) {
+        store(TodayState.initial) {
             init {
                 launchWatchPendingDocuments()
                 if (unreadPollingInterval > Duration.ZERO) {

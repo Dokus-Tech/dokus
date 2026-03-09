@@ -34,6 +34,10 @@ data class ConsoleClientsState(
                     (client.vatNumber?.value?.contains(normalizedQuery, ignoreCase = true) == true)
             }
         }
+
+    companion object {
+        val initial by lazy { ConsoleClientsState() }
+    }
 }
 
 @Immutable

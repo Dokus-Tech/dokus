@@ -32,7 +32,7 @@ internal class RegisterContainer(
     private val logger = Logger.forClass<RegisterContainer>()
 
     override val store: Store<RegisterState, RegisterIntent, RegisterAction> =
-        store(RegisterState()) {
+        store(RegisterState.initial) {
             reduce { intent ->
                 when (intent) {
                     is RegisterIntent.UpdateEmail -> updateState { copy(email = intent.value, error = null) }

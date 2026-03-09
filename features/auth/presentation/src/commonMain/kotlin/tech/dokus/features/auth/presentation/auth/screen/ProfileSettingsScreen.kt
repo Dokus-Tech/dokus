@@ -261,7 +261,7 @@ private fun ProfileSettingsLoadingPreview(
 ) {
     TestWrapper(parameters) {
         ProfileSettingsContent(
-            state = ProfileSettingsState(),
+            state = ProfileSettingsState.initial,
             currentServer = ServerConfig.Cloud,
             isLoggingOut = false,
             onIntent = {},
@@ -337,7 +337,7 @@ private fun ProfileSettingsDesktopIdlePreview(
             detailPaneContent = {
                 ProfileDetailPaneHost(
                     selection = ProfileDetailSelection.None,
-                    sessionsState = MySessionsState(),
+                    sessionsState = MySessionsState.initial,
                     onSessionsIntent = {},
                 )
             }

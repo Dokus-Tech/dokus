@@ -40,7 +40,7 @@ class ProfileSettingsContainer(
     private val logger = Logger.forClass<ProfileSettingsContainer>()
 
     override val store: Store<ProfileSettingsState, ProfileSettingsIntent, ProfileSettingsAction> =
-        store(ProfileSettingsState()) {
+        store(ProfileSettingsState.initial) {
             configure {
                 name = "ProfileSettingsStore"
             }

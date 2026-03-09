@@ -120,11 +120,10 @@ internal fun ContactDetailsRoute(
 
     if (state.uiState.showMergeDialog) {
         val contactData = (state.contact as? DokusState.Success)?.data
-        val activitySummary = (state.activityState as? DokusState.Success)?.data
         if (contactData != null) {
             ContactMergeDialogRoute(
                 sourceContact = contactData,
-                sourceActivity = activitySummary,
+                sourceActivity = (state.activityState as? DokusState.Success)?.data,
                 onMergeComplete = { result ->
                     container.store.intent(ContactDetailsIntent.HideMergeDialog)
                     navController.navigateTo(

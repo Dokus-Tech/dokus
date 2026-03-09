@@ -27,7 +27,7 @@ internal class SettingsContainer(
     private val logger = Logger.forClass<SettingsContainer>()
 
     override val store: Store<SettingsState, SettingsIntent, SettingsAction> =
-        store(SettingsState()) {
+        store(SettingsState.initial) {
             reduce { intent ->
                 when (intent) {
                     is SettingsIntent.Load -> handleLoad()

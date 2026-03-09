@@ -9,7 +9,11 @@ import tech.dokus.foundation.app.state.DokusState
 @Immutable
 data class VerifyEmailState(
     val verification: DokusState<Unit> = DokusState.loading(),
-) : MVIState
+) : MVIState {
+    companion object {
+        val initial by lazy { VerifyEmailState() }
+    }
+}
 
 @Immutable
 sealed interface VerifyEmailIntent : MVIIntent {

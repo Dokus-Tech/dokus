@@ -130,7 +130,7 @@ private fun MySessionsLoadingPreview(
 ) {
     TestWrapper(parameters) {
         MySessionsContent(
-            state = MySessionsState(),
+            state = MySessionsState.initial,
             onIntent = {},
         )
     }

@@ -23,7 +23,11 @@ import pro.respawn.flowmvi.api.MVIState
 data class NavigationState(
     val isReady: Boolean = false,
     val expandedSections: Map<String, Boolean> = emptyMap(),
-) : MVIState
+) : MVIState {
+    companion object {
+        val initial by lazy { NavigationState() }
+    }
+}
 
 // ============================================================================
 // INTENTS (User Actions)

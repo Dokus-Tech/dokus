@@ -15,7 +15,11 @@ import tech.dokus.foundation.app.state.DokusState
 @Immutable
 data class SettingsState(
     val tenant: DokusState<Tenant> = DokusState.loading(),
-) : MVIState
+) : MVIState {
+    companion object {
+        val initial by lazy { SettingsState() }
+    }
+}
 
 // ============================================================================
 // INTENTS (User Actions)

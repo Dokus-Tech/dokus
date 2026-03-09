@@ -36,7 +36,7 @@ internal class BootstrapContainer(
     private val logger = Logger.forClass<BootstrapContainer>()
 
     override val store: Store<BootstrapState, BootstrapIntent, BootstrapAction> =
-        store(BootstrapState()) {
+        store(BootstrapState.initial) {
             reduce { intent ->
                 when (intent) {
                     is BootstrapIntent.Load -> handleLoad()

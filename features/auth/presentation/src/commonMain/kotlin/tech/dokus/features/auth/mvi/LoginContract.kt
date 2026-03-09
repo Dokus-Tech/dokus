@@ -18,7 +18,11 @@ data class LoginState(
     val password: Password = Password(""),
     val isAuthenticating: Boolean = false,
     val error: DokusException? = null,
-) : MVIState
+) : MVIState {
+    companion object {
+        val initial by lazy { LoginState() }
+    }
+}
 
 // ============================================================================
 // INTENTS (User Actions)

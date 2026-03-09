@@ -64,7 +64,7 @@ internal class TeamSettingsContainer(
     private val logger = Logger.forClass<TeamSettingsContainer>()
 
     override val store: Store<TeamSettingsState, TeamSettingsIntent, TeamSettingsAction> =
-        store(TeamSettingsState()) {
+        store(TeamSettingsState.initial) {
             reduce { intent ->
                 when (intent) {
                     is TeamSettingsIntent.Load -> handleLoad()

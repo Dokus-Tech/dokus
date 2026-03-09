@@ -30,7 +30,7 @@ internal class ForgotPasswordContainer(
     private val logger = Logger.forClass<ForgotPasswordContainer>()
 
     override val store: Store<ForgotPasswordState, ForgotPasswordIntent, ForgotPasswordAction> =
-        store(ForgotPasswordState()) {
+        store(ForgotPasswordState.initial) {
             reduce { intent ->
                 when (intent) {
                     is ForgotPasswordIntent.UpdateEmail -> handleUpdateEmail(intent.value)

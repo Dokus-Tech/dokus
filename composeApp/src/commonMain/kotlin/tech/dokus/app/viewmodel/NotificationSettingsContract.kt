@@ -13,7 +13,11 @@ import tech.dokus.foundation.app.state.DokusState
 data class NotificationSettingsState(
     val preferences: DokusState<List<NotificationPreferenceDto>> = DokusState.loading(),
     val updatingTypes: Set<NotificationType> = emptySet(),
-) : MVIState
+) : MVIState {
+    companion object {
+        val initial by lazy { NotificationSettingsState() }
+    }
+}
 
 @Immutable
 sealed interface NotificationSettingsIntent : MVIIntent {

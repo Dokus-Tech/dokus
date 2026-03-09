@@ -34,7 +34,7 @@ internal class WorkspaceSelectContainer(
     private val logger = Logger.forClass<WorkspaceSelectContainer>()
 
     override val store: Store<WorkspaceSelectState, WorkspaceSelectIntent, WorkspaceSelectAction> =
-        store(WorkspaceSelectState()) {
+        store(WorkspaceSelectState.initial) {
             init {
                 handleLoadWorkspaces()
             }

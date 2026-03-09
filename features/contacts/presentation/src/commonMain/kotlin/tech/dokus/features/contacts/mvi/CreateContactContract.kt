@@ -140,7 +140,11 @@ data class CreateContactState(
     // Shared
     val isSubmitting: Boolean = false,
     val emailError: DokusException? = null,
-) : MVIState
+) : MVIState {
+    companion object {
+        val initial by lazy { CreateContactState() }
+    }
+}
 
 // ============================================================================
 // INTENTS (User Actions)

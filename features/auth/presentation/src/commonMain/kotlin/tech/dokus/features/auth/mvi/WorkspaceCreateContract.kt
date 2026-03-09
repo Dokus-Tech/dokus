@@ -72,6 +72,10 @@ data class WorkspaceCreateState(
             WorkspaceWizardStep.CompanyName -> companyName.isValid
             WorkspaceWizardStep.VatAndAddress -> vatNumber.isValid && address.isValid
         }
+
+    companion object {
+        val initial by lazy { WorkspaceCreateState() }
+    }
 }
 
 // ============================================================================

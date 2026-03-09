@@ -33,7 +33,7 @@ internal class ShareImportContainer(
     private var uploadSession: UploadSession? = null
 
     override val store: Store<ShareImportState, ShareImportIntent, ShareImportAction> =
-        store(ShareImportState()) {
+        store(ShareImportState.initial) {
             reduce { intent ->
                 when (intent) {
                     ShareImportIntent.Load -> handleLoad()

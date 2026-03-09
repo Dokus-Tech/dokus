@@ -83,7 +83,7 @@ internal class ChatContainer(
     private var loadSessionsJob: Job? = null
 
     override val store: Store<ChatState, ChatIntent, ChatAction> =
-        store(ChatState()) {
+        store(ChatState.initial) {
             reduce { intent ->
                 when (intent) {
                     // === Initialization ===

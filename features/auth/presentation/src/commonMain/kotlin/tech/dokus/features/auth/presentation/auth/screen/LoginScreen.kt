@@ -220,7 +220,7 @@ private fun LoginScreenPreview(
 ) {
     tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
         LoginScreen(
-            state = LoginState(),
+            state = LoginState.initial,
             onIntent = {},
             onForgotPassword = {},
             onConnectToServer = {},

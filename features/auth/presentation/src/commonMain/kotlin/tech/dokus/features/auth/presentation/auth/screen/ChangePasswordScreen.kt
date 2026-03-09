@@ -162,7 +162,7 @@ private fun ChangePasswordScreenPreview(
 ) {
     tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
         ChangePasswordScreen(
-            state = ChangePasswordState(),
+            state = ChangePasswordState.initial,
             snackbarHostState = androidx.compose.runtime.remember { SnackbarHostState() },
             onIntent = {},
         )

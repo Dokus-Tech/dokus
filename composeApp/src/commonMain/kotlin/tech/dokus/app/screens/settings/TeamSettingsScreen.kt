@@ -183,19 +183,9 @@ fun TeamSettingsContent(
     var showTransferOwnershipDialog by remember { mutableStateOf<TeamMember?>(null) }
     var showCancelInvitationDialog by remember { mutableStateOf<InvitationId?>(null) }
 
-    // Extract data from state
-    val teamData = (state.teamData as? DokusState.Success)?.data
-    val members = teamData?.members ?: emptyList()
-    val invitations = teamData?.invitations ?: emptyList()
-    val currentUserId = teamData?.currentUserId
-    val isCurrentUserOwner = teamData?.isCurrentUserOwner == true
     val isInviting = state.actionState is TeamSettingsActionState.Inviting
 
-    val owner = members.find { it.role == UserRole.Owner }
-    val nonOwnerMembers = members.filter { it.role != UserRole.Owner }
-
-    val debouncedSearchQuery = state.bookkeeperSearchQuery
-    LaunchedEffect(showBookkeeperDialog, debouncedSearchQuery) {
+    LaunchedEffect(showBookkeeperDialog, state.bookkeeperSearchQuery) {
         if (!showBookkeeperDialog) return@LaunchedEffect
         delay(300)
         onIntent(TeamSettingsIntent.SearchBookkeeperFirms)
@@ -227,6 +217,13 @@ fun TeamSettingsContent(
                 }
 
                 state.teamData.isSuccess() -> {
+                    val teamData = state.teamData.data
+                    val members = teamData.members
+                    val invitations = teamData.invitations
+                    val currentUserId = teamData.currentUserId
+                    val owner = members.find { it.role == UserRole.Owner }
+                    val nonOwnerMembers = members.filter { it.role != UserRole.Owner }
+
                     // Owner hero
                     if (owner != null) {
                         OwnerHero(owner = owner)
@@ -268,7 +265,7 @@ fun TeamSettingsContent(
 
                             // Invite row
                             InviteRow(
-                                availableSeats = teamData?.availableSeats ?: 0,
+                                availableSeats = teamData.availableSeats,
                                 onClick = { onShowInviteDialog(true) },
                             )
                         }
@@ -276,9 +273,9 @@ fun TeamSettingsContent(
 
                     DokusCardSurface(modifier = Modifier.fillMaxWidth()) {
                         BookkeeperAccessSection(
-                            access = teamData?.bookkeeperAccess ?: emptyList(),
+                            access = teamData.bookkeeperAccess,
                             isLoading = false,
-                            isOwner = isCurrentUserOwner,
+                            isOwner = teamData.isCurrentUserOwner,
                             onGrantClick = { onShowBookkeeperDialog(true) },
                             onRevokeClick = { firmId ->
                                 onIntent(TeamSettingsIntent.RevokeBookkeeperAccess(firmId))
@@ -288,7 +285,7 @@ fun TeamSettingsContent(
 
                     // Footer note
                     Text(
-                        text = stringResource(Res.string.team_footer_note, teamData?.maxSeats ?: 0),
+                        text = stringResource(Res.string.team_footer_note, teamData.maxSeats),
                         modifier = Modifier.fillMaxWidth().padding(vertical = 20.dp),
                         textAlign = TextAlign.Center,
                         fontSize = 11.sp,
@@ -318,7 +315,7 @@ fun TeamSettingsContent(
         )
     }
 
-    if (showBookkeeperDialog && teamData != null) {
+    if (showBookkeeperDialog && state.teamData is DokusState.Success) {
         GrantBookkeeperAccessDialog(
             query = state.bookkeeperSearchQuery,
             results = state.bookkeeperSearchResults,

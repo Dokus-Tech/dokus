@@ -183,7 +183,7 @@ private fun RegisterScreenPreview(
 ) {
     TestWrapper(parameters) {
         RegisterScreen(
-            state = RegisterState(),
+            state = RegisterState.initial,
             onIntent = {},
             onNavigateUp = {},
             onNavigateToLogin = {},

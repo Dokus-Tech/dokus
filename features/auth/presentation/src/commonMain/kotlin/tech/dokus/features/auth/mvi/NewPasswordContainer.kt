@@ -27,7 +27,7 @@ internal class NewPasswordContainer(
     private val logger = Logger.forClass<NewPasswordContainer>()
 
     override val store: Store<NewPasswordState, NewPasswordIntent, NewPasswordAction> =
-        store(NewPasswordState()) {
+        store(NewPasswordState.initial) {
             reduce { intent ->
                 when (intent) {
                     is NewPasswordIntent.UpdatePassword -> handleUpdatePassword(intent.value)

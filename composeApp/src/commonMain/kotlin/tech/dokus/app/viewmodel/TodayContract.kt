@@ -42,6 +42,7 @@ data class TodayState(
 ) : MVIState {
     companion object {
         const val PENDING_PAGE_SIZE = 5
+        val initial by lazy { TodayState() }
     }
 }
 

@@ -23,7 +23,11 @@ data class AddDocumentState(
     val isUploading: Boolean = false,
     val hasCompletedUploads: Boolean = false,
     val hasFailedUploads: Boolean = false,
-) : MVIState
+) : MVIState {
+    companion object {
+        val initial by lazy { AddDocumentState() }
+    }
+}
 
 // ============================================================================
 // INTENTS (User Actions)

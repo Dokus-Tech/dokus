@@ -49,7 +49,7 @@ internal class WorkspaceCreateContainer(
     private val logger = Logger.forClass<WorkspaceCreateContainer>()
 
     override val store: Store<WorkspaceCreateState, WorkspaceCreateIntent, WorkspaceCreateAction> =
-        store(WorkspaceCreateState()) {
+        store(WorkspaceCreateState.initial) {
             init {
                 handleLoadUserInfo()
             }

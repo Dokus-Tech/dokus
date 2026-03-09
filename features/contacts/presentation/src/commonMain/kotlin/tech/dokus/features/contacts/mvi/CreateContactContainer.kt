@@ -59,7 +59,7 @@ internal class CreateContactContainer(
     private var searchJob: Job? = null
 
     override val store: Store<CreateContactState, CreateContactIntent, CreateContactAction> =
-        store(CreateContactState()) {
+        store(CreateContactState.initial) {
             reduce { intent ->
                 when (intent) {
                     // Lookup step
@@ -327,7 +327,7 @@ internal class CreateContactContainer(
     }
 
     private suspend fun CreateContactCtx.handleBackToLookup() {
-        updateState { CreateContactState() }
+        updateState { CreateContactState.initial }
     }
 
     // ============================================================================

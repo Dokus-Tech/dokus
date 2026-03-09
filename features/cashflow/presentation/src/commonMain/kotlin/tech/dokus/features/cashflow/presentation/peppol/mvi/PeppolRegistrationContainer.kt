@@ -40,7 +40,7 @@ internal class PeppolRegistrationContainer(
     private val logger = Logger.forClass<PeppolRegistrationContainer>()
 
     override val store: Store<PeppolRegistrationState, PeppolRegistrationIntent, PeppolRegistrationAction> =
-        store(PeppolRegistrationState()) {
+        store(PeppolRegistrationState.initial) {
             reduce { intent ->
                 when (intent) {
                     PeppolRegistrationIntent.Refresh -> handleRefresh()

@@ -58,7 +58,11 @@ data class ServerConnectionState(
     val portError: DokusException? = null,
     val validation: DokusState<ServerValidation> = DokusState.idle(),
     val isConnecting: Boolean = false,
-) : MVIState
+) : MVIState {
+    companion object {
+        val initial by lazy { ServerConnectionState() }
+    }
+}
 
 // ============================================================================
 // INTENTS (User Actions)

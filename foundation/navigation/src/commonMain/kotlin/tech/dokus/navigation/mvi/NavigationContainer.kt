@@ -34,7 +34,7 @@ class NavigationContainer(
 ) : Container<NavigationState, NavigationIntent, NavigationAction> {
 
     override val store: Store<NavigationState, NavigationIntent, NavigationAction> =
-        store(NavigationState()) {
+        store(NavigationState.initial) {
             reduce { intent ->
                 when (intent) {
                     is NavigationIntent.Initialize -> handleInitialize()

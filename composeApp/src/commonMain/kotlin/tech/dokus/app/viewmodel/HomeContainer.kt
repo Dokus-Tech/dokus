@@ -44,7 +44,7 @@ internal class HomeContainer(
     private val logger = Logger.forClass<HomeContainer>()
 
     override val store: Store<HomeState, HomeIntent, HomeAction> =
-        store(HomeState()) {
+        store(HomeState.initial) {
             init {
                 launchObserveTenant()
                 launchObserveUser()

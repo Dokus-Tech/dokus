@@ -38,7 +38,11 @@ data class WorkspaceSelectState(
     val workspaces: DokusState<WorkspaceSelectData> = DokusState.loading(),
     val isSelectingTenant: Boolean = false,
     val isSelectingFirm: Boolean = false,
-) : MVIState
+) : MVIState {
+    companion object {
+        val initial by lazy { WorkspaceSelectState() }
+    }
+}
 
 // ============================================================================
 // INTENTS (User Actions)

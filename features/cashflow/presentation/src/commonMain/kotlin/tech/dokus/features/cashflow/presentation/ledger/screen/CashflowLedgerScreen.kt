@@ -90,34 +90,11 @@ internal fun CashflowLedgerScreen(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         modifier = modifier
     ) {
-        when {
-            state.entries.isLoading() && state.entries.lastData == null -> {
-                CashflowLedgerSkeleton(
-                    showHeader = isLargeScreen,
-                    rowCount = 5,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 16.dp)
-                )
-            }
-
-            state.entries.isError() && state.entries.lastData == null -> {
-                val error = state.entries as DokusState.Error
-                DokusErrorBanner(
-                    exception = error.exception,
-                    retryHandler = error.retryHandler,
-                    modifier = Modifier.padding(16.dp),
-                )
-            }
-
-            else -> {
-                CashflowLedgerContent(
-                    state = state,
-                    onIntent = onIntent,
-                    onCreateInvoiceClick = onCreateInvoiceClick
-                )
-            }
-        }
+        CashflowLedgerContent(
+            state = state,
+            onIntent = onIntent,
+            onCreateInvoiceClick = onCreateInvoiceClick
+        )
     }
 }
 
@@ -192,8 +169,15 @@ private fun CashflowLedgerContent(
                         null
                     }
                 ) {
-                    // Table body OR empty state
-                    if (entriesData.isEmpty() && isRefreshing) {
+                    // Table body OR loading/error/empty state
+                    if (entriesData.isEmpty() && state.entries.isError()) {
+                        val error = state.entries as DokusState.Error
+                        DokusErrorBanner(
+                            exception = error.exception,
+                            retryHandler = error.retryHandler,
+                            modifier = Modifier.padding(16.dp),
+                        )
+                    } else if (entriesData.isEmpty() && isRefreshing) {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()

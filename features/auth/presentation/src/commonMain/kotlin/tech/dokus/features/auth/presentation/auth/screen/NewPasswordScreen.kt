@@ -104,7 +104,7 @@ private fun NewPasswordScreenPreview(
 ) {
     tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
         NewPasswordScreen(
-            state = NewPasswordState(),
+            state = NewPasswordState.initial,
             onIntent = {},
             onNavigateUp = {},
         )

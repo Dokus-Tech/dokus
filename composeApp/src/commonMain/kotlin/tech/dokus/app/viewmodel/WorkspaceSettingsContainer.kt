@@ -56,7 +56,7 @@ internal class WorkspaceSettingsContainer(
     private val logger = Logger.forClass<WorkspaceSettingsContainer>()
 
     override val store: Store<WorkspaceSettingsState, WorkspaceSettingsIntent, WorkspaceSettingsAction> =
-        store(WorkspaceSettingsState()) {
+        store(WorkspaceSettingsState.initial) {
             reduce { intent ->
                 when (intent) {
                     is WorkspaceSettingsIntent.Load -> handleLoad()
