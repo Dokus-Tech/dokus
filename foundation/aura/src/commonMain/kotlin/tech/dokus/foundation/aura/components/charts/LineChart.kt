@@ -8,6 +8,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
@@ -23,6 +24,7 @@ import com.patrykandpatrick.vico.multiplatform.cartesian.rememberCartesianChart
 import com.patrykandpatrick.vico.multiplatform.common.Fill
 import com.patrykandpatrick.vico.multiplatform.common.component.LineComponent
 import com.patrykandpatrick.vico.multiplatform.common.component.TextComponent
+import tech.dokus.foundation.aura.style.textMuted
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
@@ -38,6 +40,7 @@ data class LineChartSeries(
 @Composable
 fun DokusLineChart(
     series: List<LineChartSeries>,
+    xLabels: List<String> = emptyList(),
     modifier: Modifier = Modifier,
 ) {
     if (series.isEmpty()) return
@@ -69,6 +72,10 @@ fun DokusLineChart(
     val markerLabel = remember { TextComponent() }
     val marker = rememberDefaultCartesianMarker(label = markerLabel)
 
+    // Axis label style — uses textMuted color for readability
+    val labelColor = MaterialTheme.colorScheme.textMuted
+    val labelTextComponent = TextComponent(TextStyle(color = labelColor))
+
     // Minimal gridline style
     val guidelineColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
     val guideline = LineComponent(Fill(guidelineColor), thickness = 0.5.dp)
@@ -84,17 +91,28 @@ fun DokusLineChart(
         }
     }
 
+    // X-axis formatter: maps indices to provided labels
+    val xFormatter = remember(xLabels) {
+        CartesianValueFormatter { _, value, _ ->
+            val index = value.toInt()
+            xLabels.getOrElse(index) { "" }
+        }
+    }
+
     CartesianChartHost(
         chart = rememberCartesianChart(
             LineCartesianLayer(
                 lineProvider = LineCartesianLayer.LineProvider.series(lines),
             ),
             startAxis = VerticalAxis.rememberStart(
+                label = labelTextComponent,
                 guideline = guideline,
                 valueFormatter = yFormatter,
             ),
             bottomAxis = HorizontalAxis.rememberBottom(
+                label = labelTextComponent,
                 guideline = null,
+                valueFormatter = xFormatter,
             ),
             marker = marker,
         ),
@@ -130,6 +148,7 @@ private fun DokusLineChartPreview(
                     dashed = true,
                 ),
             ),
+            xLabels = listOf("Feb 7", "Feb 11", "Feb 15", "Feb 19", "Feb 23", "Feb 27", "Mar 3", "Mar 7"),
             modifier = Modifier.fillMaxWidth().height(200.dp),
         )
     }

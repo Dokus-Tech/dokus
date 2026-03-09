@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -142,6 +143,7 @@ internal fun BalanceTimelineCard(
                     } else {
                         DokusLineChart(
                             series = chartData,
+                            xLabels = buildXLabels(balanceHistory.data),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(ChartHeight),
@@ -186,7 +188,9 @@ private fun LegendItem(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         androidx.compose.foundation.Canvas(
-            modifier = Modifier.height(Constraints.Spacing.xxSmall),
+            modifier = Modifier
+                .width(Constraints.Spacing.large)
+                .height(Constraints.Spacing.xxSmall),
         ) {
             val strokeWidth = 2.dp.toPx()
             val width = Constraints.Spacing.large.toPx()
@@ -215,6 +219,21 @@ private fun LegendItem(
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.textMuted,
         )
+    }
+}
+
+private val ShortMonthNames = listOf(
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+)
+
+private fun buildXLabels(response: BalanceHistoryResponse): List<String> {
+    val dateSeries = response.totalSeries.ifEmpty {
+        response.series.firstOrNull()?.points ?: emptyList()
+    }
+    return dateSeries.map { point ->
+        val month = ShortMonthNames[point.date.month.ordinal]
+        "$month ${point.date.day}"
     }
 }
 
