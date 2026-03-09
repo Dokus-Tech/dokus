@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,7 +24,6 @@ import tech.dokus.aura.resources.banking_balances_timeline_subtitle
 import tech.dokus.aura.resources.banking_balances_timeline_title
 import tech.dokus.domain.model.BalanceHistoryResponse
 import tech.dokus.domain.model.BankAccountSummary
-import tech.dokus.domain.model.BankConnectionDto
 import tech.dokus.features.banking.presentation.balances.mvi.BalanceTimeRange
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.app.state.isError
@@ -37,7 +37,6 @@ import tech.dokus.foundation.aura.components.common.ShimmerBox
 import tech.dokus.foundation.aura.components.tabs.DokusTab
 import tech.dokus.foundation.aura.components.text.formatEuroCurrency
 import tech.dokus.foundation.aura.components.tabs.DokusTabs
-import tech.dokus.foundation.aura.components.text.Amt
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.textMuted
 
@@ -56,7 +55,6 @@ private val AccountColors = listOf(
 internal fun BalanceTimelineCard(
     summary: DokusState<BankAccountSummary>,
     balanceHistory: DokusState<BalanceHistoryResponse>,
-    connections: DokusState<List<BankConnectionDto>>,
     timeRange: BalanceTimeRange,
     onTimeRangeChange: (BalanceTimeRange) -> Unit,
     modifier: Modifier = Modifier,
@@ -88,7 +86,7 @@ internal fun BalanceTimelineCard(
                         Text(
                             text = stringResource(
                                 Res.string.banking_balances_timeline_subtitle,
-                                formatEuroCurrency(summary.data.totalBalance.minor / 100.0),
+                                formatEuroCurrency(summary.data.totalBalance.toDouble()),
                                 accountCount,
                             ),
                             style = MaterialTheme.typography.bodySmall,
@@ -126,10 +124,9 @@ internal fun BalanceTimelineCard(
                     )
                 }
                 balanceHistory.isSuccess() -> {
-                    val response = balanceHistory.data
-                    val chartData = buildChartData(response)
+                    val chartData = buildChartSeries(balanceHistory.data)
 
-                    if (chartData.series.isEmpty()) {
+                    if (chartData.isEmpty()) {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -144,9 +141,7 @@ internal fun BalanceTimelineCard(
                         }
                     } else {
                         DokusLineChart(
-                            series = chartData.series,
-                            xLabels = chartData.xLabels,
-                            yLabels = chartData.yLabels,
+                            series = chartData,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(ChartHeight),
@@ -223,28 +218,17 @@ private fun LegendItem(
     }
 }
 
-private data class ChartData(
-    val series: List<LineChartSeries>,
-    val xLabels: List<String>,
-    val yLabels: List<String>,
-)
-
-private fun buildChartData(response: BalanceHistoryResponse): ChartData {
-    val allPoints = response.series.flatMap { s -> s.points.map { it.balance.minor } } +
-        response.totalSeries.map { it.balance.minor }
-
-    if (allPoints.isEmpty()) return ChartData(emptyList(), emptyList(), emptyList())
-
-    val minVal = allPoints.min().toFloat()
-    val maxVal = allPoints.max().toFloat()
-    val range = (maxVal - minVal).coerceAtLeast(1f)
+private fun buildChartSeries(response: BalanceHistoryResponse): List<LineChartSeries> {
+    if (response.series.isEmpty() && response.totalSeries.isEmpty()) {
+        return emptyList()
+    }
 
     val lineChartSeries = response.series.mapIndexed { index, accountSeries ->
         val color = AccountColors[index % AccountColors.size]
         LineChartSeries(
             label = accountSeries.accountName,
             color = color,
-            points = accountSeries.points.map { ((it.balance.minor - minVal) / range) },
+            points = accountSeries.points.map { it.balance.toDouble().toFloat() },
         )
     }
 
@@ -252,38 +236,10 @@ private fun buildChartData(response: BalanceHistoryResponse): ChartData {
         LineChartSeries(
             label = "Total",
             color = Color(0xFF8B8B8B),
-            points = response.totalSeries.map { ((it.balance.minor - minVal) / range) },
+            points = response.totalSeries.map { it.balance.toDouble().toFloat() },
             dashed = true,
         )
     } else null
 
-    val allSeries = lineChartSeries + listOfNotNull(totalLine)
-
-    // X labels: first and last dates from total series (or first account series)
-    val dateSeries = response.totalSeries.ifEmpty {
-        response.series.firstOrNull()?.points ?: emptyList()
-    }
-    val xLabels = if (dateSeries.size >= 2) {
-        listOf(
-            dateSeries.first().date.toString(),
-            dateSeries.last().date.toString(),
-        )
-    } else emptyList()
-
-    // Y labels: min and max
-    val yLabels = listOf(
-        formatCompactCurrency(minVal / 100f),
-        formatCompactCurrency(maxVal / 100f),
-    )
-
-    return ChartData(allSeries, xLabels, yLabels)
-}
-
-private fun formatCompactCurrency(value: Float): String {
-    val absValue = kotlin.math.abs(value)
-    return when {
-        absValue >= 1_000_000 -> "\u20AC${(value / 1_000_000).let { "%.1f".format(it) }}M"
-        absValue >= 1_000 -> "\u20AC${(value / 1_000).let { "%.0f".format(it) }}k"
-        else -> "\u20AC${"%.0f".format(value)}"
-    }
+    return lineChartSeries + listOfNotNull(totalLine)
 }

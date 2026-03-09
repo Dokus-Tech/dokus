@@ -70,6 +70,9 @@ kotlin {
 
             api(libs.materialKolor)
 
+            // Vico Charts
+            api(libs.vico.multiplatform.m3)
+
             // Coil - Remote image loading
             api(libs.coil.compose)
             api(libs.coil.compose.core)

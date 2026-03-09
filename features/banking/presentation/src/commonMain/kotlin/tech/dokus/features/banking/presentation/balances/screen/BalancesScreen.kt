@@ -148,7 +148,6 @@ private fun BalancesContent(
             BalanceTimelineCard(
                 summary = state.summary,
                 balanceHistory = state.balanceHistory,
-                connections = state.connections,
                 timeRange = state.timeRange,
                 onTimeRangeChange = { onIntent(BalancesIntent.SetTimeRange(it)) },
             )
