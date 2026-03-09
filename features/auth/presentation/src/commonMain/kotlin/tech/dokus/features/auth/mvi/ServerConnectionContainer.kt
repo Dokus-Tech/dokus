@@ -10,6 +10,9 @@ import tech.dokus.domain.config.ServerConfig
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.features.auth.usecases.ConnectToServerUseCase
+import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.app.state.isIdle
+import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.platform.Logger
 
 internal typealias ServerConnectionCtx =
@@ -40,7 +43,7 @@ internal class ServerConnectionContainer(
 
     override val store: Store<ServerConnectionState, ServerConnectionIntent, ServerConnectionAction> =
         store(
-            ServerConnectionState.Input(
+            ServerConnectionState(
                 protocol = initialConfig?.protocol ?: "http",
                 host = initialConfig?.host ?: "",
                 port = (initialConfig?.port ?: DefaultPort).toString()
@@ -62,48 +65,40 @@ internal class ServerConnectionContainer(
 
     private suspend fun ServerConnectionCtx.handleUpdateProtocol(value: String) {
         updateState {
-            when (this) {
-                is ServerConnectionState.Input -> copy(protocol = value)
-                is ServerConnectionState.Error -> ServerConnectionState.Input(
-                    protocol = value,
-                    host = host,
-                    port = port
-                )
-                else -> this
-            }
+            copy(
+                protocol = value,
+                validation = DokusState.idle(),
+                hostError = null,
+                portError = null,
+            )
         }
     }
 
     private suspend fun ServerConnectionCtx.handleUpdateHost(value: String) {
         updateState {
-            when (this) {
-                is ServerConnectionState.Input -> copy(host = value, hostError = null)
-                is ServerConnectionState.Error -> ServerConnectionState.Input(
-                    protocol = protocol,
-                    host = value,
-                    port = port
-                )
-                else -> this
-            }
+            copy(
+                host = value,
+                hostError = null,
+                validation = DokusState.idle(),
+            )
         }
     }
 
     private suspend fun ServerConnectionCtx.handleUpdatePort(value: String) {
         updateState {
-            when (this) {
-                is ServerConnectionState.Input -> copy(port = value, portError = null)
-                is ServerConnectionState.Error -> ServerConnectionState.Input(
-                    protocol = protocol,
-                    host = host,
-                    port = value
-                )
-                else -> this
-            }
+            copy(
+                port = value,
+                portError = null,
+                validation = DokusState.idle(),
+            )
         }
     }
 
     private suspend fun ServerConnectionCtx.handleValidate() {
-        withState<ServerConnectionState.Input, _> {
+        withState {
+            // Only allow validation from idle/error state
+            if (!validation.isIdle() && !validation.isSuccess()) return@withState
+
             // Validate host
             val hostError = validateHost(host)
             val portError = validatePort(port)
@@ -128,11 +123,7 @@ internal class ServerConnectionContainer(
 
             // Transition to validating state
             updateState {
-                ServerConnectionState.Validating(
-                    protocol = currentProtocol,
-                    host = currentHost,
-                    port = currentPort
-                )
+                copy(validation = DokusState.loading())
             }
 
             logger.d { "Validating server: ${config.baseUrl}" }
@@ -142,24 +133,21 @@ internal class ServerConnectionContainer(
                 onSuccess = { serverInfo ->
                     logger.i { "Server validated: ${serverInfo.name}" }
                     updateState {
-                        ServerConnectionState.Preview(
-                            protocol = currentProtocol,
-                            host = currentHost,
-                            port = currentPort,
-                            config = config,
-                            serverInfo = serverInfo
+                        copy(
+                            validation = DokusState.success(
+                                ServerValidation(config = config, serverInfo = serverInfo)
+                            )
                         )
                     }
                 },
                 onFailure = { error ->
                     logger.e(error) { "Server validation failed" }
                     updateState {
-                        ServerConnectionState.Error(
-                            protocol = currentProtocol,
-                            host = currentHost,
-                            port = currentPort,
-                            exception = error.asDokusException,
-                            retryHandler = { intent(ServerConnectionIntent.ValidateClicked) }
+                        copy(
+                            validation = DokusState.error(
+                                exception = error.asDokusException,
+                                retryHandler = { intent(ServerConnectionIntent.ValidateClicked) }
+                            )
                         )
                     }
                 }
@@ -168,22 +156,16 @@ internal class ServerConnectionContainer(
     }
 
     private suspend fun ServerConnectionCtx.handleConfirmConnection() {
-        withState<ServerConnectionState.Preview, _> {
-            val currentProtocol = protocol
-            val currentHost = host
-            val currentPort = port
-            val currentConfig = config
-            val currentServerInfo = serverInfo
+        withState {
+            val validationState = validation
+            if (!validationState.isSuccess()) return@withState
+
+            val currentConfig = validationState.data.config
+            val currentServerInfo = validationState.data.serverInfo
 
             // Transition to connecting state
             updateState {
-                ServerConnectionState.Connecting(
-                    protocol = currentProtocol,
-                    host = currentHost,
-                    port = currentPort,
-                    config = currentConfig,
-                    serverInfo = currentServerInfo
-                )
+                copy(isConnecting = true)
             }
 
             logger.i { "Confirming connection to: ${currentServerInfo.name}" }
@@ -197,33 +179,18 @@ internal class ServerConnectionContainer(
     }
 
     private suspend fun ServerConnectionCtx.handleCancelPreview() {
-        withState<ServerConnectionState.Preview, _> {
-            updateState {
-                ServerConnectionState.Input(
-                    protocol = protocol,
-                    host = host,
-                    port = port
-                )
-            }
+        updateState {
+            copy(
+                validation = DokusState.idle(),
+                isConnecting = false,
+            )
         }
     }
 
     private suspend fun ServerConnectionCtx.handleResetToCloud() {
-        // Capture current state values and transition to validating
-        var currentProtocol = ""
-        var currentHost = ""
-        var currentPort = ""
-
+        // Transition to loading
         updateState {
-            currentProtocol = protocol
-            currentHost = host
-            currentPort = port
-
-            ServerConnectionState.Validating(
-                protocol = currentProtocol,
-                host = currentHost,
-                port = currentPort
-            )
+            copy(validation = DokusState.loading())
         }
 
         logger.i { "Resetting to cloud server" }
@@ -237,12 +204,11 @@ internal class ServerConnectionContainer(
             onFailure = { error ->
                 logger.e(error) { "Failed to reset to cloud" }
                 updateState {
-                    ServerConnectionState.Error(
-                        protocol = currentProtocol,
-                        host = currentHost,
-                        port = currentPort,
-                        exception = error.asDokusException,
-                        retryHandler = { intent(ServerConnectionIntent.ResetToCloud) }
+                    copy(
+                        validation = DokusState.error(
+                            exception = error.asDokusException,
+                            retryHandler = { intent(ServerConnectionIntent.ResetToCloud) }
+                        )
                     )
                 }
             }

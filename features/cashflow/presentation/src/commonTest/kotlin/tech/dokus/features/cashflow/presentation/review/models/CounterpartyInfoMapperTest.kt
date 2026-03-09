@@ -20,6 +20,8 @@ import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.contact.CounterpartySnapshot
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
+import tech.dokus.features.cashflow.presentation.review.ReviewDocumentData
+import tech.dokus.foundation.app.state.DokusState
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -58,7 +60,7 @@ class CounterpartyInfoMapperTest {
         assertNull(info.address)
     }
 
-    private fun contentState(counterpartySnapshot: CounterpartySnapshot?): DocumentReviewState.Content {
+    private fun contentState(counterpartySnapshot: CounterpartySnapshot?): DocumentReviewState {
         val tenantId = TenantId.parse("44e8ed5c-020a-4bbb-9439-ac85899c5589")
         val documentId = DocumentId.parse("e72f69a8-6913-4d8f-98e7-224db7f4133f")
         val contactId = ContactId.parse("ee14421b-c659-45e3-9a27-e4d3ef6b32eb")
@@ -89,7 +91,7 @@ class CounterpartyInfoMapperTest {
             updatedAt = now
         )
 
-        val document = DocumentRecordDto(
+        val record = DocumentRecordDto(
             document = DocumentDto(
                 id = documentId,
                 tenantId = tenantId,
@@ -105,11 +107,17 @@ class CounterpartyInfoMapperTest {
             confirmedEntity = null
         )
 
-        return DocumentReviewState.Content(
-            documentId = documentId,
-            document = document,
-            draftData = draftData,
-            originalData = draftData,
+        return DocumentReviewState(
+            document = DokusState.success(
+                ReviewDocumentData(
+                    documentId = documentId,
+                    documentRecord = record,
+                    draftData = draftData,
+                    originalData = draftData,
+                    previewUrl = null,
+                    contactSuggestions = emptyList(),
+                )
+            ),
             isContactRequired = true,
             selectedContactId = contactId,
             counterpartyIntent = CounterpartyIntent.None

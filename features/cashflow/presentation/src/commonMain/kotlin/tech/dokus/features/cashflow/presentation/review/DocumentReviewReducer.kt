@@ -3,6 +3,7 @@
 package tech.dokus.features.cashflow.presentation.review
 
 import pro.respawn.flowmvi.dsl.withState
+import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.ContactId
@@ -97,9 +98,9 @@ internal class DocumentReviewReducer(
 
     suspend fun DocumentReviewCtx.handleSelectDocumentType(type: DocumentType) {
         var shouldPersist = false
-        withState<DocumentReviewState.Content, _> {
+        withState {
+            if (!hasContent) return@withState
             if (type == DocumentType.Unknown) return@withState
-
             if (draftData.documentType == type) return@withState
 
             val newDraftData = when (type) {
@@ -109,9 +110,10 @@ internal class DocumentReviewReducer(
                 else -> return@withState
             }
 
+            val currentData = documentData ?: return@withState
             updateState {
                 copy(
-                    draftData = newDraftData,
+                    document = DokusState.success(currentData.copy(draftData = newDraftData)),
                     hasUnsavedChanges = true,
                     isContactRequired = newDraftData.isContactRequired,
                 )
@@ -126,7 +128,8 @@ internal class DocumentReviewReducer(
 
     suspend fun DocumentReviewCtx.handleSelectDirection(direction: DocumentDirection) {
         var shouldPersist = false
-        withState<DocumentReviewState.Content, _> {
+        withState {
+            if (!hasContent) return@withState
             if (direction == DocumentDirection.Unknown) return@withState
 
             val updatedDraftData = when (val data = draftData) {
@@ -143,10 +146,11 @@ internal class DocumentReviewReducer(
                 null -> return@withState
             }
 
+            val currentData = documentData ?: return@withState
             updateState {
                 copy(
-                    draftData = updatedDraftData,
-                    hasUnsavedChanges = true
+                    document = DokusState.success(currentData.copy(draftData = updatedDraftData)),
+                    hasUnsavedChanges = true,
                 )
             }
             shouldPersist = true

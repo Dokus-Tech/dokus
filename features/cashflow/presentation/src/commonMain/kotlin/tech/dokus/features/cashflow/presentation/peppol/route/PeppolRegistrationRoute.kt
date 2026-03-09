@@ -14,7 +14,9 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.features.cashflow.presentation.peppol.mvi.PeppolRegistrationAction
 import tech.dokus.features.cashflow.presentation.peppol.mvi.PeppolRegistrationContainer
 import tech.dokus.features.cashflow.presentation.peppol.mvi.PeppolRegistrationIntent
+import tech.dokus.features.cashflow.presentation.peppol.mvi.PeppolRegistrationPhase
 import tech.dokus.features.cashflow.presentation.peppol.mvi.PeppolRegistrationState
+import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.features.cashflow.presentation.peppol.screen.PeppolRegistrationScreen
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.app.network.ConnectionSnackbarEffect
@@ -56,8 +58,10 @@ internal fun PeppolRegistrationRoute(
     }
 
     // Poll for transfer completion while the user is on the waiting screen.
-    LaunchedEffect(state) {
-        if (state !is PeppolRegistrationState.WaitingTransfer) return@LaunchedEffect
+    val isWaitingTransfer = state.setupContext.isSuccess() &&
+        state.phase == PeppolRegistrationPhase.WaitingTransfer
+    LaunchedEffect(isWaitingTransfer) {
+        if (!isWaitingTransfer) return@LaunchedEffect
         while (true) {
             delay(30.seconds)
             container.store.intent(PeppolRegistrationIntent.PollTransfer)

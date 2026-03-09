@@ -27,19 +27,13 @@ import tech.dokus.foundation.app.state.DokusState
 // ============================================================================
 
 @Immutable
-sealed interface HomeState : MVIState {
-
-    /**
-     * Ready state containing shell-level data for workspace/profile controls.
-     */
-    data class Ready(
-        val tenantState: DokusState<Tenant> = DokusState.idle(),
-        val userState: DokusState<User> = DokusState.idle(),
-        val surfaceAvailability: SurfaceAvailability? = null,
-        val firms: List<FirmWorkspaceSummary> = emptyList(),
-        val isLoggingOut: Boolean = false,
-    ) : HomeState
-}
+data class HomeState(
+    val tenantState: DokusState<Tenant> = DokusState.idle(),
+    val userState: DokusState<User> = DokusState.idle(),
+    val surfaceAvailability: SurfaceAvailability? = null,
+    val firms: List<FirmWorkspaceSummary> = emptyList(),
+    val isLoggingOut: Boolean = false,
+) : MVIState
 
 // ============================================================================
 // INTENTS (User Actions)

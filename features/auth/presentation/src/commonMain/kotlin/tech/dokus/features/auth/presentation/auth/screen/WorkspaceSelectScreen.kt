@@ -27,8 +27,10 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.auth.FirmWorkspaceSummary
 import tech.dokus.domain.model.auth.TenantWorkspaceSummary
+import tech.dokus.features.auth.mvi.WorkspaceSelectData
 import tech.dokus.features.auth.mvi.WorkspaceSelectIntent
 import tech.dokus.features.auth.mvi.WorkspaceSelectState
+import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.features.auth.presentation.auth.components.WorkspaceSelectionBody
 import tech.dokus.features.auth.presentation.auth.components.onboarding.OnboardingCenteredShell
 import tech.dokus.foundation.aura.components.background.WarpJumpEffect
@@ -126,12 +128,16 @@ private fun WorkspaceSelectScreenPreview(
 ) {
     tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
         WorkspaceSelectScreen(
-            state = WorkspaceSelectState.Content(
-                tenants = listOf(
-                    previewTenant("Dokus Tech", UserRole.Owner),
-                    previewTenant("Client Corp", UserRole.Admin),
+            state = WorkspaceSelectState(
+                workspaces = DokusState.success(
+                    WorkspaceSelectData(
+                        tenants = listOf(
+                            previewTenant("Dokus Tech", UserRole.Owner),
+                            previewTenant("Client Corp", UserRole.Admin),
+                        ),
+                        firms = listOf(previewFirm("Kantoor Boonen", 8)),
+                    )
                 ),
-                firms = listOf(previewFirm("Kantoor Boonen", 8)),
             ),
             onIntent = {},
             onAddTenantClick = {},
@@ -150,12 +156,16 @@ private fun WorkspaceSelectScreenDesktopPreview(
 ) {
     tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
         WorkspaceSelectScreen(
-            state = WorkspaceSelectState.Content(
-                tenants = listOf(
-                    previewTenant("Dokus Tech", UserRole.Owner),
-                    previewTenant("Client Corp", UserRole.Editor),
+            state = WorkspaceSelectState(
+                workspaces = DokusState.success(
+                    WorkspaceSelectData(
+                        tenants = listOf(
+                            previewTenant("Dokus Tech", UserRole.Owner),
+                            previewTenant("Client Corp", UserRole.Editor),
+                        ),
+                        firms = emptyList(),
+                    )
                 ),
-                firms = emptyList(),
             ),
             onIntent = {},
             onAddTenantClick = {},

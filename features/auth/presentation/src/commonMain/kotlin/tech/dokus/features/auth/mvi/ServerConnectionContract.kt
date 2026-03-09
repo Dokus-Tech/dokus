@@ -4,7 +4,6 @@ import androidx.compose.runtime.Immutable
 import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
-import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.config.ServerConfig
 import tech.dokus.domain.config.ServerInfo
 import tech.dokus.domain.exceptions.DokusException
@@ -14,11 +13,11 @@ import tech.dokus.foundation.app.state.DokusState
  * Contract for Server Connection screen.
  *
  * Flow:
- * 1. Input → User enters protocol, host, and port
- * 2. Validating → Server is being validated via API call
- * 3. Preview → Server validated, showing details for confirmation
- * 4. Connecting → Connection in progress after user confirmation
- * 5. Error → Display error with retry option
+ * 1. Input → User enters protocol, host, and port (validation idle)
+ * 2. Validating → Server is being validated via API call (validation loading)
+ * 3. Preview → Server validated, showing details for confirmation (validation success, !isConnecting)
+ * 4. Connecting → Connection in progress after user confirmation (validation success, isConnecting)
+ * 5. Error → Display error with retry option (validation error)
  *
  * Navigation flows:
  * - Successful connection → NavigateToLogin
@@ -30,65 +29,36 @@ import tech.dokus.foundation.app.state.DokusState
 // STATE
 // ============================================================================
 
+/**
+ * Validated server details including config and server metadata.
+ */
+data class ServerValidation(
+    val config: ServerConfig,
+    val serverInfo: ServerInfo,
+)
+
+/**
+ * Flat state for the server connection screen.
+ *
+ * Uses [DokusState] for the validation lifecycle:
+ * - idle → user is entering details
+ * - loading → validating the server
+ * - success → server validated, preview available
+ * - error → validation or connection failed
+ *
+ * [isConnecting] distinguishes preview (false) from active connection (true)
+ * when validation is successful.
+ */
 @Immutable
-sealed interface ServerConnectionState : MVIState {
-    val protocol: String
-    val host: String
-    val port: String
-
-    /**
-     * Initial state - user enters server details.
-     */
-    data class Input(
-        override val protocol: String = "http",
-        override val host: String = "",
-        override val port: String = "8000",
-        val hostError: DokusException? = null,
-        val portError: DokusException? = null,
-    ) : ServerConnectionState
-
-    /**
-     * Server is being validated.
-     */
-    data class Validating(
-        override val protocol: String,
-        override val host: String,
-        override val port: String,
-    ) : ServerConnectionState
-
-    /**
-     * Server validated, showing preview for confirmation.
-     */
-    data class Preview(
-        override val protocol: String,
-        override val host: String,
-        override val port: String,
-        val config: ServerConfig,
-        val serverInfo: ServerInfo,
-    ) : ServerConnectionState
-
-    /**
-     * Connection in progress after user confirmation.
-     */
-    data class Connecting(
-        override val protocol: String,
-        override val host: String,
-        override val port: String,
-        val config: ServerConfig,
-        val serverInfo: ServerInfo,
-    ) : ServerConnectionState
-
-    /**
-     * Error state with recovery option.
-     */
-    data class Error(
-        override val protocol: String,
-        override val host: String,
-        override val port: String,
-        val exception: DokusException,
-        val retryHandler: RetryHandler,
-    ) : ServerConnectionState
-}
+data class ServerConnectionState(
+    val protocol: String = "http",
+    val host: String = "",
+    val port: String = "8000",
+    val hostError: DokusException? = null,
+    val portError: DokusException? = null,
+    val validation: DokusState<ServerValidation> = DokusState.idle(),
+    val isConnecting: Boolean = false,
+) : MVIState
 
 // ============================================================================
 // INTENTS (User Actions)

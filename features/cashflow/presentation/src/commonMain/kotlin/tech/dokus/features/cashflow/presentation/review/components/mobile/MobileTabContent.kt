@@ -216,7 +216,7 @@ private fun NoPreviewPlaceholder(modifier: Modifier = Modifier) {
  */
 @Composable
 internal fun DetailsTabContent(
-    state: DocumentReviewState.Content,
+    state: DocumentReviewState,
     isAccountantReadOnly: Boolean,
     onIntent: (DocumentReviewIntent) -> Unit,
     onCorrectContact: () -> Unit,
@@ -295,9 +295,8 @@ internal fun DetailsTabContent(
         )
 
         // Line items (if invoice with items)
-        if (state.draftData is InvoiceDraftData &&
-            state.draftData.lineItems.isNotEmpty()
-        ) {
+        val invoiceDraft = state.draftData as? InvoiceDraftData
+        if (invoiceDraft != null && invoiceDraft.lineItems.isNotEmpty()) {
             // LineItemsSection would go here if needed
         }
 

@@ -36,7 +36,7 @@ internal class BootstrapContainer(
     private val logger = Logger.forClass<BootstrapContainer>()
 
     override val store: Store<BootstrapState, BootstrapIntent, BootstrapAction> =
-        store(BootstrapState.Loading()) {
+        store(BootstrapState()) {
             reduce { intent ->
                 when (intent) {
                     is BootstrapIntent.Load -> handleLoad()
@@ -110,33 +110,25 @@ internal class BootstrapContainer(
 
     private suspend fun BootstrapCtx.updateStep(type: BootstrapStepType) {
         updateState {
-            when (this) {
-                is BootstrapState.Loading -> {
-                    copy(
-                        steps = steps.map { step ->
-                            when {
-                                step.type == type -> step.copy(isActive = true, isCurrent = true)
-                                step.isCurrent -> step.copy(isCurrent = false)
-                                else -> step
-                            }
-                        }
-                    )
+            copy(
+                steps = steps.map { step ->
+                    when {
+                        step.type == type -> step.copy(isActive = true, isCurrent = true)
+                        step.isCurrent -> step.copy(isCurrent = false)
+                        else -> step
+                    }
                 }
-            }
+            )
         }
     }
 
     private suspend fun BootstrapCtx.completeAllSteps() {
         updateState {
-            when (this) {
-                is BootstrapState.Loading -> {
-                    copy(
-                        steps = steps.map { step ->
-                            step.copy(isActive = true, isCurrent = false)
-                        }
-                    )
+            copy(
+                steps = steps.map { step ->
+                    step.copy(isActive = true, isCurrent = false)
                 }
-            }
+            )
         }
     }
 

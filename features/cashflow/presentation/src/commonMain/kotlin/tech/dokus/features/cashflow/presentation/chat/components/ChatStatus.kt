@@ -5,12 +5,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
@@ -19,10 +19,8 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.chat_loading
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.features.cashflow.presentation.chat.ChatState
 import tech.dokus.foundation.aura.components.common.DokusErrorBanner
 import tech.dokus.foundation.aura.components.common.DokusLoader
-import tech.dokus.foundation.aura.components.common.ShimmerLine
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
@@ -31,7 +29,7 @@ import tech.dokus.foundation.aura.tooling.TestWrapper
 @Composable
 internal fun LoadingContent(contentPadding: PaddingValues) {
     Box(
-        modifier = androidx.compose.ui.Modifier
+        modifier = Modifier
             .fillMaxSize()
             .padding(contentPadding),
         contentAlignment = Alignment.Center
@@ -52,18 +50,19 @@ internal fun LoadingContent(contentPadding: PaddingValues) {
 
 @Composable
 internal fun ErrorContent(
-    error: ChatState.Error,
+    exception: DokusException,
+    retryHandler: RetryHandler,
     contentPadding: PaddingValues,
 ) {
     Box(
-        modifier = androidx.compose.ui.Modifier
+        modifier = Modifier
             .fillMaxSize()
             .padding(contentPadding)
             .padding(Constraints.Spacing.large),
     ) {
         DokusErrorBanner(
-            exception = error.exception,
-            retryHandler = error.retryHandler,
+            exception = exception,
+            retryHandler = retryHandler,
         )
     }
 }
@@ -85,10 +84,8 @@ private fun ErrorContentPreview(
 ) {
     TestWrapper(parameters) {
         ErrorContent(
-            error = ChatState.Error(
-                exception = DokusException.ConnectionError(),
-                retryHandler = RetryHandler { },
-            ),
+            exception = DokusException.ConnectionError(),
+            retryHandler = RetryHandler { },
             contentPadding = PaddingValues(0.dp),
         )
     }

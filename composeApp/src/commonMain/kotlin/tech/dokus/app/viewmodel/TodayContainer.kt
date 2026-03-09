@@ -43,7 +43,7 @@ internal class TodayContainer(
     private val logger = Logger.forClass<TodayContainer>()
 
     override val store: Store<TodayState, TodayIntent, TodayAction> =
-        store(TodayState.Content()) {
+        store(TodayState()) {
             init {
                 launchWatchPendingDocuments()
                 if (unreadPollingInterval > Duration.ZERO) {
@@ -73,13 +73,13 @@ internal class TodayContainer(
             watchPendingDocuments().collectLatest { state ->
                 when (state) {
                     is DokusState.Loading -> {
-                        withState<TodayState.Content, _> {
+                        withState<TodayState, _> {
                             updateState { copy(pendingDocumentsState = DokusState.loading()) }
                         }
                     }
 
                     is DokusState.Success -> {
-                        withState<TodayState.Content, _> {
+                        withState<TodayState, _> {
                             updateState {
                                 copy(
                                     allPendingDocuments = state.data,
@@ -91,7 +91,7 @@ internal class TodayContainer(
                     }
 
                     is DokusState.Error -> {
-                        withState<TodayState.Content, _> {
+                        withState<TodayState, _> {
                             updateState {
                                 copy(
                                     allPendingDocuments = emptyList(),
@@ -105,7 +105,7 @@ internal class TodayContainer(
                     }
 
                     is DokusState.Idle -> {
-                        withState<TodayState.Content, _> {
+                        withState<TodayState, _> {
                             updateState { copy(pendingDocumentsState = DokusState.idle()) }
                         }
                     }
@@ -124,7 +124,7 @@ internal class TodayContainer(
     }
 
     private suspend fun TodayCtx.handleRefreshTenant() {
-        withState<TodayState.Content, _> {
+        withState<TodayState, _> {
             logger.d { "Refreshing tenant" }
 
             updateState { copy(tenantState = DokusState.loading()) }
@@ -160,7 +160,7 @@ internal class TodayContainer(
     }
 
     private suspend fun TodayCtx.handleLoadMorePendingDocuments() {
-        withState<TodayState.Content, _> {
+        withState<TodayState, _> {
             if (pendingVisibleCount >= allPendingDocuments.size) return@withState
 
             logger.d { "Loading more pending documents" }
@@ -176,7 +176,7 @@ internal class TodayContainer(
     }
 
     private suspend fun TodayCtx.updatePendingPaginationState() {
-        withState<TodayState.Content, _> {
+        withState<TodayState, _> {
             val visibleDocs = allPendingDocuments.take(pendingVisibleCount)
             val hasMore = pendingVisibleCount < allPendingDocuments.size
 
@@ -194,7 +194,7 @@ internal class TodayContainer(
     }
 
     private suspend fun TodayCtx.handleLoadNotifications(filter: NotificationFilterTab) {
-        withState<TodayState.Content, _> {
+        withState<TodayState, _> {
             updateState {
                 copy(
                     notificationFilter = filter,
@@ -210,7 +210,7 @@ internal class TodayContainer(
             offset = 0
         ).fold(
             onSuccess = { page ->
-                withState<TodayState.Content, _> {
+                withState<TodayState, _> {
                     updateState {
                         copy(notificationsState = DokusState.success(page.items))
                     }
@@ -218,7 +218,7 @@ internal class TodayContainer(
             },
             onFailure = { error ->
                 logger.e(error) { "Failed to load notifications" }
-                withState<TodayState.Content, _> {
+                withState<TodayState, _> {
                     updateState {
                         copy(
                             notificationsState = DokusState.error(
@@ -235,7 +235,7 @@ internal class TodayContainer(
     private suspend fun TodayCtx.handleRefreshUnreadNotifications() {
         notificationRemoteDataSource.unreadCount().fold(
             onSuccess = { count ->
-                withState<TodayState.Content, _> {
+                withState<TodayState, _> {
                     updateState { copy(unreadNotificationCount = count) }
                 }
             },
@@ -247,7 +247,7 @@ internal class TodayContainer(
 
     private suspend fun TodayCtx.handleOpenNotification(notification: tech.dokus.domain.model.NotificationDto) {
         var currentFilter = NotificationFilterTab.All
-        withState<TodayState.Content, _> {
+        withState<TodayState, _> {
             currentFilter = notificationFilter
         }
 
@@ -268,7 +268,7 @@ internal class TodayContainer(
 
     private suspend fun TodayCtx.handleMarkAllNotificationsRead() {
         var currentFilter = NotificationFilterTab.All
-        withState<TodayState.Content, _> {
+        withState<TodayState, _> {
             currentFilter = notificationFilter
         }
 

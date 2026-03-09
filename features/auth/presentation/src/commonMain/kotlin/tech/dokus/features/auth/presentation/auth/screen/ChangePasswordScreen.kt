@@ -29,7 +29,6 @@ import tech.dokus.aura.resources.profile_new_password
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.features.auth.mvi.ChangePasswordIntent
 import tech.dokus.features.auth.mvi.ChangePasswordState
-import tech.dokus.foundation.app.state.exceptionIfError
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.components.fields.PTextFieldPassword
@@ -68,8 +67,8 @@ private fun ChangePasswordContent(
     contentPadding: PaddingValues,
     onIntent: (ChangePasswordIntent) -> Unit
 ) {
-    val fieldsError = (state as? ChangePasswordState.Error)?.exception
-    val isSubmitting = state is ChangePasswordState.Submitting
+    val fieldsError = state.error
+    val isSubmitting = state.isSubmitting
     val passwordsMatch = state.newPassword.value == state.confirmPassword.value
     val canSubmit = state.currentPassword.isValid &&
         state.newPassword.isValid &&
@@ -163,7 +162,7 @@ private fun ChangePasswordScreenPreview(
 ) {
     tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
         ChangePasswordScreen(
-            state = ChangePasswordState.Idle(),
+            state = ChangePasswordState(),
             snackbarHostState = androidx.compose.runtime.remember { SnackbarHostState() },
             onIntent = {},
         )

@@ -28,6 +28,8 @@ import tech.dokus.features.auth.usecases.RemoveTeamMemberUseCase
 import tech.dokus.features.auth.usecases.SearchBookkeeperFirmsUseCase
 import tech.dokus.features.auth.usecases.TransferWorkspaceOwnershipUseCase
 import tech.dokus.features.auth.usecases.UpdateTeamMemberRoleUseCase
+import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.platform.Logger
 
 internal typealias TeamSettingsCtx = PipelineContext<TeamSettingsState, TeamSettingsIntent, TeamSettingsAction>
@@ -62,7 +64,7 @@ internal class TeamSettingsContainer(
     private val logger = Logger.forClass<TeamSettingsContainer>()
 
     override val store: Store<TeamSettingsState, TeamSettingsIntent, TeamSettingsAction> =
-        store(TeamSettingsState.Loading) {
+        store(TeamSettingsState()) {
             reduce { intent ->
                 when (intent) {
                     is TeamSettingsIntent.Load -> handleLoad()
@@ -89,7 +91,7 @@ internal class TeamSettingsContainer(
     private suspend fun TeamSettingsCtx.handleLoad() {
         logger.d { "Loading team data" }
 
-        updateState { TeamSettingsState.Loading }
+        updateState { copy(teamData = DokusState.loading()) }
 
         loadTeamData()
     }
@@ -97,21 +99,12 @@ internal class TeamSettingsContainer(
     private suspend fun TeamSettingsCtx.handleRefresh() {
         logger.d { "Refreshing team data" }
 
-        withState<TeamSettingsState.Content, _> {
-            updateState {
-                copy(
-                    membersLoading = true,
-                    invitationsLoading = true,
-                    bookkeeperAccessLoading = isCurrentUserOwner,
-                )
-            }
-        }
+        updateState { copy(teamData = teamData.asLoading) }
 
         loadTeamData()
     }
 
     private suspend fun TeamSettingsCtx.loadTeamData() {
-        // Load members
         val membersResult = useCases.listTeamMembers()
         val invitationsResult = useCases.listPendingInvitations()
         val currentUserId = useCases.getCurrentUser().getOrNull()?.id
@@ -133,32 +126,34 @@ internal class TeamSettingsContainer(
                         bookkeeperAccessResult.fold(
                             onSuccess = { bookkeeperAccess ->
                                 updateState {
-                                    TeamSettingsState.Content(
-                                        members = members,
-                                        membersLoading = false,
-                                        invitations = invitations,
-                                        invitationsLoading = false,
-                                        currentUserId = currentUserId,
-                                        maxSeats = maxSeats,
-                                        bookkeeperAccess = bookkeeperAccess,
-                                        bookkeeperAccessLoading = false,
-                                        isCurrentUserOwner = isCurrentUserOwner,
+                                    copy(
+                                        teamData = DokusState.success(
+                                            TeamData(
+                                                members = members,
+                                                invitations = invitations,
+                                                currentUserId = currentUserId,
+                                                maxSeats = maxSeats,
+                                                bookkeeperAccess = bookkeeperAccess,
+                                                isCurrentUserOwner = isCurrentUserOwner,
+                                            )
+                                        )
                                     )
                                 }
                             },
                             onFailure = { error ->
                                 logger.e(error) { "Failed to load connected bookkeeper firms" }
                                 updateState {
-                                    TeamSettingsState.Content(
-                                        members = members,
-                                        membersLoading = false,
-                                        invitations = invitations,
-                                        invitationsLoading = false,
-                                        currentUserId = currentUserId,
-                                        maxSeats = maxSeats,
-                                        bookkeeperAccess = emptyList(),
-                                        bookkeeperAccessLoading = false,
-                                        isCurrentUserOwner = isCurrentUserOwner,
+                                    copy(
+                                        teamData = DokusState.success(
+                                            TeamData(
+                                                members = members,
+                                                invitations = invitations,
+                                                currentUserId = currentUserId,
+                                                maxSeats = maxSeats,
+                                                bookkeeperAccess = emptyList(),
+                                                isCurrentUserOwner = isCurrentUserOwner,
+                                            )
+                                        )
                                     )
                                 }
                                 action(TeamSettingsAction.ShowError(error.asDokusException))
@@ -168,9 +163,11 @@ internal class TeamSettingsContainer(
                     onFailure = { error ->
                         logger.e(error) { "Failed to load invitations" }
                         updateState {
-                            TeamSettingsState.Error(
-                                exception = error.asDokusException,
-                                retryHandler = { intent(TeamSettingsIntent.Load) }
+                            copy(
+                                teamData = DokusState.error(
+                                    exception = error.asDokusException,
+                                    retryHandler = { intent(TeamSettingsIntent.Load) }
+                                )
                             )
                         }
                     }
@@ -179,9 +176,11 @@ internal class TeamSettingsContainer(
             onFailure = { error ->
                 logger.e(error) { "Failed to load team members" }
                 updateState {
-                    TeamSettingsState.Error(
-                        exception = error.asDokusException,
-                        retryHandler = { intent(TeamSettingsIntent.Load) }
+                    copy(
+                        teamData = DokusState.error(
+                            exception = error.asDokusException,
+                            retryHandler = { intent(TeamSettingsIntent.Load) }
+                        )
                     )
                 }
             }
@@ -189,111 +188,142 @@ internal class TeamSettingsContainer(
     }
 
     private suspend fun TeamSettingsCtx.handleUpdateInviteEmail(email: String) {
-        withState<TeamSettingsState.Content, _> {
-            updateState { copy(inviteEmail = email) }
-        }
+        updateState { copy(inviteEmail = email) }
     }
 
     private suspend fun TeamSettingsCtx.handleUpdateInviteRole(role: UserRole) {
-        withState<TeamSettingsState.Content, _> {
-            updateState { copy(inviteRole = role) }
-        }
+        updateState { copy(inviteRole = role) }
     }
 
     private suspend fun TeamSettingsCtx.handleResetInviteForm() {
-        withState<TeamSettingsState.Content, _> {
-            updateState {
-                copy(
-                    inviteEmail = "",
-                    inviteRole = UserRole.Editor
-                )
-            }
+        updateState {
+            copy(
+                inviteEmail = "",
+                inviteRole = UserRole.Editor
+            )
         }
     }
 
     private suspend fun TeamSettingsCtx.handleSendInvitation() {
-        withState<TeamSettingsState.Content, _> {
-            // Validate email
-            if (inviteEmail.isBlank()) {
-                val exception = DokusException.Validation.EmailRequired
-                updateState {
-                    copy(actionState = TeamSettingsState.Content.ActionState.Error(exception))
-                }
-                action(TeamSettingsAction.ShowError(exception))
-                return@withState
-            }
+        var capturedEmail: String? = null
+        var capturedRole: UserRole? = null
 
-            // Basic email validation
-            if (!inviteEmail.contains("@") || !inviteEmail.contains(".")) {
-                val exception = DokusException.Validation.InvalidEmail
-                updateState {
-                    copy(actionState = TeamSettingsState.Content.ActionState.Error(exception))
-                }
-                action(TeamSettingsAction.ShowError(exception))
-                return@withState
-            }
-
-            val currentEmail = inviteEmail.trim()
-            val currentRole = inviteRole
-
-            logger.d { "Sending invitation to $currentEmail" }
-            updateState { copy(actionState = TeamSettingsState.Content.ActionState.Inviting) }
-
-            val request = CreateInvitationRequest(
-                email = Email(currentEmail),
-                role = currentRole
-            )
-
-            useCases.createInvitation(request).fold(
-                onSuccess = {
-                    logger.i { "Invitation sent to $currentEmail" }
-                    updateState {
-                        copy(
-                            inviteEmail = "",
-                            inviteRole = UserRole.Editor,
-                            actionState = TeamSettingsState.Content.ActionState.Success(TeamSettingsSuccess.InviteSent)
-                        )
-                    }
-                    action(TeamSettingsAction.ShowSuccess(TeamSettingsSuccess.InviteSent))
-                    action(TeamSettingsAction.DismissInviteDialog)
-
-                    // Refresh invitations
-                    refreshInvitations()
-                },
-                onFailure = { error ->
-                    logger.e(error) { "Failed to send invitation" }
-                    val exception = error.asDokusException
-                    val displayException = if (exception is DokusException.Unknown) {
-                        DokusException.TeamInviteFailed
-                    } else {
-                        exception
-                    }
-                    updateState {
-                        copy(actionState = TeamSettingsState.Content.ActionState.Error(displayException))
-                    }
-                    action(TeamSettingsAction.ShowError(displayException))
-                }
-            )
+        withState {
+            if (!teamData.isSuccess()) return@withState
+            capturedEmail = inviteEmail
+            capturedRole = inviteRole
         }
+
+        val inviteEmail = capturedEmail ?: return
+        val inviteRole = capturedRole ?: return
+
+        // Validate email
+        if (inviteEmail.isBlank()) {
+            val exception = DokusException.Validation.EmailRequired
+            updateState { copy(actionState = TeamSettingsActionState.Error(exception)) }
+            action(TeamSettingsAction.ShowError(exception))
+            return
+        }
+
+        // Basic email validation
+        if (!inviteEmail.contains("@") || !inviteEmail.contains(".")) {
+            val exception = DokusException.Validation.InvalidEmail
+            updateState { copy(actionState = TeamSettingsActionState.Error(exception)) }
+            action(TeamSettingsAction.ShowError(exception))
+            return
+        }
+
+        val currentEmail = inviteEmail.trim()
+
+        logger.d { "Sending invitation to $currentEmail" }
+        updateState { copy(actionState = TeamSettingsActionState.Inviting) }
+
+        val request = CreateInvitationRequest(
+            email = Email(currentEmail),
+            role = inviteRole
+        )
+
+        useCases.createInvitation(request).fold(
+            onSuccess = {
+                logger.i { "Invitation sent to $currentEmail" }
+                updateState {
+                    copy(
+                        inviteEmail = "",
+                        inviteRole = UserRole.Editor,
+                        actionState = TeamSettingsActionState.Success(TeamSettingsSuccess.InviteSent)
+                    )
+                }
+                action(TeamSettingsAction.ShowSuccess(TeamSettingsSuccess.InviteSent))
+                action(TeamSettingsAction.DismissInviteDialog)
+
+                // Refresh invitations
+                refreshInvitations()
+            },
+            onFailure = { error ->
+                logger.e(error) { "Failed to send invitation" }
+                val exception = error.asDokusException
+                val displayException = if (exception is DokusException.Unknown) {
+                    DokusException.TeamInviteFailed
+                } else {
+                    exception
+                }
+                updateState { copy(actionState = TeamSettingsActionState.Error(displayException)) }
+                action(TeamSettingsAction.ShowError(displayException))
+            }
+        )
     }
 
     private suspend fun TeamSettingsCtx.handleUpdateBookkeeperSearchQuery(query: String) {
-        withState<TeamSettingsState.Content, _> {
-            updateState {
-                copy(
-                    bookkeeperSearchQuery = query,
-                    selectedBookkeeperFirmId = null,
-                )
-            }
+        updateState {
+            copy(
+                bookkeeperSearchQuery = query,
+                selectedBookkeeperFirmId = null,
+            )
         }
     }
 
     private suspend fun TeamSettingsCtx.handleSearchBookkeeperFirms() {
-        withState<TeamSettingsState.Content, _> {
-            if (!isCurrentUserOwner) return@withState
+        var capturedQuery: String? = null
+        var capturedSelectedFirmId: FirmId? = null
 
-            val query = bookkeeperSearchQuery.trim()
-            if (query.length < 2) {
+        withState {
+            val data = (teamData as? DokusState.Success)?.data ?: return@withState
+            if (!data.isCurrentUserOwner) return@withState
+            capturedQuery = bookkeeperSearchQuery.trim()
+            capturedSelectedFirmId = selectedBookkeeperFirmId
+        }
+
+        val query = capturedQuery ?: return
+
+        if (query.length < 2) {
+            updateState {
+                copy(
+                    bookkeeperSearchResults = emptyList(),
+                    bookkeeperSearchLoading = false,
+                    selectedBookkeeperFirmId = null,
+                )
+            }
+            return
+        }
+
+        updateState { copy(bookkeeperSearchLoading = true) }
+
+        useCases.searchBookkeeperFirms(query = query).fold(
+            onSuccess = { results ->
+                val sorted = results.sortedBy { it.name.value.lowercase() }
+                val selectedId = capturedSelectedFirmId?.takeIf { selected ->
+                    sorted.any { it.firmId == selected }
+                }
+                updateState {
+                    copy(
+                        bookkeeperSearchResults = sorted,
+                        bookkeeperSearchLoading = false,
+                        selectedBookkeeperFirmId = selectedId,
+                    )
+                }
+            },
+            onFailure = { error ->
+                logger.e(error) { "Failed to search bookkeeper firms" }
                 updateState {
                     copy(
                         bookkeeperSearchResults = emptyList(),
@@ -301,367 +331,316 @@ internal class TeamSettingsContainer(
                         selectedBookkeeperFirmId = null,
                     )
                 }
-                return@withState
+                action(TeamSettingsAction.ShowError(error.asDokusException))
             }
-
-            updateState { copy(bookkeeperSearchLoading = true) }
-
-            useCases.searchBookkeeperFirms(query = query).fold(
-                onSuccess = { results ->
-                    val sorted = results.sortedBy { it.name.value.lowercase() }
-                    val selectedId = selectedBookkeeperFirmId?.takeIf { selected ->
-                        sorted.any { it.firmId == selected }
-                    }
-                    updateState {
-                        copy(
-                            bookkeeperSearchResults = sorted,
-                            bookkeeperSearchLoading = false,
-                            selectedBookkeeperFirmId = selectedId,
-                        )
-                    }
-                },
-                onFailure = { error ->
-                    logger.e(error) { "Failed to search bookkeeper firms" }
-                    updateState {
-                        copy(
-                            bookkeeperSearchResults = emptyList(),
-                            bookkeeperSearchLoading = false,
-                            selectedBookkeeperFirmId = null,
-                        )
-                    }
-                    action(TeamSettingsAction.ShowError(error.asDokusException))
-                }
-            )
-        }
+        )
     }
 
     private suspend fun TeamSettingsCtx.handleSelectBookkeeperFirm(firmId: FirmId?) {
-        withState<TeamSettingsState.Content, _> {
-            updateState { copy(selectedBookkeeperFirmId = firmId) }
-        }
+        updateState { copy(selectedBookkeeperFirmId = firmId) }
     }
 
     private suspend fun TeamSettingsCtx.handleGrantBookkeeperAccess() {
-        withState<TeamSettingsState.Content, _> {
-            if (!isCurrentUserOwner) {
-                action(TeamSettingsAction.ShowError(DokusException.NotAuthorized()))
-                return@withState
-            }
+        var isOwner = false
+        var capturedFirmId: FirmId? = null
 
-            val selectedFirmId = selectedBookkeeperFirmId
-            if (selectedFirmId == null) {
-                val exception = DokusException.BadRequest("Select a bookkeeper firm first")
-                updateState {
-                    copy(actionState = TeamSettingsState.Content.ActionState.Error(exception))
-                }
-                action(TeamSettingsAction.ShowError(exception))
-                return@withState
-            }
-
-            updateState {
-                copy(
-                    actionState = TeamSettingsState.Content.ActionState.Processing,
-                    bookkeeperAccessLoading = true,
-                )
-            }
-
-            useCases.grantBookkeeperAccess(selectedFirmId).fold(
-                onSuccess = {
-                    updateState {
-                        copy(
-                            actionState = TeamSettingsState.Content.ActionState.Success(
-                                TeamSettingsSuccess.BookkeeperAccessGranted
-                            ),
-                            bookkeeperSearchQuery = "",
-                            bookkeeperSearchResults = emptyList(),
-                            selectedBookkeeperFirmId = null,
-                        )
-                    }
-                    action(TeamSettingsAction.ShowSuccess(TeamSettingsSuccess.BookkeeperAccessGranted))
-                    action(TeamSettingsAction.DismissBookkeeperDialog)
-                    refreshBookkeeperAccess()
-                },
-                onFailure = { error ->
-                    val exception = error.asDokusException
-                    updateState {
-                        copy(
-                            actionState = TeamSettingsState.Content.ActionState.Error(exception),
-                            bookkeeperAccessLoading = false,
-                        )
-                    }
-                    action(TeamSettingsAction.ShowError(exception))
-                }
-            )
+        withState {
+            val data = (teamData as? DokusState.Success)?.data ?: return@withState
+            isOwner = data.isCurrentUserOwner
+            capturedFirmId = selectedBookkeeperFirmId
         }
+
+        if (!isOwner) {
+            action(TeamSettingsAction.ShowError(DokusException.NotAuthorized()))
+            return
+        }
+
+        val selectedFirmId = capturedFirmId
+        if (selectedFirmId == null) {
+            val exception = DokusException.BadRequest("Select a bookkeeper firm first")
+            updateState { copy(actionState = TeamSettingsActionState.Error(exception)) }
+            action(TeamSettingsAction.ShowError(exception))
+            return
+        }
+
+        updateState { copy(actionState = TeamSettingsActionState.Processing) }
+
+        useCases.grantBookkeeperAccess(selectedFirmId).fold(
+            onSuccess = {
+                updateState {
+                    copy(
+                        actionState = TeamSettingsActionState.Success(
+                            TeamSettingsSuccess.BookkeeperAccessGranted
+                        ),
+                        bookkeeperSearchQuery = "",
+                        bookkeeperSearchResults = emptyList(),
+                        selectedBookkeeperFirmId = null,
+                    )
+                }
+                action(TeamSettingsAction.ShowSuccess(TeamSettingsSuccess.BookkeeperAccessGranted))
+                action(TeamSettingsAction.DismissBookkeeperDialog)
+                refreshBookkeeperAccess()
+            },
+            onFailure = { error ->
+                val exception = error.asDokusException
+                updateState { copy(actionState = TeamSettingsActionState.Error(exception)) }
+                action(TeamSettingsAction.ShowError(exception))
+            }
+        )
     }
 
     private suspend fun TeamSettingsCtx.handleRevokeBookkeeperAccess(firmId: FirmId) {
-        withState<TeamSettingsState.Content, _> {
-            if (!isCurrentUserOwner) {
-                action(TeamSettingsAction.ShowError(DokusException.NotAuthorized()))
-                return@withState
-            }
+        var isOwner = false
 
-            updateState {
-                copy(
-                    actionState = TeamSettingsState.Content.ActionState.Processing,
-                    bookkeeperAccessLoading = true,
-                )
-            }
-
-            useCases.revokeBookkeeperAccess(firmId).fold(
-                onSuccess = {
-                    updateState {
-                        copy(
-                            actionState = TeamSettingsState.Content.ActionState.Success(
-                                TeamSettingsSuccess.BookkeeperAccessRevoked
-                            ),
-                        )
-                    }
-                    action(TeamSettingsAction.ShowSuccess(TeamSettingsSuccess.BookkeeperAccessRevoked))
-                    refreshBookkeeperAccess()
-                },
-                onFailure = { error ->
-                    val exception = error.asDokusException
-                    updateState {
-                        copy(
-                            actionState = TeamSettingsState.Content.ActionState.Error(exception),
-                            bookkeeperAccessLoading = false,
-                        )
-                    }
-                    action(TeamSettingsAction.ShowError(exception))
-                }
-            )
+        withState {
+            val data = (teamData as? DokusState.Success)?.data ?: return@withState
+            isOwner = data.isCurrentUserOwner
         }
+
+        if (!isOwner) {
+            action(TeamSettingsAction.ShowError(DokusException.NotAuthorized()))
+            return
+        }
+
+        updateState { copy(actionState = TeamSettingsActionState.Processing) }
+
+        useCases.revokeBookkeeperAccess(firmId).fold(
+            onSuccess = {
+                updateState {
+                    copy(
+                        actionState = TeamSettingsActionState.Success(
+                            TeamSettingsSuccess.BookkeeperAccessRevoked
+                        ),
+                    )
+                }
+                action(TeamSettingsAction.ShowSuccess(TeamSettingsSuccess.BookkeeperAccessRevoked))
+                refreshBookkeeperAccess()
+            },
+            onFailure = { error ->
+                val exception = error.asDokusException
+                updateState { copy(actionState = TeamSettingsActionState.Error(exception)) }
+                action(TeamSettingsAction.ShowError(exception))
+            }
+        )
     }
 
     private suspend fun TeamSettingsCtx.handleResetBookkeeperAccessForm() {
-        withState<TeamSettingsState.Content, _> {
-            updateState {
-                copy(
-                    bookkeeperSearchQuery = "",
-                    bookkeeperSearchResults = emptyList(),
-                    bookkeeperSearchLoading = false,
-                    selectedBookkeeperFirmId = null,
-                )
-            }
+        updateState {
+            copy(
+                bookkeeperSearchQuery = "",
+                bookkeeperSearchResults = emptyList(),
+                bookkeeperSearchLoading = false,
+                selectedBookkeeperFirmId = null,
+            )
         }
     }
 
     private suspend fun TeamSettingsCtx.handleCancelInvitation(invitationId: InvitationId) {
-        withState<TeamSettingsState.Content, _> {
-            logger.d { "Cancelling invitation $invitationId" }
-            updateState { copy(actionState = TeamSettingsState.Content.ActionState.Processing) }
+        var isSuccess = false
+        withState { isSuccess = teamData.isSuccess() }
+        if (!isSuccess) return
 
-            useCases.cancelInvitation(invitationId).fold(
-                onSuccess = {
-                    logger.i { "Invitation cancelled: $invitationId" }
-                    updateState {
-                        copy(
-                            actionState = TeamSettingsState.Content.ActionState.Success(
-                                TeamSettingsSuccess.InviteCancelled
-                            )
+        logger.d { "Cancelling invitation $invitationId" }
+        updateState { copy(actionState = TeamSettingsActionState.Processing) }
+
+        useCases.cancelInvitation(invitationId).fold(
+            onSuccess = {
+                logger.i { "Invitation cancelled: $invitationId" }
+                updateState {
+                    copy(
+                        actionState = TeamSettingsActionState.Success(
+                            TeamSettingsSuccess.InviteCancelled
                         )
-                    }
-                    action(TeamSettingsAction.ShowSuccess(TeamSettingsSuccess.InviteCancelled))
-
-                    // Refresh invitations
-                    refreshInvitations()
-                },
-                onFailure = { error ->
-                    logger.e(error) { "Failed to cancel invitation" }
-                    val exception = error.asDokusException
-                    val displayException = if (exception is DokusException.Unknown) {
-                        DokusException.TeamInviteCancelFailed
-                    } else {
-                        exception
-                    }
-                    updateState {
-                        copy(actionState = TeamSettingsState.Content.ActionState.Error(displayException))
-                    }
-                    action(TeamSettingsAction.ShowError(displayException))
+                    )
                 }
-            )
-        }
+                action(TeamSettingsAction.ShowSuccess(TeamSettingsSuccess.InviteCancelled))
+
+                // Refresh invitations
+                refreshInvitations()
+            },
+            onFailure = { error ->
+                logger.e(error) { "Failed to cancel invitation" }
+                val exception = error.asDokusException
+                val displayException = if (exception is DokusException.Unknown) {
+                    DokusException.TeamInviteCancelFailed
+                } else {
+                    exception
+                }
+                updateState { copy(actionState = TeamSettingsActionState.Error(displayException)) }
+                action(TeamSettingsAction.ShowError(displayException))
+            }
+        )
     }
 
     private suspend fun TeamSettingsCtx.handleUpdateMemberRole(userId: UserId, newRole: UserRole) {
-        withState<TeamSettingsState.Content, _> {
-            logger.d { "Updating role for $userId to $newRole" }
-            updateState { copy(actionState = TeamSettingsState.Content.ActionState.Processing) }
+        var isSuccess = false
+        withState { isSuccess = teamData.isSuccess() }
+        if (!isSuccess) return
 
-            useCases.updateTeamMemberRole(userId, newRole).fold(
-                onSuccess = {
-                    logger.i { "Role updated for $userId to $newRole" }
-                    updateState {
-                        copy(
-                            actionState = TeamSettingsState.Content.ActionState.Success(TeamSettingsSuccess.RoleUpdated)
-                        )
-                    }
-                    action(TeamSettingsAction.ShowSuccess(TeamSettingsSuccess.RoleUpdated))
+        logger.d { "Updating role for $userId to $newRole" }
+        updateState { copy(actionState = TeamSettingsActionState.Processing) }
 
-                    // Refresh members
-                    refreshMembers()
-                },
-                onFailure = { error ->
-                    logger.e(error) { "Failed to update role" }
-                    val exception = error.asDokusException
-                    val displayException = if (exception is DokusException.Unknown) {
-                        DokusException.TeamRoleUpdateFailed
-                    } else {
-                        exception
-                    }
-                    updateState {
-                        copy(actionState = TeamSettingsState.Content.ActionState.Error(displayException))
-                    }
-                    action(TeamSettingsAction.ShowError(displayException))
+        useCases.updateTeamMemberRole(userId, newRole).fold(
+            onSuccess = {
+                logger.i { "Role updated for $userId to $newRole" }
+                updateState {
+                    copy(actionState = TeamSettingsActionState.Success(TeamSettingsSuccess.RoleUpdated))
                 }
-            )
-        }
+                action(TeamSettingsAction.ShowSuccess(TeamSettingsSuccess.RoleUpdated))
+
+                // Refresh members
+                refreshMembers()
+            },
+            onFailure = { error ->
+                logger.e(error) { "Failed to update role" }
+                val exception = error.asDokusException
+                val displayException = if (exception is DokusException.Unknown) {
+                    DokusException.TeamRoleUpdateFailed
+                } else {
+                    exception
+                }
+                updateState { copy(actionState = TeamSettingsActionState.Error(displayException)) }
+                action(TeamSettingsAction.ShowError(displayException))
+            }
+        )
     }
 
     private suspend fun TeamSettingsCtx.handleRemoveMember(userId: UserId) {
-        withState<TeamSettingsState.Content, _> {
-            logger.d { "Removing member $userId" }
-            updateState { copy(actionState = TeamSettingsState.Content.ActionState.Processing) }
+        var isSuccess = false
+        withState { isSuccess = teamData.isSuccess() }
+        if (!isSuccess) return
 
-            useCases.removeTeamMember(userId).fold(
-                onSuccess = {
-                    logger.i { "Member removed: $userId" }
-                    updateState {
-                        copy(
-                            actionState = TeamSettingsState.Content.ActionState.Success(
-                                TeamSettingsSuccess.MemberRemoved
-                            )
+        logger.d { "Removing member $userId" }
+        updateState { copy(actionState = TeamSettingsActionState.Processing) }
+
+        useCases.removeTeamMember(userId).fold(
+            onSuccess = {
+                logger.i { "Member removed: $userId" }
+                updateState {
+                    copy(
+                        actionState = TeamSettingsActionState.Success(
+                            TeamSettingsSuccess.MemberRemoved
                         )
-                    }
-                    action(TeamSettingsAction.ShowSuccess(TeamSettingsSuccess.MemberRemoved))
-
-                    // Refresh members
-                    refreshMembers()
-                },
-                onFailure = { error ->
-                    logger.e(error) { "Failed to remove member" }
-                    val exception = error.asDokusException
-                    val displayException = if (exception is DokusException.Unknown) {
-                        DokusException.TeamMemberRemoveFailed
-                    } else {
-                        exception
-                    }
-                    updateState {
-                        copy(actionState = TeamSettingsState.Content.ActionState.Error(displayException))
-                    }
-                    action(TeamSettingsAction.ShowError(displayException))
+                    )
                 }
-            )
-        }
+                action(TeamSettingsAction.ShowSuccess(TeamSettingsSuccess.MemberRemoved))
+
+                // Refresh members
+                refreshMembers()
+            },
+            onFailure = { error ->
+                logger.e(error) { "Failed to remove member" }
+                val exception = error.asDokusException
+                val displayException = if (exception is DokusException.Unknown) {
+                    DokusException.TeamMemberRemoveFailed
+                } else {
+                    exception
+                }
+                updateState { copy(actionState = TeamSettingsActionState.Error(displayException)) }
+                action(TeamSettingsAction.ShowError(displayException))
+            }
+        )
     }
 
     private suspend fun TeamSettingsCtx.handleTransferOwnership(newOwnerId: UserId) {
-        withState<TeamSettingsState.Content, _> {
-            logger.d { "Transferring ownership to $newOwnerId" }
-            updateState { copy(actionState = TeamSettingsState.Content.ActionState.Processing) }
+        var isSuccess = false
+        withState { isSuccess = teamData.isSuccess() }
+        if (!isSuccess) return
 
-            useCases.transferWorkspaceOwnership(newOwnerId).fold(
-                onSuccess = {
-                    logger.i { "Ownership transferred to $newOwnerId" }
-                    updateState {
-                        copy(
-                            actionState = TeamSettingsState.Content.ActionState.Success(
-                                TeamSettingsSuccess.OwnershipTransferred
-                            )
+        logger.d { "Transferring ownership to $newOwnerId" }
+        updateState { copy(actionState = TeamSettingsActionState.Processing) }
+
+        useCases.transferWorkspaceOwnership(newOwnerId).fold(
+            onSuccess = {
+                logger.i { "Ownership transferred to $newOwnerId" }
+                updateState {
+                    copy(
+                        actionState = TeamSettingsActionState.Success(
+                            TeamSettingsSuccess.OwnershipTransferred
                         )
-                    }
-                    action(TeamSettingsAction.ShowSuccess(TeamSettingsSuccess.OwnershipTransferred))
-
-                    // Refresh members
-                    refreshMembers()
-                },
-                onFailure = { error ->
-                    logger.e(error) { "Failed to transfer ownership" }
-                    val exception = error.asDokusException
-                    val displayException = if (exception is DokusException.Unknown) {
-                        DokusException.TeamOwnershipTransferFailed
-                    } else {
-                        exception
-                    }
-                    updateState {
-                        copy(actionState = TeamSettingsState.Content.ActionState.Error(displayException))
-                    }
-                    action(TeamSettingsAction.ShowError(displayException))
+                    )
                 }
-            )
-        }
+                action(TeamSettingsAction.ShowSuccess(TeamSettingsSuccess.OwnershipTransferred))
+
+                // Refresh members
+                refreshMembers()
+            },
+            onFailure = { error ->
+                logger.e(error) { "Failed to transfer ownership" }
+                val exception = error.asDokusException
+                val displayException = if (exception is DokusException.Unknown) {
+                    DokusException.TeamOwnershipTransferFailed
+                } else {
+                    exception
+                }
+                updateState { copy(actionState = TeamSettingsActionState.Error(displayException)) }
+                action(TeamSettingsAction.ShowError(displayException))
+            }
+        )
     }
 
     private suspend fun TeamSettingsCtx.handleResetActionState() {
-        withState<TeamSettingsState.Content, _> {
-            updateState { copy(actionState = TeamSettingsState.Content.ActionState.Idle) }
-        }
+        updateState { copy(actionState = TeamSettingsActionState.Idle) }
     }
 
     private suspend fun TeamSettingsCtx.refreshMembers() {
-        withState<TeamSettingsState.Content, _> {
-            updateState { copy(membersLoading = true) }
+        var capturedTeamData: TeamData? = null
+        withState { capturedTeamData = (teamData as? DokusState.Success)?.data }
+        val teamData = capturedTeamData ?: return
 
-            useCases.listTeamMembers().fold(
-                onSuccess = { members ->
-                    logger.i { "Refreshed ${members.size} team members" }
-                    updateState {
-                        copy(members = members, membersLoading = false)
-                    }
-                },
-                onFailure = { error ->
-                    logger.e(error) { "Failed to refresh members" }
-                    updateState { copy(membersLoading = false) }
+        useCases.listTeamMembers().fold(
+            onSuccess = { members ->
+                logger.i { "Refreshed ${members.size} team members" }
+                updateState {
+                    copy(teamData = DokusState.success(teamData.copy(members = members)))
                 }
-            )
-        }
+            },
+            onFailure = { error ->
+                logger.e(error) { "Failed to refresh members" }
+            }
+        )
     }
 
     private suspend fun TeamSettingsCtx.refreshInvitations() {
-        withState<TeamSettingsState.Content, _> {
-            updateState { copy(invitationsLoading = true) }
+        var capturedTeamData: TeamData? = null
+        withState { capturedTeamData = (teamData as? DokusState.Success)?.data }
+        val teamData = capturedTeamData ?: return
 
-            useCases.listPendingInvitations().fold(
-                onSuccess = { invitations ->
-                    logger.i { "Refreshed ${invitations.size} pending invitations" }
-                    updateState {
-                        copy(invitations = invitations, invitationsLoading = false)
-                    }
-                },
-                onFailure = { error ->
-                    logger.e(error) { "Failed to refresh invitations" }
-                    updateState { copy(invitationsLoading = false) }
+        useCases.listPendingInvitations().fold(
+            onSuccess = { invitations ->
+                logger.i { "Refreshed ${invitations.size} pending invitations" }
+                updateState {
+                    copy(teamData = DokusState.success(teamData.copy(invitations = invitations)))
                 }
-            )
-        }
+            },
+            onFailure = { error ->
+                logger.e(error) { "Failed to refresh invitations" }
+            }
+        )
     }
 
     private suspend fun TeamSettingsCtx.refreshBookkeeperAccess() {
-        withState<TeamSettingsState.Content, _> {
-            if (!isCurrentUserOwner) {
-                updateState { copy(bookkeeperAccess = emptyList(), bookkeeperAccessLoading = false) }
-                return@withState
+        var capturedTeamData: TeamData? = null
+        withState { capturedTeamData = (teamData as? DokusState.Success)?.data }
+        val teamData = capturedTeamData ?: return
+
+        if (!teamData.isCurrentUserOwner) {
+            updateState {
+                copy(teamData = DokusState.success(teamData.copy(bookkeeperAccess = emptyList())))
             }
-
-            updateState { copy(bookkeeperAccessLoading = true) }
-
-            useCases.listBookkeeperAccess().fold(
-                onSuccess = { access ->
-                    updateState {
-                        copy(
-                            bookkeeperAccess = access,
-                            bookkeeperAccessLoading = false,
-                        )
-                    }
-                },
-                onFailure = { error ->
-                    logger.e(error) { "Failed to refresh connected bookkeeper firms" }
-                    updateState { copy(bookkeeperAccessLoading = false) }
-                    action(TeamSettingsAction.ShowError(error.asDokusException))
-                }
-            )
+            return
         }
+
+        useCases.listBookkeeperAccess().fold(
+            onSuccess = { access ->
+                updateState {
+                    copy(teamData = DokusState.success(teamData.copy(bookkeeperAccess = access)))
+                }
+            },
+            onFailure = { error ->
+                logger.e(error) { "Failed to refresh connected bookkeeper firms" }
+                action(TeamSettingsAction.ShowError(error.asDokusException))
+            }
+        )
     }
 }

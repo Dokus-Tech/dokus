@@ -64,8 +64,8 @@ import tech.dokus.foundation.app.ModuleSettingsGroup
 import tech.dokus.foundation.app.ModuleSettingsSection
 import tech.dokus.foundation.app.local.LocalAppModules
 import tech.dokus.foundation.app.mvi.container
+import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.app.state.isLoading
-import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.aura.components.DokusCard
 import tech.dokus.foundation.aura.components.DokusCardPadding
 import tech.dokus.foundation.aura.components.DokusCardSurface
@@ -220,8 +220,8 @@ private fun SettingsMobileLayout(
     val appModules = LocalAppModules.current
     val settingsGroups = remember(appModules) { appModules.settingsGroupsCombined }
 
-    val currentTenant = (state as? SettingsState.Content)?.data
-    val isLoading = state is SettingsState.Loading
+    val currentTenant = (state.tenant as? DokusState.Success)?.data
+    val isLoading = state.tenant.isLoading()
 
     Scaffold { contentPadding ->
         Column(
@@ -261,8 +261,8 @@ private fun SettingsNavigationPanel(
 ) {
     val spacing = MaterialTheme.dokusSpacing
 
-    val currentTenant = (state as? SettingsState.Content)?.data
-    val isLoading = state is SettingsState.Loading
+    val currentTenant = (state.tenant as? DokusState.Success)?.data
+    val isLoading = state.tenant.isLoading()
 
     Column(
         modifier = Modifier
@@ -486,7 +486,7 @@ private fun SettingsScreenPreview(
 ) {
     TestWrapper(parameters) {
         SettingsScreen(
-            state = SettingsState.Loading,
+            state = SettingsState(),
             snackbarHostState = remember { SnackbarHostState() },
             onWorkspaceSelectClick = {},
             onSectionClick = {},

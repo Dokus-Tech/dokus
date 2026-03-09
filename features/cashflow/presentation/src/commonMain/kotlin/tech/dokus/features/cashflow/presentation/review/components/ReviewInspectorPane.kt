@@ -44,7 +44,7 @@ import tech.dokus.features.cashflow.presentation.review.colorized as financialSt
 
 @Composable
 internal fun ReviewInspectorPane(
-    state: DocumentReviewState.Content,
+    state: DocumentReviewState,
     isAccountantReadOnly: Boolean,
     onIntent: (DocumentReviewIntent) -> Unit,
     onCorrectContact: () -> Unit,
@@ -136,7 +136,7 @@ private fun InspectorFactGroupCard(
 
 @Composable
 private fun InspectorHeader(
-    state: DocumentReviewState.Content,
+    state: DocumentReviewState,
     isAccountantReadOnly: Boolean,
     onIntent: (DocumentReviewIntent) -> Unit,
     modifier: Modifier = Modifier,
@@ -175,7 +175,7 @@ private fun InspectorHeader(
 }
 
 @Composable
-private fun CompressedStatusLine(state: DocumentReviewState.Content) {
+private fun CompressedStatusLine(state: DocumentReviewState) {
     val statusColor = state.financialStatus.financialStatusColorized
     val detailText = state.compressedStatusDetailLocalized
 

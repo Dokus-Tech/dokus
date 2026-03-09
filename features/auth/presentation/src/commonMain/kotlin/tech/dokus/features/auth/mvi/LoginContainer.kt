@@ -33,7 +33,7 @@ internal class LoginContainer(
     private val logger = Logger.forClass<LoginContainer>()
 
     override val store: Store<LoginState, LoginIntent, LoginAction> =
-        store(LoginState.Idle()) {
+        store(LoginState()) {
             reduce { intent ->
                 when (intent) {
                     is LoginIntent.UpdateEmail -> handleUpdateEmail(intent.value)
@@ -44,29 +44,11 @@ internal class LoginContainer(
         }
 
     private suspend fun LoginCtx.handleUpdateEmail(value: Email) {
-        updateState {
-            when (this) {
-                is LoginState.Idle -> copy(email = value)
-                is LoginState.Error -> LoginState.Idle(
-                    email = value,
-                    password = password
-                )
-                is LoginState.Authenticating -> this
-            }
-        }
+        updateState { copy(email = value, error = null) }
     }
 
     private suspend fun LoginCtx.handleUpdatePassword(value: Password) {
-        updateState {
-            when (this) {
-                is LoginState.Idle -> copy(password = value)
-                is LoginState.Error -> LoginState.Idle(
-                    email = email,
-                    password = value
-                )
-                is LoginState.Authenticating -> this
-            }
-        }
+        updateState { copy(password = value, error = null) }
     }
 
     private suspend fun LoginCtx.handleLogin() {
@@ -78,10 +60,7 @@ internal class LoginContainer(
         updateState {
             email = this.email
             password = this.password
-            LoginState.Authenticating(
-                email = this.email,
-                password = this.password
-            )
+            copy(isAuthenticating = true, error = null)
         }
 
         logger.d { "Login attempt started for email: ${email.value.take(EmailPreviewLength)}***" }
@@ -90,6 +69,7 @@ internal class LoginContainer(
         loginUseCase(email, password).fold(
             onSuccess = {
                 logger.i { "Login successful, navigating to home" }
+                updateState { copy(isAuthenticating = false) }
                 if (tokenManager.getSelectedTenantId() == null) {
                     action(LoginAction.NavigateToWorkspaceSelect)
                 } else {
@@ -99,11 +79,9 @@ internal class LoginContainer(
             onFailure = { error ->
                 logger.e(error) { "Login failed" }
                 updateState {
-                    LoginState.Error(
-                        email = email,
-                        password = password,
-                        exception = error.asDokusException,
-                        retryHandler = { intent(LoginIntent.LoginClicked) }
+                    copy(
+                        isAuthenticating = false,
+                        error = error.asDokusException,
                     )
                 }
             }

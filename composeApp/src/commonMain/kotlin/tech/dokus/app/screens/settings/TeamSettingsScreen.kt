@@ -45,6 +45,8 @@ import kotlinx.datetime.format.MonthNames
 import kotlinx.datetime.format.Padding
 import kotlinx.datetime.format.char
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.app.viewmodel.TeamData
+import tech.dokus.app.viewmodel.TeamSettingsActionState
 import tech.dokus.app.viewmodel.TeamSettingsIntent
 import tech.dokus.app.viewmodel.TeamSettingsState
 import tech.dokus.aura.resources.Res
@@ -81,9 +83,9 @@ import tech.dokus.aura.resources.team_since
 import tech.dokus.aura.resources.team_transfer_confirm
 import tech.dokus.aura.resources.team_transfer_ownership
 import tech.dokus.aura.resources.team_you
-import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.enums.UserRole
 import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.FirmId
 import tech.dokus.domain.ids.InvitationId
 import tech.dokus.domain.model.TeamMember
 import tech.dokus.domain.model.TenantInvitation
@@ -91,6 +93,10 @@ import tech.dokus.domain.model.auth.BookkeeperFirmSearchItem
 import tech.dokus.domain.model.auth.TenantBookkeeperAccessItem
 import tech.dokus.foundation.app.network.rememberAuthenticatedImageLoader
 import tech.dokus.foundation.app.network.rememberResolvedApiUrl
+import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.app.state.isError
+import tech.dokus.foundation.app.state.isLoading
+import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.MonogramAvatar
 import tech.dokus.foundation.aura.components.UserAvatarImage
@@ -117,7 +123,6 @@ import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
 import tech.dokus.domain.Email
 import tech.dokus.domain.Name
-import tech.dokus.domain.ids.FirmId
 import tech.dokus.domain.ids.UserId
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -179,20 +184,17 @@ fun TeamSettingsContent(
     var showCancelInvitationDialog by remember { mutableStateOf<InvitationId?>(null) }
 
     // Extract data from state
-    val contentState = state as? TeamSettingsState.Content
-    val members = contentState?.members ?: emptyList()
-    val invitations = contentState?.invitations ?: emptyList()
-    val isLoading = state is TeamSettingsState.Loading
-    val inviteEmail = contentState?.inviteEmail ?: ""
-    val inviteRole = contentState?.inviteRole ?: UserRole.Editor
-    val isInviting = contentState?.actionState is TeamSettingsState.Content.ActionState.Inviting
-    val currentUserId = contentState?.currentUserId
-    val isCurrentUserOwner = contentState?.isCurrentUserOwner == true
+    val teamData = (state.teamData as? DokusState.Success)?.data
+    val members = teamData?.members ?: emptyList()
+    val invitations = teamData?.invitations ?: emptyList()
+    val currentUserId = teamData?.currentUserId
+    val isCurrentUserOwner = teamData?.isCurrentUserOwner == true
+    val isInviting = state.actionState is TeamSettingsActionState.Inviting
 
     val owner = members.find { it.role == UserRole.Owner }
     val nonOwnerMembers = members.filter { it.role != UserRole.Owner }
 
-    val debouncedSearchQuery = contentState?.bookkeeperSearchQuery.orEmpty()
+    val debouncedSearchQuery = state.bookkeeperSearchQuery
     LaunchedEffect(showBookkeeperDialog, debouncedSearchQuery) {
         if (!showBookkeeperDialog) return@LaunchedEffect
         delay(300)
@@ -213,18 +215,18 @@ fun TeamSettingsContent(
             verticalArrangement = Arrangement.spacedBy(SectionSpacing),
         ) {
             when {
-                isLoading -> {
+                state.teamData.isLoading() -> {
                     SettingsSkeleton(sectionCount = 2)
                 }
 
-                state is TeamSettingsState.Error -> {
+                state.teamData.isError() -> {
                     DokusErrorBanner(
-                        exception = state.exception,
-                        retryHandler = state.retryHandler,
+                        exception = state.teamData.exception,
+                        retryHandler = state.teamData.retryHandler,
                     )
                 }
 
-                else -> {
+                state.teamData.isSuccess() -> {
                     // Owner hero
                     if (owner != null) {
                         OwnerHero(owner = owner)
@@ -266,7 +268,7 @@ fun TeamSettingsContent(
 
                             // Invite row
                             InviteRow(
-                                availableSeats = contentState?.availableSeats ?: 0,
+                                availableSeats = teamData?.availableSeats ?: 0,
                                 onClick = { onShowInviteDialog(true) },
                             )
                         }
@@ -274,8 +276,8 @@ fun TeamSettingsContent(
 
                     DokusCardSurface(modifier = Modifier.fillMaxWidth()) {
                         BookkeeperAccessSection(
-                            access = contentState?.bookkeeperAccess ?: emptyList(),
-                            isLoading = contentState?.bookkeeperAccessLoading ?: false,
+                            access = teamData?.bookkeeperAccess ?: emptyList(),
+                            isLoading = false,
                             isOwner = isCurrentUserOwner,
                             onGrantClick = { onShowBookkeeperDialog(true) },
                             onRevokeClick = { firmId ->
@@ -286,7 +288,7 @@ fun TeamSettingsContent(
 
                     // Footer note
                     Text(
-                        text = stringResource(Res.string.team_footer_note, contentState?.maxSeats ?: 3),
+                        text = stringResource(Res.string.team_footer_note, teamData?.maxSeats ?: 0),
                         modifier = Modifier.fillMaxWidth().padding(vertical = 20.dp),
                         textAlign = TextAlign.Center,
                         fontSize = 11.sp,
@@ -303,8 +305,8 @@ fun TeamSettingsContent(
     // Invite Dialog
     if (showInviteDialog) {
         InviteDialog(
-            email = inviteEmail,
-            role = inviteRole,
+            email = state.inviteEmail,
+            role = state.inviteRole,
             isInviting = isInviting,
             onEmailChange = { onIntent(TeamSettingsIntent.UpdateInviteEmail(it)) },
             onRoleChange = { onIntent(TeamSettingsIntent.UpdateInviteRole(it)) },
@@ -316,12 +318,12 @@ fun TeamSettingsContent(
         )
     }
 
-    if (showBookkeeperDialog && contentState != null) {
+    if (showBookkeeperDialog && teamData != null) {
         GrantBookkeeperAccessDialog(
-            query = contentState.bookkeeperSearchQuery,
-            results = contentState.bookkeeperSearchResults,
-            selectedFirmId = contentState.selectedBookkeeperFirmId,
-            loading = contentState.bookkeeperSearchLoading,
+            query = state.bookkeeperSearchQuery,
+            results = state.bookkeeperSearchResults,
+            selectedFirmId = state.selectedBookkeeperFirmId,
+            loading = state.bookkeeperSearchLoading,
             onQueryChange = { onIntent(TeamSettingsIntent.UpdateBookkeeperSearchQuery(it)) },
             onSelectFirm = { onIntent(TeamSettingsIntent.SelectBookkeeperFirm(it)) },
             onDismiss = {
@@ -973,7 +975,7 @@ private fun TeamSettingsLoadingPreview(
 ) {
     TestWrapper(parameters) {
         TeamSettingsContent(
-            state = TeamSettingsState.Loading,
+            state = TeamSettingsState(teamData = DokusState.loading()),
             showInviteDialog = false,
             onShowInviteDialog = {},
             showBookkeeperDialog = false,
@@ -990,9 +992,11 @@ private fun TeamSettingsErrorPreview(
 ) {
     TestWrapper(parameters) {
         TeamSettingsContent(
-            state = TeamSettingsState.Error(
-                exception = DokusException.ConnectionError(),
-                retryHandler = RetryHandler { },
+            state = TeamSettingsState(
+                teamData = DokusState.error(
+                    exception = DokusException.ConnectionError(),
+                    retryHandler = { },
+                )
             ),
             showInviteDialog = false,
             onShowInviteDialog = {},
@@ -1032,10 +1036,14 @@ private fun TeamSettingsContentPreview(
     )
     TestWrapper(parameters) {
         TeamSettingsContent(
-            state = TeamSettingsState.Content(
-                members = sampleMembers,
-                currentUserId = ownerId,
-                isCurrentUserOwner = true,
+            state = TeamSettingsState(
+                teamData = DokusState.success(
+                    TeamData(
+                        members = sampleMembers,
+                        currentUserId = ownerId,
+                        isCurrentUserOwner = true,
+                    )
+                )
             ),
             showInviteDialog = false,
             onShowInviteDialog = {},

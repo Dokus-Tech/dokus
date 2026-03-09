@@ -59,27 +59,28 @@ internal fun ReviewTopBar(
     onConfirmClick: () -> Unit,
     onRejectClick: () -> Unit,
 ) {
-    val content = state as? DocumentReviewState.Content
-
     Column {
         TopAppBar(
             title = {
                 Column {
                     // Primary: Description (counterparty + context)
                     Text(
-                        text = content?.description
-                            ?: stringResource(Res.string.cashflow_document_review_title),
+                        text = if (state.hasContent) {
+                            state.description
+                        } else {
+                            stringResource(Res.string.cashflow_document_review_title)
+                        },
                         style = MaterialTheme.typography.titleLarge,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                     // Understanding line: amount + status
-                    if (content != null) {
+                    if (state.hasContent) {
                         UnderstandingLine(
-                            totalAmount = content.totalAmount?.toDisplayString(),
-                            isBlocking = content.isBlocking,
-                            hasAttention = content.hasAttention,
-                            isProcessing = content.isProcessing
+                            totalAmount = state.totalAmount?.toDisplayString(),
+                            isBlocking = state.isBlocking,
+                            hasAttention = state.hasAttention,
+                            isProcessing = state.isProcessing
                         )
                     }
                 }
@@ -88,16 +89,16 @@ internal fun ReviewTopBar(
                 PBackButton(onBackPress = onBackClick)
             },
             actions = {
-                val showActions = content != null &&
+                val showActions = state.hasContent &&
                     isLargeScreen &&
                     !isAccountantReadOnly &&
-                    !content.isDocumentConfirmed &&
-                    !content.isDocumentRejected
+                    !state.isDocumentConfirmed &&
+                    !state.isDocumentRejected
                 if (showActions) {
-                    val isBusy = content.isConfirming ||
-                        content.isSaving ||
-                        content.isBindingContact ||
-                        content.isRejecting
+                    val isBusy = state.isConfirming ||
+                        state.isSaving ||
+                        state.isBindingContact ||
+                        state.isRejecting
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
                         verticalAlignment = Alignment.CenterVertically
@@ -114,19 +115,19 @@ internal fun ReviewTopBar(
                             )
                         }
                         PPrimaryButton(
-                            text = if (content.isConfirming) {
+                            text = if (state.isConfirming) {
                                 stringResource(Res.string.state_confirming)
                             } else {
                                 stringResource(Res.string.action_confirm)
                             },
-                            enabled = content.canConfirm,
-                            isLoading = content.isConfirming || content.isBindingContact,
+                            enabled = state.canConfirm,
+                            isLoading = state.isConfirming || state.isBindingContact,
                             onClick = onConfirmClick,
                         )
                     }
                 }
 
-                if (content != null && content.isDocumentConfirmed) {
+                if (state.hasContent && state.isDocumentConfirmed) {
                     IconButton(onClick = onChatClick) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.Message,
@@ -235,7 +236,7 @@ private fun ReviewTopBarPreview(
 ) {
     TestWrapper(parameters) {
         ReviewTopBar(
-            state = DocumentReviewState.Loading(),
+            state = DocumentReviewState(),
             isLargeScreen = false,
             isAccountantReadOnly = false,
             onBackClick = {},

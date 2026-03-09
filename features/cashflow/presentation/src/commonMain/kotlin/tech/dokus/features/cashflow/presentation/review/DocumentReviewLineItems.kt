@@ -6,6 +6,7 @@ import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.FinancialLineItem
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
+import tech.dokus.foundation.app.state.DokusState
 
 internal class DocumentReviewLineItems {
     suspend fun DocumentReviewCtx.handleAddLineItem() {
@@ -32,8 +33,9 @@ internal class DocumentReviewLineItems {
         index: Int? = null,
         add: Boolean = false,
     ) {
-        withState<DocumentReviewState.Content, _> {
+        withState {
             val currentData = draftData ?: return@withState
+            val docData = documentData ?: return@withState
 
             val currentItems = when (currentData) {
                 is InvoiceDraftData -> currentData.lineItems
@@ -59,8 +61,8 @@ internal class DocumentReviewLineItems {
 
             updateState {
                 copy(
-                    draftData = updatedDraftData,
-                    hasUnsavedChanges = true
+                    document = DokusState.success(docData.copy(draftData = updatedDraftData)),
+                    hasUnsavedChanges = true,
                 )
             }
         }

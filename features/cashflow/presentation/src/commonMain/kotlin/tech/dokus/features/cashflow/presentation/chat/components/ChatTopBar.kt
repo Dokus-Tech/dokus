@@ -37,7 +37,10 @@ import tech.dokus.aura.resources.chat_scope_single_document
 import tech.dokus.aura.resources.chat_switch_to_all_documents
 import tech.dokus.aura.resources.chat_title_all_documents
 import tech.dokus.domain.model.ai.ChatScope
+import tech.dokus.features.cashflow.presentation.chat.ChatSessionData
 import tech.dokus.features.cashflow.presentation.chat.ChatState
+import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.aura.components.PBackButton
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.tooling.PreviewParameters
@@ -53,7 +56,7 @@ internal fun ChatTopBar(
     onShowHistory: () -> Unit,
     onSwitchScope: (ChatScope) -> Unit,
 ) {
-    val content = state as? ChatState.Content
+    val sessionData = (state.session as? DokusState.Success)?.data
     var showMenu by remember { mutableStateOf(false) }
 
     Column {
@@ -62,8 +65,8 @@ internal fun ChatTopBar(
                 Column {
                     Text(
                         text = when {
-                            content?.isSingleDocMode == true ->
-                                content.documentName
+                            sessionData?.isSingleDocMode == true ->
+                                sessionData.documentName
                                     ?: stringResource(Res.string.chat_document_title_fallback)
                             else -> stringResource(Res.string.chat_title_all_documents)
                         },
@@ -71,9 +74,9 @@ internal fun ChatTopBar(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
-                    if (content != null) {
+                    if (sessionData != null) {
                         Text(
-                            text = if (content.isSingleDocMode) {
+                            text = if (sessionData.isSingleDocMode) {
                                 stringResource(Res.string.chat_scope_single_document)
                             } else {
                                 stringResource(Res.string.chat_scope_all_documents)
@@ -88,7 +91,7 @@ internal fun ChatTopBar(
                 PBackButton(onBackPress = onBackClick)
             },
             actions = {
-                if (content != null) {
+                if (sessionData != null) {
                     IconButton(onClick = onNewChat) {
                         Icon(
                             imageVector = Icons.Default.Add,
@@ -118,7 +121,7 @@ internal fun ChatTopBar(
                             expanded = showMenu,
                             onDismissRequest = { showMenu = false }
                         ) {
-                            if (content.isSingleDocMode) {
+                            if (sessionData.isSingleDocMode) {
                                 DropdownMenuItem(
                                     text = { Text(stringResource(Res.string.chat_switch_to_all_documents)) },
                                     onClick = {
@@ -160,7 +163,7 @@ private fun ChatTopBarPreview(
 ) {
     TestWrapper(parameters) {
         ChatTopBar(
-            state = ChatState.Loading,
+            state = ChatState(),
             onBackClick = {},
             onNewChat = {},
             onShowHistory = {},

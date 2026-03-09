@@ -17,6 +17,10 @@ import tech.dokus.features.cashflow.presentation.chat.components.ChatContent
 import tech.dokus.features.cashflow.presentation.chat.components.ChatTopBar
 import tech.dokus.features.cashflow.presentation.chat.components.ErrorContent
 import tech.dokus.features.cashflow.presentation.chat.components.LoadingContent
+import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.app.state.isError
+import tech.dokus.foundation.app.state.isLoading
+import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
@@ -30,8 +34,8 @@ internal fun ChatScreen(
     onIntent: (ChatIntent) -> Unit,
     onBackClick: () -> Unit,
 ) {
-    val contentState = state as? ChatState.Content
-    val messageCount = contentState?.messages?.size ?: 0
+    val sessionState = state.session
+    val messageCount = (sessionState as? DokusState.Success)?.data?.messages?.size ?: 0
     LaunchedEffect(messageCount) {
         if (messageCount > 0) {
             listState.animateScrollToItem(messageCount - 1)
@@ -60,17 +64,19 @@ internal fun ChatScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background
     ) { contentPadding ->
-        when (state) {
-            is ChatState.Loading -> LoadingContent(contentPadding)
-            is ChatState.Content -> ChatContent(
+        when {
+            sessionState.isLoading() -> LoadingContent(contentPadding)
+            sessionState.isSuccess() -> ChatContent(
                 state = state,
+                sessionData = sessionState.data,
                 contentPadding = contentPadding,
                 listState = listState,
                 isLargeScreen = isLargeScreen,
                 onIntent = onIntent,
             )
-            is ChatState.Error -> ErrorContent(
-                error = state,
+            sessionState.isError() -> ErrorContent(
+                exception = sessionState.exception,
+                retryHandler = sessionState.retryHandler,
                 contentPadding = contentPadding
             )
         }
@@ -84,7 +90,7 @@ private fun ChatScreenPreview(
 ) {
     TestWrapper(parameters) {
         ChatScreen(
-            state = ChatState.Loading,
+            state = ChatState(),
             listState = rememberLazyListState(),
             isLargeScreen = false,
             snackbarHostState = remember { SnackbarHostState() },

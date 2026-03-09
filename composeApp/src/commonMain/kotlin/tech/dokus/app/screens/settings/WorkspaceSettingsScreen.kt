@@ -1,9 +1,7 @@
 package tech.dokus.app.screens.settings
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -39,6 +37,10 @@ import tech.dokus.aura.resources.workspace_settings_title
 import tech.dokus.app.screens.settings.components.SettingsSkeleton
 import tech.dokus.foundation.app.picker.FilePickerLauncher
 import tech.dokus.foundation.app.picker.rememberImagePicker
+import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.app.state.isError
+import tech.dokus.foundation.app.state.isLoading
+import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.aura.components.common.DokusErrorBanner
 import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.constrains.Constraints
@@ -78,7 +80,7 @@ internal fun WorkspaceSettingsScreen(
 }
 
 /**
- * Workspace settings content — collapsible sections with PEPPOL hero card.
+ * Workspace settings content -- collapsible sections with PEPPOL hero card.
  */
 @Composable
 fun WorkspaceSettingsContent(
@@ -91,28 +93,31 @@ fun WorkspaceSettingsContent(
         onIntent(WorkspaceSettingsIntent.UploadAvatar(pickedImage.bytes, pickedImage.name))
     }
 
-    when (state) {
-        is WorkspaceSettingsState.Loading -> {
+    val workspaceData = state.workspaceData
+
+    when {
+        workspaceData.isLoading() -> {
             SettingsSkeleton(
                 sectionCount = 5,
                 modifier = modifier,
             )
         }
 
-        is WorkspaceSettingsState.Content -> {
-            WorkspaceSettingsContentScreen(
-                state = state,
-                onIntent = onIntent,
-                avatarPicker = avatarPicker,
-                modifier = modifier,
+        workspaceData.isError() -> {
+            DokusErrorBanner(
+                exception = workspaceData.exception,
+                retryHandler = workspaceData.retryHandler,
+                modifier = modifier.padding(Constraints.Spacing.large),
             )
         }
 
-        is WorkspaceSettingsState.Error -> {
-            DokusErrorBanner(
-                exception = state.exception,
-                retryHandler = state.retryHandler,
-                modifier = modifier.padding(Constraints.Spacing.large),
+        workspaceData.isSuccess() -> {
+            WorkspaceSettingsContentScreen(
+                state = state,
+                data = workspaceData.data,
+                onIntent = onIntent,
+                avatarPicker = avatarPicker,
+                modifier = modifier,
             )
         }
     }
@@ -120,7 +125,8 @@ fun WorkspaceSettingsContent(
 
 @Composable
 private fun WorkspaceSettingsContentScreen(
-    state: WorkspaceSettingsState.Content,
+    state: WorkspaceSettingsState,
+    data: WorkspaceSettingsState.WorkspaceData,
     onIntent: (WorkspaceSettingsIntent) -> Unit,
     avatarPicker: FilePickerLauncher,
     modifier: Modifier = Modifier,
@@ -129,12 +135,12 @@ private fun WorkspaceSettingsContentScreen(
     val saveState = state.saveState
     val avatarState = state.avatarState
     val currentAvatar = state.currentAvatar
-    val peppolRegistration = state.peppolRegistration
-    val peppolActivity = state.peppolActivity
+    val peppolRegistration = data.peppolRegistration
+    val peppolActivity = data.peppolActivity
     val editingSection = state.editingSection
     val isLegalIdentityLocked = state.isLegalIdentityLocked
 
-    // Section expansion state — PEPPOL always expanded
+    // Section expansion state -- PEPPOL always expanded
     var legalIdentityExpanded by remember { mutableStateOf(!isLegalIdentityLocked) }
     var bankingExpanded by remember { mutableStateOf(false) }
     var invoiceFormatExpanded by remember { mutableStateOf(false) }
@@ -153,7 +159,7 @@ private fun WorkspaceSettingsContentScreen(
                 .padding(top = 12.dp),
             verticalArrangement = Arrangement.spacedBy(0.dp),
         ) {
-            // 1. PEPPOL Connection — always expanded hero card
+            // 1. PEPPOL Connection -- always expanded hero card
             PeppolConnectionSection(
                 peppolRegistration = peppolRegistration,
                 peppolActivity = peppolActivity,
@@ -169,15 +175,15 @@ private fun WorkspaceSettingsContentScreen(
                 isLocked = isLegalIdentityLocked,
                 expanded = legalIdentityExpanded,
                 onToggle = { legalIdentityExpanded = !legalIdentityExpanded },
-                editMode = editingSection == WorkspaceSettingsState.Content.EditingSection.LegalIdentity,
+                editMode = editingSection == WorkspaceSettingsState.EditingSection.LegalIdentity,
                 onEdit = {
                     onIntent(WorkspaceSettingsIntent.EnterEditMode(
-                        WorkspaceSettingsState.Content.EditingSection.LegalIdentity
+                        WorkspaceSettingsState.EditingSection.LegalIdentity
                     ))
                 },
                 onSave = {
                     onIntent(WorkspaceSettingsIntent.SaveSection(
-                        WorkspaceSettingsState.Content.EditingSection.LegalIdentity
+                        WorkspaceSettingsState.EditingSection.LegalIdentity
                     ))
                 },
                 onCancel = { onIntent(WorkspaceSettingsIntent.CancelEditMode) },
@@ -192,15 +198,15 @@ private fun WorkspaceSettingsContentScreen(
                 formState = formState,
                 expanded = bankingExpanded,
                 onToggle = { bankingExpanded = !bankingExpanded },
-                editMode = editingSection == WorkspaceSettingsState.Content.EditingSection.Banking,
+                editMode = editingSection == WorkspaceSettingsState.EditingSection.Banking,
                 onEdit = {
                     onIntent(WorkspaceSettingsIntent.EnterEditMode(
-                        WorkspaceSettingsState.Content.EditingSection.Banking
+                        WorkspaceSettingsState.EditingSection.Banking
                     ))
                 },
                 onSave = {
                     onIntent(WorkspaceSettingsIntent.SaveSection(
-                        WorkspaceSettingsState.Content.EditingSection.Banking
+                        WorkspaceSettingsState.EditingSection.Banking
                     ))
                 },
                 onCancel = { onIntent(WorkspaceSettingsIntent.CancelEditMode) },
@@ -212,15 +218,15 @@ private fun WorkspaceSettingsContentScreen(
                 formState = formState,
                 expanded = invoiceFormatExpanded,
                 onToggle = { invoiceFormatExpanded = !invoiceFormatExpanded },
-                editMode = editingSection == WorkspaceSettingsState.Content.EditingSection.InvoiceFormat,
+                editMode = editingSection == WorkspaceSettingsState.EditingSection.InvoiceFormat,
                 onEdit = {
                     onIntent(WorkspaceSettingsIntent.EnterEditMode(
-                        WorkspaceSettingsState.Content.EditingSection.InvoiceFormat
+                        WorkspaceSettingsState.EditingSection.InvoiceFormat
                     ))
                 },
                 onSave = {
                     onIntent(WorkspaceSettingsIntent.SaveSection(
-                        WorkspaceSettingsState.Content.EditingSection.InvoiceFormat
+                        WorkspaceSettingsState.EditingSection.InvoiceFormat
                     ))
                 },
                 onCancel = { onIntent(WorkspaceSettingsIntent.CancelEditMode) },
@@ -232,15 +238,15 @@ private fun WorkspaceSettingsContentScreen(
                 formState = formState,
                 expanded = paymentTermsExpanded,
                 onToggle = { paymentTermsExpanded = !paymentTermsExpanded },
-                editMode = editingSection == WorkspaceSettingsState.Content.EditingSection.PaymentTerms,
+                editMode = editingSection == WorkspaceSettingsState.EditingSection.PaymentTerms,
                 onEdit = {
                     onIntent(WorkspaceSettingsIntent.EnterEditMode(
-                        WorkspaceSettingsState.Content.EditingSection.PaymentTerms
+                        WorkspaceSettingsState.EditingSection.PaymentTerms
                     ))
                 },
                 onSave = {
                     onIntent(WorkspaceSettingsIntent.SaveSection(
-                        WorkspaceSettingsState.Content.EditingSection.PaymentTerms
+                        WorkspaceSettingsState.EditingSection.PaymentTerms
                     ))
                 },
                 onCancel = { onIntent(WorkspaceSettingsIntent.CancelEditMode) },
@@ -269,7 +275,7 @@ private fun WorkspaceSettingsContentLoadingPreview(
 ) {
     TestWrapper(parameters) {
         WorkspaceSettingsContent(
-            state = WorkspaceSettingsState.Loading,
+            state = WorkspaceSettingsState(),
             onIntent = {},
         )
     }
@@ -284,11 +290,11 @@ private fun WorkspaceSettingsContentLoadingPreview(
  */
 @Composable
 private fun SaveStateFeedback(
-    saveState: WorkspaceSettingsState.Content.SaveState,
+    saveState: WorkspaceSettingsState.SaveState,
     modifier: Modifier = Modifier
 ) {
     when (saveState) {
-        is WorkspaceSettingsState.Content.SaveState.Success -> {
+        is WorkspaceSettingsState.SaveState.Success -> {
             Spacer(Modifier.height(12.dp))
             Text(
                 text = stringResource(Res.string.settings_saved_successfully),
@@ -297,7 +303,7 @@ private fun SaveStateFeedback(
             )
         }
 
-        is WorkspaceSettingsState.Content.SaveState.Error -> {
+        is WorkspaceSettingsState.SaveState.Error -> {
             Spacer(Modifier.height(12.dp))
             Text(
                 text = saveState.error.localized,

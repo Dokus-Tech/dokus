@@ -62,7 +62,7 @@ import tech.dokus.aura.resources.user_avatar_content_description
 import tech.dokus.domain.Name
 import tech.dokus.domain.config.ServerConfig
 import tech.dokus.domain.model.User
-import tech.dokus.features.auth.mvi.ProfileSettingsState
+import tech.dokus.features.auth.mvi.AvatarState
 import tech.dokus.foundation.app.network.rememberAuthenticatedImageLoader
 import tech.dokus.foundation.app.network.rememberResolvedApiUrl
 import tech.dokus.foundation.aura.components.DokusCardSurface
@@ -103,7 +103,7 @@ private val EditableProfileAvatarRadius = 28.dp
 @Composable
 internal fun ProfileHero(
     user: User,
-    avatarState: ProfileSettingsState.AvatarState,
+    avatarState: AvatarState,
     onUploadAvatar: () -> Unit,
     onResetAvatarState: () -> Unit,
     modifier: Modifier = Modifier,
@@ -112,8 +112,8 @@ internal fun ProfileHero(
     val initials = userInitials(user)
     val avatarUrl = rememberResolvedApiUrl(user.avatar?.medium)
     val imageLoader = rememberAuthenticatedImageLoader()
-    val isAvatarBusy = avatarState is ProfileSettingsState.AvatarState.Uploading
-    val uploadProgress = (avatarState as? ProfileSettingsState.AvatarState.Uploading)?.progress
+    val isAvatarBusy = avatarState is AvatarState.Uploading
+    val uploadProgress = (avatarState as? AvatarState.Uploading)?.progress
     val editDescription = stringResource(
         if (user.avatar != null) Res.string.action_change else Res.string.action_upload
     )
@@ -167,11 +167,11 @@ internal fun ProfileHero(
 
 @Composable
 private fun ProfileAvatarStateIndicator(
-    avatarState: ProfileSettingsState.AvatarState,
+    avatarState: AvatarState,
     onResetState: () -> Unit,
 ) {
     when (avatarState) {
-        is ProfileSettingsState.AvatarState.Uploading -> {
+        is AvatarState.Uploading -> {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -189,7 +189,7 @@ private fun ProfileAvatarStateIndicator(
             }
         }
 
-        is ProfileSettingsState.AvatarState.Error -> {
+        is AvatarState.Error -> {
             Text(
                 text = avatarState.error.localized,
                 style = MaterialTheme.typography.bodySmall,
@@ -198,13 +198,13 @@ private fun ProfileAvatarStateIndicator(
             )
         }
 
-        ProfileSettingsState.AvatarState.Success -> {
+        AvatarState.Success -> {
             LaunchedEffect(Unit) {
                 onResetState()
             }
         }
 
-        ProfileSettingsState.AvatarState.Idle -> Unit
+        AvatarState.Idle -> Unit
     }
 }
 
@@ -418,11 +418,14 @@ internal fun VersionFooter(
 
 @Composable
 internal fun ProfileEditingSection(
-    state: ProfileSettingsState.Editing,
+    email: String,
+    editFirstName: Name,
+    editLastName: Name,
+    canSave: Boolean,
     onFirstNameChange: (Name) -> Unit,
     onLastNameChange: (Name) -> Unit,
     onSave: () -> Unit,
-    onCancel: () -> Unit
+    onCancel: () -> Unit,
 ) {
     DokusCardSurface(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -435,14 +438,14 @@ internal fun ProfileEditingSection(
 
             ProfileField(
                 label = stringResource(Res.string.profile_email),
-                value = state.user.email.value
+                value = email
             )
 
             Spacer(Modifier.height(12.dp))
 
             PTextFieldName(
                 fieldName = stringResource(Res.string.profile_first_name),
-                value = state.editFirstName,
+                value = editFirstName,
                 icon = null,
                 keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
                     keyboardType = KeyboardType.Text,
@@ -457,14 +460,14 @@ internal fun ProfileEditingSection(
 
             PTextFieldName(
                 fieldName = stringResource(Res.string.profile_last_name),
-                value = state.editLastName,
+                value = editLastName,
                 icon = null,
                 keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
                     keyboardType = KeyboardType.Text,
                     capitalization = KeyboardCapitalization.Words,
                     imeAction = ImeAction.Done
                 ),
-                onAction = { if (state.canSave) onSave() },
+                onAction = { if (canSave) onSave() },
                 modifier = Modifier.fillMaxWidth(),
                 onValueChange = onLastNameChange
             )
@@ -482,7 +485,7 @@ internal fun ProfileEditingSection(
                 Spacer(Modifier.width(8.dp))
                 PPrimaryButton(
                     text = stringResource(Res.string.profile_save),
-                    enabled = state.canSave,
+                    enabled = canSave,
                     onClick = onSave
                 )
             }
@@ -492,7 +495,9 @@ internal fun ProfileEditingSection(
 
 @Composable
 internal fun ProfileSavingSection(
-    state: ProfileSettingsState.Saving
+    email: String,
+    editFirstName: Name,
+    editLastName: Name,
 ) {
     DokusCardSurface(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -503,11 +508,11 @@ internal fun ProfileSavingSection(
 
             Spacer(Modifier.height(16.dp))
 
-            ProfileField(label = stringResource(Res.string.profile_email), value = state.user.email.value)
+            ProfileField(label = stringResource(Res.string.profile_email), value = email)
             Spacer(Modifier.height(12.dp))
-            ProfileField(label = stringResource(Res.string.profile_first_name), value = state.editFirstName.value)
+            ProfileField(label = stringResource(Res.string.profile_first_name), value = editFirstName.value)
             Spacer(Modifier.height(12.dp))
-            ProfileField(label = stringResource(Res.string.profile_last_name), value = state.editLastName.value)
+            ProfileField(label = stringResource(Res.string.profile_last_name), value = editLastName.value)
 
             Spacer(Modifier.height(16.dp))
 
@@ -589,7 +594,7 @@ private fun ProfileHeroPreview(
     TestWrapper(parameters) {
         ProfileHero(
             user = previewUser,
-            avatarState = ProfileSettingsState.AvatarState.Idle,
+            avatarState = AvatarState.Idle,
             onUploadAvatar = {},
             onResetAvatarState = {},
         )

@@ -158,11 +158,7 @@ internal fun DocumentReviewRoute(
         }
     }
 
-    val detailStreamDocumentId = when (state) {
-        is DocumentReviewState.AwaitingExtraction -> (state as DocumentReviewState.AwaitingExtraction).documentId
-        is DocumentReviewState.Content -> (state as DocumentReviewState.Content).documentId
-        else -> null
-    }
+    val detailStreamDocumentId = state.documentId
 
     LaunchedEffect(detailStreamDocumentId) {
         val activeDocumentId = detailStreamDocumentId ?: return@LaunchedEffect
@@ -186,13 +182,12 @@ internal fun DocumentReviewRoute(
     }
 
     val isLargeScreen = LocalScreenSize.isLarge
-    val contentState = state as? DocumentReviewState.Content
     val navigateBack: () -> Unit = {
         markDocumentsRefreshRequired()
         navController.popBackStack()
     }
     val requestBackNavigation: () -> Unit = {
-        if (contentState?.hasUnsyncedLocalChanges == true) {
+        if (state.hasContent && state.hasUnsyncedLocalChanges) {
             showDiscardDialog = true
         } else {
             navigateBack()
@@ -200,8 +195,8 @@ internal fun DocumentReviewRoute(
     }
 
     // Load contacts when contact sheet opens
-    LaunchedEffect(contentState?.showContactSheet) {
-        if (contentState?.showContactSheet == true && contactsState !is DokusState.Success) {
+    LaunchedEffect(state.showContactSheet) {
+        if (state.showContactSheet && contactsState !is DokusState.Success) {
             contactsState = DokusState.loading()
             listContacts(limit = 100).fold(
                 onSuccess = { contacts ->
@@ -226,9 +221,7 @@ internal fun DocumentReviewRoute(
             onBackClick = requestBackNavigation,
             onOpenChat = { dispatchIntent(DocumentReviewIntent.OpenChat) },
             onOpenSource = { sourceId ->
-                val activeDocumentId = (state as? DocumentReviewState.Content)
-                    ?.documentId
-                    ?.toString()
+                val activeDocumentId = state.documentId?.toString()
                     ?: route.documentId
                 navController.navigateTo(
                     CashFlowDestination.DocumentSourceViewer(
@@ -289,14 +282,14 @@ internal fun DocumentReviewRoute(
     }
 
     // Contact Edit Sheet
-    contentState?.let { content ->
+    if (state.hasContent) {
         ContactEditSheet(
-            isVisible = content.showContactSheet && !isAccountantReadOnly,
+            isVisible = state.showContactSheet && !isAccountantReadOnly,
             onDismiss = { dispatchIntent(DocumentReviewIntent.CloseContactSheet) },
-            suggestions = content.contactSuggestions,
+            suggestions = state.contactSuggestions,
             contactsState = contactsState,
-            selectedContactId = content.selectedContactId,
-            searchQuery = content.contactSheetSearchQuery,
+            selectedContactId = state.selectedContactId,
+            searchQuery = state.contactSheetSearchQuery,
             onSearchQueryChange = { query ->
                 dispatchIntent(DocumentReviewIntent.UpdateContactSheetSearch(query))
             },
@@ -311,7 +304,7 @@ internal fun DocumentReviewRoute(
                 dispatchIntent(
                     DocumentReviewIntent.SetCounterpartyIntent(CounterpartyIntent.Pending)
                 )
-                val counterparty = tech.dokus.features.cashflow.presentation.review.models.counterpartyInfo(content)
+                val counterparty = tech.dokus.features.cashflow.presentation.review.models.counterpartyInfo(state)
                 navController.navigateTo(
                     ContactsDestination.CreateContact(
                         prefillCompanyName = counterparty.name,
@@ -348,7 +341,7 @@ internal fun DocumentReviewRoute(
     }
 
     // Feedback dialog (correction-first "Something's wrong" flow)
-    (state as? DocumentReviewState.Content)?.feedbackDialogState?.let { dialogState ->
+    state.feedbackDialogState?.let { dialogState ->
         if (isAccountantReadOnly) return@let
         FeedbackDialog(
             state = dialogState,
@@ -369,7 +362,7 @@ internal fun DocumentReviewRoute(
     }
 
     // Reject document dialog (state-driven)
-    (state as? DocumentReviewState.Content)?.rejectDialogState?.let { dialogState ->
+    state.rejectDialogState?.let { dialogState ->
         if (isAccountantReadOnly) return@let
         RejectDocumentDialog(
             state = dialogState,
@@ -388,11 +381,10 @@ internal fun DocumentReviewRoute(
         )
     }
 
-    val content = state as? DocumentReviewState.Content
-    val viewerState = content?.sourceViewerState
-    if (isLargeScreen && content != null && viewerState != null) {
+    val viewerState = state.sourceViewerState
+    if (isLargeScreen && state.hasContent && viewerState != null) {
         SourceEvidenceDialog(
-            contentState = content,
+            contentState = state,
             viewerState = viewerState,
             onClose = { dispatchIntent(DocumentReviewIntent.CloseSourceModal) },
             onToggleTechnicalDetails = {
@@ -401,9 +393,9 @@ internal fun DocumentReviewRoute(
             onRetry = { dispatchIntent(DocumentReviewIntent.OpenSourceModal(viewerState.sourceId)) },
         )
     }
-    content?.paymentSheetState?.let { paymentState ->
+    state.paymentSheetState?.let { paymentState ->
         if (isAccountantReadOnly) return@let
-        val currencySign = when (val data = content.draftData) {
+        val currencySign = when (val data = state.draftData) {
             is tech.dokus.domain.model.InvoiceDraftData -> data.currency.displaySign
             is tech.dokus.domain.model.CreditNoteDraftData -> data.currency.displaySign
             else -> "\u20AC"
@@ -474,16 +466,7 @@ private fun DocumentReviewIntent.isBlockedForAccountantReadOnly(): Boolean = whe
     else -> false
 }
 
-private fun DocumentReviewState.queueStateOrNull(): DocumentReviewQueueState? = when (this) {
-    is DocumentReviewState.Loading -> queueState
-    is DocumentReviewState.AwaitingExtraction -> queueState
-    is DocumentReviewState.Content -> queueState
-    is DocumentReviewState.Error -> null
-}
+private fun DocumentReviewState.queueStateOrNull(): DocumentReviewQueueState? = queueState
 
-private fun DocumentReviewState.selectedQueueDocumentIdOrDefault(defaultDocumentId: DocumentId): DocumentId = when (this) {
-    is DocumentReviewState.Loading -> selectedQueueDocumentId ?: defaultDocumentId
-    is DocumentReviewState.AwaitingExtraction -> selectedQueueDocumentId ?: documentId
-    is DocumentReviewState.Content -> selectedQueueDocumentId ?: documentId
-    is DocumentReviewState.Error -> defaultDocumentId
-}
+private fun DocumentReviewState.selectedQueueDocumentIdOrDefault(defaultDocumentId: DocumentId): DocumentId =
+    selectedQueueDocumentId ?: documentId ?: defaultDocumentId

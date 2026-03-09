@@ -4,12 +4,12 @@ import androidx.compose.runtime.Immutable
 import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
-import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.FirmId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.auth.FirmWorkspaceSummary
 import tech.dokus.domain.model.auth.TenantWorkspaceSummary
+import tech.dokus.foundation.app.state.DokusState
 
 /**
  * Contract for Workspace Selection screen.
@@ -26,34 +26,19 @@ import tech.dokus.domain.model.auth.TenantWorkspaceSummary
 // ============================================================================
 
 @Immutable
-sealed interface WorkspaceSelectState : MVIState {
-
-    data object Loading : WorkspaceSelectState
-
-    data class Content(
-        val tenants: List<TenantWorkspaceSummary>,
-        val firms: List<FirmWorkspaceSummary>,
-    ) : WorkspaceSelectState {
-        val hasFirmAccess: Boolean get() = firms.isNotEmpty()
-    }
-
-    data class SelectingTenant(
-        val tenants: List<TenantWorkspaceSummary>,
-        val firms: List<FirmWorkspaceSummary>,
-        val selectedTenantId: TenantId,
-    ) : WorkspaceSelectState
-
-    data class SelectingFirm(
-        val tenants: List<TenantWorkspaceSummary>,
-        val firms: List<FirmWorkspaceSummary>,
-        val selectedFirmId: FirmId,
-    ) : WorkspaceSelectState
-
-    data class Error(
-        val exception: DokusException,
-        val retryHandler: RetryHandler,
-    ) : WorkspaceSelectState
+data class WorkspaceSelectData(
+    val tenants: List<TenantWorkspaceSummary>,
+    val firms: List<FirmWorkspaceSummary>,
+) {
+    val hasFirmAccess: Boolean get() = firms.isNotEmpty()
 }
+
+@Immutable
+data class WorkspaceSelectState(
+    val workspaces: DokusState<WorkspaceSelectData> = DokusState.loading(),
+    val isSelectingTenant: Boolean = false,
+    val isSelectingFirm: Boolean = false,
+) : MVIState
 
 // ============================================================================
 // INTENTS (User Actions)

@@ -69,7 +69,7 @@ private val HeroAccentWidth = 3.5.dp
 
 @Composable
 internal fun MobileCanonicalHeader(
-    state: DocumentReviewState.Content,
+    state: DocumentReviewState,
 ) {
     val counterparty = counterpartyInfo(state)
     Column(
@@ -85,7 +85,7 @@ internal fun MobileCanonicalHeader(
 }
 
 @Composable
-internal fun MobileAmountHeroCard(state: DocumentReviewState.Content) {
+internal fun MobileAmountHeroCard(state: DocumentReviewState) {
     val currency = currencySign(state)
     val amount = state.totalAmount?.toDisplayString() ?: "\u2014"
 
@@ -139,7 +139,7 @@ internal fun MobileAmountHeroCard(state: DocumentReviewState.Content) {
 
 @Composable
 internal fun MobilePaymentStateCard(
-    state: DocumentReviewState.Content,
+    state: DocumentReviewState,
     isAccountantReadOnly: Boolean,
     onIntent: (DocumentReviewIntent) -> Unit,
 ) {

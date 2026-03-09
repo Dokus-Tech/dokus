@@ -21,7 +21,6 @@ import tech.dokus.aura.resources.console_clients_count
 import tech.dokus.aura.resources.workspace_add
 import tech.dokus.aura.resources.workspace_select_title
 import tech.dokus.domain.DisplayName
-import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.enums.FirmRole
 import tech.dokus.domain.enums.TenantType
 import tech.dokus.domain.enums.UserRole
@@ -30,7 +29,11 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.auth.FirmWorkspaceSummary
 import tech.dokus.domain.model.auth.TenantWorkspaceSummary
+import tech.dokus.features.auth.mvi.WorkspaceSelectData
 import tech.dokus.features.auth.mvi.WorkspaceSelectState
+import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.app.state.isError
+import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.tiles.AddCompanyTile
@@ -83,18 +86,14 @@ private fun StateDrivenContent(
     onFirmClick: (FirmId) -> Unit,
     onAddTenantClick: () -> Unit,
 ) {
-    when (state) {
-        WorkspaceSelectState.Loading -> DokusLoader()
-        is WorkspaceSelectState.Error -> DokusErrorContent(
-            exception = state.exception,
-            retryHandler = state.retryHandler,
+    val workspaces = state.workspaces
+    when {
+        workspaces.isError() -> DokusErrorContent(
+            exception = workspaces.exception,
+            retryHandler = workspaces.retryHandler,
         )
-        is WorkspaceSelectState.Content,
-        is WorkspaceSelectState.SelectingTenant,
-        is WorkspaceSelectState.SelectingFirm,
-        -> {
-            val contentState = state.toContentState()
-            val sortedWorkspaceEntries = buildWorkspaceEntries(contentState)
+        workspaces.isSuccess() -> {
+            val sortedWorkspaceEntries = buildWorkspaceEntries(workspaces.data)
             val imageLoader = rememberAuthenticatedImageLoader()
 
             WorkspaceSection(
@@ -116,6 +115,7 @@ private fun StateDrivenContent(
                 },
             )
         }
+        else -> DokusLoader()
     }
 }
 
@@ -177,11 +177,11 @@ private sealed interface WorkspaceEntry {
 }
 
 private fun buildWorkspaceEntries(
-    state: WorkspaceSelectState.Content,
+    data: WorkspaceSelectData,
 ): List<WorkspaceEntry> {
     return buildList {
-        addAll(state.tenants.map(WorkspaceEntry::Tenant))
-        addAll(state.firms.map(WorkspaceEntry::Firm))
+        addAll(data.tenants.map(WorkspaceEntry::Tenant))
+        addAll(data.firms.map(WorkspaceEntry::Firm))
     }.sortedWith(
         compareBy<WorkspaceEntry>(
             { it.sortName.lowercase() },
@@ -206,21 +206,6 @@ private fun WorkspaceSection(
         maxItemsInEachRow = Int.MAX_VALUE,
     ) {
         items()
-    }
-}
-
-private fun WorkspaceSelectState.toContentState(): WorkspaceSelectState.Content {
-    return when (this) {
-        is WorkspaceSelectState.Content -> this
-        is WorkspaceSelectState.SelectingTenant -> WorkspaceSelectState.Content(
-            tenants = tenants,
-            firms = firms,
-        )
-        is WorkspaceSelectState.SelectingFirm -> WorkspaceSelectState.Content(
-            tenants = tenants,
-            firms = firms,
-        )
-        else -> WorkspaceSelectState.Content(emptyList(), emptyList())
     }
 }
 
@@ -257,9 +242,13 @@ private fun WorkspaceSelectionEmptyPreview(
 ) {
     TestWrapper(parameters) {
         WorkspaceSelectionBody(
-            state = WorkspaceSelectState.Content(
-                tenants = listOf(previewTenant("Dokus Tech", UserRole.Owner)),
-                firms = emptyList(),
+            state = WorkspaceSelectState(
+                workspaces = DokusState.success(
+                    WorkspaceSelectData(
+                        tenants = listOf(previewTenant("Dokus Tech", UserRole.Owner)),
+                        firms = emptyList(),
+                    )
+                ),
             ),
             onTenantClick = {},
             onFirmClick = {},
@@ -277,13 +266,17 @@ private fun WorkspaceSelectionWithPracticePreview(
 ) {
     TestWrapper(parameters) {
         WorkspaceSelectionBody(
-            state = WorkspaceSelectState.Content(
-                tenants = listOf(
-                    previewTenant("Dokus Tech", UserRole.Owner),
-                    previewTenant("Client Corp", UserRole.Admin),
-                ),
-                firms = listOf(
-                    previewFirm("Kantoor Boonen", 8),
+            state = WorkspaceSelectState(
+                workspaces = DokusState.success(
+                    WorkspaceSelectData(
+                        tenants = listOf(
+                            previewTenant("Dokus Tech", UserRole.Owner),
+                            previewTenant("Client Corp", UserRole.Admin),
+                        ),
+                        firms = listOf(
+                            previewFirm("Kantoor Boonen", 8),
+                        ),
+                    )
                 ),
             ),
             onTenantClick = {},
@@ -302,14 +295,18 @@ private fun WorkspaceSelectionDesktopPreview(
 ) {
     TestWrapper(parameters) {
         WorkspaceSelectionBody(
-            state = WorkspaceSelectState.Content(
-                tenants = listOf(
-                    previewTenant("Dokus Tech", UserRole.Owner),
-                    previewTenant("Client Corp", UserRole.Editor),
-                ),
-                firms = listOf(
-                    previewFirm("Kantoor Boonen", 8),
-                    previewFirm("Acme Accounting", 3),
+            state = WorkspaceSelectState(
+                workspaces = DokusState.success(
+                    WorkspaceSelectData(
+                        tenants = listOf(
+                            previewTenant("Dokus Tech", UserRole.Owner),
+                            previewTenant("Client Corp", UserRole.Editor),
+                        ),
+                        firms = listOf(
+                            previewFirm("Kantoor Boonen", 8),
+                            previewFirm("Acme Accounting", 3),
+                        ),
+                    )
                 ),
             ),
             onTenantClick = {},

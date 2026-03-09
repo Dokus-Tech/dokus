@@ -4,8 +4,8 @@ import androidx.compose.runtime.Immutable
 import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
-import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.foundation.app.state.DokusState
 
 /**
  * Contract for the Peppol registration/settings flow.
@@ -25,55 +25,27 @@ data class PeppolSetupContext(
     val companyName: String,
     /** Participant ID in `0208:BE...` format. */
     val peppolId: String,
-    /** UX hint: surface that Peppol is a premium feature. */
 )
 
-@Immutable
-sealed interface PeppolRegistrationState : MVIState {
-
-    data object Loading : PeppolRegistrationState
-
-    data class Fresh(
-        val context: PeppolSetupContext,
-        val isEnabling: Boolean = false,
-    ) : PeppolRegistrationState
-
-    data class Activating(
-        val context: PeppolSetupContext,
-    ) : PeppolRegistrationState
-
-    data class Active(
-        val context: PeppolSetupContext,
-    ) : PeppolRegistrationState
-
-    data class Blocked(
-        val context: PeppolSetupContext,
-        val isWorking: Boolean = false,
-    ) : PeppolRegistrationState
-
-    data class WaitingTransfer(
-        val context: PeppolSetupContext,
-    ) : PeppolRegistrationState
-
-    data class SendingOnly(
-        val context: PeppolSetupContext,
-    ) : PeppolRegistrationState
-
-    data class External(
-        val context: PeppolSetupContext,
-    ) : PeppolRegistrationState
-
-    data class Failed(
-        val context: PeppolSetupContext,
-        val message: String? = null,
-        val isRetrying: Boolean = false,
-    ) : PeppolRegistrationState
-
-    data class Error(
-        val exception: DokusException,
-        val retryHandler: RetryHandler,
-    ) : PeppolRegistrationState
+enum class PeppolRegistrationPhase {
+    Fresh,
+    Activating,
+    Active,
+    Blocked,
+    WaitingTransfer,
+    SendingOnly,
+    External,
+    Failed,
 }
+
+@Immutable
+data class PeppolRegistrationState(
+    val setupContext: DokusState<PeppolSetupContext> = DokusState.loading(),
+    val phase: PeppolRegistrationPhase = PeppolRegistrationPhase.Fresh,
+    val isWorking: Boolean = false,
+    val isRetrying: Boolean = false,
+    val failureMessage: String? = null,
+) : MVIState
 
 // ============================================================================
 // INTENTS (User Actions)

@@ -25,9 +25,10 @@ import tech.dokus.features.cashflow.usecases.GetPeppolRegistrationUseCase
 import tech.dokus.features.cashflow.usecases.PollPeppolTransferUseCase
 import tech.dokus.features.cashflow.usecases.VerifyPeppolIdUseCase
 import tech.dokus.features.cashflow.usecases.WaitForPeppolTransferUseCase
+import tech.dokus.foundation.app.state.isError
+import tech.dokus.foundation.app.state.isSuccess
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import kotlin.uuid.ExperimentalUuidApi
@@ -61,9 +62,10 @@ class PeppolRegistrationContainerTest {
             emit(PeppolRegistrationIntent.Refresh)
             advanceUntilIdle()
 
-            val error = assertIs<PeppolRegistrationState.Error>(states.value)
-            assertIs<DokusException.PeppolDirectoryUnavailable>(error.exception)
-            assertTrue(error.exception.recoverable)
+            val state = states.value
+            assertTrue(state.setupContext.isError())
+            assertIs<DokusException.PeppolDirectoryUnavailable>(state.setupContext.exception)
+            assertTrue(state.setupContext.exception.recoverable)
             assertEquals(1, verify.invocations)
         }
     }
@@ -77,9 +79,10 @@ class PeppolRegistrationContainerTest {
             emit(PeppolRegistrationIntent.Refresh)
             advanceUntilIdle()
 
-            val error = assertIs<PeppolRegistrationState.Error>(states.value)
-            assertIs<DokusException.ConnectionError>(error.exception)
-            assertTrue(error.exception.recoverable)
+            val state = states.value
+            assertTrue(state.setupContext.isError())
+            assertIs<DokusException.ConnectionError>(state.setupContext.exception)
+            assertTrue(state.setupContext.exception.recoverable)
             assertEquals(1, verify.invocations)
         }
     }

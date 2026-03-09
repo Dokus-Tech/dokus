@@ -58,7 +58,7 @@ class HomeContainerTest {
             emit(HomeIntent.ScreenAppeared)
             advanceUntilIdle()
 
-            val ready = assertIs<HomeState.Ready>(states.value)
+            val ready = assertIs<HomeState>(states.value)
             val tenantState = assertIs<DokusState.Success<Tenant>>(ready.tenantState)
             val userState = assertIs<DokusState.Success<User>>(ready.userState)
             assertEquals(tenant, tenantState.data)
@@ -82,7 +82,7 @@ class HomeContainerTest {
 
         container.store.subscribeAndTest {
             HomeIntent.ScreenAppeared resultsIn HomeAction.ShowError(DokusException.WorkspaceContextUnavailable)
-            val ready = assertIs<HomeState.Ready>(states.value)
+            val ready = assertIs<HomeState>(states.value)
             val tenantState = assertIs<DokusState.Error<Tenant>>(ready.tenantState)
             val userState = assertIs<DokusState.Success<User>>(ready.userState)
             assertEquals(DokusException.WorkspaceContextUnavailable, tenantState.exception)
@@ -105,14 +105,14 @@ class HomeContainerTest {
             emit(HomeIntent.Logout)
             advanceUntilIdle()
 
-            val inProgress = assertIs<HomeState.Ready>(states.value)
+            val inProgress = assertIs<HomeState>(states.value)
             assertTrue(inProgress.isLoggingOut)
             assertEquals(1, logoutUseCase.invocations)
 
             gate.complete(Result.success(Unit))
             advanceUntilIdle()
 
-            val completed = assertIs<HomeState.Ready>(states.value)
+            val completed = assertIs<HomeState>(states.value)
             assertTrue(completed.isLoggingOut)
         }
     }
@@ -132,7 +132,7 @@ class HomeContainerTest {
             emit(HomeIntent.ScreenAppeared)
             advanceUntilIdle()
 
-            val inProgress = assertIs<HomeState.Ready>(states.value)
+            val inProgress = assertIs<HomeState>(states.value)
             assertTrue(inProgress.isLoggingOut)
             assertIs<DokusState.Idle<Tenant>>(inProgress.tenantState)
         }
@@ -151,7 +151,7 @@ class HomeContainerTest {
 
         container.store.subscribeAndTest {
             HomeIntent.Logout resultsIn HomeAction.ShowError(expectedError)
-            val ready = assertIs<HomeState.Ready>(states.value)
+            val ready = assertIs<HomeState>(states.value)
             assertFalse(ready.isLoggingOut)
             assertEquals(1, logoutUseCase.invocations)
         }
@@ -186,7 +186,7 @@ class HomeContainerTest {
             emit(HomeIntent.ScreenAppeared)
             advanceUntilIdle()
 
-            val ready = assertIs<HomeState.Ready>(states.value)
+            val ready = assertIs<HomeState>(states.value)
             assertEquals(expectedSurface, ready.surfaceAvailability)
             assertIs<DokusState.Idle<Tenant>>(ready.tenantState)
             val userState = assertIs<DokusState.Success<User>>(ready.userState)

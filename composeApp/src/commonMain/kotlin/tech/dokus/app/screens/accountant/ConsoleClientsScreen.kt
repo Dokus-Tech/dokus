@@ -72,7 +72,6 @@ import tech.dokus.aura.resources.console_clients_search_placeholder
 import tech.dokus.aura.resources.console_no_documents_yet
 import tech.dokus.aura.resources.console_requests_period_label
 import tech.dokus.domain.DisplayName
-import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.FirmId
@@ -82,6 +81,9 @@ import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.auth.ConsoleClientSummary
 import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.app.state.isError
+import tech.dokus.foundation.app.state.isLoading
+import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.badges.DocumentSource as BadgeDocumentSource
@@ -175,22 +177,24 @@ internal fun ConsoleClientsScreen(
                 .padding(horizontal = Constraints.Spacing.medium)
                 .padding(top = Constraints.Spacing.medium)
         ) {
-            when (state) {
-                ConsoleClientsState.Loading -> {
+            val clientsState = state.clients
+            when {
+                clientsState.isLoading() -> {
                     ConsoleClientsSkeleton(modifier = Modifier.fillMaxSize())
                 }
 
-                is ConsoleClientsState.Error -> {
+                clientsState.isError() -> {
                     DokusErrorBanner(
-                        exception = state.exception,
-                        retryHandler = state.retryHandler,
+                        exception = clientsState.exception,
+                        retryHandler = clientsState.retryHandler,
                     )
                 }
 
-                is ConsoleClientsState.Content -> {
+                clientsState.isSuccess() -> {
                     if (state.selectedClientTenantId == null) {
                         ClientsListContent(
                             state = state,
+                            clients = clientsState.data,
                             onIntent = onIntent,
                             onAddClientClick = onAddClientClick,
                             initialShowAddClientDialog = initialShowAddClientDialog,
@@ -198,6 +202,7 @@ internal fun ConsoleClientsScreen(
                     } else {
                         ClientDetailContent(
                             state = state,
+                            clients = clientsState.data,
                             onIntent = onIntent,
                         )
                     }
@@ -209,7 +214,8 @@ internal fun ConsoleClientsScreen(
 
 @Composable
 private fun ClientsListContent(
-    state: ConsoleClientsState.Content,
+    state: ConsoleClientsState,
+    clients: List<ConsoleClientSummary>,
     onIntent: (ConsoleClientsIntent) -> Unit,
     onAddClientClick: () -> Unit,
     initialShowAddClientDialog: Boolean,
@@ -218,8 +224,8 @@ private fun ClientsListContent(
     var addClientEmail by remember { mutableStateOf("") }
     var selectedFilter by rememberSaveable { mutableStateOf(ClientFilter.All) }
 
-    val clientsWithInsights = remember(state.clients) {
-        state.clients.mapIndexed { index, client ->
+    val clientsWithInsights = remember(clients) {
+        clients.mapIndexed { index, client ->
             client to insightForClient(client = client, index = index)
         }
     }
@@ -297,7 +303,7 @@ private fun ClientsListContent(
         }
 
         if (visibleRows.isEmpty()) {
-            val emptyText = if (state.clients.isEmpty()) {
+            val emptyText = if (clients.isEmpty()) {
                 stringResource(Res.string.console_clients_empty_all)
             } else {
                 stringResource(Res.string.console_clients_empty)
@@ -439,16 +445,17 @@ private fun ClientsListContent(
 
 @Composable
 private fun ClientDetailContent(
-    state: ConsoleClientsState.Content,
+    state: ConsoleClientsState,
+    clients: List<ConsoleClientSummary>,
     onIntent: (ConsoleClientsIntent) -> Unit,
 ) {
-    val selectedClient = state.clients.firstOrNull { it.tenantId == state.selectedClientTenantId }
+    val selectedClient = clients.firstOrNull { it.tenantId == state.selectedClientTenantId }
     if (selectedClient == null) {
         onIntent(ConsoleClientsIntent.BackToClients)
         return
     }
 
-    val selectedIndex = state.clients.indexOfFirst { it.tenantId == selectedClient.tenantId }.coerceAtLeast(0)
+    val selectedIndex = clients.indexOfFirst { it.tenantId == selectedClient.tenantId }.coerceAtLeast(0)
     val insight = remember(selectedClient.tenantId) { insightForClient(selectedClient, selectedIndex) }
 
     Column(
@@ -499,7 +506,7 @@ private fun ClientDetailContent(
                 )
                 DokusCardSurface(accent = true) {
                     Text(
-                        text = state.firmName,
+                        text = state.firmName.orEmpty(),
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.primary,
@@ -1024,7 +1031,7 @@ private fun ConsoleClientsScreenLoadingPreview(
 ) {
     TestWrapper(parameters) {
         ConsoleClientsScreen(
-            state = ConsoleClientsState.Loading,
+            state = ConsoleClientsState(),
             snackbarHostState = SnackbarHostState(),
             onIntent = {},
         )
@@ -1038,10 +1045,10 @@ private fun ConsoleClientsScreenDesktopContentPreview(
 ) {
     TestWrapper(parameters) {
         ConsoleClientsScreen(
-            state = ConsoleClientsState.Content(
+            state = ConsoleClientsState(
                 firmId = FirmId("00000000-0000-0000-0000-000000000111"),
                 firmName = "Kantoor Boonen",
-                clients = previewClients(),
+                clients = DokusState.success(previewClients()),
             ),
             snackbarHostState = SnackbarHostState(),
             onIntent = {},
@@ -1056,10 +1063,10 @@ private fun ConsoleClientDetailDesktopPreview(
 ) {
     TestWrapper(parameters) {
         ConsoleClientsScreen(
-            state = ConsoleClientsState.Content(
+            state = ConsoleClientsState(
                 firmId = FirmId("00000000-0000-0000-0000-000000000111"),
                 firmName = "Kantoor Boonen",
-                clients = previewClients(),
+                clients = DokusState.success(previewClients()),
                 selectedClientTenantId = TenantId("00000000-0000-0000-0000-000000000001"),
                 documentsState = DokusState.success(previewDocumentRecords()),
             ),
@@ -1076,9 +1083,11 @@ private fun ConsoleClientsScreenErrorPreview(
 ) {
     TestWrapper(parameters) {
         ConsoleClientsScreen(
-            state = ConsoleClientsState.Error(
-                exception = DokusException.Validation.InvalidDisplayName,
-                retryHandler = RetryHandler {},
+            state = ConsoleClientsState(
+                clients = DokusState.error(
+                    exception = DokusException.Validation.InvalidDisplayName,
+                    retryHandler = {},
+                ),
             ),
             snackbarHostState = SnackbarHostState(),
             onIntent = {},

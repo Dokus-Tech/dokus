@@ -32,77 +32,17 @@ internal class RegisterContainer(
     private val logger = Logger.forClass<RegisterContainer>()
 
     override val store: Store<RegisterState, RegisterIntent, RegisterAction> =
-        store(RegisterState.Idle()) {
+        store(RegisterState()) {
             reduce { intent ->
                 when (intent) {
-                    is RegisterIntent.UpdateEmail -> handleUpdateEmail(intent.value)
-                    is RegisterIntent.UpdatePassword -> handleUpdatePassword(intent.value)
-                    is RegisterIntent.UpdateFirstName -> handleUpdateFirstName(intent.value)
-                    is RegisterIntent.UpdateLastName -> handleUpdateLastName(intent.value)
+                    is RegisterIntent.UpdateEmail -> updateState { copy(email = intent.value, error = null) }
+                    is RegisterIntent.UpdatePassword -> updateState { copy(password = intent.value, error = null) }
+                    is RegisterIntent.UpdateFirstName -> updateState { copy(firstName = intent.value, error = null) }
+                    is RegisterIntent.UpdateLastName -> updateState { copy(lastName = intent.value, error = null) }
                     is RegisterIntent.RegisterClicked -> handleRegister()
                 }
             }
         }
-
-    private suspend fun RegisterCtx.handleUpdateEmail(value: Email) {
-        updateState {
-            when (this) {
-                is RegisterState.Idle -> copy(email = value)
-                is RegisterState.Error -> RegisterState.Idle(
-                    email = value,
-                    password = password,
-                    firstName = firstName,
-                    lastName = lastName
-                )
-                is RegisterState.Registering -> this
-            }
-        }
-    }
-
-    private suspend fun RegisterCtx.handleUpdatePassword(value: Password) {
-        updateState {
-            when (this) {
-                is RegisterState.Idle -> copy(password = value)
-                is RegisterState.Error -> RegisterState.Idle(
-                    email = email,
-                    password = value,
-                    firstName = firstName,
-                    lastName = lastName
-                )
-                is RegisterState.Registering -> this
-            }
-        }
-    }
-
-    private suspend fun RegisterCtx.handleUpdateFirstName(value: Name) {
-        updateState {
-            when (this) {
-                is RegisterState.Idle -> copy(firstName = value)
-                is RegisterState.Error -> RegisterState.Idle(
-                    email = email,
-                    password = password,
-                    firstName = value,
-                    lastName = lastName
-                )
-                is RegisterState.Registering -> this
-            }
-        }
-    }
-
-    private suspend fun RegisterCtx.handleUpdateLastName(value: Name) {
-        updateState {
-            when (this) {
-                is RegisterState.Idle -> copy(lastName = value)
-                is RegisterState.Error -> RegisterState.Idle(
-                    email = email,
-                    password = password,
-                    firstName = firstName,
-                    lastName = value
-                )
-                is RegisterState.Registering -> this
-            }
-        }
-    }
 
     private suspend fun RegisterCtx.handleRegister() {
         // Capture values during state transition
@@ -117,12 +57,7 @@ internal class RegisterContainer(
             password = this.password
             firstName = this.firstName
             lastName = this.lastName
-            RegisterState.Registering(
-                email = this.email,
-                password = this.password,
-                firstName = this.firstName,
-                lastName = this.lastName
-            )
+            copy(isRegistering = true, error = null)
         }
 
         logger.d { "Registration attempt started for email: ${email.value.take(EmailPreviewLength)}***" }
@@ -131,6 +66,7 @@ internal class RegisterContainer(
         registerAndLoginUseCase(email, password, firstName, lastName).fold(
             onSuccess = {
                 logger.i { "Registration successful, navigating to home" }
+                updateState { copy(isRegistering = false) }
                 if (tokenManager.getSelectedTenantId() == null) {
                     action(RegisterAction.NavigateToWorkspaceSelect)
                 } else {
@@ -140,14 +76,7 @@ internal class RegisterContainer(
             onFailure = { error ->
                 logger.e(error) { "Registration failed" }
                 updateState {
-                    RegisterState.Error(
-                        email = email,
-                        password = password,
-                        firstName = firstName,
-                        lastName = lastName,
-                        exception = error.asDokusException,
-                        retryHandler = { intent(RegisterIntent.RegisterClicked) }
-                    )
+                    copy(isRegistering = false, error = error.asDokusException)
                 }
             }
         )

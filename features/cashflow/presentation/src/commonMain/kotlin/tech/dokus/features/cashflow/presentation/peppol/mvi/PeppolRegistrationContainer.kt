@@ -16,6 +16,8 @@ import tech.dokus.features.cashflow.usecases.GetPeppolRegistrationUseCase
 import tech.dokus.features.cashflow.usecases.PollPeppolTransferUseCase
 import tech.dokus.features.cashflow.usecases.VerifyPeppolIdUseCase
 import tech.dokus.features.cashflow.usecases.WaitForPeppolTransferUseCase
+import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.platform.Logger
 
 internal typealias PeppolRegistrationCtx = PipelineContext<PeppolRegistrationState, PeppolRegistrationIntent, PeppolRegistrationAction>
@@ -38,7 +40,7 @@ internal class PeppolRegistrationContainer(
     private val logger = Logger.forClass<PeppolRegistrationContainer>()
 
     override val store: Store<PeppolRegistrationState, PeppolRegistrationIntent, PeppolRegistrationAction> =
-        store(PeppolRegistrationState.Loading) {
+        store(PeppolRegistrationState()) {
             reduce { intent ->
                 when (intent) {
                     PeppolRegistrationIntent.Refresh -> handleRefresh()
@@ -54,22 +56,26 @@ internal class PeppolRegistrationContainer(
         }
 
     private suspend fun PeppolRegistrationCtx.handleRefresh() {
-        updateState { PeppolRegistrationState.Loading }
+        updateState { copy(setupContext = setupContext.asLoading) }
 
         val tenant = getCurrentTenant().getOrElse { error ->
             logger.e(error) { "Failed to load tenant context" }
             updateState {
-                PeppolRegistrationState.Error(
-                    exception = error.asDokusException,
-                    retryHandler = { intent(PeppolRegistrationIntent.Refresh) }
+                copy(
+                    setupContext = DokusState.error(
+                        exception = error.asDokusException,
+                        retryHandler = { intent(PeppolRegistrationIntent.Refresh) }
+                    )
                 )
             }
             return
         } ?: run {
             updateState {
-                PeppolRegistrationState.Error(
-                    exception = DokusException.BadRequest("No workspace selected"),
-                    retryHandler = { intent(PeppolRegistrationIntent.Refresh) }
+                copy(
+                    setupContext = DokusState.error(
+                        exception = DokusException.BadRequest("No workspace selected"),
+                        retryHandler = { intent(PeppolRegistrationIntent.Refresh) }
+                    )
                 )
             }
             return
@@ -82,9 +88,11 @@ internal class PeppolRegistrationContainer(
         val registration = getRegistration().getOrElse { error ->
             logger.e(error) { "Failed to load PEPPOL registration" }
             updateState {
-                PeppolRegistrationState.Error(
-                    exception = error.asDokusException,
-                    retryHandler = { intent(PeppolRegistrationIntent.Refresh) }
+                copy(
+                    setupContext = DokusState.error(
+                        exception = error.asDokusException,
+                        retryHandler = { intent(PeppolRegistrationIntent.Refresh) }
+                    )
                 )
             }
             return
@@ -96,56 +104,53 @@ internal class PeppolRegistrationContainer(
         )
 
         when (registration?.status) {
-            PeppolRegistrationStatus.Active -> updateState { PeppolRegistrationState.Active(context) }
+            PeppolRegistrationStatus.Active -> updateState {
+                copy(setupContext = DokusState.success(context), phase = PeppolRegistrationPhase.Active)
+            }
+
             PeppolRegistrationStatus.Pending -> updateState {
-                PeppolRegistrationState.Activating(
-                    context
-                )
+                copy(setupContext = DokusState.success(context), phase = PeppolRegistrationPhase.Activating)
             }
 
             PeppolRegistrationStatus.WaitingTransfer -> updateState {
-                PeppolRegistrationState.WaitingTransfer(
-                    context
-                )
+                copy(setupContext = DokusState.success(context), phase = PeppolRegistrationPhase.WaitingTransfer)
             }
 
             PeppolRegistrationStatus.SendingOnly -> updateState {
-                PeppolRegistrationState.SendingOnly(
-                    context
-                )
+                copy(setupContext = DokusState.success(context), phase = PeppolRegistrationPhase.SendingOnly)
             }
 
             PeppolRegistrationStatus.External -> updateState {
-                PeppolRegistrationState.External(
-                    context
-                )
+                copy(setupContext = DokusState.success(context), phase = PeppolRegistrationPhase.External)
             }
 
             PeppolRegistrationStatus.Failed -> updateState {
-                PeppolRegistrationState.Failed(
-                    context = context,
-                    message = registration.errorMessage
+                copy(
+                    setupContext = DokusState.success(context),
+                    phase = PeppolRegistrationPhase.Failed,
+                    failureMessage = registration.errorMessage
                 )
             }
 
             PeppolRegistrationStatus.NotConfigured, null -> {
-                // Determine whether we should show Fresh or Blocked without asking the user for VAT input.
                 verifyPeppolId(vatNumber).fold(
                     onSuccess = { verification ->
                         updateState {
-                            if (verification.isBlocked) {
-                                PeppolRegistrationState.Blocked(context)
-                            } else {
-                                PeppolRegistrationState.Fresh(context)
-                            }
+                            copy(
+                                setupContext = DokusState.success(context),
+                                phase = if (verification.isBlocked) PeppolRegistrationPhase.Blocked
+                                else PeppolRegistrationPhase.Fresh
+                            )
                         }
                     },
                     onFailure = { error ->
                         logger.e(error) { "Failed to verify PEPPOL ID" }
                         updateState {
-                            PeppolRegistrationState.Error(
-                                exception = error.asDokusException,
-                                retryHandler = { intent(PeppolRegistrationIntent.Refresh) }
+                            copy(
+                                setupContext = DokusState.error(
+                                    exception = error.asDokusException,
+                                    retryHandler = { intent(PeppolRegistrationIntent.Refresh) }
+                                )
                             )
                         }
                     }
@@ -160,48 +165,66 @@ internal class PeppolRegistrationContainer(
             return
         }
 
-        updateState { PeppolRegistrationState.Activating(context) }
+        updateState {
+            copy(setupContext = DokusState.success(context), phase = PeppolRegistrationPhase.Activating)
+        }
 
         enablePeppol().fold(
             onSuccess = { response ->
                 val newContext = context.copy(peppolId = response.registration.peppolId)
                 when {
                     response.nextAction == tech.dokus.domain.model.PeppolNextAction.WAIT_FOR_TRANSFER ->
-                        updateState { PeppolRegistrationState.Blocked(newContext) }
+                        updateState {
+                            copy(setupContext = DokusState.success(newContext), phase = PeppolRegistrationPhase.Blocked)
+                        }
 
                     response.registration.status == PeppolRegistrationStatus.Active ->
-                        updateState { PeppolRegistrationState.Active(newContext) }
+                        updateState {
+                            copy(setupContext = DokusState.success(newContext), phase = PeppolRegistrationPhase.Active)
+                        }
 
                     response.registration.status == PeppolRegistrationStatus.Pending ->
-                        updateState { PeppolRegistrationState.Activating(newContext) }
+                        updateState {
+                            copy(setupContext = DokusState.success(newContext), phase = PeppolRegistrationPhase.Activating)
+                        }
 
                     response.registration.status == PeppolRegistrationStatus.WaitingTransfer ->
-                        updateState { PeppolRegistrationState.WaitingTransfer(newContext) }
+                        updateState {
+                            copy(setupContext = DokusState.success(newContext), phase = PeppolRegistrationPhase.WaitingTransfer)
+                        }
 
                     response.registration.status == PeppolRegistrationStatus.SendingOnly ->
-                        updateState { PeppolRegistrationState.SendingOnly(newContext) }
+                        updateState {
+                            copy(setupContext = DokusState.success(newContext), phase = PeppolRegistrationPhase.SendingOnly)
+                        }
 
                     response.registration.status == PeppolRegistrationStatus.External ->
-                        updateState { PeppolRegistrationState.External(newContext) }
+                        updateState {
+                            copy(setupContext = DokusState.success(newContext), phase = PeppolRegistrationPhase.External)
+                        }
 
                     response.registration.status == PeppolRegistrationStatus.Failed ->
                         updateState {
-                            PeppolRegistrationState.Failed(
-                                newContext,
-                                response.registration.errorMessage
+                            copy(
+                                setupContext = DokusState.success(newContext),
+                                phase = PeppolRegistrationPhase.Failed,
+                                failureMessage = response.registration.errorMessage
                             )
                         }
 
                     else ->
-                        updateState { PeppolRegistrationState.Fresh(newContext) }
+                        updateState {
+                            copy(setupContext = DokusState.success(newContext), phase = PeppolRegistrationPhase.Fresh)
+                        }
                 }
             },
             onFailure = { error ->
                 logger.e(error) { "Failed to enable PEPPOL" }
                 updateState {
-                    PeppolRegistrationState.Failed(
-                        context = context,
-                        message = error.message
+                    copy(
+                        setupContext = DokusState.success(context),
+                        phase = PeppolRegistrationPhase.Failed,
+                        failureMessage = error.message
                     )
                 }
             }
@@ -209,13 +232,21 @@ internal class PeppolRegistrationContainer(
     }
 
     private suspend fun PeppolRegistrationCtx.handleEnableSendingOnly() {
-        withState<PeppolRegistrationState.Blocked, _> {
+        withState {
+            if (phase != PeppolRegistrationPhase.Blocked) return@withState
             updateState { copy(isWorking = true) }
 
             enableSendingOnly().fold(
                 onSuccess = { response ->
+                    val context = (setupContext as? DokusState.Success)?.data ?: return@fold
                     val newContext = context.copy(peppolId = response.registration.peppolId)
-                    updateState { PeppolRegistrationState.SendingOnly(newContext) }
+                    updateState {
+                        copy(
+                            setupContext = DokusState.success(newContext),
+                            phase = PeppolRegistrationPhase.SendingOnly,
+                            isWorking = false
+                        )
+                    }
                 },
                 onFailure = { error ->
                     logger.e(error) { "Failed to enable sending-only" }
@@ -227,13 +258,21 @@ internal class PeppolRegistrationContainer(
     }
 
     private suspend fun PeppolRegistrationCtx.handleWaitForTransfer() {
-        withState<PeppolRegistrationState.Blocked, _> {
+        withState {
+            if (phase != PeppolRegistrationPhase.Blocked) return@withState
             updateState { copy(isWorking = true) }
 
             waitForTransfer().fold(
                 onSuccess = { response ->
+                    val context = (setupContext as? DokusState.Success)?.data ?: return@fold
                     val newContext = context.copy(peppolId = response.registration.peppolId)
-                    updateState { PeppolRegistrationState.WaitingTransfer(newContext) }
+                    updateState {
+                        copy(
+                            setupContext = DokusState.success(newContext),
+                            phase = PeppolRegistrationPhase.WaitingTransfer,
+                            isWorking = false
+                        )
+                    }
                 },
                 onFailure = { error ->
                     logger.e(error) { "Failed to start waiting for transfer" }
@@ -245,53 +284,28 @@ internal class PeppolRegistrationContainer(
     }
 
     private suspend fun PeppolRegistrationCtx.handlePollTransfer() {
-        withState<PeppolRegistrationState.WaitingTransfer, _> {
+        withState {
+            if (phase != PeppolRegistrationPhase.WaitingTransfer) return@withState
+
             pollTransfer().fold(
                 onSuccess = { response ->
+                    val context = (setupContext as? DokusState.Success)?.data ?: return@fold
                     val newContext = context.copy(peppolId = response.registration.peppolId)
-                    when (response.registration.status) {
-                        PeppolRegistrationStatus.Active -> updateState {
-                            PeppolRegistrationState.Active(
-                                newContext
-                            )
-                        }
-
-                        PeppolRegistrationStatus.Failed -> updateState {
-                            PeppolRegistrationState.Failed(
-                                newContext,
-                                response.registration.errorMessage
-                            )
-                        }
-
-                        PeppolRegistrationStatus.SendingOnly -> updateState {
-                            PeppolRegistrationState.SendingOnly(
-                                newContext
-                            )
-                        }
-
-                        PeppolRegistrationStatus.External -> updateState {
-                            PeppolRegistrationState.External(
-                                newContext
-                            )
-                        }
-
-                        PeppolRegistrationStatus.Pending -> updateState {
-                            PeppolRegistrationState.Activating(
-                                newContext
-                            )
-                        }
-
-                        PeppolRegistrationStatus.WaitingTransfer -> updateState {
-                            PeppolRegistrationState.WaitingTransfer(
-                                newContext
-                            )
-                        }
-
-                        PeppolRegistrationStatus.NotConfigured -> updateState {
-                            PeppolRegistrationState.Blocked(
-                                newContext
-                            )
-                        }
+                    val newPhase = when (response.registration.status) {
+                        PeppolRegistrationStatus.Active -> PeppolRegistrationPhase.Active
+                        PeppolRegistrationStatus.Failed -> PeppolRegistrationPhase.Failed
+                        PeppolRegistrationStatus.SendingOnly -> PeppolRegistrationPhase.SendingOnly
+                        PeppolRegistrationStatus.External -> PeppolRegistrationPhase.External
+                        PeppolRegistrationStatus.Pending -> PeppolRegistrationPhase.Activating
+                        PeppolRegistrationStatus.WaitingTransfer -> PeppolRegistrationPhase.WaitingTransfer
+                        PeppolRegistrationStatus.NotConfigured -> PeppolRegistrationPhase.Blocked
+                    }
+                    updateState {
+                        copy(
+                            setupContext = DokusState.success(newContext),
+                            phase = newPhase,
+                            failureMessage = if (newPhase == PeppolRegistrationPhase.Failed) response.registration.errorMessage else null
+                        )
                     }
                 },
                 onFailure = { error ->
@@ -312,9 +326,10 @@ internal class PeppolRegistrationContainer(
             return
         }
         updateState {
-            PeppolRegistrationState.Failed(
-                context = context,
-                message = null,
+            copy(
+                setupContext = DokusState.success(context),
+                phase = PeppolRegistrationPhase.Failed,
+                failureMessage = null,
                 isRetrying = true
             )
         }
@@ -323,16 +338,11 @@ internal class PeppolRegistrationContainer(
 
     private suspend fun PeppolRegistrationCtx.currentContextOrNull(): PeppolSetupContext? {
         var ctx: PeppolSetupContext? = null
-
-        withState<PeppolRegistrationState.Fresh, _> { ctx = context }
-        withState<PeppolRegistrationState.Activating, _> { ctx = context }
-        withState<PeppolRegistrationState.Active, _> { ctx = context }
-        withState<PeppolRegistrationState.Blocked, _> { ctx = context }
-        withState<PeppolRegistrationState.WaitingTransfer, _> { ctx = context }
-        withState<PeppolRegistrationState.SendingOnly, _> { ctx = context }
-        withState<PeppolRegistrationState.External, _> { ctx = context }
-        withState<PeppolRegistrationState.Failed, _> { ctx = context }
-
+        withState {
+            if (setupContext.isSuccess()) {
+                ctx = setupContext.data
+            }
+        }
         return ctx
     }
 }

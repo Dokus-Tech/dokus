@@ -261,9 +261,9 @@ private fun ContactsDesktopMasterDetailPreview(
                     onCreateContact = {},
                     detailContent = {
                         ContactDetailsScreen(
-                            state = ContactDetailsState.Content(
+                            state = ContactDetailsState(
                                 contactId = contactId,
-                                contact = contacts.first(),
+                                contact = DokusState.success(contacts.first()),
                                 activityState = DokusState.success(
                                     ContactActivitySummary(contactId = contactId)
                                 ),

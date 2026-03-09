@@ -28,13 +28,13 @@ internal class DocumentReviewPaymentActions(
     private val logger: Logger,
 ) {
     suspend fun DocumentReviewCtx.handleLoadCashflowEntry() {
-        withState<DocumentReviewState.Content, _> {
-            val entryId = confirmedCashflowEntryId ?: document.cashflowEntryId ?: return@withState
+        withState {
+            val entryId = confirmedCashflowEntryId ?: documentRecord?.cashflowEntryId ?: return@withState
             updateState { copy(cashflowEntryState = DokusState.loading()) }
             launch {
                 getCashflowEntry(entryId).fold(
                     onSuccess = { entry ->
-                        withState<DocumentReviewState.Content, _> {
+                        withState {
                             updateState {
                                 copy(
                                     cashflowEntryState = DokusState.success(entry),
@@ -46,7 +46,7 @@ internal class DocumentReviewPaymentActions(
                     },
                     onFailure = { error ->
                         logger.e(error) { "Failed to load cashflow entry: $entryId" }
-                        withState<DocumentReviewState.Content, _> {
+                        withState {
                             updateState {
                                 copy(
                                     cashflowEntryState = DokusState.error(
@@ -63,7 +63,7 @@ internal class DocumentReviewPaymentActions(
     }
 
     suspend fun DocumentReviewCtx.handleLoadAutoPaymentStatus() {
-        withState<DocumentReviewState.Content, _> {
+        withState {
             val entry = (cashflowEntryState as? DokusState.Success<*>)?.data as? CashflowEntry ?: run {
                 updateState { copy(autoPaymentStatus = DokusState.idle()) }
                 return@withState
@@ -72,13 +72,13 @@ internal class DocumentReviewPaymentActions(
             launch {
                 getAutoPaymentStatus(entry.id).fold(
                     onSuccess = { status ->
-                        withState<DocumentReviewState.Content, _> {
+                        withState {
                             updateState { copy(autoPaymentStatus = DokusState.success(status)) }
                         }
                     },
                     onFailure = { error ->
                         logger.e(error) { "Failed to load auto-payment status for entry: ${entry.id}" }
-                        withState<DocumentReviewState.Content, _> {
+                        withState {
                             updateState {
                                 copy(
                                     autoPaymentStatus = DokusState.error(
@@ -95,7 +95,7 @@ internal class DocumentReviewPaymentActions(
     }
 
     suspend fun DocumentReviewCtx.handleOpenPaymentSheet() {
-        withState<DocumentReviewState.Content, _> {
+        withState {
             val entry = (cashflowEntryState as? DokusState.Success<*>)?.data as? CashflowEntry ?: run {
                 intent(DocumentReviewIntent.LoadCashflowEntry)
                 return@withState
@@ -114,13 +114,13 @@ internal class DocumentReviewPaymentActions(
     }
 
     suspend fun DocumentReviewCtx.handleClosePaymentSheet() {
-        withState<DocumentReviewState.Content, _> {
+        withState {
             updateState { copy(paymentSheetState = null) }
         }
     }
 
     suspend fun DocumentReviewCtx.handleLoadPaymentCandidates() {
-        withState<DocumentReviewState.Content, _> {
+        withState {
             val entry = (cashflowEntryState as? DokusState.Success<*>)?.data as? CashflowEntry ?: return@withState
             val sheet = paymentSheetState ?: return@withState
             updateState {
@@ -134,7 +134,7 @@ internal class DocumentReviewPaymentActions(
             launch {
                 getCashflowPaymentCandidates(entry.id).fold(
                     onSuccess = { response ->
-                        withState<DocumentReviewState.Content, _> {
+                        withState {
                             val currentSheet = paymentSheetState ?: return@withState
                             val strongCandidate = response.strongCandidate
                             val selected = strongCandidate
@@ -157,7 +157,7 @@ internal class DocumentReviewPaymentActions(
                     },
                     onFailure = { error ->
                         logger.e(error) { "Failed to load payment candidates for entry: ${entry.id}" }
-                        withState<DocumentReviewState.Content, _> {
+                        withState {
                             val currentSheet = paymentSheetState ?: return@withState
                             updateState {
                                 copy(
@@ -175,7 +175,7 @@ internal class DocumentReviewPaymentActions(
     }
 
     suspend fun DocumentReviewCtx.handleOpenPaymentTransactionPicker() {
-        withState<DocumentReviewState.Content, _> {
+        withState {
             val sheet = paymentSheetState ?: return@withState
             updateState {
                 copy(
@@ -188,7 +188,7 @@ internal class DocumentReviewPaymentActions(
     }
 
     suspend fun DocumentReviewCtx.handleClosePaymentTransactionPicker() {
-        withState<DocumentReviewState.Content, _> {
+        withState {
             val sheet = paymentSheetState ?: return@withState
             updateState {
                 copy(
@@ -201,7 +201,7 @@ internal class DocumentReviewPaymentActions(
     }
 
     suspend fun DocumentReviewCtx.handleSelectPaymentTransaction(transactionId: tech.dokus.domain.ids.ImportedBankTransactionId) {
-        withState<DocumentReviewState.Content, _> {
+        withState {
             val sheet = paymentSheetState ?: return@withState
             val selected = (
                 listOfNotNull(sheet.suggestedTransaction) + sheet.selectableTransactions
@@ -224,7 +224,7 @@ internal class DocumentReviewPaymentActions(
     }
 
     suspend fun DocumentReviewCtx.handleClearPaymentTransactionSelection() {
-        withState<DocumentReviewState.Content, _> {
+        withState {
             val sheet = paymentSheetState ?: return@withState
             updateState {
                 copy(
@@ -238,7 +238,7 @@ internal class DocumentReviewPaymentActions(
     }
 
     suspend fun DocumentReviewCtx.handleUpdatePaymentAmountText(text: String) {
-        withState<DocumentReviewState.Content, _> {
+        withState {
             val sheet = paymentSheetState ?: return@withState
             updateState {
                 copy(
@@ -253,21 +253,21 @@ internal class DocumentReviewPaymentActions(
     }
 
     suspend fun DocumentReviewCtx.handleUpdatePaymentPaidAt(date: LocalDate) {
-        withState<DocumentReviewState.Content, _> {
+        withState {
             val sheet = paymentSheetState ?: return@withState
             updateState { copy(paymentSheetState = sheet.copy(paidAt = date)) }
         }
     }
 
     suspend fun DocumentReviewCtx.handleUpdatePaymentNote(note: String) {
-        withState<DocumentReviewState.Content, _> {
+        withState {
             val sheet = paymentSheetState ?: return@withState
             updateState { copy(paymentSheetState = sheet.copy(note = note)) }
         }
     }
 
     suspend fun DocumentReviewCtx.handleSubmitPayment() {
-        withState<DocumentReviewState.Content, _> {
+        withState {
             val entry = (cashflowEntryState as? DokusState.Success<*>)?.data as? CashflowEntry
                 ?: return@withState
             val sheet = paymentSheetState ?: return@withState
@@ -308,7 +308,7 @@ internal class DocumentReviewPaymentActions(
                     )
                 ).fold(
                     onSuccess = { updatedEntry ->
-                        withState<DocumentReviewState.Content, _> {
+                        withState {
                             updateState {
                                 copy(
                                     cashflowEntryState = DokusState.success(updatedEntry),
@@ -320,7 +320,7 @@ internal class DocumentReviewPaymentActions(
                     },
                     onFailure = { error ->
                         logger.e(error) { "Failed to record payment: ${entry.id}" }
-                        withState<DocumentReviewState.Content, _> {
+                        withState {
                             val currentSheet = paymentSheetState
                             if (currentSheet != null) {
                                 updateState {
@@ -338,7 +338,7 @@ internal class DocumentReviewPaymentActions(
     }
 
     suspend fun DocumentReviewCtx.handleUndoAutoPayment(reason: String?) {
-        withState<DocumentReviewState.Content, _> {
+        withState {
             if (isUndoingAutoPayment) return@withState
             val entry = (cashflowEntryState as? DokusState.Success<*>)?.data as? CashflowEntry ?: return@withState
             updateState { copy(isUndoingAutoPayment = true) }
@@ -348,7 +348,7 @@ internal class DocumentReviewPaymentActions(
                     request = UndoAutoPaymentRequest(reason = reason)
                 ).fold(
                     onSuccess = { updatedEntry ->
-                        withState<DocumentReviewState.Content, _> {
+                        withState {
                             updateState {
                                 copy(
                                     isUndoingAutoPayment = false,
@@ -360,7 +360,7 @@ internal class DocumentReviewPaymentActions(
                     },
                     onFailure = { error ->
                         logger.e(error) { "Failed to undo auto payment: ${entry.id}" }
-                        withState<DocumentReviewState.Content, _> {
+                        withState {
                             updateState { copy(isUndoingAutoPayment = false) }
                         }
                         action(DocumentReviewAction.ShowError(error.asDokusException))

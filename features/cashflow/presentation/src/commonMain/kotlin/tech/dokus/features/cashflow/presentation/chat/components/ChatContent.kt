@@ -16,7 +16,9 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import tech.dokus.domain.model.ai.ChatScope
 import tech.dokus.features.cashflow.presentation.chat.ChatIntent
+import tech.dokus.features.cashflow.presentation.chat.ChatSessionData
 import tech.dokus.features.cashflow.presentation.chat.ChatState
+import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.extensions.dismissKeyboardOnTapOutside
 import tech.dokus.foundation.aura.tooling.PreviewParameters
@@ -25,7 +27,8 @@ import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Composable
 internal fun ChatContent(
-    state: ChatState.Content,
+    state: ChatState,
+    sessionData: ChatSessionData,
     contentPadding: PaddingValues,
     listState: LazyListState,
     isLargeScreen: Boolean,
@@ -38,9 +41,9 @@ internal fun ChatContent(
             .imePadding()
             .dismissKeyboardOnTapOutside()
     ) {
-        if (state.isCrossDocMode) {
+        if (sessionData.isCrossDocMode) {
             ScopeSelectorChips(
-                currentScope = state.scope,
+                currentScope = sessionData.scope,
                 onScopeChange = { scope ->
                     when (scope) {
                         tech.dokus.domain.model.ai.ChatScope.AllDocs -> onIntent(ChatIntent.SwitchToCrossDoc)
@@ -61,15 +64,15 @@ internal fun ChatContent(
                 .weight(1f)
                 .fillMaxWidth()
         ) {
-            if (state.messages.isEmpty()) {
+            if (sessionData.messages.isEmpty()) {
                 EmptyStateContent(
-                    isSingleDocMode = state.isSingleDocMode,
-                    documentName = state.documentName,
+                    isSingleDocMode = sessionData.isSingleDocMode,
+                    documentName = sessionData.documentName,
                     modifier = Modifier.fillMaxSize()
                 )
             } else {
                 MessagesList(
-                    messages = state.messages,
+                    messages = sessionData.messages,
                     expandedCitationIds = state.expandedCitationIds,
                     listState = listState,
                     isLargeScreen = isLargeScreen,
@@ -95,7 +98,7 @@ internal fun ChatContent(
             canSend = state.canSend,
             isSending = state.isSending,
             isInputTooLong = state.isInputTooLong,
-            maxLength = state.maxMessageLength,
+            maxLength = sessionData.maxMessageLength,
             onInputChange = { text -> onIntent(ChatIntent.UpdateInputText(text)) },
             onSend = { onIntent(ChatIntent.SendMessage) },
             modifier = Modifier
@@ -106,7 +109,7 @@ internal fun ChatContent(
 
     if (state.showSessionPicker) {
         SessionPickerDialog(
-            sessions = state.recentSessions,
+            sessions = sessionData.recentSessions,
             onSessionSelect = { sessionId ->
                 onIntent(ChatIntent.LoadSession(sessionId))
             },
@@ -123,7 +126,12 @@ private fun ChatContentPreview(
 ) {
     TestWrapper(parameters) {
         ChatContent(
-            state = ChatState.Content(
+            state = ChatState(
+                session = DokusState.success(
+                    ChatSessionData(scope = ChatScope.AllDocs)
+                )
+            ),
+            sessionData = ChatSessionData(
                 scope = ChatScope.AllDocs,
                 messages = emptyList(),
             ),

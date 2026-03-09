@@ -24,6 +24,7 @@ import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.components.mobile.MobileSourceViewerScreen
 import tech.dokus.foundation.app.mvi.container
+import tech.dokus.foundation.app.state.isError
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.extensions.localized
@@ -63,8 +64,8 @@ internal fun DocumentSourceViewerRoute(
 
     LaunchedEffect(state, hasOpenedSource) {
         if (hasOpenedSource) return@LaunchedEffect
-        val contentState = state as? DocumentReviewState.Content ?: return@LaunchedEffect
-        if (contentState.document.sources.none { it.id == sourceId }) {
+        if (!state.hasContent) return@LaunchedEffect
+        if (state.documentRecord?.sources.orEmpty().none { it.id == sourceId }) {
             hasOpenedSource = true
             navController.popBackStack()
             return@LaunchedEffect
@@ -74,9 +75,9 @@ internal fun DocumentSourceViewerRoute(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        when (val currentState = state) {
-            is DocumentReviewState.Content -> {
-                val viewerState = currentState.sourceViewerState
+        when {
+            state.hasContent -> {
+                val viewerState = state.sourceViewerState
                 if (viewerState == null) {
                     Box(
                         modifier = Modifier.fillMaxSize(),
@@ -86,7 +87,7 @@ internal fun DocumentSourceViewerRoute(
                     }
                 } else {
                     MobileSourceViewerScreen(
-                        contentState = currentState,
+                        contentState = state,
                         viewerState = viewerState,
                         onBack = { navController.popBackStack() },
                         onToggleTechnicalDetails = {
@@ -100,12 +101,15 @@ internal fun DocumentSourceViewerRoute(
                 }
             }
 
-            is DocumentReviewState.Error -> {
-                DokusErrorContent(
-                    exception = currentState.exception,
-                    retryHandler = currentState.retryHandler,
-                    modifier = Modifier.fillMaxSize(),
-                )
+            state.document.isError() -> {
+                val errorState = state.document as? tech.dokus.foundation.app.state.DokusState.Error
+                if (errorState != null) {
+                    DokusErrorContent(
+                        exception = errorState.exception,
+                        retryHandler = errorState.retryHandler,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
             }
 
             else -> {

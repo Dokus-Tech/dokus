@@ -12,9 +12,10 @@ import tech.dokus.domain.model.NotificationDto
 import tech.dokus.domain.model.NotificationPreferenceDto
 import tech.dokus.domain.model.NotificationPreferencesResponse
 import tech.dokus.domain.model.common.PaginatedResponse
+import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.app.state.isSuccess
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -41,10 +42,11 @@ class NotificationPreferencesContainerTest {
         container.store.subscribeAndTest {
             testScope.advanceUntilIdle()
 
-            val content = assertIs<NotificationPreferencesState.Content>(states.value)
-            assertEquals(false, content.preferenceFor(NotificationType.PeppolReceived).emailEnabled)
-            assertEquals(true, content.preferenceFor(NotificationType.PaymentFailed).emailEnabled)
-            assertTrue(content.preferenceFor(NotificationType.PaymentFailed).emailLocked)
+            val state = states.value
+            assertTrue(state.preferences.isSuccess())
+            assertEquals(false, state.preferenceFor(NotificationType.PeppolReceived).emailEnabled)
+            assertEquals(true, state.preferenceFor(NotificationType.PaymentFailed).emailEnabled)
+            assertTrue(state.preferenceFor(NotificationType.PaymentFailed).emailLocked)
         }
     }
 
@@ -74,8 +76,9 @@ class NotificationPreferencesContainerTest {
             )
             testScope.advanceUntilIdle()
 
-            val content = assertIs<NotificationPreferencesState.Content>(states.value)
-            assertEquals(true, content.preferenceFor(NotificationType.VatWarning).emailEnabled)
+            val state = states.value
+            assertTrue(state.preferences.isSuccess())
+            assertEquals(true, state.preferenceFor(NotificationType.VatWarning).emailEnabled)
             assertEquals(NotificationType.VatWarning, remoteDataSource.lastUpdatedType)
             assertEquals(true, remoteDataSource.lastUpdatedEnabled)
         }

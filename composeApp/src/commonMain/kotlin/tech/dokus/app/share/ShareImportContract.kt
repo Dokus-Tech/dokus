@@ -7,34 +7,30 @@ import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.exceptions.DokusException
 
+enum class ShareImportPhase { LoadingContext, Uploading, Success, Error }
+
 @Immutable
-sealed interface ShareImportState : MVIState {
-    data object LoadingContext : ShareImportState
-
-    data class Uploading(
-        val currentFileName: String,
-        val currentFileIndex: Int,
-        val totalFiles: Int,
-        val workspaceName: String,
-        val currentFileProgress: Float,
-        val overallProgress: Float,
-    ) : ShareImportState
-
-    data class SuccessPulse(
-        val primaryFileName: String,
-        val additionalFileCount: Int,
-        val uploadedCount: Int,
-        val needsReviewCount: Int = 0,
-        val uploadedDocumentIds: List<String>
-    ) : ShareImportState
-
-    data class Error(
-        val exception: DokusException,
-        val retryHandler: RetryHandler?,
-        val canNavigateToLogin: Boolean,
-        val canOpenApp: Boolean = false,
-    ) : ShareImportState
-}
+data class ShareImportState(
+    val phase: ShareImportPhase = ShareImportPhase.LoadingContext,
+    // Uploading fields
+    val currentFileName: String = "",
+    val currentFileIndex: Int = 0,
+    val totalFiles: Int = 0,
+    val workspaceName: String = "",
+    val currentFileProgress: Float = 0f,
+    val overallProgress: Float = 0f,
+    // Success fields
+    val primaryFileName: String = "",
+    val additionalFileCount: Int = 0,
+    val uploadedCount: Int = 0,
+    val needsReviewCount: Int = 0,
+    val uploadedDocumentIds: List<String> = emptyList(),
+    // Error fields
+    val exception: DokusException? = null,
+    val retryHandler: RetryHandler? = null,
+    val canNavigateToLogin: Boolean = false,
+    val canOpenApp: Boolean = false,
+) : MVIState
 
 @Immutable
 sealed interface ShareImportIntent : MVIIntent {

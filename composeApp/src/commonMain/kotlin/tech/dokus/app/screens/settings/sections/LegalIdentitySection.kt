@@ -56,7 +56,7 @@ private val EditableCompanyAvatarSize = 144.dp
 
 @Composable
 internal fun LegalIdentitySection(
-    formState: WorkspaceSettingsState.Content.FormState,
+    formState: WorkspaceSettingsState.FormState,
     isLocked: Boolean,
     expanded: Boolean,
     onToggle: () -> Unit,
@@ -65,7 +65,7 @@ internal fun LegalIdentitySection(
     onSave: () -> Unit,
     onCancel: () -> Unit,
     onIntent: (WorkspaceSettingsIntent) -> Unit,
-    avatarState: WorkspaceSettingsState.Content.AvatarState,
+    avatarState: WorkspaceSettingsState.AvatarState,
     currentAvatar: Thumbnail?,
     avatarPicker: FilePickerLauncher,
 ) {
@@ -181,7 +181,7 @@ internal fun LegalIdentitySection(
  */
 @Composable
 private fun CompanyAvatarSection(
-    avatarState: WorkspaceSettingsState.Content.AvatarState,
+    avatarState: WorkspaceSettingsState.AvatarState,
     currentAvatar: Thumbnail?,
     companyInitial: String,
     onUploadAvatar: () -> Unit,
@@ -189,9 +189,9 @@ private fun CompanyAvatarSection(
     imageLoader: ImageLoader
 ) {
     val isAvatarBusy =
-        avatarState is WorkspaceSettingsState.Content.AvatarState.Uploading ||
-            avatarState is WorkspaceSettingsState.Content.AvatarState.Deleting
-    val uploadProgress = (avatarState as? WorkspaceSettingsState.Content.AvatarState.Uploading)?.progress
+        avatarState is WorkspaceSettingsState.AvatarState.Uploading ||
+            avatarState is WorkspaceSettingsState.AvatarState.Deleting
+    val uploadProgress = (avatarState as? WorkspaceSettingsState.AvatarState.Uploading)?.progress
     val editDescription = stringResource(
         if (currentAvatar != null) Res.string.action_change else Res.string.action_upload
     )
@@ -240,11 +240,11 @@ private fun CompanyAvatarSection(
  */
 @Composable
 private fun AvatarStateIndicator(
-    avatarState: WorkspaceSettingsState.Content.AvatarState,
+    avatarState: WorkspaceSettingsState.AvatarState,
     onResetState: () -> Unit
 ) {
     when (avatarState) {
-        is WorkspaceSettingsState.Content.AvatarState.Uploading -> {
+        is WorkspaceSettingsState.AvatarState.Uploading -> {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
@@ -263,7 +263,7 @@ private fun AvatarStateIndicator(
             }
         }
 
-        is WorkspaceSettingsState.Content.AvatarState.Deleting -> {
+        is WorkspaceSettingsState.AvatarState.Deleting -> {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
@@ -281,7 +281,7 @@ private fun AvatarStateIndicator(
             }
         }
 
-        is WorkspaceSettingsState.Content.AvatarState.Error -> {
+        is WorkspaceSettingsState.AvatarState.Error -> {
             Text(
                 text = avatarState.error.localized,
                 style = MaterialTheme.typography.bodySmall,
@@ -290,7 +290,7 @@ private fun AvatarStateIndicator(
             )
         }
 
-        is WorkspaceSettingsState.Content.AvatarState.Success -> {
+        is WorkspaceSettingsState.AvatarState.Success -> {
             LaunchedEffect(Unit) {
                 onResetState()
             }
@@ -307,7 +307,7 @@ private fun CompanyAvatarSectionPreview(
 ) {
     TestWrapper(parameters) {
         CompanyAvatarSection(
-            avatarState = WorkspaceSettingsState.Content.AvatarState.Idle,
+            avatarState = WorkspaceSettingsState.AvatarState.Idle,
             currentAvatar = null,
             companyInitial = "D",
             onUploadAvatar = {},

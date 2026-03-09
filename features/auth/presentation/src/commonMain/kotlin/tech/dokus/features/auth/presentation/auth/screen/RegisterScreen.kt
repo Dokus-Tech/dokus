@@ -35,7 +35,6 @@ import tech.dokus.features.auth.presentation.auth.components.onboarding.Onboardi
 import tech.dokus.features.auth.presentation.auth.components.onboarding.OnboardingSplitShell
 import tech.dokus.features.auth.presentation.auth.model.RegisterFormFields
 import tech.dokus.features.auth.presentation.auth.model.RegisterPage
-import tech.dokus.foundation.app.state.exceptionIfError
 import tech.dokus.foundation.aura.components.text.SectionTitle
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.extensions.dismissKeyboardOnTapOutside
@@ -57,8 +56,8 @@ internal fun RegisterScreen(
     val focusManager = LocalFocusManager.current
     val scope = rememberCoroutineScope()
 
-    val fieldsError = (state as? RegisterState.Error)?.exception
-    val isLoading = state is RegisterState.Registering
+    val fieldsError = state.error
+    val isLoading = state.isRegistering
 
     val fields = RegisterFormFields(
         email = state.email,
@@ -184,7 +183,7 @@ private fun RegisterScreenPreview(
 ) {
     TestWrapper(parameters) {
         RegisterScreen(
-            state = RegisterState.Idle(),
+            state = RegisterState(),
             onIntent = {},
             onNavigateUp = {},
             onNavigateToLogin = {},

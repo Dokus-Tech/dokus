@@ -24,7 +24,7 @@ import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Composable
 internal fun BankingDetailsSection(
-    formState: WorkspaceSettingsState.Content.FormState,
+    formState: WorkspaceSettingsState.FormState,
     expanded: Boolean,
     onToggle: () -> Unit,
     editMode: Boolean,
@@ -84,7 +84,7 @@ private fun BankingDetailsSectionPreview(
 ) {
     TestWrapper(parameters) {
         BankingDetailsSection(
-            formState = WorkspaceSettingsState.Content.FormState(
+            formState = WorkspaceSettingsState.FormState(
                 iban = "BE68 5390 0754 7034",
                 bic = "TRIOBEBB",
             ),

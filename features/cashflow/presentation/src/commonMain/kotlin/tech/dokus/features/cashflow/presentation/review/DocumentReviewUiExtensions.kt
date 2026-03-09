@@ -12,7 +12,7 @@ import tech.dokus.aura.resources.document_payment_recorded
 import tech.dokus.aura.resources.payment_method_bank_transfer
 import tech.dokus.features.cashflow.presentation.common.utils.formatShortDate
 
-val DocumentReviewState.Content.statusBadgeLocalized: String
+val DocumentReviewState.statusBadgeLocalized: String
     @Composable get() = when (financialStatus) {
         ReviewFinancialStatus.Overdue -> overdueDays?.let { days ->
             stringResource(Res.string.document_overdue_with_days, days)
@@ -20,7 +20,7 @@ val DocumentReviewState.Content.statusBadgeLocalized: String
         else -> financialStatus.localized
     }
 
-val DocumentReviewState.Content.compressedStatusDetailLocalized: String
+val DocumentReviewState.compressedStatusDetailLocalized: String
     @Composable get() = when (financialStatus) {
         ReviewFinancialStatus.Paid -> paidAtDate?.let { paidAt ->
             stringResource(Res.string.document_payment_paid_on, formatShortDate(paidAt))
@@ -32,21 +32,20 @@ val DocumentReviewState.Content.compressedStatusDetailLocalized: String
         ReviewFinancialStatus.Review -> financialStatus.localized
     }
 
-val DocumentReviewState.Content.paidHeadlineLocalized: String
+val DocumentReviewState.paidHeadlineLocalized: String
     @Composable get() = paidAtDate?.let { paidAt ->
         stringResource(Res.string.document_payment_paid_on, formatShortDate(paidAt))
     } ?: stringResource(Res.string.document_payment_recorded)
 
-val DocumentReviewState.Content.paidMethodLocalized: String
+val DocumentReviewState.paidMethodLocalized: String
     @Composable get() = stringResource(Res.string.payment_method_bank_transfer)
 
-val DocumentReviewState.Content.paymentDueLocalized: String?
+val DocumentReviewState.paymentDueLocalized: String?
     @Composable get() = resolvedDueDate?.let { dueDate ->
         stringResource(Res.string.document_payment_due_on, formatShortDate(dueDate))
     }
 
-val DocumentReviewState.Content.overdueInlineLocalized: String?
+val DocumentReviewState.overdueInlineLocalized: String?
     @Composable get() = overdueDays?.let { days ->
         stringResource(Res.string.document_overdue_days_inline, days)
     }
-

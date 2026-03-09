@@ -13,7 +13,6 @@ import tech.dokus.domain.City
 import tech.dokus.domain.Email
 import tech.dokus.domain.Name
 import tech.dokus.domain.PhoneNumber
-import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.enums.ClientType
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
@@ -24,13 +23,9 @@ import tech.dokus.foundation.app.state.DokusState
 /**
  * Contract for Contact Form screen (Create/Edit).
  *
- * Flow:
- * 1. Editing (Create Mode) → Empty form for new contact
- * 2. LoadingContact → Fetching existing contact for edit mode
- * 3. Editing (Edit Mode) → Form populated with contact data
- * 4. Saving → Creating or updating contact
- * 5. Deleting → Deleting the contact
- * 6. Error → Failed operation with retry option
+ * The form is always visible. Network-loaded data (the original contact for
+ * edit mode) is wrapped in [DokusState]. All form fields and UI flags are
+ * top-level properties.
  *
  * Features:
  * - Form field validation (name required, email format)
@@ -140,74 +135,53 @@ enum class DuplicateReason(val labelRes: StringResource) {
 // STATE
 // ============================================================================
 
+/**
+ * Flat state for the Contact Form screen.
+ *
+ * The form is always rendered. Network-loaded data (the original contact for
+ * edit mode) is wrapped in [DokusState].
+ *
+ * @property contactId ID of the contact being edited (null for create mode)
+ * @property originalContact Original contact loaded from server (idle for create, loading/success/error for edit)
+ * @property formData Current form field values
+ * @property ui UI state for pickers and dialogs
+ * @property duplicates Detected potential duplicate contacts
+ * @property isDuplicateCheckInProgress Whether duplicate check is running
+ * @property isSaving Whether save operation is in progress
+ * @property isDeleting Whether delete operation is in progress
+ */
 @Immutable
-sealed interface ContactFormState : MVIState {
+data class ContactFormState(
+    val contactId: ContactId? = null,
+    val originalContact: DokusState<ContactDto?> = DokusState.idle(),
+    val formData: ContactFormData = ContactFormData(),
+    val ui: ContactFormUi = ContactFormUi(),
+    val duplicates: List<PotentialDuplicate> = emptyList(),
+    val isDuplicateCheckInProgress: Boolean = false,
+    val isSaving: Boolean = false,
+    val isDeleting: Boolean = false,
+) : MVIState {
+    /**
+     * Whether the form is in edit mode (vs create mode).
+     */
+    val isEditMode: Boolean get() = contactId != null
 
     /**
-     * Loading existing contact for edit mode.
+     * Whether the form has unsaved changes.
+     * NOTE: PEPPOL comparison removed - PEPPOL status is in PeppolDirectoryCacheTable
      */
-    data class LoadingContact(
-        val contactId: ContactId,
-    ) : ContactFormState
-
-    /**
-     * Main editing state - handles both create and edit modes.
-     *
-     * @property contactId ID of the contact being edited (null for create mode)
-     * @property originalContact Original contact data when editing (for comparison)
-     * @property formData Current form field values
-     * @property ui UI state for pickers and dialogs
-     * @property duplicates Detected potential duplicate contacts
-     * @property isDuplicateCheckInProgress Whether duplicate check is running
-     * @property isSaving Whether save operation is in progress
-     * @property isDeleting Whether delete operation is in progress
-     */
-    data class Editing(
-        val contactId: ContactId? = null,
-        val originalContact: ContactDto? = null,
-        val formData: ContactFormData = ContactFormData(),
-        val ui: ContactFormUi = ContactFormUi(),
-        val duplicates: List<PotentialDuplicate> = emptyList(),
-        val isDuplicateCheckInProgress: Boolean = false,
-        val isSaving: Boolean = false,
-        val isDeleting: Boolean = false,
-    ) : ContactFormState {
-        /**
-         * Whether the form is in edit mode (vs create mode).
-         */
-        val isEditMode: Boolean get() = contactId != null
-
-        /**
-         * Whether the form has unsaved changes.
-         * NOTE: PEPPOL comparison removed - PEPPOL status is in PeppolDirectoryCacheTable
-         */
-        val hasChanges: Boolean
-            get() = originalContact?.let { original ->
-                formData.name != original.name ||
-                    formData.email != (original.email ?: Email.Empty) ||
-                    formData.phone != (original.phone ?: PhoneNumber.Empty) ||
-                    formData.vatNumber != (original.vatNumber ?: VatNumber.Empty) ||
-                    formData.businessType != original.businessType ||
-                    formData.addressLine1 != (original.addressLine1 ?: "") ||
-                    formData.city.value != (original.city ?: "") ||
-                    formData.country != (original.country ?: "")
-            } ?: formData.name.value.isNotBlank()
-    }
-
-    /**
-     * Error state - failed to load contact or save.
-     *
-     * @property contactId ID of the contact (if editing)
-     * @property formData Current form data to preserve user input
-     * @property exception The error that occurred
-     * @property retryHandler Handler to retry the failed operation
-     */
-    data class Error(
-        val contactId: ContactId?,
-        val formData: ContactFormData,
-        val exception: DokusException,
-        val retryHandler: RetryHandler,
-    ) : ContactFormState
+    val hasChanges: Boolean
+        get() {
+            val original = (originalContact as? DokusState.Success)?.data ?: return formData.name.value.isNotBlank()
+            return formData.name != original.name ||
+                formData.email != (original.email ?: Email.Empty) ||
+                formData.phone != (original.phone ?: PhoneNumber.Empty) ||
+                formData.vatNumber != (original.vatNumber ?: VatNumber.Empty) ||
+                formData.businessType != original.businessType ||
+                formData.addressLine1 != (original.addressLine1 ?: "") ||
+                formData.city.value != (original.city ?: "") ||
+                formData.country != (original.country ?: "")
+        }
 }
 
 // ============================================================================

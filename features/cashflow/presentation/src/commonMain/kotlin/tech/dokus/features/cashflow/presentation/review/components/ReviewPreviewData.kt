@@ -46,6 +46,7 @@ import tech.dokus.domain.model.contact.CounterpartySnapshot
 import tech.dokus.features.cashflow.presentation.review.DocumentPreviewState
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.PaymentSheetState
+import tech.dokus.features.cashflow.presentation.review.ReviewDocumentData
 import tech.dokus.features.cashflow.presentation.review.SourceEvidenceViewerState
 import tech.dokus.foundation.app.state.DokusState
 
@@ -72,7 +73,7 @@ internal fun previewReviewContentState(
     isUndoingAutoPayment: Boolean = false,
     hasCrossMatchedSource: Boolean = true,
     showPendingMatchReview: Boolean = false,
-): DocumentReviewState.Content {
+): DocumentReviewState {
     val tenantId = previewTenantId
     val documentId = previewDocumentId
     val draftData = InvoiceDraftData(
@@ -205,11 +206,17 @@ internal fun previewReviewContentState(
         ),
     )
 
-    return DocumentReviewState.Content(
-        documentId = documentId,
-        document = record,
-        draftData = draftData,
-        originalData = draftData,
+    return DocumentReviewState(
+        document = DokusState.success(
+            ReviewDocumentData(
+                documentId = documentId,
+                documentRecord = record,
+                draftData = draftData,
+                originalData = draftData,
+                previewUrl = null,
+                contactSuggestions = emptyList(),
+            )
+        ),
         previewState = previewState,
         hasUnsavedChanges = hasUnsyncedChanges,
         isDocumentConfirmed = isDocumentConfirmed,

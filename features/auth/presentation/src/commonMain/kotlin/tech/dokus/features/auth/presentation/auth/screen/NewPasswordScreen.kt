@@ -22,7 +22,6 @@ import tech.dokus.features.auth.mvi.NewPasswordIntent
 import tech.dokus.features.auth.mvi.NewPasswordState
 import tech.dokus.features.auth.presentation.auth.components.onboarding.OnboardingBrandVariant
 import tech.dokus.features.auth.presentation.auth.components.onboarding.OnboardingSplitShell
-import tech.dokus.foundation.app.state.exceptionIfError
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.fields.PTextFieldPassword
 import tech.dokus.foundation.aura.components.fields.PTextFieldPasswordDefaults
@@ -36,8 +35,8 @@ internal fun NewPasswordScreen(
     onIntent: (NewPasswordIntent) -> Unit,
     onNavigateUp: () -> Unit,
 ) {
-    val fieldsError = (state as? NewPasswordState.Error)?.exception
-    val isSubmitting = state is NewPasswordState.Submitting
+    val fieldsError = state.error
+    val isSubmitting = state.isSubmitting
     val passwordsMatch = state.password.value == state.passwordConfirmation.value
     val canSubmit = state.password.isValid && state.passwordConfirmation.isValid && passwordsMatch && !isSubmitting
 
@@ -105,7 +104,7 @@ private fun NewPasswordScreenPreview(
 ) {
     tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
         NewPasswordScreen(
-            state = NewPasswordState.Idle(),
+            state = NewPasswordState(),
             onIntent = {},
             onNavigateUp = {},
         )

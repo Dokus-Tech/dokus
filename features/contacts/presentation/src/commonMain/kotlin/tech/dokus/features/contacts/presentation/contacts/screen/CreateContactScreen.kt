@@ -28,6 +28,7 @@ import tech.dokus.aura.resources.contacts_create_contact
 import tech.dokus.aura.resources.contacts_resolve_counterparty
 import tech.dokus.features.contacts.mvi.CreateContactIntent
 import tech.dokus.features.contacts.mvi.CreateContactState
+import tech.dokus.features.contacts.mvi.CreateContactStep
 import tech.dokus.features.contacts.presentation.contacts.components.create.ConfirmStepContent
 import tech.dokus.features.contacts.presentation.contacts.components.create.LookupStepContent
 import tech.dokus.features.contacts.presentation.contacts.components.create.ManualStepContent
@@ -191,19 +192,19 @@ private fun CreateContactContent(
     LaunchedEffect(state, prefillCompanyName, prefillVat, origin) {
         if (origin != ContactCreateOrigin.DocumentReview) return@LaunchedEffect
         if (manualPrefillApplied) return@LaunchedEffect
-        val manualState = state as? CreateContactState.ManualStep ?: return@LaunchedEffect
+        if (state.step != CreateContactStep.Manual) return@LaunchedEffect
 
-        if (!prefillCompanyName.isNullOrBlank() && manualState.formData.companyName.value.isBlank()) {
+        if (!prefillCompanyName.isNullOrBlank() && state.formData.companyName.value.isBlank()) {
             onIntent(CreateContactIntent.ManualFieldChanged("companyName", prefillCompanyName))
         }
-        if (!prefillVat.isNullOrBlank() && manualState.formData.vatNumber.value.isBlank()) {
+        if (!prefillVat.isNullOrBlank() && state.formData.vatNumber.value.isBlank()) {
             onIntent(CreateContactIntent.ManualFieldChanged("vatNumber", prefillVat))
         }
         manualPrefillApplied = true
     }
 
-    when (state) {
-        is CreateContactState.LookupStep -> LookupStepContent(
+    when (state.step) {
+        CreateContactStep.Lookup -> LookupStepContent(
             state = state,
             onIntent = onIntent,
             initialQuery = prefillVat?.takeIf { it.isNotBlank() } ?: prefillCompanyName,
@@ -217,14 +218,14 @@ private fun CreateContactContent(
             modifier = modifier
         )
 
-        is CreateContactState.ConfirmStep -> ConfirmStepContent(
+        CreateContactStep.Confirm -> ConfirmStepContent(
             state = state,
             headerTitle = headerTitle,
             onIntent = onIntent,
             modifier = modifier
         )
 
-        is CreateContactState.ManualStep -> ManualStepContent(
+        CreateContactStep.Manual -> ManualStepContent(
             state = state,
             headerTitle = headerTitle,
             onIntent = onIntent,

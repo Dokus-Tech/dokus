@@ -9,6 +9,7 @@ import pro.respawn.flowmvi.plugins.init
 import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
+import tech.dokus.domain.ids.FirmId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.auth.ConsoleClientSummary
 import tech.dokus.features.auth.usecases.GetAccountMeUseCase
@@ -32,7 +33,7 @@ internal class ConsoleClientsContainer(
     private val logger = Logger.forClass<ConsoleClientsContainer>()
 
     override val store: Store<ConsoleClientsState, ConsoleClientsIntent, ConsoleClientsAction> =
-        store(ConsoleClientsState.Loading) {
+        store(ConsoleClientsState()) {
             init {
                 handleRefresh()
             }
@@ -49,14 +50,16 @@ internal class ConsoleClientsContainer(
         }
 
     private suspend fun ConsoleClientsCtx.handleRefresh() {
-        updateState { ConsoleClientsState.Loading }
+        updateState { copy(clients = clients.asLoading) }
 
         val accountMe = getAccountMeUseCase().getOrElse { error ->
             logger.e(error) { "Failed to resolve account context for console" }
             updateState {
-                ConsoleClientsState.Error(
-                    exception = error.asDokusException,
-                    retryHandler = { intent(ConsoleClientsIntent.Refresh) }
+                copy(
+                    clients = DokusState.error(
+                        exception = error.asDokusException,
+                        retryHandler = { intent(ConsoleClientsIntent.Refresh) },
+                    )
                 )
             }
             return
@@ -67,9 +70,11 @@ internal class ConsoleClientsContainer(
             ?: accountMe.firms.firstOrNull()
         if (firm == null) {
             updateState {
-                ConsoleClientsState.Error(
-                    exception = DokusException.WorkspaceContextUnavailable,
-                    retryHandler = { intent(ConsoleClientsIntent.Refresh) }
+                copy(
+                    clients = DokusState.error(
+                        exception = DokusException.WorkspaceContextUnavailable,
+                        retryHandler = { intent(ConsoleClientsIntent.Refresh) },
+                    )
                 )
             }
             return
@@ -77,27 +82,31 @@ internal class ConsoleClientsContainer(
         listConsoleClientsUseCase(firm.id).fold(
             onSuccess = { clients ->
                 updateState {
-                    ConsoleClientsState.Content(
+                    copy(
                         firmId = firm.id,
                         firmName = firm.name.value,
-                        clients = clients.sortedWith(
-                            compareBy<ConsoleClientSummary> {
-                                it.companyName.value.lowercase()
-                            }.thenBy {
-                                it.vatNumber?.value?.lowercase() ?: ""
-                            }.thenBy {
-                                it.tenantId.toString()
-                            }
-                        )
+                        clients = DokusState.success(
+                            clients.sortedWith(
+                                compareBy<ConsoleClientSummary> {
+                                    it.companyName.value.lowercase()
+                                }.thenBy {
+                                    it.vatNumber?.value?.lowercase() ?: ""
+                                }.thenBy {
+                                    it.tenantId.toString()
+                                }
+                            )
+                        ),
                     )
                 }
             },
             onFailure = { error ->
                 logger.e(error) { "Failed to load console clients" }
                 updateState {
-                    ConsoleClientsState.Error(
-                        exception = error.asDokusException,
-                        retryHandler = { intent(ConsoleClientsIntent.Refresh) }
+                    copy(
+                        clients = DokusState.error(
+                            exception = error.asDokusException,
+                            retryHandler = { intent(ConsoleClientsIntent.Refresh) },
+                        )
                     )
                 }
             }
@@ -105,96 +114,98 @@ internal class ConsoleClientsContainer(
     }
 
     private suspend fun ConsoleClientsCtx.handleUpdateQuery(query: String) {
-        withState<ConsoleClientsState.Content, _> {
-            updateState { copy(query = query) }
-        }
+        updateState { copy(query = query) }
     }
 
     private suspend fun ConsoleClientsCtx.handleSelectClient(tenantId: TenantId) {
-        withState<ConsoleClientsState.Content, _> {
-            updateState {
-                copy(
-                    selectedClientTenantId = tenantId,
-                    documentsState = DokusState.loading(),
-                    selectedDocument = null,
-                    loadingDocumentId = null,
-                )
-            }
-
-            listConsoleClientDocumentsUseCase(
-                firmId = firmId,
-                tenantId = tenantId,
-                page = 0,
-                limit = 50,
-            ).fold(
-                onSuccess = { paginated ->
-                    updateState {
-                        copy(
-                            selectedClientTenantId = tenantId,
-                            documentsState = DokusState.success(paginated.items),
-                            selectedDocument = null,
-                            loadingDocumentId = null,
-                        )
-                    }
-                },
-                onFailure = { error ->
-                    logger.e(error) { "Failed to load console client documents" }
-                    val exception = error.asDokusException
-                    updateState {
-                        copy(
-                            selectedClientTenantId = tenantId,
-                            documentsState = DokusState.error(
-                                exception = exception,
-                                retryHandler = { intent(ConsoleClientsIntent.SelectClient(tenantId)) },
-                            ),
-                            selectedDocument = null,
-                            loadingDocumentId = null,
-                        )
-                    }
-                    action(ConsoleClientsAction.ShowError(exception))
-                }
+        var currentFirmId: FirmId? = null
+        withState { currentFirmId = firmId }
+        val firmId = currentFirmId ?: return
+        updateState {
+            copy(
+                selectedClientTenantId = tenantId,
+                documentsState = DokusState.loading(),
+                selectedDocument = null,
+                loadingDocumentId = null,
             )
         }
+
+        listConsoleClientDocumentsUseCase(
+            firmId = firmId,
+            tenantId = tenantId,
+            page = 0,
+            limit = 50,
+        ).fold(
+            onSuccess = { paginated ->
+                updateState {
+                    copy(
+                        selectedClientTenantId = tenantId,
+                        documentsState = DokusState.success(paginated.items),
+                        selectedDocument = null,
+                        loadingDocumentId = null,
+                    )
+                }
+            },
+            onFailure = { error ->
+                logger.e(error) { "Failed to load console client documents" }
+                val exception = error.asDokusException
+                updateState {
+                    copy(
+                        selectedClientTenantId = tenantId,
+                        documentsState = DokusState.error(
+                            exception = exception,
+                            retryHandler = { intent(ConsoleClientsIntent.SelectClient(tenantId)) },
+                        ),
+                        selectedDocument = null,
+                        loadingDocumentId = null,
+                    )
+                }
+                action(ConsoleClientsAction.ShowError(exception))
+            }
+        )
     }
 
     private suspend fun ConsoleClientsCtx.handleOpenDocument(documentId: String) {
-        withState<ConsoleClientsState.Content, _> {
-            val tenantId = selectedClientTenantId ?: return@withState
-
-            updateState { copy(loadingDocumentId = documentId) }
-
-            getConsoleClientDocumentUseCase(
-                firmId = firmId,
-                tenantId = tenantId,
-                documentId = documentId,
-            ).fold(
-                onSuccess = { document ->
-                    updateState {
-                        copy(
-                            selectedDocument = document,
-                            loadingDocumentId = null,
-                        )
-                    }
-                },
-                onFailure = { error ->
-                    logger.e(error) { "Failed to load console document detail" }
-                    updateState { copy(loadingDocumentId = null) }
-                    action(ConsoleClientsAction.ShowError(error.asDokusException))
-                }
-            )
+        var currentFirmId: FirmId? = null
+        var currentTenantId: TenantId? = null
+        withState {
+            currentFirmId = firmId
+            currentTenantId = selectedClientTenantId
         }
+        val firmId = currentFirmId ?: return
+        val tenantId = currentTenantId ?: return
+
+        updateState { copy(loadingDocumentId = documentId) }
+
+        getConsoleClientDocumentUseCase(
+            firmId = firmId,
+            tenantId = tenantId,
+            documentId = documentId,
+        ).fold(
+            onSuccess = { document ->
+                updateState {
+                    copy(
+                        selectedDocument = document,
+                        loadingDocumentId = null,
+                    )
+                }
+            },
+            onFailure = { error ->
+                logger.e(error) { "Failed to load console document detail" }
+                updateState { copy(loadingDocumentId = null) }
+                action(ConsoleClientsAction.ShowError(error.asDokusException))
+            }
+        )
     }
 
     private suspend fun ConsoleClientsCtx.handleBackToClients() {
-        withState<ConsoleClientsState.Content, _> {
-            updateState {
-                copy(
-                    selectedClientTenantId = null,
-                    documentsState = DokusState.idle(),
-                    selectedDocument = null,
-                    loadingDocumentId = null,
-                )
-            }
+        updateState {
+            copy(
+                selectedClientTenantId = null,
+                documentsState = DokusState.idle(),
+                selectedDocument = null,
+                loadingDocumentId = null,
+            )
         }
     }
 }

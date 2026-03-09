@@ -19,7 +19,7 @@ internal class DocumentReviewContactBinder(
     // Contact sheet handlers
 
     suspend fun DocumentReviewCtx.handleOpenContactSheet() {
-        withState<DocumentReviewState.Content, _> {
+        withState {
             updateState {
                 copy(
                     showContactSheet = true,
@@ -33,7 +33,7 @@ internal class DocumentReviewContactBinder(
     }
 
     suspend fun DocumentReviewCtx.handleCloseContactSheet() {
-        withState<DocumentReviewState.Content, _> {
+        withState {
             updateState {
                 copy(
                     showContactSheet = false,
@@ -44,32 +44,35 @@ internal class DocumentReviewContactBinder(
     }
 
     suspend fun DocumentReviewCtx.handleUpdateContactSheetSearch(query: String) {
-        withState<DocumentReviewState.Content, _> {
+        withState {
             updateState { copy(contactSheetSearchQuery = query) }
         }
     }
 
     suspend fun DocumentReviewCtx.handleSelectContact(contactId: ContactId) {
-        withState<DocumentReviewState.Content, _> {
-            bindContact(documentId, contactId)
+        withState {
+            val activeDocumentId = documentId ?: return@withState
+            bindContact(activeDocumentId, contactId)
         }
     }
 
     suspend fun DocumentReviewCtx.handleAcceptSuggestedContact() {
-        withState<DocumentReviewState.Content, _> {
+        withState {
+            val activeDocumentId = documentId ?: return@withState
             val suggested = contactSelectionState as? ContactSelectionState.Suggested
                 ?: return@withState
-            bindContact(documentId, suggested.contactId)
+            bindContact(activeDocumentId, suggested.contactId)
         }
     }
 
     suspend fun DocumentReviewCtx.handleClearSelectedContact() {
-        withState<DocumentReviewState.Content, _> {
+        withState {
             updateState { copy(isBindingContact = true) }
         }
 
-        withState<DocumentReviewState.Content, _> {
-            updateDocumentDraftContact(documentId, null, CounterpartyIntent.None)
+        withState {
+            val activeDocumentId = documentId ?: return@withState
+            updateDocumentDraftContact(activeDocumentId, null, CounterpartyIntent.None)
                 .fold(
                     onSuccess = {
                         updateState {
@@ -99,18 +102,20 @@ internal class DocumentReviewContactBinder(
     }
 
     suspend fun DocumentReviewCtx.handleContactCreated(contactId: ContactId) {
-        withState<DocumentReviewState.Content, _> {
-            bindContact(documentId, contactId)
+        withState {
+            val activeDocumentId = documentId ?: return@withState
+            bindContact(activeDocumentId, contactId)
         }
     }
 
     suspend fun DocumentReviewCtx.handleSetCounterpartyIntent(intent: CounterpartyIntent) {
-        withState<DocumentReviewState.Content, _> {
+        withState {
             updateState { copy(isBindingContact = true) }
         }
 
-        withState<DocumentReviewState.Content, _> {
-            updateDocumentDraftContact(documentId, null, intent)
+        withState {
+            val activeDocumentId = documentId ?: return@withState
+            updateDocumentDraftContact(activeDocumentId, null, intent)
                 .fold(
                     onSuccess = {
                         val isPending = intent == CounterpartyIntent.Pending
@@ -145,7 +150,7 @@ internal class DocumentReviewContactBinder(
     }
 
     private suspend fun DocumentReviewCtx.bindContact(documentId: DocumentId, contactId: ContactId) {
-        withState<DocumentReviewState.Content, _> {
+        withState {
             updateState { copy(isBindingContact = true, contactValidationError = null) }
         }
 
@@ -154,7 +159,7 @@ internal class DocumentReviewContactBinder(
                 onSuccess = {
                     getContact(contactId).fold(
                         onSuccess = { contact ->
-                            withState<DocumentReviewState.Content, _> {
+                            withState {
                                 updateState {
                                     copy(
                                         selectedContactId = contactId,
@@ -174,7 +179,7 @@ internal class DocumentReviewContactBinder(
                         },
                         onFailure = { error ->
                             logger.w(error) { "Contact bound but fetch failed" }
-                            withState<DocumentReviewState.Content, _> {
+                            withState {
                                 updateState {
                                     copy(
                                         selectedContactId = contactId,
@@ -196,7 +201,7 @@ internal class DocumentReviewContactBinder(
                     } else {
                         exception
                     }
-                    withState<DocumentReviewState.Content, _> {
+                    withState {
                         updateState {
                             copy(
                                 isBindingContact = false,

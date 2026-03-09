@@ -40,6 +40,7 @@ import tech.dokus.domain.enums.ClientType
 import tech.dokus.domain.enums.Country
 import tech.dokus.features.contacts.mvi.CreateContactIntent
 import tech.dokus.features.contacts.mvi.CreateContactState
+import tech.dokus.features.contacts.mvi.CreateContactStep
 import tech.dokus.features.contacts.mvi.ManualContactFormData
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.fields.PTextFieldEmail
@@ -57,7 +58,7 @@ import tech.dokus.domain.LegalName
  */
 @Composable
 fun ManualStepContent(
-    state: CreateContactState.ManualStep,
+    state: CreateContactState,
     headerTitle: String,
     onIntent: (CreateContactIntent) -> Unit,
     modifier: Modifier = Modifier,
@@ -337,7 +338,8 @@ private fun ManualStepContentPreview(
 ) {
     TestWrapper(parameters) {
         ManualStepContent(
-            state = CreateContactState.ManualStep(
+            state = CreateContactState(
+                step = CreateContactStep.Manual,
                 contactType = ClientType.Business,
                 formData = ManualContactFormData(
                     companyName = LegalName("Acme Corp")

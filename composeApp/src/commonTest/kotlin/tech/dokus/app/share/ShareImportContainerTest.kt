@@ -11,7 +11,6 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -44,10 +43,11 @@ class ShareImportContainerTest {
             emit(ShareImportIntent.Load)
             testScope.advanceUntilIdle()
 
-            val error = assertIs<ShareImportState.Error>(states.value)
-            assertEquals(DokusException.NotAuthenticated(), error.exception)
-            assertEquals(null, error.retryHandler)
-            assertTrue(error.canNavigateToLogin)
+            val state = states.value
+            assertEquals(ShareImportPhase.Error, state.phase)
+            assertEquals(DokusException.NotAuthenticated(), state.exception)
+            assertEquals(null, state.retryHandler)
+            assertTrue(state.canNavigateToLogin)
             assertEquals(0, uploadUseCase.invocations)
         }
     }
@@ -81,9 +81,10 @@ class ShareImportContainerTest {
 
             assertEquals(1, uploadUseCase.invocations)
             assertEquals(listOf(workspace.id), selectTenantUseCase.invocations)
-            val success = assertIs<ShareImportState.SuccessPulse>(states.value)
-            assertEquals(1, success.uploadedCount)
-            assertEquals(listOf(document.id.toString()), success.uploadedDocumentIds)
+            val state = states.value
+            assertEquals(ShareImportPhase.Success, state.phase)
+            assertEquals(1, state.uploadedCount)
+            assertEquals(listOf(document.id.toString()), state.uploadedDocumentIds)
         }
     }
 
@@ -188,8 +189,9 @@ class ShareImportContainerTest {
             emit(ShareImportIntent.Load)
             testScope.advanceUntilIdle()
 
-            val error = assertIs<ShareImportState.Error>(states.value)
-            assertEquals(DokusException.WorkspaceContextUnavailable, error.exception)
+            val state = states.value
+            assertEquals(ShareImportPhase.Error, state.phase)
+            assertEquals(DokusException.WorkspaceContextUnavailable, state.exception)
             assertEquals(0, uploadUseCase.invocations)
         }
     }
@@ -218,10 +220,11 @@ class ShareImportContainerTest {
             emit(ShareImportIntent.Load)
             testScope.advanceUntilIdle()
 
-            val error = assertIs<ShareImportState.Error>(states.value)
-            assertEquals(DokusException.WorkspaceContextUnavailable, error.exception)
-            assertNotNull(error.retryHandler)
-            assertTrue(error.canOpenApp)
+            val state = states.value
+            assertEquals(ShareImportPhase.Error, state.phase)
+            assertEquals(DokusException.WorkspaceContextUnavailable, state.exception)
+            assertNotNull(state.retryHandler)
+            assertTrue(state.canOpenApp)
             assertEquals(0, uploadUseCase.invocations)
         }
     }
@@ -258,9 +261,10 @@ class ShareImportContainerTest {
             emit(ShareImportIntent.Load)
             testScope.advanceUntilIdle()
 
-            val error = assertIs<ShareImportState.Error>(states.value)
-            assertEquals(DokusException.DocumentUploadFailed, error.exception)
-            assertNotNull(error.retryHandler)
+            val state = states.value
+            assertEquals(ShareImportPhase.Error, state.phase)
+            assertEquals(DokusException.DocumentUploadFailed, state.exception)
+            assertNotNull(state.retryHandler)
             assertEquals(2, uploadUseCase.invocations)
             assertEquals(listOf("one.pdf", "two.pdf"), uploadUseCase.uploadedFilenames)
         }
@@ -310,7 +314,7 @@ class ShareImportContainerTest {
         container.store.subscribeAndTest {
             emit(ShareImportIntent.Load)
             testScope.advanceUntilIdle()
-            assertIs<ShareImportState.Error>(states.value)
+            assertEquals(ShareImportPhase.Error, states.value.phase)
             assertEquals(listOf("one.pdf", "two.pdf"), uploadUseCase.uploadedFilenames)
 
             ShareImportIntent.Retry resultsIn ShareImportAction.Finish(
@@ -354,9 +358,10 @@ class ShareImportContainerTest {
             emit(ShareImportIntent.Load)
             testScope.advanceUntilIdle()
 
-            val error = assertIs<ShareImportState.Error>(states.value)
-            assertEquals(DokusException.WorkspaceSelectFailed, error.exception)
-            assertNotNull(error.retryHandler)
+            val state = states.value
+            assertEquals(ShareImportPhase.Error, state.phase)
+            assertEquals(DokusException.WorkspaceSelectFailed, state.exception)
+            assertNotNull(state.retryHandler)
         }
     }
 

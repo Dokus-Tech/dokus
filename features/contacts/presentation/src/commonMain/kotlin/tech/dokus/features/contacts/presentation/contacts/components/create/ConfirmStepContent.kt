@@ -44,6 +44,7 @@ import tech.dokus.domain.enums.Country
 import tech.dokus.domain.model.entity.EntityLookup
 import tech.dokus.features.contacts.mvi.CreateContactIntent
 import tech.dokus.features.contacts.mvi.CreateContactState
+import tech.dokus.features.contacts.mvi.CreateContactStep
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.DokusCardVariant
 import tech.dokus.foundation.aura.components.PPrimaryButton
@@ -63,11 +64,13 @@ import tech.dokus.domain.model.entity.EntityStatus
  */
 @Composable
 fun ConfirmStepContent(
-    state: CreateContactState.ConfirmStep,
+    state: CreateContactState,
     headerTitle: String,
     onIntent: (CreateContactIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val selectedEntity = state.selectedEntity ?: return
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -96,7 +99,7 @@ fun ConfirmStepContent(
 
             // Company info card (read-only)
             CompanyInfoCard(
-                entity = state.selectedEntity,
+                entity = selectedEntity,
                 showAddress = state.showAddressDetails,
                 onToggleAddress = { onIntent(CreateContactIntent.ToggleAddressDetails) }
             )
@@ -298,7 +301,8 @@ private fun ConfirmStepContentPreview(
 ) {
     TestWrapper(parameters) {
         ConfirmStepContent(
-            state = CreateContactState.ConfirmStep(
+            state = CreateContactState(
+                step = CreateContactStep.Confirm,
                 selectedEntity = EntityLookup(
                     enterpriseNumber = "0123.456.789",
                     vatNumber = VatNumber("BE0123456789"),

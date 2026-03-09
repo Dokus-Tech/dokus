@@ -19,13 +19,13 @@ import tech.dokus.foundation.aura.extensions.localized
 
 @Composable
 internal fun SourcesCard(
-    state: DocumentReviewState.Content,
+    state: DocumentReviewState,
     onResolveSame: () -> Unit,
     onResolveDifferent: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val sources = state.document.sources
-    val pendingReview = state.document.pendingMatchReview
+    val sources = state.documentRecord?.sources.orEmpty()
+    val pendingReview = state.documentRecord?.pendingMatchReview
     if (sources.size <= 1 && pendingReview == null) return
 
     Column(modifier = modifier.fillMaxWidth()) {

@@ -7,15 +7,13 @@ import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.domain.Email
 import tech.dokus.domain.Name
 import tech.dokus.domain.Password
-import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.foundation.app.state.DokusState
 
 /**
  * Contract for Register screen.
  *
  * Flow:
- * 1. Idle → User enters email, password, first name, and last name
+ * 1. User enters email, password, first name, and last name
  * 2. Registering → Creating account and authenticating with backend
  * 3. Success → Navigate to Home or WorkspaceSelect
  * 4. Error → Display error with retry option
@@ -26,44 +24,14 @@ import tech.dokus.foundation.app.state.DokusState
 // ============================================================================
 
 @Immutable
-sealed interface RegisterState : MVIState {
-    val email: Email
-    val password: Password
-    val firstName: Name
-    val lastName: Name
-
-    /**
-     * Initial state - user enters credentials and name.
-     */
-    data class Idle(
-        override val email: Email = Email(""),
-        override val password: Password = Password(""),
-        override val firstName: Name = Name(""),
-        override val lastName: Name = Name(""),
-    ) : RegisterState
-
-    /**
-     * Registering and authenticating with backend.
-     */
-    data class Registering(
-        override val email: Email,
-        override val password: Password,
-        override val firstName: Name,
-        override val lastName: Name,
-    ) : RegisterState
-
-    /**
-     * Error state with recovery option.
-     */
-    data class Error(
-        override val email: Email,
-        override val password: Password,
-        override val firstName: Name,
-        override val lastName: Name,
-        val exception: DokusException,
-        val retryHandler: RetryHandler,
-    ) : RegisterState
-}
+data class RegisterState(
+    val email: Email = Email(""),
+    val password: Password = Password(""),
+    val firstName: Name = Name(""),
+    val lastName: Name = Name(""),
+    val isRegistering: Boolean = false,
+    val error: DokusException? = null,
+) : MVIState
 
 // ============================================================================
 // INTENTS (User Actions)

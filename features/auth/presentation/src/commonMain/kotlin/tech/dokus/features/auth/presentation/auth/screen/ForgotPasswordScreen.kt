@@ -21,7 +21,6 @@ import tech.dokus.features.auth.mvi.ForgotPasswordIntent
 import tech.dokus.features.auth.mvi.ForgotPasswordState
 import tech.dokus.features.auth.presentation.auth.components.onboarding.OnboardingBrandVariant
 import tech.dokus.features.auth.presentation.auth.components.onboarding.OnboardingSplitShell
-import tech.dokus.foundation.app.state.exceptionIfError
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.fields.PTextFieldEmail
 import tech.dokus.foundation.aura.components.fields.PTextFieldEmailDefaults
@@ -40,8 +39,8 @@ internal fun ForgotPasswordScreen(
     onIntent: (ForgotPasswordIntent) -> Unit,
     onNavigateUp: () -> Unit,
 ) {
-    val fieldsError = (state as? ForgotPasswordState.Error)?.exception
-    val isSubmitting = state is ForgotPasswordState.Submitting
+    val fieldsError = state.error
+    val isSubmitting = state.isSubmitting
     val canSubmit = state.email.isValid && !isSubmitting
 
     OnboardingSplitShell(
@@ -96,7 +95,7 @@ private fun ForgotPasswordScreenPreview(
 ) {
     TestWrapper(parameters) {
         ForgotPasswordScreen(
-            state = ForgotPasswordState.Idle(),
+            state = ForgotPasswordState(),
             onIntent = {},
             onNavigateUp = {},
         )

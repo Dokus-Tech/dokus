@@ -201,7 +201,7 @@ private fun ProfileDetailPaneIdlePreview(
     TestWrapper(parameters) {
         ProfileDetailPaneHost(
             selection = ProfileDetailSelection.None,
-            sessionsState = MySessionsState.Loading,
+            sessionsState = MySessionsState(),
             onSessionsIntent = {},
         )
     }
@@ -217,7 +217,7 @@ private fun ProfileDetailPaneSessionsPreview(
     TestWrapper(parameters) {
         ProfileDetailPaneHost(
             selection = ProfileDetailSelection.Sessions,
-            sessionsState = MySessionsState.Loaded(sessions = previewSessions()),
+            sessionsState = MySessionsState(sessions = tech.dokus.foundation.app.state.DokusState.success(previewSessions())),
             onSessionsIntent = {},
             nowEpochSeconds = SessionsPreviewNowEpochSeconds,
         )

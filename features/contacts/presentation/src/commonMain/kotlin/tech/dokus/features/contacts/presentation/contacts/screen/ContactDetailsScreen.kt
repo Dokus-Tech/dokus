@@ -16,7 +16,6 @@ import tech.dokus.domain.Name
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.contact.ContactDto
-import tech.dokus.domain.model.contact.ContactNoteDto
 import tech.dokus.features.contacts.mvi.ContactDetailsIntent
 import tech.dokus.features.contacts.mvi.ContactDetailsState
 import tech.dokus.features.contacts.mvi.EnrichmentSuggestion
@@ -67,31 +66,11 @@ private fun ContactDetailsScreenContent(
     onBackClick: () -> Unit,
     onEditClick: () -> Unit,
 ) {
-    val contactState: DokusState<ContactDto> = when (state) {
-        is ContactDetailsState.Loading -> DokusState.loading()
-        is ContactDetailsState.Content -> DokusState.success(state.contact)
-        is ContactDetailsState.Error -> DokusState.error(state.exception, state.retryHandler)
-    }
-
-    val invoiceSnapshotState = when (state) {
-        is ContactDetailsState.Content -> state.invoiceSnapshotState
-        else -> DokusState.loading()
-    }
-
-    val peppolStatusState = when (state) {
-        is ContactDetailsState.Content -> state.peppolStatusState
-        else -> DokusState.loading()
-    }
-
-    val notesState: DokusState<List<ContactNoteDto>> = when (state) {
-        is ContactDetailsState.Content -> state.notesState
-        else -> DokusState.loading()
-    }
-
-    val enrichmentSuggestions: List<EnrichmentSuggestion> = when (state) {
-        is ContactDetailsState.Content -> state.enrichmentSuggestions
-        else -> emptyList()
-    }
+    val contactState = state.contact
+    val invoiceSnapshotState = state.invoiceSnapshotState
+    val peppolStatusState = state.peppolStatusState
+    val notesState = state.notesState
+    val enrichmentSuggestions = state.enrichmentSuggestions
     val isEmbeddedDesktop = isDesktop && !showBackButton
 
     Scaffold(
@@ -136,8 +115,7 @@ private fun ContactDetailsScreenContent(
         )
     }
 
-    val contentState = state as? ContactDetailsState.Content
-    if (contentState?.uiState?.showEnrichmentPanel == true && enrichmentSuggestions.isNotEmpty()) {
+    if (state.uiState.showEnrichmentPanel && state.enrichmentSuggestions.isNotEmpty()) {
         EnrichmentSuggestionsDialog(
             suggestions = enrichmentSuggestions,
             onApply = { selected ->
@@ -157,14 +135,16 @@ private fun ContactDetailsScreenPreview(
     val now = LocalDateTime(2026, 1, 1, 0, 0)
     TestWrapper(parameters) {
         ContactDetailsScreen(
-            state = ContactDetailsState.Content(
+            state = ContactDetailsState(
                 contactId = mockContactId,
-                contact = ContactDto(
-                    id = mockContactId,
-                    tenantId = TenantId.generate(),
-                    name = Name("Acme Corp"),
-                    createdAt = now,
-                    updatedAt = now
+                contact = DokusState.success(
+                    ContactDto(
+                        id = mockContactId,
+                        tenantId = TenantId.generate(),
+                        name = Name("Acme Corp"),
+                        createdAt = now,
+                        updatedAt = now
+                    )
                 )
             ),
             showBackButton = true,

@@ -10,6 +10,7 @@ import tech.dokus.domain.model.DocumentMatchResolutionDecision
 import tech.dokus.domain.model.ReprocessRequest
 import tech.dokus.features.cashflow.usecases.ReprocessDocumentUseCase
 import tech.dokus.features.cashflow.usecases.ResolveDocumentMatchReviewUseCase
+import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.platform.Logger
 
 internal class DocumentReviewFeedbackActions(
@@ -19,9 +20,7 @@ internal class DocumentReviewFeedbackActions(
     private val logger: Logger,
 ) {
     suspend fun DocumentReviewCtx.handleShowFeedbackDialog() {
-        withState<DocumentReviewState.Content, _> {
-            updateState { copy(feedbackDialogState = FeedbackDialogState()) }
-        }
+        updateState { copy(feedbackDialogState = FeedbackDialogState()) }
     }
 
     suspend fun DocumentReviewCtx.handleRequestAmendment() {
@@ -29,13 +28,11 @@ internal class DocumentReviewFeedbackActions(
     }
 
     suspend fun DocumentReviewCtx.handleDismissFeedbackDialog() {
-        withState<DocumentReviewState.Content, _> {
-            updateState { copy(feedbackDialogState = null) }
-        }
+        updateState { copy(feedbackDialogState = null) }
     }
 
     suspend fun DocumentReviewCtx.handleUpdateFeedbackText(text: String) {
-        withState<DocumentReviewState.Content, _> {
+        withState {
             feedbackDialogState?.let { dialogState ->
                 updateState {
                     copy(feedbackDialogState = dialogState.copy(feedbackText = text))
@@ -45,7 +42,8 @@ internal class DocumentReviewFeedbackActions(
     }
 
     suspend fun DocumentReviewCtx.handleSubmitFeedback() {
-        withState<DocumentReviewState.Content, _> {
+        withState {
+            val activeDocumentId = documentId ?: return@withState
             val dialogState = feedbackDialogState ?: return@withState
             val feedback = dialogState.feedbackText.trim()
             if (feedback.isBlank()) return@withState
@@ -56,7 +54,7 @@ internal class DocumentReviewFeedbackActions(
 
             launch {
                 reprocessDocument(
-                    documentId,
+                    activeDocumentId,
                     ReprocessRequest(
                         force = true,
                         dpi = 220,
@@ -65,14 +63,12 @@ internal class DocumentReviewFeedbackActions(
                 ).fold(
                     onSuccess = { response ->
                         logger.d { "Reprocess with feedback queued: runId=${response.runId}" }
-                        withState<DocumentReviewState.Content, _> {
-                            updateState { copy(feedbackDialogState = null) }
-                        }
-                        refreshAfterDraftUpdate(documentId)
+                        updateState { copy(feedbackDialogState = null) }
+                        refreshAfterDraftUpdate(activeDocumentId)
                     },
                     onFailure = { error ->
-                        logger.e(error) { "Failed to reprocess with feedback: $documentId" }
-                        withState<DocumentReviewState.Content, _> {
+                        logger.e(error) { "Failed to reprocess with feedback: $activeDocumentId" }
+                        withState {
                             updateState {
                                 copy(feedbackDialogState = feedbackDialogState?.copy(isSubmitting = false))
                             }
@@ -85,18 +81,19 @@ internal class DocumentReviewFeedbackActions(
     }
 
     suspend fun DocumentReviewCtx.handleRetryAnalysis() {
-        withState<DocumentReviewState.Content, _> {
-            logger.d { "Retrying analysis for document: $documentId" }
+        withState {
+            val activeDocumentId = documentId ?: return@withState
+            logger.d { "Retrying analysis for document: $activeDocumentId" }
 
             launch {
-                reprocessDocument(documentId)
+                reprocessDocument(activeDocumentId)
                     .fold(
                         onSuccess = { response ->
                             logger.d { "Reprocess queued: runId=${response.runId}, status=${response.status}" }
-                            refreshAfterDraftUpdate(documentId)
+                            refreshAfterDraftUpdate(activeDocumentId)
                         },
                         onFailure = { error ->
-                            logger.e(error) { "Failed to reprocess document: $documentId" }
+                            logger.e(error) { "Failed to reprocess document: $activeDocumentId" }
                             action(DocumentReviewAction.ShowError(error.asDokusException))
                         }
                     )
@@ -105,9 +102,7 @@ internal class DocumentReviewFeedbackActions(
     }
 
     suspend fun DocumentReviewCtx.handleDismissFailureBanner() {
-        withState<DocumentReviewState.Content, _> {
-            updateState { copy(failureBannerDismissed = true) }
-        }
+        updateState { copy(failureBannerDismissed = true) }
     }
 
     suspend fun DocumentReviewCtx.handleResolvePossibleMatchSame() {
@@ -119,8 +114,8 @@ internal class DocumentReviewFeedbackActions(
     }
 
     private suspend fun DocumentReviewCtx.resolvePossibleMatch(decision: DocumentMatchResolutionDecision) {
-        withState<DocumentReviewState.Content, _> {
-            val reviewId = document.pendingMatchReview?.reviewId ?: return@withState
+        withState {
+            val reviewId = documentRecord?.pendingMatchReview?.reviewId ?: return@withState
             if (isResolvingMatchReview) return@withState
 
             updateState { copy(isResolvingMatchReview = true) }
@@ -129,12 +124,17 @@ internal class DocumentReviewFeedbackActions(
                 resolveDocumentMatchReview(reviewId, decision).fold(
                     onSuccess = { record ->
                         val draft = record.draft
-                        withState<DocumentReviewState.Content, _> {
+                        withState {
+                            val currentData = documentData ?: return@withState
                             updateState {
                                 copy(
-                                    document = record,
-                                    draftData = draft?.extractedData,
-                                    originalData = draft?.extractedData,
+                                    document = DokusState.success(
+                                        currentData.copy(
+                                            documentRecord = record,
+                                            draftData = draft?.extractedData,
+                                            originalData = draft?.extractedData,
+                                        )
+                                    ),
                                     hasUnsavedChanges = false,
                                     isResolvingMatchReview = false,
                                     counterpartyIntent = draft?.counterpartyIntent ?: CounterpartyIntent.None,
@@ -146,7 +146,7 @@ internal class DocumentReviewFeedbackActions(
                     },
                     onFailure = { error ->
                         logger.e(error) { "Failed to resolve possible match for reviewId=$reviewId" }
-                        withState<DocumentReviewState.Content, _> {
+                        withState {
                             updateState { copy(isResolvingMatchReview = false) }
                         }
                         action(DocumentReviewAction.ShowError(error.asDokusException))

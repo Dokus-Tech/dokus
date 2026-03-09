@@ -13,6 +13,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.app.state.isError
+import tech.dokus.foundation.app.state.isLoading
+import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.aura.components.common.DokusErrorBanner
 import tech.dokus.app.screens.settings.components.SettingsSkeleton
 import androidx.compose.material3.HorizontalDivider
@@ -101,27 +105,28 @@ internal fun NotificationPreferencesContent(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
-    when (state) {
-        NotificationPreferencesState.Loading -> {
+    when {
+        state.preferences.isLoading() -> {
             SettingsSkeleton(
                 sectionCount = 3,
                 modifier = modifier.padding(contentPadding),
             )
         }
 
-        is NotificationPreferencesState.Content -> {
+        state.preferences.isError() -> {
+            val error = state.preferences as DokusState.Error
+            DokusErrorBanner(
+                exception = error.exception,
+                retryHandler = error.retryHandler,
+                modifier = modifier.padding(contentPadding).padding(Constraints.Spacing.large),
+            )
+        }
+
+        state.preferences.isSuccess() -> {
             NotificationPreferencesContentScreen(
                 state = state,
                 onIntent = onIntent,
                 modifier = modifier.padding(contentPadding)
-            )
-        }
-
-        is NotificationPreferencesState.Error -> {
-            DokusErrorBanner(
-                exception = state.exception,
-                retryHandler = state.retryHandler,
-                modifier = modifier.padding(contentPadding).padding(Constraints.Spacing.large),
             )
         }
     }
@@ -129,7 +134,7 @@ internal fun NotificationPreferencesContent(
 
 @Composable
 private fun NotificationPreferencesContentScreen(
-    state: NotificationPreferencesState.Content,
+    state: NotificationPreferencesState,
     onIntent: (NotificationPreferencesIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -226,7 +231,7 @@ private fun NotificationSection(
     expanded: Boolean,
     onToggle: () -> Unit,
     rows: List<NotificationType>,
-    state: NotificationPreferencesState.Content,
+    state: NotificationPreferencesState,
     onIntent: (NotificationPreferencesIntent) -> Unit,
     hint: String? = null,
 ) {
@@ -367,7 +372,7 @@ private fun NotificationPreferencesLoadingPreview(
 ) {
     TestWrapper(parameters) {
         NotificationPreferencesContent(
-            state = NotificationPreferencesState.Loading,
+            state = NotificationPreferencesState(),
             onIntent = {},
         )
     }
@@ -380,9 +385,11 @@ private fun NotificationPreferencesErrorPreview(
 ) {
     TestWrapper(parameters) {
         NotificationPreferencesContent(
-            state = NotificationPreferencesState.Error(
-                exception = DokusException.ConnectionError(),
-                retryHandler = RetryHandler { },
+            state = NotificationPreferencesState(
+                preferences = DokusState.error(
+                    exception = DokusException.ConnectionError(),
+                    retryHandler = RetryHandler { },
+                ),
             ),
             onIntent = {},
         )
@@ -413,8 +420,8 @@ private fun NotificationPreferencesContentPreview(
     )
     TestWrapper(parameters) {
         NotificationPreferencesContent(
-            state = NotificationPreferencesState.Content(
-                preferences = samplePreferences,
+            state = NotificationPreferencesState(
+                preferences = DokusState.success(samplePreferences),
             ),
             onIntent = {},
         )

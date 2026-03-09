@@ -32,6 +32,9 @@ import tech.dokus.features.auth.presentation.auth.components.ProtocolSelector
 import tech.dokus.features.auth.presentation.auth.components.ServerConfirmationDialog
 import tech.dokus.features.auth.presentation.auth.components.onboarding.OnboardingBrandVariant
 import tech.dokus.features.auth.presentation.auth.components.onboarding.OnboardingSplitShell
+import tech.dokus.foundation.app.state.isError
+import tech.dokus.foundation.app.state.isLoading
+import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
@@ -46,6 +49,10 @@ internal fun ServerConnectionScreen(
     currentServer: ServerConfig?,
     onIntent: (ServerConnectionIntent) -> Unit,
 ) {
+    val isValidating = state.validation.isLoading()
+    val isConnecting = state.isConnecting
+    val isBusy = isValidating || isConnecting
+
     OnboardingSplitShell(
         brandVariant = OnboardingBrandVariant.Primary,
         modifier = Modifier.dismissKeyboardOnTapOutside()
@@ -87,7 +94,6 @@ internal fun ServerConnectionScreen(
 
         Spacer(modifier = Modifier.height(Constraints.Spacing.large))
 
-        val hostError = (state as? ServerConnectionState.Input)?.hostError
         PTextFieldStandard(
             fieldName = stringResource(Res.string.auth_host_label),
             value = state.host,
@@ -95,14 +101,13 @@ internal fun ServerConnectionScreen(
                 keyboardType = KeyboardType.Uri,
                 imeAction = ImeAction.Next,
             ),
-            error = hostError,
+            error = state.hostError,
             modifier = Modifier.fillMaxWidth(),
             onValueChange = { onIntent(ServerConnectionIntent.UpdateHost(it)) },
         )
 
         Spacer(modifier = Modifier.height(Constraints.Spacing.large))
 
-        val portError = (state as? ServerConnectionState.Input)?.portError
         PTextFieldStandard(
             fieldName = stringResource(Res.string.auth_port_label),
             value = state.port,
@@ -110,7 +115,7 @@ internal fun ServerConnectionScreen(
                 keyboardType = KeyboardType.Number,
                 imeAction = ImeAction.Done,
             ),
-            error = portError,
+            error = state.portError,
             modifier = Modifier.fillMaxWidth(),
             onValueChange = { onIntent(ServerConnectionIntent.UpdatePort(it)) },
         )
@@ -118,20 +123,20 @@ internal fun ServerConnectionScreen(
         Spacer(modifier = Modifier.height(Constraints.Spacing.xLarge))
 
         PPrimaryButton(
-            text = when (state) {
-                is ServerConnectionState.Validating -> stringResource(Res.string.auth_validating)
-                is ServerConnectionState.Connecting -> stringResource(Res.string.auth_connecting)
+            text = when {
+                isValidating -> stringResource(Res.string.auth_validating)
+                isConnecting -> stringResource(Res.string.auth_connecting)
                 else -> stringResource(Res.string.auth_validate_connection)
             },
-            enabled = state !is ServerConnectionState.Validating && state !is ServerConnectionState.Connecting,
+            enabled = !isBusy,
             onClick = { onIntent(ServerConnectionIntent.ValidateClicked) },
             modifier = Modifier.fillMaxWidth(),
         )
 
-        if (state is ServerConnectionState.Validating || state is ServerConnectionState.Connecting) {
+        if (isBusy) {
             Spacer(modifier = Modifier.height(Constraints.Spacing.small))
             Text(
-                text = if (state is ServerConnectionState.Validating) {
+                text = if (isValidating) {
                     stringResource(Res.string.auth_checking_server)
                 } else {
                     stringResource(Res.string.auth_connecting)
@@ -142,12 +147,12 @@ internal fun ServerConnectionScreen(
             )
         }
 
-        val errorState = state as? ServerConnectionState.Error
-        if (errorState != null) {
+        val validation = state.validation
+        if (validation.isError()) {
             Spacer(modifier = Modifier.height(Constraints.Spacing.medium))
             DokusErrorContent(
-                exception = errorState.exception,
-                retryHandler = errorState.retryHandler,
+                exception = validation.exception,
+                retryHandler = validation.retryHandler,
                 compact = true,
             )
         }
@@ -166,11 +171,11 @@ internal fun ServerConnectionScreen(
         }
     }
 
-    val previewState = state as? ServerConnectionState.Preview
-    if (previewState != null) {
+    val validation = state.validation
+    if (validation.isSuccess() && !state.isConnecting) {
         ServerConfirmationDialog(
-            config = previewState.config,
-            serverInfo = previewState.serverInfo,
+            config = validation.data.config,
+            serverInfo = validation.data.serverInfo,
             onConfirm = { onIntent(ServerConnectionIntent.ConfirmConnection) },
             onDismiss = { onIntent(ServerConnectionIntent.CancelPreview) },
         )
@@ -186,7 +191,7 @@ private fun ServerConnectionScreenPreview(
 ) {
     tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
         ServerConnectionScreen(
-            state = ServerConnectionState.Input(),
+            state = ServerConnectionState(),
             currentServer = ServerConfig.Cloud,
             onIntent = {},
         )

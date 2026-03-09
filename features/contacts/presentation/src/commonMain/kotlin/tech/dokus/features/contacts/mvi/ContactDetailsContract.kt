@@ -5,7 +5,6 @@ import androidx.compose.runtime.Stable
 import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
-import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.model.PeppolStatusResponse
@@ -18,12 +17,8 @@ import tech.dokus.foundation.app.state.DokusState
 /**
  * Contract for Contact Details screen.
  *
- * Flow:
- * 1. Loading → Initial data fetch for contact, activity, and notes
- * 2. Content → Contact loaded, displays info, activity summary, and notes
- *    - Sub-states for activity and notes (independently loading/error)
- *    - UI dialogs for notes management
- * 3. Error → Failed to load contact with retry option
+ * Flat data class state — network/loaded data wrapped in [DokusState],
+ * UI state (enrichment, saving flags, note drafts) always top-level.
  *
  * Features:
  * - Contact information display
@@ -37,56 +32,31 @@ import tech.dokus.foundation.app.state.DokusState
 // STATE
 // ============================================================================
 
+/**
+ * @property contactId ID of the contact being displayed
+ * @property contact Contact data (loading / success / error)
+ * @property activityState Activity summary (independent loading)
+ * @property invoiceSnapshotState Invoice snapshot (count/totals/recent docs)
+ * @property peppolStatusState PEPPOL lookup status
+ * @property notesState Notes list (independent loading)
+ * @property enrichmentSuggestions Available enrichment suggestions
+ * @property uiState UI state for dialogs and panels
+ * @property isSavingNote Whether note save is in progress
+ * @property isDeletingNote Whether note deletion is in progress
+ */
 @Immutable
-sealed interface ContactDetailsState : MVIState {
-
-    /**
-     * Loading state - initial data fetch in progress.
-     */
-    data class Loading(
-        val contactId: ContactId,
-    ) : ContactDetailsState
-
-    /**
-     * Content state - contact loaded and ready for display.
-     *
-     * @property contactId ID of the contact being displayed
-     * @property contact The contact data
-     * @property activityState State of activity summary (independent loading)
-     * @property invoiceSnapshotState State of invoice snapshot (count/totals/recent docs)
-     * @property peppolStatusState State of PEPPOL lookup
-     * @property notesState State of notes list (independent loading)
-     * @property enrichmentSuggestions Available enrichment suggestions
-     * @property uiState UI state for dialogs and panels
-     * @property isSavingNote Whether note save is in progress
-     * @property isDeletingNote Whether note deletion is in progress
-     */
-    data class Content(
-        val contactId: ContactId,
-        val contact: ContactDto,
-        val activityState: DokusState<ContactActivitySummary> = DokusState.loading(),
-        val invoiceSnapshotState: DokusState<ContactInvoiceSnapshot> = DokusState.loading(),
-        val peppolStatusState: DokusState<PeppolStatusResponse> = DokusState.loading(),
-        val notesState: DokusState<List<ContactNoteDto>> = DokusState.loading(),
-        val enrichmentSuggestions: List<EnrichmentSuggestion> = emptyList(),
-        val uiState: ContactDetailsUiState = ContactDetailsUiState(),
-        val isSavingNote: Boolean = false,
-        val isDeletingNote: Boolean = false,
-    ) : ContactDetailsState
-
-    /**
-     * Error state - failed to load contact.
-     *
-     * @property contactId ID of the contact that failed to load
-     * @property exception The error that occurred
-     * @property retryHandler Handler to retry the failed operation
-     */
-    data class Error(
-        val contactId: ContactId,
-        val exception: DokusException,
-        val retryHandler: RetryHandler,
-    ) : ContactDetailsState
-}
+data class ContactDetailsState(
+    val contactId: ContactId,
+    val contact: DokusState<ContactDto> = DokusState.loading(),
+    val activityState: DokusState<ContactActivitySummary> = DokusState.loading(),
+    val invoiceSnapshotState: DokusState<ContactInvoiceSnapshot> = DokusState.loading(),
+    val peppolStatusState: DokusState<PeppolStatusResponse> = DokusState.loading(),
+    val notesState: DokusState<List<ContactNoteDto>> = DokusState.loading(),
+    val enrichmentSuggestions: List<EnrichmentSuggestion> = emptyList(),
+    val uiState: ContactDetailsUiState = ContactDetailsUiState(),
+    val isSavingNote: Boolean = false,
+    val isDeletingNote: Boolean = false,
+) : MVIState
 
 // ============================================================================
 // INTENTS (User Actions)

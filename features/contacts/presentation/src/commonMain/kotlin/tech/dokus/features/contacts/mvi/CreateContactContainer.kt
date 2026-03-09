@@ -8,7 +8,6 @@ import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.reduce
-import tech.dokus.domain.City
 import tech.dokus.domain.Email
 import tech.dokus.domain.LegalName
 import tech.dokus.domain.Name
@@ -60,7 +59,7 @@ internal class CreateContactContainer(
     private var searchJob: Job? = null
 
     override val store: Store<CreateContactState, CreateContactIntent, CreateContactAction> =
-        store(CreateContactState.LookupStep()) {
+        store(CreateContactState()) {
             reduce { intent ->
                 when (intent) {
                     // Lookup step
@@ -115,22 +114,18 @@ internal class CreateContactContainer(
         // Cancel any previous search job
         searchJob?.cancel()
 
-        withState<CreateContactState.LookupStep, _> {
-            // Clear previous duplicate warning
-            if (duplicateVat != null) {
-                updateState { copy(duplicateVat = null) }
-            }
+        // Clear previous duplicate warning
+        updateState { copy(duplicateVat = null) }
 
-            val vatNumber = VatNumber(query)
-            val name = LegalName(query)
-            if (vatNumber.isValid) {
-                // VAT-like input - check local first, then remote
-                handleVatQuery(vatNumber)
-            } else {
-                // Name search - execute immediately (debounce already happened in UI)
-                updateState { copy(lookupState = LookupUiState.Loading) }
-                searchJob = launch { searchRemote(name, vatNumber) }
-            }
+        val vatNumber = VatNumber(query)
+        val name = LegalName(query)
+        if (vatNumber.isValid) {
+            // VAT-like input - check local first, then remote
+            handleVatQuery(vatNumber)
+        } else {
+            // Name search - execute immediately (debounce already happened in UI)
+            updateState { copy(lookupState = LookupUiState.Loading) }
+            searchJob = launch { searchRemote(name, vatNumber) }
         }
     }
 
@@ -139,35 +134,31 @@ internal class CreateContactContainer(
      */
     private suspend fun CreateContactCtx.handleClearSearch() {
         searchJob?.cancel()
-        withState<CreateContactState.LookupStep, _> {
-            updateState { copy(lookupState = LookupUiState.Idle, duplicateVat = null) }
-        }
+        updateState { copy(lookupState = LookupUiState.Idle, duplicateVat = null) }
     }
 
     private suspend fun CreateContactCtx.handleVatQuery(normalizedVat: VatNumber) {
-        withState<CreateContactState.LookupStep, _> {
-            updateState { copy(lookupState = LookupUiState.Loading) }
+        updateState { copy(lookupState = LookupUiState.Loading) }
 
-            // Check local contacts first
-            val existingContact = findContactByVat(normalizedVat)
-            if (existingContact != null) {
-                logger.d { "Found existing contact with VAT: $normalizedVat" }
-                updateState {
-                    copy(
-                        lookupState = LookupUiState.Idle,
-                        duplicateVat = DuplicateVatUi(
-                            contactId = existingContact.first,
-                            displayName = existingContact.second,
-                            vatNumber = normalizedVat
-                        )
+        // Check local contacts first
+        val existingContact = findContactByVat(normalizedVat)
+        if (existingContact != null) {
+            logger.d { "Found existing contact with VAT: $normalizedVat" }
+            updateState {
+                copy(
+                    lookupState = LookupUiState.Idle,
+                    duplicateVat = DuplicateVatUi(
+                        contactId = existingContact.first,
+                        displayName = existingContact.second,
+                        vatNumber = normalizedVat
                     )
-                }
-                return@withState
+                )
             }
-
-            // No local match - do remote lookup
-            searchRemote(null, normalizedVat)
+            return
         }
+
+        // No local match - do remote lookup
+        searchRemote(null, normalizedVat)
     }
 
     private suspend fun CreateContactCtx.searchRemote(name: LegalName?, number: VatNumber?) {
@@ -177,34 +168,32 @@ internal class CreateContactContainer(
             onSuccess = { response ->
                 logger.d { "Found ${response.results.size} results" }
                 updateState {
-                    when (this) {
-                        is CreateContactState.LookupStep -> copy(
+                    if (step == CreateContactStep.Lookup) {
+                        copy(
                             lookupState = if (response.results.isEmpty()) {
                                 LookupUiState.Empty
                             } else {
                                 LookupUiState.Success(response.results)
                             }
                         )
-
-                        else -> this
+                    } else {
+                        this
                     }
                 }
             },
             onFailure = { error ->
                 logger.e(error) { "Search failed" }
                 updateState {
-                    when (this) {
-                        is CreateContactState.LookupStep -> {
-                            val exception = error.asDokusException
-                            val displayException = if (exception is DokusException.Unknown) {
-                                DokusException.ContactLookupFailed
-                            } else {
-                                exception
-                            }
-                            copy(lookupState = LookupUiState.Error(displayException))
+                    if (step == CreateContactStep.Lookup) {
+                        val exception = error.asDokusException
+                        val displayException = if (exception is DokusException.Unknown) {
+                            DokusException.ContactLookupFailed
+                        } else {
+                            exception
                         }
-
-                        else -> this
+                        copy(lookupState = LookupUiState.Error(displayException))
+                    } else {
+                        this
                     }
                 }
             }
@@ -225,7 +214,8 @@ internal class CreateContactContainer(
         val country = entity.address?.country ?: Country.Belgium
         // Manual form has no address fields, so we prefill name/VAT/country only.
         updateState {
-            CreateContactState.ManualStep(
+            CreateContactState(
+                step = CreateContactStep.Manual,
                 contactType = ClientType.Business,
                 formData = ManualContactFormData(
                     companyName = entity.name,
@@ -239,7 +229,7 @@ internal class CreateContactContainer(
     private suspend fun CreateContactCtx.handleGoToManualEntry() {
         logger.d { "Going to manual entry" }
         updateState {
-            CreateContactState.ManualStep()
+            CreateContactState(step = CreateContactStep.Manual)
         }
     }
 
@@ -248,96 +238,96 @@ internal class CreateContactContainer(
     // ============================================================================
 
     private suspend fun CreateContactCtx.handleBillingEmailChanged(email: Email) {
-        withState<CreateContactState.ConfirmStep, _> {
-            val error = runCatching { email.validOrThrows }.exceptionOrNull()
-            updateState { copy(billingEmail = email, emailError = error?.asDokusException) }
-        }
+        val error = runCatching { email.validOrThrows }.exceptionOrNull()
+        updateState { copy(billingEmail = email, emailError = error?.asDokusException) }
     }
 
     private suspend fun CreateContactCtx.handlePhoneChanged(phone: PhoneNumber) {
-        withState<CreateContactState.ConfirmStep, _> {
-            updateState { copy(phone = phone) }
-        }
+        updateState { copy(phone = phone) }
     }
 
     private suspend fun CreateContactCtx.handleLanguageChanged(language: Language?) {
-        withState<CreateContactState.ConfirmStep, _> {
-            updateState { copy(language = language) }
-        }
+        updateState { copy(language = language) }
     }
 
     private suspend fun CreateContactCtx.handleToggleAddressDetails() {
-        withState<CreateContactState.ConfirmStep, _> {
-            updateState { copy(showAddressDetails = !showAddressDetails) }
-        }
+        updateState { copy(showAddressDetails = !showAddressDetails) }
     }
 
     private suspend fun CreateContactCtx.handleConfirmAndCreate() {
-        withState<CreateContactState.ConfirmStep, _> {
-            // Validate email format only if provided
-            if (billingEmail.isValid) {
-                updateState { copy(emailError = DokusException.Validation.InvalidEmail) }
-                return@withState
-            }
-
-            val vatNumber = selectedEntity.vatNumber
-            if (vatNumber.isValid) {
-                val existingContact = findContactByVat(vatNumber)
-                if (existingContact != null) {
-                    action(
-                        CreateContactAction.ContactCreated(
-                            existingContact.first,
-                            existingContact.second
-                        )
-                    )
-                    return@withState
-                }
-            }
-
-            updateState { copy(isSubmitting = true) }
-
-            val entity = selectedEntity
-            val request = CreateContactRequest(
-                name = Name(entity.name.value),
-                email = billingEmail,
-                phone = phone.takeIf { it.isValid },
-                vatNumber = vatNumber,
-                businessType = ClientType.Business,
-                addresses = entity.address?.let { addr ->
-                    listOf(
-                        ContactAddressInput(
-                            streetLine1 = addr.streetLine1,
-                            streetLine2 = addr.streetLine2,
-                            city = addr.city,
-                            postalCode = addr.postalCode,
-                            country = addr.country.dbValue
-                        )
-                    )
-                } ?: emptyList()
-            )
-
-            createContact(request).fold(
-                onSuccess = { contact ->
-                    logger.i { "Contact created from lookup: ${contact.id}" }
-                    action(CreateContactAction.ContactCreated(contact.id, contact.name.value))
-                },
-                onFailure = { error ->
-                    logger.e(error) { "Failed to create contact" }
-                    updateState { copy(isSubmitting = false) }
-                    val exception = error.asDokusException
-                    val displayException = if (exception is DokusException.Unknown) {
-                        DokusException.ContactCreateFailed
-                    } else {
-                        exception
-                    }
-                    action(CreateContactAction.ShowError(displayException))
-                }
-            )
+        // Read current state fields
+        var currentBillingEmail: Email = Email.Empty
+        var currentSelectedEntity: EntityLookup? = null
+        var currentPhone: PhoneNumber = PhoneNumber.Empty
+        withState {
+            currentBillingEmail = billingEmail
+            currentSelectedEntity = selectedEntity
+            currentPhone = phone
         }
+
+        // Validate email format only if provided
+        if (currentBillingEmail.isValid) {
+            updateState { copy(emailError = DokusException.Validation.InvalidEmail) }
+            return
+        }
+
+        val entity = currentSelectedEntity ?: return
+        val vatNumber = entity.vatNumber
+        if (vatNumber.isValid) {
+            val existingContact = findContactByVat(vatNumber)
+            if (existingContact != null) {
+                action(
+                    CreateContactAction.ContactCreated(
+                        existingContact.first,
+                        existingContact.second
+                    )
+                )
+                return
+            }
+        }
+
+        updateState { copy(isSubmitting = true) }
+
+        val request = CreateContactRequest(
+            name = Name(entity.name.value),
+            email = currentBillingEmail,
+            phone = currentPhone.takeIf { it.isValid },
+            vatNumber = vatNumber,
+            businessType = ClientType.Business,
+            addresses = entity.address?.let { addr ->
+                listOf(
+                    ContactAddressInput(
+                        streetLine1 = addr.streetLine1,
+                        streetLine2 = addr.streetLine2,
+                        city = addr.city,
+                        postalCode = addr.postalCode,
+                        country = addr.country.dbValue
+                    )
+                )
+            } ?: emptyList()
+        )
+
+        createContact(request).fold(
+            onSuccess = { contact ->
+                logger.i { "Contact created from lookup: ${contact.id}" }
+                action(CreateContactAction.ContactCreated(contact.id, contact.name.value))
+            },
+            onFailure = { error ->
+                logger.e(error) { "Failed to create contact" }
+                updateState { copy(isSubmitting = false) }
+                val exception = error.asDokusException
+                val displayException = if (exception is DokusException.Unknown) {
+                    DokusException.ContactCreateFailed
+                } else {
+                    exception
+                }
+                action(CreateContactAction.ShowError(displayException))
+            }
+        )
     }
 
     private suspend fun CreateContactCtx.handleBackToLookup() {
-        updateState { CreateContactState.LookupStep() }
+        updateState { CreateContactState() }
     }
 
     // ============================================================================
@@ -345,13 +335,11 @@ internal class CreateContactContainer(
     // ============================================================================
 
     private suspend fun CreateContactCtx.handleManualTypeChanged(type: ClientType) {
-        withState<CreateContactState.ManualStep, _> {
-            updateState { copy(contactType = type) }
-        }
+        updateState { copy(contactType = type) }
     }
 
     private suspend fun CreateContactCtx.handleManualFieldChanged(field: String, value: String) {
-        withState<CreateContactState.ManualStep, _> {
+        updateState {
             val newFormData = when (field) {
                 "companyName" -> formData.copy(
                     companyName = LegalName(value),
@@ -373,120 +361,124 @@ internal class CreateContactContainer(
 
                 else -> formData
             }
-            updateState { copy(formData = newFormData) }
+            copy(formData = newFormData)
         }
     }
 
     private suspend fun CreateContactCtx.handleManualCountryChanged(country: Country) {
-        withState<CreateContactState.ManualStep, _> {
-            updateState {
-                copy(
-                    formData = formData.copy(country = country),
-                    showCountryPicker = false
-                )
-            }
+        updateState {
+            copy(
+                formData = formData.copy(country = country),
+                showCountryPicker = false
+            )
         }
     }
 
     private suspend fun CreateContactCtx.handleShowCountryPicker() {
-        withState<CreateContactState.ManualStep, _> {
-            updateState { copy(showCountryPicker = true) }
-        }
+        updateState { copy(showCountryPicker = true) }
     }
 
     private suspend fun CreateContactCtx.handleHideCountryPicker() {
-        withState<CreateContactState.ManualStep, _> {
-            updateState { copy(showCountryPicker = false) }
-        }
+        updateState { copy(showCountryPicker = false) }
     }
 
     private suspend fun CreateContactCtx.handleCreateManualContact() {
-        withState<CreateContactState.ManualStep, _> {
-            // Validate form
-            val errors = validateManualForm(contactType, formData)
-            if (errors.isNotEmpty()) {
-                updateState { copy(formData = formData.copy(errors = errors)) }
-                return@withState
-            }
-
-            val vatNumber = formData.vatNumber.takeIf { it.isValid }
-            if (vatNumber != null) {
-                val existingContact = findContactByVat(vatNumber)
-                if (existingContact != null) {
-                    action(
-                        CreateContactAction.ContactCreated(
-                            existingContact.first,
-                            existingContact.second
-                        )
-                    )
-                    return@withState
-                }
-            }
-
-            // Check for soft duplicates (name + country)
-            val duplicates = findSoftDuplicates(contactType, formData)
-            if (duplicates.isNotEmpty() && softDuplicates == null) {
-                logger.d { "Found ${duplicates.size} potential duplicates" }
-                updateState { copy(softDuplicates = duplicates) }
-                return@withState
-            }
-
-            // Proceed with creation
-            createManualContact()
+        // Read current state fields
+        var currentContactType: ClientType = ClientType.Business
+        var currentFormData = ManualContactFormData()
+        var currentSoftDuplicates: List<SoftDuplicateUi>? = null
+        withState {
+            currentContactType = contactType
+            currentFormData = formData
+            currentSoftDuplicates = softDuplicates
         }
+
+        // Validate form
+        val errors = validateManualForm(currentContactType, currentFormData)
+        if (errors.isNotEmpty()) {
+            updateState { copy(formData = formData.copy(errors = errors)) }
+            return
+        }
+
+        val vatNumber = currentFormData.vatNumber.takeIf { it.isValid }
+        if (vatNumber != null) {
+            val existingContact = findContactByVat(vatNumber)
+            if (existingContact != null) {
+                action(
+                    CreateContactAction.ContactCreated(
+                        existingContact.first,
+                        existingContact.second
+                    )
+                )
+                return
+            }
+        }
+
+        // Check for soft duplicates (name + country)
+        val duplicates = findSoftDuplicates(currentContactType, currentFormData)
+        if (duplicates.isNotEmpty() && currentSoftDuplicates == null) {
+            logger.d { "Found ${duplicates.size} potential duplicates" }
+            updateState { copy(softDuplicates = duplicates) }
+            return
+        }
+
+        // Proceed with creation
+        createManualContact()
     }
 
     private suspend fun CreateContactCtx.handleConfirmCreateDespiteDuplicates() {
-        withState<CreateContactState.ManualStep, _> {
-            updateState { copy(softDuplicates = null) }
-            createManualContact()
-        }
+        updateState { copy(softDuplicates = null) }
+        createManualContact()
     }
 
     private suspend fun CreateContactCtx.handleDismissSoftDuplicates() {
-        withState<CreateContactState.ManualStep, _> {
-            updateState { copy(softDuplicates = null) }
-        }
+        updateState { copy(softDuplicates = null) }
     }
 
     private suspend fun CreateContactCtx.createManualContact() {
-        withState<CreateContactState.ManualStep, _> {
-            updateState { copy(isSubmitting = true) }
+        // Read current state fields
+        var currentContactType: ClientType = ClientType.Business
+        var currentFormData = ManualContactFormData()
+        withState {
+            currentContactType = contactType
+            currentFormData = formData
+        }
 
-            val request = if (contactType == ClientType.Business) {
-                CreateContactRequest(
-                    name = Name(formData.companyName.value),
-                    email = formData.email.takeIf { it.isValid },
-                    vatNumber = formData.vatNumber,
-                    businessType = ClientType.Business
-                )
-            } else {
-                CreateContactRequest(
-                    name = formData.fullName,
-                    email = formData.personEmail.takeIf { it.isValid },
-                    phone = formData.personPhone.takeIf { it.isValid },
-                    businessType = ClientType.Individual
-                )
-            }
+        updateState { copy(isSubmitting = true) }
 
-            createContact(request).fold(
-                onSuccess = { contact ->
-                    logger.i { "Contact created manually: ${contact.id}" }
-                    action(CreateContactAction.ContactCreated(contact.id, contact.name.value))
-                },
-                onFailure = { error ->
-                    logger.e(error) { "Failed to create contact" }
-                    updateState { copy(isSubmitting = false) }
-                    val exception = error.asDokusException
-                    val displayException = if (exception is DokusException.Unknown) {
-                        DokusException.ContactCreateFailed
-                    } else {
-                        exception
-                    }
-                    action(CreateContactAction.ShowError(displayException))
-                }
+        val request = if (currentContactType == ClientType.Business) {
+            CreateContactRequest(
+                name = Name(currentFormData.companyName.value),
+                email = currentFormData.email.takeIf { it.isValid },
+                vatNumber = currentFormData.vatNumber,
+                businessType = ClientType.Business
+            )
+        } else {
+            CreateContactRequest(
+                name = currentFormData.fullName,
+                email = currentFormData.personEmail.takeIf { it.isValid },
+                phone = currentFormData.personPhone.takeIf { it.isValid },
+                businessType = ClientType.Individual
             )
         }
+
+        createContact(request).fold(
+            onSuccess = { contact ->
+                logger.i { "Contact created manually: ${contact.id}" }
+                action(CreateContactAction.ContactCreated(contact.id, contact.name.value))
+            },
+            onFailure = { error ->
+                logger.e(error) { "Failed to create contact" }
+                updateState { copy(isSubmitting = false) }
+                val exception = error.asDokusException
+                val displayException = if (exception is DokusException.Unknown) {
+                    DokusException.ContactCreateFailed
+                } else {
+                    exception
+                }
+                action(CreateContactAction.ShowError(displayException))
+            }
+        )
     }
 
     // ============================================================================

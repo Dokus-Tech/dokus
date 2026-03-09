@@ -4,7 +4,6 @@ import androidx.compose.runtime.Immutable
 import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
-import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.enums.UserRole
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.FirmId
@@ -14,91 +13,58 @@ import tech.dokus.domain.model.TeamMember
 import tech.dokus.domain.model.TenantInvitation
 import tech.dokus.domain.model.auth.BookkeeperFirmSearchItem
 import tech.dokus.domain.model.auth.TenantBookkeeperAccessItem
+import tech.dokus.foundation.app.state.DokusState
 
 /**
  * Contract for Team Settings screen.
  *
  * Manages team members, invitations, role changes, and ownership transfers.
  *
- * Flow:
- * 1. Loading → Initial data fetch
- * 2. Content → Members and invitations loaded
- *    - User can invite new members
- *    - User can change member roles
- *    - User can remove members
- *    - User can cancel invitations
- *    - User can transfer ownership
- * 3. Error → Failed to load with retry option
+ * Network-loaded data is wrapped in [DokusState] so the screen chrome
+ * (form fields, dialogs) stays visible during loading/error states.
  */
 
 // ============================================================================
 // STATE
 // ============================================================================
 
+/**
+ * Data loaded from the network for the team settings screen.
+ */
 @Immutable
-sealed interface TeamSettingsState : MVIState {
+data class TeamData(
+    val members: List<TeamMember> = emptyList(),
+    val invitations: List<TenantInvitation> = emptyList(),
+    val bookkeeperAccess: List<TenantBookkeeperAccessItem> = emptyList(),
+    val isCurrentUserOwner: Boolean = false,
+    val currentUserId: UserId? = null,
+    val maxSeats: Int = 3,
+) {
+    val availableSeats: Int get() = (maxSeats - members.size - invitations.size).coerceAtLeast(0)
+}
 
-    /**
-     * Initial loading state.
-     */
-    data object Loading : TeamSettingsState
+@Immutable
+data class TeamSettingsState(
+    val teamData: DokusState<TeamData> = DokusState.loading(),
+    val inviteEmail: String = "",
+    val inviteRole: UserRole = UserRole.Editor,
+    val bookkeeperSearchQuery: String = "",
+    val bookkeeperSearchResults: List<BookkeeperFirmSearchItem> = emptyList(),
+    val bookkeeperSearchLoading: Boolean = false,
+    val selectedBookkeeperFirmId: FirmId? = null,
+    val actionState: TeamSettingsActionState = TeamSettingsActionState.Idle,
+) : MVIState
 
-    /**
-     * Content state with team members and invitations.
-     *
-     * @property members List of team members
-     * @property membersLoading Whether members are being refreshed
-     * @property invitations List of pending invitations
-     * @property invitationsLoading Whether invitations are being refreshed
-     * @property inviteEmail Email for new invitation
-     * @property inviteRole Role for new invitation
-     * @property actionState Current action state for feedback
-     */
-    @Immutable
-    data class Content(
-        val members: List<TeamMember> = emptyList(),
-        val membersLoading: Boolean = false,
-        val invitations: List<TenantInvitation> = emptyList(),
-        val invitationsLoading: Boolean = false,
-        val inviteEmail: String = "",
-        val inviteRole: UserRole = UserRole.Editor,
-        val bookkeeperAccess: List<TenantBookkeeperAccessItem> = emptyList(),
-        val bookkeeperAccessLoading: Boolean = false,
-        val bookkeeperSearchQuery: String = "",
-        val bookkeeperSearchResults: List<BookkeeperFirmSearchItem> = emptyList(),
-        val bookkeeperSearchLoading: Boolean = false,
-        val selectedBookkeeperFirmId: FirmId? = null,
-        val isCurrentUserOwner: Boolean = false,
-        val actionState: ActionState = ActionState.Idle,
-        val currentUserId: UserId? = null,
-        val maxSeats: Int = 3,
-    ) : TeamSettingsState {
-
-        val availableSeats: Int get() = (maxSeats - members.size - invitations.size).coerceAtLeast(0)
-
-        /**
-         * State for team action operations.
-         */
-        @Immutable
-        sealed interface ActionState {
-            data object Idle : ActionState
-            data object Processing : ActionState
-            data object Inviting : ActionState
-            data class Success(val success: TeamSettingsSuccess) : ActionState
-            data class Error(val error: DokusException) : ActionState
-        }
-    }
-
-    /**
-     * Error state with recovery option.
-     *
-     * @property exception The error that occurred
-     * @property retryHandler Handler to retry the failed operation
-     */
-    data class Error(
-        val exception: DokusException,
-        val retryHandler: RetryHandler,
-    ) : TeamSettingsState
+/**
+ * State for team action operations.
+ */
+@Immutable
+sealed interface TeamSettingsActionState {
+    data object Idle : TeamSettingsActionState
+    data object Processing : TeamSettingsActionState
+    data object Inviting : TeamSettingsActionState
+    data class Success(val success: TeamSettingsSuccess) : TeamSettingsActionState
+    data class Error(val error: DokusException) : TeamSettingsActionState
 }
 
 // ============================================================================

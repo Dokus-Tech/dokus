@@ -38,8 +38,11 @@ import tech.dokus.features.auth.presentation.auth.components.SecurityCard
 import tech.dokus.features.auth.presentation.auth.components.ServerCard
 import tech.dokus.features.auth.presentation.auth.components.VersionFooter
 import tech.dokus.foundation.app.picker.rememberImagePicker
-import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.app.state.isError
+import tech.dokus.foundation.app.state.isLoading
+import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.aura.components.common.DokusErrorBanner
 import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.local.LocalScreenSize
@@ -48,6 +51,7 @@ import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
 import tech.dokus.domain.Email
 import tech.dokus.domain.Name
+import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.User
 import tech.dokus.features.auth.mvi.MySessionsState
@@ -143,7 +147,7 @@ fun ProfileSettingsScreen(
 }
 
 /**
- * Profile settings content — iOS Settings-style grouped cards, centered.
+ * Profile settings content -- iOS Settings-style grouped cards, centered.
  * Can be embedded in split-pane layout for desktop or used in full-screen for mobile.
  */
 @Composable
@@ -178,50 +182,59 @@ fun ProfileSettingsContent(
                 .padding(top = 8.dp),
             verticalArrangement = Arrangement.spacedBy(SectionSpacing),
         ) {
-            when (state) {
-                ProfileSettingsState.Loading -> {
+            // User data section: loading / error / editing / saving / viewing
+            when {
+                state.user.isLoading() -> {
                     ProfileSettingsSkeleton()
                 }
 
-                is ProfileSettingsState.Viewing -> {
+                state.user.isError() -> {
+                    DokusErrorBanner(
+                        exception = state.user.exception,
+                        retryHandler = state.user.retryHandler,
+                    )
+                }
+
+                state.isSaving && state.user.isSuccess() -> {
+                    ProfileSavingSection(
+                        email = state.user.data.email.value,
+                        editFirstName = state.editFirstName,
+                        editLastName = state.editLastName,
+                    )
+                }
+
+                state.isEditing && state.user.isSuccess() -> {
+                    ProfileEditingSection(
+                        email = state.user.data.email.value,
+                        editFirstName = state.editFirstName,
+                        editLastName = state.editLastName,
+                        canSave = state.canSave,
+                        onFirstNameChange = { onIntent(ProfileSettingsIntent.UpdateFirstName(it)) },
+                        onLastNameChange = { onIntent(ProfileSettingsIntent.UpdateLastName(it)) },
+                        onSave = { onIntent(ProfileSettingsIntent.SaveClicked) },
+                        onCancel = { onIntent(ProfileSettingsIntent.CancelEditing) },
+                    )
+                }
+
+                state.user.isSuccess() -> {
+                    val user = state.user.data
                     ProfileHero(
-                        user = state.user,
+                        user = user,
                         avatarState = state.avatarState,
                         onUploadAvatar = { avatarPicker.launch() },
                         onResetAvatarState = { onIntent(ProfileSettingsIntent.ResetAvatarState) },
                     )
                     AccountCard(
-                        user = state.user,
+                        user = user,
                         isResendingVerification = state.isResendingVerification,
                         onResendVerification = onResendVerification,
                         onEditClick = { onIntent(ProfileSettingsIntent.StartEditing) },
                     )
                 }
-
-                is ProfileSettingsState.Editing -> {
-                    ProfileEditingSection(
-                        state = state,
-                        onFirstNameChange = { onIntent(ProfileSettingsIntent.UpdateFirstName(it)) },
-                        onLastNameChange = { onIntent(ProfileSettingsIntent.UpdateLastName(it)) },
-                        onSave = { onIntent(ProfileSettingsIntent.SaveClicked) },
-                        onCancel = { onIntent(ProfileSettingsIntent.CancelEditing) }
-                    )
-                }
-
-                is ProfileSettingsState.Saving -> {
-                    ProfileSavingSection(state = state)
-                }
-
-                is ProfileSettingsState.Error -> {
-                    DokusErrorBanner(
-                        exception = state.exception,
-                        retryHandler = state.retryHandler,
-                    )
-                }
             }
 
-            // Independent sections — always visible regardless of state
-            if (state !is ProfileSettingsState.Editing && state !is ProfileSettingsState.Saving) {
+            // Independent sections -- always visible regardless of state
+            if (!state.isEditing && !state.isSaving) {
                 SecurityCard(
                     onChangePassword = onChangePassword,
                     onMySessions = onMySessions,
@@ -248,7 +261,7 @@ private fun ProfileSettingsLoadingPreview(
 ) {
     TestWrapper(parameters) {
         ProfileSettingsContent(
-            state = ProfileSettingsState.Loading,
+            state = ProfileSettingsState(),
             currentServer = ServerConfig.Cloud,
             isLoggingOut = false,
             onIntent = {},
@@ -269,9 +282,11 @@ private fun ProfileSettingsErrorPreview(
 ) {
     TestWrapper(parameters) {
         ProfileSettingsContent(
-            state = ProfileSettingsState.Error(
-                exception = DokusException.ConnectionError(),
-                retryHandler = RetryHandler { },
+            state = ProfileSettingsState(
+                user = DokusState.error(
+                    exception = DokusException.ConnectionError(),
+                    retryHandler = RetryHandler { },
+                ),
             ),
             currentServer = ServerConfig.Cloud,
             isLoggingOut = false,
@@ -296,15 +311,17 @@ private fun ProfileSettingsDesktopIdlePreview(
 ) {
     TestWrapper(parameters) {
         ProfileSettingsScreen(
-            state = ProfileSettingsState.Viewing(
-                user = User(
-                    id = UserId(Uuid.parse("00000000-0000-0000-0000-000000000001")),
-                    email = Email("john@dokus.tech"),
-                    firstName = Name("John"),
-                    lastName = Name("Doe"),
-                    emailVerified = true,
-                    createdAt = LocalDateTime(2025, 1, 1, 0, 0),
-                    updatedAt = LocalDateTime(2025, 1, 1, 0, 0),
+            state = ProfileSettingsState(
+                user = DokusState.success(
+                    User(
+                        id = UserId(Uuid.parse("00000000-0000-0000-0000-000000000001")),
+                        email = Email("john@dokus.tech"),
+                        firstName = Name("John"),
+                        lastName = Name("Doe"),
+                        emailVerified = true,
+                        createdAt = LocalDateTime(2025, 1, 1, 0, 0),
+                        updatedAt = LocalDateTime(2025, 1, 1, 0, 0),
+                    ),
                 ),
             ),
             currentServer = ServerConfig.Cloud,
@@ -320,7 +337,7 @@ private fun ProfileSettingsDesktopIdlePreview(
             detailPaneContent = {
                 ProfileDetailPaneHost(
                     selection = ProfileDetailSelection.None,
-                    sessionsState = MySessionsState.Loading,
+                    sessionsState = MySessionsState(),
                     onSessionsIntent = {},
                 )
             }
@@ -338,15 +355,17 @@ private fun ProfileSettingsDesktopSplitPreview(
 ) {
     TestWrapper(parameters) {
         ProfileSettingsScreen(
-            state = ProfileSettingsState.Viewing(
-                user = User(
-                    id = UserId(Uuid.parse("00000000-0000-0000-0000-000000000001")),
-                    email = Email("john@dokus.tech"),
-                    firstName = Name("John"),
-                    lastName = Name("Doe"),
-                    emailVerified = true,
-                    createdAt = LocalDateTime(2025, 1, 1, 0, 0),
-                    updatedAt = LocalDateTime(2025, 1, 1, 0, 0),
+            state = ProfileSettingsState(
+                user = DokusState.success(
+                    User(
+                        id = UserId(Uuid.parse("00000000-0000-0000-0000-000000000001")),
+                        email = Email("john@dokus.tech"),
+                        firstName = Name("John"),
+                        lastName = Name("Doe"),
+                        emailVerified = true,
+                        createdAt = LocalDateTime(2025, 1, 1, 0, 0),
+                        updatedAt = LocalDateTime(2025, 1, 1, 0, 0),
+                    ),
                 ),
             ),
             currentServer = ServerConfig.Cloud,
@@ -362,8 +381,8 @@ private fun ProfileSettingsDesktopSplitPreview(
             detailPaneContent = {
                 ProfileDetailPaneHost(
                     selection = ProfileDetailSelection.Sessions,
-                    sessionsState = MySessionsState.Loaded(
-                        sessions = previewSessions()
+                    sessionsState = MySessionsState(
+                        sessions = DokusState.success(previewSessions())
                     ),
                     onSessionsIntent = {},
                     nowEpochSeconds = SessionsPreviewNowEpochSeconds,
@@ -383,15 +402,17 @@ private fun ProfileSettingsContentPreview(
 ) {
     TestWrapper(parameters) {
         ProfileSettingsContent(
-            state = ProfileSettingsState.Viewing(
-                user = User(
-                    id = UserId(Uuid.parse("00000000-0000-0000-0000-000000000001")),
-                    email = Email("john@dokus.tech"),
-                    firstName = Name("John"),
-                    lastName = Name("Doe"),
-                    emailVerified = true,
-                    createdAt = LocalDateTime(2025, 1, 1, 0, 0),
-                    updatedAt = LocalDateTime(2025, 1, 1, 0, 0),
+            state = ProfileSettingsState(
+                user = DokusState.success(
+                    User(
+                        id = UserId(Uuid.parse("00000000-0000-0000-0000-000000000001")),
+                        email = Email("john@dokus.tech"),
+                        firstName = Name("John"),
+                        lastName = Name("Doe"),
+                        emailVerified = true,
+                        createdAt = LocalDateTime(2025, 1, 1, 0, 0),
+                        updatedAt = LocalDateTime(2025, 1, 1, 0, 0),
+                    ),
                 ),
             ),
             currentServer = ServerConfig.Cloud,

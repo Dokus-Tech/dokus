@@ -5,87 +5,44 @@ import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.domain.Name
-import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.User
 import tech.dokus.foundation.app.state.DokusState
-
-/**
- * Contract for Profile Settings screen.
- *
- * Flow:
- * 1. Loading → Fetching user profile
- * 2. Viewing → Displaying user data
- * 3. Editing → User modifies profile fields
- * 4. Saving → Persisting changes to backend
- * 5. Error → Display error with retry option
- */
 
 // ============================================================================
 // STATE
 // ============================================================================
 
 @Immutable
-sealed interface ProfileSettingsState : MVIState {
+data class ProfileSettingsState(
+    val user: DokusState<User> = DokusState.loading(),
+    val isEditing: Boolean = false,
+    val editFirstName: Name = Name.Empty,
+    val editLastName: Name = Name.Empty,
+    val isSaving: Boolean = false,
+    val isResendingVerification: Boolean = false,
+    val avatarState: AvatarState = AvatarState.Idle,
+) : MVIState {
 
-    /**
-     * Initial state - loading user profile.
-     */
-    data object Loading : ProfileSettingsState
+    val hasChanges: Boolean
+        get() {
+            val currentUser = (user as? DokusState.Success)?.data ?: return false
+            val currentFirstName = currentUser.firstName?.value ?: ""
+            val currentLastName = currentUser.lastName?.value ?: ""
+            return editFirstName.value != currentFirstName ||
+                editLastName.value != currentLastName
+        }
 
-    /**
-     * Viewing user profile (not editing).
-     */
-    data class Viewing(
-        val user: User,
-        val isResendingVerification: Boolean = false,
-        val avatarState: AvatarState = AvatarState.Idle,
-    ) : ProfileSettingsState
+    val canSave: Boolean
+        get() = isEditing && editFirstName.isValid && editLastName.isValid && hasChanges
+}
 
-    /**
-     * Editing user profile.
-     */
-    data class Editing(
-        val user: User,
-        val editFirstName: Name,
-        val editLastName: Name,
-    ) : ProfileSettingsState {
-        val hasChanges: Boolean
-            get() {
-                val currentFirstName = user.firstName?.value ?: ""
-                val currentLastName = user.lastName?.value ?: ""
-                return editFirstName.value != currentFirstName ||
-                    editLastName.value != currentLastName
-            }
-
-        val canSave: Boolean
-            get() = editFirstName.isValid && editLastName.isValid && hasChanges
-    }
-
-    /**
-     * Saving profile changes.
-     */
-    data class Saving(
-        val user: User,
-        val editFirstName: Name,
-        val editLastName: Name,
-    ) : ProfileSettingsState
-
-    /**
-     * Error state with recovery option.
-     */
-    data class Error(
-        val exception: DokusException,
-        val retryHandler: RetryHandler,
-    ) : ProfileSettingsState
-
-    @Immutable
-    sealed interface AvatarState {
-        data object Idle : AvatarState
-        data class Uploading(val progress: Float) : AvatarState
-        data object Success : AvatarState
-        data class Error(val error: DokusException) : AvatarState
-    }
+@Immutable
+sealed interface AvatarState {
+    data object Idle : AvatarState
+    data class Uploading(val progress: Float) : AvatarState
+    data object Success : AvatarState
+    data class Error(val error: DokusException) : AvatarState
 }
 
 // ============================================================================

@@ -14,6 +14,8 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.features.auth.usecases.GetAccountMeUseCase
 import tech.dokus.features.auth.usecases.RefreshSessionNowUseCase
 import tech.dokus.features.auth.usecases.SelectTenantUseCase
+import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.platform.Logger
 
 internal typealias WorkspaceSelectCtx =
@@ -32,7 +34,7 @@ internal class WorkspaceSelectContainer(
     private val logger = Logger.forClass<WorkspaceSelectContainer>()
 
     override val store: Store<WorkspaceSelectState, WorkspaceSelectIntent, WorkspaceSelectAction> =
-        store(WorkspaceSelectState.Loading) {
+        store(WorkspaceSelectState()) {
             init {
                 handleLoadWorkspaces()
             }
@@ -46,7 +48,7 @@ internal class WorkspaceSelectContainer(
         }
 
     private suspend fun WorkspaceSelectCtx.handleLoadWorkspaces() {
-        updateState { WorkspaceSelectState.Loading }
+        updateState { copy(workspaces = workspaces.asLoading) }
 
         logger.d { "Loading available workspaces from account/me" }
         getAccountMeUseCase().fold(
@@ -55,18 +57,17 @@ internal class WorkspaceSelectContainer(
                 val firms = accountMe.firms.sortedBy { it.name.value.lowercase() }
                 logger.i { "Loaded ${tenants.size} tenant(s) and ${firms.size} firm(s)" }
                 updateState {
-                    WorkspaceSelectState.Content(
-                        tenants = tenants,
-                        firms = firms,
-                    )
+                    copy(workspaces = DokusState.success(WorkspaceSelectData(tenants, firms)))
                 }
             },
             onFailure = { error ->
                 logger.e(error) { "Failed to load workspaces" }
                 updateState {
-                    WorkspaceSelectState.Error(
-                        exception = error.asDokusException,
-                        retryHandler = { intent(WorkspaceSelectIntent.LoadWorkspaces) }
+                    copy(
+                        workspaces = DokusState.error(
+                            exception = error.asDokusException,
+                            retryHandler = { intent(WorkspaceSelectIntent.LoadWorkspaces) },
+                        )
                     )
                 }
             }
@@ -74,17 +75,10 @@ internal class WorkspaceSelectContainer(
     }
 
     private suspend fun WorkspaceSelectCtx.handleSelectTenant(tenantId: TenantId) {
-        withState<WorkspaceSelectState.Content, _> {
-            val currentTenants = tenants
-            val currentFirms = firms
+        withState {
+            if (!workspaces.isSuccess()) return@withState
 
-            updateState {
-                WorkspaceSelectState.SelectingTenant(
-                    tenants = currentTenants,
-                    firms = currentFirms,
-                    selectedTenantId = tenantId,
-                )
-            }
+            updateState { copy(isSelectingTenant = true) }
 
             logger.d { "Selecting tenant: $tenantId" }
             selectTenantUseCase(tenantId).fold(
@@ -101,28 +95,17 @@ internal class WorkspaceSelectContainer(
                         exception
                     }
                     action(WorkspaceSelectAction.ShowSelectionError(displayException))
-                    updateState {
-                        WorkspaceSelectState.Content(
-                            tenants = currentTenants,
-                            firms = currentFirms,
-                        )
-                    }
+                    updateState { copy(isSelectingTenant = false) }
                 }
             )
         }
     }
 
     private suspend fun WorkspaceSelectCtx.handleSelectFirm(firmId: FirmId) {
-        withState<WorkspaceSelectState.Content, _> {
-            val currentTenants = tenants
-            val currentFirms = firms
-            updateState {
-                WorkspaceSelectState.SelectingFirm(
-                    tenants = currentTenants,
-                    firms = currentFirms,
-                    selectedFirmId = firmId,
-                )
-            }
+        withState {
+            if (!workspaces.isSuccess()) return@withState
+
+            updateState { copy(isSelectingFirm = true) }
 
             refreshSessionNowUseCase().fold(
                 onSuccess = {
@@ -137,12 +120,7 @@ internal class WorkspaceSelectContainer(
                         exception
                     }
                     action(WorkspaceSelectAction.ShowSelectionError(displayException))
-                    updateState {
-                        WorkspaceSelectState.Content(
-                            tenants = currentTenants,
-                            firms = currentFirms,
-                        )
-                    }
+                    updateState { copy(isSelectingFirm = false) }
                 }
             )
         }
