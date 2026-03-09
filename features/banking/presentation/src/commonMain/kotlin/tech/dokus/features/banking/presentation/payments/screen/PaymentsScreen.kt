@@ -39,6 +39,7 @@ import tech.dokus.aura.resources.banking_empty_title
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.model.BankTransactionDto
+import tech.dokus.features.banking.presentation.payments.components.IgnoreReasonDialog
 import tech.dokus.features.banking.presentation.payments.components.PaymentFilterTabs
 import tech.dokus.features.banking.presentation.payments.components.PaymentsSkeleton
 import tech.dokus.features.banking.presentation.payments.components.TransactionCard
@@ -75,6 +76,15 @@ internal fun PaymentsScreen(
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     modifier: Modifier = Modifier,
 ) {
+    state.ignoreDialogState?.let { dialogState ->
+        IgnoreReasonDialog(
+            selectedReason = dialogState.selectedReason,
+            onReasonSelected = { onIntent(PaymentsIntent.SelectIgnoreReason(it)) },
+            onConfirm = { onIntent(PaymentsIntent.ConfirmIgnore) },
+            onDismiss = { onIntent(PaymentsIntent.DismissIgnoreDialog) },
+        )
+    }
+
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         modifier = modifier,

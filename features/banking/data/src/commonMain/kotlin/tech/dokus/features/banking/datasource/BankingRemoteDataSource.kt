@@ -3,6 +3,7 @@ package tech.dokus.features.banking.datasource
 import kotlinx.datetime.LocalDate
 import tech.dokus.domain.enums.BankTransactionSource
 import tech.dokus.domain.enums.BankTransactionStatus
+import tech.dokus.domain.enums.IgnoredReason
 import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.model.BalanceHistoryResponse
@@ -36,7 +37,7 @@ interface BankingRemoteDataSource {
         cashflowEntryId: CashflowEntryId
     ): Result<BankTransactionDto>
 
-    suspend fun ignoreTransaction(transactionId: BankTransactionId): Result<BankTransactionDto>
+    suspend fun ignoreTransaction(transactionId: BankTransactionId, reason: IgnoredReason): Result<BankTransactionDto>
 
     suspend fun confirmTransaction(transactionId: BankTransactionId): Result<BankTransactionDto>
 

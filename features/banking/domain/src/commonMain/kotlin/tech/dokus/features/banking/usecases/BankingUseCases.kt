@@ -3,6 +3,7 @@ package tech.dokus.features.banking.usecases
 import kotlinx.datetime.LocalDate
 import tech.dokus.domain.enums.BankTransactionSource
 import tech.dokus.domain.enums.BankTransactionStatus
+import tech.dokus.domain.enums.IgnoredReason
 import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.model.BalanceHistoryResponse
@@ -55,7 +56,8 @@ interface LinkTransactionUseCase {
 
 interface IgnoreTransactionUseCase {
     suspend operator fun invoke(
-        transactionId: BankTransactionId
+        transactionId: BankTransactionId,
+        reason: IgnoredReason,
     ): Result<BankTransactionDto>
 }
 

@@ -3,6 +3,7 @@ package tech.dokus.features.banking.usecase
 import kotlinx.datetime.LocalDate
 import tech.dokus.domain.enums.BankTransactionSource
 import tech.dokus.domain.enums.BankTransactionStatus
+import tech.dokus.domain.enums.IgnoredReason
 import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.model.BalanceHistoryResponse
@@ -82,8 +83,8 @@ internal class LinkTransactionUseCaseImpl(
 internal class IgnoreTransactionUseCaseImpl(
     private val dataSource: BankingRemoteDataSource
 ) : IgnoreTransactionUseCase {
-    override suspend fun invoke(transactionId: BankTransactionId): Result<BankTransactionDto> {
-        return dataSource.ignoreTransaction(transactionId)
+    override suspend fun invoke(transactionId: BankTransactionId, reason: IgnoredReason): Result<BankTransactionDto> {
+        return dataSource.ignoreTransaction(transactionId, reason)
     }
 }
 

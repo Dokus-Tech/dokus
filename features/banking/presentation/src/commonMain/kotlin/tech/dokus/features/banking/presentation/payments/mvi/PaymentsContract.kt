@@ -5,6 +5,7 @@ import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.domain.enums.BankTransactionStatus
+import tech.dokus.domain.enums.IgnoredReason
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.model.BankTransactionDto
@@ -25,6 +26,15 @@ enum class PaymentFilterTab {
 }
 
 /**
+ * Dialog state for ignore-with-reason flow.
+ */
+@Immutable
+data class IgnoreDialogState(
+    val transactionId: BankTransactionId,
+    val selectedReason: IgnoredReason? = null,
+)
+
+/**
  * State for PaymentsScreen.
  */
 @Immutable
@@ -33,6 +43,7 @@ data class PaymentsState(
     val summary: DokusState<BankTransactionSummary>,
     val filterTab: PaymentFilterTab = PaymentFilterTab.All,
     val selectedTransactionId: BankTransactionId? = null,
+    val ignoreDialogState: IgnoreDialogState? = null,
 ) : MVIState {
     companion object {
         val initial by lazy {
@@ -55,6 +66,9 @@ sealed interface PaymentsIntent : MVIIntent {
     data class SelectTransaction(val transactionId: BankTransactionId?) : PaymentsIntent
     data class LinkDocument(val transactionId: BankTransactionId) : PaymentsIntent
     data class IgnoreTransaction(val transactionId: BankTransactionId) : PaymentsIntent
+    data class SelectIgnoreReason(val reason: IgnoredReason) : PaymentsIntent
+    data object ConfirmIgnore : PaymentsIntent
+    data object DismissIgnoreDialog : PaymentsIntent
     data class ConfirmMatch(val transactionId: BankTransactionId) : PaymentsIntent
 }
 

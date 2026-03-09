@@ -12,6 +12,7 @@ import kotlinx.datetime.LocalDate
 import tech.dokus.domain.config.DynamicDokusEndpointProvider
 import tech.dokus.domain.enums.BankTransactionSource
 import tech.dokus.domain.enums.BankTransactionStatus
+import tech.dokus.domain.enums.IgnoredReason
 import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.model.BalanceHistoryResponse
@@ -19,6 +20,7 @@ import tech.dokus.domain.model.BankAccountSummary
 import tech.dokus.domain.model.BankAccountDto
 import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.domain.model.BankTransactionSummary
+import tech.dokus.domain.model.IgnoreTransactionRequest
 import tech.dokus.domain.model.LinkTransactionRequest
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.routes.Banking
@@ -80,11 +82,15 @@ internal class BankingRemoteDataSourceImpl(
     }
 
     override suspend fun ignoreTransaction(
-        transactionId: BankTransactionId
+        transactionId: BankTransactionId,
+        reason: IgnoredReason,
     ): Result<BankTransactionDto> = runCatching {
         val txRoute = Banking.Transactions()
         val idRoute = Banking.Transactions.Id(parent = txRoute, id = transactionId.toString())
-        httpClient.resourcePost(Banking.Transactions.Id.Ignore(parent = idRoute)).body()
+        httpClient.resourcePost(Banking.Transactions.Id.Ignore(parent = idRoute)) {
+            contentType(ContentType.Application.Json)
+            setBody(IgnoreTransactionRequest(reason = reason))
+        }.body()
     }
 
     override suspend fun confirmTransaction(

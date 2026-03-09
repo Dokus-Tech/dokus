@@ -1,19 +1,13 @@
 package tech.dokus.backend.services.cashflow
 
-import java.security.MessageDigest
-import kotlinx.datetime.Clock
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
 import kotlinx.datetime.daysUntil
-import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
-import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
-import tech.dokus.database.repository.banking.BankTransactionCreate
 import tech.dokus.database.repository.banking.BankTransactionRepository
+import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.database.tables.cashflow.InvoicesTable
 import tech.dokus.domain.Money
@@ -21,126 +15,45 @@ import tech.dokus.domain.enums.BankTransactionStatus
 import tech.dokus.domain.enums.CashflowDirection
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.CashflowSourceType
+import tech.dokus.domain.enums.MatchedBy
+import tech.dokus.domain.enums.ResolutionType
+import tech.dokus.domain.enums.StatementTrust
+import tech.dokus.backend.services.banking.BankStatementProcessingService
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.BankStatementDraftData
-import tech.dokus.domain.model.BankStatementTransactionDraftRow
-import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.model.BankTransactionDto
+import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.util.JaroWinkler
 import tech.dokus.foundation.backend.utils.loggerFor
+import tech.dokus.foundation.backend.utils.runSuspendCatching
+import kotlinx.serialization.json.Json
 import java.util.UUID
 import kotlin.math.abs
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid
 
-private const val RowConfidenceThreshold = 0.90
-private const val StrongThreshold = 0.88
-private const val PossibleThreshold = 0.70
-private const val BestMarginThreshold = 0.08
-private const val AmountToleranceMinor = 100L // 1.00 EUR
 private const val DueDateWindowDays = 30
+private const val AmountToleranceMinor = 100L // 1.00 EUR
 
-data class DiscardedBankStatementRow(
-    val index: Int,
-    val reason: String
-)
-
-data class BankStatementProcessingResult(
-    val sanitizedDraft: BankStatementDraftData,
-    val validRows: Int,
-    val discardedRows: List<DiscardedBankStatementRow>
-)
+/**
+ * Match classification for a transaction × entry pair.
+ */
+private enum class MatchClassification {
+    /** Strong evidence — auto-match and trigger payment */
+    AutoMatch,
+    /** Decent evidence but needs human review */
+    NeedsReview,
+}
 
 class BankStatementMatchingService(
-    private val importedBankTransactionRepository: BankTransactionRepository,
+    private val bankTransactionRepository: BankTransactionRepository,
     private val cashflowEntriesRepository: CashflowEntriesRepository,
-    private val contactRepository: ContactRepository
+    private val contactRepository: ContactRepository,
+    private val autoPaymentService: AutoPaymentService,
 ) {
     private val logger = loggerFor()
-
-    suspend fun processAndMatch(
-        tenantId: TenantId,
-        documentId: DocumentId,
-        draftData: BankStatementDraftData
-    ): BankStatementProcessingResult {
-        val today = Clock.System.now().toLocalDateTime(TimeZone.UTC).date
-        val discarded = mutableListOf<DiscardedBankStatementRow>()
-        val validRows = mutableListOf<BankStatementTransactionDraftRow>()
-        val inserts = mutableListOf<BankTransactionCreate>()
-
-        draftData.transactions.forEachIndexed { index, row ->
-            val date = row.transactionDate
-            if (date == null) {
-                discarded += DiscardedBankStatementRow(index, "missing_date")
-                return@forEachIndexed
-            }
-            if (date > today) {
-                discarded += DiscardedBankStatementRow(index, "date_in_future")
-                return@forEachIndexed
-            }
-
-            val amount = row.signedAmount
-            if (amount == null || amount.isZero) {
-                discarded += DiscardedBankStatementRow(index, "invalid_or_zero_amount")
-                return@forEachIndexed
-            }
-
-            val confidence = row.rowConfidence
-            if (confidence < RowConfidenceThreshold) {
-                discarded += DiscardedBankStatementRow(index, "low_confidence")
-                return@forEachIndexed
-            }
-
-            val normalizedStructuredCommunication = normalizeStructuredCommunication(row.structuredCommunicationRaw)
-            val dedupHash = hashRow(
-                date = date,
-                amount = amount,
-                description = row.descriptionRaw,
-                structuredCommunication = row.structuredCommunicationRaw,
-                counterpartyName = row.counterpartyName
-            )
-
-            validRows += row
-            inserts += BankTransactionCreate(
-                dedupHash = dedupHash,
-                transactionDate = date,
-                signedAmount = amount,
-                counterpartyName = row.counterpartyName,
-                counterpartyIban = row.counterpartyIban?.value,
-                structuredCommunicationRaw = row.structuredCommunicationRaw,
-                normalizedStructuredCommunication = normalizedStructuredCommunication,
-                descriptionRaw = row.descriptionRaw,
-            )
-        }
-
-        importedBankTransactionRepository.replaceForDocument(
-            tenantId = tenantId,
-            documentId = documentId,
-            rows = inserts
-        )
-
-        if (validRows.isNotEmpty()) {
-            runMatching(tenantId = tenantId, documentId = documentId)
-        }
-
-        discarded.forEach {
-            logger.info(
-                "Discarded bank statement row for document {} at index {} due to {}",
-                documentId,
-                it.index,
-                it.reason
-            )
-        }
-
-        return BankStatementProcessingResult(
-            sanitizedDraft = draftData.copy(transactions = validRows),
-            validRows = validRows.size,
-            discardedRows = discarded
-        )
-    }
 
     /**
      * Returns candidate transactions for a cashflow entry.
@@ -148,103 +61,100 @@ class BankStatementMatchingService(
      */
     suspend fun getPaymentCandidates(
         tenantId: TenantId,
-        cashflowEntryId: CashflowEntryId
+        cashflowEntryId: CashflowEntryId,
     ): List<BankTransactionDto> {
-        val candidates = importedBankTransactionRepository.listCandidatesForEntry(tenantId, cashflowEntryId)
-        val selectable = importedBankTransactionRepository.listSelectable(tenantId)
+        val candidates = bankTransactionRepository.listCandidatesForEntry(tenantId, cashflowEntryId)
+        val selectable = bankTransactionRepository.listSelectable(tenantId)
         val candidateIds = candidates.map { it.id }.toSet()
         return candidates + selectable.filter { it.id !in candidateIds }
     }
 
-    private suspend fun runMatching(
+    /**
+     * Run matching for transactions from a specific document against open cashflow entries.
+     * Uses hard-evidence gates per spec §8.
+     */
+    suspend fun runMatching(
         tenantId: TenantId,
-        documentId: DocumentId
+        documentId: DocumentId,
     ) {
-        val transactions = importedBankTransactionRepository.listByDocument(tenantId, documentId)
+        val transactions = bankTransactionRepository.listByDocument(tenantId, documentId)
             .filter { it.status == BankTransactionStatus.Unmatched }
         if (transactions.isEmpty()) return
 
+        matchTransactions(tenantId, transactions)
+    }
+
+    /**
+     * Run matching for a list of unmatched transactions against open cashflow entries.
+     * Reusable entry point for bidirectional triggers.
+     */
+    suspend fun matchTransactions(
+        tenantId: TenantId,
+        transactions: List<BankTransactionDto>,
+    ) {
         val openEntries = cashflowEntriesRepository.listEntries(
             tenantId = tenantId,
-            statuses = listOf(CashflowEntryStatus.Open, CashflowEntryStatus.Overdue)
+            statuses = listOf(CashflowEntryStatus.Open, CashflowEntryStatus.Overdue),
         ).getOrDefault(emptyList()).filter { !it.remainingAmount.isZero }
         if (openEntries.isEmpty()) return
-        val invoiceStructuredReferenceBySourceId = loadInvoiceStructuredReferenceMap(tenantId, openEntries)
 
-        val contactById = mutableMapOf<String, tech.dokus.domain.model.contact.ContactDto?>()
+        val invoiceRefsBySourceId = loadInvoiceStructuredReferenceMap(tenantId, openEntries)
+
+        val contactCache = mutableMapOf<String, tech.dokus.domain.model.contact.ContactDto?>()
         suspend fun resolveContact(entry: CashflowEntry): tech.dokus.domain.model.contact.ContactDto? {
             val contactId = entry.contactId ?: return null
             val key = contactId.toString()
-            if (contactById.containsKey(key)) return contactById[key]
+            if (contactCache.containsKey(key)) return contactCache[key]
             val resolved = contactRepository.getContact(contactId, tenantId).getOrNull()
-            contactById[key] = resolved
+            contactCache[key] = resolved
             return resolved
         }
 
-        val bestPerEntry = mutableMapOf<CashflowEntryId, MatchCandidate>()
-        val transactionSuggestions = mutableListOf<TransactionSuggestion>()
-
         for (tx in transactions) {
-            val scored = openEntries.mapNotNull { entry ->
+            val candidates = openEntries.mapNotNull { entry ->
                 val contact = resolveContact(entry)
-                scoreCandidate(
+                evaluateEvidence(
                     tx = tx,
                     entry = entry,
-                    contactVat = contact?.vatNumber?.normalized,
                     contactIban = contact?.iban?.value,
-                    invoiceStructuredReference = invoiceStructuredReferenceBySourceId[entry.sourceId]
+                    invoiceStructuredReference = invoiceRefsBySourceId[entry.sourceId],
                 )
             }.sortedByDescending { it.score }
 
-            val best = scored.firstOrNull() ?: continue
-            if (best.score < PossibleThreshold) continue
+            val best = candidates.firstOrNull() ?: continue
 
-            transactionSuggestions += TransactionSuggestion(
-                transactionId = tx.id,
-                entryId = best.entry.id,
-                score = best.score,
+            val classification = classifyMatch(
+                best = best,
+                candidateCount = candidates.size,
+                trust = tx.statementTrust,
             )
 
-            val currentBest = bestPerEntry[best.entry.id]
-            if (currentBest == null || best.score > currentBest.score) {
-                bestPerEntry[best.entry.id] = best
+            when (classification) {
+                MatchClassification.AutoMatch -> applyAutoMatch(tenantId, best)
+                MatchClassification.NeedsReview -> applyNeedsReview(tenantId, best)
             }
-        }
-
-        bestPerEntry.keys.forEach { entryId ->
-            importedBankTransactionRepository.clearCandidatesForEntry(tenantId, entryId)
-        }
-
-        transactionSuggestions.forEach { suggestion ->
-            importedBankTransactionRepository.setMatchCandidate(
-                tenantId = tenantId,
-                transactionId = suggestion.transactionId,
-                cashflowEntryId = suggestion.entryId,
-                score = suggestion.score,
-            )
         }
     }
 
-    private data class TransactionSuggestion(
-        val transactionId: tech.dokus.domain.ids.BankTransactionId,
-        val entryId: CashflowEntryId,
-        val score: Double,
-    )
+    // ─── Evidence evaluation ──────────────────────────────────────────────
 
-    private data class MatchCandidate(
-        val transaction: BankTransactionDto,
+    private data class EvidenceResult(
+        val tx: BankTransactionDto,
         val entry: CashflowEntry,
         val score: Double,
-        val signalSnapshot: String,
+        val evidence: List<String>,
+        val exactAmount: Boolean,
+        val structuredCommMatch: Boolean,
+        val counterpartyIbanMatch: Boolean,
+        val withinDueWindow: Boolean,
     )
 
-    private fun scoreCandidate(
+    private fun evaluateEvidence(
         tx: BankTransactionDto,
         entry: CashflowEntry,
-        contactVat: String?,
         contactIban: String?,
-        invoiceStructuredReference: String?
-    ): MatchCandidate? {
+        invoiceStructuredReference: String?,
+    ): EvidenceResult? {
         if (!isSignCoherent(tx.signedAmount, entry.direction)) return null
 
         val absoluteAmountMinor = abs(tx.signedAmount.minor)
@@ -255,66 +165,136 @@ class BankStatementMatchingService(
         val dueDaysDistance = abs(tx.transactionDate.daysUntil(entry.eventDate))
         val withinDueWindow = dueDaysDistance <= DueDateWindowDays
 
-        val normalizedTxStructuredRef = normalizeStructuredCommunication(tx.structuredCommunicationRaw)
-        val normalizedEntryStructuredRef = invoiceStructuredReference ?: normalizeStructuredCommunication(entry.description)
-        val structuredMatch = normalizedTxStructuredRef != null && normalizedTxStructuredRef == normalizedEntryStructuredRef
-        val ibanMatch = exactAmount && tx.counterpartyIban?.value != null &&
-            tx.counterpartyIban?.value == normalizedIban(contactIban)
-        val vatMatch = exactAmount && !contactVat.isNullOrBlank() &&
-            containsVatHint(tx.descriptionRaw, contactVat)
+        // Hard evidence signals
+        val normalizedTxRef = normalizeStructuredCommunication(tx.structuredCommunicationRaw)
+        val normalizedEntryRef = invoiceStructuredReference
+            ?: normalizeStructuredCommunication(entry.description)
+        val structuredCommMatch = normalizedTxRef != null && normalizedTxRef == normalizedEntryRef
 
-        val baseScore = when {
-            exactAmount && structuredMatch -> 1.0
-            exactAmount && ibanMatch -> 0.93
-            exactAmount && vatMatch -> 0.88
-            withinTolerance && withinDueWindow -> {
-                val amountComponent = (AmountToleranceMinor - amountDelta).toDouble() / AmountToleranceMinor.toDouble()
-                val dateComponent = (DueDateWindowDays - dueDaysDistance).toDouble() / DueDateWindowDays.toDouble()
-                0.62 + (amountComponent * 0.18) + (dateComponent * 0.10)
-            }
-            else -> return null
-        }
+        val counterpartyIbanMatch = tx.counterpartyIban?.value != null &&
+            tx.counterpartyIban?.value == normalizedIban(contactIban)
+
+        // Collect evidence signals
+        val evidence = mutableListOf<String>()
+        if (exactAmount) evidence += "exact_amount"
+        if (structuredCommMatch) evidence += "structured_comm_match"
+        if (counterpartyIbanMatch) evidence += "counterparty_iban_match"
+        if (withinDueWindow) evidence += "within_due_window"
+        if (withinTolerance && !exactAmount) evidence += "amount_within_tolerance"
 
         val nameSimilarity = if (!tx.counterpartyName.isNullOrBlank() && !entry.contactName.isNullOrBlank()) {
             JaroWinkler.similarity(
                 tx.counterpartyName!!.trim().lowercase(),
-                entry.contactName!!.trim().lowercase()
+                entry.contactName!!.trim().lowercase(),
             )
         } else {
             0.0
         }
-        val modifier = if (nameSimilarity >= 0.95) 0.02 else 0.0
-        val score = (baseScore + modifier).coerceAtMost(1.0)
+        if (nameSimilarity >= 0.90) evidence += "counterparty_name_match"
 
-        return MatchCandidate(
-            transaction = tx,
+        // Score (used for ranking and review display)
+        val baseScore = when {
+            exactAmount && structuredCommMatch -> 1.0
+            exactAmount && counterpartyIbanMatch -> 0.95
+            exactAmount && nameSimilarity >= 0.90 && withinDueWindow -> 0.88
+            withinTolerance && withinDueWindow -> {
+                val amtPart = (AmountToleranceMinor - amountDelta).toDouble() / AmountToleranceMinor
+                val datePart = (DueDateWindowDays - dueDaysDistance).toDouble() / DueDateWindowDays
+                0.62 + (amtPart * 0.18) + (datePart * 0.10)
+            }
+            else -> return null
+        }
+
+        return EvidenceResult(
+            tx = tx,
             entry = entry,
-            score = score,
-            signalSnapshot = buildSignalSnapshot(
-                exactAmount = exactAmount,
-                structuredMatch = structuredMatch,
-                ibanMatch = ibanMatch,
-                vatMatch = vatMatch,
-                amountDelta = amountDelta,
-                dueDaysDistance = dueDaysDistance,
-                nameSimilarity = nameSimilarity
-            )
+            score = baseScore.coerceAtMost(1.0),
+            evidence = evidence,
+            exactAmount = exactAmount,
+            structuredCommMatch = structuredCommMatch,
+            counterpartyIbanMatch = counterpartyIbanMatch,
+            withinDueWindow = withinDueWindow,
         )
     }
 
-    private fun buildSignalSnapshot(
-        exactAmount: Boolean,
-        structuredMatch: Boolean,
-        ibanMatch: Boolean,
-        vatMatch: Boolean,
-        amountDelta: Long,
-        dueDaysDistance: Int,
-        nameSimilarity: Double
-    ): String {
-        return """{"exactAmount":$exactAmount,"structuredMatch":$structuredMatch,"ibanMatch":$ibanMatch,"vatMatch":$vatMatch,"amountDeltaMinor":$amountDelta,"dueDaysDistance":$dueDaysDistance,"nameSimilarity":${"%.4f".format(
-            nameSimilarity
-        )}}"""
+    // ─── Evidence gates ───────────────────────────────────────────────────
+
+    /**
+     * Classify a match based on hard-evidence gates (spec §8).
+     *
+     * AUTO_MATCH requires:
+     * - Trust >= HIGH
+     * - Single candidate (no ambiguity)
+     * - Strong evidence: (structuredComm + exactAmount) OR (iban + exactAmount + withinDueWindow)
+     *
+     * Everything else → NEEDS_REVIEW
+     */
+    private fun classifyMatch(
+        best: EvidenceResult,
+        candidateCount: Int,
+        trust: StatementTrust,
+    ): MatchClassification {
+        if (trust != StatementTrust.High) return MatchClassification.NeedsReview
+        if (candidateCount > 1) return MatchClassification.NeedsReview
+
+        val hasStrongEvidence = (best.structuredCommMatch && best.exactAmount) ||
+            (best.counterpartyIbanMatch && best.exactAmount && best.withinDueWindow)
+
+        return if (hasStrongEvidence) {
+            MatchClassification.AutoMatch
+        } else {
+            MatchClassification.NeedsReview
+        }
     }
+
+    // ─── Apply match decisions ────────────────────────────────────────────
+
+    private suspend fun applyAutoMatch(tenantId: TenantId, result: EvidenceResult) {
+        bankTransactionRepository.markMatched(
+            tenantId = tenantId,
+            transactionId = result.tx.id,
+            cashflowEntryId = result.entry.id,
+            matchedBy = MatchedBy.Auto,
+            resolutionType = ResolutionType.Document,
+            score = result.score,
+            evidence = result.evidence,
+        )
+
+        runSuspendCatching {
+            autoPaymentService.applyAutoPayment(
+                tenantId = tenantId,
+                entry = result.entry,
+                transaction = result.tx,
+                confidenceScore = result.score,
+                scoreMargin = 0.0,
+                reasonsJson = Json.encodeToString(result.evidence),
+                rulesJson = """{"gate":"hard_evidence","trust":"HIGH"}""",
+                triggerSource = tech.dokus.domain.enums.AutoPaymentTriggerSource.BankImport,
+            )
+        }.onFailure { e ->
+            logger.warn(
+                "Auto-payment failed for tx {} → entry {}: {}",
+                result.tx.id, result.entry.id, e.message,
+            )
+        }
+
+        logger.info(
+            "Auto-matched tx {} → entry {} (score={}, evidence={})",
+            result.tx.id, result.entry.id, result.score, result.evidence,
+        )
+    }
+
+    private suspend fun applyNeedsReview(tenantId: TenantId, result: EvidenceResult) {
+        bankTransactionRepository.setMatchCandidate(
+            tenantId = tenantId,
+            transactionId = result.tx.id,
+            cashflowEntryId = result.entry.id,
+            score = result.score,
+            evidence = result.evidence,
+        )
+    }
+
+    // ─── Helpers ──────────────────────────────────────────────────────────
 
     private fun isSignCoherent(amount: Money, direction: CashflowDirection): Boolean {
         return when (direction) {
@@ -326,22 +306,13 @@ class BankStatementMatchingService(
 
     private fun normalizedIban(value: String?): String? = Iban.from(value)?.value
 
-    private fun normalizeStructuredCommunication(raw: String?): String? {
-        if (raw.isNullOrBlank()) return null
-        return raw.trim().uppercase().replace(Regex("\\s+"), "")
-    }
-
-    private fun containsVatHint(text: String?, vat: String): Boolean {
-        if (text.isNullOrBlank()) return false
-        val normalizedVat = vat.uppercase().replace(Regex("[^A-Z0-9]"), "")
-        val normalizedText = text.uppercase().replace(Regex("[^A-Z0-9]"), "")
-        return normalizedText.contains(normalizedVat)
-    }
+    private fun normalizeStructuredCommunication(raw: String?): String? =
+        BankStatementProcessingService.normalizeStructuredCommunication(raw)
 
     @OptIn(ExperimentalUuidApi::class)
     private suspend fun loadInvoiceStructuredReferenceMap(
         tenantId: TenantId,
-        entries: List<CashflowEntry>
+        entries: List<CashflowEntry>,
     ): Map<String, String> = newSuspendedTransaction {
         val invoiceSourceIds = entries
             .asSequence()
@@ -354,7 +325,7 @@ class BankStatementMatchingService(
 
         InvoicesTable.select(
             InvoicesTable.id,
-            InvoicesTable.structuredCommunication
+            InvoicesTable.structuredCommunication,
         ).where {
             (InvoicesTable.tenantId eq tenantId.value.toJavaUuid()) and
                 (InvoicesTable.id inList invoiceSourceIds.toList())
@@ -363,24 +334,5 @@ class BankStatementMatchingService(
                 ?: return@mapNotNull null
             row[InvoicesTable.id].value.toString() to structured
         }.toMap()
-    }
-
-    private fun hashRow(
-        date: LocalDate,
-        amount: Money,
-        description: String?,
-        structuredCommunication: String?,
-        counterpartyName: String?
-    ): String {
-        val raw = listOf(
-            date.toString(),
-            amount.minor.toString(),
-            description?.trim().orEmpty(),
-            structuredCommunication?.trim().orEmpty(),
-            counterpartyName?.trim().orEmpty()
-        ).joinToString("|")
-        return MessageDigest.getInstance("SHA-256")
-            .digest(raw.toByteArray())
-            .joinToString("") { "%02x".format(it) }
     }
 }

@@ -129,14 +129,8 @@ class BankStatementProcessingService(
             validRowAmounts = validRowAmounts,
         ).getOrThrow()
 
-        val accountId = when (accountResolution) {
-            is AccountResolution.Resolved -> accountResolution.accountId
-            is AccountResolution.Unresolved -> null
-        }
-        val accountStatus = when (accountResolution) {
-            is AccountResolution.Resolved -> accountResolution.accountStatus
-            is AccountResolution.Unresolved -> null
-        }
+        val accountId = (accountResolution as? AccountResolution.Resolved)?.accountId
+        val accountStatus = (accountResolution as? AccountResolution.Resolved)?.accountStatus
 
         // 4. Trust calculation
         val trustResult = trustCalculator.calculate(
@@ -225,9 +219,11 @@ class BankStatementProcessingService(
     }
 
     companion object {
+        private val WhitespaceRegex = Regex("\\s+")
+
         fun normalizeStructuredCommunication(raw: String?): String? {
             if (raw.isNullOrBlank()) return null
-            return raw.trim().uppercase().replace(Regex("\\s+"), "")
+            return raw.trim().uppercase().replace(WhitespaceRegex, "")
         }
 
         fun hashRow(

@@ -2,7 +2,7 @@ package tech.dokus.database.repository.banking
 
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
-import org.jetbrains.exposed.v1.jdbc.insertAndGetId
+import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import tech.dokus.database.tables.banking.BankStatementsTable
 import tech.dokus.domain.Money
@@ -81,8 +81,8 @@ class BankStatementRepository {
         openingBalance: Money?,
         closingBalance: Money?,
         transactionCount: Int,
-    ): BankStatementRecord = dbQuery {
-        val id = BankStatementsTable.insertAndGetId {
+    ): Unit = dbQuery {
+        BankStatementsTable.insert {
             it[BankStatementsTable.tenantId] = tenantId.value.toJavaUuid()
             it[BankStatementsTable.bankAccountId] = bankAccountId?.value?.toJavaUuid()
             it[BankStatementsTable.documentId] = documentId?.value?.toJavaUuid()
@@ -96,10 +96,6 @@ class BankStatementRepository {
             it[BankStatementsTable.closingBalance] = closingBalance?.toDbDecimal()
             it[BankStatementsTable.transactionCount] = transactionCount
         }
-
-        BankStatementsTable.selectAll().where {
-            BankStatementsTable.id eq id
-        }.single().let(::toRecord)
     }
 
     private fun toRecord(row: org.jetbrains.exposed.v1.core.ResultRow): BankStatementRecord {

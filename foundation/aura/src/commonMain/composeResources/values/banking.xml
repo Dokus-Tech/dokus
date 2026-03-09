@@ -40,6 +40,20 @@
     <string name="banking_action_ignore">Ignore</string>
     <string name="banking_action_confirm_match">Confirm match</string>
 
+    <!-- Ignore dialog -->
+    <string name="banking_ignore_dialog_title">Ignore transaction</string>
+    <string name="banking_ignore_dialog_prompt">Why are you ignoring this transaction?</string>
+    <string name="banking_ignore_dialog_confirm">Ignore</string>
+    <string name="banking_ignore_dialog_cancel">Cancel</string>
+
+    <!-- Ignore reasons -->
+    <string name="banking_ignore_reason_bank_fee">Bank fee</string>
+    <string name="banking_ignore_reason_duplicate">Duplicate import</string>
+    <string name="banking_ignore_reason_personal">Personal transaction</string>
+    <string name="banking_ignore_reason_not_business">Not business-related</string>
+    <string name="banking_ignore_reason_irrelevant">Irrelevant</string>
+    <string name="banking_ignore_reason_other">Other</string>
+
     <!-- Callout -->
     <string name="banking_unresolved_callout">%1$d payments without documents</string>
     <string name="banking_unresolved_amount">%1$s unresolved</string>

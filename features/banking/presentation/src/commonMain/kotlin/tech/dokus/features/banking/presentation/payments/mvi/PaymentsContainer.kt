@@ -10,6 +10,7 @@ import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.init
 import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.domain.enums.BankTransactionStatus
+import tech.dokus.domain.enums.IgnoredReason
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.model.common.PaginationState
@@ -47,7 +48,10 @@ internal class PaymentsContainer(
                     is PaymentsIntent.SetFilterTab -> handleSetFilterTab(intent.tab)
                     is PaymentsIntent.SelectTransaction -> handleSelectTransaction(intent.transactionId)
                     is PaymentsIntent.LinkDocument -> { /* TODO: Navigate to link flow */ }
-                    is PaymentsIntent.IgnoreTransaction -> handleIgnoreTransaction(intent.transactionId)
+                    is PaymentsIntent.IgnoreTransaction -> handleOpenIgnoreDialog(intent.transactionId)
+                    is PaymentsIntent.SelectIgnoreReason -> handleSelectIgnoreReason(intent.reason)
+                    is PaymentsIntent.ConfirmIgnore -> handleConfirmIgnore()
+                    is PaymentsIntent.DismissIgnoreDialog -> handleDismissIgnoreDialog()
                     is PaymentsIntent.ConfirmMatch -> handleConfirmMatch(intent.transactionId)
                 }
             }
@@ -88,17 +92,35 @@ internal class PaymentsContainer(
         updateState { copy(selectedTransactionId = transactionId) }
     }
 
-    private suspend fun PaymentsCtx.handleIgnoreTransaction(transactionId: BankTransactionId) {
-        ignoreTransaction(transactionId).fold(
-            onSuccess = { updatedTx ->
-                updateTransactionInList(updatedTx.id) { updatedTx }
-                // Refresh summary since counts changed
-                refreshSummary()
-            },
-            onFailure = { error ->
-                action(PaymentsAction.ShowError(error.asDokusException))
-            }
-        )
+    private suspend fun PaymentsCtx.handleOpenIgnoreDialog(transactionId: BankTransactionId) {
+        updateState { copy(ignoreDialogState = IgnoreDialogState(transactionId = transactionId)) }
+    }
+
+    private suspend fun PaymentsCtx.handleSelectIgnoreReason(reason: IgnoredReason) {
+        updateState { copy(ignoreDialogState = ignoreDialogState?.copy(selectedReason = reason)) }
+    }
+
+    private suspend fun PaymentsCtx.handleDismissIgnoreDialog() {
+        updateState { copy(ignoreDialogState = null) }
+    }
+
+    private suspend fun PaymentsCtx.handleConfirmIgnore() {
+        withState {
+            val dialog = ignoreDialogState ?: return@withState
+            val reason = dialog.selectedReason ?: return@withState
+
+            updateState { copy(ignoreDialogState = null) }
+
+            ignoreTransaction(dialog.transactionId, reason).fold(
+                onSuccess = { updatedTx ->
+                    updateTransactionInList(updatedTx.id) { updatedTx }
+                    refreshSummary()
+                },
+                onFailure = { error ->
+                    action(PaymentsAction.ShowError(error.asDokusException))
+                }
+            )
+        }
     }
 
     private suspend fun PaymentsCtx.handleConfirmMatch(transactionId: BankTransactionId) {
