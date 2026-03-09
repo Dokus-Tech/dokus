@@ -4,6 +4,24 @@ All notable changes to Dokus are documented in this file.
 
 The format follows Keep a Changelog principles with pragmatic release summaries.
 
+## [1.1.0] - 2026-03-09
+
+### Added
+- Skeleton loaders for loading states across all screens (#212).
+- UI previews and Roborazzi snapshots for loading and error states.
+
+### Changed
+- Loading and error states now preserve screen layout (Scaffold, app bar, navigation chrome) — only the content area changes (#212).
+- Unified error display: `DokusErrorContent` replaces `DokusErrorBanner` in all full-content-replacement branches for consistent centered error UX.
+- Flattened MVI state structures across all features — replaced sealed `State` interfaces with single data classes using `DokusState<T>` wrappers (#212).
+- Standardized initial MVI state initialization across all features.
+- `DokusState` enhanced with data persistence across loading/error transitions and smart-cast contracts.
+- Simplified contacts screen header and error handling.
+
+### Internal
+- Removed redundant UI wrappers and stale explicit casts post-flattening cleanup.
+- Screenshot snapshots updated.
+
 ## [0.2.0] - 2026-03-08
 
 ### Added
