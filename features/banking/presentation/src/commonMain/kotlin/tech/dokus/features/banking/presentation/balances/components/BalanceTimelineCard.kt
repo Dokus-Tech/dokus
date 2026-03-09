@@ -39,6 +39,7 @@ import tech.dokus.foundation.aura.components.tabs.DokusTab
 import tech.dokus.foundation.aura.components.text.formatEuroCurrency
 import tech.dokus.foundation.aura.components.tabs.DokusTabs
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.style.textMuted
 
 private val ChartHeight = 200.dp
@@ -71,38 +72,67 @@ internal fun BalanceTimelineCard(
             modifier = Modifier.padding(Constraints.Spacing.large),
             verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.large),
         ) {
-            // Header: title + total balance on left, time range tabs on right
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xxSmall)) {
+            // Header: title + total balance, time range tabs
+            val isLargeScreen = LocalScreenSize.current.isLarge
+            if (isLargeScreen) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xxSmall)) {
+                        Text(
+                            text = stringResource(Res.string.banking_balances_timeline_title),
+                            style = MaterialTheme.typography.titleSmall,
+                        )
+                        if (summary.isSuccess()) {
+                            Text(
+                                text = stringResource(
+                                    Res.string.banking_balances_timeline_subtitle,
+                                    formatEuroCurrency(summary.data.totalBalance.toDouble()),
+                                    summary.data.accountCount,
+                                ),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.textMuted,
+                            )
+                        }
+                    }
+
+                    DokusTabs(
+                        tabs = tabs,
+                        activeId = timeRange.id,
+                        onTabSelected = { id ->
+                            BalanceTimeRange.entries.find { it.id == id }?.let(onTimeRangeChange)
+                        },
+                    )
+                }
+            } else {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
+                ) {
                     Text(
                         text = stringResource(Res.string.banking_balances_timeline_title),
                         style = MaterialTheme.typography.titleSmall,
                     )
                     if (summary.isSuccess()) {
-                        val accountCount = summary.data.accountCount
                         Text(
                             text = stringResource(
                                 Res.string.banking_balances_timeline_subtitle,
                                 formatEuroCurrency(summary.data.totalBalance.toDouble()),
-                                accountCount,
+                                summary.data.accountCount,
                             ),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.textMuted,
                         )
                     }
+                    DokusTabs(
+                        tabs = tabs,
+                        activeId = timeRange.id,
+                        onTabSelected = { id ->
+                            BalanceTimeRange.entries.find { it.id == id }?.let(onTimeRangeChange)
+                        },
+                    )
                 }
-
-                DokusTabs(
-                    tabs = tabs,
-                    activeId = timeRange.id,
-                    onTabSelected = { id ->
-                        BalanceTimeRange.entries.find { it.id == id }?.let(onTimeRangeChange)
-                    },
-                )
             }
 
             // Chart area

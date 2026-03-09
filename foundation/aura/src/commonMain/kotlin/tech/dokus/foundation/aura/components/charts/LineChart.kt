@@ -84,6 +84,7 @@ fun DokusLineChart(
     val yFormatter = remember {
         CartesianValueFormatter { _, value, _ ->
             when {
+                value == 0.0 -> " "
                 value >= 1_000_000 -> "\u20AC${(value / 1_000_000).toInt()}M"
                 value >= 1_000 -> "\u20AC${(value / 1_000).toInt()}k"
                 else -> "\u20AC${value.toInt()}"
@@ -105,12 +106,16 @@ fun DokusLineChart(
                 lineProvider = LineCartesianLayer.LineProvider.series(lines),
             ),
             startAxis = VerticalAxis.rememberStart(
+                line = null,
                 label = labelTextComponent,
+                tick = null,
                 guideline = guideline,
                 valueFormatter = yFormatter,
             ),
             bottomAxis = HorizontalAxis.rememberBottom(
+                line = null,
                 label = labelTextComponent,
+                tick = null,
                 guideline = null,
                 valueFormatter = xFormatter,
             ),
