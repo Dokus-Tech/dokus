@@ -12,17 +12,15 @@ import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
-import tech.dokus.database.repository.cashflow.CashflowPaymentCandidateRecord
-import tech.dokus.database.repository.cashflow.CashflowPaymentCandidateRepository
 import tech.dokus.database.repository.banking.BankTransactionCreate
 import tech.dokus.database.repository.banking.BankTransactionRepository
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.database.tables.cashflow.InvoicesTable
 import tech.dokus.domain.Money
+import tech.dokus.domain.enums.BankTransactionStatus
 import tech.dokus.domain.enums.CashflowDirection
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.CashflowSourceType
-import tech.dokus.domain.enums.PaymentCandidateTier
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.Iban
@@ -30,7 +28,6 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.BankStatementDraftData
 import tech.dokus.domain.model.BankStatementTransactionDraftRow
 import tech.dokus.domain.model.CashflowEntry
-import tech.dokus.domain.model.CashflowPaymentCandidatesResponse
 import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.domain.util.JaroWinkler
 import tech.dokus.foundation.backend.utils.loggerFor
@@ -40,7 +37,6 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid
 
 private const val RowConfidenceThreshold = 0.90
-private const val LargeAmountThresholdMinor = 10_000_000L // 100_000.00
 private const val StrongThreshold = 0.88
 private const val PossibleThreshold = 0.70
 private const val BestMarginThreshold = 0.08
@@ -60,7 +56,6 @@ data class BankStatementProcessingResult(
 
 class BankStatementMatchingService(
     private val importedBankTransactionRepository: BankTransactionRepository,
-    private val cashflowPaymentCandidateRepository: CashflowPaymentCandidateRepository,
     private val cashflowEntriesRepository: CashflowEntriesRepository,
     private val contactRepository: ContactRepository
 ) {
@@ -99,9 +94,8 @@ class BankStatementMatchingService(
                 return@forEachIndexed
             }
 
-            val largeFlag = abs(amount.minor) >= LargeAmountThresholdMinor
             val normalizedStructuredCommunication = normalizeStructuredCommunication(row.structuredCommunicationRaw)
-            val rowHash = hashRow(
+            val dedupHash = hashRow(
                 date = date,
                 amount = amount,
                 description = row.descriptionRaw,
@@ -109,11 +103,9 @@ class BankStatementMatchingService(
                 counterpartyName = row.counterpartyName
             )
 
-            val sanitized = row.copy(largeAmountFlag = largeFlag)
-            validRows += sanitized
+            validRows += row
             inserts += BankTransactionCreate(
-                rowHash = rowHash,
-                transactionFingerprint = rowHash,
+                dedupHash = dedupHash,
                 transactionDate = date,
                 signedAmount = amount,
                 counterpartyName = row.counterpartyName,
@@ -121,8 +113,6 @@ class BankStatementMatchingService(
                 structuredCommunicationRaw = row.structuredCommunicationRaw,
                 normalizedStructuredCommunication = normalizedStructuredCommunication,
                 descriptionRaw = row.descriptionRaw,
-                rowConfidence = row.rowConfidence,
-                largeAmountFlag = largeFlag
             )
         }
 
@@ -152,21 +142,18 @@ class BankStatementMatchingService(
         )
     }
 
+    /**
+     * Returns candidate transactions for a cashflow entry.
+     * Combines NeedsReview suggestions with all selectable (unmatched) transactions.
+     */
     suspend fun getPaymentCandidates(
         tenantId: TenantId,
         cashflowEntryId: CashflowEntryId
-    ): CashflowPaymentCandidatesResponse {
-        val suggestions = importedBankTransactionRepository.listSuggestionsForEntry(tenantId, cashflowEntryId)
-            .sortedByDescending { it.score ?: 0.0 }
-        val strong = suggestions.firstOrNull { it.tier == PaymentCandidateTier.Strong }
-        val possible = suggestions.filter { it.tier == PaymentCandidateTier.Possible && (it.score ?: 0.0) >= PossibleThreshold }
+    ): List<BankTransactionDto> {
+        val candidates = importedBankTransactionRepository.listCandidatesForEntry(tenantId, cashflowEntryId)
         val selectable = importedBankTransactionRepository.listSelectable(tenantId)
-
-        return CashflowPaymentCandidatesResponse(
-            strongCandidate = strong,
-            possibleCandidates = possible,
-            selectableTransactions = selectable
-        )
+        val candidateIds = candidates.map { it.id }.toSet()
+        return candidates + selectable.filter { it.id !in candidateIds }
     }
 
     private suspend fun runMatching(
@@ -174,7 +161,7 @@ class BankStatementMatchingService(
         documentId: DocumentId
     ) {
         val transactions = importedBankTransactionRepository.listByDocument(tenantId, documentId)
-            .filter { it.linkedCashflowEntryId == null }
+            .filter { it.status == BankTransactionStatus.Unmatched }
         if (transactions.isEmpty()) return
 
         val openEntries = cashflowEntriesRepository.listEntries(
@@ -210,52 +197,30 @@ class BankStatementMatchingService(
             }.sortedByDescending { it.score }
 
             val best = scored.firstOrNull() ?: continue
-            val second = scored.getOrNull(1)
-            val margin = best.score - (second?.score ?: 0.0)
-            val tier = when {
-                best.score >= StrongThreshold && margin >= BestMarginThreshold -> PaymentCandidateTier.Strong
-                best.score >= PossibleThreshold -> PaymentCandidateTier.Possible
-                else -> null
-            } ?: continue
+            if (best.score < PossibleThreshold) continue
 
             transactionSuggestions += TransactionSuggestion(
                 transactionId = tx.id,
                 entryId = best.entry.id,
                 score = best.score,
-                tier = tier
             )
 
             val currentBest = bestPerEntry[best.entry.id]
             if (currentBest == null || best.score > currentBest.score) {
-                bestPerEntry[best.entry.id] = best.copy(tier = tier)
+                bestPerEntry[best.entry.id] = best
             }
         }
 
         bestPerEntry.keys.forEach { entryId ->
-            importedBankTransactionRepository.clearSuggestionsForEntry(tenantId, entryId)
-            cashflowPaymentCandidateRepository.clearForEntry(tenantId, entryId)
+            importedBankTransactionRepository.clearCandidatesForEntry(tenantId, entryId)
         }
 
         transactionSuggestions.forEach { suggestion ->
-            importedBankTransactionRepository.setSuggestion(
+            importedBankTransactionRepository.setMatchCandidate(
                 tenantId = tenantId,
                 transactionId = suggestion.transactionId,
                 cashflowEntryId = suggestion.entryId,
                 score = suggestion.score,
-                tier = suggestion.tier
-            )
-        }
-
-        bestPerEntry.values.forEach { candidate ->
-            cashflowPaymentCandidateRepository.upsertBestCandidate(
-                tenantId = tenantId,
-                record = CashflowPaymentCandidateRecord(
-                    cashflowEntryId = candidate.entry.id,
-                    importedBankTransactionId = candidate.transaction.id,
-                    score = candidate.score,
-                    tier = candidate.tier ?: PaymentCandidateTier.Possible,
-                    signalSnapshotJson = candidate.signalSnapshot
-                )
             )
         }
     }
@@ -264,7 +229,6 @@ class BankStatementMatchingService(
         val transactionId: tech.dokus.domain.ids.BankTransactionId,
         val entryId: CashflowEntryId,
         val score: Double,
-        val tier: PaymentCandidateTier
     )
 
     private data class MatchCandidate(
@@ -272,7 +236,6 @@ class BankStatementMatchingService(
         val entry: CashflowEntry,
         val score: Double,
         val signalSnapshot: String,
-        val tier: PaymentCandidateTier? = null
     )
 
     private fun scoreCandidate(

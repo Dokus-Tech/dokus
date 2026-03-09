@@ -256,8 +256,8 @@ internal class PaymentsContainer(
 
 private fun PaymentFilterTab.toStatusFilter(): BankTransactionStatus? = when (this) {
     PaymentFilterTab.All -> null
-    PaymentFilterTab.NeedsReview -> BankTransactionStatus.Suggested
+    PaymentFilterTab.NeedsReview -> BankTransactionStatus.NeedsReview
     PaymentFilterTab.Unmatched -> BankTransactionStatus.Unmatched
-    PaymentFilterTab.Matched -> BankTransactionStatus.Linked
+    PaymentFilterTab.Matched -> BankTransactionStatus.Matched
     PaymentFilterTab.Ignored -> BankTransactionStatus.Ignored
 }

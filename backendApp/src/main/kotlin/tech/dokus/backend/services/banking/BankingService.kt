@@ -1,17 +1,20 @@
 package tech.dokus.backend.services.banking
 
 import tech.dokus.database.repository.banking.BankTransactionRepository
-import tech.dokus.database.repository.banking.BankingRepository
+import tech.dokus.database.repository.banking.BankAccountRepository
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.BankTransactionSource
 import tech.dokus.domain.enums.BankTransactionStatus
+import tech.dokus.domain.enums.IgnoredReason
+import tech.dokus.domain.enums.MatchedBy
+import tech.dokus.domain.enums.ResolutionType
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.AccountBalanceSeries
+import tech.dokus.domain.model.BankAccountDto
 import tech.dokus.domain.model.BankAccountSummary
-import tech.dokus.domain.model.BankConnectionDto
 import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.domain.model.BankTransactionSummary
 import tech.dokus.domain.model.BalanceHistoryPoint
@@ -19,7 +22,6 @@ import tech.dokus.domain.model.BalanceHistoryResponse
 import tech.dokus.foundation.backend.utils.loggerFor
 import tech.dokus.foundation.backend.utils.runSuspendCatching
 import kotlinx.datetime.Clock
-import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -29,29 +31,29 @@ import kotlinx.datetime.todayIn
 
 class BankingService(
     private val bankTransactionRepository: BankTransactionRepository,
-    private val bankingRepository: BankingRepository
+    private val bankAccountRepository: BankAccountRepository,
 ) {
     private val logger = loggerFor()
 
-    suspend fun listConnections(tenantId: TenantId): Result<List<BankConnectionDto>> {
-        return bankingRepository.listConnections(tenantId)
+    suspend fun listAccounts(tenantId: TenantId): Result<List<BankAccountDto>> = runSuspendCatching {
+        bankAccountRepository.listAccounts(tenantId)
     }
 
     suspend fun getAccountSummary(tenantId: TenantId): Result<BankAccountSummary> = runSuspendCatching {
-        val connections = bankingRepository.listConnections(tenantId).getOrThrow()
+        val accounts = bankAccountRepository.listAccounts(tenantId)
         val statusCounts = bankTransactionRepository.countByStatus(tenantId)
         val unmatchedCount = (statusCounts[BankTransactionStatus.Unmatched] ?: 0L).toInt()
-        val suggestedCount = (statusCounts[BankTransactionStatus.Suggested] ?: 0L).toInt()
-        val matchedCount = (statusCounts[BankTransactionStatus.Linked] ?: 0L).toInt()
+        val needsReviewCount = (statusCounts[BankTransactionStatus.NeedsReview] ?: 0L).toInt()
+        val matchedCount = (statusCounts[BankTransactionStatus.Matched] ?: 0L).toInt()
         val unresolvedMinor = bankTransactionRepository.sumUnresolved(tenantId)
 
-        val totalBalanceMinor = connections.mapNotNull { it.balance?.minor }.sum()
-        val lastSynced = connections.mapNotNull { it.lastSyncedAt }.maxOrNull()
+        val totalBalanceMinor = accounts.mapNotNull { it.balance?.minor }.sum()
+        val lastSynced = accounts.mapNotNull { it.balanceUpdatedAt }.maxOrNull()
 
         BankAccountSummary(
             totalBalance = Money(totalBalanceMinor),
-            accountCount = connections.size,
-            unmatchedCount = unmatchedCount + suggestedCount,
+            accountCount = accounts.size,
+            unmatchedCount = unmatchedCount + needsReviewCount,
             totalUnresolvedAmount = Money(unresolvedMinor),
             matchedThisPeriod = matchedCount,
             lastSyncedAt = lastSynced,
@@ -80,8 +82,8 @@ class BankingService(
 
         BankTransactionSummary(
             unmatchedCount = (statusCounts[BankTransactionStatus.Unmatched] ?: 0L).toInt(),
-            needsReviewCount = (statusCounts[BankTransactionStatus.Suggested] ?: 0L).toInt(),
-            matchedCount = (statusCounts[BankTransactionStatus.Linked] ?: 0L).toInt(),
+            needsReviewCount = (statusCounts[BankTransactionStatus.NeedsReview] ?: 0L).toInt(),
+            matchedCount = (statusCounts[BankTransactionStatus.Matched] ?: 0L).toInt(),
             ignoredCount = (statusCounts[BankTransactionStatus.Ignored] ?: 0L).toInt(),
             totalCount = statusCounts.values.sum().toInt(),
             totalUnresolvedAmount = Money(unresolvedMinor)
@@ -101,7 +103,13 @@ class BankingService(
         transactionId: BankTransactionId,
         cashflowEntryId: CashflowEntryId
     ): Result<BankTransactionDto> = runSuspendCatching {
-        val updated = bankTransactionRepository.markLinked(tenantId, transactionId, cashflowEntryId)
+        val updated = bankTransactionRepository.markMatched(
+            tenantId = tenantId,
+            transactionId = transactionId,
+            cashflowEntryId = cashflowEntryId,
+            matchedBy = MatchedBy.Manual,
+            resolutionType = ResolutionType.Document,
+        )
         if (!updated) throw DokusException.NotFound("Bank transaction not found")
         logger.info("Linked transaction {} to entry {} for tenant {}", transactionId, cashflowEntryId, tenantId)
         bankTransactionRepository.findById(tenantId, transactionId)
@@ -110,11 +118,13 @@ class BankingService(
 
     suspend fun ignoreTransaction(
         tenantId: TenantId,
-        transactionId: BankTransactionId
+        transactionId: BankTransactionId,
+        reason: IgnoredReason,
+        ignoredBy: String,
     ): Result<BankTransactionDto> = runSuspendCatching {
-        val updated = bankTransactionRepository.markIgnored(tenantId, transactionId)
+        val updated = bankTransactionRepository.markIgnored(tenantId, transactionId, reason, ignoredBy)
         if (!updated) throw DokusException.NotFound("Bank transaction not found")
-        logger.info("Ignored transaction {} for tenant {}", transactionId, tenantId)
+        logger.info("Ignored transaction {} (reason={}) for tenant {}", transactionId, reason, tenantId)
         bankTransactionRepository.findById(tenantId, transactionId)
             ?: throw DokusException.NotFound("Bank transaction not found after update")
     }
@@ -126,12 +136,18 @@ class BankingService(
         val transaction = bankTransactionRepository.findById(tenantId, transactionId)
             ?: throw DokusException.NotFound("Bank transaction not found")
 
-        val suggestedEntryId = transaction.suggestedCashflowEntryId
+        val matchedEntryId = transaction.matchedCashflowId
             ?: throw DokusException.BadRequest("Transaction has no suggested match to confirm")
 
-        val updated = bankTransactionRepository.markLinked(tenantId, transactionId, suggestedEntryId)
+        val updated = bankTransactionRepository.markMatched(
+            tenantId = tenantId,
+            transactionId = transactionId,
+            cashflowEntryId = matchedEntryId,
+            matchedBy = MatchedBy.Review,
+            resolutionType = ResolutionType.Document,
+        )
         if (!updated) throw DokusException.InternalError("Failed to confirm match")
-        logger.info("Confirmed suggested match for transaction {} -> entry {} for tenant {}", transactionId, suggestedEntryId, tenantId)
+        logger.info("Confirmed suggested match for transaction {} -> entry {} for tenant {}", transactionId, matchedEntryId, tenantId)
         bankTransactionRepository.findById(tenantId, transactionId)
             ?: throw DokusException.NotFound("Bank transaction not found after update")
     }
@@ -146,22 +162,22 @@ class BankingService(
     ): Result<BalanceHistoryResponse> = runSuspendCatching {
         val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
         val startDate = today.minus(days, DateTimeUnit.DAY)
-        val connections = bankingRepository.listConnections(tenantId).getOrThrow()
+        val accounts = bankAccountRepository.listAccounts(tenantId)
         val transactions = bankTransactionRepository.listAll(
             tenantId = tenantId,
             fromDate = startDate,
             toDate = today,
         )
 
-        // Group transactions by connection and date
-        val txByConnection = transactions.groupBy { it.bankConnectionId }
+        // Group transactions by account and date
+        val txByAccount = transactions.groupBy { it.bankAccountId }
 
-        val accountSeries = connections.map { conn ->
-            val currentBalance = conn.balance?.minor ?: 0L
-            val connTxs = txByConnection[conn.id] ?: emptyList()
+        val accountSeries = accounts.map { account ->
+            val currentBalance = account.balance?.minor ?: 0L
+            val accountTxs = txByAccount[account.id] ?: emptyList()
 
             // Group by date, sum amounts per day
-            val dailyAmounts = connTxs
+            val dailyAmounts = accountTxs
                 .groupBy { it.transactionDate }
                 .mapValues { (_, txs) -> txs.sumOf { it.signedAmount.minor } }
 
@@ -170,15 +186,14 @@ class BankingService(
             var runningBalance = currentBalance
             val points = dates.reversed().map { date ->
                 val point = BalanceHistoryPoint(date = date, balance = Money(runningBalance))
-                // Subtract today's transactions to get previous day's balance
                 val dayAmount = dailyAmounts[date] ?: 0L
                 runningBalance -= dayAmount
                 point
             }.reversed()
 
             AccountBalanceSeries(
-                connectionId = conn.id,
-                accountName = conn.accountName ?: conn.institutionName,
+                accountId = account.id,
+                accountName = account.name,
                 points = points,
             )
         }

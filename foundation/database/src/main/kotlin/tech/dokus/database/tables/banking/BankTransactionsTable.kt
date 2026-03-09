@@ -11,22 +11,24 @@ import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.domain.enums.BankTransactionSource
 import tech.dokus.domain.enums.BankTransactionStatus
 import tech.dokus.domain.enums.Currency
-import tech.dokus.domain.enums.PaymentCandidateTier
+import tech.dokus.domain.enums.IgnoredReason
+import tech.dokus.domain.enums.MatchedBy
+import tech.dokus.domain.enums.ResolutionType
+import tech.dokus.domain.enums.StatementTrust
 import tech.dokus.foundation.backend.database.dbEnumeration
 
-private const val HashLength = 64
-private const val FingerprintLength = 64
+private const val DedupHashLength = 64
 private const val IbanLength = 34
+private const val BicLength = 11
 private const val NameLength = 255
-private const val ExternalIdLength = 255
 private const val StructuredCommLength = 64
 private const val NormalizedStructuredCommLength = 32
 
 /**
  * Unified bank transactions table.
  *
- * Merges the former `imported_bank_transactions` (file imports) and `bank_transactions` (live sync)
- * into a single table. The `source` column distinguishes the origin.
+ * Each row represents a single bank transaction imported from a statement
+ * (PDF, CODA, MT940) or live-sync provider (Plaid, Tink).
  */
 object BankTransactionsTable : UUIDTable("bank_transactions") {
     val tenantId = uuid("tenant_id").references(
@@ -35,66 +37,72 @@ object BankTransactionsTable : UUIDTable("bank_transactions") {
     )
 
     // --- Source identification ---
-    val txSource = dbEnumeration<BankTransactionSource>("source").default(BankTransactionSource.BankImport)
+    val txSource = dbEnumeration<BankTransactionSource>("source").default(BankTransactionSource.PdfStatement)
 
-    // File import fields (nullable for live sync)
     val documentId = uuid("document_id").references(
         DocumentsTable.id,
         onDelete = ReferenceOption.CASCADE
     ).nullable()
-    val rowHash = varchar("row_hash", HashLength).nullable()
 
-    // Live sync fields (nullable for file imports)
-    val bankConnectionId = uuid("bank_connection_id").references(
-        BankConnectionsTable.id,
+    val bankAccountId = uuid("bank_account_id").references(
+        BankAccountsTable.id,
         onDelete = ReferenceOption.SET_NULL
     ).nullable()
-    val externalId = varchar("external_id", ExternalIdLength).nullable()
+
+    // --- Dedup ---
+    val dedupHash = varchar("dedup_hash", DedupHashLength)
 
     // --- Core transaction data ---
-    val transactionFingerprint = varchar("transaction_fingerprint", FingerprintLength)
     val transactionDate = date("transaction_date")
+    val valueDate = date("value_date").nullable()
     val signedAmount = decimal("signed_amount", 12, 2)
     val currency = dbEnumeration<Currency>("currency").default(Currency.Eur)
-    val isPending = bool("is_pending").default(false)
 
     // --- Counterparty ---
     val counterpartyName = varchar("counterparty_name", NameLength).nullable()
     val counterpartyIban = varchar("counterparty_iban", IbanLength).nullable()
+    val counterpartyBic = varchar("counterparty_bic", BicLength).nullable()
 
     // --- Communication / description ---
     val structuredCommunicationRaw = varchar("structured_communication_raw", StructuredCommLength).nullable()
     val normalizedStructuredCommunication =
         varchar("normalized_structured_communication", NormalizedStructuredCommLength).nullable()
+    val freeCommunication = text("free_communication").nullable()
     val descriptionRaw = text("description_raw").nullable()
-
-    // --- Quality signals ---
-    val rowConfidence = decimal("row_confidence", 5, 4).nullable()
-    val largeAmountFlag = bool("large_amount_flag").default(false)
 
     // --- Matching lifecycle ---
     val status = dbEnumeration<BankTransactionStatus>("status").default(BankTransactionStatus.Unmatched)
-    val linkedCashflowEntryId = uuid("linked_cashflow_entry_id")
+    val resolutionType = dbEnumeration<ResolutionType>("resolution_type").nullable()
+    val matchedCashflowId = uuid("matched_cashflow_id")
         .references(CashflowEntriesTable.id, onDelete = ReferenceOption.SET_NULL)
         .nullable()
-    val suggestedCashflowEntryId = uuid("suggested_cashflow_entry_id")
-        .references(CashflowEntriesTable.id, onDelete = ReferenceOption.SET_NULL)
+    val matchedDocumentId = uuid("matched_document_id")
+        .references(DocumentsTable.id, onDelete = ReferenceOption.SET_NULL)
         .nullable()
-    val suggestedScore = decimal("suggested_score", 5, 4).nullable()
-    val suggestedTier = dbEnumeration<PaymentCandidateTier>("suggested_tier").nullable()
+    val matchScore = decimal("match_score", 5, 4).nullable()
+    val matchEvidence = text("match_evidence").nullable() // JSON array of strings
+    val matchedBy = dbEnumeration<MatchedBy>("matched_by").nullable()
+    val matchedAt = datetime("matched_at").nullable()
+
+    // --- Ignore metadata ---
+    val ignoredReason = dbEnumeration<IgnoredReason>("ignored_reason").nullable()
+    val ignoredAt = datetime("ignored_at").nullable()
+    val ignoredBy = varchar("ignored_by", NameLength).nullable()
+
+    // --- Trust & transfer ---
+    val statementTrust = dbEnumeration<StatementTrust>("statement_trust").default(StatementTrust.Low)
+    val transferPairId = uuid("transfer_pair_id").nullable()
 
     // --- Timestamps ---
     val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)
     val updatedAt = datetime("updated_at").defaultExpression(CurrentDateTime)
 
     init {
-        // Regular indexes
         index(false, tenantId, status, transactionDate)
-        index(false, tenantId, suggestedCashflowEntryId)
-        index(false, tenantId, linkedCashflowEntryId)
+        index(false, tenantId, matchedCashflowId)
         index(false, tenantId, normalizedStructuredCommunication)
-        index(false, tenantId, transactionFingerprint)
-        index(false, tenantId, bankConnectionId, transactionDate)
+        index(false, tenantId, dedupHash)
+        index(false, tenantId, bankAccountId, transactionDate)
         index(false, tenantId, txSource)
     }
 }

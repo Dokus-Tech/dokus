@@ -24,8 +24,8 @@
 
     <!-- Transaction status -->
     <string name="banking_status_unmatched">Unmatched</string>
-    <string name="banking_status_suggested">Needs review</string>
-    <string name="banking_status_linked">Matched</string>
+    <string name="banking_status_needs_review">Needs review</string>
+    <string name="banking_status_matched">Matched</string>
     <string name="banking_status_ignored">Ignored</string>
 
     <!-- Detail pane -->

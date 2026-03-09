@@ -13,14 +13,14 @@ import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.features.banking.usecases.GetAccountSummaryUseCase
 import tech.dokus.features.banking.usecases.GetBalanceHistoryUseCase
 import tech.dokus.features.banking.usecases.GetTransactionSummaryUseCase
-import tech.dokus.features.banking.usecases.ListBankConnectionsUseCase
+import tech.dokus.features.banking.usecases.ListBankAccountsUseCase
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.platform.Logger
 
 internal typealias BalancesCtx = PipelineContext<BalancesState, BalancesIntent, BalancesAction>
 
 internal class BalancesContainer(
-    private val listConnections: ListBankConnectionsUseCase,
+    private val listAccounts: ListBankAccountsUseCase,
     private val getAccountSummary: GetAccountSummaryUseCase,
     private val getTransactionSummary: GetTransactionSummaryUseCase,
     private val getBalanceHistory: GetBalanceHistoryUseCase,
@@ -45,7 +45,7 @@ internal class BalancesContainer(
     private suspend fun BalancesCtx.handleRefresh() {
         updateState {
             copy(
-                connections = connections.asLoading,
+                accounts = accounts.asLoading,
                 summary = summary.asLoading,
                 transactionSummary = transactionSummary.asLoading,
                 balanceHistory = balanceHistory.asLoading,
@@ -56,28 +56,28 @@ internal class BalancesContainer(
             val days = timeRange.days
 
             coroutineScope {
-                val connectionsDeferred = async { listConnections() }
+                val accountsDeferred = async { listAccounts() }
                 val summaryDeferred = async { getAccountSummary() }
                 val txSummaryDeferred = async { getTransactionSummary() }
                 val historyDeferred = async { getBalanceHistory(days) }
 
-                val connectionsResult = connectionsDeferred.await()
+                val accountsResult = accountsDeferred.await()
                 val summaryResult = summaryDeferred.await()
                 val txSummaryResult = txSummaryDeferred.await()
                 val historyResult = historyDeferred.await()
 
-                connectionsResult.fold(
+                accountsResult.fold(
                     onSuccess = { data ->
-                        updateState { copy(connections = DokusState.success(data)) }
+                        updateState { copy(accounts = DokusState.success(data)) }
                     },
                     onFailure = { error ->
-                        logger.e(error) { "Failed to load connections" }
+                        logger.e(error) { "Failed to load accounts" }
                         updateState {
                             copy(
-                                connections = DokusState.error(
+                                accounts = DokusState.error(
                                     exception = error.asDokusException,
                                     retryHandler = { intent(BalancesIntent.Refresh) },
-                                    lastData = connections.lastData,
+                                    lastData = accounts.lastData,
                                 )
                             )
                         }

@@ -23,7 +23,7 @@ val bankingViewModelModule = module {
 
     container<BalancesContainer, BalancesState, BalancesIntent, BalancesAction> {
         BalancesContainer(
-            listConnections = get(),
+            listAccounts = get(),
             getAccountSummary = get(),
             getTransactionSummary = get(),
             getBalanceHistory = get(),

@@ -192,7 +192,7 @@ internal fun TransactionRow(
         // Document action
         DokusTableCell(PaymentsTableColumns.Document) {
             if (transaction.status == BankTransactionStatus.Unmatched ||
-                transaction.status == BankTransactionStatus.Suggested
+                transaction.status == BankTransactionStatus.NeedsReview
             ) {
                 Text(
                     text = "+ ${stringResource(Res.string.banking_action_link)}",
@@ -278,8 +278,8 @@ private fun TransactionStatusBadge(
 ) {
     val bgColor = when (status) {
         BankTransactionStatus.Unmatched -> MaterialTheme.colorScheme.amberSoft
-        BankTransactionStatus.Suggested -> MaterialTheme.colorScheme.redSoft
-        BankTransactionStatus.Linked -> MaterialTheme.colorScheme.surface
+        BankTransactionStatus.NeedsReview -> MaterialTheme.colorScheme.redSoft
+        BankTransactionStatus.Matched -> MaterialTheme.colorScheme.surface
         BankTransactionStatus.Ignored -> MaterialTheme.colorScheme.surface
     }
 

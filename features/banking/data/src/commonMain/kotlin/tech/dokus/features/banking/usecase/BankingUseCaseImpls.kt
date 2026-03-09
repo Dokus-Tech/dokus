@@ -7,7 +7,7 @@ import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.model.BalanceHistoryResponse
 import tech.dokus.domain.model.BankAccountSummary
-import tech.dokus.domain.model.BankConnectionDto
+import tech.dokus.domain.model.BankAccountDto
 import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.domain.model.BankTransactionSummary
 import tech.dokus.domain.model.common.PaginatedResponse
@@ -19,7 +19,7 @@ import tech.dokus.features.banking.usecases.GetBankTransactionUseCase
 import tech.dokus.features.banking.usecases.GetTransactionSummaryUseCase
 import tech.dokus.features.banking.usecases.IgnoreTransactionUseCase
 import tech.dokus.features.banking.usecases.LinkTransactionUseCase
-import tech.dokus.features.banking.usecases.ListBankConnectionsUseCase
+import tech.dokus.features.banking.usecases.ListBankAccountsUseCase
 import tech.dokus.features.banking.usecases.ListBankTransactionsUseCase
 
 internal class ListBankTransactionsUseCaseImpl(
@@ -95,11 +95,11 @@ internal class ConfirmTransactionUseCaseImpl(
     }
 }
 
-internal class ListBankConnectionsUseCaseImpl(
+internal class ListBankAccountsUseCaseImpl(
     private val dataSource: BankingRemoteDataSource,
-) : ListBankConnectionsUseCase {
-    override suspend fun invoke(): Result<List<BankConnectionDto>> {
-        return dataSource.listConnections()
+) : ListBankAccountsUseCase {
+    override suspend fun invoke(): Result<List<BankAccountDto>> {
+        return dataSource.listAccounts()
     }
 }
 

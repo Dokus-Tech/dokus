@@ -13,7 +13,7 @@ import tech.dokus.aura.resources.banking_balances_tab_1y
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.BalanceHistoryResponse
 import tech.dokus.domain.model.BankAccountSummary
-import tech.dokus.domain.model.BankConnectionDto
+import tech.dokus.domain.model.BankAccountDto
 import tech.dokus.domain.model.BankTransactionSummary
 import tech.dokus.foundation.app.state.DokusState
 
@@ -27,7 +27,7 @@ enum class BalanceTimeRange(val id: String, val days: Int, val labelRes: StringR
 
 @Immutable
 data class BalancesState(
-    val connections: DokusState<List<BankConnectionDto>>,
+    val accounts: DokusState<List<BankAccountDto>>,
     val summary: DokusState<BankAccountSummary>,
     val transactionSummary: DokusState<BankTransactionSummary>,
     val balanceHistory: DokusState<BalanceHistoryResponse>,
@@ -35,7 +35,7 @@ data class BalancesState(
 ) : MVIState {
     companion object {
         val initial = BalancesState(
-            connections = DokusState.loading(),
+            accounts = DokusState.loading(),
             summary = DokusState.loading(),
             transactionSummary = DokusState.loading(),
             balanceHistory = DokusState.loading(),

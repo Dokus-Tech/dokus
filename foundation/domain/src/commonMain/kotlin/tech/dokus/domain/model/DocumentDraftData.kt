@@ -119,5 +119,10 @@ data class BankStatementTransactionDraftRow(
 data class BankStatementDraftData(
     val direction: DocumentDirection = DocumentDirection.Neutral,
     val transactions: List<BankStatementTransactionDraftRow> = emptyList(),
-    val notes: String? = null
+    val accountIban: Iban? = null,
+    val openingBalance: Money? = null,
+    val closingBalance: Money? = null,
+    val periodStart: LocalDate? = null,
+    val periodEnd: LocalDate? = null,
+    val notes: String? = null,
 ) : DocumentDraftData

@@ -13,6 +13,7 @@ import tech.dokus.backend.security.requireTenantId
 import tech.dokus.backend.services.banking.BankingService
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.BankTransactionId
+import tech.dokus.domain.model.IgnoreTransactionRequest
 import tech.dokus.domain.model.LinkTransactionRequest
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.routes.Banking
@@ -43,9 +44,9 @@ internal fun Route.bankingRoutes() {
         // GET /api/v1/banking/accounts
         get<Banking.Accounts> {
             val tenantId = requireTenantId()
-            val connections = bankingService.listConnections(tenantId)
+            val accounts = bankingService.listAccounts(tenantId)
                 .getOrElse { throw DokusException.InternalError("Failed to list accounts: ${it.message}") }
-            call.respond(HttpStatusCode.OK, connections)
+            call.respond(HttpStatusCode.OK, accounts)
         }
 
         // GET /api/v1/banking/accounts/summary
@@ -136,9 +137,14 @@ internal fun Route.bankingRoutes() {
         post<Banking.Transactions.Id.Ignore> { route ->
             val tenantId = requireTenantId()
             val transactionId = parseTransactionId(route.parent.id)
+            val request = call.receive<IgnoreTransactionRequest>()
 
-            val updated = bankingService.ignoreTransaction(tenantId, transactionId)
-                .getOrElse { error ->
+            val updated = bankingService.ignoreTransaction(
+                tenantId = tenantId,
+                transactionId = transactionId,
+                reason = request.reason,
+                ignoredBy = "user", // TODO: extract from principal
+            ).getOrElse { error ->
                     throw (error as? DokusException
                         ?: DokusException.InternalError("Failed to ignore transaction: ${error.message}"))
                 }

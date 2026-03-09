@@ -16,7 +16,7 @@ import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.model.BalanceHistoryResponse
 import tech.dokus.domain.model.BankAccountSummary
-import tech.dokus.domain.model.BankConnectionDto
+import tech.dokus.domain.model.BankAccountDto
 import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.domain.model.BankTransactionSummary
 import tech.dokus.domain.model.LinkTransactionRequest
@@ -28,7 +28,7 @@ internal class BankingRemoteDataSourceImpl(
     private val endpointProvider: DynamicDokusEndpointProvider,
 ) : BankingRemoteDataSource {
 
-    override suspend fun listConnections(): Result<List<BankConnectionDto>> = runCatching {
+    override suspend fun listAccounts(): Result<List<BankAccountDto>> = runCatching {
         httpClient.get(Banking.Accounts()).body()
     }
 

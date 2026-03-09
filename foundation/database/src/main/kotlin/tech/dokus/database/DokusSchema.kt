@@ -16,7 +16,7 @@ import tech.dokus.database.tables.auth.TenantSettingsTable
 import tech.dokus.database.tables.auth.TenantTable
 import tech.dokus.database.tables.auth.UsersTable
 import tech.dokus.database.tables.auth.WelcomeEmailJobsTable
-import tech.dokus.database.tables.banking.BankConnectionsTable
+import tech.dokus.database.tables.banking.BankAccountsTable
 import tech.dokus.database.tables.banking.BankTransactionsTable
 import tech.dokus.database.tables.business.BusinessProfileEnrichmentJobsTable
 import tech.dokus.database.tables.business.BusinessProfilesTable
@@ -38,7 +38,6 @@ import tech.dokus.database.tables.documents.DocumentPurposeExamplesTable
 import tech.dokus.database.tables.documents.DocumentPurposeTemplatesTable
 import tech.dokus.database.tables.documents.DocumentSourcesTable
 import tech.dokus.database.tables.documents.DocumentsTable
-import tech.dokus.database.tables.documents.CashflowPaymentCandidatesTable
 import tech.dokus.database.tables.documents.InvoiceBankMatchLinksTable
 import tech.dokus.database.tables.documents.AutoPaymentAuditEventsTable
 import tech.dokus.database.tables.notifications.NotificationPreferencesTable
@@ -98,7 +97,6 @@ object DokusSchema {
                 DocumentPurposeTemplatesTable,
                 DocumentPurposeExamplesTable,
                 BankTransactionsTable,
-                CashflowPaymentCandidatesTable,
                 InvoiceBankMatchLinksTable,
                 AutoPaymentAuditEventsTable,
 
@@ -126,7 +124,7 @@ object DokusSchema {
                 // Payments / Banking
                 // ----------------------------
                 PaymentsTable,
-                BankConnectionsTable,
+                BankAccountsTable,
 
                 // ----------------------------
                 // Search telemetry
@@ -150,21 +148,14 @@ object DokusSchema {
             )
         }
 
-        // Partial unique indexes for bank_transactions (Exposed can't express WHERE on indexes)
+        // Partial unique index for bank transaction dedup
         dbQuery {
             val tx = org.jetbrains.exposed.v1.jdbc.transactions.TransactionManager.current()
             tx.exec(
                 """
-                CREATE UNIQUE INDEX IF NOT EXISTS uq_bank_txn_file_import
-                    ON bank_transactions (tenant_id, document_id, row_hash)
-                    WHERE document_id IS NOT NULL AND row_hash IS NOT NULL
-                """.trimIndent()
-            )
-            tx.exec(
-                """
-                CREATE UNIQUE INDEX IF NOT EXISTS uq_bank_txn_live_sync
-                    ON bank_transactions (tenant_id, bank_connection_id, external_id)
-                    WHERE bank_connection_id IS NOT NULL AND external_id IS NOT NULL
+                CREATE UNIQUE INDEX IF NOT EXISTS uq_bank_txn_dedup
+                    ON bank_transactions (tenant_id, bank_account_id, dedup_hash)
+                    WHERE bank_account_id IS NOT NULL
                 """.trimIndent()
             )
         }

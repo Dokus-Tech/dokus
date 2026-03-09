@@ -161,7 +161,7 @@ internal fun TransactionDetailPane(
                     Text(stringResource(Res.string.banking_action_ignore))
                 }
             }
-            BankTransactionStatus.Suggested -> {
+            BankTransactionStatus.NeedsReview -> {
                 Button(
                     onClick = onConfirmMatch,
                     modifier = Modifier.fillMaxWidth(),
@@ -183,7 +183,7 @@ internal fun TransactionDetailPane(
                     Text(stringResource(Res.string.banking_action_ignore))
                 }
             }
-            BankTransactionStatus.Linked,
+            BankTransactionStatus.Matched,
             BankTransactionStatus.Ignored -> {
                 // No actions for resolved transactions
             }

@@ -3,17 +3,18 @@ package tech.dokus.features.banking.presentation.balances.screen
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalDate
 import tech.dokus.domain.Money
+import tech.dokus.domain.enums.BankAccountProvider
+import tech.dokus.domain.enums.BankAccountStatus
 import tech.dokus.domain.enums.BankAccountType
-import tech.dokus.domain.enums.BankProvider
 import tech.dokus.domain.enums.Currency
-import tech.dokus.domain.ids.BankConnectionId
+import tech.dokus.domain.ids.BankAccountId
 import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.AccountBalanceSeries
 import tech.dokus.domain.model.BalanceHistoryPoint
 import tech.dokus.domain.model.BalanceHistoryResponse
 import tech.dokus.domain.model.BankAccountSummary
-import tech.dokus.domain.model.BankConnectionDto
+import tech.dokus.domain.model.BankAccountDto
 import tech.dokus.domain.model.BankTransactionSummary
 import tech.dokus.features.banking.presentation.balances.mvi.BalancesState
 import tech.dokus.foundation.app.state.DokusState
@@ -21,40 +22,36 @@ import tech.dokus.foundation.app.state.DokusState
 private val PreviewDateTime = LocalDateTime(2026, 3, 9, 15, 0)
 private val PreviewTenantId = TenantId.generate()
 
-private val PreviewConnections = listOf(
-    BankConnectionDto(
-        id = BankConnectionId.generate(),
+private val PreviewAccounts = listOf(
+    BankAccountDto(
+        id = BankAccountId.generate(),
         tenantId = PreviewTenantId,
-        provider = BankProvider.Tink,
-        institutionId = "kbc-001",
-        institutionName = "KBC",
-        accountId = "acc-001",
-        accountName = "KBC Business",
-        accountType = BankAccountType.Checking,
-        currency = Currency.Eur,
         iban = Iban("BE68539007547034"),
+        name = "KBC Business",
+        institutionName = "KBC",
+        accountType = BankAccountType.Current,
+        currency = Currency.Eur,
+        provider = BankAccountProvider.Tink,
         balance = Money(1438042),
-        lastSyncedAt = LocalDateTime(2026, 3, 9, 15, 0),
+        balanceUpdatedAt = LocalDateTime(2026, 3, 9, 15, 0),
+        status = BankAccountStatus.Confirmed,
         isActive = true,
         createdAt = LocalDateTime(2026, 1, 1, 0, 0),
-        updatedAt = LocalDateTime(2026, 3, 9, 15, 0),
     ),
-    BankConnectionDto(
-        id = BankConnectionId.generate(),
+    BankAccountDto(
+        id = BankAccountId.generate(),
         tenantId = PreviewTenantId,
-        provider = BankProvider.Manual,
-        institutionId = "belfius-001",
+        iban = Iban("BE42063012345678"),
+        name = "Belfius Savings",
         institutionName = "Belfius",
-        accountId = "acc-002",
-        accountName = "Belfius Savings",
         accountType = BankAccountType.Savings,
         currency = Currency.Eur,
-        iban = Iban("BE42063012345678"),
+        provider = BankAccountProvider.Coda,
         balance = Money(340000),
-        lastSyncedAt = LocalDateTime(2026, 3, 8, 10, 0),
+        balanceUpdatedAt = LocalDateTime(2026, 3, 8, 10, 0),
+        status = BankAccountStatus.Confirmed,
         isActive = true,
         createdAt = LocalDateTime(2026, 1, 1, 0, 0),
-        updatedAt = LocalDateTime(2026, 3, 8, 10, 0),
     ),
 )
 
@@ -79,7 +76,7 @@ private val PreviewTransactionSummary = BankTransactionSummary(
 private val PreviewBalanceHistory = BalanceHistoryResponse(
     series = listOf(
         AccountBalanceSeries(
-            connectionId = PreviewConnections[0].id,
+            accountId = PreviewAccounts[0].id,
             accountName = "KBC Business",
             points = listOf(
                 BalanceHistoryPoint(LocalDate(2026, 2, 7), Money(1200000)),
@@ -93,7 +90,7 @@ private val PreviewBalanceHistory = BalanceHistoryResponse(
             ),
         ),
         AccountBalanceSeries(
-            connectionId = PreviewConnections[1].id,
+            accountId = PreviewAccounts[1].id,
             accountName = "Belfius Savings",
             points = listOf(
                 BalanceHistoryPoint(LocalDate(2026, 2, 7), Money(340000)),
@@ -120,7 +117,7 @@ private val PreviewBalanceHistory = BalanceHistoryResponse(
 )
 
 internal fun previewBalancesState() = BalancesState(
-    connections = DokusState.success(PreviewConnections),
+    accounts = DokusState.success(PreviewAccounts),
     summary = DokusState.success(PreviewSummary),
     transactionSummary = DokusState.success(PreviewTransactionSummary),
     balanceHistory = DokusState.success(PreviewBalanceHistory),

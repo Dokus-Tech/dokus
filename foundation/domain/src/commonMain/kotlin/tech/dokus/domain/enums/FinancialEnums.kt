@@ -848,39 +848,33 @@ enum class PaymentCreatedBy(override val dbValue: String) : DbEnum {
 // ============================================================================
 
 @Serializable
-enum class BankProvider(override val dbValue: String) : DbEnum {
+enum class BankAccountProvider(override val dbValue: String) : DbEnum {
+    @SerialName("CODA")
+    Coda("CODA"),
+
+    @SerialName("MT940")
+    Mt940("MT940"),
+
     @SerialName("PLAID")
     Plaid("PLAID"),
-
-    @SerialName("YODLEE")
-    Yodlee("YODLEE"),
 
     @SerialName("TINK")
     Tink("TINK"),
 
-    @SerialName("SALT_EDGE")
-    SaltEdge("SALT_EDGE"),
-
-    @SerialName("MANUAL")
-    Manual("MANUAL")
+    @SerialName("UNKNOWN")
+    Unknown("UNKNOWN")
 }
 
 @Serializable
 enum class BankAccountType(override val dbValue: String) : DbEnum {
-    @SerialName("CHECKING")
-    Checking("CHECKING"),
+    @SerialName("CURRENT")
+    Current("CURRENT"),
 
     @SerialName("SAVINGS")
     Savings("SAVINGS"),
 
     @SerialName("CREDIT_CARD")
-    CreditCard("CREDIT_CARD"),
-
-    @SerialName("BUSINESS")
-    Business("BUSINESS"),
-
-    @SerialName("INVESTMENT")
-    Investment("INVESTMENT")
+    CreditCard("CREDIT_CARD")
 }
 
 // ============================================================================
@@ -1040,8 +1034,8 @@ enum class EntityType(override val dbValue: String) : DbEnum {
     @SerialName("PAYMENT")
     Payment("PAYMENT"),
 
-    @SerialName("BANK_CONNECTION")
-    BankConnection("BANK_CONNECTION"),
+    @SerialName("BANK_ACCOUNT")
+    BankAccount("BANK_ACCOUNT"),
 
     @SerialName("BANK_TRANSACTION")
     BankTransaction("BANK_TRANSACTION"),

@@ -23,7 +23,7 @@ private val PreviewTransactions: List<BankTransactionDto> = listOf(
     BankTransactionDto(
         id = BankTransactionId.generate(),
         tenantId = PreviewTenantId,
-        source = BankTransactionSource.BankImport,
+        source = BankTransactionSource.PdfStatement,
         transactionDate = LocalDate(2026, 2, 14),
         signedAmount = Money.parseOrThrow("-1250.00"),
         counterpartyName = "Coolblue België NV",
@@ -37,13 +37,13 @@ private val PreviewTransactions: List<BankTransactionDto> = listOf(
     BankTransactionDto(
         id = BankTransactionId.generate(),
         tenantId = PreviewTenantId,
-        source = BankTransactionSource.BankImport,
+        source = BankTransactionSource.PdfStatement,
         transactionDate = LocalDate(2026, 2, 13),
         signedAmount = Money.parseOrThrow("3500.00"),
         counterpartyName = "Acme Corp",
         counterpartyIban = Iban("BE71096123456769"),
         structuredCommunicationRaw = "+++101/2345/67890+++",
-        status = BankTransactionStatus.Suggested,
+        status = BankTransactionStatus.NeedsReview,
         currency = Currency.Eur,
         createdAt = PreviewDateTime,
         updatedAt = PreviewDateTime,
@@ -51,12 +51,12 @@ private val PreviewTransactions: List<BankTransactionDto> = listOf(
     BankTransactionDto(
         id = BankTransactionId.generate(),
         tenantId = PreviewTenantId,
-        source = BankTransactionSource.BankImport,
+        source = BankTransactionSource.PdfStatement,
         transactionDate = LocalDate(2026, 2, 12),
         signedAmount = Money.parseOrThrow("-89.99"),
         counterpartyName = "DigitalOcean",
         descriptionRaw = "DO Invoice #12345",
-        status = BankTransactionStatus.Linked,
+        status = BankTransactionStatus.Matched,
         currency = Currency.Eur,
         createdAt = PreviewDateTime,
         updatedAt = PreviewDateTime,
@@ -64,7 +64,7 @@ private val PreviewTransactions: List<BankTransactionDto> = listOf(
     BankTransactionDto(
         id = BankTransactionId.generate(),
         tenantId = PreviewTenantId,
-        source = BankTransactionSource.BankImport,
+        source = BankTransactionSource.PdfStatement,
         transactionDate = LocalDate(2026, 2, 11),
         signedAmount = Money.parseOrThrow("-42.50"),
         counterpartyName = "Proximus",
@@ -77,13 +77,13 @@ private val PreviewTransactions: List<BankTransactionDto> = listOf(
     BankTransactionDto(
         id = BankTransactionId.generate(),
         tenantId = PreviewTenantId,
-        source = BankTransactionSource.BankImport,
+        source = BankTransactionSource.PdfStatement,
         transactionDate = LocalDate(2026, 2, 10),
         signedAmount = Money.parseOrThrow("7200.00"),
         counterpartyName = "Dokus Tech BVBA",
         counterpartyIban = Iban("BE62510007547061"),
         structuredCommunicationRaw = "+++200/0001/00042+++",
-        status = BankTransactionStatus.Linked,
+        status = BankTransactionStatus.Matched,
         currency = Currency.Eur,
         createdAt = PreviewDateTime,
         updatedAt = PreviewDateTime,
@@ -91,7 +91,7 @@ private val PreviewTransactions: List<BankTransactionDto> = listOf(
     BankTransactionDto(
         id = BankTransactionId.generate(),
         tenantId = PreviewTenantId,
-        source = BankTransactionSource.BankImport,
+        source = BankTransactionSource.PdfStatement,
         transactionDate = LocalDate(2026, 2, 9),
         signedAmount = Money.parseOrThrow("-320.00"),
         counterpartyName = "AWS Europe",
@@ -130,6 +130,6 @@ internal fun previewPaymentsState(
 )
 
 internal fun previewPaymentsStateWithSelection(): PaymentsState {
-    val suggestedTx = PreviewTransactions.first { it.status == BankTransactionStatus.Suggested }
+    val suggestedTx = PreviewTransactions.first { it.status == BankTransactionStatus.NeedsReview }
     return previewPaymentsState(selectedTransactionId = suggestedTx.id)
 }

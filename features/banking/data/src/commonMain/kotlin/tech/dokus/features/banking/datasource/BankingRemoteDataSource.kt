@@ -7,14 +7,14 @@ import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.model.BalanceHistoryResponse
 import tech.dokus.domain.model.BankAccountSummary
-import tech.dokus.domain.model.BankConnectionDto
+import tech.dokus.domain.model.BankAccountDto
 import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.domain.model.BankTransactionSummary
 import tech.dokus.domain.model.common.PaginatedResponse
 
 interface BankingRemoteDataSource {
 
-    suspend fun listConnections(): Result<List<BankConnectionDto>>
+    suspend fun listAccounts(): Result<List<BankAccountDto>>
 
     suspend fun getAccountSummary(): Result<BankAccountSummary>
 

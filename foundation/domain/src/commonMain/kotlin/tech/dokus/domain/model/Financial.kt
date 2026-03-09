@@ -11,7 +11,9 @@ import tech.dokus.domain.Name
 import tech.dokus.domain.Percentage
 import tech.dokus.domain.VatRate
 import tech.dokus.domain.enums.BankAccountType
-import tech.dokus.domain.enums.BankProvider
+import tech.dokus.domain.enums.BankAccountProvider
+import tech.dokus.domain.enums.BankAccountStatus
+import tech.dokus.domain.enums.IgnoredReason
 import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.EntityType
@@ -30,7 +32,7 @@ import tech.dokus.domain.enums.TenantType
 import tech.dokus.domain.enums.UserRole
 import tech.dokus.domain.ids.AddressId
 import tech.dokus.domain.ids.AttachmentId
-import tech.dokus.domain.ids.BankConnectionId
+import tech.dokus.domain.ids.BankAccountId
 import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.ids.Bic
 import tech.dokus.domain.ids.CashflowEntryId
@@ -254,22 +256,20 @@ data class PaymentDto(
 // ============================================================================
 
 @Serializable
-data class BankConnectionDto(
-    val id: BankConnectionId,
+data class BankAccountDto(
+    val id: BankAccountId,
     val tenantId: TenantId,
-    val provider: BankProvider,
-    val institutionId: String,
+    val iban: Iban,
+    val name: String,
     val institutionName: String,
-    val accountId: String,
-    val accountName: String? = null,
-    val accountType: BankAccountType? = null,
+    val accountType: BankAccountType,
     val currency: Currency = Currency.Eur,
-    val iban: Iban? = null,
+    val provider: BankAccountProvider,
     val balance: Money? = null,
-    val lastSyncedAt: LocalDateTime? = null,
+    val balanceUpdatedAt: LocalDateTime? = null,
+    val status: BankAccountStatus = BankAccountStatus.Confirmed,
     val isActive: Boolean = true,
     val createdAt: LocalDateTime,
-    val updatedAt: LocalDateTime,
 )
 
 @Serializable
@@ -298,6 +298,11 @@ data class LinkTransactionRequest(
 )
 
 @Serializable
+data class IgnoreTransactionRequest(
+    val reason: IgnoredReason,
+)
+
+@Serializable
 data class BalanceHistoryResponse(
     val series: List<AccountBalanceSeries>,
     val totalSeries: List<BalanceHistoryPoint>,
@@ -305,7 +310,7 @@ data class BalanceHistoryResponse(
 
 @Serializable
 data class AccountBalanceSeries(
-    val connectionId: BankConnectionId,
+    val accountId: BankAccountId,
     val accountName: String,
     val points: List<BalanceHistoryPoint>,
 )

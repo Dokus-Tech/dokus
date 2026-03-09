@@ -44,7 +44,7 @@ import tech.dokus.aura.resources.banking_balances_status_inactive
 import tech.dokus.aura.resources.banking_balances_status_synced
 import tech.dokus.domain.enums.BankAccountType
 import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.domain.model.BankConnectionDto
+import tech.dokus.domain.model.BankAccountDto
 import tech.dokus.features.banking.presentation.balances.components.BalanceTimelineCard
 import tech.dokus.features.banking.presentation.balances.components.BalancesSkeleton
 import tech.dokus.features.banking.presentation.balances.components.BalancesStatsRow
@@ -161,23 +161,23 @@ private fun BalancesContent(
         // Accounts content
         item {
             DokusCardSurface(modifier = Modifier.fillMaxWidth()) {
-                val connectionData = state.connections.lastData
-                val isLoading = state.connections.isLoading()
+                val accountData = state.accounts.lastData
+                val isLoading = state.accounts.isLoading()
 
                 when {
-                    connectionData == null && isLoading -> {
+                    accountData == null && isLoading -> {
                         BalancesSkeleton()
                     }
-                    state.connections.isError() -> {
+                    state.accounts.isError() -> {
                         DokusErrorContent(
-                            exception = state.connections.exception,
-                            retryHandler = state.connections.retryHandler,
+                            exception = state.accounts.exception,
+                            retryHandler = state.accounts.retryHandler,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(200.dp),
                         )
                     }
-                    connectionData != null && connectionData.isEmpty() -> {
+                    accountData != null && accountData.isEmpty() -> {
                         DokusEmptyState(
                             title = stringResource(Res.string.banking_balances_empty_title),
                             subtitle = stringResource(Res.string.banking_balances_empty_subtitle),
@@ -186,11 +186,11 @@ private fun BalancesContent(
                                 .padding(Constraints.Spacing.xxLarge),
                         )
                     }
-                    connectionData != null -> {
+                    accountData != null -> {
                         if (isLargeScreen) {
-                            DesktopAccountsTable(connections = connectionData)
+                            DesktopAccountsTable(accounts = accountData)
                         } else {
-                            MobileAccountsList(connections = connectionData)
+                            MobileAccountsList(accounts = accountData)
                         }
                     }
                 }
@@ -220,7 +220,7 @@ private fun AccountsSectionHeader(
 
 @Composable
 private fun DesktopAccountsTable(
-    connections: List<BankConnectionDto>,
+    accounts: List<BankAccountDto>,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
@@ -249,9 +249,9 @@ private fun DesktopAccountsTable(
             ),
         )
 
-        connections.forEachIndexed { index, connection ->
-            AccountTableRow(connection = connection)
-            if (index < connections.size - 1) {
+        accounts.forEachIndexed { index, account ->
+            AccountTableRow(account = account)
+            if (index < accounts.size - 1) {
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             }
         }
@@ -260,7 +260,7 @@ private fun DesktopAccountsTable(
 
 @Composable
 private fun AccountTableRow(
-    connection: BankConnectionDto,
+    account: BankAccountDto,
     modifier: Modifier = Modifier,
 ) {
     DokusTableRow(
@@ -272,37 +272,33 @@ private fun AccountTableRow(
         DokusTableCell(BalancesTableColumns.Account) {
             Column(verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xxSmall)) {
                 Text(
-                    text = connection.accountName ?: connection.institutionName,
+                    text = account.name,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium,
                     maxLines = 1,
                 )
-                connection.iban?.let { iban ->
-                    Text(
-                        text = formatIban(iban.value),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.textMuted,
-                        maxLines = 1,
-                    )
-                }
+                Text(
+                    text = formatIban(account.iban.value),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.textMuted,
+                    maxLines = 1,
+                )
             }
         }
 
         // Type badge
         DokusTableCell(BalancesTableColumns.Type) {
-            connection.accountType?.let { type ->
-                AccountTypeBadge(type = type)
-            }
+            AccountTypeBadge(type = account.accountType)
         }
 
         // Balance + provider
         DokusTableCell(BalancesTableColumns.Balance) {
             Column(verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xxSmall)) {
-                connection.balance?.let { balance ->
+                account.balance?.let { balance ->
                     Amt(minorUnits = balance.minor)
                 }
                 Text(
-                    text = connection.provider.name,
+                    text = account.provider.name,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.textMuted,
                     maxLines = 1,
@@ -312,9 +308,9 @@ private fun AccountTableRow(
 
         // Last sync
         DokusTableCell(BalancesTableColumns.LastSync) {
-            connection.lastSyncedAt?.let { syncedAt ->
+            account.balanceUpdatedAt?.let { updatedAt ->
                 Text(
-                    text = formatRelativeTime(syncedAt),
+                    text = formatRelativeTime(updatedAt),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.textMuted,
                     maxLines = 1,
@@ -324,7 +320,7 @@ private fun AccountTableRow(
 
         // Status
         DokusTableCell(BalancesTableColumns.Status) {
-            StatusIndicator(isActive = connection.isActive)
+            StatusIndicator(isActive = account.isActive)
         }
     }
 }
@@ -335,13 +331,13 @@ private fun AccountTableRow(
 
 @Composable
 private fun MobileAccountsList(
-    connections: List<BankConnectionDto>,
+    accounts: List<BankAccountDto>,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        connections.forEachIndexed { index, connection ->
-            MobileAccountCard(connection = connection)
-            if (index < connections.size - 1) {
+        accounts.forEachIndexed { index, account ->
+            MobileAccountCard(account = account)
+            if (index < accounts.size - 1) {
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             }
         }
@@ -350,7 +346,7 @@ private fun MobileAccountsList(
 
 @Composable
 private fun MobileAccountCard(
-    connection: BankConnectionDto,
+    account: BankAccountDto,
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -365,31 +361,27 @@ private fun MobileAccountCard(
             verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xxSmall),
         ) {
             Text(
-                text = connection.accountName ?: connection.institutionName,
+                text = account.name,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium,
                 maxLines = 1,
             )
-            connection.iban?.let { iban ->
-                Text(
-                    text = formatIban(iban.value),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.textMuted,
-                    maxLines = 1,
-                )
-            }
+            Text(
+                text = formatIban(account.iban.value),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.textMuted,
+                maxLines = 1,
+            )
             Row(
                 horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                connection.accountType?.let { type ->
-                    AccountTypeBadge(type = type)
-                }
-                StatusIndicator(isActive = connection.isActive)
+                AccountTypeBadge(type = account.accountType)
+                StatusIndicator(isActive = account.isActive)
             }
         }
 
-        connection.balance?.let { balance ->
+        account.balance?.let { balance ->
             Amt(minorUnits = balance.minor)
         }
     }
@@ -406,11 +398,9 @@ private fun AccountTypeBadge(
 ) {
     val (backgroundColor, textColor) = remember(type) {
         when (type) {
-            BankAccountType.Checking -> Color(0xFF3B82F6).copy(alpha = 0.12f) to Color(0xFF3B82F6)
+            BankAccountType.Current -> Color(0xFF3B82F6).copy(alpha = 0.12f) to Color(0xFF3B82F6)
             BankAccountType.Savings -> Color(0xFF10B981).copy(alpha = 0.12f) to Color(0xFF10B981)
             BankAccountType.CreditCard -> Color(0xFFF59E0B).copy(alpha = 0.12f) to Color(0xFFF59E0B)
-            BankAccountType.Business -> Color(0xFF8B5CF6).copy(alpha = 0.12f) to Color(0xFF8B5CF6)
-            BankAccountType.Investment -> Color(0xFFEC4899).copy(alpha = 0.12f) to Color(0xFFEC4899)
         }
     }
 
@@ -517,7 +507,7 @@ private fun BalancesScreenDesktopErrorPreview(
         CompositionLocalProvider(LocalScreenSize provides ScreenSize.LARGE) {
             BalancesScreen(
                 state = BalancesState(
-                    connections = DokusState.error(
+                    accounts = DokusState.error(
                         exception = DokusException.ConnectionError(),
                         retryHandler = {},
                     ),

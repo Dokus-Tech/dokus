@@ -11,10 +11,14 @@ import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.AutoMatchStatus
 import tech.dokus.domain.enums.BankTransactionSource
 import tech.dokus.domain.enums.BankTransactionStatus
-import tech.dokus.domain.enums.PaymentCandidateTier
+import tech.dokus.domain.enums.IgnoredReason
+import tech.dokus.domain.enums.MatchedBy
 import tech.dokus.domain.enums.PaymentMethod
-import tech.dokus.domain.ids.BankConnectionId
+import tech.dokus.domain.enums.ResolutionType
+import tech.dokus.domain.enums.StatementTrust
+import tech.dokus.domain.ids.BankAccountId
 import tech.dokus.domain.ids.BankTransactionId
+import tech.dokus.domain.ids.Bic
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
@@ -116,34 +120,35 @@ data class CashflowPaymentRequest(
 data class BankTransactionDto(
     val id: BankTransactionId,
     val tenantId: TenantId,
+    val bankAccountId: BankAccountId? = null,
     val documentId: DocumentId? = null,
-    val bankConnectionId: BankConnectionId? = null,
-    val externalId: String? = null,
-    val source: BankTransactionSource = BankTransactionSource.BankImport,
+    val source: BankTransactionSource = BankTransactionSource.PdfStatement,
     val transactionDate: LocalDate,
+    val valueDate: LocalDate? = null,
     val signedAmount: Money,
+    val currency: Currency = Currency.Eur,
     val counterpartyName: String? = null,
     val counterpartyIban: Iban? = null,
+    val counterpartyBic: Bic? = null,
     val structuredCommunicationRaw: String? = null,
+    val normalizedStructuredCommunication: String? = null,
+    val freeCommunication: String? = null,
     val descriptionRaw: String? = null,
-    val rowConfidence: Double? = null,
-    val largeAmountFlag: Boolean = false,
-    val isPending: Boolean = false,
-    val currency: Currency = Currency.Eur,
     val status: BankTransactionStatus,
-    val linkedCashflowEntryId: CashflowEntryId? = null,
-    val suggestedCashflowEntryId: CashflowEntryId? = null,
-    val score: Double? = null,
-    val tier: PaymentCandidateTier? = null,
+    val resolutionType: ResolutionType? = null,
+    val matchedCashflowId: CashflowEntryId? = null,
+    val matchedDocumentId: DocumentId? = null,
+    val matchScore: Double? = null,
+    val matchEvidence: List<String>? = null,
+    val matchedBy: MatchedBy? = null,
+    val matchedAt: LocalDateTime? = null,
+    val ignoredReason: IgnoredReason? = null,
+    val ignoredAt: LocalDateTime? = null,
+    val ignoredBy: String? = null,
+    val statementTrust: StatementTrust = StatementTrust.Low,
+    val transferPairId: BankTransactionId? = null,
     val createdAt: LocalDateTime,
-    val updatedAt: LocalDateTime
-)
-
-@Serializable
-data class CashflowPaymentCandidatesResponse(
-    val strongCandidate: BankTransactionDto? = null,
-    val possibleCandidates: List<BankTransactionDto> = emptyList(),
-    val selectableTransactions: List<BankTransactionDto> = emptyList()
+    val updatedAt: LocalDateTime,
 )
 
 @Serializable

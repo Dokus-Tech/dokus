@@ -9,11 +9,11 @@ enum class BankTransactionStatus(override val dbValue: String) : DbEnum {
     @SerialName("UNMATCHED")
     Unmatched("UNMATCHED"),
 
-    @SerialName("SUGGESTED")
-    Suggested("SUGGESTED"),
+    @SerialName("NEEDS_REVIEW")
+    NeedsReview("NEEDS_REVIEW"),
 
-    @SerialName("LINKED")
-    Linked("LINKED"),
+    @SerialName("MATCHED")
+    Matched("MATCHED"),
 
     @SerialName("IGNORED")
     Ignored("IGNORED")
@@ -21,23 +21,83 @@ enum class BankTransactionStatus(override val dbValue: String) : DbEnum {
 
 @Serializable
 enum class BankTransactionSource(override val dbValue: String) : DbEnum {
-    @SerialName("BANK_IMPORT")
-    BankImport("BANK_IMPORT"),
+    @SerialName("CODA")
+    Coda("CODA"),
 
-    @SerialName("LIVE_SYNC")
-    LiveSync("LIVE_SYNC"),
+    @SerialName("MT940")
+    Mt940("MT940"),
+
+    @SerialName("PDF_STATEMENT")
+    PdfStatement("PDF_STATEMENT"),
+
+    @SerialName("PLAID")
+    Plaid("PLAID"),
+
+    @SerialName("TINK")
+    Tink("TINK")
+}
+
+@Serializable
+enum class ResolutionType(override val dbValue: String) : DbEnum {
+    @SerialName("DOCUMENT")
+    Document("DOCUMENT"),
+
+    @SerialName("TRANSFER")
+    Transfer("TRANSFER")
+}
+
+@Serializable
+enum class MatchedBy(override val dbValue: String) : DbEnum {
+    @SerialName("AUTO")
+    Auto("AUTO"),
+
+    @SerialName("REVIEW")
+    Review("REVIEW"),
 
     @SerialName("MANUAL")
     Manual("MANUAL")
 }
 
 @Serializable
-enum class PaymentCandidateTier(override val dbValue: String) : DbEnum {
-    @SerialName("STRONG")
-    Strong("STRONG"),
+enum class IgnoredReason(override val dbValue: String) : DbEnum {
+    @SerialName("BANK_FEE")
+    BankFee("BANK_FEE"),
 
-    @SerialName("POSSIBLE")
-    Possible("POSSIBLE")
+    @SerialName("DUPLICATE_IMPORT")
+    DuplicateImport("DUPLICATE_IMPORT"),
+
+    @SerialName("PERSONAL")
+    Personal("PERSONAL"),
+
+    @SerialName("NOT_BUSINESS")
+    NotBusiness("NOT_BUSINESS"),
+
+    @SerialName("IRRELEVANT")
+    Irrelevant("IRRELEVANT"),
+
+    @SerialName("OTHER")
+    Other("OTHER")
+}
+
+@Serializable
+enum class StatementTrust(override val dbValue: String) : DbEnum {
+    @SerialName("HIGH")
+    High("HIGH"),
+
+    @SerialName("MEDIUM")
+    Medium("MEDIUM"),
+
+    @SerialName("LOW")
+    Low("LOW")
+}
+
+@Serializable
+enum class BankAccountStatus(override val dbValue: String) : DbEnum {
+    @SerialName("CONFIRMED")
+    Confirmed("CONFIRMED"),
+
+    @SerialName("PENDING_REVIEW")
+    PendingReview("PENDING_REVIEW")
 }
 
 @Serializable
@@ -81,8 +141,8 @@ enum class AutoPaymentDecision(override val dbValue: String) : DbEnum {
     @SerialName("SKIPPED")
     Skipped("SKIPPED"),
 
-    @SerialName("SUGGESTED_ONLY")
-    SuggestedOnly("SUGGESTED_ONLY"),
+    @SerialName("NEEDS_REVIEW_ONLY")
+    NeedsReviewOnly("NEEDS_REVIEW_ONLY"),
 
     @SerialName("AUTO_MATCHED")
     AutoMatched("AUTO_MATCHED"),

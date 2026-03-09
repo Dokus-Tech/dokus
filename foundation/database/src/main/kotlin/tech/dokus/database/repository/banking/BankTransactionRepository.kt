@@ -4,6 +4,7 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
@@ -12,9 +13,9 @@ import org.jetbrains.exposed.v1.core.greaterEq
 import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.lessEq
 import org.jetbrains.exposed.v1.core.neq
-import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.batchInsert
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
+import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.v1.jdbc.update
@@ -23,36 +24,46 @@ import tech.dokus.domain.Money
 import tech.dokus.domain.enums.BankTransactionSource
 import tech.dokus.domain.enums.BankTransactionStatus
 import tech.dokus.domain.enums.Currency
-import tech.dokus.domain.enums.PaymentCandidateTier
-import tech.dokus.domain.ids.BankConnectionId
+import tech.dokus.domain.enums.IgnoredReason
+import tech.dokus.domain.enums.MatchedBy
+import tech.dokus.domain.enums.ResolutionType
+import tech.dokus.domain.enums.StatementTrust
+import tech.dokus.domain.fromDbDecimal
+import tech.dokus.domain.ids.BankAccountId
 import tech.dokus.domain.ids.BankTransactionId
+import tech.dokus.domain.ids.Bic
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.BankTransactionDto
-import tech.dokus.domain.fromDbDecimal
 import tech.dokus.domain.toDbDecimal
 import java.util.UUID
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid
+import kotlin.uuid.toKotlinUuid
 
 data class BankTransactionCreate(
-    val rowHash: String,
-    val transactionFingerprint: String,
+    val dedupHash: String,
+    val bankAccountId: BankAccountId? = null,
     val transactionDate: LocalDate,
+    val valueDate: LocalDate? = null,
     val signedAmount: Money,
     val counterpartyName: String? = null,
     val counterpartyIban: String? = null,
+    val counterpartyBic: String? = null,
     val structuredCommunicationRaw: String? = null,
     val normalizedStructuredCommunication: String? = null,
+    val freeCommunication: String? = null,
     val descriptionRaw: String? = null,
-    val rowConfidence: Double? = null,
-    val largeAmountFlag: Boolean = false,
+    val statementTrust: StatementTrust = StatementTrust.Low,
 )
 
 @OptIn(ExperimentalUuidApi::class)
 class BankTransactionRepository {
+
+    private val json = Json { ignoreUnknownKeys = true }
+
     suspend fun replaceForDocument(
         tenantId: TenantId,
         documentId: DocumentId,
@@ -65,36 +76,40 @@ class BankTransactionRepository {
         BankTransactionsTable.deleteWhere {
             (BankTransactionsTable.tenantId eq tenantUuid) and
                 (BankTransactionsTable.documentId eq documentUuid) and
-                (BankTransactionsTable.status neq BankTransactionStatus.Linked)
+                (BankTransactionsTable.status neq BankTransactionStatus.Matched)
         }
 
-        val existingRowHashes = BankTransactionsTable.select(BankTransactionsTable.rowHash).where {
-            (BankTransactionsTable.tenantId eq tenantUuid) and
-                (BankTransactionsTable.documentId eq documentUuid)
-        }.mapNotNull { it[BankTransactionsTable.rowHash] }
+        val existingDedupHashes = BankTransactionsTable
+            .select(BankTransactionsTable.dedupHash)
+            .where {
+                (BankTransactionsTable.tenantId eq tenantUuid) and
+                    (BankTransactionsTable.documentId eq documentUuid)
+            }.map { it[BankTransactionsTable.dedupHash] }
             .toHashSet()
 
         val rowsToInsert = rows
-            .distinctBy { it.rowHash }
-            .filterNot { it.rowHash in existingRowHashes }
+            .distinctBy { it.dedupHash }
+            .filterNot { it.dedupHash in existingDedupHashes }
 
         if (rowsToInsert.isNotEmpty()) {
             BankTransactionsTable.batchInsert(rowsToInsert) { row ->
                 this[BankTransactionsTable.id] = UUID.randomUUID()
                 this[BankTransactionsTable.tenantId] = tenantUuid
-                this[BankTransactionsTable.txSource] = BankTransactionSource.BankImport
+                this[BankTransactionsTable.txSource] = BankTransactionSource.PdfStatement
                 this[BankTransactionsTable.documentId] = documentUuid
-                this[BankTransactionsTable.rowHash] = row.rowHash
-                this[BankTransactionsTable.transactionFingerprint] = row.transactionFingerprint
+                this[BankTransactionsTable.bankAccountId] = row.bankAccountId?.value?.toJavaUuid()
+                this[BankTransactionsTable.dedupHash] = row.dedupHash
                 this[BankTransactionsTable.transactionDate] = row.transactionDate
+                this[BankTransactionsTable.valueDate] = row.valueDate
                 this[BankTransactionsTable.signedAmount] = row.signedAmount.toDbDecimal()
                 this[BankTransactionsTable.counterpartyName] = row.counterpartyName
                 this[BankTransactionsTable.counterpartyIban] = row.counterpartyIban
+                this[BankTransactionsTable.counterpartyBic] = row.counterpartyBic
                 this[BankTransactionsTable.structuredCommunicationRaw] = row.structuredCommunicationRaw
                 this[BankTransactionsTable.normalizedStructuredCommunication] = row.normalizedStructuredCommunication
+                this[BankTransactionsTable.freeCommunication] = row.freeCommunication
                 this[BankTransactionsTable.descriptionRaw] = row.descriptionRaw
-                this[BankTransactionsTable.rowConfidence] = row.rowConfidence?.toBigDecimal()
-                this[BankTransactionsTable.largeAmountFlag] = row.largeAmountFlag
+                this[BankTransactionsTable.statementTrust] = row.statementTrust
                 this[BankTransactionsTable.status] = BankTransactionStatus.Unmatched
                 this[BankTransactionsTable.createdAt] = now
                 this[BankTransactionsTable.updatedAt] = now
@@ -111,7 +126,7 @@ class BankTransactionRepository {
         tenantId: TenantId,
         statuses: List<BankTransactionStatus> = listOf(
             BankTransactionStatus.Unmatched,
-            BankTransactionStatus.Suggested
+            BankTransactionStatus.NeedsReview
         )
     ): List<BankTransactionDto> = newSuspendedTransaction {
         BankTransactionsTable.selectAll().where {
@@ -146,89 +161,92 @@ class BankTransactionRepository {
         }.singleOrNull()?.toDto()
     }
 
-    suspend fun listSuggestionsForEntry(
+    suspend fun listCandidatesForEntry(
         tenantId: TenantId,
         cashflowEntryId: CashflowEntryId
     ): List<BankTransactionDto> = newSuspendedTransaction {
         BankTransactionsTable.selectAll().where {
             (BankTransactionsTable.tenantId eq tenantId.value.toJavaUuid()) and
-                (BankTransactionsTable.suggestedCashflowEntryId eq cashflowEntryId.value.toJavaUuid())
+                (BankTransactionsTable.matchedCashflowId eq cashflowEntryId.value.toJavaUuid()) and
+                (BankTransactionsTable.status eq BankTransactionStatus.NeedsReview)
         }.orderBy(
-            BankTransactionsTable.suggestedScore to SortOrder.DESC,
+            BankTransactionsTable.matchScore to SortOrder.DESC,
             BankTransactionsTable.transactionDate to SortOrder.DESC
         ).map { it.toDto() }
     }
 
-    suspend fun clearSuggestionsForEntry(
+    suspend fun clearCandidatesForEntry(
         tenantId: TenantId,
         cashflowEntryId: CashflowEntryId
     ): Int = newSuspendedTransaction {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         BankTransactionsTable.update({
             (BankTransactionsTable.tenantId eq tenantId.value.toJavaUuid()) and
-                (BankTransactionsTable.suggestedCashflowEntryId eq cashflowEntryId.value.toJavaUuid()) and
-                (BankTransactionsTable.status neq BankTransactionStatus.Linked)
+                (BankTransactionsTable.matchedCashflowId eq cashflowEntryId.value.toJavaUuid()) and
+                (BankTransactionsTable.status neq BankTransactionStatus.Matched)
         }) {
-            it[suggestedCashflowEntryId] = null
-            it[suggestedScore] = null
-            it[suggestedTier] = null
+            it[matchedCashflowId] = null
+            it[matchScore] = null
             it[status] = BankTransactionStatus.Unmatched
             it[updatedAt] = now
         }
     }
 
-    suspend fun setSuggestion(
+    suspend fun setMatchCandidate(
         tenantId: TenantId,
         transactionId: BankTransactionId,
         cashflowEntryId: CashflowEntryId,
-        score: Double,
-        tier: PaymentCandidateTier
+        score: Double
     ): Boolean = newSuspendedTransaction {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         BankTransactionsTable.update({
             (BankTransactionsTable.tenantId eq tenantId.value.toJavaUuid()) and
                 (BankTransactionsTable.id eq transactionId.value.toJavaUuid())
         }) {
-            it[suggestedCashflowEntryId] = cashflowEntryId.value.toJavaUuid()
-            it[suggestedScore] = score.toBigDecimal()
-            it[suggestedTier] = tier
-            it[status] = if (tier == PaymentCandidateTier.Strong) {
-                BankTransactionStatus.Suggested
-            } else {
-                BankTransactionStatus.Unmatched
-            }
+            it[matchedCashflowId] = cashflowEntryId.value.toJavaUuid()
+            it[matchScore] = score.toBigDecimal()
+            it[status] = BankTransactionStatus.NeedsReview
             it[updatedAt] = now
         } > 0
     }
 
-    suspend fun markLinked(
+    suspend fun markMatched(
         tenantId: TenantId,
         transactionId: BankTransactionId,
-        cashflowEntryId: CashflowEntryId
+        cashflowEntryId: CashflowEntryId,
+        matchedBy: MatchedBy,
+        resolutionType: ResolutionType
     ): Boolean = newSuspendedTransaction {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         BankTransactionsTable.update({
             (BankTransactionsTable.tenantId eq tenantId.value.toJavaUuid()) and
                 (BankTransactionsTable.id eq transactionId.value.toJavaUuid())
         }) {
-            it[status] = BankTransactionStatus.Linked
-            it[linkedCashflowEntryId] = cashflowEntryId.value.toJavaUuid()
-            it[suggestedCashflowEntryId] = cashflowEntryId.value.toJavaUuid()
+            it[status] = BankTransactionStatus.Matched
+            it[matchedCashflowId] = cashflowEntryId.value.toJavaUuid()
+            it[BankTransactionsTable.matchedBy] = matchedBy
+            it[BankTransactionsTable.resolutionType] = resolutionType
+            it[matchedAt] = now
             it[updatedAt] = now
         } > 0
     }
 
-    suspend fun markIgnoredSuggestionsForEntry(
+    suspend fun markIgnoredCandidatesForEntry(
         tenantId: TenantId,
-        cashflowEntryId: CashflowEntryId
+        cashflowEntryId: CashflowEntryId,
+        ignoredReason: IgnoredReason,
+        ignoredBy: String
     ): Int = newSuspendedTransaction {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         BankTransactionsTable.update({
             (BankTransactionsTable.tenantId eq tenantId.value.toJavaUuid()) and
-                (BankTransactionsTable.suggestedCashflowEntryId eq cashflowEntryId.value.toJavaUuid()) and
-                (BankTransactionsTable.status eq BankTransactionStatus.Suggested)
+                (BankTransactionsTable.matchedCashflowId eq cashflowEntryId.value.toJavaUuid()) and
+                (BankTransactionsTable.status eq BankTransactionStatus.NeedsReview)
         }) {
             it[status] = BankTransactionStatus.Ignored
+            it[BankTransactionsTable.ignoredReason] = ignoredReason
+            it[BankTransactionsTable.ignoredBy] = ignoredBy
+            it[ignoredAt] = now
             it[updatedAt] = now
         }
     }
@@ -241,7 +259,7 @@ class BankTransactionRepository {
             (BankTransactionsTable.tenantId eq tenantId.value.toJavaUuid()) and
                 (BankTransactionsTable.status inList listOf(
                     BankTransactionStatus.Unmatched,
-                    BankTransactionStatus.Suggested
+                    BankTransactionStatus.NeedsReview
                 )) and
                 (BankTransactionsTable.transactionDate greaterEq fromDate)
         }.orderBy(
@@ -250,13 +268,13 @@ class BankTransactionRepository {
         ).map { it.toDto() }
     }
 
-    suspend fun findByFingerprint(
+    suspend fun findByDedupHash(
         tenantId: TenantId,
-        fingerprint: String
+        dedupHash: String
     ): BankTransactionDto? = newSuspendedTransaction {
         BankTransactionsTable.selectAll().where {
             (BankTransactionsTable.tenantId eq tenantId.value.toJavaUuid()) and
-                (BankTransactionsTable.transactionFingerprint eq fingerprint)
+                (BankTransactionsTable.dedupHash eq dedupHash)
         }.orderBy(BankTransactionsTable.createdAt, SortOrder.DESC).limit(1).singleOrNull()?.toDto()
     }
 
@@ -312,7 +330,7 @@ class BankTransactionRepository {
                 (BankTransactionsTable.tenantId eq tenantUuid) and
                     (BankTransactionsTable.status inList listOf(
                         BankTransactionStatus.Unmatched,
-                        BankTransactionStatus.Suggested
+                        BankTransactionStatus.NeedsReview
                     ))
             }
             .sumOf { it[BankTransactionsTable.signedAmount].toLong() }
@@ -320,7 +338,9 @@ class BankTransactionRepository {
 
     suspend fun markIgnored(
         tenantId: TenantId,
-        transactionId: BankTransactionId
+        transactionId: BankTransactionId,
+        ignoredReason: IgnoredReason,
+        ignoredBy: String
     ): Boolean = newSuspendedTransaction {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         BankTransactionsTable.update({
@@ -328,11 +348,14 @@ class BankTransactionRepository {
                 (BankTransactionsTable.id eq transactionId.value.toJavaUuid())
         }) {
             it[status] = BankTransactionStatus.Ignored
+            it[BankTransactionsTable.ignoredReason] = ignoredReason
+            it[BankTransactionsTable.ignoredBy] = ignoredBy
+            it[ignoredAt] = now
             it[updatedAt] = now
         } > 0
     }
 
-    suspend fun clearLinkAndSuggestion(
+    suspend fun clearMatch(
         tenantId: TenantId,
         transactionId: BankTransactionId
     ): Boolean = newSuspendedTransaction {
@@ -341,40 +364,59 @@ class BankTransactionRepository {
             (BankTransactionsTable.tenantId eq tenantId.value.toJavaUuid()) and
                 (BankTransactionsTable.id eq transactionId.value.toJavaUuid())
         }) {
-            it[linkedCashflowEntryId] = null
-            it[suggestedCashflowEntryId] = null
-            it[suggestedScore] = null
-            it[suggestedTier] = null
+            it[matchedCashflowId] = null
+            it[matchedDocumentId] = null
+            it[matchScore] = null
+            it[matchEvidence] = null
+            it[matchedBy] = null
+            it[matchedAt] = null
+            it[resolutionType] = null
             it[status] = BankTransactionStatus.Unmatched
             it[updatedAt] = now
         } > 0
     }
 
     private fun ResultRow.toDto(): BankTransactionDto {
+        val evidenceJson = this[BankTransactionsTable.matchEvidence]
+        val evidenceList = evidenceJson?.let {
+            json.decodeFromString<List<String>>(it)
+        }
+
         return BankTransactionDto(
             id = BankTransactionId.parse(this[BankTransactionsTable.id].value.toString()),
             tenantId = TenantId.parse(this[BankTransactionsTable.tenantId].toString()),
             documentId = this[BankTransactionsTable.documentId]?.let { DocumentId.parse(it.toString()) },
-            bankConnectionId = this[BankTransactionsTable.bankConnectionId]?.let { BankConnectionId.parse(it.toString()) },
-            externalId = this[BankTransactionsTable.externalId],
+            bankAccountId = this[BankTransactionsTable.bankAccountId]?.let {
+                BankAccountId(it.toKotlinUuid())
+            },
             source = this[BankTransactionsTable.txSource],
             transactionDate = this[BankTransactionsTable.transactionDate],
+            valueDate = this[BankTransactionsTable.valueDate],
             signedAmount = Money.fromDbDecimal(this[BankTransactionsTable.signedAmount]),
             currency = this[BankTransactionsTable.currency],
-            isPending = this[BankTransactionsTable.isPending],
             counterpartyName = this[BankTransactionsTable.counterpartyName],
             counterpartyIban = Iban.from(this[BankTransactionsTable.counterpartyIban]),
+            counterpartyBic = this[BankTransactionsTable.counterpartyBic]?.let { Bic(it) },
             structuredCommunicationRaw = this[BankTransactionsTable.structuredCommunicationRaw],
+            normalizedStructuredCommunication = this[BankTransactionsTable.normalizedStructuredCommunication],
+            freeCommunication = this[BankTransactionsTable.freeCommunication],
             descriptionRaw = this[BankTransactionsTable.descriptionRaw],
-            rowConfidence = this[BankTransactionsTable.rowConfidence]?.toDouble(),
-            largeAmountFlag = this[BankTransactionsTable.largeAmountFlag],
             status = this[BankTransactionsTable.status],
-            linkedCashflowEntryId = this[BankTransactionsTable.linkedCashflowEntryId]
+            resolutionType = this[BankTransactionsTable.resolutionType],
+            matchedCashflowId = this[BankTransactionsTable.matchedCashflowId]
                 ?.let { CashflowEntryId.parse(it.toString()) },
-            suggestedCashflowEntryId = this[BankTransactionsTable.suggestedCashflowEntryId]
-                ?.let { CashflowEntryId.parse(it.toString()) },
-            score = this[BankTransactionsTable.suggestedScore]?.toDouble(),
-            tier = this[BankTransactionsTable.suggestedTier],
+            matchedDocumentId = this[BankTransactionsTable.matchedDocumentId]
+                ?.let { DocumentId.parse(it.toString()) },
+            matchScore = this[BankTransactionsTable.matchScore]?.toDouble(),
+            matchEvidence = evidenceList,
+            matchedBy = this[BankTransactionsTable.matchedBy],
+            matchedAt = this[BankTransactionsTable.matchedAt],
+            ignoredReason = this[BankTransactionsTable.ignoredReason],
+            ignoredAt = this[BankTransactionsTable.ignoredAt],
+            ignoredBy = this[BankTransactionsTable.ignoredBy],
+            statementTrust = this[BankTransactionsTable.statementTrust],
+            transferPairId = this[BankTransactionsTable.transferPairId]
+                ?.let { BankTransactionId(it.toKotlinUuid()) },
             createdAt = this[BankTransactionsTable.createdAt],
             updatedAt = this[BankTransactionsTable.updatedAt]
         )

@@ -13,7 +13,7 @@ import tech.dokus.database.repository.auth.RefreshTokenRepository
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.database.repository.auth.WelcomeEmailJobRepository
-import tech.dokus.database.repository.banking.BankingRepository
+import tech.dokus.database.repository.banking.BankAccountRepository
 import tech.dokus.database.repository.business.BusinessProfileEnrichmentJobRepository
 import tech.dokus.database.repository.business.BusinessProfileRepository
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
@@ -29,7 +29,6 @@ import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.DocumentSourceRepository
 import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.database.repository.banking.BankTransactionRepository
-import tech.dokus.database.repository.cashflow.CashflowPaymentCandidateRepository
 import tech.dokus.database.repository.cashflow.InvoiceBankMatchLinkRepository
 import tech.dokus.database.repository.cashflow.AutoPaymentAuditRepository
 import tech.dokus.database.repository.cashflow.InvoiceNumberRepository
@@ -81,7 +80,6 @@ val repositoryModuleCashflow = module {
     single { DocumentPurposeTemplateRepository() }
     single { DocumentPurposeSimilarityRepository() }
     single { BankTransactionRepository() }
-    single { CashflowPaymentCandidateRepository() }
     single { InvoiceBankMatchLinkRepository() }
     single { AutoPaymentAuditRepository() }
     single { DocumentRepository() }
@@ -129,7 +127,7 @@ val repositoryModuleProcessor = module {
  * Provides repositories for bank connections and transactions.
  */
 val repositoryModuleBanking = module {
-    single { BankingRepository() }
+    single { BankAccountRepository() }
 }
 
 /**
