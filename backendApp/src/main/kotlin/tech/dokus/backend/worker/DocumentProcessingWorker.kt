@@ -18,8 +18,9 @@ import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.slf4j.MDC
+import tech.dokus.backend.services.banking.BankStatementProcessingService
+import tech.dokus.backend.services.banking.StatementDedupService.StatementDedupOutcome
 import tech.dokus.backend.services.cashflow.BankStatementMatchingService
-import tech.dokus.backend.services.cashflow.InvoiceBankAutomationService
 import tech.dokus.backend.services.documents.AutoConfirmPolicy
 import tech.dokus.backend.services.documents.ContactResolutionService
 import tech.dokus.backend.services.documents.DocumentIntakeServiceResult
@@ -80,8 +81,8 @@ internal class DocumentProcessingWorker(
     private val purposeService: DocumentPurposeService,
     private val documentTruthService: DocumentTruthService,
     private val draftRepository: DocumentDraftRepository,
+    private val bankStatementProcessingService: BankStatementProcessingService,
     private val bankStatementMatchingService: BankStatementMatchingService,
-    private val invoiceBankAutomationService: InvoiceBankAutomationService,
     private val autoConfirmPolicy: AutoConfirmPolicy,
     private val confirmationDispatcher: DocumentConfirmationDispatcher,
     private val documentSsePublisher: DocumentSsePublisher,
@@ -477,38 +478,45 @@ internal class DocumentProcessingWorker(
                 }
 
                 if (draftData is BankStatementDraftData) {
-                    val bankProcessing = bankStatementMatchingService.processAndMatch(
+                    val bankProcessing = bankStatementProcessingService.process(
                         tenantId = parsedTenantId,
                         documentId = documentId,
-                        draftData = draftData
+                        sourceId = ingestion.sourceId,
+                        draftData = draftData,
                     )
+                    if (bankProcessing.dedupOutcome is StatementDedupOutcome.Skip) {
+                        logger.info("Bank statement {} skipped (duplicate)", documentId)
+                        documentSsePublisher.publishDocumentChanged(parsedTenantId, documentId)
+                        return AttemptResult.Succeeded
+                    }
                     val targetStatus = DocumentStatus.NeedsReview
                     draftRepository.updateExtractedDataAndStatus(
                         documentId = documentId,
                         tenantId = parsedTenantId,
                         extractedData = bankProcessing.sanitizedDraft,
-                        status = targetStatus
+                        status = targetStatus,
                     )
                     if (bankProcessing.validRows > 0) {
                         runSuspendCatching {
-                            invoiceBankAutomationService.onBankStatementImported(
+                            bankStatementMatchingService.runMatching(
                                 tenantId = parsedTenantId,
-                                documentId = documentId
+                                documentId = documentId,
                             )
                         }.onFailure {
                             logger.warn(
-                                "Invoice-bank automation failed after bank statement processing for {}: {}",
+                                "Bank statement matching failed for {}: {}",
                                 documentId,
-                                it.message
+                                it.message,
                             )
                         }
                     }
                     logger.info(
-                        "Processed bank statement {}: validRows={}, discardedRows={}, status={}",
+                        "Processed bank statement {}: validRows={}, discardedRows={}, trust={}, dedup={}",
                         documentId,
                         bankProcessing.validRows,
                         bankProcessing.discardedRows.size,
-                        targetStatus
+                        bankProcessing.statementTrust,
+                        bankProcessing.dedupOutcome,
                     )
                     documentSsePublisher.publishDocumentChanged(parsedTenantId, documentId)
                     return AttemptResult.Succeeded

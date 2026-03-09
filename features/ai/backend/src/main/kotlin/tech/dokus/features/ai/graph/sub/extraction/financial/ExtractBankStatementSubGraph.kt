@@ -34,6 +34,11 @@ data class BankStatementTransactionExtractionRow(
 @SerialName("BankStatementExtractionResult")
 data class BankStatementExtractionResult(
     val rows: List<BankStatementTransactionExtractionRow> = emptyList(),
+    val accountIban: Iban? = null,
+    val openingBalance: Money? = null,
+    val closingBalance: Money? = null,
+    val periodStart: LocalDate? = null,
+    val periodEnd: LocalDate? = null,
     val confidence: Double,
     val reasoning: String? = null,
 )
@@ -72,6 +77,16 @@ data class BankStatementTransactionToolInput(
 @Serializable
 data class BankStatementExtractionToolInput(
     val rows: List<BankStatementTransactionToolInput> = emptyList(),
+    @property:LLMDescription(ExtractionToolDescriptions.BankAccountIban)
+    val accountIban: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.BankOpeningBalance)
+    val openingBalance: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.BankClosingBalance)
+    val closingBalance: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.BankPeriodStart)
+    val periodStart: LocalDate? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.BankPeriodEnd)
+    val periodEnd: LocalDate? = null,
     @property:LLMDescription(ExtractionToolDescriptions.Confidence)
     val confidence: Double,
     @property:LLMDescription(ExtractionToolDescriptions.Reasoning)
@@ -99,6 +114,11 @@ private class BankStatementExtractionFinishTool :
                         rowConfidence = row.rowConfidence.coerceIn(0.0, 1.0),
                     )
                 },
+                accountIban = Iban.from(args.accountIban)?.takeIf { it.isValid },
+                openingBalance = Money.from(args.openingBalance),
+                closingBalance = Money.from(args.closingBalance),
+                periodStart = args.periodStart,
+                periodEnd = args.periodEnd,
                 confidence = args.confidence.coerceIn(0.0, 1.0),
                 reasoning = args.reasoning
             )
@@ -110,11 +130,18 @@ private val ExtractDocumentInput.bankStatementPrompt
     get() = """
     You will receive a bank statement document in context.
 
-    Task: extract transaction rows only.
+    Task: extract statement header fields AND transaction rows.
     Output MUST be submitted via tool: submit_bank_statement_extraction.
 
+    HEADER FIELDS (extract from statement header/footer if visible)
+    - accountIban: the IBAN of the account this statement belongs to
+    - openingBalance: the opening/previous balance shown on the statement (signed, e.g. "1234.56" or "-50.00")
+    - closingBalance: the closing/new balance shown on the statement (signed)
+    - periodStart: the start date of the statement period
+    - periodEnd: the end date of the statement period
+
     HARD RULES
-    - Do not guess: if a field is not visible for a row, set null.
+    - Do not guess: if a field is not visible, set null.
     - signedAmount MUST keep sign:
       - positive = money received
       - negative = money sent
@@ -122,6 +149,7 @@ private val ExtractDocumentInput.bankStatementPrompt
       Example: +++123/4567/89012+++
     - descriptionRaw should contain the raw line text for that transaction.
     - rowConfidence must be in range 0.0..1.0.
+    - openingBalance and closingBalance must include sign (positive or negative).
 
     Include all visible transaction rows on the page(s). Return empty list if no transaction table is visible.
 

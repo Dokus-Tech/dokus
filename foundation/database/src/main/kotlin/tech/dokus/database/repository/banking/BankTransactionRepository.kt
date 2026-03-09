@@ -196,7 +196,8 @@ class BankTransactionRepository {
         tenantId: TenantId,
         transactionId: BankTransactionId,
         cashflowEntryId: CashflowEntryId,
-        score: Double
+        score: Double,
+        evidence: List<String> = emptyList(),
     ): Boolean = newSuspendedTransaction {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         BankTransactionsTable.update({
@@ -206,6 +207,9 @@ class BankTransactionRepository {
             it[matchedCashflowId] = cashflowEntryId.value.toJavaUuid()
             it[matchScore] = score.toBigDecimal()
             it[status] = BankTransactionStatus.NeedsReview
+            if (evidence.isNotEmpty()) {
+                it[matchEvidence] = json.encodeToString(evidence)
+            }
             it[updatedAt] = now
         } > 0
     }
@@ -215,7 +219,9 @@ class BankTransactionRepository {
         transactionId: BankTransactionId,
         cashflowEntryId: CashflowEntryId,
         matchedBy: MatchedBy,
-        resolutionType: ResolutionType
+        resolutionType: ResolutionType,
+        score: Double? = null,
+        evidence: List<String> = emptyList(),
     ): Boolean = newSuspendedTransaction {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         BankTransactionsTable.update({
@@ -226,6 +232,12 @@ class BankTransactionRepository {
             it[matchedCashflowId] = cashflowEntryId.value.toJavaUuid()
             it[BankTransactionsTable.matchedBy] = matchedBy
             it[BankTransactionsTable.resolutionType] = resolutionType
+            if (score != null) {
+                it[matchScore] = score.toBigDecimal()
+            }
+            if (evidence.isNotEmpty()) {
+                it[matchEvidence] = json.encodeToString(evidence)
+            }
             it[matchedAt] = now
             it[updatedAt] = now
         } > 0

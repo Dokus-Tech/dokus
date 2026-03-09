@@ -79,6 +79,12 @@ object ExtractionToolDescriptions {
     const val BankDescriptionRaw = "Raw transaction description line as displayed on statement."
     const val BankRowConfidence = "Confidence score 0.0-1.0 for this specific transaction row."
 
+    const val BankAccountIban = "IBAN of the account this statement belongs to if visible in the header/footer. Null if not visible."
+    const val BankOpeningBalance = "Opening/previous balance as signed plain number string (e.g. '1234.56'). Null if not visible."
+    const val BankClosingBalance = "Closing/new balance as signed plain number string (e.g. '1234.56'). Null if not visible."
+    const val BankPeriodStart = "Start date of the statement period. Null if not visible."
+    const val BankPeriodEnd = "End date of the statement period. Null if not visible."
+
     const val LineItems = "Line items table. Leave empty list if not itemized."
     const val VatBreakdown = "VAT breakdown rows per rate (rate/base/amount). Leave empty list if not shown. Use rate 0 and VAT amount 0 for reverse charge."
 

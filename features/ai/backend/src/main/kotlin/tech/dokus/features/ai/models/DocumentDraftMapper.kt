@@ -117,6 +117,11 @@ private fun FinancialExtractionResult.toDraftData(direction: DocumentDirection):
                 largeAmountFlag = false
             )
         },
+        accountIban = data.accountIban,
+        openingBalance = data.openingBalance,
+        closingBalance = data.closingBalance,
+        periodStart = data.periodStart,
+        periodEnd = data.periodEnd,
         notes = null
     )
 
