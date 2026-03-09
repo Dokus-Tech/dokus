@@ -20,7 +20,7 @@ import tech.dokus.database.tables.cashflow.CashflowEntriesTable
 import tech.dokus.database.tables.cashflow.InvoicesTable
 import tech.dokus.database.tables.documents.AutoPaymentAuditEventsTable
 import tech.dokus.database.tables.documents.CashflowPaymentCandidatesTable
-import tech.dokus.database.tables.documents.ImportedBankTransactionsTable
+import tech.dokus.database.tables.banking.BankTransactionsTable
 import tech.dokus.database.tables.documents.InvoiceBankMatchLinksTable
 import tech.dokus.database.tables.payment.PaymentsTable
 import tech.dokus.domain.Money
@@ -29,7 +29,7 @@ import tech.dokus.domain.enums.AutoPaymentDecision
 import tech.dokus.domain.enums.AutoPaymentTriggerSource
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.CashflowSourceType
-import tech.dokus.domain.enums.ImportedBankTransactionStatus
+import tech.dokus.domain.enums.BankTransactionStatus
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.enums.PaymentCreatedBy
 import tech.dokus.domain.enums.PaymentMethod
@@ -37,13 +37,13 @@ import tech.dokus.domain.enums.PaymentSource
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.fromDbDecimal
 import tech.dokus.domain.ids.CashflowEntryId
-import tech.dokus.domain.ids.ImportedBankTransactionId
+import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.ids.PaymentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.AutoPaymentStatusDto
 import tech.dokus.domain.model.CashflowEntry
-import tech.dokus.domain.model.ImportedBankTransactionDto
+import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.domain.toDbDecimal
 import tech.dokus.foundation.backend.utils.runSuspendCatching
 import java.util.UUID
@@ -62,7 +62,7 @@ class AutoPaymentService(
     suspend fun applyAutoPayment(
         tenantId: TenantId,
         entry: CashflowEntry,
-        transaction: ImportedBankTransactionDto,
+        transaction: BankTransactionDto,
         confidenceScore: Double,
         scoreMargin: Double,
         reasonsJson: String,
@@ -117,7 +117,7 @@ class AutoPaymentService(
         AutoPaymentStatusDto(
             matchStatus = link[InvoiceBankMatchLinksTable.status],
             paymentId = paymentRow?.let { PaymentId.parse(it[PaymentsTable.id].value.toString()) },
-            bankTransactionId = ImportedBankTransactionId.parse(
+            bankTransactionId = BankTransactionId.parse(
                 link[InvoiceBankMatchLinksTable.importedBankTransactionId].toString()
             ),
             confidenceScore = link[InvoiceBankMatchLinksTable.confidenceScore]?.toDouble(),
@@ -220,11 +220,11 @@ class AutoPaymentService(
                 it[paidAt] = link[InvoiceBankMatchLinksTable.cashflowPaidAtBefore]
             }
 
-            ImportedBankTransactionsTable.update({
-                (ImportedBankTransactionsTable.id eq txId) and
-                    (ImportedBankTransactionsTable.tenantId eq tenantUuid)
+            BankTransactionsTable.update({
+                (BankTransactionsTable.id eq txId) and
+                    (BankTransactionsTable.tenantId eq tenantUuid)
             }) {
-                it[status] = ImportedBankTransactionStatus.Unmatched
+                it[status] = BankTransactionStatus.Unmatched
                 it[linkedCashflowEntryId] = null
                 it[suggestedCashflowEntryId] = null
                 it[suggestedScore] = null
@@ -269,7 +269,7 @@ class AutoPaymentService(
     private suspend fun applyAutoPaymentInTransaction(
         tenantId: TenantId,
         entry: CashflowEntry,
-        transaction: ImportedBankTransactionDto,
+        transaction: BankTransactionDto,
         confidenceScore: Double,
         scoreMargin: Double,
         reasonsJson: String,
@@ -340,19 +340,19 @@ class AutoPaymentService(
             return@newSuspendedTransaction AutoPayApplyResult(false, null)
         }
 
-        val txRow = ImportedBankTransactionsTable.selectAll().where {
-            (ImportedBankTransactionsTable.id eq txUuid) and
-                (ImportedBankTransactionsTable.tenantId eq tenantUuid)
+        val txRow = BankTransactionsTable.selectAll().where {
+            (BankTransactionsTable.id eq txUuid) and
+                (BankTransactionsTable.tenantId eq tenantUuid)
         }.singleOrNull() ?: throw DokusException.NotFound("Imported bank transaction not found")
 
-        if (txRow[ImportedBankTransactionsTable.linkedCashflowEntryId] != null) {
+        if (txRow[BankTransactionsTable.linkedCashflowEntryId] != null) {
             return@newSuspendedTransaction AutoPayApplyResult(false, null)
         }
 
-        val matchingTxIds = ImportedBankTransactionsTable.selectAll().where {
-            (ImportedBankTransactionsTable.tenantId eq tenantUuid) and
-                (ImportedBankTransactionsTable.transactionFingerprint eq txRow[ImportedBankTransactionsTable.transactionFingerprint])
-        }.map { it[ImportedBankTransactionsTable.id].value }
+        val matchingTxIds = BankTransactionsTable.selectAll().where {
+            (BankTransactionsTable.tenantId eq tenantUuid) and
+                (BankTransactionsTable.transactionFingerprint eq txRow[BankTransactionsTable.transactionFingerprint])
+        }.map { it[BankTransactionsTable.id].value }
 
         val existingPayment = PaymentsTable.selectAll().where {
             (PaymentsTable.tenantId eq tenantUuid) and
@@ -425,11 +425,11 @@ class AutoPaymentService(
             it[notes] = "Auto-paid from imported bank transaction"
         }
 
-        ImportedBankTransactionsTable.update({
-            (ImportedBankTransactionsTable.id eq txUuid) and
-                (ImportedBankTransactionsTable.tenantId eq tenantUuid)
+        BankTransactionsTable.update({
+            (BankTransactionsTable.id eq txUuid) and
+                (BankTransactionsTable.tenantId eq tenantUuid)
         }) {
-            it[status] = ImportedBankTransactionStatus.Linked
+            it[status] = BankTransactionStatus.Linked
             it[linkedCashflowEntryId] = entryUuid
             it[suggestedCashflowEntryId] = entryUuid
             it[suggestedScore] = confidenceScore.toBigDecimal()

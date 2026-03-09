@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 import tech.dokus.domain.database.DbEnum
 
 @Serializable
-enum class ImportedBankTransactionStatus(override val dbValue: String) : DbEnum {
+enum class BankTransactionStatus(override val dbValue: String) : DbEnum {
     @SerialName("UNMATCHED")
     Unmatched("UNMATCHED"),
 
@@ -17,6 +17,18 @@ enum class ImportedBankTransactionStatus(override val dbValue: String) : DbEnum 
 
     @SerialName("IGNORED")
     Ignored("IGNORED")
+}
+
+@Serializable
+enum class BankTransactionSource(override val dbValue: String) : DbEnum {
+    @SerialName("BANK_IMPORT")
+    BankImport("BANK_IMPORT"),
+
+    @SerialName("LIVE_SYNC")
+    LiveSync("LIVE_SYNC"),
+
+    @SerialName("MANUAL")
+    Manual("MANUAL")
 }
 
 @Serializable

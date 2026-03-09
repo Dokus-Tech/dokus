@@ -19,7 +19,7 @@ import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentSourceStatus
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
-import tech.dokus.domain.enums.ImportedBankTransactionStatus
+import tech.dokus.domain.enums.BankTransactionStatus
 import tech.dokus.domain.enums.PaymentCandidateTier
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.Iban
@@ -27,14 +27,14 @@ import tech.dokus.domain.ids.DocumentBlobId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentMatchReviewId
 import tech.dokus.domain.ids.DocumentSourceId
-import tech.dokus.domain.ids.ImportedBankTransactionId
+import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.ids.PaymentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.AutoPaymentStatusDto
 import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.DocumentDto
-import tech.dokus.domain.model.ImportedBankTransactionDto
+import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.domain.model.DocumentPagePreviewDto
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.DocumentSourceDto
@@ -239,7 +239,7 @@ internal fun previewAutoPaymentStatus(
     AutoPaymentStatusDto(
         matchStatus = AutoMatchStatus.AutoPaid,
         paymentId = PaymentId.parse("6cc26605-d49d-480a-ad2e-93fca770de95"),
-        bankTransactionId = ImportedBankTransactionId.parse("b038fd5b-c2b7-45b4-a0f2-f3a17d673aa3"),
+        bankTransactionId = BankTransactionId.parse("b038fd5b-c2b7-45b4-a0f2-f3a17d673aa3"),
         confidenceScore = confidenceScore,
         reasons = listOf("structured_reference_match", "exact_amount", "date_proximity"),
         matchedAt = LocalDateTime(2026, 2, 15, 7, 32, 0),
@@ -301,9 +301,9 @@ internal fun previewPaymentSheetState(
     )
 }
 
-internal fun previewImportedTransactions(): List<ImportedBankTransactionDto> = listOf(
-    ImportedBankTransactionDto(
-        id = ImportedBankTransactionId.parse("b038fd5b-c2b7-45b4-a0f2-f3a17d673aa3"),
+internal fun previewImportedTransactions(): List<BankTransactionDto> = listOf(
+    BankTransactionDto(
+        id = BankTransactionId.parse("b038fd5b-c2b7-45b4-a0f2-f3a17d673aa3"),
         tenantId = previewTenantId,
         documentId = previewDocumentId,
         transactionDate = LocalDate(2026, 2, 15),
@@ -314,7 +314,7 @@ internal fun previewImportedTransactions(): List<ImportedBankTransactionDto> = l
         descriptionRaw = "SEPA transfer premium Q1",
         rowConfidence = 0.97,
         largeAmountFlag = false,
-        status = ImportedBankTransactionStatus.Suggested,
+        status = BankTransactionStatus.Suggested,
         linkedCashflowEntryId = null,
         suggestedCashflowEntryId = null,
         score = 0.93,
@@ -322,8 +322,8 @@ internal fun previewImportedTransactions(): List<ImportedBankTransactionDto> = l
         createdAt = previewNow,
         updatedAt = previewNow,
     ),
-    ImportedBankTransactionDto(
-        id = ImportedBankTransactionId.parse("cbf4ded5-7e9d-4f66-b8f4-9751f98e3b0b"),
+    BankTransactionDto(
+        id = BankTransactionId.parse("cbf4ded5-7e9d-4f66-b8f4-9751f98e3b0b"),
         tenantId = previewTenantId,
         documentId = previewDocumentId,
         transactionDate = LocalDate(2026, 2, 12),
@@ -334,7 +334,7 @@ internal fun previewImportedTransactions(): List<ImportedBankTransactionDto> = l
         descriptionRaw = "Transfer KBC",
         rowConfidence = 0.91,
         largeAmountFlag = false,
-        status = ImportedBankTransactionStatus.Unmatched,
+        status = BankTransactionStatus.Unmatched,
         linkedCashflowEntryId = null,
         suggestedCashflowEntryId = null,
         score = 0.74,
@@ -342,8 +342,8 @@ internal fun previewImportedTransactions(): List<ImportedBankTransactionDto> = l
         createdAt = previewNow,
         updatedAt = previewNow,
     ),
-    ImportedBankTransactionDto(
-        id = ImportedBankTransactionId.parse("f1496fba-d577-4f95-84f5-c75ef229f6cb"),
+    BankTransactionDto(
+        id = BankTransactionId.parse("f1496fba-d577-4f95-84f5-c75ef229f6cb"),
         tenantId = previewTenantId,
         documentId = previewDocumentId,
         transactionDate = LocalDate(2026, 2, 10),
@@ -354,7 +354,7 @@ internal fun previewImportedTransactions(): List<ImportedBankTransactionDto> = l
         descriptionRaw = "AXA insurance transfer",
         rowConfidence = 0.95,
         largeAmountFlag = false,
-        status = ImportedBankTransactionStatus.Unmatched,
+        status = BankTransactionStatus.Unmatched,
         linkedCashflowEntryId = null,
         suggestedCashflowEntryId = null,
         score = 0.70,

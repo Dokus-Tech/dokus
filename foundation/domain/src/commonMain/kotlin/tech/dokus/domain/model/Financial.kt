@@ -36,7 +36,6 @@ import tech.dokus.domain.ids.Bic
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.ExpenseId
-import tech.dokus.domain.ids.ImportedBankTransactionId
 import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.InvitationId
 import tech.dokus.domain.ids.InvoiceId
@@ -239,7 +238,7 @@ data class PaymentDto(
     val paymentDate: LocalDate,
     val paymentMethod: PaymentMethod,
     val transactionId: TransactionId? = null,
-    val bankTransactionId: ImportedBankTransactionId? = null,
+    val bankTransactionId: BankTransactionId? = null,
     val source: PaymentSource = PaymentSource.Manual,
     val createdBy: PaymentCreatedBy = PaymentCreatedBy.User,
     val notes: String? = null,
@@ -268,24 +267,6 @@ data class BankConnectionDto(
     val isActive: Boolean = true,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime
-)
-
-@Serializable
-data class BankTransactionDto(
-    val id: BankTransactionId,
-    val bankConnectionId: BankConnectionId,
-    val tenantId: TenantId,
-    val externalId: String,
-    val date: LocalDate,
-    val amount: Money,
-    val description: String,
-    val merchantName: String? = null,
-    val category: String? = null,
-    val isPending: Boolean = false,
-    val expenseId: ExpenseId? = null,
-    val invoiceId: InvoiceId? = null,
-    val isReconciled: Boolean = false,
-    val createdAt: LocalDateTime
 )
 
 // ============================================================================

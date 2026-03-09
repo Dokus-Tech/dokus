@@ -19,7 +19,7 @@ object CashflowPaymentCandidatesTable : UUIDTable("cashflow_payment_candidates")
         onDelete = ReferenceOption.CASCADE
     )
     val importedBankTransactionId = uuid("imported_bank_transaction_id").references(
-        ImportedBankTransactionsTable.id,
+        tech.dokus.database.tables.banking.BankTransactionsTable.id,
         onDelete = ReferenceOption.CASCADE
     )
     val score = decimal("score", 5, 4)

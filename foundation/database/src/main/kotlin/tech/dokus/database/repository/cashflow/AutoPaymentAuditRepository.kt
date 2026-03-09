@@ -6,7 +6,7 @@ import tech.dokus.database.tables.documents.AutoPaymentAuditEventsTable
 import tech.dokus.domain.enums.AutoPaymentDecision
 import tech.dokus.domain.enums.AutoPaymentTriggerSource
 import tech.dokus.domain.ids.CashflowEntryId
-import tech.dokus.domain.ids.ImportedBankTransactionId
+import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.TenantId
 import java.util.UUID
@@ -19,7 +19,7 @@ data class AutoPaymentAuditEventCreate(
     val decision: AutoPaymentDecision,
     val invoiceId: InvoiceId? = null,
     val cashflowEntryId: CashflowEntryId? = null,
-    val transactionId: ImportedBankTransactionId? = null,
+    val transactionId: BankTransactionId? = null,
     val score: Double? = null,
     val margin: Double? = null,
     val reasonsJson: String? = null,

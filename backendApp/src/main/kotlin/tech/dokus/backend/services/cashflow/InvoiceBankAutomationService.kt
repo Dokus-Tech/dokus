@@ -17,7 +17,7 @@ import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTrans
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.database.repository.cashflow.CashflowPaymentCandidateRecord
 import tech.dokus.database.repository.cashflow.CashflowPaymentCandidateRepository
-import tech.dokus.database.repository.cashflow.ImportedBankTransactionRepository
+import tech.dokus.database.repository.banking.BankTransactionRepository
 import tech.dokus.database.repository.cashflow.InvoiceBankMatchLinkRepository
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.database.tables.cashflow.InvoicesTable
@@ -32,7 +32,7 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.CashflowEntry
-import tech.dokus.domain.model.ImportedBankTransactionDto
+import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.domain.util.JaroWinkler
 import tech.dokus.foundation.backend.utils.loggerFor
 import java.util.UUID
@@ -62,7 +62,7 @@ private data class InvoiceMeta(
 )
 
 private data class Candidate(
-    val transaction: ImportedBankTransactionDto,
+    val transaction: BankTransactionDto,
     val entry: CashflowEntry,
     val score: Double,
     val reasons: List<String>,
@@ -72,7 +72,7 @@ private data class Candidate(
 )
 
 class InvoiceBankAutomationService(
-    private val importedBankTransactionRepository: ImportedBankTransactionRepository,
+    private val importedBankTransactionRepository: BankTransactionRepository,
     private val cashflowPaymentCandidateRepository: CashflowPaymentCandidateRepository,
     private val cashflowEntriesRepository: CashflowEntriesRepository,
     private val contactRepository: ContactRepository,
@@ -134,7 +134,7 @@ class InvoiceBankAutomationService(
 
     private suspend fun runMatchingAndAutomation(
         tenantId: TenantId,
-        transactions: List<ImportedBankTransactionDto>,
+        transactions: List<BankTransactionDto>,
         candidateEntries: List<CashflowEntry>,
         triggerSource: AutoPaymentTriggerSource
     ) {
@@ -163,7 +163,7 @@ class InvoiceBankAutomationService(
         val bestPerEntry = mutableMapOf<CashflowEntryId, Candidate>()
 
         for (tx in transactions) {
-            if (tx.status == tech.dokus.domain.enums.ImportedBankTransactionStatus.Linked) continue
+            if (tx.status == tech.dokus.domain.enums.BankTransactionStatus.Linked) continue
 
             val scored = filteredEntries.mapNotNull { entry ->
                 val meta = invoiceMeta[entry.sourceId] ?: return@mapNotNull null
@@ -303,7 +303,7 @@ class InvoiceBankAutomationService(
     }
 
     private fun scoreCandidate(
-        tx: ImportedBankTransactionDto,
+        tx: BankTransactionDto,
         entry: CashflowEntry,
         invoice: InvoiceMeta,
         contactIban: String?

@@ -50,7 +50,7 @@ import tech.dokus.aura.resources.payment_suggested_match
 import tech.dokus.aura.resources.payment_use_manual_entry
 import tech.dokus.aura.resources.state_saving
 import tech.dokus.aura.resources.payment_amount_label
-import tech.dokus.domain.ids.ImportedBankTransactionId
+import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.features.cashflow.presentation.review.PaymentSheetState
 import tech.dokus.foundation.aura.components.PDatePickerDialog
 import tech.dokus.foundation.aura.constrains.Constraints
@@ -69,7 +69,7 @@ internal fun RecordPaymentDialog(
     onNoteChange: (String) -> Unit,
     onOpenTransactionPicker: () -> Unit,
     onCloseTransactionPicker: () -> Unit,
-    onSelectTransaction: (ImportedBankTransactionId) -> Unit,
+    onSelectTransaction: (BankTransactionId) -> Unit,
     onClearSelectedTransaction: () -> Unit,
     onSubmit: () -> Unit,
     onDismiss: () -> Unit,
@@ -115,7 +115,7 @@ private fun RecordPaymentDialogContent(
     onNoteChange: (String) -> Unit,
     onOpenTransactionPicker: () -> Unit,
     onCloseTransactionPicker: () -> Unit,
-    onSelectTransaction: (ImportedBankTransactionId) -> Unit,
+    onSelectTransaction: (BankTransactionId) -> Unit,
     onClearSelectedTransaction: () -> Unit,
     onSubmit: () -> Unit,
     onDismiss: () -> Unit,
@@ -164,7 +164,7 @@ private fun RecordPaymentDialogBody(
     onNoteChange: (String) -> Unit,
     onOpenTransactionPicker: () -> Unit,
     onCloseTransactionPicker: () -> Unit,
-    onSelectTransaction: (ImportedBankTransactionId) -> Unit,
+    onSelectTransaction: (BankTransactionId) -> Unit,
     onClearSelectedTransaction: () -> Unit,
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
@@ -242,7 +242,7 @@ private fun PaymentTransactionSection(
     sheetState: PaymentSheetState,
     onOpenTransactionPicker: () -> Unit,
     onCloseTransactionPicker: () -> Unit,
-    onSelectTransaction: (ImportedBankTransactionId) -> Unit,
+    onSelectTransaction: (BankTransactionId) -> Unit,
     onClearSelectedTransaction: () -> Unit,
 ) {
     Column(

@@ -38,7 +38,6 @@ import tech.dokus.database.tables.documents.DocumentPurposeExamplesTable
 import tech.dokus.database.tables.documents.DocumentPurposeTemplatesTable
 import tech.dokus.database.tables.documents.DocumentSourcesTable
 import tech.dokus.database.tables.documents.DocumentsTable
-import tech.dokus.database.tables.documents.ImportedBankTransactionsTable
 import tech.dokus.database.tables.documents.CashflowPaymentCandidatesTable
 import tech.dokus.database.tables.documents.InvoiceBankMatchLinksTable
 import tech.dokus.database.tables.documents.AutoPaymentAuditEventsTable
@@ -98,7 +97,7 @@ object DokusSchema {
                 DocumentMatchReviewsTable,
                 DocumentPurposeTemplatesTable,
                 DocumentPurposeExamplesTable,
-                ImportedBankTransactionsTable,
+                BankTransactionsTable,
                 CashflowPaymentCandidatesTable,
                 InvoiceBankMatchLinksTable,
                 AutoPaymentAuditEventsTable,
@@ -128,7 +127,6 @@ object DokusSchema {
                 // ----------------------------
                 PaymentsTable,
                 BankConnectionsTable,
-                BankTransactionsTable,
 
                 // ----------------------------
                 // Search telemetry
@@ -149,6 +147,25 @@ object DokusSchema {
                 DocumentChunksTable,
                 ChatMessagesTable,
                 DocumentExamplesTable,
+            )
+        }
+
+        // Partial unique indexes for bank_transactions (Exposed can't express WHERE on indexes)
+        dbQuery {
+            val tx = org.jetbrains.exposed.v1.jdbc.transactions.TransactionManager.current()
+            tx.exec(
+                """
+                CREATE UNIQUE INDEX IF NOT EXISTS uq_bank_txn_file_import
+                    ON bank_transactions (tenant_id, document_id, row_hash)
+                    WHERE document_id IS NOT NULL AND row_hash IS NOT NULL
+                """.trimIndent()
+            )
+            tx.exec(
+                """
+                CREATE UNIQUE INDEX IF NOT EXISTS uq_bank_txn_live_sync
+                    ON bank_transactions (tenant_id, bank_connection_id, external_id)
+                    WHERE bank_connection_id IS NOT NULL AND external_id IS NOT NULL
+                """.trimIndent()
             )
         }
 

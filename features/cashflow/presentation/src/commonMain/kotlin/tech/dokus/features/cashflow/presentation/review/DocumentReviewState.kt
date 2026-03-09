@@ -31,7 +31,7 @@ import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.FinancialDocumentDto
-import tech.dokus.domain.model.ImportedBankTransactionDto
+import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.domain.model.contact.ContactDto
@@ -79,9 +79,9 @@ data class PaymentSheetState(
     val amount: Money? = null,
     val paidAt: LocalDate = Clock.System.todayIn(TimeZone.currentSystemDefault()),
     val note: String = "",
-    val suggestedTransaction: ImportedBankTransactionDto? = null,
-    val selectedTransaction: ImportedBankTransactionDto? = null,
-    val selectableTransactions: List<ImportedBankTransactionDto> = emptyList(),
+    val suggestedTransaction: BankTransactionDto? = null,
+    val selectedTransaction: BankTransactionDto? = null,
+    val selectableTransactions: List<BankTransactionDto> = emptyList(),
     val showTransactionPicker: Boolean = false,
     val isLoadingTransactions: Boolean = false,
     val transactionsError: DokusException? = null,

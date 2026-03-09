@@ -10,7 +10,7 @@ import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentSourceId
-import tech.dokus.domain.ids.ImportedBankTransactionId
+import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.model.FinancialLineItem
 import tech.dokus.domain.model.DocumentRecordDto
 
@@ -38,7 +38,7 @@ sealed interface DocumentReviewIntent : MVIIntent {
     data object LoadPaymentCandidates : DocumentReviewIntent
     data object OpenPaymentTransactionPicker : DocumentReviewIntent
     data object ClosePaymentTransactionPicker : DocumentReviewIntent
-    data class SelectPaymentTransaction(val transactionId: ImportedBankTransactionId) : DocumentReviewIntent
+    data class SelectPaymentTransaction(val transactionId: BankTransactionId) : DocumentReviewIntent
     data object ClearPaymentTransactionSelection : DocumentReviewIntent
     data class UpdatePaymentAmountText(val text: String) : DocumentReviewIntent
     data class UpdatePaymentPaidAt(val date: LocalDate) : DocumentReviewIntent

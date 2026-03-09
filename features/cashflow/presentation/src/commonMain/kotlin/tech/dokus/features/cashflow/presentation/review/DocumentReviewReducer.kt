@@ -262,7 +262,7 @@ internal class DocumentReviewReducer(
     suspend fun DocumentReviewCtx.handleClosePaymentTransactionPicker() =
         with(paymentActions) { handleClosePaymentTransactionPicker() }
 
-    suspend fun DocumentReviewCtx.handleSelectPaymentTransaction(transactionId: tech.dokus.domain.ids.ImportedBankTransactionId) =
+    suspend fun DocumentReviewCtx.handleSelectPaymentTransaction(transactionId: tech.dokus.domain.ids.BankTransactionId) =
         with(paymentActions) { handleSelectPaymentTransaction(transactionId) }
 
     suspend fun DocumentReviewCtx.handleClearPaymentTransactionSelection() =

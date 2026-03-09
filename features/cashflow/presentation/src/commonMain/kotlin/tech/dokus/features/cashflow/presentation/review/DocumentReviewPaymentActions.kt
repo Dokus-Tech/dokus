@@ -200,7 +200,7 @@ internal class DocumentReviewPaymentActions(
         }
     }
 
-    suspend fun DocumentReviewCtx.handleSelectPaymentTransaction(transactionId: tech.dokus.domain.ids.ImportedBankTransactionId) {
+    suspend fun DocumentReviewCtx.handleSelectPaymentTransaction(transactionId: tech.dokus.domain.ids.BankTransactionId) {
         withState {
             val sheet = paymentSheetState ?: return@withState
             val selected = (

@@ -19,7 +19,7 @@ import tech.dokus.domain.enums.PaymentCreatedBy
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.ids.CashflowEntryId
-import tech.dokus.domain.ids.ImportedBankTransactionId
+import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.toDbDecimal
@@ -41,7 +41,7 @@ data class InvoiceBankMatchLinkRecord(
     val tenantId: TenantId,
     val invoiceId: InvoiceId,
     val cashflowEntryId: CashflowEntryId,
-    val importedBankTransactionId: ImportedBankTransactionId,
+    val importedBankTransactionId: BankTransactionId,
     val status: AutoMatchStatus,
     val createdBy: PaymentCreatedBy,
     val confidenceScore: Double?,
@@ -62,7 +62,7 @@ class InvoiceBankMatchLinkRepository {
         tenantId: TenantId,
         invoiceId: InvoiceId,
         cashflowEntryId: CashflowEntryId,
-        transactionId: ImportedBankTransactionId,
+        transactionId: BankTransactionId,
         confidenceScore: Double,
         scoreMargin: Double,
         reasonsJson: String,
@@ -151,7 +151,7 @@ class InvoiceBankMatchLinkRepository {
 
     suspend fun findActiveByTransaction(
         tenantId: TenantId,
-        transactionId: ImportedBankTransactionId
+        transactionId: BankTransactionId
     ): InvoiceBankMatchLinkRecord? = newSuspendedTransaction {
         InvoiceBankMatchLinksTable.selectAll().where {
             (InvoiceBankMatchLinksTable.tenantId eq tenantId.value.toJavaUuid()) and
@@ -185,7 +185,7 @@ class InvoiceBankMatchLinkRepository {
             tenantId = TenantId.parse(this[InvoiceBankMatchLinksTable.tenantId].toString()),
             invoiceId = InvoiceId.parse(this[InvoiceBankMatchLinksTable.invoiceId].toString()),
             cashflowEntryId = CashflowEntryId.parse(this[InvoiceBankMatchLinksTable.cashflowEntryId].toString()),
-            importedBankTransactionId = ImportedBankTransactionId.parse(this[InvoiceBankMatchLinksTable.importedBankTransactionId].toString()),
+            importedBankTransactionId = BankTransactionId.parse(this[InvoiceBankMatchLinksTable.importedBankTransactionId].toString()),
             status = this[InvoiceBankMatchLinksTable.status],
             createdBy = this[InvoiceBankMatchLinksTable.createdBy],
             confidenceScore = this[InvoiceBankMatchLinksTable.confidenceScore]?.toDouble(),

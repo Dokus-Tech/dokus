@@ -28,7 +28,7 @@ import tech.dokus.database.repository.cashflow.DocumentPurposeSimilarityReposito
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.DocumentSourceRepository
 import tech.dokus.database.repository.cashflow.ExpenseRepository
-import tech.dokus.database.repository.cashflow.ImportedBankTransactionRepository
+import tech.dokus.database.repository.banking.BankTransactionRepository
 import tech.dokus.database.repository.cashflow.CashflowPaymentCandidateRepository
 import tech.dokus.database.repository.cashflow.InvoiceBankMatchLinkRepository
 import tech.dokus.database.repository.cashflow.AutoPaymentAuditRepository
@@ -80,7 +80,7 @@ val repositoryModuleCashflow = module {
     single { DocumentMatchReviewRepository() }
     single { DocumentPurposeTemplateRepository() }
     single { DocumentPurposeSimilarityRepository() }
-    single { ImportedBankTransactionRepository() }
+    single { BankTransactionRepository() }
     single { CashflowPaymentCandidateRepository() }
     single { InvoiceBankMatchLinkRepository() }
     single { AutoPaymentAuditRepository() }

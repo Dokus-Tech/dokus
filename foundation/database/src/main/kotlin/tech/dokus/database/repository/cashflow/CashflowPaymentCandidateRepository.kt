@@ -13,7 +13,7 @@ import org.jetbrains.exposed.v1.jdbc.update
 import tech.dokus.database.tables.documents.CashflowPaymentCandidatesTable
 import tech.dokus.domain.enums.PaymentCandidateTier
 import tech.dokus.domain.ids.CashflowEntryId
-import tech.dokus.domain.ids.ImportedBankTransactionId
+import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.ids.TenantId
 import java.util.UUID
 import kotlin.uuid.ExperimentalUuidApi
@@ -21,7 +21,7 @@ import kotlin.uuid.toJavaUuid
 
 data class CashflowPaymentCandidateRecord(
     val cashflowEntryId: CashflowEntryId,
-    val importedBankTransactionId: ImportedBankTransactionId,
+    val importedBankTransactionId: BankTransactionId,
     val score: Double,
     val tier: PaymentCandidateTier,
     val signalSnapshotJson: String? = null
@@ -75,7 +75,7 @@ class CashflowPaymentCandidateRepository {
             CashflowPaymentCandidateRecord(
                 cashflowEntryId = CashflowEntryId.parse(row[CashflowPaymentCandidatesTable.cashflowEntryId].toString()),
                 importedBankTransactionId =
-                    ImportedBankTransactionId.parse(row[CashflowPaymentCandidatesTable.importedBankTransactionId].toString()),
+                    BankTransactionId.parse(row[CashflowPaymentCandidatesTable.importedBankTransactionId].toString()),
                 score = row[CashflowPaymentCandidatesTable.score].toDouble(),
                 tier = row[CashflowPaymentCandidatesTable.tier],
                 signalSnapshotJson = row[CashflowPaymentCandidatesTable.signalSnapshotJson]

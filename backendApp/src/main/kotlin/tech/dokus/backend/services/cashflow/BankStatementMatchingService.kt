@@ -14,8 +14,8 @@ import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTrans
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.database.repository.cashflow.CashflowPaymentCandidateRecord
 import tech.dokus.database.repository.cashflow.CashflowPaymentCandidateRepository
-import tech.dokus.database.repository.cashflow.ImportedBankTransactionCreate
-import tech.dokus.database.repository.cashflow.ImportedBankTransactionRepository
+import tech.dokus.database.repository.banking.BankTransactionCreate
+import tech.dokus.database.repository.banking.BankTransactionRepository
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.database.tables.cashflow.InvoicesTable
 import tech.dokus.domain.Money
@@ -31,7 +31,7 @@ import tech.dokus.domain.model.BankStatementDraftData
 import tech.dokus.domain.model.BankStatementTransactionDraftRow
 import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.model.CashflowPaymentCandidatesResponse
-import tech.dokus.domain.model.ImportedBankTransactionDto
+import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.domain.util.JaroWinkler
 import tech.dokus.foundation.backend.utils.loggerFor
 import java.util.UUID
@@ -59,7 +59,7 @@ data class BankStatementProcessingResult(
 )
 
 class BankStatementMatchingService(
-    private val importedBankTransactionRepository: ImportedBankTransactionRepository,
+    private val importedBankTransactionRepository: BankTransactionRepository,
     private val cashflowPaymentCandidateRepository: CashflowPaymentCandidateRepository,
     private val cashflowEntriesRepository: CashflowEntriesRepository,
     private val contactRepository: ContactRepository
@@ -74,7 +74,7 @@ class BankStatementMatchingService(
         val today = Clock.System.now().toLocalDateTime(TimeZone.UTC).date
         val discarded = mutableListOf<DiscardedBankStatementRow>()
         val validRows = mutableListOf<BankStatementTransactionDraftRow>()
-        val inserts = mutableListOf<ImportedBankTransactionCreate>()
+        val inserts = mutableListOf<BankTransactionCreate>()
 
         draftData.transactions.forEachIndexed { index, row ->
             val date = row.transactionDate
@@ -111,7 +111,7 @@ class BankStatementMatchingService(
 
             val sanitized = row.copy(largeAmountFlag = largeFlag)
             validRows += sanitized
-            inserts += ImportedBankTransactionCreate(
+            inserts += BankTransactionCreate(
                 rowHash = rowHash,
                 transactionFingerprint = rowHash,
                 transactionDate = date,
@@ -261,14 +261,14 @@ class BankStatementMatchingService(
     }
 
     private data class TransactionSuggestion(
-        val transactionId: tech.dokus.domain.ids.ImportedBankTransactionId,
+        val transactionId: tech.dokus.domain.ids.BankTransactionId,
         val entryId: CashflowEntryId,
         val score: Double,
         val tier: PaymentCandidateTier
     )
 
     private data class MatchCandidate(
-        val transaction: ImportedBankTransactionDto,
+        val transaction: BankTransactionDto,
         val entry: CashflowEntry,
         val score: Double,
         val signalSnapshot: String,
@@ -276,7 +276,7 @@ class BankStatementMatchingService(
     )
 
     private fun scoreCandidate(
-        tx: ImportedBankTransactionDto,
+        tx: BankTransactionDto,
         entry: CashflowEntry,
         contactVat: String?,
         contactIban: String?,
