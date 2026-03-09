@@ -101,6 +101,10 @@ kotlin {
             implementation(projects.features.contacts.domain)
             implementation(projects.features.contacts.presentation)
 
+            implementation(projects.features.banking.data)
+            implementation(projects.features.banking.domain)
+            implementation(projects.features.banking.presentation)
+
             implementation(projects.foundation.domain)
 
             implementation(compose.runtime)

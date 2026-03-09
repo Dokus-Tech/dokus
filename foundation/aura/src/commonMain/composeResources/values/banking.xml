@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Navigation -->
+    <string name="nav_section_banking">Banking</string>
+    <string name="banking_balances_title">Balances</string>
+    <string name="banking_balances_subtitle">Account overview</string>
+    <string name="banking_payments_title">Payments</string>
+    <string name="banking_payments_subtitle">Match transactions</string>
+
+    <!-- Filters -->
+    <string name="banking_filter_all">All</string>
+    <string name="banking_filter_needs_review">Needs review</string>
+    <string name="banking_filter_unmatched">Unmatched</string>
+    <string name="banking_filter_matched">Matched</string>
+    <string name="banking_filter_ignored">Ignored</string>
+
+    <!-- Table columns -->
+    <string name="banking_col_date">Date</string>
+    <string name="banking_col_description">Description</string>
+    <string name="banking_col_counterparty">Counterparty</string>
+    <string name="banking_col_account">Account</string>
+    <string name="banking_col_status">Status</string>
+    <string name="banking_col_amount">Amount</string>
+
+    <!-- Transaction status -->
+    <string name="banking_status_unmatched">Unmatched</string>
+    <string name="banking_status_suggested">Needs review</string>
+    <string name="banking_status_linked">Matched</string>
+    <string name="banking_status_ignored">Ignored</string>
+
+    <!-- Detail pane -->
+    <string name="banking_detail_title">Transaction details</string>
+    <string name="banking_detail_counterparty">Counterparty</string>
+    <string name="banking_detail_iban">IBAN</string>
+    <string name="banking_detail_reference">Reference</string>
+    <string name="banking_detail_description">Description</string>
+
+    <!-- Actions -->
+    <string name="banking_action_link">Link to document</string>
+    <string name="banking_action_ignore">Ignore</string>
+    <string name="banking_action_confirm_match">Confirm match</string>
+
+    <!-- Callout -->
+    <string name="banking_unresolved_callout">%d payments without documents</string>
+    <string name="banking_unresolved_amount">%s unresolved</string>
+
+    <!-- Empty / Error -->
+    <string name="banking_empty_title">No transactions</string>
+    <string name="banking_empty_subtitle">Upload a bank statement to get started</string>
+</resources>
