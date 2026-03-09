@@ -48,6 +48,7 @@ internal object DocumentListingQuery {
 
     private data class DocumentListingBaseQuery(
         val query: Query,
+        val tenantIdUuid: UUID,
         val processingRunIdExpr: Expression<*>,
         val finishedRunIdExpr: Expression<*>,
         val queuedRunIdExpr: Expression<*>,
@@ -331,6 +332,7 @@ internal object DocumentListingQuery {
 
         return DocumentListingBaseQuery(
             query = baseQuery,
+            tenantIdUuid = tenantIdUuid,
             processingRunIdExpr = processingRunIdExpr,
             finishedRunIdExpr = finishedRunIdExpr,
             queuedRunIdExpr = queuedRunIdExpr
@@ -398,7 +400,7 @@ internal object DocumentListingQuery {
 
         val documentIds = pageRows.map { UUID.fromString(it.documentId.toString()) }
         val latestRunIds = pageRows.mapNotNull { row -> row.latestRunId?.let { UUID.fromString(it.toString()) } }
-        val tenantIdUuid = UUID.fromString(tenantId.toString())
+        val tenantIdUuid = baseQuery.tenantIdUuid
 
         val documentsById = DocumentsTable.selectAll()
             .where {

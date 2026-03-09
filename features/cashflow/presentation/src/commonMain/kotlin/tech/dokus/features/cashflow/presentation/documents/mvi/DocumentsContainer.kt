@@ -1,5 +1,6 @@
 package tech.dokus.features.cashflow.presentation.documents.mvi
 
+import kotlinx.coroutines.launch
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
@@ -52,7 +53,7 @@ internal class DocumentsContainer(
             logger.d { "Refreshing documents" }
             updateState { copy(documents = documents.asLoading) }
 
-            loadCounts()
+            launch { loadCounts() }
             loadDocumentRecords(
                 page = 0,
                 pageSize = PAGE_SIZE,

@@ -15,7 +15,6 @@ import tech.dokus.domain.model.DocumentCountsResponse
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.common.PaginatedResponse
-import tech.dokus.features.cashflow.usecases.GetDocumentCountsUseCase
 import tech.dokus.features.cashflow.usecases.LoadDocumentRecordsUseCase
 import tech.dokus.foundation.app.state.isError
 import tech.dokus.foundation.app.state.isLoading
@@ -157,23 +156,6 @@ private class FakeLoadDocumentRecordsUseCase : LoadDocumentRecordsUseCase {
         return requireNotNull(queue.removeFirstOrNull()) {
             "No remaining paged responses for filter=$effectiveFilter"
         }.await()
-    }
-}
-
-private class FakeGetDocumentCountsUseCase : GetDocumentCountsUseCase {
-    private val results: ArrayDeque<Result<DocumentCountsResponse>> = ArrayDeque()
-    var callCount: Int = 0
-        private set
-
-    fun enqueueResult(response: DocumentCountsResponse) {
-        results.addLast(Result.success(response))
-    }
-
-    override suspend fun invoke(): Result<DocumentCountsResponse> {
-        callCount += 1
-        return requireNotNull(results.removeFirstOrNull()) {
-            "No remaining count responses queued"
-        }
     }
 }
 
