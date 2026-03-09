@@ -14,6 +14,7 @@ import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.database.repository.auth.WelcomeEmailJobRepository
 import tech.dokus.database.repository.banking.BankAccountRepository
+import tech.dokus.database.repository.banking.BankStatementRepository
 import tech.dokus.database.repository.business.BusinessProfileEnrichmentJobRepository
 import tech.dokus.database.repository.business.BusinessProfileRepository
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
@@ -128,6 +129,7 @@ val repositoryModuleProcessor = module {
  */
 val repositoryModuleBanking = module {
     single { BankAccountRepository() }
+    single { BankStatementRepository() }
 }
 
 /**

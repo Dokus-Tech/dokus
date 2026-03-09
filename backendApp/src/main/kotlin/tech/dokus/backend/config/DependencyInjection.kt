@@ -12,7 +12,11 @@ import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
+import tech.dokus.backend.services.banking.AccountResolutionService
+import tech.dokus.backend.services.banking.BankStatementProcessingService
 import tech.dokus.backend.services.banking.BankingService
+import tech.dokus.backend.services.banking.StatementDedupService
+import tech.dokus.backend.services.banking.StatementTrustCalculator
 import tech.dokus.backend.services.auth.AuthService
 import tech.dokus.backend.services.auth.EmailService
 import tech.dokus.backend.services.auth.EmailTemplateRenderer
@@ -215,6 +219,10 @@ private val cryptoModule = module {
 
 private val bankingModule = module {
     singleOf(::BankingService)
+    singleOf(::StatementTrustCalculator)
+    singleOf(::AccountResolutionService)
+    singleOf(::StatementDedupService)
+    singleOf(::BankStatementProcessingService)
 }
 
 private fun authModule() = module {

@@ -17,6 +17,7 @@ import tech.dokus.database.tables.auth.TenantTable
 import tech.dokus.database.tables.auth.UsersTable
 import tech.dokus.database.tables.auth.WelcomeEmailJobsTable
 import tech.dokus.database.tables.banking.BankAccountsTable
+import tech.dokus.database.tables.banking.BankStatementsTable
 import tech.dokus.database.tables.banking.BankTransactionsTable
 import tech.dokus.database.tables.business.BusinessProfileEnrichmentJobsTable
 import tech.dokus.database.tables.business.BusinessProfilesTable
@@ -125,6 +126,7 @@ object DokusSchema {
                 // ----------------------------
                 PaymentsTable,
                 BankAccountsTable,
+                BankStatementsTable,
 
                 // ----------------------------
                 // Search telemetry

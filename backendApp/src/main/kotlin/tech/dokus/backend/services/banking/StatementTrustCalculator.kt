@@ -3,7 +3,7 @@ package tech.dokus.backend.services.banking
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.BankAccountStatus
 import tech.dokus.domain.enums.StatementTrust
-import tech.dokus.domain.model.DocumentDraftData.BankStatementDraftData
+import tech.dokus.domain.model.BankStatementDraftData
 
 /**
  * Calculates statement-level trust based on PDF balance reconciliation.
