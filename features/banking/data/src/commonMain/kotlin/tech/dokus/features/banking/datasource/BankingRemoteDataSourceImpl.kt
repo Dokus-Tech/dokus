@@ -14,6 +14,7 @@ import tech.dokus.domain.enums.BankTransactionSource
 import tech.dokus.domain.enums.BankTransactionStatus
 import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.ids.CashflowEntryId
+import tech.dokus.domain.model.BalanceHistoryResponse
 import tech.dokus.domain.model.BankAccountSummary
 import tech.dokus.domain.model.BankConnectionDto
 import tech.dokus.domain.model.BankTransactionDto
@@ -92,5 +93,9 @@ internal class BankingRemoteDataSourceImpl(
         val txRoute = Banking.Transactions()
         val idRoute = Banking.Transactions.Id(parent = txRoute, id = transactionId.toString())
         httpClient.resourcePost(Banking.Transactions.Id.Confirm(parent = idRoute)).body()
+    }
+
+    override suspend fun getBalanceHistory(days: Int): Result<BalanceHistoryResponse> = runCatching {
+        httpClient.get(Banking.AccountsBalanceHistory(days = days)).body()
     }
 }

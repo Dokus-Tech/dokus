@@ -9,13 +9,23 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.AccountBalanceSeries
 import tech.dokus.domain.model.BankAccountSummary
 import tech.dokus.domain.model.BankConnectionDto
 import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.domain.model.BankTransactionSummary
+import tech.dokus.domain.model.BalanceHistoryPoint
+import tech.dokus.domain.model.BalanceHistoryResponse
 import tech.dokus.foundation.backend.utils.loggerFor
 import tech.dokus.foundation.backend.utils.runSuspendCatching
+import kotlinx.datetime.Clock
+import kotlinx.datetime.DatePeriod
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.minus
+import kotlinx.datetime.plus
+import kotlinx.datetime.todayIn
 
 class BankingService(
     private val bankTransactionRepository: BankTransactionRepository,
@@ -32,13 +42,19 @@ class BankingService(
         val statusCounts = bankTransactionRepository.countByStatus(tenantId)
         val unmatchedCount = (statusCounts[BankTransactionStatus.Unmatched] ?: 0L).toInt()
         val suggestedCount = (statusCounts[BankTransactionStatus.Suggested] ?: 0L).toInt()
+        val matchedCount = (statusCounts[BankTransactionStatus.Linked] ?: 0L).toInt()
         val unresolvedMinor = bankTransactionRepository.sumUnresolved(tenantId)
 
+        val totalBalanceMinor = connections.mapNotNull { it.balance?.minor }.sum()
+        val lastSynced = connections.mapNotNull { it.lastSyncedAt }.maxOrNull()
+
         BankAccountSummary(
-            totalBalance = Money(0), // Balance tracking not yet implemented
+            totalBalance = Money(totalBalanceMinor),
             accountCount = connections.size,
             unmatchedCount = unmatchedCount + suggestedCount,
-            totalUnresolvedAmount = Money(unresolvedMinor)
+            totalUnresolvedAmount = Money(unresolvedMinor),
+            matchedThisPeriod = matchedCount,
+            lastSyncedAt = lastSynced,
         )
     }
 
@@ -118,5 +134,74 @@ class BankingService(
         logger.info("Confirmed suggested match for transaction {} -> entry {} for tenant {}", transactionId, suggestedEntryId, tenantId)
         bankTransactionRepository.findById(tenantId, transactionId)
             ?: throw DokusException.NotFound("Bank transaction not found after update")
+    }
+
+    /**
+     * Compute daily balance history per account over [days] days.
+     * Works backwards from current balance using transaction amounts.
+     */
+    suspend fun getBalanceHistory(
+        tenantId: TenantId,
+        days: Int,
+    ): Result<BalanceHistoryResponse> = runSuspendCatching {
+        val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+        val startDate = today.minus(days, DateTimeUnit.DAY)
+        val connections = bankingRepository.listConnections(tenantId).getOrThrow()
+        val transactions = bankTransactionRepository.listAll(
+            tenantId = tenantId,
+            fromDate = startDate,
+            toDate = today,
+        )
+
+        // Group transactions by connection and date
+        val txByConnection = transactions.groupBy { it.bankConnectionId }
+
+        val accountSeries = connections.map { conn ->
+            val currentBalance = conn.balance?.minor ?: 0L
+            val connTxs = txByConnection[conn.id] ?: emptyList()
+
+            // Group by date, sum amounts per day
+            val dailyAmounts = connTxs
+                .groupBy { it.transactionDate }
+                .mapValues { (_, txs) -> txs.sumOf { it.signedAmount.minor } }
+
+            // Build daily points: work backwards from current balance
+            val dates = generateDateRange(startDate, today)
+            var runningBalance = currentBalance
+            val points = dates.reversed().map { date ->
+                val point = BalanceHistoryPoint(date = date, balance = Money(runningBalance))
+                // Subtract today's transactions to get previous day's balance
+                val dayAmount = dailyAmounts[date] ?: 0L
+                runningBalance -= dayAmount
+                point
+            }.reversed()
+
+            AccountBalanceSeries(
+                connectionId = conn.id,
+                accountName = conn.accountName ?: conn.institutionName,
+                points = points,
+            )
+        }
+
+        // Compute total series by summing balances across accounts per day
+        val dates = generateDateRange(startDate, today)
+        val totalSeries = dates.mapIndexed { index, date ->
+            val totalMinor = accountSeries.sumOf { series ->
+                series.points.getOrNull(index)?.balance?.minor ?: 0L
+            }
+            BalanceHistoryPoint(date = date, balance = Money(totalMinor))
+        }
+
+        BalanceHistoryResponse(series = accountSeries, totalSeries = totalSeries)
+    }
+
+    private fun generateDateRange(start: LocalDate, end: LocalDate): List<LocalDate> {
+        val dates = mutableListOf<LocalDate>()
+        var current = start
+        while (current <= end) {
+            dates.add(current)
+            current = current.plus(1, DateTimeUnit.DAY)
+        }
+        return dates
     }
 }

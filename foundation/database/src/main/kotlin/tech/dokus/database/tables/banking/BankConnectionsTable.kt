@@ -27,6 +27,8 @@ object BankConnectionsTable : UUIDTable("bank_connections") {
     val accountName = varchar("account_name", 255).nullable()
     val accountType = dbEnumeration<BankAccountType>("account_type").nullable()
     val currency = dbEnumeration<Currency>("currency").default(Currency.Eur)
+    val iban = varchar("iban", 34).nullable()
+    val balance = long("balance").nullable()
 
     // Encrypted access token
     val accessToken = text("access_token")

@@ -264,10 +264,12 @@ data class BankConnectionDto(
     val accountName: String? = null,
     val accountType: BankAccountType? = null,
     val currency: Currency = Currency.Eur,
+    val iban: Iban? = null,
+    val balance: Money? = null,
     val lastSyncedAt: LocalDateTime? = null,
     val isActive: Boolean = true,
     val createdAt: LocalDateTime,
-    val updatedAt: LocalDateTime
+    val updatedAt: LocalDateTime,
 )
 
 @Serializable
@@ -275,7 +277,9 @@ data class BankAccountSummary(
     val totalBalance: Money,
     val accountCount: Int,
     val unmatchedCount: Int,
-    val totalUnresolvedAmount: Money
+    val totalUnresolvedAmount: Money,
+    val matchedThisPeriod: Int = 0,
+    val lastSyncedAt: LocalDateTime? = null,
 )
 
 @Serializable
@@ -290,7 +294,26 @@ data class BankTransactionSummary(
 
 @Serializable
 data class LinkTransactionRequest(
-    val cashflowEntryId: CashflowEntryId
+    val cashflowEntryId: CashflowEntryId,
+)
+
+@Serializable
+data class BalanceHistoryResponse(
+    val series: List<AccountBalanceSeries>,
+    val totalSeries: List<BalanceHistoryPoint>,
+)
+
+@Serializable
+data class AccountBalanceSeries(
+    val connectionId: BankConnectionId,
+    val accountName: String,
+    val points: List<BalanceHistoryPoint>,
+)
+
+@Serializable
+data class BalanceHistoryPoint(
+    val date: LocalDate,
+    val balance: Money,
 )
 
 // ============================================================================

@@ -5,6 +5,7 @@ import tech.dokus.domain.enums.BankTransactionSource
 import tech.dokus.domain.enums.BankTransactionStatus
 import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.ids.CashflowEntryId
+import tech.dokus.domain.model.BalanceHistoryResponse
 import tech.dokus.domain.model.BankAccountSummary
 import tech.dokus.domain.model.BankConnectionDto
 import tech.dokus.domain.model.BankTransactionDto
@@ -38,4 +39,6 @@ interface BankingRemoteDataSource {
     suspend fun ignoreTransaction(transactionId: BankTransactionId): Result<BankTransactionDto>
 
     suspend fun confirmTransaction(transactionId: BankTransactionId): Result<BankTransactionDto>
+
+    suspend fun getBalanceHistory(days: Int = 30): Result<BalanceHistoryResponse>
 }

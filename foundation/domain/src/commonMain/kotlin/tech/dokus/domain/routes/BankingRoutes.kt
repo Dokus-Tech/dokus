@@ -30,6 +30,15 @@ class Banking {
     class AccountsSummary(val parent: Banking = Banking())
 
     /**
+     * GET /api/v1/banking/accounts/balance-history - Daily balance per account over a period
+     *
+     * @param days Number of days to look back (default 30)
+     */
+    @Serializable
+    @Resource("accounts/balance-history")
+    class AccountsBalanceHistory(val parent: Banking = Banking(), val days: Int = 30)
+
+    /**
      * GET /api/v1/banking/transactions - List transactions with filters
      *
      * @param status Filter by transaction status

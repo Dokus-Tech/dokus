@@ -13,7 +13,9 @@ import tech.dokus.database.tables.banking.BankConnectionsTable
 import tech.dokus.domain.enums.BankAccountType
 import tech.dokus.domain.enums.BankProvider
 import tech.dokus.domain.enums.Currency
+import tech.dokus.domain.Money
 import tech.dokus.domain.ids.BankConnectionId
+import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.BankConnectionDto
 import tech.dokus.foundation.backend.database.dbQuery
@@ -120,6 +122,8 @@ class BankingRepository {
     }
 
     private fun ResultRow.toBankConnectionDto(): BankConnectionDto {
+        val ibanRaw = this[BankConnectionsTable.iban]
+        val balanceRaw = this[BankConnectionsTable.balance]
         return BankConnectionDto(
             id = BankConnectionId.parse(this[BankConnectionsTable.id].value.toString()),
             tenantId = TenantId.parse(this[BankConnectionsTable.tenantId].toString()),
@@ -130,10 +134,12 @@ class BankingRepository {
             accountName = this[BankConnectionsTable.accountName],
             accountType = this[BankConnectionsTable.accountType],
             currency = this[BankConnectionsTable.currency],
+            iban = ibanRaw?.let { Iban(it) },
+            balance = balanceRaw?.let { Money(it) },
             lastSyncedAt = this[BankConnectionsTable.lastSyncedAt],
             isActive = this[BankConnectionsTable.isActive],
             createdAt = this[BankConnectionsTable.createdAt],
-            updatedAt = this[BankConnectionsTable.updatedAt]
+            updatedAt = this[BankConnectionsTable.updatedAt],
         )
     }
 }

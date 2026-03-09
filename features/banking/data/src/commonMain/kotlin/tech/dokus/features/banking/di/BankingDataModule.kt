@@ -8,17 +8,21 @@ import tech.dokus.features.banking.datasource.BankingRemoteDataSource
 import tech.dokus.features.banking.datasource.BankingRemoteDataSourceImpl
 import tech.dokus.features.banking.usecase.ConfirmTransactionUseCaseImpl
 import tech.dokus.features.banking.usecase.GetAccountSummaryUseCaseImpl
+import tech.dokus.features.banking.usecase.GetBalanceHistoryUseCaseImpl
 import tech.dokus.features.banking.usecase.GetBankTransactionUseCaseImpl
 import tech.dokus.features.banking.usecase.GetTransactionSummaryUseCaseImpl
 import tech.dokus.features.banking.usecase.IgnoreTransactionUseCaseImpl
 import tech.dokus.features.banking.usecase.LinkTransactionUseCaseImpl
+import tech.dokus.features.banking.usecase.ListBankConnectionsUseCaseImpl
 import tech.dokus.features.banking.usecase.ListBankTransactionsUseCaseImpl
 import tech.dokus.features.banking.usecases.ConfirmTransactionUseCase
 import tech.dokus.features.banking.usecases.GetAccountSummaryUseCase
+import tech.dokus.features.banking.usecases.GetBalanceHistoryUseCase
 import tech.dokus.features.banking.usecases.GetBankTransactionUseCase
 import tech.dokus.features.banking.usecases.GetTransactionSummaryUseCase
 import tech.dokus.features.banking.usecases.IgnoreTransactionUseCase
 import tech.dokus.features.banking.usecases.LinkTransactionUseCase
+import tech.dokus.features.banking.usecases.ListBankConnectionsUseCase
 import tech.dokus.features.banking.usecases.ListBankTransactionsUseCase
 
 val bankingNetworkModule = module {
@@ -33,4 +37,6 @@ val bankingNetworkModule = module {
     singleOf(::LinkTransactionUseCaseImpl) bind LinkTransactionUseCase::class
     singleOf(::IgnoreTransactionUseCaseImpl) bind IgnoreTransactionUseCase::class
     singleOf(::ConfirmTransactionUseCaseImpl) bind ConfirmTransactionUseCase::class
+    singleOf(::ListBankConnectionsUseCaseImpl) bind ListBankConnectionsUseCase::class
+    singleOf(::GetBalanceHistoryUseCaseImpl) bind GetBalanceHistoryUseCase::class
 }

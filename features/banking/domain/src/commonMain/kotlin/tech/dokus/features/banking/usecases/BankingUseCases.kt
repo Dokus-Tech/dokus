@@ -5,7 +5,9 @@ import tech.dokus.domain.enums.BankTransactionSource
 import tech.dokus.domain.enums.BankTransactionStatus
 import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.ids.CashflowEntryId
+import tech.dokus.domain.model.BalanceHistoryResponse
 import tech.dokus.domain.model.BankAccountSummary
+import tech.dokus.domain.model.BankConnectionDto
 import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.domain.model.BankTransactionSummary
 import tech.dokus.domain.model.LinkTransactionRequest
@@ -34,6 +36,14 @@ interface GetTransactionSummaryUseCase {
 
 interface GetAccountSummaryUseCase {
     suspend operator fun invoke(): Result<BankAccountSummary>
+}
+
+interface ListBankConnectionsUseCase {
+    suspend operator fun invoke(): Result<List<BankConnectionDto>>
+}
+
+interface GetBalanceHistoryUseCase {
+    suspend operator fun invoke(days: Int = 30): Result<BalanceHistoryResponse>
 }
 
 interface LinkTransactionUseCase {

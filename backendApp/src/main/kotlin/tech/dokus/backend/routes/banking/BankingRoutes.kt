@@ -56,6 +56,15 @@ internal fun Route.bankingRoutes() {
             call.respond(HttpStatusCode.OK, summary)
         }
 
+        // GET /api/v1/banking/accounts/balance-history
+        get<Banking.AccountsBalanceHistory> { route ->
+            val tenantId = requireTenantId()
+            val days = route.days.coerceIn(1, 365)
+            val history = bankingService.getBalanceHistory(tenantId, days)
+                .getOrElse { throw DokusException.InternalError("Failed to get balance history: ${it.message}") }
+            call.respond(HttpStatusCode.OK, history)
+        }
+
         // GET /api/v1/banking/transactions
         get<Banking.Transactions> { route ->
             val tenantId = requireTenantId()
