@@ -1,12 +1,8 @@
 package tech.dokus.features.banking.presentation.payments.components
 
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.PrimaryScrollableTabRow
-import androidx.compose.material3.Tab
-import androidx.compose.material3.Text
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.banking_filter_all
@@ -16,8 +12,10 @@ import tech.dokus.aura.resources.banking_filter_needs_review
 import tech.dokus.aura.resources.banking_filter_unmatched
 import tech.dokus.domain.model.BankTransactionSummary
 import tech.dokus.features.banking.presentation.payments.mvi.PaymentFilterTab
+import tech.dokus.foundation.aura.components.tabs.DokusTab
+import tech.dokus.foundation.aura.components.tabs.DokusTabs
+import tech.dokus.foundation.aura.style.amberSoft
 
-@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 internal fun PaymentFilterTabs(
     selectedTab: PaymentFilterTab,
@@ -25,41 +23,45 @@ internal fun PaymentFilterTabs(
     onTabSelected: (PaymentFilterTab) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val tabs = PaymentFilterTab.entries
-    val selectedIndex = tabs.indexOf(selectedTab)
+    val tabs = listOf(
+        DokusTab(
+            id = PaymentFilterTab.All.name,
+            label = stringResource(Res.string.banking_filter_all),
+            count = summary?.totalCount?.takeIf { it > 0 },
+        ),
+        DokusTab(
+            id = PaymentFilterTab.NeedsReview.name,
+            label = stringResource(Res.string.banking_filter_needs_review),
+            count = summary?.needsReviewCount?.takeIf { it > 0 },
+            countColor = MaterialTheme.colorScheme.primary,
+            countBackground = MaterialTheme.colorScheme.amberSoft,
+        ),
+        DokusTab(
+            id = PaymentFilterTab.Unmatched.name,
+            label = stringResource(Res.string.banking_filter_unmatched),
+            count = summary?.unmatchedCount?.takeIf { it > 0 },
+            countColor = MaterialTheme.colorScheme.primary,
+            countBackground = MaterialTheme.colorScheme.amberSoft,
+        ),
+        DokusTab(
+            id = PaymentFilterTab.Matched.name,
+            label = stringResource(Res.string.banking_filter_matched),
+            count = summary?.matchedCount?.takeIf { it > 0 },
+        ),
+        DokusTab(
+            id = PaymentFilterTab.Ignored.name,
+            label = stringResource(Res.string.banking_filter_ignored),
+            count = summary?.ignoredCount?.takeIf { it > 0 },
+        ),
+    )
 
-    PrimaryScrollableTabRow(
-        selectedTabIndex = selectedIndex,
-        edgePadding = 0.dp,
-        modifier = modifier.fillMaxWidth(),
-    ) {
-        tabs.forEach { tab ->
-            val count = summary?.countFor(tab)
-            val label = tab.label()
-            val text = if (count != null) "$label ($count)" else label
-
-            Tab(
-                selected = tab == selectedTab,
-                onClick = { onTabSelected(tab) },
-                text = { Text(text) },
-            )
-        }
-    }
-}
-
-@Composable
-private fun PaymentFilterTab.label(): String = when (this) {
-    PaymentFilterTab.All -> stringResource(Res.string.banking_filter_all)
-    PaymentFilterTab.NeedsReview -> stringResource(Res.string.banking_filter_needs_review)
-    PaymentFilterTab.Unmatched -> stringResource(Res.string.banking_filter_unmatched)
-    PaymentFilterTab.Matched -> stringResource(Res.string.banking_filter_matched)
-    PaymentFilterTab.Ignored -> stringResource(Res.string.banking_filter_ignored)
-}
-
-private fun BankTransactionSummary.countFor(tab: PaymentFilterTab): Int = when (tab) {
-    PaymentFilterTab.All -> totalCount
-    PaymentFilterTab.NeedsReview -> needsReviewCount
-    PaymentFilterTab.Unmatched -> unmatchedCount
-    PaymentFilterTab.Matched -> matchedCount
-    PaymentFilterTab.Ignored -> ignoredCount
+    DokusTabs(
+        tabs = tabs,
+        activeId = selectedTab.name,
+        onTabSelected = { id ->
+            val tab = PaymentFilterTab.entries.first { it.name == id }
+            onTabSelected(tab)
+        },
+        modifier = modifier,
+    )
 }
