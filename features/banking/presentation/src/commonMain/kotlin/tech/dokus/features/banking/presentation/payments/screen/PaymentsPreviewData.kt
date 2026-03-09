@@ -16,11 +16,10 @@ import tech.dokus.features.banking.presentation.payments.mvi.PaymentFilterTab
 import tech.dokus.features.banking.presentation.payments.mvi.PaymentsState
 import tech.dokus.foundation.app.state.DokusState
 
-private val PreviewDate = LocalDate(2026, 2, 15)
 private val PreviewDateTime = LocalDateTime(2026, 2, 15, 10, 0)
 private val PreviewTenantId = TenantId.generate()
 
-internal fun previewTransactions(): List<BankTransactionDto> = listOf(
+private val PreviewTransactions: List<BankTransactionDto> = listOf(
     BankTransactionDto(
         id = BankTransactionId.generate(),
         tenantId = PreviewTenantId,
@@ -119,7 +118,7 @@ internal fun previewPaymentsState(
 ) = PaymentsState(
     transactions = DokusState.success(
         PaginationState(
-            data = previewTransactions(),
+            data = PreviewTransactions,
             currentPage = 0,
             pageSize = 50,
             hasMorePages = true,
@@ -129,3 +128,8 @@ internal fun previewPaymentsState(
     filterTab = filterTab,
     selectedTransactionId = selectedTransactionId,
 )
+
+internal fun previewPaymentsStateWithSelection(): PaymentsState {
+    val suggestedTx = PreviewTransactions.first { it.status == BankTransactionStatus.Suggested }
+    return previewPaymentsState(selectedTransactionId = suggestedTx.id)
+}

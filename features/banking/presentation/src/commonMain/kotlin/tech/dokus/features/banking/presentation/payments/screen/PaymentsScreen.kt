@@ -3,10 +3,14 @@ package tech.dokus.features.banking.presentation.payments.screen
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.HorizontalDivider
@@ -14,27 +18,34 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.unit.dp
+import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
-import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.foundation.aura.local.LocalScreenSize
-import tech.dokus.foundation.aura.local.ScreenSize
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.banking_empty_subtitle
 import tech.dokus.aura.resources.banking_empty_title
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.BankTransactionId
+import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.features.banking.presentation.payments.components.PaymentFilterTabs
 import tech.dokus.features.banking.presentation.payments.components.PaymentsSkeleton
+import tech.dokus.features.banking.presentation.payments.components.TransactionDateHeader
+import tech.dokus.features.banking.presentation.payments.components.TransactionDetailPane
+import tech.dokus.features.banking.presentation.payments.components.TransactionHeaderRow
 import tech.dokus.features.banking.presentation.payments.components.TransactionRow
 import tech.dokus.features.banking.presentation.payments.components.UnresolvedCallout
+import tech.dokus.features.banking.presentation.payments.components.formatShortDate
 import tech.dokus.features.banking.presentation.payments.mvi.PaymentsIntent
 import tech.dokus.features.banking.presentation.payments.mvi.PaymentsState
 import tech.dokus.foundation.app.state.DokusState
@@ -47,9 +58,13 @@ import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.local.LocalScreenSize
+import tech.dokus.foundation.aura.local.ScreenSize
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
+
+private val DetailPaneWidth = 280.dp
 
 @Composable
 internal fun PaymentsScreen(
@@ -77,6 +92,9 @@ private fun PaymentsContent(
     val txData = state.transactions.lastData?.data ?: emptyList()
     val isRefreshing = state.transactions.isLoading()
     val listState = rememberLazyListState()
+    val selectedTx = state.selectedTransactionId?.let { id ->
+        txData.find { it.id == id }
+    }
 
     // Load-more trigger
     val shouldLoadMore by remember(listState, state.transactions) {
@@ -120,87 +138,162 @@ private fun PaymentsContent(
             onTabSelected = { onIntent(PaymentsIntent.SetFilterTab(it)) },
         )
 
-        // Content area
-        Box(
+        // Content area: table + optional detail pane
+        Row(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
                 .padding(bottom = Constraints.Spacing.large),
         ) {
-            DokusCardSurface(modifier = Modifier.fillMaxSize()) {
-                Column(modifier = Modifier.fillMaxSize()) {
-                    when {
-                        // First load — no data yet
-                        txData.isEmpty() && isRefreshing -> {
-                            PaymentsSkeleton()
-                        }
-                        // Error with no data
-                        txData.isEmpty() && state.transactions.isError() -> {
-                            DokusErrorContent(
-                                exception = state.transactions.exception,
-                                retryHandler = state.transactions.retryHandler,
-                                modifier = Modifier.fillMaxSize(),
-                            )
-                        }
-                        // Empty after successful load
-                        txData.isEmpty() && state.transactions.isSuccess() -> {
-                            DokusEmptyState(
-                                title = stringResource(Res.string.banking_empty_title),
-                                subtitle = stringResource(Res.string.banking_empty_subtitle),
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(Constraints.Spacing.xxLarge),
-                            )
-                        }
-                        // Data loaded
-                        else -> {
-                            LazyColumn(
-                                state = listState,
-                                modifier = Modifier.fillMaxSize(),
-                            ) {
-                                itemsIndexed(
-                                    items = txData,
-                                    key = { _, tx -> tx.id.toString() },
-                                ) { index, tx ->
-                                    TransactionRow(
-                                        transaction = tx,
-                                        isSelected = tx.id == state.selectedTransactionId,
-                                        onClick = {
-                                            onIntent(PaymentsIntent.SelectTransaction(tx.id))
-                                        },
-                                        onIgnore = {
-                                            onIntent(PaymentsIntent.IgnoreTransaction(tx.id))
-                                        },
-                                        onConfirm = {
-                                            onIntent(PaymentsIntent.ConfirmMatch(tx.id))
-                                        },
-                                    )
-                                    if (index < txData.size - 1) {
-                                        HorizontalDivider(
-                                            color = MaterialTheme.colorScheme.outlineVariant,
-                                        )
-                                    }
-                                }
+            // Transaction table
+            DokusCardSurface(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
+            ) {
+                when {
+                    // First load — no data yet
+                    txData.isEmpty() && isRefreshing -> {
+                        PaymentsSkeleton()
+                    }
+                    // Error with no data
+                    state.transactions.isError() -> {
+                        DokusErrorContent(
+                            exception = state.transactions.exception,
+                            retryHandler = state.transactions.retryHandler,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
+                    // Empty after successful load
+                    txData.isEmpty() && state.transactions.isSuccess() -> {
+                        DokusEmptyState(
+                            title = stringResource(Res.string.banking_empty_title),
+                            subtitle = stringResource(Res.string.banking_empty_subtitle),
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(Constraints.Spacing.xxLarge),
+                        )
+                    }
+                    // Data loaded
+                    else -> {
+                        TransactionTable(
+                            transactions = txData,
+                            selectedTransactionId = state.selectedTransactionId,
+                            isRefreshing = isRefreshing,
+                            listState = listState,
+                            onSelectTransaction = { id ->
+                                onIntent(PaymentsIntent.SelectTransaction(id))
+                            },
+                        )
+                    }
+                }
+            }
 
-                                if (isRefreshing) {
-                                    item {
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(Constraints.Spacing.large),
-                                            contentAlignment = Alignment.Center,
-                                        ) {
-                                            DokusLoader(size = DokusLoaderSize.Small)
-                                        }
-                                    }
-                                }
-                            }
-                        }
+            // Detail pane
+            if (selectedTx != null) {
+                VerticalDivider()
+                TransactionDetailPane(
+                    transaction = selectedTx,
+                    onClose = {
+                        onIntent(PaymentsIntent.SelectTransaction(null))
+                    },
+                    onLinkDocument = {
+                        onIntent(PaymentsIntent.LinkDocument(selectedTx.id))
+                    },
+                    onIgnore = {
+                        onIntent(PaymentsIntent.IgnoreTransaction(selectedTx.id))
+                    },
+                    onConfirmMatch = {
+                        onIntent(PaymentsIntent.ConfirmMatch(selectedTx.id))
+                    },
+                    modifier = Modifier
+                        .width(DetailPaneWidth)
+                        .fillMaxHeight(),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun TransactionTable(
+    transactions: List<BankTransactionDto>,
+    selectedTransactionId: BankTransactionId?,
+    isRefreshing: Boolean,
+    listState: LazyListState,
+    onSelectTransaction: (BankTransactionId) -> Unit,
+) {
+    // Group transactions by date for date headers
+    val grouped = remember(transactions) {
+        buildList {
+            var lastDate: LocalDate? = null
+            for (tx in transactions) {
+                if (tx.transactionDate != lastDate) {
+                    add(TransactionListItem.DateHeader(tx.transactionDate))
+                    lastDate = tx.transactionDate
+                }
+                add(TransactionListItem.Transaction(tx))
+            }
+        }
+    }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        // Table header
+        TransactionHeaderRow()
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+        // Transaction list
+        LazyColumn(
+            state = listState,
+            modifier = Modifier.fillMaxSize(),
+        ) {
+            itemsIndexed(
+                items = grouped,
+                key = { _, item ->
+                    when (item) {
+                        is TransactionListItem.DateHeader -> "date-${item.date}"
+                        is TransactionListItem.Transaction -> item.tx.id.toString()
+                    }
+                },
+            ) { _, item ->
+                when (item) {
+                    is TransactionListItem.DateHeader -> {
+                        TransactionDateHeader(
+                            label = formatShortDate(item.date),
+                        )
+                    }
+                    is TransactionListItem.Transaction -> {
+                        TransactionRow(
+                            transaction = item.tx,
+                            isSelected = item.tx.id == selectedTransactionId,
+                            onClick = { onSelectTransaction(item.tx.id) },
+                        )
+                        HorizontalDivider(
+                            color = MaterialTheme.colorScheme.outlineVariant,
+                        )
+                    }
+                }
+            }
+
+            if (isRefreshing) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(Constraints.Spacing.large),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        DokusLoader(size = DokusLoaderSize.Small)
                     }
                 }
             }
         }
     }
+}
+
+private sealed interface TransactionListItem {
+    data class DateHeader(val date: LocalDate) : TransactionListItem
+    data class Transaction(val tx: BankTransactionDto) : TransactionListItem
 }
 
 // =============================================================================
@@ -229,6 +322,21 @@ private fun PaymentsScreenDesktopSuccessPreview(
         CompositionLocalProvider(LocalScreenSize provides ScreenSize.LARGE) {
             PaymentsScreen(
                 state = previewPaymentsState(),
+                onIntent = {},
+            )
+        }
+    }
+}
+
+@Preview(name = "Payments Desktop — Selected", widthDp = 1366, heightDp = 900)
+@Composable
+private fun PaymentsScreenDesktopSelectedPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
+) {
+    TestWrapper(parameters) {
+        CompositionLocalProvider(LocalScreenSize provides ScreenSize.LARGE) {
+            PaymentsScreen(
+                state = previewPaymentsStateWithSelection(),
                 onIntent = {},
             )
         }
