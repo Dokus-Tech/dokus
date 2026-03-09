@@ -8,6 +8,7 @@ import tech.dokus.backend.routes.common.configureCommonRoutes
 import tech.dokus.backend.routes.contacts.configureContactsRoutes
 import tech.dokus.backend.routes.payment.configurePaymentRoutes
 import tech.dokus.backend.routes.search.configureSearchRoutes
+import tech.dokus.backend.routes.banking.configureBankingRouting
 import tech.dokus.foundation.backend.config.ServerInfoConfig
 
 private val logger = LoggerFactory.getLogger("Routing")
@@ -32,8 +33,7 @@ fun Application.configureRouting(serverInfoConfig: ServerInfoConfig) {
     configureSearchRoutes()
     configurePaymentRoutes()
 
-    // Banking routes disabled until implemented
-    // configureBankingRoutes()
+    configureBankingRouting()
 
     logger.info("Routes configured")
 }

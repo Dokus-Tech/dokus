@@ -12,6 +12,7 @@ import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
+import tech.dokus.backend.services.banking.BankingService
 import tech.dokus.backend.services.auth.AuthService
 import tech.dokus.backend.services.auth.EmailService
 import tech.dokus.backend.services.auth.EmailTemplateRenderer
@@ -147,6 +148,7 @@ fun Application.configureDependencyInjection(appConfig: AppBaseConfig) {
 
             // Feature services
             authModule(),
+            bankingModule,
             cashflowModule(),
             contactsModule,
             searchModule,
@@ -209,6 +211,10 @@ private val cryptoModule = module {
 
     singleOf(::JwtGenerator)
     singleOf(::JwtValidator)
+}
+
+private val bankingModule = module {
+    singleOf(::BankingService)
 }
 
 private fun authModule() = module {

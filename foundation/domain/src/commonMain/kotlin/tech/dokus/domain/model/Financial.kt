@@ -33,6 +33,7 @@ import tech.dokus.domain.ids.AttachmentId
 import tech.dokus.domain.ids.BankConnectionId
 import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.ids.Bic
+import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.ExpenseId
@@ -267,6 +268,29 @@ data class BankConnectionDto(
     val isActive: Boolean = true,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime
+)
+
+@Serializable
+data class BankAccountSummary(
+    val totalBalance: Money,
+    val accountCount: Int,
+    val unmatchedCount: Int,
+    val totalUnresolvedAmount: Money
+)
+
+@Serializable
+data class BankTransactionSummary(
+    val unmatchedCount: Int,
+    val needsReviewCount: Int,
+    val matchedCount: Int,
+    val ignoredCount: Int,
+    val totalCount: Int,
+    val totalUnresolvedAmount: Money
+)
+
+@Serializable
+data class LinkTransactionRequest(
+    val cashflowEntryId: CashflowEntryId
 )
 
 // ============================================================================

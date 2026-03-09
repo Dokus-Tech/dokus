@@ -10,6 +10,7 @@ import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.greaterEq
 import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.core.lessEq
 import org.jetbrains.exposed.v1.core.neq
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.batchInsert
@@ -257,6 +258,78 @@ class BankTransactionRepository {
             (BankTransactionsTable.tenantId eq tenantId.value.toJavaUuid()) and
                 (BankTransactionsTable.transactionFingerprint eq fingerprint)
         }.orderBy(BankTransactionsTable.createdAt, SortOrder.DESC).limit(1).singleOrNull()?.toDto()
+    }
+
+    suspend fun listAll(
+        tenantId: TenantId,
+        status: BankTransactionStatus? = null,
+        source: BankTransactionSource? = null,
+        fromDate: LocalDate? = null,
+        toDate: LocalDate? = null
+    ): List<BankTransactionDto> = newSuspendedTransaction {
+        val tenantUuid = tenantId.value.toJavaUuid()
+        BankTransactionsTable.selectAll().where {
+            var condition = BankTransactionsTable.tenantId eq tenantUuid
+            if (status != null) {
+                condition = condition and (BankTransactionsTable.status eq status)
+            }
+            if (source != null) {
+                condition = condition and (BankTransactionsTable.txSource eq source)
+            }
+            if (fromDate != null) {
+                condition = condition and (BankTransactionsTable.transactionDate greaterEq fromDate)
+            }
+            if (toDate != null) {
+                condition = condition and (BankTransactionsTable.transactionDate lessEq toDate)
+            }
+            condition
+        }.orderBy(
+            BankTransactionsTable.transactionDate to SortOrder.DESC,
+            BankTransactionsTable.createdAt to SortOrder.DESC
+        ).map { it.toDto() }
+    }
+
+    suspend fun countByStatus(
+        tenantId: TenantId
+    ): Map<BankTransactionStatus, Long> = newSuspendedTransaction {
+        val tenantUuid = tenantId.value.toJavaUuid()
+        BankTransactionsTable
+            .select(BankTransactionsTable.status)
+            .where { BankTransactionsTable.tenantId eq tenantUuid }
+            .map { it[BankTransactionsTable.status] }
+            .groupingBy { it }
+            .eachCount()
+            .mapValues { it.value.toLong() }
+    }
+
+    suspend fun sumUnresolved(
+        tenantId: TenantId
+    ): Long = newSuspendedTransaction {
+        val tenantUuid = tenantId.value.toJavaUuid()
+        BankTransactionsTable
+            .select(BankTransactionsTable.signedAmount)
+            .where {
+                (BankTransactionsTable.tenantId eq tenantUuid) and
+                    (BankTransactionsTable.status inList listOf(
+                        BankTransactionStatus.Unmatched,
+                        BankTransactionStatus.Suggested
+                    ))
+            }
+            .sumOf { it[BankTransactionsTable.signedAmount].toLong() }
+    }
+
+    suspend fun markIgnored(
+        tenantId: TenantId,
+        transactionId: BankTransactionId
+    ): Boolean = newSuspendedTransaction {
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+        BankTransactionsTable.update({
+            (BankTransactionsTable.tenantId eq tenantId.value.toJavaUuid()) and
+                (BankTransactionsTable.id eq transactionId.value.toJavaUuid())
+        }) {
+            it[status] = BankTransactionStatus.Ignored
+            it[updatedAt] = now
+        } > 0
     }
 
     suspend fun clearLinkAndSuggestion(
