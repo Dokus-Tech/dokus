@@ -294,6 +294,7 @@ fun Route.contactRoutes() {
             val contactId = ContactId.parse(route.parent.id)
             val request = call.receive<UpdateBusinessProfileRequest>()
             val response = contactService.updateContactProfile(tenantId, contactId, request)
+            contactSsePublisher.publishContactChanged(tenantId, contactId, "profile_updated")
             call.respond(HttpStatusCode.OK, response)
         }
 

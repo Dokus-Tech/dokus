@@ -57,6 +57,7 @@
     <string name="contacts_filter_customers">Клиенты</string>
     <string name="contacts_filter_vendors">Продавцы</string>
     <string name="contacts_email">E-mail</string>
+    <string name="contacts_website">Веб-сайт</string>
     <string name="contacts_phone">Телефон</string>
     <string name="contacts_vat_number">Номер НДС</string>
     <string name="contacts_company_number">Регистрационный номер</string>

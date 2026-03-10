@@ -57,6 +57,7 @@
     <string name="contacts_filter_customers">Clientes</string>
     <string name="contacts_filter_vendors">Proveedores</string>
     <string name="contacts_email">Correo electrónico</string>
+    <string name="contacts_website">Sitio web</string>
     <string name="contacts_phone">Teléfono</string>
     <string name="contacts_vat_number">Número de IVA</string>
     <string name="contacts_company_number">Número de empresa</string>

@@ -10,6 +10,7 @@ import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
 import tech.dokus.backend.security.requireTenantId
 import tech.dokus.backend.services.business.BusinessProfileService
+import tech.dokus.backend.services.business.EnrichmentTrigger
 import tech.dokus.database.repository.auth.AddressRepository
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.auth.UserRepository
@@ -117,7 +118,7 @@ internal fun Route.tenantRoutes() {
 
             businessProfileService.enqueueTenant(
                 tenantId = tenantId,
-                triggerReason = "TENANT_CREATED"
+                trigger = EnrichmentTrigger.TenantCreated
             ).onFailure { error ->
                 logger.warn("Failed to enqueue business profile enrichment for tenant {}", tenantId, error)
             }
@@ -177,7 +178,7 @@ internal fun Route.tenantRoutes() {
             val address = addressRepository.upsertCompanyAddress(tenantId, request)
             businessProfileService.enqueueTenant(
                 tenantId = tenantId,
-                triggerReason = "TENANT_ADDRESS_UPDATED"
+                trigger = EnrichmentTrigger.TenantAddressUpdated
             ).onFailure { error ->
                 logger.warn(
                     "Failed to enqueue business profile enrichment after tenant address update {}",
