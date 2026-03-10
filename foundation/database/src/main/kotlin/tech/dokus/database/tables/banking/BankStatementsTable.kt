@@ -32,8 +32,8 @@ object BankStatementsTable : UUIDTable("bank_statements") {
     val statementSource = dbEnumeration<BankTransactionSource>("source")
     val statementTrust = dbEnumeration<StatementTrust>("statement_trust").default(StatementTrust.Low)
 
-    /** SHA-256 of the raw file bytes — strong dedup key */
-    val fileHash = varchar("file_hash", 64)
+    /** SHA-256 of the raw file bytes — strong dedup key. Null when hash unavailable. */
+    val fileHash = varchar("file_hash", 64).nullable()
 
     val accountIban = varchar("account_iban", 34).nullable()
     val periodStart = date("period_start").nullable()

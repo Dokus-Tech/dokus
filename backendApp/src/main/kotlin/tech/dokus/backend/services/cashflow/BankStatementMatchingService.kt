@@ -268,7 +268,7 @@ class BankStatementMatchingService(
                 confidenceScore = result.score,
                 scoreMargin = 0.0,
                 reasonsJson = Json.encodeToString(result.evidence),
-                rulesJson = """{"gate":"hard_evidence","trust":"HIGH"}""",
+                rulesJson = Json.encodeToString(mapOf("gate" to "hard_evidence", "trust" to "HIGH")),
                 triggerSource = tech.dokus.domain.enums.AutoPaymentTriggerSource.BankImport,
             )
         }.onFailure { e ->

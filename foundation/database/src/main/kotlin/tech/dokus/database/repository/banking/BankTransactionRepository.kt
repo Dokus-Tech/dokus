@@ -295,28 +295,56 @@ class BankTransactionRepository {
         status: BankTransactionStatus? = null,
         source: BankTransactionSource? = null,
         fromDate: LocalDate? = null,
-        toDate: LocalDate? = null
+        toDate: LocalDate? = null,
+        limit: Int? = null,
+        offset: Long? = null,
     ): List<BankTransactionDto> = newSuspendedTransaction {
+        val condition = buildCondition(tenantId, status, source, fromDate, toDate)
+        BankTransactionsTable.selectAll().where { condition }
+            .orderBy(
+                BankTransactionsTable.transactionDate to SortOrder.DESC,
+                BankTransactionsTable.createdAt to SortOrder.DESC
+            )
+            .let { query ->
+                if (limit != null) query.limit(limit).offset(offset ?: 0) else query
+            }
+            .map { it.toDto() }
+    }
+
+    suspend fun countAll(
+        tenantId: TenantId,
+        status: BankTransactionStatus? = null,
+        source: BankTransactionSource? = null,
+        fromDate: LocalDate? = null,
+        toDate: LocalDate? = null,
+    ): Long = newSuspendedTransaction {
+        val condition = buildCondition(tenantId, status, source, fromDate, toDate)
+        BankTransactionsTable.selectAll().where { condition }.count()
+    }
+
+    private fun buildCondition(
+        tenantId: TenantId,
+        status: BankTransactionStatus?,
+        source: BankTransactionSource?,
+        fromDate: LocalDate?,
+        toDate: LocalDate?,
+    ): org.jetbrains.exposed.v1.core.Op<Boolean> {
         val tenantUuid = tenantId.value.toJavaUuid()
-        BankTransactionsTable.selectAll().where {
-            var condition = BankTransactionsTable.tenantId eq tenantUuid
-            if (status != null) {
-                condition = condition and (BankTransactionsTable.status eq status)
-            }
-            if (source != null) {
-                condition = condition and (BankTransactionsTable.txSource eq source)
-            }
-            if (fromDate != null) {
-                condition = condition and (BankTransactionsTable.transactionDate greaterEq fromDate)
-            }
-            if (toDate != null) {
-                condition = condition and (BankTransactionsTable.transactionDate lessEq toDate)
-            }
-            condition
-        }.orderBy(
-            BankTransactionsTable.transactionDate to SortOrder.DESC,
-            BankTransactionsTable.createdAt to SortOrder.DESC
-        ).map { it.toDto() }
+        var condition: org.jetbrains.exposed.v1.core.Op<Boolean> =
+            BankTransactionsTable.tenantId eq tenantUuid
+        if (status != null) {
+            condition = condition and (BankTransactionsTable.status eq status)
+        }
+        if (source != null) {
+            condition = condition and (BankTransactionsTable.txSource eq source)
+        }
+        if (fromDate != null) {
+            condition = condition and (BankTransactionsTable.transactionDate greaterEq fromDate)
+        }
+        if (toDate != null) {
+            condition = condition and (BankTransactionsTable.transactionDate lessEq toDate)
+        }
+        return condition
     }
 
     suspend fun countByStatus(

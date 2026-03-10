@@ -77,21 +77,21 @@ internal fun Route.bankingRoutes() {
                 throw DokusException.BadRequest("Offset must be non-negative")
             }
 
-            val transactions = bankingService.listTransactions(
+            val page = bankingService.listTransactions(
                 tenantId = tenantId,
                 status = route.status,
                 source = route.source,
                 fromDate = route.fromDate,
-                toDate = route.toDate
+                toDate = route.toDate,
+                limit = route.limit,
+                offset = route.offset.toLong(),
             ).getOrElse { throw DokusException.InternalError("Failed to list transactions: ${it.message}") }
-
-            val paginated = transactions.drop(route.offset).take(route.limit)
 
             call.respond(
                 HttpStatusCode.OK,
                 PaginatedResponse(
-                    items = paginated,
-                    total = transactions.size.toLong(),
+                    items = page.items,
+                    total = page.total,
                     limit = route.limit,
                     offset = route.offset
                 )

@@ -146,7 +146,7 @@ class BankStatementProcessingService(
             documentId = documentId,
             source = BankTransactionSource.PdfStatement,
             statementTrust = trustResult.trust,
-            fileHash = fileHash ?: "unknown",
+            fileHash = fileHash,
             accountIban = draftData.accountIban,
             periodStart = draftData.periodStart,
             periodEnd = draftData.periodEnd,
