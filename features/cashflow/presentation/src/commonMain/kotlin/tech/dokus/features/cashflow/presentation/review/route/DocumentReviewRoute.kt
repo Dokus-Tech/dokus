@@ -240,7 +240,7 @@ internal fun DocumentReviewRoute(
                     ContactsDestination.CreateContact(
                         prefillCompanyName = counterparty.name,
                         prefillVat = counterparty.vatNumber,
-                        prefillAddress = counterparty.address,
+                        prefillAddress = counterparty.address?.formatted,
                         origin = ContactCreateOrigin.DocumentReview.name,
                     )
                 )
@@ -306,7 +306,7 @@ internal fun DocumentReviewRoute(
                     ContactsDestination.CreateContact(
                         prefillCompanyName = counterparty.name,
                         prefillVat = counterparty.vatNumber,
-                        prefillAddress = counterparty.address,
+                        prefillAddress = counterparty.address?.formatted,
                         origin = ContactCreateOrigin.DocumentReview.name,
                     )
                 )
@@ -392,9 +392,10 @@ internal fun DocumentReviewRoute(
     }
     state.paymentSheetState?.let { paymentState ->
         if (isAccountantReadOnly) return@let
-        val currencySign = when (val data = state.draftData) {
-            is tech.dokus.domain.model.InvoiceDraftData -> data.currency.displaySign
-            is tech.dokus.domain.model.CreditNoteDraftData -> data.currency.displaySign
+        val currencySign = when (val uiData = state.uiData) {
+            is tech.dokus.features.cashflow.presentation.review.models.DocumentUiData.Invoice -> uiData.currencySign
+            is tech.dokus.features.cashflow.presentation.review.models.DocumentUiData.CreditNote -> uiData.currencySign
+            is tech.dokus.features.cashflow.presentation.review.models.DocumentUiData.Receipt -> uiData.currencySign
             else -> "\u20AC"
         }
         RecordPaymentDialog(

@@ -28,12 +28,10 @@ import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.document_source_received_on
 import tech.dokus.aura.resources.document_source_technical_details
-import tech.dokus.domain.Money
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.CashflowEntryStatus
-import tech.dokus.domain.model.CreditNoteDraftData
-import tech.dokus.domain.model.FinancialLineItem
-import tech.dokus.domain.model.InvoiceDraftData
+import tech.dokus.features.cashflow.presentation.review.models.DocumentUiData
+import tech.dokus.features.cashflow.presentation.review.models.LineItemUiData
 import tech.dokus.features.cashflow.presentation.common.utils.formatShortDate
 import tech.dokus.features.cashflow.presentation.review.DocumentPreviewState
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
@@ -80,17 +78,17 @@ internal fun CanonicalCenterPane(
     }
 
     val counterparty = counterpartyInfo(state)
+    val uiData = state.uiData
 
-    val invoiceDraft = state.draftData as? InvoiceDraftData
-    if (invoiceDraft != null) {
+    if (uiData is DocumentUiData.Invoice) {
         Box(
             modifier = modifier.fillMaxSize(),
             contentAlignment = Alignment.TopCenter
         ) {
             CanonicalInvoiceDocumentCard(
-                draft = invoiceDraft,
+                data = uiData,
                 counterpartyName = counterparty.name ?: state.documentRecord?.document?.filename ?: "",
-                counterpartyAddress = counterparty.address,
+                counterpartyAddress = counterparty.address?.formatted,
                 modifier = Modifier
                     .width(CanonicalPreviewWidth)
                     .fillMaxHeight()
@@ -99,10 +97,10 @@ internal fun CanonicalCenterPane(
         return
     }
 
-    val draft = (state.draftData as? CreditNoteDraftData)?.let(CanonicalDraft::CreditNote) ?: return
-    val currencySign = draft.currencySign
-    val documentNumber = draft.documentNumber ?: "\u2014"
-    val totalAmount = draft.total ?: "\u2014"
+    val creditNote = uiData as? DocumentUiData.CreditNote ?: return
+    val currencySign = creditNote.currencySign
+    val documentNumber = creditNote.creditNoteNumber ?: "\u2014"
+    val totalAmount = creditNote.totalAmount?.toDisplayString() ?: "\u2014"
 
     Box(
         modifier = modifier.fillMaxSize(),
@@ -143,7 +141,7 @@ internal fun CanonicalCenterPane(
                             maxLines = 2,
                             overflow = TextOverflow.Ellipsis,
                         )
-                        counterparty.address?.let { address ->
+                        counterparty.address?.formatted?.let { address ->
                             Text(
                                 text = address,
                                 style = MaterialTheme.typography.bodySmall,
@@ -169,7 +167,8 @@ internal fun CanonicalCenterPane(
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface,
                     )
-                    draft.description?.let { description ->
+                    val description = creditNote.reason ?: creditNote.notes
+                    if (!description.isNullOrBlank()) {
                         Text(
                             text = description,
                             style = MaterialTheme.typography.bodyMedium,
@@ -184,37 +183,26 @@ internal fun CanonicalCenterPane(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.large),
                 ) {
-                    CanonicalMetaCell("Issue", draft.issueDate ?: "\u2014")
+                    CanonicalMetaCell("Issue", creditNote.issueDate ?: "\u2014")
                     CanonicalMetaCell("Credit note", documentNumber)
                 }
 
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
                 CanonicalLineItems(
-                    lineItems = draft.lineItems,
-                    currencySign = currencySign,
+                    lineItems = creditNote.lineItems,
                 )
 
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
                 CanonicalTotals(
                     currencySign = currencySign,
-                    subtotal = draft.subtotal,
-                    vat = draft.vat,
+                    subtotal = creditNote.subtotalAmount?.toDisplayString(),
+                    vat = creditNote.vatAmount?.toDisplayString(),
                     total = totalAmount,
                 )
 
-                val bankDetails = draft.bankDetails
-                if (!bankDetails.isNullOrBlank()) {
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                    Text(
-                        text = bankDetails,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.textMuted,
-                    )
-                }
-
-                val notes = draft.notes
+                val notes = creditNote.notes
                 if (!notes.isNullOrBlank()) {
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -386,8 +374,7 @@ private fun CanonicalMetaCell(
 
 @Composable
 private fun CanonicalLineItems(
-    lineItems: List<FinancialLineItem>,
-    currencySign: String,
+    lineItems: List<LineItemUiData>,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -420,13 +407,13 @@ private fun CanonicalLineItems(
             lineItems.forEach { item ->
                 Row(modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        text = item.description.ifBlank { "\u2014" },
+                        text = item.description,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.weight(1f),
                     )
                     Text(
-                        text = itemLineAmount(item, currencySign),
+                        text = item.displayAmount,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface,
                         textAlign = TextAlign.End,
@@ -501,36 +488,6 @@ private fun CanonicalTotalRow(
     }
 }
 
-private sealed interface CanonicalDraft {
-    val documentNumber: String?
-    val issueDate: String?
-    val subtotal: String?
-    val vat: String?
-    val total: String?
-    val description: String?
-    val lineItems: List<FinancialLineItem>
-    val bankDetails: String?
-    val notes: String?
-    val currencySign: String
-
-    data class CreditNote(private val draft: CreditNoteDraftData) : CanonicalDraft {
-        override val documentNumber: String? = draft.creditNoteNumber
-        override val issueDate: String? = draft.issueDate?.toString()
-        override val subtotal: String? = draft.subtotalAmount?.toDisplayString()
-        override val vat: String? = draft.vatAmount?.toDisplayString()
-        override val total: String? = draft.totalAmount?.toDisplayString()
-        override val description: String? = draft.reason ?: draft.notes
-        override val lineItems: List<FinancialLineItem> = draft.lineItems
-        override val bankDetails: String? = null
-        override val notes: String? = draft.notes
-        override val currencySign: String = draft.currency.displaySign
-    }
-}
-
-private fun itemLineAmount(item: FinancialLineItem, currencySign: String): String {
-    val amountMinor = item.netAmount ?: item.unitPrice?.let { unit -> (item.quantity ?: 1L) * unit }
-    return amountMinor?.let { "$currencySign${Money(it).toDisplayString()}" } ?: "\u2014"
-}
 
 @Preview
 @Composable

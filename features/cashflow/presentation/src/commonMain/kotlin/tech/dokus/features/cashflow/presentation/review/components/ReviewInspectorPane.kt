@@ -34,7 +34,6 @@ import tech.dokus.features.cashflow.presentation.review.components.details.Count
 import tech.dokus.features.cashflow.presentation.review.components.details.DocumentDetailsCard
 import tech.dokus.features.cashflow.presentation.review.components.details.UnknownDocumentDetailsCard
 import tech.dokus.features.cashflow.presentation.review.models.DocumentUiData
-import tech.dokus.features.cashflow.presentation.review.models.toUiData
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.icons.LockIcon
 import tech.dokus.foundation.aura.components.status.StatusDot
@@ -79,7 +78,7 @@ internal fun ReviewInspectorPane(
                 .padding(horizontal = Constraints.Spacing.medium),
             verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
         ) {
-            val uiData = state.draftData?.toUiData()
+            val uiData = state.uiData
             when (uiData) {
                 is DocumentUiData.Invoice -> InspectorBody(state, uiData, isAccountantReadOnly, onIntent, onCorrectContact, onCreateContact)
                 is DocumentUiData.CreditNote -> InspectorBody(state, uiData, isAccountantReadOnly, onIntent, onCorrectContact, onCreateContact)

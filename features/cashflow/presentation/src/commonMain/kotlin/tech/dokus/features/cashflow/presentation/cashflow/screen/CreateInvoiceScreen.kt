@@ -56,6 +56,8 @@ import tech.dokus.features.cashflow.presentation.cashflow.components.invoice.cre
 import tech.dokus.features.cashflow.presentation.cashflow.components.invoice.create.desktop.formatDate
 import tech.dokus.features.cashflow.presentation.cashflow.components.invoice.create.desktop.localized
 import tech.dokus.features.cashflow.presentation.review.components.CanonicalInvoiceDocumentCard
+import tech.dokus.features.cashflow.presentation.review.models.DocumentUiData
+import tech.dokus.features.cashflow.presentation.review.models.toUiData
 import tech.dokus.foundation.aura.components.DokusCard
 import tech.dokus.foundation.aura.components.DokusCardPadding
 import tech.dokus.foundation.aura.components.DokusCardSurface
@@ -414,7 +416,7 @@ private fun InvoicePreviewDialog(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     CanonicalInvoiceDocumentCard(
-                        draft = state.toInvoicePreviewDraft(),
+                        data = state.toInvoicePreviewDraft().toUiData() as DocumentUiData.Invoice,
                         counterpartyName = selectedClient?.name?.value ?: stringResource(Res.string.invoice_click_to_select_client),
                         counterpartyAddress = selectedClient?.toPreviewAddressLine(),
                         modifier = Modifier

@@ -16,70 +16,46 @@ import tech.dokus.aura.resources.cashflow_select_document_type
 import tech.dokus.aura.resources.cashflow_vat_amount
 import tech.dokus.aura.resources.invoice_subtotal
 import tech.dokus.aura.resources.invoice_total_amount
-import tech.dokus.domain.model.BankStatementDraftData
-import tech.dokus.domain.model.CreditNoteDraftData
-import tech.dokus.domain.model.InvoiceDraftData
-import tech.dokus.domain.model.ReceiptDraftData
-import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
-import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
+import tech.dokus.features.cashflow.presentation.review.models.DocumentUiData
 import tech.dokus.foundation.aura.constrains.Constraints
 
-/**
- * Amounts display section - shows amounts as facts with tabular numbers.
- * Fact validation pattern: display-by-default, no form inputs.
- */
 @Composable
 internal fun AmountsCard(
-    state: DocumentReviewState,
-    onIntent: (DocumentReviewIntent) -> Unit,
+    uiData: DocumentUiData?,
+    isProcessing: Boolean,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        // Subtle micro-label
         MicroLabel(text = stringResource(Res.string.cashflow_section_amounts))
 
-        when (val draft = state.draftData) {
-            is InvoiceDraftData -> {
-                InvoiceAmountsDisplay(
-                    subtotal = draft.subtotalAmount?.toString(),
-                    vat = draft.vatAmount?.toString(),
-                    total = draft.totalAmount?.toString()
-                )
-            }
-            is ReceiptDraftData -> {
-                ReceiptAmountsDisplay(
-                    total = draft.totalAmount?.toString(),
-                    vat = draft.vatAmount?.toString()
-                )
-            }
-            is CreditNoteDraftData -> {
-                CreditNoteAmountsDisplay(
-                    subtotal = draft.subtotalAmount?.toString(),
-                    vat = draft.vatAmount?.toString(),
-                    total = draft.totalAmount?.toString()
-                )
-            }
-            is BankStatementDraftData -> {
-                Text(
-                    text = "Amounts are available per transaction in bank statements.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            null -> {
-                // Show neutral placeholder during processing, hint when type not selected
-                Text(
-                    text = stringResource(
-                        if (state.isProcessing) {
-                            Res.string.cashflow_processing_calculating_totals
-                        } else {
-                            Res.string.cashflow_select_document_type
-                        }
-                    ),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+        when (uiData) {
+            is DocumentUiData.Invoice -> InvoiceAmountsDisplay(
+                subtotal = uiData.subtotalAmount?.toString(),
+                vat = uiData.vatAmount?.toString(),
+                total = uiData.totalAmount?.toString(),
+            )
+            is DocumentUiData.CreditNote -> CreditNoteAmountsDisplay(
+                subtotal = uiData.subtotalAmount?.toString(),
+                vat = uiData.vatAmount?.toString(),
+                total = uiData.totalAmount?.toString(),
+            )
+            is DocumentUiData.Receipt -> ReceiptAmountsDisplay(
+                total = uiData.totalAmount?.toString(),
+                vat = uiData.vatAmount?.toString(),
+            )
+            is DocumentUiData.BankStatement -> Text(
+                text = "Amounts are available per transaction in bank statements.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            null -> Text(
+                text = stringResource(
+                    if (isProcessing) Res.string.cashflow_processing_calculating_totals
+                    else Res.string.cashflow_select_document_type
+                ),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }
@@ -92,24 +68,13 @@ private fun InvoiceAmountsDisplay(
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        AmountRow(
-            label = stringResource(Res.string.invoice_subtotal),
-            value = subtotal
-        )
-        AmountRow(
-            label = stringResource(Res.string.cashflow_vat_amount),
-            value = vat
-        )
-        // Subtle divider before total
+        AmountRow(label = stringResource(Res.string.invoice_subtotal), value = subtotal)
+        AmountRow(label = stringResource(Res.string.cashflow_vat_amount), value = vat)
         HorizontalDivider(
             modifier = Modifier.padding(vertical = Constraints.Spacing.xSmall),
             color = MaterialTheme.colorScheme.outlineVariant
         )
-        AmountRow(
-            label = stringResource(Res.string.invoice_total_amount),
-            value = total,
-            isTotal = true
-        )
+        AmountRow(label = stringResource(Res.string.invoice_total_amount), value = total, isTotal = true)
     }
 }
 
@@ -120,20 +85,12 @@ private fun ReceiptAmountsDisplay(
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        AmountRow(
-            label = stringResource(Res.string.cashflow_vat_amount),
-            value = vat
-        )
-        // Subtle divider before total
+        AmountRow(label = stringResource(Res.string.cashflow_vat_amount), value = vat)
         HorizontalDivider(
             modifier = Modifier.padding(vertical = Constraints.Spacing.xSmall),
             color = MaterialTheme.colorScheme.outlineVariant
         )
-        AmountRow(
-            label = stringResource(Res.string.invoice_total_amount),
-            value = total,
-            isTotal = true
-        )
+        AmountRow(label = stringResource(Res.string.invoice_total_amount), value = total, isTotal = true)
     }
 }
 
@@ -145,22 +102,12 @@ private fun CreditNoteAmountsDisplay(
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        AmountRow(
-            label = stringResource(Res.string.invoice_subtotal),
-            value = subtotal
-        )
-        AmountRow(
-            label = stringResource(Res.string.cashflow_vat_amount),
-            value = vat
-        )
+        AmountRow(label = stringResource(Res.string.invoice_subtotal), value = subtotal)
+        AmountRow(label = stringResource(Res.string.cashflow_vat_amount), value = vat)
         HorizontalDivider(
             modifier = Modifier.padding(vertical = Constraints.Spacing.xSmall),
             color = MaterialTheme.colorScheme.outlineVariant
         )
-        AmountRow(
-            label = stringResource(Res.string.invoice_total_amount),
-            value = total,
-            isTotal = true
-        )
+        AmountRow(label = stringResource(Res.string.invoice_total_amount), value = total, isTotal = true)
     }
 }

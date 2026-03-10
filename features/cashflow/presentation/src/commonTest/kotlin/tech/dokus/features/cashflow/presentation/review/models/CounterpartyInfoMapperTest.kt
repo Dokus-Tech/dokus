@@ -46,7 +46,7 @@ class CounterpartyInfoMapperTest {
         assertEquals("Apple Distribution International Ltd.", info.name)
         assertEquals("IE9700053D", info.vatNumber)
         assertEquals("IE29AIBK93115212345678", info.iban)
-        assertEquals("Hollyhill Industrial Estate, T23 Cork, BE", info.address)
+        assertEquals("Hollyhill Industrial Estate, T23 Cork, BE", info.address?.formatted)
     }
 
     @Test

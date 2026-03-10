@@ -17,9 +17,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import tech.dokus.domain.Money
-import tech.dokus.domain.model.FinancialLineItem
-import tech.dokus.domain.model.InvoiceDraftData
+import tech.dokus.features.cashflow.presentation.review.models.DocumentUiData
+import tech.dokus.features.cashflow.presentation.review.models.LineItemUiData
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
@@ -29,18 +28,18 @@ import tech.dokus.foundation.aura.style.textMuted
 
 @Composable
 internal fun CanonicalInvoiceDocumentCard(
-    draft: InvoiceDraftData,
+    data: DocumentUiData.Invoice,
     counterpartyName: String,
     counterpartyAddress: String?,
     modifier: Modifier = Modifier,
 ) {
-    val currencySign = draft.currency.displaySign
-    val invoiceNumber = draft.invoiceNumber ?: "\u2014"
-    val issueDate = draft.issueDate?.toString() ?: "\u2014"
-    val dueDate = draft.dueDate?.toString() ?: "\u2014"
-    val subtotal = draft.subtotalAmount?.toDisplayString()
-    val vat = draft.vatAmount?.toDisplayString()
-    val total = draft.totalAmount?.toDisplayString() ?: "\u2014"
+    val currencySign = data.currencySign
+    val invoiceNumber = data.invoiceNumber ?: "\u2014"
+    val issueDate = data.issueDate ?: "\u2014"
+    val dueDate = data.dueDate ?: "\u2014"
+    val subtotal = data.subtotalAmount?.toDisplayString()
+    val vat = data.vatAmount?.toDisplayString()
+    val total = data.totalAmount?.toDisplayString() ?: "\u2014"
 
     DokusCardSurface(
         modifier = modifier,
@@ -114,8 +113,7 @@ internal fun CanonicalInvoiceDocumentCard(
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
             CanonicalInvoiceLineItems(
-                lineItems = draft.lineItems,
-                currencySign = currencySign,
+                lineItems = data.lineItems,
             )
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -127,7 +125,7 @@ internal fun CanonicalInvoiceDocumentCard(
                 total = total,
             )
 
-            draft.iban?.value?.takeIf { it.isNotBlank() }?.let { bank ->
+            data.iban?.takeIf { it.isNotBlank() }?.let { bank ->
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 Text(
                     text = bank,
@@ -136,7 +134,7 @@ internal fun CanonicalInvoiceDocumentCard(
                 )
             }
 
-            draft.notes?.takeIf { it.isNotBlank() }?.let { notes ->
+            data.notes?.takeIf { it.isNotBlank() }?.let { notes ->
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
@@ -180,8 +178,7 @@ private fun CanonicalInvoiceMetaCell(
 
 @Composable
 private fun CanonicalInvoiceLineItems(
-    lineItems: List<FinancialLineItem>,
-    currencySign: String,
+    lineItems: List<LineItemUiData>,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -214,13 +211,13 @@ private fun CanonicalInvoiceLineItems(
             lineItems.forEach { item ->
                 Row(modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        text = item.description.ifBlank { "\u2014" },
+                        text = item.description,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.weight(1f),
                     )
                     Text(
-                        text = invoiceItemLineAmount(item, currencySign),
+                        text = item.displayAmount,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface,
                         textAlign = TextAlign.End,
@@ -293,9 +290,4 @@ private fun CanonicalInvoiceTotalRow(
             color = MaterialTheme.colorScheme.onSurface,
         )
     }
-}
-
-private fun invoiceItemLineAmount(item: FinancialLineItem, currencySign: String): String {
-    val amountMinor = item.netAmount ?: item.unitPrice?.let { unit -> (item.quantity ?: 1L) * unit }
-    return amountMinor?.let { "$currencySign${Money(it).toDisplayString()}" } ?: "\u2014"
 }

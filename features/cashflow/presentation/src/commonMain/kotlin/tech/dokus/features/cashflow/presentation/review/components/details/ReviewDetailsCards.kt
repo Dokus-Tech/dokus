@@ -116,7 +116,7 @@ internal fun CounterpartyCard(
                         value = iban
                     )
                 }
-                counterparty.address?.let { address ->
+                counterparty.address?.formatted?.let { address ->
                     FactField(
                         label = stringResource(Res.string.contacts_address),
                         value = address
@@ -224,7 +224,22 @@ private fun PendingContactCard(
     }
 }
 
-// region Document details card overloads
+// region Document details card — general entry-point + overloads
+
+@Composable
+internal fun DocumentDetailsCard(
+    uiData: DocumentUiData,
+    isReadOnly: Boolean,
+    onDirectionSelected: (DocumentDirection) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    when (uiData) {
+        is DocumentUiData.Invoice -> DocumentDetailsCard(uiData, isReadOnly, onDirectionSelected, modifier)
+        is DocumentUiData.CreditNote -> DocumentDetailsCard(uiData, isReadOnly, onDirectionSelected, modifier)
+        is DocumentUiData.Receipt -> DocumentDetailsCard(uiData, modifier)
+        is DocumentUiData.BankStatement -> DocumentDetailsCard(uiData, modifier)
+    }
+}
 
 @Composable
 internal fun DocumentDetailsCard(

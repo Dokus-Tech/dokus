@@ -34,6 +34,8 @@ import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.features.cashflow.presentation.review.models.DocumentUiData
+import tech.dokus.features.cashflow.presentation.review.models.toUiData
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.app.state.isSuccess
 import kotlin.time.Clock
@@ -165,9 +167,13 @@ data class DocumentReviewState(
     val documentRecord: DocumentRecordDto?
         get() = documentData?.documentRecord
 
-    /** The current draft data. */
+    /** The current draft data (store-internal — composables should use [uiData] instead). */
     val draftData: DocumentDraftData?
         get() = documentData?.draftData
+
+    /** Presentation-layer document data for UI rendering. Composables should use this. */
+    val uiData: DocumentUiData?
+        get() = draftData?.toUiData()
 
     /** The original AI draft data. */
     val originalData: DocumentDraftData?

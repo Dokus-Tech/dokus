@@ -5,6 +5,12 @@ import tech.dokus.domain.Money
 import tech.dokus.domain.enums.DocumentDirection
 
 @Immutable
+data class LineItemUiData(
+    val description: String,
+    val displayAmount: String,
+)
+
+@Immutable
 sealed interface DocumentUiData {
 
     @Immutable
@@ -17,6 +23,10 @@ sealed interface DocumentUiData {
         val vatAmount: Money?,
         val totalAmount: Money?,
         val currencySign: String,
+        val lineItems: List<LineItemUiData>,
+        val notes: String?,
+        val iban: String?,
+        val primaryDescription: String,
     ) : DocumentUiData
 
     @Immutable
@@ -29,6 +39,10 @@ sealed interface DocumentUiData {
         val vatAmount: Money?,
         val totalAmount: Money?,
         val currencySign: String,
+        val lineItems: List<LineItemUiData>,
+        val reason: String?,
+        val notes: String?,
+        val primaryDescription: String,
     ) : DocumentUiData
 
     @Immutable
@@ -38,6 +52,8 @@ sealed interface DocumentUiData {
         val totalAmount: Money?,
         val vatAmount: Money?,
         val currencySign: String,
+        val notes: String?,
+        val primaryDescription: String,
     ) : DocumentUiData
 
     @Immutable

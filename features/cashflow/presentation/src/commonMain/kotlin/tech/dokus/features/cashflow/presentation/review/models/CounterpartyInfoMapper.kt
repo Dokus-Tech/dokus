@@ -19,18 +19,19 @@ internal fun counterpartyInfo(state: DocumentReviewState): CounterpartyInfo {
         name = snapshot.name?.trim()?.takeIf { it.isNotEmpty() },
         vatNumber = snapshot.vatNumber?.value,
         iban = snapshot.iban?.value,
-        address = buildAddress(snapshot),
+        address = toAddressUiModel(snapshot),
     )
 }
 
-private fun buildAddress(snapshot: tech.dokus.domain.model.contact.CounterpartySnapshot): String? {
-    val parts = listOfNotNull(
-        snapshot.streetLine1?.trim()?.takeIf { it.isNotEmpty() },
-        listOfNotNull(
-            snapshot.postalCode?.trim()?.takeIf { it.isNotEmpty() },
-            snapshot.city?.trim()?.takeIf { it.isNotEmpty() }
-        ).takeIf { it.isNotEmpty() }?.joinToString(" "),
-        snapshot.country?.dbValue?.trim()?.takeIf { it.isNotEmpty() },
+private fun toAddressUiModel(snapshot: tech.dokus.domain.model.contact.CounterpartySnapshot): AddressUiModel? {
+    val hasData = snapshot.streetLine1 != null || snapshot.city != null ||
+        snapshot.postalCode != null || snapshot.country != null
+    if (!hasData) return null
+    return AddressUiModel(
+        streetLine1 = snapshot.streetLine1?.trim()?.takeIf { it.isNotEmpty() },
+        streetLine2 = null,
+        city = snapshot.city?.trim()?.takeIf { it.isNotEmpty() },
+        postalCode = snapshot.postalCode?.trim()?.takeIf { it.isNotEmpty() },
+        country = snapshot.country?.dbValue?.trim()?.takeIf { it.isNotEmpty() },
     )
-    return parts.takeIf { it.isNotEmpty() }?.joinToString(", ")
 }

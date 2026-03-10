@@ -17,6 +17,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.ids.DocumentSourceId
+import tech.dokus.features.cashflow.presentation.review.models.DocumentUiData
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.components.previewAutoPaymentStatus
@@ -63,18 +64,45 @@ internal fun MobileCanonicalContent(
         ) {
             MobileCanonicalHeader(state = state)
 
-            MobileAmountHeroCard(state = state)
-            MobilePaymentStateCard(
-                state = state,
-                isAccountantReadOnly = isAccountantReadOnly,
-                onIntent = onIntent,
-            )
+            val uiData = state.uiData
+            if (uiData != null && uiData !is DocumentUiData.BankStatement) {
+                MobileAmountHeroCard(state = state, uiData = uiData)
+                MobilePaymentStateCard(
+                    state = state,
+                    isAccountantReadOnly = isAccountantReadOnly,
+                    onIntent = onIntent,
+                )
+            }
 
-            MobileItemsAccordion(
-                state = state,
-                expanded = accordionState["items"] == true,
-                onToggle = { accordionState["items"] = accordionState["items"] != true },
-            )
+            // Items accordion — Invoice and CreditNote only
+            val lineItems = when (uiData) {
+                is DocumentUiData.Invoice -> uiData.lineItems
+                is DocumentUiData.CreditNote -> uiData.lineItems
+                else -> emptyList()
+            }
+            if (lineItems.isNotEmpty()) {
+                MobileItemsAccordion(
+                    lineItems = lineItems,
+                    subtotalAmount = when (uiData) {
+                        is DocumentUiData.Invoice -> uiData.subtotalAmount
+                        is DocumentUiData.CreditNote -> uiData.subtotalAmount
+                        else -> null
+                    },
+                    vatAmount = when (uiData) {
+                        is DocumentUiData.Invoice -> uiData.vatAmount
+                        is DocumentUiData.CreditNote -> uiData.vatAmount
+                        else -> null
+                    },
+                    totalAmount = state.totalAmount,
+                    currencySign = when (uiData) {
+                        is DocumentUiData.Invoice -> uiData.currencySign
+                        is DocumentUiData.CreditNote -> uiData.currencySign
+                        else -> "\u20AC"
+                    },
+                    expanded = accordionState["items"] == true,
+                    onToggle = { accordionState["items"] = accordionState["items"] != true },
+                )
+            }
 
             MobileSourcesAccordion(
                 state = state,
@@ -86,13 +114,19 @@ internal fun MobileCanonicalContent(
             )
 
             MobileBankDetailsAccordion(
-                state = state,
+                bankDetails = (uiData as? DocumentUiData.Invoice)?.iban,
                 expanded = accordionState["bank"] == true,
                 onToggle = { accordionState["bank"] = accordionState["bank"] != true },
             )
 
+            val notes = when (uiData) {
+                is DocumentUiData.Invoice -> uiData.notes
+                is DocumentUiData.CreditNote -> uiData.notes
+                is DocumentUiData.Receipt -> uiData.notes
+                else -> null
+            }
             MobileNotesAccordion(
-                state = state,
+                notes = notes,
                 expanded = accordionState["notes"] == true,
                 onToggle = { accordionState["notes"] = accordionState["notes"] != true },
             )
