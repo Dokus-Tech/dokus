@@ -113,6 +113,7 @@ internal fun TransactionRow(
     transaction: BankTransactionDto,
     isSelected: Boolean,
     onClick: () -> Unit,
+    accountName: String? = null,
     modifier: Modifier = Modifier,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -177,10 +178,11 @@ internal fun TransactionRow(
         // Account (short label)
         DokusTableCell(PaymentsTableColumns.Account) {
             Text(
-                text = "KBC", // TODO: resolve from bankConnectionId
+                text = accountName ?: "\u2014",
                 style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
                 color = MaterialTheme.colorScheme.textMuted,
                 maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
         }
 

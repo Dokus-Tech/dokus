@@ -7,6 +7,7 @@ import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.domain.enums.BankTransactionStatus
 import tech.dokus.domain.enums.IgnoredReason
 import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.BankAccountId
 import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.domain.model.BankTransactionSummary
@@ -41,6 +42,7 @@ data class IgnoreDialogState(
 data class PaymentsState(
     val transactions: DokusState<PaginationState<BankTransactionDto>>,
     val summary: DokusState<BankTransactionSummary>,
+    val accountNames: Map<BankAccountId, String> = emptyMap(),
     val filterTab: PaymentFilterTab = PaymentFilterTab.All,
     val selectedTransactionId: BankTransactionId? = null,
     val ignoreDialogState: IgnoreDialogState? = null,

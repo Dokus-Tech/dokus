@@ -37,6 +37,7 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.banking_empty_subtitle
 import tech.dokus.aura.resources.banking_empty_title
 import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.BankAccountId
 import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.features.banking.presentation.payments.components.IgnoreReasonDialog
@@ -189,6 +190,7 @@ private fun PaymentsContent(
                             DesktopTransactionTable(
                                 transactions = txData,
                                 selectedTransactionId = state.selectedTransactionId,
+                                accountNames = state.accountNames,
                                 isRefreshing = isRefreshing,
                                 listState = listState,
                                 onSelectTransaction = { id ->
@@ -247,6 +249,7 @@ private fun PaymentsContent(
 private fun DesktopTransactionTable(
     transactions: List<BankTransactionDto>,
     selectedTransactionId: BankTransactionId?,
+    accountNames: Map<BankAccountId, String>,
     isRefreshing: Boolean,
     listState: LazyListState,
     onSelectTransaction: (BankTransactionId) -> Unit,
@@ -267,6 +270,7 @@ private fun DesktopTransactionTable(
                     transaction = tx,
                     isSelected = tx.id == selectedTransactionId,
                     onClick = { onSelectTransaction(tx.id) },
+                    accountName = tx.bankAccountId?.let { accountNames[it] },
                 )
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             }

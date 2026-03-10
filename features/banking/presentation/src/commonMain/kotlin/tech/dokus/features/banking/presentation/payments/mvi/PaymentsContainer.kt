@@ -18,6 +18,7 @@ import tech.dokus.features.banking.usecases.ConfirmTransactionUseCase
 import tech.dokus.features.banking.usecases.CreateExpenseFromTransactionUseCase
 import tech.dokus.features.banking.usecases.GetTransactionSummaryUseCase
 import tech.dokus.features.banking.usecases.IgnoreTransactionUseCase
+import tech.dokus.features.banking.usecases.ListBankAccountsUseCase
 import tech.dokus.features.banking.usecases.ListBankTransactionsUseCase
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.app.state.isSuccess
@@ -30,6 +31,7 @@ private const val PAGE_SIZE = 50
 internal class PaymentsContainer(
     private val listTransactions: ListBankTransactionsUseCase,
     private val getTransactionSummary: GetTransactionSummaryUseCase,
+    private val listAccounts: ListBankAccountsUseCase,
     private val ignoreTransaction: IgnoreTransactionUseCase,
     private val confirmTransaction: ConfirmTransactionUseCase,
     private val createExpenseFromTransaction: CreateExpenseFromTransactionUseCase,
@@ -166,9 +168,16 @@ internal class PaymentsContainer(
                         )
                     }
                     val summaryDeferred = async { getTransactionSummary() }
+                    val accountsDeferred = async { listAccounts() }
 
                     val txResult = txDeferred.await()
                     val summaryResult = summaryDeferred.await()
+                    val accountsResult = accountsDeferred.await()
+
+                    accountsResult.onSuccess { accounts ->
+                        val names = accounts.associate { it.id to it.name }
+                        updateState { copy(accountNames = names) }
+                    }
 
                     txResult.fold(
                         onSuccess = { response ->

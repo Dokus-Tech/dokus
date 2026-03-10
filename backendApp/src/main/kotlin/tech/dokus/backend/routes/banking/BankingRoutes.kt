@@ -18,6 +18,7 @@ import tech.dokus.domain.model.LinkTransactionRequest
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.routes.Banking
 import tech.dokus.foundation.backend.security.authenticateJwt
+import tech.dokus.foundation.backend.security.dokusPrincipal
 import tech.dokus.foundation.backend.utils.loggerFor
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -143,7 +144,7 @@ internal fun Route.bankingRoutes() {
                 tenantId = tenantId,
                 transactionId = transactionId,
                 reason = request.reason,
-                ignoredBy = "user", // TODO: extract from principal
+                ignoredBy = dokusPrincipal.userId.value.toString(),
             ).getOrElse { error ->
                     throw (error as? DokusException
                         ?: DokusException.InternalError("Failed to ignore transaction: ${error.message}"))

@@ -10,6 +10,7 @@ import tech.dokus.domain.enums.IgnoredReason
 import tech.dokus.domain.enums.MatchedBy
 import tech.dokus.domain.enums.ResolutionType
 import tech.dokus.domain.enums.StatementTrust
+import tech.dokus.domain.ids.BankAccountId
 import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.Iban
@@ -23,11 +24,14 @@ import tech.dokus.foundation.app.state.DokusState
 
 private val PreviewDateTime = LocalDateTime(2026, 2, 15, 10, 0)
 private val PreviewTenantId = TenantId.generate()
+private val PreviewAccountKbc = BankAccountId.generate()
+private val PreviewAccountBelfius = BankAccountId.generate()
 
 private val PreviewTransactions: List<BankTransactionDto> = listOf(
     BankTransactionDto(
         id = BankTransactionId.generate(),
         tenantId = PreviewTenantId,
+        bankAccountId = PreviewAccountKbc,
         source = BankTransactionSource.PdfStatement,
         transactionDate = LocalDate(2026, 2, 14),
         signedAmount = Money.parseOrThrow("-1250.00"),
@@ -42,6 +46,7 @@ private val PreviewTransactions: List<BankTransactionDto> = listOf(
     BankTransactionDto(
         id = BankTransactionId.generate(),
         tenantId = PreviewTenantId,
+        bankAccountId = PreviewAccountKbc,
         source = BankTransactionSource.PdfStatement,
         transactionDate = LocalDate(2026, 2, 13),
         signedAmount = Money.parseOrThrow("3500.00"),
@@ -60,6 +65,7 @@ private val PreviewTransactions: List<BankTransactionDto> = listOf(
     BankTransactionDto(
         id = BankTransactionId.generate(),
         tenantId = PreviewTenantId,
+        bankAccountId = PreviewAccountKbc,
         source = BankTransactionSource.PdfStatement,
         transactionDate = LocalDate(2026, 2, 12),
         signedAmount = Money.parseOrThrow("-89.99"),
@@ -79,6 +85,7 @@ private val PreviewTransactions: List<BankTransactionDto> = listOf(
     BankTransactionDto(
         id = BankTransactionId.generate(),
         tenantId = PreviewTenantId,
+        bankAccountId = PreviewAccountBelfius,
         source = BankTransactionSource.PdfStatement,
         transactionDate = LocalDate(2026, 2, 11),
         signedAmount = Money.parseOrThrow("-42.50"),
@@ -95,6 +102,7 @@ private val PreviewTransactions: List<BankTransactionDto> = listOf(
     BankTransactionDto(
         id = BankTransactionId.generate(),
         tenantId = PreviewTenantId,
+        bankAccountId = PreviewAccountBelfius,
         source = BankTransactionSource.PdfStatement,
         transactionDate = LocalDate(2026, 2, 10),
         signedAmount = Money.parseOrThrow("7200.00"),
@@ -109,6 +117,7 @@ private val PreviewTransactions: List<BankTransactionDto> = listOf(
     BankTransactionDto(
         id = BankTransactionId.generate(),
         tenantId = PreviewTenantId,
+        bankAccountId = PreviewAccountBelfius,
         source = BankTransactionSource.PdfStatement,
         transactionDate = LocalDate(2026, 2, 9),
         signedAmount = Money.parseOrThrow("-320.00"),
@@ -130,6 +139,11 @@ internal val PreviewSummary = BankTransactionSummary(
     totalUnresolvedAmount = Money.parseOrThrow("8420.50"),
 )
 
+private val PreviewAccountNames = mapOf(
+    PreviewAccountKbc to "KBC Business",
+    PreviewAccountBelfius to "Belfius",
+)
+
 internal fun previewPaymentsState(
     filterTab: PaymentFilterTab = PaymentFilterTab.All,
     selectedTransactionId: BankTransactionId? = null,
@@ -143,6 +157,7 @@ internal fun previewPaymentsState(
         )
     ),
     summary = DokusState.success(PreviewSummary),
+    accountNames = PreviewAccountNames,
     filterTab = filterTab,
     selectedTransactionId = selectedTransactionId,
 )
