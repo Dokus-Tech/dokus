@@ -49,7 +49,10 @@ import tech.dokus.features.cashflow.presentation.review.ScanningLineOverlay
 import tech.dokus.features.cashflow.presentation.review.components.AnalysisFailedBanner
 import tech.dokus.features.cashflow.presentation.review.components.details.AmountsCard
 import tech.dokus.features.cashflow.presentation.review.components.details.CounterpartyCard
-import tech.dokus.features.cashflow.presentation.review.components.details.InvoiceDetailsCard
+import tech.dokus.features.cashflow.presentation.review.components.details.DocumentDetailsCard
+import tech.dokus.features.cashflow.presentation.review.components.details.UnknownDocumentDetailsCard
+import tech.dokus.features.cashflow.presentation.review.models.DocumentUiData
+import tech.dokus.features.cashflow.presentation.review.models.toUiData
 import tech.dokus.features.cashflow.presentation.review.components.details.PeppolStatusCard
 import tech.dokus.features.cashflow.presentation.review.components.details.SourcesCard
 import tech.dokus.foundation.app.network.rememberAuthenticatedImageLoader
@@ -262,12 +265,30 @@ internal fun DetailsTabContent(
         )
 
         // Document details section (fact display, not form)
-        InvoiceDetailsCard(
-            state = state,
-            isAccountantReadOnly = isAccountantReadOnly,
-            onIntent = onIntent,
-            modifier = Modifier.fillMaxWidth()
-        )
+        val uiData = state.draftData?.toUiData()
+        val isReadOnly = isAccountantReadOnly || state.isDocumentConfirmed || state.isDocumentRejected
+        when (uiData) {
+            is DocumentUiData.Invoice -> DocumentDetailsCard(
+                data = uiData,
+                isReadOnly = isReadOnly,
+                onDirectionSelected = { onIntent(DocumentReviewIntent.SelectDirection(it)) },
+                modifier = Modifier.fillMaxWidth(),
+            )
+            is DocumentUiData.CreditNote -> DocumentDetailsCard(
+                data = uiData,
+                isReadOnly = isReadOnly,
+                onDirectionSelected = { onIntent(DocumentReviewIntent.SelectDirection(it)) },
+                modifier = Modifier.fillMaxWidth(),
+            )
+            is DocumentUiData.Receipt -> DocumentDetailsCard(data = uiData, modifier = Modifier.fillMaxWidth())
+            is DocumentUiData.BankStatement -> DocumentDetailsCard(data = uiData, modifier = Modifier.fillMaxWidth())
+            null -> UnknownDocumentDetailsCard(
+                state = state,
+                isAccountantReadOnly = isAccountantReadOnly,
+                onIntent = onIntent,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
         PeppolStatusCard(
             state = state,
             modifier = Modifier.fillMaxWidth()

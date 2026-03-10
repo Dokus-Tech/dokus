@@ -31,27 +31,18 @@ import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_match_review_different_document
 import tech.dokus.aura.resources.cashflow_match_review_same_document
-import tech.dokus.aura.resources.common_unknown
 import tech.dokus.aura.resources.document_section_payment
 import tech.dokus.aura.resources.document_sources_independently_verified
 import tech.dokus.aura.resources.inspector_conflict_confirmation
 import tech.dokus.aura.resources.inspector_fuzzy_match
-import tech.dokus.aura.resources.inspector_label_address
 import tech.dokus.aura.resources.inspector_label_automation
-import tech.dokus.aura.resources.inspector_label_due_date
-import tech.dokus.aura.resources.inspector_label_invoice_number
-import tech.dokus.aura.resources.inspector_label_issue_date
-import tech.dokus.aura.resources.inspector_label_name
 import tech.dokus.aura.resources.inspector_label_source
 import tech.dokus.aura.resources.inspector_label_subtotal
 import tech.dokus.aura.resources.inspector_label_total
 import tech.dokus.aura.resources.inspector_label_vat
 import tech.dokus.aura.resources.inspector_no_sources
 import tech.dokus.aura.resources.inspector_section_amount
-import tech.dokus.aura.resources.inspector_section_contact
-import tech.dokus.aura.resources.inspector_section_reference
 import tech.dokus.aura.resources.inspector_section_sources
-import tech.dokus.aura.resources.inspector_section_timeline
 import tech.dokus.aura.resources.payment_auto_paid
 import tech.dokus.aura.resources.payment_confidence
 import tech.dokus.aura.resources.payment_method_bank_transfer
@@ -61,12 +52,11 @@ import tech.dokus.aura.resources.payment_unable_to_load
 import tech.dokus.aura.resources.payment_undo_auto
 import tech.dokus.aura.resources.payment_undoing
 import tech.dokus.aura.resources.state_loading
+import tech.dokus.domain.Money
 import tech.dokus.domain.enums.AutoMatchStatus
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.DocumentMatchReviewReasonType
 import tech.dokus.domain.enums.DocumentSource
-import tech.dokus.domain.model.CreditNoteDraftData
-import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.AutoPaymentStatusDto
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
@@ -74,7 +64,6 @@ import tech.dokus.features.cashflow.presentation.review.ReviewFinancialStatus
 import tech.dokus.features.cashflow.presentation.review.dotType
 import tech.dokus.features.cashflow.presentation.review.hasCrossMatchedSources
 import tech.dokus.features.cashflow.presentation.review.localized
-import tech.dokus.features.cashflow.presentation.review.models.counterpartyInfo
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.DokusCardVariant
@@ -93,10 +82,15 @@ import tech.dokus.features.cashflow.presentation.review.colorized as financialSt
 private val AmountAccentWidth = 3.5.dp
 
 @Composable
-internal fun InspectorAmountSection(state: DocumentReviewState) {
-    val total = state.totalAmount?.toDisplayString() ?: "\u2014"
-    val currencySign = state.currencySign()
-    val accentColor = when (state.financialStatus) {
+internal fun InspectorAmountSection(
+    total: Money?,
+    subtotal: Money?,
+    vat: Money?,
+    currencySign: String,
+    financialStatus: ReviewFinancialStatus,
+) {
+    val totalDisplay = total?.toDisplayString() ?: "\u2014"
+    val accentColor = when (financialStatus) {
         ReviewFinancialStatus.Paid -> MaterialTheme.colorScheme.statusConfirmed
         ReviewFinancialStatus.Overdue -> MaterialTheme.colorScheme.statusError
         ReviewFinancialStatus.Unpaid,
@@ -126,7 +120,7 @@ internal fun InspectorAmountSection(state: DocumentReviewState) {
                     color = MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
-                    text = "$currencySign$total",
+                    text = "$currencySign$totalDisplay",
                     style = MaterialTheme.typography.displayMedium.copy(fontSize = 24.sp),
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,
@@ -137,34 +131,10 @@ internal fun InspectorAmountSection(state: DocumentReviewState) {
             }
         }
 
-        InspectorValueRow(stringResource(Res.string.inspector_label_subtotal), state.prefixedAmount(state.subtotalAmount()))
-        InspectorValueRow(stringResource(Res.string.inspector_label_vat), state.prefixedAmount(state.vatAmount()))
-    }
-}
-
-@Composable
-internal fun InspectorTimelineSection(state: DocumentReviewState) {
-    InspectorSectionCard(title = stringResource(Res.string.inspector_section_timeline)) {
-        InspectorValueRow(stringResource(Res.string.inspector_label_issue_date), state.issueDate() ?: "\u2014")
-        InspectorValueRow(stringResource(Res.string.inspector_label_due_date), state.dueDate() ?: "\u2014")
-    }
-}
-
-@Composable
-internal fun InspectorReferenceSection(state: DocumentReviewState) {
-    InspectorSectionCard(title = stringResource(Res.string.inspector_section_reference)) {
-        InspectorValueRow(stringResource(Res.string.inspector_label_invoice_number), state.referenceNumber() ?: "\u2014")
-    }
-}
-
-@Composable
-internal fun InspectorContactSection(state: DocumentReviewState) {
-    val counterparty = counterpartyInfo(state)
-    InspectorSectionCard(title = stringResource(Res.string.inspector_section_contact)) {
-        InspectorValueRow(stringResource(Res.string.inspector_label_name), counterparty.name ?: stringResource(Res.string.common_unknown))
-        counterparty.address?.let { address ->
-            InspectorValueRow(stringResource(Res.string.inspector_label_address), address)
-        }
+        val subtotalDisplay = subtotal?.let { "$currencySign${it.toDisplayString()}" } ?: "\u2014"
+        val vatDisplay = vat?.let { "$currencySign${it.toDisplayString()}" } ?: "\u2014"
+        InspectorValueRow(stringResource(Res.string.inspector_label_subtotal), subtotalDisplay)
+        InspectorValueRow(stringResource(Res.string.inspector_label_vat), vatDisplay)
     }
 }
 
@@ -524,44 +494,6 @@ private fun SourceRow(
         )
     }
 }
-
-private fun DocumentReviewState.referenceNumber(): String? = when (val data = draftData) {
-    is InvoiceDraftData -> data.invoiceNumber
-    is CreditNoteDraftData -> data.creditNoteNumber
-    else -> null
-}
-
-private fun DocumentReviewState.issueDate(): String? = when (val data = draftData) {
-    is InvoiceDraftData -> data.issueDate?.toString()
-    is CreditNoteDraftData -> data.issueDate?.toString()
-    else -> null
-}
-
-private fun DocumentReviewState.dueDate(): String? = when (val data = draftData) {
-    is InvoiceDraftData -> data.dueDate?.toString()
-    else -> null
-}
-
-private fun DocumentReviewState.subtotalAmount() = when (val data = draftData) {
-    is InvoiceDraftData -> data.subtotalAmount
-    is CreditNoteDraftData -> data.subtotalAmount
-    else -> null
-}
-
-private fun DocumentReviewState.vatAmount() = when (val data = draftData) {
-    is InvoiceDraftData -> data.vatAmount
-    is CreditNoteDraftData -> data.vatAmount
-    else -> null
-}
-
-private fun DocumentReviewState.currencySign(): String = when (val data = draftData) {
-    is InvoiceDraftData -> data.currency.displaySign
-    is CreditNoteDraftData -> data.currency.displaySign
-    else -> "\u20AC"
-}
-
-private fun DocumentReviewState.prefixedAmount(value: tech.dokus.domain.Money?): String =
-    value?.let { "${currencySign()}${it.toDisplayString()}" } ?: "\u2014"
 
 private fun formatMatchReason(reason: String): String = when (reason) {
     "structured_reference_match" -> "Structured reference match"
