@@ -18,6 +18,24 @@ fun counterpartyInvariantCheck(tenantVat: String?, counterpartyVat: String?): Au
 }
 
 /**
+ * Checks that the raw extracted merchant/seller VAT is not the same as the tenant VAT.
+ * This catches AI hallucination where the model copies the tenant VAT into the merchant field.
+ * Returns a warning if they match, null otherwise.
+ */
+fun rawVatInvariantCheck(tenantVat: String?, rawMerchantOrSellerVat: String?): AuditCheck? {
+    if (tenantVat == null || rawMerchantOrSellerVat == null) return null
+    if (tenantVat != rawMerchantOrSellerVat) return null
+    return AuditCheck.warning(
+        type = CheckType.COUNTERPARTY_INTEGRITY,
+        field = "rawMerchantVat",
+        message = "Extracted merchant/seller VAT equals tenant VAT ($tenantVat) — possible hallucination",
+        hint = "Verify that the tenant VAT actually appears on the document as the merchant/seller",
+        expected = "merchant VAT != tenant VAT (or confirmed on document)",
+        actual = "$rawMerchantOrSellerVat == $tenantVat"
+    )
+}
+
+/**
  * Merges an optional extra [AuditCheck] into an existing [AuditReport].
  */
 fun mergeAudit(base: AuditReport, invariantCheck: AuditCheck?): AuditReport {

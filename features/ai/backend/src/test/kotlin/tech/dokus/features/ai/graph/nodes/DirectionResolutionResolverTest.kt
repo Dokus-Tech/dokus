@@ -148,6 +148,52 @@ class DirectionResolutionResolverTest {
     }
 
     @Test
+    fun `receipt with hallucinated tenant vat as merchant vat falls through to name resolution`() {
+        val extraction = FinancialExtractionResult.Receipt(
+            ReceiptExtractionResult(
+                merchantName = "SSD ASBL",
+                merchantVat = tenantVat,
+                date = null,
+                currency = Currency.Eur,
+                totalAmount = null,
+                vatAmount = null,
+                receiptNumber = null,
+                paymentMethod = null,
+                confidence = 0.8,
+                reasoning = null
+            )
+        )
+
+        val resolved = DirectionResolutionResolver.resolve(extraction, tenant, emptyList())
+
+        assertEquals(DocumentDirection.Inbound, resolved.direction)
+        assertEquals(DirectionResolutionSource.NameMatch, resolved.source)
+    }
+
+    @Test
+    fun `receipt with tenant vat and matching tenant name is outbound`() {
+        val extraction = FinancialExtractionResult.Receipt(
+            ReceiptExtractionResult(
+                merchantName = "INVOID VISION",
+                merchantVat = tenantVat,
+                date = null,
+                currency = Currency.Eur,
+                totalAmount = null,
+                vatAmount = null,
+                receiptNumber = null,
+                paymentMethod = null,
+                confidence = 0.9,
+                reasoning = null
+            )
+        )
+
+        val resolved = DirectionResolutionResolver.resolve(extraction, tenant, emptyList())
+
+        assertEquals(DocumentDirection.Outbound, resolved.direction)
+        assertEquals(DirectionResolutionSource.VatMatch, resolved.source)
+    }
+
+    @Test
     fun `resolved counterparty vat uses non-tenant party for inbound invoice`() {
         val extraction = FinancialExtractionResult.Invoice(
             InvoiceExtractionResult(
@@ -172,5 +218,31 @@ class DirectionResolutionResolverTest {
         )
 
         assertEquals("IE6388047V", counterpartyVat)
+    }
+
+    @Test
+    fun `resolved counterparty vat filters out hallucinated tenant vat for receipt`() {
+        val extraction = FinancialExtractionResult.Receipt(
+            ReceiptExtractionResult(
+                merchantName = "SSD ASBL",
+                merchantVat = tenantVat,
+                date = null,
+                currency = Currency.Eur,
+                totalAmount = null,
+                vatAmount = null,
+                receiptNumber = null,
+                paymentMethod = null,
+                confidence = 0.8,
+                reasoning = null
+            )
+        )
+
+        val counterpartyVat = DirectionResolutionResolver.resolvedCounterpartyVat(
+            extraction = extraction,
+            direction = DocumentDirection.Inbound,
+            tenantVat = tenantVat.normalized
+        )
+
+        assertEquals(null, counterpartyVat)
     }
 }

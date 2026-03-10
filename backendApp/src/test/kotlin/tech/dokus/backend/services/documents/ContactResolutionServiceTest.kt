@@ -17,6 +17,7 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.InvoiceDraftData
+import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.ContactResolution
 import tech.dokus.domain.model.contact.CounterpartySnapshot
@@ -69,7 +70,7 @@ class ContactResolutionServiceTest {
     }
 
     @Test
-    fun `invoice unknown direction with tenant vat is kept pending and never auto-linked`() = runBlocking {
+    fun `counterparty with tenant vat gets vat stripped and never auto-linked by vat`() = runBlocking {
         val result = service.resolve(
             tenantId = tenantId,
             tenantVat = tenantVat,
@@ -81,10 +82,30 @@ class ContactResolutionServiceTest {
         )
 
         assertIs<ContactResolution.PendingReview>(result.resolution)
-        assertEquals("BE0777887045", result.snapshot.vatNumber?.normalized)
+        // Tenant VAT should be stripped from the snapshot
+        assertEquals(null, result.snapshot.vatNumber)
 
         coVerify(exactly = 0) { contactRepository.findByVatNumber(any(), any()) }
         coVerify(exactly = 0) { cbeApiClient.searchByVat(any()) }
+    }
+
+    @Test
+    fun `receipt with hallucinated tenant vat strips vat and uses name resolution`() = runBlocking {
+        val result = service.resolve(
+            tenantId = tenantId,
+            tenantVat = tenantVat,
+            draftData = ReceiptDraftData(direction = DocumentDirection.Inbound),
+            authoritativeSnapshot = CounterpartySnapshot(
+                name = "SSD ASBL",
+                vatNumber = VatNumber.from("BE0777887045")
+            )
+        )
+
+        // Tenant VAT should be stripped, name-based resolution attempted
+        assertEquals(null, result.snapshot.vatNumber)
+        coVerify(exactly = 0) { contactRepository.findByVatNumber(any(), any()) }
+        // Should attempt name-based lookup
+        coVerify(exactly = 1) { contactRepository.findByName(tenantId, "SSD ASBL", 10) }
     }
 
     @Test

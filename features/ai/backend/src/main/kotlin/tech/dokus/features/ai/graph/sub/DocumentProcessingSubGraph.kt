@@ -13,6 +13,7 @@ import tech.dokus.features.ai.models.ResolvedExtraction
 import tech.dokus.features.ai.services.DocumentFetcher
 import tech.dokus.features.ai.validation.FinancialExtractionAuditor
 import tech.dokus.features.ai.validation.counterpartyInvariantCheck
+import tech.dokus.features.ai.validation.rawVatInvariantCheck
 import tech.dokus.features.ai.validation.mergeAudit
 import tech.dokus.foundation.backend.config.AIConfig
 
@@ -46,9 +47,10 @@ fun AIAgentSubgraphBuilderBase<*, *>.documentProcessingSubGraph(
         val resolveDirection by node<FinancialExtractionResult, ResolvedExtraction>("resolve-direction") { extraction ->
             val tenant = storage.getValue(tenantKey)
             val associatedNames = storage.getValue(associatedNamesKey)
+            val tenantVat = tenant.vatNumber.normalized.takeIf { it.isNotBlank() }
             val directionResolution = DirectionResolutionResolver.resolve(extraction, tenant, associatedNames)
             val counterpartyVat = DirectionResolutionResolver
-                .resolvedCounterpartyVat(extraction, directionResolution.direction)
+                .resolvedCounterpartyVat(extraction, directionResolution.direction, tenantVat)
             ResolvedExtraction(
                 extraction = extraction,
                 directionResolution = directionResolution.copy(counterpartyVat = counterpartyVat)
@@ -57,12 +59,18 @@ fun AIAgentSubgraphBuilderBase<*, *>.documentProcessingSubGraph(
         val auditAndWrap by node<ResolvedExtraction, DocumentAiProcessingResult>("audit-extraction") { resolved ->
             val classification = storage.getValue(classificationKey)
             val tenant = storage.getValue(tenantKey)
+            val tenantVat = tenant.vatNumber.normalized.takeIf { it.isNotBlank() }
             val baseAudit = FinancialExtractionAuditor.audit(resolved.extraction)
             val invariantCheck = counterpartyInvariantCheck(
-                tenantVat = tenant.vatNumber.normalized.takeIf { it.isNotBlank() },
+                tenantVat = tenantVat,
                 counterpartyVat = resolved.directionResolution.counterpartyVat
             )
-            val auditReport = mergeAudit(baseAudit, invariantCheck)
+            val rawVatCheck = rawVatInvariantCheck(
+                tenantVat = tenantVat,
+                rawMerchantOrSellerVat = (resolved.extraction as? FinancialExtractionResult.Receipt)
+                    ?.data?.merchantVat?.normalized
+            )
+            val auditReport = mergeAudit(mergeAudit(baseAudit, invariantCheck), rawVatCheck)
             DocumentAiProcessingResult(
                 classification = classification,
                 extraction = resolved.extraction,

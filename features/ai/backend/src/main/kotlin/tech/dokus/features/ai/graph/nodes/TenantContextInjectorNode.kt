@@ -64,6 +64,7 @@ private fun buildTenantPrompt(tenant: Tenant, associatedPersonNames: List<String
         appendLine("- Tenant details should match: \"${legalName.value}\", VAT: ${vatNumber.value}")
         appendLine("- Extract seller/issuer and buyer/recipient as neutral facts from the document.")
         appendLine("- Do not swap roles based on assumptions; direction is resolved in deterministic code.")
+        appendLine("- CRITICAL: Never copy the tenant VAT number (${vatNumber.value}) into merchant/seller fields unless it is physically printed on the document. If no VAT is visible, return null.")
         appendLine("- Prefer ${language.code} field labels when document is multilingual")
         appendLine()
         appendLine("**Name Matching:**")

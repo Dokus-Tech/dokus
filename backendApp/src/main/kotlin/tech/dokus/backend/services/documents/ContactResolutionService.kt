@@ -58,7 +58,21 @@ class ContactResolutionService(
         authoritativeSnapshot: CounterpartySnapshot,
         tenantVat: VatNumber? = null
     ): ContactResolutionResult {
-        val snapshot = authoritativeSnapshot.normalized()
+        val rawSnapshot = authoritativeSnapshot.normalized()
+        if (rawSnapshot.isEmptyForResolution()) {
+            return ContactResolutionResult(
+                snapshot = rawSnapshot,
+                resolution = ContactResolution.PendingReview(rawSnapshot)
+            )
+        }
+
+        // A counterparty should never be the tenant — strip hallucinated tenant VAT
+        val snapshot = if (rawSnapshot.vatNumber.isSameVat(tenantVat)) {
+            logger.warn("Counterparty VAT {} matches tenant VAT; stripping from snapshot", rawSnapshot.vatNumber)
+            rawSnapshot.copy(vatNumber = null)
+        } else {
+            rawSnapshot
+        }
         if (snapshot.isEmptyForResolution()) {
             return ContactResolutionResult(
                 snapshot = snapshot,
@@ -69,19 +83,11 @@ class ContactResolutionService(
         val name = snapshot.name
         val vat = snapshot.vatNumber
         val iban = snapshot.iban
-        val unknownDirectionInvoiceOrCreditNote = isUnknownDirectionInvoiceOrCreditNote(draftData)
         val strictAutoLink = when (draftData) {
             is InvoiceDraftData -> draftData.direction == DocumentDirection.Unknown
             is ReceiptDraftData -> draftData.direction == DocumentDirection.Unknown
             is CreditNoteDraftData -> draftData.direction == DocumentDirection.Unknown
             is BankStatementDraftData -> false
-        }
-
-        if (unknownDirectionInvoiceOrCreditNote && vat.isSameVat(tenantVat)) {
-            return ContactResolutionResult(
-                snapshot = snapshot,
-                resolution = ContactResolution.PendingReview(snapshot)
-            )
         }
 
         val suggestions = mutableListOf<SuggestedContact>()
@@ -271,13 +277,6 @@ class ContactResolutionService(
             snapshot = snapshot,
             resolution = ContactResolution.PendingReview(snapshot)
         )
-    }
-
-    private fun isUnknownDirectionInvoiceOrCreditNote(draftData: DocumentDraftData): Boolean = when (draftData) {
-        is InvoiceDraftData -> draftData.direction == DocumentDirection.Unknown
-        is CreditNoteDraftData -> draftData.direction == DocumentDirection.Unknown
-        is ReceiptDraftData,
-        is BankStatementDraftData -> false
     }
 
     private fun VatNumber?.isSameVat(other: VatNumber?): Boolean {

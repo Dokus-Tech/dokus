@@ -25,7 +25,7 @@ import tech.dokus.features.ai.graph.nodes.InputWithDocumentId
 import tech.dokus.features.ai.graph.nodes.InputWithTenantContext
 import tech.dokus.features.ai.graph.nodes.InputWithUserFeedback
 import tech.dokus.features.ai.graph.nodes.documentImagesInjectorNode
-import tech.dokus.features.ai.graph.nodes.tenantContextInjectorNode
+
 import tech.dokus.features.ai.graph.nodes.userFeedbackInjectorNode
 import tech.dokus.features.ai.graph.purposeEnrichmentGraph
 import tech.dokus.features.ai.graph.sub.ClassificationResult
@@ -46,6 +46,7 @@ import tech.dokus.features.ai.validation.AuditReport
 import tech.dokus.features.ai.validation.CheckType
 import tech.dokus.features.ai.validation.FinancialExtractionAuditor
 import tech.dokus.features.ai.validation.counterpartyInvariantCheck
+import tech.dokus.features.ai.validation.rawVatInvariantCheck
 import tech.dokus.features.ai.validation.mergeAudit
 import tech.dokus.foundation.backend.config.AIConfig
 import tech.dokus.foundation.backend.utils.loggerFor
@@ -202,7 +203,6 @@ class DocumentProcessingAgent(
                 storage.set(classificationKey, input.classification)
                 input
             }
-            val injectTenant by tenantContextInjectorNode<DocumentExtractionInput>()
             val injectImages by documentImagesInjectorNode<DocumentExtractionInput>(documentFetcher)
             val injectUserFeedback by userFeedbackInjectorNode<DocumentExtractionInput>()
             val prepareExtractionInput by node<DocumentExtractionInput, ExtractDocumentInput>("prepare-extraction") { input ->
@@ -212,9 +212,10 @@ class DocumentProcessingAgent(
             val resolveDirection by node<FinancialExtractionResult, ResolvedExtraction>("resolve-direction") { extraction ->
                 val tenant = storage.getValue(tenantKey)
                 val associatedNames = storage.getValue(associatedNamesKey)
+                val tenantVat = tenant.vatNumber.normalized.takeIf { it.isNotBlank() }
                 val directionResolution = DirectionResolutionResolver.resolve(extraction, tenant, associatedNames)
                 val counterpartyVat = DirectionResolutionResolver
-                    .resolvedCounterpartyVat(extraction, directionResolution.direction)
+                    .resolvedCounterpartyVat(extraction, directionResolution.direction, tenantVat)
                 ResolvedExtraction(
                     extraction = extraction,
                     directionResolution = directionResolution.copy(counterpartyVat = counterpartyVat)
@@ -223,12 +224,18 @@ class DocumentProcessingAgent(
             val auditAndWrap by node<ResolvedExtraction, DocumentAiProcessingResult>("audit-extraction") { resolved ->
                 val classification = storage.getValue(classificationKey)
                 val tenant = storage.getValue(tenantKey)
+                val tenantVat = tenant.vatNumber.normalized.takeIf { it.isNotBlank() }
                 val baseAudit = FinancialExtractionAuditor.audit(resolved.extraction)
                 val invariantCheck = counterpartyInvariantCheck(
-                    tenantVat = tenant.vatNumber.normalized.takeIf { it.isNotBlank() },
+                    tenantVat = tenantVat,
                     counterpartyVat = resolved.directionResolution.counterpartyVat
                 )
-                val auditReport = mergeAudit(baseAudit, invariantCheck)
+                val rawVatCheck = rawVatInvariantCheck(
+                    tenantVat = tenantVat,
+                    rawMerchantOrSellerVat = (resolved.extraction as? FinancialExtractionResult.Receipt)
+                        ?.data?.merchantVat?.normalized
+                )
+                val auditReport = mergeAudit(mergeAudit(baseAudit, invariantCheck), rawVatCheck)
                 DocumentAiProcessingResult(
                     classification = classification,
                     extraction = resolved.extraction,
@@ -237,7 +244,7 @@ class DocumentProcessingAgent(
                 )
             }
 
-            nodeStart then storeInputContext then injectTenant then injectImages then injectUserFeedback then prepareExtractionInput then extract then resolveDirection then auditAndWrap then nodeFinish
+            nodeStart then storeInputContext then injectImages then injectUserFeedback then prepareExtractionInput then extract then resolveDirection then auditAndWrap then nodeFinish
         }
     }
 
