@@ -8,8 +8,8 @@ import ai.koog.agents.ext.agent.subgraphWithTask
 import ai.koog.prompt.params.LLMParams
 import kotlinx.serialization.Serializable
 import tech.dokus.features.ai.config.asOrchestratorModel
-import tech.dokus.features.ai.config.assistantResponseRepeatMax
-import tech.dokus.features.ai.config.documentProcessing
+import tech.dokus.features.ai.config.externalToolAssistantResponseRepeatMax
+import tech.dokus.features.ai.config.externalToolWorkflow
 import tech.dokus.features.ai.models.BusinessDiscoveryStatus
 import tech.dokus.features.ai.models.BusinessProfileDiscoveryResult
 import tech.dokus.features.ai.models.BusinessProfileEnrichmentInput
@@ -23,8 +23,8 @@ fun AIAgentSubgraphBuilderBase<*, *>.businessProfileDiscoverySubGraph(
         name = "Discover business profile",
         llmModel = aiConfig.mode.asOrchestratorModel,
         tools = tools,
-        llmParams = LLMParams.documentProcessing,
-        assistantResponseRepeatMax = assistantResponseRepeatMax,
+        llmParams = LLMParams.externalToolWorkflow,
+        assistantResponseRepeatMax = externalToolAssistantResponseRepeatMax,
         finishTool = BusinessProfileDiscoveryFinishTool()
     ) { it.prompt }
 }

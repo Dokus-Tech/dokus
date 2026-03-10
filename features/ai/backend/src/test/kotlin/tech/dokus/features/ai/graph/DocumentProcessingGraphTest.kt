@@ -40,7 +40,7 @@ class DocumentProcessingGraphTest {
         val toolRegistry = ToolRegistry { }
 
         val strategy = strategy<AcceptDocumentInput, DocumentAiProcessingResult>("test") {
-            val process by documentProcessingSubGraph(TestAiFixtures.aiConfig, mockFetcher, emptyList())
+            val process by documentProcessingSubGraph(TestAiFixtures.aiConfig, mockFetcher)
             edge(nodeStart forwardTo process)
             edge(process forwardTo nodeFinish)
         }

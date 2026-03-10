@@ -33,6 +33,9 @@ enum class CheckType {
     /** Counterparty integrity check (must not equal tenant identity) */
     COUNTERPARTY_INTEGRITY,
 
+    /** AI finish-tool / structured output contract enforcement */
+    AI_CONTRACT,
+
     /** Bank statement row-level validation */
     BANK_STATEMENT_ROW
 }

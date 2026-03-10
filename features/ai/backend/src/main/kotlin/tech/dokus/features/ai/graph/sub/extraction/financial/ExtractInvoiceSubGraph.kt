@@ -19,8 +19,8 @@ import tech.dokus.domain.model.CanonicalPayment
 import tech.dokus.domain.model.FinancialLineItem
 import tech.dokus.domain.model.VatBreakdownEntry
 import tech.dokus.features.ai.config.asVisionModel
-import tech.dokus.features.ai.config.assistantResponseRepeatMax
-import tech.dokus.features.ai.config.documentProcessing
+import tech.dokus.features.ai.config.finishToolOnly
+import tech.dokus.features.ai.config.finishToolVisionAssistantResponseRepeatMax
 import tech.dokus.features.ai.models.ExtractDocumentInput
 import tech.dokus.features.ai.models.ExtractionToolDescriptions
 import tech.dokus.features.ai.models.FinancialExtractionResult
@@ -86,14 +86,13 @@ data class InvoiceExtractionResult(
 
 fun AIAgentSubgraphBuilderBase<*, *>.extractInvoiceSubGraph(
     aiConfig: AIConfig,
-    tools: List<Tool<*, *>>
 ): AIAgentSubgraphDelegate<ExtractDocumentInput, FinancialExtractionResult.Invoice> {
     return subgraphWithTask(
         name = "Extract invoice information",
         llmModel = aiConfig.mode.asVisionModel,
-        tools = tools,
-        llmParams = LLMParams.documentProcessing,
-        assistantResponseRepeatMax = assistantResponseRepeatMax,
+        tools = emptyList<Tool<*, *>>(),
+        llmParams = LLMParams.finishToolOnly("submit_invoice_extraction"),
+        assistantResponseRepeatMax = finishToolVisionAssistantResponseRepeatMax,
         finishTool = InvoiceExtractionFinishTool()
     ) { it.prompt }
 }
@@ -277,6 +276,8 @@ private val ExtractDocumentInput.prompt
 
     ## PAYMENT FIELDS
     If IBAN or structured reference is present, extract it. Otherwise null.
+    If a payment reference is visible but checksum validity is uncertain, keep the raw text in `paymentReference`.
+    Do not invent or mutate digits just to make an OGM appear valid.
 
     ## LINE ITEMS
     If an itemized table is present, extract lineItems with description, quantity, unitPrice, vatRate, netAmount (line total excl VAT).

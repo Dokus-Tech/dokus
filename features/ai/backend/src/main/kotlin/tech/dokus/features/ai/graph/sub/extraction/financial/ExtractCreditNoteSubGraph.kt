@@ -16,8 +16,8 @@ import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.FinancialLineItem
 import tech.dokus.domain.model.VatBreakdownEntry
 import tech.dokus.features.ai.config.asVisionModel
-import tech.dokus.features.ai.config.assistantResponseRepeatMax
-import tech.dokus.features.ai.config.documentProcessing
+import tech.dokus.features.ai.config.finishToolOnly
+import tech.dokus.features.ai.config.finishToolVisionAssistantResponseRepeatMax
 import tech.dokus.features.ai.models.ExtractDocumentInput
 import tech.dokus.features.ai.models.FinancialExtractionResult
 import tech.dokus.features.ai.models.ExtractionToolDescriptions
@@ -37,8 +37,8 @@ fun AIAgentSubgraphBuilderBase<*, *>.extractCreditNoteSubGraph(
         name = "Extract credit note information",
         llmModel = aiConfig.mode.asVisionModel,
         tools = emptyList(),
-        llmParams = LLMParams.documentProcessing,
-        assistantResponseRepeatMax = assistantResponseRepeatMax,
+        llmParams = LLMParams.finishToolOnly("submit_credit_note_extraction"),
+        assistantResponseRepeatMax = finishToolVisionAssistantResponseRepeatMax,
         finishTool = CreditNoteExtractionFinishTool(),
     ) { it.creditNotePrompt }
 }

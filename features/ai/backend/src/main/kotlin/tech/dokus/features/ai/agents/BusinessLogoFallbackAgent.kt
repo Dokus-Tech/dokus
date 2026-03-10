@@ -6,8 +6,8 @@ import ai.koog.agents.core.annotation.ExperimentalAgentsApi
 import ai.koog.agents.core.tools.ToolRegistry
 import ai.koog.prompt.dsl.prompt
 import ai.koog.prompt.executor.model.PromptExecutor
-import ai.koog.prompt.processor.ManualToolCallFixProcessor
 import tech.dokus.features.ai.config.asOrchestratorModel
+import tech.dokus.features.ai.config.installKoogEventLogging
 import tech.dokus.features.ai.graph.businessLogoFallbackGraph
 import tech.dokus.features.ai.models.BusinessLogoFallbackInput
 import tech.dokus.features.ai.models.BusinessLogoFallbackResult
@@ -30,8 +30,13 @@ class BusinessLogoFallbackAgent(
                 },
                 model = aiConfig.mode.asOrchestratorModel,
                 maxAgentIterations = aiConfig.mode.maxIterations,
-                responseProcessor = ManualToolCallFixProcessor(ToolRegistry.EMPTY)
-            )
+            ),
+            installFeatures = {
+                installKoogEventLogging(
+                    agentName = "business-logo-fallback",
+                    enabled = aiConfig.koogEventLoggingEnabled
+                )
+            }
         )
 
         return try {
