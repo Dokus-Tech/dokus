@@ -16,13 +16,20 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.banking_balances_legend_total
 import tech.dokus.aura.resources.banking_balances_no_chart_data
 import tech.dokus.aura.resources.banking_balances_timeline_subtitle
 import tech.dokus.aura.resources.banking_balances_timeline_title
+import tech.dokus.domain.Money
+import tech.dokus.domain.ids.BankAccountId
+import tech.dokus.domain.model.AccountBalanceSeries
+import tech.dokus.domain.model.BalanceHistoryPoint
 import tech.dokus.domain.model.BalanceHistoryResponse
 import tech.dokus.domain.model.BankAccountSummary
 import tech.dokus.features.banking.presentation.balances.mvi.BalanceTimeRange
@@ -41,6 +48,9 @@ import tech.dokus.foundation.aura.components.tabs.DokusTabs
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.style.textMuted
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 private val ChartHeight = 200.dp
 
@@ -291,4 +301,55 @@ private fun buildChartSeries(response: BalanceHistoryResponse): List<LineChartSe
     } else null
 
     return lineChartSeries + listOfNotNull(totalLine)
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+private val PreviewSummary = BankAccountSummary(
+    totalBalance = Money(1778042),
+    accountCount = 2,
+    unmatchedCount = 3,
+    totalUnresolvedAmount = Money(842050),
+    matchedThisPeriod = 12,
+    lastSyncedAt = null,
+)
+
+private val PreviewBalanceHistory = BalanceHistoryResponse(
+    series = listOf(
+        AccountBalanceSeries(
+            accountId = BankAccountId.generate(),
+            accountName = "KBC Business",
+            points = listOf(
+                BalanceHistoryPoint(LocalDate(2026, 2, 7), Money(1200000)),
+                BalanceHistoryPoint(LocalDate(2026, 2, 15), Money(1180000)),
+                BalanceHistoryPoint(LocalDate(2026, 2, 23), Money(1320000)),
+                BalanceHistoryPoint(LocalDate(2026, 3, 3), Money(1350000)),
+                BalanceHistoryPoint(LocalDate(2026, 3, 7), Money(1438042)),
+            ),
+        ),
+    ),
+    totalSeries = listOf(
+        BalanceHistoryPoint(LocalDate(2026, 2, 7), Money(1540000)),
+        BalanceHistoryPoint(LocalDate(2026, 2, 15), Money(1520000)),
+        BalanceHistoryPoint(LocalDate(2026, 2, 23), Money(1660000)),
+        BalanceHistoryPoint(LocalDate(2026, 3, 3), Money(1690000)),
+        BalanceHistoryPoint(LocalDate(2026, 3, 7), Money(1778042)),
+    ),
+)
+
+@Preview(name = "Balance Timeline Card", widthDp = 800)
+@Composable
+private fun BalanceTimelineCardPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
+) {
+    TestWrapper(parameters) {
+        BalanceTimelineCard(
+            summary = DokusState.success(PreviewSummary),
+            balanceHistory = DokusState.success(PreviewBalanceHistory),
+            timeRange = BalanceTimeRange.ThirtyDays,
+            onTimeRangeChange = {},
+        )
+    }
 }

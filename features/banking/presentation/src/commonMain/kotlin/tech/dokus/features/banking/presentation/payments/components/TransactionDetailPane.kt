@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
@@ -20,6 +21,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.unit.dp
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
 import androidx.compose.ui.text.style.TextAlign
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
@@ -37,13 +43,25 @@ import tech.dokus.aura.resources.banking_detail_reference
 import tech.dokus.aura.resources.banking_detail_resolution
 import tech.dokus.aura.resources.banking_detail_title
 import tech.dokus.aura.resources.banking_detail_trust
+import tech.dokus.domain.Money
+import tech.dokus.domain.enums.BankTransactionSource
 import tech.dokus.domain.enums.BankTransactionStatus
+import tech.dokus.domain.enums.Currency
+import tech.dokus.domain.enums.IgnoredReason
+import tech.dokus.domain.enums.MatchedBy
+import tech.dokus.domain.enums.ResolutionType
 import tech.dokus.domain.enums.StatementTrust
+import tech.dokus.domain.ids.BankTransactionId
+import tech.dokus.domain.ids.Iban
+import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.foundation.aura.components.text.Amt
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.extensions.statusColor
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Composable
 internal fun TransactionDetailPane(
@@ -279,6 +297,86 @@ private fun DetailRow(
             style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.End,
+        )
+    }
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+private val PreviewDateTime = LocalDateTime(2026, 2, 15, 10, 0)
+private val PreviewTenantId = TenantId.generate()
+
+private val PreviewUnmatchedTx = BankTransactionDto(
+    id = BankTransactionId.generate(),
+    tenantId = PreviewTenantId,
+    source = BankTransactionSource.PdfStatement,
+    transactionDate = LocalDate(2026, 2, 14),
+    signedAmount = Money.parseOrThrow("-1250.00"),
+    counterpartyName = "Coolblue Belgi\u00EB NV",
+    counterpartyIban = Iban("BE68539007547034"),
+    structuredCommunicationRaw = "+++090/9337/55493+++",
+    descriptionRaw = "Payment for order #12345",
+    status = BankTransactionStatus.Unmatched,
+    currency = Currency.Eur,
+    createdAt = PreviewDateTime,
+    updatedAt = PreviewDateTime,
+)
+
+private val PreviewMatchedTx = BankTransactionDto(
+    id = BankTransactionId.generate(),
+    tenantId = PreviewTenantId,
+    source = BankTransactionSource.PdfStatement,
+    transactionDate = LocalDate(2026, 2, 12),
+    signedAmount = Money.parseOrThrow("-89.99"),
+    counterpartyName = "DigitalOcean",
+    counterpartyIban = Iban("BE71096123456769"),
+    descriptionRaw = "DO Invoice #12345",
+    status = BankTransactionStatus.Matched,
+    matchedBy = MatchedBy.Auto,
+    resolutionType = ResolutionType.Document,
+    matchScore = 1.0,
+    matchEvidence = listOf("exact_amount", "structured_comm_match"),
+    matchedAt = PreviewDateTime,
+    statementTrust = StatementTrust.High,
+    currency = Currency.Eur,
+    createdAt = PreviewDateTime,
+    updatedAt = PreviewDateTime,
+)
+
+@Preview(name = "Detail Pane — Unmatched", widthDp = 280, heightDp = 700)
+@Composable
+private fun TransactionDetailPaneUnmatchedPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
+) {
+    TestWrapper(parameters) {
+        TransactionDetailPane(
+            transaction = PreviewUnmatchedTx,
+            onClose = {},
+            onLinkDocument = {},
+            onIgnore = {},
+            onConfirmMatch = {},
+            onCreateExpense = {},
+            modifier = Modifier.width(280.dp),
+        )
+    }
+}
+
+@Preview(name = "Detail Pane — Matched", widthDp = 280, heightDp = 700)
+@Composable
+private fun TransactionDetailPaneMatchedPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
+) {
+    TestWrapper(parameters) {
+        TransactionDetailPane(
+            transaction = PreviewMatchedTx,
+            onClose = {},
+            onLinkDocument = {},
+            onIgnore = {},
+            onConfirmMatch = {},
+            onCreateExpense = {},
+            modifier = Modifier.width(280.dp),
         )
     }
 }

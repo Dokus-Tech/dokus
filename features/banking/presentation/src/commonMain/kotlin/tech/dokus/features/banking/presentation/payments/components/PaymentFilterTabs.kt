@@ -3,6 +3,8 @@ package tech.dokus.features.banking.presentation.payments.components
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.banking_filter_all
@@ -10,11 +12,15 @@ import tech.dokus.aura.resources.banking_filter_ignored
 import tech.dokus.aura.resources.banking_filter_matched
 import tech.dokus.aura.resources.banking_filter_needs_review
 import tech.dokus.aura.resources.banking_filter_unmatched
+import tech.dokus.domain.Money
 import tech.dokus.domain.model.BankTransactionSummary
 import tech.dokus.features.banking.presentation.payments.mvi.PaymentFilterTab
 import tech.dokus.foundation.aura.components.tabs.DokusTab
 import tech.dokus.foundation.aura.components.tabs.DokusTabs
 import tech.dokus.foundation.aura.style.amberSoft
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Composable
 internal fun PaymentFilterTabs(
@@ -64,4 +70,25 @@ internal fun PaymentFilterTabs(
         },
         modifier = modifier,
     )
+}
+
+@Preview(name = "Payment Filter Tabs")
+@Composable
+private fun PaymentFilterTabsPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
+) {
+    TestWrapper(parameters) {
+        PaymentFilterTabs(
+            selectedTab = PaymentFilterTab.All,
+            summary = BankTransactionSummary(
+                unmatchedCount = 12,
+                needsReviewCount = 3,
+                matchedCount = 45,
+                ignoredCount = 5,
+                totalCount = 65,
+                totalUnresolvedAmount = Money.parseOrThrow("8420.50"),
+            ),
+            onTabSelected = {},
+        )
+    }
 }
