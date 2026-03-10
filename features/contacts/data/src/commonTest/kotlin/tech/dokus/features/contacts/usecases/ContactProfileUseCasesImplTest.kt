@@ -280,6 +280,8 @@ class ContactProfileUseCasesImplTest {
             contactId: ContactId,
             noteId: ContactNoteId
         ): Result<Unit> = error("unused")
+
+        override fun observeContactChanges(contactId: ContactId) = error("unused")
     }
 }
 

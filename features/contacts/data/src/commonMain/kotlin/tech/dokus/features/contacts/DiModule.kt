@@ -49,6 +49,8 @@ import tech.dokus.features.contacts.usecases.LookupContactsUseCase
 import tech.dokus.features.contacts.usecases.LookupContactsUseCaseImpl
 import tech.dokus.features.contacts.usecases.MergeContactsUseCase
 import tech.dokus.features.contacts.usecases.MergeContactsUseCaseImpl
+import tech.dokus.features.contacts.usecases.ObserveContactChangesUseCase
+import tech.dokus.features.contacts.usecases.ObserveContactChangesUseCaseImpl
 import tech.dokus.features.contacts.usecases.UpdateContactNoteUseCase
 import tech.dokus.features.contacts.usecases.UpdateContactNoteUseCaseImpl
 import tech.dokus.features.contacts.usecases.UpdateContactUseCase
@@ -105,4 +107,7 @@ val contactsDomainModule = module {
     single<GetContactInvoiceSnapshotUseCase> { GetContactInvoiceSnapshotUseCaseImpl(get()) }
     single<GetContactPeppolStatusUseCase> { GetContactPeppolStatusUseCaseImpl(get()) }
     single<MergeContactsUseCase> { MergeContactsUseCaseImpl(get()) }
+
+    // SSE
+    singleOf(::ObserveContactChangesUseCaseImpl) bind ObserveContactChangesUseCase::class
 }

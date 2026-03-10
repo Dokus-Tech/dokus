@@ -10,11 +10,14 @@ import io.ktor.server.resources.put
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondBytes
 import io.ktor.server.routing.Route
+import io.ktor.server.sse.heartbeat
 import org.koin.ktor.ext.inject
 import tech.dokus.backend.security.requireTenantId
 import tech.dokus.backend.services.business.BusinessProfileService
 import tech.dokus.backend.services.contacts.ContactNoteService
 import tech.dokus.backend.services.contacts.ContactService
+import tech.dokus.backend.services.contacts.sse.ContactEventHub
+import tech.dokus.backend.services.contacts.sse.ContactSsePublisher
 import tech.dokus.backend.services.peppol.PeppolRecipientResolver
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.domain.enums.BusinessProfileSubjectType
@@ -23,15 +26,21 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.ContactNoteId
 import tech.dokus.domain.model.PinBusinessProfileFieldsRequest
 import tech.dokus.domain.model.UpdateBusinessProfileRequest
+import tech.dokus.domain.model.contact.ContactChangedEventDto
+import tech.dokus.domain.model.contact.ContactStreamEventNames
 import tech.dokus.domain.model.contact.CreateContactNoteRequest
 import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.model.contact.UpdateContactNoteRequest
 import tech.dokus.domain.model.contact.UpdateContactRequest
 import tech.dokus.domain.routes.Contacts
+import tech.dokus.domain.utils.json
 import tech.dokus.foundation.backend.security.authenticateJwt
 import tech.dokus.foundation.backend.security.dokusPrincipal
 import tech.dokus.foundation.backend.storage.AvatarStorageService
+import tech.dokus.foundation.backend.utils.defaultSseHeartbeatPeriod
 import tech.dokus.foundation.backend.utils.loggerFor
+import tech.dokus.foundation.backend.utils.respondSse
+import tech.dokus.foundation.backend.utils.sendJsonEvent
 import kotlin.uuid.ExperimentalUuidApi
 
 /**
@@ -56,6 +65,8 @@ fun Route.contactRoutes() {
     val peppolResolver by inject<PeppolRecipientResolver>()
     val businessProfileService by inject<BusinessProfileService>()
     val avatarStorageService by inject<AvatarStorageService>()
+    val contactEventHub by inject<ContactEventHub>()
+    val contactSsePublisher by inject<ContactSsePublisher>()
 
     /**
      * GET /api/v1/contacts/{id}/avatar/{size}.webp
@@ -89,6 +100,34 @@ fun Route.contactRoutes() {
     }
 
     authenticateJwt {
+        // ================================================================
+        // SSE EVENTS
+        // ================================================================
+
+        /**
+         * GET /api/v1/contacts/{id}/events
+         * SSE stream for per-contact change notifications.
+         */
+        get<Contacts.Events> { route ->
+            val tenantId = requireTenantId()
+            val contactId = ContactId.parse(route.id)
+
+            call.respondSse {
+                heartbeat {
+                    period = defaultSseHeartbeatPeriod
+                }
+                contactEventHub.eventsFor(tenantId, contactId).collect { event ->
+                    sendJsonEvent(
+                        event = ContactStreamEventNames.Changed,
+                        payload = event,
+                        encode = {
+                            json.encodeToString(ContactChangedEventDto.serializer(), it)
+                        }
+                    )
+                }
+            }
+        }
+
         // ================================================================
         // CRUD OPERATIONS
         // ================================================================
@@ -242,6 +281,7 @@ fun Route.contactRoutes() {
             val contact = contactService.updateContact(contactId, tenantId, request)
                 .getOrElse { throw DokusException.InternalError("Failed to update contact: ${it.message}") }
 
+            contactSsePublisher.publishContactChanged(tenantId, contactId, "contact_updated")
             call.respond(HttpStatusCode.OK, contact)
         }
 
@@ -416,6 +456,7 @@ fun Route.contactRoutes() {
                 authorName = principal.email
             ).getOrElse { throw DokusException.InternalError("Failed to create note: ${it.message}") }
 
+            contactSsePublisher.publishContactChanged(tenantId, contactId, "note_created")
             call.respond(HttpStatusCode.Created, note)
         }
 
@@ -425,12 +466,14 @@ fun Route.contactRoutes() {
          */
         put<Contacts.Id.Notes.ById> { route ->
             val tenantId = requireTenantId()
+            val contactId = ContactId.parse(route.parent.parent.id)
             val noteId = ContactNoteId.parse(route.noteId)
             val request = call.receive<UpdateContactNoteRequest>()
 
             val note = contactNoteService.updateNote(noteId, tenantId, request.content)
                 .getOrElse { throw DokusException.InternalError("Failed to update note: ${it.message}") }
 
+            contactSsePublisher.publishContactChanged(tenantId, contactId, "note_updated")
             call.respond(HttpStatusCode.OK, note)
         }
 
@@ -440,11 +483,13 @@ fun Route.contactRoutes() {
          */
         delete<Contacts.Id.Notes.ById> { route ->
             val tenantId = requireTenantId()
+            val contactId = ContactId.parse(route.parent.parent.id)
             val noteId = ContactNoteId.parse(route.noteId)
 
             contactNoteService.deleteNote(noteId, tenantId)
                 .getOrElse { throw DokusException.InternalError("Failed to delete note: ${it.message}") }
 
+            contactSsePublisher.publishContactChanged(tenantId, contactId, "note_deleted")
             call.respond(HttpStatusCode.NoContent)
         }
     }

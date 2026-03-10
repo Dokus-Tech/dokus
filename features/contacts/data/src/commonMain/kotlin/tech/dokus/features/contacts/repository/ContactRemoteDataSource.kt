@@ -2,6 +2,7 @@
 
 package tech.dokus.features.contacts.repository
 
+import kotlinx.coroutines.flow.Flow
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.ContactNoteId
 import tech.dokus.domain.ids.DocumentId
@@ -113,4 +114,7 @@ interface ContactRemoteDataSource {
         contactId: ContactId,
         noteId: ContactNoteId
     ): Result<Unit>
+
+    // SSE Operations
+    fun observeContactChanges(contactId: ContactId): Flow<Unit>
 }

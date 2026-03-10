@@ -10,6 +10,8 @@ import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.ContactNoteDto
 import tech.dokus.domain.model.contact.CreateContactNoteRequest
 import tech.dokus.domain.model.contact.UpdateContactNoteRequest
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import tech.dokus.features.auth.usecases.GetCurrentTenantIdUseCase
 import tech.dokus.features.contacts.usecases.CacheContactsUseCase
 import tech.dokus.features.contacts.usecases.ContactInvoiceSnapshot
@@ -21,6 +23,7 @@ import tech.dokus.features.contacts.usecases.GetContactInvoiceSnapshotUseCase
 import tech.dokus.features.contacts.usecases.GetContactPeppolStatusUseCase
 import tech.dokus.features.contacts.usecases.GetContactUseCase
 import tech.dokus.features.contacts.usecases.ListContactNotesUseCase
+import tech.dokus.features.contacts.usecases.ObserveContactChangesUseCase
 import tech.dokus.features.contacts.usecases.UpdateContactNoteUseCase
 
 internal class StubGetContactUseCase(
@@ -108,4 +111,10 @@ internal class StubGetCurrentTenantIdUseCase(
     private val tenantId: TenantId?
 ) : GetCurrentTenantIdUseCase {
     override suspend fun invoke() = tenantId
+}
+
+internal class StubObserveContactChangesUseCase(
+    private val flow: Flow<Unit> = emptyFlow()
+) : ObserveContactChangesUseCase {
+    override fun invoke(contactId: ContactId): Flow<Unit> = flow
 }

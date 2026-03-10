@@ -70,6 +70,14 @@ class Contacts(
      * PATCH - Partial update (including active status for activation/deactivation)
      * DELETE - Delete contact
      */
+    /**
+     * GET /api/v1/contacts/{id}/events
+     * SSE stream for per-contact change notifications.
+     */
+    @Serializable
+    @Resource("{id}/events")
+    class Events(val parent: Contacts = Contacts(), val id: String)
+
     @Serializable
     @Resource("{id}")
     class Id(val parent: Contacts = Contacts(), val id: String) {
