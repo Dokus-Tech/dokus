@@ -404,7 +404,6 @@ private fun TransactionRowPreview(
         DokusCardSurface(modifier = Modifier.fillMaxWidth()) {
             Column {
                 TransactionHeaderRow()
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 TransactionRow(
                     transaction = PreviewUnmatchedTx,
                     isSelected = false,

@@ -25,8 +25,13 @@ import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.banking_filter_all_accounts
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.domain.ids.BankAccountId
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Composable
 internal fun AccountFilterDropdown(
@@ -105,5 +110,42 @@ internal fun AccountFilterDropdown(
                 )
             }
         }
+    }
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+private val PreviewAccounts = mapOf(
+    BankAccountId.generate() to "KBC Business",
+    BankAccountId.generate() to "Belfius",
+)
+
+@Preview(name = "Account Filter — All")
+@Composable
+private fun AccountFilterDropdownAllPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
+) {
+    TestWrapper(parameters) {
+        AccountFilterDropdown(
+            accounts = PreviewAccounts,
+            selectedAccountId = null,
+            onSelect = {},
+        )
+    }
+}
+
+@Preview(name = "Account Filter — Selected")
+@Composable
+private fun AccountFilterDropdownSelectedPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
+) {
+    TestWrapper(parameters) {
+        AccountFilterDropdown(
+            accounts = PreviewAccounts,
+            selectedAccountId = PreviewAccounts.keys.first(),
+            onSelect = {},
+        )
     }
 }
