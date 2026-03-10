@@ -4,8 +4,8 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import pro.respawn.flowmvi.dsl.withState
-import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentRejectReason
+import tech.dokus.domain.model.contact.CounterpartyInfo
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
@@ -175,7 +175,7 @@ internal class DocumentReviewActions(
                         val cashflowEntryId = record.cashflowEntryId
                         withState {
                             val currentData = documentData ?: return@withState
-                            val linkedContactId = draft?.linkedContactId
+                            val linked = draft?.counterparty as? CounterpartyInfo.Linked
                             updateState {
                                 copy(
                                     document = DokusState.success(
@@ -193,9 +193,9 @@ internal class DocumentReviewActions(
                                     isContactRequired = draft?.extractedData?.let {
                                         it.isContactRequired
                                     } ?: isContactRequired,
-                                    counterpartyIntent = draft?.counterpartyIntent ?: CounterpartyIntent.None,
-                                    selectedContactId = linkedContactId ?: selectedContactId,
-                                    contactSelectionState = if (linkedContactId != null) {
+                                    isPendingCreation = (draft?.counterparty as? CounterpartyInfo.Unresolved)?.pendingCreation == true,
+                                    selectedContactId = linked?.contactId ?: selectedContactId,
+                                    contactSelectionState = if (linked != null) {
                                         ContactSelectionState.Selected
                                     } else {
                                         contactSelectionState
@@ -361,7 +361,7 @@ internal class DocumentReviewActions(
                             isContactRequired = draft?.extractedData?.let {
                                 it.isContactRequired
                             } ?: isContactRequired,
-                            counterpartyIntent = draft?.counterpartyIntent ?: CounterpartyIntent.None,
+                            isPendingCreation = (draft?.counterparty as? CounterpartyInfo.Unresolved)?.pendingCreation == true,
                             confirmedCashflowEntryId = record.cashflowEntryId,
                             isDocumentConfirmed = draft?.documentStatus == DocumentStatus.Confirmed,
                             isDocumentRejected = draft?.documentStatus == DocumentStatus.Rejected

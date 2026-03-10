@@ -12,7 +12,7 @@ import tech.dokus.database.repository.cashflow.DocumentPurposeTemplateRepository
 import tech.dokus.database.repository.cashflow.DocumentPurposeTemplateSummary
 import tech.dokus.database.repository.cashflow.DraftSummary
 import tech.dokus.domain.Money
-import tech.dokus.domain.enums.CounterpartyIntent
+import tech.dokus.domain.enums.ContactLinkSource
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentPurposeSource
 import tech.dokus.domain.enums.PurposePeriodMode
@@ -23,6 +23,7 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.InvoiceDraftData
+import tech.dokus.domain.model.contact.CounterpartyInfo
 import tech.dokus.domain.model.PartyDraft
 import tech.dokus.features.ai.agents.DocumentProcessingAgent
 import tech.dokus.features.ai.models.PurposeEnrichmentResult
@@ -271,8 +272,7 @@ class DocumentPurposeServiceTest {
             draftVersion = 0,
             draftEditedAt = null,
             draftEditedBy = null,
-            linkedContactId = contactId,
-            counterpartyIntent = CounterpartyIntent.None,
+            counterparty = CounterpartyInfo.Linked(contactId = contactId, source = ContactLinkSource.User),
             rejectReason = null,
             lastSuccessfulRunId = null,
             createdAt = now,

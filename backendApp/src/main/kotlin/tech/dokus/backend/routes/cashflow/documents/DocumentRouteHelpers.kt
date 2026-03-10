@@ -29,6 +29,7 @@ import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.domain.model.UpdateDraftRequest
+import tech.dokus.domain.model.contact.CounterpartyInfo
 import tech.dokus.domain.utils.parseSafe
 import tech.dokus.foundation.backend.storage.DocumentStorageService as MinioDocumentStorageService
 
@@ -97,12 +98,8 @@ internal fun DraftSummary.toDto(): DocumentDraftDto = DocumentDraftDto(
     draftVersion = draftVersion,
     draftEditedAt = draftEditedAt,
     draftEditedBy = draftEditedBy,
-    contactSuggestions = contactSuggestions,
-    counterpartySnapshot = counterpartySnapshot,
-    matchEvidence = matchEvidence,
-    linkedContactId = linkedContactId,
-    linkedContactSource = linkedContactSource,
-    counterpartyIntent = counterpartyIntent,
+    counterparty = counterparty,
+    counterpartyDisplayName = counterpartyDisplayName,
     rejectReason = rejectReason,
     lastSuccessfulRunId = lastSuccessfulRunId,
     createdAt = createdAt,
@@ -193,12 +190,20 @@ internal suspend fun updateDraftCounterparty(
     request: UpdateDraftRequest
 ) {
     val contactId = request.contactId?.let { ContactId.parse(it) }
+    val counterparty: CounterpartyInfo = if (contactId != null) {
+        CounterpartyInfo.Linked(
+            contactId = contactId,
+            source = ContactLinkSource.User,
+        )
+    } else {
+        CounterpartyInfo.Unresolved(
+            pendingCreation = request.pendingCreation == true,
+        )
+    }
     val updated = draftRepository.updateCounterparty(
         documentId = documentId,
         tenantId = tenantId,
-        contactId = contactId,
-        intent = request.counterpartyIntent,
-        source = if (contactId != null) ContactLinkSource.User else null
+        counterparty = counterparty,
     )
     if (!updated) {
         throw DokusException.InternalError("Failed to update document counterparty")

@@ -131,7 +131,6 @@ class DocumentRowAttentionTest {
             draftVersion = 1,
             draftEditedAt = null,
             draftEditedBy = null,
-            linkedContactId = null,
             lastSuccessfulRunId = null,
             createdAt = NOW,
             updatedAt = NOW

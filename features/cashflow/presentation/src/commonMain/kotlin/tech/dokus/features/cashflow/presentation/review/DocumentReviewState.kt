@@ -12,7 +12,6 @@ import tech.dokus.aura.resources.cashflow_confirm_missing_fields
 import tech.dokus.aura.resources.cashflow_confirm_select_contact
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.CashflowEntryStatus
-import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentRejectReason
 import tech.dokus.domain.enums.DocumentSource
@@ -127,7 +126,7 @@ data class DocumentReviewState(
     val selectedContactSnapshot: ContactSnapshot? = null,
     val contactSelectionState: ContactSelectionState = ContactSelectionState.NoContact,
     val isContactRequired: Boolean = false,
-    val counterpartyIntent: CounterpartyIntent = CounterpartyIntent.None,
+    val isPendingCreation: Boolean = false,
     val contactValidationError: DokusException? = null,
     val isBindingContact: Boolean = false,
     val isRejecting: Boolean = false,
@@ -230,7 +229,7 @@ data class DocumentReviewState(
             if (isDocumentConfirmed || isDocumentRejected) return null
             val draft = draftData ?: return Res.string.cashflow_confirm_missing_fields
             return when {
-                counterpartyIntent == CounterpartyIntent.Pending -> Res.string.cashflow_confirm_select_contact
+                isPendingCreation -> Res.string.cashflow_confirm_select_contact
                 draft.isContactRequired && selectedContactId == null -> Res.string.cashflow_confirm_select_contact
                 !draft.hasKnownDirectionForConfirmation -> Res.string.cashflow_confirm_missing_fields
                 !draft.hasRequiredIdentityForConfirmation -> Res.string.cashflow_confirm_missing_fields
@@ -306,7 +305,7 @@ data class DocumentReviewState(
      */
     val description: String
         get() {
-            val counterparty = documentRecord?.draft?.counterpartySnapshot?.name?.takeIf { it.isNotBlank() }
+            val counterparty = documentRecord?.draft?.counterpartyDisplayName?.takeIf { it.isNotBlank() }
                 ?: selectedContactSnapshot?.name?.takeIf { it.isNotBlank() }
             val context = draftData.displayContextDescription
 

@@ -43,7 +43,7 @@ class DocumentConfirmationDispatcherTest {
             tenantId = tenantId,
             documentId = documentId,
             draftData = InvoiceDraftData(direction = DocumentDirection.Inbound),
-            linkedContactId = null
+            contactId = null
         )
 
         assertTrue(confirmation.isSuccess)
@@ -60,7 +60,7 @@ class DocumentConfirmationDispatcherTest {
             tenantId = tenantId,
             documentId = documentId,
             draftData = InvoiceDraftData(direction = DocumentDirection.Inbound),
-            linkedContactId = null
+            contactId = null
         )
 
         assertTrue(confirmation.isFailure)

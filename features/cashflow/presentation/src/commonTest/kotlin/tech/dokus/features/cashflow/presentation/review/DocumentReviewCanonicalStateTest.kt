@@ -179,7 +179,6 @@ class DocumentReviewCanonicalStateTest {
             draftVersion = 1,
             draftEditedAt = null,
             draftEditedBy = null,
-            linkedContactId = null,
             lastSuccessfulRunId = null,
             createdAt = now,
             updatedAt = now,

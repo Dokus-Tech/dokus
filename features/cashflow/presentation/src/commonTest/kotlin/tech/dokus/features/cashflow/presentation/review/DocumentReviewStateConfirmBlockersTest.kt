@@ -3,7 +3,7 @@ package tech.dokus.features.cashflow.presentation.review
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import tech.dokus.domain.Money
-import tech.dokus.domain.enums.CounterpartyIntent
+import tech.dokus.domain.enums.ContactLinkSource
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentStatus
@@ -11,6 +11,7 @@ import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.contact.CounterpartyInfo
 import tech.dokus.domain.model.BankStatementDraftData
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentDraftData
@@ -76,7 +77,7 @@ class DocumentReviewStateConfirmBlockersTest {
     fun `pending counterparty blocks confirmation`() {
         val state = contentState(
             draftData = defaultInvoiceDraft(direction = DocumentDirection.Inbound),
-            counterpartyIntent = CounterpartyIntent.Pending,
+            isPendingCreation = true,
             selectedContactId = null,
         )
 
@@ -162,11 +163,20 @@ class DocumentReviewStateConfirmBlockersTest {
         hasUnsavedChanges: Boolean = false,
         isSaving: Boolean = false,
         selectedContactId: ContactId? = null,
-        counterpartyIntent: CounterpartyIntent = CounterpartyIntent.None,
+        isPendingCreation: Boolean = false,
     ): DocumentReviewState {
         val tenantId = TenantId.parse("44e8ed5c-020a-4bbb-9439-ac85899c5589")
         val documentId = DocumentId.parse("e72f69a8-6913-4d8f-98e7-224db7f4133f")
         val now = LocalDateTime(2026, 2, 11, 0, 0, 0)
+
+        val counterparty = when {
+            selectedContactId != null -> CounterpartyInfo.Linked(
+                contactId = selectedContactId,
+                source = ContactLinkSource.AI,
+            )
+            isPendingCreation -> CounterpartyInfo.Unresolved(pendingCreation = true)
+            else -> null
+        }
 
         val draft = DocumentDraftDto(
             documentId = documentId,
@@ -179,8 +189,7 @@ class DocumentReviewStateConfirmBlockersTest {
             draftVersion = 1,
             draftEditedAt = null,
             draftEditedBy = null,
-            linkedContactId = selectedContactId,
-            counterpartyIntent = counterpartyIntent,
+            counterparty = counterparty,
             lastSuccessfulRunId = null,
             createdAt = now,
             updatedAt = now,
@@ -217,7 +226,7 @@ class DocumentReviewStateConfirmBlockersTest {
             isSaving = isSaving,
             isContactRequired = true,
             selectedContactId = selectedContactId,
-            counterpartyIntent = counterpartyIntent,
+            isPendingCreation = isPendingCreation,
         )
     }
 

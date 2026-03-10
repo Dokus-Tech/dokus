@@ -8,7 +8,6 @@ import tech.dokus.database.tables.auth.TenantTable
 import tech.dokus.database.tables.auth.UsersTable
 import tech.dokus.database.tables.contacts.ContactsTable
 import tech.dokus.domain.enums.ContactLinkSource
-import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentRejectReason
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DocumentStatus
@@ -123,9 +122,8 @@ object DocumentDraftsTable : Table("document_drafts") {
     // Evidence JSON for contact decision (MatchEvidence)
     val matchEvidence = text("match_evidence").nullable()
 
-    // Counterparty intent (NONE/PENDING)
-    val counterpartyIntent = dbEnumeration<CounterpartyIntent>("counterparty_intent")
-        .default(CounterpartyIntent.None)
+    // Whether a new contact should be created from the counterparty snapshot
+    val pendingCreation = bool("pending_creation").default(false)
 
     // Rejection reason (if documentStatus == Rejected)
     val rejectReason = dbEnumeration<DocumentRejectReason>("reject_reason").nullable()

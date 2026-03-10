@@ -1,7 +1,7 @@
 package tech.dokus.features.cashflow.presentation.model
 
 import kotlinx.datetime.LocalDateTime
-import tech.dokus.domain.enums.CounterpartyIntent
+import tech.dokus.domain.enums.ContactLinkSource
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.IngestionStatus
@@ -9,6 +9,7 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.contact.CounterpartyInfo
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.DocumentIngestionDto
@@ -154,11 +155,11 @@ class DocumentUiStatusMapperTest {
         ingestionStatus: IngestionStatus = IngestionStatus.Queued,
         errorMessage: String? = null,
         confidence: Double? = null,
-        linkedContactId: ContactId? = null,
+        contactId: ContactId? = null,
         documentStatus: DocumentStatus = DocumentStatus.NeedsReview,
         documentType: DocumentType? = null,
         draft: DocumentDraftDto? = createDraft(
-            linkedContactId = linkedContactId,
+            contactId = contactId,
             documentStatus = documentStatus,
             documentType = documentType
         ),
@@ -193,7 +194,7 @@ class DocumentUiStatusMapperTest {
     }
 
     private fun createDraft(
-        linkedContactId: ContactId?,
+        contactId: ContactId?,
         documentStatus: DocumentStatus,
         documentType: DocumentType?
     ): DocumentDraftDto {
@@ -209,8 +210,9 @@ class DocumentUiStatusMapperTest {
             draftVersion = 1,
             draftEditedAt = null,
             draftEditedBy = null,
-            linkedContactId = linkedContactId,
-            counterpartyIntent = CounterpartyIntent.None,
+            counterparty = contactId?.let {
+                CounterpartyInfo.Linked(contactId = it, source = ContactLinkSource.AI)
+            },
             rejectReason = null,
             lastSuccessfulRunId = null,
             createdAt = now,

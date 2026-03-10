@@ -420,8 +420,8 @@ private fun TodayRecentRow(
 // ── Helpers ─────────────────────────────────────────────────────────────
 
 private fun DocumentRecordDto.vendorName(): String {
-    val snapshot = draft?.counterpartySnapshot?.name
-    if (!snapshot.isNullOrBlank()) return snapshot
+    val displayName = draft?.counterpartyDisplayName
+    if (!displayName.isNullOrBlank()) return displayName
     return when (val data = draft?.extractedData) {
         is InvoiceDraftData -> data.seller.name ?: data.buyer.name ?: document.filename
         is CreditNoteDraftData -> data.counterpartyName ?: document.filename

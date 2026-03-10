@@ -1,7 +1,6 @@
 package tech.dokus.features.cashflow.usecase
 
 import kotlinx.coroutines.flow.Flow
-import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentMatchReviewId
@@ -61,12 +60,12 @@ internal class UpdateDocumentDraftContactUseCaseImpl(
     override suspend fun invoke(
         documentId: DocumentId,
         contactId: ContactId?,
-        counterpartyIntent: CounterpartyIntent?
+        pendingCreation: Boolean
     ): Result<Unit> {
         return documentReviewGateway.updateDocumentDraftContact(
             documentId = documentId,
             contactId = contactId,
-            counterpartyIntent = counterpartyIntent
+            pendingCreation = pendingCreation
         )
     }
 }

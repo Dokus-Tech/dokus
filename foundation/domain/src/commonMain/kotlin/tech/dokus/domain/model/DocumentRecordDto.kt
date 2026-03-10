@@ -3,8 +3,6 @@ package tech.dokus.domain.model
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
-import tech.dokus.domain.enums.ContactLinkSource
-import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentPurposeSource
 import tech.dokus.domain.enums.DocumentRejectReason
@@ -14,14 +12,11 @@ import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.enums.ProcessingOutcome
 import tech.dokus.domain.enums.PurposePeriodMode
 import tech.dokus.domain.ids.CashflowEntryId
-import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
-import tech.dokus.domain.model.contact.CounterpartySnapshot
-import tech.dokus.domain.model.contact.MatchEvidence
-import tech.dokus.domain.model.contact.SuggestedContact
+import tech.dokus.domain.model.contact.CounterpartyInfo
 import kotlin.time.Instant
 
 /**
@@ -85,12 +80,8 @@ data class DocumentDraftDto(
     val draftVersion: Int,
     val draftEditedAt: LocalDateTime?,
     val draftEditedBy: UserId?,
-    val contactSuggestions: List<SuggestedContact> = emptyList(),
-    val counterpartySnapshot: CounterpartySnapshot? = null,
-    val matchEvidence: MatchEvidence? = null,
-    val linkedContactId: ContactId?,
-    val linkedContactSource: ContactLinkSource? = null,
-    val counterpartyIntent: CounterpartyIntent = CounterpartyIntent.None,
+    val counterparty: CounterpartyInfo? = null,
+    val counterpartyDisplayName: String? = null,
     val rejectReason: DocumentRejectReason? = null,
     val lastSuccessfulRunId: IngestionRunId?,
     val createdAt: LocalDateTime,
@@ -162,7 +153,7 @@ data class ReprocessResponse(
 data class UpdateDraftRequest(
     val extractedData: DocumentDraftData? = null,
     val contactId: String? = null,
-    val counterpartyIntent: CounterpartyIntent? = null,
+    val pendingCreation: Boolean? = null,
     val purpose: String? = null,
     val purposePeriodMode: PurposePeriodMode? = null,
     val changeDescription: String? = null

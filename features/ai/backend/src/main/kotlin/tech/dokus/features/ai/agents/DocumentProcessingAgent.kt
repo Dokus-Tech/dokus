@@ -25,7 +25,7 @@ import tech.dokus.features.ai.graph.nodes.InputWithDocumentId
 import tech.dokus.features.ai.graph.nodes.InputWithTenantContext
 import tech.dokus.features.ai.graph.nodes.InputWithUserFeedback
 import tech.dokus.features.ai.graph.nodes.documentImagesInjectorNode
-
+import tech.dokus.features.ai.graph.nodes.tenantContextInjectorNode
 import tech.dokus.features.ai.graph.nodes.userFeedbackInjectorNode
 import tech.dokus.features.ai.graph.purposeEnrichmentGraph
 import tech.dokus.features.ai.graph.sub.ClassificationResult
@@ -203,6 +203,7 @@ class DocumentProcessingAgent(
                 storage.set(classificationKey, input.classification)
                 input
             }
+            val injectTenant by tenantContextInjectorNode<DocumentExtractionInput>()
             val injectImages by documentImagesInjectorNode<DocumentExtractionInput>(documentFetcher)
             val injectUserFeedback by userFeedbackInjectorNode<DocumentExtractionInput>()
             val prepareExtractionInput by node<DocumentExtractionInput, ExtractDocumentInput>("prepare-extraction") { input ->
@@ -244,7 +245,7 @@ class DocumentProcessingAgent(
                 )
             }
 
-            nodeStart then storeInputContext then injectImages then injectUserFeedback then prepareExtractionInput then extract then resolveDirection then auditAndWrap then nodeFinish
+            nodeStart then storeInputContext then injectTenant then injectImages then injectUserFeedback then prepareExtractionInput then extract then resolveDirection then auditAndWrap then nodeFinish
         }
     }
 

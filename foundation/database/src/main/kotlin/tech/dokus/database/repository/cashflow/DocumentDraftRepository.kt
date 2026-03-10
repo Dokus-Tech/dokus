@@ -4,6 +4,7 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
@@ -14,9 +15,9 @@ import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.v1.jdbc.update
+import tech.dokus.database.tables.contacts.ContactsTable
 import tech.dokus.database.tables.documents.DocumentDraftsTable
 import tech.dokus.domain.enums.ContactLinkSource
-import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentPurposeSource
 import tech.dokus.domain.enums.DocumentRejectReason
 import tech.dokus.domain.enums.DocumentType
@@ -32,6 +33,7 @@ import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.domain.model.toDocumentType
+import tech.dokus.domain.model.contact.CounterpartyInfo
 import tech.dokus.domain.model.contact.CounterpartySnapshot
 import tech.dokus.domain.model.contact.MatchEvidence
 import tech.dokus.domain.model.contact.SuggestedContact
@@ -65,12 +67,8 @@ data class DraftSummary(
     val draftVersion: Int,
     val draftEditedAt: LocalDateTime?,
     val draftEditedBy: UserId?,
-    val contactSuggestions: List<SuggestedContact> = emptyList(),
-    val counterpartySnapshot: CounterpartySnapshot? = null,
-    val matchEvidence: MatchEvidence? = null,
-    val linkedContactId: ContactId?,
-    val linkedContactSource: ContactLinkSource? = null,
-    val counterpartyIntent: CounterpartyIntent,
+    val counterparty: CounterpartyInfo? = null,
+    val counterpartyDisplayName: String? = null,
     val rejectReason: DocumentRejectReason?,
     val lastSuccessfulRunId: IngestionRunId?,
     val createdAt: LocalDateTime,
@@ -175,12 +173,16 @@ class DocumentDraftRepository : DocumentStatusChecker {
         documentId: DocumentId,
         tenantId: TenantId
     ): DraftSummary? = newSuspendedTransaction {
-        DocumentDraftsTable.selectAll()
+        DocumentDraftsTable
+            .join(ContactsTable, JoinType.LEFT, DocumentDraftsTable.linkedContactId, ContactsTable.id) {
+                ContactsTable.tenantId eq DocumentDraftsTable.tenantId
+            }
+            .selectAll()
             .where {
                 (DocumentDraftsTable.documentId eq UUID.fromString(documentId.toString())) and
                     (DocumentDraftsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }
-            .map { it.toDraftSummary() }
+            .map { it.toDraftSummary(contactName = it.getOrNull(ContactsTable.name)) }
             .singleOrNull()
     }
 
@@ -279,21 +281,17 @@ class DocumentDraftRepository : DocumentStatusChecker {
     }
 
     /**
-     * Update linked contact and/or counterparty intent.
+     * Update counterparty info on a draft.
      * If the draft was previously confirmed, it transitions to NeedsReview.
      */
     suspend fun updateCounterparty(
         documentId: DocumentId,
         tenantId: TenantId,
-        contactId: ContactId?,
-        intent: CounterpartyIntent?,
-        source: ContactLinkSource? = null,
-        matchEvidence: MatchEvidence? = null
+        counterparty: CounterpartyInfo
     ): Boolean = newSuspendedTransaction {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         val docIdUuid = UUID.fromString(documentId.toString())
         val tenantIdUuid = UUID.fromString(tenantId.toString())
-        val evidenceJson = matchEvidence?.let { json.encodeToString(it) }
 
         val current = DocumentDraftsTable.selectAll()
             .where {
@@ -309,18 +307,18 @@ class DocumentDraftRepository : DocumentStatusChecker {
             (DocumentDraftsTable.documentId eq docIdUuid) and
                 (DocumentDraftsTable.tenantId eq tenantIdUuid)
         }) {
-            if (contactId != null) {
-                it[linkedContactId] = UUID.fromString(contactId.toString())
-                it[counterpartyIntent] = CounterpartyIntent.None
-                it[linkedContactSource] = source
-                if (evidenceJson != null) {
-                    it[DocumentDraftsTable.matchEvidence] = evidenceJson
+            when (counterparty) {
+                is CounterpartyInfo.Linked -> {
+                    it[linkedContactId] = UUID.fromString(counterparty.contactId.toString())
+                    it[linkedContactSource] = counterparty.source
+                    it[matchEvidence] = counterparty.evidence?.let { ev -> json.encodeToString(ev) }
+                    it[pendingCreation] = false
                 }
-            } else if (intent != null) {
-                it[counterpartyIntent] = intent
-                if (intent == CounterpartyIntent.None || intent == CounterpartyIntent.Pending) {
+                is CounterpartyInfo.Unresolved -> {
                     it[linkedContactId] = null
                     it[linkedContactSource] = null
+                    it[matchEvidence] = null
+                    it[pendingCreation] = counterparty.pendingCreation
                 }
             }
             if (shouldReview) {
@@ -388,38 +386,41 @@ class DocumentDraftRepository : DocumentStatusChecker {
     }
 
     /**
-     * Update contact resolution results (suggestions, snapshot, evidence, and optional link).
+     * Update contact resolution results (snapshot, counterparty info).
      * CRITICAL: Must filter by tenantId.
      */
     suspend fun updateContactResolution(
         documentId: DocumentId,
         tenantId: TenantId,
-        contactSuggestions: List<SuggestedContact> = emptyList(),
         counterpartySnapshot: CounterpartySnapshot? = null,
-        matchEvidence: MatchEvidence? = null,
-        linkedContactId: ContactId? = null,
-        linkedContactSource: ContactLinkSource? = null
+        counterparty: CounterpartyInfo
     ): Boolean = newSuspendedTransaction {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-        val suggestionsJson = json.encodeToString(contactSuggestions)
         val snapshotJson = counterpartySnapshot?.let { json.encodeToString(it) }
 
         DocumentDraftsTable.update({
             (DocumentDraftsTable.documentId eq UUID.fromString(documentId.toString())) and
                 (DocumentDraftsTable.tenantId eq UUID.fromString(tenantId.toString()))
         }) {
-            it[DocumentDraftsTable.contactSuggestions] = suggestionsJson
             it[DocumentDraftsTable.counterpartySnapshot] = snapshotJson
 
-            if (linkedContactId != null) {
-                it[DocumentDraftsTable.linkedContactId] = UUID.fromString(linkedContactId.toString())
-                it[DocumentDraftsTable.linkedContactSource] = linkedContactSource
-                it[DocumentDraftsTable.counterpartyIntent] = CounterpartyIntent.None
-                it[DocumentDraftsTable.matchEvidence] = matchEvidence?.let { evidence -> json.encodeToString(evidence) }
-            } else {
-                it[DocumentDraftsTable.linkedContactId] = null
-                it[DocumentDraftsTable.linkedContactSource] = null
-                it[DocumentDraftsTable.matchEvidence] = null
+            when (counterparty) {
+                is CounterpartyInfo.Linked -> {
+                    it[DocumentDraftsTable.linkedContactId] = UUID.fromString(counterparty.contactId.toString())
+                    it[DocumentDraftsTable.linkedContactSource] = counterparty.source
+                    it[DocumentDraftsTable.matchEvidence] = counterparty.evidence?.let { ev -> json.encodeToString(ev) }
+                    it[DocumentDraftsTable.contactSuggestions] = null
+                    it[DocumentDraftsTable.pendingCreation] = false
+                }
+                is CounterpartyInfo.Unresolved -> {
+                    it[DocumentDraftsTable.linkedContactId] = null
+                    it[DocumentDraftsTable.linkedContactSource] = null
+                    it[DocumentDraftsTable.matchEvidence] = null
+                    it[DocumentDraftsTable.contactSuggestions] = counterparty.suggestions
+                        .takeIf { s -> s.isNotEmpty() }
+                        ?.let { s -> json.encodeToString(s) }
+                    it[DocumentDraftsTable.pendingCreation] = counterparty.pendingCreation
+                }
             }
 
             it[DocumentDraftsTable.updatedAt] = now
@@ -545,7 +546,8 @@ class DocumentDraftRepository : DocumentStatusChecker {
         draft?.get(DocumentDraftsTable.documentStatus) == DocumentStatus.Confirmed
     }
 
-    private fun ResultRow.toDraftSummary(): DraftSummary {
+    private fun ResultRow.toDraftSummary(contactName: String? = null): DraftSummary {
+        val counterpartyInfo = buildCounterpartyInfo(this)
         return DraftSummary(
             documentId = DocumentId.parse(this[DocumentDraftsTable.documentId].toString()),
             tenantId = TenantId(this[DocumentDraftsTable.tenantId].toKotlinUuid()),
@@ -568,21 +570,49 @@ class DocumentDraftRepository : DocumentStatusChecker {
             draftVersion = this[DocumentDraftsTable.draftVersion],
             draftEditedAt = this[DocumentDraftsTable.draftEditedAt],
             draftEditedBy = this[DocumentDraftsTable.draftEditedBy]?.let { UserId(it.toKotlinUuid()) },
-            contactSuggestions = this[DocumentDraftsTable.contactSuggestions]
-                ?.let { json.decodeFromString(it) }
-                ?: emptyList(),
-            counterpartySnapshot = this[DocumentDraftsTable.counterpartySnapshot]
-                ?.let { json.decodeFromString(it) },
-            matchEvidence = this[DocumentDraftsTable.matchEvidence]
-                ?.let { json.decodeFromString(it) },
-            linkedContactId = this[DocumentDraftsTable.linkedContactId]?.let { ContactId(it.toKotlinUuid()) },
-            linkedContactSource = this[DocumentDraftsTable.linkedContactSource],
-            counterpartyIntent = this[DocumentDraftsTable.counterpartyIntent],
+            counterparty = counterpartyInfo,
+            counterpartyDisplayName = contactName
+                ?: (counterpartyInfo as? CounterpartyInfo.Unresolved)?.snapshot?.name,
             rejectReason = this[DocumentDraftsTable.rejectReason],
             lastSuccessfulRunId = this[DocumentDraftsTable.lastSuccessfulRunId]
                 ?.let { IngestionRunId.parse(it.toString()) },
             createdAt = this[DocumentDraftsTable.createdAt],
             updatedAt = this[DocumentDraftsTable.updatedAt]
         )
+    }
+
+    companion object {
+        internal fun buildCounterpartyInfo(row: ResultRow): CounterpartyInfo? {
+            val linkedContactId = row[DocumentDraftsTable.linkedContactId]
+                ?.let { ContactId(it.toKotlinUuid()) }
+            val linkedContactSource = row[DocumentDraftsTable.linkedContactSource]
+            val matchEvidence = row[DocumentDraftsTable.matchEvidence]
+                ?.let { json.decodeFromString<MatchEvidence>(it) }
+
+            if (linkedContactId != null && linkedContactSource != null) {
+                return CounterpartyInfo.Linked(
+                    contactId = linkedContactId,
+                    source = linkedContactSource,
+                    evidence = matchEvidence,
+                )
+            }
+
+            val snapshot = row[DocumentDraftsTable.counterpartySnapshot]
+                ?.let { json.decodeFromString<CounterpartySnapshot>(it) }
+            val suggestions = row[DocumentDraftsTable.contactSuggestions]
+                ?.let { json.decodeFromString<List<SuggestedContact>>(it) }
+                ?: emptyList()
+            val pendingCreation = row[DocumentDraftsTable.pendingCreation]
+
+            if (snapshot != null || suggestions.isNotEmpty() || pendingCreation) {
+                return CounterpartyInfo.Unresolved(
+                    snapshot = snapshot,
+                    suggestions = suggestions,
+                    pendingCreation = pendingCreation,
+                )
+            }
+
+            return null
+        }
     }
 }

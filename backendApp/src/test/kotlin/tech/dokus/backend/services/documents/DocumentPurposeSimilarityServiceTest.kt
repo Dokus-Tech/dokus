@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentPurposeSimilarityRepository
 import tech.dokus.database.repository.cashflow.DraftSummary
-import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentPurposeSource
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
@@ -122,8 +121,7 @@ class DocumentPurposeSimilarityServiceTest {
             draftVersion = 0,
             draftEditedAt = null,
             draftEditedBy = null,
-            linkedContactId = null,
-            counterpartyIntent = CounterpartyIntent.None,
+            counterparty = null,
             rejectReason = null,
             lastSuccessfulRunId = null,
             createdAt = now,

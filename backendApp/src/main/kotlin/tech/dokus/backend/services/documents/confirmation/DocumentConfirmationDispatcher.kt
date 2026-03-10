@@ -29,12 +29,12 @@ class DocumentConfirmationDispatcher(
         tenantId: TenantId,
         documentId: DocumentId,
         draftData: DocumentDraftData,
-        linkedContactId: ContactId?
+        contactId: ContactId?
     ): Result<ConfirmationResult> {
         val confirmation = when (draftData) {
-            is InvoiceDraftData -> invoiceService.confirm(tenantId, documentId, draftData, linkedContactId)
-            is ReceiptDraftData -> receiptService.confirm(tenantId, documentId, draftData, linkedContactId)
-            is CreditNoteDraftData -> creditNoteService.confirm(tenantId, documentId, draftData, linkedContactId)
+            is InvoiceDraftData -> invoiceService.confirm(tenantId, documentId, draftData, contactId)
+            is ReceiptDraftData -> receiptService.confirm(tenantId, documentId, draftData, contactId)
+            is CreditNoteDraftData -> creditNoteService.confirm(tenantId, documentId, draftData, contactId)
             is BankStatementDraftData -> Result.failure(
                 DokusException.BadRequest("Bank statement documents cannot be manually confirmed")
             )

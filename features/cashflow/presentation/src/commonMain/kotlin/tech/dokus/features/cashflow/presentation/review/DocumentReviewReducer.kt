@@ -173,8 +173,8 @@ internal class DocumentReviewReducer(
     suspend fun DocumentReviewCtx.handleContactCreated(contactId: ContactId) =
         with(contactBinder) { handleContactCreated(contactId) }
 
-    suspend fun DocumentReviewCtx.handleSetCounterpartyIntent(intent: tech.dokus.domain.enums.CounterpartyIntent) =
-        with(contactBinder) { handleSetCounterpartyIntent(intent) }
+    suspend fun DocumentReviewCtx.handleSetPendingCreation() =
+        with(contactBinder) { handleSetPendingCreation() }
 
     // Contact sheet handlers
     suspend fun DocumentReviewCtx.handleOpenContactSheet() =

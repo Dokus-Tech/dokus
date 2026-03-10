@@ -10,7 +10,6 @@ import tech.dokus.backend.services.cashflow.CashflowEntriesService
 import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DraftSummary
 import tech.dokus.database.repository.cashflow.InvoiceRepository
-import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
@@ -46,7 +45,7 @@ class InvoiceConfirmationServiceTest {
             tenantId = tenantId,
             documentId = documentId,
             draftData = InvoiceDraftData(direction = DocumentDirection.Unknown),
-            linkedContactId = linkedContactId
+            contactId = linkedContactId
         )
 
         assertTrue(result.isFailure)
@@ -72,8 +71,7 @@ class InvoiceConfirmationServiceTest {
             draftVersion = 0,
             draftEditedAt = null,
             draftEditedBy = null,
-            linkedContactId = null,
-            counterpartyIntent = CounterpartyIntent.None,
+            counterparty = null,
             rejectReason = null,
             lastSuccessfulRunId = null,
             createdAt = now,

@@ -47,7 +47,6 @@ import tech.dokus.database.repository.cashflow.DocumentSourceSummary
 import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
 import tech.dokus.database.repository.cashflow.selectDefaultSourceFromList
-import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentSourceStatus
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
@@ -57,6 +56,7 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentMatchReviewId
 import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.contact.CounterpartyInfo
 import tech.dokus.domain.model.DocumentCollectionChangedEventDto
 import tech.dokus.domain.model.DocumentCountsResponse
 import tech.dokus.domain.model.DocumentDeletedEventDto
@@ -539,7 +539,7 @@ internal fun Route.documentRecordRoutes() {
 
             val requestData = request.extractedData
             val hasExtractedData = requestData != null
-            val hasContactUpdate = request.contactId != null || request.counterpartyIntent != null
+            val hasContactUpdate = request.contactId != null || request.pendingCreation != null
             val hasPurposeUpdate = request.purpose != null || request.purposePeriodMode != null
 
             if (!hasExtractedData && !hasContactUpdate && !hasPurposeUpdate) {
@@ -771,7 +771,7 @@ internal fun Route.documentRecordRoutes() {
                 throw DokusException.BadRequest("Draft is not ready for confirmation: ${draft.documentStatus}")
             }
 
-            if (draft.counterpartyIntent == CounterpartyIntent.Pending) {
+            if ((draft.counterparty as? CounterpartyInfo.Unresolved)?.pendingCreation == true) {
                 throw DokusException.BadRequest("Counterparty is pending creation")
             }
 
@@ -797,7 +797,7 @@ internal fun Route.documentRecordRoutes() {
                 tenantId,
                 documentId,
                 draftData,
-                draft.linkedContactId
+                (draft.counterparty as? CounterpartyInfo.Linked)?.contactId
             ).getOrThrow()
 
             val entryId = confirmationResult.cashflowEntryId

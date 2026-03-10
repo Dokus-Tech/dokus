@@ -20,6 +20,7 @@ import tech.dokus.domain.enums.TenantStatus
 import tech.dokus.domain.enums.TenantType
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.contact.CounterpartyInfo
 import tech.dokus.domain.model.contact.MatchEvidence
 import tech.dokus.domain.utils.json
 import java.util.UUID
@@ -134,18 +135,13 @@ class DocumentDraftRepositoryTest {
         val updated = repository.updateContactResolution(
             documentId = documentId,
             tenantId = tenantId,
-            contactSuggestions = emptyList(),
             counterpartySnapshot = null,
-            matchEvidence = null,
-            linkedContactId = null,
-            linkedContactSource = null
+            counterparty = CounterpartyInfo.Unresolved()
         )
 
         assertTrue(updated)
 
         val draft = repository.getByDocumentId(documentId, tenantId)
-        assertNull(draft?.linkedContactId)
-        assertNull(draft?.linkedContactSource)
-        assertNull(draft?.matchEvidence)
+        assertNull(draft?.counterparty)
     }
 }

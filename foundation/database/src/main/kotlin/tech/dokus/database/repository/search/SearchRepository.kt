@@ -368,15 +368,20 @@ class SearchRepository(
     }
 
     private fun mapDocumentHit(row: ResultRow): SearchDocumentHit {
-        val snapshot = row.getOrNull(DocumentDraftsTable.counterpartySnapshot)
-            ?.let { json.decodeFromStringOrNull<CounterpartySnapshot>(it) }
+        val contactName = row.getOrNull(ContactsTable.name)
+        val contactVat = row.getOrNull(ContactsTable.vatNumber)
+        val snapshot = if (contactName == null || contactVat == null) {
+            row.getOrNull(DocumentDraftsTable.counterpartySnapshot)
+                ?.let { json.decodeFromStringOrNull<CounterpartySnapshot>(it) }
+        } else null
+
         return SearchDocumentHit(
             documentId = DocumentId.parse(row[DocumentsTable.id].value.toString()),
             filename = row[DocumentsTable.filename],
             documentType = row[DocumentDraftsTable.documentType],
             status = row[DocumentDraftsTable.documentStatus],
-            counterpartyName = row.getOrNull(ContactsTable.name) ?: snapshot?.name,
-            counterpartyVat = row.getOrNull(ContactsTable.vatNumber) ?: snapshot?.vatNumber?.value,
+            counterpartyName = contactName ?: snapshot?.name,
+            counterpartyVat = contactVat ?: snapshot?.vatNumber?.value,
         )
     }
 

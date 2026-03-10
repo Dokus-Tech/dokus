@@ -14,7 +14,6 @@ import tech.dokus.domain.enums.CashflowDirection
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.enums.CashflowViewMode
-import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentListFilter
 import tech.dokus.domain.enums.DocumentType
@@ -515,7 +514,7 @@ interface CashflowRemoteDataSource {
     suspend fun updateDocumentDraftContact(
         documentId: DocumentId,
         contactId: ContactId?,
-        counterpartyIntent: CounterpartyIntent? = null
+        pendingCreation: Boolean = false
     ): Result<Unit>
 
     /**

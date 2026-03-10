@@ -3,7 +3,6 @@ package tech.dokus.features.cashflow.presentation.review.models
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import tech.dokus.domain.Money
-import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.Country
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentSource
@@ -18,6 +17,7 @@ import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.InvoiceDraftData
+import tech.dokus.domain.model.contact.CounterpartyInfo
 import tech.dokus.domain.model.contact.CounterpartySnapshot
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.ReviewDocumentData
@@ -72,6 +72,11 @@ class CounterpartyInfoMapperTest {
             subtotalAmount = Money.from("100.00")
         )
 
+        val counterpartyInfo = when {
+            counterpartySnapshot != null -> CounterpartyInfo.Unresolved(snapshot = counterpartySnapshot)
+            else -> null
+        }
+
         val draft = DocumentDraftDto(
             documentId = documentId,
             tenantId = tenantId,
@@ -83,9 +88,7 @@ class CounterpartyInfoMapperTest {
             draftVersion = 0,
             draftEditedAt = null,
             draftEditedBy = null,
-            linkedContactId = contactId,
-            counterpartySnapshot = counterpartySnapshot,
-            counterpartyIntent = CounterpartyIntent.None,
+            counterparty = counterpartyInfo,
             lastSuccessfulRunId = null,
             createdAt = now,
             updatedAt = now
@@ -120,7 +123,7 @@ class CounterpartyInfoMapperTest {
             ),
             isContactRequired = true,
             selectedContactId = contactId,
-            counterpartyIntent = CounterpartyIntent.None
+            isPendingCreation = false,
         )
     }
 }

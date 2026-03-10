@@ -38,7 +38,7 @@ class ReceiptConfirmationService(
         tenantId: TenantId,
         documentId: DocumentId,
         draftData: ReceiptDraftData,
-        linkedContactId: ContactId?
+        contactId: ContactId?
     ): Result<ConfirmationResult> = runSuspendCatching {
         logger.info("Confirming receipt document: $documentId for tenant: $tenantId")
 
@@ -68,7 +68,7 @@ class ReceiptConfirmationService(
             vatRate = vatRate,
             category = ExpenseCategory.Other,
             documentId = documentId,
-            contactId = linkedContactId,
+            contactId = contactId,
             isDeductible = true,
             deductiblePercentage = Percentage.FULL,
             paymentMethod = draftData.paymentMethod,
@@ -100,7 +100,7 @@ class ReceiptConfirmationService(
                 expenseDate = date,
                 amountGross = expense.amount,
                 amountVat = expense.vatAmount ?: Money.ZERO,
-                contactId = linkedContactId
+                contactId = contactId
             ).getOrThrow()
         } else {
             cashflowEntriesService.createFromExpense(
@@ -110,7 +110,7 @@ class ReceiptConfirmationService(
                 expenseDate = date,
                 amountGross = expense.amount,
                 amountVat = expense.vatAmount ?: Money.ZERO,
-                contactId = linkedContactId
+                contactId = contactId
             ).getOrThrow()
         }
 

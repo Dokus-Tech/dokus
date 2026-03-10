@@ -141,7 +141,7 @@ private fun SourceStructuredEvidence(
 
         when (draft) {
             is InvoiceDraftData -> {
-                StructuredValue("Vendor", contentState.documentRecord?.draft?.counterpartySnapshot?.name ?: "\u2014")
+                StructuredValue("Vendor", contentState.documentRecord?.draft?.counterpartyDisplayName ?: "\u2014")
                 StructuredValue("Invoice", draft.invoiceNumber ?: "\u2014")
                 StructuredValue("Date", draft.issueDate?.let { formatShortDate(it) } ?: "\u2014")
                 StructuredValue("Due", draft.dueDate?.let { formatShortDate(it) } ?: "\u2014")

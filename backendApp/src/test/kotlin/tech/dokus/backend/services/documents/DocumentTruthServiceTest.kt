@@ -26,8 +26,6 @@ import tech.dokus.domain.enums.DocumentMatchReviewStatus
 import tech.dokus.domain.enums.DocumentMatchType
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentSourceStatus
-import tech.dokus.domain.enums.ContactLinkSource
-import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.DocumentBlobId
@@ -439,12 +437,7 @@ class DocumentTruthServiceTest {
         draftVersion = 1,
         draftEditedAt = null,
         draftEditedBy = null,
-        contactSuggestions = emptyList(),
-        counterpartySnapshot = null,
-        matchEvidence = null,
-        linkedContactId = null,
-        linkedContactSource = null,
-        counterpartyIntent = CounterpartyIntent.None,
+        counterparty = null,
         rejectReason = null,
         lastSuccessfulRunId = null,
         createdAt = now,

@@ -18,6 +18,7 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.contact.CounterpartyInfo
 import tech.dokus.domain.model.CreateInvoiceRequest
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.InvoiceItemDto
@@ -42,14 +43,14 @@ class InvoiceConfirmationService(
         tenantId: TenantId,
         documentId: DocumentId,
         draftData: InvoiceDraftData,
-        linkedContactId: ContactId?
+        contactId: ContactId?
     ): Result<ConfirmationResult> = runSuspendCatching {
         logger.info("Confirming invoice document: $documentId for tenant: $tenantId")
 
         val draft = requireConfirmableDraft(draftRepository, tenantId, documentId)
         val isReconfirm = draft.documentStatus == DocumentStatus.NeedsReview
 
-        val contactId = linkedContactId ?: draft.linkedContactId
+        val contactId = contactId ?: (draft.counterparty as? CounterpartyInfo.Linked)?.contactId
             ?: throw DokusException.BadRequest("Invoice requires a linked contact")
 
         val items = buildInvoiceItems(draftData)

@@ -3,7 +3,7 @@ package tech.dokus.features.cashflow.presentation.review
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import tech.dokus.domain.Money
-import tech.dokus.domain.enums.CounterpartyIntent
+import tech.dokus.domain.enums.ContactLinkSource
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentStatus
@@ -16,6 +16,7 @@ import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.PartyDraft
+import tech.dokus.domain.model.contact.CounterpartyInfo
 import tech.dokus.domain.model.contact.CounterpartySnapshot
 import tech.dokus.foundation.app.state.DokusState
 import kotlin.test.Test
@@ -83,6 +84,17 @@ class DocumentReviewStateDirectionTest {
             seller = PartyDraft(name = sellerName)
         )
 
+        val counterparty = when {
+            selectedContactId != null -> CounterpartyInfo.Linked(
+                contactId = selectedContactId,
+                source = ContactLinkSource.AI,
+            )
+            counterpartySnapshotName != null -> CounterpartyInfo.Unresolved(
+                snapshot = CounterpartySnapshot(name = counterpartySnapshotName),
+            )
+            else -> null
+        }
+
         val draft = DocumentDraftDto(
             documentId = documentId,
             tenantId = tenantId,
@@ -94,9 +106,8 @@ class DocumentReviewStateDirectionTest {
             draftVersion = 0,
             draftEditedAt = null,
             draftEditedBy = null,
-            linkedContactId = selectedContactId,
-            counterpartySnapshot = counterpartySnapshotName?.let { CounterpartySnapshot(name = it) },
-            counterpartyIntent = CounterpartyIntent.None,
+            counterparty = counterparty,
+            counterpartyDisplayName = counterpartySnapshotName,
             lastSuccessfulRunId = null,
             createdAt = now,
             updatedAt = now
@@ -131,7 +142,7 @@ class DocumentReviewStateDirectionTest {
             ),
             isContactRequired = isContactRequired,
             selectedContactId = selectedContactId,
-            counterpartyIntent = CounterpartyIntent.None
+            isPendingCreation = false,
         )
     }
 }

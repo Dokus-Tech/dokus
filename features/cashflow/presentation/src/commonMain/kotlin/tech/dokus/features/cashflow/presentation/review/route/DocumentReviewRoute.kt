@@ -23,7 +23,6 @@ import tech.dokus.aura.resources.action_confirm
 import tech.dokus.aura.resources.cashflow_discard_changes_message
 import tech.dokus.aura.resources.cashflow_discard_changes_title
 import tech.dokus.aura.resources.cashflow_document_confirmed
-import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
@@ -236,7 +235,7 @@ internal fun DocumentReviewRoute(
             },
             onCreateContact = { counterparty ->
                 if (isAccountantReadOnly) return@DocumentReviewScreen
-                dispatchIntent(DocumentReviewIntent.SetCounterpartyIntent(CounterpartyIntent.Pending))
+                dispatchIntent(DocumentReviewIntent.SetPendingCreation)
                 navController.navigateTo(
                     ContactsDestination.CreateContact(
                         prefillCompanyName = counterparty.name,
@@ -301,9 +300,7 @@ internal fun DocumentReviewRoute(
                 // Close sheet and navigate to contact creation
                 if (isAccountantReadOnly) return@ContactEditSheet
                 dispatchIntent(DocumentReviewIntent.CloseContactSheet)
-                dispatchIntent(
-                    DocumentReviewIntent.SetCounterpartyIntent(CounterpartyIntent.Pending)
-                )
+                dispatchIntent(DocumentReviewIntent.SetPendingCreation)
                 val counterparty = tech.dokus.features.cashflow.presentation.review.models.counterpartyInfo(state)
                 navController.navigateTo(
                     ContactsDestination.CreateContact(
@@ -440,7 +437,7 @@ private fun DocumentReviewIntent.isBlockedForAccountantReadOnly(): Boolean = whe
     is DocumentReviewIntent.AcceptSuggestedContact,
     is DocumentReviewIntent.ClearSelectedContact,
     is DocumentReviewIntent.ContactCreated,
-    is DocumentReviewIntent.SetCounterpartyIntent,
+    is DocumentReviewIntent.SetPendingCreation,
     is DocumentReviewIntent.OpenContactSheet,
     is DocumentReviewIntent.CloseContactSheet,
     is DocumentReviewIntent.UpdateContactSheetSearch,

@@ -435,7 +435,7 @@ internal fun resolveDescription(document: DocumentRecordDto, unknownLabel: Strin
         is BankStatementDraftData -> null
         else -> null
     }
-    val counterparty = document.draft?.counterpartySnapshot?.name.nonBlank()
+    val counterparty = document.draft?.counterpartyDisplayName.nonBlank()
     val filename = document.document.filename.nonBlank()
 
     return when {
@@ -455,8 +455,8 @@ internal fun resolveDescription(document: DocumentRecordDto, unknownLabel: Strin
  * Resolves the counterparty name for display.
  */
 internal fun resolveCounterparty(document: DocumentRecordDto, emptyLabel: String = "\u2014"): String {
-    val snapshot = document.draft?.counterpartySnapshot?.name.nonBlank()
-    if (snapshot != null) return snapshot
+    val displayName = document.draft?.counterpartyDisplayName.nonBlank()
+    if (displayName != null) return displayName
 
     val fromDraft = when (val data = document.draft?.extractedData) {
         is InvoiceDraftData -> data.seller.name.nonBlank() ?: data.buyer.name.nonBlank()

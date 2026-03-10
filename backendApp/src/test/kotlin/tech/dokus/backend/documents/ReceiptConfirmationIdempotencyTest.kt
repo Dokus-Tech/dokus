@@ -134,8 +134,8 @@ class ReceiptConfirmationIdempotencyTest {
     fun `confirming the same receipt twice is idempotent (no duplicates)`() = runBlocking {
         val (documentId, draftData) = createReceiptDocument(draftAmount = Money.from("18.48")!!)
 
-        val first = confirmationService.confirm(tenantId, documentId, draftData, linkedContactId = null).getOrThrow()
-        val second = confirmationService.confirm(tenantId, documentId, draftData, linkedContactId = null).getOrThrow()
+        val first = confirmationService.confirm(tenantId, documentId, draftData, contactId = null).getOrThrow()
+        val second = confirmationService.confirm(tenantId, documentId, draftData, contactId = null).getOrThrow()
 
         val firstExpenseId = (first.entity as FinancialDocumentDto.ExpenseDto).id
         val secondExpenseId = (second.entity as FinancialDocumentDto.ExpenseDto).id
@@ -153,7 +153,7 @@ class ReceiptConfirmationIdempotencyTest {
     fun `edit confirmed draft then reconfirm updates expense and cashflow entry`() = runBlocking {
         val (documentId, originalDraft) = createReceiptDocument(draftAmount = Money.from("18.48")!!)
 
-        val confirmed = confirmationService.confirm(tenantId, documentId, originalDraft, linkedContactId = null).getOrThrow()
+        val confirmed = confirmationService.confirm(tenantId, documentId, originalDraft, contactId = null).getOrThrow()
         val originalEntryId = confirmed.cashflowEntryId
         assertNotNull(originalEntryId)
 
@@ -174,7 +174,7 @@ class ReceiptConfirmationIdempotencyTest {
             updatedData = updatedDraft
         )
 
-        val reconfirmed = confirmationService.confirm(tenantId, documentId, updatedDraft, linkedContactId = null).getOrThrow()
+        val reconfirmed = confirmationService.confirm(tenantId, documentId, updatedDraft, contactId = null).getOrThrow()
         val confirmedExpenseId = (confirmed.entity as FinancialDocumentDto.ExpenseDto).id
         val reconfirmedExpenseId = (reconfirmed.entity as FinancialDocumentDto.ExpenseDto).id
         assertEquals(confirmedExpenseId, reconfirmedExpenseId)

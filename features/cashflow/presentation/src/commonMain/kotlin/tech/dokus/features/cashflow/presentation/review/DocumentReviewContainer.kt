@@ -175,7 +175,7 @@ internal class DocumentReviewContainer(
                 is DocumentReviewIntent.AcceptSuggestedContact -> handleAcceptSuggestedContact()
                 is DocumentReviewIntent.ClearSelectedContact -> handleClearSelectedContact()
                 is DocumentReviewIntent.ContactCreated -> handleContactCreated(intent.contactId)
-                is DocumentReviewIntent.SetCounterpartyIntent -> handleSetCounterpartyIntent(intent.intent)
+                is DocumentReviewIntent.SetPendingCreation -> handleSetPendingCreation()
 
                 // === Line Items ===
                 is DocumentReviewIntent.AddLineItem -> handleAddLineItem()

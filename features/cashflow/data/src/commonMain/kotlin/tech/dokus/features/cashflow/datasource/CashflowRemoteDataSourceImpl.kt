@@ -28,7 +28,6 @@ import tech.dokus.domain.enums.CashflowDirection
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.enums.CashflowViewMode
-import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentListFilter
 import tech.dokus.domain.enums.DocumentType
@@ -702,7 +701,7 @@ internal class CashflowRemoteDataSourceImpl(
     override suspend fun updateDocumentDraftContact(
         documentId: DocumentId,
         contactId: ContactId?,
-        counterpartyIntent: CounterpartyIntent?
+        pendingCreation: Boolean
     ): Result<Unit> {
         return runCatching {
             val docIdRoute = Documents.Id(id = documentId.toString())
@@ -711,7 +710,7 @@ internal class CashflowRemoteDataSourceImpl(
                 setBody(
                     UpdateDraftRequest(
                         contactId = contactId?.toString(),
-                        counterpartyIntent = counterpartyIntent
+                        pendingCreation = pendingCreation
                     )
                 )
             }.body<Unit>()

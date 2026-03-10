@@ -8,7 +8,6 @@ import tech.dokus.domain.Money
 import tech.dokus.domain.enums.CashflowDirection
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.CashflowSourceType
-import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.AutoMatchStatus
 import tech.dokus.domain.enums.DocumentDirection
@@ -41,6 +40,7 @@ import tech.dokus.domain.model.DocumentMatchReviewSummaryDto
 import tech.dokus.domain.model.FinancialLineItem
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.PartyDraft
+import tech.dokus.domain.model.contact.CounterpartyInfo
 import tech.dokus.domain.model.contact.CounterpartySnapshot
 import tech.dokus.features.cashflow.presentation.review.DocumentPreviewState
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
@@ -106,14 +106,15 @@ internal fun previewReviewContentState(
         draftVersion = 1,
         draftEditedAt = null,
         draftEditedBy = null,
-        linkedContactId = null,
-        counterpartySnapshot = CounterpartySnapshot(
-            name = "KBC Bank NV",
-            streetLine1 = "Havenlaan 2",
-            postalCode = "1080",
-            city = "Brussels"
+        counterparty = CounterpartyInfo.Unresolved(
+            snapshot = CounterpartySnapshot(
+                name = "KBC Bank NV",
+                streetLine1 = "Havenlaan 2",
+                postalCode = "1080",
+                city = "Brussels",
+            ),
         ),
-        counterpartyIntent = CounterpartyIntent.None,
+        counterpartyDisplayName = "KBC Bank NV",
         lastSuccessfulRunId = null,
         createdAt = previewNow,
         updatedAt = previewNow,
@@ -226,7 +227,7 @@ internal fun previewReviewContentState(
         isUndoingAutoPayment = isUndoingAutoPayment,
         sourceViewerState = sourceViewerState,
         paymentSheetState = paymentSheetState,
-        counterpartyIntent = CounterpartyIntent.None,
+        isPendingCreation = false,
         today = LocalDate(2026, 3, 1),
     )
 }

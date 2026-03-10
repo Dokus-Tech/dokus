@@ -35,6 +35,7 @@ import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.processor.ProcessorIngestionRepository
 import tech.dokus.domain.enums.ContactLinkSource
 import tech.dokus.domain.enums.DocumentSource
+import tech.dokus.domain.model.contact.CounterpartyInfo
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
@@ -540,11 +541,8 @@ internal class DocumentProcessingWorker(
                     draftRepository.updateContactResolution(
                         documentId = documentId,
                         tenantId = parsedTenantId,
-                        contactSuggestions = emptyList(),
                         counterpartySnapshot = null,
-                        matchEvidence = null,
-                        linkedContactId = null,
-                        linkedContactSource = null
+                        counterparty = CounterpartyInfo.Unresolved()
                     )
                 } else {
                     val resolution = contactResolutionService.resolve(
@@ -559,11 +557,12 @@ internal class DocumentProcessingWorker(
                             draftRepository.updateContactResolution(
                                 documentId = documentId,
                                 tenantId = parsedTenantId,
-                                contactSuggestions = emptyList(),
                                 counterpartySnapshot = resolution.snapshot,
-                                matchEvidence = decision.evidence,
-                                linkedContactId = decision.contactId,
-                                linkedContactSource = ContactLinkSource.AI
+                                counterparty = CounterpartyInfo.Linked(
+                                    contactId = decision.contactId,
+                                    source = ContactLinkSource.AI,
+                                    evidence = decision.evidence,
+                                )
                             )
                         }
 
@@ -576,11 +575,16 @@ internal class DocumentProcessingWorker(
                             draftRepository.updateContactResolution(
                                 documentId = documentId,
                                 tenantId = parsedTenantId,
-                                contactSuggestions = emptyList(),
                                 counterpartySnapshot = resolution.snapshot,
-                                matchEvidence = decision.evidence,
-                                linkedContactId = contactId,
-                                linkedContactSource = if (contactId != null) ContactLinkSource.AI else null
+                                counterparty = if (contactId != null) {
+                                    CounterpartyInfo.Linked(
+                                        contactId = contactId,
+                                        source = ContactLinkSource.AI,
+                                        evidence = decision.evidence,
+                                    )
+                                } else {
+                                    CounterpartyInfo.Unresolved(snapshot = resolution.snapshot)
+                                }
                             )
                         }
 
@@ -588,11 +592,10 @@ internal class DocumentProcessingWorker(
                             draftRepository.updateContactResolution(
                                 documentId = documentId,
                                 tenantId = parsedTenantId,
-                                contactSuggestions = decision.candidates,
                                 counterpartySnapshot = resolution.snapshot,
-                                matchEvidence = null,
-                                linkedContactId = null,
-                                linkedContactSource = null
+                                counterparty = CounterpartyInfo.Unresolved(
+                                    suggestions = decision.candidates,
+                                )
                             )
                         }
 
@@ -600,11 +603,8 @@ internal class DocumentProcessingWorker(
                             draftRepository.updateContactResolution(
                                 documentId = documentId,
                                 tenantId = parsedTenantId,
-                                contactSuggestions = emptyList(),
                                 counterpartySnapshot = resolution.snapshot,
-                                matchEvidence = null,
-                                linkedContactId = null,
-                                linkedContactSource = null
+                                counterparty = CounterpartyInfo.Unresolved()
                             )
                         }
                     }
@@ -634,7 +634,7 @@ internal class DocumentProcessingWorker(
                     draftData = draftData,
                     auditPassed = result.auditReport.isValid,
                     confidence = confidence,
-                    linkedContactId = linkedContactId,
+                    contactId = linkedContactId,
                     directionResolvedFromAiHintOnly = result.directionResolution.source == DirectionResolutionSource.AiHint
                 )
 
