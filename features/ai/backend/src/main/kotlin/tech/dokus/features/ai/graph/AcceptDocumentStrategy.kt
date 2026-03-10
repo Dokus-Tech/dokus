@@ -3,7 +3,6 @@ package tech.dokus.features.ai.graph
 import ai.koog.agents.core.agent.entity.AIAgentGraphStrategy
 import ai.koog.agents.core.dsl.builder.forwardTo
 import ai.koog.agents.core.dsl.builder.strategy
-import ai.koog.agents.core.tools.ToolRegistry
 import ai.koog.agents.ext.agent.ConditionResult
 import ai.koog.agents.ext.agent.subgraphWithRetrySimple
 import kotlinx.serialization.SerializationException
@@ -39,7 +38,6 @@ data class AcceptDocumentInput(
 
 fun acceptDocumentGraph(
     aiConfig: AIConfig,
-    registry: ToolRegistry,
     documentFetcher: DocumentFetcher,
 ): AIAgentGraphStrategy<AcceptDocumentInput, DocumentAiProcessingResult> {
     return strategy<AcceptDocumentInput, DocumentAiProcessingResult>("accept-document-parent") {
@@ -73,7 +71,7 @@ fun acceptDocumentGraph(
                 }
             }
         ) {
-            val process by documentProcessingSubGraph(aiConfig, documentFetcher, registry.tools)
+            val process by documentProcessingSubGraph(aiConfig, documentFetcher)
             nodeStart then process then nodeFinish
         }
 

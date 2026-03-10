@@ -78,7 +78,7 @@ class ClassificationGraphTest {
         val toolRegistry = ToolRegistry { }
 
         val strategy = strategy<AcceptDocumentInput, ClassificationResult>("test") {
-            val classify by classifyDocumentSubGraph(TestAiFixtures.aiConfig, emptyList())
+            val classify by classifyDocumentSubGraph(TestAiFixtures.aiConfig)
             val prepare by documentPreparationSubGraph<AcceptDocumentInput>(mockFetcher)
 
             // Classification

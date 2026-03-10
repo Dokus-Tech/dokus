@@ -3,7 +3,6 @@ package tech.dokus.features.ai.graph.sub
 import ai.koog.agents.core.agent.entity.createStorageKey
 import ai.koog.agents.core.dsl.builder.AIAgentSubgraphBuilderBase
 import ai.koog.agents.core.dsl.builder.AIAgentSubgraphDelegate
-import ai.koog.agents.core.tools.Tool
 import tech.dokus.domain.model.Tenant
 import tech.dokus.features.ai.graph.AcceptDocumentInput
 import tech.dokus.features.ai.graph.nodes.DirectionResolutionResolver
@@ -20,7 +19,6 @@ import tech.dokus.foundation.backend.config.AIConfig
 fun AIAgentSubgraphBuilderBase<*, *>.documentProcessingSubGraph(
     aiConfig: AIConfig,
     documentFetcher: DocumentFetcher,
-    tools: List<Tool<*, *>>
 ): AIAgentSubgraphDelegate<AcceptDocumentInput, DocumentAiProcessingResult> {
     return subgraph(name = "document-processing") {
         val tenantKey = createStorageKey<Tenant>("tenant-context")
@@ -33,7 +31,10 @@ fun AIAgentSubgraphBuilderBase<*, *>.documentProcessingSubGraph(
             input
         }
         val prepare by documentPreparationSubGraph<AcceptDocumentInput>(documentFetcher)
-        val classify by classifyDocumentSubGraph(aiConfig, tools)
+        // Validation and lookup helpers run deterministically after extraction. Exposing them
+        // here causes the vision model to loop on repeated tool calls and resend the full
+        // multimodal prompt on every round-trip.
+        val classify by classifyDocumentSubGraph(aiConfig)
         val storeClassification by node<ClassificationResult, ClassificationResult>("store-classification") { result ->
             storage.set(classificationKey, result)
             result
@@ -41,7 +42,7 @@ fun AIAgentSubgraphBuilderBase<*, *>.documentProcessingSubGraph(
         val prepareExtractionInput by node<ClassificationResult, ExtractDocumentInput>("prepare-extraction") { input ->
             ExtractDocumentInput(input.documentType, input.language)
         }
-        val extract by financialExtractionSubGraph(aiConfig, tools)
+        val extract by financialExtractionSubGraph(aiConfig)
         val resolveDirection by node<FinancialExtractionResult, ResolvedExtraction>("resolve-direction") { extraction ->
             val tenant = storage.getValue(tenantKey)
             val associatedNames = storage.getValue(associatedNamesKey)

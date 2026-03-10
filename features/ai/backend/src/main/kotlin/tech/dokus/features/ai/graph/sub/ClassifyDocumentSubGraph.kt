@@ -21,12 +21,11 @@ import tech.dokus.foundation.backend.config.AIConfig
 
 fun AIAgentSubgraphBuilderBase<*, *>.classifyDocumentSubGraph(
     aiConfig: AIConfig,
-    tools: List<Tool<*, *>>
 ): AIAgentSubgraphDelegate<ClassifyDocumentInput, ClassificationResult> {
     return subgraphWithTask(
         name = "Classify document",
         llmModel = aiConfig.mode.asVisionModel,
-        tools = tools,
+        tools = emptyList<Tool<*, *>>(),
         llmParams = LLMParams.documentProcessing,
         assistantResponseRepeatMax = assistantResponseRepeatMax,
         finishTool = ClassificationFinishTool()
