@@ -21,6 +21,7 @@ object ModelRegistry {
         // Chat models (LM Studio format)
         "qwen/qwen3-32b" to CONTEXT_128K,
         "qwen/qwen3-8b" to CONTEXT_40K,
+        "qwen/qwen3-14b" to CONTEXT_40K,
     )
 
     /**
