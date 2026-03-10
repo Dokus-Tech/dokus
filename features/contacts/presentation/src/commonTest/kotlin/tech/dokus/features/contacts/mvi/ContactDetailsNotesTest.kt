@@ -78,9 +78,9 @@ class ContactDetailsNotesTest {
             createContactNote = FakeCreateContactNoteUseCase(createNoteResult),
             updateContactNote = FakeUpdateContactNoteUseCase(updateNoteResult),
             deleteContactNote = FakeDeleteContactNoteUseCase(deleteNoteResult),
-            getCachedContacts = FakeGetCachedContactsUseCase(),
-            cacheContacts = FakeCacheContactsUseCase(),
-            getCurrentTenantId = FakeGetCurrentTenantIdUseCase(tenantId),
+            getCachedContacts = StubGetCachedContactsUseCase(),
+            cacheContacts = StubCacheContactsUseCase(),
+            getCurrentTenantId = StubGetCurrentTenantIdUseCase(tenantId),
         )
     }
 
@@ -216,9 +216,9 @@ class ContactDetailsNotesTest {
             createContactNote = FakeCreateContactNoteUseCase(Result.success(createdNote)),
             updateContactNote = FakeUpdateContactNoteUseCase(Result.success(testNote)),
             deleteContactNote = FakeDeleteContactNoteUseCase(Result.success(Unit)),
-            getCachedContacts = FakeGetCachedContactsUseCase(),
-            cacheContacts = FakeCacheContactsUseCase(),
-            getCurrentTenantId = FakeGetCurrentTenantIdUseCase(tenantId),
+            getCachedContacts = StubGetCachedContactsUseCase(),
+            cacheContacts = StubCacheContactsUseCase(),
+            getCurrentTenantId = StubGetCurrentTenantIdUseCase(tenantId),
         )
 
         container.store.subscribeAndTest {
@@ -323,9 +323,9 @@ class ContactDetailsNotesTest {
             createContactNote = createNote,
             updateContactNote = FakeUpdateContactNoteUseCase(Result.success(testNote)),
             deleteContactNote = FakeDeleteContactNoteUseCase(Result.success(Unit)),
-            getCachedContacts = FakeGetCachedContactsUseCase(),
-            cacheContacts = FakeCacheContactsUseCase(),
-            getCurrentTenantId = FakeGetCurrentTenantIdUseCase(tenantId),
+            getCachedContacts = StubGetCachedContactsUseCase(),
+            cacheContacts = StubCacheContactsUseCase(),
+            getCurrentTenantId = StubGetCurrentTenantIdUseCase(tenantId),
         )
 
         container.store.subscribeAndTest {
@@ -423,15 +423,15 @@ private class FakeDeleteContactNoteUseCase(
     ) = result
 }
 
-private class FakeGetCachedContactsUseCase : GetCachedContactsUseCase {
+private class StubGetCachedContactsUseCase : GetCachedContactsUseCase {
     override suspend fun invoke(tenantId: TenantId): List<ContactDto> = emptyList()
 }
 
-private class FakeCacheContactsUseCase : CacheContactsUseCase {
+private class StubCacheContactsUseCase : CacheContactsUseCase {
     override suspend fun invoke(tenantId: TenantId, contacts: List<ContactDto>) = Unit
 }
 
-private class FakeGetCurrentTenantIdUseCase(
+private class StubGetCurrentTenantIdUseCase(
     private val tenantId: TenantId?
 ) : GetCurrentTenantIdUseCase {
     override suspend fun invoke() = tenantId

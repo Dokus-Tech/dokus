@@ -36,6 +36,7 @@ import tech.dokus.aura.resources.action_cancel
 import tech.dokus.aura.resources.action_delete
 import tech.dokus.aura.resources.action_save
 import tech.dokus.aura.resources.contacts_add_first_note_hint
+import tech.dokus.aura.resources.contacts_add_note
 import tech.dokus.aura.resources.contacts_delete_note
 import tech.dokus.aura.resources.contacts_delete_note_confirm
 import tech.dokus.aura.resources.contacts_delete_note_warning
