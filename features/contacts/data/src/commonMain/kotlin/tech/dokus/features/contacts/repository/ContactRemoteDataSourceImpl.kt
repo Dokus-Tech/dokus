@@ -4,14 +4,18 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.resources.delete
 import io.ktor.client.plugins.resources.get
+import io.ktor.client.plugins.resources.href
 import io.ktor.client.plugins.resources.post
 import io.ktor.client.plugins.resources.put
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import kotlinx.coroutines.flow.Flow
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.ContactNoteId
+import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.PeppolStatusResponse
 import tech.dokus.domain.model.common.PaginatedResponse
@@ -21,11 +25,16 @@ import tech.dokus.domain.model.contact.ContactMergeResult
 import tech.dokus.domain.model.contact.ContactNoteDto
 import tech.dokus.domain.model.contact.ContactStats
 import tech.dokus.domain.model.contact.CreateContactNoteRequest
+import tech.dokus.domain.model.contact.ContactStreamEventNames
 import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.model.contact.UpdateContactNoteRequest
 import tech.dokus.domain.model.contact.UpdateContactRequest
 import tech.dokus.domain.routes.Contacts
+import tech.dokus.domain.routes.Documents
 import tech.dokus.domain.routes.Invoices
+import tech.dokus.foundation.app.network.SseEventCollector
+import tech.dokus.foundation.app.network.KtorSseEventCollector
+import tech.dokus.foundation.app.network.observeSseEvents
 import tech.dokus.foundation.platform.Logger
 
 /**
@@ -33,7 +42,8 @@ import tech.dokus.foundation.platform.Logger
  * Uses type-safe routing to communicate with the contacts API.
  */
 internal class ContactRemoteDataSourceImpl(
-    private val httpClient: HttpClient
+    private val httpClient: HttpClient,
+    private val sseEventCollector: SseEventCollector = KtorSseEventCollector,
 ) : ContactRemoteDataSource {
     private val logger = Logger.forClass<ContactRemoteDataSourceImpl>()
 
@@ -232,6 +242,17 @@ internal class ContactRemoteDataSourceImpl(
         }
     }
 
+    override suspend fun getDocumentRecord(documentId: DocumentId): Result<DocumentRecordDto> {
+        logger.d { "Getting document record for contact details: $documentId" }
+        return runCatching {
+            httpClient.get(Documents.Id(id = documentId.toString())).body<DocumentRecordDto>()
+        }.onSuccess {
+            logger.i { "Got document record for contact details: $documentId" }
+        }.onFailure { error ->
+            logger.e(error) { "Failed to get document record for contact details: $documentId" }
+        }
+    }
+
     override suspend fun getContactActivity(contactId: ContactId): Result<ContactActivitySummary> {
         logger.d { "Getting contact activity: $contactId" }
         return runCatching {
@@ -355,5 +376,20 @@ internal class ContactRemoteDataSourceImpl(
         }.onFailure { error ->
             logger.e(error) { "Failed to delete note: $noteId" }
         }
+    }
+
+    override fun observeContactChanges(contactId: ContactId): Flow<Unit> {
+        val eventsResource = Contacts.Events(id = contactId.toString())
+        return observeSseEvents(
+            httpClient = httpClient,
+            request = { httpClient.href(eventsResource, url) },
+            decodeEvent = { event ->
+                when (event.event) {
+                    ContactStreamEventNames.Changed -> Unit
+                    else -> null
+                }
+            },
+            sseEventCollector = sseEventCollector,
+        )
     }
 }

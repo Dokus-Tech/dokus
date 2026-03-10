@@ -64,6 +64,7 @@
     <string name="contacts_filter_customers">Customers</string>
     <string name="contacts_filter_vendors">Vendors</string>
     <string name="contacts_email">Email</string>
+    <string name="contacts_website">Website</string>
     <string name="contacts_phone">Phone</string>
     <string name="contacts_vat_number">VAT Number</string>
     <string name="contacts_company_number">Company Number</string>

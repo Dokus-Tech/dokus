@@ -200,7 +200,17 @@ data class ContactDetailsUiState(
 
     // Enrichment panel
     val showEnrichmentPanel: Boolean = false,
-)
+) {
+    /** Resets all note-related transient UI state to defaults. */
+    fun resetNoteTransientState(): ContactDetailsUiState = copy(
+        showAddNoteDialog = false,
+        showEditNoteDialog = false,
+        editingNote = null,
+        showDeleteNoteConfirmation = false,
+        deletingNote = null,
+        noteContent = "",
+    )
+}
 
 // ============================================================================
 // ENRICHMENT

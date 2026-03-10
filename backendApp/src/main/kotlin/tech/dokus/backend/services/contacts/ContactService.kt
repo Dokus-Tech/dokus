@@ -1,6 +1,7 @@
 package tech.dokus.backend.services.contacts
 
 import tech.dokus.backend.services.business.BusinessProfileService
+import tech.dokus.backend.services.business.EnrichmentTrigger
 import tech.dokus.backend.services.cashflow.InvoiceBankAutomationService
 import tech.dokus.database.repository.contacts.ContactAddressRepository
 import tech.dokus.database.repository.contacts.ContactRepository
@@ -59,7 +60,7 @@ class ContactService(
                 businessProfileService.enqueueContact(
                     tenantId = tenantId,
                     contactId = created.id,
-                    triggerReason = "CONTACT_CREATED"
+                    trigger = EnrichmentTrigger.ContactCreated
                 ).onFailure { e ->
                     logger.warn("Failed to enqueue business enrichment for contact ${created.id}: ${e.message}")
                 }
@@ -215,6 +216,13 @@ class ContactService(
                             error.message
                         )
                     }
+                }
+                val nameChanged = before?.let { it.name != updated.name } ?: false
+                if (nameChanged) {
+                    businessProfileService.enqueueContact(tenantId, contactId, EnrichmentTrigger.ContactNameChanged)
+                        .onFailure { error ->
+                            logger.warn("Failed to enqueue enrichment after name change for {}: {}", contactId, error.message)
+                        }
                 }
                 hydrateSingle(tenantId, updated) ?: updated
             }

@@ -46,6 +46,8 @@ import tech.dokus.backend.services.cashflow.InvoiceService
 import tech.dokus.backend.services.contacts.ContactMatchingService
 import tech.dokus.backend.services.contacts.ContactNoteService
 import tech.dokus.backend.services.contacts.ContactService
+import tech.dokus.backend.services.contacts.sse.ContactEventHub
+import tech.dokus.backend.services.contacts.sse.ContactSsePublisher
 import tech.dokus.backend.services.documents.AutoConfirmPolicy
 import tech.dokus.backend.services.documents.ContactResolutionService
 import tech.dokus.backend.services.documents.DocumentPurposeService
@@ -363,6 +365,8 @@ private val contactsModule = module {
     single { ContactService(get(), get(), get(), get(), getOrNull()) }
     single { ContactNoteService(get()) }
     single { ContactMatchingService(get()) }
+    singleOf(::ContactEventHub)
+    singleOf(::ContactSsePublisher)
 }
 
 private val searchModule = module {

@@ -7,10 +7,12 @@
 package tech.dokus.features.contacts.mvi
 
 import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
+import pro.respawn.flowmvi.plugins.init
 import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.ContactId
@@ -27,6 +29,7 @@ import tech.dokus.features.contacts.usecases.GetContactInvoiceSnapshotUseCase
 import tech.dokus.features.contacts.usecases.GetContactPeppolStatusUseCase
 import tech.dokus.features.contacts.usecases.GetContactUseCase
 import tech.dokus.features.contacts.usecases.ListContactNotesUseCase
+import tech.dokus.features.contacts.usecases.ObserveContactChangesUseCase
 import tech.dokus.features.contacts.usecases.UpdateContactNoteUseCase
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.foundation.app.state.DokusState
@@ -63,6 +66,7 @@ internal class ContactDetailsContainer(
     private val getCachedContacts: GetCachedContactsUseCase,
     private val cacheContacts: CacheContactsUseCase,
     private val getCurrentTenantId: GetCurrentTenantIdUseCase,
+    private val observeContactChanges: ObserveContactChangesUseCase,
 ) : Container<ContactDetailsState, ContactDetailsIntent, ContactDetailsAction> {
 
     companion object {
@@ -75,6 +79,14 @@ internal class ContactDetailsContainer(
 
     override val store: Store<ContactDetailsState, ContactDetailsIntent, ContactDetailsAction> =
         store(ContactDetailsState(contactId = contactId)) {
+            init {
+                launch {
+                    observeContactChanges(contactId).collect {
+                        logger.d { "SSE: contact changed, refreshing $contactId" }
+                        intent(ContactDetailsIntent.Refresh)
+                    }
+                }
+            }
             reduce { intent ->
                 when (intent) {
                     // Loading
@@ -338,12 +350,7 @@ internal class ContactDetailsContainer(
 
     private suspend fun ContactDetailsCtx.handleShowAddNoteDialog() {
         updateState {
-            copy(
-                uiState = uiState.copy(
-                    showAddNoteDialog = true,
-                    noteContent = ""
-                )
-            )
+            copy(uiState = uiState.resetNoteTransientState().copy(showAddNoteDialog = true))
         }
     }
 
@@ -361,10 +368,10 @@ internal class ContactDetailsContainer(
     private suspend fun ContactDetailsCtx.handleShowEditNoteDialog(note: tech.dokus.domain.model.contact.ContactNoteDto) {
         updateState {
             copy(
-                uiState = uiState.copy(
+                uiState = uiState.resetNoteTransientState().copy(
                     showEditNoteDialog = true,
                     editingNote = note,
-                    noteContent = note.content
+                    noteContent = note.content,
                 )
             )
         }
@@ -391,9 +398,9 @@ internal class ContactDetailsContainer(
     private suspend fun ContactDetailsCtx.handleShowDeleteNoteConfirmation(note: tech.dokus.domain.model.contact.ContactNoteDto) {
         updateState {
             copy(
-                uiState = uiState.copy(
+                uiState = uiState.resetNoteTransientState().copy(
                     showDeleteNoteConfirmation = true,
-                    deletingNote = note
+                    deletingNote = note,
                 )
             )
         }
@@ -422,16 +429,7 @@ internal class ContactDetailsContainer(
 
     private suspend fun ContactDetailsCtx.handleHideNotesSidePanel() {
         updateState {
-            copy(
-                uiState = uiState.copy(
-                    showNotesSidePanel = false,
-                    // Also reset any note editing state when closing
-                    showAddNoteDialog = false,
-                    showEditNoteDialog = false,
-                    editingNote = null,
-                    noteContent = ""
-                )
-            )
+            copy(uiState = uiState.resetNoteTransientState().copy(showNotesSidePanel = false))
         }
     }
 
@@ -443,16 +441,7 @@ internal class ContactDetailsContainer(
 
     private suspend fun ContactDetailsCtx.handleHideNotesBottomSheet() {
         updateState {
-            copy(
-                uiState = uiState.copy(
-                    showNotesBottomSheet = false,
-                    // Also reset any note editing state when closing
-                    showAddNoteDialog = false,
-                    showEditNoteDialog = false,
-                    editingNote = null,
-                    noteContent = ""
-                )
-            )
+            copy(uiState = uiState.resetNoteTransientState().copy(showNotesBottomSheet = false))
         }
     }
 
