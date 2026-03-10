@@ -341,6 +341,10 @@ internal class ContactDetailsContainer(
             copy(
                 uiState = uiState.copy(
                     showAddNoteDialog = true,
+                    showEditNoteDialog = false,
+                    editingNote = null,
+                    showDeleteNoteConfirmation = false,
+                    deletingNote = null,
                     noteContent = ""
                 )
             )
@@ -362,8 +366,11 @@ internal class ContactDetailsContainer(
         updateState {
             copy(
                 uiState = uiState.copy(
+                    showAddNoteDialog = false,
                     showEditNoteDialog = true,
                     editingNote = note,
+                    showDeleteNoteConfirmation = false,
+                    deletingNote = null,
                     noteContent = note.content
                 )
             )
@@ -392,6 +399,9 @@ internal class ContactDetailsContainer(
         updateState {
             copy(
                 uiState = uiState.copy(
+                    showAddNoteDialog = false,
+                    showEditNoteDialog = false,
+                    editingNote = null,
                     showDeleteNoteConfirmation = true,
                     deletingNote = note
                 )
@@ -429,6 +439,8 @@ internal class ContactDetailsContainer(
                     showAddNoteDialog = false,
                     showEditNoteDialog = false,
                     editingNote = null,
+                    showDeleteNoteConfirmation = false,
+                    deletingNote = null,
                     noteContent = ""
                 )
             )
@@ -450,6 +462,8 @@ internal class ContactDetailsContainer(
                     showAddNoteDialog = false,
                     showEditNoteDialog = false,
                     editingNote = null,
+                    showDeleteNoteConfirmation = false,
+                    deletingNote = null,
                     noteContent = ""
                 )
             )
