@@ -101,13 +101,15 @@ fun DokusLineChart(
 
     Canvas(modifier = modifier) {
         val yLabelWidth = yLabelLayouts.maxOfOrNull { it.size.width.toFloat() } ?: 0f
+        val yLabelHeight = yLabelLayouts.maxOfOrNull { it.size.height.toFloat() } ?: 0f
         val leftPadding = yLabelWidth + Constraints.Spacing.small.toPx()
+        val topPadding = yLabelHeight / 2f
         val bottomPadding = (xLabelLayouts.maxOfOrNull { (_, l) -> l.size.height.toFloat() } ?: 0f) +
             Constraints.Spacing.xSmall.toPx()
 
         val chartLeft = leftPadding
         val chartRight = size.width
-        val chartTop = 0f
+        val chartTop = topPadding
         val chartBottom = size.height - bottomPadding
         val chartWidth = chartRight - chartLeft
         val chartHeight = chartBottom - chartTop
