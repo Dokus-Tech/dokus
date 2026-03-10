@@ -18,6 +18,7 @@ import tech.dokus.features.contacts.repository.ContactRemoteDataSource
 
 private const val InvoicePageSize = 100
 private const val RecentDocumentsLimit = 5
+private val WhitespaceRegex = Regex("\\s+")
 
 private val OutstandingStatuses = setOf(
     InvoiceStatus.Draft,
@@ -133,24 +134,20 @@ internal fun resolveRecentDocumentSummary(
     invoice: FinancialDocumentDto.InvoiceDto,
     documentRecord: DocumentRecordDto?
 ): String? {
-    return listOfNotNull(
-        documentRecord?.draft?.purposeRendered.normalizeRecentDocumentText(),
-        documentRecord?.draft?.purposeBase.normalizeRecentDocumentText(),
-        documentRecord?.confirmedEntity?.recentDocumentSummary(),
-        invoice.notes.normalizeRecentDocumentText()
-    ).firstOrNull()
+    return documentRecord?.draft?.purposeRendered.normalizeRecentDocumentText()
+        ?: documentRecord?.draft?.purposeBase.normalizeRecentDocumentText()
+        ?: documentRecord?.confirmedEntity?.recentDocumentSummary()
+        ?: invoice.notes.normalizeRecentDocumentText()
 }
 
 internal fun resolveRecentDocumentReference(
     invoice: FinancialDocumentDto.InvoiceDto,
     documentRecord: DocumentRecordDto?
 ): String? {
-    return listOfNotNull(
-        documentRecord?.draft?.extractedData?.recentDocumentReference(),
-        documentRecord?.confirmedEntity?.recentDocumentReference(),
-        invoice.invoiceNumber.toString().normalizeRecentDocumentText(),
-        documentRecord?.document?.filename.normalizeRecentDocumentText()
-    ).firstOrNull()
+    return documentRecord?.draft?.extractedData?.recentDocumentReference()
+        ?: documentRecord?.confirmedEntity?.recentDocumentReference()
+        ?: invoice.invoiceNumber.toString().normalizeRecentDocumentText()
+        ?: documentRecord?.document?.filename.normalizeRecentDocumentText()
 }
 
 private fun FinancialDocumentDto.recentDocumentSummary(): String? {
@@ -208,6 +205,6 @@ private fun String?.normalizeRecentDocumentText(): String? {
         ?.lineSequence()
         ?.firstOrNull { it.isNotBlank() }
         ?.trim()
-        ?.replace(Regex("\\s+"), " ")
+        ?.replace(WhitespaceRegex, " ")
         ?.takeIf { it.isNotBlank() }
 }
