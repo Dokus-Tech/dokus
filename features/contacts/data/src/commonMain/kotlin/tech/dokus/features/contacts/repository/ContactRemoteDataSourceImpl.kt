@@ -12,6 +12,8 @@ import io.ktor.http.contentType
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.ContactNoteId
+import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.PeppolStatusResponse
 import tech.dokus.domain.model.common.PaginatedResponse
@@ -25,6 +27,7 @@ import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.model.contact.UpdateContactNoteRequest
 import tech.dokus.domain.model.contact.UpdateContactRequest
 import tech.dokus.domain.routes.Contacts
+import tech.dokus.domain.routes.Documents
 import tech.dokus.domain.routes.Invoices
 import tech.dokus.foundation.platform.Logger
 
@@ -229,6 +232,17 @@ internal class ContactRemoteDataSourceImpl(
             }
         }.onFailure { error ->
             logger.e(error) { "Failed to list invoices for contact: $contactId" }
+        }
+    }
+
+    override suspend fun getDocumentRecord(documentId: DocumentId): Result<DocumentRecordDto> {
+        logger.d { "Getting document record for contact details: $documentId" }
+        return runCatching {
+            httpClient.get(Documents.Id(id = documentId.toString())).body<DocumentRecordDto>()
+        }.onSuccess {
+            logger.i { "Got document record for contact details: $documentId" }
+        }.onFailure { error ->
+            logger.e(error) { "Failed to get document record for contact details: $documentId" }
         }
     }
 

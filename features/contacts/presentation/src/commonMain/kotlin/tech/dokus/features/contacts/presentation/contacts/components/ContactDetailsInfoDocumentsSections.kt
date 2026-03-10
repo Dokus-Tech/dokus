@@ -21,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.Month
 import kotlinx.datetime.number
@@ -29,7 +30,6 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.common_unknown
 import tech.dokus.aura.resources.contacts_address
 import tech.dokus.aura.resources.contacts_email
-import tech.dokus.aura.resources.contacts_invoice
 import tech.dokus.aura.resources.contacts_no_documents
 import tech.dokus.aura.resources.contacts_payment_terms
 import tech.dokus.aura.resources.contacts_recent_documents
@@ -196,6 +196,10 @@ internal fun RecentDocumentsSection(
 @Composable
 private fun RecentDocumentRow(document: ContactRecentInvoice) {
     val statusStyle = invoiceStatusStyle(document.status)
+    val textContent = resolveRecentDocumentText(
+        document = document,
+        unknownLabel = stringResource(Res.string.common_unknown)
+    )
     val signedMinor = when (document.direction) {
         DocumentDirection.Inbound -> -document.totalAmount.minor
         else -> document.totalAmount.minor
@@ -221,11 +225,27 @@ private fun RecentDocumentRow(document: ContactRecentInvoice) {
             color = MaterialTheme.colorScheme.textMuted,
             modifier = Modifier.width(52.dp)
         )
-        Text(
-            text = stringResource(Res.string.contacts_invoice),
-            style = MaterialTheme.typography.bodyLarge,
+        Column(
             modifier = Modifier.weight(1f)
-        )
+        ) {
+            Text(
+                text = textContent.primary,
+                style = MaterialTheme.typography.bodyLarge,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            textContent.secondary?.let { secondary ->
+                Text(
+                    text = secondary,
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontFamily = MaterialTheme.typography.labelLarge.fontFamily
+                    ),
+                    color = MaterialTheme.colorScheme.textMuted,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
         Text(
             text = document.status.localized,
             style = MaterialTheme.typography.labelSmall.copy(
@@ -267,6 +287,24 @@ private fun formatMonthDay(monthNumber: Int, day: Int): String {
     return "$month $day"
 }
 
+internal fun resolveRecentDocumentText(
+    document: ContactRecentInvoice,
+    unknownLabel: String,
+): RecentDocumentText {
+    val summary = document.summary?.takeIf { it.isNotBlank() }
+    val reference = document.reference?.takeIf { it.isNotBlank() } ?: unknownLabel
+    val secondary = summary?.let {
+        reference.takeIf { resolvedReference ->
+            !resolvedReference.equals(it, ignoreCase = true)
+        }
+    }
+
+    return RecentDocumentText(
+        primary = summary ?: reference,
+        secondary = secondary
+    )
+}
+
 @Composable
 private fun invoiceStatusStyle(status: InvoiceStatus): InvoiceStatusStyle {
     return when (status) {
@@ -291,4 +329,10 @@ private fun invoiceStatusStyle(status: InvoiceStatus): InvoiceStatusStyle {
 private data class InvoiceStatusStyle(
     val color: Color,
     val background: Color
+)
+
+@Immutable
+internal data class RecentDocumentText(
+    val primary: String,
+    val secondary: String?,
 )

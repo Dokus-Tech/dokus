@@ -1,10 +1,19 @@
 package tech.dokus.features.contacts.usecases
 
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.model.BankStatementDraftData
+import tech.dokus.domain.model.CreditNoteDraftData
+import tech.dokus.domain.model.DocumentDraftData
+import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.InvoiceDraftData
+import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.features.contacts.repository.ContactRemoteDataSource
 
 private const val InvoicePageSize = 100
@@ -65,12 +74,12 @@ internal class GetContactInvoiceSnapshotUseCaseImpl(
         return invoices
     }
 
-    private fun buildSnapshot(invoices: List<FinancialDocumentDto.InvoiceDto>): ContactInvoiceSnapshot {
+    private suspend fun buildSnapshot(invoices: List<FinancialDocumentDto.InvoiceDto>): ContactInvoiceSnapshot = coroutineScope {
         val totalVolume = invoices.fold(Money.ZERO) { sum, invoice ->
             sum + invoice.totalAmount
         }
         val outstanding = invoices.fold(Money.ZERO) { sum, invoice ->
-            sum + invoiceOutstanding(invoice)
+            sum + invoiceOutstandingAmount(invoice)
         }
         val recentDocuments = invoices
             .sortedWith(
@@ -79,28 +88,126 @@ internal class GetContactInvoiceSnapshotUseCaseImpl(
             )
             .take(RecentDocumentsLimit)
             .map { invoice ->
-                ContactRecentInvoice(
-                    invoiceId = invoice.id,
-                    issueDate = invoice.issueDate,
-                    updatedAt = invoice.updatedAt,
-                    direction = invoice.direction,
-                    status = invoice.status,
-                    totalAmount = invoice.totalAmount,
-                    outstandingAmount = invoiceOutstanding(invoice)
-                )
+                async {
+                    val documentRecord = invoice.documentId
+                        ?.let { documentId -> remoteDataSource.getDocumentRecord(documentId).getOrNull() }
+                    invoice.toRecentDocument(documentRecord)
+                }
             }
+            .awaitAll()
 
-        return ContactInvoiceSnapshot(
+        ContactInvoiceSnapshot(
             documentsCount = invoices.size,
             totalVolume = totalVolume,
             outstanding = outstanding,
             recentDocuments = recentDocuments
         )
     }
+}
 
-    private fun invoiceOutstanding(invoice: FinancialDocumentDto.InvoiceDto): Money {
-        if (invoice.status !in OutstandingStatuses) return Money.ZERO
-        val remainder = invoice.totalAmount - invoice.paidAmount
-        return if (remainder.isNegative) Money.ZERO else remainder
+private fun invoiceOutstandingAmount(
+    invoice: FinancialDocumentDto.InvoiceDto,
+): Money {
+    if (invoice.status !in OutstandingStatuses) return Money.ZERO
+    val remainder = invoice.totalAmount - invoice.paidAmount
+    return if (remainder.isNegative) Money.ZERO else remainder
+}
+
+private fun FinancialDocumentDto.InvoiceDto.toRecentDocument(
+    documentRecord: DocumentRecordDto?
+): ContactRecentInvoice {
+    return ContactRecentInvoice(
+        invoiceId = id,
+        issueDate = issueDate,
+        updatedAt = updatedAt,
+        direction = direction,
+        status = status,
+        totalAmount = totalAmount,
+        outstandingAmount = invoiceOutstandingAmount(this),
+        summary = resolveRecentDocumentSummary(this, documentRecord),
+        reference = resolveRecentDocumentReference(this, documentRecord)
+    )
+}
+
+internal fun resolveRecentDocumentSummary(
+    invoice: FinancialDocumentDto.InvoiceDto,
+    documentRecord: DocumentRecordDto?
+): String? {
+    return listOfNotNull(
+        documentRecord?.draft?.purposeRendered.normalizeRecentDocumentText(),
+        documentRecord?.draft?.purposeBase.normalizeRecentDocumentText(),
+        documentRecord?.confirmedEntity?.recentDocumentSummary(),
+        invoice.notes.normalizeRecentDocumentText()
+    ).firstOrNull()
+}
+
+internal fun resolveRecentDocumentReference(
+    invoice: FinancialDocumentDto.InvoiceDto,
+    documentRecord: DocumentRecordDto?
+): String? {
+    return listOfNotNull(
+        documentRecord?.draft?.extractedData?.recentDocumentReference(),
+        documentRecord?.confirmedEntity?.recentDocumentReference(),
+        invoice.invoiceNumber.toString().normalizeRecentDocumentText(),
+        documentRecord?.document?.filename.normalizeRecentDocumentText()
+    ).firstOrNull()
+}
+
+private fun FinancialDocumentDto.recentDocumentSummary(): String? {
+    return when (this) {
+        is FinancialDocumentDto.InvoiceDto -> {
+            items.firstOrNull()?.description.normalizeRecentDocumentText() ?: notes.normalizeRecentDocumentText()
+        }
+
+        is FinancialDocumentDto.CreditNoteDto -> {
+            reason.normalizeRecentDocumentText() ?: notes.normalizeRecentDocumentText()
+        }
+
+        is FinancialDocumentDto.ExpenseDto -> {
+            description.normalizeRecentDocumentText() ?:
+                merchant.normalizeRecentDocumentText() ?:
+                notes.normalizeRecentDocumentText()
+        }
+
+        is FinancialDocumentDto.QuoteDto -> {
+            items.firstOrNull().normalizeRecentDocumentText() ?: notes.normalizeRecentDocumentText()
+        }
+
+        is FinancialDocumentDto.ProFormaDto -> {
+            items.firstOrNull().normalizeRecentDocumentText() ?: notes.normalizeRecentDocumentText()
+        }
+
+        is FinancialDocumentDto.PurchaseOrderDto -> {
+            items.firstOrNull().normalizeRecentDocumentText() ?: notes.normalizeRecentDocumentText()
+        }
     }
+}
+
+private fun FinancialDocumentDto.recentDocumentReference(): String? {
+    return when (this) {
+        is FinancialDocumentDto.InvoiceDto -> invoiceNumber.toString().normalizeRecentDocumentText()
+        is FinancialDocumentDto.CreditNoteDto -> creditNoteNumber.normalizeRecentDocumentText()
+        is FinancialDocumentDto.ExpenseDto -> null
+        is FinancialDocumentDto.QuoteDto -> quoteNumber.normalizeRecentDocumentText()
+        is FinancialDocumentDto.ProFormaDto -> proFormaNumber.normalizeRecentDocumentText()
+        is FinancialDocumentDto.PurchaseOrderDto -> poNumber.normalizeRecentDocumentText()
+    }
+}
+
+private fun DocumentDraftData.recentDocumentReference(): String? {
+    return when (this) {
+        is InvoiceDraftData -> invoiceNumber.normalizeRecentDocumentText()
+        is CreditNoteDraftData -> creditNoteNumber.normalizeRecentDocumentText()
+        is ReceiptDraftData -> receiptNumber.normalizeRecentDocumentText()
+        is BankStatementDraftData -> null
+    }
+}
+
+private fun String?.normalizeRecentDocumentText(): String? {
+    return this
+        ?.lineSequence()
+        ?.firstOrNull { it.isNotBlank() }
+        ?.trim()
+        ?.replace(Regex("\\s+"), " ")
+        ?.takeIf { it.isNotBlank() }
 }
