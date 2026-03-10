@@ -34,6 +34,7 @@ import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.domain.model.toDocumentType
 import tech.dokus.domain.model.contact.CounterpartyInfo
+import tech.dokus.domain.model.contact.isUnresolved
 import tech.dokus.domain.model.contact.CounterpartySnapshot
 import tech.dokus.domain.model.contact.MatchEvidence
 import tech.dokus.domain.model.contact.SuggestedContact
@@ -572,7 +573,7 @@ class DocumentDraftRepository : DocumentStatusChecker {
             draftEditedBy = this[DocumentDraftsTable.draftEditedBy]?.let { UserId(it.toKotlinUuid()) },
             counterparty = counterpartyInfo,
             counterpartyDisplayName = contactName
-                ?: (counterpartyInfo as? CounterpartyInfo.Unresolved)?.snapshot?.name,
+                ?: if (counterpartyInfo.isUnresolved()) counterpartyInfo.snapshot?.name else null,
             rejectReason = this[DocumentDraftsTable.rejectReason],
             lastSuccessfulRunId = this[DocumentDraftsTable.lastSuccessfulRunId]
                 ?.let { IngestionRunId.parse(it.toString()) },

@@ -1,17 +1,16 @@
 package tech.dokus.features.cashflow.presentation.review
 
-import pro.respawn.flowmvi.dsl.withState
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.DocumentRecordDto
-import tech.dokus.domain.model.contact.SuggestedContact
+import tech.dokus.domain.model.contact.isLinked
+import tech.dokus.domain.model.contact.isUnresolved
 import tech.dokus.features.cashflow.usecases.GetDocumentRecordUseCase
 import tech.dokus.features.contacts.usecases.GetContactUseCase
 import tech.dokus.foundation.app.state.DokusState
-import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.platform.Logger
 
 internal class DocumentReviewLoader(
@@ -127,7 +126,7 @@ internal class DocumentReviewLoader(
                         previewState = previewState,
                         // Preserve existing UI state where available
                         isContactRequired = false,
-                        isPendingCreation = (draft?.counterparty as? tech.dokus.domain.model.contact.CounterpartyInfo.Unresolved)?.pendingCreation == true,
+                        isPendingCreation = draft?.counterparty.let { it.isUnresolved() && it.pendingCreation },
                         isDocumentConfirmed = draft?.documentStatus == DocumentStatus.Confirmed,
                         isDocumentRejected = draft?.documentStatus == DocumentStatus.Rejected,
                         confirmedCashflowEntryId = document.cashflowEntryId,
@@ -170,7 +169,7 @@ internal class DocumentReviewLoader(
         }
 
         val counterparty = draft.counterparty
-        val suggestions = (counterparty as? tech.dokus.domain.model.contact.CounterpartyInfo.Unresolved)?.suggestions.orEmpty()
+        val suggestions = if (counterparty.isUnresolved()) counterparty.suggestions else emptyList()
         val contactSuggestions = suggestions.map { suggestion ->
             ContactSuggestion(
                 contactId = suggestion.contactId,
@@ -181,7 +180,7 @@ internal class DocumentReviewLoader(
         val documentStatus = draft.documentStatus
         val isDocumentConfirmed = documentStatus == DocumentStatus.Confirmed
         val isDocumentRejected = documentStatus == DocumentStatus.Rejected
-        val isPendingCreation = (counterparty as? tech.dokus.domain.model.contact.CounterpartyInfo.Unresolved)?.pendingCreation == true
+        val isPendingCreation = counterparty.isUnresolved() && counterparty.pendingCreation
         val (contactSelectionState, linkedContactId, selectedContactSnapshot) =
             buildContactSelectionState(document, suggestions)
 
@@ -253,9 +252,9 @@ internal class DocumentReviewLoader(
         suggestions: List<tech.dokus.domain.model.contact.SuggestedContact>
     ): Triple<ContactSelectionState, ContactId?, ContactSnapshot?> {
         val draft = document.draft ?: return Triple(ContactSelectionState.NoContact, null, null)
-        val linked = draft.counterparty as? tech.dokus.domain.model.contact.CounterpartyInfo.Linked
-        if (linked != null) {
-            return Triple(ContactSelectionState.Selected, linked.contactId, null)
+        val counterparty = draft.counterparty
+        if (counterparty.isLinked()) {
+            return Triple(ContactSelectionState.Selected, counterparty.contactId, null)
         }
         val topSuggestion = suggestions.firstOrNull()
         if (topSuggestion != null) {

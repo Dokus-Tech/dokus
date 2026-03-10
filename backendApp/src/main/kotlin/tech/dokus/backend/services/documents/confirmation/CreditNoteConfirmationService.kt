@@ -15,6 +15,7 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.contact.CounterpartyInfo
+import tech.dokus.domain.model.contact.isLinked
 import tech.dokus.domain.model.CreateCreditNoteRequest
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.foundation.backend.utils.loggerFor
@@ -47,7 +48,9 @@ class CreditNoteConfirmationService(
         val draft = requireConfirmableDraft(draftRepository, tenantId, documentId)
         val isReconfirm = draft.documentStatus == DocumentStatus.NeedsReview
 
-        val contactId = contactId ?: (draft.counterparty as? CounterpartyInfo.Linked)?.contactId
+        val counterparty = draft.counterparty
+        val contactId = contactId
+            ?: if (counterparty.isLinked()) counterparty.contactId else null
             ?: throw DokusException.BadRequest("Credit note requires a linked contact")
         val creditNoteType = when (draftData.direction) {
             DocumentDirection.Outbound -> CreditNoteType.Sales

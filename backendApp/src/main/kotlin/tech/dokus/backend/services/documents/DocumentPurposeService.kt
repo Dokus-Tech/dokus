@@ -19,6 +19,7 @@ import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.domain.model.contact.CounterpartyInfo
+import tech.dokus.domain.model.contact.isLinked
 import tech.dokus.features.ai.agents.DocumentProcessingAgent
 import tech.dokus.features.ai.models.PurposeEnrichmentInput
 import tech.dokus.foundation.backend.utils.loggerFor
@@ -185,7 +186,8 @@ class DocumentPurposeService(
             purposePeriodMode = mode
         )
 
-        val draftContactId = (draft.counterparty as? CounterpartyInfo.Linked)?.contactId
+        val counterparty = draft.counterparty
+        val draftContactId = if (counterparty.isLinked()) counterparty.contactId else null
         val counterpartyKey = draft.counterpartyKey ?: computeCounterpartyKey(draftContactId, draftData)
         if (!counterpartyKey.isNullOrBlank()) {
             templateRepository.upsert(

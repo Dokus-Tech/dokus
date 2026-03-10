@@ -1,10 +1,11 @@
 package tech.dokus.features.cashflow.presentation.review.models
 
-import tech.dokus.domain.model.contact.CounterpartyInfo as DomainCounterpartyInfo
+import tech.dokus.domain.model.contact.isUnresolved
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 
 internal fun counterpartyInfo(state: DocumentReviewState): CounterpartyInfo {
-    val snapshot = (state.documentRecord?.draft?.counterparty as? DomainCounterpartyInfo.Unresolved)?.snapshot
+    val counterparty = state.documentRecord?.draft?.counterparty
+    val snapshot = if (counterparty.isUnresolved()) counterparty.snapshot else null
     if (snapshot == null) {
         return CounterpartyInfo(
             name = null,

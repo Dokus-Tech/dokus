@@ -1,21 +1,25 @@
 package tech.dokus.backend.routes.cashflow
 
-import io.ktor.http.*
-import io.ktor.server.request.*
-import io.ktor.server.resources.*
+import io.ktor.http.ContentDisposition
+import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.request.receive
+import io.ktor.server.resources.delete
+import io.ktor.server.resources.get
 import io.ktor.server.resources.patch
 import io.ktor.server.resources.post
-import io.ktor.server.response.*
+import io.ktor.server.response.header
+import io.ktor.server.response.respond
+import io.ktor.server.response.respondOutputStream
 import io.ktor.server.routing.Route
 import io.ktor.server.sse.heartbeat
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onSubscription
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.koin.ktor.ext.inject
@@ -56,7 +60,6 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentMatchReviewId
 import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.contact.CounterpartyInfo
 import tech.dokus.domain.model.DocumentCollectionChangedEventDto
 import tech.dokus.domain.model.DocumentCountsResponse
 import tech.dokus.domain.model.DocumentDeletedEventDto
@@ -70,6 +73,8 @@ import tech.dokus.domain.model.ResolveDocumentMatchReviewRequest
 import tech.dokus.domain.model.UpdateDraftRequest
 import tech.dokus.domain.model.UpdateDraftResponse
 import tech.dokus.domain.model.common.PaginatedResponse
+import tech.dokus.domain.model.contact.isLinked
+import tech.dokus.domain.model.contact.isUnresolved
 import tech.dokus.domain.routes.Documents
 import tech.dokus.domain.utils.json
 import tech.dokus.foundation.backend.security.authenticateJwt
@@ -77,6 +82,7 @@ import tech.dokus.foundation.backend.security.dokusPrincipal
 import tech.dokus.foundation.backend.utils.defaultSseHeartbeatPeriod
 import tech.dokus.foundation.backend.utils.respondSse
 import tech.dokus.foundation.backend.utils.sendJsonEvent
+import kotlin.time.Clock
 import tech.dokus.foundation.backend.storage.DocumentStorageService as MinioDocumentStorageService
 
 /**
@@ -305,6 +311,7 @@ internal fun Route.documentRecordRoutes() {
                             DocumentSnapshotSignal.Changed -> {
                                 if (!sendSnapshotOrDeleted()) break
                             }
+
                             DocumentSnapshotSignal.Deleted -> {
                                 sendDeletedEvent()
                                 break
@@ -645,8 +652,8 @@ internal fun Route.documentRecordRoutes() {
 
             logger.info(
                 "Reprocessing document: $documentId, force=${request.force}, " +
-                    "overrides=[maxPages=${request.maxPages}, dpi=${request.dpi}], " +
-                    "timeoutOverride=${request.timeoutSeconds} (ignored), tenant=$tenantId"
+                        "overrides=[maxPages=${request.maxPages}, dpi=${request.dpi}], " +
+                        "timeoutOverride=${request.timeoutSeconds} (ignored), tenant=$tenantId"
             )
 
             // Check document exists
@@ -725,10 +732,6 @@ internal fun Route.documentRecordRoutes() {
                 )
 
                 if (confirmedEntity != null) {
-                    val document = documentRepository.getById(tenantId, documentId)!!
-                    val documentWithUrl = addDownloadUrl(document, minioStorage, logger)
-                    val latestIngestion = ingestionRepository.getLatestForDocument(documentId, tenantId)
-
                     if (confirmedEntity is FinancialDocumentDto.InvoiceDto &&
                         confirmedEntity.paidAmount.minor >= confirmedEntity.totalAmount.minor &&
                         confirmedEntity.paidAt == null
@@ -771,7 +774,8 @@ internal fun Route.documentRecordRoutes() {
                 throw DokusException.BadRequest("Draft is not ready for confirmation: ${draft.documentStatus}")
             }
 
-            if ((draft.counterparty as? CounterpartyInfo.Unresolved)?.pendingCreation == true) {
+            val counterparty = draft.counterparty
+            if (counterparty.isUnresolved() && counterparty.pendingCreation) {
                 throw DokusException.BadRequest("Counterparty is pending creation")
             }
 
@@ -797,7 +801,7 @@ internal fun Route.documentRecordRoutes() {
                 tenantId,
                 documentId,
                 draftData,
-                (draft.counterparty as? CounterpartyInfo.Linked)?.contactId
+                if (counterparty.isLinked()) counterparty.contactId else null
             ).getOrThrow()
 
             val entryId = confirmationResult.cashflowEntryId

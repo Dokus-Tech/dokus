@@ -40,6 +40,7 @@ import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.DocumentDraftData
+import tech.dokus.domain.model.contact.isUnresolved
 import tech.dokus.domain.utils.json
 import java.util.UUID
 import kotlin.uuid.toKotlinUuid
@@ -492,7 +493,7 @@ private fun ResultRow.toDraftSummary(contactName: String? = null): DraftSummary 
         draftEditedBy = this[DocumentDraftsTable.draftEditedBy]?.let { UserId(it.toKotlinUuid()) },
         counterparty = counterparty,
         counterpartyDisplayName = contactName
-            ?: (counterparty as? tech.dokus.domain.model.contact.CounterpartyInfo.Unresolved)?.snapshot?.name,
+            ?: if (counterparty.isUnresolved()) counterparty.snapshot?.name else null,
         rejectReason = this[DocumentDraftsTable.rejectReason],
         lastSuccessfulRunId = this[DocumentDraftsTable.lastSuccessfulRunId]?.let { IngestionRunId.parse(it.toString()) },
         createdAt = this[DocumentDraftsTable.createdAt],

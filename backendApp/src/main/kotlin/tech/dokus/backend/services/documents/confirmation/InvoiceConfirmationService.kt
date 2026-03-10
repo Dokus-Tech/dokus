@@ -19,6 +19,7 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.contact.CounterpartyInfo
+import tech.dokus.domain.model.contact.isLinked
 import tech.dokus.domain.model.CreateInvoiceRequest
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.InvoiceItemDto
@@ -50,7 +51,9 @@ class InvoiceConfirmationService(
         val draft = requireConfirmableDraft(draftRepository, tenantId, documentId)
         val isReconfirm = draft.documentStatus == DocumentStatus.NeedsReview
 
-        val contactId = contactId ?: (draft.counterparty as? CounterpartyInfo.Linked)?.contactId
+        val counterparty = draft.counterparty
+        val contactId = contactId
+            ?: if (counterparty.isLinked()) counterparty.contactId else null
             ?: throw DokusException.BadRequest("Invoice requires a linked contact")
 
         val items = buildInvoiceItems(draftData)
