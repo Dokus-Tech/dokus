@@ -8,8 +8,8 @@ import ai.koog.agents.ext.agent.subgraphWithTask
 import ai.koog.prompt.params.LLMParams
 import kotlinx.serialization.Serializable
 import tech.dokus.features.ai.config.asOrchestratorModel
-import tech.dokus.features.ai.config.assistantResponseRepeatMax
-import tech.dokus.features.ai.config.documentProcessing
+import tech.dokus.features.ai.config.finishToolOnlyText
+import tech.dokus.features.ai.config.finishToolTextAssistantResponseRepeatMax
 import tech.dokus.features.ai.models.BusinessLogoFallbackCandidate
 import tech.dokus.features.ai.models.BusinessLogoFallbackInput
 import tech.dokus.features.ai.models.BusinessLogoFallbackResult
@@ -22,8 +22,8 @@ fun AIAgentSubgraphBuilderBase<*, *>.businessLogoFallbackSubGraph(
         name = "Recover logo candidates from HTML snippets",
         llmModel = aiConfig.mode.asOrchestratorModel,
         tools = emptyList<Tool<*, *>>(),
-        llmParams = LLMParams.documentProcessing,
-        assistantResponseRepeatMax = assistantResponseRepeatMax,
+        llmParams = LLMParams.finishToolOnlyText("submit_business_logo_fallback"),
+        assistantResponseRepeatMax = finishToolTextAssistantResponseRepeatMax,
         finishTool = BusinessLogoFallbackFinishTool()
     ) { it.prompt }
 }
@@ -79,7 +79,8 @@ private val BusinessLogoFallbackInput.prompt
     - Return only absolute http(s) URLs.
     - Prefer explicit logo/icon/manifest assets.
     - Avoid social/share/banner images.
-    - Use only URLs present in snippets or directly derivable from provided page hosts/paths.
+    - Use only URLs explicitly present in snippets or in the known asset lists below.
+    - Never derive new URLs from hostnames, guessed paths, favicon conventions, or common logo filenames.
     - Return at most 8 candidates ordered best-first.
 
     Provided pages:

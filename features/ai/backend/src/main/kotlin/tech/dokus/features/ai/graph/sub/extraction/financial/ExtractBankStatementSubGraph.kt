@@ -12,8 +12,8 @@ import kotlinx.serialization.Serializable
 import tech.dokus.domain.Money
 import tech.dokus.domain.ids.Iban
 import tech.dokus.features.ai.config.asVisionModel
-import tech.dokus.features.ai.config.assistantResponseRepeatMax
-import tech.dokus.features.ai.config.documentProcessing
+import tech.dokus.features.ai.config.finishToolOnlyVision
+import tech.dokus.features.ai.config.finishToolVisionAssistantResponseRepeatMax
 import tech.dokus.features.ai.models.ExtractDocumentInput
 import tech.dokus.features.ai.models.ExtractionToolDescriptions
 import tech.dokus.features.ai.models.FinancialExtractionResult
@@ -45,8 +45,8 @@ fun AIAgentSubgraphBuilderBase<*, *>.extractBankStatementSubGraph(
         name = "Extract bank statement transaction rows",
         llmModel = aiConfig.mode.asVisionModel,
         tools = emptyList(),
-        llmParams = LLMParams.documentProcessing,
-        assistantResponseRepeatMax = assistantResponseRepeatMax,
+        llmParams = LLMParams.finishToolOnlyVision("submit_bank_statement_extraction"),
+        assistantResponseRepeatMax = finishToolVisionAssistantResponseRepeatMax,
         finishTool = BankStatementExtractionFinishTool()
     ) { it.bankStatementPrompt }
 }

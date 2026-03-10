@@ -12,6 +12,7 @@ import org.koin.core.component.inject
 import org.koin.core.parameter.parametersOf
 import org.koin.core.qualifier.named
 import tech.dokus.features.ai.config.asOrchestratorModel
+import tech.dokus.features.ai.config.installKoogEventLogging
 import tech.dokus.features.ai.graph.businessProfileEnrichmentGraph
 import tech.dokus.features.ai.models.BusinessProfileDiscoveryResult
 import tech.dokus.features.ai.models.BusinessProfileEnrichmentInput
@@ -47,7 +48,13 @@ class BusinessProfileEnrichmentAgent(
                 model = aiConfig.mode.asOrchestratorModel,
                 maxAgentIterations = aiConfig.mode.maxIterations,
                 responseProcessor = ManualToolCallFixProcessor(registry)
-            )
+            ),
+            installFeatures = {
+                installKoogEventLogging(
+                    agentName = "business-profile-enrichment",
+                    enabled = aiConfig.koogEventLoggingEnabled
+                )
+            }
         )
 
         return try {

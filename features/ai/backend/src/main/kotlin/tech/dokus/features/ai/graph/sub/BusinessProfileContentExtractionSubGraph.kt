@@ -8,8 +8,8 @@ import ai.koog.agents.ext.agent.subgraphWithTask
 import ai.koog.prompt.params.LLMParams
 import kotlinx.serialization.Serializable
 import tech.dokus.features.ai.config.asOrchestratorModel
-import tech.dokus.features.ai.config.assistantResponseRepeatMax
-import tech.dokus.features.ai.config.documentProcessing
+import tech.dokus.features.ai.config.finishToolOnlyText
+import tech.dokus.features.ai.config.finishToolTextAssistantResponseRepeatMax
 import tech.dokus.features.ai.models.BusinessProfileContentExtractionInput
 import tech.dokus.features.ai.models.BusinessProfileContentExtractionResult
 import tech.dokus.foundation.backend.config.AIConfig
@@ -21,8 +21,8 @@ fun AIAgentSubgraphBuilderBase<*, *>.businessProfileContentExtractionSubGraph(
         name = "Extract business profile content",
         llmModel = aiConfig.mode.asOrchestratorModel,
         tools = emptyList<Tool<*, *>>(),
-        llmParams = LLMParams.documentProcessing,
-        assistantResponseRepeatMax = assistantResponseRepeatMax,
+        llmParams = LLMParams.finishToolOnlyText("submit_business_profile_content"),
+        assistantResponseRepeatMax = finishToolTextAssistantResponseRepeatMax,
         finishTool = BusinessProfileContentFinishTool()
     ) { it.prompt }
 }

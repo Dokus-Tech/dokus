@@ -45,6 +45,7 @@ object AIModels {
         capabilities = buildList {
             add(LLMCapability.Completion)
             add(LLMCapability.OpenAIEndpoint.Completions)
+            add(LLMCapability.Temperature)
             if (supportsTools) {
                 add(LLMCapability.Tools)
                 add(LLMCapability.ToolChoice)
