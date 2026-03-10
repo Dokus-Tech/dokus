@@ -30,6 +30,8 @@ data class ContactRecentInvoice(
     val status: InvoiceStatus,
     val totalAmount: Money,
     val outstandingAmount: Money,
+    val summary: String? = null,
+    val reference: String? = null,
 )
 
 /**

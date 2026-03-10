@@ -5,6 +5,7 @@ package tech.dokus.backend.worker
 import tech.dokus.backend.services.business.BusinessWebsiteProbe
 import tech.dokus.backend.services.business.BusinessWebsiteRanker
 import tech.dokus.backend.services.business.CrawledBusinessPage
+import tech.dokus.backend.services.business.EnrichmentTrigger
 import tech.dokus.backend.services.business.WebsiteCandidateInput
 import tech.dokus.backend.services.business.WebsiteRankingContext
 import tech.dokus.backend.services.business.WebsiteRankingDecision
@@ -45,6 +46,11 @@ internal class BusinessProfileEnrichmentJobProcessor(
     suspend fun process(job: BusinessProfileEnrichmentJob) {
         val context = subjectContextLoader.load(job) ?: run {
             jobRepository.markCompletedWithError(job.id, "Subject not found")
+            return
+        }
+
+        if (job.triggerReason == EnrichmentTrigger.WebsiteChanged.reason) {
+            processWebsiteChanged(job, context)
             return
         }
 
@@ -239,6 +245,43 @@ internal class BusinessProfileEnrichmentJobProcessor(
         }
 
         jobRepository.markCompleted(job.id)
+    }
+
+    private suspend fun processWebsiteChanged(job: BusinessProfileEnrichmentJob, context: BusinessSubjectContext) {
+        val profile = businessProfileService.getProfileRecord(job.tenantId, job.subjectType, job.subjectId)
+        val websiteUrl = profile?.websiteUrl
+        if (websiteUrl.isNullOrBlank()) {
+            logger.info("No website URL for website-changed enrichment, subjectType={}, subjectId={}", job.subjectType, job.subjectId)
+            jobRepository.markCompleted(job.id)
+            return
+        }
+
+        val crawl = websiteProbe.crawl(startUrl = websiteUrl, maxPages = config.maxPages)
+        val extracted = extractBusinessContent(context = context, websiteUrl = websiteUrl, pages = crawl.pages)
+        val logoResolution = logoResolver.resolve(
+            job = job,
+            websiteUrl = websiteUrl,
+            selectedPages = crawl.pages,
+            failedCandidateUrls = emptyList(),
+            failedCandidatePages = emptyList()
+        )
+
+        businessProfileService.applyEnrichment(
+            tenantId = job.tenantId,
+            subjectType = job.subjectType,
+            subjectId = job.subjectId,
+            verificationState = BusinessProfileVerificationState.Verified,
+            evidenceScore = 100,
+            evidenceChecksJson = null,
+            websiteUrl = websiteUrl,
+            businessSummary = extracted?.businessSummary,
+            businessActivities = extracted?.activities,
+            logoStorageKey = logoResolution.storageKey,
+            lastErrorCode = null,
+            lastErrorMessage = null,
+        )
+        jobRepository.markCompleted(job.id)
+        logger.info("Completed website-changed enrichment for subjectType={}, subjectId={}, website={}", job.subjectType, job.subjectId, websiteUrl)
     }
 
     private suspend fun extractBusinessContent(

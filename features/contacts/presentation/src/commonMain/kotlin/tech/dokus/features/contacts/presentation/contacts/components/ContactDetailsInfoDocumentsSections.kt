@@ -1,6 +1,7 @@
 package tech.dokus.features.contacts.presentation.contacts.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,7 +21,9 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.Month
 import kotlinx.datetime.number
@@ -29,11 +32,11 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.common_unknown
 import tech.dokus.aura.resources.contacts_address
 import tech.dokus.aura.resources.contacts_email
-import tech.dokus.aura.resources.contacts_invoice
 import tech.dokus.aura.resources.contacts_no_documents
 import tech.dokus.aura.resources.contacts_payment_terms
 import tech.dokus.aura.resources.contacts_recent_documents
 import tech.dokus.aura.resources.contacts_vat_number
+import tech.dokus.aura.resources.contacts_website
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.model.contact.ContactDto
@@ -57,8 +60,19 @@ import tech.dokus.foundation.aura.style.textMuted
 
 private val InfoLabelWidth = 120.dp
 
+private enum class InfoRowStyle { Plain, Link }
+
+@Immutable
+private data class InfoRow(
+    val label: String,
+    val value: String,
+    val style: InfoRowStyle = InfoRowStyle.Plain,
+)
+
 @Composable
 internal fun ContactInfoSectionCompact(contact: ContactDto?) {
+    val uriHandler = LocalUriHandler.current
+
     DokusCard(
         modifier = Modifier.fillMaxWidth(),
         padding = DokusCardPadding.Default,
@@ -66,34 +80,55 @@ internal fun ContactInfoSectionCompact(contact: ContactDto?) {
     ) {
         val rows = if (contact == null) {
             listOf(
-                stringResource(Res.string.contacts_vat_number) to "—",
-                stringResource(Res.string.contacts_address) to "—",
-                stringResource(Res.string.contacts_email) to "—",
-                stringResource(Res.string.contacts_payment_terms) to "—"
+                InfoRow(stringResource(Res.string.contacts_vat_number), "—"),
+                InfoRow(stringResource(Res.string.contacts_address), "—"),
+                InfoRow(stringResource(Res.string.contacts_email), "—"),
+                InfoRow(stringResource(Res.string.contacts_website), "—"),
+                InfoRow(stringResource(Res.string.contacts_payment_terms), "—"),
             )
         } else {
             listOf(
-                stringResource(Res.string.contacts_vat_number) to (contact.vatNumber?.value ?: "—"),
-                stringResource(Res.string.contacts_address) to formatAddress(contact),
-                stringResource(Res.string.contacts_email) to (contact.email?.value ?: "—"),
-                stringResource(Res.string.contacts_payment_terms) to "Net ${contact.defaultPaymentTerms}"
+                InfoRow(stringResource(Res.string.contacts_vat_number), contact.vatNumber?.value ?: "—"),
+                InfoRow(stringResource(Res.string.contacts_address), formatAddress(contact)),
+                InfoRow(stringResource(Res.string.contacts_email), contact.email?.value ?: "—"),
+                InfoRow(
+                    label = stringResource(Res.string.contacts_website),
+                    value = contact.websiteUrl ?: "—",
+                    style = if (contact.websiteUrl != null) InfoRowStyle.Link else InfoRowStyle.Plain,
+                ),
+                InfoRow(stringResource(Res.string.contacts_payment_terms), "Net ${contact.defaultPaymentTerms}"),
             )
         }
 
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             rows.forEachIndexed { index, row ->
+                val isLink = row.style == InfoRowStyle.Link
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .then(
+                            if (isLink) {
+                                Modifier.clickable {
+                                    try {
+                                        uriHandler.openUri(row.value)
+                                    } catch (_: Exception) {
+                                        // Malformed URL — ignore
+                                    }
+                                }
+                            } else {
+                                Modifier
+                            }
+                        ),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = row.first,
+                        text = row.label,
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.textMuted,
                         modifier = Modifier.widthIn(min = InfoLabelWidth)
                     )
                     Text(
-                        text = row.second,
+                        text = row.value,
                         style = MaterialTheme.typography.bodyLarge.copy(
                             fontFamily = if (index == 0) {
                                 MaterialTheme.typography.labelLarge.fontFamily
@@ -101,10 +136,10 @@ internal fun ContactInfoSectionCompact(contact: ContactDto?) {
                                 MaterialTheme.typography.bodyLarge.fontFamily
                             }
                         ),
-                        color = if (row.second == "—") {
-                            MaterialTheme.colorScheme.textFaint
-                        } else {
-                            MaterialTheme.colorScheme.onSurface
+                        color = when {
+                            isLink -> MaterialTheme.colorScheme.primary
+                            row.value == "—" -> MaterialTheme.colorScheme.textFaint
+                            else -> MaterialTheme.colorScheme.onSurface
                         }
                     )
                 }
@@ -196,6 +231,10 @@ internal fun RecentDocumentsSection(
 @Composable
 private fun RecentDocumentRow(document: ContactRecentInvoice) {
     val statusStyle = invoiceStatusStyle(document.status)
+    val textContent = resolveRecentDocumentText(
+        document = document,
+        unknownLabel = stringResource(Res.string.common_unknown)
+    )
     val signedMinor = when (document.direction) {
         DocumentDirection.Inbound -> -document.totalAmount.minor
         else -> document.totalAmount.minor
@@ -221,11 +260,27 @@ private fun RecentDocumentRow(document: ContactRecentInvoice) {
             color = MaterialTheme.colorScheme.textMuted,
             modifier = Modifier.width(52.dp)
         )
-        Text(
-            text = stringResource(Res.string.contacts_invoice),
-            style = MaterialTheme.typography.bodyLarge,
+        Column(
             modifier = Modifier.weight(1f)
-        )
+        ) {
+            Text(
+                text = textContent.primary,
+                style = MaterialTheme.typography.bodyLarge,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            textContent.secondary?.let { secondary ->
+                Text(
+                    text = secondary,
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontFamily = MaterialTheme.typography.labelLarge.fontFamily
+                    ),
+                    color = MaterialTheme.colorScheme.textMuted,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
         Text(
             text = document.status.localized,
             style = MaterialTheme.typography.labelSmall.copy(
@@ -267,6 +322,24 @@ private fun formatMonthDay(monthNumber: Int, day: Int): String {
     return "$month $day"
 }
 
+internal fun resolveRecentDocumentText(
+    document: ContactRecentInvoice,
+    unknownLabel: String,
+): RecentDocumentText {
+    val summary = document.summary?.takeIf { it.isNotBlank() }
+    val reference = document.reference?.takeIf { it.isNotBlank() } ?: unknownLabel
+    val secondary = summary?.let {
+        reference.takeIf { resolvedReference ->
+            !resolvedReference.equals(it, ignoreCase = true)
+        }
+    }
+
+    return RecentDocumentText(
+        primary = summary ?: reference,
+        secondary = secondary
+    )
+}
+
 @Composable
 private fun invoiceStatusStyle(status: InvoiceStatus): InvoiceStatusStyle {
     return when (status) {
@@ -291,4 +364,10 @@ private fun invoiceStatusStyle(status: InvoiceStatus): InvoiceStatusStyle {
 private data class InvoiceStatusStyle(
     val color: Color,
     val background: Color
+)
+
+@Immutable
+internal data class RecentDocumentText(
+    val primary: String,
+    val secondary: String?,
 )

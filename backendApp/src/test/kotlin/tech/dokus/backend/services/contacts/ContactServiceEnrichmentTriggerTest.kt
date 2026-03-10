@@ -9,6 +9,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.LocalDateTime
 import org.junit.jupiter.api.Test
 import tech.dokus.backend.services.business.BusinessProfileService
+import tech.dokus.backend.services.business.EnrichmentTrigger
 import tech.dokus.backend.services.cashflow.InvoiceBankAutomationService
 import tech.dokus.database.repository.contacts.ContactAddressRepository
 import tech.dokus.database.repository.contacts.ContactRepository
@@ -81,7 +82,7 @@ class ContactServiceEnrichmentTriggerTest {
             businessProfileService.enqueueContact(
                 tenantId = tenantId,
                 contactId = created.id,
-                triggerReason = "CONTACT_CREATED"
+                trigger = EnrichmentTrigger.ContactCreated
             )
         } returns Result.success(Unit)
 
@@ -92,7 +93,7 @@ class ContactServiceEnrichmentTriggerTest {
             businessProfileService.enqueueContact(
                 tenantId = tenantId,
                 contactId = created.id,
-                triggerReason = "CONTACT_CREATED"
+                trigger = EnrichmentTrigger.ContactCreated
             )
         }
     }
@@ -128,7 +129,7 @@ class ContactServiceEnrichmentTriggerTest {
             businessProfileService.enqueueContact(
                 tenantId = tenantId,
                 contactId = created.id,
-                triggerReason = "CONTACT_CREATED"
+                trigger = EnrichmentTrigger.ContactCreated
             )
         }
     }

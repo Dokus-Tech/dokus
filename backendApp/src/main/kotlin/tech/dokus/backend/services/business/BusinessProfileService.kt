@@ -46,21 +46,21 @@ class BusinessProfileService(
 ) {
     private val logger = loggerFor()
 
-    suspend fun enqueueTenant(tenantId: TenantId, triggerReason: String): Result<Unit> {
+    suspend fun enqueueTenant(tenantId: TenantId, trigger: EnrichmentTrigger): Result<Unit> {
         return jobRepository.enqueueOrReset(
             tenantId = tenantId,
             subjectType = BusinessProfileSubjectType.Tenant,
             subjectId = tenantId.value,
-            triggerReason = triggerReason
+            triggerReason = trigger.reason
         )
     }
 
-    suspend fun enqueueContact(tenantId: TenantId, contactId: ContactId, triggerReason: String): Result<Unit> {
+    suspend fun enqueueContact(tenantId: TenantId, contactId: ContactId, trigger: EnrichmentTrigger): Result<Unit> {
         return jobRepository.enqueueOrReset(
             tenantId = tenantId,
             subjectType = BusinessProfileSubjectType.Contact,
             subjectId = contactId.value,
-            triggerReason = triggerReason
+            triggerReason = trigger.reason
         )
     }
 
@@ -122,6 +122,14 @@ class BusinessProfileService(
         return profileRepository.getLogoStorageKey(subjectType, subjectId)
     }
 
+    internal suspend fun getProfileRecord(
+        tenantId: TenantId,
+        subjectType: BusinessProfileSubjectType,
+        subjectId: Uuid,
+    ): BusinessProfileRecord? {
+        return profileRepository.getBySubject(tenantId, subjectType, subjectId)
+    }
+
     suspend fun buildTenantAvatarThumbnail(tenantId: TenantId): Thumbnail? =
         tenantRepository.getAvatarStorageKey(tenantId)
             ?.takeIf { it.isNotBlank() }
@@ -148,8 +156,18 @@ class BusinessProfileService(
         tenantId: TenantId,
         contactId: ContactId,
         request: UpdateBusinessProfileRequest
-    ): BusinessProfileUpdateResponse =
-        updateProfile(tenantId, BusinessProfileSubjectType.Contact, contactId.value, request)
+    ): BusinessProfileUpdateResponse {
+        val existingUrl = request.websiteUrl?.let {
+            profileRepository.getBySubject(tenantId, BusinessProfileSubjectType.Contact, contactId.value)?.websiteUrl
+        }
+        val response = updateProfile(tenantId, BusinessProfileSubjectType.Contact, contactId.value, request)
+        val websiteChanged = !request.websiteUrl.isNullOrBlank() && request.websiteUrl != existingUrl
+        if (websiteChanged) {
+            enqueueContact(tenantId, contactId, EnrichmentTrigger.WebsiteChanged)
+                .onFailure { logger.warn("Failed to enqueue enrichment after website change for contact {}: {}", contactId, it.message) }
+        }
+        return response
+    }
 
     private suspend fun updateProfile(
         tenantId: TenantId,

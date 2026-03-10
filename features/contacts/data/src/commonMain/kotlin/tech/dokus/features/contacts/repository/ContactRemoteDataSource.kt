@@ -2,9 +2,12 @@
 
 package tech.dokus.features.contacts.repository
 
+import kotlinx.coroutines.flow.Flow
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.ContactNoteId
+import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.enums.DocumentDirection
+import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.PeppolStatusResponse
 import tech.dokus.domain.model.common.PaginatedResponse
@@ -75,6 +78,8 @@ interface ContactRemoteDataSource {
         offset: Int = 0
     ): Result<PaginatedResponse<FinancialDocumentDto.InvoiceDto>>
 
+    suspend fun getDocumentRecord(documentId: DocumentId): Result<DocumentRecordDto>
+
     // Activity Operations
     suspend fun getContactActivity(contactId: ContactId): Result<ContactActivitySummary>
 
@@ -109,4 +114,7 @@ interface ContactRemoteDataSource {
         contactId: ContactId,
         noteId: ContactNoteId
     ): Result<Unit>
+
+    // SSE Operations
+    fun observeContactChanges(contactId: ContactId): Flow<Unit>
 }
