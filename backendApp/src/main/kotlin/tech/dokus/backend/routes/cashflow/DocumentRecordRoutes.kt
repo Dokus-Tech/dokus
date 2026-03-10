@@ -58,6 +58,7 @@ import tech.dokus.domain.ids.DocumentMatchReviewId
 import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.DocumentCollectionChangedEventDto
+import tech.dokus.domain.model.DocumentCountsResponse
 import tech.dokus.domain.model.DocumentDeletedEventDto
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.DocumentStreamEventNames
@@ -188,6 +189,21 @@ internal fun Route.documentRecordRoutes() {
                     total = total,
                     limit = limit,
                     offset = page * limit
+                )
+            )
+        }
+
+        get<Documents.Counts> {
+            val tenantId = requireTenantId()
+            logger.info("Listing document counts: tenant=$tenantId")
+
+            val counts = documentRepository.getOperationalCounts(tenantId)
+
+            call.respond(
+                HttpStatusCode.OK,
+                DocumentCountsResponse(
+                    needsAttention = counts.needsAttention,
+                    confirmed = counts.confirmed
                 )
             )
         }

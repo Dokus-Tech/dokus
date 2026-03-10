@@ -6,7 +6,7 @@ import ai.koog.agents.core.annotation.ExperimentalAgentsApi
 import ai.koog.agents.core.tools.ToolRegistry
 import ai.koog.prompt.dsl.prompt
 import ai.koog.prompt.executor.model.PromptExecutor
-import ai.koog.prompt.processor.ManualToolCallFixProcessor
+import tech.dokus.features.ai.config.installKoogEventLogging
 import tech.dokus.features.ai.config.asOrchestratorModel
 import tech.dokus.features.ai.graph.businessProfileContentExtractionGraph
 import tech.dokus.features.ai.models.BusinessProfileContentExtractionInput
@@ -30,8 +30,13 @@ class BusinessProfileContentExtractionAgent(
                 },
                 model = aiConfig.mode.asOrchestratorModel,
                 maxAgentIterations = aiConfig.mode.maxIterations,
-                responseProcessor = ManualToolCallFixProcessor(ToolRegistry.EMPTY)
-            )
+            ),
+            installFeatures = {
+                installKoogEventLogging(
+                    agentName = "business-profile-content-extraction",
+                    enabled = aiConfig.koogEventLoggingEnabled
+                )
+            }
         )
 
         return try {

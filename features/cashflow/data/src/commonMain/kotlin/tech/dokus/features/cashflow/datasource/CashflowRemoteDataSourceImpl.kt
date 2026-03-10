@@ -59,6 +59,7 @@ import tech.dokus.domain.model.UndoAutoPaymentRequest
 import tech.dokus.domain.model.CreateExpenseRequest
 import tech.dokus.domain.model.CreateInvoiceRequest
 import tech.dokus.domain.model.DocumentDraftDto
+import tech.dokus.domain.model.DocumentCountsResponse
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentIngestionDto
 import tech.dokus.domain.model.DocumentIntakeResult
@@ -623,6 +624,12 @@ internal class CashflowRemoteDataSourceImpl(
                     limit = limit
                 )
             ).body()
+        }
+    }
+
+    override suspend fun getDocumentCounts(): Result<DocumentCountsResponse> {
+        return runCatching {
+            httpClient.get(Documents.Counts()).body()
         }
     }
 

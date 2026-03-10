@@ -16,8 +16,8 @@ import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.CanonicalPayment
 import tech.dokus.features.ai.config.asVisionModel
-import tech.dokus.features.ai.config.assistantResponseRepeatMax
-import tech.dokus.features.ai.config.documentProcessing
+import tech.dokus.features.ai.config.finishToolOnly
+import tech.dokus.features.ai.config.finishToolVisionAssistantResponseRepeatMax
 import tech.dokus.features.ai.models.ExtractDocumentInput
 import tech.dokus.features.ai.models.ExtractionToolDescriptions
 import tech.dokus.features.ai.models.FinancialExtractionResult
@@ -30,8 +30,8 @@ fun AIAgentSubgraphBuilderBase<*, *>.extractPurchaseOrderSubGraph(
         name = "Extract purchase order information",
         llmModel = aiConfig.mode.asVisionModel,
         tools = emptyList(),
-        llmParams = LLMParams.documentProcessing,
-        assistantResponseRepeatMax = assistantResponseRepeatMax,
+        llmParams = LLMParams.finishToolOnly("submit_purchase_order_extraction"),
+        assistantResponseRepeatMax = finishToolVisionAssistantResponseRepeatMax,
         finishTool = PurchaseOrderExtractionFinishTool(),
     ) { it.purchaseOrderPrompt }
 }

@@ -37,7 +37,6 @@ class AcceptDocumentGraphTest {
 
         val strategy = acceptDocumentGraph(
             aiConfig = TestAiFixtures.aiConfig,
-            registry = toolRegistry,
             documentFetcher = mockFetcher
         )
 

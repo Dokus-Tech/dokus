@@ -119,6 +119,12 @@ data class DocumentRecordDto(
     val sources: List<DocumentSourceDto> = emptyList()
 )
 
+@Serializable
+data class DocumentCountsResponse(
+    val needsAttention: Long,
+    val confirmed: Long
+)
+
 /**
  * Request to reprocess a document.
  *

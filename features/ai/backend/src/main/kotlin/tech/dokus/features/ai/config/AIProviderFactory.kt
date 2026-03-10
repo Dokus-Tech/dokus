@@ -1,5 +1,8 @@
 package tech.dokus.features.ai.config
 
+import ai.koog.prompt.executor.clients.ConnectionTimeoutConfig
+import ai.koog.prompt.executor.clients.retry.RetryConfig
+import ai.koog.prompt.executor.clients.retry.RetryingLLMClient
 import ai.koog.prompt.executor.clients.openai.OpenAIClientSettings
 import ai.koog.prompt.executor.clients.openai.OpenAILLMClient
 import ai.koog.prompt.executor.llms.SingleLLMPromptExecutor
@@ -11,7 +14,7 @@ import tech.dokus.foundation.backend.utils.loggerFor
 /**
  * Factory for creating AI prompt executors.
  *
- * All inference runs through Ollama. Model selection is handled by [AIModels].
+ * Model selection is handled by [AIModels].
  */
 object AIProviderFactory {
     private val logger = loggerFor()
@@ -19,7 +22,7 @@ object AIProviderFactory {
     /**
      * Create a throttled executor that respects concurrency limits.
      *
-     * CRITICAL: Without throttling, parallel agents can overwhelm Ollama
+     * CRITICAL: Without throttling, parallel agents can overwhelm the local runtime
      * causing OOM, timeouts, or model unload/reload thrashing.
      */
     fun createOllamaExecutor(config: AIConfig): PromptExecutor {
@@ -46,8 +49,23 @@ object AIProviderFactory {
 
         val client = OpenAILLMClient(
             apiKey = "",
-            settings = OpenAIClientSettings(baseUrl = config.lmStudioHost)
+            settings = OpenAIClientSettings(
+                baseUrl = config.lmStudioHost,
+                timeoutConfig = ConnectionTimeoutConfig(
+                    requestTimeoutMillis = config.llmRequestTimeout.inWholeMilliseconds,
+                    connectTimeoutMillis = config.llmConnectTimeout.inWholeMilliseconds,
+                    socketTimeoutMillis = config.llmSocketTimeout.inWholeMilliseconds,
+                )
+            )
         )
-        return SingleLLMPromptExecutor(client)
+        val retryingClient = RetryingLLMClient(
+            delegate = client,
+            config = RetryConfig(
+                maxAttempts = config.llmRetryMaxAttempts,
+                initialDelay = config.llmRetryInitialDelay,
+                maxDelay = config.llmRetryMaxDelay,
+            )
+        )
+        return SingleLLMPromptExecutor(retryingClient)
     }
 }

@@ -3,6 +3,7 @@
 package tech.dokus.database.repository.cashflow
 
 import org.jetbrains.exposed.v1.core.JoinType
+import org.jetbrains.exposed.v1.core.Expression
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.alias
@@ -19,6 +20,7 @@ import org.jetbrains.exposed.v1.core.neq
 import org.jetbrains.exposed.v1.core.or
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.Query
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import tech.dokus.database.tables.cashflow.CreditNotesTable
 import tech.dokus.database.tables.cashflow.ExpensesTable
@@ -44,16 +46,22 @@ import kotlin.uuid.toKotlinUuid
 
 internal object DocumentListingQuery {
 
+    private data class DocumentListingBaseQuery(
+        val query: Query,
+        val tenantIdUuid: UUID,
+        val processingRunIdExpr: Expression<*>,
+        val finishedRunIdExpr: Expression<*>,
+        val queuedRunIdExpr: Expression<*>,
+    )
+
     @Suppress("LongMethod", "LongParameterList")
-    suspend fun listWithDraftsAndIngestion(
+    private fun buildBaseQuery(
         tenantId: TenantId,
         filter: DocumentListFilter?,
         documentStatus: DocumentStatus?,
         documentType: DocumentType?,
-        ingestionStatus: IngestionStatus?,
-        page: Int,
-        limit: Int
-    ): DocumentListPage<DocumentWithDraftAndIngestion> = newSuspendedTransaction {
+        ingestionStatus: IngestionStatus?
+    ): DocumentListingBaseQuery {
         val tenantIdUuid = UUID.fromString(tenantId.toString())
 
         // Precedence: when using the high-level filter, ignore lower-level status filters.
@@ -322,7 +330,50 @@ internal object DocumentListingQuery {
             )
             .where { whereOp }
 
-        val total = baseQuery.count()
+        return DocumentListingBaseQuery(
+            query = baseQuery,
+            tenantIdUuid = tenantIdUuid,
+            processingRunIdExpr = processingRunIdExpr,
+            finishedRunIdExpr = finishedRunIdExpr,
+            queuedRunIdExpr = queuedRunIdExpr
+        )
+    }
+
+    suspend fun countWithDraftsAndIngestion(
+        tenantId: TenantId,
+        filter: DocumentListFilter?,
+        documentStatus: DocumentStatus?,
+        documentType: DocumentType?,
+        ingestionStatus: IngestionStatus?,
+    ): Long = newSuspendedTransaction {
+        buildBaseQuery(
+            tenantId = tenantId,
+            filter = filter,
+            documentStatus = documentStatus,
+            documentType = documentType,
+            ingestionStatus = ingestionStatus
+        ).query.count()
+    }
+
+    @Suppress("LongMethod", "LongParameterList")
+    suspend fun listWithDraftsAndIngestion(
+        tenantId: TenantId,
+        filter: DocumentListFilter?,
+        documentStatus: DocumentStatus?,
+        documentType: DocumentType?,
+        ingestionStatus: IngestionStatus?,
+        page: Int,
+        limit: Int
+    ): DocumentListPage<DocumentWithDraftAndIngestion> = newSuspendedTransaction {
+        val baseQuery = buildBaseQuery(
+            tenantId = tenantId,
+            filter = filter,
+            documentStatus = documentStatus,
+            documentType = documentType,
+            ingestionStatus = ingestionStatus
+        )
+
+        val total = baseQuery.query.count()
 
         data class PageRow(
             val documentId: DocumentId,
@@ -330,15 +381,15 @@ internal object DocumentListingQuery {
         )
 
         val offset = (page * limit).toLong()
-        val pageRows = baseQuery
+        val pageRows = baseQuery.query
             .orderBy(DocumentsTable.uploadedAt to SortOrder.DESC, DocumentsTable.id to SortOrder.DESC)
             .limit(limit)
             .offset(offset)
             .mapNotNull { row ->
                 val documentId = DocumentId.parse(row[DocumentsTable.id].toString())
-                val processing = row.getOrNull(processingRunIdExpr)
-                val finished = row.getOrNull(finishedRunIdExpr)
-                val queued = row.getOrNull(queuedRunIdExpr)
+                val processing = row.getOrNull(baseQuery.processingRunIdExpr)
+                val finished = row.getOrNull(baseQuery.finishedRunIdExpr)
+                val queued = row.getOrNull(baseQuery.queuedRunIdExpr)
                 val latest = (processing ?: finished ?: queued)?.let { IngestionRunId.parse(it.toString()) }
                 PageRow(documentId = documentId, latestRunId = latest)
             }
@@ -349,6 +400,7 @@ internal object DocumentListingQuery {
 
         val documentIds = pageRows.map { UUID.fromString(it.documentId.toString()) }
         val latestRunIds = pageRows.mapNotNull { row -> row.latestRunId?.let { UUID.fromString(it.toString()) } }
+        val tenantIdUuid = baseQuery.tenantIdUuid
 
         val documentsById = DocumentsTable.selectAll()
             .where {

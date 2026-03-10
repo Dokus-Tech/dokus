@@ -229,6 +229,42 @@ class DocumentListingFiltersTest {
     }
 
     @Test
+    fun `operational counts return backend totals without pagination`() = runBlocking {
+        insertDocument("queued.pdf").also { insertIngestion(it, IngestionStatus.Queued) }
+        insertDocument("processing.pdf").also { insertIngestion(it, IngestionStatus.Processing) }
+        insertDocument("failed.pdf").also { insertIngestion(it, IngestionStatus.Failed) }
+        insertDocument("succeeded-no-draft.pdf").also {
+            insertIngestion(it, IngestionStatus.Succeeded)
+        }
+
+        insertDocument("needs-review.pdf").also {
+            insertIngestion(it, IngestionStatus.Succeeded)
+            insertDraft(it, DocumentStatus.NeedsReview, DocumentType.Invoice)
+        }
+
+        insertDocument("confirmed-with-entity.pdf").also {
+            insertIngestion(it, IngestionStatus.Succeeded)
+            insertDraft(it, DocumentStatus.Confirmed, DocumentType.Invoice)
+            insertInvoice(it)
+        }
+
+        insertDocument("confirmed-no-entity.pdf").also {
+            insertIngestion(it, IngestionStatus.Succeeded)
+            insertDraft(it, DocumentStatus.Confirmed, DocumentType.Invoice)
+        }
+
+        insertDocument("rejected.pdf").also {
+            insertIngestion(it, IngestionStatus.Succeeded)
+            insertDraft(it, DocumentStatus.Rejected, DocumentType.Invoice)
+        }
+
+        val counts = documentRepository.getOperationalCounts(tenantId)
+
+        assertEquals(6L, counts.needsAttention)
+        assertEquals(1L, counts.confirmed)
+    }
+
+    @Test
     fun `IngestionStatus filter is applied before pagination and totals are correct`() = runBlocking {
         val failedDocs = (1..25).map { index ->
             insertDocument("failed-$index.pdf").also { insertIngestion(it, IngestionStatus.Failed) }
