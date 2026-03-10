@@ -42,6 +42,7 @@ import tech.dokus.aura.resources.banking_balances_empty_subtitle
 import tech.dokus.aura.resources.banking_balances_empty_title
 import tech.dokus.aura.resources.banking_balances_status_inactive
 import tech.dokus.aura.resources.banking_balances_status_synced
+import tech.dokus.domain.enums.BankAccountStatus
 import tech.dokus.domain.enums.BankAccountType
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.BankAccountDto
@@ -69,7 +70,9 @@ import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.local.ScreenSize
 import tech.dokus.foundation.aura.local.isLarge
+import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.style.positionPositive
+import tech.dokus.foundation.aura.style.statusWarning
 import tech.dokus.foundation.aura.style.textMuted
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
@@ -320,7 +323,7 @@ private fun AccountTableRow(
 
         // Status
         DokusTableCell(BalancesTableColumns.Status) {
-            StatusIndicator(isActive = account.isActive)
+            StatusIndicator(status = account.status, isActive = account.isActive)
         }
     }
 }
@@ -377,7 +380,7 @@ private fun MobileAccountCard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 AccountTypeBadge(type = account.accountType)
-                StatusIndicator(isActive = account.isActive)
+                StatusIndicator(status = account.status, isActive = account.isActive)
             }
         }
 
@@ -426,9 +429,21 @@ private fun AccountTypeBadge(
 
 @Composable
 private fun StatusIndicator(
+    status: BankAccountStatus,
     isActive: Boolean,
     modifier: Modifier = Modifier,
 ) {
+    val dotColor = when {
+        !isActive -> MaterialTheme.colorScheme.textMuted
+        status == BankAccountStatus.PendingReview -> MaterialTheme.colorScheme.statusWarning
+        else -> MaterialTheme.colorScheme.positionPositive
+    }
+    val label = if (!isActive) {
+        stringResource(Res.string.banking_balances_status_inactive)
+    } else {
+        status.localized
+    }
+
     Row(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall),
@@ -438,19 +453,10 @@ private fun StatusIndicator(
             modifier = Modifier
                 .size(Constraints.StatusDot.size)
                 .clip(CircleShape)
-                .background(
-                    if (isActive) {
-                        MaterialTheme.colorScheme.positionPositive
-                    } else {
-                        MaterialTheme.colorScheme.textMuted
-                    }
-                ),
+                .background(dotColor),
         )
         Text(
-            text = stringResource(
-                if (isActive) Res.string.banking_balances_status_synced
-                else Res.string.banking_balances_status_inactive
-            ),
+            text = label,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.textMuted,
             maxLines = 1,

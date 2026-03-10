@@ -15,8 +15,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -43,12 +46,14 @@ import tech.dokus.aura.resources.banking_col_date
 import tech.dokus.aura.resources.banking_col_description
 import tech.dokus.aura.resources.banking_col_status
 import tech.dokus.domain.enums.BankTransactionStatus
+import tech.dokus.domain.enums.StatementTrust
 import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.foundation.aura.components.layout.DokusTableCell
 import tech.dokus.foundation.aura.components.layout.DokusTableColumnSpec
 import tech.dokus.foundation.aura.components.layout.DokusTableRow
 import tech.dokus.foundation.aura.components.text.Amt
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.extensions.iconized
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.extensions.statusColor
 import tech.dokus.foundation.aura.style.amberSoft
@@ -138,17 +143,30 @@ internal fun TransactionRow(
         onClick = onClick,
         contentPadding = PaddingValues(horizontal = Constraints.Spacing.large),
     ) {
-        // Date
+        // Date + trust dot
         DokusTableCell(PaymentsTableColumns.Date) {
-            Text(
-                text = formatShortDate(transaction.transactionDate),
-                style = MaterialTheme.typography.bodySmall.copy(
-                    fontSize = 11.sp,
-                    fontFamily = MaterialTheme.typography.labelLarge.fontFamily,
-                ),
-                color = MaterialTheme.colorScheme.textMuted,
-                maxLines = 1,
-            )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.xxSmall),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (transaction.statementTrust != StatementTrust.High) {
+                    Box(
+                        modifier = Modifier
+                            .size(Constraints.Spacing.xSmall)
+                            .clip(CircleShape)
+                            .background(transaction.statementTrust.statusColor),
+                    )
+                }
+                Text(
+                    text = formatShortDate(transaction.transactionDate),
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        fontSize = 11.sp,
+                        fontFamily = MaterialTheme.typography.labelLarge.fontFamily,
+                    ),
+                    color = MaterialTheme.colorScheme.textMuted,
+                    maxLines = 1,
+                )
+            }
         }
 
         // Description
@@ -186,9 +204,22 @@ internal fun TransactionRow(
             )
         }
 
-        // Status badge
+        // Status badge + resolution icon
         DokusTableCell(PaymentsTableColumns.Status) {
-            TransactionStatusBadge(status = transaction.status)
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.xxSmall),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                TransactionStatusBadge(status = transaction.status)
+                transaction.resolutionType?.let { resolution ->
+                    Icon(
+                        imageVector = resolution.iconized,
+                        contentDescription = null,
+                        modifier = Modifier.size(Constraints.IconSize.xSmall),
+                        tint = MaterialTheme.colorScheme.textMuted,
+                    )
+                }
+            }
         }
 
         // Document action
