@@ -105,20 +105,20 @@ internal fun CanonicalInvoiceDocumentCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.large),
             ) {
-                CanonicalInvoiceMetaCell(stringResource(Res.string.invoice_issue), issueDate)
-                CanonicalInvoiceMetaCell(stringResource(Res.string.invoice_due), dueDate)
-                CanonicalInvoiceMetaCell(stringResource(Res.string.invoice_title), invoiceNumber)
+                CanonicalMetaCell(stringResource(Res.string.invoice_issue), issueDate)
+                CanonicalMetaCell(stringResource(Res.string.invoice_due), dueDate)
+                CanonicalMetaCell(stringResource(Res.string.invoice_title), invoiceNumber)
             }
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
-            CanonicalInvoiceLineItems(
+            CanonicalLineItems(
                 lineItems = data.lineItems,
             )
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
-            CanonicalInvoiceTotals(
+            CanonicalTotals(
                 currencySign = currencySign,
                 subtotal = subtotal,
                 vat = vat,
@@ -154,7 +154,7 @@ internal fun CanonicalInvoiceDocumentCard(
 }
 
 @Composable
-private fun CanonicalInvoiceMetaCell(
+internal fun CanonicalMetaCell(
     label: String,
     value: String,
     modifier: Modifier = Modifier,
@@ -177,7 +177,7 @@ private fun CanonicalInvoiceMetaCell(
 }
 
 @Composable
-private fun CanonicalInvoiceLineItems(
+internal fun CanonicalLineItems(
     lineItems: List<LineItemUiData>,
     modifier: Modifier = Modifier,
 ) {
@@ -230,7 +230,7 @@ private fun CanonicalInvoiceLineItems(
 }
 
 @Composable
-private fun CanonicalInvoiceTotals(
+internal fun CanonicalTotals(
     currencySign: String,
     subtotal: String?,
     vat: String?,
@@ -242,8 +242,8 @@ private fun CanonicalInvoiceTotals(
         horizontalAlignment = Alignment.End,
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        CanonicalInvoiceTotalRow(stringResource(Res.string.invoice_subtotal), subtotal, currencySign)
-        CanonicalInvoiceTotalRow(stringResource(Res.string.invoice_vat), vat, currencySign)
+        CanonicalTotalRow(stringResource(Res.string.invoice_subtotal), subtotal, currencySign)
+        CanonicalTotalRow(stringResource(Res.string.invoice_vat), vat, currencySign)
         HorizontalDivider(
             modifier = Modifier.width(220.dp),
             color = MaterialTheme.colorScheme.onSurface
@@ -268,7 +268,7 @@ private fun CanonicalInvoiceTotals(
 }
 
 @Composable
-private fun CanonicalInvoiceTotalRow(
+private fun CanonicalTotalRow(
     label: String,
     value: String?,
     currencySign: String,

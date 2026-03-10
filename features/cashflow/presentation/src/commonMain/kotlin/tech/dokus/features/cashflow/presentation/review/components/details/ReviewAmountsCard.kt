@@ -29,12 +29,12 @@ internal fun AmountsCard(
         MicroLabel(text = stringResource(Res.string.cashflow_section_amounts))
 
         when (uiData) {
-            is DocumentUiData.Invoice -> InvoiceAmountsDisplay(
+            is DocumentUiData.Invoice -> FinancialAmountsDisplay(
                 subtotal = uiData.subtotalAmount?.toString(),
                 vat = uiData.vatAmount?.toString(),
                 total = uiData.totalAmount?.toString(),
             )
-            is DocumentUiData.CreditNote -> CreditNoteAmountsDisplay(
+            is DocumentUiData.CreditNote -> FinancialAmountsDisplay(
                 subtotal = uiData.subtotalAmount?.toString(),
                 vat = uiData.vatAmount?.toString(),
                 total = uiData.totalAmount?.toString(),
@@ -61,7 +61,7 @@ internal fun AmountsCard(
 }
 
 @Composable
-private fun InvoiceAmountsDisplay(
+private fun FinancialAmountsDisplay(
     subtotal: String?,
     vat: String?,
     total: String?,
@@ -85,24 +85,6 @@ private fun ReceiptAmountsDisplay(
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        AmountRow(label = stringResource(Res.string.cashflow_vat_amount), value = vat)
-        HorizontalDivider(
-            modifier = Modifier.padding(vertical = Constraints.Spacing.xSmall),
-            color = MaterialTheme.colorScheme.outlineVariant
-        )
-        AmountRow(label = stringResource(Res.string.invoice_total_amount), value = total, isTotal = true)
-    }
-}
-
-@Composable
-private fun CreditNoteAmountsDisplay(
-    subtotal: String?,
-    vat: String?,
-    total: String?,
-    modifier: Modifier = Modifier
-) {
-    Column(modifier = modifier.fillMaxWidth()) {
-        AmountRow(label = stringResource(Res.string.invoice_subtotal), value = subtotal)
         AmountRow(label = stringResource(Res.string.cashflow_vat_amount), value = vat)
         HorizontalDivider(
             modifier = Modifier.padding(vertical = Constraints.Spacing.xSmall),

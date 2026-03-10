@@ -18,7 +18,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -31,7 +30,6 @@ import tech.dokus.aura.resources.document_source_technical_details
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.features.cashflow.presentation.review.models.DocumentUiData
-import tech.dokus.features.cashflow.presentation.review.models.LineItemUiData
 import tech.dokus.features.cashflow.presentation.common.utils.formatShortDate
 import tech.dokus.features.cashflow.presentation.review.DocumentPreviewState
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
@@ -348,146 +346,6 @@ private fun SourceViewerCenter(
         }
     }
 }
-
-@Composable
-private fun CanonicalMetaCell(
-    label: String,
-    value: String,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(2.dp),
-    ) {
-        Text(
-            text = label.uppercase(),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.textMuted,
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-        )
-    }
-}
-
-@Composable
-private fun CanonicalLineItems(
-    lineItems: List<LineItemUiData>,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
-    ) {
-        Row(modifier = Modifier.fillMaxWidth()) {
-            Text(
-                text = "Description",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.textMuted,
-                modifier = Modifier.weight(1f),
-            )
-            Text(
-                text = "Amount",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.textMuted,
-                textAlign = TextAlign.End,
-                modifier = Modifier.width(96.dp),
-            )
-        }
-
-        if (lineItems.isEmpty()) {
-            Text(
-                text = "No line items",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.textMuted,
-            )
-        } else {
-            lineItems.forEach { item ->
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        text = item.description,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.weight(1f),
-                    )
-                    Text(
-                        text = item.displayAmount,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        textAlign = TextAlign.End,
-                        modifier = Modifier.width(96.dp),
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun CanonicalTotals(
-    currencySign: String,
-    subtotal: String?,
-    vat: String?,
-    total: String,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.End,
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        CanonicalTotalRow("Subtotal", subtotal, currencySign)
-        CanonicalTotalRow("VAT", vat, currencySign)
-        HorizontalDivider(
-            modifier = Modifier.width(220.dp),
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        Row(
-            modifier = Modifier.width(220.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = "Total",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-            )
-            Text(
-                text = "$currencySign$total",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-            )
-        }
-    }
-}
-
-@Composable
-private fun CanonicalTotalRow(
-    label: String,
-    value: String?,
-    currencySign: String,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier = modifier.width(220.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.textMuted,
-        )
-        Text(
-            text = if (value != null) "$currencySign$value" else "\u2014",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurface,
-        )
-    }
-}
-
 
 @Preview
 @Composable

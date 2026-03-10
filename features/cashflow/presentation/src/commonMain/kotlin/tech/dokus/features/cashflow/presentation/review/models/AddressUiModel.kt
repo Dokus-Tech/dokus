@@ -10,16 +10,15 @@ data class AddressUiModel(
     val postalCode: String?,
     val country: String?,
 ) {
-    val formatted: String?
-        get() {
-            val parts = listOfNotNull(
-                streetLine1?.trim()?.takeIf { it.isNotEmpty() },
-                listOfNotNull(
-                    postalCode?.trim()?.takeIf { it.isNotEmpty() },
-                    city?.trim()?.takeIf { it.isNotEmpty() },
-                ).takeIf { it.isNotEmpty() }?.joinToString(" "),
-                country?.trim()?.takeIf { it.isNotEmpty() },
-            )
-            return parts.takeIf { it.isNotEmpty() }?.joinToString(", ")
-        }
+    val formatted: String? = run {
+        val parts = listOfNotNull(
+            streetLine1?.trim()?.takeIf { it.isNotEmpty() },
+            listOfNotNull(
+                postalCode?.trim()?.takeIf { it.isNotEmpty() },
+                city?.trim()?.takeIf { it.isNotEmpty() },
+            ).takeIf { it.isNotEmpty() }?.joinToString(" "),
+            country?.trim()?.takeIf { it.isNotEmpty() },
+        )
+        parts.takeIf { it.isNotEmpty() }?.joinToString(", ")
+    }
 }
