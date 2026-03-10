@@ -46,6 +46,9 @@ import tech.dokus.aura.resources.contacts_no_notes
 import tech.dokus.aura.resources.contacts_note_by
 import tech.dokus.aura.resources.contacts_note_content
 import tech.dokus.aura.resources.contacts_saving
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.ContactNoteId
+import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.contact.ContactNoteDto
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.common.DokusLoader
@@ -54,6 +57,12 @@ import tech.dokus.foundation.aura.components.dialog.DokusDialog
 import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
 import tech.dokus.foundation.aura.components.fields.PTextFieldFree
 import tech.dokus.foundation.aura.constrains.Constraints
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import kotlinx.datetime.LocalDateTime
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 internal object ContactNotesTestTags {
     const val BottomSheetRoot = "contact_notes_bottom_sheet"
@@ -384,4 +393,78 @@ internal fun ContactNoteDeleteDialog(
         dismissOnBackPress = !isDeleting,
         dismissOnClickOutside = !isDeleting
     )
+}
+
+// ============================================================================
+// PREVIEWS
+// ============================================================================
+
+private val PreviewNow = LocalDateTime(2026, 1, 15, 10, 0)
+
+private val PreviewNotes = listOf(
+    ContactNoteDto(
+        id = ContactNoteId.generate(),
+        contactId = ContactId.generate(),
+        tenantId = TenantId.generate(),
+        content = "Called about invoice #2024-001. Will pay by end of month.",
+        authorName = "John Doe",
+        createdAt = PreviewNow,
+        updatedAt = PreviewNow
+    ),
+    ContactNoteDto(
+        id = ContactNoteId.generate(),
+        contactId = ContactId.generate(),
+        tenantId = TenantId.generate(),
+        content = "Prefers email communication over phone.",
+        authorName = null,
+        createdAt = PreviewNow,
+        updatedAt = PreviewNow
+    )
+)
+
+@Preview
+@Composable
+private fun ContactNotesComposerPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        ContactNotesComposer(
+            noteContent = "Draft note content",
+            onNoteContentChange = {},
+            isSaving = false,
+            isEditing = false,
+            onSave = {},
+            onCancel = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun ContactNotesListPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        ContactNotesList(
+            notesState = DokusState.success(PreviewNotes),
+            editingNote = null,
+            onEditClick = {},
+            onDeleteClick = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun ContactNoteDeleteDialogPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        ContactNoteDeleteDialog(
+            note = PreviewNotes.first(),
+            isDeleting = false,
+            onConfirm = {},
+            onDismiss = {}
+        )
+    }
 }

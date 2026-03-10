@@ -36,15 +36,24 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import kotlinx.datetime.LocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_close
 import tech.dokus.aura.resources.contacts_add_note
 import tech.dokus.aura.resources.contacts_notes
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.ContactNoteId
+import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.contact.ContactNoteDto
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 private const val AnimationDurationMs = 200
 private const val SlideAnimationDurationMs = 300
@@ -187,5 +196,42 @@ internal fun ContactNotesPane(
                 }
             }
         }
+    }
+}
+
+@Preview
+@Composable
+private fun ContactNotesPanePreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    val now = LocalDateTime(2026, 1, 15, 10, 0)
+    TestWrapper(parameters) {
+        ContactNotesPane(
+            isVisible = true,
+            notesState = DokusState.success(
+                listOf(
+                    ContactNoteDto(
+                        id = ContactNoteId.generate(),
+                        contactId = ContactId.generate(),
+                        tenantId = TenantId.generate(),
+                        content = "Called about invoice #2024-001. Will pay by end of month.",
+                        authorName = "John Doe",
+                        createdAt = now,
+                        updatedAt = now
+                    )
+                )
+            ),
+            noteContent = "",
+            onNoteContentChange = {},
+            isSavingNote = false,
+            editingNote = null,
+            showComposer = true,
+            onShowAddNote = {},
+            onSaveNote = {},
+            onEditNoteClick = {},
+            onDeleteNoteClick = {},
+            onDismissComposer = {},
+            onDismiss = {}
+        )
     }
 }
