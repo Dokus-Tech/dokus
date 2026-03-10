@@ -8,7 +8,7 @@ import ai.koog.agents.ext.agent.subgraphWithTask
 import ai.koog.prompt.params.LLMParams
 import kotlinx.serialization.Serializable
 import tech.dokus.features.ai.config.asOrchestratorModel
-import tech.dokus.features.ai.config.finishToolOnlyText
+import tech.dokus.features.ai.config.finishToolOnly
 import tech.dokus.features.ai.config.finishToolTextAssistantResponseRepeatMax
 import tech.dokus.features.ai.models.BusinessLogoFallbackCandidate
 import tech.dokus.features.ai.models.BusinessLogoFallbackInput
@@ -22,7 +22,7 @@ fun AIAgentSubgraphBuilderBase<*, *>.businessLogoFallbackSubGraph(
         name = "Recover logo candidates from HTML snippets",
         llmModel = aiConfig.mode.asOrchestratorModel,
         tools = emptyList<Tool<*, *>>(),
-        llmParams = LLMParams.finishToolOnlyText("submit_business_logo_fallback"),
+        llmParams = LLMParams.finishToolOnly("submit_business_logo_fallback"),
         assistantResponseRepeatMax = finishToolTextAssistantResponseRepeatMax,
         finishTool = BusinessLogoFallbackFinishTool()
     ) { it.prompt }

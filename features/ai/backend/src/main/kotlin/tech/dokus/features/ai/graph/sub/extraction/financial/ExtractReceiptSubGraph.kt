@@ -17,7 +17,7 @@ import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.FinancialLineItem
 import tech.dokus.domain.model.VatBreakdownEntry
 import tech.dokus.features.ai.config.asVisionModel
-import tech.dokus.features.ai.config.finishToolOnlyVision
+import tech.dokus.features.ai.config.finishToolOnly
 import tech.dokus.features.ai.config.finishToolVisionAssistantResponseRepeatMax
 import tech.dokus.features.ai.models.ExtractDocumentInput
 import tech.dokus.features.ai.models.ExtractionToolDescriptions
@@ -58,7 +58,7 @@ fun AIAgentSubgraphBuilderBase<*, *>.extractReceiptSubGraph(
         name = "Extract receipt information",
         llmModel = aiConfig.mode.asVisionModel,
         tools = emptyList(),
-        llmParams = LLMParams.finishToolOnlyVision("submit_receipt_extraction"),
+        llmParams = LLMParams.finishToolOnly("submit_receipt_extraction"),
         assistantResponseRepeatMax = finishToolVisionAssistantResponseRepeatMax,
         finishTool = ReceiptExtractionFinishTool()
     ) { it.receiptPrompt }

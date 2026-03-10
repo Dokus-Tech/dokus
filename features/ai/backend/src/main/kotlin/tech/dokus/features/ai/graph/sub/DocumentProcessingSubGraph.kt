@@ -9,11 +9,11 @@ import tech.dokus.features.ai.graph.nodes.DirectionResolutionResolver
 import tech.dokus.features.ai.models.DocumentAiProcessingResult
 import tech.dokus.features.ai.models.ExtractDocumentInput
 import tech.dokus.features.ai.models.FinancialExtractionResult
-import tech.dokus.features.ai.validation.AuditCheck
-import tech.dokus.features.ai.validation.AuditReport
-import tech.dokus.features.ai.validation.CheckType
+import tech.dokus.features.ai.models.ResolvedExtraction
 import tech.dokus.features.ai.services.DocumentFetcher
 import tech.dokus.features.ai.validation.FinancialExtractionAuditor
+import tech.dokus.features.ai.validation.counterpartyInvariantCheck
+import tech.dokus.features.ai.validation.mergeAudit
 import tech.dokus.foundation.backend.config.AIConfig
 
 fun AIAgentSubgraphBuilderBase<*, *>.documentProcessingSubGraph(
@@ -73,28 +73,4 @@ fun AIAgentSubgraphBuilderBase<*, *>.documentProcessingSubGraph(
 
         nodeStart then storeInputContext then prepare then classify then storeClassification then prepareExtractionInput then extract then resolveDirection then auditAndWrap then nodeFinish
     }
-}
-
-private data class ResolvedExtraction(
-    val extraction: FinancialExtractionResult,
-    val directionResolution: tech.dokus.features.ai.models.DirectionResolution
-)
-
-private fun counterpartyInvariantCheck(tenantVat: String?, counterpartyVat: String?): AuditCheck? {
-    if (tenantVat == null || counterpartyVat == null) return null
-    if (tenantVat != counterpartyVat) return null
-    return AuditCheck.criticalFailure(
-        type = CheckType.COUNTERPARTY_INTEGRITY,
-        field = "counterpartyVat",
-        message = "Counterparty VAT equals tenant VAT ($tenantVat)",
-        hint = "Verify seller/buyer extraction and direction; counterparty must be a non-tenant entity",
-        expected = "counterparty VAT != tenant VAT",
-        actual = "$counterpartyVat == $tenantVat"
-    )
-}
-
-private fun mergeAudit(base: AuditReport, invariantCheck: AuditCheck?): AuditReport {
-    if (invariantCheck == null) return base
-    val checks = if (base.checks.isEmpty()) listOf(invariantCheck) else base.checks + invariantCheck
-    return AuditReport.fromChecks(checks)
 }

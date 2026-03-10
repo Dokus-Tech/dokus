@@ -16,7 +16,7 @@ import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.CanonicalPayment
 import tech.dokus.features.ai.config.asVisionModel
-import tech.dokus.features.ai.config.finishToolOnlyVision
+import tech.dokus.features.ai.config.finishToolOnly
 import tech.dokus.features.ai.config.finishToolVisionAssistantResponseRepeatMax
 import tech.dokus.features.ai.models.ExtractDocumentInput
 import tech.dokus.features.ai.models.ExtractionToolDescriptions
@@ -30,7 +30,7 @@ fun AIAgentSubgraphBuilderBase<*, *>.extractQuoteSubGraph(
         name = "Extract quote information",
         llmModel = aiConfig.mode.asVisionModel,
         tools = emptyList(),
-        llmParams = LLMParams.finishToolOnlyVision("submit_quote_extraction"),
+        llmParams = LLMParams.finishToolOnly("submit_quote_extraction"),
         assistantResponseRepeatMax = finishToolVisionAssistantResponseRepeatMax,
         finishTool = QuoteExtractionFinishTool(),
     ) { it.quotePrompt }

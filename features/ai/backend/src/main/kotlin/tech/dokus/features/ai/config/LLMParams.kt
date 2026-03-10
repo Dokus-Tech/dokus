@@ -2,12 +2,7 @@ package tech.dokus.features.ai.config
 
 import ai.koog.prompt.params.LLMParams
 
-fun LLMParams.Companion.finishToolOnlyVision(finishToolName: String) = LLMParams(
-    temperature = 0.1,
-    toolChoice = LLMParams.ToolChoice.Named(name = finishToolName)
-)
-
-fun LLMParams.Companion.finishToolOnlyText(finishToolName: String) = LLMParams(
+fun LLMParams.Companion.finishToolOnly(finishToolName: String) = LLMParams(
     temperature = 0.1,
     toolChoice = LLMParams.ToolChoice.Named(name = finishToolName)
 )

@@ -19,7 +19,7 @@ import tech.dokus.domain.model.CanonicalPayment
 import tech.dokus.domain.model.FinancialLineItem
 import tech.dokus.domain.model.VatBreakdownEntry
 import tech.dokus.features.ai.config.asVisionModel
-import tech.dokus.features.ai.config.finishToolOnlyVision
+import tech.dokus.features.ai.config.finishToolOnly
 import tech.dokus.features.ai.config.finishToolVisionAssistantResponseRepeatMax
 import tech.dokus.features.ai.models.ExtractDocumentInput
 import tech.dokus.features.ai.models.ExtractionToolDescriptions
@@ -91,7 +91,7 @@ fun AIAgentSubgraphBuilderBase<*, *>.extractInvoiceSubGraph(
         name = "Extract invoice information",
         llmModel = aiConfig.mode.asVisionModel,
         tools = emptyList<Tool<*, *>>(),
-        llmParams = LLMParams.finishToolOnlyVision("submit_invoice_extraction"),
+        llmParams = LLMParams.finishToolOnly("submit_invoice_extraction"),
         assistantResponseRepeatMax = finishToolVisionAssistantResponseRepeatMax,
         finishTool = InvoiceExtractionFinishTool()
     ) { it.prompt }

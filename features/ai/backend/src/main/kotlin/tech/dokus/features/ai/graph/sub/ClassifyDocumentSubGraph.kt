@@ -12,7 +12,7 @@ import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.Tenant
 import tech.dokus.features.ai.config.asVisionModel
-import tech.dokus.features.ai.config.finishToolOnlyVision
+import tech.dokus.features.ai.config.finishToolOnly
 import tech.dokus.features.ai.config.finishToolVisionAssistantResponseRepeatMax
 import tech.dokus.features.ai.extensions.description
 import tech.dokus.features.ai.graph.nodes.InputWithDocumentId
@@ -26,7 +26,7 @@ fun AIAgentSubgraphBuilderBase<*, *>.classifyDocumentSubGraph(
         name = "Classify document",
         llmModel = aiConfig.mode.asVisionModel,
         tools = emptyList<Tool<*, *>>(),
-        llmParams = LLMParams.finishToolOnlyVision("submit_classification"),
+        llmParams = LLMParams.finishToolOnly("submit_classification"),
         assistantResponseRepeatMax = finishToolVisionAssistantResponseRepeatMax,
         finishTool = ClassificationFinishTool()
     ) { it.prompt }
