@@ -350,16 +350,7 @@ internal class ContactDetailsContainer(
 
     private suspend fun ContactDetailsCtx.handleShowAddNoteDialog() {
         updateState {
-            copy(
-                uiState = uiState.copy(
-                    showAddNoteDialog = true,
-                    showEditNoteDialog = false,
-                    editingNote = null,
-                    showDeleteNoteConfirmation = false,
-                    deletingNote = null,
-                    noteContent = ""
-                )
-            )
+            copy(uiState = uiState.resetNoteTransientState().copy(showAddNoteDialog = true))
         }
     }
 
@@ -377,13 +368,10 @@ internal class ContactDetailsContainer(
     private suspend fun ContactDetailsCtx.handleShowEditNoteDialog(note: tech.dokus.domain.model.contact.ContactNoteDto) {
         updateState {
             copy(
-                uiState = uiState.copy(
-                    showAddNoteDialog = false,
+                uiState = uiState.resetNoteTransientState().copy(
                     showEditNoteDialog = true,
                     editingNote = note,
-                    showDeleteNoteConfirmation = false,
-                    deletingNote = null,
-                    noteContent = note.content
+                    noteContent = note.content,
                 )
             )
         }
@@ -410,12 +398,9 @@ internal class ContactDetailsContainer(
     private suspend fun ContactDetailsCtx.handleShowDeleteNoteConfirmation(note: tech.dokus.domain.model.contact.ContactNoteDto) {
         updateState {
             copy(
-                uiState = uiState.copy(
-                    showAddNoteDialog = false,
-                    showEditNoteDialog = false,
-                    editingNote = null,
+                uiState = uiState.resetNoteTransientState().copy(
                     showDeleteNoteConfirmation = true,
-                    deletingNote = note
+                    deletingNote = note,
                 )
             )
         }
@@ -444,18 +429,7 @@ internal class ContactDetailsContainer(
 
     private suspend fun ContactDetailsCtx.handleHideNotesSidePanel() {
         updateState {
-            copy(
-                uiState = uiState.copy(
-                    showNotesSidePanel = false,
-                    // Also reset any note editing state when closing
-                    showAddNoteDialog = false,
-                    showEditNoteDialog = false,
-                    editingNote = null,
-                    showDeleteNoteConfirmation = false,
-                    deletingNote = null,
-                    noteContent = ""
-                )
-            )
+            copy(uiState = uiState.resetNoteTransientState().copy(showNotesSidePanel = false))
         }
     }
 
@@ -467,18 +441,7 @@ internal class ContactDetailsContainer(
 
     private suspend fun ContactDetailsCtx.handleHideNotesBottomSheet() {
         updateState {
-            copy(
-                uiState = uiState.copy(
-                    showNotesBottomSheet = false,
-                    // Also reset any note editing state when closing
-                    showAddNoteDialog = false,
-                    showEditNoteDialog = false,
-                    editingNote = null,
-                    showDeleteNoteConfirmation = false,
-                    deletingNote = null,
-                    noteContent = ""
-                )
-            )
+            copy(uiState = uiState.resetNoteTransientState().copy(showNotesBottomSheet = false))
         }
     }
 

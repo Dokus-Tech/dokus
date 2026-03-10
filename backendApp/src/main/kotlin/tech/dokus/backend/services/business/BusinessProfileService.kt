@@ -122,7 +122,7 @@ class BusinessProfileService(
         return profileRepository.getLogoStorageKey(subjectType, subjectId)
     }
 
-    suspend fun getProfileRecord(
+    internal suspend fun getProfileRecord(
         tenantId: TenantId,
         subjectType: BusinessProfileSubjectType,
         subjectId: Uuid,

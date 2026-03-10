@@ -28,6 +28,7 @@ import tech.dokus.domain.model.PinBusinessProfileFieldsRequest
 import tech.dokus.domain.model.UpdateBusinessProfileRequest
 import tech.dokus.domain.model.contact.ContactChangedEventDto
 import tech.dokus.domain.model.contact.ContactStreamEventNames
+import tech.dokus.domain.model.contact.ContactStreamEventReasons
 import tech.dokus.domain.model.contact.CreateContactNoteRequest
 import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.model.contact.UpdateContactNoteRequest
@@ -281,7 +282,7 @@ fun Route.contactRoutes() {
             val contact = contactService.updateContact(contactId, tenantId, request)
                 .getOrElse { throw DokusException.InternalError("Failed to update contact: ${it.message}") }
 
-            contactSsePublisher.publishContactChanged(tenantId, contactId, "contact_updated")
+            contactSsePublisher.publishContactChanged(tenantId, contactId, ContactStreamEventReasons.ContactUpdated)
             call.respond(HttpStatusCode.OK, contact)
         }
 
@@ -294,7 +295,7 @@ fun Route.contactRoutes() {
             val contactId = ContactId.parse(route.parent.id)
             val request = call.receive<UpdateBusinessProfileRequest>()
             val response = contactService.updateContactProfile(tenantId, contactId, request)
-            contactSsePublisher.publishContactChanged(tenantId, contactId, "profile_updated")
+            contactSsePublisher.publishContactChanged(tenantId, contactId, ContactStreamEventReasons.ProfileUpdated)
             call.respond(HttpStatusCode.OK, response)
         }
 
@@ -457,7 +458,7 @@ fun Route.contactRoutes() {
                 authorName = principal.email
             ).getOrElse { throw DokusException.InternalError("Failed to create note: ${it.message}") }
 
-            contactSsePublisher.publishContactChanged(tenantId, contactId, "note_created")
+            contactSsePublisher.publishContactChanged(tenantId, contactId, ContactStreamEventReasons.NoteCreated)
             call.respond(HttpStatusCode.Created, note)
         }
 
@@ -474,7 +475,7 @@ fun Route.contactRoutes() {
             val note = contactNoteService.updateNote(noteId, tenantId, request.content)
                 .getOrElse { throw DokusException.InternalError("Failed to update note: ${it.message}") }
 
-            contactSsePublisher.publishContactChanged(tenantId, contactId, "note_updated")
+            contactSsePublisher.publishContactChanged(tenantId, contactId, ContactStreamEventReasons.NoteUpdated)
             call.respond(HttpStatusCode.OK, note)
         }
 
@@ -490,7 +491,7 @@ fun Route.contactRoutes() {
             contactNoteService.deleteNote(noteId, tenantId)
                 .getOrElse { throw DokusException.InternalError("Failed to delete note: ${it.message}") }
 
-            contactSsePublisher.publishContactChanged(tenantId, contactId, "note_deleted")
+            contactSsePublisher.publishContactChanged(tenantId, contactId, ContactStreamEventReasons.NoteDeleted)
             call.respond(HttpStatusCode.NoContent)
         }
     }

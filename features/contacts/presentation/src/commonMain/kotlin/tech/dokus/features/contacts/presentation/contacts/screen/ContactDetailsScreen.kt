@@ -97,6 +97,14 @@ private fun ContactDetailsScreenContent(
         }
     }
 
+    fun saveNote() {
+        if (uiState.showEditNoteDialog) {
+            onIntent(ContactDetailsIntent.UpdateNote)
+        } else {
+            onIntent(ContactDetailsIntent.AddNote)
+        }
+    }
+
     Scaffold(
         topBar = {
             if (!isEmbeddedDesktop) {
@@ -149,13 +157,7 @@ private fun ContactDetailsScreenContent(
             editingNote = uiState.editingNote,
             showComposer = showNoteComposer,
             onShowAddNote = { onIntent(ContactDetailsIntent.ShowAddNoteDialog) },
-            onSaveNote = {
-                if (uiState.showEditNoteDialog) {
-                    onIntent(ContactDetailsIntent.UpdateNote)
-                } else {
-                    onIntent(ContactDetailsIntent.AddNote)
-                }
-            },
+            onSaveNote = ::saveNote,
             onEditNoteClick = { onIntent(ContactDetailsIntent.ShowEditNoteDialog(it)) },
             onDeleteNoteClick = { onIntent(ContactDetailsIntent.ShowDeleteNoteConfirmation(it)) },
             onDismissComposer = ::dismissComposer,
@@ -172,13 +174,7 @@ private fun ContactDetailsScreenContent(
             editingNote = uiState.editingNote,
             showComposer = showNoteComposer,
             onShowAddNote = { onIntent(ContactDetailsIntent.ShowAddNoteDialog) },
-            onSaveNote = {
-                if (uiState.showEditNoteDialog) {
-                    onIntent(ContactDetailsIntent.UpdateNote)
-                } else {
-                    onIntent(ContactDetailsIntent.AddNote)
-                }
-            },
+            onSaveNote = ::saveNote,
             onEditNoteClick = { onIntent(ContactDetailsIntent.ShowEditNoteDialog(it)) },
             onDeleteNoteClick = { onIntent(ContactDetailsIntent.ShowDeleteNoteConfirmation(it)) },
             onDismissComposer = ::dismissComposer
