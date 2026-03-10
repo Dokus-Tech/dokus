@@ -18,6 +18,7 @@ val bankingViewModelModule = module {
             getTransactionSummary = get(),
             ignoreTransaction = get(),
             confirmTransaction = get(),
+            createExpenseFromTransaction = get(),
         )
     }
 

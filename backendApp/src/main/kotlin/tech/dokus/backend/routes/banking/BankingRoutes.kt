@@ -163,6 +163,19 @@ internal fun Route.bankingRoutes() {
                 }
             call.respond(HttpStatusCode.OK, updated)
         }
+
+        // POST /api/v1/banking/transactions/{id}/create-expense
+        post<Banking.Transactions.Id.CreateExpense> { route ->
+            val tenantId = requireTenantId()
+            val transactionId = parseTransactionId(route.parent.id)
+
+            val updated = bankingService.createExpenseFromTransaction(tenantId, transactionId)
+                .getOrElse { error ->
+                    throw (error as? DokusException
+                        ?: DokusException.InternalError("Failed to create expense: ${error.message}"))
+                }
+            call.respond(HttpStatusCode.OK, updated)
+        }
     }
 }
 

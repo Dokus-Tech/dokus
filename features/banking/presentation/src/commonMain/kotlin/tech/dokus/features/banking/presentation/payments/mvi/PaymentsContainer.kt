@@ -15,6 +15,7 @@ import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.features.banking.usecases.ConfirmTransactionUseCase
+import tech.dokus.features.banking.usecases.CreateExpenseFromTransactionUseCase
 import tech.dokus.features.banking.usecases.GetTransactionSummaryUseCase
 import tech.dokus.features.banking.usecases.IgnoreTransactionUseCase
 import tech.dokus.features.banking.usecases.ListBankTransactionsUseCase
@@ -31,6 +32,7 @@ internal class PaymentsContainer(
     private val getTransactionSummary: GetTransactionSummaryUseCase,
     private val ignoreTransaction: IgnoreTransactionUseCase,
     private val confirmTransaction: ConfirmTransactionUseCase,
+    private val createExpenseFromTransaction: CreateExpenseFromTransactionUseCase,
 ) : Container<PaymentsState, PaymentsIntent, PaymentsAction> {
 
     private val logger = Logger.forClass<PaymentsContainer>()
@@ -53,6 +55,7 @@ internal class PaymentsContainer(
                     is PaymentsIntent.ConfirmIgnore -> handleConfirmIgnore()
                     is PaymentsIntent.DismissIgnoreDialog -> handleDismissIgnoreDialog()
                     is PaymentsIntent.ConfirmMatch -> handleConfirmMatch(intent.transactionId)
+                    is PaymentsIntent.CreateExpense -> handleCreateExpense(intent.transactionId)
                 }
             }
         }
@@ -125,6 +128,18 @@ internal class PaymentsContainer(
 
     private suspend fun PaymentsCtx.handleConfirmMatch(transactionId: BankTransactionId) {
         confirmTransaction(transactionId).fold(
+            onSuccess = { updatedTx ->
+                updateTransactionInList(updatedTx.id) { updatedTx }
+                refreshSummary()
+            },
+            onFailure = { error ->
+                action(PaymentsAction.ShowError(error.asDokusException))
+            }
+        )
+    }
+
+    private suspend fun PaymentsCtx.handleCreateExpense(transactionId: BankTransactionId) {
+        createExpenseFromTransaction(transactionId).fold(
             onSuccess = { updatedTx ->
                 updateTransactionInList(updatedTx.id) { updatedTx }
                 refreshSummary()

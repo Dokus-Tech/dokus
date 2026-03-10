@@ -41,5 +41,7 @@ interface BankingRemoteDataSource {
 
     suspend fun confirmTransaction(transactionId: BankTransactionId): Result<BankTransactionDto>
 
+    suspend fun createExpenseFromTransaction(transactionId: BankTransactionId): Result<BankTransactionDto>
+
     suspend fun getBalanceHistory(days: Int = 30): Result<BalanceHistoryResponse>
 }

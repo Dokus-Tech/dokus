@@ -70,6 +70,7 @@ sealed interface PaymentsIntent : MVIIntent {
     data object ConfirmIgnore : PaymentsIntent
     data object DismissIgnoreDialog : PaymentsIntent
     data class ConfirmMatch(val transactionId: BankTransactionId) : PaymentsIntent
+    data class CreateExpense(val transactionId: BankTransactionId) : PaymentsIntent
 }
 
 /**

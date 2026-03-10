@@ -39,6 +39,7 @@
     <string name="banking_action_link">Link to document</string>
     <string name="banking_action_ignore">Ignore</string>
     <string name="banking_action_confirm_match">Confirm match</string>
+    <string name="banking_action_add_expense">Add expense</string>
 
     <!-- Ignore dialog -->
     <string name="banking_ignore_dialog_title">Ignore transaction</string>
@@ -57,6 +58,31 @@
     <!-- Callout -->
     <string name="banking_unresolved_callout">%1$d payments without documents</string>
     <string name="banking_unresolved_amount">%1$s unresolved</string>
+
+    <!-- Statement trust -->
+    <string name="banking_trust_high">High</string>
+    <string name="banking_trust_medium">Medium</string>
+    <string name="banking_trust_low">Low</string>
+    <string name="banking_trust_label">Trust</string>
+
+    <!-- Resolution type -->
+    <string name="banking_resolution_document">Document</string>
+    <string name="banking_resolution_transfer">Transfer</string>
+
+    <!-- Match metadata -->
+    <string name="banking_match_by_auto">Auto</string>
+    <string name="banking_match_by_review">Review</string>
+    <string name="banking_match_by_manual">Manual</string>
+    <string name="banking_detail_matched_by">Matched by</string>
+    <string name="banking_detail_matched_at">Matched at</string>
+    <string name="banking_detail_evidence">Evidence</string>
+    <string name="banking_detail_resolution">Resolution</string>
+    <string name="banking_detail_trust">Trust</string>
+    <string name="banking_detail_ignored_reason">Reason</string>
+
+    <!-- Account status -->
+    <string name="banking_account_status_confirmed">Confirmed</string>
+    <string name="banking_account_status_pending">Pending review</string>
 
     <!-- Empty / Error -->
     <string name="banking_empty_title">No transactions</string>

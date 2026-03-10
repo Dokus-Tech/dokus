@@ -6,7 +6,12 @@ import tech.dokus.domain.Money
 import tech.dokus.domain.enums.BankTransactionSource
 import tech.dokus.domain.enums.BankTransactionStatus
 import tech.dokus.domain.enums.Currency
+import tech.dokus.domain.enums.IgnoredReason
+import tech.dokus.domain.enums.MatchedBy
+import tech.dokus.domain.enums.ResolutionType
+import tech.dokus.domain.enums.StatementTrust
 import tech.dokus.domain.ids.BankTransactionId
+import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.BankTransactionDto
@@ -44,6 +49,10 @@ private val PreviewTransactions: List<BankTransactionDto> = listOf(
         counterpartyIban = Iban("BE71096123456769"),
         structuredCommunicationRaw = "+++101/2345/67890+++",
         status = BankTransactionStatus.NeedsReview,
+        matchedCashflowId = CashflowEntryId.generate(),
+        matchScore = 0.88,
+        matchEvidence = listOf("exact_amount", "counterparty_name_match", "within_due_window"),
+        statementTrust = StatementTrust.High,
         currency = Currency.Eur,
         createdAt = PreviewDateTime,
         updatedAt = PreviewDateTime,
@@ -57,6 +66,12 @@ private val PreviewTransactions: List<BankTransactionDto> = listOf(
         counterpartyName = "DigitalOcean",
         descriptionRaw = "DO Invoice #12345",
         status = BankTransactionStatus.Matched,
+        matchedBy = MatchedBy.Auto,
+        resolutionType = ResolutionType.Document,
+        matchScore = 1.0,
+        matchEvidence = listOf("exact_amount", "structured_comm_match"),
+        matchedAt = PreviewDateTime,
+        statementTrust = StatementTrust.High,
         currency = Currency.Eur,
         createdAt = PreviewDateTime,
         updatedAt = PreviewDateTime,
@@ -70,6 +85,9 @@ private val PreviewTransactions: List<BankTransactionDto> = listOf(
         counterpartyName = "Proximus",
         counterpartyIban = Iban("BE39539007547034"),
         status = BankTransactionStatus.Ignored,
+        ignoredReason = IgnoredReason.BankFee,
+        ignoredAt = PreviewDateTime,
+        ignoredBy = "user",
         currency = Currency.Eur,
         createdAt = PreviewDateTime,
         updatedAt = PreviewDateTime,

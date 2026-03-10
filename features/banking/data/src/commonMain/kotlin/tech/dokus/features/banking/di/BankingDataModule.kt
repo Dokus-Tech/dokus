@@ -7,6 +7,7 @@ import tech.dokus.domain.config.DynamicDokusEndpointProvider
 import tech.dokus.features.banking.datasource.BankingRemoteDataSource
 import tech.dokus.features.banking.datasource.BankingRemoteDataSourceImpl
 import tech.dokus.features.banking.usecase.ConfirmTransactionUseCaseImpl
+import tech.dokus.features.banking.usecase.CreateExpenseFromTransactionUseCaseImpl
 import tech.dokus.features.banking.usecase.GetAccountSummaryUseCaseImpl
 import tech.dokus.features.banking.usecase.GetBalanceHistoryUseCaseImpl
 import tech.dokus.features.banking.usecase.GetBankTransactionUseCaseImpl
@@ -16,6 +17,7 @@ import tech.dokus.features.banking.usecase.LinkTransactionUseCaseImpl
 import tech.dokus.features.banking.usecase.ListBankAccountsUseCaseImpl
 import tech.dokus.features.banking.usecase.ListBankTransactionsUseCaseImpl
 import tech.dokus.features.banking.usecases.ConfirmTransactionUseCase
+import tech.dokus.features.banking.usecases.CreateExpenseFromTransactionUseCase
 import tech.dokus.features.banking.usecases.GetAccountSummaryUseCase
 import tech.dokus.features.banking.usecases.GetBalanceHistoryUseCase
 import tech.dokus.features.banking.usecases.GetBankTransactionUseCase
@@ -37,6 +39,7 @@ val bankingNetworkModule = module {
     singleOf(::LinkTransactionUseCaseImpl) bind LinkTransactionUseCase::class
     singleOf(::IgnoreTransactionUseCaseImpl) bind IgnoreTransactionUseCase::class
     singleOf(::ConfirmTransactionUseCaseImpl) bind ConfirmTransactionUseCase::class
+    singleOf(::CreateExpenseFromTransactionUseCaseImpl) bind CreateExpenseFromTransactionUseCase::class
     singleOf(::ListBankAccountsUseCaseImpl) bind ListBankAccountsUseCase::class
     singleOf(::GetBalanceHistoryUseCaseImpl) bind GetBalanceHistoryUseCase::class
 }

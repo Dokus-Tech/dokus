@@ -66,3 +66,9 @@ interface ConfirmTransactionUseCase {
         transactionId: BankTransactionId
     ): Result<BankTransactionDto>
 }
+
+interface CreateExpenseFromTransactionUseCase {
+    suspend operator fun invoke(
+        transactionId: BankTransactionId,
+    ): Result<BankTransactionDto>
+}

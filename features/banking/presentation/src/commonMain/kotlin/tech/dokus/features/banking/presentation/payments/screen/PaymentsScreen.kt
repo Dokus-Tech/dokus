@@ -227,6 +227,9 @@ private fun PaymentsContent(
                     onConfirmMatch = {
                         onIntent(PaymentsIntent.ConfirmMatch(selectedTx.id))
                     },
+                    onCreateExpense = {
+                        onIntent(PaymentsIntent.CreateExpense(selectedTx.id))
+                    },
                     modifier = Modifier
                         .width(DetailPaneWidth)
                         .fillMaxHeight(),

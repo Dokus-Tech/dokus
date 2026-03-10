@@ -92,6 +92,13 @@ class Banking {
             @Serializable
             @Resource("confirm")
             class Confirm(val parent: Id)
+
+            /**
+             * POST /api/v1/banking/transactions/{id}/create-expense - Create expense from transaction
+             */
+            @Serializable
+            @Resource("create-expense")
+            class CreateExpense(val parent: Id)
         }
     }
 }

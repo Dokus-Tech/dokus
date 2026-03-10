@@ -23,15 +23,22 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.banking_action_add_expense
 import tech.dokus.aura.resources.banking_action_confirm_match
 import tech.dokus.aura.resources.banking_action_ignore
 import tech.dokus.aura.resources.banking_action_link
 import tech.dokus.aura.resources.banking_detail_counterparty
 import tech.dokus.aura.resources.banking_detail_description
+import tech.dokus.aura.resources.banking_detail_evidence
 import tech.dokus.aura.resources.banking_detail_iban
+import tech.dokus.aura.resources.banking_detail_ignored_reason
+import tech.dokus.aura.resources.banking_detail_matched_by
 import tech.dokus.aura.resources.banking_detail_reference
+import tech.dokus.aura.resources.banking_detail_resolution
 import tech.dokus.aura.resources.banking_detail_title
+import tech.dokus.aura.resources.banking_detail_trust
 import tech.dokus.domain.enums.BankTransactionStatus
+import tech.dokus.domain.enums.StatementTrust
 import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.foundation.aura.components.text.Amt
 import tech.dokus.foundation.aura.constrains.Constraints
@@ -45,6 +52,7 @@ internal fun TransactionDetailPane(
     onLinkDocument: () -> Unit,
     onIgnore: () -> Unit,
     onConfirmMatch: () -> Unit,
+    onCreateExpense: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.padding(Constraints.Spacing.large)) {
@@ -142,6 +150,47 @@ internal fun TransactionDetailPane(
             )
         }
 
+        // Trust badge
+        if (transaction.statementTrust != StatementTrust.High) {
+            Spacer(Modifier.height(Constraints.Spacing.small))
+            DetailRow(
+                label = stringResource(Res.string.banking_detail_trust),
+                value = transaction.statementTrust.localized,
+            )
+        }
+
+        // Match metadata (when matched)
+        if (transaction.status == BankTransactionStatus.Matched) {
+            transaction.matchedBy?.let {
+                DetailRow(
+                    label = stringResource(Res.string.banking_detail_matched_by),
+                    value = it.localized,
+                )
+            }
+            transaction.resolutionType?.let {
+                DetailRow(
+                    label = stringResource(Res.string.banking_detail_resolution),
+                    value = it.localized,
+                )
+            }
+            transaction.matchEvidence?.takeIf { it.isNotEmpty() }?.let { evidence ->
+                DetailRow(
+                    label = stringResource(Res.string.banking_detail_evidence),
+                    value = evidence.joinToString(", "),
+                )
+            }
+        }
+
+        // Ignored reason (when ignored)
+        if (transaction.status == BankTransactionStatus.Ignored) {
+            transaction.ignoredReason?.let {
+                DetailRow(
+                    label = stringResource(Res.string.banking_detail_ignored_reason),
+                    value = it.localized,
+                )
+            }
+        }
+
         Spacer(Modifier.height(Constraints.Spacing.xLarge))
 
         // Action buttons
@@ -152,6 +201,15 @@ internal fun TransactionDetailPane(
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text(stringResource(Res.string.banking_action_link))
+                }
+                if (transaction.signedAmount.isNegative) {
+                    Spacer(Modifier.height(Constraints.Spacing.small))
+                    OutlinedButton(
+                        onClick = onCreateExpense,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(stringResource(Res.string.banking_action_add_expense))
+                    }
                 }
                 Spacer(Modifier.height(Constraints.Spacing.small))
                 OutlinedButton(
@@ -174,6 +232,15 @@ internal fun TransactionDetailPane(
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text(stringResource(Res.string.banking_action_link))
+                }
+                if (transaction.signedAmount.isNegative) {
+                    Spacer(Modifier.height(Constraints.Spacing.small))
+                    OutlinedButton(
+                        onClick = onCreateExpense,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(stringResource(Res.string.banking_action_add_expense))
+                    }
                 }
                 Spacer(Modifier.height(Constraints.Spacing.small))
                 OutlinedButton(

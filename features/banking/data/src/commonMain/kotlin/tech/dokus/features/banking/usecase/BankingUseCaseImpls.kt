@@ -14,6 +14,7 @@ import tech.dokus.domain.model.BankTransactionSummary
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.features.banking.datasource.BankingRemoteDataSource
 import tech.dokus.features.banking.usecases.ConfirmTransactionUseCase
+import tech.dokus.features.banking.usecases.CreateExpenseFromTransactionUseCase
 import tech.dokus.features.banking.usecases.GetAccountSummaryUseCase
 import tech.dokus.features.banking.usecases.GetBalanceHistoryUseCase
 import tech.dokus.features.banking.usecases.GetBankTransactionUseCase
@@ -93,6 +94,14 @@ internal class ConfirmTransactionUseCaseImpl(
 ) : ConfirmTransactionUseCase {
     override suspend fun invoke(transactionId: BankTransactionId): Result<BankTransactionDto> {
         return dataSource.confirmTransaction(transactionId)
+    }
+}
+
+internal class CreateExpenseFromTransactionUseCaseImpl(
+    private val dataSource: BankingRemoteDataSource,
+) : CreateExpenseFromTransactionUseCase {
+    override suspend fun invoke(transactionId: BankTransactionId): Result<BankTransactionDto> {
+        return dataSource.createExpenseFromTransaction(transactionId)
     }
 }
 

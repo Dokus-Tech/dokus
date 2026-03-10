@@ -101,6 +101,14 @@ internal class BankingRemoteDataSourceImpl(
         httpClient.resourcePost(Banking.Transactions.Id.Confirm(parent = idRoute)).body()
     }
 
+    override suspend fun createExpenseFromTransaction(
+        transactionId: BankTransactionId,
+    ): Result<BankTransactionDto> = runCatching {
+        val txRoute = Banking.Transactions()
+        val idRoute = Banking.Transactions.Id(parent = txRoute, id = transactionId.toString())
+        httpClient.resourcePost(Banking.Transactions.Id.CreateExpense(parent = idRoute)).body()
+    }
+
     override suspend fun getBalanceHistory(days: Int): Result<BalanceHistoryResponse> = runCatching {
         httpClient.get(Banking.AccountsBalanceHistory(days = days)).body()
     }

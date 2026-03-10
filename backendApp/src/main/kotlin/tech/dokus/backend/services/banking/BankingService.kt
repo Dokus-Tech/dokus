@@ -1,10 +1,12 @@
 package tech.dokus.backend.services.banking
 
+import tech.dokus.backend.services.cashflow.ExpenseService
 import tech.dokus.database.repository.banking.BankTransactionRepository
 import tech.dokus.database.repository.banking.BankAccountRepository
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.BankTransactionSource
 import tech.dokus.domain.enums.BankTransactionStatus
+import tech.dokus.domain.enums.ExpenseCategory
 import tech.dokus.domain.enums.IgnoredReason
 import tech.dokus.domain.enums.MatchedBy
 import tech.dokus.domain.enums.ResolutionType
@@ -19,8 +21,11 @@ import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.domain.model.BankTransactionSummary
 import tech.dokus.domain.model.BalanceHistoryPoint
 import tech.dokus.domain.model.BalanceHistoryResponse
+import tech.dokus.domain.model.CreateExpenseRequest
 import tech.dokus.foundation.backend.utils.loggerFor
 import tech.dokus.foundation.backend.utils.runSuspendCatching
+import kotlin.math.abs
+import kotlin.uuid.ExperimentalUuidApi
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
@@ -32,6 +37,7 @@ import kotlinx.datetime.todayIn
 class BankingService(
     private val bankTransactionRepository: BankTransactionRepository,
     private val bankAccountRepository: BankAccountRepository,
+    private val expenseService: ExpenseService,
 ) {
     private val logger = loggerFor()
 
@@ -148,6 +154,46 @@ class BankingService(
         )
         if (!updated) throw DokusException.InternalError("Failed to confirm match")
         logger.info("Confirmed suggested match for transaction {} -> entry {} for tenant {}", transactionId, matchedEntryId, tenantId)
+        bankTransactionRepository.findById(tenantId, transactionId)
+            ?: throw DokusException.NotFound("Bank transaction not found after update")
+    }
+
+    @OptIn(ExperimentalUuidApi::class)
+    suspend fun createExpenseFromTransaction(
+        tenantId: TenantId,
+        transactionId: BankTransactionId,
+    ): Result<BankTransactionDto> = runSuspendCatching {
+        val transaction = bankTransactionRepository.findById(tenantId, transactionId)
+            ?: throw DokusException.NotFound("Bank transaction not found")
+
+        if (transaction.status != BankTransactionStatus.Unmatched &&
+            transaction.status != BankTransactionStatus.NeedsReview
+        ) {
+            throw DokusException.BadRequest("Transaction must be unmatched or needs review to create expense")
+        }
+
+        val expense = expenseService.createExpense(
+            tenantId = tenantId,
+            request = CreateExpenseRequest(
+                date = transaction.transactionDate,
+                merchant = transaction.counterpartyName ?: "Unknown",
+                amount = Money(abs(transaction.signedAmount.minor)),
+                category = ExpenseCategory.Other,
+                description = transaction.descriptionRaw,
+            ),
+        ).getOrThrow()
+
+        bankTransactionRepository.markMatched(
+            tenantId = tenantId,
+            transactionId = transactionId,
+            cashflowEntryId = CashflowEntryId(expense.id.value),
+            matchedBy = MatchedBy.Manual,
+            resolutionType = ResolutionType.Document,
+            score = 1.0,
+            evidence = listOf("manual_expense_creation"),
+        )
+
+        logger.info("Created expense {} from transaction {} for tenant {}", expense.id, transactionId, tenantId)
         bankTransactionRepository.findById(tenantId, transactionId)
             ?: throw DokusException.NotFound("Bank transaction not found after update")
     }
