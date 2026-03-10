@@ -41,6 +41,7 @@ import tech.dokus.domain.ids.BankAccountId
 import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.features.banking.presentation.payments.components.IgnoreReasonDialog
+import tech.dokus.features.banking.presentation.payments.components.AccountFilterDropdown
 import tech.dokus.features.banking.presentation.payments.components.PaymentFilterTabs
 import tech.dokus.features.banking.presentation.payments.components.PaymentsSkeleton
 import tech.dokus.features.banking.presentation.payments.components.TransactionCard
@@ -102,7 +103,12 @@ private fun PaymentsContent(
     state: PaymentsState,
     onIntent: (PaymentsIntent) -> Unit,
 ) {
-    val txData = state.transactions.lastData?.data ?: emptyList()
+    val allTxData = state.transactions.lastData?.data ?: emptyList()
+    val txData = if (state.selectedAccountId != null) {
+        allTxData.filter { it.bankAccountId == state.selectedAccountId }
+    } else {
+        allTxData
+    }
     val isRefreshing = state.transactions.isLoading()
     val listState = rememberLazyListState()
     val isLargeScreen = LocalScreenSize.isLarge
@@ -145,12 +151,23 @@ private fun PaymentsContent(
             }
         }
 
-        // Filter tabs
-        PaymentFilterTabs(
-            selectedTab = state.filterTab,
-            summary = if (state.summary.isSuccess()) state.summary.data else null,
-            onTabSelected = { onIntent(PaymentsIntent.SetFilterTab(it)) },
-        )
+        // Filter tabs + account dropdown
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            PaymentFilterTabs(
+                selectedTab = state.filterTab,
+                summary = if (state.summary.isSuccess()) state.summary.data else null,
+                onTabSelected = { onIntent(PaymentsIntent.SetFilterTab(it)) },
+            )
+            AccountFilterDropdown(
+                accounts = state.accountNames,
+                selectedAccountId = state.selectedAccountId,
+                onSelect = { onIntent(PaymentsIntent.SetAccountFilter(it)) },
+            )
+        }
 
         // Content area: table + optional detail pane
         Row(
@@ -256,7 +273,6 @@ private fun DesktopTransactionTable(
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
         TransactionHeaderRow()
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
         LazyColumn(
             state = listState,

@@ -63,8 +63,10 @@ import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.layout.DokusHeaderColumn
 import tech.dokus.foundation.aura.components.layout.DokusTableCell
 import tech.dokus.foundation.aura.components.layout.DokusTableColumnSpec
+import tech.dokus.foundation.aura.components.layout.DokusTableHeader
 import tech.dokus.foundation.aura.components.layout.DokusTableRow
 import tech.dokus.foundation.aura.components.text.Amt
 import tech.dokus.foundation.aura.constrains.Constraints
@@ -99,36 +101,22 @@ private val TableRowHeight = Constraints.Height.input
 internal fun TransactionHeaderRow(
     modifier: Modifier = Modifier,
 ) {
-    DokusTableRow(
+    DokusTableHeader(
+        columns = listOf(
+            DokusHeaderColumn(label = stringResource(Res.string.banking_col_date), width = 60.dp),
+            DokusHeaderColumn(label = stringResource(Res.string.banking_col_description), weight = 1f),
+            DokusHeaderColumn(label = stringResource(Res.string.banking_col_counterparty), weight = 0.7f),
+            DokusHeaderColumn(label = stringResource(Res.string.banking_col_account), width = 50.dp),
+            DokusHeaderColumn(label = stringResource(Res.string.banking_col_status), width = 90.dp),
+            DokusHeaderColumn(label = "", width = 70.dp),
+            DokusHeaderColumn(
+                label = stringResource(Res.string.banking_col_amount),
+                width = 100.dp,
+                alignment = Alignment.End,
+            ),
+        ),
         modifier = modifier,
-        minHeight = Constraints.CropGuide.cornerLength,
-        contentPadding = PaddingValues(horizontal = Constraints.Spacing.large),
-    ) {
-        DokusTableCell(PaymentsTableColumns.Date) {
-            HeaderLabel(text = stringResource(Res.string.banking_col_date))
-        }
-        DokusTableCell(PaymentsTableColumns.Description) {
-            HeaderLabel(text = stringResource(Res.string.banking_col_description))
-        }
-        DokusTableCell(PaymentsTableColumns.Counterparty) {
-            HeaderLabel(text = stringResource(Res.string.banking_col_counterparty))
-        }
-        DokusTableCell(PaymentsTableColumns.Account) {
-            HeaderLabel(text = stringResource(Res.string.banking_col_account))
-        }
-        DokusTableCell(PaymentsTableColumns.Status) {
-            HeaderLabel(text = stringResource(Res.string.banking_col_status))
-        }
-        DokusTableCell(PaymentsTableColumns.Document) {
-            Spacer(modifier = Modifier.width(Constraints.Stroke.thin))
-        }
-        DokusTableCell(PaymentsTableColumns.Amount) {
-            HeaderLabel(
-                text = stringResource(Res.string.banking_col_amount),
-                textAlign = TextAlign.End,
-            )
-        }
-    }
+    )
 }
 
 @Composable
@@ -349,23 +337,6 @@ private fun TransactionStatusBadge(
             maxLines = 1,
         )
     }
-}
-
-@Composable
-private fun HeaderLabel(
-    text: String,
-    textAlign: TextAlign = TextAlign.Start,
-) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.labelSmall.copy(
-            fontWeight = FontWeight.SemiBold,
-        ),
-        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-        textAlign = textAlign,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-    )
 }
 
 // =============================================================================

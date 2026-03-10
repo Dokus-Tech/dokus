@@ -1,29 +1,42 @@
 package tech.dokus.features.banking.presentation.balances.screen
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.banking_balances_accounts_title
+import tech.dokus.aura.resources.banking_balances_connect
 import tech.dokus.aura.resources.banking_balances_empty_subtitle
 import tech.dokus.aura.resources.banking_balances_empty_title
+import tech.dokus.aura.resources.banking_balances_upload
+import tech.dokus.foundation.aura.style.borderAmber
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.features.banking.presentation.balances.components.BalanceTimelineCard
 import tech.dokus.features.banking.presentation.balances.components.BalancesSkeleton
@@ -116,10 +129,27 @@ private fun BalancesContent(
 
         // Accounts section header
         item {
-            Text(
-                text = stringResource(Res.string.banking_balances_accounts_title),
-                style = MaterialTheme.typography.titleSmall,
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(Res.string.banking_balances_accounts_title),
+                    style = MaterialTheme.typography.titleSmall,
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)) {
+                    SmallActionChip(
+                        text = stringResource(Res.string.banking_balances_upload),
+                        onClick = { onIntent(BalancesIntent.UploadStatement) },
+                    )
+                    SmallActionChip(
+                        text = "+ ${stringResource(Res.string.banking_balances_connect)}",
+                        onClick = { onIntent(BalancesIntent.ConnectAccount) },
+                        accent = true,
+                    )
+                }
+            }
         }
 
         // Accounts content
@@ -160,6 +190,40 @@ private fun BalancesContent(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun SmallActionChip(
+    text: String,
+    onClick: () -> Unit,
+    accent: Boolean = false,
+    modifier: Modifier = Modifier,
+) {
+    val colorScheme = MaterialTheme.colorScheme
+    val borderColor = if (accent) colorScheme.borderAmber else colorScheme.outlineVariant
+    val textColor = if (accent) colorScheme.primary else colorScheme.onSurfaceVariant
+
+    Surface(
+        modifier = modifier
+            .pointerHoverIcon(PointerIcon.Hand)
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(Constraints.Spacing.xSmall),
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(Constraints.Stroke.thin, borderColor),
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelSmall.copy(
+                fontSize = 10.sp,
+                fontWeight = FontWeight.SemiBold,
+            ),
+            color = textColor,
+            modifier = Modifier.padding(
+                horizontal = Constraints.Spacing.medium,
+                vertical = Constraints.Spacing.xSmall,
+            ),
+        )
     }
 }
 

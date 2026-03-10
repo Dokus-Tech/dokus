@@ -7,12 +7,12 @@ import tech.dokus.domain.enums.IgnoredReason
 import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.model.BalanceHistoryResponse
-import tech.dokus.domain.model.BankAccountSummary
 import tech.dokus.domain.model.BankAccountDto
+import tech.dokus.domain.model.BankAccountSummary
 import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.domain.model.BankTransactionSummary
-import tech.dokus.domain.model.LinkTransactionRequest
 import tech.dokus.domain.model.common.PaginatedResponse
+import kotlin.time.Duration
 
 interface ListBankTransactionsUseCase {
     suspend operator fun invoke(
@@ -44,7 +44,7 @@ interface ListBankAccountsUseCase {
 }
 
 interface GetBalanceHistoryUseCase {
-    suspend operator fun invoke(days: Int = 30): Result<BalanceHistoryResponse>
+    suspend operator fun invoke(duration: Duration): Result<BalanceHistoryResponse>
 }
 
 interface LinkTransactionUseCase {

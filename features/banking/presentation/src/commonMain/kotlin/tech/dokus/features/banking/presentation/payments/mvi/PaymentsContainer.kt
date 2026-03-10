@@ -12,6 +12,7 @@ import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.domain.enums.BankTransactionStatus
 import tech.dokus.domain.enums.IgnoredReason
 import tech.dokus.domain.exceptions.asDokusException
+import tech.dokus.domain.ids.BankAccountId
 import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.features.banking.usecases.ConfirmTransactionUseCase
@@ -50,6 +51,7 @@ internal class PaymentsContainer(
                     is PaymentsIntent.Refresh -> handleRefresh()
                     is PaymentsIntent.LoadMore -> handleLoadMore()
                     is PaymentsIntent.SetFilterTab -> handleSetFilterTab(intent.tab)
+                    is PaymentsIntent.SetAccountFilter -> handleSetAccountFilter(intent.accountId)
                     is PaymentsIntent.SelectTransaction -> handleSelectTransaction(intent.transactionId)
                     is PaymentsIntent.LinkDocument -> { /* TODO: Navigate to link flow */ }
                     is PaymentsIntent.IgnoreTransaction -> handleOpenIgnoreDialog(intent.transactionId)
@@ -91,6 +93,10 @@ internal class PaymentsContainer(
             }
             loadTransactions(page = 0, reset = true)
         }
+    }
+
+    private suspend fun PaymentsCtx.handleSetAccountFilter(accountId: BankAccountId?) {
+        updateState { copy(selectedAccountId = accountId, selectedTransactionId = null) }
     }
 
     private suspend fun PaymentsCtx.handleSelectTransaction(transactionId: BankTransactionId?) {

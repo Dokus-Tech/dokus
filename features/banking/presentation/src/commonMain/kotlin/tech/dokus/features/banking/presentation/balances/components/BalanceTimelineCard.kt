@@ -8,13 +8,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -43,8 +43,8 @@ import tech.dokus.foundation.aura.components.charts.LineChartSeries
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.ShimmerBox
 import tech.dokus.foundation.aura.components.tabs.DokusTab
-import tech.dokus.foundation.aura.components.text.formatEuroCurrency
 import tech.dokus.foundation.aura.components.tabs.DokusTabs
+import tech.dokus.foundation.aura.components.text.formatEuroCurrency
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.style.textMuted
@@ -73,11 +73,11 @@ internal fun BalanceTimelineCard(
 ) {
     val tabs = remember {
         BalanceTimeRange.entries.map { range ->
-            DokusTab(id = range.id, label = range.id)
+            DokusTab(id = range.id, label = range.labelRes)
         }
     }
 
-    DokusCardSurface(modifier = modifier.fillMaxWidth()) {
+    DokusCardSurface(modifier = modifier.fillMaxWidth(), accent = true) {
         Column(
             modifier = Modifier.padding(Constraints.Spacing.large),
             verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.large),
@@ -154,6 +154,7 @@ internal fun BalanceTimelineCard(
                             .height(ChartHeight),
                     )
                 }
+
                 balanceHistory.isError() -> {
                     DokusErrorContent(
                         exception = balanceHistory.exception,
@@ -164,6 +165,7 @@ internal fun BalanceTimelineCard(
                             .height(ChartHeight),
                     )
                 }
+
                 balanceHistory.isSuccess() -> {
                     val chartData = buildChartSeries(balanceHistory.data)
 
@@ -240,16 +242,16 @@ private fun LegendItem(
                 )
                 drawLine(
                     color = color,
-                    start = androidx.compose.ui.geometry.Offset(0f, size.height / 2f),
-                    end = androidx.compose.ui.geometry.Offset(width, size.height / 2f),
+                    start = Offset(0f, size.height / 2f),
+                    end = Offset(width, size.height / 2f),
                     strokeWidth = strokeWidth,
                     pathEffect = dashEffect,
                 )
             } else {
                 drawLine(
                     color = color,
-                    start = androidx.compose.ui.geometry.Offset(0f, size.height / 2f),
-                    end = androidx.compose.ui.geometry.Offset(width, size.height / 2f),
+                    start = Offset(0f, size.height / 2f),
+                    end = Offset(width, size.height / 2f),
                     strokeWidth = strokeWidth,
                 )
             }

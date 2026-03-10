@@ -6,7 +6,6 @@ import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
-import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.init
 import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.domain.exceptions.asDokusException
@@ -38,6 +37,8 @@ internal class BalancesContainer(
                 when (intent) {
                     is BalancesIntent.Refresh -> handleRefresh()
                     is BalancesIntent.SetTimeRange -> handleSetTimeRange(intent.range)
+                    is BalancesIntent.UploadStatement -> logger.i { "Upload statement (not yet implemented)" }
+                    is BalancesIntent.ConnectAccount -> logger.i { "Connect account (not yet implemented)" }
                 }
             }
         }
@@ -53,7 +54,7 @@ internal class BalancesContainer(
         }
 
         withState {
-            val days = timeRange.days
+            val days = timeRange.timeframe
 
             coroutineScope {
                 val accountsDeferred = async { listAccounts() }
@@ -152,7 +153,7 @@ internal class BalancesContainer(
                 )
             }
 
-            getBalanceHistory(range.days).fold(
+            getBalanceHistory(range.timeframe).fold(
                 onSuccess = { data ->
                     updateState { copy(balanceHistory = DokusState.success(data)) }
                 },

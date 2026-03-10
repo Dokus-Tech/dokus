@@ -44,6 +44,7 @@ data class PaymentsState(
     val summary: DokusState<BankTransactionSummary>,
     val accountNames: Map<BankAccountId, String> = emptyMap(),
     val filterTab: PaymentFilterTab = PaymentFilterTab.All,
+    val selectedAccountId: BankAccountId? = null,
     val selectedTransactionId: BankTransactionId? = null,
     val ignoreDialogState: IgnoreDialogState? = null,
 ) : MVIState {
@@ -65,6 +66,7 @@ sealed interface PaymentsIntent : MVIIntent {
     data object Refresh : PaymentsIntent
     data object LoadMore : PaymentsIntent
     data class SetFilterTab(val tab: PaymentFilterTab) : PaymentsIntent
+    data class SetAccountFilter(val accountId: BankAccountId?) : PaymentsIntent
     data class SelectTransaction(val transactionId: BankTransactionId?) : PaymentsIntent
     data class LinkDocument(val transactionId: BankTransactionId) : PaymentsIntent
     data class IgnoreTransaction(val transactionId: BankTransactionId) : PaymentsIntent

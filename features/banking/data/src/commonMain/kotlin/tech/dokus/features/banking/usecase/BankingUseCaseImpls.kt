@@ -7,8 +7,8 @@ import tech.dokus.domain.enums.IgnoredReason
 import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.model.BalanceHistoryResponse
-import tech.dokus.domain.model.BankAccountSummary
 import tech.dokus.domain.model.BankAccountDto
+import tech.dokus.domain.model.BankAccountSummary
 import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.domain.model.BankTransactionSummary
 import tech.dokus.domain.model.common.PaginatedResponse
@@ -23,6 +23,7 @@ import tech.dokus.features.banking.usecases.IgnoreTransactionUseCase
 import tech.dokus.features.banking.usecases.LinkTransactionUseCase
 import tech.dokus.features.banking.usecases.ListBankAccountsUseCase
 import tech.dokus.features.banking.usecases.ListBankTransactionsUseCase
+import kotlin.time.Duration
 
 internal class ListBankTransactionsUseCaseImpl(
     private val dataSource: BankingRemoteDataSource
@@ -116,7 +117,7 @@ internal class ListBankAccountsUseCaseImpl(
 internal class GetBalanceHistoryUseCaseImpl(
     private val dataSource: BankingRemoteDataSource,
 ) : GetBalanceHistoryUseCase {
-    override suspend fun invoke(days: Int): Result<BalanceHistoryResponse> {
-        return dataSource.getBalanceHistory(days)
+    override suspend fun invoke(duration: Duration): Result<BalanceHistoryResponse> {
+        return dataSource.getBalanceHistory(duration.inWholeDays.toInt())
     }
 }

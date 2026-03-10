@@ -14,6 +14,8 @@
     <string name="banking_filter_matched">Matched</string>
     <string name="banking_filter_ignored">Ignored</string>
 
+    <string name="banking_filter_all_accounts">All accounts</string>
+
     <!-- Table columns -->
     <string name="banking_col_date">Date</string>
     <string name="banking_col_description">Description</string>
