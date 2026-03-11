@@ -1,7 +1,12 @@
 package tech.dokus.backend.services.documents
 
 import tech.dokus.backend.services.contacts.ContactService
-import tech.dokus.database.repository.contacts.ContactRepository
+import tech.dokus.backend.services.documents.resolution.AutoCreateResolver
+import tech.dokus.backend.services.documents.resolution.IbanNameResolver
+import tech.dokus.backend.services.documents.resolution.NameSuggestionResolver
+import tech.dokus.backend.services.documents.resolution.ResolverInput
+import tech.dokus.backend.services.documents.resolution.ResolverOutcome
+import tech.dokus.backend.services.documents.resolution.VatMatchResolver
 import tech.dokus.domain.Name
 import tech.dokus.domain.enums.ContactSource
 import tech.dokus.domain.enums.DocumentDirection
@@ -14,18 +19,10 @@ import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.domain.model.contact.ContactAddressInput
-import tech.dokus.domain.model.contact.ContactDto
-import tech.dokus.domain.model.contact.ContactMatchScore
 import tech.dokus.domain.model.contact.ContactResolution
 import tech.dokus.domain.model.contact.CounterpartySnapshot
 import tech.dokus.domain.model.contact.CreateContactRequest
-import tech.dokus.domain.model.contact.MatchEvidence
 import tech.dokus.domain.model.contact.SuggestedContact
-import tech.dokus.domain.model.contact.UpdateContactRequest
-import tech.dokus.domain.model.entity.EntityLookup
-import tech.dokus.domain.model.entity.EntityStatus
-import tech.dokus.domain.util.JaroWinkler
-import tech.dokus.foundation.backend.lookup.CbeApiClient
 import tech.dokus.foundation.backend.utils.loggerFor
 
 data class ContactResolutionResult(
@@ -34,23 +31,13 @@ data class ContactResolutionResult(
 )
 
 class ContactResolutionService(
-    private val contactRepository: ContactRepository,
-    private val cbeApiClient: CbeApiClient,
+    private val vatMatchResolver: VatMatchResolver,
+    private val ibanNameResolver: IbanNameResolver,
+    private val autoCreateResolver: AutoCreateResolver,
+    private val nameSuggestionResolver: NameSuggestionResolver,
     private val contactService: ContactService
 ) {
     private val logger = loggerFor()
-    companion object {
-        private const val StrongNameThreshold = 0.90
-        private const val SuggestionThreshold = 0.80
-        private const val PaymentAliasRenameSimilarityThreshold = 0.70
-        private val paymentTokenKeywordPattern = Regex(
-            "\\b(visa|mastercard|apple\\s*pay|google\\s*pay|amex|american\\s*express|bancontact|card)\\b",
-            RegexOption.IGNORE_CASE
-        )
-        private val maskedOrTailPattern = Regex("(\\*{2,}|\\.{2,}|[*.]+\\s*\\d{4}\\b)")
-        private val nonAlphanumericPattern = Regex("[^a-z0-9\\s]")
-        private val multiSpacePattern = Regex("\\s+")
-    }
 
     suspend fun resolve(
         tenantId: TenantId,
@@ -60,10 +47,7 @@ class ContactResolutionService(
     ): ContactResolutionResult {
         val rawSnapshot = authoritativeSnapshot.normalized()
         if (rawSnapshot.isEmptyForResolution()) {
-            return ContactResolutionResult(
-                snapshot = rawSnapshot,
-                resolution = ContactResolution.PendingReview(rawSnapshot)
-            )
+            return ContactResolutionResult(rawSnapshot, ContactResolution.PendingReview(rawSnapshot))
         }
 
         // A counterparty should never be the tenant — strip hallucinated tenant VAT
@@ -74,15 +58,9 @@ class ContactResolutionService(
             rawSnapshot
         }
         if (snapshot.isEmptyForResolution()) {
-            return ContactResolutionResult(
-                snapshot = snapshot,
-                resolution = ContactResolution.PendingReview(snapshot)
-            )
+            return ContactResolutionResult(snapshot, ContactResolution.PendingReview(snapshot))
         }
 
-        val name = snapshot.name
-        val vat = snapshot.vatNumber
-        val iban = snapshot.iban
         val strictAutoLink = when (draftData) {
             is InvoiceDraftData -> draftData.direction == DocumentDirection.Unknown
             is ReceiptDraftData -> draftData.direction == DocumentDirection.Unknown
@@ -90,198 +68,18 @@ class ContactResolutionService(
             is BankStatementDraftData -> false
         }
 
+        val input = ResolverInput(tenantId, snapshot, strictAutoLink)
         val suggestions = mutableListOf<SuggestedContact>()
 
-        // 1) VAT match (exact, normalized)
-        if (vat != null) {
-            val vatMatch = contactRepository.findByVatNumber(tenantId, vat.value).getOrNull()
-            if (vatMatch != null) {
-                val cbeStatus = resolveCbeStatus(vat)
-                val allowAutoLink = !strictAutoLink || cbeStatus == EntityStatus.Active
-
-                if (allowAutoLink) {
-                    val healedContact = maybeHealPaymentAliasContact(
-                        tenantId = tenantId,
-                        matchedContact = vatMatch,
-                        authoritativeName = name
-                    )
-                    val nameSimilarity = name?.let { similarity(it, healedContact.name.value) }
-                    val evidence = MatchEvidence(
-                        vatMatch = true,
-                        ibanMatch = false,
-                        nameSimilarity = nameSimilarity,
-                        ambiguityCount = 1,
-                        cbeStatus = cbeStatus
-                    )
-                    return ContactResolutionResult(
-                        snapshot = snapshot,
-                        resolution = ContactResolution.Matched(
-                            contactId = healedContact.id,
-                            evidence = evidence
-                        )
-                    )
-                }
-
-                val nameSimilarity = name?.let { similarity(it, vatMatch.name.value) }
-                suggestions += vatMatch.toSuggestedContact(
-                    vatMatch = true,
-                    ibanMatch = false,
-                    nameSimilarity = nameSimilarity,
-                    ambiguityCount = 1,
-                    reason = "VAT matched but direction is unclear"
-                )
-            }
-        }
-
-        // 2) IBAN match + strong name similarity
-        if (iban != null && name != null) {
-            val ibanMatches = contactRepository.findByIban(tenantId, iban).getOrNull().orEmpty()
-            if (ibanMatches.isNotEmpty()) {
-                val scored = ibanMatches.map { contact ->
-                    contact to similarity(name, contact.name.value)
-                }
-                val strongMatches = scored.filter { it.second >= StrongNameThreshold }
-                if (strongMatches.size == 1 && (!strictAutoLink || strongMatches.first().second >= StrongNameThreshold)) {
-                    val (contact, score) = strongMatches.first()
-                    val evidence = MatchEvidence(
-                        vatMatch = false,
-                        ibanMatch = true,
-                        nameSimilarity = score,
-                        ambiguityCount = strongMatches.size,
-                        cbeStatus = null
-                    )
-                    return ContactResolutionResult(
-                        snapshot = snapshot,
-                        resolution = ContactResolution.Matched(
-                            contactId = contact.id,
-                            evidence = evidence
-                        )
-                    )
-                }
-
-                val ambiguityCount = strongMatches.size
-                suggestions += strongMatches.map { (contact, score) ->
-                    contact.toSuggestedContact(
-                        vatMatch = false,
-                        ibanMatch = true,
-                        nameSimilarity = score,
-                        ambiguityCount = ambiguityCount,
-                        reason = "IBAN match with name similarity ${formatScore(score)}"
-                    )
-                }
-            }
-        }
-
-        // 3) CBE auto-create for Belgian VAT
-        if (vat != null && vat.isValid && vat.isBelgian) {
-            val cbeLookup = cbeApiClient.searchByVat(vat).getOrNull()
-            if (cbeLookup != null) {
-                when (cbeLookup.status) {
-                    EntityStatus.Active -> return ContactResolutionResult(
-                        snapshot = snapshot,
-                        resolution = ContactResolution.AutoCreate(
-                            contactData = snapshotFromCbe(cbeLookup, snapshot),
-                            cbeVerified = cbeLookup,
-                            evidence = MatchEvidence(
-                                vatMatch = false,
-                                ibanMatch = false,
-                                nameSimilarity = null,
-                                ambiguityCount = 0,
-                                cbeStatus = EntityStatus.Active
-                            )
-                        )
-                    )
-                    EntityStatus.Inactive -> return ContactResolutionResult(
-                        snapshot = snapshot,
-                        resolution = ContactResolution.PendingReview(snapshot)
-                    )
-                    EntityStatus.Unknown -> {
-                        // Fall through to non-CBE logic
-                    }
-                }
-            }
-        }
-
-        // 4) Auto-create for valid non-BE VAT
-        if (vat != null && vat.isValid && !vat.isBelgian && name != null) {
-            val evidence = MatchEvidence(
-                vatMatch = false,
-                ibanMatch = false,
-                nameSimilarity = null,
-                ambiguityCount = 0,
-                cbeStatus = null
-            )
-            return ContactResolutionResult(
-                snapshot = snapshot,
-                resolution = ContactResolution.AutoCreate(
-                    contactData = snapshot,
-                    cbeVerified = null,
-                    evidence = evidence
-                )
-            )
-        }
-
-        // 5) Auto-create without VAT if name + IBAN present
-        if (vat == null && name != null && iban != null) {
-            val evidence = MatchEvidence(
-                vatMatch = false,
-                ibanMatch = false,
-                nameSimilarity = null,
-                ambiguityCount = 0,
-                cbeStatus = null
-            )
-            return ContactResolutionResult(
-                snapshot = snapshot,
-                resolution = ContactResolution.AutoCreate(
-                    contactData = snapshot,
-                    cbeVerified = null,
-                    evidence = evidence
-                )
-            )
-        }
-
-        // 6) Suggestions by name similarity
-        if (name != null) {
-            val candidates = contactRepository.findByName(tenantId, name, limit = 10).getOrNull().orEmpty()
-            val scored = candidates.map { contact ->
-                contact to similarity(name, contact.name.value)
-            }.filter { it.second >= SuggestionThreshold }
-
-            // Auto-link on exact unambiguous name match (unless direction is Unknown)
-            if (!strictAutoLink && scored.size == 1 && scored.first().second >= 1.0) {
-                val (contact, score) = scored.first()
-                val healedContact = maybeHealPaymentAliasContact(
-                    tenantId = tenantId,
-                    matchedContact = contact,
-                    authoritativeName = name
-                )
-                return ContactResolutionResult(
-                    snapshot = snapshot,
-                    resolution = ContactResolution.Matched(
-                        contactId = healedContact.id,
-                        evidence = MatchEvidence(
-                            vatMatch = false,
-                            ibanMatch = false,
-                            nameSimilarity = score,
-                            ambiguityCount = 1,
-                            cbeStatus = null
-                        )
-                    )
-                )
-            }
-
-            if (scored.isNotEmpty()) {
-                val ambiguityCount = scored.size
-                val suggestionList = scored.map { (contact, score) ->
-                    contact.toSuggestedContact(
-                        vatMatch = false,
-                        ibanMatch = false,
-                        nameSimilarity = score,
-                        ambiguityCount = ambiguityCount,
-                        reason = "Name similarity ${formatScore(score)}"
-                    )
-                }
-                suggestions += suggestionList
+        for (resolver in listOf(
+            vatMatchResolver::invoke,
+            ibanNameResolver::invoke,
+            autoCreateResolver::invoke,
+            nameSuggestionResolver::invoke
+        )) {
+            when (val outcome = resolver(input)) {
+                is ResolverOutcome.Resolved -> return ContactResolutionResult(snapshot, outcome.resolution)
+                is ResolverOutcome.Partial -> suggestions += outcome.suggestions
             }
         }
 
@@ -296,15 +94,7 @@ class ContactResolutionService(
             )
         }
 
-        return ContactResolutionResult(
-            snapshot = snapshot,
-            resolution = ContactResolution.PendingReview(snapshot)
-        )
-    }
-
-    private fun VatNumber?.isSameVat(other: VatNumber?): Boolean {
-        if (this == null || other == null) return false
-        return this.normalized == other.normalized
+        return ContactResolutionResult(snapshot, ContactResolution.PendingReview(snapshot))
     }
 
     suspend fun createContactFromResolution(
@@ -338,53 +128,9 @@ class ContactResolutionService(
         return contactService.createContact(tenantId, request).getOrNull()?.id
     }
 
-    private suspend fun resolveCbeStatus(vat: VatNumber): EntityStatus? {
-        if (!vat.isValid || !vat.isBelgian) return null
-        return cbeApiClient.searchByVat(vat).getOrNull()?.status
-    }
-
-    private suspend fun maybeHealPaymentAliasContact(
-        tenantId: TenantId,
-        matchedContact: ContactDto,
-        authoritativeName: String?
-    ): ContactDto {
-        val targetName = authoritativeName.orEmpty()
-        if (targetName.isEmpty()) return matchedContact
-        if (matchedContact.source != ContactSource.AI) return matchedContact
-
-        val currentName = matchedContact.name.value
-        if (!isPaymentTokenAlias(currentName)) return matchedContact
-        if (isPaymentTokenAlias(targetName)) return matchedContact
-        if (similarity(targetName, currentName) >= PaymentAliasRenameSimilarityThreshold) return matchedContact
-
-        val candidateName = Name(targetName)
-        if (!candidateName.isValid) {
-            logger.warn("Skipping payment alias heal: invalid name '{}' for contact {}", targetName, matchedContact.id)
-            return matchedContact
-        }
-
-        val result = contactRepository.updateContact(
-            contactId = matchedContact.id,
-            tenantId = tenantId,
-            request = UpdateContactRequest(name = candidateName)
-        )
-        return result.getOrElse { e ->
-            logger.warn("Failed to heal payment alias for contact {}: {}", matchedContact.id, e.message)
-            matchedContact
-        }.also { healed ->
-            if (healed.id == matchedContact.id && healed.name.value == targetName) {
-                logger.info(
-                    "Healed payment alias contact {}: '{}' -> '{}'",
-                    matchedContact.id,
-                    currentName,
-                    targetName
-                )
-            }
-        }
-    }
-
-    private fun isPaymentTokenAlias(value: String): Boolean {
-        return paymentTokenKeywordPattern.containsMatchIn(value) && maskedOrTailPattern.containsMatchIn(value)
+    private fun VatNumber?.isSameVat(other: VatNumber?): Boolean {
+        if (this == null || other == null) return false
+        return this.normalized == other.normalized
     }
 
     private fun CounterpartySnapshot.normalized(): CounterpartySnapshot = CounterpartySnapshot(
@@ -404,25 +150,6 @@ class ContactResolutionService(
         return name == null && vatNumber == null && iban == null
     }
 
-    private fun snapshotFromCbe(
-        lookup: EntityLookup,
-        fallback: CounterpartySnapshot
-    ): CounterpartySnapshot {
-        val address = lookup.address
-        return CounterpartySnapshot(
-            name = lookup.name.value,
-            vatNumber = lookup.vatNumber,
-            iban = fallback.iban,
-            email = fallback.email,
-            companyNumber = lookup.enterpriseNumber,
-            streetLine1 = address?.streetLine1,
-            streetLine2 = address?.streetLine2,
-            postalCode = address?.postalCode,
-            city = address?.city,
-            country = address?.country
-        )
-    }
-
     private fun CounterpartySnapshot.toAddressInputs(): List<ContactAddressInput> {
         if (streetLine1 == null && city == null && postalCode == null && country == null) return emptyList()
         return listOf(
@@ -433,43 +160,6 @@ class ContactResolutionService(
                 postalCode = postalCode,
                 country = country?.dbValue
             )
-        )
-    }
-
-    private fun similarity(left: String, right: String): Double {
-        return JaroWinkler.similarity(normalizeName(left), normalizeName(right))
-    }
-
-    private fun normalizeName(value: String): String {
-        return value.lowercase()
-            .replace(nonAlphanumericPattern, " ")
-            .replace(multiSpacePattern, " ")
-            .trim()
-    }
-
-    private fun formatScore(value: Double): String = String.format("%.2f", value)
-
-    private fun ContactDto.toSuggestedContact(
-        vatMatch: Boolean,
-        ibanMatch: Boolean,
-        nameSimilarity: Double?,
-        ambiguityCount: Int,
-        reason: String
-    ): SuggestedContact {
-        val score = ContactMatchScore(
-            vatMatch = vatMatch,
-            ibanMatch = ibanMatch,
-            nameSimilarity = nameSimilarity ?: 0.0,
-            ambiguityCount = ambiguityCount,
-            cbeResult = null
-        )
-        return SuggestedContact(
-            contactId = id,
-            name = name.value,
-            vatNumber = vatNumber,
-            iban = iban,
-            matchScore = score,
-            reason = reason
         )
     }
 }

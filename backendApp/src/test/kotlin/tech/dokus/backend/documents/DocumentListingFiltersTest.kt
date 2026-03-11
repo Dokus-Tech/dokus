@@ -177,8 +177,6 @@ class DocumentListingFiltersTest {
 
         val ids = items.map { it.document.id }.toSet()
         val expected = setOf(
-            docQueued,
-            docProcessing,
             docFailed,
             docSucceededNoDraft,
             docNeedsReviewNoIngestion,
@@ -188,6 +186,8 @@ class DocumentListingFiltersTest {
 
         assertEquals(expected, ids)
         assertEquals(expected.size.toLong(), total)
+        assertTrue(DocumentId.parse(docQueued.toString()) !in ids, "Queued must not be in NeedsAttention")
+        assertTrue(DocumentId.parse(docProcessing.toString()) !in ids, "Processing must not be in NeedsAttention")
         assertTrue(DocumentId.parse(docConfirmedWithEntity.toString()) !in ids, "Confirmed+entity must not be in NeedsAttention")
         assertTrue(DocumentId.parse(docRejected.toString()) !in ids, "Rejected must not be in NeedsAttention")
     }

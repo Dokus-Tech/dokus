@@ -43,13 +43,17 @@ import tech.dokus.backend.services.cashflow.CreditNoteService
 import tech.dokus.backend.services.cashflow.ExpenseService
 import tech.dokus.backend.services.cashflow.InvoiceBankAutomationService
 import tech.dokus.backend.services.cashflow.InvoiceService
-import tech.dokus.backend.services.contacts.ContactMatchingService
 import tech.dokus.backend.services.contacts.ContactNoteService
 import tech.dokus.backend.services.contacts.ContactService
 import tech.dokus.backend.services.contacts.sse.ContactEventHub
 import tech.dokus.backend.services.contacts.sse.ContactSsePublisher
 import tech.dokus.backend.services.documents.AutoConfirmPolicy
 import tech.dokus.backend.services.documents.ContactResolutionService
+import tech.dokus.backend.services.documents.resolution.AutoCreateResolver
+import tech.dokus.backend.services.documents.resolution.ContactMatchingUtils
+import tech.dokus.backend.services.documents.resolution.IbanNameResolver
+import tech.dokus.backend.services.documents.resolution.NameSuggestionResolver
+import tech.dokus.backend.services.documents.resolution.VatMatchResolver
 import tech.dokus.backend.services.documents.DocumentPurposeService
 import tech.dokus.backend.services.documents.DocumentPurposeSimilarityService
 import tech.dokus.backend.services.documents.DocumentRecordLoader
@@ -364,7 +368,6 @@ private val contactsModule = module {
     // NOTE: ContactService takes optional PeppolDirectoryCacheRepository for cache invalidation
     single { ContactService(get(), get(), get(), get(), getOrNull()) }
     single { ContactNoteService(get()) }
-    single { ContactMatchingService(get()) }
     singleOf(::ContactEventHub)
     singleOf(::ContactSsePublisher)
 }
@@ -378,6 +381,11 @@ private fun documentProcessingModule() = module {
     single<DocumentFetcher> { StorageDocumentFetcher(get(), get()) }
 
     // Contact resolution (deterministic post-processing)
+    singleOf(::ContactMatchingUtils)
+    singleOf(::VatMatchResolver)
+    singleOf(::IbanNameResolver)
+    singleOf(::AutoCreateResolver)
+    singleOf(::NameSuggestionResolver)
     singleOf(::ContactResolutionService)
     singleOf(::AutoConfirmPolicy)
     singleOf(::DocumentPurposeSimilarityService)
