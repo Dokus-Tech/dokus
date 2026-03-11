@@ -260,7 +260,7 @@ class DocumentListingFiltersTest {
 
         val counts = documentRepository.getOperationalCounts(tenantId)
 
-        assertEquals(6L, counts.needsAttention)
+        assertEquals(4L, counts.needsAttention)
         assertEquals(1L, counts.confirmed)
     }
 

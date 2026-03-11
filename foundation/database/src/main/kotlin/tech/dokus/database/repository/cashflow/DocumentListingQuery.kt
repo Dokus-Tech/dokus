@@ -307,7 +307,7 @@ internal object DocumentListingQuery {
                         (DocumentDraftsTable.documentStatus neq DocumentStatus.Confirmed) or
                         (not(entityExists) and not(isBankStatementType))
 
-                val ingestionNeedsAttention = latestIsQueued or latestIsProcessing or latestIsFailed
+                val ingestionNeedsAttention = latestIsFailed
                 val draftNeedsReview = DocumentDraftsTable.documentStatus eq DocumentStatus.NeedsReview
                 val succeededButNoDraft = draftMissing and latestIsSucceeded
 

@@ -355,9 +355,7 @@ internal fun computeNeedsAttention(document: DocumentRecordDto): Boolean {
         return false
     }
 
-    val ingestionNeedsAttention = ingestionStatus == IngestionStatus.Failed ||
-        ingestionStatus == IngestionStatus.Processing ||
-        ingestionStatus == IngestionStatus.Queued
+    val ingestionNeedsAttention = ingestionStatus == IngestionStatus.Failed
     val draftNeedsReview = documentStatus == DocumentStatus.NeedsReview
     val confirmedButNoEntity =
         documentStatus == DocumentStatus.Confirmed &&

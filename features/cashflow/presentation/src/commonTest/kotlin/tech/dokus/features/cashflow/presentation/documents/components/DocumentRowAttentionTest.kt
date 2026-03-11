@@ -68,13 +68,23 @@ class DocumentRowAttentionTest {
     }
 
     @Test
-    fun `queued ingestion is attention`() {
+    fun `queued ingestion is not attention`() {
         val document = createRecord(
             draftStatus = null,
             ingestionStatus = IngestionStatus.Queued
         )
 
-        assertTrue(computeNeedsAttention(document))
+        assertFalse(computeNeedsAttention(document))
+    }
+
+    @Test
+    fun `processing ingestion is not attention`() {
+        val document = createRecord(
+            draftStatus = null,
+            ingestionStatus = IngestionStatus.Processing
+        )
+
+        assertFalse(computeNeedsAttention(document))
     }
 
     @Test
