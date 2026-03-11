@@ -22,7 +22,6 @@ import tech.dokus.database.tables.cashflow.CreditNotesTable
 import tech.dokus.database.tables.cashflow.ExpensesTable
 import tech.dokus.database.tables.cashflow.InvoicesTable
 import tech.dokus.database.tables.contacts.ContactsTable
-import tech.dokus.database.tables.documents.DocumentDraftsTable
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
 import tech.dokus.database.tables.documents.DocumentSourcesTable
 import tech.dokus.database.tables.documents.DocumentsTable
@@ -76,11 +75,10 @@ abstract class SearchTestFixture {
             SchemaUtils.create(
                 TenantTable,
                 UsersTable,
+                ContactsTable,
                 DocumentsTable,
                 DocumentSourcesTable,
                 DocumentIngestionRunsTable,
-                ContactsTable,
-                DocumentDraftsTable,
                 InvoicesTable,
                 ExpensesTable,
                 CreditNotesTable,

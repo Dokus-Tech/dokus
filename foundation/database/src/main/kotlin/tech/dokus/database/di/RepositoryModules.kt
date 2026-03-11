@@ -2,6 +2,7 @@ package tech.dokus.database.di
 
 import org.koin.dsl.bind
 import org.koin.dsl.module
+import tech.dokus.domain.repository.DocumentStatusChecker
 import tech.dokus.database.repository.ai.ChatRepositoryImpl
 import tech.dokus.database.repository.ai.DocumentChunksRepository
 import tech.dokus.database.repository.ai.DocumentExamplesRepository
@@ -21,7 +22,6 @@ import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.database.repository.cashflow.CashflowRepository
 import tech.dokus.database.repository.cashflow.CreditNoteRepository
 import tech.dokus.database.repository.cashflow.DocumentBlobRepository
-import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentMatchReviewRepository
 import tech.dokus.database.repository.cashflow.DocumentPurposeTemplateRepository
@@ -83,9 +83,8 @@ val repositoryModuleCashflow = module {
     single { BankTransactionRepository() }
     single { InvoiceBankMatchLinkRepository() }
     single { AutoPaymentAuditRepository() }
-    single { DocumentRepository() }
+    single { DocumentRepository() } bind DocumentStatusChecker::class
     single { DocumentIngestionRunRepository() }
-    single { DocumentDraftRepository() }
     single { InvoiceNumberRepository() }
     single { InvoiceNumberGenerator(get()) }
     single { InvoiceRepository(get()) }

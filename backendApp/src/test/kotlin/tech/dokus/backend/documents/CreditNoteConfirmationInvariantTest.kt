@@ -15,7 +15,6 @@ import tech.dokus.backend.services.cashflow.CreditNoteService
 import tech.dokus.backend.services.documents.confirmation.CreditNoteConfirmationService
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.database.repository.cashflow.DocumentCreatePayload
-import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.InvoiceNumberRepository
@@ -25,6 +24,7 @@ import tech.dokus.database.repository.cashflow.RefundClaimRepository
 import tech.dokus.database.repository.documents.DocumentLinkRepository
 import tech.dokus.database.services.InvoiceNumberGenerator
 import tech.dokus.database.tables.auth.TenantTable
+import tech.dokus.database.tables.auth.UsersTable
 import tech.dokus.database.tables.cashflow.CashflowEntriesTable
 import tech.dokus.database.tables.cashflow.CreditNotesTable
 import tech.dokus.database.tables.cashflow.InvoiceItemsTable
@@ -32,7 +32,6 @@ import tech.dokus.database.tables.cashflow.InvoicesTable
 import tech.dokus.database.tables.cashflow.RefundClaimsTable
 import tech.dokus.database.tables.contacts.ContactsTable
 import tech.dokus.database.tables.documents.DocumentBlobsTable
-import tech.dokus.database.tables.documents.DocumentDraftsTable
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
 import tech.dokus.database.tables.documents.DocumentLinksTable
 import tech.dokus.database.tables.documents.DocumentSourcesTable
@@ -76,7 +75,6 @@ class CreditNoteConfirmationInvariantTest {
 
     private val documentRepository = DocumentRepository()
     private val ingestionRunRepository = DocumentIngestionRunRepository()
-    private val draftRepository = DocumentDraftRepository()
     private val cashflowEntriesRepository = CashflowEntriesRepository()
     private val documentLinkRepository = DocumentLinkRepository()
     private val invoiceRepository = InvoiceRepository(InvoiceNumberGenerator(InvoiceNumberRepository()))
@@ -90,7 +88,7 @@ class CreditNoteConfirmationInvariantTest {
     )
     private val confirmationService = CreditNoteConfirmationService(
         creditNoteService = creditNoteService,
-        draftRepository = draftRepository,
+        draftRepository = documentRepository,
         documentLinkRepository = documentLinkRepository,
         invoiceRepository = invoiceRepository
     )
@@ -107,13 +105,13 @@ class CreditNoteConfirmationInvariantTest {
         transaction(database) {
             SchemaUtils.create(
                 TenantTable,
+                UsersTable,
+                ContactsTable,
                 DocumentsTable,
                 DocumentBlobsTable,
                 DocumentSourcesTable,
                 DocumentIngestionRunsTable,
-                DocumentDraftsTable,
                 DocumentLinksTable,
-                ContactsTable,
                 InvoicesTable,
                 InvoiceItemsTable,
                 CreditNotesTable,
@@ -149,21 +147,7 @@ class CreditNoteConfirmationInvariantTest {
     @AfterEach
     fun teardown() {
         transaction(database) {
-            SchemaUtils.drop(
-                CashflowEntriesTable,
-                RefundClaimsTable,
-                CreditNotesTable,
-                InvoiceItemsTable,
-                InvoicesTable,
-                ContactsTable,
-                DocumentLinksTable,
-                DocumentDraftsTable,
-                DocumentIngestionRunsTable,
-                DocumentSourcesTable,
-                DocumentBlobsTable,
-                DocumentsTable,
-                TenantTable
-            )
+            exec("DROP ALL OBJECTS")
         }
     }
 

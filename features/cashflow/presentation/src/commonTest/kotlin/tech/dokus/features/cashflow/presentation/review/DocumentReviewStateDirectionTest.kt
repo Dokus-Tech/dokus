@@ -120,7 +120,7 @@ class DocumentReviewStateDirectionTest {
                 contentType = "application/pdf",
                 sizeBytes = 1200L,
                 storageKey = "documents/$tenantId/invoice.pdf",
-                source = DocumentSource.Upload,
+                effectiveOrigin = DocumentSource.Upload,
                 uploadedAt = now
             ),
             draft = draft,

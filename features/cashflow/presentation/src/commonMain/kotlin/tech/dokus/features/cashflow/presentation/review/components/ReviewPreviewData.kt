@@ -163,7 +163,7 @@ internal fun previewReviewContentState(
             contentType = "application/pdf",
             sizeBytes = 248_200,
             storageKey = "documents/$tenantId/KBC_384421507.pdf",
-            source = DocumentSource.Upload,
+            effectiveOrigin = DocumentSource.Upload,
             uploadedAt = previewNow,
         ),
         draft = draft,

@@ -338,7 +338,7 @@ private fun documentRecord(
             contentType = "application/pdf",
             sizeBytes = 128_000,
             storageKey = "documents/$documentId.pdf",
-            source = DocumentSource.Upload,
+            effectiveOrigin = DocumentSource.Upload,
             uploadedAt = LocalDateTime(2026, 2, 1, 10, 0),
         ),
         draft = null,

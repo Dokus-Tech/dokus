@@ -226,7 +226,7 @@ class DocumentsLocalUploadRowsTest {
             contentType = "application/pdf",
             sizeBytes = 512,
             storageKey = "documents/$filename",
-            source = DocumentSource.Upload,
+            effectiveOrigin = DocumentSource.Upload,
             uploadedAt = LocalDateTime(2026, 1, 1, 10, 0),
             downloadUrl = null
         )

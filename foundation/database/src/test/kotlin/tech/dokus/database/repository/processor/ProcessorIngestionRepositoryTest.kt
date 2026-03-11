@@ -86,13 +86,7 @@ class ProcessorIngestionRepositoryTest {
     @AfterTest
     fun teardown() {
         transaction(database) {
-            SchemaUtils.drop(
-                DocumentIngestionRunsTable,
-                DocumentSourcesTable,
-                DocumentBlobsTable,
-                DocumentsTable,
-                TenantTable
-            )
+            exec("DROP ALL OBJECTS")
         }
     }
 

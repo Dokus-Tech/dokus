@@ -16,7 +16,6 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.v1.jdbc.update
 import tech.dokus.database.entity.IngestionItemEntity
-import tech.dokus.database.tables.documents.DocumentDraftsTable
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
 import tech.dokus.database.tables.documents.DocumentSourcesTable
 import tech.dokus.database.tables.documents.DocumentsTable
@@ -224,64 +223,45 @@ class ProcessorIngestionRepository {
 
             if (!runUpdated) return@newSuspendedTransaction false
 
-            // Check if draft exists and get current state
+            // Get current document state to determine draft update rules
             // SECURITY: Always filter by tenantId to prevent cross-tenant access
-            val existingDraft = DocumentDraftsTable.selectAll()
+            val existingDoc = DocumentsTable.selectAll()
                 .where {
-                    (DocumentDraftsTable.documentId eq documentUuid) and
-                            (DocumentDraftsTable.tenantId eq tenantUuid)
+                    (DocumentsTable.id eq documentUuid) and
+                        (DocumentsTable.tenantId eq tenantUuid)
                 }
-                .singleOrNull()
+                .singleOrNull() ?: return@newSuspendedTransaction false
 
-            if (existingDraft == null) {
-                // Create new draft
-                DocumentDraftsTable.insert {
-                    it[DocumentDraftsTable.documentId] = documentUuid
-                    it[DocumentDraftsTable.tenantId] = tenantUuid
-                    it[documentStatus] = calculatedStatus
-                    it[DocumentDraftsTable.documentType] = documentType
-                    it[DocumentDraftsTable.direction] = draftData?.toDirection() ?: DocumentDirection.Unknown
-                    it[DocumentDraftsTable.aiKeywords] = keywordsJson
+            val currentAiDraftSourceRunId = existingDoc[DocumentsTable.aiDraftSourceRunId]
+            val currentVersion = existingDoc[DocumentsTable.draftVersion]
+
+            // aiDraftSourceRunId: set ONLY if null (first successful run)
+            val shouldSetAiDraftRun = currentAiDraftSourceRunId == null
+
+            // extracted_data: set ONLY if draftVersion == 0 (not user-edited) or force
+            val shouldSetExtracted = currentVersion == 0 || force
+
+            // SECURITY: Always filter by tenantId to prevent cross-tenant modification
+            DocumentsTable.update({
+                (DocumentsTable.id eq documentUuid) and
+                    (DocumentsTable.tenantId eq tenantUuid)
+            }) {
+                it[DocumentsTable.documentType] = documentType
+                it[lastSuccessfulRunId] = runUuid
+                it[updatedAt] = now
+
+                if (shouldSetAiDraftRun) {
+                    it[DocumentsTable.aiKeywords] = keywordsJson
                     it[aiDraftSourceRunId] = runUuid
-                    it[DocumentDraftsTable.canonicalData] = draftJson
-                    it[draftVersion] = 0
-                    it[lastSuccessfulRunId] = runUuid
-                    it[createdAt] = now
-                    it[updatedAt] = now
                 }
-            } else {
-                // Update existing draft
-                val currentAiDraftSourceRunId = existingDraft[DocumentDraftsTable.aiDraftSourceRunId]
-                val currentVersion = existingDraft[DocumentDraftsTable.draftVersion]
 
-                // aiDraftSourceRunId: set ONLY if null (first successful run)
-                val shouldSetAiDraftRun = currentAiDraftSourceRunId == null
-
-                // extracted_data: set ONLY if draftVersion == 0 (not user-edited) or force
-                val shouldSetExtracted = currentVersion == 0 || force
-
-                // SECURITY: Always filter by tenantId to prevent cross-tenant modification
-                DocumentDraftsTable.update({
-                    (DocumentDraftsTable.documentId eq documentUuid) and
-                            (DocumentDraftsTable.tenantId eq tenantUuid)
-                }) {
-                    it[DocumentDraftsTable.documentType] = documentType
-                    it[lastSuccessfulRunId] = runUuid
-                    it[updatedAt] = now
-
-                    if (shouldSetAiDraftRun) {
-                        it[DocumentDraftsTable.aiKeywords] = keywordsJson
-                        it[aiDraftSourceRunId] = runUuid
-                    }
-
-                    if (shouldSetExtracted) {
-                        it[DocumentDraftsTable.canonicalData] = draftJson
-                        it[DocumentDraftsTable.direction] = draftData?.toDirection() ?: DocumentDirection.Unknown
-                        // Update status when we update extracted data
-                        it[documentStatus] = calculatedStatus
-                        if (keywordsJson != null) {
-                            it[DocumentDraftsTable.aiKeywords] = keywordsJson
-                        }
+                if (shouldSetExtracted) {
+                    it[DocumentsTable.canonicalData] = draftJson
+                    it[DocumentsTable.direction] = draftData?.toDirection() ?: DocumentDirection.Unknown
+                    // Update status when we update extracted data
+                    it[documentStatus] = calculatedStatus
+                    if (keywordsJson != null) {
+                        it[DocumentsTable.aiKeywords] = keywordsJson
                     }
                 }
             }

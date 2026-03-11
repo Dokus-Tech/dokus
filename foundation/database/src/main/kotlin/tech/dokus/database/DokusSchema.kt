@@ -31,7 +31,6 @@ import tech.dokus.database.tables.cashflow.RefundClaimsTable
 import tech.dokus.database.tables.contacts.ContactAddressesTable
 import tech.dokus.database.tables.contacts.ContactNotesTable
 import tech.dokus.database.tables.contacts.ContactsTable
-import tech.dokus.database.tables.documents.DocumentDraftsTable
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
 import tech.dokus.database.tables.documents.DocumentBlobsTable
 import tech.dokus.database.tables.documents.DocumentMatchReviewsTable
@@ -94,7 +93,6 @@ object DokusSchema {
                 DocumentBlobsTable,
                 DocumentSourcesTable,
                 DocumentIngestionRunsTable,
-                DocumentDraftsTable,
                 DocumentMatchReviewsTable,
                 DocumentPurposeTemplatesTable,
                 DocumentPurposeExamplesTable,

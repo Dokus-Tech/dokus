@@ -24,7 +24,6 @@ import tech.dokus.database.tables.cashflow.CashflowEntriesTable
 import tech.dokus.database.tables.cashflow.ExpensesTable
 import tech.dokus.database.tables.contacts.ContactsTable
 import tech.dokus.database.tables.documents.DocumentBlobsTable
-import tech.dokus.database.tables.documents.DocumentDraftsTable
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
 import tech.dokus.database.tables.documents.DocumentSourcesTable
 import tech.dokus.database.tables.documents.DocumentsTable
@@ -85,12 +84,11 @@ class ReceiptConfirmationIdempotencyTest {
             SchemaUtils.create(
                 TenantTable,
                 UsersTable,
+                ContactsTable,
                 DocumentsTable,
                 DocumentBlobsTable,
                 DocumentSourcesTable,
                 DocumentIngestionRunsTable,
-                DocumentDraftsTable,
-                ContactsTable,
                 ExpensesTable,
                 CashflowEntriesTable
             )
@@ -115,18 +113,7 @@ class ReceiptConfirmationIdempotencyTest {
     @AfterEach
     fun teardown() {
         transaction(database) {
-            SchemaUtils.drop(
-                CashflowEntriesTable,
-                ExpensesTable,
-                ContactsTable,
-                DocumentDraftsTable,
-                DocumentIngestionRunsTable,
-                DocumentSourcesTable,
-                DocumentBlobsTable,
-                DocumentsTable,
-                UsersTable,
-                TenantTable
-            )
+            exec("DROP ALL OBJECTS")
         }
     }
 

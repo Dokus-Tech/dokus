@@ -100,13 +100,7 @@ class PeppolTransmissionRepositoryIdempotencyTest {
     @AfterEach
     fun teardown() {
         transaction(database) {
-            SchemaUtils.drop(
-                PeppolTransmissionsTable,
-                InvoicesTable,
-                DocumentsTable,
-                ContactsTable,
-                TenantTable
-            )
+            exec("DROP ALL OBJECTS")
         }
     }
 

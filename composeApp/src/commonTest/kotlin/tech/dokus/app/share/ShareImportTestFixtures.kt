@@ -141,7 +141,7 @@ internal fun testDocument(
     contentType = "application/pdf",
     sizeBytes = 1234,
     storageKey = "documents/invoice.pdf",
-    source = DocumentSource.Upload,
+    effectiveOrigin = DocumentSource.Upload,
     uploadedAt = LocalDateTime(2024, 1, 1, 0, 0),
     downloadUrl = null
 )

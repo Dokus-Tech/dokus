@@ -118,13 +118,7 @@ class InvoicePaymentCashflowSyncTest {
     @AfterEach
     fun teardown() {
         transaction(database) {
-            SchemaUtils.drop(
-                CashflowEntriesTable,
-                InvoicesTable,
-                ContactsTable,
-                DocumentsTable,
-                TenantTable
-            )
+            exec("DROP ALL OBJECTS")
         }
     }
 

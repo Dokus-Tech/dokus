@@ -124,7 +124,7 @@ class DocumentProcessingWorkerConcurrencyTest {
             documentId = DocumentId.generate(),
             tenantId = TenantId.generate(),
             sourceChannel = null,
-            documentSource = DocumentSource.Email,
+            effectiveOrigin = DocumentSource.Email,
             storageKey = "docs/fallback.pdf",
             filename = "fallback.pdf",
             contentType = "application/pdf"

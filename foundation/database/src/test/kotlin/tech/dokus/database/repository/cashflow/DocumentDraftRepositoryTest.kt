@@ -3,12 +3,13 @@ package tech.dokus.database.repository.cashflow
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.SchemaUtils
+import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.update
 import tech.dokus.database.tables.auth.TenantTable
 import tech.dokus.database.tables.auth.UsersTable
 import tech.dokus.database.tables.contacts.ContactsTable
-import tech.dokus.database.tables.documents.DocumentDraftsTable
 import tech.dokus.database.tables.documents.DocumentBlobsTable
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
 import tech.dokus.database.tables.documents.DocumentSourcesTable
@@ -54,12 +55,11 @@ class DocumentDraftRepositoryTest {
             SchemaUtils.create(
                 TenantTable,
                 UsersTable,
+                ContactsTable,
                 DocumentBlobsTable,
                 DocumentsTable,
                 DocumentSourcesTable,
                 DocumentIngestionRunsTable,
-                ContactsTable,
-                DocumentDraftsTable
             )
         }
 
@@ -98,12 +98,11 @@ class DocumentDraftRepositoryTest {
                 it[isActive] = true
             }
 
-            DocumentDraftsTable.insert {
-                it[DocumentDraftsTable.documentId] = documentUuid
-                it[DocumentDraftsTable.tenantId] = tenantUuid
-                it[DocumentDraftsTable.linkedContactId] = contactUuid
-                it[DocumentDraftsTable.linkedContactSource] = ContactLinkSource.AI
-                it[DocumentDraftsTable.matchEvidence] = json.encodeToString(
+            // Set draft columns on the document row
+            DocumentsTable.update({ DocumentsTable.id eq documentUuid }) {
+                it[linkedContactId] = contactUuid
+                it[linkedContactSource] = ContactLinkSource.AI
+                it[matchEvidence] = json.encodeToString(
                     MatchEvidence(
                         vatMatch = true,
                         ibanMatch = false,
@@ -117,16 +116,7 @@ class DocumentDraftRepositoryTest {
     @AfterTest
     fun teardown() {
         transaction(database) {
-            SchemaUtils.drop(
-                DocumentDraftsTable,
-                ContactsTable,
-                DocumentIngestionRunsTable,
-                DocumentSourcesTable,
-                DocumentBlobsTable,
-                DocumentsTable,
-                UsersTable,
-                TenantTable
-            )
+            exec("DROP ALL OBJECTS")
         }
     }
 
