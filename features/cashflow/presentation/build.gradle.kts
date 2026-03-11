@@ -114,6 +114,7 @@ android {
         unitTests {
             isIncludeAndroidResources = true
             all {
+                it.maxHeapSize = "1g"
                 it.systemProperties["robolectric.pixelCopyRenderMode"] = "hardware"
             }
         }
