@@ -166,7 +166,7 @@ abstract class SearchTestFixture {
                 it[contentType] = "application/pdf"
                 it[sizeBytes] = 512L
                 it[storageKey] = "docs/$id.pdf"
-                it[documentSource] = DocumentSource.Upload
+                it[effectiveOrigin] = DocumentSource.Upload
                 it[uploadedAt] = now
             }
         }

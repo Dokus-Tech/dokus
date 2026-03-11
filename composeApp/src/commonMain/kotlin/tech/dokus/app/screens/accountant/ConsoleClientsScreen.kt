@@ -980,7 +980,7 @@ private fun DocumentRecordDto.toConsoleDocumentRow(index: Int): ConsoleDocumentR
             2 -> "receipt"
             else -> "bank"
         },
-        origin = if (document.source == tech.dokus.domain.enums.DocumentSource.Peppol) {
+        origin = if (document.effectiveOrigin == tech.dokus.domain.enums.DocumentSource.Peppol) {
             BadgeDocumentSource.Peppol
         } else {
             BadgeDocumentSource.Pdf

@@ -252,8 +252,8 @@ class CreditNoteConfirmationInvariantTest {
                 contentType = "application/pdf",
                 sizeBytes = 123L,
                 storageKey = "test/$tenantUuid/invoice.pdf",
-                contentHash = null,
-                source = DocumentSource.Upload
+                canonicalContentHash = null,
+                effectiveOrigin = DocumentSource.Upload
             )
         )
         val invoiceId = UUID.randomUUID()
@@ -288,8 +288,8 @@ class CreditNoteConfirmationInvariantTest {
                 contentType = "application/pdf",
                 sizeBytes = 123L,
                 storageKey = "test/$tenantUuid/credit-note-${UUID.randomUUID()}.pdf",
-                contentHash = null,
-                source = DocumentSource.Upload
+                canonicalContentHash = null,
+                effectiveOrigin = DocumentSource.Upload
             )
         )
 

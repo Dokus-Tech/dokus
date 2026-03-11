@@ -328,8 +328,8 @@ class DocumentListingFiltersTest {
                 it[contentType] = "application/pdf"
                 it[sizeBytes] = 123L
                 it[storageKey] = "test/$docUuid/$filename"
-                it[contentHash] = null
-                it[documentSource] = DocumentSource.Upload
+                it[canonicalContentHash] = null
+                it[effectiveOrigin] = DocumentSource.Upload
             }
         }
         return docUuid
@@ -365,7 +365,7 @@ class DocumentListingFiltersTest {
                 it[documentStatus] = status
                 it[documentType] = type
                 it[aiDraftSourceRunId] = null
-                it[extractedData] = null
+                it[canonicalData] = null
                 it[lastSuccessfulRunId] = null
                 it[createdAt] = now
                 it[updatedAt] = now

@@ -50,7 +50,7 @@ import tech.dokus.database.repository.cashflow.DocumentSourceRepository
 import tech.dokus.database.repository.cashflow.DocumentSourceSummary
 import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
-import tech.dokus.database.repository.cashflow.selectDefaultSourceFromList
+import tech.dokus.database.repository.cashflow.selectPreferredSource
 import tech.dokus.domain.enums.DocumentSourceStatus
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
@@ -338,10 +338,10 @@ internal fun Route.documentRecordRoutes() {
             val document = documentRepository.getById(tenantId, documentId)
                 ?: throw DokusException.NotFound("Document not found")
             val sources = truthService.listSources(tenantId, documentId)
-            val defaultSource = selectDefaultSource(sources)
-            val storageKey = defaultSource?.storageKey ?: document.storageKey
-            val resolvedFilename = defaultSource?.filename ?: document.filename
-            val resolvedContentType = defaultSource?.contentType ?: document.contentType
+            val preferredSource = selectPreferredSource(sources)
+            val storageKey = preferredSource?.storageKey ?: document.storageKey
+            val resolvedFilename = preferredSource?.filename ?: document.filename
+            val resolvedContentType = preferredSource?.contentType ?: document.contentType
 
             val stream = try {
                 minioStorage.openDocumentStream(storageKey)
@@ -897,8 +897,8 @@ internal fun isInboxLifecycle(status: IngestionStatus?): Boolean {
     return status == IngestionStatus.Queued || status == IngestionStatus.Processing
 }
 
-private fun selectDefaultSource(sources: List<DocumentSourceSummary>): DocumentSourceSummary? {
-    return selectDefaultSourceFromList(sources)
+private fun selectPreferredSource(sources: List<DocumentSourceSummary>): DocumentSourceSummary? {
+    return selectPreferredSource(sources)
 }
 
 private fun publishAffectedDocuments(

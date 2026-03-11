@@ -13,7 +13,7 @@ import tech.dokus.backend.services.pdf.PdfPreviewService
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.DocumentSourceRepository
 import tech.dokus.database.repository.cashflow.DocumentSourceSummary
-import tech.dokus.database.repository.cashflow.selectDefaultSourceFromList
+import tech.dokus.database.repository.cashflow.selectPreferredSource
 import tech.dokus.domain.enums.DocumentSourceStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
@@ -249,9 +249,9 @@ private suspend fun resolveDefaultSourceForPreview(
     val document = documentRepository.getById(tenantId, documentId)
         ?: throw DokusException.NotFound("Document not found: $documentId")
     val sources = sourceRepository.listByDocument(tenantId, documentId)
-    val defaultSource = selectDefaultSourceFromList(sources)
-    return if (defaultSource != null) {
-        defaultSource.toPreviewSelection()
+    val preferredSource = selectPreferredSource(sources)
+    return if (preferredSource != null) {
+        preferredSource.toPreviewSelection()
     } else {
         PreviewSourceSelection(
             storageKey = document.storageKey,

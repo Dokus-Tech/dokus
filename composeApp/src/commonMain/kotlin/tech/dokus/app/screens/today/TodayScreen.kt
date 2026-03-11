@@ -334,7 +334,7 @@ private fun TodayRecentRow(
     document: DocumentRecordDto,
     onClick: () -> Unit,
 ) {
-    val source = document.document.source.toUiSource()
+    val source = document.document.effectiveOrigin.toUiSource()
     val vendorName = document.vendorName()
     val dateText = document.formattedDate()
     val amount = document.extractedTotalDouble()

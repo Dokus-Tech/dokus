@@ -200,8 +200,8 @@ class DocumentTruthService(
                     it[DocumentsTable.contentType] = blob.contentType
                     it[DocumentsTable.sizeBytes] = blob.sizeBytes
                     it[DocumentsTable.storageKey] = blob.storageKey
-                    it[DocumentsTable.contentHash] = null
-                    it[DocumentsTable.documentSource] = sourceChannel
+                    it[DocumentsTable.canonicalContentHash] = null
+                    it[DocumentsTable.effectiveOrigin] = sourceChannel
                 }
 
                 val sourceId = DocumentSourceId.generate()
@@ -305,7 +305,7 @@ class DocumentTruthService(
             extractedSnapshotJson = extractedSnapshotJson,
             matchType = null
         )
-        documentRepository.updateContentHash(tenantId, documentId, extractedContentHash)
+        documentRepository.updateCanonicalContentHash(tenantId, documentId, extractedContentHash)
 
         val contentMatchDocumentId = sourceRepository.findLinkedDocumentByContentHash(
             tenantId = tenantId,
@@ -392,7 +392,7 @@ class DocumentTruthService(
         }
 
         if (identity != null) {
-            documentRepository.updateIdentityKeyHash(tenantId, documentId, identity.hash)
+            documentRepository.updateCanonicalIdentityKey(tenantId, documentId, identity.hash)
         }
 
         val sourceCount = sourceRepository.countLinkedSources(tenantId, documentId)
@@ -480,9 +480,9 @@ class DocumentTruthService(
                         contentType = source.contentType,
                         sizeBytes = source.sizeBytes,
                         storageKey = source.storageKey,
-                        contentHash = source.contentHash,
-                        identityKeyHash = source.identityKeyHash,
-                        source = source.sourceChannel
+                        canonicalContentHash = source.contentHash,
+                        canonicalIdentityKey = source.identityKeyHash,
+                        effectiveOrigin = source.sourceChannel
                     )
                 )
                 sourceRepository.reassignToDocument(

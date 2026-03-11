@@ -80,8 +80,8 @@ object DocumentDraftsTable : Table("document_drafts") {
         .references(DocumentIngestionRunsTable.id, onDelete = ReferenceOption.SET_NULL)
         .nullable()
 
-    // Current extraction data (may include user edits)
-    val extractedData = text("extracted_data").nullable()
+    // Canonical document data — the single reviewable truth (may include user edits)
+    val canonicalData = text("extracted_data").nullable()
 
     // ============================================
     // Versioning & Audit Fields

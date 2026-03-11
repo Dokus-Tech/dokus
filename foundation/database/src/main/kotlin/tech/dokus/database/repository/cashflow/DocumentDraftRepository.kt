@@ -129,7 +129,7 @@ class DocumentDraftRepository : DocumentStatusChecker {
                 it[DocumentDraftsTable.direction] = extractedData.toDirection()
                 it[DocumentDraftsTable.aiKeywords] = keywordsJson
                 it[aiDraftSourceRunId] = runIdUuid
-                it[DocumentDraftsTable.extractedData] = json.encodeToString(extractedData)
+                it[DocumentDraftsTable.canonicalData] = json.encodeToString(extractedData)
                 it[lastSuccessfulRunId] = runIdUuid
                 it[createdAt] = now
                 it[updatedAt] = now
@@ -153,7 +153,7 @@ class DocumentDraftRepository : DocumentStatusChecker {
 
                 // extracted_data: update only if force or not user-edited
                 if (shouldUpdateExtracted) {
-                    it[DocumentDraftsTable.extractedData] = json.encodeToString(extractedData)
+                    it[DocumentDraftsTable.canonicalData] = json.encodeToString(extractedData)
                     it[DocumentDraftsTable.documentType] = documentType
                     it[DocumentDraftsTable.direction] = extractedData.toDirection()
                     it[documentStatus] = DocumentStatus.NeedsReview
@@ -231,7 +231,7 @@ class DocumentDraftRepository : DocumentStatusChecker {
         }) {
             it[documentType] = updatedData.toDocumentType()
             it[direction] = updatedData.toDirection()
-            it[extractedData] = json.encodeToString(updatedData)
+            it[canonicalData] = json.encodeToString(updatedData)
             it[draftVersion] = newVersion
             it[draftEditedAt] = now
             it[draftEditedBy] = UUID.fromString(userId.toString())
@@ -255,7 +255,7 @@ class DocumentDraftRepository : DocumentStatusChecker {
             (DocumentDraftsTable.documentId eq UUID.fromString(documentId.toString())) and
                 (DocumentDraftsTable.tenantId eq UUID.fromString(tenantId.toString()))
         }) {
-            it[DocumentDraftsTable.extractedData] = json.encodeToString(extractedData)
+            it[DocumentDraftsTable.canonicalData] = json.encodeToString(extractedData)
             it[DocumentDraftsTable.documentType] = extractedData.toDocumentType()
             it[DocumentDraftsTable.direction] = extractedData.toDirection()
             it[documentStatus] = status
@@ -559,7 +559,7 @@ class DocumentDraftRepository : DocumentStatusChecker {
             documentStatus = this[DocumentDraftsTable.documentStatus],
             documentType = this[DocumentDraftsTable.documentType],
             direction = this[DocumentDraftsTable.direction],
-            extractedData = this[DocumentDraftsTable.extractedData]?.let { json.decodeFromString(it) },
+            extractedData = this[DocumentDraftsTable.canonicalData]?.let { json.decodeFromString(it) },
             aiKeywords = this[DocumentDraftsTable.aiKeywords]?.let { json.decodeFromString(it) } ?: emptyList(),
             purposeBase = this[DocumentDraftsTable.purposeBase],
             purposePeriodYear = this[DocumentDraftsTable.purposePeriodYear],

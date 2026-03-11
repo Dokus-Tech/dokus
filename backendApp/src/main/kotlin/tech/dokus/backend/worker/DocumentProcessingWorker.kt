@@ -367,7 +367,7 @@ internal class DocumentProcessingWorker(
             val parsedTenantId = tenantId
             val tenant = tenantRepository.findById(parsedTenantId)
                 ?: error("Tenant not found: $tenantId")
-            val sourceChannel = ingestion.sourceChannel ?: ingestion.documentSource
+            val sourceChannel = ingestion.sourceChannel ?: ingestion.effectiveOrigin
             if (ingestion.sourceChannel == null) {
                 logger.warn(
                     "Missing source channel for run {} document {}; using document source {}",

@@ -369,12 +369,12 @@ class DocumentSourceRepository {
         } > 0
     }
 
-    suspend fun selectDefaultSource(
+    suspend fun selectPreferredSource(
         tenantId: TenantId,
         documentId: DocumentId
     ): DocumentSourceSummary? {
         val sources = listByDocument(tenantId, documentId, includeDetached = false)
-        return selectDefaultSourceFromList(sources)
+        return selectPreferredSource(sources)
     }
 
     private fun ResultRow.toSourceSummary(): DocumentSourceSummary {
@@ -440,7 +440,7 @@ private val SOURCE_TRUST_PRIORITY = mapOf(
     DocumentSource.Manual to 1
 )
 
-fun selectDefaultSourceFromList(sources: List<DocumentSourceSummary>): DocumentSourceSummary? {
+fun selectPreferredSource(sources: List<DocumentSourceSummary>): DocumentSourceSummary? {
     return sources
         .filter { it.status == DocumentSourceStatus.Linked }
         .maxWithOrNull(

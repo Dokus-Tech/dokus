@@ -115,8 +115,8 @@ class ProcessorIngestionInvariantTest {
                 contentType = "application/pdf",
                 sizeBytes = 123L,
                 storageKey = "test/$tenantUuid/invoice.pdf",
-                contentHash = null,
-                source = DocumentSource.Upload
+                canonicalContentHash = null,
+                effectiveOrigin = DocumentSource.Upload
             )
         )
 

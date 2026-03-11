@@ -105,7 +105,7 @@ internal fun Route.attachmentRoutes() {
                     contentType = uploadResult.contentType,
                     sizeBytes = uploadResult.sizeBytes,
                     storageKey = uploadResult.key,
-                    contentHash = null
+                    canonicalContentHash = null
                 )
             )
 
@@ -202,7 +202,7 @@ internal fun Route.attachmentRoutes() {
                     contentType = uploadResult.contentType,
                     sizeBytes = uploadResult.sizeBytes,
                     storageKey = uploadResult.key,
-                    contentHash = null
+                    canonicalContentHash = null
                 )
             )
 

@@ -47,9 +47,9 @@ data class DocumentCreatePayload(
     val contentType: String,
     val sizeBytes: Long,
     val storageKey: String,
-    val contentHash: String?,
-    val identityKeyHash: String? = null,
-    val source: DocumentSource = DocumentSource.Upload
+    val canonicalContentHash: String?,
+    val canonicalIdentityKey: String? = null,
+    val effectiveOrigin: DocumentSource = DocumentSource.Upload
 )
 
 /**
@@ -76,9 +76,9 @@ class DocumentRepository {
             it[DocumentsTable.contentType] = payload.contentType
             it[DocumentsTable.sizeBytes] = payload.sizeBytes
             it[DocumentsTable.storageKey] = payload.storageKey
-            it[DocumentsTable.contentHash] = payload.contentHash
-            it[DocumentsTable.identityKeyHash] = payload.identityKeyHash
-            it[DocumentsTable.documentSource] = payload.source
+            it[DocumentsTable.canonicalContentHash] = payload.canonicalContentHash
+            it[DocumentsTable.canonicalIdentityKey] = payload.canonicalIdentityKey
+            it[DocumentsTable.effectiveOrigin] = payload.effectiveOrigin
         }
         id
     }
@@ -105,13 +105,13 @@ class DocumentRepository {
     suspend fun getContentHash(tenantId: TenantId, documentId: DocumentId): String? =
         newSuspendedTransaction {
             DocumentsTable
-                .select(DocumentsTable.contentHash)
+                .select(DocumentsTable.canonicalContentHash)
                 .where {
                     (DocumentsTable.id eq UUID.fromString(documentId.toString())) and
                         (DocumentsTable.tenantId eq UUID.fromString(tenantId.toString()))
                 }
                 .singleOrNull()
-                ?.get(DocumentsTable.contentHash)
+                ?.get(DocumentsTable.canonicalContentHash)
         }
 
     /**
@@ -137,7 +137,7 @@ class DocumentRepository {
         newSuspendedTransaction {
             DocumentsTable.selectAll()
                 .where {
-                    (DocumentsTable.contentHash eq contentHash) and
+                    (DocumentsTable.canonicalContentHash eq contentHash) and
                         (DocumentsTable.tenantId eq UUID.fromString(tenantId.toString()))
                 }
                 .map { it.toDocumentDto() }
@@ -152,36 +152,36 @@ class DocumentRepository {
         newSuspendedTransaction {
             DocumentsTable.selectAll()
                 .where {
-                    (DocumentsTable.identityKeyHash eq identityKeyHash) and
+                    (DocumentsTable.canonicalIdentityKey eq identityKeyHash) and
                         (DocumentsTable.tenantId eq UUID.fromString(tenantId.toString()))
                 }
                 .map { it.toDocumentDto() }
                 .singleOrNull()
         }
 
-    suspend fun updateIdentityKeyHash(
+    suspend fun updateCanonicalIdentityKey(
         tenantId: TenantId,
         documentId: DocumentId,
-        identityKeyHash: String?
+        canonicalIdentityKey: String?
     ): Boolean = newSuspendedTransaction {
         DocumentsTable.update({
             (DocumentsTable.id eq UUID.fromString(documentId.toString())) and
                 (DocumentsTable.tenantId eq UUID.fromString(tenantId.toString()))
         }) {
-            it[DocumentsTable.identityKeyHash] = identityKeyHash
+            it[DocumentsTable.canonicalIdentityKey] = canonicalIdentityKey
         } > 0
     }
 
-    suspend fun updateContentHash(
+    suspend fun updateCanonicalContentHash(
         tenantId: TenantId,
         documentId: DocumentId,
-        contentHash: String?
+        canonicalContentHash: String?
     ): Boolean = newSuspendedTransaction {
         DocumentsTable.update({
             (DocumentsTable.id eq UUID.fromString(documentId.toString())) and
                 (DocumentsTable.tenantId eq UUID.fromString(tenantId.toString()))
         }) {
-            it[DocumentsTable.contentHash] = contentHash
+            it[DocumentsTable.canonicalContentHash] = canonicalContentHash
         } > 0
     }
 

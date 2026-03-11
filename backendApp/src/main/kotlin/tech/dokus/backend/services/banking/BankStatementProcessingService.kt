@@ -219,7 +219,7 @@ class BankStatementProcessingService(
         val source = if (sourceId != null) {
             documentSourceRepository.getById(tenantId, sourceId)
         } else {
-            documentSourceRepository.selectDefaultSource(tenantId, documentId)
+            documentSourceRepository.selectPreferredSource(tenantId, documentId)
         }
         return source?.inputHash
     }

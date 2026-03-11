@@ -128,7 +128,7 @@ internal fun DocumentTableRow(
     }
     val isProcessing = listStatus == DocumentUiStatus.Queued ||
         listStatus == DocumentUiStatus.Processing
-    val source = document.document.source.toUiSource()
+    val source = document.document.effectiveOrigin.toUiSource()
 
     val interactionSource = remember { MutableInteractionSource() }
     val isHovered by interactionSource.collectIsHoveredAsState()
@@ -239,7 +239,7 @@ internal fun DocumentMobileRow(
     }
     val isProcessing = listStatus == DocumentUiStatus.Queued ||
         listStatus == DocumentUiStatus.Processing
-    val source = document.document.source.toUiSource()
+    val source = document.document.effectiveOrigin.toUiSource()
 
     DokusCardSurface(
         modifier = modifier,

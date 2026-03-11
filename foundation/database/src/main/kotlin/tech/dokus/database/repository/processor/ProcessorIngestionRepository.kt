@@ -90,7 +90,7 @@ class ProcessorIngestionRepository {
                         tenantId = TenantId(row[DocumentIngestionRunsTable.tenantId].toKotlinUuid()),
                         sourceId = row[DocumentIngestionRunsTable.sourceId]?.toKotlinUuid()?.let { DocumentSourceId(it) },
                         sourceChannel = row.getOrNull(DocumentSourcesTable.sourceChannel),
-                        documentSource = row[DocumentsTable.documentSource],
+                        effectiveOrigin = row[DocumentsTable.effectiveOrigin],
                         peppolStructuredSnapshotJson = row.getOrNull(DocumentSourcesTable.peppolStructuredSnapshotJson),
                         peppolSnapshotVersion = row.getOrNull(DocumentSourcesTable.peppolSnapshotVersion),
                         storageKey = row[DocumentsTable.storageKey],
@@ -243,7 +243,7 @@ class ProcessorIngestionRepository {
                     it[DocumentDraftsTable.direction] = draftData?.toDirection() ?: DocumentDirection.Unknown
                     it[DocumentDraftsTable.aiKeywords] = keywordsJson
                     it[aiDraftSourceRunId] = runUuid
-                    it[DocumentDraftsTable.extractedData] = draftJson
+                    it[DocumentDraftsTable.canonicalData] = draftJson
                     it[draftVersion] = 0
                     it[lastSuccessfulRunId] = runUuid
                     it[createdAt] = now
@@ -275,7 +275,7 @@ class ProcessorIngestionRepository {
                     }
 
                     if (shouldSetExtracted) {
-                        it[DocumentDraftsTable.extractedData] = draftJson
+                        it[DocumentDraftsTable.canonicalData] = draftJson
                         it[DocumentDraftsTable.direction] = draftData?.toDirection() ?: DocumentDirection.Unknown
                         // Update status when we update extracted data
                         it[documentStatus] = calculatedStatus

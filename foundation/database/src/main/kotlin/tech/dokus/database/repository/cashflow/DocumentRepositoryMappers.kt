@@ -17,7 +17,7 @@ internal fun ResultRow.toDocumentDto(): DocumentDto {
         contentType = this[DocumentsTable.contentType],
         sizeBytes = this[DocumentsTable.sizeBytes],
         storageKey = this[DocumentsTable.storageKey],
-        source = this[DocumentsTable.documentSource],
+        effectiveOrigin = this[DocumentsTable.effectiveOrigin],
         uploadedAt = this[DocumentsTable.uploadedAt],
         downloadUrl = null // Generated on-demand by the service layer
     )

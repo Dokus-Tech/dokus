@@ -255,8 +255,8 @@ class CashflowProjectionReconciliationTest {
                 contentType = "application/pdf",
                 sizeBytes = 100L,
                 storageKey = "test/$tenantUuid/invoice-${UUID.randomUUID()}.pdf",
-                contentHash = null,
-                source = DocumentSource.Upload
+                canonicalContentHash = null,
+                effectiveOrigin = DocumentSource.Upload
             )
         )
 

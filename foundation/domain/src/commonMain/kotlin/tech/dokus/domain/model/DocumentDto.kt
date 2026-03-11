@@ -7,12 +7,11 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 
 /**
- * Document DTO - represents a document stored in object storage (MinIO).
+ * Document DTO - represents a canonical document.
  *
- * Documents are pure file metadata. Entity linkage is handled by the
- * financial entity tables (Invoice, Expense) which have a documentId FK.
- * The download URL is generated fresh on each fetch to avoid storing
- * expiring presigned URLs.
+ * File metadata (filename, contentType, sizeBytes, storageKey) is resolved
+ * from the preferred source. The download URL is generated fresh on each
+ * fetch to avoid storing expiring presigned URLs.
  */
 @Serializable
 data class DocumentDto(
@@ -22,7 +21,7 @@ data class DocumentDto(
     val contentType: String,
     val sizeBytes: Long,
     val storageKey: String,
-    val source: DocumentSource = DocumentSource.Upload,
+    val effectiveOrigin: DocumentSource = DocumentSource.Upload,
     val uploadedAt: LocalDateTime,
     val downloadUrl: String? = null
 )

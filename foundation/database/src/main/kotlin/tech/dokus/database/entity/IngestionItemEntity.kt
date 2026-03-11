@@ -16,7 +16,7 @@ data class IngestionItemEntity(
     val tenantId: TenantId,
     val sourceId: DocumentSourceId? = null,
     val sourceChannel: DocumentSource? = null,
-    val documentSource: DocumentSource = DocumentSource.Upload,
+    val effectiveOrigin: DocumentSource = DocumentSource.Upload,
     val peppolStructuredSnapshotJson: String? = null,
     val peppolSnapshotVersion: Int? = null,
     val storageKey: String,

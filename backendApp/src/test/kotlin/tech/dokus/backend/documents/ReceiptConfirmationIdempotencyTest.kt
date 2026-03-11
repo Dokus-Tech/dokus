@@ -203,8 +203,8 @@ class ReceiptConfirmationIdempotencyTest {
                 contentType = "application/pdf",
                 sizeBytes = 123L,
                 storageKey = "test/$tenantUuid/receipt.pdf",
-                contentHash = null,
-                source = DocumentSource.Upload
+                canonicalContentHash = null,
+                effectiveOrigin = DocumentSource.Upload
             )
         )
 

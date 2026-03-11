@@ -11,7 +11,7 @@ import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
-import tech.dokus.database.repository.cashflow.selectDefaultSourceFromList
+import tech.dokus.database.repository.cashflow.selectPreferredSource
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
@@ -39,15 +39,15 @@ internal class DocumentRecordLoader(
     ): DocumentRecordDto? {
         val document = documentRepository.getById(tenantId, documentId) ?: return null
         val sources = truthService.listSources(tenantId, documentId)
-        val defaultSource = selectDefaultSourceFromList(sources)
-        val effectiveDocument = if (defaultSource != null) {
+        val preferredSource = selectPreferredSource(sources)
+        val effectiveDocument = if (preferredSource != null) {
             document.copy(
-                filename = defaultSource.filename ?: document.filename,
-                contentType = defaultSource.contentType,
-                sizeBytes = defaultSource.sizeBytes,
-                storageKey = defaultSource.storageKey,
-                source = defaultSource.sourceChannel,
-                uploadedAt = defaultSource.arrivalAt,
+                filename = preferredSource.filename ?: document.filename,
+                contentType = preferredSource.contentType,
+                sizeBytes = preferredSource.sizeBytes,
+                storageKey = preferredSource.storageKey,
+                effectiveOrigin = preferredSource.sourceChannel,
+                uploadedAt = preferredSource.arrivalAt,
             )
         } else {
             document
