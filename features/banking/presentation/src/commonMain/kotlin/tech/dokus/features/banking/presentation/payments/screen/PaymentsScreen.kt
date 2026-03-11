@@ -273,6 +273,7 @@ private fun DesktopTransactionTable(
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
         TransactionHeaderRow()
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
         LazyColumn(
             state = listState,

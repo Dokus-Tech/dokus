@@ -105,6 +105,7 @@ internal fun DesktopAccountsTable(
                 ),
             ),
         )
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
         accounts.forEachIndexed { index, account ->
             AccountTableRow(account = account)

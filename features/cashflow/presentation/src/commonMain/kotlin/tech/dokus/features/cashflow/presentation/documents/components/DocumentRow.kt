@@ -48,8 +48,10 @@ import tech.dokus.features.cashflow.presentation.common.utils.formatShortDate
 import tech.dokus.features.cashflow.presentation.model.toUiStatus
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.badges.SourceBadge
+import tech.dokus.foundation.aura.components.layout.DokusHeaderColumn
 import tech.dokus.foundation.aura.components.layout.DokusTableCell
 import tech.dokus.foundation.aura.components.layout.DokusTableColumnSpec
+import tech.dokus.foundation.aura.components.layout.DokusTableHeader
 import tech.dokus.foundation.aura.components.layout.DokusTableRow
 import tech.dokus.foundation.aura.components.status.StatusDot
 import tech.dokus.foundation.aura.components.status.StatusDotType
@@ -88,39 +90,15 @@ private object DocumentTableColumns {
 internal fun DocumentTableHeaderRow(
     modifier: Modifier = Modifier
 ) {
-    DokusTableRow(
-        modifier = modifier,
-        minHeight = 40.dp,
-        contentPadding = PaddingValues(horizontal = Constraints.Spacing.large)
-    ) {
-        DokusTableCell(DocumentTableColumns.Vendor) {
-            HeaderLabel(text = stringResource(Res.string.documents_table_counterparty))
-        }
-        DokusTableCell(DocumentTableColumns.Reference) {
-            HeaderLabel(text = stringResource(Res.string.documents_table_description))
-        }
-        DokusTableCell(DocumentTableColumns.Amount) {
-            HeaderLabel(text = stringResource(Res.string.document_table_amount))
-        }
-        DokusTableCell(DocumentTableColumns.Date) {
-            HeaderLabel(text = stringResource(Res.string.document_table_date))
-        }
-        DokusTableCell(DocumentTableColumns.Source) {
-            Spacer(modifier = Modifier.width(1.dp))
-        }
-    }
-}
-
-@Composable
-private fun HeaderLabel(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.labelSmall.copy(
-            fontWeight = FontWeight.SemiBold,
+    DokusTableHeader(
+        columns = listOf(
+            DokusHeaderColumn(label = stringResource(Res.string.documents_table_counterparty), weight = 1f),
+            DokusHeaderColumn(label = stringResource(Res.string.documents_table_description), width = 150.dp),
+            DokusHeaderColumn(label = stringResource(Res.string.document_table_amount), width = 90.dp, alignment = Alignment.End),
+            DokusHeaderColumn(label = stringResource(Res.string.document_table_date), width = 70.dp),
+            DokusHeaderColumn(label = "", width = 64.dp),
         ),
-        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis
+        modifier = modifier,
     )
 }
 
