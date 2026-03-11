@@ -4,20 +4,15 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -47,6 +42,19 @@ sealed interface CalloutVariant {
 }
 
 /**
+ * Constrained trailing content for [DokusCalloutBanner].
+ */
+@Immutable
+sealed interface CalloutTrailing {
+
+    /** Static text label (e.g. an amount or status). */
+    data class Label(val text: String) : CalloutTrailing
+
+    /** Call-to-action button rendered as [PPrimaryButton]. */
+    data class Cta(val text: String, val onClick: () -> Unit) : CalloutTrailing
+}
+
+/**
  * Standardized inline callout banner.
  *
  * Layout: **status dot · title + subtitle · trailing action**
@@ -57,7 +65,7 @@ sealed interface CalloutVariant {
  * @param title Primary message text (bold, single line).
  * @param subtitle Optional secondary text below the title (muted, single line).
  * @param variant Visual style.
- * @param trailing Optional trailing content (button, label, amount).
+ * @param trailing Optional constrained trailing content ([CalloutTrailing.Label] or [CalloutTrailing.Cta]).
  */
 @Composable
 fun DokusCalloutBanner(
@@ -65,7 +73,7 @@ fun DokusCalloutBanner(
     modifier: Modifier = Modifier,
     subtitle: String? = null,
     variant: CalloutVariant = CalloutVariant.Warning,
-    trailing: (@Composable () -> Unit)? = null,
+    trailing: CalloutTrailing? = null,
 ) {
     val dotType = when (variant) {
         is CalloutVariant.Warning -> StatusDotType.Warning
@@ -99,7 +107,7 @@ private fun BannerContent(
     title: String,
     subtitle: String?,
     dotType: StatusDotType,
-    trailing: (@Composable () -> Unit)?,
+    trailing: CalloutTrailing?,
 ) {
     Row(
         modifier = Modifier
@@ -134,7 +142,18 @@ private fun BannerContent(
                 )
             }
         }
-        trailing?.invoke()
+        when (trailing) {
+            is CalloutTrailing.Label -> Text(
+                text = trailing.text,
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+            )
+            is CalloutTrailing.Cta -> PPrimaryButton(
+                text = trailing.text,
+                onClick = trailing.onClick,
+            )
+            null -> {}
+        }
     }
 }
 
@@ -144,55 +163,27 @@ private fun BannerContent(
 
 @Preview
 @Composable
-private fun DokusCalloutBannerWarningPreview(
+private fun DokusCalloutBannerLabelPreview(
     @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
 ) {
     TestWrapper(parameters) {
         DokusCalloutBanner(
             title = "15 payments without documents",
-            trailing = {
-                Text(
-                    text = "\u20ac8 420,50 unresolved",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-            },
+            trailing = CalloutTrailing.Label("\u20ac8 420,50 unresolved"),
         )
     }
 }
 
 @Preview
 @Composable
-private fun DokusCalloutBannerWithSubtitlePreview(
+private fun DokusCalloutBannerCtaPreview(
     @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
 ) {
     TestWrapper(parameters) {
         DokusCalloutBanner(
             title = "APRR \u2014 Entr\u00e9e April 2025",
             subtitle = "Apr 26 \u00b7 APRR",
-            trailing = {
-                PPrimaryButton(text = "Review", onClick = {})
-            },
-        )
-    }
-}
-
-@Preview
-@Composable
-private fun DokusCalloutBannerWithButtonPreview(
-    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
-) {
-    TestWrapper(parameters) {
-        DokusCalloutBanner(
-            title = "3 payments require documents",
-            trailing = {
-                TextButton(onClick = {}) {
-                    Text(
-                        text = "Review now",
-                        style = MaterialTheme.typography.labelMedium,
-                    )
-                }
-            },
+            trailing = CalloutTrailing.Cta(text = "Review", onClick = {}),
         )
     }
 }
@@ -207,11 +198,7 @@ private fun DokusCalloutBannerErrorPreview(
             title = "A contact with this VAT number already exists",
             subtitle = "Acme Corporation (BE0123456789)",
             variant = CalloutVariant.Filled(color = MaterialTheme.colorScheme.error),
-            trailing = {
-                TextButton(onClick = {}) {
-                    Text("View", color = MaterialTheme.colorScheme.error)
-                }
-            },
+            trailing = CalloutTrailing.Cta(text = "View", onClick = {}),
         )
     }
 }

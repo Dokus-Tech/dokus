@@ -1,8 +1,6 @@
 package tech.dokus.features.contacts.presentation.contacts.components.create
 
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import org.jetbrains.compose.resources.stringResource
@@ -12,6 +10,7 @@ import tech.dokus.aura.resources.contacts_duplicate_exists
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.features.contacts.mvi.DuplicateVatUi
+import tech.dokus.foundation.aura.components.common.CalloutTrailing
 import tech.dokus.foundation.aura.components.common.CalloutVariant
 import tech.dokus.foundation.aura.components.common.DokusCalloutBanner
 import tech.dokus.foundation.aura.tooling.PreviewParameters
@@ -33,14 +32,10 @@ fun DuplicateVatBanner(
         subtitle = "${duplicate.displayName} (${duplicate.vatNumber})",
         modifier = modifier,
         variant = CalloutVariant.Filled(color = MaterialTheme.colorScheme.error),
-        trailing = {
-            TextButton(onClick = onViewContact) {
-                Text(
-                    text = stringResource(Res.string.action_view),
-                    color = MaterialTheme.colorScheme.error,
-                )
-            }
-        },
+        trailing = CalloutTrailing.Cta(
+            text = stringResource(Res.string.action_view),
+            onClick = onViewContact,
+        ),
     )
 }
 

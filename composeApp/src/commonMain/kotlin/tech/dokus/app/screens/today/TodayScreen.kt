@@ -61,8 +61,8 @@ import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.common.CalloutTrailing
 import tech.dokus.foundation.aura.components.common.DokusCalloutBanner
-import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.badges.SourceBadge
 import tech.dokus.foundation.aura.components.status.StatusDot
 import tech.dokus.foundation.aura.components.status.StatusDotType
@@ -283,12 +283,10 @@ private fun TodayAttentionCard(
     DokusCalloutBanner(
         title = description,
         subtitle = subtitle,
-        trailing = {
-            PPrimaryButton(
-                text = stringResource(Res.string.today_review_button),
-                onClick = onReviewClick,
-            )
-        },
+        trailing = CalloutTrailing.Cta(
+            text = stringResource(Res.string.today_review_button),
+            onClick = onReviewClick,
+        ),
     )
 }
 
