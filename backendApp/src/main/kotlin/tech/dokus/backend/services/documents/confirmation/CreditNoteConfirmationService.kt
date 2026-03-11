@@ -2,7 +2,7 @@ package tech.dokus.backend.services.documents.confirmation
 
 import tech.dokus.backend.services.cashflow.CreditNoteService
 import tech.dokus.backend.util.isUniqueViolation
-import tech.dokus.database.repository.cashflow.DocumentDraftRepository
+import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
 import tech.dokus.database.repository.documents.DocumentLinkRepository
 import tech.dokus.domain.enums.CreditNoteStatus
@@ -30,7 +30,7 @@ import tech.dokus.foundation.backend.utils.runSuspendCatching
  */
 class CreditNoteConfirmationService(
     private val creditNoteService: CreditNoteService,
-    private val draftRepository: DocumentDraftRepository,
+    private val documentRepository: DocumentRepository,
     private val documentLinkRepository: DocumentLinkRepository,
     private val invoiceRepository: InvoiceRepository
 ) {
@@ -45,7 +45,7 @@ class CreditNoteConfirmationService(
     ): Result<ConfirmationResult> = runSuspendCatching {
         logger.info("Confirming credit note document: $documentId for tenant: $tenantId")
 
-        val draft = requireConfirmableDraft(draftRepository, tenantId, documentId)
+        val draft = requireConfirmableDraft(documentRepository, tenantId, documentId)
         val isReconfirm = draft.documentStatus == DocumentStatus.NeedsReview
 
         val counterparty = draft.counterparty
@@ -116,7 +116,7 @@ class CreditNoteConfirmationService(
             updatedOrCreated
         }
 
-        draftRepository.updateDocumentStatus(documentId, tenantId, DocumentStatus.Confirmed)
+        documentRepository.updateDocumentStatus(documentId, tenantId, DocumentStatus.Confirmed)
         upsertOriginalReferenceLink(
             tenantId = tenantId,
             creditNoteDocumentId = documentId,

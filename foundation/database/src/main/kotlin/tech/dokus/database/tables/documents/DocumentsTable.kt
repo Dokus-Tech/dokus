@@ -84,6 +84,14 @@ object DocumentsTable : UUIDTable("documents") {
     val aiKeywords = text("ai_keywords").nullable()
 
     // ============================================
+    // Field Provenance & User Locks
+    // ============================================
+
+    // Per-field provenance map (JSON: Map<String, FieldProvenance>)
+    // Tracks source trust, extraction confidence, and user locks for each field
+    val fieldProvenance = text("field_provenance").nullable()
+
+    // ============================================
     // Identity & Dedup
     // ============================================
 

@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Test
 import tech.dokus.backend.services.cashflow.CashflowEntriesService
 import tech.dokus.backend.services.documents.confirmation.ReceiptConfirmationService
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
-import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.ExpenseRepository
@@ -61,14 +60,13 @@ class ReceiptConfirmationIdempotencyTest {
 
     private val documentRepository = DocumentRepository()
     private val ingestionRepository = DocumentIngestionRunRepository()
-    private val draftRepository = DocumentDraftRepository()
     private val expenseRepository = ExpenseRepository()
     private val cashflowEntriesRepository = CashflowEntriesRepository()
     private val cashflowEntriesService = CashflowEntriesService(cashflowEntriesRepository)
     private val confirmationService = ReceiptConfirmationService(
         expenseRepository = expenseRepository,
         cashflowEntriesService = cashflowEntriesService,
-        draftRepository = draftRepository
+        documentRepository = documentRepository
     )
 
     @BeforeEach
@@ -154,7 +152,7 @@ class ReceiptConfirmationIdempotencyTest {
             currency = Currency.Eur
         )
 
-        draftRepository.updateDraft(
+        documentRepository.updateDraft(
             documentId = documentId,
             tenantId = tenantId,
             userId = userId,
@@ -177,7 +175,7 @@ class ReceiptConfirmationIdempotencyTest {
         assertEquals(Money.from("25.00")!!, updatedEntry.amountGross)
         assertEquals(CashflowEntryStatus.Open, updatedEntry.status)
 
-        val draft = draftRepository.getByDocumentId(documentId, tenantId)
+        val draft = documentRepository.getDraftByDocumentId(documentId, tenantId)
         assertNotNull(draft)
         assertEquals(DocumentStatus.Confirmed, draft.documentStatus)
     }
@@ -205,7 +203,7 @@ class ReceiptConfirmationIdempotencyTest {
             vatAmount = Money.from("3.20")
         )
 
-        val created = draftRepository.createOrUpdateFromIngestion(
+        val created = documentRepository.createOrUpdateFromIngestion(
             documentId = documentId,
             tenantId = tenantId,
             runId = runId,

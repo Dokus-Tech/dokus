@@ -43,7 +43,6 @@ import tech.dokus.backend.services.documents.sse.DocumentSnapshotSignal
 import tech.dokus.backend.services.documents.sse.DocumentSsePublisher
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.database.repository.cashflow.CreditNoteRepository
-import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.DocumentSourceRepository
@@ -102,7 +101,6 @@ import tech.dokus.foundation.backend.storage.DocumentStorageService as MinioDocu
  */
 internal fun Route.documentRecordRoutes() {
     val documentRepository by inject<DocumentRepository>()
-    val draftRepository by inject<DocumentDraftRepository>()
     val ingestionRepository by inject<DocumentIngestionRunRepository>()
     val invoiceRepository by inject<InvoiceRepository>()
     val expenseRepository by inject<ExpenseRepository>()
@@ -485,7 +483,7 @@ internal fun Route.documentRecordRoutes() {
                 throw DokusException.NotFound("Document not found")
             }
 
-            val draft = draftRepository.getByDocumentId(documentId, tenantId)
+            val draft = documentRepository.getDraftByDocumentId(documentId, tenantId)
             if (draft?.documentStatus == DocumentStatus.Confirmed) {
                 throw DokusException.BadRequest(
                     "Confirmed documents cannot be fully deleted. Remove sources instead."
@@ -522,7 +520,7 @@ internal fun Route.documentRecordRoutes() {
 
             logger.info("Getting draft: $documentId, tenant=$tenantId")
 
-            val draft = draftRepository.getByDocumentId(documentId, tenantId)
+            val draft = documentRepository.getDraftByDocumentId(documentId, tenantId)
                 ?: throw DokusException.NotFound("Draft not found for document")
 
             call.respond(HttpStatusCode.OK, draft.toDto())
@@ -541,7 +539,7 @@ internal fun Route.documentRecordRoutes() {
 
             logger.info("Updating draft: $documentId, tenant=$tenantId, user=$userId")
 
-            val draft = draftRepository.getByDocumentId(documentId, tenantId)
+            val draft = documentRepository.getDraftByDocumentId(documentId, tenantId)
                 ?: throw DokusException.NotFound("Draft not found for document")
 
             val requestData = request.extractedData
@@ -563,7 +561,7 @@ internal fun Route.documentRecordRoutes() {
 
             if (hasExtractedData) {
                 // Update draft (may transition Confirmed -> NeedsReview)
-                val newVersion = draftRepository.updateDraft(
+                val newVersion = documentRepository.updateDraft(
                     documentId = documentId,
                     tenantId = tenantId,
                     userId = userId,
@@ -573,7 +571,7 @@ internal fun Route.documentRecordRoutes() {
                 logger.info("Draft updated: document=$documentId, version=$newVersion")
 
                 if (hasContactUpdate) {
-                    updateDraftCounterparty(draftRepository, documentId, tenantId, request)
+                    updateDraftCounterparty(documentRepository, documentId, tenantId, request)
                 }
                 if (hasPurposeUpdate) {
                     val purpose = request.purpose
@@ -581,7 +579,7 @@ internal fun Route.documentRecordRoutes() {
                     purposeService.applyUserPurposeEdit(
                         tenantId = tenantId,
                         documentId = documentId,
-                        draft = draftRepository.getByDocumentId(documentId, tenantId)
+                        draft = documentRepository.getDraftByDocumentId(documentId, tenantId)
                             ?: throw DokusException.NotFound("Draft not found for document"),
                         purpose = purpose,
                         purposePeriodMode = request.purposePeriodMode
@@ -600,7 +598,7 @@ internal fun Route.documentRecordRoutes() {
                 )
             } else {
                 if (hasContactUpdate) {
-                    updateDraftCounterparty(draftRepository, documentId, tenantId, request)
+                    updateDraftCounterparty(documentRepository, documentId, tenantId, request)
                 }
                 if (hasPurposeUpdate) {
                     val purpose = request.purpose
@@ -711,7 +709,7 @@ internal fun Route.documentRecordRoutes() {
             val documentId = DocumentId.parse(route.parent.id)
             logger.info("Confirming document: $documentId, tenant=$tenantId")
 
-            val draft = draftRepository.getByDocumentId(documentId, tenantId)
+            val draft = documentRepository.getDraftByDocumentId(documentId, tenantId)
                 ?: throw DokusException.NotFound("Draft not found for document")
 
             if (draft.documentStatus == DocumentStatus.Rejected) {
@@ -843,7 +841,7 @@ internal fun Route.documentRecordRoutes() {
             val documentId = DocumentId.parse(route.parent.id)
             val request = call.receive<RejectDocumentRequest>()
 
-            val draft = draftRepository.getByDocumentId(documentId, tenantId)
+            val draft = documentRepository.getDraftByDocumentId(documentId, tenantId)
                 ?: throw DokusException.NotFound("Draft not found for document")
 
             if (draft.documentStatus == DocumentStatus.Confirmed) {
@@ -852,7 +850,7 @@ internal fun Route.documentRecordRoutes() {
 
             val didReject = draft.documentStatus != DocumentStatus.Rejected
             if (didReject) {
-                draftRepository.rejectDraft(documentId, tenantId, request.reason)
+                documentRepository.rejectDraft(documentId, tenantId, request.reason)
                 documentSsePublisher.publishDocumentChanged(tenantId, documentId)
             }
 

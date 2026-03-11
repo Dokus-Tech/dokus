@@ -6,7 +6,6 @@ import tech.dokus.backend.routes.cashflow.documents.toDto
 import tech.dokus.backend.routes.cashflow.documents.toSummaryDto
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.database.repository.cashflow.CreditNoteRepository
-import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.ExpenseRepository
@@ -22,7 +21,6 @@ import tech.dokus.foundation.backend.utils.loggerFor
 @Suppress("LongParameterList")
 internal class DocumentRecordLoader(
     private val documentRepository: DocumentRepository,
-    private val draftRepository: DocumentDraftRepository,
     private val ingestionRepository: DocumentIngestionRunRepository,
     private val invoiceRepository: InvoiceRepository,
     private val expenseRepository: ExpenseRepository,
@@ -54,7 +52,7 @@ internal class DocumentRecordLoader(
         }
 
         val documentWithUrl = addDownloadUrl(effectiveDocument, documentStorageService, logger)
-        val draft = draftRepository.getByDocumentId(documentId, tenantId)
+        val draft = documentRepository.getDraftByDocumentId(documentId, tenantId)
         val latestIngestion = ingestionRepository.getLatestForDocument(documentId, tenantId)
         val pendingReview = truthService.getPendingReviewByDocument(tenantId, documentId)
         val confirmedEntity = if (draft?.documentStatus == DocumentStatus.Confirmed) {

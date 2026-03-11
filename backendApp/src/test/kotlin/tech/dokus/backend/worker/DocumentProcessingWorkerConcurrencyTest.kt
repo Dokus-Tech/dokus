@@ -16,7 +16,7 @@ import tech.dokus.backend.services.documents.sse.DocumentSsePublisher
 import tech.dokus.database.entity.IngestionItemEntity
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.auth.UserRepository
-import tech.dokus.database.repository.cashflow.DocumentDraftRepository
+import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.processor.ProcessorIngestionRepository
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.ids.DocumentId
@@ -47,7 +47,7 @@ class DocumentProcessingWorkerConcurrencyTest {
         val processingAgent = mockk<DocumentProcessingAgent>()
         val contactResolutionService = mockk<ContactResolutionService>(relaxed = true)
         val purposeService = mockk<DocumentPurposeService>(relaxed = true)
-        val draftRepository = mockk<DocumentDraftRepository>(relaxed = true)
+        val documentRepository = mockk<DocumentRepository>(relaxed = true)
         val documentTruthService = mockk<DocumentTruthService>(relaxed = true)
         val bankStatementMatchingService = mockk<BankStatementMatchingService>(relaxed = true)
         val bankStatementProcessingService = mockk<BankStatementProcessingService>(relaxed = true)
@@ -79,7 +79,7 @@ class DocumentProcessingWorkerConcurrencyTest {
             contactResolutionService = contactResolutionService,
             purposeService = purposeService,
             documentTruthService = documentTruthService,
-            draftRepository = draftRepository,
+            documentRepository = documentRepository,
             bankStatementMatchingService = bankStatementMatchingService,
             bankStatementProcessingService = bankStatementProcessingService,
             autoConfirmPolicy = autoConfirmPolicy,
@@ -109,7 +109,7 @@ class DocumentProcessingWorkerConcurrencyTest {
         val processingAgent = mockk<DocumentProcessingAgent>()
         val contactResolutionService = mockk<ContactResolutionService>(relaxed = true)
         val purposeService = mockk<DocumentPurposeService>(relaxed = true)
-        val draftRepository = mockk<DocumentDraftRepository>(relaxed = true)
+        val documentRepository = mockk<DocumentRepository>(relaxed = true)
         val documentTruthService = mockk<DocumentTruthService>(relaxed = true)
         val bankStatementMatchingService = mockk<BankStatementMatchingService>(relaxed = true)
         val bankStatementProcessingService = mockk<BankStatementProcessingService>(relaxed = true)
@@ -145,7 +145,7 @@ class DocumentProcessingWorkerConcurrencyTest {
             contactResolutionService = contactResolutionService,
             purposeService = purposeService,
             documentTruthService = documentTruthService,
-            draftRepository = draftRepository,
+            documentRepository = documentRepository,
             bankStatementMatchingService = bankStatementMatchingService,
             bankStatementProcessingService = bankStatementProcessingService,
             autoConfirmPolicy = autoConfirmPolicy,

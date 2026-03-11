@@ -37,7 +37,7 @@ import kotlin.uuid.toKotlinUuid
 class DocumentDraftRepositoryTest {
 
     private lateinit var database: Database
-    private val repository = DocumentDraftRepository()
+    private val repository = DocumentRepository()
 
     private var tenantId: TenantId = TenantId.generate()
     private var documentId: DocumentId = DocumentId.generate()
@@ -131,7 +131,7 @@ class DocumentDraftRepositoryTest {
 
         assertTrue(updated)
 
-        val draft = repository.getByDocumentId(documentId, tenantId)
+        val draft = repository.getDraftByDocumentId(documentId, tenantId)
         assertNull(draft?.counterparty)
     }
 }

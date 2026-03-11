@@ -24,6 +24,7 @@ import tech.dokus.domain.enums.DocumentListFilter
 import tech.dokus.domain.enums.DocumentPurposeSource
 import tech.dokus.domain.enums.DocumentRejectReason
 import tech.dokus.domain.enums.DocumentSource
+import tech.dokus.domain.enums.SourceTrust
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.IngestionStatus
@@ -35,9 +36,13 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentDraftData
+import tech.dokus.domain.model.FieldProvenance
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.CreditNoteDraftData
+import tech.dokus.domain.model.ProvenanceMergeResult
 import tech.dokus.domain.model.ReceiptDraftData
+import tech.dokus.domain.model.diffFieldPaths
+import tech.dokus.domain.model.mergeWithProvenance
 import tech.dokus.domain.model.contact.CounterpartyInfo
 import tech.dokus.domain.model.contact.CounterpartySnapshot
 import tech.dokus.domain.model.contact.MatchEvidence
@@ -374,7 +379,8 @@ class DocumentRepository : DocumentStatusChecker {
         extractedData: DocumentDraftData,
         documentType: DocumentType,
         aiKeywords: List<String> = emptyList(),
-        force: Boolean = false
+        force: Boolean = false,
+        fieldProvenance: Map<String, FieldProvenance>? = null
     ): Boolean = newSuspendedTransaction {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         val docIdUuid = UUID.fromString(documentId.toString())
@@ -390,9 +396,34 @@ class DocumentRepository : DocumentStatusChecker {
             }
             .singleOrNull() ?: return@newSuspendedTransaction false
 
-        val currentVersion = existing[DocumentsTable.draftVersion]
         val hasAiDraftRun = existing[DocumentsTable.aiDraftSourceRunId] != null
-        val shouldUpdateExtracted = force || currentVersion == 0
+
+        // Determine what data to write using provenance-based merge
+        val existingData = existing[DocumentsTable.canonicalData]
+            ?.let<String, DocumentDraftData> { json.decodeFromString(it) }
+        val existingProv = existing[DocumentsTable.fieldProvenance]
+            ?.let<String, Map<String, FieldProvenance>> { json.decodeFromString(it) }
+
+        // Merge logic:
+        // - force → full overwrite
+        // - no existing data → full write (first extraction)
+        // - no existing provenance (legacy) → fall back to binary draftVersion==0 check
+        // - has provenance → per-field merge using trust comparison
+        val mergeResult: ProvenanceMergeResult? = when {
+            force || existingData == null -> null // null = full overwrite
+            existingProv == null -> {
+                // Legacy doc without provenance: use old binary check
+                val currentVersion = existing[DocumentsTable.draftVersion]
+                if (currentVersion == 0) null else ProvenanceMergeResult(existingData, emptyMap())
+            }
+            fieldProvenance != null -> {
+                mergeWithProvenance(existingData, extractedData, existingProv, fieldProvenance)
+            }
+            else -> null // incoming has no provenance → full overwrite
+        }
+
+        val dataToWrite = mergeResult?.mergedData ?: extractedData
+        val provToWrite = mergeResult?.mergedProvenance ?: fieldProvenance
 
         DocumentsTable.update({
             (DocumentsTable.id eq docIdUuid) and
@@ -404,15 +435,15 @@ class DocumentRepository : DocumentStatusChecker {
                 it[aiDraftSourceRunId] = runIdUuid
             }
 
-            // canonical_data: update only if force or not user-edited
-            if (shouldUpdateExtracted) {
-                it[DocumentsTable.canonicalData] = json.encodeToString(extractedData)
-                it[DocumentsTable.documentType] = documentType
-                it[DocumentsTable.direction] = extractedData.toDirection()
-                it[DocumentsTable.documentStatus] = DocumentStatus.NeedsReview
-                if (keywordsJson != null) {
-                    it[DocumentsTable.aiKeywords] = keywordsJson
-                }
+            it[DocumentsTable.canonicalData] = json.encodeToString(dataToWrite)
+            it[DocumentsTable.documentType] = dataToWrite.toDocumentType()
+            it[DocumentsTable.direction] = dataToWrite.toDirection()
+            it[DocumentsTable.documentStatus] = DocumentStatus.NeedsReview
+            if (keywordsJson != null) {
+                it[DocumentsTable.aiKeywords] = keywordsJson
+            }
+            if (provToWrite != null) {
+                it[DocumentsTable.fieldProvenance] = json.encodeToString(provToWrite)
             }
 
             it[lastSuccessfulRunId] = runIdUuid
@@ -477,6 +508,38 @@ class DocumentRepository : DocumentStatusChecker {
             currentStatus
         }
 
+        // Mark changed fields as user-locked in provenance
+        val existingData = current[DocumentsTable.canonicalData]
+            ?.let<String, DocumentDraftData> { json.decodeFromString(it) }
+        val existingProv = current[DocumentsTable.fieldProvenance]
+            ?.let<String, Map<String, FieldProvenance>> { json.decodeFromString(it) }
+            ?: emptyMap()
+
+        val changedFields = if (existingData != null) {
+            diffFieldPaths(existingData, updatedData)
+        } else {
+            emptySet()
+        }
+
+        val updatedProv = if (changedFields.isNotEmpty()) {
+            val mutable = existingProv.toMutableMap()
+            for (field in changedFields) {
+                val existing = mutable[field]
+                mutable[field] = FieldProvenance(
+                    sourceId = existing?.sourceId,
+                    sourceRunId = existing?.sourceRunId,
+                    sourceTrust = existing?.sourceTrust ?: SourceTrust.ManualEntry,
+                    extractionConfidence = existing?.extractionConfidence,
+                    userLocked = true,
+                    lockedAt = now,
+                    lockedBy = userId,
+                )
+            }
+            mutable
+        } else {
+            null
+        }
+
         DocumentsTable.update({
             (DocumentsTable.id eq docIdUuid) and
                 (DocumentsTable.tenantId eq tenantIdUuid)
@@ -487,6 +550,9 @@ class DocumentRepository : DocumentStatusChecker {
             it[draftVersion] = newVersion
             it[draftEditedAt] = now
             it[draftEditedBy] = UUID.fromString(userId.toString())
+            if (updatedProv != null) {
+                it[DocumentsTable.fieldProvenance] = json.encodeToString(updatedProv)
+            }
             if (nextStatus != currentStatus) {
                 it[DocumentsTable.documentStatus] = nextStatus
             }

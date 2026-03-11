@@ -1,8 +1,8 @@
 package tech.dokus.backend.services.documents
 
 import kotlinx.datetime.LocalDate
-import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentPurposeTemplateRepository
+import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.DraftSummary
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentPurposeSource
@@ -28,7 +28,7 @@ private const val PurposeBaseMaxLength = 72
 
 @Suppress("LongParameterList")
 class DocumentPurposeService(
-    private val draftRepository: DocumentDraftRepository,
+    private val documentRepository: DocumentRepository,
     private val templateRepository: DocumentPurposeTemplateRepository,
     private val similarityService: DocumentPurposeSimilarityService,
     private val processingAgent: DocumentProcessingAgent
@@ -48,7 +48,7 @@ class DocumentPurposeService(
         val counterpartyKey = currentDraft.counterpartyKey ?: computeCounterpartyKey(linkedContactId, draftData)
         val merchantToken = currentDraft.merchantToken ?: computeMerchantToken(supplierDisplayName)
 
-        draftRepository.updatePurposeContext(
+        documentRepository.updatePurposeContext(
             documentId = documentId,
             tenantId = tenantId,
             counterpartyKey = counterpartyKey,
@@ -84,7 +84,7 @@ class DocumentPurposeService(
             } else {
                 when {
                     !counterpartyKey.isNullOrBlank() -> {
-                        draftRepository.listConfirmedPurposeBasesByCounterparty(
+                        documentRepository.listConfirmedPurposeBasesByCounterparty(
                             tenantId = tenantId,
                             counterpartyKey = counterpartyKey,
                             documentType = documentType,
@@ -93,7 +93,7 @@ class DocumentPurposeService(
                     }
 
                     !merchantToken.isNullOrBlank() -> {
-                        draftRepository.listConfirmedPurposeBasesByMerchantToken(
+                        documentRepository.listConfirmedPurposeBasesByMerchantToken(
                             tenantId = tenantId,
                             merchantToken = merchantToken,
                             documentType = documentType,
@@ -128,7 +128,7 @@ class DocumentPurposeService(
             return
         }
 
-        draftRepository.updatePurposeFields(
+        documentRepository.updatePurposeFields(
             documentId = documentId,
             tenantId = tenantId,
             purposeBase = purposeBase,
@@ -174,7 +174,7 @@ class DocumentPurposeService(
             periodMode = mode
         )?.take(80)
 
-        draftRepository.updatePurposeFields(
+        documentRepository.updatePurposeFields(
             documentId = documentId,
             tenantId = tenantId,
             purposeBase = base,

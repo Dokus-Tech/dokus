@@ -31,7 +31,7 @@ import tech.dokus.backend.services.documents.sse.DocumentSsePublisher
 import tech.dokus.database.entity.IngestionItemEntity
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.auth.UserRepository
-import tech.dokus.database.repository.cashflow.DocumentDraftRepository
+import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.processor.ProcessorIngestionRepository
 import tech.dokus.domain.enums.ContactLinkSource
 import tech.dokus.domain.enums.DocumentSource
@@ -40,7 +40,9 @@ import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.enums.SourceTrust
 import tech.dokus.domain.model.BankStatementDraftData
+import tech.dokus.domain.model.buildProvenance
 import tech.dokus.domain.model.contact.ContactResolution
 import tech.dokus.domain.processing.DocumentProcessingConstants
 import tech.dokus.domain.utils.json
@@ -81,7 +83,7 @@ internal class DocumentProcessingWorker(
     private val contactResolutionService: ContactResolutionService,
     private val purposeService: DocumentPurposeService,
     private val documentTruthService: DocumentTruthService,
-    private val draftRepository: DocumentDraftRepository,
+    private val documentRepository: DocumentRepository,
     private val bankStatementProcessingService: BankStatementProcessingService,
     private val bankStatementMatchingService: BankStatementMatchingService,
     private val autoConfirmPolicy: AutoConfirmPolicy,
@@ -438,6 +440,12 @@ internal class DocumentProcessingWorker(
 
             val rawExtractionJson = json.encodeToString(result)
 
+            val provenance = draftData?.buildProvenance(
+                sourceTrust = SourceTrust.UploadScan,
+                sourceRunId = IngestionRunId.parse(runId.toString()),
+                extractionConfidence = confidence,
+            )
+
             ingestionRepository.markAsSucceeded(
                 runId = runId.toString(),
                 tenantId = tenantId.toString(),
@@ -449,7 +457,8 @@ internal class DocumentProcessingWorker(
                 processingOutcome = processingOutcome,
                 rawText = null,
                 keywords = emptyList(),
-                force = false
+                force = false,
+                fieldProvenance = provenance
             )
 
             if (draftData != null) {
@@ -491,7 +500,7 @@ internal class DocumentProcessingWorker(
                         return AttemptResult.Succeeded
                     }
                     val targetStatus = DocumentStatus.NeedsReview
-                    draftRepository.updateExtractedDataAndStatus(
+                    documentRepository.updateExtractedDataAndStatus(
                         documentId = documentId,
                         tenantId = parsedTenantId,
                         extractedData = bankProcessing.sanitizedDraft,
@@ -524,7 +533,7 @@ internal class DocumentProcessingWorker(
                 }
 
                 // Ensure drafts start in NeedsReview; auto-confirm will set Confirmed explicitly.
-                draftRepository.updateDocumentStatus(
+                documentRepository.updateDocumentStatus(
                     documentId = documentId,
                     tenantId = parsedTenantId,
                     status = DocumentStatus.NeedsReview
@@ -538,7 +547,7 @@ internal class DocumentProcessingWorker(
                         documentId,
                         runId
                     )
-                    draftRepository.updateContactResolution(
+                    documentRepository.updateContactResolution(
                         documentId = documentId,
                         tenantId = parsedTenantId,
                         counterpartySnapshot = null,
@@ -554,7 +563,7 @@ internal class DocumentProcessingWorker(
                     when (val decision = resolution.resolution) {
                         is ContactResolution.Matched -> {
                             linkedContactId = decision.contactId
-                            draftRepository.updateContactResolution(
+                            documentRepository.updateContactResolution(
                                 documentId = documentId,
                                 tenantId = parsedTenantId,
                                 counterpartySnapshot = resolution.snapshot,
@@ -572,7 +581,7 @@ internal class DocumentProcessingWorker(
                                 resolution = decision
                             )
                             linkedContactId = contactId
-                            draftRepository.updateContactResolution(
+                            documentRepository.updateContactResolution(
                                 documentId = documentId,
                                 tenantId = parsedTenantId,
                                 counterpartySnapshot = resolution.snapshot,
@@ -589,7 +598,7 @@ internal class DocumentProcessingWorker(
                         }
 
                         is ContactResolution.Suggested -> {
-                            draftRepository.updateContactResolution(
+                            documentRepository.updateContactResolution(
                                 documentId = documentId,
                                 tenantId = parsedTenantId,
                                 counterpartySnapshot = resolution.snapshot,
@@ -600,7 +609,7 @@ internal class DocumentProcessingWorker(
                         }
 
                         is ContactResolution.PendingReview -> {
-                            draftRepository.updateContactResolution(
+                            documentRepository.updateContactResolution(
                                 documentId = documentId,
                                 tenantId = parsedTenantId,
                                 counterpartySnapshot = resolution.snapshot,
@@ -610,7 +619,7 @@ internal class DocumentProcessingWorker(
                     }
                 }
 
-                val currentDraft = draftRepository.getByDocumentId(documentId, parsedTenantId)
+                val currentDraft = documentRepository.getDraftByDocumentId(documentId, parsedTenantId)
                 if (currentDraft != null) {
                     runSuspendCatching {
                         purposeService.enrichAfterContactResolution(
@@ -648,7 +657,7 @@ internal class DocumentProcessingWorker(
                         ).getOrThrow()
                     } catch (e: Exception) {
                         logger.error("Auto-confirm failed for document $documentId", e)
-                        draftRepository.updateDocumentStatus(
+                        documentRepository.updateDocumentStatus(
                             documentId = documentId,
                             tenantId = parsedTenantId,
                             status = DocumentStatus.NeedsReview

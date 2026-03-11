@@ -2,8 +2,8 @@ package tech.dokus.backend.routes.cashflow.documents
 
 import kotlinx.serialization.json.JsonElement
 import tech.dokus.database.repository.cashflow.CreditNoteRepository
-import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentMatchReviewSummary
+import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.DocumentSourceSummary
 import tech.dokus.database.repository.cashflow.DraftSummary
 import tech.dokus.database.repository.cashflow.ExpenseRepository
@@ -169,7 +169,7 @@ internal fun DocumentMatchReviewSummary.toSummaryDto(): DocumentMatchReviewSumma
  * Update draft counterparty (contact ID and intent).
  */
 internal suspend fun updateDraftCounterparty(
-    draftRepository: DocumentDraftRepository,
+    documentRepository: DocumentRepository,
     documentId: DocumentId,
     tenantId: TenantId,
     request: UpdateDraftRequest
@@ -185,7 +185,7 @@ internal suspend fun updateDraftCounterparty(
             pendingCreation = request.pendingCreation == true,
         )
     }
-    val updated = draftRepository.updateCounterparty(
+    val updated = documentRepository.updateCounterparty(
         documentId = documentId,
         tenantId = tenantId,
         counterparty = counterparty,

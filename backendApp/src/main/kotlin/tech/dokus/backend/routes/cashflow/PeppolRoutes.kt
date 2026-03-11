@@ -15,7 +15,7 @@ import tech.dokus.backend.services.peppol.PeppolRecipientResolver
 import tech.dokus.backend.worker.PeppolPollingWorker
 import tech.dokus.database.repository.auth.AddressRepository
 import tech.dokus.database.repository.auth.TenantRepository
-import tech.dokus.database.repository.cashflow.DocumentDraftRepository
+import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.model.PeppolInboxPollResponse
@@ -64,7 +64,7 @@ internal fun Route.peppolRoutes() {
     val contactRepository by inject<ContactRepository>()
     val tenantRepository by inject<TenantRepository>()
     val addressRepository by inject<AddressRepository>()
-    val documentDraftRepository by inject<DocumentDraftRepository>()
+    val documentRepository by inject<DocumentRepository>()
     val peppolPollingWorker by inject<PeppolPollingWorker>()
 
     authenticateJwt {
@@ -205,7 +205,7 @@ internal fun Route.peppolRoutes() {
 
             val sourceDocumentId = invoice.documentId
             if (sourceDocumentId != null) {
-                val isConfirmed = documentDraftRepository.isConfirmed(
+                val isConfirmed = documentRepository.isConfirmed(
                     tenantId = tenantId,
                     documentId = sourceDocumentId
                 )

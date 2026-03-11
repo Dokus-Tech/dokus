@@ -9,7 +9,6 @@ import kotlinx.datetime.LocalDateTime
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import tech.dokus.database.repository.cashflow.DocumentBlobRepository
-import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.FuzzySourceCandidate
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentMatchReviewRepository
@@ -49,7 +48,6 @@ class DocumentTruthServiceTest {
     private val storageService = mockk<DocumentStorageService>()
     private val documentRepository = mockk<DocumentRepository>(relaxed = true)
     private val ingestionRepository = mockk<DocumentIngestionRunRepository>(relaxed = true)
-    private val draftRepository = mockk<DocumentDraftRepository>(relaxed = true)
     private val blobRepository = mockk<DocumentBlobRepository>(relaxed = true)
     private val sourceRepository = mockk<DocumentSourceRepository>(relaxed = true)
     private val matchReviewRepository = mockk<DocumentMatchReviewRepository>(relaxed = true)
@@ -72,7 +70,6 @@ class DocumentTruthServiceTest {
             storageService = storageService,
             documentRepository = documentRepository,
             ingestionRepository = ingestionRepository,
-            draftRepository = draftRepository,
             blobRepository = blobRepository,
             sourceRepository = sourceRepository,
             matchReviewRepository = matchReviewRepository
@@ -202,7 +199,7 @@ class DocumentTruthServiceTest {
             sourceRepository.findLinkedDocumentByIdentityKeyHash(tenantId, any(), excludeDocumentId = docId1)
         } returns docId2
         coEvery {
-            draftRepository.getByDocumentId(docId2, tenantId)
+            documentRepository.getDraftByDocumentId(docId2, tenantId)
         } returns draftSummary(extractedData = existingDraft)
         coEvery {
             matchReviewRepository.createPending(tenantId, docId2, sourceId1, any(), any(), any())
@@ -235,7 +232,7 @@ class DocumentTruthServiceTest {
             sourceRepository.findLinkedDocumentByIdentityKeyHash(tenantId, any(), excludeDocumentId = docId1)
         } returns docId2
         coEvery {
-            draftRepository.getByDocumentId(docId2, tenantId)
+            documentRepository.getDraftByDocumentId(docId2, tenantId)
         } returns draftSummary(extractedData = sharedDraft)
         coEvery { sourceRepository.countLinkedSources(tenantId, docId2) } returns 2
         coEvery { sourceRepository.countSources(tenantId, docId1, includeDetached = true) } returns 0
@@ -307,7 +304,7 @@ class DocumentTruthServiceTest {
                 distance = 1
             )
         )
-        coEvery { draftRepository.getByDocumentId(docId2, tenantId) } returns draftSummary(
+        coEvery { documentRepository.getDraftByDocumentId(docId2, tenantId) } returns draftSummary(
             extractedData = simpleInvoiceDraft(invoiceNumber = "INV-2026-002")
         )
         coEvery {
@@ -338,7 +335,7 @@ class DocumentTruthServiceTest {
 
         coEvery { sourceRepository.getById(tenantId, sourceId1) } returns source
         coEvery { sourceRepository.countLinkedSources(tenantId, docId1) } returns 1
-        coEvery { draftRepository.getByDocumentId(docId1, tenantId) } returns draftSummary(
+        coEvery { documentRepository.getDraftByDocumentId(docId1, tenantId) } returns draftSummary(
             documentStatus = DocumentStatus.Confirmed
         )
 
@@ -355,7 +352,7 @@ class DocumentTruthServiceTest {
 
         coEvery { sourceRepository.getById(tenantId, sourceId1) } returns source
         coEvery { sourceRepository.countLinkedSources(tenantId, docId1) } returns 1
-        coEvery { draftRepository.getByDocumentId(docId1, tenantId) } returns draftSummary(
+        coEvery { documentRepository.getDraftByDocumentId(docId1, tenantId) } returns draftSummary(
             documentStatus = DocumentStatus.NeedsReview
         )
         coEvery { sourceRepository.deleteById(tenantId, sourceId1) } returns true

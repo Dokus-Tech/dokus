@@ -19,7 +19,6 @@ import tech.dokus.backend.security.requireTenantAccess
 import tech.dokus.backend.services.auth.FirmInviteTokenService
 import tech.dokus.database.repository.auth.FirmRepository
 import tech.dokus.database.repository.auth.TenantRepository
-import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.domain.enums.UserRole
@@ -40,7 +39,6 @@ internal fun Route.consoleRoutes() {
     val firmRepository by inject<FirmRepository>()
     val tenantRepository by inject<TenantRepository>()
     val documentRepository by inject<DocumentRepository>()
-    val draftRepository by inject<DocumentDraftRepository>()
     val ingestionRepository by inject<DocumentIngestionRunRepository>()
     val minioStorage by inject<MinioDocumentStorageService>()
     val inviteTokenService by inject<FirmInviteTokenService>()
@@ -142,7 +140,7 @@ internal fun Route.consoleRoutes() {
             val document = documentRepository.getById(tenantId, documentId)
                 ?: throw DokusException.NotFound("Document not found")
             val documentWithUrl = addDownloadUrl(document, minioStorage, logger)
-            val draft = draftRepository.getByDocumentId(documentId, tenantId)
+            val draft = documentRepository.getDraftByDocumentId(documentId, tenantId)
             val latestIngestion = ingestionRepository.getLatestForDocument(documentId, tenantId)
 
             call.respond(

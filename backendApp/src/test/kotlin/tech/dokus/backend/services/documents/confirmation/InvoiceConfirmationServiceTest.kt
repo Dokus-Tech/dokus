@@ -7,7 +7,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.LocalDateTime
 import org.junit.jupiter.api.Test
 import tech.dokus.backend.services.cashflow.CashflowEntriesService
-import tech.dokus.database.repository.cashflow.DocumentDraftRepository
+import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.DraftSummary
 import tech.dokus.database.repository.cashflow.InvoiceRepository
 import tech.dokus.domain.enums.DocumentDirection
@@ -25,12 +25,12 @@ class InvoiceConfirmationServiceTest {
 
     private val invoiceRepository = mockk<InvoiceRepository>()
     private val cashflowEntriesService = mockk<CashflowEntriesService>()
-    private val draftRepository = mockk<DocumentDraftRepository>()
+    private val documentRepository = mockk<DocumentRepository>()
 
     private val service = InvoiceConfirmationService(
         invoiceRepository = invoiceRepository,
         cashflowEntriesService = cashflowEntriesService,
-        draftRepository = draftRepository
+        documentRepository = documentRepository
     )
 
     @Test
@@ -39,7 +39,7 @@ class InvoiceConfirmationServiceTest {
         val documentId = DocumentId.parse("e72f69a8-6913-4d8f-98e7-224db7f4133f")
         val linkedContactId = ContactId.parse("ee14421b-c659-45e3-9a27-e4d3ef6b32eb")
 
-        coEvery { draftRepository.getByDocumentId(documentId, tenantId) } returns needsReviewDraft(documentId, tenantId)
+        coEvery { documentRepository.getDraftByDocumentId(documentId, tenantId) } returns needsReviewDraft(documentId, tenantId)
 
         val result = service.confirm(
             tenantId = tenantId,

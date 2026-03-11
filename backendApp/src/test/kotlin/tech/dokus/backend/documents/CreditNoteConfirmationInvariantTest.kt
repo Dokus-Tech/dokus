@@ -88,7 +88,7 @@ class CreditNoteConfirmationInvariantTest {
     )
     private val confirmationService = CreditNoteConfirmationService(
         creditNoteService = creditNoteService,
-        draftRepository = documentRepository,
+        documentRepository = documentRepository,
         documentLinkRepository = documentLinkRepository,
         invoiceRepository = invoiceRepository
     )
@@ -278,7 +278,7 @@ class CreditNoteConfirmationInvariantTest {
         )
 
         val runId = ingestionRunRepository.createRun(documentId, tenantId)
-        draftRepository.createOrUpdateFromIngestion(
+        documentRepository.createOrUpdateFromIngestion(
             documentId = documentId,
             tenantId = tenantId,
             runId = runId,

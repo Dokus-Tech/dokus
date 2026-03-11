@@ -28,9 +28,13 @@ import tech.dokus.domain.enums.ProcessingOutcome
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.DocumentSourceId
+import tech.dokus.domain.model.FieldProvenance
+import tech.dokus.domain.model.ProvenanceMergeResult
+import tech.dokus.domain.model.mergeWithProvenance
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.toDirection
+import tech.dokus.domain.model.toDocumentType
 import tech.dokus.domain.processing.DocumentProcessingConstants
 import tech.dokus.domain.utils.json
 import java.util.*
@@ -193,7 +197,8 @@ class ProcessorIngestionRepository {
         processingOutcome: ProcessingOutcome,
         rawText: String?,
         keywords: List<String> = emptyList(),
-        force: Boolean = false
+        force: Boolean = false,
+        fieldProvenance: Map<String, FieldProvenance>? = null
     ): Boolean {
         // Defense-in-depth: Validate tenantId is provided
         require(tenantId.isNotBlank()) { "tenantId is required for draft operations" }
@@ -233,20 +238,37 @@ class ProcessorIngestionRepository {
                 .singleOrNull() ?: return@newSuspendedTransaction false
 
             val currentAiDraftSourceRunId = existingDoc[DocumentsTable.aiDraftSourceRunId]
-            val currentVersion = existingDoc[DocumentsTable.draftVersion]
 
             // aiDraftSourceRunId: set ONLY if null (first successful run)
             val shouldSetAiDraftRun = currentAiDraftSourceRunId == null
 
-            // extracted_data: set ONLY if draftVersion == 0 (not user-edited) or force
-            val shouldSetExtracted = currentVersion == 0 || force
+            // Provenance-based merge: determine what data to write
+            val existingData = existingDoc[DocumentsTable.canonicalData]
+                ?.let<String, DocumentDraftData> { json.decodeFromString(it) }
+            val existingProv = existingDoc[DocumentsTable.fieldProvenance]
+                ?.let<String, Map<String, FieldProvenance>> { json.decodeFromString(it) }
+
+            val mergeResult: ProvenanceMergeResult? = when {
+                force || draftData == null || existingData == null -> null // full overwrite
+                existingProv == null -> {
+                    // Legacy doc without provenance: use old binary draftVersion check
+                    val currentVersion = existingDoc[DocumentsTable.draftVersion]
+                    if (currentVersion == 0) null else ProvenanceMergeResult(existingData, emptyMap())
+                }
+                fieldProvenance != null -> {
+                    mergeWithProvenance(existingData, draftData, existingProv, fieldProvenance)
+                }
+                else -> null // incoming has no provenance → full overwrite
+            }
+
+            val dataToWrite = mergeResult?.mergedData ?: draftData
+            val provToWrite = mergeResult?.mergedProvenance ?: fieldProvenance
 
             // SECURITY: Always filter by tenantId to prevent cross-tenant modification
             DocumentsTable.update({
                 (DocumentsTable.id eq documentUuid) and
                     (DocumentsTable.tenantId eq tenantUuid)
             }) {
-                it[DocumentsTable.documentType] = documentType
                 it[lastSuccessfulRunId] = runUuid
                 it[updatedAt] = now
 
@@ -255,13 +277,16 @@ class ProcessorIngestionRepository {
                     it[aiDraftSourceRunId] = runUuid
                 }
 
-                if (shouldSetExtracted) {
-                    it[DocumentsTable.canonicalData] = draftJson
-                    it[DocumentsTable.direction] = draftData?.toDirection() ?: DocumentDirection.Unknown
-                    // Update status when we update extracted data
+                if (dataToWrite != null) {
+                    it[DocumentsTable.canonicalData] = json.encodeToString(dataToWrite)
+                    it[DocumentsTable.documentType] = dataToWrite.toDocumentType()
+                    it[DocumentsTable.direction] = dataToWrite.toDirection()
                     it[documentStatus] = calculatedStatus
                     if (keywordsJson != null) {
                         it[DocumentsTable.aiKeywords] = keywordsJson
+                    }
+                    if (provToWrite != null) {
+                        it[DocumentsTable.fieldProvenance] = json.encodeToString(provToWrite)
                     }
                 }
             }

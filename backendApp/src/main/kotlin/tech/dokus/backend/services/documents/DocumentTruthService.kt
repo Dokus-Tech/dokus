@@ -11,7 +11,6 @@ import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTrans
 import tech.dokus.database.repository.cashflow.DocumentBlobCreatePayload
 import tech.dokus.database.repository.cashflow.DocumentCreatePayload
 import tech.dokus.database.repository.cashflow.DocumentBlobRepository
-import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentMatchReviewRepository
 import tech.dokus.database.repository.cashflow.DocumentMatchReviewSummary
@@ -54,18 +53,82 @@ import tech.dokus.foundation.backend.utils.runSuspendCatching
 import java.security.MessageDigest
 import java.util.UUID
 
+/**
+ * Type-safe intake resolution that encodes the dedup decision tree.
+ * Replaces the separate outcome + matchType enum combination.
+ */
+sealed interface IntakeResolution {
+    /** Brand new document, no match found */
+    data object NewDocument : IntakeResolution
+
+    /** Source silently linked to existing document */
+    sealed interface Linked : IntakeResolution {
+        val linkedDocumentId: DocumentId
+        data class ExactFile(override val linkedDocumentId: DocumentId) : Linked
+        data class SameContent(override val linkedDocumentId: DocumentId) : Linked
+        data class IdentityMatch(override val linkedDocumentId: DocumentId) : Linked
+    }
+
+    /** Source requires manual review before linking */
+    sealed interface NeedsReview : IntakeResolution {
+        val candidateDocumentId: DocumentId
+        val reviewId: DocumentMatchReviewId
+        data class MaterialConflict(
+            override val candidateDocumentId: DocumentId,
+            override val reviewId: DocumentMatchReviewId,
+        ) : NeedsReview
+        data class FuzzyCandidate(
+            override val candidateDocumentId: DocumentId,
+            override val reviewId: DocumentMatchReviewId,
+        ) : NeedsReview
+    }
+
+    /** Map to legacy [DocumentIntakeOutcome] for DTO/metrics compatibility. */
+    fun toOutcome(): DocumentIntakeOutcome = when (this) {
+        is NewDocument -> DocumentIntakeOutcome.NewDocument
+        is Linked -> DocumentIntakeOutcome.LinkedToExisting
+        is NeedsReview -> DocumentIntakeOutcome.PendingMatchReview
+    }
+
+    /** Map to legacy [DocumentMatchType] for DTO/DB compatibility. */
+    fun toMatchType(): DocumentMatchType? = when (this) {
+        is NewDocument -> null
+        is Linked.ExactFile -> DocumentMatchType.ExactFile
+        is Linked.SameContent -> DocumentMatchType.SameContent
+        is Linked.IdentityMatch -> DocumentMatchType.SameDocument
+        is NeedsReview.MaterialConflict -> DocumentMatchType.SameDocument
+        is NeedsReview.FuzzyCandidate -> DocumentMatchType.FuzzyCandidate
+    }
+}
+
 data class DocumentIntakeServiceResult(
     val documentId: DocumentId,
     val sourceId: DocumentSourceId,
     val runId: IngestionRunId?,
-    val outcome: DocumentIntakeOutcome,
+    val resolution: IntakeResolution,
     val sourceDocumentId: DocumentId? = null,
-    val linkedDocumentId: DocumentId? = null,
-    val reviewId: DocumentMatchReviewId? = null,
     val sourceCount: Int = 1,
-    val matchType: DocumentMatchType? = null,
     val orphanedDocumentId: DocumentId? = null,
 ) {
+    /** Backward-compatible computed property for callers checking outcome. */
+    val outcome: DocumentIntakeOutcome get() = resolution.toOutcome()
+
+    /** Backward-compatible computed property for callers checking match type. */
+    val matchType: DocumentMatchType? get() = resolution.toMatchType()
+
+    /** Backward-compatible computed property — linked document ID from resolution. */
+    val linkedDocumentId: DocumentId? get() = when (resolution) {
+        is IntakeResolution.Linked -> resolution.linkedDocumentId
+        is IntakeResolution.NeedsReview -> resolution.candidateDocumentId
+        is IntakeResolution.NewDocument -> null
+    }
+
+    /** Backward-compatible computed property — review ID from resolution. */
+    val reviewId: DocumentMatchReviewId? get() = when (resolution) {
+        is IntakeResolution.NeedsReview -> resolution.reviewId
+        else -> null
+    }
+
     fun toOutcomeDto(): DocumentIntakeOutcomeDto = DocumentIntakeOutcomeDto(
         outcome = outcome,
         sourceId = sourceId,
@@ -93,7 +156,6 @@ class DocumentTruthService(
     private val storageService: DocumentStorageService,
     private val documentRepository: DocumentRepository,
     private val ingestionRepository: DocumentIngestionRunRepository,
-    private val draftRepository: DocumentDraftRepository,
     private val blobRepository: DocumentBlobRepository,
     private val sourceRepository: DocumentSourceRepository,
     private val matchReviewRepository: DocumentMatchReviewRepository
@@ -180,16 +242,15 @@ class DocumentTruthService(
                     .count()
                     .toInt()
 
-                recordIntakeOutcome(sourceChannel, DocumentIntakeOutcome.LinkedToExisting)
+                val resolution = IntakeResolution.Linked.ExactFile(linkedDocumentId = existingDocId)
+                recordIntakeOutcome(sourceChannel, resolution.toOutcome())
                 DocumentIntakeServiceResult(
                     documentId = existingDocId,
                     sourceId = sourceId,
                     runId = null,
-                    outcome = DocumentIntakeOutcome.LinkedToExisting,
+                    resolution = resolution,
                     sourceDocumentId = existingDocId,
-                    linkedDocumentId = existingDocId,
                     sourceCount = sourceCount,
-                    matchType = DocumentMatchType.ExactFile
                 )
             } else {
                 val documentId = DocumentId.generate()
@@ -228,7 +289,7 @@ class DocumentTruthService(
                     documentId = documentId,
                     sourceId = sourceId,
                     runId = runId,
-                    outcome = DocumentIntakeOutcome.NewDocument,
+                    resolution = IntakeResolution.NewDocument,
                     sourceDocumentId = documentId,
                     sourceCount = 1
                 )
@@ -318,7 +379,7 @@ class DocumentTruthService(
                 sourceId = resolvedSource.id,
                 sourceDocumentId = documentId,
                 targetDocumentId = contentMatchDocumentId,
-                matchType = DocumentMatchType.SameContent
+                resolution = IntakeResolution.Linked.SameContent(contentMatchDocumentId)
             )
             recordIntakeOutcome(resolvedSource.sourceChannel, result.outcome)
             return result
@@ -331,7 +392,7 @@ class DocumentTruthService(
                 excludeDocumentId = documentId
             )
             if (identityMatchDocumentId != null) {
-                val existingDraft = draftRepository.getByDocumentId(identityMatchDocumentId, tenantId)?.extractedData
+                val existingDraft = documentRepository.getDraftByDocumentId(identityMatchDocumentId, tenantId)?.extractedData
                 val hasMaterialConflict = existingDraft?.let { hasMaterialConflict(draftData, it) } ?: false
                 return if (hasMaterialConflict) {
                     val result = createPendingReview(
@@ -351,7 +412,7 @@ class DocumentTruthService(
                         sourceId = resolvedSource.id,
                         sourceDocumentId = documentId,
                         targetDocumentId = identityMatchDocumentId,
-                        matchType = DocumentMatchType.SameDocument
+                        resolution = IntakeResolution.Linked.IdentityMatch(identityMatchDocumentId)
                     )
                     recordIntakeOutcome(resolvedSource.sourceChannel, result.outcome)
                     result
@@ -370,7 +431,7 @@ class DocumentTruthService(
                 )
                 val bestFuzzy = fuzzyCandidates.firstOrNull()
                 if (bestFuzzy != null) {
-                    val existingDraft = draftRepository.getByDocumentId(bestFuzzy.documentId, tenantId)?.extractedData
+                    val existingDraft = documentRepository.getDraftByDocumentId(bestFuzzy.documentId, tenantId)?.extractedData
                     val fuzzyAssessment = buildFuzzyAssessment(
                         incoming = draftData,
                         existing = existingDraft
@@ -400,7 +461,7 @@ class DocumentTruthService(
             documentId = documentId,
             sourceId = resolvedSource.id,
             runId = null,
-            outcome = DocumentIntakeOutcome.NewDocument,
+            resolution = IntakeResolution.NewDocument,
             sourceDocumentId = documentId,
             sourceCount = sourceCount
         )
@@ -434,16 +495,22 @@ class DocumentTruthService(
                 )
                 val sourceCount = sourceRepository.countLinkedSources(tenantId, review.documentId)
                 val orphanDeleted = deleteOrphanIfSafe(tenantId, source.documentId)
+                // Map the DB-stored matchType to a Linked resolution variant
+                val linkedResolution: IntakeResolution.Linked = when (source.matchType) {
+                    DocumentMatchType.ExactFile ->
+                        IntakeResolution.Linked.ExactFile(review.documentId)
+                    DocumentMatchType.SameContent ->
+                        IntakeResolution.Linked.SameContent(review.documentId)
+                    DocumentMatchType.SameDocument, DocumentMatchType.FuzzyCandidate, null ->
+                        IntakeResolution.Linked.IdentityMatch(review.documentId)
+                }
                 DocumentIntakeServiceResult(
                     documentId = review.documentId,
                     sourceId = source.id,
                     runId = null,
-                    outcome = DocumentIntakeOutcome.LinkedToExisting,
+                    resolution = linkedResolution,
                     sourceDocumentId = source.documentId,
-                    linkedDocumentId = review.documentId,
-                    reviewId = reviewId,
                     sourceCount = sourceCount,
-                    matchType = source.matchType,
                     orphanedDocumentId = source.documentId.takeIf { orphanDeleted }
                 ).also {
                     logger.info(
@@ -506,7 +573,7 @@ class DocumentTruthService(
                             rawExtractionJson = snapshot,
                             confidence = 1.0
                         )
-                        draftRepository.createOrUpdateFromIngestion(
+                        documentRepository.createOrUpdateFromIngestion(
                             documentId = newDocumentId,
                             tenantId = tenantId,
                             runId = runId,
@@ -529,9 +596,8 @@ class DocumentTruthService(
                     documentId = newDocumentId,
                     sourceId = source.id,
                     runId = null,
-                    outcome = DocumentIntakeOutcome.NewDocument,
+                    resolution = IntakeResolution.NewDocument,
                     sourceDocumentId = source.documentId,
-                    reviewId = reviewId,
                     sourceCount = 1,
                     orphanedDocumentId = source.documentId.takeIf { orphanDeleted }
                 ).also {
@@ -583,7 +649,7 @@ class DocumentTruthService(
         if (source.documentId != documentId) return SourceDeleteResult(deleted = false)
 
         val linkedCount = sourceRepository.countLinkedSources(tenantId, documentId)
-        val draft = draftRepository.getByDocumentId(documentId, tenantId)
+        val draft = documentRepository.getDraftByDocumentId(documentId, tenantId)
         val isConfirmed = draft?.documentStatus == DocumentStatus.Confirmed
 
         if (linkedCount <= 1 && isConfirmed && !confirmLastOnConfirmed) {
@@ -633,14 +699,14 @@ class DocumentTruthService(
         sourceId: DocumentSourceId,
         sourceDocumentId: DocumentId,
         targetDocumentId: DocumentId,
-        matchType: DocumentMatchType
+        resolution: IntakeResolution.Linked
     ): DocumentIntakeServiceResult {
         sourceRepository.reassignToDocument(
             tenantId = tenantId,
             sourceId = sourceId,
             documentId = targetDocumentId,
             status = DocumentSourceStatus.Linked,
-            matchType = matchType
+            matchType = resolution.toMatchType()
         )
         val orphanDeleted = deleteOrphanIfSafe(tenantId, sourceDocumentId)
         val sourceCount = sourceRepository.countLinkedSources(tenantId, targetDocumentId)
@@ -648,11 +714,9 @@ class DocumentTruthService(
             documentId = targetDocumentId,
             sourceId = sourceId,
             runId = null,
-            outcome = DocumentIntakeOutcome.LinkedToExisting,
+            resolution = resolution,
             sourceDocumentId = sourceDocumentId,
-            linkedDocumentId = targetDocumentId,
             sourceCount = sourceCount,
-            matchType = matchType,
             orphanedDocumentId = sourceDocumentId.takeIf { orphanDeleted }
         )
     }
@@ -684,16 +748,19 @@ class DocumentTruthService(
         )
         val orphanDeleted = deleteOrphanIfSafe(tenantId, sourceDocumentId)
         val sourceCount = sourceRepository.countLinkedSources(tenantId, targetDocumentId)
+        val resolution = when (reason) {
+            DocumentMatchReviewReasonType.MaterialConflict ->
+                IntakeResolution.NeedsReview.MaterialConflict(targetDocumentId, reviewId)
+            DocumentMatchReviewReasonType.FuzzyCandidate ->
+                IntakeResolution.NeedsReview.FuzzyCandidate(targetDocumentId, reviewId)
+        }
         return DocumentIntakeServiceResult(
             documentId = targetDocumentId,
             sourceId = sourceId,
             runId = null,
-            outcome = DocumentIntakeOutcome.PendingMatchReview,
+            resolution = resolution,
             sourceDocumentId = sourceDocumentId,
-            linkedDocumentId = targetDocumentId,
-            reviewId = reviewId,
             sourceCount = sourceCount,
-            matchType = matchType,
             orphanedDocumentId = sourceDocumentId.takeIf { orphanDeleted }
         )
     }

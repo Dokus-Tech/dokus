@@ -7,7 +7,7 @@ import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import tech.dokus.backend.services.cashflow.CashflowEntriesService
 import tech.dokus.backend.util.isUniqueViolation
-import tech.dokus.database.repository.cashflow.DocumentDraftRepository
+import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
 import tech.dokus.domain.Money
 import tech.dokus.domain.VatRate
@@ -35,7 +35,7 @@ import java.util.UUID
 class InvoiceConfirmationService(
     private val invoiceRepository: InvoiceRepository,
     private val cashflowEntriesService: CashflowEntriesService,
-    private val draftRepository: DocumentDraftRepository,
+    private val documentRepository: DocumentRepository,
 ) {
     private val logger = loggerFor()
 
@@ -48,7 +48,7 @@ class InvoiceConfirmationService(
     ): Result<ConfirmationResult> = runSuspendCatching {
         logger.info("Confirming invoice document: $documentId for tenant: $tenantId")
 
-        val draft = requireConfirmableDraft(draftRepository, tenantId, documentId)
+        val draft = requireConfirmableDraft(documentRepository, tenantId, documentId)
         val isReconfirm = draft.documentStatus == DocumentStatus.NeedsReview
 
         val counterparty = draft.counterparty
@@ -121,7 +121,7 @@ class InvoiceConfirmationService(
             ).getOrThrow()
         }
 
-        draftRepository.updateDocumentStatus(documentId, tenantId, DocumentStatus.Confirmed)
+        documentRepository.updateDocumentStatus(documentId, tenantId, DocumentStatus.Confirmed)
 
         logger.info("Invoice confirmed: $documentId -> invoiceId=${invoice.id}, entryId=${cashflowEntry.id}")
         ConfirmationResult(entity = invoice, cashflowEntryId = cashflowEntry.id, documentId = documentId)

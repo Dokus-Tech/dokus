@@ -2,7 +2,7 @@ package tech.dokus.backend.services.documents.confirmation
 
 import tech.dokus.backend.services.cashflow.CashflowEntriesService
 import tech.dokus.backend.util.isUniqueViolation
-import tech.dokus.database.repository.cashflow.DocumentDraftRepository
+import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.domain.Money
 import tech.dokus.domain.Percentage
@@ -28,7 +28,7 @@ import kotlin.uuid.toJavaUuid
 class ReceiptConfirmationService(
     private val expenseRepository: ExpenseRepository,
     private val cashflowEntriesService: CashflowEntriesService,
-    private val draftRepository: DocumentDraftRepository,
+    private val documentRepository: DocumentRepository,
 ) {
     private val logger = loggerFor()
 
@@ -42,7 +42,7 @@ class ReceiptConfirmationService(
     ): Result<ConfirmationResult> = runSuspendCatching {
         logger.info("Confirming receipt document: $documentId for tenant: $tenantId")
 
-        val draft = requireConfirmableDraft(draftRepository, tenantId, documentId)
+        val draft = requireConfirmableDraft(documentRepository, tenantId, documentId)
         val isReconfirm = draft.documentStatus == DocumentStatus.NeedsReview
 
         val date = draftData.date ?: throw DokusException.BadRequest("Date is required")
@@ -114,7 +114,7 @@ class ReceiptConfirmationService(
             ).getOrThrow()
         }
 
-        draftRepository.updateDocumentStatus(documentId, tenantId, DocumentStatus.Confirmed)
+        documentRepository.updateDocumentStatus(documentId, tenantId, DocumentStatus.Confirmed)
 
         logger.info("Receipt confirmed: $documentId -> expenseId=${expense.id}, entryId=${cashflowEntry.id}")
         ConfirmationResult(entity = expense, cashflowEntryId = cashflowEntry.id, documentId = documentId)

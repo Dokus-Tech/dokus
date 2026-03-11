@@ -319,7 +319,7 @@ private fun cashflowModule() = module {
     single { ReceiptConfirmationService(get(), get(), get()) }
     single { CreditNoteConfirmationService(get(), get(), get(), get()) }
     single { DocumentConfirmationDispatcher(get(), get(), get(), get()) }
-    single { DocumentTruthService(get(), get(), get(), get(), get(), get(), get()) }
+    singleOf(::DocumentTruthService)
     singleOf(::DocumentCollectionEventHub)
     singleOf(::DocumentSnapshotEventHub)
     singleOf(::DocumentSsePublisher)
