@@ -9,7 +9,6 @@ import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
-import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.init
 import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.domain.exceptions.asDokusException
@@ -85,7 +84,7 @@ internal class ContactsContainer(
     private suspend fun ContactsCtx.handleUpdateSortOption(option: ContactSortOption) {
         withState {
             if (!contacts.isSuccess()) return@withState
-            val currentPagination = (contacts as DokusState.Success).data
+            val currentPagination = contacts.data
             val sorted = applySorting(currentPagination.data, option)
             updateState {
                 copy(
