@@ -8,7 +8,9 @@ import kotlinx.datetime.LocalDateTime
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import tech.dokus.backend.services.contacts.ContactService
-import tech.dokus.backend.services.documents.resolution.AutoCreateResolver
+import tech.dokus.backend.services.documents.resolution.CbeAutoCreateResolver
+import tech.dokus.backend.services.documents.resolution.NameIbanAutoCreateResolver
+import tech.dokus.backend.services.documents.resolution.VatAutoCreateResolver
 import tech.dokus.backend.services.documents.resolution.ContactMatchingUtils
 import tech.dokus.backend.services.documents.resolution.IbanNameResolver
 import tech.dokus.backend.services.documents.resolution.NameSuggestionResolver
@@ -40,7 +42,9 @@ class ContactResolutionServiceTest {
     private val service = ContactResolutionService(
         vatMatchResolver = VatMatchResolver(contactRepository, cbeApiClient, matchingUtils),
         ibanNameResolver = IbanNameResolver(contactRepository, matchingUtils),
-        autoCreateResolver = AutoCreateResolver(cbeApiClient),
+        cbeAutoCreateResolver = CbeAutoCreateResolver(cbeApiClient),
+        vatAutoCreateResolver = VatAutoCreateResolver(),
+        nameIbanAutoCreateResolver = NameIbanAutoCreateResolver(),
         nameSuggestionResolver = NameSuggestionResolver(contactRepository, matchingUtils),
         contactService = contactService
     )

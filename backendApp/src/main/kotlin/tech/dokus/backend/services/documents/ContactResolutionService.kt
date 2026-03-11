@@ -1,11 +1,13 @@
 package tech.dokus.backend.services.documents
 
 import tech.dokus.backend.services.contacts.ContactService
-import tech.dokus.backend.services.documents.resolution.AutoCreateResolver
+import tech.dokus.backend.services.documents.resolution.CbeAutoCreateResolver
 import tech.dokus.backend.services.documents.resolution.IbanNameResolver
+import tech.dokus.backend.services.documents.resolution.NameIbanAutoCreateResolver
 import tech.dokus.backend.services.documents.resolution.NameSuggestionResolver
 import tech.dokus.backend.services.documents.resolution.ResolverInput
 import tech.dokus.backend.services.documents.resolution.ResolverOutcome
+import tech.dokus.backend.services.documents.resolution.VatAutoCreateResolver
 import tech.dokus.backend.services.documents.resolution.VatMatchResolver
 import tech.dokus.domain.Name
 import tech.dokus.domain.enums.ContactSource
@@ -34,7 +36,9 @@ data class ContactResolutionResult(
 class ContactResolutionService(
     private val vatMatchResolver: VatMatchResolver,
     private val ibanNameResolver: IbanNameResolver,
-    private val autoCreateResolver: AutoCreateResolver,
+    private val cbeAutoCreateResolver: CbeAutoCreateResolver,
+    private val vatAutoCreateResolver: VatAutoCreateResolver,
+    private val nameIbanAutoCreateResolver: NameIbanAutoCreateResolver,
     private val nameSuggestionResolver: NameSuggestionResolver,
     private val contactService: ContactService
 ) {
@@ -75,7 +79,9 @@ class ContactResolutionService(
         for (resolver in listOf(
             vatMatchResolver::invoke,
             ibanNameResolver::invoke,
-            autoCreateResolver::invoke,
+            cbeAutoCreateResolver::invoke,
+            vatAutoCreateResolver::invoke,
+            nameIbanAutoCreateResolver::invoke,
             nameSuggestionResolver::invoke
         )) {
             when (val outcome = resolver(input)) {

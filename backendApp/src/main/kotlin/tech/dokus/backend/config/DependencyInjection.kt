@@ -49,10 +49,12 @@ import tech.dokus.backend.services.contacts.sse.ContactEventHub
 import tech.dokus.backend.services.contacts.sse.ContactSsePublisher
 import tech.dokus.backend.services.documents.AutoConfirmPolicy
 import tech.dokus.backend.services.documents.ContactResolutionService
-import tech.dokus.backend.services.documents.resolution.AutoCreateResolver
+import tech.dokus.backend.services.documents.resolution.CbeAutoCreateResolver
 import tech.dokus.backend.services.documents.resolution.ContactMatchingUtils
 import tech.dokus.backend.services.documents.resolution.IbanNameResolver
+import tech.dokus.backend.services.documents.resolution.NameIbanAutoCreateResolver
 import tech.dokus.backend.services.documents.resolution.NameSuggestionResolver
+import tech.dokus.backend.services.documents.resolution.VatAutoCreateResolver
 import tech.dokus.backend.services.documents.resolution.VatMatchResolver
 import tech.dokus.backend.services.documents.DocumentPurposeService
 import tech.dokus.backend.services.documents.DocumentPurposeSimilarityService
@@ -384,7 +386,9 @@ private fun documentProcessingModule() = module {
     singleOf(::ContactMatchingUtils)
     singleOf(::VatMatchResolver)
     singleOf(::IbanNameResolver)
-    singleOf(::AutoCreateResolver)
+    singleOf(::CbeAutoCreateResolver)
+    singleOf(::VatAutoCreateResolver)
+    singleOf(::NameIbanAutoCreateResolver)
     singleOf(::NameSuggestionResolver)
     singleOf(::ContactResolutionService)
     singleOf(::AutoConfirmPolicy)
