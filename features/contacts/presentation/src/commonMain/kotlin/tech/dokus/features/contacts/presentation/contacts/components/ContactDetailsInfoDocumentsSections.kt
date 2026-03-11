@@ -89,7 +89,10 @@ internal fun ContactInfoSectionCompact(contact: ContactDto?) {
             )
         } else {
             listOf(
-                InfoRow(stringResource(Res.string.contacts_vat_number), contact.vatNumber?.value ?: "—"),
+                InfoRow(
+                    stringResource(Res.string.contacts_vat_number),
+                    contact.vatNumber?.value ?: "—"
+                ),
                 InfoRow(stringResource(Res.string.contacts_address), formatAddress(contact)),
                 InfoRow(stringResource(Res.string.contacts_email), contact.email?.value ?: "—"),
                 InfoRow(
@@ -97,7 +100,10 @@ internal fun ContactInfoSectionCompact(contact: ContactDto?) {
                     value = contact.websiteUrl ?: "—",
                     style = if (contact.websiteUrl != null) InfoRowStyle.Link else InfoRowStyle.Plain,
                 ),
-                InfoRow(stringResource(Res.string.contacts_payment_terms), "Net ${contact.defaultPaymentTerms}"),
+                InfoRow(
+                    stringResource(Res.string.contacts_payment_terms),
+                    "Net ${contact.defaultPaymentTerms}"
+                ),
             )
         }
 
@@ -251,13 +257,8 @@ private fun RecentDocumentRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .then(
-                if (document.documentId != null) {
-                    Modifier.clickable { onDocumentClick(document.documentId) }
-                } else {
-                    Modifier
-                }
-            )
+            .then(document.documentId?.let { Modifier.clickable { onDocumentClick(it) } }
+                ?: Modifier)
             .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp)
