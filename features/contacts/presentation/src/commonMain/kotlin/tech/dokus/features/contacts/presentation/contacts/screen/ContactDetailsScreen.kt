@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDateTime
 import tech.dokus.domain.Name
 import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.features.contacts.mvi.ContactDetailsIntent
@@ -41,6 +42,7 @@ internal fun ContactDetailsScreen(
     onIntent: (ContactDetailsIntent) -> Unit,
     onBackClick: () -> Unit,
     onEditClick: () -> Unit,
+    onDocumentClick: (DocumentId) -> Unit,
 ) {
     BoxWithConstraints {
         val isDesktop = maxWidth >= 600.dp
@@ -54,6 +56,7 @@ internal fun ContactDetailsScreen(
             onIntent = onIntent,
             onBackClick = onBackClick,
             onEditClick = onEditClick,
+            onDocumentClick = onDocumentClick,
         )
     }
 }
@@ -69,6 +72,7 @@ private fun ContactDetailsScreenContent(
     onIntent: (ContactDetailsIntent) -> Unit,
     onBackClick: () -> Unit,
     onEditClick: () -> Unit,
+    onDocumentClick: (DocumentId) -> Unit,
 ) {
     val contactState = state.contact
     val invoiceSnapshotState = state.invoiceSnapshotState
@@ -135,6 +139,7 @@ private fun ContactDetailsScreenContent(
             onEditContact = onEditClick,
             onMergeContact = { onIntent(ContactDetailsIntent.ShowMergeDialog) },
             onShowEnrichment = { onIntent(ContactDetailsIntent.ShowEnrichmentPanel) },
+            onDocumentClick = onDocumentClick,
             onAddNote = {
                 openNotesSurface()
                 onIntent(ContactDetailsIntent.ShowAddNoteDialog)
@@ -227,7 +232,8 @@ private fun ContactDetailsScreenPreview(
             snackbarHostState = remember { SnackbarHostState() },
             onIntent = {},
             onBackClick = {},
-            onEditClick = {}
+            onEditClick = {},
+            onDocumentClick = {}
         )
     }
 }

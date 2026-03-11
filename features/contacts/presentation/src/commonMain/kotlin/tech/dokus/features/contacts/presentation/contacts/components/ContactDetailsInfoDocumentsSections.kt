@@ -39,6 +39,7 @@ import tech.dokus.aura.resources.contacts_vat_number
 import tech.dokus.aura.resources.contacts_website
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.InvoiceStatus
+import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.features.contacts.usecases.ContactInvoiceSnapshot
 import tech.dokus.features.contacts.usecases.ContactRecentInvoice
@@ -150,7 +151,8 @@ internal fun ContactInfoSectionCompact(contact: ContactDto?) {
 
 @Composable
 internal fun RecentDocumentsSection(
-    invoiceSnapshotState: DokusState<ContactInvoiceSnapshot>
+    invoiceSnapshotState: DokusState<ContactInvoiceSnapshot>,
+    onDocumentClick: (DocumentId) -> Unit,
 ) {
     Text(
         text = stringResource(Res.string.contacts_recent_documents),
@@ -202,7 +204,10 @@ internal fun RecentDocumentsSection(
                                         .background(MaterialTheme.colorScheme.outlineVariant)
                                 )
                             }
-                            RecentDocumentRow(document = document)
+                            RecentDocumentRow(
+                                document = document,
+                                onDocumentClick = onDocumentClick,
+                            )
                         }
                     }
                 }
@@ -229,7 +234,10 @@ internal fun RecentDocumentsSection(
 }
 
 @Composable
-private fun RecentDocumentRow(document: ContactRecentInvoice) {
+private fun RecentDocumentRow(
+    document: ContactRecentInvoice,
+    onDocumentClick: (DocumentId) -> Unit,
+) {
     val statusStyle = invoiceStatusStyle(document.status)
     val textContent = resolveRecentDocumentText(
         document = document,
@@ -243,6 +251,13 @@ private fun RecentDocumentRow(document: ContactRecentInvoice) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .then(
+                if (document.documentId != null) {
+                    Modifier.clickable { onDocumentClick(document.documentId) }
+                } else {
+                    Modifier
+                }
+            )
             .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp)
