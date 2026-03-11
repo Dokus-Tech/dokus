@@ -218,6 +218,48 @@ class ContactResolutionServiceTest {
         coVerify(exactly = 0) { contactRepository.updateContact(any(), any(), any()) }
     }
 
+    @Test
+    fun `exact name match with single candidate auto-links`() = runBlocking {
+        val contact = contact(
+            id = "11111111-aaaa-bbbb-cccc-222222222222",
+            name = "Google Cloud EMEA Limited",
+            vat = "IE3668997OH",
+            source = ContactSource.AI
+        )
+        coEvery { contactRepository.findByName(tenantId, "Google Cloud EMEA Limited", 10) } returns Result.success(listOf(contact))
+
+        val result = service.resolve(
+            tenantId = tenantId,
+            tenantVat = tenantVat,
+            draftData = InvoiceDraftData(direction = DocumentDirection.Inbound),
+            authoritativeSnapshot = CounterpartySnapshot(name = "Google Cloud EMEA Limited")
+        )
+
+        val resolution = assertIs<ContactResolution.Matched>(result.resolution)
+        assertEquals(contact.id, resolution.contactId)
+        assertEquals(1.0, resolution.evidence.nameSimilarity)
+    }
+
+    @Test
+    fun `exact name match with unknown direction stays suggested`() = runBlocking {
+        val contact = contact(
+            id = "11111111-aaaa-bbbb-cccc-222222222222",
+            name = "Google Cloud EMEA Limited",
+            vat = "IE3668997OH",
+            source = ContactSource.AI
+        )
+        coEvery { contactRepository.findByName(tenantId, "Google Cloud EMEA Limited", 10) } returns Result.success(listOf(contact))
+
+        val result = service.resolve(
+            tenantId = tenantId,
+            tenantVat = tenantVat,
+            draftData = InvoiceDraftData(direction = DocumentDirection.Unknown),
+            authoritativeSnapshot = CounterpartySnapshot(name = "Google Cloud EMEA Limited")
+        )
+
+        assertIs<ContactResolution.Suggested>(result.resolution)
+    }
+
     private fun contact(
         id: String,
         name: String,

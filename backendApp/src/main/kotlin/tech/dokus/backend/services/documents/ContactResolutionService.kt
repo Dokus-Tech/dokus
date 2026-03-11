@@ -247,6 +247,29 @@ class ContactResolutionService(
                 contact to similarity(name, contact.name.value)
             }.filter { it.second >= SuggestionThreshold }
 
+            // Auto-link on exact unambiguous name match (unless direction is Unknown)
+            if (!strictAutoLink && scored.size == 1 && scored.first().second >= 1.0) {
+                val (contact, score) = scored.first()
+                val healedContact = maybeHealPaymentAliasContact(
+                    tenantId = tenantId,
+                    matchedContact = contact,
+                    authoritativeName = name
+                )
+                return ContactResolutionResult(
+                    snapshot = snapshot,
+                    resolution = ContactResolution.Matched(
+                        contactId = healedContact.id,
+                        evidence = MatchEvidence(
+                            vatMatch = false,
+                            ibanMatch = false,
+                            nameSimilarity = score,
+                            ambiguityCount = 1,
+                            cbeStatus = null
+                        )
+                    )
+                )
+            }
+
             if (scored.isNotEmpty()) {
                 val ambiguityCount = scored.size
                 val suggestionList = scored.map { (contact, score) ->
@@ -426,7 +449,7 @@ class ContactResolutionService(
 
     private fun formatScore(value: Double): String = String.format("%.2f", value)
 
-    private fun tech.dokus.domain.model.contact.ContactDto.toSuggestedContact(
+    private fun ContactDto.toSuggestedContact(
         vatMatch: Boolean,
         ibanMatch: Boolean,
         nameSimilarity: Double?,
