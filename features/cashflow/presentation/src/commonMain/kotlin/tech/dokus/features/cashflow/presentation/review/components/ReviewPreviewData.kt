@@ -42,6 +42,7 @@ import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.PartyDraft
 import tech.dokus.domain.model.contact.CounterpartyInfo
 import tech.dokus.domain.model.contact.CounterpartySnapshot
+import tech.dokus.domain.model.contact.PostalAddress
 import tech.dokus.features.cashflow.presentation.review.DocumentPreviewState
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.PaymentSheetState
@@ -109,9 +110,11 @@ internal fun previewReviewContentState(
         counterparty = CounterpartyInfo.Unresolved(
             snapshot = CounterpartySnapshot(
                 name = "KBC Bank NV",
-                streetLine1 = "Havenlaan 2",
-                postalCode = "1080",
-                city = "Brussels",
+                address = PostalAddress(
+                    streetLine1 = "Havenlaan 2",
+                    postalCode = "1080",
+                    city = "Brussels",
+                ),
             ),
         ),
         counterpartyDisplayName = "KBC Bank NV",

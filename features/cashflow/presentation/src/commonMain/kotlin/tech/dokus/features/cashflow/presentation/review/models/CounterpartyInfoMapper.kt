@@ -24,14 +24,15 @@ internal fun counterpartyInfo(state: DocumentReviewState): CounterpartyInfo {
 }
 
 private fun toAddressUiModel(snapshot: tech.dokus.domain.model.contact.CounterpartySnapshot): AddressUiModel? {
-    val hasData = snapshot.streetLine1 != null || snapshot.city != null ||
-        snapshot.postalCode != null || snapshot.country != null
+    val addr = snapshot.address
+    val hasData = addr.streetLine1 != null || addr.city != null ||
+        addr.postalCode != null || addr.country != null
     if (!hasData) return null
     return AddressUiModel(
-        streetLine1 = snapshot.streetLine1?.trim()?.takeIf { it.isNotEmpty() },
-        streetLine2 = null,
-        city = snapshot.city?.trim()?.takeIf { it.isNotEmpty() },
-        postalCode = snapshot.postalCode?.trim()?.takeIf { it.isNotEmpty() },
-        country = snapshot.country?.dbValue?.trim()?.takeIf { it.isNotEmpty() },
+        streetLine1 = addr.streetLine1?.trim()?.takeIf { it.isNotEmpty() },
+        streetLine2 = addr.streetLine2?.trim()?.takeIf { it.isNotEmpty() },
+        city = addr.city?.trim()?.takeIf { it.isNotEmpty() },
+        postalCode = addr.postalCode?.trim()?.takeIf { it.isNotEmpty() },
+        country = addr.country?.dbValue?.trim()?.takeIf { it.isNotEmpty() },
     )
 }

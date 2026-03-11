@@ -3,6 +3,7 @@ package tech.dokus.backend.services.documents.resolution
 import tech.dokus.domain.model.contact.ContactResolution
 import tech.dokus.domain.model.contact.CounterpartySnapshot
 import tech.dokus.domain.model.contact.MatchEvidence
+import tech.dokus.domain.model.contact.PostalAddress
 import tech.dokus.domain.model.entity.EntityLookup
 import tech.dokus.domain.model.entity.EntityStatus
 import tech.dokus.foundation.backend.lookup.CbeApiClient
@@ -73,18 +74,20 @@ class AutoCreateResolver(
         lookup: EntityLookup,
         fallback: CounterpartySnapshot
     ): CounterpartySnapshot {
-        val address = lookup.address
+        val cbeAddress = lookup.address
         return CounterpartySnapshot(
             name = lookup.name.value,
             vatNumber = lookup.vatNumber,
             iban = fallback.iban,
             email = fallback.email,
             companyNumber = lookup.enterpriseNumber,
-            streetLine1 = address?.streetLine1,
-            streetLine2 = address?.streetLine2,
-            postalCode = address?.postalCode,
-            city = address?.city,
-            country = address?.country
+            address = PostalAddress(
+                streetLine1 = cbeAddress?.streetLine1,
+                streetLine2 = cbeAddress?.streetLine2,
+                postalCode = cbeAddress?.postalCode,
+                city = cbeAddress?.city,
+                country = cbeAddress?.country
+            )
         )
     }
 

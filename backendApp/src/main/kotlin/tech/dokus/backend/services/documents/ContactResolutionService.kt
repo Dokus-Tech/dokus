@@ -22,6 +22,7 @@ import tech.dokus.domain.model.contact.ContactAddressInput
 import tech.dokus.domain.model.contact.ContactResolution
 import tech.dokus.domain.model.contact.CounterpartySnapshot
 import tech.dokus.domain.model.contact.CreateContactRequest
+import tech.dokus.domain.model.contact.PostalAddress
 import tech.dokus.domain.model.contact.SuggestedContact
 import tech.dokus.foundation.backend.utils.loggerFor
 
@@ -139,6 +140,10 @@ class ContactResolutionService(
         iban = iban,
         email = email,
         companyNumber = companyNumber?.trim()?.takeIf { it.isNotEmpty() },
+        address = address.normalized()
+    )
+
+    private fun PostalAddress.normalized(): PostalAddress = PostalAddress(
         streetLine1 = streetLine1?.trim()?.takeIf { it.isNotEmpty() },
         streetLine2 = streetLine2?.trim()?.takeIf { it.isNotEmpty() },
         postalCode = postalCode?.trim()?.takeIf { it.isNotEmpty() },
@@ -151,14 +156,17 @@ class ContactResolutionService(
     }
 
     private fun CounterpartySnapshot.toAddressInputs(): List<ContactAddressInput> {
-        if (streetLine1 == null && city == null && postalCode == null && country == null) return emptyList()
+        val addr = address
+        if (addr.streetLine1 == null && addr.city == null && addr.postalCode == null && addr.country == null) {
+            return emptyList()
+        }
         return listOf(
             ContactAddressInput(
-                streetLine1 = streetLine1,
-                streetLine2 = streetLine2,
-                city = city,
-                postalCode = postalCode,
-                country = country?.dbValue
+                streetLine1 = addr.streetLine1,
+                streetLine2 = addr.streetLine2,
+                city = addr.city,
+                postalCode = addr.postalCode,
+                country = addr.country?.dbValue
             )
         )
     }

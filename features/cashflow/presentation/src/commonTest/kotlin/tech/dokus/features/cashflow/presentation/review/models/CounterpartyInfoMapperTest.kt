@@ -19,6 +19,7 @@ import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.contact.CounterpartyInfo
 import tech.dokus.domain.model.contact.CounterpartySnapshot
+import tech.dokus.domain.model.contact.PostalAddress
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.ReviewDocumentData
 import tech.dokus.foundation.app.state.DokusState
@@ -35,10 +36,12 @@ class CounterpartyInfoMapperTest {
                 name = "Apple Distribution International Ltd.",
                 vatNumber = VatNumber.from("IE9700053D"),
                 iban = Iban.from("IE29AIBK93115212345678"),
-                streetLine1 = "Hollyhill Industrial Estate",
-                postalCode = "T23",
-                city = "Cork",
-                country = Country.Belgium
+                address = PostalAddress(
+                    streetLine1 = "Hollyhill Industrial Estate",
+                    postalCode = "T23",
+                    city = "Cork",
+                    country = Country.Belgium
+                )
             )
         )
 

@@ -10,17 +10,22 @@ import tech.dokus.domain.model.entity.EntityLookup
 import tech.dokus.domain.model.entity.EntityStatus
 
 @Serializable
+data class PostalAddress(
+    val streetLine1: String? = null,
+    val streetLine2: String? = null,
+    val postalCode: String? = null,
+    val city: String? = null,
+    val country: Country? = null,
+)
+
+@Serializable
 data class CounterpartySnapshot(
     val name: String? = null,
     val vatNumber: VatNumber? = null,
     val iban: Iban? = null,
     val email: Email? = null,
     val companyNumber: String? = null,
-    val streetLine1: String? = null,
-    val streetLine2: String? = null,
-    val postalCode: String? = null,
-    val city: String? = null,
-    val country: Country? = null
+    val address: PostalAddress = PostalAddress(),
 )
 
 @Serializable
