@@ -160,8 +160,9 @@ class BankStatementProcessingService(
         val inserts = validRows.map { row ->
             val date = requireNotNull(row.transactionDate)
             val amount = requireNotNull(row.signedAmount)
-            val structuredRaw = (row.communication as? TransactionCommunication.Structured)?.raw
-            val normalizedComm = normalizeStructuredCommunication(structuredRaw)
+            val structured = row.communication as? TransactionCommunication.Structured
+            val structuredRaw = structured?.raw
+            val normalizedComm = structured?.normalized?.value
             val freeComm = (row.communication as? TransactionCommunication.FreeForm)?.text
             BankTransactionCreate(
                 dedupHash = hashRow(

@@ -38,6 +38,7 @@ import tech.dokus.database.tables.documents.DocumentMatchReviewsTable
 import tech.dokus.database.tables.documents.DocumentPurposeExamplesTable
 import tech.dokus.database.tables.documents.DocumentPurposeTemplatesTable
 import tech.dokus.database.tables.documents.DocumentSourcesTable
+import tech.dokus.database.tables.documents.DocumentLinksTable
 import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.database.tables.documents.InvoiceBankMatchLinksTable
 import tech.dokus.database.tables.documents.AutoPaymentAuditEventsTable
@@ -100,6 +101,7 @@ object DokusSchema {
                 BankTransactionsTable,
                 InvoiceBankMatchLinksTable,
                 AutoPaymentAuditEventsTable,
+                DocumentLinksTable,
 
                 // ----------------------------
                 // Contacts (depends on docs/users/addresses)
