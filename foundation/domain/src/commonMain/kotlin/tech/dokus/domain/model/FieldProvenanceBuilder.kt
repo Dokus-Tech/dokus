@@ -69,8 +69,6 @@ private fun CreditNoteDraftData.populatedFields(): Set<String> = buildSet {
     if (totalAmount != null) add("totalAmount")
     if (lineItems.isNotEmpty()) add("lineItems")
     if (vatBreakdown.isNotEmpty()) add("vatBreakdown")
-    if (counterpartyName != null) add("counterpartyName")
-    if (counterpartyVat != null) add("counterpartyVat")
     if (originalInvoiceNumber != null) add("originalInvoiceNumber")
     if (reason != null) add("reason")
     if (notes != null) add("notes")

@@ -50,45 +50,28 @@ private fun FinancialExtractionResult.toDraftData(direction: DocumentDirection):
         ),
     )
 
-    is FinancialExtractionResult.CreditNote -> {
-        val counterpartyName = when (direction) {
-            DocumentDirection.Inbound -> data.sellerName
-            DocumentDirection.Outbound -> data.buyerName
-            DocumentDirection.Neutral,
-            DocumentDirection.Unknown -> data.buyerName ?: data.sellerName
-        }
-        val counterpartyVat = when (direction) {
-            DocumentDirection.Inbound -> data.sellerVat
-            DocumentDirection.Outbound -> data.buyerVat
-            DocumentDirection.Neutral,
-            DocumentDirection.Unknown -> data.buyerVat ?: data.sellerVat
-        }
-
-        CreditNoteDraftData(
-            creditNoteNumber = data.creditNoteNumber,
-            direction = direction,
-            issueDate = data.issueDate,
-            currency = data.currency,
-            subtotalAmount = data.subtotalAmount,
-            vatAmount = data.vatAmount,
-            totalAmount = data.totalAmount,
-            lineItems = data.lineItems,
-            vatBreakdown = data.vatBreakdown,
-            counterpartyName = counterpartyName,
-            counterpartyVat = counterpartyVat,
-            originalInvoiceNumber = data.originalInvoiceNumber,
-            reason = data.reason,
-            notes = null,
-            seller = PartyDraft(
-                name = data.sellerName,
-                vat = data.sellerVat,
-            ),
-            buyer = PartyDraft(
-                name = data.buyerName,
-                vat = data.buyerVat,
-            ),
-        )
-    }
+    is FinancialExtractionResult.CreditNote -> CreditNoteDraftData(
+        creditNoteNumber = data.creditNoteNumber,
+        direction = direction,
+        issueDate = data.issueDate,
+        currency = data.currency,
+        subtotalAmount = data.subtotalAmount,
+        vatAmount = data.vatAmount,
+        totalAmount = data.totalAmount,
+        lineItems = data.lineItems,
+        vatBreakdown = data.vatBreakdown,
+        originalInvoiceNumber = data.originalInvoiceNumber,
+        reason = data.reason,
+        notes = null,
+        seller = PartyDraft(
+            name = data.sellerName,
+            vat = data.sellerVat,
+        ),
+        buyer = PartyDraft(
+            name = data.buyerName,
+            vat = data.buyerVat,
+        ),
+    )
 
     is FinancialExtractionResult.Receipt -> ReceiptDraftData(
         direction = direction,

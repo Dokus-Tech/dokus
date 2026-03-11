@@ -14,7 +14,7 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentIngestionDto
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.FinancialDocumentDto
 import kotlin.test.Test
 import kotlin.test.assertFalse
@@ -112,8 +112,8 @@ class DocumentRowAttentionTest {
         draftStatus: DocumentStatus?,
         ingestionStatus: IngestionStatus?,
         confirmedEntity: FinancialDocumentDto? = null
-    ): DocumentRecordDto {
-        return DocumentRecordDto(
+    ): DocumentDetailDto {
+        return DocumentDetailDto(
             document = DocumentDto(
                 id = documentId,
                 tenantId = TENANT_ID,

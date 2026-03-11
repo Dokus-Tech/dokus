@@ -89,10 +89,6 @@ class DocumentIngestionRunRepositoryStaleRecoveryTest {
             DocumentsTable.insert {
                 it[id] = documentUuid
                 it[tenantId] = tenantUuid
-                it[filename] = "stale-run.pdf"
-                it[contentType] = "application/pdf"
-                it[sizeBytes] = 123L
-                it[storageKey] = "docs/$tenantUuid/stale-run.pdf"
                 it[effectiveOrigin] = DocumentSource.Upload
             }
         }

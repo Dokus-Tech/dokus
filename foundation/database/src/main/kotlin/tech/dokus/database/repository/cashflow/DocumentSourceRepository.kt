@@ -9,6 +9,7 @@ import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.neq
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
@@ -375,6 +376,36 @@ class DocumentSourceRepository {
     ): DocumentSourceSummary? {
         val sources = listByDocument(tenantId, documentId, includeDetached = false)
         return selectPreferredSource(sources)
+    }
+
+    /**
+     * Batch-load preferred sources for a list of document IDs.
+     * Returns a map from documentId to the preferred source summary (if any).
+     */
+    suspend fun selectPreferredSourcesByDocumentIds(
+        tenantId: TenantId,
+        documentIds: List<DocumentId>
+    ): Map<DocumentId, DocumentSourceSummary> {
+        if (documentIds.isEmpty()) return emptyMap()
+        return newSuspendedTransaction {
+            val tenantUuid = UUID.fromString(tenantId.toString())
+            val docUuids = documentIds.map { UUID.fromString(it.toString()) }
+            val allSources = DocumentSourcesTable
+                .join(DocumentBlobsTable, JoinType.INNER, DocumentSourcesTable.blobId, DocumentBlobsTable.id)
+                .selectAll()
+                .where {
+                    (DocumentSourcesTable.tenantId eq tenantUuid) and
+                        (DocumentSourcesTable.documentId inList docUuids) and
+                        (DocumentSourcesTable.status eq DocumentSourceStatus.Linked)
+                }
+                .map { it.toSourceSummary() }
+
+            allSources.groupBy { it.documentId }
+                .mapNotNull { (docId, sources) ->
+                    selectPreferredSource(sources)?.let { docId to it }
+                }
+                .toMap()
+        }
     }
 
     private fun ResultRow.toSourceSummary(): DocumentSourceSummary {

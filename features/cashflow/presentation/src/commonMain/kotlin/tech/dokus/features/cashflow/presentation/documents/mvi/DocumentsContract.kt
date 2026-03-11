@@ -6,7 +6,7 @@ import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentListItemDto
 import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.navigation.destinations.CashFlowDestination
@@ -46,7 +46,7 @@ enum class DocumentFilter {
 
 @Immutable
 data class DocumentsState(
-    val documents: DokusState<PaginationState<DocumentRecordDto>>,
+    val documents: DokusState<PaginationState<DocumentListItemDto>>,
     val filter: DocumentFilter,
     val needsAttentionCount: Int,
     val confirmedCount: Int,

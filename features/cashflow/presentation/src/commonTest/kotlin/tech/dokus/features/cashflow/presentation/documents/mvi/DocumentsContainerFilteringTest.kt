@@ -7,13 +7,13 @@ import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import pro.respawn.flowmvi.test.subscribeAndTest
 import tech.dokus.domain.enums.DocumentListFilter
+import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.DocumentCountsResponse
-import tech.dokus.domain.model.DocumentDto
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentListItemDto
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.features.cashflow.usecases.LoadDocumentRecordsUseCase
 import tech.dokus.foundation.app.state.isError
@@ -38,7 +38,7 @@ class DocumentsContainerFilteringTest {
         val getDocumentCounts = FakeGetDocumentCountsUseCase().apply {
             enqueueResult(DocumentCountsResponse(needsAttention = 39L, confirmed = 25L))
         }
-        val deferredNeedsAttentionResult = CompletableDeferred<Result<PaginatedResponse<DocumentRecordDto>>>()
+        val deferredNeedsAttentionResult = CompletableDeferred<Result<PaginatedResponse<DocumentListItemDto>>>()
         loadDocuments.enqueuePageDeferred(DocumentListFilter.NeedsAttention, deferredNeedsAttentionResult)
 
         val container = DocumentsContainer(loadDocuments, getDocumentCounts)
@@ -51,7 +51,7 @@ class DocumentsContainerFilteringTest {
             assertFalse(initial.documents.isLoading())
             assertEquals(39, initial.needsAttentionCount)
             assertEquals(25, initial.confirmedCount)
-            assertEquals(allDocs.map { it.document.id }, initial.documents.lastData?.data?.map { it.document.id })
+            assertEquals(allDocs.map { it.documentId }, initial.documents.lastData?.data?.map { it.documentId })
 
             emit(DocumentsIntent.UpdateFilter(DocumentFilter.NeedsAttention))
             runCurrent()
@@ -59,7 +59,7 @@ class DocumentsContainerFilteringTest {
             val refreshing = states.value
             assertEquals(DocumentFilter.NeedsAttention, refreshing.filter)
             assertTrue(refreshing.documents.isLoading())
-            assertEquals(allDocs.map { it.document.id }, refreshing.documents.lastData?.data?.map { it.document.id })
+            assertEquals(allDocs.map { it.documentId }, refreshing.documents.lastData?.data?.map { it.documentId })
 
             deferredNeedsAttentionResult.complete(Result.success(pageResponse(needsAttentionDocs)))
             advanceUntilIdle()
@@ -68,8 +68,8 @@ class DocumentsContainerFilteringTest {
             assertFalse(updated.documents.isLoading())
             assertEquals(DocumentFilter.NeedsAttention, updated.filter)
             assertEquals(
-                needsAttentionDocs.map { it.document.id },
-                updated.documents.lastData?.data?.map { it.document.id }
+                needsAttentionDocs.map { it.documentId },
+                updated.documents.lastData?.data?.map { it.documentId }
             )
             assertEquals(39, updated.needsAttentionCount)
             assertEquals(25, updated.confirmedCount)
@@ -87,7 +87,7 @@ class DocumentsContainerFilteringTest {
         val getDocumentCounts = FakeGetDocumentCountsUseCase().apply {
             enqueueResult(DocumentCountsResponse(needsAttention = 10L, confirmed = 5L))
         }
-        val deferredFailure = CompletableDeferred<Result<PaginatedResponse<DocumentRecordDto>>>()
+        val deferredFailure = CompletableDeferred<Result<PaginatedResponse<DocumentListItemDto>>>()
         loadDocuments.enqueuePageDeferred(DocumentListFilter.NeedsAttention, deferredFailure)
 
         val container = DocumentsContainer(loadDocuments, getDocumentCounts)
@@ -99,7 +99,7 @@ class DocumentsContainerFilteringTest {
             assertEquals(DocumentFilter.All, initial.filter)
             assertEquals(10, initial.needsAttentionCount)
             assertEquals(5, initial.confirmedCount)
-            assertEquals(allDocs.map { it.document.id }, initial.documents.lastData?.data?.map { it.document.id })
+            assertEquals(allDocs.map { it.documentId }, initial.documents.lastData?.data?.map { it.documentId })
 
             emit(DocumentsIntent.UpdateFilter(DocumentFilter.NeedsAttention))
             runCurrent()
@@ -113,23 +113,23 @@ class DocumentsContainerFilteringTest {
             val errorState = states.value
             assertTrue(errorState.documents.isError())
             assertEquals(DocumentFilter.NeedsAttention, errorState.filter)
-            assertEquals(allDocs.map { it.document.id }, errorState.documents.lastData?.data?.map { it.document.id })
+            assertEquals(allDocs.map { it.documentId }, errorState.documents.lastData?.data?.map { it.documentId })
             assertEquals(1, getDocumentCounts.callCount)
         }
     }
 }
 
 private class FakeLoadDocumentRecordsUseCase : LoadDocumentRecordsUseCase {
-    private val pageResults: MutableMap<DocumentListFilter, ArrayDeque<CompletableDeferred<Result<PaginatedResponse<DocumentRecordDto>>>>> =
+    private val pageResults: MutableMap<DocumentListFilter, ArrayDeque<CompletableDeferred<Result<PaginatedResponse<DocumentListItemDto>>>>> =
         mutableMapOf()
 
     fun enqueuePageResult(
         filter: DocumentListFilter,
-        result: PaginatedResponse<DocumentRecordDto>,
+        result: PaginatedResponse<DocumentListItemDto>,
     ) {
         enqueuePageDeferred(
             filter = filter,
-            deferred = CompletableDeferred<Result<PaginatedResponse<DocumentRecordDto>>>().apply {
+            deferred = CompletableDeferred<Result<PaginatedResponse<DocumentListItemDto>>>().apply {
                 complete(Result.success(result))
             }
         )
@@ -137,7 +137,7 @@ private class FakeLoadDocumentRecordsUseCase : LoadDocumentRecordsUseCase {
 
     fun enqueuePageDeferred(
         filter: DocumentListFilter,
-        deferred: CompletableDeferred<Result<PaginatedResponse<DocumentRecordDto>>>,
+        deferred: CompletableDeferred<Result<PaginatedResponse<DocumentListItemDto>>>,
     ) {
         pageResults.getOrPut(filter) { ArrayDeque() }.addLast(deferred)
     }
@@ -148,7 +148,7 @@ private class FakeLoadDocumentRecordsUseCase : LoadDocumentRecordsUseCase {
         filter: DocumentListFilter?,
         documentStatus: DocumentStatus?,
         ingestionStatus: IngestionStatus?,
-    ): Result<PaginatedResponse<DocumentRecordDto>> {
+    ): Result<PaginatedResponse<DocumentListItemDto>> {
         val effectiveFilter = filter ?: DocumentListFilter.All
         val queue = requireNotNull(pageResults[effectiveFilter]) {
             "No paged responses queued for filter=$effectiveFilter"
@@ -159,7 +159,7 @@ private class FakeLoadDocumentRecordsUseCase : LoadDocumentRecordsUseCase {
     }
 }
 
-private fun pageResponse(items: List<DocumentRecordDto>): PaginatedResponse<DocumentRecordDto> {
+private fun pageResponse(items: List<DocumentListItemDto>): PaginatedResponse<DocumentListItemDto> {
     return PaginatedResponse(
         items = items,
         total = items.size.toLong(),
@@ -169,20 +169,20 @@ private fun pageResponse(items: List<DocumentRecordDto>): PaginatedResponse<Docu
     )
 }
 
-private fun documentRecord(documentId: String): DocumentRecordDto {
-    return DocumentRecordDto(
-        document = DocumentDto(
-            id = DocumentId.parse(documentId),
-            tenantId = TenantId.parse("00000000-0000-0000-0000-000000000001"),
-            filename = "doc-$documentId.pdf",
-            uploadedAt = LocalDateTime(2026, 1, 1, 10, 0),
-            downloadUrl = null,
-        ),
-        draft = null,
-        latestIngestion = null,
-        confirmedEntity = null,
-        cashflowEntryId = null,
-        pendingMatchReview = null,
-        sources = emptyList(),
+private fun documentRecord(documentId: String): DocumentListItemDto {
+    return DocumentListItemDto(
+        documentId = DocumentId.parse(documentId),
+        tenantId = TenantId.parse("00000000-0000-0000-0000-000000000001"),
+        filename = "doc-$documentId.pdf",
+        documentType = null,
+        direction = null,
+        documentStatus = null,
+        ingestionStatus = null,
+        effectiveOrigin = DocumentSource.Upload,
+        uploadedAt = LocalDateTime(2026, 1, 1, 10, 0),
+        counterpartyDisplayName = null,
+        purposeRendered = null,
+        totalAmount = null,
+        currency = null,
     )
 }

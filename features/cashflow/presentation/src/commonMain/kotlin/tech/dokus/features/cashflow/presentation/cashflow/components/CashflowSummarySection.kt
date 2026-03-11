@@ -11,7 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentListItemDto
 import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.common.OfflineOverlay
@@ -45,8 +45,8 @@ private const val RightColumnWeight = 2f
 @Composable
 fun CashflowSummarySection(
     vatSummaryState: DokusState<VatSummaryData>,
-    pendingDocumentsState: DokusState<PaginationState<DocumentRecordDto>>,
-    onPendingDocumentClick: (DocumentRecordDto) -> Unit,
+    pendingDocumentsState: DokusState<PaginationState<DocumentListItemDto>>,
+    onPendingDocumentClick: (DocumentListItemDto) -> Unit,
     onPendingLoadMore: () -> Unit,
     isOnline: Boolean = true,
     modifier: Modifier = Modifier

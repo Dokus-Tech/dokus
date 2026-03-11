@@ -15,7 +15,7 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.DocumentDto
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.contact.CounterpartyInfo
 import tech.dokus.domain.model.contact.CounterpartySnapshot
@@ -96,7 +96,7 @@ class CounterpartyInfoMapperTest {
             updatedAt = now
         )
 
-        val record = DocumentRecordDto(
+        val record = DocumentDetailDto(
             document = DocumentDto(
                 id = documentId,
                 tenantId = tenantId,

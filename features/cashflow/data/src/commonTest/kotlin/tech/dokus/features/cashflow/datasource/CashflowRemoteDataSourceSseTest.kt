@@ -17,7 +17,7 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.DocumentDeletedEventDto
 import tech.dokus.domain.model.DocumentDto
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.DocumentRecordStreamEvent
 import tech.dokus.domain.model.DocumentStreamEventNames
 import tech.dokus.domain.utils.json
@@ -42,7 +42,7 @@ class CashflowRemoteDataSourceSseTest {
                 events = listOf(
                     ServerSentEvent(
                         event = DocumentStreamEventNames.Snapshot,
-                        data = json.encodeToString(DocumentRecordDto.serializer(), record),
+                        data = json.encodeToString(DocumentDetailDto.serializer(), record),
                     ),
                     ServerSentEvent(
                         event = DocumentStreamEventNames.Deleted,
@@ -123,8 +123,8 @@ private class FakeServerConfigManager(
     override suspend fun initialize() = Unit
 }
 
-private fun documentRecord(documentId: String): DocumentRecordDto {
-    return DocumentRecordDto(
+private fun documentRecord(documentId: String): DocumentDetailDto {
+    return DocumentDetailDto(
         document = DocumentDto(
             id = DocumentId.parse(documentId),
             tenantId = TenantId.parse("00000000-0000-0000-0000-000000000001"),

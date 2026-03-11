@@ -13,7 +13,7 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.DocumentDraftData
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.RejectDocumentRequest
 import tech.dokus.domain.model.UpdateDraftRequest

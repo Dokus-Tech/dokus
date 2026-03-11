@@ -41,7 +41,8 @@ import tech.dokus.domain.model.auth.UpdateProfileRequest
 import tech.dokus.domain.model.auth.SurfaceAvailability
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.model.common.Thumbnail
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentDetailDto
+import tech.dokus.domain.model.DocumentListItemDto
 import tech.dokus.features.auth.datasource.AccountRemoteDataSource
 import tech.dokus.features.auth.datasource.IdentityRemoteDataSource
 import tech.dokus.features.auth.datasource.TenantRemoteDataSource
@@ -411,14 +412,14 @@ private class FakeAccountRemoteDataSource : AccountRemoteDataSource {
         tenantId: TenantId,
         page: Int,
         limit: Int
-    ): Result<PaginatedResponse<DocumentRecordDto>> =
+    ): Result<PaginatedResponse<DocumentListItemDto>> =
         Result.failure(IllegalStateException("not needed"))
 
     override suspend fun getConsoleClientDocument(
         firmId: FirmId,
         tenantId: TenantId,
         documentId: String
-    ): Result<DocumentRecordDto> =
+    ): Result<DocumentDetailDto> =
         Result.failure(IllegalStateException("not needed"))
 
     override suspend fun selectTenant(tenantId: TenantId): Result<LoginResponse> =

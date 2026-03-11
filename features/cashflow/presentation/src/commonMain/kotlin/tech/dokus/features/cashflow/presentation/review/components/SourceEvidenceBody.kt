@@ -26,6 +26,7 @@ import tech.dokus.aura.resources.upload_action_retry
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.model.CreditNoteDraftData
+import tech.dokus.domain.model.resolvedCounterpartyName
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.features.cashflow.presentation.common.utils.formatShortDate
 import tech.dokus.features.cashflow.presentation.review.DocumentPreviewState
@@ -164,7 +165,7 @@ private fun SourceStructuredEvidence(
             }
 
             is CreditNoteDraftData -> {
-                StructuredValue("Counterparty", draft.counterpartyName ?: "\u2014")
+                StructuredValue("Counterparty", draft.resolvedCounterpartyName ?: "\u2014")
                 StructuredValue("Credit note", draft.creditNoteNumber ?: "\u2014")
                 StructuredValue("Date", draft.issueDate?.let { formatShortDate(it) } ?: "\u2014")
                 StructuredValue("Total", draft.totalAmount?.toDisplayString() ?: "\u2014", emphasized = true)

@@ -101,8 +101,6 @@ private fun diffCreditNote(old: CreditNoteDraftData, new: CreditNoteDraftData): 
     if (old.totalAmount != new.totalAmount) add("totalAmount")
     if (old.lineItems != new.lineItems) add("lineItems")
     if (old.vatBreakdown != new.vatBreakdown) add("vatBreakdown")
-    if (old.counterpartyName != new.counterpartyName) add("counterpartyName")
-    if (old.counterpartyVat != new.counterpartyVat) add("counterpartyVat")
     if (old.originalInvoiceNumber != new.originalInvoiceNumber) add("originalInvoiceNumber")
     if (old.reason != new.reason) add("reason")
     if (old.notes != new.notes) add("notes")
@@ -175,8 +173,6 @@ private fun creditNotePopulated(d: CreditNoteDraftData): Set<String> = buildSet 
     if (d.totalAmount != null) add("totalAmount")
     if (d.lineItems.isNotEmpty()) add("lineItems")
     if (d.vatBreakdown.isNotEmpty()) add("vatBreakdown")
-    if (d.counterpartyName != null) add("counterpartyName")
-    if (d.counterpartyVat != null) add("counterpartyVat")
     if (d.originalInvoiceNumber != null) add("originalInvoiceNumber")
     if (d.reason != null) add("reason")
     if (d.notes != null) add("notes")
@@ -339,8 +335,6 @@ private fun mergeCreditNote(
         totalAmount = pick("totalAmount", existing.totalAmount, incoming.totalAmount),
         lineItems = pick("lineItems", existing.lineItems, incoming.lineItems),
         vatBreakdown = pick("vatBreakdown", existing.vatBreakdown, incoming.vatBreakdown),
-        counterpartyName = pick("counterpartyName", existing.counterpartyName, incoming.counterpartyName),
-        counterpartyVat = pick("counterpartyVat", existing.counterpartyVat, incoming.counterpartyVat),
         originalInvoiceNumber = pick("originalInvoiceNumber", existing.originalInvoiceNumber, incoming.originalInvoiceNumber),
         reason = pick("reason", existing.reason, incoming.reason),
         notes = pick("notes", existing.notes, incoming.notes),

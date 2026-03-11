@@ -15,6 +15,8 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.BankStatementDraftData
 import tech.dokus.domain.model.CreditNoteDraftData
+import tech.dokus.domain.model.resolvedCounterpartyName
+import tech.dokus.domain.model.resolvedCounterpartyVat
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
@@ -230,12 +232,7 @@ class DocumentPurposeService(
             DocumentDirection.Unknown -> draftData.seller.name ?: draftData.buyer.name
         }
 
-        is CreditNoteDraftData -> when (draftData.direction) {
-            DocumentDirection.Inbound -> draftData.seller.name ?: draftData.counterpartyName
-            DocumentDirection.Outbound -> draftData.buyer.name ?: draftData.counterpartyName
-            DocumentDirection.Neutral -> draftData.counterpartyName ?: draftData.seller.name ?: draftData.buyer.name
-            DocumentDirection.Unknown -> draftData.counterpartyName ?: draftData.seller.name ?: draftData.buyer.name
-        }
+        is CreditNoteDraftData -> draftData.resolvedCounterpartyName
 
         is ReceiptDraftData -> draftData.merchantName
         is BankStatementDraftData -> draftData.transactions.firstNotNullOfOrNull { it.counterparty.name }
@@ -249,12 +246,7 @@ class DocumentPurposeService(
             DocumentDirection.Unknown -> draftData.seller.vat ?: draftData.buyer.vat
         }
 
-        is CreditNoteDraftData -> when (draftData.direction) {
-            DocumentDirection.Inbound -> draftData.seller.vat ?: draftData.counterpartyVat
-            DocumentDirection.Outbound -> draftData.buyer.vat ?: draftData.counterpartyVat
-            DocumentDirection.Neutral -> draftData.counterpartyVat ?: draftData.seller.vat ?: draftData.buyer.vat
-            DocumentDirection.Unknown -> draftData.counterpartyVat ?: draftData.seller.vat ?: draftData.buyer.vat
-        }
+        is CreditNoteDraftData -> draftData.resolvedCounterpartyVat
 
         is ReceiptDraftData -> draftData.merchantVat
         is BankStatementDraftData -> null

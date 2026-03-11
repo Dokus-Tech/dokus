@@ -63,7 +63,8 @@ import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentIngestionDto
 import tech.dokus.domain.model.DocumentIntakeResult
 import tech.dokus.domain.model.DocumentPagesResponse
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentDetailDto
+import tech.dokus.domain.model.DocumentListItemDto
 import tech.dokus.domain.model.DocumentRecordStreamEvent
 import tech.dokus.domain.model.DocumentSourceDto
 import tech.dokus.domain.model.DocumentStreamEventNames
@@ -433,7 +434,7 @@ internal class CashflowRemoteDataSourceImpl(
 
     override suspend fun getDocument(documentId: DocumentId): Result<DocumentDto> {
         return runCatching {
-            val response: DocumentRecordDto = httpClient.get(Documents.Id(id = documentId.toString())).body()
+            val response: DocumentDetailDto = httpClient.get(Documents.Id(id = documentId.toString())).body()
             response.document
         }
     }
@@ -464,7 +465,7 @@ internal class CashflowRemoteDataSourceImpl(
     override suspend fun resolveDocumentMatchReview(
         reviewId: DocumentMatchReviewId,
         request: ResolveDocumentMatchReviewRequest
-    ): Result<DocumentRecordDto> {
+    ): Result<DocumentDetailDto> {
         return runCatching {
             httpClient.post(
                 Documents.MatchReviews.Resolve(reviewId = reviewId.toString())
@@ -611,7 +612,7 @@ internal class CashflowRemoteDataSourceImpl(
         ingestionStatus: IngestionStatus?,
         page: Int,
         limit: Int
-    ): Result<PaginatedResponse<DocumentRecordDto>> {
+    ): Result<PaginatedResponse<DocumentListItemDto>> {
         return runCatching {
             httpClient.get(
                 Documents.Paginated(
@@ -649,7 +650,7 @@ internal class CashflowRemoteDataSourceImpl(
         )
     }
 
-    override suspend fun getDocumentRecord(documentId: DocumentId): Result<DocumentRecordDto> {
+    override suspend fun getDocumentRecord(documentId: DocumentId): Result<DocumentDetailDto> {
         return runCatching {
             httpClient.get(Documents.Id(id = documentId.toString())).body()
         }
@@ -666,7 +667,7 @@ internal class CashflowRemoteDataSourceImpl(
             decodeEvent = { event ->
                 when (event.event) {
                     DocumentStreamEventNames.Snapshot -> event.data?.let { payload ->
-                        runCatching { json.decodeFromString(DocumentRecordDto.serializer(), payload) }
+                        runCatching { json.decodeFromString(DocumentDetailDto.serializer(), payload) }
                             .getOrNull()
                             ?.let { DocumentRecordStreamEvent.Snapshot(record = it) }
                     }
@@ -732,7 +733,7 @@ internal class CashflowRemoteDataSourceImpl(
 
     override suspend fun confirmDocument(
         documentId: DocumentId
-    ): Result<DocumentRecordDto> {
+    ): Result<DocumentDetailDto> {
         return runCatching {
             val docIdRoute = Documents.Id(id = documentId.toString())
             httpClient.post(Documents.Id.Confirm(parent = docIdRoute)) {
@@ -744,7 +745,7 @@ internal class CashflowRemoteDataSourceImpl(
     override suspend fun rejectDocument(
         documentId: DocumentId,
         request: RejectDocumentRequest
-    ): Result<DocumentRecordDto> {
+    ): Result<DocumentDetailDto> {
         return runCatching {
             val docIdRoute = Documents.Id(id = documentId.toString())
             httpClient.post(Documents.Id.Reject(parent = docIdRoute)) {

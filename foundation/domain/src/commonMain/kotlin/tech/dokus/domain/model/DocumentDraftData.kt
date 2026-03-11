@@ -34,6 +34,20 @@ fun DocumentDraftData.toDocumentType(): DocumentType = when (this) {
     is BankStatementDraftData -> DocumentType.BankStatement
 }
 
+fun DocumentDraftData.toTotalAmount(): Money? = when (this) {
+    is InvoiceDraftData -> totalAmount
+    is CreditNoteDraftData -> totalAmount
+    is ReceiptDraftData -> totalAmount
+    is BankStatementDraftData -> null
+}
+
+fun DocumentDraftData.toCurrency(): Currency = when (this) {
+    is InvoiceDraftData -> currency
+    is CreditNoteDraftData -> currency
+    is ReceiptDraftData -> currency
+    is BankStatementDraftData -> Currency.default
+}
+
 @Serializable
 data class PartyDraft(
     val name: String? = null,
@@ -81,16 +95,27 @@ data class CreditNoteDraftData(
     val totalAmount: Money? = null,
     val lineItems: List<FinancialLineItem> = emptyList(),
     val vatBreakdown: List<VatBreakdownEntry> = emptyList(),
-    val counterpartyName: String? = null,
-    val counterpartyVat: VatNumber? = null,
     val originalInvoiceNumber: String? = null,
     val reason: String? = null,
     val notes: String? = null,
     // Neutral party model used for deterministic direction and counterparty resolution.
     val seller: PartyDraft = PartyDraft(),
     val buyer: PartyDraft = PartyDraft(),
-) : DocumentDraftData {
-}
+) : DocumentDraftData
+
+val CreditNoteDraftData.resolvedCounterpartyName: String?
+    get() = when (direction) {
+        DocumentDirection.Inbound -> seller.name
+        DocumentDirection.Outbound -> buyer.name
+        else -> seller.name ?: buyer.name
+    }
+
+val CreditNoteDraftData.resolvedCounterpartyVat: VatNumber?
+    get() = when (direction) {
+        DocumentDirection.Inbound -> seller.vat
+        DocumentDirection.Outbound -> buyer.vat
+        else -> seller.vat ?: buyer.vat
+    }
 
 @Serializable
 @SerialName("receipt_draft")

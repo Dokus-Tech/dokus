@@ -36,7 +36,7 @@ import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.domain.model.TransactionCommunication
 import tech.dokus.domain.ids.StructuredCommunication
 import tech.dokus.domain.model.DocumentPagePreviewDto
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.DocumentSourceDto
 import tech.dokus.domain.model.DocumentMatchReviewSummaryDto
 import tech.dokus.domain.model.FinancialLineItem
@@ -155,7 +155,7 @@ internal fun previewReviewContentState(
         )
     }
 
-    val record = DocumentRecordDto(
+    val record = DocumentDetailDto(
         document = DocumentDto(
             id = documentId,
             tenantId = tenantId,

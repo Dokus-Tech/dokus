@@ -16,8 +16,11 @@ import io.ktor.server.routing.Route
 import io.ktor.server.sse.heartbeat
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.onSubscription
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
@@ -59,10 +62,13 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentMatchReviewId
 import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.toCurrency
+import tech.dokus.domain.model.toTotalAmount
 import tech.dokus.domain.model.DocumentCollectionChangedEventDto
 import tech.dokus.domain.model.DocumentCountsResponse
 import tech.dokus.domain.model.DocumentDeletedEventDto
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentDetailDto
+import tech.dokus.domain.model.DocumentListItemDto
 import tech.dokus.domain.model.DocumentStreamEventNames
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.RejectDocumentRequest
@@ -89,7 +95,7 @@ import tech.dokus.foundation.backend.storage.DocumentStorageService as MinioDocu
  *
  * Endpoints:
  * - GET /api/v1/documents - List documents with filters
- * - GET /api/v1/documents/{id} - Get full DocumentRecordDto
+ * - GET /api/v1/documents/{id} - Get full DocumentDetailDto
  * - DELETE /api/v1/documents/{id} - Delete document (cascades)
  * - GET /api/v1/documents/{id}/draft - Get draft
  * - PATCH /api/v1/documents/{id}/draft - Update draft
@@ -148,48 +154,68 @@ internal fun Route.documentRecordRoutes() {
                 limit = limit
             )
 
+            val documentIds = documentsWithInfo.map { it.document.id }
             val confirmedDocumentIds = documentsWithInfo
                 .filter { it.draft?.documentStatus == DocumentStatus.Confirmed }
                 .map { it.document.id }
-            val cashflowEntryIdsByDocumentId = cashflowEntriesRepository
-                .getIdsByDocumentIds(tenantId, confirmedDocumentIds)
-                .getOrThrow()
-            val pendingReviewsByDocumentId = truthService.getPendingReviewsByDocuments(
-                tenantId = tenantId,
-                documentIds = documentsWithInfo.map { it.document.id }
-            )
 
-            // Build full records
-            val records = documentsWithInfo.map { docInfo ->
-                val documentWithUrl = addDownloadUrl(docInfo.document, null, minioStorage, logger)
-                val draft = docInfo.draft
-                val confirmedEntity = if (draft?.documentStatus == DocumentStatus.Confirmed) {
-                    findConfirmedEntity(
-                        docInfo.document.id,
-                        draft.documentType,
-                        tenantId,
-                        invoiceRepository,
-                        expenseRepository,
-                        creditNoteRepository
-                    )
-                } else {
-                    null
+            // Run independent enrichment queries in parallel
+            val (cashflowEntryIdsByDocumentId, pendingReviewsByDocumentId, sourceEnrichment) = coroutineScope {
+                val cashflowDeferred = async {
+                    cashflowEntriesRepository.getIdsByDocumentIds(tenantId, confirmedDocumentIds).getOrThrow()
                 }
+                val reviewsDeferred = async {
+                    truthService.getPendingReviewsByDocuments(tenantId = tenantId, documentIds = documentIds)
+                }
+                val sourcesDeferred = async {
+                    documentSourceRepository.selectPreferredSourcesByDocumentIds(tenantId, documentIds)
+                }
+                Triple(cashflowDeferred.await(), reviewsDeferred.await(), sourcesDeferred.await())
+            }
 
-                DocumentRecordDto(
-                    document = documentWithUrl,
-                    draft = draft?.toDto(),
-                    latestIngestion = docInfo.latestIngestion?.toDto(),
-                    confirmedEntity = confirmedEntity,
+            // Generate download URLs in parallel
+            val downloadUrlsByDocumentId = coroutineScope {
+                sourceEnrichment.map { (docId, source) ->
+                    async {
+                        val url = try {
+                            minioStorage.getDownloadUrl(source.storageKey)
+                        } catch (e: RuntimeException) {
+                            logger.warn("Failed to get download URL for ${source.storageKey}: ${e.message}")
+                            null
+                        }
+                        docId to url
+                    }
+                }.awaitAll().toMap()
+            }
+
+            // Build flat list items
+            val items = documentsWithInfo.map { docInfo ->
+                val draft = docInfo.draft
+                val preferredSource = sourceEnrichment[docInfo.document.id]
+                DocumentListItemDto(
+                    documentId = docInfo.document.id,
+                    tenantId = docInfo.document.tenantId,
+                    filename = preferredSource?.filename ?: docInfo.document.filename,
+                    documentType = draft?.documentType,
+                    direction = draft?.direction,
+                    documentStatus = draft?.documentStatus,
+                    ingestionStatus = docInfo.latestIngestion?.status,
+                    effectiveOrigin = preferredSource?.sourceChannel ?: docInfo.document.effectiveOrigin,
+                    uploadedAt = preferredSource?.arrivalAt ?: docInfo.document.uploadedAt,
+                    counterpartyDisplayName = draft?.counterpartyDisplayName,
+                    purposeRendered = draft?.purposeRendered,
+                    totalAmount = draft?.extractedData?.toTotalAmount(),
+                    currency = draft?.extractedData?.toCurrency(),
+                    downloadUrl = downloadUrlsByDocumentId[docInfo.document.id],
+                    hasPendingMatchReview = pendingReviewsByDocumentId.containsKey(docInfo.document.id),
                     cashflowEntryId = cashflowEntryIdsByDocumentId[docInfo.document.id],
-                    pendingMatchReview = pendingReviewsByDocumentId[docInfo.document.id]?.toSummaryDto()
                 )
             }
 
             call.respond(
                 HttpStatusCode.OK,
                 PaginatedResponse(
-                    items = records,
+                    items = items,
                     total = total,
                     limit = limit,
                     offset = page * limit
@@ -270,7 +296,7 @@ internal fun Route.documentRecordRoutes() {
                         sendJsonEvent(
                             event = DocumentStreamEventNames.Snapshot,
                             payload = currentRecord,
-                            encode = { json.encodeToString(DocumentRecordDto.serializer(), it) }
+                            encode = { json.encodeToString(DocumentDetailDto.serializer(), it) }
                         )
                         true
                     } else {
@@ -301,7 +327,7 @@ internal fun Route.documentRecordRoutes() {
                     sendJsonEvent(
                         event = DocumentStreamEventNames.Snapshot,
                         payload = initialRecord,
-                        encode = { json.encodeToString(DocumentRecordDto.serializer(), it) }
+                        encode = { json.encodeToString(DocumentDetailDto.serializer(), it) }
                     )
 
                     while (true) {
@@ -894,10 +920,6 @@ internal fun Route.documentRecordRoutes() {
 
 internal fun isInboxLifecycle(status: IngestionStatus?): Boolean {
     return status == IngestionStatus.Queued || status == IngestionStatus.Processing
-}
-
-private fun selectPreferredSource(sources: List<DocumentSourceSummary>): DocumentSourceSummary? {
-    return selectPreferredSource(sources)
 }
 
 private fun publishAffectedDocuments(

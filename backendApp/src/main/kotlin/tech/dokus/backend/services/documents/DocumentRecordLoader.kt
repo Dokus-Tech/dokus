@@ -14,7 +14,7 @@ import tech.dokus.database.repository.cashflow.selectPreferredSource
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.foundation.backend.storage.DocumentStorageService
 import tech.dokus.foundation.backend.utils.loggerFor
 
@@ -34,7 +34,7 @@ internal class DocumentRecordLoader(
     suspend fun load(
         tenantId: TenantId,
         documentId: DocumentId,
-    ): DocumentRecordDto? {
+    ): DocumentDetailDto? {
         val document = documentRepository.getById(tenantId, documentId) ?: return null
         val sources = truthService.listSources(tenantId, documentId)
         val preferredSource = selectPreferredSource(sources)
@@ -70,7 +70,7 @@ internal class DocumentRecordLoader(
             null
         }
 
-        return DocumentRecordDto(
+        return DocumentDetailDto(
             document = documentWithUrl,
             draft = draft?.toDto(),
             latestIngestion = latestIngestion?.toDto(

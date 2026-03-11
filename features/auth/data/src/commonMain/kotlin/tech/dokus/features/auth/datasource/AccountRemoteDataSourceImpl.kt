@@ -21,7 +21,8 @@ import tech.dokus.domain.ids.SessionId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.FirmId
 import tech.dokus.domain.ids.UserId
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentDetailDto
+import tech.dokus.domain.model.DocumentListItemDto
 import tech.dokus.domain.model.User
 import tech.dokus.domain.model.common.Thumbnail
 import tech.dokus.domain.model.common.PaginatedResponse
@@ -81,7 +82,7 @@ internal class AccountRemoteDataSourceImpl(
         tenantId: TenantId,
         page: Int,
         limit: Int
-    ): Result<PaginatedResponse<DocumentRecordDto>> {
+    ): Result<PaginatedResponse<DocumentListItemDto>> {
         return runCatching {
             httpClient.get(
                 Console.Client.Documents(
@@ -99,7 +100,7 @@ internal class AccountRemoteDataSourceImpl(
         firmId: FirmId,
         tenantId: TenantId,
         documentId: String
-    ): Result<DocumentRecordDto> {
+    ): Result<DocumentDetailDto> {
         return runCatching {
             httpClient.get(
                 Console.Client.Document(

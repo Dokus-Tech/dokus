@@ -32,7 +32,7 @@ import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentIngestionDto
 import tech.dokus.domain.model.DocumentMatchReviewSummaryDto
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.DocumentSourceDto
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
@@ -198,7 +198,7 @@ class DocumentReviewCanonicalStateTest {
             )
         }
 
-        val record = DocumentRecordDto(
+        val record = DocumentDetailDto(
             document = DocumentDto(
                 id = documentId,
                 tenantId = tenantId,

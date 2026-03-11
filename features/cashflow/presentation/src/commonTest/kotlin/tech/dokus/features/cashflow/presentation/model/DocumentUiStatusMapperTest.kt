@@ -13,7 +13,7 @@ import tech.dokus.domain.model.contact.CounterpartyInfo
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.DocumentIngestionDto
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.foundation.aura.model.DocumentUiStatus
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -164,8 +164,8 @@ class DocumentUiStatusMapperTest {
             documentType = documentType
         ),
         latestIngestion: DocumentIngestionDto? = createIngestion(ingestionStatus, errorMessage, confidence)
-    ): DocumentRecordDto {
-        return DocumentRecordDto(
+    ): DocumentDetailDto {
+        return DocumentDetailDto(
             document = createDocument(),
             draft = draft,
             latestIngestion = latestIngestion,

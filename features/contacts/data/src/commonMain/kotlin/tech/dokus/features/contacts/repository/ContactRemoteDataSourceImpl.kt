@@ -15,7 +15,7 @@ import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.ContactNoteId
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.PeppolStatusResponse
 import tech.dokus.domain.model.common.PaginatedResponse
@@ -242,10 +242,10 @@ internal class ContactRemoteDataSourceImpl(
         }
     }
 
-    override suspend fun getDocumentRecord(documentId: DocumentId): Result<DocumentRecordDto> {
+    override suspend fun getDocumentRecord(documentId: DocumentId): Result<DocumentDetailDto> {
         logger.d { "Getting document record for contact details: $documentId" }
         return runCatching {
-            httpClient.get(Documents.Id(id = documentId.toString())).body<DocumentRecordDto>()
+            httpClient.get(Documents.Id(id = documentId.toString())).body<DocumentDetailDto>()
         }.onSuccess {
             logger.i { "Got document record for contact details: $documentId" }
         }.onFailure { error ->

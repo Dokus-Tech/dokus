@@ -15,7 +15,8 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.Tenant
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentDetailDto
+import tech.dokus.domain.model.DocumentListItemDto
 import tech.dokus.domain.model.UpsertTenantAddressRequest
 import tech.dokus.domain.model.User
 import tech.dokus.domain.model.common.Thumbnail
@@ -68,13 +69,13 @@ interface AuthGateway {
         tenantId: TenantId,
         page: Int = 0,
         limit: Int = 20,
-    ): Result<PaginatedResponse<DocumentRecordDto>>
+    ): Result<PaginatedResponse<DocumentListItemDto>>
 
     suspend fun getConsoleClientDocument(
         firmId: FirmId,
         tenantId: TenantId,
         documentId: String,
-    ): Result<DocumentRecordDto>
+    ): Result<DocumentDetailDto>
 
     suspend fun getCurrentUser(): Result<User>
 

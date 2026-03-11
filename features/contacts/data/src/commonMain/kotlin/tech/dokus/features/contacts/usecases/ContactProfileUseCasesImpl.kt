@@ -10,7 +10,7 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.model.BankStatementDraftData
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentDraftData
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
@@ -115,7 +115,7 @@ private fun invoiceOutstandingAmount(
 }
 
 private fun FinancialDocumentDto.InvoiceDto.toRecentDocument(
-    documentRecord: DocumentRecordDto?
+    documentRecord: DocumentDetailDto?
 ): ContactRecentInvoice {
     return ContactRecentInvoice(
         invoiceId = id,
@@ -132,7 +132,7 @@ private fun FinancialDocumentDto.InvoiceDto.toRecentDocument(
 
 internal fun resolveRecentDocumentSummary(
     invoice: FinancialDocumentDto.InvoiceDto,
-    documentRecord: DocumentRecordDto?
+    documentRecord: DocumentDetailDto?
 ): String? {
     return documentRecord?.draft?.purposeRendered.normalizeRecentDocumentText()
         ?: documentRecord?.draft?.purposeBase.normalizeRecentDocumentText()
@@ -142,7 +142,7 @@ internal fun resolveRecentDocumentSummary(
 
 internal fun resolveRecentDocumentReference(
     invoice: FinancialDocumentDto.InvoiceDto,
-    documentRecord: DocumentRecordDto?
+    documentRecord: DocumentDetailDto?
 ): String? {
     return documentRecord?.draft?.extractedData?.recentDocumentReference()
         ?: documentRecord?.confirmedEntity?.recentDocumentReference()

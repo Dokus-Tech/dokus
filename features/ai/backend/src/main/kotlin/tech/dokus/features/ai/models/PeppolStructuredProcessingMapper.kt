@@ -4,6 +4,8 @@ import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.model.BankStatementDraftData
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentDraftData
+import tech.dokus.domain.model.resolvedCounterpartyName
+import tech.dokus.domain.model.resolvedCounterpartyVat
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.domain.model.TransactionCommunication
@@ -186,8 +188,8 @@ private fun counterpartyExtractionForCreditNote(data: CreditNoteDraftData): Coun
         DocumentDirection.Neutral -> CounterpartyRole.Unknown
         DocumentDirection.Unknown -> CounterpartyRole.Unknown
     }
-    val name = data.counterpartyName ?: data.seller.name ?: data.buyer.name
-    val vat = data.counterpartyVat?.value ?: data.seller.vat?.value ?: data.buyer.vat?.value
+    val name = data.resolvedCounterpartyName
+    val vat = data.resolvedCounterpartyVat?.value
     return CounterpartyExtraction(
         name = name,
         vatNumber = vat,

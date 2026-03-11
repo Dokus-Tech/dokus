@@ -7,7 +7,7 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.model.DocumentMatchResolutionDecision
 import tech.dokus.domain.model.DocumentPagesResponse
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.DocumentRecordStreamEvent
 import tech.dokus.domain.model.RejectDocumentRequest
 import tech.dokus.domain.model.UpdateDraftRequest
@@ -19,7 +19,7 @@ import tech.dokus.domain.model.UpdateDraftResponse
  * Use case for loading a document record for review.
  */
 interface GetDocumentRecordUseCase {
-    suspend operator fun invoke(documentId: DocumentId): Result<DocumentRecordDto>
+    suspend operator fun invoke(documentId: DocumentId): Result<DocumentDetailDto>
 }
 
 interface ObserveDocumentRecordEventsUseCase {
@@ -53,7 +53,7 @@ interface UpdateDocumentDraftContactUseCase {
 interface ConfirmDocumentUseCase {
     suspend operator fun invoke(
         documentId: DocumentId
-    ): Result<DocumentRecordDto>
+    ): Result<DocumentDetailDto>
 }
 
 /**
@@ -63,7 +63,7 @@ interface RejectDocumentUseCase {
     suspend operator fun invoke(
         documentId: DocumentId,
         request: RejectDocumentRequest
-    ): Result<DocumentRecordDto>
+    ): Result<DocumentDetailDto>
 }
 
 /**
@@ -117,5 +117,5 @@ interface ResolveDocumentMatchReviewUseCase {
     suspend operator fun invoke(
         reviewId: DocumentMatchReviewId,
         decision: DocumentMatchResolutionDecision
-    ): Result<DocumentRecordDto>
+    ): Result<DocumentDetailDto>
 }

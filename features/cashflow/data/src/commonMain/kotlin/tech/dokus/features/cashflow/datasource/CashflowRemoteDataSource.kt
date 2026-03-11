@@ -48,7 +48,8 @@ import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentIngestionDto
 import tech.dokus.domain.model.DocumentIntakeResult
 import tech.dokus.domain.model.DocumentPagesResponse
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentDetailDto
+import tech.dokus.domain.model.DocumentListItemDto
 import tech.dokus.domain.model.DocumentRecordStreamEvent
 import tech.dokus.domain.model.DocumentSourceDto
 import tech.dokus.domain.model.FinancialDocumentDto
@@ -339,7 +340,7 @@ interface CashflowRemoteDataSource {
     suspend fun resolveDocumentMatchReview(
         reviewId: DocumentMatchReviewId,
         request: ResolveDocumentMatchReviewRequest
-    ): Result<DocumentRecordDto>
+    ): Result<DocumentDetailDto>
 
     // ============================================================================
     // STATISTICS & OVERVIEW
@@ -454,7 +455,7 @@ interface CashflowRemoteDataSource {
      * List documents with optional filtering.
      * GET /api/v1/documents?documentStatus={documentStatus}&documentType={documentType}&ingestionStatus={ingestionStatus}&page={page}&limit={limit}
      *
-     * Returns DocumentRecordDto envelope containing document, draft, and latest ingestion.
+     * Returns DocumentListItemDto — a flat row DTO with only the fields needed for list rendering.
      *
      * @param documentStatus Filter by draft status (NeedsReview, Confirmed, Rejected)
      * @param documentType Filter by document type (Invoice, Expense)
@@ -469,7 +470,7 @@ interface CashflowRemoteDataSource {
         ingestionStatus: IngestionStatus? = null,
         page: Int = 0,
         limit: Int = 20
-    ): Result<PaginatedResponse<DocumentRecordDto>>
+    ): Result<PaginatedResponse<DocumentListItemDto>>
 
     /**
      * Return full backend badge counts for the documents inbox.
@@ -483,7 +484,7 @@ interface CashflowRemoteDataSource {
      * Get a document record by ID with full envelope (document + draft + latest ingestion + confirmed entity).
      * GET /api/v1/documents/{id}
      */
-    suspend fun getDocumentRecord(documentId: DocumentId): Result<DocumentRecordDto>
+    suspend fun getDocumentRecord(documentId: DocumentId): Result<DocumentDetailDto>
 
     fun observeDocumentRecordEvents(documentId: DocumentId): Flow<DocumentRecordStreamEvent>
 
@@ -536,7 +537,7 @@ interface CashflowRemoteDataSource {
      */
     suspend fun confirmDocument(
         documentId: DocumentId
-    ): Result<DocumentRecordDto>
+    ): Result<DocumentDetailDto>
 
     /**
      * Reject a document draft with a reason.
@@ -545,7 +546,7 @@ interface CashflowRemoteDataSource {
     suspend fun rejectDocument(
         documentId: DocumentId,
         request: RejectDocumentRequest
-    ): Result<DocumentRecordDto>
+    ): Result<DocumentDetailDto>
 
     /**
      * Get ingestion history for a document.

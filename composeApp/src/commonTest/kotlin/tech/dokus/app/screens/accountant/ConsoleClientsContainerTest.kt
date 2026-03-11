@@ -17,8 +17,9 @@ import tech.dokus.domain.ids.FirmId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.DocumentDto
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentListItemDto
 import tech.dokus.domain.model.User
 import tech.dokus.domain.model.auth.AccountMeResponse
 import tech.dokus.domain.model.auth.AppSurface
@@ -139,7 +140,7 @@ class ConsoleClientsContainerTest {
     fun `select client success loads documents list`() = runTest {
         val firmId = FirmId("00000000-0000-0000-0000-000000000903")
         val tenantId = TenantId("00000000-0000-0000-0000-000000000555")
-        val docs = listOf(documentRecord(tenantId, "doc-1.pdf"), documentRecord(tenantId, "doc-2.pdf"))
+        val docs = listOf(listItemRecord(tenantId, "doc-1.pdf"), listItemRecord(tenantId, "doc-2.pdf"))
         val documentsUseCase = FakeListConsoleClientDocumentsUseCase(
             Result.success(PaginatedResponse(items = docs, total = docs.size.toLong(), limit = 50, offset = 0))
         )
@@ -162,7 +163,7 @@ class ConsoleClientsContainerTest {
             assertEquals(listOf(tenantId), documentsUseCase.receivedTenantIds)
             val loaded = states.value
             assertEquals(tenantId, loaded.selectedClientTenantId)
-            val docsState = assertIs<DokusState.Success<List<DocumentRecordDto>>>(loaded.documentsState)
+            val docsState = assertIs<DokusState.Success<List<DocumentListItemDto>>>(loaded.documentsState)
             assertEquals(2, docsState.data.size)
         }
     }
@@ -190,7 +191,7 @@ class ConsoleClientsContainerTest {
 
             val loaded = states.value
             assertEquals(tenantId, loaded.selectedClientTenantId)
-            val docsError = assertIs<DokusState.Error<List<DocumentRecordDto>>>(loaded.documentsState)
+            val docsError = assertIs<DokusState.Error<List<DocumentListItemDto>>>(loaded.documentsState)
             assertEquals(expectedError, docsError.exception)
             assertNull(loaded.selectedDocument)
             assertEquals(listOf(tenantId), documentsUseCase.receivedTenantIds)
@@ -201,15 +202,17 @@ class ConsoleClientsContainerTest {
     fun `open document success stores selected document`() = runTest {
         val firmId = FirmId("00000000-0000-0000-0000-000000000905")
         val tenantId = TenantId("00000000-0000-0000-0000-000000000777")
-        val record = documentRecord(tenantId, "INV-77.pdf")
-        val documentUseCase = FakeGetConsoleClientDocumentUseCase(Result.success(record))
+        val documentId = DocumentId.generate()
+        val listItem = listItemRecord(tenantId, "INV-77.pdf", documentId = documentId)
+        val detailRecord = documentDetailRecord(tenantId, "INV-77.pdf", documentId = documentId)
+        val documentUseCase = FakeGetConsoleClientDocumentUseCase(Result.success(detailRecord))
         val container = ConsoleClientsContainer(
             getAccountMeUseCase = FakeGetAccountMeUseCase(Result.success(accountMe(firmId))),
             listConsoleClientsUseCase = FakeListConsoleClientsUseCase(
                 Result.success(listOf(client(tenantId.toString(), "Client One", null)))
             ),
             listConsoleClientDocumentsUseCase = FakeListConsoleClientDocumentsUseCase(
-                Result.success(PaginatedResponse(items = listOf(record), total = 1L, limit = 50, offset = 0))
+                Result.success(PaginatedResponse(items = listOf(listItem), total = 1L, limit = 50, offset = 0))
             ),
             getConsoleClientDocumentUseCase = documentUseCase,
         )
@@ -219,13 +222,13 @@ class ConsoleClientsContainerTest {
             emit(ConsoleClientsIntent.SelectClient(tenantId))
             advanceUntilIdle()
 
-            emit(ConsoleClientsIntent.OpenDocument(record.document.id.toString()))
+            emit(ConsoleClientsIntent.OpenDocument(documentId.toString()))
             advanceUntilIdle()
 
             val loaded = states.value
-            assertEquals(record.document.id, loaded.selectedDocument?.document?.id)
+            assertEquals(documentId, loaded.selectedDocument?.document?.id)
             assertNull(loaded.loadingDocumentId)
-            assertEquals(listOf(record.document.id.toString()), documentUseCase.receivedDocumentIds)
+            assertEquals(listOf(documentId.toString()), documentUseCase.receivedDocumentIds)
         }
     }
 }
@@ -253,7 +256,7 @@ private class FakeListConsoleClientsUseCase(
 }
 
 private class FakeListConsoleClientDocumentsUseCase(
-    private val result: Result<PaginatedResponse<DocumentRecordDto>>
+    private val result: Result<PaginatedResponse<DocumentListItemDto>>
 ) : ListConsoleClientDocumentsUseCase {
     val receivedTenantIds = mutableListOf<TenantId>()
 
@@ -262,14 +265,14 @@ private class FakeListConsoleClientDocumentsUseCase(
         tenantId: TenantId,
         page: Int,
         limit: Int
-    ): Result<PaginatedResponse<DocumentRecordDto>> {
+    ): Result<PaginatedResponse<DocumentListItemDto>> {
         receivedTenantIds += tenantId
         return result
     }
 }
 
 private class FakeGetConsoleClientDocumentUseCase(
-    private val result: Result<DocumentRecordDto>
+    private val result: Result<DocumentDetailDto>
 ) : GetConsoleClientDocumentUseCase {
     val receivedDocumentIds = mutableListOf<String>()
 
@@ -277,7 +280,7 @@ private class FakeGetConsoleClientDocumentUseCase(
         firmId: FirmId,
         tenantId: TenantId,
         documentId: String
-    ): Result<DocumentRecordDto> {
+    ): Result<DocumentDetailDto> {
         receivedDocumentIds += documentId
         return result
     }
@@ -325,12 +328,34 @@ private fun accountMe(firmId: FirmId): AccountMeResponse {
     )
 }
 
-private fun documentRecord(
+private fun listItemRecord(
     tenantId: TenantId,
-    filename: String
-): DocumentRecordDto {
-    val documentId = DocumentId.generate()
-    return DocumentRecordDto(
+    filename: String,
+    documentId: DocumentId = DocumentId.generate(),
+): DocumentListItemDto {
+    return DocumentListItemDto(
+        documentId = documentId,
+        tenantId = tenantId,
+        filename = filename,
+        documentType = null,
+        direction = null,
+        documentStatus = null,
+        ingestionStatus = null,
+        effectiveOrigin = DocumentSource.Upload,
+        uploadedAt = LocalDateTime(2026, 2, 1, 10, 0),
+        counterpartyDisplayName = null,
+        purposeRendered = null,
+        totalAmount = null,
+        currency = null,
+    )
+}
+
+private fun documentDetailRecord(
+    tenantId: TenantId,
+    filename: String,
+    documentId: DocumentId = DocumentId.generate(),
+): DocumentDetailDto {
+    return DocumentDetailDto(
         document = DocumentDto(
             id = documentId,
             tenantId = tenantId,

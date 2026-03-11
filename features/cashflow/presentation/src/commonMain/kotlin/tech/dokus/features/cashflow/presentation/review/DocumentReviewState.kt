@@ -28,7 +28,7 @@ import tech.dokus.domain.model.BankStatementDraftData
 import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentDraftData
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.domain.model.InvoiceDraftData
@@ -105,7 +105,7 @@ enum class ReviewFinancialStatus {
 @Immutable
 data class ReviewDocumentData(
     val documentId: DocumentId,
-    val documentRecord: DocumentRecordDto,
+    val documentRecord: DocumentDetailDto,
     val draftData: DocumentDraftData?,
     val originalData: DocumentDraftData?,
     val previewUrl: String?,
@@ -164,7 +164,7 @@ data class DocumentReviewState(
         get() = documentData?.documentId
 
     /** The document record, available when loaded. */
-    val documentRecord: DocumentRecordDto?
+    val documentRecord: DocumentDetailDto?
         get() = documentData?.documentRecord
 
     /** The current draft data (store-internal — composables should use [uiData] instead). */

@@ -24,7 +24,7 @@ import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.domain.enums.UserRole
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.auth.AcceptFirmInviteRequest
 import tech.dokus.domain.model.auth.AcceptFirmInviteResponse
 import tech.dokus.domain.model.auth.ConsoleClientSummary
@@ -106,7 +106,7 @@ internal fun Route.consoleRoutes() {
             val records = documentsWithInfo.map { docInfo ->
                 val documentWithUrl = addDownloadUrl(docInfo.document, null, minioStorage, logger)
 
-                DocumentRecordDto(
+                DocumentDetailDto(
                     document = documentWithUrl,
                     draft = docInfo.draft?.toDto(),
                     latestIngestion = docInfo.latestIngestion?.toDto(),
@@ -145,7 +145,7 @@ internal fun Route.consoleRoutes() {
 
             call.respond(
                 HttpStatusCode.OK,
-                DocumentRecordDto(
+                DocumentDetailDto(
                     document = documentWithUrl,
                     draft = draft?.toDto(),
                     latestIngestion = latestIngestion?.toDto(

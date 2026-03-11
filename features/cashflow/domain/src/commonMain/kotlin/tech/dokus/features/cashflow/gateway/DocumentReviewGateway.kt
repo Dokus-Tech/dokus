@@ -7,7 +7,7 @@ import tech.dokus.domain.ids.DocumentMatchReviewId
 import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.model.DocumentMatchResolutionDecision
 import tech.dokus.domain.model.DocumentPagesResponse
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.DocumentRecordStreamEvent
 import tech.dokus.domain.model.RejectDocumentRequest
 import tech.dokus.domain.model.UpdateDraftRequest
@@ -19,7 +19,7 @@ import tech.dokus.domain.model.UpdateDraftResponse
  * Gateway for document review operations.
  */
 interface DocumentReviewGateway {
-    suspend fun getDocumentRecord(documentId: DocumentId): Result<DocumentRecordDto>
+    suspend fun getDocumentRecord(documentId: DocumentId): Result<DocumentDetailDto>
     fun observeDocumentRecordEvents(documentId: DocumentId): Flow<DocumentRecordStreamEvent>
 
     suspend fun updateDocumentDraft(
@@ -35,12 +35,12 @@ interface DocumentReviewGateway {
 
     suspend fun confirmDocument(
         documentId: DocumentId
-    ): Result<DocumentRecordDto>
+    ): Result<DocumentDetailDto>
 
     suspend fun rejectDocument(
         documentId: DocumentId,
         request: RejectDocumentRequest
-    ): Result<DocumentRecordDto>
+    ): Result<DocumentDetailDto>
 
     suspend fun getDocumentPages(
         documentId: DocumentId,
@@ -68,5 +68,5 @@ interface DocumentReviewGateway {
     suspend fun resolveDocumentMatchReview(
         reviewId: DocumentMatchReviewId,
         decision: DocumentMatchResolutionDecision
-    ): Result<DocumentRecordDto>
+    ): Result<DocumentDetailDto>
 }

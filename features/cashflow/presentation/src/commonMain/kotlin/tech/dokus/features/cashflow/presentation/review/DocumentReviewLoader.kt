@@ -5,7 +5,7 @@ import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.contact.isLinked
 import tech.dokus.domain.model.contact.isUnresolved
 import tech.dokus.features.cashflow.usecases.GetDocumentRecordUseCase
@@ -41,7 +41,7 @@ internal class DocumentReviewLoader(
         }
     }
 
-    suspend fun DocumentReviewCtx.handleApplyRemoteSnapshot(record: DocumentRecordDto) {
+    suspend fun DocumentReviewCtx.handleApplyRemoteSnapshot(record: DocumentDetailDto) {
         withState {
             val activeDocumentId = documentId ?: run {
                 logger.d { "Dropping remote snapshot: no active document in current state" }
@@ -83,7 +83,7 @@ internal class DocumentReviewLoader(
 
     private suspend fun DocumentReviewCtx.transitionToDocumentState(
         documentId: DocumentId,
-        document: DocumentRecordDto,
+        document: DocumentDetailDto,
     ) {
         val previewUrl = document.document.downloadUrl
         var previousPreviewUrl: String? = null
@@ -248,7 +248,7 @@ internal class DocumentReviewLoader(
     }
 
     private fun buildContactSelectionState(
-        document: DocumentRecordDto,
+        document: DocumentDetailDto,
         suggestions: List<tech.dokus.domain.model.contact.SuggestedContact>
     ): Triple<ContactSelectionState, ContactId?, ContactSnapshot?> {
         val draft = document.draft ?: return Triple(ContactSelectionState.NoContact, null, null)

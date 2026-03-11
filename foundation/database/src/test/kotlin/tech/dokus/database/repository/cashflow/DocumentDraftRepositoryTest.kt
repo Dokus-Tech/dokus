@@ -85,10 +85,6 @@ class DocumentDraftRepositoryTest {
             DocumentsTable.insert {
                 it[id] = documentUuid
                 it[tenantId] = tenantUuid
-                it[filename] = "invoice.pdf"
-                it[contentType] = "application/pdf"
-                it[sizeBytes] = 1234L
-                it[storageKey] = "documents/$tenantUuid/invoice.pdf"
             }
 
             ContactsTable.insert {

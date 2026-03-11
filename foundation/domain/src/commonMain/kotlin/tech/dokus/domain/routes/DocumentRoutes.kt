@@ -15,9 +15,9 @@ import tech.dokus.domain.enums.IngestionStatus
  *
  * Canonical endpoints:
  * - POST /upload - Upload document (creates ingestion run with status=Queued)
- * - GET / - List documents with filters (uses Documents.List)
+ * - GET / - List documents with filters (returns DocumentListItemDto)
  * - GET /counts - Get document badge counts for the operational inbox
-     * - GET /{id} - Get full DocumentRecordDto
+     * - GET /{id} - Get full DocumentDetailDto
  * - GET /{id}/content - Download document bytes via API
  * - DELETE /{id} - Delete document (cascades to drafts, runs)
  * - POST /{id}/reprocess - Reprocess document (idempotent: returns existing run unless force)
@@ -69,7 +69,7 @@ class Documents {
     /**
      * POST /api/v1/documents/upload
      * Upload a new document
-     * Returns DocumentRecordDto (document + ingestion with status=Queued; draft is created after processing)
+     * Returns DocumentDetailDto (document + ingestion with status=Queued; draft is created after processing)
      */
     @Serializable
     @Resource("upload")
@@ -102,7 +102,7 @@ class Documents {
 
     /**
      * /api/v1/documents/{id} - Single document operations
-     * GET - Retrieve full DocumentRecordDto
+     * GET - Retrieve full DocumentDetailDto
      * DELETE - Delete document (cascades to drafts, ingestion runs, chunks)
      */
     @Serializable

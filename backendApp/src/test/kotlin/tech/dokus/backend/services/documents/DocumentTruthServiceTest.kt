@@ -37,9 +37,11 @@ import tech.dokus.domain.model.DocumentMatchResolutionDecision
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.PartyDraft
 import tech.dokus.foundation.backend.storage.DocumentStorageService
+import tech.dokus.domain.enums.SourceMatchKind
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class DocumentTruthServiceTest {
 

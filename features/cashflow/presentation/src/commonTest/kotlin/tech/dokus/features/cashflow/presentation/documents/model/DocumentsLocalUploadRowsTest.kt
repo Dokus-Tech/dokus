@@ -5,7 +5,7 @@ import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.DocumentDto
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentListItemDto
 import tech.dokus.features.cashflow.presentation.cashflow.model.DocumentUploadTask
 import tech.dokus.features.cashflow.presentation.cashflow.model.UploadStatus
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentFilter
@@ -206,15 +206,21 @@ class DocumentsLocalUploadRowsTest {
         )
     }
 
-    private fun remoteRecord(documentId: DocumentId): DocumentRecordDto {
-        return DocumentRecordDto(
-            document = document(documentId, "remote-$documentId.pdf"),
-            draft = null,
-            latestIngestion = null,
-            confirmedEntity = null,
-            cashflowEntryId = null,
-            pendingMatchReview = null,
-            sources = emptyList()
+    private fun remoteRecord(documentId: DocumentId): DocumentListItemDto {
+        return DocumentListItemDto(
+            documentId = documentId,
+            tenantId = TenantId.parse("00000000-0000-0000-0000-000000000001"),
+            filename = "remote-$documentId.pdf",
+            documentType = null,
+            direction = null,
+            documentStatus = null,
+            ingestionStatus = null,
+            effectiveOrigin = DocumentSource.Upload,
+            uploadedAt = LocalDateTime(2026, 1, 1, 10, 0),
+            counterpartyDisplayName = null,
+            purposeRendered = null,
+            totalAmount = null,
+            currency = null,
         )
     }
 

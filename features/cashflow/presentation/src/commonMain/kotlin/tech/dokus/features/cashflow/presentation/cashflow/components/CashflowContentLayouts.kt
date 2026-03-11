@@ -15,7 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentListItemDto
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.foundation.app.state.DokusState
@@ -53,14 +53,14 @@ private const val InfiniteScrollThreshold = 5
 fun DesktopCashflowContent(
     documentsState: DokusState<PaginationState<FinancialDocumentDto>>,
     vatSummaryState: DokusState<VatSummaryData>,
-    pendingDocumentsState: DokusState<PaginationState<DocumentRecordDto>>,
+    pendingDocumentsState: DokusState<PaginationState<DocumentListItemDto>>,
     sortOption: DocumentSortOption,
     contentPadding: PaddingValues,
     onSortOptionSelected: (DocumentSortOption) -> Unit,
     onDocumentClick: (FinancialDocumentDto) -> Unit,
     onMoreClick: (FinancialDocumentDto) -> Unit,
     onLoadMore: () -> Unit,
-    onPendingDocumentClick: (DocumentRecordDto) -> Unit,
+    onPendingDocumentClick: (DocumentListItemDto) -> Unit,
     onPendingLoadMore: () -> Unit,
     isOnline: Boolean = true
 ) {

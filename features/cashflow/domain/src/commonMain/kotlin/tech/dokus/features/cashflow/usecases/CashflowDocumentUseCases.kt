@@ -5,7 +5,7 @@ import tech.dokus.domain.enums.InvoiceDeliveryMethod
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.model.CreateInvoiceRequest
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentListItemDto
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.PeppolStatusResponse
 import tech.dokus.foundation.app.state.DokusState
@@ -17,7 +17,7 @@ import tech.dokus.foundation.app.state.DokusState
  * returned by invoke.
  */
 interface WatchPendingDocumentsUseCase {
-    operator fun invoke(limit: Int = 100): Flow<DokusState<List<DocumentRecordDto>>>
+    operator fun invoke(limit: Int = 100): Flow<DokusState<List<DocumentListItemDto>>>
 
     fun refresh()
 }

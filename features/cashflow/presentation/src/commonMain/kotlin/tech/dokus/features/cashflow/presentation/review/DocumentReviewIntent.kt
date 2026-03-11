@@ -11,14 +11,14 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.model.FinancialLineItem
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentDetailDto
 
 @Immutable
 sealed interface DocumentReviewIntent : MVIIntent {
 
     data class LoadDocument(val documentId: DocumentId) : DocumentReviewIntent
     data object Refresh : DocumentReviewIntent
-    data class ApplyRemoteSnapshot(val record: DocumentRecordDto) : DocumentReviewIntent
+    data class ApplyRemoteSnapshot(val record: DocumentDetailDto) : DocumentReviewIntent
     data object HandleRemoteDeletion : DocumentReviewIntent
     data class SelectQueueDocument(val documentId: DocumentId) : DocumentReviewIntent
     data object LoadMoreQueue : DocumentReviewIntent

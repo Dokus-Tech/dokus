@@ -7,7 +7,8 @@ import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.FirmId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentDetailDto
+import tech.dokus.domain.model.DocumentListItemDto
 import tech.dokus.domain.model.auth.ConsoleClientSummary
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.app.state.isSuccess
@@ -19,8 +20,8 @@ data class ConsoleClientsState(
     val clients: DokusState<List<ConsoleClientSummary>> = DokusState.loading(),
     val query: String = "",
     val selectedClientTenantId: TenantId? = null,
-    val documentsState: DokusState<List<DocumentRecordDto>> = DokusState.idle(),
-    val selectedDocument: DocumentRecordDto? = null,
+    val documentsState: DokusState<List<DocumentListItemDto>> = DokusState.idle(),
+    val selectedDocument: DocumentDetailDto? = null,
     val loadingDocumentId: String? = null,
 ) : MVIState {
     val filteredClients: List<ConsoleClientSummary>
