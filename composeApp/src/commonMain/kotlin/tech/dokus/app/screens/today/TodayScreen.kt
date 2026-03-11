@@ -61,6 +61,7 @@ import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.common.DokusCalloutBanner
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.badges.SourceBadge
 import tech.dokus.foundation.aura.components.status.StatusDot
@@ -278,54 +279,48 @@ private fun TodayAttentionCard(
     val dateText = document.formattedDate()
     val description = document.draft?.purposeRendered ?: stringResource(Res.string.today_document_needs_review)
 
-    DokusCardSurface(accent = true) {
-        Row(
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
-            StatusDot(
-                type = StatusDotType.Warning,
-                size = 8.dp,
+    DokusCalloutBanner {
+        StatusDot(
+            type = StatusDotType.Warning,
+            size = 8.dp,
+        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontWeight = FontWeight.SemiBold,
+                ),
+                maxLines = 1,
             )
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = description,
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = FontWeight.SemiBold,
-                    ),
-                    maxLines = 1,
-                )
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                ) {
-                    if (dateText != null) {
-                        Text(
-                            text = dateText,
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontFamily = MaterialTheme.typography.labelLarge.fontFamily,
-                            ),
-                            color = MaterialTheme.colorScheme.textMuted,
-                        )
-                        Text(
-                            text = "\u00b7",
-                            color = MaterialTheme.colorScheme.textFaint,
-                        )
-                    }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                if (dateText != null) {
                     Text(
-                        text = vendorName,
-                        style = MaterialTheme.typography.bodySmall,
+                        text = dateText,
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontFamily = MaterialTheme.typography.labelLarge.fontFamily,
+                        ),
                         color = MaterialTheme.colorScheme.textMuted,
-                        maxLines = 1,
+                    )
+                    Text(
+                        text = "\u00b7",
+                        color = MaterialTheme.colorScheme.textFaint,
                     )
                 }
+                Text(
+                    text = vendorName,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.textMuted,
+                    maxLines = 1,
+                )
             }
-            PPrimaryButton(
-                text = stringResource(Res.string.today_review_button),
-                onClick = onReviewClick,
-            )
         }
+        PPrimaryButton(
+            text = stringResource(Res.string.today_review_button),
+            onClick = onReviewClick,
+        )
     }
 }
 

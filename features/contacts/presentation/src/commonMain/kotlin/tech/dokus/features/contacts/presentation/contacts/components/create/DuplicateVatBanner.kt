@@ -15,6 +15,7 @@ import tech.dokus.aura.resources.contacts_duplicate_exists
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.features.contacts.mvi.DuplicateVatUi
+import tech.dokus.foundation.aura.components.common.CalloutVariant
 import tech.dokus.foundation.aura.components.common.DokusCalloutBanner
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
@@ -32,8 +33,10 @@ fun DuplicateVatBanner(
 ) {
     DokusCalloutBanner(
         modifier = modifier,
-        accentColor = MaterialTheme.colorScheme.error,
-        icon = Icons.Default.Warning,
+        variant = CalloutVariant.Filled(
+            color = MaterialTheme.colorScheme.error,
+            icon = Icons.Default.Warning,
+        ),
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
