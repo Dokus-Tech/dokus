@@ -53,8 +53,11 @@ import tech.dokus.domain.enums.ResolutionType
 import tech.dokus.domain.enums.StatementTrust
 import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.ids.Iban
+import tech.dokus.domain.ids.StructuredCommunication
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.BankTransactionDto
+import tech.dokus.domain.model.TransactionCommunication
+import tech.dokus.domain.model.contact.CounterpartySnapshot
 import tech.dokus.foundation.aura.components.text.Amt
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.extensions.localized
@@ -119,19 +122,24 @@ internal fun TransactionDetailPane(
         Spacer(Modifier.height(Constraints.Spacing.large))
 
         // Detail rows
-        transaction.counterpartyName?.let {
+        transaction.counterparty.name?.let {
             DetailRow(
                 label = stringResource(Res.string.banking_detail_counterparty),
                 value = it,
             )
         }
-        transaction.counterpartyIban?.let {
+        transaction.counterparty.iban?.let {
             DetailRow(
                 label = stringResource(Res.string.banking_detail_iban),
                 value = it.toString(),
             )
         }
-        transaction.structuredCommunicationRaw?.let {
+        val referenceText = when (val comm = transaction.communication) {
+            is TransactionCommunication.Structured -> comm.raw
+            is TransactionCommunication.FreeForm -> comm.text
+            null -> null
+        }
+        referenceText?.let {
             DetailRow(
                 label = stringResource(Res.string.banking_detail_reference),
                 value = it,
@@ -314,9 +322,14 @@ private val PreviewUnmatchedTx = BankTransactionDto(
     source = BankTransactionSource.PdfStatement,
     transactionDate = LocalDate(2026, 2, 14),
     signedAmount = Money.parseOrThrow("-1250.00"),
-    counterpartyName = "Coolblue Belgi\u00EB NV",
-    counterpartyIban = Iban("BE68539007547034"),
-    structuredCommunicationRaw = "+++090/9337/55493+++",
+    counterparty = CounterpartySnapshot(
+        name = "Coolblue Belgi\u00EB NV",
+        iban = Iban("BE68539007547034"),
+    ),
+    communication = TransactionCommunication.Structured(
+        raw = "+++090/9337/55493+++",
+        normalized = StructuredCommunication("+++090/9337/55493+++"),
+    ),
     descriptionRaw = "Payment for order #12345",
     status = BankTransactionStatus.Unmatched,
     currency = Currency.Eur,
@@ -330,9 +343,11 @@ private val PreviewMatchedTx = BankTransactionDto(
     source = BankTransactionSource.PdfStatement,
     transactionDate = LocalDate(2026, 2, 12),
     signedAmount = Money.parseOrThrow("-89.99"),
-    counterpartyName = "DigitalOcean",
-    counterpartyIban = Iban("BE71096123456769"),
-    descriptionRaw = "DO Invoice #12345",
+    counterparty = CounterpartySnapshot(
+        name = "DigitalOcean",
+        iban = Iban("BE71096123456769"),
+    ),
+    communication = TransactionCommunication.FreeForm(text = "DO Invoice #12345"),
     status = BankTransactionStatus.Matched,
     matchedBy = MatchedBy.Auto,
     resolutionType = ResolutionType.Document,

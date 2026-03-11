@@ -438,7 +438,7 @@ internal fun resolveCounterparty(document: DocumentRecordDto, emptyLabel: String
         is InvoiceDraftData -> data.seller.name.nonBlank() ?: data.buyer.name.nonBlank()
         is CreditNoteDraftData -> data.counterpartyName.nonBlank()
         is ReceiptDraftData -> data.merchantName.nonBlank()
-        is BankStatementDraftData -> data.transactions.firstOrNull()?.counterpartyName?.nonBlank()
+        is BankStatementDraftData -> data.transactions.firstOrNull()?.counterparty?.name?.nonBlank()
         else -> null
     }
     return fromDraft ?: document.document.filename.nonBlank() ?: emptyLabel

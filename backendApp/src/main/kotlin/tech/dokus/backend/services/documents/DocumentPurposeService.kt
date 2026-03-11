@@ -238,7 +238,7 @@ class DocumentPurposeService(
         }
 
         is ReceiptDraftData -> draftData.merchantName
-        is BankStatementDraftData -> draftData.transactions.firstNotNullOfOrNull { it.counterpartyName }
+        is BankStatementDraftData -> draftData.transactions.firstNotNullOfOrNull { it.counterparty.name }
     }
 
     private fun extractCounterpartyVat(draftData: DocumentDraftData): VatNumber? = when (draftData) {

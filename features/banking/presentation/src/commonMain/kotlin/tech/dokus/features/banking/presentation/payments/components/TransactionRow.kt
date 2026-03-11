@@ -60,8 +60,11 @@ import tech.dokus.domain.enums.ResolutionType
 import tech.dokus.domain.enums.StatementTrust
 import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.ids.Iban
+import tech.dokus.domain.ids.StructuredCommunication
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.BankTransactionDto
+import tech.dokus.domain.model.TransactionCommunication
+import tech.dokus.domain.model.contact.CounterpartySnapshot
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.layout.DokusHeaderColumn
 import tech.dokus.foundation.aura.components.layout.DokusTableCell
@@ -178,7 +181,7 @@ internal fun TransactionRow(
         // Description
         DokusTableCell(PaymentsTableColumns.Description) {
             Text(
-                text = transaction.descriptionRaw ?: transaction.counterpartyName ?: "\u2014",
+                text = transaction.counterparty.name ?: transaction.descriptionRaw ?: "\u2014",
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontWeight = FontWeight.Medium,
                     fontSize = 12.5.sp,
@@ -191,7 +194,7 @@ internal fun TransactionRow(
         // Counterparty
         DokusTableCell(PaymentsTableColumns.Counterparty) {
             Text(
-                text = transaction.counterpartyName ?: "\u2014",
+                text = transaction.counterparty.name ?: "\u2014",
                 style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
                 color = MaterialTheme.colorScheme.textMuted,
                 maxLines = 1,
@@ -287,7 +290,7 @@ internal fun TransactionCard(
             verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xxSmall),
         ) {
             Text(
-                text = transaction.counterpartyName ?: transaction.descriptionRaw ?: "\u2014",
+                text = transaction.counterparty.name ?: transaction.descriptionRaw ?: "\u2014",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
@@ -352,9 +355,14 @@ private val PreviewUnmatchedTx = BankTransactionDto(
     source = BankTransactionSource.PdfStatement,
     transactionDate = LocalDate(2026, 2, 14),
     signedAmount = Money.parseOrThrow("-1250.00"),
-    counterpartyName = "Coolblue Belgi\u00EB NV",
-    counterpartyIban = Iban("BE68539007547034"),
-    structuredCommunicationRaw = "+++090/9337/55493+++",
+    counterparty = CounterpartySnapshot(
+        name = "Coolblue Belgi\u00EB NV",
+        iban = Iban("BE68539007547034"),
+    ),
+    communication = TransactionCommunication.Structured(
+        raw = "+++090/9337/55493+++",
+        normalized = StructuredCommunication("+++090/9337/55493+++"),
+    ),
     status = BankTransactionStatus.Unmatched,
     currency = Currency.Eur,
     createdAt = PreviewDateTime,
@@ -367,8 +375,8 @@ private val PreviewMatchedTx = BankTransactionDto(
     source = BankTransactionSource.PdfStatement,
     transactionDate = LocalDate(2026, 2, 12),
     signedAmount = Money.parseOrThrow("-89.99"),
-    counterpartyName = "DigitalOcean",
-    descriptionRaw = "DO Invoice #12345",
+    counterparty = CounterpartySnapshot(name = "DigitalOcean"),
+    communication = TransactionCommunication.FreeForm(text = "DO Invoice #12345"),
     status = BankTransactionStatus.Matched,
     matchedBy = MatchedBy.Auto,
     resolutionType = ResolutionType.Document,
@@ -387,7 +395,7 @@ private val PreviewLowTrustTx = BankTransactionDto(
     source = BankTransactionSource.PdfStatement,
     transactionDate = LocalDate(2026, 2, 13),
     signedAmount = Money.parseOrThrow("3500.00"),
-    counterpartyName = "Acme Corp",
+    counterparty = CounterpartySnapshot(name = "Acme Corp"),
     status = BankTransactionStatus.NeedsReview,
     statementTrust = StatementTrust.Medium,
     currency = Currency.Eur,

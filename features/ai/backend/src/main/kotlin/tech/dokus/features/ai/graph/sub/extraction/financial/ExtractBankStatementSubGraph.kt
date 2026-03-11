@@ -26,6 +26,7 @@ data class BankStatementTransactionExtractionRow(
     val counterpartyName: String? = null,
     val counterpartyIban: Iban? = null,
     val structuredCommunicationRaw: String? = null,
+    val freeCommunication: String? = null,
     val descriptionRaw: String? = null,
     val rowConfidence: Double = 0.0,
 )
@@ -68,6 +69,8 @@ data class BankStatementTransactionToolInput(
     val counterpartyIban: String? = null,
     @property:LLMDescription(ExtractionToolDescriptions.BankStructuredCommunicationRaw)
     val structuredCommunicationRaw: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.BankFreeCommunication)
+    val freeCommunication: String? = null,
     @property:LLMDescription(ExtractionToolDescriptions.BankDescriptionRaw)
     val descriptionRaw: String? = null,
     @property:LLMDescription(ExtractionToolDescriptions.BankRowConfidence)
@@ -110,6 +113,7 @@ private class BankStatementExtractionFinishTool :
                         counterpartyName = row.counterpartyName,
                         counterpartyIban = Iban.from(row.counterpartyIban)?.takeIf { it.isValid },
                         structuredCommunicationRaw = row.structuredCommunicationRaw,
+                        freeCommunication = row.freeCommunication,
                         descriptionRaw = row.descriptionRaw,
                         rowConfidence = row.rowConfidence.coerceIn(0.0, 1.0),
                     )
@@ -140,14 +144,23 @@ private val ExtractDocumentInput.bankStatementPrompt
     - periodStart: the start date of the statement period
     - periodEnd: the end date of the statement period
 
+    TRANSACTION FIELD RULES
+    Bank statements often show a bold transfer type header (e.g. "SENDING MONEY TO", "EUROPEAN DIRECT DEBIT",
+    "PAYMENT VIA BANCONTACT", "CREDIT TRANSFER FROM") followed by detail lines with the actual information.
+
+    - counterpartyName: Extract the actual business/person entity name from the DETAIL lines, NOT the transfer
+      type header. Examples: "TEAM INNING BV", "BE-MOBILE", "PROUNITY SA" — not "SENDING MONEY TO".
+    - counterpartyIban: The IBAN of the counterparty if visible in the detail lines.
+    - structuredCommunicationRaw: Belgian OGM structured communication (+++XXX/XXXX/XXXXX+++) if present. Preserve exact formatting.
+    - freeCommunication: Any free-form payment reference that is NOT a structured communication. E.g. invoice numbers,
+      reference codes, mandate references. Examples: "IV-063", "777887093469", "4411 PARKING AND MOBILITY".
+    - descriptionRaw: The FULL raw text of the transaction — include the transfer type header AND all detail lines, joined with newlines.
+
     HARD RULES
     - Do not guess: if a field is not visible, set null.
     - signedAmount MUST keep sign:
       - positive = money received
       - negative = money sent
-    - structuredCommunicationRaw must preserve exact formatting shown in the document.
-      Example: +++123/4567/89012+++
-    - descriptionRaw should contain the raw line text for that transaction.
     - rowConfidence must be in range 0.0..1.0.
     - openingBalance and closingBalance must include sign (positive or negative).
 

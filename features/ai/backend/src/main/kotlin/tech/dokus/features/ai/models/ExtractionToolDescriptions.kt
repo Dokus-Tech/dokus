@@ -73,10 +73,11 @@ object ExtractionToolDescriptions {
     const val Iban = "IBAN for payment if visible."
     const val PaymentReference = "Payment reference / structured communication if visible."
     const val BankSignedAmount = "Signed amount for one transaction row as plain number string; positive for money received, negative for money sent."
-    const val BankCounterpartyName = "Counterparty name from the transaction row if visible."
+    const val BankCounterpartyName = "Actual business or person entity name from the transaction details. NOT the transfer type header (e.g. use 'TEAM INNING BV' not 'SENDING MONEY TO'). Look in detail lines below the bold title for the real entity name."
     const val BankCounterpartyIban = "Counterparty IBAN from the transaction row if visible."
     const val BankStructuredCommunicationRaw = "Structured communication string exactly as displayed (e.g. +++123/4567/89012+++). Preserve formatting verbatim."
-    const val BankDescriptionRaw = "Raw transaction description line as displayed on statement."
+    const val BankFreeCommunication = "Free-form payment reference or communication that is not a Belgian structured communication (OGM). E.g. invoice number, reference code, mandate reference."
+    const val BankDescriptionRaw = "Full raw text of the transaction including all detail lines, joined with newlines. Include the transfer type header AND all detail lines below it."
     const val BankRowConfidence = "Confidence score 0.0-1.0 for this specific transaction row."
 
     const val BankAccountIban = "IBAN of the account this statement belongs to if visible in the header/footer. Null if not visible."

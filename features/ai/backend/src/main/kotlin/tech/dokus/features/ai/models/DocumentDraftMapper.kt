@@ -8,6 +8,8 @@ import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.PartyDraft
 import tech.dokus.domain.model.ReceiptDraftData
+import tech.dokus.domain.model.TransactionCommunication
+import tech.dokus.domain.model.contact.CounterpartySnapshot
 
 fun DocumentAiProcessingResult.toDraftData(): DocumentDraftData? {
     return extraction.toDraftData(directionResolution.direction)
@@ -109,12 +111,17 @@ private fun FinancialExtractionResult.toDraftData(direction: DocumentDirection):
             BankStatementTransactionDraftRow(
                 transactionDate = row.transactionDate,
                 signedAmount = row.signedAmount,
-                counterpartyName = row.counterpartyName,
-                counterpartyIban = row.counterpartyIban,
-                structuredCommunicationRaw = row.structuredCommunicationRaw,
+                counterparty = CounterpartySnapshot(
+                    name = row.counterpartyName,
+                    iban = row.counterpartyIban,
+                ),
+                communication = TransactionCommunication.from(
+                    structuredCommunicationRaw = row.structuredCommunicationRaw,
+                    freeCommunication = row.freeCommunication,
+                ),
                 descriptionRaw = row.descriptionRaw,
                 rowConfidence = row.rowConfidence,
-                largeAmountFlag = false
+                largeAmountFlag = false,
             )
         },
         accountIban = data.accountIban,

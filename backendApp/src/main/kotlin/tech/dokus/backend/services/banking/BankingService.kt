@@ -184,7 +184,7 @@ class BankingService(
             tenantId = tenantId,
             request = CreateExpenseRequest(
                 date = transaction.transactionDate,
-                merchant = transaction.counterpartyName ?: "Unknown",
+                merchant = transaction.counterparty.name ?: "Unknown",
                 amount = Money(abs(transaction.signedAmount.minor)),
                 category = ExpenseCategory.Other,
                 description = transaction.descriptionRaw,

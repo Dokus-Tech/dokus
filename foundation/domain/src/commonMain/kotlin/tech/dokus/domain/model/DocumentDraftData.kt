@@ -11,6 +11,7 @@ import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.PaymentMethod
 import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.model.contact.CounterpartySnapshot
 
 /**
  * Canonical, normalized draft data shown to users and used for confirmation.
@@ -106,12 +107,11 @@ data class ReceiptDraftData(
 data class BankStatementTransactionDraftRow(
     val transactionDate: LocalDate? = null,
     val signedAmount: Money? = null,
-    val counterpartyName: String? = null,
-    val counterpartyIban: Iban? = null,
-    val structuredCommunicationRaw: String? = null,
+    val counterparty: CounterpartySnapshot = CounterpartySnapshot(),
+    val communication: TransactionCommunication? = null,
     val descriptionRaw: String? = null,
     val rowConfidence: Double = 0.0,
-    val largeAmountFlag: Boolean = false
+    val largeAmountFlag: Boolean = false,
 )
 
 @Serializable

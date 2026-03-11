@@ -37,6 +37,8 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.BankTransactionDto
+import tech.dokus.domain.model.TransactionCommunication
+import tech.dokus.domain.model.contact.CounterpartySnapshot
 import tech.dokus.domain.toDbDecimal
 import java.util.UUID
 import kotlin.uuid.ExperimentalUuidApi
@@ -434,12 +436,15 @@ class BankTransactionRepository {
             valueDate = this[BankTransactionsTable.valueDate],
             signedAmount = Money.fromDbDecimal(this[BankTransactionsTable.signedAmount]),
             currency = this[BankTransactionsTable.currency],
-            counterpartyName = this[BankTransactionsTable.counterpartyName],
-            counterpartyIban = Iban.from(this[BankTransactionsTable.counterpartyIban]),
-            counterpartyBic = this[BankTransactionsTable.counterpartyBic]?.let { Bic(it) },
-            structuredCommunicationRaw = this[BankTransactionsTable.structuredCommunicationRaw],
-            normalizedStructuredCommunication = this[BankTransactionsTable.normalizedStructuredCommunication],
-            freeCommunication = this[BankTransactionsTable.freeCommunication],
+            counterparty = CounterpartySnapshot(
+                name = this[BankTransactionsTable.counterpartyName],
+                iban = Iban.from(this[BankTransactionsTable.counterpartyIban]),
+                bic = this[BankTransactionsTable.counterpartyBic]?.let { Bic(it) },
+            ),
+            communication = TransactionCommunication.from(
+                structuredCommunicationRaw = this[BankTransactionsTable.structuredCommunicationRaw],
+                freeCommunication = this[BankTransactionsTable.freeCommunication],
+            ),
             descriptionRaw = this[BankTransactionsTable.descriptionRaw],
             status = this[BankTransactionsTable.status],
             resolutionType = this[BankTransactionsTable.resolutionType],

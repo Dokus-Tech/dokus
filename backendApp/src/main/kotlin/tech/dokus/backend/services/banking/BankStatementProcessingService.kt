@@ -19,6 +19,7 @@ import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.BankStatementDraftData
 import tech.dokus.domain.model.BankStatementTransactionDraftRow
+import tech.dokus.domain.model.TransactionCommunication
 import tech.dokus.foundation.backend.utils.loggerFor
 
 private const val RowConfidenceThreshold = 0.90
@@ -159,22 +160,26 @@ class BankStatementProcessingService(
         val inserts = validRows.map { row ->
             val date = requireNotNull(row.transactionDate)
             val amount = requireNotNull(row.signedAmount)
-            val normalizedComm = normalizeStructuredCommunication(row.structuredCommunicationRaw)
+            val structuredRaw = (row.communication as? TransactionCommunication.Structured)?.raw
+            val normalizedComm = normalizeStructuredCommunication(structuredRaw)
+            val freeComm = (row.communication as? TransactionCommunication.FreeForm)?.text
             BankTransactionCreate(
                 dedupHash = hashRow(
                     date = date,
                     amount = amount,
                     description = row.descriptionRaw,
-                    structuredCommunication = row.structuredCommunicationRaw,
-                    counterpartyName = row.counterpartyName,
+                    structuredCommunication = structuredRaw,
+                    counterpartyName = row.counterparty.name,
                 ),
                 bankAccountId = accountId,
                 transactionDate = date,
                 signedAmount = amount,
-                counterpartyName = row.counterpartyName,
-                counterpartyIban = row.counterpartyIban?.value,
-                structuredCommunicationRaw = row.structuredCommunicationRaw,
+                counterpartyName = row.counterparty.name,
+                counterpartyIban = row.counterparty.iban?.value,
+                counterpartyBic = row.counterparty.bic?.value,
+                structuredCommunicationRaw = structuredRaw,
                 normalizedStructuredCommunication = normalizedComm,
+                freeCommunication = freeComm,
                 descriptionRaw = row.descriptionRaw,
                 statementTrust = trustResult.trust,
             )

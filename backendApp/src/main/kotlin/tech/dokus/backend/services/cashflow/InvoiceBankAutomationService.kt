@@ -29,8 +29,9 @@ import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.model.BankTransactionDto
+import tech.dokus.domain.model.CashflowEntry
+import tech.dokus.domain.model.TransactionCommunication
 import tech.dokus.domain.util.JaroWinkler
 import tech.dokus.foundation.backend.utils.loggerFor
 import java.util.UUID
@@ -288,12 +289,13 @@ class InvoiceBankAutomationService(
 
         val normalizedDescription = tx.descriptionRaw?.uppercase().orEmpty()
         val normalizedInvoiceNumber = invoice.invoiceNumber.uppercase().replace(" ", "")
-        val normalizedTxStructuredRef = normalizeStructuredCommunication(tx.structuredCommunicationRaw)
+        val txStructuredRaw = (tx.communication as? TransactionCommunication.Structured)?.raw
+        val normalizedTxStructuredRef = normalizeStructuredCommunication(txStructuredRaw)
         val structuredMatch = normalizedTxStructuredRef != null && normalizedTxStructuredRef == invoice.structuredReference
         val invoiceNumberMatch = normalizedInvoiceNumber.isNotBlank() &&
             normalizedDescription.replace(" ", "").contains(normalizedInvoiceNumber)
 
-        val normalizedTxIban = tx.counterpartyIban?.value
+        val normalizedTxIban = tx.counterparty.iban?.value
         val normalizedContactIban = normalizeIban(contactIban)
         val ibanMatch = normalizedTxIban != null && normalizedTxIban == normalizedContactIban
 
@@ -301,9 +303,9 @@ class InvoiceBankAutomationService(
         val hardSignal = hardReference || ibanMatch
         if (!hardSignal) return null
 
-        val nameSimilarity = if (!tx.counterpartyName.isNullOrBlank() && !entry.contactName.isNullOrBlank()) {
+        val nameSimilarity = if (!tx.counterparty.name.isNullOrBlank() && !entry.contactName.isNullOrBlank()) {
             JaroWinkler.similarity(
-                tx.counterpartyName!!.trim().lowercase(),
+                tx.counterparty.name!!.trim().lowercase(),
                 entry.contactName!!.trim().lowercase()
             )
         } else {

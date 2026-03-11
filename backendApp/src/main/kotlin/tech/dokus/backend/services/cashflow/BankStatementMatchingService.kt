@@ -25,6 +25,7 @@ import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.domain.model.CashflowEntry
+import tech.dokus.domain.model.TransactionCommunication
 import tech.dokus.domain.util.JaroWinkler
 import tech.dokus.foundation.backend.utils.loggerFor
 import tech.dokus.foundation.backend.utils.runSuspendCatching
@@ -166,13 +167,14 @@ class BankStatementMatchingService(
         val withinDueWindow = dueDaysDistance <= DueDateWindowDays
 
         // Hard evidence signals
-        val normalizedTxRef = normalizeStructuredCommunication(tx.structuredCommunicationRaw)
+        val txStructuredRaw = (tx.communication as? TransactionCommunication.Structured)?.raw
+        val normalizedTxRef = normalizeStructuredCommunication(txStructuredRaw)
         val normalizedEntryRef = invoiceStructuredReference
             ?: normalizeStructuredCommunication(entry.description)
         val structuredCommMatch = normalizedTxRef != null && normalizedTxRef == normalizedEntryRef
 
-        val counterpartyIbanMatch = tx.counterpartyIban?.value != null &&
-            tx.counterpartyIban?.value == normalizedIban(contactIban)
+        val counterpartyIbanMatch = tx.counterparty.iban?.value != null &&
+            tx.counterparty.iban?.value == normalizedIban(contactIban)
 
         // Collect evidence signals
         val evidence = mutableListOf<String>()
@@ -182,9 +184,9 @@ class BankStatementMatchingService(
         if (withinDueWindow) evidence += "within_due_window"
         if (withinTolerance && !exactAmount) evidence += "amount_within_tolerance"
 
-        val nameSimilarity = if (!tx.counterpartyName.isNullOrBlank() && !entry.contactName.isNullOrBlank()) {
+        val nameSimilarity = if (!tx.counterparty.name.isNullOrBlank() && !entry.contactName.isNullOrBlank()) {
             JaroWinkler.similarity(
-                tx.counterpartyName!!.trim().lowercase(),
+                tx.counterparty.name!!.trim().lowercase(),
                 entry.contactName!!.trim().lowercase(),
             )
         } else {

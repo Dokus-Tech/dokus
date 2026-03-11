@@ -6,6 +6,7 @@ import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
+import tech.dokus.domain.model.TransactionCommunication
 import tech.dokus.domain.model.toDocumentType
 import tech.dokus.features.ai.graph.sub.ClassificationResult
 import tech.dokus.features.ai.graph.sub.extraction.financial.BankStatementExtractionResult
@@ -140,9 +141,10 @@ private fun DocumentDraftData.toPeppolExtractionResult(): FinancialExtractionRes
                 BankStatementTransactionExtractionRow(
                     transactionDate = row.transactionDate,
                     signedAmount = row.signedAmount,
-                    counterpartyName = row.counterpartyName,
-                    counterpartyIban = row.counterpartyIban,
-                    structuredCommunicationRaw = row.structuredCommunicationRaw,
+                    counterpartyName = row.counterparty.name,
+                    counterpartyIban = row.counterparty.iban,
+                    structuredCommunicationRaw = (row.communication as? TransactionCommunication.Structured)?.raw,
+                    freeCommunication = (row.communication as? TransactionCommunication.FreeForm)?.text,
                     descriptionRaw = row.descriptionRaw,
                     rowConfidence = row.rowConfidence.coerceIn(0.0, 1.0),
                 )

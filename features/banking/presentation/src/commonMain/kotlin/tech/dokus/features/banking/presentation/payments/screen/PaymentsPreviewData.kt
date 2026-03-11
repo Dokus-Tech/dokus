@@ -14,10 +14,13 @@ import tech.dokus.domain.ids.BankAccountId
 import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.Iban
+import tech.dokus.domain.ids.StructuredCommunication
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.domain.model.BankTransactionSummary
+import tech.dokus.domain.model.TransactionCommunication
 import tech.dokus.domain.model.common.PaginationState
+import tech.dokus.domain.model.contact.CounterpartySnapshot
 import tech.dokus.features.banking.presentation.payments.mvi.PaymentFilterTab
 import tech.dokus.features.banking.presentation.payments.mvi.PaymentsState
 import tech.dokus.foundation.app.state.DokusState
@@ -35,9 +38,14 @@ private val PreviewTransactions: List<BankTransactionDto> = listOf(
         source = BankTransactionSource.PdfStatement,
         transactionDate = LocalDate(2026, 2, 14),
         signedAmount = Money.parseOrThrow("-1250.00"),
-        counterpartyName = "Coolblue België NV",
-        counterpartyIban = Iban("BE68539007547034"),
-        structuredCommunicationRaw = "+++090/9337/55493+++",
+        counterparty = CounterpartySnapshot(
+            name = "Coolblue België NV",
+            iban = Iban("BE68539007547034"),
+        ),
+        communication = TransactionCommunication.Structured(
+            raw = "+++090/9337/55493+++",
+            normalized = StructuredCommunication("+++090/9337/55493+++"),
+        ),
         status = BankTransactionStatus.Unmatched,
         currency = Currency.Eur,
         createdAt = PreviewDateTime,
@@ -50,9 +58,14 @@ private val PreviewTransactions: List<BankTransactionDto> = listOf(
         source = BankTransactionSource.PdfStatement,
         transactionDate = LocalDate(2026, 2, 13),
         signedAmount = Money.parseOrThrow("3500.00"),
-        counterpartyName = "Acme Corp",
-        counterpartyIban = Iban("BE71096123456769"),
-        structuredCommunicationRaw = "+++101/2345/67890+++",
+        counterparty = CounterpartySnapshot(
+            name = "Acme Corp",
+            iban = Iban("BE71096123456769"),
+        ),
+        communication = TransactionCommunication.Structured(
+            raw = "+++101/2345/67890+++",
+            normalized = StructuredCommunication("+++101/2345/67890+++"),
+        ),
         status = BankTransactionStatus.NeedsReview,
         matchedCashflowId = CashflowEntryId.generate(),
         matchScore = 0.88,
@@ -69,8 +82,8 @@ private val PreviewTransactions: List<BankTransactionDto> = listOf(
         source = BankTransactionSource.PdfStatement,
         transactionDate = LocalDate(2026, 2, 12),
         signedAmount = Money.parseOrThrow("-89.99"),
-        counterpartyName = "DigitalOcean",
-        descriptionRaw = "DO Invoice #12345",
+        counterparty = CounterpartySnapshot(name = "DigitalOcean"),
+        communication = TransactionCommunication.FreeForm(text = "DO Invoice #12345"),
         status = BankTransactionStatus.Matched,
         matchedBy = MatchedBy.Auto,
         resolutionType = ResolutionType.Document,
@@ -89,8 +102,10 @@ private val PreviewTransactions: List<BankTransactionDto> = listOf(
         source = BankTransactionSource.PdfStatement,
         transactionDate = LocalDate(2026, 2, 11),
         signedAmount = Money.parseOrThrow("-42.50"),
-        counterpartyName = "Proximus",
-        counterpartyIban = Iban("BE39539007547034"),
+        counterparty = CounterpartySnapshot(
+            name = "Proximus",
+            iban = Iban("BE39539007547034"),
+        ),
         status = BankTransactionStatus.Ignored,
         ignoredReason = IgnoredReason.BankFee,
         ignoredAt = PreviewDateTime,
@@ -106,9 +121,14 @@ private val PreviewTransactions: List<BankTransactionDto> = listOf(
         source = BankTransactionSource.PdfStatement,
         transactionDate = LocalDate(2026, 2, 10),
         signedAmount = Money.parseOrThrow("7200.00"),
-        counterpartyName = "Dokus Tech BVBA",
-        counterpartyIban = Iban("BE62510007547061"),
-        structuredCommunicationRaw = "+++200/0001/00042+++",
+        counterparty = CounterpartySnapshot(
+            name = "Dokus Tech BVBA",
+            iban = Iban("BE62510007547061"),
+        ),
+        communication = TransactionCommunication.Structured(
+            raw = "+++200/0001/00042+++",
+            normalized = StructuredCommunication("+++200/0001/00042+++"),
+        ),
         status = BankTransactionStatus.Matched,
         currency = Currency.Eur,
         createdAt = PreviewDateTime,
@@ -121,7 +141,7 @@ private val PreviewTransactions: List<BankTransactionDto> = listOf(
         source = BankTransactionSource.PdfStatement,
         transactionDate = LocalDate(2026, 2, 9),
         signedAmount = Money.parseOrThrow("-320.00"),
-        counterpartyName = "AWS Europe",
+        counterparty = CounterpartySnapshot(name = "AWS Europe"),
         descriptionRaw = "AWS Monthly Invoice",
         status = BankTransactionStatus.Unmatched,
         currency = Currency.Eur,

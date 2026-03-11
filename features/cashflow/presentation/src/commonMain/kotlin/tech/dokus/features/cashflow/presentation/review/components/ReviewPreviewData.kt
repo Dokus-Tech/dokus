@@ -33,6 +33,8 @@ import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.BankTransactionDto
+import tech.dokus.domain.model.TransactionCommunication
+import tech.dokus.domain.ids.StructuredCommunication
 import tech.dokus.domain.model.DocumentPagePreviewDto
 import tech.dokus.domain.model.DocumentRecordDto
 import tech.dokus.domain.model.DocumentSourceDto
@@ -311,9 +313,14 @@ internal fun previewImportedTransactions(): List<BankTransactionDto> = listOf(
         documentId = previewDocumentId,
         transactionDate = LocalDate(2026, 2, 15),
         signedAmount = Money.from("-289.00")!!,
-        counterpartyName = "KBC Bank NV",
-        counterpartyIban = Iban("BE68539007547034"),
-        structuredCommunicationRaw = "+++123/4567/89123+++",
+        counterparty = CounterpartySnapshot(
+            name = "KBC Bank NV",
+            iban = Iban("BE68539007547034"),
+        ),
+        communication = TransactionCommunication.Structured(
+            raw = "+++123/4567/89123+++",
+            normalized = StructuredCommunication("+++123/4567/89123+++"),
+        ),
         descriptionRaw = "SEPA transfer premium Q1",
         status = BankTransactionStatus.NeedsReview,
         matchScore = 0.93,
@@ -326,7 +333,7 @@ internal fun previewImportedTransactions(): List<BankTransactionDto> = listOf(
         documentId = previewDocumentId,
         transactionDate = LocalDate(2026, 2, 12),
         signedAmount = Money.from("-289.00")!!,
-        counterpartyName = "KBC Bank NV",
+        counterparty = CounterpartySnapshot(name = "KBC Bank NV"),
         descriptionRaw = "Transfer KBC",
         status = BankTransactionStatus.Unmatched,
         matchScore = 0.74,
@@ -339,7 +346,7 @@ internal fun previewImportedTransactions(): List<BankTransactionDto> = listOf(
         documentId = previewDocumentId,
         transactionDate = LocalDate(2026, 2, 10),
         signedAmount = Money.from("-300.00")!!,
-        counterpartyName = "AXA Belgium",
+        counterparty = CounterpartySnapshot(name = "AXA Belgium"),
         descriptionRaw = "AXA insurance transfer",
         status = BankTransactionStatus.Unmatched,
         matchScore = 0.70,

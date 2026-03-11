@@ -18,13 +18,12 @@ import tech.dokus.domain.enums.ResolutionType
 import tech.dokus.domain.enums.StatementTrust
 import tech.dokus.domain.ids.BankAccountId
 import tech.dokus.domain.ids.BankTransactionId
-import tech.dokus.domain.ids.Bic
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.PaymentId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.contact.CounterpartySnapshot
 
 /**
  * Cashflow overview data with Cash-In / Cash-Out structure.
@@ -127,12 +126,8 @@ data class BankTransactionDto(
     val valueDate: LocalDate? = null,
     val signedAmount: Money,
     val currency: Currency = Currency.Eur,
-    val counterpartyName: String? = null,
-    val counterpartyIban: Iban? = null,
-    val counterpartyBic: Bic? = null,
-    val structuredCommunicationRaw: String? = null,
-    val normalizedStructuredCommunication: String? = null,
-    val freeCommunication: String? = null,
+    val counterparty: CounterpartySnapshot = CounterpartySnapshot(),
+    val communication: TransactionCommunication? = null,
     val descriptionRaw: String? = null,
     val status: BankTransactionStatus,
     val resolutionType: ResolutionType? = null,
