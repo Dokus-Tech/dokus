@@ -278,50 +278,18 @@ private fun TodayAttentionCard(
     val vendorName = document.vendorName()
     val dateText = document.formattedDate()
     val description = document.draft?.purposeRendered ?: stringResource(Res.string.today_document_needs_review)
+    val subtitle = if (dateText != null) "$dateText \u00b7 $vendorName" else vendorName
 
-    DokusCalloutBanner {
-        StatusDot(
-            type = StatusDotType.Warning,
-            size = 8.dp,
-        )
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = description,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontWeight = FontWeight.SemiBold,
-                ),
-                maxLines = 1,
+    DokusCalloutBanner(
+        title = description,
+        subtitle = subtitle,
+        trailing = {
+            PPrimaryButton(
+                text = stringResource(Res.string.today_review_button),
+                onClick = onReviewClick,
             )
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                if (dateText != null) {
-                    Text(
-                        text = dateText,
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontFamily = MaterialTheme.typography.labelLarge.fontFamily,
-                        ),
-                        color = MaterialTheme.colorScheme.textMuted,
-                    )
-                    Text(
-                        text = "\u00b7",
-                        color = MaterialTheme.colorScheme.textFaint,
-                    )
-                }
-                Text(
-                    text = vendorName,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.textMuted,
-                    maxLines = 1,
-                )
-            }
-        }
-        PPrimaryButton(
-            text = stringResource(Res.string.today_review_button),
-            onClick = onReviewClick,
-        )
-    }
+        },
+    )
 }
 
 // ── Recent Documents Section ────────────────────────────────────────────

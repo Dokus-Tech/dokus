@@ -1,8 +1,5 @@
 package tech.dokus.features.contacts.presentation.contacts.components.create
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -32,32 +29,19 @@ fun DuplicateVatBanner(
     modifier: Modifier = Modifier,
 ) {
     DokusCalloutBanner(
+        title = stringResource(Res.string.contacts_duplicate_exists),
+        subtitle = "${duplicate.displayName} (${duplicate.vatNumber})",
         modifier = modifier,
-        variant = CalloutVariant.Filled(
-            color = MaterialTheme.colorScheme.error,
-            icon = Icons.Default.Warning,
-        ),
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = stringResource(Res.string.contacts_duplicate_exists),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            Text(
-                text = "${duplicate.displayName} (${duplicate.vatNumber})",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-
-        TextButton(onClick = onViewContact) {
-            Text(
-                text = stringResource(Res.string.action_view),
-                color = MaterialTheme.colorScheme.error,
-            )
-        }
-    }
+        variant = CalloutVariant.Filled(color = MaterialTheme.colorScheme.error),
+        trailing = {
+            TextButton(onClick = onViewContact) {
+                Text(
+                    text = stringResource(Res.string.action_view),
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+        },
+    )
 }
 
 // ============================================================================

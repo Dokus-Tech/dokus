@@ -23,22 +23,20 @@ internal fun UnresolvedCallout(
     unresolvedAmount: Money,
     modifier: Modifier = Modifier,
 ) {
-    DokusCalloutBanner(modifier = modifier) {
-        Text(
-            text = stringResource(Res.string.banking_unresolved_callout, unresolvedCount),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.weight(1f),
-        )
-        Text(
-            text = stringResource(
-                Res.string.banking_unresolved_amount,
-                "€${unresolvedAmount.toDisplayString()}",
-            ),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.statusWarning,
-        )
-    }
+    DokusCalloutBanner(
+        title = stringResource(Res.string.banking_unresolved_callout, unresolvedCount),
+        modifier = modifier,
+        trailing = {
+            Text(
+                text = stringResource(
+                    Res.string.banking_unresolved_amount,
+                    "\u20ac${unresolvedAmount.toDisplayString()}",
+                ),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.statusWarning,
+            )
+        },
+    )
 }
 
 @Preview(name = "Unresolved Callout")

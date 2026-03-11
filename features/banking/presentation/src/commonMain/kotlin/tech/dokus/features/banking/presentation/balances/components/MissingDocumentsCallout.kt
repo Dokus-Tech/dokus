@@ -21,20 +21,18 @@ internal fun MissingDocumentsCallout(
     count: Int,
     modifier: Modifier = Modifier,
 ) {
-    DokusCalloutBanner(modifier = modifier) {
-        Text(
-            text = stringResource(Res.string.banking_balances_missing_callout, count),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.weight(1f),
-        )
-        TextButton(onClick = { /* TODO: navigate to Payments */ }) {
-            Text(
-                text = stringResource(Res.string.banking_balances_review_now),
-                style = MaterialTheme.typography.labelMedium,
-            )
-        }
-    }
+    DokusCalloutBanner(
+        title = stringResource(Res.string.banking_balances_missing_callout, count),
+        modifier = modifier,
+        trailing = {
+            TextButton(onClick = { /* TODO: navigate to Payments */ }) {
+                Text(
+                    text = stringResource(Res.string.banking_balances_review_now),
+                    style = MaterialTheme.typography.labelMedium,
+                )
+            }
+        },
+    )
 }
 
 @Preview(name = "Missing Documents Callout")
