@@ -40,7 +40,6 @@ import tech.dokus.features.cashflow.presentation.review.components.DocumentRevie
 import tech.dokus.features.cashflow.presentation.review.components.FeedbackDialog
 import tech.dokus.features.cashflow.presentation.review.components.RecordPaymentDialog
 import tech.dokus.features.cashflow.presentation.review.components.RejectDocumentDialog
-import tech.dokus.features.cashflow.presentation.review.components.SourceEvidenceDialog
 import tech.dokus.features.cashflow.presentation.review.screen.DocumentReviewScreen
 import tech.dokus.features.contacts.usecases.ListContactsUseCase
 import tech.dokus.features.cashflow.usecases.ObserveDocumentCollectionChangesUseCase
@@ -378,18 +377,6 @@ internal fun DocumentReviewRoute(
         )
     }
 
-    val viewerState = state.sourceViewerState
-    if (isLargeScreen && state.hasContent && viewerState != null) {
-        SourceEvidenceDialog(
-            contentState = state,
-            viewerState = viewerState,
-            onClose = { dispatchIntent(DocumentReviewIntent.CloseSourceModal) },
-            onToggleTechnicalDetails = {
-                dispatchIntent(DocumentReviewIntent.ToggleSourceTechnicalDetails)
-            },
-            onRetry = { dispatchIntent(DocumentReviewIntent.OpenSourceModal(viewerState.sourceId)) },
-        )
-    }
     state.paymentSheetState?.let { paymentState ->
         if (isAccountantReadOnly) return@let
         val currencySign = when (val uiData = state.uiData) {
