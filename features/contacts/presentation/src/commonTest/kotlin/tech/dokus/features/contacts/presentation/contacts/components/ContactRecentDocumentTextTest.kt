@@ -62,6 +62,7 @@ private fun recentInvoice(
 ): ContactRecentInvoice {
     return ContactRecentInvoice(
         invoiceId = InvoiceId.parse("00000000-0000-0000-0000-000000000099"),
+        documentId = null,
         issueDate = LocalDate(2026, 2, 1),
         updatedAt = LocalDateTime(2026, 2, 1, 10, 0),
         direction = DocumentDirection.Inbound,

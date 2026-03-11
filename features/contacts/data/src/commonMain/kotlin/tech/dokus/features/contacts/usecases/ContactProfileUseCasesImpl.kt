@@ -119,6 +119,7 @@ private fun FinancialDocumentDto.InvoiceDto.toRecentDocument(
 ): ContactRecentInvoice {
     return ContactRecentInvoice(
         invoiceId = id,
+        documentId = documentId,
         issueDate = issueDate,
         updatedAt = updatedAt,
         direction = direction,
