@@ -98,7 +98,7 @@ class ValidateOgmUseCaseTest {
     // =========================================================================
 
     @Test
-    fun `corrects O to 0 (zero)`() {
+    fun `corrects O to 0 zero`() {
         // O12/3456/78939 should be corrected to 012/3456/78939
         // Base: 0123456789 % 97 = 39
         val result = ValidateOgmUseCase.validate("+++O12/3456/78939+++")
@@ -108,7 +108,7 @@ class ValidateOgmUseCaseTest {
     }
 
     @Test
-    fun `corrects I to 1 (one)`() {
+    fun `corrects I to 1 one`() {
         // Base: 1111111111 % 97 = 70
         val result = ValidateOgmUseCase.validate("+++III/IIII/III70+++")
 
@@ -117,7 +117,7 @@ class ValidateOgmUseCaseTest {
     }
 
     @Test
-    fun `corrects lowercase l to 1 (one)`() {
+    fun `corrects lowercase l to 1 one`() {
         // Base: 1111111111 % 97 = 70
         val result = ValidateOgmUseCase.validate("+++lll/llll/lll70+++")
 
