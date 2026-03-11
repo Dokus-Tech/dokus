@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import tech.dokus.domain.Money
 import tech.dokus.domain.model.PeppolStatusResponse
 import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.contact.ContactNoteDto
 import tech.dokus.features.contacts.usecases.ContactInvoiceSnapshot
 import tech.dokus.foundation.app.state.DokusState
@@ -47,6 +48,7 @@ internal fun ContactDetailsContent(
     onEditContact: () -> Unit,
     onMergeContact: () -> Unit,
     onShowEnrichment: () -> Unit,
+    onDocumentClick: (DocumentId) -> Unit,
     onAddNote: () -> Unit,
     onEditNote: (ContactNoteDto) -> Unit,
     onDeleteNote: (ContactNoteDto) -> Unit
@@ -79,7 +81,10 @@ internal fun ContactDetailsContent(
 
         ContactStatsSection(invoiceSnapshotState = invoiceSnapshotState)
         ContactInfoSectionCompact(contact = (contactState as? DokusState.Success)?.data)
-        RecentDocumentsSection(invoiceSnapshotState = invoiceSnapshotState)
+        RecentDocumentsSection(
+            invoiceSnapshotState = invoiceSnapshotState,
+            onDocumentClick = onDocumentClick,
+        )
 
         OfflineOverlay(isOffline = !isOnline) {
             NotesSection(
@@ -144,6 +149,7 @@ private fun ContactDetailsContentPreview(
             onEditContact = {},
             onMergeContact = {},
             onShowEnrichment = {},
+            onDocumentClick = {},
             onAddNote = {},
             onEditNote = {},
             onDeleteNote = {}

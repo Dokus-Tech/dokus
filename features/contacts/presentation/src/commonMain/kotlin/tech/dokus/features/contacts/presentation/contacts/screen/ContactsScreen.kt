@@ -298,7 +298,8 @@ private fun ContactsDesktopMasterDetailPreview(
                             snackbarHostState = remember { SnackbarHostState() },
                             onIntent = {},
                             onBackClick = {},
-                            onEditClick = {}
+                            onEditClick = {},
+                            onDocumentClick = {}
                         )
                     }
                 )

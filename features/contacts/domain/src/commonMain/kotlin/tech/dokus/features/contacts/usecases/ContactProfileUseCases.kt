@@ -6,6 +6,7 @@ import tech.dokus.domain.Money
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.model.PeppolStatusResponse
 
@@ -24,6 +25,7 @@ data class ContactInvoiceSnapshot(
  */
 data class ContactRecentInvoice(
     val invoiceId: InvoiceId,
+    val documentId: DocumentId?,
     val issueDate: LocalDate,
     val updatedAt: LocalDateTime,
     val direction: DocumentDirection,

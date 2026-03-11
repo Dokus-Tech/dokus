@@ -39,6 +39,7 @@ import tech.dokus.aura.resources.contacts_vat_number
 import tech.dokus.aura.resources.contacts_website
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.InvoiceStatus
+import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.features.contacts.usecases.ContactInvoiceSnapshot
 import tech.dokus.features.contacts.usecases.ContactRecentInvoice
@@ -88,7 +89,10 @@ internal fun ContactInfoSectionCompact(contact: ContactDto?) {
             )
         } else {
             listOf(
-                InfoRow(stringResource(Res.string.contacts_vat_number), contact.vatNumber?.value ?: "—"),
+                InfoRow(
+                    stringResource(Res.string.contacts_vat_number),
+                    contact.vatNumber?.value ?: "—"
+                ),
                 InfoRow(stringResource(Res.string.contacts_address), formatAddress(contact)),
                 InfoRow(stringResource(Res.string.contacts_email), contact.email?.value ?: "—"),
                 InfoRow(
@@ -96,7 +100,10 @@ internal fun ContactInfoSectionCompact(contact: ContactDto?) {
                     value = contact.websiteUrl ?: "—",
                     style = if (contact.websiteUrl != null) InfoRowStyle.Link else InfoRowStyle.Plain,
                 ),
-                InfoRow(stringResource(Res.string.contacts_payment_terms), "Net ${contact.defaultPaymentTerms}"),
+                InfoRow(
+                    stringResource(Res.string.contacts_payment_terms),
+                    "Net ${contact.defaultPaymentTerms}"
+                ),
             )
         }
 
@@ -150,7 +157,8 @@ internal fun ContactInfoSectionCompact(contact: ContactDto?) {
 
 @Composable
 internal fun RecentDocumentsSection(
-    invoiceSnapshotState: DokusState<ContactInvoiceSnapshot>
+    invoiceSnapshotState: DokusState<ContactInvoiceSnapshot>,
+    onDocumentClick: (DocumentId) -> Unit,
 ) {
     Text(
         text = stringResource(Res.string.contacts_recent_documents),
@@ -202,7 +210,10 @@ internal fun RecentDocumentsSection(
                                         .background(MaterialTheme.colorScheme.outlineVariant)
                                 )
                             }
-                            RecentDocumentRow(document = document)
+                            RecentDocumentRow(
+                                document = document,
+                                onDocumentClick = onDocumentClick,
+                            )
                         }
                     }
                 }
@@ -229,7 +240,10 @@ internal fun RecentDocumentsSection(
 }
 
 @Composable
-private fun RecentDocumentRow(document: ContactRecentInvoice) {
+private fun RecentDocumentRow(
+    document: ContactRecentInvoice,
+    onDocumentClick: (DocumentId) -> Unit,
+) {
     val statusStyle = invoiceStatusStyle(document.status)
     val textContent = resolveRecentDocumentText(
         document = document,
@@ -243,6 +257,8 @@ private fun RecentDocumentRow(document: ContactRecentInvoice) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .then(document.documentId?.let { Modifier.clickable { onDocumentClick(it) } }
+                ?: Modifier)
             .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp)

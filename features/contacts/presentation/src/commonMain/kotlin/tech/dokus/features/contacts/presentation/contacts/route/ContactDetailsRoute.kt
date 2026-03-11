@@ -30,6 +30,7 @@ import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.app.network.rememberIsOnline
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.extensions.localized
+import tech.dokus.navigation.destinations.CashFlowDestination
 import tech.dokus.navigation.destinations.ContactsDestination
 import tech.dokus.navigation.local.LocalNavController
 import tech.dokus.navigation.navigateTo
@@ -115,6 +116,9 @@ internal fun ContactDetailsRoute(
         onBackClick = { navController.popBackStack() },
         onEditClick = {
             navController.navigateTo(ContactsDestination.EditContact(contactId))
+        },
+        onDocumentClick = { documentId ->
+            navController.navigateTo(CashFlowDestination.DocumentReview(documentId.toString()))
         },
     )
 
