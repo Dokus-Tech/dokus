@@ -85,14 +85,14 @@ import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
- * Column layout: Date(60dp) | Description(flex) | Counterparty(flex 0.7) | Acct(50dp) | Status(90dp) | Document(70dp) | Amount(100dp)
+ * Column layout: Date(60dp) | Description(flex) | Counterparty(flex 0.7) | Acct(80dp) | Status(90dp) | Document(70dp) | Amount(100dp)
  */
 @Immutable
 internal object PaymentsTableColumns {
     val Date = DokusTableColumnSpec(width = 60.dp)
     val Description = DokusTableColumnSpec(weight = 1f)
     val Counterparty = DokusTableColumnSpec(weight = 0.7f)
-    val Account = DokusTableColumnSpec(width = 50.dp)
+    val Account = DokusTableColumnSpec(width = 80.dp)
     val Status = DokusTableColumnSpec(width = 90.dp)
     val Document = DokusTableColumnSpec(width = 70.dp)
     val Amount = DokusTableColumnSpec(width = 100.dp, horizontalAlignment = Alignment.End)
