@@ -8,6 +8,7 @@ import tech.dokus.database.tables.auth.TenantTable
 import tech.dokus.database.tables.auth.UsersTable
 import tech.dokus.database.tables.contacts.ContactsTable
 import tech.dokus.domain.enums.ContactLinkSource
+import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentRejectReason
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DocumentStatus
@@ -49,6 +50,9 @@ object DocumentDraftsTable : Table("document_drafts") {
 
     // Detected document type
     val documentType = dbEnumeration<DocumentType>("document_type").default(DocumentType.Unknown)
+
+    // Document direction (queryable column, also present inside extractedData JSON)
+    val direction = dbEnumeration<DocumentDirection>("direction").default(DocumentDirection.Unknown)
 
     // ============================================
     // Extraction Data Fields
@@ -143,6 +147,9 @@ object DocumentDraftsTable : Table("document_drafts") {
 
         // For listing documents by type
         index(false, tenantId, documentType)
+
+        // For listing documents by direction
+        index(false, tenantId, direction)
 
         // For contact activity queries
         index(false, tenantId, linkedContactId)

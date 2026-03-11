@@ -20,6 +20,7 @@ import tech.dokus.database.tables.documents.DocumentDraftsTable
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
 import tech.dokus.database.tables.documents.DocumentSourcesTable
 import tech.dokus.database.tables.documents.DocumentsTable
+import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.IndexingStatus
@@ -30,6 +31,7 @@ import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.DocumentDraftData
+import tech.dokus.domain.model.toDirection
 import tech.dokus.domain.processing.DocumentProcessingConstants
 import tech.dokus.domain.utils.json
 import java.util.*
@@ -238,6 +240,7 @@ class ProcessorIngestionRepository {
                     it[DocumentDraftsTable.tenantId] = tenantUuid
                     it[documentStatus] = calculatedStatus
                     it[DocumentDraftsTable.documentType] = documentType
+                    it[DocumentDraftsTable.direction] = draftData?.toDirection() ?: DocumentDirection.Unknown
                     it[DocumentDraftsTable.aiKeywords] = keywordsJson
                     it[aiDraftSourceRunId] = runUuid
                     it[DocumentDraftsTable.extractedData] = draftJson
@@ -273,6 +276,7 @@ class ProcessorIngestionRepository {
 
                     if (shouldSetExtracted) {
                         it[DocumentDraftsTable.extractedData] = draftJson
+                        it[DocumentDraftsTable.direction] = draftData?.toDirection() ?: DocumentDirection.Unknown
                         // Update status when we update extracted data
                         it[documentStatus] = calculatedStatus
                         if (keywordsJson != null) {

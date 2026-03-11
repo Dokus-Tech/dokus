@@ -20,6 +20,13 @@ import tech.dokus.domain.model.contact.CounterpartySnapshot
 @Serializable
 sealed interface DocumentDraftData
 
+fun DocumentDraftData.toDirection(): DocumentDirection = when (this) {
+    is InvoiceDraftData -> direction
+    is CreditNoteDraftData -> direction
+    is ReceiptDraftData -> direction
+    is BankStatementDraftData -> direction
+}
+
 fun DocumentDraftData.toDocumentType(): DocumentType = when (this) {
     is InvoiceDraftData -> DocumentType.Invoice
     is CreditNoteDraftData -> DocumentType.CreditNote

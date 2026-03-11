@@ -475,6 +475,7 @@ private fun ResultRow.toDraftSummary(contactName: String? = null): DraftSummary 
         tenantId = TenantId(this[DocumentDraftsTable.tenantId].toKotlinUuid()),
         documentStatus = this[DocumentDraftsTable.documentStatus],
         documentType = this[DocumentDraftsTable.documentType],
+        direction = this[DocumentDraftsTable.direction],
         extractedData = this[DocumentDraftsTable.extractedData]?.let { json.decodeFromString<DocumentDraftData>(it) },
         aiKeywords = this[DocumentDraftsTable.aiKeywords]?.let { json.decodeFromString(it) } ?: emptyList(),
         purposeBase = this[DocumentDraftsTable.purposeBase],

@@ -7,6 +7,7 @@ import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.domain.model.TransactionCommunication
+import tech.dokus.domain.model.toDirection
 import tech.dokus.domain.model.toDocumentType
 import tech.dokus.features.ai.graph.sub.ClassificationResult
 import tech.dokus.features.ai.graph.sub.extraction.financial.BankStatementExtractionResult
@@ -24,7 +25,7 @@ fun DocumentDraftData.toPeppolProcessingResult(snapshotVersion: Int?): DocumentA
     }
 
     val documentType = toDocumentType()
-    val direction = directionOrUnknown()
+    val direction = toDirection()
     val directionSource = if (direction == DocumentDirection.Unknown) {
         DirectionResolutionSource.Unknown
     } else {
@@ -195,9 +196,3 @@ private fun counterpartyExtractionForCreditNote(data: CreditNoteDraftData): Coun
     )
 }
 
-private fun DocumentDraftData.directionOrUnknown(): DocumentDirection = when (this) {
-    is InvoiceDraftData -> direction
-    is CreditNoteDraftData -> direction
-    is ReceiptDraftData -> direction
-    is BankStatementDraftData -> direction
-}

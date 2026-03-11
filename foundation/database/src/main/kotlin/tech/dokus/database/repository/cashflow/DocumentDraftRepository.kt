@@ -28,10 +28,12 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
+import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.ReceiptDraftData
+import tech.dokus.domain.model.toDirection
 import tech.dokus.domain.model.toDocumentType
 import tech.dokus.domain.model.contact.CounterpartyInfo
 import tech.dokus.domain.model.contact.isUnresolved
@@ -52,6 +54,7 @@ data class DraftSummary(
     val tenantId: TenantId,
     val documentStatus: DocumentStatus,
     val documentType: DocumentType?,
+    val direction: DocumentDirection = DocumentDirection.Unknown,
     val extractedData: DocumentDraftData?,
     val aiKeywords: List<String> = emptyList(),
     val purposeBase: String? = null,
@@ -123,6 +126,7 @@ class DocumentDraftRepository : DocumentStatusChecker {
                 it[DocumentDraftsTable.tenantId] = tenantIdUuid
                 it[documentStatus] = DocumentStatus.NeedsReview
                 it[DocumentDraftsTable.documentType] = documentType
+                it[DocumentDraftsTable.direction] = extractedData.toDirection()
                 it[DocumentDraftsTable.aiKeywords] = keywordsJson
                 it[aiDraftSourceRunId] = runIdUuid
                 it[DocumentDraftsTable.extractedData] = json.encodeToString(extractedData)
@@ -151,6 +155,7 @@ class DocumentDraftRepository : DocumentStatusChecker {
                 if (shouldUpdateExtracted) {
                     it[DocumentDraftsTable.extractedData] = json.encodeToString(extractedData)
                     it[DocumentDraftsTable.documentType] = documentType
+                    it[DocumentDraftsTable.direction] = extractedData.toDirection()
                     it[documentStatus] = DocumentStatus.NeedsReview
                     if (keywordsJson != null) {
                         it[DocumentDraftsTable.aiKeywords] = keywordsJson
@@ -225,6 +230,7 @@ class DocumentDraftRepository : DocumentStatusChecker {
                 (DocumentDraftsTable.tenantId eq tenantIdUuid)
         }) {
             it[documentType] = updatedData.toDocumentType()
+            it[direction] = updatedData.toDirection()
             it[extractedData] = json.encodeToString(updatedData)
             it[draftVersion] = newVersion
             it[draftEditedAt] = now
@@ -251,6 +257,7 @@ class DocumentDraftRepository : DocumentStatusChecker {
         }) {
             it[DocumentDraftsTable.extractedData] = json.encodeToString(extractedData)
             it[DocumentDraftsTable.documentType] = extractedData.toDocumentType()
+            it[DocumentDraftsTable.direction] = extractedData.toDirection()
             it[documentStatus] = status
             it[updatedAt] = now
         } > 0
@@ -551,6 +558,7 @@ class DocumentDraftRepository : DocumentStatusChecker {
             tenantId = TenantId(this[DocumentDraftsTable.tenantId].toKotlinUuid()),
             documentStatus = this[DocumentDraftsTable.documentStatus],
             documentType = this[DocumentDraftsTable.documentType],
+            direction = this[DocumentDraftsTable.direction],
             extractedData = this[DocumentDraftsTable.extractedData]?.let { json.decodeFromString(it) },
             aiKeywords = this[DocumentDraftsTable.aiKeywords]?.let { json.decodeFromString(it) } ?: emptyList(),
             purposeBase = this[DocumentDraftsTable.purposeBase],
