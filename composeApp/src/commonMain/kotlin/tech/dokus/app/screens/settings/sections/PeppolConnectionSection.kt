@@ -10,6 +10,7 @@ import org.jetbrains.compose.resources.stringResource
 import tech.dokus.app.screens.settings.components.formatRelativeTime
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.peppol_conn_compliant_note
+import tech.dokus.aura.resources.peppol_conn_configure
 import tech.dokus.aura.resources.peppol_conn_label_access_point
 import tech.dokus.aura.resources.peppol_conn_label_inbound
 import tech.dokus.aura.resources.peppol_conn_label_outbound
@@ -32,6 +33,8 @@ import tech.dokus.aura.resources.peppol_conn_title
 import tech.dokus.aura.resources.peppol_managed_by_dokus
 import tech.dokus.aura.resources.peppol_not_configured
 import tech.dokus.domain.enums.PeppolRegistrationStatus
+import tech.dokus.foundation.aura.components.PButton
+import tech.dokus.foundation.aura.components.PButtonVariant
 import tech.dokus.domain.model.PeppolActivityDto
 import tech.dokus.domain.model.PeppolRegistrationDto
 import tech.dokus.foundation.aura.components.settings.DataRow
@@ -57,6 +60,7 @@ internal fun PeppolConnectionSection(
     peppolActivity: PeppolActivityDto?,
     expanded: Boolean,
     onToggle: () -> Unit,
+    onConfigurePeppol: (() -> Unit)? = null,
 ) {
     val status = peppolRegistration?.status
     val sectionStatus = when (status) {
@@ -85,7 +89,7 @@ internal fun PeppolConnectionSection(
         status = sectionStatus,
         expanded = expanded,
         onToggle = onToggle,
-        primary = true, // Elevated background
+        primary = false,
     ) {
         if (peppolRegistration != null && status != PeppolRegistrationStatus.NotConfigured) {
             // Participant ID
@@ -160,6 +164,14 @@ internal fun PeppolConnectionSection(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.textMuted,
             )
+            if (onConfigurePeppol != null) {
+                Spacer(Modifier.height(Constraints.Spacing.medium))
+                PButton(
+                    text = stringResource(Res.string.peppol_conn_configure),
+                    variant = PButtonVariant.Outline,
+                    onClick = onConfigurePeppol,
+                )
+            }
         }
     }
 }
