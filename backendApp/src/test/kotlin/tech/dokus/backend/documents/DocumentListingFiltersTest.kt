@@ -364,7 +364,6 @@ class DocumentListingFiltersTest {
                 it[tenantId] = tenantUuid
                 it[documentStatus] = status
                 it[documentType] = type
-                it[aiDraftData] = null
                 it[aiDraftSourceRunId] = null
                 it[extractedData] = null
                 it[lastSuccessfulRunId] = null

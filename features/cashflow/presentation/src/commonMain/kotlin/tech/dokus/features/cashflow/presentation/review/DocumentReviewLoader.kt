@@ -211,7 +211,7 @@ internal class DocumentReviewLoader(
                         documentId = documentId,
                         documentRecord = document,
                         draftData = extractedData,
-                        originalData = draft.aiDraftData ?: extractedData,
+                        originalData = extractedData,
                         previewUrl = previewUrl,
                         contactSuggestions = contactSuggestions,
                     )

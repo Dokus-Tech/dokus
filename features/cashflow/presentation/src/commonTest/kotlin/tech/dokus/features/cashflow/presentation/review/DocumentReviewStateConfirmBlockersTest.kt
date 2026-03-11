@@ -184,7 +184,6 @@ class DocumentReviewStateConfirmBlockersTest {
             documentStatus = DocumentStatus.NeedsReview,
             documentType = draftData.toType(),
             extractedData = draftData,
-            aiDraftData = draftData,
             aiDraftSourceRunId = null,
             draftVersion = 1,
             draftEditedAt = null,

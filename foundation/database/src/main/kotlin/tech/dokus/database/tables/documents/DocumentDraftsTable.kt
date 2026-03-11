@@ -23,7 +23,6 @@ import tech.dokus.foundation.backend.database.dbEnumeration
  *
  * This table stores the editable draft state for a document:
  * - Draft status (NeedsReview -> Confirmed/Rejected)
- * - AI draft data (immutable, from first successful run)
  * - Extracted data (editable current version)
  * - User edits and versioning for audit
  * - Version number for optimistic locking
@@ -55,10 +54,6 @@ object DocumentDraftsTable : Table("document_drafts") {
     // Extraction Data Fields
     // ============================================
 
-    // Original AI extraction output - IMMUTABLE once set (from first successful run)
-    // Preserves the AI's initial extraction for audit purposes
-    val aiDraftData = text("ai_draft_data").nullable()
-
     // AI-generated keywords for search (JSON array)
     val aiKeywords = text("ai_keywords").nullable()
 
@@ -83,10 +78,6 @@ object DocumentDraftsTable : Table("document_drafts") {
 
     // Current extraction data (may include user edits)
     val extractedData = text("extracted_data").nullable()
-
-    // JSON linking extracted fields to their source locations in the document
-    // Format: { "vendorName": { "page": 1, "bbox": [x1,y1,x2,y2], "text": "..." }, ... }
-    val provenanceData = text("provenance_data").nullable()
 
     // ============================================
     // Versioning & Audit Fields

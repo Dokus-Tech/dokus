@@ -136,7 +136,6 @@ class DocumentRowAttentionTest {
             documentStatus = status,
             documentType = DocumentType.Invoice,
             extractedData = null,
-            aiDraftData = null,
             aiDraftSourceRunId = null,
             draftVersion = 1,
             draftEditedAt = null,

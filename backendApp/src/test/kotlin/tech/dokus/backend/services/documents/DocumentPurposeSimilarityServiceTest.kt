@@ -111,7 +111,6 @@ class DocumentPurposeSimilarityServiceTest {
             documentStatus = DocumentStatus.Confirmed,
             documentType = DocumentType.Invoice,
             extractedData = null,
-            aiDraftData = null,
             purposeBase = "ChatGPT subscription",
             purposeRendered = "OpenAI - ChatGPT subscription February 2026",
             purposeSource = DocumentPurposeSource.AiRag,

@@ -85,7 +85,6 @@ internal fun DraftSummary.toDto(): DocumentDraftDto = DocumentDraftDto(
     documentType = documentType,
     direction = extractedData.directionOrUnknown(),
     extractedData = extractedData,
-    aiDraftData = aiDraftData,
     aiKeywords = aiKeywords,
     purposeBase = purposeBase,
     purposePeriodYear = purposePeriodYear,

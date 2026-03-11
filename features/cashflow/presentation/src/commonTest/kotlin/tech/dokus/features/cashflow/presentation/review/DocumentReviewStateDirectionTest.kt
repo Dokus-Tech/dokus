@@ -101,7 +101,6 @@ class DocumentReviewStateDirectionTest {
             documentStatus = DocumentStatus.NeedsReview,
             documentType = DocumentType.Invoice,
             extractedData = draftData,
-            aiDraftData = draftData,
             aiDraftSourceRunId = null,
             draftVersion = 0,
             draftEditedAt = null,

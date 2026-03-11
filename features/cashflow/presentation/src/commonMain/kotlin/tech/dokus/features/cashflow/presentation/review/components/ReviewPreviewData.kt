@@ -104,7 +104,6 @@ internal fun previewReviewContentState(
         documentType = DocumentType.Invoice,
         direction = DocumentDirection.Inbound,
         extractedData = draftData,
-        aiDraftData = draftData,
         aiDraftSourceRunId = null,
         draftVersion = 1,
         draftEditedAt = null,

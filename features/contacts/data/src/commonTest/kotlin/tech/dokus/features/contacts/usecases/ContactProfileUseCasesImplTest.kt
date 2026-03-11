@@ -376,7 +376,6 @@ private fun documentRecord(
             documentStatus = DocumentStatus.Confirmed,
             documentType = DocumentType.Invoice,
             extractedData = InvoiceDraftData(invoiceNumber = confirmedEntityReference(confirmedEntity)),
-            aiDraftData = null,
             purposeBase = purposeBase,
             purposeRendered = purposeRendered,
             aiDraftSourceRunId = null,

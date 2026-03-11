@@ -67,7 +67,6 @@ data class DocumentDraftDto(
     val documentType: DocumentType?,
     val direction: DocumentDirection = DocumentDirection.Unknown,
     val extractedData: DocumentDraftData?,
-    val aiDraftData: DocumentDraftData?, // Original immutable AI extraction (for diff display)
     val aiKeywords: List<String> = emptyList(),
     val purposeBase: String? = null,
     val purposePeriodYear: Int? = null,
@@ -76,7 +75,7 @@ data class DocumentDraftDto(
     val purposeSource: DocumentPurposeSource? = null,
     val purposeLocked: Boolean = false,
     val purposePeriodMode: PurposePeriodMode = PurposePeriodMode.IssueMonth,
-    val aiDraftSourceRunId: IngestionRunId?, // Which run produced ai_draft_data
+    val aiDraftSourceRunId: IngestionRunId?, // Which run first produced the AI draft
     val draftVersion: Int,
     val draftEditedAt: LocalDateTime?,
     val draftEditedBy: UserId?,

@@ -232,13 +232,12 @@ class ProcessorIngestionRepository {
                 .singleOrNull()
 
             if (existingDraft == null) {
-                // Create new draft - set both ai_draft_data and extracted_data
+                // Create new draft
                 DocumentDraftsTable.insert {
                     it[DocumentDraftsTable.documentId] = documentUuid
                     it[DocumentDraftsTable.tenantId] = tenantUuid
                     it[documentStatus] = calculatedStatus
                     it[DocumentDraftsTable.documentType] = documentType
-                    it[aiDraftData] = draftJson
                     it[DocumentDraftsTable.aiKeywords] = keywordsJson
                     it[aiDraftSourceRunId] = runUuid
                     it[DocumentDraftsTable.extractedData] = draftJson
@@ -249,11 +248,11 @@ class ProcessorIngestionRepository {
                 }
             } else {
                 // Update existing draft
-                val currentAiDraftData = existingDraft[DocumentDraftsTable.aiDraftData]
+                val currentAiDraftSourceRunId = existingDraft[DocumentDraftsTable.aiDraftSourceRunId]
                 val currentVersion = existingDraft[DocumentDraftsTable.draftVersion]
 
-                // ai_draft_data: set ONLY if null (first successful run)
-                val shouldSetAiDraft = currentAiDraftData == null
+                // aiDraftSourceRunId: set ONLY if null (first successful run)
+                val shouldSetAiDraftRun = currentAiDraftSourceRunId == null
 
                 // extracted_data: set ONLY if draftVersion == 0 (not user-edited) or force
                 val shouldSetExtracted = currentVersion == 0 || force
@@ -267,8 +266,7 @@ class ProcessorIngestionRepository {
                     it[lastSuccessfulRunId] = runUuid
                     it[updatedAt] = now
 
-                    if (shouldSetAiDraft) {
-                        it[aiDraftData] = draftJson
+                    if (shouldSetAiDraftRun) {
                         it[DocumentDraftsTable.aiKeywords] = keywordsJson
                         it[aiDraftSourceRunId] = runUuid
                     }

@@ -174,7 +174,6 @@ class DocumentReviewCanonicalStateTest {
                 is BankStatementDraftData -> DocumentType.BankStatement
             },
             extractedData = draftData,
-            aiDraftData = draftData,
             aiDraftSourceRunId = null,
             draftVersion = 1,
             draftEditedAt = null,

@@ -137,7 +137,6 @@ class DocumentQueueMapperTest {
             documentStatus = draftStatus,
             documentType = DocumentType.Invoice,
             extractedData = draftData,
-            aiDraftData = draftData,
             aiDraftSourceRunId = null,
             draftVersion = 1,
             draftEditedAt = null,

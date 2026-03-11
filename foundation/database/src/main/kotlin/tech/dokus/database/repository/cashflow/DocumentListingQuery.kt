@@ -476,7 +476,6 @@ private fun ResultRow.toDraftSummary(contactName: String? = null): DraftSummary 
         documentStatus = this[DocumentDraftsTable.documentStatus],
         documentType = this[DocumentDraftsTable.documentType],
         extractedData = this[DocumentDraftsTable.extractedData]?.let { json.decodeFromString<DocumentDraftData>(it) },
-        aiDraftData = this[DocumentDraftsTable.aiDraftData]?.let { json.decodeFromString<DocumentDraftData>(it) },
         aiKeywords = this[DocumentDraftsTable.aiKeywords]?.let { json.decodeFromString(it) } ?: emptyList(),
         purposeBase = this[DocumentDraftsTable.purposeBase],
         purposePeriodYear = this[DocumentDraftsTable.purposePeriodYear],

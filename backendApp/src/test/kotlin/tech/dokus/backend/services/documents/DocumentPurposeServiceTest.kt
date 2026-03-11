@@ -263,7 +263,6 @@ class DocumentPurposeServiceTest {
             documentStatus = documentStatus,
             documentType = DocumentType.Invoice,
             extractedData = invoiceDraft(),
-            aiDraftData = null,
             purposeBase = purposeBase,
             purposeLocked = purposeLocked,
             counterpartyKey = counterpartyKey,

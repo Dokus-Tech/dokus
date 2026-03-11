@@ -168,7 +168,6 @@ class DocumentRowResolutionTest {
             documentStatus = draftStatus,
             documentType = DocumentType.Invoice,
             extractedData = extractedData,
-            aiDraftData = extractedData,
             aiDraftSourceRunId = null,
             draftVersion = 0,
             draftEditedAt = null,

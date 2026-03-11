@@ -53,7 +53,6 @@ data class DraftSummary(
     val documentStatus: DocumentStatus,
     val documentType: DocumentType?,
     val extractedData: DocumentDraftData?,
-    val aiDraftData: DocumentDraftData?,
     val aiKeywords: List<String> = emptyList(),
     val purposeBase: String? = null,
     val purposePeriodYear: Int? = null,
@@ -124,7 +123,6 @@ class DocumentDraftRepository : DocumentStatusChecker {
                 it[DocumentDraftsTable.tenantId] = tenantIdUuid
                 it[documentStatus] = DocumentStatus.NeedsReview
                 it[DocumentDraftsTable.documentType] = documentType
-                it[aiDraftData] = json.encodeToString(extractedData)
                 it[DocumentDraftsTable.aiKeywords] = keywordsJson
                 it[aiDraftSourceRunId] = runIdUuid
                 it[DocumentDraftsTable.extractedData] = json.encodeToString(extractedData)
@@ -136,16 +134,15 @@ class DocumentDraftRepository : DocumentStatusChecker {
         } else {
             // Update existing draft
             val currentVersion = existing[DocumentDraftsTable.draftVersion]
-            val hasAiDraft = existing[DocumentDraftsTable.aiDraftData] != null
+            val hasAiDraftRun = existing[DocumentDraftsTable.aiDraftSourceRunId] != null
             val shouldUpdateExtracted = force || currentVersion == 0
 
             DocumentDraftsTable.update({
                 (DocumentDraftsTable.documentId eq docIdUuid) and
                     (DocumentDraftsTable.tenantId eq tenantIdUuid)
             }) {
-                // ai_draft_data: set only if null (immutable)
-                if (!hasAiDraft) {
-                    it[aiDraftData] = json.encodeToString(extractedData)
+                // aiDraftSourceRunId + keywords: set only on first successful run
+                if (!hasAiDraftRun) {
                     it[DocumentDraftsTable.aiKeywords] = keywordsJson
                     it[aiDraftSourceRunId] = runIdUuid
                 }
@@ -555,7 +552,6 @@ class DocumentDraftRepository : DocumentStatusChecker {
             documentStatus = this[DocumentDraftsTable.documentStatus],
             documentType = this[DocumentDraftsTable.documentType],
             extractedData = this[DocumentDraftsTable.extractedData]?.let { json.decodeFromString(it) },
-            aiDraftData = this[DocumentDraftsTable.aiDraftData]?.let { json.decodeFromString(it) },
             aiKeywords = this[DocumentDraftsTable.aiKeywords]?.let { json.decodeFromString(it) } ?: emptyList(),
             purposeBase = this[DocumentDraftsTable.purposeBase],
             purposePeriodYear = this[DocumentDraftsTable.purposePeriodYear],

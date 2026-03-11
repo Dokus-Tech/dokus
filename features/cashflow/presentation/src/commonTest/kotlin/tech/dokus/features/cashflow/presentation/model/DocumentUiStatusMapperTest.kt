@@ -205,7 +205,6 @@ class DocumentUiStatusMapperTest {
             documentStatus = documentStatus,
             documentType = documentType,
             extractedData = null,
-            aiDraftData = null,
             aiDraftSourceRunId = null,
             draftVersion = 1,
             draftEditedAt = null,
