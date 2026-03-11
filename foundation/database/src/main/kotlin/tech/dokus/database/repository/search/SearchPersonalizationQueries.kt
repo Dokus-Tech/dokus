@@ -276,7 +276,7 @@ class SearchPersonalizationQueries {
         val absoluteAmount = Money.fromDbDecimal(row[CashflowEntriesTable.amountGross])
         val signedAmount = if (direction == CashflowDirection.Out) -absoluteAmount else absoluteAmount
         val contactName = row.getOrNull(ContactsTable.name)
-        val filename = row.getOrNull(DocumentsTable.filename)
+        val filename = row.getOrNull(DocumentsTable.purposeRendered)
         val expenseDescription = row.getOrNull(ExpensesTable.description)
         val invoiceNumber = row.getOrNull(InvoicesTable.invoiceNumber)
         val displayText = when {

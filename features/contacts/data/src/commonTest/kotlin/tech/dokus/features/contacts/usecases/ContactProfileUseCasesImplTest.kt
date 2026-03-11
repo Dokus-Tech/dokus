@@ -365,9 +365,6 @@ private fun documentRecord(
             id = documentId,
             tenantId = tenantId,
             filename = filename,
-            contentType = "application/pdf",
-            sizeBytes = 1024,
-            storageKey = "documents/$filename",
             uploadedAt = now
         ),
         draft = DocumentDraftDto(

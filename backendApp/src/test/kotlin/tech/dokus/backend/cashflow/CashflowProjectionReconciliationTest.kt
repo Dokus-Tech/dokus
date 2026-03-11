@@ -236,10 +236,6 @@ class CashflowProjectionReconciliationTest {
         val documentId = documentRepository.create(
             tenantId = tenantId,
             payload = DocumentCreatePayload(
-                filename = "invoice.pdf",
-                contentType = "application/pdf",
-                sizeBytes = 100L,
-                storageKey = "test/$tenantUuid/invoice-${UUID.randomUUID()}.pdf",
                 canonicalContentHash = null,
                 effectiveOrigin = DocumentSource.Upload
             )

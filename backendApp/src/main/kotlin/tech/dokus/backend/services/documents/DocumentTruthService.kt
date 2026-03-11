@@ -23,10 +23,10 @@ import tech.dokus.database.tables.documents.DocumentSourcesTable
 import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.DocumentDirection
-import tech.dokus.domain.enums.DocumentIntakeOutcome
-import tech.dokus.domain.enums.DocumentMatchReviewReasonType
+import tech.dokus.domain.enums.IntakeOutcome
+import tech.dokus.domain.enums.ReviewReason
 import tech.dokus.domain.enums.DocumentMatchReviewStatus
-import tech.dokus.domain.enums.DocumentMatchType
+import tech.dokus.domain.enums.SourceMatchKind
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentSourceStatus
 import tech.dokus.domain.enums.DocumentStatus
@@ -83,22 +83,6 @@ sealed interface IntakeResolution {
         ) : NeedsReview
     }
 
-    /** Map to legacy [DocumentIntakeOutcome] for DTO/metrics compatibility. */
-    fun toOutcome(): DocumentIntakeOutcome = when (this) {
-        is NewDocument -> DocumentIntakeOutcome.NewDocument
-        is Linked -> DocumentIntakeOutcome.LinkedToExisting
-        is NeedsReview -> DocumentIntakeOutcome.PendingMatchReview
-    }
-
-    /** Map to legacy [DocumentMatchType] for DTO/DB compatibility. */
-    fun toMatchType(): DocumentMatchType? = when (this) {
-        is NewDocument -> null
-        is Linked.ExactFile -> DocumentMatchType.ExactFile
-        is Linked.SameContent -> DocumentMatchType.SameContent
-        is Linked.IdentityMatch -> DocumentMatchType.SameDocument
-        is NeedsReview.MaterialConflict -> DocumentMatchType.SameDocument
-        is NeedsReview.FuzzyCandidate -> DocumentMatchType.FuzzyCandidate
-    }
 }
 
 data class DocumentIntakeServiceResult(
@@ -110,34 +94,36 @@ data class DocumentIntakeServiceResult(
     val sourceCount: Int = 1,
     val orphanedDocumentId: DocumentId? = null,
 ) {
-    /** Backward-compatible computed property for callers checking outcome. */
-    val outcome: DocumentIntakeOutcome get() = resolution.toOutcome()
-
-    /** Backward-compatible computed property for callers checking match type. */
-    val matchType: DocumentMatchType? get() = resolution.toMatchType()
-
-    /** Backward-compatible computed property — linked document ID from resolution. */
-    val linkedDocumentId: DocumentId? get() = when (resolution) {
-        is IntakeResolution.Linked -> resolution.linkedDocumentId
-        is IntakeResolution.NeedsReview -> resolution.candidateDocumentId
-        is IntakeResolution.NewDocument -> null
+    fun toOutcomeDto(): DocumentIntakeOutcomeDto {
+        val outcome = when (resolution) {
+            is IntakeResolution.NewDocument -> IntakeOutcome.NewDocument
+            is IntakeResolution.Linked -> IntakeOutcome.LinkedToExisting
+            is IntakeResolution.NeedsReview -> IntakeOutcome.PendingMatchReview
+        }
+        val matchType = when (resolution) {
+            is IntakeResolution.NewDocument -> null
+            is IntakeResolution.Linked.ExactFile -> SourceMatchKind.ExactFile
+            is IntakeResolution.Linked.SameContent -> SourceMatchKind.SameContent
+            is IntakeResolution.Linked.IdentityMatch -> SourceMatchKind.SameDocument
+            is IntakeResolution.NeedsReview.MaterialConflict -> SourceMatchKind.SameDocument
+            is IntakeResolution.NeedsReview.FuzzyCandidate -> SourceMatchKind.FuzzyCandidate
+        }
+        val linkedDocumentId = when (resolution) {
+            is IntakeResolution.Linked -> resolution.linkedDocumentId
+            is IntakeResolution.NeedsReview -> resolution.candidateDocumentId
+            is IntakeResolution.NewDocument -> null
+        }
+        val reviewId = (resolution as? IntakeResolution.NeedsReview)?.reviewId
+        return DocumentIntakeOutcomeDto(
+            outcome = outcome,
+            sourceId = sourceId,
+            documentId = documentId,
+            linkedDocumentId = linkedDocumentId,
+            reviewId = reviewId,
+            sourceCount = sourceCount,
+            matchType = matchType
+        )
     }
-
-    /** Backward-compatible computed property — review ID from resolution. */
-    val reviewId: DocumentMatchReviewId? get() = when (resolution) {
-        is IntakeResolution.NeedsReview -> resolution.reviewId
-        else -> null
-    }
-
-    fun toOutcomeDto(): DocumentIntakeOutcomeDto = DocumentIntakeOutcomeDto(
-        outcome = outcome,
-        sourceId = sourceId,
-        documentId = documentId,
-        linkedDocumentId = linkedDocumentId,
-        reviewId = reviewId,
-        sourceCount = sourceCount,
-        matchType = matchType
-    )
 }
 
 data class SourceDeleteResult(
@@ -230,7 +216,7 @@ class DocumentTruthService(
                     it[blobId] = UUID.fromString(blob.id.toString())
                     it[DocumentSourcesTable.sourceChannel] = sourceChannel
                     it[status] = DocumentSourceStatus.Linked
-                    it[matchType] = DocumentMatchType.ExactFile
+                    it[matchType] = SourceMatchKind.ExactFile
                     it[DocumentSourcesTable.filename] = filename
                 }
                 val sourceCount = DocumentSourcesTable.selectAll()
@@ -243,7 +229,7 @@ class DocumentTruthService(
                     .toInt()
 
                 val resolution = IntakeResolution.Linked.ExactFile(linkedDocumentId = existingDocId)
-                recordIntakeOutcome(sourceChannel, resolution.toOutcome())
+                recordIntakeOutcome(sourceChannel, resolution)
                 DocumentIntakeServiceResult(
                     documentId = existingDocId,
                     sourceId = sourceId,
@@ -257,10 +243,6 @@ class DocumentTruthService(
                 DocumentsTable.insert {
                     it[DocumentsTable.id] = UUID.fromString(documentId.toString())
                     it[DocumentsTable.tenantId] = tenantUuid
-                    it[DocumentsTable.filename] = filename
-                    it[DocumentsTable.contentType] = blob.contentType
-                    it[DocumentsTable.sizeBytes] = blob.sizeBytes
-                    it[DocumentsTable.storageKey] = blob.storageKey
                     it[DocumentsTable.canonicalContentHash] = null
                     it[DocumentsTable.effectiveOrigin] = sourceChannel
                 }
@@ -381,7 +363,7 @@ class DocumentTruthService(
                 targetDocumentId = contentMatchDocumentId,
                 resolution = IntakeResolution.Linked.SameContent(contentMatchDocumentId)
             )
-            recordIntakeOutcome(resolvedSource.sourceChannel, result.outcome)
+            recordIntakeOutcome(resolvedSource.sourceChannel, result.resolution)
             return result
         }
 
@@ -400,11 +382,11 @@ class DocumentTruthService(
                         sourceId = resolvedSource.id,
                         sourceDocumentId = documentId,
                         targetDocumentId = identityMatchDocumentId,
-                        reason = DocumentMatchReviewReasonType.MaterialConflict,
+                        reason = ReviewReason.MaterialConflict,
                         summary = "Possible match with conflicting financial facts",
-                        matchType = DocumentMatchType.SameDocument
+                        matchType = SourceMatchKind.SameDocument
                     )
-                    recordIntakeOutcome(resolvedSource.sourceChannel, result.outcome)
+                    recordIntakeOutcome(resolvedSource.sourceChannel, result.resolution)
                     result
                 } else {
                     val result = linkSourceToExisting(
@@ -414,7 +396,7 @@ class DocumentTruthService(
                         targetDocumentId = identityMatchDocumentId,
                         resolution = IntakeResolution.Linked.IdentityMatch(identityMatchDocumentId)
                     )
-                    recordIntakeOutcome(resolvedSource.sourceChannel, result.outcome)
+                    recordIntakeOutcome(resolvedSource.sourceChannel, result.resolution)
                     result
                 }
             }
@@ -441,12 +423,12 @@ class DocumentTruthService(
                         sourceId = resolvedSource.id,
                         sourceDocumentId = documentId,
                         targetDocumentId = bestFuzzy.documentId,
-                        reason = DocumentMatchReviewReasonType.FuzzyCandidate,
+                        reason = ReviewReason.FuzzyCandidate,
                         summary = fuzzyAssessment.summary,
                         aiConfidence = fuzzyAssessment.confidence,
-                        matchType = DocumentMatchType.FuzzyCandidate
+                        matchType = SourceMatchKind.FuzzyCandidate
                     )
-                    recordIntakeOutcome(resolvedSource.sourceChannel, result.outcome)
+                    recordIntakeOutcome(resolvedSource.sourceChannel, result.resolution)
                     return result
                 }
             }
@@ -465,7 +447,7 @@ class DocumentTruthService(
             sourceDocumentId = documentId,
             sourceCount = sourceCount
         )
-        recordIntakeOutcome(resolvedSource.sourceChannel, result.outcome)
+        recordIntakeOutcome(resolvedSource.sourceChannel, result.resolution)
         return result
     }
 
@@ -497,11 +479,11 @@ class DocumentTruthService(
                 val orphanDeleted = deleteOrphanIfSafe(tenantId, source.documentId)
                 // Map the DB-stored matchType to a Linked resolution variant
                 val linkedResolution: IntakeResolution.Linked = when (source.matchType) {
-                    DocumentMatchType.ExactFile ->
+                    SourceMatchKind.ExactFile ->
                         IntakeResolution.Linked.ExactFile(review.documentId)
-                    DocumentMatchType.SameContent ->
+                    SourceMatchKind.SameContent ->
                         IntakeResolution.Linked.SameContent(review.documentId)
-                    DocumentMatchType.SameDocument, DocumentMatchType.FuzzyCandidate, null ->
+                    SourceMatchKind.SameDocument, SourceMatchKind.FuzzyCandidate, null ->
                         IntakeResolution.Linked.IdentityMatch(review.documentId)
                 }
                 DocumentIntakeServiceResult(
@@ -543,10 +525,6 @@ class DocumentTruthService(
                 val newDocumentId = documentRepository.create(
                     tenantId = tenantId,
                     payload = DocumentCreatePayload(
-                        filename = source.filename ?: "document",
-                        contentType = source.contentType,
-                        sizeBytes = source.sizeBytes,
-                        storageKey = source.storageKey,
                         canonicalContentHash = source.contentHash,
                         canonicalIdentityKey = source.identityKeyHash,
                         effectiveOrigin = source.sourceChannel
@@ -706,7 +684,11 @@ class DocumentTruthService(
             sourceId = sourceId,
             documentId = targetDocumentId,
             status = DocumentSourceStatus.Linked,
-            matchType = resolution.toMatchType()
+            matchType = when (resolution) {
+                is IntakeResolution.Linked.ExactFile -> SourceMatchKind.ExactFile
+                is IntakeResolution.Linked.SameContent -> SourceMatchKind.SameContent
+                is IntakeResolution.Linked.IdentityMatch -> SourceMatchKind.SameDocument
+            }
         )
         val orphanDeleted = deleteOrphanIfSafe(tenantId, sourceDocumentId)
         val sourceCount = sourceRepository.countLinkedSources(tenantId, targetDocumentId)
@@ -726,10 +708,10 @@ class DocumentTruthService(
         sourceId: DocumentSourceId,
         sourceDocumentId: DocumentId,
         targetDocumentId: DocumentId,
-        reason: DocumentMatchReviewReasonType,
+        reason: ReviewReason,
         summary: String,
         aiConfidence: Double? = null,
-        matchType: DocumentMatchType
+        matchType: SourceMatchKind
     ): DocumentIntakeServiceResult {
         sourceRepository.reassignToDocument(
             tenantId = tenantId,
@@ -749,9 +731,9 @@ class DocumentTruthService(
         val orphanDeleted = deleteOrphanIfSafe(tenantId, sourceDocumentId)
         val sourceCount = sourceRepository.countLinkedSources(tenantId, targetDocumentId)
         val resolution = when (reason) {
-            DocumentMatchReviewReasonType.MaterialConflict ->
+            ReviewReason.MaterialConflict ->
                 IntakeResolution.NeedsReview.MaterialConflict(targetDocumentId, reviewId)
-            DocumentMatchReviewReasonType.FuzzyCandidate ->
+            ReviewReason.FuzzyCandidate ->
                 IntakeResolution.NeedsReview.FuzzyCandidate(targetDocumentId, reviewId)
         }
         return DocumentIntakeServiceResult(
@@ -970,25 +952,30 @@ class DocumentTruthService(
 
     private fun recordIntakeOutcome(
         sourceChannel: DocumentSource,
-        outcome: DocumentIntakeOutcome
+        resolution: IntakeResolution
     ) {
+        val metricName = when (resolution) {
+            is IntakeResolution.NewDocument -> "NewDocument"
+            is IntakeResolution.Linked -> "LinkedToExisting"
+            is IntakeResolution.NeedsReview -> "PendingMatchReview"
+        }
         Metrics.counter(
             "dokus_intake_outcome_count",
             "outcome",
-            outcome.name,
+            metricName,
             "channel",
             sourceChannel.name
         ).increment()
-        when (outcome) {
-            DocumentIntakeOutcome.LinkedToExisting -> {
+        when (resolution) {
+            is IntakeResolution.Linked -> {
                 Metrics.counter("dokus_silent_link_count", "channel", sourceChannel.name).increment()
             }
 
-            DocumentIntakeOutcome.PendingMatchReview -> {
+            is IntakeResolution.NeedsReview -> {
                 Metrics.counter("dokus_needs_review_count", "channel", sourceChannel.name).increment()
             }
 
-            DocumentIntakeOutcome.NewDocument -> Unit
+            is IntakeResolution.NewDocument -> Unit
         }
     }
 }

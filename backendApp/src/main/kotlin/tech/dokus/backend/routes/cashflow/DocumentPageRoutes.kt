@@ -246,19 +246,13 @@ private suspend fun resolveDefaultSourceForPreview(
     documentRepository: DocumentRepository,
     sourceRepository: DocumentSourceRepository
 ): PreviewSourceSelection {
-    val document = documentRepository.getById(tenantId, documentId)
-        ?: throw DokusException.NotFound("Document not found: $documentId")
+    if (!documentRepository.exists(tenantId, documentId)) {
+        throw DokusException.NotFound("Document not found: $documentId")
+    }
     val sources = sourceRepository.listByDocument(tenantId, documentId)
     val preferredSource = selectPreferredSource(sources)
-    return if (preferredSource != null) {
-        preferredSource.toPreviewSelection()
-    } else {
-        PreviewSourceSelection(
-            storageKey = document.storageKey,
-            contentType = document.contentType,
-            cacheScope = "default"
-        )
-    }
+        ?: throw DokusException.NotFound("No source available for document: $documentId")
+    return preferredSource.toPreviewSelection()
 }
 
 private suspend fun resolveExplicitSourceForPreview(

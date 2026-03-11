@@ -46,13 +46,6 @@ private const val PreviewMinute = 30
 private const val PreviewSecond = 0
 private const val PreviewNanosecond = 0
 
-// Preview mock data file size constants (in bytes)
-private const val InvoiceSizeBytes = 125000L
-private const val InboundInvoiceSizeBytes = 98000L
-private const val ExpenseSizeBytes = 45000L
-private const val ScanSizeBytes = 200000L
-private const val ClientInvoiceSizeBytes = 150000L
-
 // Draft version constant
 private const val InitialDraftVersion = 1
 
@@ -204,9 +197,6 @@ private fun getSamplePendingDocuments(): List<DocumentRecordDto> {
                 id = DocumentId.generate(),
                 tenantId = tenantId,
                 filename = "invoice-2024-001.pdf",
-                contentType = "application/pdf",
-                sizeBytes = InvoiceSizeBytes,
-                storageKey = "documents/invoice-2024-001.pdf",
                 uploadedAt = now
             ),
             draft = DocumentDraftDto(
@@ -233,9 +223,6 @@ private fun getSamplePendingDocuments(): List<DocumentRecordDto> {
                 id = DocumentId.generate(),
                 tenantId = tenantId,
                 filename = "supplier-inbound-invoice.pdf",
-                contentType = "application/pdf",
-                sizeBytes = InboundInvoiceSizeBytes,
-                storageKey = "documents/supplier-inbound-invoice.pdf",
                 uploadedAt = now
             ),
             draft = DocumentDraftDto(
@@ -266,9 +253,6 @@ private fun getSamplePendingDocuments(): List<DocumentRecordDto> {
                 id = DocumentId.generate(),
                 tenantId = tenantId,
                 filename = "receipt-lunch-meeting.jpg",
-                contentType = "image/jpeg",
-                sizeBytes = ExpenseSizeBytes,
-                storageKey = "documents/receipt-lunch-meeting.jpg",
                 uploadedAt = now
             ),
             draft = DocumentDraftDto(
@@ -295,9 +279,6 @@ private fun getSamplePendingDocuments(): List<DocumentRecordDto> {
                 id = DocumentId.generate(),
                 tenantId = tenantId,
                 filename = "scan-20240525.pdf",
-                contentType = "application/pdf",
-                sizeBytes = ScanSizeBytes,
-                storageKey = "documents/scan-20240525.pdf",
                 uploadedAt = now
             ),
             draft = null,
@@ -310,9 +291,6 @@ private fun getSamplePendingDocuments(): List<DocumentRecordDto> {
                 id = DocumentId.generate(),
                 tenantId = tenantId,
                 filename = "invoice-client-abc.pdf",
-                contentType = "application/pdf",
-                sizeBytes = ClientInvoiceSizeBytes,
-                storageKey = "documents/invoice-client-abc.pdf",
                 uploadedAt = now
             ),
             draft = DocumentDraftDto(

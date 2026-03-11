@@ -160,10 +160,6 @@ abstract class SearchTestFixture {
             DocumentsTable.insert {
                 it[DocumentsTable.id] = id
                 it[tenantId] = tenant
-                it[DocumentsTable.filename] = filename
-                it[contentType] = "application/pdf"
-                it[sizeBytes] = 512L
-                it[storageKey] = "docs/$id.pdf"
                 it[effectiveOrigin] = DocumentSource.Upload
                 it[uploadedAt] = now
             }

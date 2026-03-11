@@ -380,7 +380,7 @@ private val searchModule = module {
 
 private fun documentProcessingModule() = module {
     // Bridge: backendApp's DocumentFetcher implementation for the AI module
-    single<DocumentFetcher> { StorageDocumentFetcher(get(), get()) }
+    single<DocumentFetcher> { StorageDocumentFetcher(get(), get(), get()) }
 
     // Contact resolution (deterministic post-processing)
     singleOf(::ContactMatchingUtils)

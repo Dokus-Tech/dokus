@@ -311,10 +311,6 @@ class DocumentListingFiltersTest {
             DocumentsTable.insert {
                 it[id] = docUuid
                 it[tenantId] = tenantUuid
-                it[DocumentsTable.filename] = filename
-                it[contentType] = "application/pdf"
-                it[sizeBytes] = 123L
-                it[storageKey] = "test/$docUuid/$filename"
                 it[canonicalContentHash] = null
                 it[effectiveOrigin] = DocumentSource.Upload
             }

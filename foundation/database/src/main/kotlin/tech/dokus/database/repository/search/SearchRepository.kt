@@ -269,8 +269,7 @@ class SearchRepository(
             }
 
         query = query.andWhere {
-            (LowerCase(DocumentsTable.filename) like pattern) or
-                (LowerCase(DocumentsTable.purposeRendered) like pattern) or
+            (LowerCase(DocumentsTable.purposeRendered) like pattern) or
                 (LowerCase(DocumentsTable.purposeBase) like pattern) or
                 (LowerCase(DocumentsTable.aiKeywords) like pattern) or
                 (LowerCase(DocumentsTable.counterpartySnapshot) like pattern) or
@@ -348,7 +347,7 @@ class SearchRepository(
             (LowerCase(ContactsTable.name) like pattern) or
                 (LowerCase(ContactsTable.email) like pattern) or
                 (LowerCase(ContactsTable.vatNumber) like pattern) or
-                (LowerCase(DocumentsTable.filename) like pattern) or
+                (LowerCase(DocumentsTable.purposeRendered) like pattern) or
                 (LowerCase(ExpensesTable.description) like pattern) or
                 (LowerCase(InvoicesTable.invoiceNumber) like pattern) or
                 (LowerCase(InvoicesTable.notes) like pattern)
@@ -367,7 +366,7 @@ class SearchRepository(
 
         return SearchDocumentHit(
             documentId = DocumentId.parse(row[DocumentsTable.id].value.toString()),
-            filename = row[DocumentsTable.filename],
+            filename = row[DocumentsTable.purposeRendered] ?: "",
             documentType = row[DocumentsTable.documentType],
             status = row[DocumentsTable.documentStatus],
             counterpartyName = contactName ?: snapshot?.name,
@@ -389,7 +388,7 @@ class SearchRepository(
         val absoluteAmount = Money.fromDbDecimal(row[CashflowEntriesTable.amountGross])
         val signedAmount = if (direction == CashflowDirection.Out) -absoluteAmount else absoluteAmount
         val contactName = row.getOrNull(ContactsTable.name)
-        val filename = row.getOrNull(DocumentsTable.filename)
+        val filename = row.getOrNull(DocumentsTable.purposeRendered)
         val expenseDescription = row.getOrNull(ExpensesTable.description)
         val invoiceNumber = row.getOrNull(InvoicesTable.invoiceNumber)
         val displayText = when {

@@ -5,7 +5,7 @@ import kotlinx.datetime.LocalDateTime
 import tech.dokus.domain.DisplayName
 import tech.dokus.domain.LegalName
 import tech.dokus.domain.asbtractions.TokenManager
-import tech.dokus.domain.enums.DocumentIntakeOutcome
+import tech.dokus.domain.enums.IntakeOutcome
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.Language
 import tech.dokus.domain.enums.SubscriptionTier
@@ -97,7 +97,7 @@ internal class FakeUploadDocumentUseCase(
             DocumentIntakeResult(
                 document = doc,
                 intake = DocumentIntakeOutcomeDto(
-                    outcome = DocumentIntakeOutcome.NewDocument,
+                    outcome = IntakeOutcome.NewDocument,
                     sourceId = DocumentSourceId.parse(doc.id.toString()),
                     documentId = doc.id
                 )
@@ -138,9 +138,6 @@ internal fun testDocument(
     id = id,
     tenantId = tenantId,
     filename = "invoice.pdf",
-    contentType = "application/pdf",
-    sizeBytes = 1234,
-    storageKey = "documents/invoice.pdf",
     effectiveOrigin = DocumentSource.Upload,
     uploadedAt = LocalDateTime(2024, 1, 1, 0, 0),
     downloadUrl = null

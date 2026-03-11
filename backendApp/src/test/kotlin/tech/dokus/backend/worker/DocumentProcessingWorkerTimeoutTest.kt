@@ -52,17 +52,11 @@ class DocumentProcessingWorkerTimeoutTest {
             runId = IngestionRunId.generate(),
             documentId = DocumentId.generate(),
             tenantId = TenantId.generate(),
-            storageKey = "docs/first.pdf",
-            filename = "first.pdf",
-            contentType = "application/pdf"
         )
         val secondRun = IngestionItemEntity(
             runId = IngestionRunId.generate(),
             documentId = DocumentId.generate(),
             tenantId = TenantId.generate(),
-            storageKey = "docs/second.pdf",
-            filename = "second.pdf",
-            contentType = "application/pdf"
         )
 
         coEvery { ingestionRepository.recoverStaleRunsDetailed() } returns emptyList()

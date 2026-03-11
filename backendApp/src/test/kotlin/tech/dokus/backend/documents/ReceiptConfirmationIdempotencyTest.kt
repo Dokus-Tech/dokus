@@ -184,10 +184,6 @@ class ReceiptConfirmationIdempotencyTest {
         val documentId = documentRepository.create(
             tenantId = tenantId,
             payload = tech.dokus.database.repository.cashflow.DocumentCreatePayload(
-                filename = "receipt.pdf",
-                contentType = "application/pdf",
-                sizeBytes = 123L,
-                storageKey = "test/$tenantUuid/receipt.pdf",
                 canonicalContentHash = null,
                 effectiveOrigin = DocumentSource.Upload
             )

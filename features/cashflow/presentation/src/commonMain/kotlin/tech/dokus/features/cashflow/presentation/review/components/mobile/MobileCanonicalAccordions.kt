@@ -28,7 +28,7 @@ import tech.dokus.aura.resources.cashflow_match_review_different_document
 import tech.dokus.aura.resources.cashflow_match_review_same_document
 import tech.dokus.aura.resources.document_sources_independently_verified
 import tech.dokus.domain.Money
-import tech.dokus.domain.enums.DocumentMatchReviewReasonType
+import tech.dokus.domain.enums.ReviewReason
 import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.features.cashflow.presentation.review.models.LineItemUiData
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
@@ -137,11 +137,11 @@ internal fun MobileSourcesAccordion(
         state.documentRecord?.pendingMatchReview?.let { pendingReview ->
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             val reasonText = when (pendingReview.reasonType) {
-                DocumentMatchReviewReasonType.MaterialConflict -> {
+                ReviewReason.MaterialConflict -> {
                     "Conflicting source facts need your confirmation."
                 }
 
-                DocumentMatchReviewReasonType.FuzzyCandidate -> {
+                ReviewReason.FuzzyCandidate -> {
                     "Possible duplicate source found."
                 }
             }

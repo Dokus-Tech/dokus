@@ -118,9 +118,6 @@ class DocumentRowAttentionTest {
                 id = documentId,
                 tenantId = TENANT_ID,
                 filename = "test.pdf",
-                contentType = "application/pdf",
-                sizeBytes = 123L,
-                storageKey = "documents/test.pdf",
                 uploadedAt = NOW
             ),
             draft = draftStatus?.let { createDraft(documentId, it) },

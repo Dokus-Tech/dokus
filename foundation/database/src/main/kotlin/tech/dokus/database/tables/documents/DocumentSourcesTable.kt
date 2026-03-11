@@ -6,7 +6,7 @@ import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
 import tech.dokus.database.tables.auth.TenantTable
 import tech.dokus.domain.enums.DocumentDirection
-import tech.dokus.domain.enums.DocumentMatchType
+import tech.dokus.domain.enums.SourceMatchKind
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentSourceStatus
 import tech.dokus.domain.enums.DocumentType
@@ -45,7 +45,7 @@ object DocumentSourcesTable : UUIDTable("document_sources") {
     val contentHash = varchar("content_hash", HashLength).nullable()
     val identityKeyHash = varchar("identity_key_hash", HashLength).nullable()
     val status = dbEnumeration<DocumentSourceStatus>("status").default(DocumentSourceStatus.Linked)
-    val matchType = dbEnumeration<DocumentMatchType>("match_type").nullable()
+    val matchType = dbEnumeration<SourceMatchKind>("match_type").nullable()
     val isCorrective = bool("is_corrective").default(false)
     val extractedSnapshotJson = text("extracted_snapshot_json").nullable()
     val peppolStructuredSnapshotJson = text("peppol_structured_snapshot_json").nullable()

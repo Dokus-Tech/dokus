@@ -23,7 +23,7 @@ enum class DocumentSourceStatus(override val dbValue: String) : DbEnum {
  * Why a source was sent to manual match review.
  */
 @Serializable
-enum class DocumentMatchReviewReasonType(override val dbValue: String) : DbEnum {
+enum class ReviewReason(override val dbValue: String) : DbEnum {
     @SerialName("MATERIAL_CONFLICT")
     MaterialConflict("MATERIAL_CONFLICT"),
 
@@ -50,7 +50,7 @@ enum class DocumentMatchReviewStatus(override val dbValue: String) : DbEnum {
  * Intake decision surfaced to clients after a source arrives.
  */
 @Serializable
-enum class DocumentIntakeOutcome(override val dbValue: String) : DbEnum {
+enum class IntakeOutcome(override val dbValue: String) : DbEnum {
     @SerialName("NEW_DOCUMENT")
     NewDocument("NEW_DOCUMENT"),
 
@@ -62,10 +62,10 @@ enum class DocumentIntakeOutcome(override val dbValue: String) : DbEnum {
 }
 
 /**
- * Internal match layer used for explainability.
+ * Per-source evidence label: what kind of match linked this source to its document?
  */
 @Serializable
-enum class DocumentMatchType(override val dbValue: String) : DbEnum {
+enum class SourceMatchKind(override val dbValue: String) : DbEnum {
     @SerialName("EXACT_FILE")
     ExactFile("EXACT_FILE"),
 

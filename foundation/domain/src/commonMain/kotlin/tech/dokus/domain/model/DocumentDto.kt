@@ -7,20 +7,17 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 
 /**
- * Document DTO - represents a canonical document.
+ * Document DTO - represents a canonical document (a financial fact, not a file).
  *
- * File metadata (filename, contentType, sizeBytes, storageKey) is resolved
- * from the preferred source. The download URL is generated fresh on each
- * fetch to avoid storing expiring presigned URLs.
+ * `filename` is a display field resolved at runtime from the preferred source
+ * via DocumentRecordLoader. It is NOT persisted on the canonical document.
+ * The download URL is generated fresh on each fetch (presigned MinIO URL).
  */
 @Serializable
 data class DocumentDto(
     val id: DocumentId,
     val tenantId: TenantId,
-    val filename: String,
-    val contentType: String,
-    val sizeBytes: Long,
-    val storageKey: String,
+    val filename: String = "",
     val effectiveOrigin: DocumentSource = DocumentSource.Upload,
     val uploadedAt: LocalDateTime,
     val downloadUrl: String? = null

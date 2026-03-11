@@ -18,7 +18,7 @@ import org.jetbrains.exposed.v1.jdbc.update
 import tech.dokus.database.tables.documents.DocumentBlobsTable
 import tech.dokus.database.tables.documents.DocumentSourcesTable
 import tech.dokus.domain.enums.DocumentDirection
-import tech.dokus.domain.enums.DocumentMatchType
+import tech.dokus.domain.enums.SourceMatchKind
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentSourceStatus
 import tech.dokus.domain.enums.DocumentType
@@ -42,7 +42,7 @@ data class DocumentSourceSummary(
     val contentHash: String?,
     val identityKeyHash: String?,
     val status: DocumentSourceStatus,
-    val matchType: DocumentMatchType?,
+    val matchType: SourceMatchKind?,
     val isCorrective: Boolean,
     val extractedSnapshotJson: String?,
     val peppolStructuredSnapshotJson: String? = null,
@@ -65,7 +65,7 @@ data class DocumentSourceCreatePayload(
     val peppolRawUblBlobId: DocumentBlobId? = null,
     val sourceChannel: DocumentSource,
     val status: DocumentSourceStatus = DocumentSourceStatus.Linked,
-    val matchType: DocumentMatchType? = null,
+    val matchType: SourceMatchKind? = null,
     val contentHash: String? = null,
     val identityKeyHash: String? = null,
     val isCorrective: Boolean = false,
@@ -287,7 +287,7 @@ class DocumentSourceRepository {
         documentType: DocumentType?,
         direction: DocumentDirection?,
         extractedSnapshotJson: String?,
-        matchType: DocumentMatchType?
+        matchType: SourceMatchKind?
     ): Boolean = newSuspendedTransaction {
         DocumentSourcesTable.update({
             (DocumentSourcesTable.id eq UUID.fromString(sourceId.toString())) and
@@ -332,7 +332,7 @@ class DocumentSourceRepository {
         sourceId: DocumentSourceId,
         documentId: DocumentId,
         status: DocumentSourceStatus,
-        matchType: DocumentMatchType?
+        matchType: SourceMatchKind?
     ): Boolean = newSuspendedTransaction {
         DocumentSourcesTable.update({
             (DocumentSourcesTable.id eq UUID.fromString(sourceId.toString())) and

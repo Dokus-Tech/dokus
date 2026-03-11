@@ -104,7 +104,7 @@ internal fun Route.consoleRoutes() {
             )
 
             val records = documentsWithInfo.map { docInfo ->
-                val documentWithUrl = addDownloadUrl(docInfo.document, minioStorage, logger)
+                val documentWithUrl = addDownloadUrl(docInfo.document, null, minioStorage, logger)
 
                 DocumentRecordDto(
                     document = documentWithUrl,
@@ -139,7 +139,7 @@ internal fun Route.consoleRoutes() {
 
             val document = documentRepository.getById(tenantId, documentId)
                 ?: throw DokusException.NotFound("Document not found")
-            val documentWithUrl = addDownloadUrl(document, minioStorage, logger)
+            val documentWithUrl = addDownloadUrl(document, null, minioStorage, logger)
             val draft = documentRepository.getDraftByDocumentId(documentId, tenantId)
             val latestIngestion = ingestionRepository.getLatestForDocument(documentId, tenantId)
 

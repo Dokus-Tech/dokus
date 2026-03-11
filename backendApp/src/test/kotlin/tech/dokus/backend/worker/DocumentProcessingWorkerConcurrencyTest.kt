@@ -61,9 +61,6 @@ class DocumentProcessingWorkerConcurrencyTest {
             runId = IngestionRunId.generate(),
             documentId = DocumentId.generate(),
             tenantId = TenantId.generate(),
-            storageKey = "docs/claimed.pdf",
-            filename = "claimed.pdf",
-            contentType = "application/pdf"
         )
 
         coEvery { ingestionRepository.recoverStaleRunsDetailed() } returns emptyList()
@@ -125,9 +122,6 @@ class DocumentProcessingWorkerConcurrencyTest {
             tenantId = TenantId.generate(),
             sourceChannel = null,
             effectiveOrigin = DocumentSource.Email,
-            storageKey = "docs/fallback.pdf",
-            filename = "fallback.pdf",
-            contentType = "application/pdf"
         )
 
         coEvery { ingestionRepository.recoverStaleRunsDetailed() } returns emptyList()

@@ -41,9 +41,6 @@ internal class DocumentRecordLoader(
         val effectiveDocument = if (preferredSource != null) {
             document.copy(
                 filename = preferredSource.filename ?: document.filename,
-                contentType = preferredSource.contentType,
-                sizeBytes = preferredSource.sizeBytes,
-                storageKey = preferredSource.storageKey,
                 effectiveOrigin = preferredSource.sourceChannel,
                 uploadedAt = preferredSource.arrivalAt,
             )
@@ -51,7 +48,7 @@ internal class DocumentRecordLoader(
             document
         }
 
-        val documentWithUrl = addDownloadUrl(effectiveDocument, documentStorageService, logger)
+        val documentWithUrl = addDownloadUrl(effectiveDocument, preferredSource?.storageKey, documentStorageService, logger)
         val draft = documentRepository.getDraftByDocumentId(documentId, tenantId)
         val latestIngestion = ingestionRepository.getLatestForDocument(documentId, tenantId)
         val pendingReview = truthService.getPendingReviewByDocument(tenantId, documentId)

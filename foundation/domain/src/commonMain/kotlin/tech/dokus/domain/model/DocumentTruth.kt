@@ -2,10 +2,10 @@ package tech.dokus.domain.model
 
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
-import tech.dokus.domain.enums.DocumentIntakeOutcome
-import tech.dokus.domain.enums.DocumentMatchReviewReasonType
+import tech.dokus.domain.enums.IntakeOutcome
+import tech.dokus.domain.enums.ReviewReason
 import tech.dokus.domain.enums.DocumentMatchReviewStatus
-import tech.dokus.domain.enums.DocumentMatchType
+import tech.dokus.domain.enums.SourceMatchKind
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentSourceStatus
 import tech.dokus.domain.ids.DocumentBlobId
@@ -35,7 +35,7 @@ data class DocumentSourceDto(
     val filename: String? = null,
     val contentType: String? = null,
     val sizeBytes: Long? = null,
-    val matchType: DocumentMatchType? = null,
+    val matchType: SourceMatchKind? = null,
 )
 
 @Serializable
@@ -44,7 +44,7 @@ data class DocumentMatchReviewDto(
     val tenantId: TenantId,
     val documentId: DocumentId,
     val incomingSourceId: DocumentSourceId,
-    val reasonType: DocumentMatchReviewReasonType,
+    val reasonType: ReviewReason,
     val aiSummary: String? = null,
     val aiConfidence: Double? = null,
     val status: DocumentMatchReviewStatus,
@@ -57,20 +57,20 @@ data class DocumentMatchReviewDto(
 @Serializable
 data class DocumentMatchReviewSummaryDto(
     val reviewId: DocumentMatchReviewId,
-    val reasonType: DocumentMatchReviewReasonType,
+    val reasonType: ReviewReason,
     val status: DocumentMatchReviewStatus,
     val createdAt: LocalDateTime
 )
 
 @Serializable
 data class DocumentIntakeOutcomeDto(
-    val outcome: DocumentIntakeOutcome,
+    val outcome: IntakeOutcome,
     val sourceId: DocumentSourceId,
     val documentId: DocumentId,
     val linkedDocumentId: DocumentId? = null,
     val reviewId: DocumentMatchReviewId? = null,
     val sourceCount: Int = 1,
-    val matchType: DocumentMatchType? = null
+    val matchType: SourceMatchKind? = null
 )
 
 @Serializable

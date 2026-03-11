@@ -96,9 +96,6 @@ class ProcessorIngestionRepository {
                         effectiveOrigin = row[DocumentsTable.effectiveOrigin],
                         peppolStructuredSnapshotJson = row.getOrNull(DocumentSourcesTable.peppolStructuredSnapshotJson),
                         peppolSnapshotVersion = row.getOrNull(DocumentSourcesTable.peppolSnapshotVersion),
-                        storageKey = row[DocumentsTable.storageKey],
-                        filename = row[DocumentsTable.filename],
-                        contentType = row[DocumentsTable.contentType],
                         userFeedback = row[DocumentIngestionRunsTable.userFeedback],
                         overrideMaxPages = row[DocumentIngestionRunsTable.overrideMaxPages],
                         overrideDpi = row[DocumentIngestionRunsTable.overrideDpi]

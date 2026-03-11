@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import tech.dokus.domain.enums.DocumentIntakeOutcome
+import tech.dokus.domain.enums.IntakeOutcome
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.features.cashflow.presentation.cashflow.model.DocumentDeletionHandle
@@ -173,7 +173,7 @@ class DocumentUploadItemState(
             UploadStatus.COMPLETED -> {
                 if (document != null) {
                     when (task.intakeOutcome) {
-                        DocumentIntakeOutcome.LinkedToExisting -> {
+                        IntakeOutcome.LinkedToExisting -> {
                             DocumentUploadDisplayState.Linked(
                                 id = task.id,
                                 fileName = task.fileName,
@@ -183,7 +183,7 @@ class DocumentUploadItemState(
                             )
                         }
 
-                        DocumentIntakeOutcome.PendingMatchReview -> {
+                        IntakeOutcome.PendingMatchReview -> {
                             DocumentUploadDisplayState.NeedsReview(
                                 id = task.id,
                                 fileName = task.fileName,

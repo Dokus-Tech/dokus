@@ -161,7 +161,7 @@ internal fun Route.documentRecordRoutes() {
 
             // Build full records
             val records = documentsWithInfo.map { docInfo ->
-                val documentWithUrl = addDownloadUrl(docInfo.document, minioStorage, logger)
+                val documentWithUrl = addDownloadUrl(docInfo.document, null, minioStorage, logger)
                 val draft = docInfo.draft
                 val confirmedEntity = if (draft?.documentStatus == DocumentStatus.Confirmed) {
                     findConfirmedEntity(
@@ -337,9 +337,11 @@ internal fun Route.documentRecordRoutes() {
                 ?: throw DokusException.NotFound("Document not found")
             val sources = truthService.listSources(tenantId, documentId)
             val preferredSource = selectPreferredSource(sources)
-            val storageKey = preferredSource?.storageKey ?: document.storageKey
-            val resolvedFilename = preferredSource?.filename ?: document.filename
-            val resolvedContentType = preferredSource?.contentType ?: document.contentType
+            val source = preferredSource
+                ?: throw DokusException.NotFound("No source available for document")
+            val storageKey = source.storageKey
+            val resolvedFilename = source.filename ?: document.filename
+            val resolvedContentType = source.contentType
 
             val stream = try {
                 minioStorage.openDocumentStream(storageKey)
@@ -490,19 +492,18 @@ internal fun Route.documentRecordRoutes() {
                 )
             }
 
-            // Get storage key for MinIO cleanup
-            val document = documentRepository.getById(tenantId, documentId)
-            val storageKey = document?.storageKey
+            // Collect source storage keys before deleting so we can clean up blobs
+            val sources = truthService.listSources(tenantId, documentId)
 
-            // Delete document (cascades to drafts, runs, chunks)
+            // Delete document (cascades to drafts, runs, chunks, sources)
             documentRepository.delete(tenantId, documentId)
 
-            // Delete from MinIO
-            if (storageKey != null) {
+            // Delete source blobs from MinIO
+            for (source in sources) {
                 try {
-                    minioStorage.deleteDocument(storageKey)
+                    minioStorage.deleteDocument(source.storageKey)
                 } catch (e: Exception) {
-                    logger.warn("Failed to delete document from storage: $storageKey", e)
+                    logger.warn("Failed to delete source blob from storage: ${source.storageKey}", e)
                 }
             }
 

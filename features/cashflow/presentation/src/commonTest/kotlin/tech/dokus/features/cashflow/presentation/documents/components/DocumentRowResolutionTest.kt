@@ -186,9 +186,6 @@ class DocumentRowResolutionTest {
                 id = documentId,
                 tenantId = tenantId,
                 filename = "apple-invoice.pdf",
-                contentType = "application/pdf",
-                sizeBytes = 1200L,
-                storageKey = "documents/$tenantId/apple-invoice.pdf",
                 effectiveOrigin = DocumentSource.Upload,
                 uploadedAt = now
             ),

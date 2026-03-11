@@ -7,9 +7,9 @@ import tech.dokus.domain.enums.CashflowDirection
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.enums.DocumentDirection
-import tech.dokus.domain.enums.DocumentMatchReviewReasonType
+import tech.dokus.domain.enums.ReviewReason
 import tech.dokus.domain.enums.DocumentMatchReviewStatus
-import tech.dokus.domain.enums.DocumentMatchType
+import tech.dokus.domain.enums.SourceMatchKind
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.DocumentSourceStatus
@@ -118,7 +118,7 @@ class DocumentReviewCanonicalStateTest {
     fun `cross-match is visible when linked source has trusted match type and no pending review`() {
         val state = contentState(
             draftData = invoiceDraft(),
-            sources = listOf(source(matchType = DocumentMatchType.ExactFile)),
+            sources = listOf(source(matchType = SourceMatchKind.ExactFile)),
             pendingMatchReview = null,
         )
 
@@ -129,7 +129,7 @@ class DocumentReviewCanonicalStateTest {
     fun `cross-match is hidden when pending review exists`() {
         val state = contentState(
             draftData = invoiceDraft(),
-            sources = listOf(source(matchType = DocumentMatchType.SameDocument)),
+            sources = listOf(source(matchType = SourceMatchKind.SameDocument)),
             pendingMatchReview = pendingReview(),
         )
 
@@ -142,7 +142,7 @@ class DocumentReviewCanonicalStateTest {
             draftData = invoiceDraft(),
             sources = listOf(
                 source(
-                    matchType = DocumentMatchType.SameContent,
+                    matchType = SourceMatchKind.SameContent,
                     status = DocumentSourceStatus.Detached,
                 )
             ),
@@ -203,9 +203,6 @@ class DocumentReviewCanonicalStateTest {
                 id = documentId,
                 tenantId = tenantId,
                 filename = "invoice.pdf",
-                contentType = "application/pdf",
-                sizeBytes = 1200L,
-                storageKey = "documents/$tenantId/invoice.pdf",
                 effectiveOrigin = DocumentSource.Upload,
                 uploadedAt = now,
             ),
@@ -282,7 +279,7 @@ class DocumentReviewCanonicalStateTest {
     )
 
     private fun source(
-        matchType: DocumentMatchType?,
+        matchType: SourceMatchKind?,
         status: DocumentSourceStatus = DocumentSourceStatus.Linked,
     ) = DocumentSourceDto(
         id = DocumentSourceId.generate(),
@@ -298,7 +295,7 @@ class DocumentReviewCanonicalStateTest {
 
     private fun pendingReview() = DocumentMatchReviewSummaryDto(
         reviewId = DocumentMatchReviewId.generate(),
-        reasonType = DocumentMatchReviewReasonType.MaterialConflict,
+        reasonType = ReviewReason.MaterialConflict,
         status = DocumentMatchReviewStatus.Pending,
         createdAt = LocalDateTime(2026, 2, 10, 0, 0, 0),
     )

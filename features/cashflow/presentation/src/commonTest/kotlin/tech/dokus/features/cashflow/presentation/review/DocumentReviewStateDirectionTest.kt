@@ -117,9 +117,6 @@ class DocumentReviewStateDirectionTest {
                 id = documentId,
                 tenantId = tenantId,
                 filename = "invoice.pdf",
-                contentType = "application/pdf",
-                sizeBytes = 1200L,
-                storageKey = "documents/$tenantId/invoice.pdf",
                 effectiveOrigin = DocumentSource.Upload,
                 uploadedAt = now
             ),

@@ -17,9 +17,6 @@ import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.PurposePeriodMode
 import tech.dokus.foundation.backend.database.dbEnumeration
 
-private const val FilenameMaxLength = 255
-private const val ContentTypeMaxLength = 100
-private const val StorageKeyMaxLength = 500
 private const val ContentHashLength = 64
 
 /**
@@ -46,16 +43,6 @@ object DocumentsTable : UUIDTable("documents") {
         TenantTable.id,
         onDelete = ReferenceOption.CASCADE
     ).index()
-
-    // ============================================
-    // File metadata (vestigial — canonical source is DocumentSourcesTable → DocumentBlobsTable)
-    // ============================================
-    val filename = varchar("filename", FilenameMaxLength)
-    val contentType = varchar("content_type", ContentTypeMaxLength)
-    val sizeBytes = long("size_bytes")
-
-    // Storage reference (vestigial — resolve via selectPreferredSource → blob)
-    val storageKey = varchar("storage_key", StorageKeyMaxLength).index()
 
     // ============================================
     // 4-Axis Classification (all queryable columns)
@@ -176,8 +163,6 @@ object DocumentsTable : UUIDTable("documents") {
     val updatedAt = datetime("updated_at").defaultExpression(CurrentDateTime)
 
     init {
-        // Unique constraint: one storage key per tenant
-        uniqueIndex(tenantId, storageKey)
         // Identity key for matching
         index(false, tenantId, canonicalIdentityKey)
         // For listing documents by status

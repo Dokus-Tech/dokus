@@ -55,7 +55,7 @@ import tech.dokus.aura.resources.state_loading
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.AutoMatchStatus
 import tech.dokus.domain.enums.CashflowEntryStatus
-import tech.dokus.domain.enums.DocumentMatchReviewReasonType
+import tech.dokus.domain.enums.ReviewReason
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.model.AutoPaymentStatusDto
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
@@ -173,11 +173,11 @@ internal fun InspectorSourcesSection(
             }
             Text(
                 text = when (review.reasonType) {
-                    DocumentMatchReviewReasonType.MaterialConflict -> {
+                    ReviewReason.MaterialConflict -> {
                         stringResource(Res.string.inspector_conflict_confirmation)
                     }
 
-                    DocumentMatchReviewReasonType.FuzzyCandidate -> {
+                    ReviewReason.FuzzyCandidate -> {
                         stringResource(Res.string.inspector_fuzzy_match)
                     }
                 },

@@ -470,13 +470,13 @@ internal class DocumentProcessingWorker(
                     extractedSnapshotJson = json.encodeToString(draftData)
                 )
                 if (matchOutcome.documentId != documentId ||
-                    matchOutcome.outcome == tech.dokus.domain.enums.DocumentIntakeOutcome.PendingMatchReview
+                    matchOutcome.resolution is tech.dokus.backend.services.documents.IntakeResolution.NeedsReview
                 ) {
                     logger.info(
-                        "Document {} source {} resolved by truth matcher: outcome={}, target={}",
+                        "Document {} source {} resolved by truth matcher: resolution={}, target={}",
                         documentId,
                         ingestion.sourceId,
-                        matchOutcome.outcome,
+                        matchOutcome.resolution,
                         matchOutcome.documentId
                     )
                     publishResolvedDocumentState(

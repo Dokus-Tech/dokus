@@ -79,10 +79,6 @@ data class DocumentOperationalCounts(
 )
 
 data class DocumentCreatePayload(
-    val filename: String,
-    val contentType: String,
-    val sizeBytes: Long,
-    val storageKey: String,
     val canonicalContentHash: String?,
     val canonicalIdentityKey: String? = null,
     val effectiveOrigin: DocumentSource = DocumentSource.Upload
@@ -144,10 +140,6 @@ class DocumentRepository : DocumentStatusChecker {
         DocumentsTable.insert {
             it[DocumentsTable.id] = UUID.fromString(id.toString())
             it[DocumentsTable.tenantId] = UUID.fromString(tenantId.toString())
-            it[DocumentsTable.filename] = payload.filename
-            it[DocumentsTable.contentType] = payload.contentType
-            it[DocumentsTable.sizeBytes] = payload.sizeBytes
-            it[DocumentsTable.storageKey] = payload.storageKey
             it[DocumentsTable.canonicalContentHash] = payload.canonicalContentHash
             it[DocumentsTable.canonicalIdentityKey] = payload.canonicalIdentityKey
             it[DocumentsTable.effectiveOrigin] = payload.effectiveOrigin
@@ -184,21 +176,6 @@ class DocumentRepository : DocumentStatusChecker {
                 }
                 .singleOrNull()
                 ?.get(DocumentsTable.canonicalContentHash)
-        }
-
-    /**
-     * Get a document by storage key.
-     * CRITICAL: Must filter by tenantId.
-     */
-    suspend fun getByStorageKey(tenantId: TenantId, storageKey: String): DocumentDto? =
-        newSuspendedTransaction {
-            DocumentsTable.selectAll()
-                .where {
-                    (DocumentsTable.storageKey eq storageKey) and
-                        (DocumentsTable.tenantId eq UUID.fromString(tenantId.toString()))
-                }
-                .map { it.toDocumentDto() }
-                .singleOrNull()
         }
 
     /**

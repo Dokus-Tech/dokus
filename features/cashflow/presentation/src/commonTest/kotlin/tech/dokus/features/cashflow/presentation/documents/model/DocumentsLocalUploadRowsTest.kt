@@ -223,9 +223,6 @@ class DocumentsLocalUploadRowsTest {
             id = documentId,
             tenantId = TenantId.parse("00000000-0000-0000-0000-000000000001"),
             filename = filename,
-            contentType = "application/pdf",
-            sizeBytes = 512,
-            storageKey = "documents/$filename",
             effectiveOrigin = DocumentSource.Upload,
             uploadedAt = LocalDateTime(2026, 1, 1, 10, 0),
             downloadUrl = null

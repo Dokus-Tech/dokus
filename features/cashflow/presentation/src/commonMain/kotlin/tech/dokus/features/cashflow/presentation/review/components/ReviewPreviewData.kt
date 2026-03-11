@@ -11,9 +11,9 @@ import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.AutoMatchStatus
 import tech.dokus.domain.enums.DocumentDirection
-import tech.dokus.domain.enums.DocumentMatchReviewReasonType
+import tech.dokus.domain.enums.ReviewReason
 import tech.dokus.domain.enums.DocumentMatchReviewStatus
-import tech.dokus.domain.enums.DocumentMatchType
+import tech.dokus.domain.enums.SourceMatchKind
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentSourceStatus
 import tech.dokus.domain.enums.DocumentStatus
@@ -160,9 +160,6 @@ internal fun previewReviewContentState(
             id = documentId,
             tenantId = tenantId,
             filename = "KBC_384421507.pdf",
-            contentType = "application/pdf",
-            sizeBytes = 248_200,
-            storageKey = "documents/$tenantId/KBC_384421507.pdf",
             effectiveOrigin = DocumentSource.Upload,
             uploadedAt = previewNow,
         ),
@@ -173,7 +170,7 @@ internal fun previewReviewContentState(
         pendingMatchReview = if (showPendingMatchReview) {
             DocumentMatchReviewSummaryDto(
                 reviewId = DocumentMatchReviewId.generate(),
-                reasonType = DocumentMatchReviewReasonType.MaterialConflict,
+                reasonType = ReviewReason.MaterialConflict,
                 status = DocumentMatchReviewStatus.Pending,
                 createdAt = previewNow,
             )
@@ -192,7 +189,7 @@ internal fun previewReviewContentState(
                 contentType = "application/pdf",
                 sizeBytes = 248_200,
                 status = DocumentSourceStatus.Linked,
-                matchType = if (hasCrossMatchedSource) DocumentMatchType.SameContent else null,
+                matchType = if (hasCrossMatchedSource) SourceMatchKind.SameContent else null,
             ),
             DocumentSourceDto(
                 id = DocumentSourceId.generate(),
@@ -205,7 +202,7 @@ internal fun previewReviewContentState(
                 contentType = "application/xml",
                 sizeBytes = 4_800,
                 status = DocumentSourceStatus.Linked,
-                matchType = if (hasCrossMatchedSource) DocumentMatchType.SameDocument else null,
+                matchType = if (hasCrossMatchedSource) SourceMatchKind.SameDocument else null,
             ),
         ),
     )

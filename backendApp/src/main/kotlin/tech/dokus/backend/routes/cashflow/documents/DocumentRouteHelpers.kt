@@ -29,17 +29,20 @@ import tech.dokus.foundation.backend.storage.DocumentStorageService as MinioDocu
 
 /**
  * Add download URL to document DTO.
+ * [storageKey] is resolved from the preferred source's blob, not from the document itself.
  */
 @Suppress("TooGenericExceptionCaught")
 internal suspend fun addDownloadUrl(
     document: DocumentDto,
+    storageKey: String?,
     minioStorage: MinioDocumentStorageService,
     logger: org.slf4j.Logger
 ): DocumentDto {
+    if (storageKey == null) return document
     val downloadUrl = try {
-        minioStorage.getDownloadUrl(document.storageKey)
+        minioStorage.getDownloadUrl(storageKey)
     } catch (e: RuntimeException) {
-        logger.warn("Failed to get download URL for ${document.storageKey}: ${e.message}")
+        logger.warn("Failed to get download URL for $storageKey: ${e.message}")
         null
     }
     return document.copy(downloadUrl = downloadUrl)

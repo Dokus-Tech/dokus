@@ -98,10 +98,6 @@ class ProcessorIngestionInvariantTest {
         val documentId = documentRepository.create(
             tenantId = tenantId,
             payload = tech.dokus.database.repository.cashflow.DocumentCreatePayload(
-                filename = "invoice.pdf",
-                contentType = "application/pdf",
-                sizeBytes = 123L,
-                storageKey = "test/$tenantUuid/invoice.pdf",
                 canonicalContentHash = null,
                 effectiveOrigin = DocumentSource.Upload
             )

@@ -224,9 +224,6 @@ class DocumentUiStatusMapperTest {
             id = DocumentId.generate(),
             tenantId = TenantId.generate(),
             filename = "test-invoice.pdf",
-            contentType = "application/pdf",
-            sizeBytes = 12345,
-            storageKey = "documents/test-invoice.pdf",
             uploadedAt = LocalDateTime(2024, 1, 1, 12, 0, 0)
         )
     }

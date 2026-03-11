@@ -232,10 +232,6 @@ class CreditNoteConfirmationInvariantTest {
         val documentId = documentRepository.create(
             tenantId = tenantId,
             payload = DocumentCreatePayload(
-                filename = "invoice.pdf",
-                contentType = "application/pdf",
-                sizeBytes = 123L,
-                storageKey = "test/$tenantUuid/invoice.pdf",
                 canonicalContentHash = null,
                 effectiveOrigin = DocumentSource.Upload
             )
@@ -268,10 +264,6 @@ class CreditNoteConfirmationInvariantTest {
         val documentId = documentRepository.create(
             tenantId = tenantId,
             payload = DocumentCreatePayload(
-                filename = "credit-note.pdf",
-                contentType = "application/pdf",
-                sizeBytes = 123L,
-                storageKey = "test/$tenantUuid/credit-note-${UUID.randomUUID()}.pdf",
                 canonicalContentHash = null,
                 effectiveOrigin = DocumentSource.Upload
             )
