@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -33,6 +32,7 @@ import tech.dokus.features.cashflow.presentation.review.DocumentPreviewState
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.PdfPreviewPane
 import tech.dokus.features.cashflow.presentation.review.SourceEvidenceViewerState
+import tech.dokus.foundation.aura.components.PButton
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.extensions.sourceViewerSubtitleLocalized
@@ -231,9 +231,11 @@ private fun SourceTechnicalDetails(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.error,
                 )
-                Button(onClick = onRetry, modifier = Modifier.padding(top = 8.dp)) {
-                    Text(stringResource(Res.string.upload_action_retry))
-                }
+                PButton(
+                    text = stringResource(Res.string.upload_action_retry),
+                    modifier = Modifier.padding(top = 8.dp),
+                    onClick = onRetry,
+                )
             }
         }
 

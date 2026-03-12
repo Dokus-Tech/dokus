@@ -18,10 +18,8 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -41,6 +39,8 @@ import tech.dokus.aura.resources.state_retry
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.DocumentPagePreviewDto
 import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.PButton
+import tech.dokus.foundation.aura.components.PButtonVariant
 import tech.dokus.foundation.app.network.rememberAuthenticatedImageLoader
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.extensions.localized
@@ -146,17 +146,12 @@ private fun ErrorPreview(
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.error
         )
-        Button(
+        PButton(
+            text = stringResource(Res.string.state_retry),
+            icon = Icons.Default.Refresh,
+            modifier = Modifier.padding(top = RetryButtonTopPadding),
             onClick = onRetry,
-            modifier = Modifier.padding(top = RetryButtonTopPadding)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Refresh,
-                contentDescription = null,
-                modifier = Modifier.padding(end = RetryIconEndPadding)
-            )
-            Text(stringResource(Res.string.state_retry))
-        }
+        )
     }
 }
 
@@ -288,14 +283,14 @@ private fun LoadMoreButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    OutlinedButton(
-        onClick = onClick,
+    PButton(
+        text = stringResource(Res.string.cashflow_preview_load_more, currentCount, totalCount),
+        variant = PButtonVariant.Outline,
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = LoadMoreButtonVerticalPadding)
-    ) {
-        Text(stringResource(Res.string.cashflow_preview_load_more, currentCount, totalCount))
-    }
+            .padding(vertical = LoadMoreButtonVerticalPadding),
+        onClick = onClick,
+    )
 }
 
 @Composable

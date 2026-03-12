@@ -7,9 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.foundation.rememberScrollState
@@ -35,6 +33,8 @@ import tech.dokus.features.cashflow.presentation.review.components.details.Docum
 import tech.dokus.features.cashflow.presentation.review.components.details.UnknownDocumentDetailsCard
 import tech.dokus.features.cashflow.presentation.review.models.DocumentUiData
 import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.PButton
+import tech.dokus.foundation.aura.components.PButtonVariant
 import tech.dokus.foundation.aura.components.icons.LockIcon
 import tech.dokus.foundation.aura.components.status.StatusDot
 import tech.dokus.foundation.aura.constrains.Constraints
@@ -95,14 +95,14 @@ internal fun ReviewInspectorPane(
         }
 
         if (!isAccountantReadOnly) {
-            OutlinedButton(
-                onClick = { onIntent(DocumentReviewIntent.RequestAmendment) },
+            PButton(
+                text = "Request amendment",
+                variant = PButtonVariant.OutlineMuted,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(Constraints.Spacing.medium),
-            ) {
-                Text("Request amendment")
-            }
+                onClick = { onIntent(DocumentReviewIntent.RequestAmendment) },
+            )
         }
     }
 }
@@ -300,20 +300,19 @@ private fun InspectorHeader(
         if (!isAccountantReadOnly && !state.isDocumentConfirmed && !state.isDocumentRejected &&
             state.financialStatus == ReviewFinancialStatus.Review
         ) {
-            Button(
+            PButton(
+                text = "Confirm document",
+                isEnabled = state.canConfirm,
+                modifier = Modifier.fillMaxWidth(),
                 onClick = { onIntent(DocumentReviewIntent.Confirm) },
-                enabled = state.canConfirm,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text("Confirm document")
-            }
+            )
         } else if (!isAccountantReadOnly && state.canRecordPayment) {
-            OutlinedButton(
-                onClick = { onIntent(DocumentReviewIntent.OpenPaymentSheet) },
+            PButton(
+                text = "Record payment",
+                variant = PButtonVariant.Outline,
                 modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text("Record payment")
-            }
+                onClick = { onIntent(DocumentReviewIntent.OpenPaymentSheet) },
+            )
         }
     }
 }

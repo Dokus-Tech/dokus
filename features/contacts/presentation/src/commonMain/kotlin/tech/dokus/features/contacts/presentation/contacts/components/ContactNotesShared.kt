@@ -18,7 +18,6 @@ import androidx.compose.material.icons.automirrored.filled.Note
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -55,6 +54,7 @@ import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import tech.dokus.foundation.aura.components.dialog.DokusDialog
 import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
+import tech.dokus.foundation.aura.components.PButton
 import tech.dokus.foundation.aura.components.fields.PTextFieldFree
 import tech.dokus.foundation.aura.constrains.Constraints
 import androidx.compose.ui.tooling.preview.Preview
@@ -154,12 +154,11 @@ internal fun ContactNotesComposer(
 
                 Spacer(modifier = Modifier.height(SpacingSmall))
 
-                Button(
+                PButton(
+                    text = stringResource(Res.string.action_save),
+                    isEnabled = noteContent.isNotBlank(),
                     onClick = onSave,
-                    enabled = noteContent.isNotBlank()
-                ) {
-                    Text(stringResource(Res.string.action_save))
-                }
+                )
             }
         }
     }

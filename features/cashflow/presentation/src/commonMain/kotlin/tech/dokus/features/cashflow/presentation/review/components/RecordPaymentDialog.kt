@@ -11,9 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -53,6 +51,8 @@ import tech.dokus.aura.resources.payment_amount_label
 import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.model.TransactionCommunication
 import tech.dokus.features.cashflow.presentation.review.PaymentSheetState
+import tech.dokus.foundation.aura.components.PButton
+import tech.dokus.foundation.aura.components.PButtonVariant
 import tech.dokus.foundation.aura.components.PDatePickerDialog
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.extensions.localized
@@ -96,12 +96,18 @@ internal fun RecordPaymentDialog(
                 modifier = Modifier.padding(end = Constraints.Spacing.small),
                 horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
             ) {
-                OutlinedButton(onClick = onDismiss, enabled = !sheetState.isSubmitting) {
-                    Text(stringResource(Res.string.action_cancel))
-                }
-                Button(onClick = onSubmit, enabled = !sheetState.isSubmitting) {
-                    Text(if (sheetState.isSubmitting) stringResource(Res.string.state_saving) else stringResource(Res.string.payment_confirm))
-                }
+                PButton(
+                    text = stringResource(Res.string.action_cancel),
+                    variant = PButtonVariant.OutlineMuted,
+                    isEnabled = !sheetState.isSubmitting,
+                    onClick = onDismiss,
+                )
+                PButton(
+                    text = if (sheetState.isSubmitting) stringResource(Res.string.state_saving) else stringResource(Res.string.payment_confirm),
+                    isLoading = sheetState.isSubmitting,
+                    isEnabled = !sheetState.isSubmitting,
+                    onClick = onSubmit,
+                )
             }
         },
     )
@@ -145,12 +151,18 @@ private fun RecordPaymentDialogContent(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small, Alignment.End),
             ) {
-                OutlinedButton(onClick = onDismiss, enabled = !sheetState.isSubmitting) {
-                    Text(stringResource(Res.string.action_cancel))
-                }
-                Button(onClick = onSubmit, enabled = !sheetState.isSubmitting) {
-                    Text(if (sheetState.isSubmitting) stringResource(Res.string.state_saving) else stringResource(Res.string.payment_confirm))
-                }
+                PButton(
+                    text = stringResource(Res.string.action_cancel),
+                    variant = PButtonVariant.OutlineMuted,
+                    isEnabled = !sheetState.isSubmitting,
+                    onClick = onDismiss,
+                )
+                PButton(
+                    text = if (sheetState.isSubmitting) stringResource(Res.string.state_saving) else stringResource(Res.string.payment_confirm),
+                    isLoading = sheetState.isSubmitting,
+                    isEnabled = !sheetState.isSubmitting,
+                    onClick = onSubmit,
+                )
             }
         }
     }
@@ -312,18 +324,24 @@ private fun PaymentTransactionSection(
             }
             Row(horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)) {
                 if (sheetState.selectableTransactions.isNotEmpty()) {
-                    OutlinedButton(onClick = onOpenTransactionPicker) {
-                        Text(stringResource(Res.string.payment_choose_different))
-                    }
+                    PButton(
+                        text = stringResource(Res.string.payment_choose_different),
+                        variant = PButtonVariant.Outline,
+                        onClick = onOpenTransactionPicker,
+                    )
                 }
-                OutlinedButton(onClick = onClearSelectedTransaction) {
-                    Text(stringResource(Res.string.payment_use_manual_entry))
-                }
+                PButton(
+                    text = stringResource(Res.string.payment_use_manual_entry),
+                    variant = PButtonVariant.OutlineMuted,
+                    onClick = onClearSelectedTransaction,
+                )
             }
         } else if (sheetState.selectableTransactions.isNotEmpty()) {
-            OutlinedButton(onClick = onOpenTransactionPicker) {
-                Text(stringResource(Res.string.payment_choose_from_transactions))
-            }
+            PButton(
+                text = stringResource(Res.string.payment_choose_from_transactions),
+                variant = PButtonVariant.Outline,
+                onClick = onOpenTransactionPicker,
+            )
         } else {
             Text(
                 text = stringResource(Res.string.payment_no_transactions),
@@ -339,20 +357,20 @@ private fun PaymentTransactionSection(
             ) {
                 LazyColumn(modifier = Modifier.heightIn(max = 200.dp)) {
                     items(sheetState.selectableTransactions) { transaction ->
-                        OutlinedButton(
-                            onClick = { onSelectTransaction(transaction.id) },
+                        PButton(
+                            text = "${transaction.transactionDate} \u2022 ${transaction.signedAmount.toDisplayString()} \u2022 " +
+                                (transaction.counterparty.name ?: stringResource(Res.string.common_unknown)),
+                            variant = PButtonVariant.Outline,
                             modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Text(
-                                "${transaction.transactionDate} \u2022 ${transaction.signedAmount.toDisplayString()} \u2022 " +
-                                    (transaction.counterparty.name ?: stringResource(Res.string.common_unknown))
-                            )
-                        }
+                            onClick = { onSelectTransaction(transaction.id) },
+                        )
                     }
                 }
-                OutlinedButton(onClick = onCloseTransactionPicker) {
-                    Text(stringResource(Res.string.payment_close_list))
-                }
+                PButton(
+                    text = stringResource(Res.string.payment_close_list),
+                    variant = PButtonVariant.OutlineMuted,
+                    onClick = onCloseTransactionPicker,
+                )
             }
         }
     }

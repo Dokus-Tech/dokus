@@ -13,10 +13,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -54,6 +52,8 @@ import tech.dokus.features.cashflow.presentation.review.paidMethodLocalized
 import tech.dokus.features.cashflow.presentation.review.paymentDueLocalized
 import tech.dokus.features.cashflow.presentation.review.statusBadgeLocalized
 import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.PButton
+import tech.dokus.foundation.aura.components.PButtonVariant
 import tech.dokus.foundation.aura.components.PIcon
 import tech.dokus.foundation.aura.components.status.StatusDot
 import tech.dokus.foundation.aura.constrains.Constraints
@@ -256,25 +256,24 @@ internal fun MobilePaymentStateCard(
             when (state.financialStatus) {
                 ReviewFinancialStatus.Review -> {
                     if (!isAccountantReadOnly) {
-                        Button(
-                            onClick = { onIntent(DocumentReviewIntent.Confirm) },
-                            enabled = state.canConfirm,
+                        PButton(
+                            text = stringResource(Res.string.mobile_confirm_document),
+                            isEnabled = state.canConfirm,
                             modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Text(stringResource(Res.string.mobile_confirm_document))
-                        }
+                            onClick = { onIntent(DocumentReviewIntent.Confirm) },
+                        )
                     }
                 }
 
                 ReviewFinancialStatus.Unpaid,
                 ReviewFinancialStatus.Overdue -> {
                     if (!isAccountantReadOnly && state.canRecordPayment) {
-                        OutlinedButton(
-                            onClick = { onIntent(DocumentReviewIntent.OpenPaymentSheet) },
+                        PButton(
+                            text = stringResource(Res.string.payment_record_title),
+                            variant = PButtonVariant.Outline,
                             modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Text(stringResource(Res.string.payment_record_title))
-                        }
+                            onClick = { onIntent(DocumentReviewIntent.OpenPaymentSheet) },
+                        )
                     }
                 }
 
@@ -315,13 +314,13 @@ internal fun MobilePaymentStateCard(
                                 )
                             }
                             if (autoPaymentStatus.canUndo) {
-                                OutlinedButton(
-                                    onClick = { onIntent(DocumentReviewIntent.UndoAutoPayment()) },
-                                    enabled = !state.isUndoingAutoPayment,
+                                PButton(
+                                    text = if (state.isUndoingAutoPayment) stringResource(Res.string.payment_undoing) else stringResource(Res.string.payment_undo_auto),
+                                    variant = PButtonVariant.OutlineMuted,
+                                    isEnabled = !state.isUndoingAutoPayment,
                                     modifier = Modifier.fillMaxWidth(),
-                                ) {
-                                    Text(if (state.isUndoingAutoPayment) stringResource(Res.string.payment_undoing) else stringResource(Res.string.payment_undo_auto))
-                                }
+                                    onClick = { onIntent(DocumentReviewIntent.UndoAutoPayment()) },
+                                )
                             }
                         }
                     }
