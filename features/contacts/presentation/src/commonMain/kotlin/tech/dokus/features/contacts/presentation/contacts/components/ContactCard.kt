@@ -13,14 +13,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.ImageLoader
-import org.jetbrains.compose.resources.stringResource
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.contacts_doc_count_plural
-import tech.dokus.aura.resources.contacts_doc_count_single
-import tech.dokus.aura.resources.contacts_no_docs
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.DerivedContactRoles
 import tech.dokus.foundation.app.network.rememberResolvedApiUrl
@@ -31,7 +25,6 @@ import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.badges.ContactRole as UiContactRole
 import tech.dokus.foundation.aura.components.badges.RoleBadge
 import tech.dokus.foundation.aura.constrains.Constraints
-import tech.dokus.foundation.aura.style.textFaint
 import tech.dokus.foundation.aura.style.textMuted
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
@@ -43,7 +36,7 @@ import tech.dokus.domain.Name
 import kotlinx.datetime.LocalDateTime
 
 /**
- * Mobile contact card with monogram, metadata, and compact document count.
+ * Mobile contact card with monogram and metadata.
  */
 @Composable
 internal fun ContactCard(
@@ -54,13 +47,6 @@ internal fun ContactCard(
     val initials = remember(contact.name.value) { extractInitials(contact.name.value) }
     val uiRole = remember(contact.derivedRoles) { mapToUiRole(contact.derivedRoles) }
     val avatarUrl = rememberResolvedApiUrl(contact.avatar?.small)
-    val docCount = contact.invoiceCount + contact.inboundInvoiceCount + contact.expenseCount
-    val docLabel = if (docCount == 1L) {
-        stringResource(Res.string.contacts_doc_count_single)
-    } else {
-        stringResource(Res.string.contacts_doc_count_plural)
-    }
-
     DokusCardSurface(modifier = modifier) {
         Row(
             modifier = Modifier
@@ -72,7 +58,7 @@ internal fun ContactCard(
             CompanyAvatarImage(
                 avatarUrl = avatarUrl,
                 initial = initials,
-                size = AvatarSize.Medium,
+                size = AvatarSize.Small,
                 shape = AvatarShape.RoundedSquare,
                 imageLoader = imageLoader
             )
@@ -108,24 +94,6 @@ internal fun ContactCard(
                         )
                     }
                 }
-            }
-
-            Column(
-                horizontalAlignment = Alignment.End,
-                verticalArrangement = Arrangement.spacedBy(2.dp)
-            ) {
-                Text(
-                    text = if (docCount > 0) "$docCount $docLabel" else stringResource(Res.string.contacts_no_docs),
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontFamily = MaterialTheme.typography.labelLarge.fontFamily,
-                        fontSize = 9.sp,
-                    ),
-                    color = if (docCount > 0) {
-                        MaterialTheme.colorScheme.textMuted
-                    } else {
-                        MaterialTheme.colorScheme.textFaint
-                    },
-                )
             }
 
             Text(
