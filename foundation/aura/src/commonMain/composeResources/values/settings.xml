@@ -24,9 +24,6 @@
     <string name="settings_switch_workspace">Switch Workspace</string>
     <string name="settings_select_workspace">Select Workspace</string>
 
-    <!-- Profile Popover -->
-    <string name="profile_popover_profile">Profile</string>
-
     <!-- Server Card -->
     <string name="profile_server_label">Server</string>
     <string name="profile_server_dokus_cloud">Dokus Cloud</string>
