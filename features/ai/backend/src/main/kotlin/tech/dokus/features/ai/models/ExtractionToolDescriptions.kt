@@ -89,7 +89,8 @@ object ExtractionToolDescriptions {
     const val LineItems = "Line items table. Leave empty list if not itemized."
     const val VatBreakdown = "VAT breakdown rows per rate (rate/base/amount). Leave empty list if not shown. Use rate 0 and VAT amount 0 for reverse charge."
 
-    const val LineItemDescription = "Line item description. Required when providing a line item."
+    const val LineItemDescription = "Line item description."
+    const val LineItemTitle = "Line item title. Required when providing a line item."
     const val LineItemQuantity = "Quantity as a whole number string (e.g., '2'). Null if not shown."
     const val LineItemUnitPrice = "Unit price (excl VAT) as plain number string (e.g., '12.50'). Null if not shown."
     const val LineItemVatRate = "VAT rate percentage for this line (e.g., '21'). Null if not shown."

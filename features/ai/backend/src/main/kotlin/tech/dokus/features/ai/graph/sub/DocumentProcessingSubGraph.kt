@@ -13,8 +13,8 @@ import tech.dokus.features.ai.models.ResolvedExtraction
 import tech.dokus.features.ai.services.DocumentFetcher
 import tech.dokus.features.ai.validation.FinancialExtractionAuditor
 import tech.dokus.features.ai.validation.counterpartyInvariantCheck
-import tech.dokus.features.ai.validation.rawVatInvariantCheck
 import tech.dokus.features.ai.validation.mergeAudit
+import tech.dokus.features.ai.validation.rawVatInvariantCheck
 import tech.dokus.foundation.backend.config.AIConfig
 
 fun AIAgentSubgraphBuilderBase<*, *>.documentProcessingSubGraph(
