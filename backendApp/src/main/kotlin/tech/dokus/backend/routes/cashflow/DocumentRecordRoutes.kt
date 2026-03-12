@@ -232,6 +232,7 @@ internal fun Route.documentRecordRoutes() {
             call.respond(
                 HttpStatusCode.OK,
                 DocumentCountsResponse(
+                    total = counts.total,
                     needsAttention = counts.needsAttention,
                     confirmed = counts.confirmed
                 )

@@ -36,7 +36,7 @@ class DocumentsContainerFilteringTest {
             enqueuePageResult(filter = DocumentListFilter.All, result = pageResponse(allDocs))
         }
         val getDocumentCounts = FakeGetDocumentCountsUseCase().apply {
-            enqueueResult(DocumentCountsResponse(needsAttention = 39L, confirmed = 25L))
+            enqueueResult(DocumentCountsResponse(total = 64L, needsAttention = 39L, confirmed = 25L))
         }
         val deferredNeedsAttentionResult = CompletableDeferred<Result<PaginatedResponse<DocumentListItemDto>>>()
         loadDocuments.enqueuePageDeferred(DocumentListFilter.NeedsAttention, deferredNeedsAttentionResult)
@@ -85,7 +85,7 @@ class DocumentsContainerFilteringTest {
             enqueuePageResult(filter = DocumentListFilter.All, result = pageResponse(allDocs))
         }
         val getDocumentCounts = FakeGetDocumentCountsUseCase().apply {
-            enqueueResult(DocumentCountsResponse(needsAttention = 10L, confirmed = 5L))
+            enqueueResult(DocumentCountsResponse(total = 15L, needsAttention = 10L, confirmed = 5L))
         }
         val deferredFailure = CompletableDeferred<Result<PaginatedResponse<DocumentListItemDto>>>()
         loadDocuments.enqueuePageDeferred(DocumentListFilter.NeedsAttention, deferredFailure)

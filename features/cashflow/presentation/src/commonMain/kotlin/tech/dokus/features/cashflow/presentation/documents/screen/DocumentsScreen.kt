@@ -93,11 +93,6 @@ internal fun DocumentsScreen(
         }
     }
 
-    val totalCount = maxOf(
-        remoteDocuments.size,
-        state.needsAttentionCount + state.confirmedCount
-    )
-
     val shouldLoadMore = rememberLoadMoreTrigger(
         listState = listState,
         hasMore = state.documents.lastData?.hasMorePages ?: false,
@@ -135,7 +130,7 @@ internal fun DocumentsScreen(
             ) {
                 DocumentsToolbar(
                     state = state,
-                    totalCount = totalCount,
+                    totalCount = state.totalCount,
                     isLargeScreen = isLargeScreen,
                     onIntent = onIntent,
                     onUploadClick = onUploadClick

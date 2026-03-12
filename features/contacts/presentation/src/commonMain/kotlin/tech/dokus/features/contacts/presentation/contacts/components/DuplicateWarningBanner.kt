@@ -12,10 +12,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -32,6 +30,8 @@ import tech.dokus.aura.resources.contacts_merge
 import tech.dokus.features.contacts.mvi.DuplicateReason
 import tech.dokus.features.contacts.mvi.PotentialDuplicate
 import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.PButton
+import tech.dokus.foundation.aura.components.PButtonVariant
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
@@ -244,14 +244,11 @@ private fun DuplicateWarningActions(
         Spacer(modifier = Modifier.width(Constraints.Spacing.small))
 
         // Continue anyway button
-        OutlinedButton(
+        PButton(
+            text = stringResource(Res.string.contacts_continue_anyway),
+            variant = PButtonVariant.OutlineMuted,
             onClick = onContinueAnyway,
-            colors = ButtonDefaults.outlinedButtonColors(
-                contentColor = MaterialTheme.colorScheme.error
-            )
-        ) {
-            Text(text = stringResource(Res.string.contacts_continue_anyway))
-        }
+        )
     }
 }
 

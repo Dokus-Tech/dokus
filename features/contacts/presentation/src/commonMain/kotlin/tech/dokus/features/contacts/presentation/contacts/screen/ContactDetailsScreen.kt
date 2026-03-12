@@ -41,7 +41,6 @@ internal fun ContactDetailsScreen(
     snackbarHostState: SnackbarHostState,
     onIntent: (ContactDetailsIntent) -> Unit,
     onBackClick: () -> Unit,
-    onEditClick: () -> Unit,
     onDocumentClick: (DocumentId) -> Unit,
 ) {
     BoxWithConstraints {
@@ -55,7 +54,6 @@ internal fun ContactDetailsScreen(
             snackbarHostState = snackbarHostState,
             onIntent = onIntent,
             onBackClick = onBackClick,
-            onEditClick = onEditClick,
             onDocumentClick = onDocumentClick,
         )
     }
@@ -71,7 +69,6 @@ private fun ContactDetailsScreenContent(
     snackbarHostState: SnackbarHostState,
     onIntent: (ContactDetailsIntent) -> Unit,
     onBackClick: () -> Unit,
-    onEditClick: () -> Unit,
     onDocumentClick: (DocumentId) -> Unit,
 ) {
     val contactState = state.contact
@@ -80,6 +77,7 @@ private fun ContactDetailsScreenContent(
     val notesState = state.notesState
     val enrichmentSuggestions = state.enrichmentSuggestions
     val uiState = state.uiState
+    val isEditing = state.editFormData != null
     val isEmbeddedDesktop = isDesktop && !showBackButton
     val showNoteComposer = shouldShowNoteComposer(
         showAddNoteDialog = uiState.showAddNoteDialog,
@@ -116,8 +114,18 @@ private fun ContactDetailsScreenContent(
                     contactState = contactState,
                     showBackButton = showBackButton,
                     hasEnrichmentSuggestions = enrichmentSuggestions.isNotEmpty(),
-                    onBackClick = onBackClick,
-                    onEditClick = onEditClick,
+                    isEditing = isEditing,
+                    isSavingEdit = state.isSavingEdit,
+                    onBackClick = {
+                        if (isEditing) {
+                            onIntent(ContactDetailsIntent.CancelEditing)
+                        } else {
+                            onBackClick()
+                        }
+                    },
+                    onEditClick = { onIntent(ContactDetailsIntent.StartEditing) },
+                    onSaveClick = { onIntent(ContactDetailsIntent.SaveEdit) },
+                    onCancelEditClick = { onIntent(ContactDetailsIntent.CancelEditing) },
                     onEnrichmentClick = { onIntent(ContactDetailsIntent.ShowEnrichmentPanel) },
                     onMergeClick = { onIntent(ContactDetailsIntent.ShowMergeDialog) },
                     isOnline = isOnline
@@ -136,7 +144,10 @@ private fun ContactDetailsScreenContent(
             contentPadding = contentPadding,
             showInlineActions = isEmbeddedDesktop,
             hasEnrichmentSuggestions = enrichmentSuggestions.isNotEmpty(),
-            onEditContact = onEditClick,
+            isEditing = isEditing,
+            editFormData = state.editFormData,
+            onEditFormDataChange = { onIntent(ContactDetailsIntent.UpdateEditFormData(it)) },
+            onEditContact = { onIntent(ContactDetailsIntent.StartEditing) },
             onMergeContact = { onIntent(ContactDetailsIntent.ShowMergeDialog) },
             onShowEnrichment = { onIntent(ContactDetailsIntent.ShowEnrichmentPanel) },
             onDocumentClick = onDocumentClick,
@@ -232,7 +243,6 @@ private fun ContactDetailsScreenPreview(
             snackbarHostState = remember { SnackbarHostState() },
             onIntent = {},
             onBackClick = {},
-            onEditClick = {},
             onDocumentClick = {}
         )
     }

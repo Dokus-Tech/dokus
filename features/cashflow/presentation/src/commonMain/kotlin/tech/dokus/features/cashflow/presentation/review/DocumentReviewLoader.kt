@@ -25,6 +25,16 @@ internal class DocumentReviewLoader(
                 document = document.asLoading,
                 isAwaitingExtraction = false,
                 selectedQueueDocumentId = if (queueState != null) documentId else selectedQueueDocumentId,
+                // Reset document-specific UI state to prevent stale data from previous document
+                sourceViewerState = null,
+                paymentSheetState = null,
+                rejectDialogState = null,
+                feedbackDialogState = null,
+                selectedFieldPath = null,
+                hasUnsavedChanges = false,
+                isEditMode = false,
+                failureBannerDismissed = false,
+                showContactSheet = false,
             )
         }
 

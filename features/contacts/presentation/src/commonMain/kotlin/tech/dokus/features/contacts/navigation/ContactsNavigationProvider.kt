@@ -4,7 +4,6 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import tech.dokus.features.contacts.presentation.contacts.route.ContactDetailsRoute
-import tech.dokus.features.contacts.presentation.contacts.route.ContactFormRoute
 import tech.dokus.features.contacts.presentation.contacts.route.ContactsRoute
 import tech.dokus.features.contacts.presentation.contacts.route.CreateContactRoute
 import tech.dokus.navigation.NavigationProvider
@@ -24,10 +23,6 @@ internal object ContactsNavigationProvider : NavigationProvider {
                 prefillAddress = route.prefillAddress,
                 origin = route.origin,
             )
-        }
-        composable<ContactsDestination.EditContact> { backStackEntry ->
-            val route = backStackEntry.toRoute<ContactsDestination.EditContact>()
-            ContactFormRoute(contactId = route.contactId)
         }
         composable<ContactsDestination.ContactDetails> { backStackEntry ->
             val route = backStackEntry.toRoute<ContactsDestination.ContactDetails>()

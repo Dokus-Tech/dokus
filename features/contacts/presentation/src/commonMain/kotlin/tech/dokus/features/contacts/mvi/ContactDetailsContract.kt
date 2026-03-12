@@ -56,6 +56,9 @@ data class ContactDetailsState(
     val uiState: ContactDetailsUiState = ContactDetailsUiState(),
     val isSavingNote: Boolean = false,
     val isDeletingNote: Boolean = false,
+    // Inline edit
+    val editFormData: ContactFormData? = null,
+    val isSavingEdit: Boolean = false,
 ) : MVIState
 
 // ============================================================================
@@ -141,6 +144,20 @@ sealed interface ContactDetailsIntent : MVIIntent {
     data class ApplyEnrichmentSuggestions(
         val suggestions: List<EnrichmentSuggestion>,
     ) : ContactDetailsIntent
+
+    // === Inline Edit ===
+
+    /** Enter inline edit mode */
+    data object StartEditing : ContactDetailsIntent
+
+    /** Cancel inline edit, discard changes */
+    data object CancelEditing : ContactDetailsIntent
+
+    /** Save inline edits */
+    data object SaveEdit : ContactDetailsIntent
+
+    /** Update form data during inline edit */
+    data class UpdateEditFormData(val formData: ContactFormData) : ContactDetailsIntent
 }
 
 // ============================================================================
@@ -152,9 +169,6 @@ sealed interface ContactDetailsAction : MVIAction {
 
     /** Navigate back to previous screen */
     data object NavigateBack : ContactDetailsAction
-
-    /** Navigate to edit contact screen */
-    data class NavigateToEditContact(val contactId: ContactId) : ContactDetailsAction
 
     /** Navigate to merged contact after merge completion */
     data class NavigateToMergedContact(val contactId: ContactId) : ContactDetailsAction
@@ -172,6 +186,7 @@ sealed interface ContactDetailsSuccess {
     data object NoteUpdated : ContactDetailsSuccess
     data object NoteDeleted : ContactDetailsSuccess
     data class EnrichmentApplied(val count: Int) : ContactDetailsSuccess
+    data object ContactUpdated : ContactDetailsSuccess
 }
 
 // ============================================================================

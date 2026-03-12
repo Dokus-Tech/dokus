@@ -31,6 +31,7 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.Name
 import tech.dokus.domain.Email
+import tech.dokus.features.contacts.mvi.ContactFormData
 import kotlinx.datetime.LocalDateTime
 
 private val SectionSpacing = 16.dp
@@ -45,6 +46,9 @@ internal fun ContactDetailsContent(
     contentPadding: PaddingValues,
     showInlineActions: Boolean,
     hasEnrichmentSuggestions: Boolean,
+    isEditing: Boolean,
+    editFormData: ContactFormData?,
+    onEditFormDataChange: (ContactFormData) -> Unit,
     onEditContact: () -> Unit,
     onMergeContact: () -> Unit,
     onShowEnrichment: () -> Unit,
@@ -73,6 +77,7 @@ internal fun ContactDetailsContent(
             peppolStatusState = peppolStatusState,
             showInlineActions = showInlineActions,
             hasEnrichmentSuggestions = hasEnrichmentSuggestions,
+            isEditing = isEditing,
             isOnline = isOnline,
             onEditContact = onEditContact,
             onMergeContact = onMergeContact,
@@ -80,7 +85,12 @@ internal fun ContactDetailsContent(
         )
 
         ContactStatsSection(invoiceSnapshotState = invoiceSnapshotState)
-        ContactInfoSectionCompact(contact = (contactState as? DokusState.Success)?.data)
+        ContactInfoSectionCompact(
+            contact = (contactState as? DokusState.Success)?.data,
+            isEditing = isEditing,
+            editFormData = editFormData,
+            onEditFormDataChange = onEditFormDataChange,
+        )
         RecentDocumentsSection(
             invoiceSnapshotState = invoiceSnapshotState,
             onDocumentClick = onDocumentClick,
@@ -146,6 +156,9 @@ private fun ContactDetailsContentPreview(
             contentPadding = PaddingValues(0.dp),
             showInlineActions = true,
             hasEnrichmentSuggestions = true,
+            isEditing = false,
+            editFormData = null,
+            onEditFormDataChange = {},
             onEditContact = {},
             onMergeContact = {},
             onShowEnrichment = {},

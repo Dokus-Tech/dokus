@@ -18,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -33,7 +34,8 @@ import tech.dokus.foundation.aura.tooling.TestWrapper
 enum class PButtonVariant {
     Default,
     CallToAction,
-    Outline
+    Outline,
+    OutlineMuted,
 }
 
 enum class PIconPosition { Leading, Trailing }
@@ -70,50 +72,29 @@ fun PButton(
         )
 
         PButtonVariant.CallToAction -> {}
-        PButtonVariant.Outline -> {
-            OutlinedButton(
-                onClick = onClick,
-                enabled = isEnabled && !isLoading,
-                modifier = modifier.height(Constraints.Height.button),
-                shape = MaterialTheme.shapes.small,
-                contentPadding = PaddingValues(
-                    horizontal = Constraints.Spacing.large,
-                    vertical = Constraints.Spacing.small
-                ),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = MaterialTheme.colorScheme.onSurface
-                )
-            ) {
-                if (isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(Constraints.IconSize.buttonLoading),
-                        color = MaterialTheme.colorScheme.primary,
-                        strokeWidth = 2.dp
-                    )
-                } else {
-                    if (icon != null && iconPosition == PIconPosition.Leading) {
-                        Icon(
-                            imageVector = icon,
-                            contentDescription = contentDescription,
-                            modifier = Modifier.size(Constraints.IconSize.medium).padding(end = Constraints.Spacing.small)
-                        )
-                    }
-                    Text(
-                        text = text,
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                    if (icon != null && iconPosition == PIconPosition.Trailing) {
-                        Icon(
-                            imageVector = icon,
-                            contentDescription = contentDescription,
-                            modifier = Modifier.size(
-                                Constraints.IconSize.medium
-                            ).padding(start = Constraints.Spacing.small)
-                        )
-                    }
-                }
-            }
-        }
+        PButtonVariant.Outline -> PButtonOutlined(
+            text = text,
+            icon = icon,
+            contentDescription = contentDescription,
+            iconPosition = iconPosition,
+            isLoading = isLoading,
+            isEnabled = isEnabled,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            modifier = modifier,
+            onClick = onClick,
+        )
+
+        PButtonVariant.OutlineMuted -> PButtonOutlined(
+            text = text,
+            icon = icon,
+            contentDescription = contentDescription,
+            iconPosition = iconPosition,
+            isLoading = isLoading,
+            isEnabled = isEnabled,
+            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = modifier,
+            onClick = onClick,
+        )
     }
 }
 
@@ -153,6 +134,60 @@ private fun PButtonDefault(
                     icon,
                     modifier = Modifier.padding(start = Constraints.Spacing.small),
                     contentDescription = contentDescription
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PButtonOutlined(
+    text: String,
+    icon: ImageVector?,
+    contentDescription: String?,
+    iconPosition: PIconPosition,
+    isLoading: Boolean,
+    isEnabled: Boolean,
+    contentColor: Color,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    OutlinedButton(
+        onClick = onClick,
+        enabled = isEnabled && !isLoading,
+        modifier = modifier.height(Constraints.Height.button),
+        shape = MaterialTheme.shapes.small,
+        contentPadding = PaddingValues(
+            horizontal = Constraints.Spacing.large,
+            vertical = Constraints.Spacing.small
+        ),
+        colors = ButtonDefaults.outlinedButtonColors(
+            contentColor = contentColor
+        )
+    ) {
+        if (isLoading) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(Constraints.IconSize.buttonLoading),
+                color = MaterialTheme.colorScheme.primary,
+                strokeWidth = 2.dp
+            )
+        } else {
+            if (icon != null && iconPosition == PIconPosition.Leading) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = contentDescription,
+                    modifier = Modifier.size(Constraints.IconSize.medium).padding(end = Constraints.Spacing.small)
+                )
+            }
+            Text(
+                text = text,
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            if (icon != null && iconPosition == PIconPosition.Trailing) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = contentDescription,
+                    modifier = Modifier.size(Constraints.IconSize.medium).padding(start = Constraints.Spacing.small)
                 )
             }
         }
@@ -318,6 +353,16 @@ private fun POutlinedButtonPreview(
 ) {
     TestWrapper(parameters) {
         POutlinedButton(text = "Cancel", onClick = {})
+    }
+}
+
+@Preview
+@Composable
+private fun PButtonOutlineMutedPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        PButton(text = "Upload", variant = PButtonVariant.OutlineMuted, onClick = {})
     }
 }
 

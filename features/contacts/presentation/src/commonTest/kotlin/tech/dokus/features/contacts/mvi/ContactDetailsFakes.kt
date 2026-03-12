@@ -10,6 +10,7 @@ import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.ContactNoteDto
 import tech.dokus.domain.model.contact.CreateContactNoteRequest
 import tech.dokus.domain.model.contact.UpdateContactNoteRequest
+import tech.dokus.domain.model.contact.UpdateContactRequest
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import tech.dokus.features.auth.usecases.GetCurrentTenantIdUseCase
@@ -25,6 +26,7 @@ import tech.dokus.features.contacts.usecases.GetContactUseCase
 import tech.dokus.features.contacts.usecases.ListContactNotesUseCase
 import tech.dokus.features.contacts.usecases.ObserveContactChangesUseCase
 import tech.dokus.features.contacts.usecases.UpdateContactNoteUseCase
+import tech.dokus.features.contacts.usecases.UpdateContactUseCase
 
 internal class StubGetContactUseCase(
     private val result: Result<ContactDto>
@@ -117,4 +119,19 @@ internal class StubObserveContactChangesUseCase(
     private val flow: Flow<Unit> = emptyFlow()
 ) : ObserveContactChangesUseCase {
     override fun invoke(contactId: ContactId): Flow<Unit> = flow
+}
+
+internal class StubUpdateContactUseCase(
+    private val result: Result<ContactDto> = Result.success(
+        ContactDto(
+            id = ContactId.generate(),
+            tenantId = TenantId.generate(),
+            name = tech.dokus.domain.Name("Updated"),
+            isActive = true,
+            createdAt = kotlinx.datetime.LocalDateTime(2026, 1, 1, 0, 0),
+            updatedAt = kotlinx.datetime.LocalDateTime(2026, 1, 1, 0, 0),
+        )
+    )
+) : UpdateContactUseCase {
+    override suspend fun invoke(contactId: ContactId, request: UpdateContactRequest) = result
 }

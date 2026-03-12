@@ -163,7 +163,6 @@ internal fun HomeRoute(
     val activeNavContext = if (showBC) NavContext.FIRM else NavContext.TENANT
 
     val onConsumeHomeCommand = remember { { id: Long -> HomeNavigationCommandBus.consume(id) } }
-    val onLogoutClick = remember(container) { { container.store.intent(HomeIntent.Logout) } }
 
     HomeSurfaceShell(
         navContext = activeNavContext,
@@ -175,7 +174,6 @@ internal fun HomeRoute(
         profileData = profileData,
         pendingHomeCommand = pendingHomeCommand,
         onConsumeHomeCommand = onConsumeHomeCommand,
-        onLogoutClick = onLogoutClick,
         snackbarHostState = snackbarHostState,
     )
 }
@@ -249,12 +247,10 @@ internal fun HomeScreen(
     tenantState: DokusState<Tenant>,
     selectedFirm: FirmWorkspaceSummary?,
     profileData: HomeShellProfileData?,
-    isLoggingOut: Boolean,
     snackbarHostState: SnackbarHostState,
     onWorkspaceClick: () -> Unit,
     onProfileClick: () -> Unit,
     onAppearanceClick: () -> Unit,
-    onLogoutClick: () -> Unit,
     onNavItemClick: (NavItem) -> Unit,
     onTabClick: (MobileTabConfig) -> Unit,
     onSearchShortcut: () -> Unit,
@@ -287,11 +283,9 @@ internal fun HomeScreen(
                     tenantState = tenantState,
                     selectedFirm = selectedFirm,
                     profileData = profileData,
-                    isLoggingOut = isLoggingOut,
                     onWorkspaceClick = onWorkspaceClick,
                     onProfileClick = onProfileClick,
                     onAppearanceClick = onAppearanceClick,
-                    onLogoutClick = onLogoutClick,
                     onNavItemClick = onNavItemClick,
                     content = content,
                 )
@@ -351,11 +345,9 @@ private fun RailNavigationLayout(
     tenantState: DokusState<Tenant>,
     selectedFirm: FirmWorkspaceSummary?,
     profileData: HomeShellProfileData?,
-    isLoggingOut: Boolean,
     onWorkspaceClick: () -> Unit,
     onProfileClick: () -> Unit,
     onAppearanceClick: () -> Unit,
-    onLogoutClick: () -> Unit,
     onNavItemClick: (NavItem) -> Unit,
     content: @Composable () -> Unit
 ) {
@@ -420,11 +412,9 @@ private fun RailNavigationLayout(
                         tenantState = tenantState,
                         selectedFirm = selectedFirm,
                         profileData = profileData,
-                        isLoggingOut = isLoggingOut,
                         onWorkspaceClick = onWorkspaceClick,
                         onProfileClick = onProfileClick,
                         onAppearanceClick = onAppearanceClick,
-                        onLogoutClick = onLogoutClick
                     )
                 }
             }
@@ -577,12 +567,10 @@ private fun HomeScreenPreview(
             tenantState = DokusState.loading(),
             selectedFirm = null,
             profileData = null,
-            isLoggingOut = false,
             snackbarHostState = remember { SnackbarHostState() },
             onWorkspaceClick = {},
             onProfileClick = {},
             onAppearanceClick = {},
-            onLogoutClick = {},
             onNavItemClick = {},
             onTabClick = {},
             onSearchShortcut = {},

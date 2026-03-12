@@ -1,5 +1,11 @@
 package tech.dokus.features.contacts.presentation.contacts.components
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -28,6 +34,12 @@ import androidx.compose.ui.unit.dp
 import kotlinx.datetime.Month
 import kotlinx.datetime.number
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.domain.City
+import tech.dokus.domain.Email
+import tech.dokus.domain.Name
+import tech.dokus.domain.PhoneNumber
+import tech.dokus.domain.ids.VatNumber
+import tech.dokus.features.contacts.mvi.ContactFormData
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.common_unknown
 import tech.dokus.aura.resources.contacts_address
@@ -71,7 +83,50 @@ private data class InfoRow(
 )
 
 @Composable
-internal fun ContactInfoSectionCompact(contact: ContactDto?) {
+internal fun ContactInfoSectionCompact(
+    contact: ContactDto?,
+    isEditing: Boolean = false,
+    editFormData: ContactFormData? = null,
+    onEditFormDataChange: (ContactFormData) -> Unit = {},
+) {
+    AnimatedContent(
+        targetState = isEditing,
+        transitionSpec = {
+            (fadeIn() + expandVertically(expandFrom = Alignment.Top)) togetherWith
+                (fadeOut() + shrinkVertically(shrinkTowards = Alignment.Top))
+        },
+        label = "ContactInfoEditTransition"
+    ) { editing ->
+        if (editing && editFormData != null) {
+            ContactFormFields(
+                formData = editFormData,
+                onNameChange = { onEditFormDataChange(editFormData.copy(name = Name(it))) },
+                onEmailChange = { onEditFormDataChange(editFormData.copy(email = Email(it))) },
+                onPhoneChange = { onEditFormDataChange(editFormData.copy(phone = PhoneNumber(it))) },
+                onContactPersonChange = { onEditFormDataChange(editFormData.copy(contactPerson = it)) },
+                onVatNumberChange = { onEditFormDataChange(editFormData.copy(vatNumber = VatNumber(it))) },
+                onCompanyNumberChange = { onEditFormDataChange(editFormData.copy(companyNumber = it)) },
+                onBusinessTypeChange = { onEditFormDataChange(editFormData.copy(businessType = it)) },
+                onAddressLine1Change = { onEditFormDataChange(editFormData.copy(addressLine1 = it)) },
+                onAddressLine2Change = { onEditFormDataChange(editFormData.copy(addressLine2 = it)) },
+                onCityChange = { onEditFormDataChange(editFormData.copy(city = City(it))) },
+                onPostalCodeChange = { onEditFormDataChange(editFormData.copy(postalCode = it)) },
+                onCountryChange = { onEditFormDataChange(editFormData.copy(country = it)) },
+                onDefaultPaymentTermsChange = { onEditFormDataChange(editFormData.copy(defaultPaymentTerms = it)) },
+                onDefaultVatRateChange = { onEditFormDataChange(editFormData.copy(defaultVatRate = it)) },
+                onTagsChange = { onEditFormDataChange(editFormData.copy(tags = it)) },
+                onInitialNoteChange = { },
+                onIsActiveChange = { onEditFormDataChange(editFormData.copy(isActive = it)) },
+                showInitialNote = false,
+            )
+        } else {
+            ContactInfoReadOnly(contact = contact)
+        }
+    }
+}
+
+@Composable
+private fun ContactInfoReadOnly(contact: ContactDto?) {
     val uriHandler = LocalUriHandler.current
 
     DokusCard(

@@ -65,6 +65,7 @@ class ContactDetailsNotesTest {
             cacheContacts = StubCacheContactsUseCase(),
             getCurrentTenantId = StubGetCurrentTenantIdUseCase(tenantId),
             observeContactChanges = StubObserveContactChangesUseCase(),
+            updateContact = StubUpdateContactUseCase(),
         )
     }
 
@@ -251,6 +252,7 @@ class ContactDetailsNotesTest {
             cacheContacts = StubCacheContactsUseCase(),
             getCurrentTenantId = StubGetCurrentTenantIdUseCase(tenantId),
             observeContactChanges = StubObserveContactChangesUseCase(),
+            updateContact = StubUpdateContactUseCase(),
         )
 
         container.store.subscribeAndTest {

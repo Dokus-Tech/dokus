@@ -63,6 +63,7 @@ internal fun ContactHeroSection(
     peppolStatusState: DokusState<PeppolStatusResponse>,
     showInlineActions: Boolean,
     hasEnrichmentSuggestions: Boolean,
+    isEditing: Boolean,
     isOnline: Boolean,
     onEditContact: () -> Unit,
     onMergeContact: () -> Unit,
@@ -174,7 +175,7 @@ internal fun ContactHeroSection(
 
                         IconButton(
                             onClick = onEditContact,
-                            enabled = isOnline
+                            enabled = isOnline && !isEditing
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Edit,

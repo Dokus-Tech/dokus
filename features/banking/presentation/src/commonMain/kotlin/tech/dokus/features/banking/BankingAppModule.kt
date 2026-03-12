@@ -10,6 +10,7 @@ import tech.dokus.aura.resources.wallet_2
 import tech.dokus.features.banking.di.bankingPresentationModule
 import tech.dokus.features.banking.di.bankingViewModelModule
 import tech.dokus.features.banking.navigation.BankingHomeNavigationProvider
+import tech.dokus.features.banking.navigation.BankingNavigationProvider
 import tech.dokus.foundation.app.AppDataModuleDi
 import tech.dokus.foundation.app.AppDomainModuleDi
 import tech.dokus.foundation.app.AppModule
@@ -24,7 +25,7 @@ import tech.dokus.navigation.NavigationProvider
 import tech.dokus.navigation.destinations.HomeDestination
 
 object BankingAppModule : AppModule {
-    override val navigationProvider: NavigationProvider? = null
+    override val navigationProvider: NavigationProvider = BankingNavigationProvider
     override val homeNavigationProvider: NavigationProvider = BankingHomeNavigationProvider
     override val navGroups: List<ModuleNavGroup> = listOf(
         ModuleNavGroup(

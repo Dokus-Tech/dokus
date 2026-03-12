@@ -13,11 +13,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -45,6 +42,8 @@ import tech.dokus.aura.resources.cashflow_needed_to_complete
 import tech.dokus.aura.resources.cashflow_somethings_wrong
 import tech.dokus.aura.resources.cashflow_view_cashflow
 import tech.dokus.aura.resources.cashflow_view_document
+import tech.dokus.foundation.aura.components.PButton
+import tech.dokus.foundation.aura.components.PButtonVariant
 import tech.dokus.foundation.aura.components.PIcon
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.textMuted
@@ -196,48 +195,24 @@ private fun PendingFooter(
             ) {
                 // Save button (only visible when there are unsaved changes)
                 AnimatedVisibility(visible = hasUnsavedChanges) {
-                    OutlinedButton(
+                    PButton(
+                        text = stringResource(Res.string.action_save),
+                        variant = PButtonVariant.Outline,
+                        icon = FeatherIcons.Save,
+                        isLoading = isSaving,
+                        isEnabled = !isLoading,
                         onClick = onSaveChanges,
-                        enabled = !isLoading,
-                    ) {
-                        if (isSaving) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(16.dp),
-                                strokeWidth = 2.dp,
-                            )
-                        } else {
-                            PIcon(
-                                icon = FeatherIcons.Save,
-                                description = null,
-                                modifier = Modifier.size(16.dp),
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(stringResource(Res.string.action_save))
-                    }
+                    )
                 }
 
                 // Confirm button
-                Button(
+                PButton(
+                    text = stringResource(Res.string.action_confirm),
+                    icon = FeatherIcons.Check,
+                    isLoading = isConfirming || isBindingContact,
+                    isEnabled = canConfirm && !isLoading,
                     onClick = onConfirm,
-                    enabled = canConfirm && !isLoading,
-                ) {
-                    if (isConfirming || isBindingContact) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(16.dp),
-                            strokeWidth = 2.dp,
-                            color = MaterialTheme.colorScheme.onPrimary,
-                        )
-                    } else {
-                        PIcon(
-                            icon = FeatherIcons.Check,
-                            description = null,
-                            modifier = Modifier.size(16.dp),
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(stringResource(Res.string.action_confirm))
-                }
+                )
             }
         }
     }
@@ -288,37 +263,31 @@ private fun ConfirmedFooter(
                     .padding(bottom = Constraints.Spacing.small),
                 horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
             ) {
-                OutlinedButton(
-                    onClick = onViewEntity,
+                PButton(
+                    text = stringResource(Res.string.cashflow_view_document),
+                    variant = PButtonVariant.Outline,
                     modifier = Modifier.weight(1f),
-                ) {
-                    Text(stringResource(Res.string.cashflow_view_document))
-                }
+                    onClick = onViewEntity,
+                )
                 if (hasCashflowEntry) {
-                    OutlinedButton(
-                        onClick = onViewCashflowEntry,
+                    PButton(
+                        text = stringResource(Res.string.cashflow_view_cashflow),
+                        variant = PButtonVariant.Outline,
                         modifier = Modifier.weight(1f),
-                    ) {
-                        Text(stringResource(Res.string.cashflow_view_cashflow))
-                    }
+                        onClick = onViewCashflowEntry,
+                    )
                 }
             }
         }
 
         // Chat button
         if (showChat) {
-            Button(
-                onClick = onOpenChat,
+            PButton(
+                text = stringResource(Res.string.cashflow_chat_with_document),
+                icon = FeatherIcons.MessageSquare,
                 modifier = Modifier.fillMaxWidth(),
-            ) {
-                PIcon(
-                    icon = FeatherIcons.MessageSquare,
-                    description = null,
-                    modifier = Modifier.size(18.dp),
-                )
-                Spacer(modifier = Modifier.width(Constraints.Spacing.small))
-                Text(stringResource(Res.string.cashflow_chat_with_document))
-            }
+                onClick = onOpenChat,
+            )
         }
     }
 }

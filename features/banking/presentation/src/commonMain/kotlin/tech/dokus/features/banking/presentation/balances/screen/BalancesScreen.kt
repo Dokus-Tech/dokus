@@ -1,7 +1,5 @@
 package tech.dokus.features.banking.presentation.balances.screen
 
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -10,33 +8,29 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.banking_balances_accounts_title
+import tech.dokus.aura.resources.banking_balances_title
 import tech.dokus.aura.resources.banking_balances_connect
 import tech.dokus.aura.resources.banking_balances_empty_subtitle
 import tech.dokus.aura.resources.banking_balances_empty_title
 import tech.dokus.aura.resources.banking_balances_upload
-import tech.dokus.foundation.aura.style.borderAmber
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.features.banking.presentation.balances.components.BalanceTimelineCard
 import tech.dokus.features.banking.presentation.balances.components.BalancesSkeleton
@@ -51,8 +45,12 @@ import tech.dokus.foundation.app.state.isError
 import tech.dokus.foundation.app.state.isLoading
 import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.PButton
+import tech.dokus.foundation.aura.components.PButtonVariant
+import tech.dokus.foundation.aura.components.PIconPosition
 import tech.dokus.foundation.aura.components.common.DokusEmptyState
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.local.ScreenSize
@@ -72,11 +70,19 @@ internal fun BalancesScreen(
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     modifier: Modifier = Modifier,
 ) {
+    val isLargeScreen = LocalScreenSize.current.isLarge
     Scaffold(
+        topBar = {
+            if (!isLargeScreen) PTopAppBar(Res.string.banking_balances_title)
+        },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         modifier = modifier,
-    ) {
-        BalancesContent(state = state, onIntent = onIntent)
+    ) { contentPadding ->
+        BalancesContent(
+            state = state,
+            onIntent = onIntent,
+            modifier = Modifier.padding(contentPadding),
+        )
     }
 }
 
@@ -84,11 +90,12 @@ internal fun BalancesScreen(
 private fun BalancesContent(
     state: BalancesState,
     onIntent: (BalancesIntent) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val isLargeScreen = LocalScreenSize.isLarge
 
     LazyColumn(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .padding(
                 start = Constraints.Spacing.large,
@@ -139,14 +146,17 @@ private fun BalancesContent(
                     style = MaterialTheme.typography.titleSmall,
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)) {
-                    SmallActionChip(
+                    PButton(
                         text = stringResource(Res.string.banking_balances_upload),
+                        variant = PButtonVariant.OutlineMuted,
                         onClick = { onIntent(BalancesIntent.UploadStatement) },
                     )
-                    SmallActionChip(
-                        text = "+ ${stringResource(Res.string.banking_balances_connect)}",
+                    PButton(
+                        text = stringResource(Res.string.banking_balances_connect),
+                        variant = PButtonVariant.Outline,
+                        icon = Icons.Default.Add,
+                        iconPosition = PIconPosition.Leading,
                         onClick = { onIntent(BalancesIntent.ConnectAccount) },
-                        accent = true,
                     )
                 }
             }
@@ -190,40 +200,6 @@ private fun BalancesContent(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun SmallActionChip(
-    text: String,
-    onClick: () -> Unit,
-    accent: Boolean = false,
-    modifier: Modifier = Modifier,
-) {
-    val colorScheme = MaterialTheme.colorScheme
-    val borderColor = if (accent) colorScheme.borderAmber else colorScheme.outlineVariant
-    val textColor = if (accent) colorScheme.primary else colorScheme.onSurfaceVariant
-
-    Surface(
-        modifier = modifier
-            .pointerHoverIcon(PointerIcon.Hand)
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(Constraints.Spacing.xSmall),
-        color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(Constraints.Stroke.thin, borderColor),
-    ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.labelSmall.copy(
-                fontSize = 10.sp,
-                fontWeight = FontWeight.SemiBold,
-            ),
-            color = textColor,
-            modifier = Modifier.padding(
-                horizontal = Constraints.Spacing.medium,
-                vertical = Constraints.Spacing.xSmall,
-            ),
-        )
     }
 }
 
