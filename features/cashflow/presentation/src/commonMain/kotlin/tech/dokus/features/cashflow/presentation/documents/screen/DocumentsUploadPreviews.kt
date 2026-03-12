@@ -93,6 +93,7 @@ private fun previewContentState(): DocumentsState {
             )
         ),
         filter = DocumentFilter.All,
+        totalCount = 9,
         needsAttentionCount = 1,
         confirmedCount = 8,
     )

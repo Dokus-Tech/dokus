@@ -35,8 +35,8 @@ class DocumentsContainerExternalRefreshTest {
             enqueuePageResult(filter = DocumentListFilter.All, result = externalRefreshPageResponse(initialDocs))
         }
         val getDocumentCounts = FakeGetDocumentCountsUseCase().apply {
-            enqueueResult(DocumentCountsResponse(needsAttention = 4L, confirmed = 7L))
-            enqueueResult(DocumentCountsResponse(needsAttention = 6L, confirmed = 9L))
+            enqueueResult(DocumentCountsResponse(total = 11L, needsAttention = 4L, confirmed = 7L))
+            enqueueResult(DocumentCountsResponse(total = 15L, needsAttention = 6L, confirmed = 9L))
         }
         val deferredRefresh = CompletableDeferred<Result<PaginatedResponse<DocumentListItemDto>>>()
         loadDocuments.enqueuePageDeferred(DocumentListFilter.All, deferredRefresh)

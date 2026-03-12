@@ -48,6 +48,7 @@ enum class DocumentFilter {
 data class DocumentsState(
     val documents: DokusState<PaginationState<DocumentListItemDto>>,
     val filter: DocumentFilter,
+    val totalCount: Int,
     val needsAttentionCount: Int,
     val confirmedCount: Int,
 ) : MVIState {
@@ -58,6 +59,7 @@ data class DocumentsState(
             DocumentsState(
                 documents = DokusState.loading(),
                 filter = DocumentFilter.All,
+                totalCount = 0,
                 needsAttentionCount = 0,
                 confirmedCount = 0
             )

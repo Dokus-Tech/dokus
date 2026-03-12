@@ -187,6 +187,7 @@ internal class DocumentsContainer(
             .onSuccess { counts ->
                 updateState {
                     copy(
+                        totalCount = counts.total.toUiCount(),
                         needsAttentionCount = counts.needsAttention.toUiCount(),
                         confirmedCount = counts.confirmed.toUiCount()
                     )
