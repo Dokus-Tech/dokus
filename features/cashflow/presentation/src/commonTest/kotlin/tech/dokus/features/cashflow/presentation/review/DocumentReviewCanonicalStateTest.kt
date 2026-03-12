@@ -14,7 +14,6 @@ import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.DocumentSourceStatus
 import tech.dokus.domain.enums.DocumentStatus
-import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
@@ -24,7 +23,6 @@ import tech.dokus.domain.ids.DocumentMatchReviewId
 import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.BankStatementDraftData
 import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentDraftData
@@ -36,6 +34,7 @@ import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.DocumentSourceDto
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
+import tech.dokus.domain.model.toDocumentType
 import tech.dokus.foundation.app.state.DokusState
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -167,12 +166,7 @@ class DocumentReviewCanonicalStateTest {
             documentId = documentId,
             tenantId = tenantId,
             documentStatus = if (isDocumentConfirmed) DocumentStatus.Confirmed else DocumentStatus.NeedsReview,
-            documentType = when (draftData) {
-                is InvoiceDraftData -> DocumentType.Invoice
-                is CreditNoteDraftData -> DocumentType.CreditNote
-                is ReceiptDraftData -> DocumentType.Receipt
-                is BankStatementDraftData -> DocumentType.BankStatement
-            },
+            documentType = draftData.toDocumentType(),
             extractedData = draftData,
             aiDraftSourceRunId = null,
             draftVersion = 1,

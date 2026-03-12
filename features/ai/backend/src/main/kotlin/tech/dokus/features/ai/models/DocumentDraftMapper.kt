@@ -10,8 +10,12 @@ import tech.dokus.domain.model.PartyDraft
 import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.domain.model.TransactionCommunication
 import tech.dokus.domain.model.contact.CounterpartySnapshot
+import tech.dokus.domain.model.toEmptyDraftData
 
 fun DocumentAiProcessingResult.toDraftData(): DocumentDraftData? {
+    if (extraction is FinancialExtractionResult.Unsupported && !classification.documentType.supported) {
+        return classification.documentType.toEmptyDraftData()
+    }
     return extraction.toDraftData(directionResolution.direction)
 }
 

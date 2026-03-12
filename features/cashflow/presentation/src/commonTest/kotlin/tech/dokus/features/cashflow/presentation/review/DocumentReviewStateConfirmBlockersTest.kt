@@ -12,7 +12,6 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.contact.CounterpartyInfo
-import tech.dokus.domain.model.BankStatementDraftData
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.DocumentDraftDto
@@ -20,6 +19,7 @@ import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
+import tech.dokus.domain.model.toDocumentType
 import tech.dokus.foundation.app.state.DokusState
 import kotlin.test.Test
 import kotlin.test.assertFalse
@@ -236,10 +236,5 @@ class DocumentReviewStateConfirmBlockersTest {
         totalAmount = Money.from("121.00"),
     )
 
-    private fun DocumentDraftData.toType(): DocumentType = when (this) {
-        is InvoiceDraftData -> DocumentType.Invoice
-        is ReceiptDraftData -> DocumentType.Receipt
-        is CreditNoteDraftData -> DocumentType.CreditNote
-        is BankStatementDraftData -> DocumentType.BankStatement
-    }
+    private fun DocumentDraftData.toType(): DocumentType = toDocumentType()
 }

@@ -24,12 +24,14 @@ import tech.dokus.features.ai.graph.sub.ClassificationResult
 import tech.dokus.features.ai.graph.sub.ClassifyDocumentInput
 import tech.dokus.features.ai.graph.sub.classifyDocumentSubGraph
 import tech.dokus.features.ai.graph.sub.financialExtractionSubGraph
+import tech.dokus.features.ai.models.DirectionResolution
 import tech.dokus.features.ai.models.DocumentAiProcessingResult
 import tech.dokus.features.ai.models.ExtractDocumentInput
 import tech.dokus.features.ai.models.FinancialExtractionResult
 import tech.dokus.features.ai.models.ResolvedExtraction
 import tech.dokus.features.ai.models.confidenceScore
 import tech.dokus.features.ai.models.toPeppolProcessingResult
+import tech.dokus.features.ai.validation.AuditReport
 import tech.dokus.features.ai.services.DocumentFetcher
 import tech.dokus.features.ai.validation.FinancialExtractionAuditor
 import tech.dokus.features.ai.validation.counterpartyInvariantCheck
@@ -90,6 +92,17 @@ fun acceptDocumentGraph(
                     rewritePrompt { prompt -> prompt.copy(messages = prompt.messages.take(preClassifyMessageCount)) }
                 }
                 result
+            }
+
+            // --- Skip unsupported types (no extraction, no LLM tokens) ---
+
+            val skipUnsupported by node<ClassificationResult, DocumentAiProcessingResult>("skip-unsupported") { result ->
+                DocumentAiProcessingResult(
+                    classification = result,
+                    extraction = FinancialExtractionResult.Unsupported,
+                    directionResolution = DirectionResolution(),
+                    auditReport = AuditReport.EMPTY
+                )
             }
 
             // --- Extraction phase (retries up to 2x) ---
@@ -165,8 +178,12 @@ fun acceptDocumentGraph(
             }
 
             nodeStart then storeContext then injectTenant then injectImages then injectFeedback then
-                prepareClassify then classify then storeClassification then cleanForExtraction then
-                extractionWithRetry then nodeFinish
+                prepareClassify then classify then storeClassification then cleanForExtraction
+
+            edge(cleanForExtraction forwardTo extractionWithRetry onCondition { it.documentType.supported })
+            edge(cleanForExtraction forwardTo skipUnsupported onCondition { !it.documentType.supported })
+            edge(extractionWithRetry forwardTo nodeFinish)
+            edge(skipUnsupported forwardTo nodeFinish)
         }
 
         // --- PEPPOL route (deterministic, no LLM) ---

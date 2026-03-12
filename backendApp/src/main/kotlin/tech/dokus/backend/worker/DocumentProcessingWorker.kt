@@ -49,6 +49,7 @@ import tech.dokus.domain.utils.json
 import tech.dokus.features.ai.agents.DocumentProcessingAgent
 import tech.dokus.features.ai.graph.AcceptDocumentInput
 import tech.dokus.features.ai.models.DirectionResolutionSource
+import tech.dokus.features.ai.models.FinancialExtractionResult
 import tech.dokus.features.ai.models.confidenceScore
 import tech.dokus.features.ai.models.toAuthoritativeCounterpartySnapshot
 import tech.dokus.features.ai.models.toDraftData
@@ -432,10 +433,11 @@ internal class DocumentProcessingWorker(
 
             val processingOutcome = result.toProcessingOutcome()
             val documentType = result.classification.documentType
-            val confidence = minOf(
-                result.classification.confidence,
-                result.extraction.confidenceScore()
-            )
+            val confidence = if (result.extraction is FinancialExtractionResult.Unsupported) {
+                result.classification.confidence
+            } else {
+                minOf(result.classification.confidence, result.extraction.confidenceScore())
+            }
             val draftData = result.toDraftData()
 
             val rawExtractionJson = json.encodeToString(result)
@@ -460,6 +462,17 @@ internal class DocumentProcessingWorker(
                 force = false,
                 fieldProvenance = provenance
             )
+
+            // Unsupported types: auto-confirm immediately, skip contact/purpose enrichment
+            if (draftData != null && !documentType.supported) {
+                documentRepository.updateDocumentStatus(
+                    documentId = documentId,
+                    tenantId = parsedTenantId,
+                    status = DocumentStatus.Confirmed
+                )
+                documentSsePublisher.publishDocumentChanged(parsedTenantId, documentId)
+                return AttemptResult.Succeeded
+            }
 
             if (draftData != null) {
                 val matchOutcome = documentTruthService.applyPostExtractionMatching(

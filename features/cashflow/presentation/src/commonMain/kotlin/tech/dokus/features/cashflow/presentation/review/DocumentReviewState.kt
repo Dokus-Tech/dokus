@@ -23,16 +23,65 @@ import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentSourceId
+import tech.dokus.domain.model.AnnualAccountsDraftData
 import tech.dokus.domain.model.AutoPaymentStatusDto
+import tech.dokus.domain.model.BankFeeDraftData
 import tech.dokus.domain.model.BankStatementDraftData
-import tech.dokus.domain.model.CashflowEntry
-import tech.dokus.domain.model.CreditNoteDraftData
-import tech.dokus.domain.model.DocumentDraftData
-import tech.dokus.domain.model.DocumentDetailDto
-import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.BankTransactionDto
+import tech.dokus.domain.model.BoardMinutesDraftData
+import tech.dokus.domain.model.C4DraftData
+import tech.dokus.domain.model.CashflowEntry
+import tech.dokus.domain.model.CompanyExtractDraftData
+import tech.dokus.domain.model.ContractDraftData
+import tech.dokus.domain.model.CorporateTaxAdvanceDraftData
+import tech.dokus.domain.model.CorporateTaxDraftData
+import tech.dokus.domain.model.CreditNoteDraftData
+import tech.dokus.domain.model.CustomsDeclarationDraftData
+import tech.dokus.domain.model.DeliveryNoteDraftData
+import tech.dokus.domain.model.DepreciationScheduleDraftData
+import tech.dokus.domain.model.DimonaDraftData
+import tech.dokus.domain.model.DividendDraftData
+import tech.dokus.domain.model.DocumentDetailDto
+import tech.dokus.domain.model.DocumentDraftData
+import tech.dokus.domain.model.EmploymentContractDraftData
+import tech.dokus.domain.model.ExpenseClaimDraftData
+import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.FineDraftData
+import tech.dokus.domain.model.HolidayPayDraftData
+import tech.dokus.domain.model.IcListingDraftData
+import tech.dokus.domain.model.InsuranceDraftData
+import tech.dokus.domain.model.InterestStatementDraftData
+import tech.dokus.domain.model.IntrastatDraftData
+import tech.dokus.domain.model.InventoryDraftData
 import tech.dokus.domain.model.InvoiceDraftData
+import tech.dokus.domain.model.LeaseDraftData
+import tech.dokus.domain.model.LoanDraftData
+import tech.dokus.domain.model.OrderConfirmationDraftData
+import tech.dokus.domain.model.OssReturnDraftData
+import tech.dokus.domain.model.OtherDraftData
+import tech.dokus.domain.model.PaymentConfirmationDraftData
+import tech.dokus.domain.model.PayrollSummaryDraftData
+import tech.dokus.domain.model.PermitDraftData
+import tech.dokus.domain.model.PersonalTaxDraftData
+import tech.dokus.domain.model.ProFormaDraftData
+import tech.dokus.domain.model.PurchaseOrderDraftData
+import tech.dokus.domain.model.QuoteDraftData
 import tech.dokus.domain.model.ReceiptDraftData
+import tech.dokus.domain.model.ReminderDraftData
+import tech.dokus.domain.model.SalarySlipDraftData
+import tech.dokus.domain.model.SelfEmployedContributionDraftData
+import tech.dokus.domain.model.ShareholderRegisterDraftData
+import tech.dokus.domain.model.SocialContributionDraftData
+import tech.dokus.domain.model.SocialFundDraftData
+import tech.dokus.domain.model.StatementOfAccountDraftData
+import tech.dokus.domain.model.SubsidyDraftData
+import tech.dokus.domain.model.TaxAssessmentDraftData
+import tech.dokus.domain.model.VapzDraftData
+import tech.dokus.domain.model.VatAssessmentDraftData
+import tech.dokus.domain.model.VatListingDraftData
+import tech.dokus.domain.model.VatReturnDraftData
+import tech.dokus.domain.model.WithholdingTaxDraftData
+import tech.dokus.domain.model.toDocumentType
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.features.cashflow.presentation.review.models.DocumentUiData
 import tech.dokus.features.cashflow.presentation.review.models.toUiData
@@ -397,6 +446,54 @@ private val DocumentDraftData.hasRequiredDates: Boolean
         is ReceiptDraftData -> date != null
         is CreditNoteDraftData -> issueDate != null
         is BankStatementDraftData -> transactions.all { it.transactionDate != null }
+        is ProFormaDraftData,
+        is QuoteDraftData,
+        is OrderConfirmationDraftData,
+        is DeliveryNoteDraftData,
+        is ReminderDraftData,
+        is StatementOfAccountDraftData,
+        is PurchaseOrderDraftData,
+        is ExpenseClaimDraftData,
+        is BankFeeDraftData,
+        is InterestStatementDraftData,
+        is PaymentConfirmationDraftData,
+        is VatReturnDraftData,
+        is VatListingDraftData,
+        is VatAssessmentDraftData,
+        is IcListingDraftData,
+        is OssReturnDraftData,
+        is CorporateTaxDraftData,
+        is CorporateTaxAdvanceDraftData,
+        is TaxAssessmentDraftData,
+        is PersonalTaxDraftData,
+        is WithholdingTaxDraftData,
+        is SocialContributionDraftData,
+        is SocialFundDraftData,
+        is SelfEmployedContributionDraftData,
+        is VapzDraftData,
+        is SalarySlipDraftData,
+        is PayrollSummaryDraftData,
+        is EmploymentContractDraftData,
+        is DimonaDraftData,
+        is C4DraftData,
+        is HolidayPayDraftData,
+        is ContractDraftData,
+        is LeaseDraftData,
+        is LoanDraftData,
+        is InsuranceDraftData,
+        is DividendDraftData,
+        is ShareholderRegisterDraftData,
+        is CompanyExtractDraftData,
+        is AnnualAccountsDraftData,
+        is BoardMinutesDraftData,
+        is SubsidyDraftData,
+        is FineDraftData,
+        is PermitDraftData,
+        is CustomsDeclarationDraftData,
+        is IntrastatDraftData,
+        is DepreciationScheduleDraftData,
+        is InventoryDraftData,
+        is OtherDraftData -> true
     }
 
 /** Direction must be known for document types that map to invoice/credit-note entities. */
@@ -406,6 +503,54 @@ private val DocumentDraftData.hasKnownDirectionForConfirmation: Boolean
         is CreditNoteDraftData -> direction != DocumentDirection.Unknown
         is ReceiptDraftData -> true
         is BankStatementDraftData -> direction == DocumentDirection.Neutral
+        is ProFormaDraftData,
+        is QuoteDraftData,
+        is OrderConfirmationDraftData,
+        is DeliveryNoteDraftData,
+        is ReminderDraftData,
+        is StatementOfAccountDraftData,
+        is PurchaseOrderDraftData,
+        is ExpenseClaimDraftData,
+        is BankFeeDraftData,
+        is InterestStatementDraftData,
+        is PaymentConfirmationDraftData,
+        is VatReturnDraftData,
+        is VatListingDraftData,
+        is VatAssessmentDraftData,
+        is IcListingDraftData,
+        is OssReturnDraftData,
+        is CorporateTaxDraftData,
+        is CorporateTaxAdvanceDraftData,
+        is TaxAssessmentDraftData,
+        is PersonalTaxDraftData,
+        is WithholdingTaxDraftData,
+        is SocialContributionDraftData,
+        is SocialFundDraftData,
+        is SelfEmployedContributionDraftData,
+        is VapzDraftData,
+        is SalarySlipDraftData,
+        is PayrollSummaryDraftData,
+        is EmploymentContractDraftData,
+        is DimonaDraftData,
+        is C4DraftData,
+        is HolidayPayDraftData,
+        is ContractDraftData,
+        is LeaseDraftData,
+        is LoanDraftData,
+        is InsuranceDraftData,
+        is DividendDraftData,
+        is ShareholderRegisterDraftData,
+        is CompanyExtractDraftData,
+        is AnnualAccountsDraftData,
+        is BoardMinutesDraftData,
+        is SubsidyDraftData,
+        is FineDraftData,
+        is PermitDraftData,
+        is CustomsDeclarationDraftData,
+        is IntrastatDraftData,
+        is DepreciationScheduleDraftData,
+        is InventoryDraftData,
+        is OtherDraftData -> true
     }
 
 /** Identity fields required by backend confirmation services. */
@@ -414,7 +559,55 @@ private val DocumentDraftData.hasRequiredIdentityForConfirmation: Boolean
         is InvoiceDraftData -> true
         is ReceiptDraftData -> !merchantName.isNullOrBlank()
         is CreditNoteDraftData -> !creditNoteNumber.isNullOrBlank()
-        is BankStatementDraftData -> true
+        is BankStatementDraftData,
+        is ProFormaDraftData,
+        is QuoteDraftData,
+        is OrderConfirmationDraftData,
+        is DeliveryNoteDraftData,
+        is ReminderDraftData,
+        is StatementOfAccountDraftData,
+        is PurchaseOrderDraftData,
+        is ExpenseClaimDraftData,
+        is BankFeeDraftData,
+        is InterestStatementDraftData,
+        is PaymentConfirmationDraftData,
+        is VatReturnDraftData,
+        is VatListingDraftData,
+        is VatAssessmentDraftData,
+        is IcListingDraftData,
+        is OssReturnDraftData,
+        is CorporateTaxDraftData,
+        is CorporateTaxAdvanceDraftData,
+        is TaxAssessmentDraftData,
+        is PersonalTaxDraftData,
+        is WithholdingTaxDraftData,
+        is SocialContributionDraftData,
+        is SocialFundDraftData,
+        is SelfEmployedContributionDraftData,
+        is VapzDraftData,
+        is SalarySlipDraftData,
+        is PayrollSummaryDraftData,
+        is EmploymentContractDraftData,
+        is DimonaDraftData,
+        is C4DraftData,
+        is HolidayPayDraftData,
+        is ContractDraftData,
+        is LeaseDraftData,
+        is LoanDraftData,
+        is InsuranceDraftData,
+        is DividendDraftData,
+        is ShareholderRegisterDraftData,
+        is CompanyExtractDraftData,
+        is AnnualAccountsDraftData,
+        is BoardMinutesDraftData,
+        is SubsidyDraftData,
+        is FineDraftData,
+        is PermitDraftData,
+        is CustomsDeclarationDraftData,
+        is IntrastatDraftData,
+        is DepreciationScheduleDraftData,
+        is InventoryDraftData,
+        is OtherDraftData -> true
     }
 
 /** Subtotal requirement enforced by backend (credit notes only). */
@@ -423,7 +616,55 @@ private val DocumentDraftData.hasRequiredSubtotalForConfirmation: Boolean
         is InvoiceDraftData -> true
         is ReceiptDraftData -> true
         is CreditNoteDraftData -> subtotalAmount != null
-        is BankStatementDraftData -> true
+        is BankStatementDraftData,
+        is ProFormaDraftData,
+        is QuoteDraftData,
+        is OrderConfirmationDraftData,
+        is DeliveryNoteDraftData,
+        is ReminderDraftData,
+        is StatementOfAccountDraftData,
+        is PurchaseOrderDraftData,
+        is ExpenseClaimDraftData,
+        is BankFeeDraftData,
+        is InterestStatementDraftData,
+        is PaymentConfirmationDraftData,
+        is VatReturnDraftData,
+        is VatListingDraftData,
+        is VatAssessmentDraftData,
+        is IcListingDraftData,
+        is OssReturnDraftData,
+        is CorporateTaxDraftData,
+        is CorporateTaxAdvanceDraftData,
+        is TaxAssessmentDraftData,
+        is PersonalTaxDraftData,
+        is WithholdingTaxDraftData,
+        is SocialContributionDraftData,
+        is SocialFundDraftData,
+        is SelfEmployedContributionDraftData,
+        is VapzDraftData,
+        is SalarySlipDraftData,
+        is PayrollSummaryDraftData,
+        is EmploymentContractDraftData,
+        is DimonaDraftData,
+        is C4DraftData,
+        is HolidayPayDraftData,
+        is ContractDraftData,
+        is LeaseDraftData,
+        is LoanDraftData,
+        is InsuranceDraftData,
+        is DividendDraftData,
+        is ShareholderRegisterDraftData,
+        is CompanyExtractDraftData,
+        is AnnualAccountsDraftData,
+        is BoardMinutesDraftData,
+        is SubsidyDraftData,
+        is FineDraftData,
+        is PermitDraftData,
+        is CustomsDeclarationDraftData,
+        is IntrastatDraftData,
+        is DepreciationScheduleDraftData,
+        is InventoryDraftData,
+        is OtherDraftData -> true
     }
 
 /** Whether totals required for confirmation are present. */
@@ -432,7 +673,55 @@ private val DocumentDraftData.hasRequiredTotalForConfirmation: Boolean
         is InvoiceDraftData -> totalAmount != null
         is ReceiptDraftData -> totalAmount != null
         is CreditNoteDraftData -> totalAmount != null
-        is BankStatementDraftData -> true
+        is BankStatementDraftData,
+        is ProFormaDraftData,
+        is QuoteDraftData,
+        is OrderConfirmationDraftData,
+        is DeliveryNoteDraftData,
+        is ReminderDraftData,
+        is StatementOfAccountDraftData,
+        is PurchaseOrderDraftData,
+        is ExpenseClaimDraftData,
+        is BankFeeDraftData,
+        is InterestStatementDraftData,
+        is PaymentConfirmationDraftData,
+        is VatReturnDraftData,
+        is VatListingDraftData,
+        is VatAssessmentDraftData,
+        is IcListingDraftData,
+        is OssReturnDraftData,
+        is CorporateTaxDraftData,
+        is CorporateTaxAdvanceDraftData,
+        is TaxAssessmentDraftData,
+        is PersonalTaxDraftData,
+        is WithholdingTaxDraftData,
+        is SocialContributionDraftData,
+        is SocialFundDraftData,
+        is SelfEmployedContributionDraftData,
+        is VapzDraftData,
+        is SalarySlipDraftData,
+        is PayrollSummaryDraftData,
+        is EmploymentContractDraftData,
+        is DimonaDraftData,
+        is C4DraftData,
+        is HolidayPayDraftData,
+        is ContractDraftData,
+        is LeaseDraftData,
+        is LoanDraftData,
+        is InsuranceDraftData,
+        is DividendDraftData,
+        is ShareholderRegisterDraftData,
+        is CompanyExtractDraftData,
+        is AnnualAccountsDraftData,
+        is BoardMinutesDraftData,
+        is SubsidyDraftData,
+        is FineDraftData,
+        is PermitDraftData,
+        is CustomsDeclarationDraftData,
+        is IntrastatDraftData,
+        is DepreciationScheduleDraftData,
+        is InventoryDraftData,
+        is OtherDraftData -> true
     }
 
 /** Whether VAT required for confirmation is present (0-value VAT is valid). */
@@ -440,8 +729,56 @@ private val DocumentDraftData.hasRequiredVatForConfirmation: Boolean
     get() = when (this) {
         is InvoiceDraftData -> vatAmount != null
         is CreditNoteDraftData -> vatAmount != null
-        is ReceiptDraftData -> true
-        is BankStatementDraftData -> true
+        is ReceiptDraftData,
+        is BankStatementDraftData,
+        is ProFormaDraftData,
+        is QuoteDraftData,
+        is OrderConfirmationDraftData,
+        is DeliveryNoteDraftData,
+        is ReminderDraftData,
+        is StatementOfAccountDraftData,
+        is PurchaseOrderDraftData,
+        is ExpenseClaimDraftData,
+        is BankFeeDraftData,
+        is InterestStatementDraftData,
+        is PaymentConfirmationDraftData,
+        is VatReturnDraftData,
+        is VatListingDraftData,
+        is VatAssessmentDraftData,
+        is IcListingDraftData,
+        is OssReturnDraftData,
+        is CorporateTaxDraftData,
+        is CorporateTaxAdvanceDraftData,
+        is TaxAssessmentDraftData,
+        is PersonalTaxDraftData,
+        is WithholdingTaxDraftData,
+        is SocialContributionDraftData,
+        is SocialFundDraftData,
+        is SelfEmployedContributionDraftData,
+        is VapzDraftData,
+        is SalarySlipDraftData,
+        is PayrollSummaryDraftData,
+        is EmploymentContractDraftData,
+        is DimonaDraftData,
+        is C4DraftData,
+        is HolidayPayDraftData,
+        is ContractDraftData,
+        is LeaseDraftData,
+        is LoanDraftData,
+        is InsuranceDraftData,
+        is DividendDraftData,
+        is ShareholderRegisterDraftData,
+        is CompanyExtractDraftData,
+        is AnnualAccountsDraftData,
+        is BoardMinutesDraftData,
+        is SubsidyDraftData,
+        is FineDraftData,
+        is PermitDraftData,
+        is CustomsDeclarationDraftData,
+        is IntrastatDraftData,
+        is DepreciationScheduleDraftData,
+        is InventoryDraftData,
+        is OtherDraftData -> true
     }
 
 /** Whether amount math is coherent when all required values are present. */

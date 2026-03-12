@@ -36,6 +36,56 @@ fun mergeWithProvenance(
             mergeReceipt(existing, incoming, existingProvenance, incomingProvenance)
         existing is BankStatementDraftData && incoming is BankStatementDraftData ->
             mergeBankStatement(existing, incoming, existingProvenance, incomingProvenance)
+        // Classified-only types have only `direction` — incoming always wins
+        existing is ProFormaDraftData && incoming is ProFormaDraftData,
+        existing is QuoteDraftData && incoming is QuoteDraftData,
+        existing is OrderConfirmationDraftData && incoming is OrderConfirmationDraftData,
+        existing is DeliveryNoteDraftData && incoming is DeliveryNoteDraftData,
+        existing is ReminderDraftData && incoming is ReminderDraftData,
+        existing is StatementOfAccountDraftData && incoming is StatementOfAccountDraftData,
+        existing is PurchaseOrderDraftData && incoming is PurchaseOrderDraftData,
+        existing is ExpenseClaimDraftData && incoming is ExpenseClaimDraftData,
+        existing is BankFeeDraftData && incoming is BankFeeDraftData,
+        existing is InterestStatementDraftData && incoming is InterestStatementDraftData,
+        existing is PaymentConfirmationDraftData && incoming is PaymentConfirmationDraftData,
+        existing is VatReturnDraftData && incoming is VatReturnDraftData,
+        existing is VatListingDraftData && incoming is VatListingDraftData,
+        existing is VatAssessmentDraftData && incoming is VatAssessmentDraftData,
+        existing is IcListingDraftData && incoming is IcListingDraftData,
+        existing is OssReturnDraftData && incoming is OssReturnDraftData,
+        existing is CorporateTaxDraftData && incoming is CorporateTaxDraftData,
+        existing is CorporateTaxAdvanceDraftData && incoming is CorporateTaxAdvanceDraftData,
+        existing is TaxAssessmentDraftData && incoming is TaxAssessmentDraftData,
+        existing is PersonalTaxDraftData && incoming is PersonalTaxDraftData,
+        existing is WithholdingTaxDraftData && incoming is WithholdingTaxDraftData,
+        existing is SocialContributionDraftData && incoming is SocialContributionDraftData,
+        existing is SocialFundDraftData && incoming is SocialFundDraftData,
+        existing is SelfEmployedContributionDraftData && incoming is SelfEmployedContributionDraftData,
+        existing is VapzDraftData && incoming is VapzDraftData,
+        existing is SalarySlipDraftData && incoming is SalarySlipDraftData,
+        existing is PayrollSummaryDraftData && incoming is PayrollSummaryDraftData,
+        existing is EmploymentContractDraftData && incoming is EmploymentContractDraftData,
+        existing is DimonaDraftData && incoming is DimonaDraftData,
+        existing is C4DraftData && incoming is C4DraftData,
+        existing is HolidayPayDraftData && incoming is HolidayPayDraftData,
+        existing is ContractDraftData && incoming is ContractDraftData,
+        existing is LeaseDraftData && incoming is LeaseDraftData,
+        existing is LoanDraftData && incoming is LoanDraftData,
+        existing is InsuranceDraftData && incoming is InsuranceDraftData,
+        existing is DividendDraftData && incoming is DividendDraftData,
+        existing is ShareholderRegisterDraftData && incoming is ShareholderRegisterDraftData,
+        existing is CompanyExtractDraftData && incoming is CompanyExtractDraftData,
+        existing is AnnualAccountsDraftData && incoming is AnnualAccountsDraftData,
+        existing is BoardMinutesDraftData && incoming is BoardMinutesDraftData,
+        existing is SubsidyDraftData && incoming is SubsidyDraftData,
+        existing is FineDraftData && incoming is FineDraftData,
+        existing is PermitDraftData && incoming is PermitDraftData,
+        existing is CustomsDeclarationDraftData && incoming is CustomsDeclarationDraftData,
+        existing is IntrastatDraftData && incoming is IntrastatDraftData,
+        existing is DepreciationScheduleDraftData && incoming is DepreciationScheduleDraftData,
+        existing is InventoryDraftData && incoming is InventoryDraftData,
+        existing is OtherDraftData && incoming is OtherDraftData ->
+            ProvenanceMergeResult(incoming, incomingProvenance)
         else -> ProvenanceMergeResult(incoming, incomingProvenance)
     }
 }
@@ -54,7 +104,7 @@ fun diffFieldPaths(
             ?: updated.let { (it as? CreditNoteDraftData)?.let(::creditNotePopulated) }
             ?: updated.let { (it as? ReceiptDraftData)?.let(::receiptPopulated) }
             ?: updated.let { (it as? BankStatementDraftData)?.let(::bankStatementPopulated) }
-            ?: emptySet()
+            ?: classifiedOnlyPopulated(updated)
     }
     return when {
         existing is InvoiceDraftData && updated is InvoiceDraftData ->
@@ -65,6 +115,55 @@ fun diffFieldPaths(
             diffReceipt(existing, updated)
         existing is BankStatementDraftData && updated is BankStatementDraftData ->
             diffBankStatement(existing, updated)
+        existing is ProFormaDraftData && updated is ProFormaDraftData,
+        existing is QuoteDraftData && updated is QuoteDraftData,
+        existing is OrderConfirmationDraftData && updated is OrderConfirmationDraftData,
+        existing is DeliveryNoteDraftData && updated is DeliveryNoteDraftData,
+        existing is ReminderDraftData && updated is ReminderDraftData,
+        existing is StatementOfAccountDraftData && updated is StatementOfAccountDraftData,
+        existing is PurchaseOrderDraftData && updated is PurchaseOrderDraftData,
+        existing is ExpenseClaimDraftData && updated is ExpenseClaimDraftData,
+        existing is BankFeeDraftData && updated is BankFeeDraftData,
+        existing is InterestStatementDraftData && updated is InterestStatementDraftData,
+        existing is PaymentConfirmationDraftData && updated is PaymentConfirmationDraftData,
+        existing is VatReturnDraftData && updated is VatReturnDraftData,
+        existing is VatListingDraftData && updated is VatListingDraftData,
+        existing is VatAssessmentDraftData && updated is VatAssessmentDraftData,
+        existing is IcListingDraftData && updated is IcListingDraftData,
+        existing is OssReturnDraftData && updated is OssReturnDraftData,
+        existing is CorporateTaxDraftData && updated is CorporateTaxDraftData,
+        existing is CorporateTaxAdvanceDraftData && updated is CorporateTaxAdvanceDraftData,
+        existing is TaxAssessmentDraftData && updated is TaxAssessmentDraftData,
+        existing is PersonalTaxDraftData && updated is PersonalTaxDraftData,
+        existing is WithholdingTaxDraftData && updated is WithholdingTaxDraftData,
+        existing is SocialContributionDraftData && updated is SocialContributionDraftData,
+        existing is SocialFundDraftData && updated is SocialFundDraftData,
+        existing is SelfEmployedContributionDraftData && updated is SelfEmployedContributionDraftData,
+        existing is VapzDraftData && updated is VapzDraftData,
+        existing is SalarySlipDraftData && updated is SalarySlipDraftData,
+        existing is PayrollSummaryDraftData && updated is PayrollSummaryDraftData,
+        existing is EmploymentContractDraftData && updated is EmploymentContractDraftData,
+        existing is DimonaDraftData && updated is DimonaDraftData,
+        existing is C4DraftData && updated is C4DraftData,
+        existing is HolidayPayDraftData && updated is HolidayPayDraftData,
+        existing is ContractDraftData && updated is ContractDraftData,
+        existing is LeaseDraftData && updated is LeaseDraftData,
+        existing is LoanDraftData && updated is LoanDraftData,
+        existing is InsuranceDraftData && updated is InsuranceDraftData,
+        existing is DividendDraftData && updated is DividendDraftData,
+        existing is ShareholderRegisterDraftData && updated is ShareholderRegisterDraftData,
+        existing is CompanyExtractDraftData && updated is CompanyExtractDraftData,
+        existing is AnnualAccountsDraftData && updated is AnnualAccountsDraftData,
+        existing is BoardMinutesDraftData && updated is BoardMinutesDraftData,
+        existing is SubsidyDraftData && updated is SubsidyDraftData,
+        existing is FineDraftData && updated is FineDraftData,
+        existing is PermitDraftData && updated is PermitDraftData,
+        existing is CustomsDeclarationDraftData && updated is CustomsDeclarationDraftData,
+        existing is IntrastatDraftData && updated is IntrastatDraftData,
+        existing is DepreciationScheduleDraftData && updated is DepreciationScheduleDraftData,
+        existing is InventoryDraftData && updated is InventoryDraftData,
+        existing is OtherDraftData && updated is OtherDraftData ->
+            diffClassifiedOnly(existing.toDirection(), updated.toDirection())
         else -> emptySet()
     }
 }
@@ -204,6 +303,16 @@ private fun bankStatementPopulated(d: BankStatementDraftData): Set<String> = bui
     if (d.periodEnd != null) add("periodEnd")
     if (d.notes != null) add("notes")
 }
+
+/** Populated fields for classified-only types (direction is the only field). */
+private fun classifiedOnlyPopulated(@Suppress("UNUSED_PARAMETER") d: DocumentDraftData): Set<String> =
+    setOf("direction")
+
+/** Diff for classified-only types: only the direction field can differ. */
+private fun diffClassifiedOnly(
+    oldDirection: tech.dokus.domain.enums.DocumentDirection,
+    newDirection: tech.dokus.domain.enums.DocumentDirection,
+): Set<String> = if (oldDirection != newDirection) setOf("direction") else emptySet()
 
 private fun MutableSet<String>.addPopulatedParty(prefix: String, party: PartyDraft) {
     if (party.name != null) add("$prefix.name")

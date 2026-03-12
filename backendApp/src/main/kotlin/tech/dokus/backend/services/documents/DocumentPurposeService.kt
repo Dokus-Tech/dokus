@@ -13,13 +13,62 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.model.AnnualAccountsDraftData
+import tech.dokus.domain.model.BankFeeDraftData
 import tech.dokus.domain.model.BankStatementDraftData
+import tech.dokus.domain.model.BoardMinutesDraftData
+import tech.dokus.domain.model.C4DraftData
+import tech.dokus.domain.model.CompanyExtractDraftData
+import tech.dokus.domain.model.ContractDraftData
+import tech.dokus.domain.model.CorporateTaxAdvanceDraftData
+import tech.dokus.domain.model.CorporateTaxDraftData
 import tech.dokus.domain.model.CreditNoteDraftData
+import tech.dokus.domain.model.CustomsDeclarationDraftData
+import tech.dokus.domain.model.DeliveryNoteDraftData
+import tech.dokus.domain.model.DepreciationScheduleDraftData
+import tech.dokus.domain.model.DimonaDraftData
+import tech.dokus.domain.model.DividendDraftData
+import tech.dokus.domain.model.DocumentDraftData
+import tech.dokus.domain.model.EmploymentContractDraftData
+import tech.dokus.domain.model.ExpenseClaimDraftData
+import tech.dokus.domain.model.FineDraftData
+import tech.dokus.domain.model.HolidayPayDraftData
+import tech.dokus.domain.model.IcListingDraftData
+import tech.dokus.domain.model.InsuranceDraftData
+import tech.dokus.domain.model.InterestStatementDraftData
+import tech.dokus.domain.model.IntrastatDraftData
+import tech.dokus.domain.model.InventoryDraftData
+import tech.dokus.domain.model.InvoiceDraftData
+import tech.dokus.domain.model.LeaseDraftData
+import tech.dokus.domain.model.LoanDraftData
+import tech.dokus.domain.model.OrderConfirmationDraftData
+import tech.dokus.domain.model.OssReturnDraftData
+import tech.dokus.domain.model.OtherDraftData
+import tech.dokus.domain.model.PaymentConfirmationDraftData
+import tech.dokus.domain.model.PayrollSummaryDraftData
+import tech.dokus.domain.model.PermitDraftData
+import tech.dokus.domain.model.PersonalTaxDraftData
+import tech.dokus.domain.model.ProFormaDraftData
+import tech.dokus.domain.model.PurchaseOrderDraftData
+import tech.dokus.domain.model.QuoteDraftData
+import tech.dokus.domain.model.ReceiptDraftData
+import tech.dokus.domain.model.ReminderDraftData
+import tech.dokus.domain.model.SalarySlipDraftData
+import tech.dokus.domain.model.SelfEmployedContributionDraftData
+import tech.dokus.domain.model.ShareholderRegisterDraftData
+import tech.dokus.domain.model.SocialContributionDraftData
+import tech.dokus.domain.model.SocialFundDraftData
+import tech.dokus.domain.model.StatementOfAccountDraftData
+import tech.dokus.domain.model.SubsidyDraftData
+import tech.dokus.domain.model.TaxAssessmentDraftData
+import tech.dokus.domain.model.VapzDraftData
+import tech.dokus.domain.model.VatAssessmentDraftData
+import tech.dokus.domain.model.VatListingDraftData
+import tech.dokus.domain.model.VatReturnDraftData
+import tech.dokus.domain.model.WithholdingTaxDraftData
 import tech.dokus.domain.model.resolvedCounterpartyName
 import tech.dokus.domain.model.resolvedCounterpartyVat
-import tech.dokus.domain.model.DocumentDraftData
-import tech.dokus.domain.model.InvoiceDraftData
-import tech.dokus.domain.model.ReceiptDraftData
+import tech.dokus.domain.model.toDocumentType
 import tech.dokus.domain.model.contact.CounterpartyInfo
 import tech.dokus.domain.model.contact.isLinked
 import tech.dokus.features.ai.agents.DocumentProcessingAgent
@@ -236,6 +285,54 @@ class DocumentPurposeService(
 
         is ReceiptDraftData -> draftData.merchantName
         is BankStatementDraftData -> draftData.transactions.firstNotNullOfOrNull { it.counterparty.name }
+        is ProFormaDraftData,
+        is QuoteDraftData,
+        is OrderConfirmationDraftData,
+        is DeliveryNoteDraftData,
+        is ReminderDraftData,
+        is StatementOfAccountDraftData,
+        is PurchaseOrderDraftData,
+        is ExpenseClaimDraftData,
+        is BankFeeDraftData,
+        is InterestStatementDraftData,
+        is PaymentConfirmationDraftData,
+        is VatReturnDraftData,
+        is VatListingDraftData,
+        is VatAssessmentDraftData,
+        is IcListingDraftData,
+        is OssReturnDraftData,
+        is CorporateTaxDraftData,
+        is CorporateTaxAdvanceDraftData,
+        is TaxAssessmentDraftData,
+        is PersonalTaxDraftData,
+        is WithholdingTaxDraftData,
+        is SocialContributionDraftData,
+        is SocialFundDraftData,
+        is SelfEmployedContributionDraftData,
+        is VapzDraftData,
+        is SalarySlipDraftData,
+        is PayrollSummaryDraftData,
+        is EmploymentContractDraftData,
+        is DimonaDraftData,
+        is C4DraftData,
+        is HolidayPayDraftData,
+        is ContractDraftData,
+        is LeaseDraftData,
+        is LoanDraftData,
+        is InsuranceDraftData,
+        is DividendDraftData,
+        is ShareholderRegisterDraftData,
+        is CompanyExtractDraftData,
+        is AnnualAccountsDraftData,
+        is BoardMinutesDraftData,
+        is SubsidyDraftData,
+        is FineDraftData,
+        is PermitDraftData,
+        is CustomsDeclarationDraftData,
+        is IntrastatDraftData,
+        is DepreciationScheduleDraftData,
+        is InventoryDraftData,
+        is OtherDraftData -> null
     }
 
     private fun extractCounterpartyVat(draftData: DocumentDraftData): VatNumber? = when (draftData) {
@@ -250,6 +347,54 @@ class DocumentPurposeService(
 
         is ReceiptDraftData -> draftData.merchantVat
         is BankStatementDraftData -> null
+        is ProFormaDraftData,
+        is QuoteDraftData,
+        is OrderConfirmationDraftData,
+        is DeliveryNoteDraftData,
+        is ReminderDraftData,
+        is StatementOfAccountDraftData,
+        is PurchaseOrderDraftData,
+        is ExpenseClaimDraftData,
+        is BankFeeDraftData,
+        is InterestStatementDraftData,
+        is PaymentConfirmationDraftData,
+        is VatReturnDraftData,
+        is VatListingDraftData,
+        is VatAssessmentDraftData,
+        is IcListingDraftData,
+        is OssReturnDraftData,
+        is CorporateTaxDraftData,
+        is CorporateTaxAdvanceDraftData,
+        is TaxAssessmentDraftData,
+        is PersonalTaxDraftData,
+        is WithholdingTaxDraftData,
+        is SocialContributionDraftData,
+        is SocialFundDraftData,
+        is SelfEmployedContributionDraftData,
+        is VapzDraftData,
+        is SalarySlipDraftData,
+        is PayrollSummaryDraftData,
+        is EmploymentContractDraftData,
+        is DimonaDraftData,
+        is C4DraftData,
+        is HolidayPayDraftData,
+        is ContractDraftData,
+        is LeaseDraftData,
+        is LoanDraftData,
+        is InsuranceDraftData,
+        is DividendDraftData,
+        is ShareholderRegisterDraftData,
+        is CompanyExtractDraftData,
+        is AnnualAccountsDraftData,
+        is BoardMinutesDraftData,
+        is SubsidyDraftData,
+        is FineDraftData,
+        is PermitDraftData,
+        is CustomsDeclarationDraftData,
+        is IntrastatDraftData,
+        is DepreciationScheduleDraftData,
+        is InventoryDraftData,
+        is OtherDraftData -> null
     }
 
     private fun extractIssueDate(draftData: DocumentDraftData): LocalDate? = when (draftData) {
@@ -257,6 +402,54 @@ class DocumentPurposeService(
         is CreditNoteDraftData -> draftData.issueDate
         is ReceiptDraftData -> draftData.date
         is BankStatementDraftData -> draftData.transactions.firstNotNullOfOrNull { it.transactionDate }
+        is ProFormaDraftData,
+        is QuoteDraftData,
+        is OrderConfirmationDraftData,
+        is DeliveryNoteDraftData,
+        is ReminderDraftData,
+        is StatementOfAccountDraftData,
+        is PurchaseOrderDraftData,
+        is ExpenseClaimDraftData,
+        is BankFeeDraftData,
+        is InterestStatementDraftData,
+        is PaymentConfirmationDraftData,
+        is VatReturnDraftData,
+        is VatListingDraftData,
+        is VatAssessmentDraftData,
+        is IcListingDraftData,
+        is OssReturnDraftData,
+        is CorporateTaxDraftData,
+        is CorporateTaxAdvanceDraftData,
+        is TaxAssessmentDraftData,
+        is PersonalTaxDraftData,
+        is WithholdingTaxDraftData,
+        is SocialContributionDraftData,
+        is SocialFundDraftData,
+        is SelfEmployedContributionDraftData,
+        is VapzDraftData,
+        is SalarySlipDraftData,
+        is PayrollSummaryDraftData,
+        is EmploymentContractDraftData,
+        is DimonaDraftData,
+        is C4DraftData,
+        is HolidayPayDraftData,
+        is ContractDraftData,
+        is LeaseDraftData,
+        is LoanDraftData,
+        is InsuranceDraftData,
+        is DividendDraftData,
+        is ShareholderRegisterDraftData,
+        is CompanyExtractDraftData,
+        is AnnualAccountsDraftData,
+        is BoardMinutesDraftData,
+        is SubsidyDraftData,
+        is FineDraftData,
+        is PermitDraftData,
+        is CustomsDeclarationDraftData,
+        is IntrastatDraftData,
+        is DepreciationScheduleDraftData,
+        is InventoryDraftData,
+        is OtherDraftData -> null
     }
 
     private fun extractPeriodDate(draftData: DocumentDraftData, mode: PurposePeriodMode): LocalDate? {
@@ -292,6 +485,54 @@ class DocumentPurposeService(
             is CreditNoteDraftData -> draftData.lineItems.firstOrNull()?.description
             is ReceiptDraftData -> draftData.lineItems.firstOrNull()?.description
             is BankStatementDraftData -> draftData.transactions.firstOrNull()?.descriptionRaw
+            is ProFormaDraftData,
+            is QuoteDraftData,
+            is OrderConfirmationDraftData,
+            is DeliveryNoteDraftData,
+            is ReminderDraftData,
+            is StatementOfAccountDraftData,
+            is PurchaseOrderDraftData,
+            is ExpenseClaimDraftData,
+            is BankFeeDraftData,
+            is InterestStatementDraftData,
+            is PaymentConfirmationDraftData,
+            is VatReturnDraftData,
+            is VatListingDraftData,
+            is VatAssessmentDraftData,
+            is IcListingDraftData,
+            is OssReturnDraftData,
+            is CorporateTaxDraftData,
+            is CorporateTaxAdvanceDraftData,
+            is TaxAssessmentDraftData,
+            is PersonalTaxDraftData,
+            is WithholdingTaxDraftData,
+            is SocialContributionDraftData,
+            is SocialFundDraftData,
+            is SelfEmployedContributionDraftData,
+            is VapzDraftData,
+            is SalarySlipDraftData,
+            is PayrollSummaryDraftData,
+            is EmploymentContractDraftData,
+            is DimonaDraftData,
+            is C4DraftData,
+            is HolidayPayDraftData,
+            is ContractDraftData,
+            is LeaseDraftData,
+            is LoanDraftData,
+            is InsuranceDraftData,
+            is DividendDraftData,
+            is ShareholderRegisterDraftData,
+            is CompanyExtractDraftData,
+            is AnnualAccountsDraftData,
+            is BoardMinutesDraftData,
+            is SubsidyDraftData,
+            is FineDraftData,
+            is PermitDraftData,
+            is CustomsDeclarationDraftData,
+            is IntrastatDraftData,
+            is DepreciationScheduleDraftData,
+            is InventoryDraftData,
+            is OtherDraftData -> null
         }?.trim()?.take(PurposeBaseMaxLength)
         return lineHint?.takeIf { it.isNotBlank() }
     }
