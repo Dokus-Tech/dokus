@@ -3,7 +3,6 @@ package tech.dokus.features.ai.graph
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.config.AIAgentConfig
 import ai.koog.agents.core.annotation.ExperimentalAgentsApi
-import ai.koog.agents.core.dsl.builder.forwardTo
 import ai.koog.agents.core.dsl.builder.strategy
 import ai.koog.agents.core.tools.ToolRegistry
 import kotlinx.coroutines.runBlocking
@@ -15,9 +14,12 @@ import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.features.ai.config.AIProviderFactory
 import tech.dokus.features.ai.config.asVisionModel
+import tech.dokus.features.ai.graph.nodes.documentImagesInjectorNode
+import tech.dokus.features.ai.graph.nodes.tenantContextInjectorNode
+import tech.dokus.features.ai.graph.nodes.userFeedbackInjectorNode
 import tech.dokus.features.ai.graph.sub.ClassificationResult
+import tech.dokus.features.ai.graph.sub.ClassifyDocumentInput
 import tech.dokus.features.ai.graph.sub.classifyDocumentSubGraph
-import tech.dokus.features.ai.graph.sub.documentPreparationSubGraph
 import tech.dokus.features.ai.services.DocumentFetcher
 import tech.dokus.features.ai.services.DocumentFetcher.FetchedDocumentData
 import java.io.File
@@ -79,14 +81,16 @@ class ClassificationGraphTest {
         val toolRegistry = ToolRegistry { }
 
         val strategy = strategy<AcceptDocumentInput, ClassificationResult>("test") {
+            val injectTenant by tenantContextInjectorNode<AcceptDocumentInput>()
+            val injectImages by documentImagesInjectorNode<AcceptDocumentInput>(mockFetcher)
+            val injectFeedback by userFeedbackInjectorNode<AcceptDocumentInput>()
+            val prepareClassify by node<AcceptDocumentInput, ClassifyDocumentInput>("prepare-classify") { input ->
+                ClassifyDocumentInput(input.documentId, input.tenant)
+            }
             val classify by classifyDocumentSubGraph(TestAiFixtures.aiConfig)
-            val prepare by documentPreparationSubGraph<AcceptDocumentInput>(mockFetcher)
 
-            // Classification
-            edge(nodeStart forwardTo prepare)
-            edge(prepare forwardTo classify)
-
-            edge(classify forwardTo nodeFinish)
+            nodeStart then injectTenant then injectImages then injectFeedback then
+                prepareClassify then classify then nodeFinish
         }
 
         val agent = AIAgent(
