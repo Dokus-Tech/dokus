@@ -159,6 +159,10 @@ val NavigationDestination.route: String get() = when (this) {
         CoreDestination.Home -> "home"
         CoreDestination.UpdateRequired -> "update_required"
     }
+    is BankingDestination -> when (this) {
+        BankingDestination.Balances -> "root/banking/balances"
+        BankingDestination.Payments -> "root/banking/payments"
+    }
     is AppDestination -> when (this) {
         AppDestination.Notifications -> "notifications"
         AppDestination.UnderDevelopment -> "app/under_development"

@@ -36,6 +36,7 @@ import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.banking_empty_subtitle
 import tech.dokus.aura.resources.banking_empty_title
+import tech.dokus.aura.resources.banking_payments_title
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.BankAccountId
 import tech.dokus.domain.ids.BankTransactionId
@@ -60,6 +61,7 @@ import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.common.DokusEmptyState
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.DokusLoader
+import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.local.LocalScreenSize
@@ -87,13 +89,18 @@ internal fun PaymentsScreen(
         )
     }
 
+    val isLargeScreen = LocalScreenSize.current.isLarge
     Scaffold(
+        topBar = {
+            if (!isLargeScreen) PTopAppBar(Res.string.banking_payments_title)
+        },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         modifier = modifier,
-    ) {
+    ) { contentPadding ->
         PaymentsContent(
             state = state,
             onIntent = onIntent,
+            modifier = Modifier.padding(contentPadding),
         )
     }
 }
@@ -102,6 +109,7 @@ internal fun PaymentsScreen(
 private fun PaymentsContent(
     state: PaymentsState,
     onIntent: (PaymentsIntent) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val allTxData = state.transactions.lastData?.data ?: emptyList()
     val txData = if (state.selectedAccountId != null) {
@@ -131,7 +139,7 @@ private fun PaymentsContent(
     }
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .padding(
                 start = Constraints.Spacing.large,

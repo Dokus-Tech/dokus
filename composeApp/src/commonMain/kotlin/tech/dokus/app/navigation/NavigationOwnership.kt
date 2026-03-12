@@ -2,6 +2,7 @@ package tech.dokus.app.navigation
 
 import tech.dokus.navigation.destinations.AppDestination
 import tech.dokus.navigation.destinations.AuthDestination
+import tech.dokus.navigation.destinations.BankingDestination
 import tech.dokus.navigation.destinations.CashFlowDestination
 import tech.dokus.navigation.destinations.ContactsDestination
 import tech.dokus.navigation.destinations.CoreDestination
@@ -21,6 +22,7 @@ internal object NavigationOwnershipPolicy {
         AppDestination::class,
         AuthDestination::class,
         SettingsDestination::class,
+        BankingDestination::class,
         CashFlowDestination::class,
         ContactsDestination::class,
     )
@@ -35,6 +37,7 @@ internal object NavigationOwnershipPolicy {
             is AppDestination,
             is AuthDestination,
             is SettingsDestination,
+            is BankingDestination,
             is CashFlowDestination,
             is ContactsDestination -> NavHostOwner.Root
 
