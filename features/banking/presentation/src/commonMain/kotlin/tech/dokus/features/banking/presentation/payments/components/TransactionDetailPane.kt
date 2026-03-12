@@ -10,12 +10,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -58,6 +56,8 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.domain.model.TransactionCommunication
 import tech.dokus.domain.model.contact.CounterpartySnapshot
+import tech.dokus.foundation.aura.components.PButton
+import tech.dokus.foundation.aura.components.PButtonVariant
 import tech.dokus.foundation.aura.components.text.Amt
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.extensions.localized
@@ -222,59 +222,57 @@ internal fun TransactionDetailPane(
         // Action buttons
         when (transaction.status) {
             BankTransactionStatus.Unmatched -> {
-                Button(
-                    onClick = onLinkDocument,
+                PButton(
+                    text = stringResource(Res.string.banking_action_link),
                     modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(stringResource(Res.string.banking_action_link))
-                }
+                    onClick = onLinkDocument,
+                )
                 if (transaction.signedAmount.isNegative) {
                     Spacer(Modifier.height(Constraints.Spacing.small))
-                    OutlinedButton(
-                        onClick = onCreateExpense,
+                    PButton(
+                        text = stringResource(Res.string.banking_action_add_expense),
+                        variant = PButtonVariant.Outline,
                         modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text(stringResource(Res.string.banking_action_add_expense))
-                    }
+                        onClick = onCreateExpense,
+                    )
                 }
                 Spacer(Modifier.height(Constraints.Spacing.small))
-                OutlinedButton(
-                    onClick = onIgnore,
+                PButton(
+                    text = stringResource(Res.string.banking_action_ignore),
+                    variant = PButtonVariant.OutlineMuted,
                     modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(stringResource(Res.string.banking_action_ignore))
-                }
+                    onClick = onIgnore,
+                )
             }
             BankTransactionStatus.NeedsReview -> {
-                Button(
+                PButton(
+                    text = stringResource(Res.string.banking_action_confirm_match),
+                    modifier = Modifier.fillMaxWidth(),
                     onClick = onConfirmMatch,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(stringResource(Res.string.banking_action_confirm_match))
-                }
+                )
                 Spacer(Modifier.height(Constraints.Spacing.small))
-                OutlinedButton(
-                    onClick = onLinkDocument,
+                PButton(
+                    text = stringResource(Res.string.banking_action_link),
+                    variant = PButtonVariant.Outline,
                     modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(stringResource(Res.string.banking_action_link))
-                }
+                    onClick = onLinkDocument,
+                )
                 if (transaction.signedAmount.isNegative) {
                     Spacer(Modifier.height(Constraints.Spacing.small))
-                    OutlinedButton(
-                        onClick = onCreateExpense,
+                    PButton(
+                        text = stringResource(Res.string.banking_action_add_expense),
+                        variant = PButtonVariant.Outline,
                         modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text(stringResource(Res.string.banking_action_add_expense))
-                    }
+                        onClick = onCreateExpense,
+                    )
                 }
                 Spacer(Modifier.height(Constraints.Spacing.small))
-                OutlinedButton(
-                    onClick = onIgnore,
+                PButton(
+                    text = stringResource(Res.string.banking_action_ignore),
+                    variant = PButtonVariant.OutlineMuted,
                     modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(stringResource(Res.string.banking_action_ignore))
-                }
+                    onClick = onIgnore,
+                )
             }
             BankTransactionStatus.Matched,
             BankTransactionStatus.Ignored -> {

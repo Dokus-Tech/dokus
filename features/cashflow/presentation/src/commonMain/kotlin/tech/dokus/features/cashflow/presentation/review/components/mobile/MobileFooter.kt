@@ -7,8 +7,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -25,6 +23,7 @@ import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_confirm
 import tech.dokus.aura.resources.cashflow_somethings_wrong
+import tech.dokus.foundation.aura.components.PButton
 import tech.dokus.foundation.aura.components.PIcon
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.textMuted
@@ -76,26 +75,13 @@ internal fun MobileFooter(
             }
 
             // Confirm button only (right side) - NO Save button on mobile
-            Button(
+            PButton(
+                text = stringResource(Res.string.action_confirm),
+                icon = FeatherIcons.Check,
+                isLoading = isLoading,
+                isEnabled = canConfirm && !isLoading,
                 onClick = onConfirm,
-                enabled = canConfirm && !isLoading
-            ) {
-                if (isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(16.dp),
-                        strokeWidth = 2.dp,
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                } else {
-                    PIcon(
-                        icon = FeatherIcons.Check,
-                        description = null,
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(stringResource(Res.string.action_confirm))
-            }
+            )
         }
     }
 }
