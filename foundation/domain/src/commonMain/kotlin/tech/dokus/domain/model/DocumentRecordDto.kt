@@ -140,6 +140,7 @@ data class DocumentDetailDto(
 
 @Serializable
 data class DocumentCountsResponse(
+    val total: Long,
     val needsAttention: Long,
     val confirmed: Long
 )

@@ -74,6 +74,7 @@ data class DocumentListPage<T>(
 )
 
 data class DocumentOperationalCounts(
+    val total: Long,
     val needsAttention: Long,
     val confirmed: Long
 )
@@ -291,6 +292,13 @@ class DocumentRepository : DocumentStatusChecker {
     ): DocumentOperationalCounts {
         DocumentIngestionRunRepository().recoverStaleProcessingRunsForTenant(tenantId)
         return DocumentOperationalCounts(
+            total = DocumentListingQuery.countWithDraftsAndIngestion(
+                tenantId = tenantId,
+                filter = DocumentListFilter.All,
+                documentStatus = null,
+                documentType = null,
+                ingestionStatus = null
+            ),
             needsAttention = DocumentListingQuery.countWithDraftsAndIngestion(
                 tenantId = tenantId,
                 filter = DocumentListFilter.NeedsAttention,
