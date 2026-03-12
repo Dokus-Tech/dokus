@@ -31,6 +31,7 @@ import tech.dokus.aura.resources.contacts_business_type
 import tech.dokus.aura.resources.contacts_city
 import tech.dokus.aura.resources.contacts_company_number
 import tech.dokus.aura.resources.contacts_contact_person
+import tech.dokus.aura.resources.contacts_iban
 import tech.dokus.aura.resources.contacts_country
 import tech.dokus.aura.resources.contacts_default_vat_rate
 import tech.dokus.aura.resources.contacts_email
@@ -46,6 +47,7 @@ import tech.dokus.aura.resources.contacts_status
 import tech.dokus.aura.resources.contacts_tags
 import tech.dokus.aura.resources.contacts_tags_hint
 import tech.dokus.aura.resources.contacts_vat_number
+import tech.dokus.aura.resources.contacts_website
 import tech.dokus.aura.resources.field_optional
 import tech.dokus.aura.resources.field_required
 import tech.dokus.domain.enums.ClientType
@@ -80,7 +82,9 @@ internal fun ContactFormFields(
     onContactPersonChange: (String) -> Unit,
     onVatNumberChange: (String) -> Unit,
     onCompanyNumberChange: (String) -> Unit,
+    onIbanChange: (String) -> Unit,
     onBusinessTypeChange: (ClientType) -> Unit,
+    onWebsiteUrlChange: (String) -> Unit,
     onAddressLine1Change: (String) -> Unit,
     onAddressLine2Change: (String) -> Unit,
     onCityChange: (String) -> Unit,
@@ -144,6 +148,21 @@ internal fun ContactFormFields(
                 onValueChange = onContactPersonChange,
                 modifier = Modifier.fillMaxWidth()
             )
+
+            Spacer(modifier = Modifier.height(Constraints.Spacing.medium))
+
+            // Website URL
+            PTextFieldStandard(
+                fieldName = stringResource(Res.string.contacts_website),
+                value = formData.websiteUrl,
+                onValueChange = onWebsiteUrlChange,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Uri,
+                    capitalization = KeyboardCapitalization.None,
+                    imeAction = ImeAction.Next
+                ),
+                modifier = Modifier.fillMaxWidth()
+            )
         }
 
         // Business Information Section
@@ -177,6 +196,21 @@ internal fun ContactFormFields(
                 fieldName = stringResource(Res.string.contacts_company_number),
                 value = formData.companyNumber,
                 onValueChange = onCompanyNumberChange,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(Constraints.Spacing.medium))
+
+            // IBAN
+            PTextFieldStandard(
+                fieldName = stringResource(Res.string.contacts_iban),
+                value = formData.iban.value,
+                onValueChange = onIbanChange,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Text,
+                    capitalization = KeyboardCapitalization.Characters,
+                    imeAction = ImeAction.Next
+                ),
                 modifier = Modifier.fillMaxWidth()
             )
         }
@@ -451,7 +485,9 @@ private fun ContactFormFieldsPreview(
             onContactPersonChange = {},
             onVatNumberChange = {},
             onCompanyNumberChange = {},
+            onIbanChange = {},
             onBusinessTypeChange = {},
+            onWebsiteUrlChange = {},
             onAddressLine1Change = {},
             onAddressLine2Change = {},
             onCityChange = {},

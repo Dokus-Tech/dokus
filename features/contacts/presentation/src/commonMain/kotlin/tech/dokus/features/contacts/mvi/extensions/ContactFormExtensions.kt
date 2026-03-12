@@ -3,6 +3,7 @@ package tech.dokus.features.contacts.mvi.extensions
 import tech.dokus.domain.City
 import tech.dokus.domain.Email
 import tech.dokus.domain.PhoneNumber
+import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.contact.ContactAddressInput
 import tech.dokus.domain.model.contact.ContactDto
@@ -18,8 +19,10 @@ internal fun ContactDto.toFormData(): ContactFormData = ContactFormData(
     email = email ?: Email.Empty,
     phone = phone ?: PhoneNumber.Empty,
     contactPerson = contactPerson ?: "",
+    websiteUrl = websiteUrl ?: "",
     vatNumber = vatNumber ?: VatNumber.Empty,
     companyNumber = companyNumber ?: "",
+    iban = iban ?: Iban(""),
     businessType = businessType,
     addressLine1 = addressLine1 ?: "",
     addressLine2 = addressLine2 ?: "",
@@ -40,6 +43,7 @@ internal fun ContactDto.toFormData(): ContactFormData = ContactFormData(
 internal fun ContactFormData.toCreateRequest(): CreateContactRequest = CreateContactRequest(
     name = name,
     email = email.takeIf { it.value.isNotBlank() },
+    iban = iban.takeIf { it.value.isNotBlank() },
     phone = phone.takeIf { it.value.isNotBlank() },
     vatNumber = vatNumber.takeIf { it.value.isNotBlank() },
     businessType = businessType,
@@ -60,6 +64,7 @@ internal fun ContactFormData.toCreateRequest(): CreateContactRequest = CreateCon
 internal fun ContactFormData.toUpdateRequest(): UpdateContactRequest = UpdateContactRequest(
     name = name,
     email = email.takeIf { it.value.isNotBlank() },
+    iban = iban.takeIf { it.value.isNotBlank() },
     phone = phone.takeIf { it.value.isNotBlank() },
     vatNumber = vatNumber.takeIf { it.value.isNotBlank() },
     businessType = businessType,
@@ -68,9 +73,9 @@ internal fun ContactFormData.toUpdateRequest(): UpdateContactRequest = UpdateCon
     companyNumber = companyNumber.takeIf { it.isNotBlank() },
     defaultPaymentTerms = defaultPaymentTerms,
     defaultVatRate = defaultVatRate.takeIf { it.isNotBlank() },
-    // NOTE: peppolId/peppolEnabled removed - PEPPOL status is in PeppolDirectoryCacheTable
     tags = tags.takeIf { it.isNotBlank() },
-    isActive = isActive
+    isActive = isActive,
+    websiteUrl = websiteUrl.takeIf { it.isNotBlank() }
 )
 
 /**

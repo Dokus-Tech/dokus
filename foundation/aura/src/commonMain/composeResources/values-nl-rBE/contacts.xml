@@ -61,6 +61,7 @@
     <string name="contacts_phone">Telefoon</string>
     <string name="contacts_vat_number">BTW-nummer</string>
     <string name="contacts_company_number">Bedrijfsnummer</string>
+    <string name="contacts_iban">IBAN</string>
     <string name="contacts_address">Adres</string>
     <string name="contacts_city">Stad</string>
     <string name="contacts_postal_code">Postcode</string>

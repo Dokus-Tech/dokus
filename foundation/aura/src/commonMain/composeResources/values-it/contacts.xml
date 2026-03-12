@@ -61,6 +61,7 @@
     <string name="contacts_phone">Telefono</string>
     <string name="contacts_vat_number">Partita IVA</string>
     <string name="contacts_company_number">Numero aziendale</string>
+    <string name="contacts_iban">IBAN</string>
     <string name="contacts_address">Indirizzo</string>
     <string name="contacts_city">Città</string>
     <string name="contacts_postal_code">CAP</string>

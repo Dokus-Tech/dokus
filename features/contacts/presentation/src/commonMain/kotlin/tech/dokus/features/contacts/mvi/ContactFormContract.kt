@@ -16,6 +16,7 @@ import tech.dokus.domain.PhoneNumber
 import tech.dokus.domain.enums.ClientType
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.foundation.app.state.DokusState
@@ -52,10 +53,12 @@ data class ContactFormData(
     val email: Email = Email.Empty,
     val phone: PhoneNumber = PhoneNumber.Empty,
     val contactPerson: String = "",
+    val websiteUrl: String = "",
 
     // Business info
     val vatNumber: VatNumber = VatNumber.Empty,
     val companyNumber: String = "",
+    val iban: Iban = Iban(""),
     val businessType: ClientType = ClientType.Business,
 
     // Address
@@ -213,6 +216,9 @@ sealed interface ContactFormIntent : MVIIntent {
     /** Update contact person field */
     data class UpdateContactPerson(val value: String) : ContactFormIntent
 
+    /** Update website URL field */
+    data class UpdateWebsiteUrl(val value: String) : ContactFormIntent
+
     // === Business Info Field Updates ===
 
     /** Update VAT number field */
@@ -220,6 +226,9 @@ sealed interface ContactFormIntent : MVIIntent {
 
     /** Update company number field */
     data class UpdateCompanyNumber(val value: String) : ContactFormIntent
+
+    /** Update IBAN field */
+    data class UpdateIban(val value: String) : ContactFormIntent
 
     /** Update business type (after picker selection) */
     data class UpdateBusinessType(val value: ClientType) : ContactFormIntent

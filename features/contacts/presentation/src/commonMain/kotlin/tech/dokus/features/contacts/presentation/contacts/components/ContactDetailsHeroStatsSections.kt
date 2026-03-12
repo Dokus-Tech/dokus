@@ -10,10 +10,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import com.composables.icons.lucide.Check
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Merge
 import com.composables.icons.lucide.Pencil
 import com.composables.icons.lucide.Sparkles
+import com.composables.icons.lucide.X
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -64,8 +66,11 @@ internal fun ContactHeroSection(
     showInlineActions: Boolean,
     hasEnrichmentSuggestions: Boolean,
     isEditing: Boolean,
+    isSavingEdit: Boolean = false,
     isOnline: Boolean,
     onEditContact: () -> Unit,
+    onSaveEdit: () -> Unit = {},
+    onCancelEdit: () -> Unit = {},
     onMergeContact: () -> Unit,
     onShowEnrichment: () -> Unit,
 ) {
@@ -150,37 +155,61 @@ internal fun ContactHeroSection(
                         horizontalArrangement = Arrangement.End,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        if (hasEnrichmentSuggestions) {
+                        if (isEditing) {
+                            // Cancel edit
                             IconButton(
-                                onClick = onShowEnrichment,
+                                onClick = onCancelEdit,
+                                enabled = !isSavingEdit
+                            ) {
+                                Icon(
+                                    imageVector = Lucide.X,
+                                    contentDescription = null
+                                )
+                            }
+                            // Save edit (check icon)
+                            IconButton(
+                                onClick = onSaveEdit,
+                                enabled = !isSavingEdit
+                            ) {
+                                Icon(
+                                    imageVector = Lucide.Check,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        } else {
+                            if (hasEnrichmentSuggestions) {
+                                IconButton(
+                                    onClick = onShowEnrichment,
+                                    enabled = isOnline
+                                ) {
+                                    Icon(
+                                        imageVector = Lucide.Sparkles,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.statusWarning
+                                    )
+                                }
+                            }
+
+                            IconButton(
+                                onClick = onMergeContact,
                                 enabled = isOnline
                             ) {
                                 Icon(
-                                    imageVector = Lucide.Sparkles,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.statusWarning
+                                    imageVector = Lucide.Merge,
+                                    contentDescription = null
                                 )
                             }
-                        }
 
-                        IconButton(
-                            onClick = onMergeContact,
-                            enabled = isOnline
-                        ) {
-                            Icon(
-                                imageVector = Lucide.Merge,
-                                contentDescription = null
-                            )
-                        }
-
-                        IconButton(
-                            onClick = onEditContact,
-                            enabled = isOnline && !isEditing
-                        ) {
-                            Icon(
-                                imageVector = Lucide.Pencil,
-                                contentDescription = null
-                            )
+                            IconButton(
+                                onClick = onEditContact,
+                                enabled = isOnline
+                            ) {
+                                Icon(
+                                    imageVector = Lucide.Pencil,
+                                    contentDescription = null
+                                )
+                            }
                         }
                     }
                 }

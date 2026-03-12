@@ -38,6 +38,7 @@ import tech.dokus.domain.City
 import tech.dokus.domain.Email
 import tech.dokus.domain.Name
 import tech.dokus.domain.PhoneNumber
+import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.features.contacts.mvi.ContactFormData
 import tech.dokus.aura.resources.Res
@@ -106,7 +107,9 @@ internal fun ContactInfoSectionCompact(
                 onContactPersonChange = { onEditFormDataChange(editFormData.copy(contactPerson = it)) },
                 onVatNumberChange = { onEditFormDataChange(editFormData.copy(vatNumber = VatNumber(it))) },
                 onCompanyNumberChange = { onEditFormDataChange(editFormData.copy(companyNumber = it)) },
+                onIbanChange = { onEditFormDataChange(editFormData.copy(iban = Iban(it))) },
                 onBusinessTypeChange = { onEditFormDataChange(editFormData.copy(businessType = it)) },
+                onWebsiteUrlChange = { onEditFormDataChange(editFormData.copy(websiteUrl = it)) },
                 onAddressLine1Change = { onEditFormDataChange(editFormData.copy(addressLine1 = it)) },
                 onAddressLine2Change = { onEditFormDataChange(editFormData.copy(addressLine2 = it)) },
                 onCityChange = { onEditFormDataChange(editFormData.copy(city = City(it))) },
