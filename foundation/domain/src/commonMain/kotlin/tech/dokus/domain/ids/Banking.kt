@@ -14,12 +14,12 @@ import kotlin.uuid.Uuid
 @OptIn(ExperimentalUuidApi::class)
 @Serializable
 @JvmInline
-value class BankConnectionId(val value: Uuid) {
+value class BankAccountId(val value: Uuid) {
     override fun toString(): String = value.toString()
 
     companion object {
-        fun generate(): BankConnectionId = BankConnectionId(Uuid.random())
-        fun parse(value: String): BankConnectionId = BankConnectionId(Uuid.parse(value))
+        fun generate(): BankAccountId = BankAccountId(Uuid.random())
+        fun parse(value: String): BankAccountId = BankAccountId(Uuid.parse(value))
     }
 }
 
@@ -32,18 +32,6 @@ value class BankTransactionId(val value: Uuid) {
     companion object {
         fun generate(): BankTransactionId = BankTransactionId(Uuid.random())
         fun parse(value: String): BankTransactionId = BankTransactionId(Uuid.parse(value))
-    }
-}
-
-@OptIn(ExperimentalUuidApi::class)
-@Serializable
-@JvmInline
-value class ImportedBankTransactionId(val value: Uuid) {
-    override fun toString(): String = value.toString()
-
-    companion object {
-        fun generate(): ImportedBankTransactionId = ImportedBankTransactionId(Uuid.random())
-        fun parse(value: String): ImportedBankTransactionId = ImportedBankTransactionId(Uuid.parse(value))
     }
 }
 

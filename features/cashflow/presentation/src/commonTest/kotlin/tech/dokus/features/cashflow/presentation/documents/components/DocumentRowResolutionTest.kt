@@ -11,11 +11,13 @@ import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentIngestionDto
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentListItemDto
 import tech.dokus.domain.model.InvoiceDraftData
+import tech.dokus.domain.model.contact.CounterpartyInfo
 import tech.dokus.domain.model.contact.CounterpartySnapshot
 import tech.dokus.foundation.aura.model.DocumentUiStatus
 import kotlin.test.Test
@@ -23,9 +25,13 @@ import kotlin.test.assertEquals
 
 class DocumentRowResolutionTest {
 
+    // =========================================================================
+    // Detail-context helpers (DocumentDetailDto)
+    // =========================================================================
+
     @Test
     fun `counterparty column uses snapshot name only`() {
-        val record = record(
+        val record = detailRecord(
             counterpartyName = "Apple Distribution International Ltd.",
             invoiceNumber = "1-12218196743"
         )
@@ -35,35 +41,39 @@ class DocumentRowResolutionTest {
 
     @Test
     fun `description uses snapshot name and document number`() {
-        val record = record(
+        val record = detailRecord(
             counterpartyName = "Apple Distribution International Ltd.",
             invoiceNumber = "1-12218196743"
         )
 
         assertEquals(
-            "Apple Distribution International Ltd. — 1-12218196743",
+            "Apple Distribution International Ltd. \u2014 1-12218196743",
             resolveDescription(record, "Unknown")
         )
     }
 
     @Test
     fun `description falls back to filename and document number when snapshot is missing`() {
-        val record = record(
+        val record = detailRecord(
             counterpartyName = null,
             invoiceNumber = "1-12218196743"
         )
 
         assertEquals(
-            "apple-invoice.pdf — 1-12218196743",
+            "apple-invoice.pdf \u2014 1-12218196743",
             resolveDescription(record, "Unknown")
         )
     }
 
+    // =========================================================================
+    // List-context helpers (DocumentListItemDto)
+    // =========================================================================
+
     @Test
     fun `queued records use filename and preparing status in list row`() {
-        val record = record(
+        val record = listRecord(
             counterpartyName = "Any Vendor",
-            invoiceNumber = "INV-1",
+            purposeRendered = "INV-1",
             draftStatus = DocumentStatus.NeedsReview,
             ingestionStatus = IngestionStatus.Queued
         )
@@ -78,9 +88,9 @@ class DocumentRowResolutionTest {
 
     @Test
     fun `processing records use filename and reading status in list row`() {
-        val record = record(
+        val record = listRecord(
             counterpartyName = "Any Vendor",
-            invoiceNumber = "INV-2",
+            purposeRendered = "INV-2",
             draftStatus = DocumentStatus.NeedsReview,
             ingestionStatus = IngestionStatus.Processing
         )
@@ -95,9 +105,9 @@ class DocumentRowResolutionTest {
 
     @Test
     fun `failed records use filename and failed status in list row`() {
-        val record = record(
+        val record = listRecord(
             counterpartyName = "Any Vendor",
-            invoiceNumber = "INV-3",
+            purposeRendered = "INV-3",
             draftStatus = DocumentStatus.NeedsReview,
             ingestionStatus = IngestionStatus.Failed
         )
@@ -112,9 +122,9 @@ class DocumentRowResolutionTest {
 
     @Test
     fun `review records keep normal counterparty and reference text`() {
-        val record = record(
+        val record = listRecord(
             counterpartyName = "Tesla Belgium BVBA",
-            invoiceNumber = "INV-10",
+            purposeRendered = "INV-10",
             draftStatus = DocumentStatus.NeedsReview,
             ingestionStatus = IngestionStatus.Succeeded
         )
@@ -129,9 +139,9 @@ class DocumentRowResolutionTest {
 
     @Test
     fun `confirmed records keep normal counterparty and reference text`() {
-        val record = record(
+        val record = listRecord(
             counterpartyName = "Tesla Belgium BVBA",
-            invoiceNumber = "INV-11",
+            purposeRendered = "INV-11",
             draftStatus = DocumentStatus.Confirmed,
             ingestionStatus = IngestionStatus.Succeeded
         )
@@ -144,12 +154,16 @@ class DocumentRowResolutionTest {
         )
     }
 
-    private fun record(
+    // =========================================================================
+    // Factories
+    // =========================================================================
+
+    private fun detailRecord(
         counterpartyName: String?,
         invoiceNumber: String?,
         draftStatus: DocumentStatus = DocumentStatus.NeedsReview,
         ingestionStatus: IngestionStatus? = null,
-    ): DocumentRecordDto {
+    ): DocumentDetailDto {
         val tenantId = TenantId.parse("44e8ed5c-020a-4bbb-9439-ac85899c5589")
         val documentId = DocumentId.parse("e72f69a8-6913-4d8f-98e7-224db7f4133f")
         val now = LocalDateTime(2026, 2, 11, 0, 0, 0)
@@ -167,27 +181,25 @@ class DocumentRowResolutionTest {
             documentStatus = draftStatus,
             documentType = DocumentType.Invoice,
             extractedData = extractedData,
-            aiDraftData = extractedData,
             aiDraftSourceRunId = null,
             draftVersion = 0,
             draftEditedAt = null,
             draftEditedBy = null,
-            linkedContactId = null,
-            counterpartySnapshot = counterpartyName?.let { CounterpartySnapshot(name = it) },
+            counterparty = counterpartyName?.let {
+                CounterpartyInfo.Unresolved(snapshot = CounterpartySnapshot(name = it))
+            },
+            counterpartyDisplayName = counterpartyName,
             lastSuccessfulRunId = null,
             createdAt = now,
             updatedAt = now
         )
 
-        return DocumentRecordDto(
+        return DocumentDetailDto(
             document = DocumentDto(
                 id = documentId,
                 tenantId = tenantId,
                 filename = "apple-invoice.pdf",
-                contentType = "application/pdf",
-                sizeBytes = 1200L,
-                storageKey = "documents/$tenantId/apple-invoice.pdf",
-                source = DocumentSource.Upload,
+                effectiveOrigin = DocumentSource.Upload,
                 uploadedAt = now
             ),
             draft = draft,
@@ -206,6 +218,33 @@ class DocumentRowResolutionTest {
                 )
             },
             confirmedEntity = null
+        )
+    }
+
+    private fun listRecord(
+        counterpartyName: String?,
+        purposeRendered: String?,
+        draftStatus: DocumentStatus = DocumentStatus.NeedsReview,
+        ingestionStatus: IngestionStatus? = null,
+    ): DocumentListItemDto {
+        val tenantId = TenantId.parse("44e8ed5c-020a-4bbb-9439-ac85899c5589")
+        val documentId = DocumentId.parse("e72f69a8-6913-4d8f-98e7-224db7f4133f")
+        val now = LocalDateTime(2026, 2, 11, 0, 0, 0)
+
+        return DocumentListItemDto(
+            documentId = documentId,
+            tenantId = tenantId,
+            filename = "apple-invoice.pdf",
+            documentType = DocumentType.Invoice,
+            direction = DocumentDirection.Inbound,
+            documentStatus = draftStatus,
+            ingestionStatus = ingestionStatus,
+            effectiveOrigin = DocumentSource.Upload,
+            uploadedAt = now,
+            counterpartyDisplayName = counterpartyName,
+            purposeRendered = purposeRendered,
+            totalAmount = null,
+            currency = null,
         )
     }
 }

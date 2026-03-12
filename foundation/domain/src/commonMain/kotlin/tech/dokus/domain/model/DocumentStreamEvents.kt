@@ -20,6 +20,6 @@ data class DocumentDeletedEventDto(
 )
 
 sealed interface DocumentRecordStreamEvent {
-    data class Snapshot(val record: DocumentRecordDto) : DocumentRecordStreamEvent
+    data class Snapshot(val record: DocumentDetailDto) : DocumentRecordStreamEvent
     data object Deleted : DocumentRecordStreamEvent
 }

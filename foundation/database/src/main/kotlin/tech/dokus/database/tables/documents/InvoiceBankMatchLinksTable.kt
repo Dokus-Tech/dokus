@@ -18,7 +18,7 @@ object InvoiceBankMatchLinksTable : UUIDTable("invoice_bank_match_links") {
     val invoiceId = uuid("invoice_id").references(InvoicesTable.id, onDelete = ReferenceOption.CASCADE)
     val cashflowEntryId = uuid("cashflow_entry_id").references(CashflowEntriesTable.id, onDelete = ReferenceOption.CASCADE)
     val importedBankTransactionId = uuid("imported_bank_transaction_id")
-        .references(ImportedBankTransactionsTable.id, onDelete = ReferenceOption.CASCADE)
+        .references(tech.dokus.database.tables.banking.BankTransactionsTable.id, onDelete = ReferenceOption.CASCADE)
 
     val status = dbEnumeration<AutoMatchStatus>("status")
     val createdBy = dbEnumeration<PaymentCreatedBy>("created_by").default(PaymentCreatedBy.Auto)

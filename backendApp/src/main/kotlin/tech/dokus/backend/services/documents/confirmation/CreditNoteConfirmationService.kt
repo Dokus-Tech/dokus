@@ -2,7 +2,7 @@ package tech.dokus.backend.services.documents.confirmation
 
 import tech.dokus.backend.services.cashflow.CreditNoteService
 import tech.dokus.backend.util.isUniqueViolation
-import tech.dokus.database.repository.cashflow.DocumentDraftRepository
+import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
 import tech.dokus.database.repository.documents.DocumentLinkRepository
 import tech.dokus.domain.enums.CreditNoteStatus
@@ -14,6 +14,8 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.contact.CounterpartyInfo
+import tech.dokus.domain.model.contact.isLinked
 import tech.dokus.domain.model.CreateCreditNoteRequest
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.foundation.backend.utils.loggerFor
@@ -28,7 +30,7 @@ import tech.dokus.foundation.backend.utils.runSuspendCatching
  */
 class CreditNoteConfirmationService(
     private val creditNoteService: CreditNoteService,
-    private val draftRepository: DocumentDraftRepository,
+    private val documentRepository: DocumentRepository,
     private val documentLinkRepository: DocumentLinkRepository,
     private val invoiceRepository: InvoiceRepository
 ) {
@@ -39,14 +41,16 @@ class CreditNoteConfirmationService(
         tenantId: TenantId,
         documentId: DocumentId,
         draftData: CreditNoteDraftData,
-        linkedContactId: ContactId?
+        contactId: ContactId?
     ): Result<ConfirmationResult> = runSuspendCatching {
         logger.info("Confirming credit note document: $documentId for tenant: $tenantId")
 
-        val draft = requireConfirmableDraft(draftRepository, tenantId, documentId)
+        val draft = requireConfirmableDraft(documentRepository, tenantId, documentId)
         val isReconfirm = draft.documentStatus == DocumentStatus.NeedsReview
 
-        val contactId = linkedContactId ?: draft.linkedContactId
+        val counterparty = draft.counterparty
+        val contactId = contactId
+            ?: if (counterparty.isLinked()) counterparty.contactId else null
             ?: throw DokusException.BadRequest("Credit note requires a linked contact")
         val creditNoteType = when (draftData.direction) {
             DocumentDirection.Outbound -> CreditNoteType.Sales
@@ -112,7 +116,7 @@ class CreditNoteConfirmationService(
             updatedOrCreated
         }
 
-        draftRepository.updateDocumentStatus(documentId, tenantId, DocumentStatus.Confirmed)
+        documentRepository.updateDocumentStatus(documentId, tenantId, DocumentStatus.Confirmed)
         upsertOriginalReferenceLink(
             tenantId = tenantId,
             creditNoteDocumentId = documentId,

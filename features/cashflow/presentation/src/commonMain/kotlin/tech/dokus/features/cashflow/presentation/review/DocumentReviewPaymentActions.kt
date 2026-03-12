@@ -6,6 +6,7 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
 import pro.respawn.flowmvi.dsl.withState
 import tech.dokus.domain.Money
+import tech.dokus.domain.enums.BankTransactionStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.model.CashflowEntry
@@ -133,10 +134,15 @@ internal class DocumentReviewPaymentActions(
             }
             launch {
                 getCashflowPaymentCandidates(entry.id).fold(
-                    onSuccess = { response ->
+                    onSuccess = { candidates ->
                         withState {
                             val currentSheet = paymentSheetState ?: return@withState
-                            val strongCandidate = response.strongCandidate
+                            val strongCandidate = candidates.firstOrNull {
+                                it.status == BankTransactionStatus.NeedsReview
+                            }
+                            val selectableTransactions = candidates.filter {
+                                it.status == BankTransactionStatus.Unmatched
+                            }
                             val selected = strongCandidate
                             val selectedAmount = selected?.signedAmount?.absoluteOrNull()
                             updateState {
@@ -144,7 +150,7 @@ internal class DocumentReviewPaymentActions(
                                     paymentSheetState = currentSheet.copy(
                                         suggestedTransaction = strongCandidate,
                                         selectedTransaction = selected,
-                                        selectableTransactions = response.selectableTransactions,
+                                        selectableTransactions = selectableTransactions,
                                         paidAt = selected?.transactionDate ?: currentSheet.paidAt,
                                         amount = selectedAmount ?: currentSheet.amount,
                                         amountText = selectedAmount?.toDisplayString() ?: currentSheet.amountText,
@@ -200,7 +206,7 @@ internal class DocumentReviewPaymentActions(
         }
     }
 
-    suspend fun DocumentReviewCtx.handleSelectPaymentTransaction(transactionId: tech.dokus.domain.ids.ImportedBankTransactionId) {
+    suspend fun DocumentReviewCtx.handleSelectPaymentTransaction(transactionId: tech.dokus.domain.ids.BankTransactionId) {
         withState {
             val sheet = paymentSheetState ?: return@withState
             val selected = (

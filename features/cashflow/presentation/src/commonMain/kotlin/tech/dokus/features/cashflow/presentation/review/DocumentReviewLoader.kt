@@ -1,17 +1,16 @@
 package tech.dokus.features.cashflow.presentation.review
 
-import pro.respawn.flowmvi.dsl.withState
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.model.DocumentRecordDto
-import tech.dokus.domain.model.contact.SuggestedContact
+import tech.dokus.domain.model.DocumentDetailDto
+import tech.dokus.domain.model.contact.isLinked
+import tech.dokus.domain.model.contact.isUnresolved
 import tech.dokus.features.cashflow.usecases.GetDocumentRecordUseCase
 import tech.dokus.features.contacts.usecases.GetContactUseCase
 import tech.dokus.foundation.app.state.DokusState
-import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.platform.Logger
 
 internal class DocumentReviewLoader(
@@ -42,7 +41,7 @@ internal class DocumentReviewLoader(
         }
     }
 
-    suspend fun DocumentReviewCtx.handleApplyRemoteSnapshot(record: DocumentRecordDto) {
+    suspend fun DocumentReviewCtx.handleApplyRemoteSnapshot(record: DocumentDetailDto) {
         withState {
             val activeDocumentId = documentId ?: run {
                 logger.d { "Dropping remote snapshot: no active document in current state" }
@@ -84,7 +83,7 @@ internal class DocumentReviewLoader(
 
     private suspend fun DocumentReviewCtx.transitionToDocumentState(
         documentId: DocumentId,
-        document: DocumentRecordDto,
+        document: DocumentDetailDto,
     ) {
         val previewUrl = document.document.downloadUrl
         var previousPreviewUrl: String? = null
@@ -127,7 +126,7 @@ internal class DocumentReviewLoader(
                         previewState = previewState,
                         // Preserve existing UI state where available
                         isContactRequired = false,
-                        counterpartyIntent = draft?.counterpartyIntent ?: tech.dokus.domain.enums.CounterpartyIntent.None,
+                        isPendingCreation = draft?.counterparty.let { it.isUnresolved() && it.pendingCreation },
                         isDocumentConfirmed = draft?.documentStatus == DocumentStatus.Confirmed,
                         isDocumentRejected = draft?.documentStatus == DocumentStatus.Rejected,
                         confirmedCashflowEntryId = document.cashflowEntryId,
@@ -169,7 +168,9 @@ internal class DocumentReviewLoader(
             return
         }
 
-        val contactSuggestions = draft.contactSuggestions.map { suggestion ->
+        val counterparty = draft.counterparty
+        val suggestions = if (counterparty.isUnresolved()) counterparty.suggestions else emptyList()
+        val contactSuggestions = suggestions.map { suggestion ->
             ContactSuggestion(
                 contactId = suggestion.contactId,
                 name = suggestion.name,
@@ -179,9 +180,9 @@ internal class DocumentReviewLoader(
         val documentStatus = draft.documentStatus
         val isDocumentConfirmed = documentStatus == DocumentStatus.Confirmed
         val isDocumentRejected = documentStatus == DocumentStatus.Rejected
-        val counterpartyIntent = draft.counterpartyIntent
+        val isPendingCreation = counterparty.isUnresolved() && counterparty.pendingCreation
         val (contactSelectionState, linkedContactId, selectedContactSnapshot) =
-            buildContactSelectionState(document, draft.contactSuggestions)
+            buildContactSelectionState(document, suggestions)
 
         // Preserve contact snapshot if same contact
         var preservedContactSnapshot: ContactSnapshot? = selectedContactSnapshot
@@ -210,7 +211,7 @@ internal class DocumentReviewLoader(
                         documentId = documentId,
                         documentRecord = document,
                         draftData = extractedData,
-                        originalData = draft.aiDraftData ?: extractedData,
+                        originalData = extractedData,
                         previewUrl = previewUrl,
                         contactSuggestions = contactSuggestions,
                     )
@@ -221,7 +222,7 @@ internal class DocumentReviewLoader(
                 selectedContactSnapshot = preservedContactSnapshot,
                 contactSelectionState = contactSelectionState,
                 isContactRequired = extractedData.isContactRequired,
-                counterpartyIntent = counterpartyIntent,
+                isPendingCreation = isPendingCreation,
                 isDocumentConfirmed = isDocumentConfirmed,
                 isDocumentRejected = isDocumentRejected,
                 confirmedCashflowEntryId = document.cashflowEntryId,
@@ -247,13 +248,13 @@ internal class DocumentReviewLoader(
     }
 
     private fun buildContactSelectionState(
-        document: DocumentRecordDto,
+        document: DocumentDetailDto,
         suggestions: List<tech.dokus.domain.model.contact.SuggestedContact>
     ): Triple<ContactSelectionState, ContactId?, ContactSnapshot?> {
         val draft = document.draft ?: return Triple(ContactSelectionState.NoContact, null, null)
-        val linkedContactId = draft.linkedContactId
-        if (linkedContactId != null) {
-            return Triple(ContactSelectionState.Selected, linkedContactId, null)
+        val counterparty = draft.counterparty
+        if (counterparty.isLinked()) {
+            return Triple(ContactSelectionState.Selected, counterparty.contactId, null)
         }
         val topSuggestion = suggestions.firstOrNull()
         if (topSuggestion != null) {

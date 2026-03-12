@@ -7,13 +7,13 @@ import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import pro.respawn.flowmvi.test.subscribeAndTest
 import tech.dokus.domain.enums.DocumentListFilter
+import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.DocumentCountsResponse
-import tech.dokus.domain.model.DocumentDto
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentListItemDto
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.features.cashflow.usecases.LoadDocumentRecordsUseCase
 import tech.dokus.foundation.app.state.isLoading
@@ -38,7 +38,7 @@ class DocumentsContainerExternalRefreshTest {
             enqueueResult(DocumentCountsResponse(needsAttention = 4L, confirmed = 7L))
             enqueueResult(DocumentCountsResponse(needsAttention = 6L, confirmed = 9L))
         }
-        val deferredRefresh = CompletableDeferred<Result<PaginatedResponse<DocumentRecordDto>>>()
+        val deferredRefresh = CompletableDeferred<Result<PaginatedResponse<DocumentListItemDto>>>()
         loadDocuments.enqueuePageDeferred(DocumentListFilter.All, deferredRefresh)
 
         val container = DocumentsContainer(loadDocuments, getDocumentCounts)
@@ -50,14 +50,14 @@ class DocumentsContainerExternalRefreshTest {
             assertFalse(initial.documents.isLoading())
             assertEquals(4, initial.needsAttentionCount)
             assertEquals(7, initial.confirmedCount)
-            assertEquals(initialDocs.map { it.document.id }, initial.documents.lastData?.data?.map { it.document.id })
+            assertEquals(initialDocs.map { it.documentId }, initial.documents.lastData?.data?.map { it.documentId })
 
             emit(DocumentsIntent.ExternalDocumentsChanged)
             runCurrent()
 
             val refreshing = states.value
             assertTrue(refreshing.documents.isLoading())
-            assertEquals(initialDocs.map { it.document.id }, refreshing.documents.lastData?.data?.map { it.document.id })
+            assertEquals(initialDocs.map { it.documentId }, refreshing.documents.lastData?.data?.map { it.documentId })
 
             deferredRefresh.complete(Result.success(externalRefreshPageResponse(refreshedDocs)))
             advanceUntilIdle()
@@ -66,23 +66,23 @@ class DocumentsContainerExternalRefreshTest {
             assertFalse(updated.documents.isLoading())
             assertEquals(6, updated.needsAttentionCount)
             assertEquals(9, updated.confirmedCount)
-            assertEquals(refreshedDocs.map { it.document.id }, updated.documents.lastData?.data?.map { it.document.id })
+            assertEquals(refreshedDocs.map { it.documentId }, updated.documents.lastData?.data?.map { it.documentId })
             assertEquals(2, getDocumentCounts.callCount)
         }
     }
 }
 
 private class ExternalRefreshLoadDocumentRecordsUseCase : LoadDocumentRecordsUseCase {
-    private val pageResults: MutableMap<DocumentListFilter, ArrayDeque<CompletableDeferred<Result<PaginatedResponse<DocumentRecordDto>>>>> =
+    private val pageResults: MutableMap<DocumentListFilter, ArrayDeque<CompletableDeferred<Result<PaginatedResponse<DocumentListItemDto>>>>> =
         mutableMapOf()
 
     fun enqueuePageResult(
         filter: DocumentListFilter,
-        result: PaginatedResponse<DocumentRecordDto>,
+        result: PaginatedResponse<DocumentListItemDto>,
     ) {
         enqueuePageDeferred(
             filter = filter,
-            deferred = CompletableDeferred<Result<PaginatedResponse<DocumentRecordDto>>>().apply {
+            deferred = CompletableDeferred<Result<PaginatedResponse<DocumentListItemDto>>>().apply {
                 complete(Result.success(result))
             }
         )
@@ -90,7 +90,7 @@ private class ExternalRefreshLoadDocumentRecordsUseCase : LoadDocumentRecordsUse
 
     fun enqueuePageDeferred(
         filter: DocumentListFilter,
-        deferred: CompletableDeferred<Result<PaginatedResponse<DocumentRecordDto>>>,
+        deferred: CompletableDeferred<Result<PaginatedResponse<DocumentListItemDto>>>,
     ) {
         pageResults.getOrPut(filter) { ArrayDeque() }.addLast(deferred)
     }
@@ -101,7 +101,7 @@ private class ExternalRefreshLoadDocumentRecordsUseCase : LoadDocumentRecordsUse
         filter: DocumentListFilter?,
         documentStatus: DocumentStatus?,
         ingestionStatus: IngestionStatus?,
-    ): Result<PaginatedResponse<DocumentRecordDto>> {
+    ): Result<PaginatedResponse<DocumentListItemDto>> {
         val effectiveFilter = filter ?: DocumentListFilter.All
         val queue = requireNotNull(pageResults[effectiveFilter]) {
             "No paged responses queued for filter=$effectiveFilter"
@@ -112,7 +112,7 @@ private class ExternalRefreshLoadDocumentRecordsUseCase : LoadDocumentRecordsUse
     }
 }
 
-private fun externalRefreshPageResponse(items: List<DocumentRecordDto>): PaginatedResponse<DocumentRecordDto> {
+private fun externalRefreshPageResponse(items: List<DocumentListItemDto>): PaginatedResponse<DocumentListItemDto> {
     return PaginatedResponse(
         items = items,
         total = items.size.toLong(),
@@ -122,23 +122,20 @@ private fun externalRefreshPageResponse(items: List<DocumentRecordDto>): Paginat
     )
 }
 
-private fun externalRefreshDocumentRecord(documentId: String): DocumentRecordDto {
-    return DocumentRecordDto(
-        document = DocumentDto(
-            id = DocumentId.parse(documentId),
-            tenantId = TenantId.parse("00000000-0000-0000-0000-000000000001"),
-            filename = "doc-$documentId.pdf",
-            contentType = "application/pdf",
-            sizeBytes = 1024,
-            storageKey = "documents/$documentId.pdf",
-            uploadedAt = LocalDateTime(2026, 1, 1, 10, 0),
-            downloadUrl = null,
-        ),
-        draft = null,
-        latestIngestion = null,
-        confirmedEntity = null,
-        cashflowEntryId = null,
-        pendingMatchReview = null,
-        sources = emptyList(),
+private fun externalRefreshDocumentRecord(documentId: String): DocumentListItemDto {
+    return DocumentListItemDto(
+        documentId = DocumentId.parse(documentId),
+        tenantId = TenantId.parse("00000000-0000-0000-0000-000000000001"),
+        filename = "doc-$documentId.pdf",
+        documentType = null,
+        direction = null,
+        documentStatus = null,
+        ingestionStatus = null,
+        effectiveOrigin = DocumentSource.Upload,
+        uploadedAt = LocalDateTime(2026, 1, 1, 10, 0),
+        counterpartyDisplayName = null,
+        purposeRendered = null,
+        totalAmount = null,
+        currency = null,
     )
 }

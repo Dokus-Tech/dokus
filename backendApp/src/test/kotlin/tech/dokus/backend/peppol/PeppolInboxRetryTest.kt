@@ -189,14 +189,7 @@ class PeppolInboxRetryTest {
     @AfterEach
     fun teardown() {
         transaction(database) {
-            SchemaUtils.drop(
-                PeppolTransmissionsTable,
-                PeppolSettingsTable,
-                InvoicesTable,
-                ContactsTable,
-                DocumentsTable,
-                TenantTable
-            )
+            exec("DROP ALL OBJECTS")
         }
     }
 

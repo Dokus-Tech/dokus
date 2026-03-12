@@ -221,7 +221,25 @@ private val ExtractDocumentInput.creditNotePrompt: String
     If a clear reason is written (return, correction, discount), extract it; else null.
 
     ## LINE ITEMS
-    If an itemized table is present, extract lineItems with description, quantity, unitPrice, vatRate, netAmount.
+    Extract only PRIMARY billable line items — goods or services that are the subject of the credit note.
+
+    INCLUDE:
+    - Rows with a description of a product or service AND a net amount.
+    - Sub-items (e.g. eco-contributions like Recupel, Auvibel) as SEPARATE line items
+      with their own description and amount, even if visually indented.
+
+    EXCLUDE (these are NOT line items):
+    - Subtotal rows ("Total excl. VAT", "Sous-total", "Subtotaal")
+    - VAT computation rows ("VAT 21%", "BTW", "TVA", "Reverse Charge rows")
+    - Grand total rows ("Total incl. VAT", "Totaal", "Total TTC")
+
+    For each line item extract:
+    - description: the product/service label
+    - quantity: numeric if shown, else null
+    - unitPrice: price per unit excl. VAT, null if not shown
+    - vatRate: e.g. "21" for 21%, "0" for reverse charge
+    - netAmount: line total excl. VAT (this is the billable amount for this line)
+
     If no clear itemization, return an empty list.
 
     ## VAT BREAKDOWN

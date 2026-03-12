@@ -14,10 +14,13 @@ import kotlinx.serialization.Serializable
 import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
 import tech.dokus.backend.security.requireTenantId
-import tech.dokus.database.repository.cashflow.DocumentCreatePayload
+import tech.dokus.backend.services.documents.DocumentTruthService
 import tech.dokus.database.repository.cashflow.DocumentRepository
+import tech.dokus.database.repository.cashflow.DocumentSourceRepository
+import tech.dokus.database.repository.cashflow.DocumentSourceSummary
 import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
+import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.EntityType
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.AttachmentId
@@ -47,6 +50,8 @@ import tech.dokus.foundation.backend.storage.DocumentStorageService as MinioDocu
 @OptIn(ExperimentalUuidApi::class)
 internal fun Route.attachmentRoutes() {
     val documentRepository by inject<DocumentRepository>()
+    val sourceRepository by inject<DocumentSourceRepository>()
+    val truthService by inject<DocumentTruthService>()
     val uploadValidator by inject<DocumentUploadValidator>()
     val minioStorage by inject<MinioDocumentStorageService>()
     val invoiceRepository by inject<InvoiceRepository>()
@@ -85,29 +90,21 @@ internal fun Route.attachmentRoutes() {
                 throw DokusException.Validation.Generic(validationError)
             }
 
-            val uploadResult = try {
-                minioStorage.uploadDocument(
+            val intakeResult = try {
+                truthService.intakeBytes(
                     tenantId = tenantId,
-                    prefix = "invoices",
                     filename = filename,
-                    data = fileBytes,
-                    contentType = contentType
+                    contentType = contentType,
+                    prefix = "invoices",
+                    fileBytes = fileBytes,
+                    sourceChannel = DocumentSource.Upload
                 )
             } catch (e: Exception) {
                 logger.error("Failed to upload file for invoice: $invoiceId", e)
                 throw DokusException.InternalError("Failed to upload file: ${e.message}")
             }
 
-            val documentId = documentRepository.create(
-                tenantId = tenantId,
-                payload = DocumentCreatePayload(
-                    filename = uploadResult.filename,
-                    contentType = uploadResult.contentType,
-                    sizeBytes = uploadResult.sizeBytes,
-                    storageKey = uploadResult.key,
-                    contentHash = null
-                )
-            )
+            val documentId = intakeResult.documentId
 
             // Link document to invoice by updating invoice's documentId
             // Note: This replaces any existing attachment. Multiple attachments per invoice
@@ -142,8 +139,10 @@ internal fun Route.attachmentRoutes() {
 
             // Get attachment from invoice's documentId
             val attachments = invoice.documentId?.let { docId ->
-                val document = documentRepository.getById(tenantId, docId)
-                document?.let { listOf(it.toAttachmentDto()) } ?: emptyList()
+                val document = documentRepository.getById(tenantId, docId) ?: return@let emptyList()
+                val source = sourceRepository.selectPreferredSource(tenantId, docId)
+                    ?: return@let emptyList()
+                listOf(document.toAttachmentDto(source))
             } ?: emptyList()
 
             logger.info("Retrieved ${attachments.size} attachments for invoice: $invoiceId")
@@ -182,29 +181,21 @@ internal fun Route.attachmentRoutes() {
                 throw DokusException.Validation.Generic(validationError)
             }
 
-            val uploadResult = try {
-                minioStorage.uploadDocument(
+            val intakeResult = try {
+                truthService.intakeBytes(
                     tenantId = tenantId,
-                    prefix = "expenses",
                     filename = filename,
-                    data = fileBytes,
-                    contentType = contentType
+                    contentType = contentType,
+                    prefix = "expenses",
+                    fileBytes = fileBytes,
+                    sourceChannel = DocumentSource.Upload
                 )
             } catch (e: Exception) {
                 logger.error("Failed to upload file for expense: $expenseId", e)
                 throw DokusException.InternalError("Failed to upload file: ${e.message}")
             }
 
-            val documentId = documentRepository.create(
-                tenantId = tenantId,
-                payload = DocumentCreatePayload(
-                    filename = uploadResult.filename,
-                    contentType = uploadResult.contentType,
-                    sizeBytes = uploadResult.sizeBytes,
-                    storageKey = uploadResult.key,
-                    contentHash = null
-                )
-            )
+            val documentId = intakeResult.documentId
 
             // Link document to expense by updating expense's documentId
             // Note: This replaces any existing attachment. Multiple attachments per expense
@@ -239,8 +230,10 @@ internal fun Route.attachmentRoutes() {
 
             // Get attachment from expense's documentId
             val attachments = expense.documentId?.let { docId ->
-                val document = documentRepository.getById(tenantId, docId)
-                document?.let { listOf(it.toAttachmentDto()) } ?: emptyList()
+                val document = documentRepository.getById(tenantId, docId) ?: return@let emptyList()
+                val source = sourceRepository.selectPreferredSource(tenantId, docId)
+                    ?: return@let emptyList()
+                listOf(document.toAttachmentDto(source))
             } ?: emptyList()
 
             logger.info("Retrieved ${attachments.size} attachments for expense: $expenseId")
@@ -260,10 +253,13 @@ internal fun Route.attachmentRoutes() {
 
             logger.info("Getting download URL for attachment: $attachmentId")
 
-            val document = documentRepository.getById(tenantId, documentId)
+            documentRepository.getById(tenantId, documentId)
                 ?: throw DokusException.NotFound("Attachment not found")
 
-            val downloadUrl = minioStorage.getDownloadUrl(document.storageKey)
+            val preferredSource = sourceRepository.selectPreferredSource(tenantId, documentId)
+                ?: throw DokusException.NotFound("No source available for attachment")
+
+            val downloadUrl = minioStorage.getDownloadUrl(preferredSource.storageKey)
 
             call.respond(HttpStatusCode.OK, DownloadUrlResponse(downloadUrl))
         }
@@ -276,13 +272,17 @@ internal fun Route.attachmentRoutes() {
 
             logger.info("Deleting attachment: $attachmentId")
 
-            val document = documentRepository.getById(tenantId, documentId)
+            documentRepository.getById(tenantId, documentId)
                 ?: throw DokusException.NotFound("Attachment not found")
 
-            try {
-                minioStorage.deleteDocument(document.storageKey)
-            } catch (e: Exception) {
-                logger.warn("Failed to delete document from MinIO: ${e.message}")
+            // Delete all source blobs from MinIO
+            val sources = sourceRepository.listByDocument(tenantId, documentId, includeDetached = true)
+            for (source in sources) {
+                try {
+                    minioStorage.deleteDocument(source.storageKey)
+                } catch (e: Exception) {
+                    logger.warn("Failed to delete source blob from MinIO: ${e.message}")
+                }
             }
 
             val deleted = documentRepository.delete(tenantId, documentId)
@@ -297,16 +297,16 @@ internal fun Route.attachmentRoutes() {
     }
 }
 
-private fun DocumentDto.toAttachmentDto(): AttachmentDto {
+private fun DocumentDto.toAttachmentDto(source: DocumentSourceSummary): AttachmentDto {
     return AttachmentDto(
         id = AttachmentId.parse(id.toString()),
         tenantId = tenantId,
         entityType = EntityType.Attachment,
         entityId = "",
-        filename = filename,
-        mimeType = contentType,
-        sizeBytes = sizeBytes,
-        s3Key = storageKey,
+        filename = source.filename ?: filename,
+        mimeType = source.contentType,
+        sizeBytes = source.sizeBytes,
+        s3Key = source.storageKey,
         s3Bucket = "minio",
         uploadedAt = uploadedAt
     )

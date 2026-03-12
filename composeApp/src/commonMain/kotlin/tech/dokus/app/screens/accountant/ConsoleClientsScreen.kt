@@ -77,8 +77,7 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.FirmId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
-import tech.dokus.domain.model.DocumentDto
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentListItemDto
 import tech.dokus.domain.model.auth.ConsoleClientSummary
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.app.state.isError
@@ -952,7 +951,7 @@ private fun insightForClient(client: ConsoleClientSummary, index: Int): ConsoleC
     )
 }
 
-private fun DocumentRecordDto.toConsoleDocumentRow(index: Int): ConsoleDocumentRow {
+private fun DocumentListItemDto.toConsoleDocumentRow(index: Int): ConsoleDocumentRow {
     val counterparty = listOf(
         "CloudSoft NV",
         "DataStream BV",
@@ -967,20 +966,20 @@ private fun DocumentRecordDto.toConsoleDocumentRow(index: Int): ConsoleDocumentR
     val baseAmount = 45 + ((index + 1) * 89)
     val major = 100 + baseAmount
     val cents = ((index * 13) % 100).toString().padStart(2, '0')
-    val status = draft?.documentStatus ?: DocumentStatus.NeedsReview
+    val status = documentStatus ?: DocumentStatus.NeedsReview
     return ConsoleDocumentRow(
-        id = document.id.toString(),
-        date = formatDate(document.uploadedAt),
-        number = document.filename.substringBeforeLast('.').uppercase(),
+        id = documentId.toString(),
+        date = formatDate(uploadedAt),
+        number = filename.substringBeforeLast('.').uppercase(),
         counterparty = counterparty[index % counterparty.size],
-        amount = "€$major,$cents",
+        amount = "\u20ac$major,$cents",
         vatType = when (index % 4) {
             0 -> "purchase"
             1 -> "sales"
             2 -> "receipt"
             else -> "bank"
         },
-        origin = if (document.source == tech.dokus.domain.enums.DocumentSource.Peppol) {
+        origin = if (effectiveOrigin == tech.dokus.domain.enums.DocumentSource.Peppol) {
             BadgeDocumentSource.Peppol
         } else {
             BadgeDocumentSource.Pdf
@@ -1096,36 +1095,36 @@ private fun ConsoleClientsScreenErrorPreview(
     }
 }
 
-private fun previewDocumentRecords(): List<DocumentRecordDto> = listOf(
-    DocumentRecordDto(
-        document = DocumentDto(
-            id = tech.dokus.domain.ids.DocumentId("00000000-0000-0000-0000-000000000041"),
-            tenantId = TenantId("00000000-0000-0000-0000-000000000001"),
-            filename = "INV-2026-0188.pdf",
-            contentType = "application/pdf",
-            sizeBytes = 123_000,
-            storageKey = "docs/1.pdf",
-            source = tech.dokus.domain.enums.DocumentSource.Upload,
-            uploadedAt = LocalDateTime(2026, 2, 14, 9, 0),
-        ),
-        draft = null,
-        latestIngestion = null,
-        confirmedEntity = null,
+private fun previewDocumentRecords(): List<DocumentListItemDto> = listOf(
+    DocumentListItemDto(
+        documentId = tech.dokus.domain.ids.DocumentId("00000000-0000-0000-0000-000000000041"),
+        tenantId = TenantId("00000000-0000-0000-0000-000000000001"),
+        filename = "INV-2026-0188.pdf",
+        documentType = null,
+        direction = null,
+        documentStatus = null,
+        ingestionStatus = null,
+        effectiveOrigin = tech.dokus.domain.enums.DocumentSource.Upload,
+        uploadedAt = LocalDateTime(2026, 2, 14, 9, 0),
+        counterpartyDisplayName = null,
+        purposeRendered = null,
+        totalAmount = null,
+        currency = null,
     ),
-    DocumentRecordDto(
-        document = DocumentDto(
-            id = tech.dokus.domain.ids.DocumentId("00000000-0000-0000-0000-000000000042"),
-            tenantId = TenantId("00000000-0000-0000-0000-000000000001"),
-            filename = "PUR-2026-0042.pdf",
-            contentType = "application/pdf",
-            sizeBytes = 98_000,
-            storageKey = "docs/2.pdf",
-            source = tech.dokus.domain.enums.DocumentSource.Peppol,
-            uploadedAt = LocalDateTime(2026, 2, 15, 11, 30),
-        ),
-        draft = null,
-        latestIngestion = null,
-        confirmedEntity = null,
+    DocumentListItemDto(
+        documentId = tech.dokus.domain.ids.DocumentId("00000000-0000-0000-0000-000000000042"),
+        tenantId = TenantId("00000000-0000-0000-0000-000000000001"),
+        filename = "PUR-2026-0042.pdf",
+        documentType = null,
+        direction = null,
+        documentStatus = null,
+        ingestionStatus = null,
+        effectiveOrigin = tech.dokus.domain.enums.DocumentSource.Peppol,
+        uploadedAt = LocalDateTime(2026, 2, 15, 11, 30),
+        counterpartyDisplayName = null,
+        purposeRendered = null,
+        totalAmount = null,
+        currency = null,
     ),
 )
 

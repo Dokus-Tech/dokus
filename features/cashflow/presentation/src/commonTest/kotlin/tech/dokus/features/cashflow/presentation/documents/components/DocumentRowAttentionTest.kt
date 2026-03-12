@@ -14,7 +14,7 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentIngestionDto
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.FinancialDocumentDto
 import kotlin.test.Test
 import kotlin.test.assertFalse
@@ -68,13 +68,23 @@ class DocumentRowAttentionTest {
     }
 
     @Test
-    fun `queued ingestion is attention`() {
+    fun `queued ingestion is not attention`() {
         val document = createRecord(
             draftStatus = null,
             ingestionStatus = IngestionStatus.Queued
         )
 
-        assertTrue(computeNeedsAttention(document))
+        assertFalse(computeNeedsAttention(document))
+    }
+
+    @Test
+    fun `processing ingestion is not attention`() {
+        val document = createRecord(
+            draftStatus = null,
+            ingestionStatus = IngestionStatus.Processing
+        )
+
+        assertFalse(computeNeedsAttention(document))
     }
 
     @Test
@@ -102,15 +112,12 @@ class DocumentRowAttentionTest {
         draftStatus: DocumentStatus?,
         ingestionStatus: IngestionStatus?,
         confirmedEntity: FinancialDocumentDto? = null
-    ): DocumentRecordDto {
-        return DocumentRecordDto(
+    ): DocumentDetailDto {
+        return DocumentDetailDto(
             document = DocumentDto(
                 id = documentId,
                 tenantId = TENANT_ID,
                 filename = "test.pdf",
-                contentType = "application/pdf",
-                sizeBytes = 123L,
-                storageKey = "documents/test.pdf",
                 uploadedAt = NOW
             ),
             draft = draftStatus?.let { createDraft(documentId, it) },
@@ -126,12 +133,10 @@ class DocumentRowAttentionTest {
             documentStatus = status,
             documentType = DocumentType.Invoice,
             extractedData = null,
-            aiDraftData = null,
             aiDraftSourceRunId = null,
             draftVersion = 1,
             draftEditedAt = null,
             draftEditedBy = null,
-            linkedContactId = null,
             lastSuccessfulRunId = null,
             createdAt = NOW,
             updatedAt = NOW

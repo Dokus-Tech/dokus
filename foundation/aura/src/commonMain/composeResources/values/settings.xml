@@ -218,6 +218,7 @@
     <string name="peppol_conn_compliant_note">Belgium PEPPOL mandate effective January 1, 2026.\nYour business is compliant.</string>
     <string name="peppol_conn_not_configured_text">PEPPOL e-invoicing is not configured for your workspace.</string>
     <string name="peppol_conn_mandate_note">Belgium requires PEPPOL for B2G invoicing from January 1, 2026.</string>
+    <string name="peppol_conn_configure">Configure</string>
 
     <!-- Notification Preferences -->
     <string name="notification_pref_subtitle">In-app notifications are always on. Configure email per event.</string>

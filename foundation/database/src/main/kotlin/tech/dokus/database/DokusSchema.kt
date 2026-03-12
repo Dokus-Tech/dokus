@@ -16,7 +16,8 @@ import tech.dokus.database.tables.auth.TenantSettingsTable
 import tech.dokus.database.tables.auth.TenantTable
 import tech.dokus.database.tables.auth.UsersTable
 import tech.dokus.database.tables.auth.WelcomeEmailJobsTable
-import tech.dokus.database.tables.banking.BankConnectionsTable
+import tech.dokus.database.tables.banking.BankAccountsTable
+import tech.dokus.database.tables.banking.BankStatementsTable
 import tech.dokus.database.tables.banking.BankTransactionsTable
 import tech.dokus.database.tables.business.BusinessProfileEnrichmentJobsTable
 import tech.dokus.database.tables.business.BusinessProfilesTable
@@ -30,16 +31,14 @@ import tech.dokus.database.tables.cashflow.RefundClaimsTable
 import tech.dokus.database.tables.contacts.ContactAddressesTable
 import tech.dokus.database.tables.contacts.ContactNotesTable
 import tech.dokus.database.tables.contacts.ContactsTable
-import tech.dokus.database.tables.documents.DocumentDraftsTable
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
 import tech.dokus.database.tables.documents.DocumentBlobsTable
 import tech.dokus.database.tables.documents.DocumentMatchReviewsTable
 import tech.dokus.database.tables.documents.DocumentPurposeExamplesTable
 import tech.dokus.database.tables.documents.DocumentPurposeTemplatesTable
 import tech.dokus.database.tables.documents.DocumentSourcesTable
+import tech.dokus.database.tables.documents.DocumentLinksTable
 import tech.dokus.database.tables.documents.DocumentsTable
-import tech.dokus.database.tables.documents.ImportedBankTransactionsTable
-import tech.dokus.database.tables.documents.CashflowPaymentCandidatesTable
 import tech.dokus.database.tables.documents.InvoiceBankMatchLinksTable
 import tech.dokus.database.tables.documents.AutoPaymentAuditEventsTable
 import tech.dokus.database.tables.notifications.NotificationPreferencesTable
@@ -94,14 +93,13 @@ object DokusSchema {
                 DocumentBlobsTable,
                 DocumentSourcesTable,
                 DocumentIngestionRunsTable,
-                DocumentDraftsTable,
                 DocumentMatchReviewsTable,
                 DocumentPurposeTemplatesTable,
                 DocumentPurposeExamplesTable,
-                ImportedBankTransactionsTable,
-                CashflowPaymentCandidatesTable,
+                BankTransactionsTable,
                 InvoiceBankMatchLinksTable,
                 AutoPaymentAuditEventsTable,
+                DocumentLinksTable,
 
                 // ----------------------------
                 // Contacts (depends on docs/users/addresses)
@@ -127,8 +125,8 @@ object DokusSchema {
                 // Payments / Banking
                 // ----------------------------
                 PaymentsTable,
-                BankConnectionsTable,
-                BankTransactionsTable,
+                BankAccountsTable,
+                BankStatementsTable,
 
                 // ----------------------------
                 // Search telemetry
@@ -149,6 +147,18 @@ object DokusSchema {
                 DocumentChunksTable,
                 ChatMessagesTable,
                 DocumentExamplesTable,
+            )
+        }
+
+        // Partial unique index for bank transaction dedup
+        dbQuery {
+            val tx = org.jetbrains.exposed.v1.jdbc.transactions.TransactionManager.current()
+            tx.exec(
+                """
+                CREATE UNIQUE INDEX IF NOT EXISTS uq_bank_txn_dedup
+                    ON bank_transactions (tenant_id, bank_account_id, dedup_hash)
+                    WHERE bank_account_id IS NOT NULL
+                """.trimIndent()
             )
         }
 

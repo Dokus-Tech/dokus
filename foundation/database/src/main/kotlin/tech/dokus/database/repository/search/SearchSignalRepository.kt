@@ -116,13 +116,13 @@ class SearchSignalRepository {
         dbQuery {
             when (entityType) {
                 SearchResultEntityType.Document -> {
-                    DocumentsTable.select(DocumentsTable.filename)
+                    DocumentsTable.select(DocumentsTable.purposeRendered)
                         .where {
                             (DocumentsTable.tenantId eq tenantUuid) and
                                 (DocumentsTable.id eq entityUuid)
                         }
                         .firstOrNull()
-                        ?.get(DocumentsTable.filename)
+                        ?.get(DocumentsTable.purposeRendered)
                 }
 
                 SearchResultEntityType.Contact -> {
@@ -183,7 +183,7 @@ class SearchSignalRepository {
                         .limit(1)
                         .firstOrNull()
                         ?.let { row ->
-                            val documentName = row.getOrNull(DocumentsTable.filename)
+                            val documentName = row.getOrNull(DocumentsTable.purposeRendered)
                             val expenseDescription = row.getOrNull(ExpensesTable.description)
                             val invoiceNumber = row.getOrNull(InvoicesTable.invoiceNumber)
                             val contactName = row.getOrNull(ContactsTable.name)

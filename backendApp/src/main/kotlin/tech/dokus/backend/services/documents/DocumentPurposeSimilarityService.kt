@@ -1,7 +1,7 @@
 package tech.dokus.backend.services.documents
 
-import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentPurposeSimilarityRepository
+import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.DocumentId
@@ -14,7 +14,7 @@ private const val DefaultPurposeSimilarityThreshold = 0.78f
 private const val DefaultPurposeTopK = 3
 
 class DocumentPurposeSimilarityService(
-    private val draftRepository: DocumentDraftRepository,
+    private val documentRepository: DocumentRepository,
     private val similarityRepository: DocumentPurposeSimilarityRepository,
     private val embeddingService: EmbeddingService
 ) {
@@ -69,7 +69,7 @@ class DocumentPurposeSimilarityService(
         tenantId: TenantId,
         documentId: DocumentId
     ) {
-        val draft = draftRepository.getByDocumentId(documentId, tenantId) ?: return
+        val draft = documentRepository.getDraftByDocumentId(documentId, tenantId) ?: return
         if (draft.documentStatus != DocumentStatus.Confirmed) return
 
         val documentType = draft.documentType ?: return

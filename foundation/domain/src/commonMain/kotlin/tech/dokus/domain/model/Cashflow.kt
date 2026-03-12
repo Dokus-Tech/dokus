@@ -9,16 +9,21 @@ import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.AutoMatchStatus
-import tech.dokus.domain.enums.ImportedBankTransactionStatus
-import tech.dokus.domain.enums.PaymentCandidateTier
+import tech.dokus.domain.enums.BankTransactionSource
+import tech.dokus.domain.enums.BankTransactionStatus
+import tech.dokus.domain.enums.IgnoredReason
+import tech.dokus.domain.enums.MatchedBy
 import tech.dokus.domain.enums.PaymentMethod
+import tech.dokus.domain.enums.ResolutionType
+import tech.dokus.domain.enums.StatementTrust
+import tech.dokus.domain.ids.BankAccountId
+import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.ids.Iban
-import tech.dokus.domain.ids.ImportedBankTransactionId
 import tech.dokus.domain.ids.PaymentId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.contact.CounterpartySnapshot
 
 /**
  * Cashflow overview data with Cash-In / Cash-Out structure.
@@ -105,45 +110,47 @@ data class CashflowPaymentRequest(
     val amount: Money,
     val paidAt: LocalDateTime,
     val note: String? = null,
-    val bankTransactionId: ImportedBankTransactionId? = null,
+    val bankTransactionId: BankTransactionId? = null,
     val dismissSuggestedMatch: Boolean = false,
     val paymentMethod: PaymentMethod = PaymentMethod.BankTransfer
 )
 
 @Serializable
-data class ImportedBankTransactionDto(
-    val id: ImportedBankTransactionId,
+data class BankTransactionDto(
+    val id: BankTransactionId,
     val tenantId: TenantId,
-    val documentId: DocumentId,
+    val bankAccountId: BankAccountId? = null,
+    val documentId: DocumentId? = null,
+    val source: BankTransactionSource = BankTransactionSource.PdfStatement,
     val transactionDate: LocalDate,
+    val valueDate: LocalDate? = null,
     val signedAmount: Money,
-    val counterpartyName: String? = null,
-    val counterpartyIban: Iban? = null,
-    val structuredCommunicationRaw: String? = null,
+    val currency: Currency = Currency.Eur,
+    val counterparty: CounterpartySnapshot = CounterpartySnapshot(),
+    val communication: TransactionCommunication? = null,
     val descriptionRaw: String? = null,
-    val rowConfidence: Double? = null,
-    val largeAmountFlag: Boolean = false,
-    val status: ImportedBankTransactionStatus,
-    val linkedCashflowEntryId: CashflowEntryId? = null,
-    val suggestedCashflowEntryId: CashflowEntryId? = null,
-    val score: Double? = null,
-    val tier: PaymentCandidateTier? = null,
+    val status: BankTransactionStatus,
+    val resolutionType: ResolutionType? = null,
+    val matchedCashflowId: CashflowEntryId? = null,
+    val matchedDocumentId: DocumentId? = null,
+    val matchScore: Double? = null,
+    val matchEvidence: List<String>? = null,
+    val matchedBy: MatchedBy? = null,
+    val matchedAt: LocalDateTime? = null,
+    val ignoredReason: IgnoredReason? = null,
+    val ignoredAt: LocalDateTime? = null,
+    val ignoredBy: String? = null,
+    val statementTrust: StatementTrust = StatementTrust.Low,
+    val transferPairId: BankTransactionId? = null,
     val createdAt: LocalDateTime,
-    val updatedAt: LocalDateTime
-)
-
-@Serializable
-data class CashflowPaymentCandidatesResponse(
-    val strongCandidate: ImportedBankTransactionDto? = null,
-    val possibleCandidates: List<ImportedBankTransactionDto> = emptyList(),
-    val selectableTransactions: List<ImportedBankTransactionDto> = emptyList()
+    val updatedAt: LocalDateTime,
 )
 
 @Serializable
 data class AutoPaymentStatusDto(
     val matchStatus: AutoMatchStatus? = null,
     val paymentId: PaymentId? = null,
-    val bankTransactionId: ImportedBankTransactionId? = null,
+    val bankTransactionId: BankTransactionId? = null,
     val confidenceScore: Double? = null,
     val scoreMargin: Double? = null,
     val reasons: List<String> = emptyList(),

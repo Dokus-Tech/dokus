@@ -2,7 +2,7 @@ package tech.dokus.backend.services.documents.confirmation
 
 import tech.dokus.backend.services.cashflow.CashflowEntriesService
 import tech.dokus.backend.util.isUniqueViolation
-import tech.dokus.database.repository.cashflow.DocumentDraftRepository
+import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.domain.Money
 import tech.dokus.domain.Percentage
@@ -28,7 +28,7 @@ import kotlin.uuid.toJavaUuid
 class ReceiptConfirmationService(
     private val expenseRepository: ExpenseRepository,
     private val cashflowEntriesService: CashflowEntriesService,
-    private val draftRepository: DocumentDraftRepository,
+    private val documentRepository: DocumentRepository,
 ) {
     private val logger = loggerFor()
 
@@ -38,11 +38,11 @@ class ReceiptConfirmationService(
         tenantId: TenantId,
         documentId: DocumentId,
         draftData: ReceiptDraftData,
-        linkedContactId: ContactId?
+        contactId: ContactId?
     ): Result<ConfirmationResult> = runSuspendCatching {
         logger.info("Confirming receipt document: $documentId for tenant: $tenantId")
 
-        val draft = requireConfirmableDraft(draftRepository, tenantId, documentId)
+        val draft = requireConfirmableDraft(documentRepository, tenantId, documentId)
         val isReconfirm = draft.documentStatus == DocumentStatus.NeedsReview
 
         val date = draftData.date ?: throw DokusException.BadRequest("Date is required")
@@ -68,7 +68,7 @@ class ReceiptConfirmationService(
             vatRate = vatRate,
             category = ExpenseCategory.Other,
             documentId = documentId,
-            contactId = linkedContactId,
+            contactId = contactId,
             isDeductible = true,
             deductiblePercentage = Percentage.FULL,
             paymentMethod = draftData.paymentMethod,
@@ -100,7 +100,7 @@ class ReceiptConfirmationService(
                 expenseDate = date,
                 amountGross = expense.amount,
                 amountVat = expense.vatAmount ?: Money.ZERO,
-                contactId = linkedContactId
+                contactId = contactId
             ).getOrThrow()
         } else {
             cashflowEntriesService.createFromExpense(
@@ -110,11 +110,11 @@ class ReceiptConfirmationService(
                 expenseDate = date,
                 amountGross = expense.amount,
                 amountVat = expense.vatAmount ?: Money.ZERO,
-                contactId = linkedContactId
+                contactId = contactId
             ).getOrThrow()
         }
 
-        draftRepository.updateDocumentStatus(documentId, tenantId, DocumentStatus.Confirmed)
+        documentRepository.updateDocumentStatus(documentId, tenantId, DocumentStatus.Confirmed)
 
         logger.info("Receipt confirmed: $documentId -> expenseId=${expense.id}, entryId=${cashflowEntry.id}")
         ConfirmationResult(entity = expense, cashflowEntryId = cashflowEntry.id, documentId = documentId)

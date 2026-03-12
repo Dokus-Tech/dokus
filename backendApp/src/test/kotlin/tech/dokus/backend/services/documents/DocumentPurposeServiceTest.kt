@@ -7,12 +7,12 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import org.junit.jupiter.api.Test
-import tech.dokus.database.repository.cashflow.DocumentDraftRepository
+import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.DocumentPurposeTemplateRepository
 import tech.dokus.database.repository.cashflow.DocumentPurposeTemplateSummary
 import tech.dokus.database.repository.cashflow.DraftSummary
 import tech.dokus.domain.Money
-import tech.dokus.domain.enums.CounterpartyIntent
+import tech.dokus.domain.enums.ContactLinkSource
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentPurposeSource
 import tech.dokus.domain.enums.PurposePeriodMode
@@ -23,19 +23,20 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.InvoiceDraftData
+import tech.dokus.domain.model.contact.CounterpartyInfo
 import tech.dokus.domain.model.PartyDraft
 import tech.dokus.features.ai.agents.DocumentProcessingAgent
 import tech.dokus.features.ai.models.PurposeEnrichmentResult
 
 class DocumentPurposeServiceTest {
 
-    private val draftRepository = mockk<DocumentDraftRepository>(relaxed = true)
+    private val documentRepository = mockk<DocumentRepository>(relaxed = true)
     private val templateRepository = mockk<DocumentPurposeTemplateRepository>(relaxed = true)
     private val similarityService = mockk<DocumentPurposeSimilarityService>(relaxed = true)
     private val processingAgent = mockk<DocumentProcessingAgent>(relaxed = true)
 
     private val service = DocumentPurposeService(
-        draftRepository = draftRepository,
+        documentRepository = documentRepository,
         templateRepository = templateRepository,
         similarityService = similarityService,
         processingAgent = processingAgent
@@ -47,7 +48,7 @@ class DocumentPurposeServiceTest {
 
     @Test
     fun `locked purpose is never overwritten`() = runTest {
-        coEvery { draftRepository.updatePurposeContext(any(), any(), any(), any()) } returns true
+        coEvery { documentRepository.updatePurposeContext(any(), any(), any(), any()) } returns true
 
         service.enrichAfterContactResolution(
             tenantId = tenantId,
@@ -62,12 +63,12 @@ class DocumentPurposeServiceTest {
         )
 
         coVerify(exactly = 0) { processingAgent.enrichPurpose(any()) }
-        coVerify(exactly = 0) { draftRepository.updatePurposeFields(any(), any(), any(), any(), any(), any(), any(), any(), any()) }
+        coVerify(exactly = 0) { documentRepository.updatePurposeFields(any(), any(), any(), any(), any(), any(), any(), any(), any()) }
     }
 
     @Test
     fun `template hit bypasses similarity retrieval`() = runTest {
-        coEvery { draftRepository.updatePurposeContext(any(), any(), any(), any()) } returns true
+        coEvery { documentRepository.updatePurposeContext(any(), any(), any(), any()) } returns true
         coEvery {
             templateRepository.findByCounterparty(
                 tenantId = tenantId,
@@ -91,7 +92,7 @@ class DocumentPurposeServiceTest {
             purposeSource = DocumentPurposeSource.AiTemplate,
             purposePeriodMode = PurposePeriodMode.ServicePeriod
         )
-        coEvery { draftRepository.updatePurposeFields(any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns true
+        coEvery { documentRepository.updatePurposeFields(any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns true
 
         service.enrichAfterContactResolution(
             tenantId = tenantId,
@@ -103,12 +104,12 @@ class DocumentPurposeServiceTest {
         )
 
         coVerify(exactly = 0) { similarityService.findCandidates(any(), any(), any(), any(), any(), any(), any()) }
-        coVerify(exactly = 1) { draftRepository.updatePurposeFields(any(), any(), any(), any(), any(), any(), any(), any(), any()) }
+        coVerify(exactly = 1) { documentRepository.updatePurposeFields(any(), any(), any(), any(), any(), any(), any(), any(), any()) }
     }
 
     @Test
     fun `counterparty fallback never uses merchant fallback when counterparty exists`() = runTest {
-        coEvery { draftRepository.updatePurposeContext(any(), any(), any(), any()) } returns true
+        coEvery { documentRepository.updatePurposeContext(any(), any(), any(), any()) } returns true
         coEvery { templateRepository.findByCounterparty(any(), any(), any()) } returns null
         coEvery {
             similarityService.findCandidates(
@@ -122,7 +123,7 @@ class DocumentPurposeServiceTest {
             )
         } returns emptyList()
         coEvery {
-            draftRepository.listConfirmedPurposeBasesByCounterparty(
+            documentRepository.listConfirmedPurposeBasesByCounterparty(
                 tenantId = tenantId,
                 counterpartyKey = "contact:$contactId",
                 documentType = DocumentType.Invoice,
@@ -137,7 +138,7 @@ class DocumentPurposeServiceTest {
             purposeSource = DocumentPurposeSource.AiRag,
             purposePeriodMode = PurposePeriodMode.IssueMonth
         )
-        coEvery { draftRepository.updatePurposeFields(any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns true
+        coEvery { documentRepository.updatePurposeFields(any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns true
 
         service.enrichAfterContactResolution(
             tenantId = tenantId,
@@ -148,13 +149,13 @@ class DocumentPurposeServiceTest {
             currentDraft = draftSummary(counterpartyKey = "contact:$contactId", merchantToken = "kbc")
         )
 
-        coVerify(exactly = 1) { draftRepository.listConfirmedPurposeBasesByCounterparty(any(), any(), any(), any()) }
-        coVerify(exactly = 0) { draftRepository.listConfirmedPurposeBasesByMerchantToken(any(), any(), any(), any()) }
+        coVerify(exactly = 1) { documentRepository.listConfirmedPurposeBasesByCounterparty(any(), any(), any(), any()) }
+        coVerify(exactly = 0) { documentRepository.listConfirmedPurposeBasesByMerchantToken(any(), any(), any(), any()) }
     }
 
     @Test
     fun `merchant fallback is used when counterparty key is missing`() = runTest {
-        coEvery { draftRepository.updatePurposeContext(any(), any(), any(), any()) } returns true
+        coEvery { documentRepository.updatePurposeContext(any(), any(), any(), any()) } returns true
         coEvery { templateRepository.findByCounterparty(any(), any(), any()) } returns null
         coEvery {
             similarityService.findCandidates(
@@ -168,7 +169,7 @@ class DocumentPurposeServiceTest {
             )
         } returns emptyList()
         coEvery {
-            draftRepository.listConfirmedPurposeBasesByMerchantToken(
+            documentRepository.listConfirmedPurposeBasesByMerchantToken(
                 tenantId = tenantId,
                 merchantToken = "openai",
                 documentType = DocumentType.Invoice,
@@ -183,7 +184,7 @@ class DocumentPurposeServiceTest {
             purposeSource = DocumentPurposeSource.AiRag,
             purposePeriodMode = PurposePeriodMode.IssueMonth
         )
-        coEvery { draftRepository.updatePurposeFields(any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns true
+        coEvery { documentRepository.updatePurposeFields(any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns true
 
         service.enrichAfterContactResolution(
             tenantId = tenantId,
@@ -198,12 +199,12 @@ class DocumentPurposeServiceTest {
             currentDraft = draftSummary(counterpartyKey = null, merchantToken = "openai")
         )
 
-        coVerify(exactly = 1) { draftRepository.listConfirmedPurposeBasesByMerchantToken(any(), any(), any(), any()) }
+        coVerify(exactly = 1) { documentRepository.listConfirmedPurposeBasesByMerchantToken(any(), any(), any(), any()) }
     }
 
     @Test
     fun `user edit locks purpose and triggers reindex when draft is confirmed`() = runTest {
-        coEvery { draftRepository.updatePurposeFields(any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns true
+        coEvery { documentRepository.updatePurposeFields(any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns true
         coEvery { templateRepository.upsert(any(), any(), any(), any(), any(), any(), any()) } returns Unit
 
         service.applyUserPurposeEdit(
@@ -218,7 +219,7 @@ class DocumentPurposeServiceTest {
         )
 
         coVerify(exactly = 1) {
-            draftRepository.updatePurposeFields(
+            documentRepository.updatePurposeFields(
                 documentId = documentId,
                 tenantId = tenantId,
                 purposeBase = any(),
@@ -262,7 +263,6 @@ class DocumentPurposeServiceTest {
             documentStatus = documentStatus,
             documentType = DocumentType.Invoice,
             extractedData = invoiceDraft(),
-            aiDraftData = null,
             purposeBase = purposeBase,
             purposeLocked = purposeLocked,
             counterpartyKey = counterpartyKey,
@@ -271,8 +271,7 @@ class DocumentPurposeServiceTest {
             draftVersion = 0,
             draftEditedAt = null,
             draftEditedBy = null,
-            linkedContactId = contactId,
-            counterpartyIntent = CounterpartyIntent.None,
+            counterparty = CounterpartyInfo.Linked(contactId = contactId, source = ContactLinkSource.User),
             rejectReason = null,
             lastSuccessfulRunId = null,
             createdAt = now,

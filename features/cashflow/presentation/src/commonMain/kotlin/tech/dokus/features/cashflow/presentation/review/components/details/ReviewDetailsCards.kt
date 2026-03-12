@@ -38,24 +38,24 @@ import tech.dokus.aura.resources.cashflow_select_contact
 import tech.dokus.aura.resources.cashflow_select_document_type
 import tech.dokus.aura.resources.cashflow_suggested_contact
 import tech.dokus.aura.resources.cashflow_use_this_contact
+import tech.dokus.aura.resources.cashflow_bank_statement_details_section
 import tech.dokus.aura.resources.common_date
 import tech.dokus.aura.resources.contacts_address
 import tech.dokus.aura.resources.contacts_vat_number
 import tech.dokus.aura.resources.document_type_credit_note
 import tech.dokus.aura.resources.document_type_invoice
 import tech.dokus.aura.resources.document_type_receipt
+import tech.dokus.aura.resources.inspector_label_period
+import tech.dokus.aura.resources.inspector_label_transactions
 import tech.dokus.aura.resources.invoice_due_date
 import tech.dokus.aura.resources.invoice_issue_date
 import tech.dokus.aura.resources.workspace_iban
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentType
-import tech.dokus.domain.model.BankStatementDraftData
-import tech.dokus.domain.model.CreditNoteDraftData
-import tech.dokus.domain.model.InvoiceDraftData
-import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.features.cashflow.presentation.review.ContactSelectionState
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
+import tech.dokus.features.cashflow.presentation.review.models.DocumentUiData
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.constrains.Constraints
@@ -116,7 +116,7 @@ internal fun CounterpartyCard(
                         value = iban
                     )
                 }
-                counterparty.address?.let { address ->
+                counterparty.address?.formatted?.let { address ->
                     FactField(
                         label = stringResource(Res.string.contacts_address),
                         value = address
@@ -224,120 +224,148 @@ private fun PendingContactCard(
     }
 }
 
-/**
- * Document details section - shows document info as facts.
- * Fact validation pattern: display-by-default.
- */
+// region Document details card — general entry-point + overloads
+
 @Composable
-internal fun InvoiceDetailsCard(
+internal fun DocumentDetailsCard(
+    uiData: DocumentUiData,
+    isReadOnly: Boolean,
+    onDirectionSelected: (DocumentDirection) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    when (uiData) {
+        is DocumentUiData.Invoice -> DocumentDetailsCard(uiData, isReadOnly, onDirectionSelected, modifier)
+        is DocumentUiData.CreditNote -> DocumentDetailsCard(uiData, isReadOnly, onDirectionSelected, modifier)
+        is DocumentUiData.Receipt -> DocumentDetailsCard(uiData, modifier)
+        is DocumentUiData.BankStatement -> DocumentDetailsCard(uiData, modifier)
+    }
+}
+
+@Composable
+internal fun DocumentDetailsCard(
+    data: DocumentUiData.Invoice,
+    isReadOnly: Boolean,
+    onDirectionSelected: (DocumentDirection) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        MicroLabel(text = stringResource(Res.string.cashflow_invoice_details_section))
+        InvoiceDetailsFactDisplay(
+            direction = data.direction,
+            isReadOnly = isReadOnly,
+            onDirectionSelected = onDirectionSelected,
+            invoiceNumber = data.invoiceNumber,
+            issueDate = data.issueDate,
+            dueDate = data.dueDate,
+        )
+    }
+}
+
+@Composable
+internal fun DocumentDetailsCard(
+    data: DocumentUiData.CreditNote,
+    isReadOnly: Boolean,
+    onDirectionSelected: (DocumentDirection) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        MicroLabel(text = stringResource(Res.string.cashflow_credit_note_details_section))
+        CreditNoteDetailsFactDisplay(
+            direction = data.direction,
+            isReadOnly = isReadOnly,
+            onDirectionSelected = onDirectionSelected,
+            creditNoteNumber = data.creditNoteNumber,
+            issueDate = data.issueDate,
+            originalInvoiceNumber = data.originalInvoiceNumber,
+        )
+    }
+}
+
+@Composable
+internal fun DocumentDetailsCard(
+    data: DocumentUiData.Receipt,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        MicroLabel(text = stringResource(Res.string.cashflow_receipt_details_section))
+        ReceiptDetailsFactDisplay(
+            receiptNumber = data.receiptNumber,
+            date = data.date,
+        )
+    }
+}
+
+@Composable
+internal fun DocumentDetailsCard(
+    data: DocumentUiData.BankStatement,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        MicroLabel(text = stringResource(Res.string.cashflow_bank_statement_details_section))
+        BankStatementDetailsFactDisplay(
+            accountIban = data.accountIban,
+            periodStart = data.periodStart,
+            periodEnd = data.periodEnd,
+            transactionCount = data.transactionCount,
+        )
+    }
+}
+
+@Composable
+internal fun UnknownDocumentDetailsCard(
     state: DocumentReviewState,
-    isAccountantReadOnly: Boolean = false,
+    isAccountantReadOnly: Boolean,
     onIntent: (DocumentReviewIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val titleRes = when (state.draftData) {
-        is InvoiceDraftData -> Res.string.cashflow_invoice_details_section
-        is ReceiptDraftData -> Res.string.cashflow_receipt_details_section
-        is CreditNoteDraftData -> Res.string.cashflow_credit_note_details_section
-        is BankStatementDraftData -> Res.string.cashflow_invoice_details_section
-        null -> Res.string.cashflow_invoice_details_section
-    }
-
     Column(modifier = modifier.fillMaxWidth()) {
-        // Subtle micro-label
-        MicroLabel(text = stringResource(titleRes))
-
-        when (val draft = state.draftData) {
-            is InvoiceDraftData -> {
-                InvoiceDetailsFactDisplay(
-                    direction = draft.direction,
-                    isReadOnly = isAccountantReadOnly || state.isDocumentConfirmed || state.isDocumentRejected,
-                    onDirectionSelected = { direction ->
-                        onIntent(DocumentReviewIntent.SelectDirection(direction))
-                    },
-                    invoiceNumber = draft.invoiceNumber?.takeIf { it.isNotBlank() },
-                    issueDate = draft.issueDate?.toString(),
-                    dueDate = draft.dueDate?.toString()
-                )
-            }
-            is ReceiptDraftData -> {
-                ReceiptDetailsFactDisplay(
-                    receiptNumber = draft.receiptNumber?.takeIf { it.isNotBlank() },
-                    date = draft.date?.toString()
-                )
-            }
-            is CreditNoteDraftData -> {
-                CreditNoteDetailsFactDisplay(
-                    direction = draft.direction,
-                    isReadOnly = isAccountantReadOnly || state.isDocumentConfirmed || state.isDocumentRejected,
-                    onDirectionSelected = { direction ->
-                        onIntent(DocumentReviewIntent.SelectDirection(direction))
-                    },
-                    creditNoteNumber = draft.creditNoteNumber?.takeIf { it.isNotBlank() },
-                    issueDate = draft.issueDate?.toString(),
-                    originalInvoiceNumber = draft.originalInvoiceNumber?.takeIf { it.isNotBlank() }
-                )
-            }
-            is BankStatementDraftData -> {
-                FactField(
-                    label = "Transactions",
-                    value = draft.transactions.size.toString()
-                )
-                draft.transactions.firstOrNull()?.transactionDate?.let {
-                    FactField(
-                        label = stringResource(Res.string.common_date),
-                        value = it.toString()
+        MicroLabel(text = stringResource(Res.string.cashflow_invoice_details_section))
+        if (state.isProcessing) {
+            Text(
+                text = stringResource(Res.string.cashflow_processing_identifying_type),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        } else {
+            Text(
+                text = stringResource(Res.string.cashflow_select_document_type),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            if (!isAccountantReadOnly) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
+                ) {
+                    POutlinedButton(
+                        text = stringResource(Res.string.document_type_invoice),
+                        modifier = Modifier.weight(1f),
+                        onClick = { onIntent(DocumentReviewIntent.SelectDocumentType(DocumentType.Invoice)) },
                     )
                 }
-            }
-            null -> {
-                // Document type selector - only show when type is unknown and not processing
-                if (state.isProcessing) {
-                    Text(
-                        text = stringResource(Res.string.cashflow_processing_identifying_type),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = Constraints.Spacing.small),
+                    horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
+                ) {
+                    POutlinedButton(
+                        text = stringResource(Res.string.document_type_receipt),
+                        modifier = Modifier.weight(1f),
+                        onClick = { onIntent(DocumentReviewIntent.SelectDocumentType(DocumentType.Receipt)) },
                     )
-                } else {
-                    Text(
-                        text = stringResource(Res.string.cashflow_select_document_type),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    POutlinedButton(
+                        text = stringResource(Res.string.document_type_credit_note),
+                        modifier = Modifier.weight(1f),
+                        onClick = { onIntent(DocumentReviewIntent.SelectDocumentType(DocumentType.CreditNote)) },
                     )
-                    if (!isAccountantReadOnly) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
-                        ) {
-                            POutlinedButton(
-                                text = stringResource(Res.string.document_type_invoice),
-                                modifier = Modifier.weight(1f),
-                                onClick = { onIntent(DocumentReviewIntent.SelectDocumentType(DocumentType.Invoice)) },
-                            )
-                        }
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = Constraints.Spacing.small),
-                            horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
-                        ) {
-                            POutlinedButton(
-                                text = stringResource(Res.string.document_type_receipt),
-                                modifier = Modifier.weight(1f),
-                                onClick = { onIntent(DocumentReviewIntent.SelectDocumentType(DocumentType.Receipt)) },
-                            )
-                            POutlinedButton(
-                                text = stringResource(Res.string.document_type_credit_note),
-                                modifier = Modifier.weight(1f),
-                                onClick = { onIntent(DocumentReviewIntent.SelectDocumentType(DocumentType.CreditNote)) },
-                            )
-                        }
-                    }
                 }
             }
         }
     }
 }
+
+// endregion
 
 @Composable
 private fun InvoiceDetailsFactDisplay(
@@ -428,6 +456,44 @@ private fun CreditNoteDetailsFactDisplay(
             )
         }
     }
+}
+
+@Composable
+private fun BankStatementDetailsFactDisplay(
+    accountIban: String?,
+    periodStart: String?,
+    periodEnd: String?,
+    transactionCount: Int,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall),
+    ) {
+        accountIban?.let { iban ->
+            FactField(
+                label = stringResource(Res.string.workspace_iban),
+                value = iban,
+            )
+        }
+        formatPeriodRange(periodStart, periodEnd)?.let { range ->
+            FactField(
+                label = stringResource(Res.string.inspector_label_period),
+                value = range,
+            )
+        }
+        FactField(
+            label = stringResource(Res.string.inspector_label_transactions),
+            value = transactionCount.toString(),
+        )
+    }
+}
+
+private fun formatPeriodRange(start: String?, end: String?): String? = when {
+    start != null && end != null -> "$start \u2013 $end"
+    start != null -> start
+    end != null -> end
+    else -> null
 }
 
 @Composable

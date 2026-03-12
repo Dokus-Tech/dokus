@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Test
 import tech.dokus.backend.services.cashflow.CashflowEntriesService
 import tech.dokus.backend.services.documents.confirmation.ReceiptConfirmationService
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
-import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.ExpenseRepository
@@ -24,7 +23,6 @@ import tech.dokus.database.tables.cashflow.CashflowEntriesTable
 import tech.dokus.database.tables.cashflow.ExpensesTable
 import tech.dokus.database.tables.contacts.ContactsTable
 import tech.dokus.database.tables.documents.DocumentBlobsTable
-import tech.dokus.database.tables.documents.DocumentDraftsTable
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
 import tech.dokus.database.tables.documents.DocumentSourcesTable
 import tech.dokus.database.tables.documents.DocumentsTable
@@ -62,14 +60,13 @@ class ReceiptConfirmationIdempotencyTest {
 
     private val documentRepository = DocumentRepository()
     private val ingestionRepository = DocumentIngestionRunRepository()
-    private val draftRepository = DocumentDraftRepository()
     private val expenseRepository = ExpenseRepository()
     private val cashflowEntriesRepository = CashflowEntriesRepository()
     private val cashflowEntriesService = CashflowEntriesService(cashflowEntriesRepository)
     private val confirmationService = ReceiptConfirmationService(
         expenseRepository = expenseRepository,
         cashflowEntriesService = cashflowEntriesService,
-        draftRepository = draftRepository
+        documentRepository = documentRepository
     )
 
     @BeforeEach
@@ -85,12 +82,11 @@ class ReceiptConfirmationIdempotencyTest {
             SchemaUtils.create(
                 TenantTable,
                 UsersTable,
+                ContactsTable,
                 DocumentsTable,
                 DocumentBlobsTable,
                 DocumentSourcesTable,
                 DocumentIngestionRunsTable,
-                DocumentDraftsTable,
-                ContactsTable,
                 ExpensesTable,
                 CashflowEntriesTable
             )
@@ -115,18 +111,7 @@ class ReceiptConfirmationIdempotencyTest {
     @AfterEach
     fun teardown() {
         transaction(database) {
-            SchemaUtils.drop(
-                CashflowEntriesTable,
-                ExpensesTable,
-                ContactsTable,
-                DocumentDraftsTable,
-                DocumentIngestionRunsTable,
-                DocumentSourcesTable,
-                DocumentBlobsTable,
-                DocumentsTable,
-                UsersTable,
-                TenantTable
-            )
+            exec("DROP ALL OBJECTS")
         }
     }
 
@@ -134,8 +119,8 @@ class ReceiptConfirmationIdempotencyTest {
     fun `confirming the same receipt twice is idempotent (no duplicates)`() = runBlocking {
         val (documentId, draftData) = createReceiptDocument(draftAmount = Money.from("18.48")!!)
 
-        val first = confirmationService.confirm(tenantId, documentId, draftData, linkedContactId = null).getOrThrow()
-        val second = confirmationService.confirm(tenantId, documentId, draftData, linkedContactId = null).getOrThrow()
+        val first = confirmationService.confirm(tenantId, documentId, draftData, contactId = null).getOrThrow()
+        val second = confirmationService.confirm(tenantId, documentId, draftData, contactId = null).getOrThrow()
 
         val firstExpenseId = (first.entity as FinancialDocumentDto.ExpenseDto).id
         val secondExpenseId = (second.entity as FinancialDocumentDto.ExpenseDto).id
@@ -153,7 +138,7 @@ class ReceiptConfirmationIdempotencyTest {
     fun `edit confirmed draft then reconfirm updates expense and cashflow entry`() = runBlocking {
         val (documentId, originalDraft) = createReceiptDocument(draftAmount = Money.from("18.48")!!)
 
-        val confirmed = confirmationService.confirm(tenantId, documentId, originalDraft, linkedContactId = null).getOrThrow()
+        val confirmed = confirmationService.confirm(tenantId, documentId, originalDraft, contactId = null).getOrThrow()
         val originalEntryId = confirmed.cashflowEntryId
         assertNotNull(originalEntryId)
 
@@ -167,14 +152,14 @@ class ReceiptConfirmationIdempotencyTest {
             currency = Currency.Eur
         )
 
-        draftRepository.updateDraft(
+        documentRepository.updateDraft(
             documentId = documentId,
             tenantId = tenantId,
             userId = userId,
             updatedData = updatedDraft
         )
 
-        val reconfirmed = confirmationService.confirm(tenantId, documentId, updatedDraft, linkedContactId = null).getOrThrow()
+        val reconfirmed = confirmationService.confirm(tenantId, documentId, updatedDraft, contactId = null).getOrThrow()
         val confirmedExpenseId = (confirmed.entity as FinancialDocumentDto.ExpenseDto).id
         val reconfirmedExpenseId = (reconfirmed.entity as FinancialDocumentDto.ExpenseDto).id
         assertEquals(confirmedExpenseId, reconfirmedExpenseId)
@@ -190,7 +175,7 @@ class ReceiptConfirmationIdempotencyTest {
         assertEquals(Money.from("25.00")!!, updatedEntry.amountGross)
         assertEquals(CashflowEntryStatus.Open, updatedEntry.status)
 
-        val draft = draftRepository.getByDocumentId(documentId, tenantId)
+        val draft = documentRepository.getDraftByDocumentId(documentId, tenantId)
         assertNotNull(draft)
         assertEquals(DocumentStatus.Confirmed, draft.documentStatus)
     }
@@ -199,12 +184,8 @@ class ReceiptConfirmationIdempotencyTest {
         val documentId = documentRepository.create(
             tenantId = tenantId,
             payload = tech.dokus.database.repository.cashflow.DocumentCreatePayload(
-                filename = "receipt.pdf",
-                contentType = "application/pdf",
-                sizeBytes = 123L,
-                storageKey = "test/$tenantUuid/receipt.pdf",
-                contentHash = null,
-                source = DocumentSource.Upload
+                canonicalContentHash = null,
+                effectiveOrigin = DocumentSource.Upload
             )
         )
 
@@ -218,7 +199,7 @@ class ReceiptConfirmationIdempotencyTest {
             vatAmount = Money.from("3.20")
         )
 
-        val created = draftRepository.createOrUpdateFromIngestion(
+        val created = documentRepository.createOrUpdateFromIngestion(
             documentId = documentId,
             tenantId = tenantId,
             runId = runId,

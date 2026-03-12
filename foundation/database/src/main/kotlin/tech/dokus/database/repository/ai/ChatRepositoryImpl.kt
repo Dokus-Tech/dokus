@@ -279,7 +279,7 @@ class ChatRepositoryImpl : ChatRepository {
                             (DocumentsTable.tenantId eq tenantUuid)
                     }
                     .singleOrNull()
-                    ?.get(DocumentsTable.filename)
+                    ?.get(DocumentsTable.purposeRendered)
             } catch (e: Exception) {
                 logger.warn("Failed to get document name for session: ${e.message}")
                 null

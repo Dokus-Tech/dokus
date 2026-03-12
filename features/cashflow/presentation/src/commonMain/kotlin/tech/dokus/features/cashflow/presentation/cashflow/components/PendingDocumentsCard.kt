@@ -33,10 +33,7 @@ import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.pending_documents_empty
 import tech.dokus.aura.resources.pending_documents_title
-import tech.dokus.domain.model.CreditNoteDraftData
-import tech.dokus.domain.model.DocumentRecordDto
-import tech.dokus.domain.model.InvoiceDraftData
-import tech.dokus.domain.model.ReceiptDraftData
+import tech.dokus.domain.model.DocumentListItemDto
 import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.features.cashflow.presentation.model.toUiStatus
 import tech.dokus.foundation.app.state.DokusState
@@ -87,8 +84,8 @@ private const val DocumentIdPreviewLength = 8
  */
 @Composable
 fun PendingDocumentsCard(
-    state: DokusState<PaginationState<DocumentRecordDto>>,
-    onDocumentClick: (DocumentRecordDto) -> Unit,
+    state: DokusState<PaginationState<DocumentListItemDto>>,
+    onDocumentClick: (DocumentListItemDto) -> Unit,
     onLoadMore: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -246,10 +243,10 @@ private fun PendingDocumentsErrorContent(
  */
 @Composable
 private fun PendingDocumentsLazyList(
-    documents: List<DocumentRecordDto>,
+    documents: List<DocumentListItemDto>,
     hasMorePages: Boolean,
     isLoadingMore: Boolean,
-    onDocumentClick: (DocumentRecordDto) -> Unit,
+    onDocumentClick: (DocumentListItemDto) -> Unit,
     onLoadMore: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -278,7 +275,7 @@ private fun PendingDocumentsLazyList(
     ) {
         itemsIndexed(
             items = documents,
-            key = { _, doc -> doc.document.id.toString() }
+            key = { _, doc -> doc.documentId.toString() }
         ) { index, processing ->
             PendingDocumentItem(
                 processing = processing,
@@ -319,7 +316,7 @@ private fun PendingDocumentsLazyList(
  */
 @Composable
 private fun PendingDocumentItem(
-    processing: DocumentRecordDto,
+    processing: DocumentListItemDto,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -353,28 +350,22 @@ private fun PendingDocumentItem(
 
 /**
  * Get a display name for a pending document.
- * Uses extracted invoice number if available, otherwise falls back to filename.
+ * Uses purposeRendered or counterparty if available, otherwise falls back to filename.
  */
 @Composable
-private fun getDocumentDisplayName(record: DocumentRecordDto): String {
-    val filename = record.document.filename
-    val extractedData = record.draft?.extractedData
-
-    // Try to get extracted document number from draft data
-    val documentNumber = when (extractedData) {
-        is InvoiceDraftData -> extractedData.invoiceNumber
-        is CreditNoteDraftData -> extractedData.creditNoteNumber
-        is ReceiptDraftData -> extractedData.receiptNumber
-        else -> null
-    }
+private fun getDocumentDisplayName(record: DocumentListItemDto): String {
+    val filename = record.filename
 
     // Get document type prefix (localizedUppercase is @Composable, call outside remembering)
-    val typePrefix = record.draft?.documentType?.localizedUppercase.orEmpty()
+    val typePrefix = record.documentType?.localizedUppercase.orEmpty()
 
-    return remember(record.document.id, typePrefix, documentNumber, filename) {
+    // Use purposeRendered as the best available reference
+    val displayRef = record.purposeRendered?.takeIf { it.isNotBlank() }
+
+    return remember(record.documentId, typePrefix, displayRef, filename) {
         when {
-            !documentNumber.isNullOrBlank() -> {
-                "$typePrefix $documentNumber"
+            !displayRef.isNullOrBlank() -> {
+                "$typePrefix $displayRef"
             }
 
             filename.isNotBlank() -> {
@@ -384,7 +375,7 @@ private fun getDocumentDisplayName(record: DocumentRecordDto): String {
 
             else -> {
                 // Fallback to document ID if no filename
-                "$typePrefix ${record.document.id.toString().take(DocumentIdPreviewLength).uppercase()}"
+                "$typePrefix ${record.documentId.toString().take(DocumentIdPreviewLength).uppercase()}"
             }
         }
     }

@@ -2,23 +2,19 @@ package tech.dokus.backend.routes.cashflow.documents
 
 import kotlinx.serialization.json.JsonElement
 import tech.dokus.database.repository.cashflow.CreditNoteRepository
-import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentMatchReviewSummary
+import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.DocumentSourceSummary
 import tech.dokus.database.repository.cashflow.DraftSummary
 import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.database.repository.cashflow.IngestionRunSummary
 import tech.dokus.database.repository.cashflow.InvoiceRepository
 import tech.dokus.domain.enums.ContactLinkSource
-import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.BankStatementDraftData
-import tech.dokus.domain.model.CreditNoteDraftData
-import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentIngestionDto
@@ -26,25 +22,27 @@ import tech.dokus.domain.model.DocumentMatchReviewSummaryDto
 import tech.dokus.domain.model.DocumentProcessingStepDto
 import tech.dokus.domain.model.DocumentSourceDto
 import tech.dokus.domain.model.FinancialDocumentDto
-import tech.dokus.domain.model.InvoiceDraftData
-import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.domain.model.UpdateDraftRequest
+import tech.dokus.domain.model.contact.CounterpartyInfo
 import tech.dokus.domain.utils.parseSafe
 import tech.dokus.foundation.backend.storage.DocumentStorageService as MinioDocumentStorageService
 
 /**
  * Add download URL to document DTO.
+ * [storageKey] is resolved from the preferred source's blob, not from the document itself.
  */
 @Suppress("TooGenericExceptionCaught")
 internal suspend fun addDownloadUrl(
     document: DocumentDto,
+    storageKey: String?,
     minioStorage: MinioDocumentStorageService,
     logger: org.slf4j.Logger
 ): DocumentDto {
+    if (storageKey == null) return document
     val downloadUrl = try {
-        minioStorage.getDownloadUrl(document.storageKey)
+        minioStorage.getDownloadUrl(storageKey)
     } catch (e: RuntimeException) {
-        logger.warn("Failed to get download URL for ${document.storageKey}: ${e.message}")
+        logger.warn("Failed to get download URL for $storageKey: ${e.message}")
         null
     }
     return document.copy(downloadUrl = downloadUrl)
@@ -82,9 +80,8 @@ internal fun DraftSummary.toDto(): DocumentDraftDto = DocumentDraftDto(
     tenantId = tenantId,
     documentStatus = documentStatus,
     documentType = documentType,
-    direction = extractedData.directionOrUnknown(),
+    direction = direction,
     extractedData = extractedData,
-    aiDraftData = aiDraftData,
     aiKeywords = aiKeywords,
     purposeBase = purposeBase,
     purposePeriodYear = purposePeriodYear,
@@ -97,25 +94,13 @@ internal fun DraftSummary.toDto(): DocumentDraftDto = DocumentDraftDto(
     draftVersion = draftVersion,
     draftEditedAt = draftEditedAt,
     draftEditedBy = draftEditedBy,
-    contactSuggestions = contactSuggestions,
-    counterpartySnapshot = counterpartySnapshot,
-    matchEvidence = matchEvidence,
-    linkedContactId = linkedContactId,
-    linkedContactSource = linkedContactSource,
-    counterpartyIntent = counterpartyIntent,
+    counterparty = counterparty,
+    counterpartyDisplayName = counterpartyDisplayName,
     rejectReason = rejectReason,
     lastSuccessfulRunId = lastSuccessfulRunId,
     createdAt = createdAt,
     updatedAt = updatedAt
 )
-
-private fun DocumentDraftData?.directionOrUnknown(): DocumentDirection = when (this) {
-    is InvoiceDraftData -> this.direction
-    is ReceiptDraftData -> this.direction
-    is CreditNoteDraftData -> this.direction
-    is BankStatementDraftData -> this.direction
-    null -> DocumentDirection.Unknown
-}
 
 /**
  * Convert IngestionRunSummary to DocumentIngestionDto.
@@ -187,18 +172,26 @@ internal fun DocumentMatchReviewSummary.toSummaryDto(): DocumentMatchReviewSumma
  * Update draft counterparty (contact ID and intent).
  */
 internal suspend fun updateDraftCounterparty(
-    draftRepository: DocumentDraftRepository,
+    documentRepository: DocumentRepository,
     documentId: DocumentId,
     tenantId: TenantId,
     request: UpdateDraftRequest
 ) {
     val contactId = request.contactId?.let { ContactId.parse(it) }
-    val updated = draftRepository.updateCounterparty(
+    val counterparty: CounterpartyInfo = if (contactId != null) {
+        CounterpartyInfo.Linked(
+            contactId = contactId,
+            source = ContactLinkSource.User,
+        )
+    } else {
+        CounterpartyInfo.Unresolved(
+            pendingCreation = request.pendingCreation == true,
+        )
+    }
+    val updated = documentRepository.updateCounterparty(
         documentId = documentId,
         tenantId = tenantId,
-        contactId = contactId,
-        intent = request.counterpartyIntent,
-        source = if (contactId != null) ContactLinkSource.User else null
+        counterparty = counterparty,
     )
     if (!updated) {
         throw DokusException.InternalError("Failed to update document counterparty")

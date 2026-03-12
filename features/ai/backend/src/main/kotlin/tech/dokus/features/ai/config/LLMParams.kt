@@ -14,5 +14,5 @@ val LLMParams.Companion.chatNoTools
     get() = LLMParams(temperature = 0.1, toolChoice = LLMParams.ToolChoice.None)
 
 const val finishToolVisionAssistantResponseRepeatMax = 2
-const val finishToolTextAssistantResponseRepeatMax = 1
+const val finishToolTextAssistantResponseRepeatMax = 2
 const val externalToolAssistantResponseRepeatMax = 3

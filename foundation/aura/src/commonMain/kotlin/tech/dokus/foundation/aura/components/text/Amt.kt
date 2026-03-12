@@ -91,7 +91,7 @@ private fun AmtPreview(
 /**
  * Formats a Double as Euro currency in German locale: `€1.306,12` or `−€1.306,12`.
  */
-internal fun formatEuroCurrency(value: Double): String {
+fun formatEuroCurrency(value: Double): String {
     val absValue = abs(value)
     val cents = (absValue * 100).roundToLong()
     val intPart = cents / 100

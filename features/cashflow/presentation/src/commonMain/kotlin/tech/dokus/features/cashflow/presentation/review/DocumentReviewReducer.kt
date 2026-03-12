@@ -11,7 +11,7 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.model.BankStatementDraftData
 import tech.dokus.domain.model.CreditNoteDraftData
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.FinancialLineItem
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
@@ -93,7 +93,7 @@ internal class DocumentReviewReducer(
     suspend fun DocumentReviewCtx.handleRefresh() =
         with(loader) { handleRefresh() }
 
-    suspend fun DocumentReviewCtx.handleApplyRemoteSnapshot(record: DocumentRecordDto) =
+    suspend fun DocumentReviewCtx.handleApplyRemoteSnapshot(record: DocumentDetailDto) =
         with(loader) { handleApplyRemoteSnapshot(record) }
 
     suspend fun DocumentReviewCtx.handleSelectDocumentType(type: DocumentType) {
@@ -173,8 +173,8 @@ internal class DocumentReviewReducer(
     suspend fun DocumentReviewCtx.handleContactCreated(contactId: ContactId) =
         with(contactBinder) { handleContactCreated(contactId) }
 
-    suspend fun DocumentReviewCtx.handleSetCounterpartyIntent(intent: tech.dokus.domain.enums.CounterpartyIntent) =
-        with(contactBinder) { handleSetCounterpartyIntent(intent) }
+    suspend fun DocumentReviewCtx.handleSetPendingCreation() =
+        with(contactBinder) { handleSetPendingCreation() }
 
     // Contact sheet handlers
     suspend fun DocumentReviewCtx.handleOpenContactSheet() =
@@ -262,7 +262,7 @@ internal class DocumentReviewReducer(
     suspend fun DocumentReviewCtx.handleClosePaymentTransactionPicker() =
         with(paymentActions) { handleClosePaymentTransactionPicker() }
 
-    suspend fun DocumentReviewCtx.handleSelectPaymentTransaction(transactionId: tech.dokus.domain.ids.ImportedBankTransactionId) =
+    suspend fun DocumentReviewCtx.handleSelectPaymentTransaction(transactionId: tech.dokus.domain.ids.BankTransactionId) =
         with(paymentActions) { handleSelectPaymentTransaction(transactionId) }
 
     suspend fun DocumentReviewCtx.handleClearPaymentTransactionSelection() =

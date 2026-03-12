@@ -26,6 +26,7 @@ data class BankStatementTransactionExtractionRow(
     val counterpartyName: String? = null,
     val counterpartyIban: Iban? = null,
     val structuredCommunicationRaw: String? = null,
+    val freeCommunication: String? = null,
     val descriptionRaw: String? = null,
     val rowConfidence: Double = 0.0,
 )
@@ -34,6 +35,11 @@ data class BankStatementTransactionExtractionRow(
 @SerialName("BankStatementExtractionResult")
 data class BankStatementExtractionResult(
     val rows: List<BankStatementTransactionExtractionRow> = emptyList(),
+    val accountIban: Iban? = null,
+    val openingBalance: Money? = null,
+    val closingBalance: Money? = null,
+    val periodStart: LocalDate? = null,
+    val periodEnd: LocalDate? = null,
     val confidence: Double,
     val reasoning: String? = null,
 )
@@ -63,6 +69,8 @@ data class BankStatementTransactionToolInput(
     val counterpartyIban: String? = null,
     @property:LLMDescription(ExtractionToolDescriptions.BankStructuredCommunicationRaw)
     val structuredCommunicationRaw: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.BankFreeCommunication)
+    val freeCommunication: String? = null,
     @property:LLMDescription(ExtractionToolDescriptions.BankDescriptionRaw)
     val descriptionRaw: String? = null,
     @property:LLMDescription(ExtractionToolDescriptions.BankRowConfidence)
@@ -72,6 +80,16 @@ data class BankStatementTransactionToolInput(
 @Serializable
 data class BankStatementExtractionToolInput(
     val rows: List<BankStatementTransactionToolInput> = emptyList(),
+    @property:LLMDescription(ExtractionToolDescriptions.BankAccountIban)
+    val accountIban: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.BankOpeningBalance)
+    val openingBalance: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.BankClosingBalance)
+    val closingBalance: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.BankPeriodStart)
+    val periodStart: LocalDate? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.BankPeriodEnd)
+    val periodEnd: LocalDate? = null,
     @property:LLMDescription(ExtractionToolDescriptions.Confidence)
     val confidence: Double,
     @property:LLMDescription(ExtractionToolDescriptions.Reasoning)
@@ -95,10 +113,16 @@ private class BankStatementExtractionFinishTool :
                         counterpartyName = row.counterpartyName,
                         counterpartyIban = Iban.from(row.counterpartyIban)?.takeIf { it.isValid },
                         structuredCommunicationRaw = row.structuredCommunicationRaw,
+                        freeCommunication = row.freeCommunication,
                         descriptionRaw = row.descriptionRaw,
                         rowConfidence = row.rowConfidence.coerceIn(0.0, 1.0),
                     )
                 },
+                accountIban = Iban.from(args.accountIban)?.takeIf { it.isValid },
+                openingBalance = Money.from(args.openingBalance),
+                closingBalance = Money.from(args.closingBalance),
+                periodStart = args.periodStart,
+                periodEnd = args.periodEnd,
                 confidence = args.confidence.coerceIn(0.0, 1.0),
                 reasoning = args.reasoning
             )
@@ -110,18 +134,35 @@ private val ExtractDocumentInput.bankStatementPrompt
     get() = """
     You will receive a bank statement document in context.
 
-    Task: extract transaction rows only.
+    Task: extract statement header fields AND transaction rows.
     Output MUST be submitted via tool: submit_bank_statement_extraction.
 
+    HEADER FIELDS (extract from statement header/footer if visible)
+    - accountIban: the IBAN of the account this statement belongs to
+    - openingBalance: the opening/previous balance shown on the statement (signed, e.g. "1234.56" or "-50.00")
+    - closingBalance: the closing/new balance shown on the statement (signed)
+    - periodStart: the start date of the statement period
+    - periodEnd: the end date of the statement period
+
+    TRANSACTION FIELD RULES
+    Bank statements often show a bold transfer type header (e.g. "SENDING MONEY TO", "EUROPEAN DIRECT DEBIT",
+    "PAYMENT VIA BANCONTACT", "CREDIT TRANSFER FROM") followed by detail lines with the actual information.
+
+    - counterpartyName: Extract the actual business/person entity name from the DETAIL lines, NOT the transfer
+      type header. Examples: "TEAM INNING BV", "BE-MOBILE", "PROUNITY SA" — not "SENDING MONEY TO".
+    - counterpartyIban: The IBAN of the counterparty if visible in the detail lines.
+    - structuredCommunicationRaw: Belgian OGM structured communication (+++XXX/XXXX/XXXXX+++) if present. Preserve exact formatting.
+    - freeCommunication: Any free-form payment reference that is NOT a structured communication. E.g. invoice numbers,
+      reference codes, mandate references. Examples: "IV-063", "777887093469", "4411 PARKING AND MOBILITY".
+    - descriptionRaw: The FULL raw text of the transaction — include the transfer type header AND all detail lines, joined with newlines.
+
     HARD RULES
-    - Do not guess: if a field is not visible for a row, set null.
+    - Do not guess: if a field is not visible, set null.
     - signedAmount MUST keep sign:
       - positive = money received
       - negative = money sent
-    - structuredCommunicationRaw must preserve exact formatting shown in the document.
-      Example: +++123/4567/89012+++
-    - descriptionRaw should contain the raw line text for that transaction.
     - rowConfidence must be in range 0.0..1.0.
+    - openingBalance and closingBalance must include sign (positive or negative).
 
     Include all visible transaction rows on the page(s). Return empty list if no transaction table is visible.
 

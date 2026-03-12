@@ -13,11 +13,8 @@ internal fun ResultRow.toDocumentDto(): DocumentDto {
     return DocumentDto(
         id = DocumentId.parse(this[DocumentsTable.id].toString()),
         tenantId = TenantId(this[DocumentsTable.tenantId].toKotlinUuid()),
-        filename = this[DocumentsTable.filename],
-        contentType = this[DocumentsTable.contentType],
-        sizeBytes = this[DocumentsTable.sizeBytes],
-        storageKey = this[DocumentsTable.storageKey],
-        source = this[DocumentsTable.documentSource],
+        filename = "", // Resolved from preferred source by service layer
+        effectiveOrigin = this[DocumentsTable.effectiveOrigin],
         uploadedAt = this[DocumentsTable.uploadedAt],
         downloadUrl = null // Generated on-demand by the service layer
     )

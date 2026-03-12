@@ -21,7 +21,7 @@ import tech.dokus.backend.services.documents.sse.DocumentSsePublisher
 import tech.dokus.backend.services.notifications.NotificationEmission
 import tech.dokus.backend.services.notifications.NotificationService
 import tech.dokus.database.repository.peppol.PeppolSettingsRepository
-import tech.dokus.domain.enums.DocumentIntakeOutcome
+import tech.dokus.backend.services.documents.IntakeResolution
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.NotificationReferenceType
 import tech.dokus.domain.enums.NotificationType
@@ -392,7 +392,7 @@ internal class PeppolPollingWorker(
             "Failed to persist PEPPOL envelope for source ${intake.sourceId}"
         }
 
-        if (intake.outcome == DocumentIntakeOutcome.LinkedToExisting) {
+        if (intake.resolution is IntakeResolution.Linked) {
             logger.info("PEPPOL artifact linked to existing document {} via exact-byte match", documentId)
         } else {
             require(intake.runId != null) {

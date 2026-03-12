@@ -297,22 +297,6 @@ enum class DocumentStatus(override val dbValue: String) : DbEnum {
     }
 }
 
-/**
- * Counterparty intent for document drafts.
- * Tracks whether the user has explicitly chosen to link or skip a counterparty.
- */
-@Serializable
-enum class CounterpartyIntent(override val dbValue: String) : DbEnum {
-    @SerialName("NONE")
-    None("NONE"),
-
-    @SerialName("PENDING")
-    Pending("PENDING");
-
-    companion object {
-        fun fromDbValue(value: String): CounterpartyIntent = entries.find { it.dbValue == value }!!
-    }
-}
 
 /**
  * Business direction of a document relative to the tenant.

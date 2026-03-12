@@ -13,7 +13,7 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.v1.jdbc.update
 import tech.dokus.database.tables.documents.DocumentMatchReviewsTable
-import tech.dokus.domain.enums.DocumentMatchReviewReasonType
+import tech.dokus.domain.enums.ReviewReason
 import tech.dokus.domain.enums.DocumentMatchReviewStatus
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentMatchReviewId
@@ -29,7 +29,7 @@ data class DocumentMatchReviewSummary(
     val tenantId: TenantId,
     val documentId: DocumentId,
     val incomingSourceId: DocumentSourceId,
-    val reasonType: DocumentMatchReviewReasonType,
+    val reasonType: ReviewReason,
     val aiSummary: String?,
     val aiConfidence: Double?,
     val status: DocumentMatchReviewStatus,
@@ -46,7 +46,7 @@ class DocumentMatchReviewRepository {
         tenantId: TenantId,
         documentId: DocumentId,
         sourceId: DocumentSourceId,
-        reasonType: DocumentMatchReviewReasonType,
+        reasonType: ReviewReason,
         aiSummary: String? = null,
         aiConfidence: Double? = null
     ): DocumentMatchReviewId = newSuspendedTransaction {

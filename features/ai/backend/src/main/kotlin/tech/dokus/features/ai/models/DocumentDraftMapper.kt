@@ -8,6 +8,8 @@ import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.PartyDraft
 import tech.dokus.domain.model.ReceiptDraftData
+import tech.dokus.domain.model.TransactionCommunication
+import tech.dokus.domain.model.contact.CounterpartySnapshot
 
 fun DocumentAiProcessingResult.toDraftData(): DocumentDraftData? {
     return extraction.toDraftData(directionResolution.direction)
@@ -48,45 +50,28 @@ private fun FinancialExtractionResult.toDraftData(direction: DocumentDirection):
         ),
     )
 
-    is FinancialExtractionResult.CreditNote -> {
-        val counterpartyName = when (direction) {
-            DocumentDirection.Inbound -> data.sellerName
-            DocumentDirection.Outbound -> data.buyerName
-            DocumentDirection.Neutral,
-            DocumentDirection.Unknown -> data.buyerName ?: data.sellerName
-        }
-        val counterpartyVat = when (direction) {
-            DocumentDirection.Inbound -> data.sellerVat
-            DocumentDirection.Outbound -> data.buyerVat
-            DocumentDirection.Neutral,
-            DocumentDirection.Unknown -> data.buyerVat ?: data.sellerVat
-        }
-
-        CreditNoteDraftData(
-            creditNoteNumber = data.creditNoteNumber,
-            direction = direction,
-            issueDate = data.issueDate,
-            currency = data.currency,
-            subtotalAmount = data.subtotalAmount,
-            vatAmount = data.vatAmount,
-            totalAmount = data.totalAmount,
-            lineItems = data.lineItems,
-            vatBreakdown = data.vatBreakdown,
-            counterpartyName = counterpartyName,
-            counterpartyVat = counterpartyVat,
-            originalInvoiceNumber = data.originalInvoiceNumber,
-            reason = data.reason,
-            notes = null,
-            seller = PartyDraft(
-                name = data.sellerName,
-                vat = data.sellerVat,
-            ),
-            buyer = PartyDraft(
-                name = data.buyerName,
-                vat = data.buyerVat,
-            ),
-        )
-    }
+    is FinancialExtractionResult.CreditNote -> CreditNoteDraftData(
+        creditNoteNumber = data.creditNoteNumber,
+        direction = direction,
+        issueDate = data.issueDate,
+        currency = data.currency,
+        subtotalAmount = data.subtotalAmount,
+        vatAmount = data.vatAmount,
+        totalAmount = data.totalAmount,
+        lineItems = data.lineItems,
+        vatBreakdown = data.vatBreakdown,
+        originalInvoiceNumber = data.originalInvoiceNumber,
+        reason = data.reason,
+        notes = null,
+        seller = PartyDraft(
+            name = data.sellerName,
+            vat = data.sellerVat,
+        ),
+        buyer = PartyDraft(
+            name = data.buyerName,
+            vat = data.buyerVat,
+        ),
+    )
 
     is FinancialExtractionResult.Receipt -> ReceiptDraftData(
         direction = direction,
@@ -109,14 +94,24 @@ private fun FinancialExtractionResult.toDraftData(direction: DocumentDirection):
             BankStatementTransactionDraftRow(
                 transactionDate = row.transactionDate,
                 signedAmount = row.signedAmount,
-                counterpartyName = row.counterpartyName,
-                counterpartyIban = row.counterpartyIban,
-                structuredCommunicationRaw = row.structuredCommunicationRaw,
+                counterparty = CounterpartySnapshot(
+                    name = row.counterpartyName,
+                    iban = row.counterpartyIban,
+                ),
+                communication = TransactionCommunication.from(
+                    structuredCommunicationRaw = row.structuredCommunicationRaw,
+                    freeCommunication = row.freeCommunication,
+                ),
                 descriptionRaw = row.descriptionRaw,
                 rowConfidence = row.rowConfidence,
-                largeAmountFlag = false
+                largeAmountFlag = false,
             )
         },
+        accountIban = data.accountIban,
+        openingBalance = data.openingBalance,
+        closingBalance = data.closingBalance,
+        periodStart = data.periodStart,
+        periodEnd = data.periodEnd,
         notes = null
     )
 

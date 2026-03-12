@@ -107,7 +107,7 @@ private val ClassifyDocumentInput.prompt
     - Classify every invoice-like document as INVOICE regardless of whether tenant is seller or buyer.
     - Direction (incoming/outgoing) is resolved later by deterministic business logic, not classification.
 
-    NAME MATCHING: Names on documents may differ from official names — ignore casing, dots vs spaces, domain-style names (e.g., "invoid.vision" = "Invoid Vision"). Use VAT number as the strongest identifier.
+    NAME MATCHING: Names on documents may differ from official names — ignore casing, dots vs spaces, domain-style names. Use VAT number as the strongest identifier.
 
     RECEIPT vs INVOICE:
     - RECEIPT: Small thermal ticket proving payment already made (retail/restaurant)

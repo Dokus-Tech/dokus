@@ -37,7 +37,7 @@ import tech.dokus.aura.resources.documents_empty_title
 import tech.dokus.aura.resources.documents_filter_no_match
 import tech.dokus.aura.resources.documents_upload
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentListItemDto
 import tech.dokus.features.cashflow.presentation.common.components.pagination.rememberLoadMoreTrigger
 import tech.dokus.features.cashflow.presentation.common.components.table.DokusTableDivider
 import tech.dokus.features.cashflow.presentation.common.components.table.DokusTableSurface
@@ -59,12 +59,12 @@ import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import tech.dokus.foundation.aura.local.LocalScreenSize
 
-private val DocumentsState.documentItems: List<DocumentRecordDto>
+private val DocumentsState.documentItems: List<DocumentListItemDto>
     get() = documents.lastData?.data ?: emptyList()
 
 private sealed interface DocumentsDisplayRow {
     data class Local(val row: DocumentsLocalUploadRow) : DocumentsDisplayRow
-    data class Remote(val row: DocumentRecordDto) : DocumentsDisplayRow
+    data class Remote(val row: DocumentListItemDto) : DocumentsDisplayRow
 }
 
 @Composable
@@ -306,7 +306,7 @@ private fun DesktopDocumentsTable(
                         key = { _, row ->
                             when (row) {
                                 is DocumentsDisplayRow.Local -> "local-${row.row.taskId}"
-                                is DocumentsDisplayRow.Remote -> row.row.document.id.toString()
+                                is DocumentsDisplayRow.Remote -> row.row.documentId.toString()
                             }
                         }
                     ) { index, row ->
@@ -322,7 +322,7 @@ private fun DesktopDocumentsTable(
                             is DocumentsDisplayRow.Remote -> {
                                 DocumentTableRow(
                                     document = row.row,
-                                    onClick = { onOpenDocument(row.row.document.id) }
+                                    onClick = { onOpenDocument(row.row.documentId) }
                                 )
                             }
                         }
@@ -388,7 +388,7 @@ private fun MobileDocumentsList(
                 key = { _, row ->
                     when (row) {
                         is DocumentsDisplayRow.Local -> "local-${row.row.taskId}"
-                        is DocumentsDisplayRow.Remote -> row.row.document.id.toString()
+                        is DocumentsDisplayRow.Remote -> row.row.documentId.toString()
                     }
                 }
             ) { _, row ->
@@ -404,7 +404,7 @@ private fun MobileDocumentsList(
                     is DocumentsDisplayRow.Remote -> {
                         DocumentMobileRow(
                             document = row.row,
-                            onClick = { onOpenDocument(row.row.document.id) }
+                            onClick = { onOpenDocument(row.row.documentId) }
                         )
                     }
                 }

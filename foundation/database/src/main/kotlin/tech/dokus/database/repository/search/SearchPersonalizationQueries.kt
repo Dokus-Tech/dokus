@@ -25,7 +25,6 @@ import tech.dokus.database.tables.cashflow.CashflowEntriesTable
 import tech.dokus.database.tables.cashflow.ExpensesTable
 import tech.dokus.database.tables.cashflow.InvoicesTable
 import tech.dokus.database.tables.contacts.ContactsTable
-import tech.dokus.database.tables.documents.DocumentDraftsTable
 import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.CashflowDirection
@@ -231,18 +230,9 @@ class SearchPersonalizationQueries {
         val tenantUuid = UUID.fromString(tenantId.toString())
         return DocumentsTable
             .join(
-                DocumentDraftsTable,
-                joinType = JoinType.INNER,
-                onColumn = DocumentsTable.id,
-                otherColumn = DocumentDraftsTable.documentId,
-                additionalConstraint = {
-                    DocumentDraftsTable.tenantId eq DocumentsTable.tenantId
-                }
-            )
-            .join(
                 ContactsTable,
                 joinType = JoinType.INNER,
-                onColumn = DocumentDraftsTable.linkedContactId,
+                onColumn = DocumentsTable.linkedContactId,
                 otherColumn = ContactsTable.id,
                 additionalConstraint = {
                     ContactsTable.tenantId eq DocumentsTable.tenantId
@@ -251,7 +241,7 @@ class SearchPersonalizationQueries {
             .select(ContactsTable.name, DocumentsTable.uploadedAt)
             .where {
                 (DocumentsTable.tenantId eq tenantUuid) and
-                    (DocumentDraftsTable.documentStatus eq DocumentStatus.Confirmed)
+                    (DocumentsTable.documentStatus eq DocumentStatus.Confirmed)
             }
             .mapNotNull { row ->
                 val label = row.getOrNull(ContactsTable.name)?.trim().orEmpty()
@@ -286,7 +276,7 @@ class SearchPersonalizationQueries {
         val absoluteAmount = Money.fromDbDecimal(row[CashflowEntriesTable.amountGross])
         val signedAmount = if (direction == CashflowDirection.Out) -absoluteAmount else absoluteAmount
         val contactName = row.getOrNull(ContactsTable.name)
-        val filename = row.getOrNull(DocumentsTable.filename)
+        val filename = row.getOrNull(DocumentsTable.purposeRendered)
         val expenseDescription = row.getOrNull(ExpensesTable.description)
         val invoiceNumber = row.getOrNull(InvoicesTable.invoiceNumber)
         val displayText = when {

@@ -18,7 +18,7 @@ import tech.dokus.domain.enums.PaymentCreatedBy
 import tech.dokus.domain.enums.PaymentMethod
 import tech.dokus.domain.enums.PaymentSource
 import tech.dokus.domain.fromDbDecimal
-import tech.dokus.domain.ids.ImportedBankTransactionId
+import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.PaymentId
 import tech.dokus.domain.ids.TenantId
@@ -52,7 +52,7 @@ class PaymentRepository {
         paymentDate: LocalDate,
         paymentMethod: PaymentMethod,
         transactionId: TransactionId?,
-        bankTransactionId: ImportedBankTransactionId? = null,
+        bankTransactionId: BankTransactionId? = null,
         source: PaymentSource = PaymentSource.Manual,
         createdBy: PaymentCreatedBy = PaymentCreatedBy.User,
         notes: String?
@@ -197,7 +197,7 @@ class PaymentRepository {
             paymentDate = this[PaymentsTable.paymentDate],
             paymentMethod = this[PaymentsTable.paymentMethod],
             transactionId = this[PaymentsTable.transactionId]?.let { TransactionId(it) },
-            bankTransactionId = this[PaymentsTable.bankTransactionId]?.let { ImportedBankTransactionId.parse(it.toString()) },
+            bankTransactionId = this[PaymentsTable.bankTransactionId]?.let { BankTransactionId.parse(it.toString()) },
             source = this[PaymentsTable.paymentSource],
             createdBy = this[PaymentsTable.createdBy],
             notes = this[PaymentsTable.notes],

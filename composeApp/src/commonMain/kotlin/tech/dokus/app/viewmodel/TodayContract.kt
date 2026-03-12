@@ -6,7 +6,7 @@ import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.domain.enums.NotificationCategory
 import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentListItemDto
 import tech.dokus.domain.model.NotificationDto
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.common.PaginationState
@@ -33,8 +33,8 @@ import tech.dokus.foundation.app.state.DokusState
 data class TodayState(
     val tenantState: DokusState<Tenant?> = DokusState.idle(),
     val currentAvatar: Thumbnail? = null,
-    val pendingDocumentsState: DokusState<PaginationState<DocumentRecordDto>> = DokusState.idle(),
-    val allPendingDocuments: List<DocumentRecordDto> = emptyList(),
+    val pendingDocumentsState: DokusState<PaginationState<DocumentListItemDto>> = DokusState.idle(),
+    val allPendingDocuments: List<DocumentListItemDto> = emptyList(),
     val pendingVisibleCount: Int = PENDING_PAGE_SIZE,
     val notificationsState: DokusState<List<NotificationDto>> = DokusState.idle(),
     val unreadNotificationCount: Int = 0,

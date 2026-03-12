@@ -7,7 +7,8 @@ import tech.dokus.domain.ids.FirmId
 import tech.dokus.domain.ids.SessionId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentDetailDto
+import tech.dokus.domain.model.DocumentListItemDto
 import tech.dokus.domain.model.User
 import tech.dokus.domain.model.common.Thumbnail
 import tech.dokus.domain.model.common.PaginatedResponse
@@ -52,7 +53,7 @@ interface ListConsoleClientDocumentsUseCase {
         tenantId: TenantId,
         page: Int = 0,
         limit: Int = 20,
-    ): Result<PaginatedResponse<DocumentRecordDto>>
+    ): Result<PaginatedResponse<DocumentListItemDto>>
 }
 
 interface GetConsoleClientDocumentUseCase {
@@ -60,7 +61,7 @@ interface GetConsoleClientDocumentUseCase {
         firmId: FirmId,
         tenantId: TenantId,
         documentId: String,
-    ): Result<DocumentRecordDto>
+    ): Result<DocumentDetailDto>
 }
 
 /**

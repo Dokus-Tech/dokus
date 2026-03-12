@@ -20,7 +20,6 @@ import tech.dokus.database.tables.cashflow.CreditNotesTable
 import tech.dokus.database.tables.cashflow.ExpensesTable
 import tech.dokus.database.tables.cashflow.InvoicesTable
 import tech.dokus.database.tables.contacts.ContactsTable
-import tech.dokus.database.tables.documents.DocumentDraftsTable
 import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.CashflowDirection
@@ -254,18 +253,9 @@ class SearchRepository(
 
         var query = DocumentsTable
             .join(
-                DocumentDraftsTable,
-                joinType = JoinType.INNER,
-                onColumn = DocumentsTable.id,
-                otherColumn = DocumentDraftsTable.documentId,
-                additionalConstraint = {
-                    DocumentDraftsTable.tenantId eq DocumentsTable.tenantId
-                }
-            )
-            .join(
                 ContactsTable,
                 joinType = JoinType.LEFT,
-                onColumn = DocumentDraftsTable.linkedContactId,
+                onColumn = DocumentsTable.linkedContactId,
                 otherColumn = ContactsTable.id,
                 additionalConstraint = {
                     ContactsTable.tenantId eq DocumentsTable.tenantId
@@ -274,16 +264,15 @@ class SearchRepository(
             .selectAll()
             .where {
                 (DocumentsTable.tenantId eq tenantUuid) and
-                    (DocumentDraftsTable.documentStatus eq DocumentStatus.Confirmed) and
+                    (DocumentsTable.documentStatus eq DocumentStatus.Confirmed) and
                     entityExists
             }
 
         query = query.andWhere {
-            (LowerCase(DocumentsTable.filename) like pattern) or
-                (LowerCase(DocumentDraftsTable.purposeRendered) like pattern) or
-                (LowerCase(DocumentDraftsTable.purposeBase) like pattern) or
-                (LowerCase(DocumentDraftsTable.aiKeywords) like pattern) or
-                (LowerCase(DocumentDraftsTable.counterpartySnapshot) like pattern) or
+            (LowerCase(DocumentsTable.purposeRendered) like pattern) or
+                (LowerCase(DocumentsTable.purposeBase) like pattern) or
+                (LowerCase(DocumentsTable.aiKeywords) like pattern) or
+                (LowerCase(DocumentsTable.counterpartySnapshot) like pattern) or
                 (LowerCase(ContactsTable.name) like pattern) or
                 (LowerCase(ContactsTable.email) like pattern) or
                 (LowerCase(ContactsTable.vatNumber) like pattern) or
@@ -358,7 +347,7 @@ class SearchRepository(
             (LowerCase(ContactsTable.name) like pattern) or
                 (LowerCase(ContactsTable.email) like pattern) or
                 (LowerCase(ContactsTable.vatNumber) like pattern) or
-                (LowerCase(DocumentsTable.filename) like pattern) or
+                (LowerCase(DocumentsTable.purposeRendered) like pattern) or
                 (LowerCase(ExpensesTable.description) like pattern) or
                 (LowerCase(InvoicesTable.invoiceNumber) like pattern) or
                 (LowerCase(InvoicesTable.notes) like pattern)
@@ -368,15 +357,20 @@ class SearchRepository(
     }
 
     private fun mapDocumentHit(row: ResultRow): SearchDocumentHit {
-        val snapshot = row.getOrNull(DocumentDraftsTable.counterpartySnapshot)
-            ?.let { json.decodeFromStringOrNull<CounterpartySnapshot>(it) }
+        val contactName = row.getOrNull(ContactsTable.name)
+        val contactVat = row.getOrNull(ContactsTable.vatNumber)
+        val snapshot = if (contactName == null || contactVat == null) {
+            row.getOrNull(DocumentsTable.counterpartySnapshot)
+                ?.let { json.decodeFromStringOrNull<CounterpartySnapshot>(it) }
+        } else null
+
         return SearchDocumentHit(
             documentId = DocumentId.parse(row[DocumentsTable.id].value.toString()),
-            filename = row[DocumentsTable.filename],
-            documentType = row[DocumentDraftsTable.documentType],
-            status = row[DocumentDraftsTable.documentStatus],
-            counterpartyName = row.getOrNull(ContactsTable.name) ?: snapshot?.name,
-            counterpartyVat = row.getOrNull(ContactsTable.vatNumber) ?: snapshot?.vatNumber?.value,
+            filename = row[DocumentsTable.purposeRendered] ?: "",
+            documentType = row[DocumentsTable.documentType],
+            status = row[DocumentsTable.documentStatus],
+            counterpartyName = contactName ?: snapshot?.name,
+            counterpartyVat = contactVat ?: snapshot?.vatNumber?.value,
         )
     }
 
@@ -394,7 +388,7 @@ class SearchRepository(
         val absoluteAmount = Money.fromDbDecimal(row[CashflowEntriesTable.amountGross])
         val signedAmount = if (direction == CashflowDirection.Out) -absoluteAmount else absoluteAmount
         val contactName = row.getOrNull(ContactsTable.name)
-        val filename = row.getOrNull(DocumentsTable.filename)
+        val filename = row.getOrNull(DocumentsTable.purposeRendered)
         val expenseDescription = row.getOrNull(ExpensesTable.description)
         val invoiceNumber = row.getOrNull(InvoicesTable.invoiceNumber)
         val displayText = when {

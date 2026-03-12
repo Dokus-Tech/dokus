@@ -16,8 +16,8 @@ import kotlinx.coroutines.test.runTest
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.DocumentDto
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.enums.DocumentSource
+import tech.dokus.domain.model.DocumentListItemDto
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.features.cashflow.datasource.CashflowRemoteDataSource
 import tech.dokus.features.cashflow.usecases.ObserveDocumentCollectionChangesUseCase
@@ -75,12 +75,12 @@ class CashflowDocumentUseCasesJvmTest {
         assertTrue(states[0] is DokusState.Loading<*>)
         assertEquals(
             firstPage.items,
-            (states[1] as DokusState.Success<List<DocumentRecordDto>>).data
+            (states[1] as DokusState.Success<List<DocumentListItemDto>>).data
         )
         assertTrue(states[2] is DokusState.Loading<*>)
         assertEquals(
             secondPage.items,
-            (states[3] as DokusState.Success<List<DocumentRecordDto>>).data
+            (states[3] as DokusState.Success<List<DocumentListItemDto>>).data
         )
         coVerify(exactly = 2) {
             remoteDataSource.listDocuments(
@@ -123,7 +123,7 @@ class CashflowDocumentUseCasesJvmTest {
     }
 }
 
-private fun pageResponse(items: List<DocumentRecordDto>): PaginatedResponse<DocumentRecordDto> {
+private fun pageResponse(items: List<DocumentListItemDto>): PaginatedResponse<DocumentListItemDto> {
     return PaginatedResponse(
         items = items,
         total = items.size.toLong(),
@@ -133,23 +133,20 @@ private fun pageResponse(items: List<DocumentRecordDto>): PaginatedResponse<Docu
     )
 }
 
-private fun documentRecord(documentId: String): DocumentRecordDto {
-    return DocumentRecordDto(
-        document = DocumentDto(
-            id = DocumentId.parse(documentId),
-            tenantId = TenantId.parse("00000000-0000-0000-0000-000000000001"),
-            filename = "doc-$documentId.pdf",
-            contentType = "application/pdf",
-            sizeBytes = 1024,
-            storageKey = "documents/$documentId.pdf",
-            uploadedAt = LocalDateTime(2026, 1, 1, 10, 0),
-            downloadUrl = null,
-        ),
-        draft = null,
-        latestIngestion = null,
-        confirmedEntity = null,
-        cashflowEntryId = null,
-        pendingMatchReview = null,
-        sources = emptyList(),
+private fun documentRecord(documentId: String): DocumentListItemDto {
+    return DocumentListItemDto(
+        documentId = DocumentId.parse(documentId),
+        tenantId = TenantId.parse("00000000-0000-0000-0000-000000000001"),
+        filename = "doc-$documentId.pdf",
+        documentType = null,
+        direction = null,
+        documentStatus = null,
+        ingestionStatus = null,
+        effectiveOrigin = DocumentSource.Upload,
+        uploadedAt = LocalDateTime(2026, 1, 1, 10, 0),
+        counterpartyDisplayName = null,
+        purposeRendered = null,
+        totalAmount = null,
+        currency = null,
     )
 }

@@ -71,7 +71,7 @@ class CounterpartySnapshotMapperTest {
 
         val snapshot = extraction.toAuthoritativeCounterpartySnapshot()
         assertNotNull(snapshot)
-        assertNull(snapshot.country)
+        assertNull(snapshot.address.country)
     }
 
     @Test

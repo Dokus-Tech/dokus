@@ -40,7 +40,7 @@ class AutoConfirmPolicyTest {
             draftData = invoiceDraft(direction = DocumentDirection.Inbound),
             auditPassed = true,
             confidence = 0.99,
-            linkedContactId = contactId,
+            contactId = contactId,
             directionResolvedFromAiHintOnly = true
         )
 
@@ -57,7 +57,7 @@ class AutoConfirmPolicyTest {
             draftData = invoiceDraft(direction = DocumentDirection.Inbound),
             auditPassed = true,
             confidence = 1.0,
-            linkedContactId = contactId,
+            contactId = contactId,
             directionResolvedFromAiHintOnly = false
         )
 
@@ -74,7 +74,7 @@ class AutoConfirmPolicyTest {
             draftData = invoiceDraft(direction = DocumentDirection.Unknown),
             auditPassed = true,
             confidence = 0.99,
-            linkedContactId = contactId,
+            contactId = contactId,
             directionResolvedFromAiHintOnly = false
         )
 
@@ -91,7 +91,7 @@ class AutoConfirmPolicyTest {
             draftData = receiptDraft(date = null),
             auditPassed = true,
             confidence = 1.0,
-            linkedContactId = null,
+            contactId = null,
             directionResolvedFromAiHintOnly = false
         )
 
@@ -108,7 +108,7 @@ class AutoConfirmPolicyTest {
             draftData = receiptDraft(merchant = null),
             auditPassed = true,
             confidence = 1.0,
-            linkedContactId = null,
+            contactId = null,
             directionResolvedFromAiHintOnly = false
         )
 
@@ -125,7 +125,7 @@ class AutoConfirmPolicyTest {
             draftData = creditNoteDraft(issueDate = null),
             auditPassed = true,
             confidence = 1.0,
-            linkedContactId = contactId,
+            contactId = contactId,
             directionResolvedFromAiHintOnly = false
         )
 

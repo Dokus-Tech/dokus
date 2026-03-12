@@ -60,8 +60,10 @@ import tech.dokus.aura.resources.cashflow_ledger_status
 import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.features.cashflow.presentation.common.utils.formatShortDate
 import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowViewMode
+import tech.dokus.foundation.aura.components.layout.DokusHeaderColumn
 import tech.dokus.foundation.aura.components.layout.DokusTableCell
 import tech.dokus.foundation.aura.components.layout.DokusTableColumnSpec
+import tech.dokus.foundation.aura.components.layout.DokusTableHeader
 import tech.dokus.foundation.aura.components.layout.DokusTableRow
 import tech.dokus.foundation.aura.components.text.Amt
 import tech.dokus.foundation.aura.constrains.Constraints
@@ -96,49 +98,16 @@ private object CashflowTableColumns {
 internal fun CashflowLedgerHeaderRow(
     modifier: Modifier = Modifier
 ) {
-    DokusTableRow(
-        modifier = modifier,
-        minHeight = Constraints.CropGuide.cornerLength,
-        contentPadding = PaddingValues(horizontal = Constraints.Spacing.large)
-    ) {
-        DokusTableCell(CashflowTableColumns.DueDate) {
-            HeaderLabel(text = stringResource(Res.string.cashflow_ledger_due_date))
-        }
-        DokusTableCell(CashflowTableColumns.Contact) {
-            HeaderLabel(text = stringResource(Res.string.cashflow_ledger_contact))
-        }
-        DokusTableCell(CashflowTableColumns.Description) {
-            HeaderLabel(text = stringResource(Res.string.cashflow_ledger_description))
-        }
-        DokusTableCell(CashflowTableColumns.Status) {
-            HeaderLabel(text = stringResource(Res.string.cashflow_ledger_status))
-        }
-        DokusTableCell(CashflowTableColumns.Amount) {
-            HeaderLabel(
-                text = stringResource(Res.string.cashflow_ledger_amount),
-                textAlign = TextAlign.End,
-            )
-        }
-        DokusTableCell(CashflowTableColumns.Actions) {
-            Spacer(modifier = Modifier.width(Constraints.Stroke.thin))
-        }
-    }
-}
-
-@Composable
-private fun HeaderLabel(
-    text: String,
-    textAlign: TextAlign = TextAlign.Start
-) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.labelSmall.copy(
-            fontWeight = FontWeight.SemiBold,
+    DokusTableHeader(
+        columns = listOf(
+            DokusHeaderColumn(label = stringResource(Res.string.cashflow_ledger_due_date), width = 80.dp),
+            DokusHeaderColumn(label = stringResource(Res.string.cashflow_ledger_contact), weight = 1f),
+            DokusHeaderColumn(label = stringResource(Res.string.cashflow_ledger_description), weight = 0.8f),
+            DokusHeaderColumn(label = stringResource(Res.string.cashflow_ledger_status), width = 70.dp),
+            DokusHeaderColumn(label = stringResource(Res.string.cashflow_ledger_amount), width = 90.dp, alignment = Alignment.End),
+            DokusHeaderColumn(label = "", width = Constraints.IconSize.xxLarge),
         ),
-        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-        textAlign = textAlign,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
+        modifier = modifier,
     )
 }
 

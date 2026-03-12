@@ -2,6 +2,7 @@ package tech.dokus.database.di
 
 import org.koin.dsl.bind
 import org.koin.dsl.module
+import tech.dokus.domain.repository.DocumentStatusChecker
 import tech.dokus.database.repository.ai.ChatRepositoryImpl
 import tech.dokus.database.repository.ai.DocumentChunksRepository
 import tech.dokus.database.repository.ai.DocumentExamplesRepository
@@ -13,14 +14,14 @@ import tech.dokus.database.repository.auth.RefreshTokenRepository
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.database.repository.auth.WelcomeEmailJobRepository
-import tech.dokus.database.repository.banking.BankingRepository
+import tech.dokus.database.repository.banking.BankAccountRepository
+import tech.dokus.database.repository.banking.BankStatementRepository
 import tech.dokus.database.repository.business.BusinessProfileEnrichmentJobRepository
 import tech.dokus.database.repository.business.BusinessProfileRepository
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.database.repository.cashflow.CashflowRepository
 import tech.dokus.database.repository.cashflow.CreditNoteRepository
 import tech.dokus.database.repository.cashflow.DocumentBlobRepository
-import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentMatchReviewRepository
 import tech.dokus.database.repository.cashflow.DocumentPurposeTemplateRepository
@@ -28,8 +29,7 @@ import tech.dokus.database.repository.cashflow.DocumentPurposeSimilarityReposito
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.DocumentSourceRepository
 import tech.dokus.database.repository.cashflow.ExpenseRepository
-import tech.dokus.database.repository.cashflow.ImportedBankTransactionRepository
-import tech.dokus.database.repository.cashflow.CashflowPaymentCandidateRepository
+import tech.dokus.database.repository.banking.BankTransactionRepository
 import tech.dokus.database.repository.cashflow.InvoiceBankMatchLinkRepository
 import tech.dokus.database.repository.cashflow.AutoPaymentAuditRepository
 import tech.dokus.database.repository.cashflow.InvoiceNumberRepository
@@ -80,13 +80,11 @@ val repositoryModuleCashflow = module {
     single { DocumentMatchReviewRepository() }
     single { DocumentPurposeTemplateRepository() }
     single { DocumentPurposeSimilarityRepository() }
-    single { ImportedBankTransactionRepository() }
-    single { CashflowPaymentCandidateRepository() }
+    single { BankTransactionRepository() }
     single { InvoiceBankMatchLinkRepository() }
     single { AutoPaymentAuditRepository() }
-    single { DocumentRepository() }
+    single { DocumentRepository() } bind DocumentStatusChecker::class
     single { DocumentIngestionRunRepository() }
-    single { DocumentDraftRepository() }
     single { InvoiceNumberRepository() }
     single { InvoiceNumberGenerator(get()) }
     single { InvoiceRepository(get()) }
@@ -129,7 +127,8 @@ val repositoryModuleProcessor = module {
  * Provides repositories for bank connections and transactions.
  */
 val repositoryModuleBanking = module {
-    single { BankingRepository() }
+    single { BankAccountRepository() }
+    single { BankStatementRepository() }
 }
 
 /**

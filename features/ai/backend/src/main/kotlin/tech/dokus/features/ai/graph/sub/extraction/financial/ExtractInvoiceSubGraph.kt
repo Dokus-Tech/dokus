@@ -260,7 +260,7 @@ private val ExtractDocumentInput.prompt
 
     ### Examples
     - B2B invoice:
-      - seller = "Google Cloud EMEA Limited", buyer = "Invoid Vision", counterparty = seller, role = SELLER.
+      - seller = "Google Cloud EMEA Limited", buyer = the tenant, counterparty = seller, role = SELLER.
     - Consumer-style invoice:
       - seller = "Example Account", footer shows "Example Distribution International Ltd.", buyer contains "Card .... 1234 (Digital Wallet)".
       - counterparty = "Example Distribution International Ltd.", role = SELLER, and never use "Card .... 1234 (Digital Wallet)" as counterparty.
@@ -280,7 +280,30 @@ private val ExtractDocumentInput.prompt
     Do not invent or mutate digits just to make an OGM appear valid.
 
     ## LINE ITEMS
-    If an itemized table is present, extract lineItems with description, quantity, unitPrice, vatRate, netAmount (line total excl VAT).
+    Extract only PRIMARY billable line items — goods or services that are the subject of the invoice.
+
+    INCLUDE:
+    - Rows with a description of a product or service AND a net amount.
+    - Sub-items (e.g. eco-contributions like Recupel, Auvibel) as SEPARATE line items
+      with their own description and amount, even if visually indented.
+
+    EXCLUDE (these are NOT line items):
+    - Subtotal rows ("Total excl. VAT", "Sous-total", "Subtotaal")
+    - VAT computation rows ("VAT 21%", "BTW", "TVA", "Reverse Charge rows")
+    - Grand total rows ("Total incl. VAT", "Totaal", "Total TTC")
+    - Payment method rows ("Automatic Collection", "Bancontact", etc.)
+    - Period or administrative fee rows that describe WHEN not WHAT
+      (e.g. "Price per Period" is a fee descriptor, not the service)
+
+    For each line item extract:
+    - description: the product/service label
+    - quantity: numeric if shown, else null
+    - unitPrice: price per unit excl. VAT, null if not shown
+    - vatRate: e.g. "21" for 21%, "0" for reverse charge
+    - netAmount: line total excl. VAT (this is the billable amount for this line)
+
+    If the table structure mixes billable rows with VAT rows, use the AMOUNT COLUMN
+    to anchor on rows that match the subtotal when summed — not on structural position.
     If no clear itemization, return an empty list.
 
     ## VAT BREAKDOWN

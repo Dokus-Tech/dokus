@@ -9,6 +9,7 @@ import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.neq
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
@@ -18,7 +19,7 @@ import org.jetbrains.exposed.v1.jdbc.update
 import tech.dokus.database.tables.documents.DocumentBlobsTable
 import tech.dokus.database.tables.documents.DocumentSourcesTable
 import tech.dokus.domain.enums.DocumentDirection
-import tech.dokus.domain.enums.DocumentMatchType
+import tech.dokus.domain.enums.SourceMatchKind
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentSourceStatus
 import tech.dokus.domain.enums.DocumentType
@@ -42,7 +43,7 @@ data class DocumentSourceSummary(
     val contentHash: String?,
     val identityKeyHash: String?,
     val status: DocumentSourceStatus,
-    val matchType: DocumentMatchType?,
+    val matchType: SourceMatchKind?,
     val isCorrective: Boolean,
     val extractedSnapshotJson: String?,
     val peppolStructuredSnapshotJson: String? = null,
@@ -65,7 +66,7 @@ data class DocumentSourceCreatePayload(
     val peppolRawUblBlobId: DocumentBlobId? = null,
     val sourceChannel: DocumentSource,
     val status: DocumentSourceStatus = DocumentSourceStatus.Linked,
-    val matchType: DocumentMatchType? = null,
+    val matchType: SourceMatchKind? = null,
     val contentHash: String? = null,
     val identityKeyHash: String? = null,
     val isCorrective: Boolean = false,
@@ -287,7 +288,7 @@ class DocumentSourceRepository {
         documentType: DocumentType?,
         direction: DocumentDirection?,
         extractedSnapshotJson: String?,
-        matchType: DocumentMatchType?
+        matchType: SourceMatchKind?
     ): Boolean = newSuspendedTransaction {
         DocumentSourcesTable.update({
             (DocumentSourcesTable.id eq UUID.fromString(sourceId.toString())) and
@@ -332,7 +333,7 @@ class DocumentSourceRepository {
         sourceId: DocumentSourceId,
         documentId: DocumentId,
         status: DocumentSourceStatus,
-        matchType: DocumentMatchType?
+        matchType: SourceMatchKind?
     ): Boolean = newSuspendedTransaction {
         DocumentSourcesTable.update({
             (DocumentSourcesTable.id eq UUID.fromString(sourceId.toString())) and
@@ -369,12 +370,42 @@ class DocumentSourceRepository {
         } > 0
     }
 
-    suspend fun selectDefaultSource(
+    suspend fun selectPreferredSource(
         tenantId: TenantId,
         documentId: DocumentId
     ): DocumentSourceSummary? {
         val sources = listByDocument(tenantId, documentId, includeDetached = false)
-        return selectDefaultSourceFromList(sources)
+        return selectPreferredSource(sources)
+    }
+
+    /**
+     * Batch-load preferred sources for a list of document IDs.
+     * Returns a map from documentId to the preferred source summary (if any).
+     */
+    suspend fun selectPreferredSourcesByDocumentIds(
+        tenantId: TenantId,
+        documentIds: List<DocumentId>
+    ): Map<DocumentId, DocumentSourceSummary> {
+        if (documentIds.isEmpty()) return emptyMap()
+        return newSuspendedTransaction {
+            val tenantUuid = UUID.fromString(tenantId.toString())
+            val docUuids = documentIds.map { UUID.fromString(it.toString()) }
+            val allSources = DocumentSourcesTable
+                .join(DocumentBlobsTable, JoinType.INNER, DocumentSourcesTable.blobId, DocumentBlobsTable.id)
+                .selectAll()
+                .where {
+                    (DocumentSourcesTable.tenantId eq tenantUuid) and
+                        (DocumentSourcesTable.documentId inList docUuids) and
+                        (DocumentSourcesTable.status eq DocumentSourceStatus.Linked)
+                }
+                .map { it.toSourceSummary() }
+
+            allSources.groupBy { it.documentId }
+                .mapNotNull { (docId, sources) ->
+                    selectPreferredSource(sources)?.let { docId to it }
+                }
+                .toMap()
+        }
     }
 
     private fun ResultRow.toSourceSummary(): DocumentSourceSummary {
@@ -440,7 +471,7 @@ private val SOURCE_TRUST_PRIORITY = mapOf(
     DocumentSource.Manual to 1
 )
 
-fun selectDefaultSourceFromList(sources: List<DocumentSourceSummary>): DocumentSourceSummary? {
+fun selectPreferredSource(sources: List<DocumentSourceSummary>): DocumentSourceSummary? {
     return sources
         .filter { it.status == DocumentSourceStatus.Linked }
         .maxWithOrNull(

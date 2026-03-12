@@ -28,7 +28,6 @@ import tech.dokus.domain.enums.CashflowDirection
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.enums.CashflowViewMode
-import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentListFilter
 import tech.dokus.domain.enums.DocumentType
@@ -53,7 +52,7 @@ import tech.dokus.domain.model.CancelEntryRequest
 import tech.dokus.domain.model.AutoPaymentStatusDto
 import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.model.CashflowOverview
-import tech.dokus.domain.model.CashflowPaymentCandidatesResponse
+import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.domain.model.CashflowPaymentRequest
 import tech.dokus.domain.model.UndoAutoPaymentRequest
 import tech.dokus.domain.model.CreateExpenseRequest
@@ -64,7 +63,8 @@ import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentIngestionDto
 import tech.dokus.domain.model.DocumentIntakeResult
 import tech.dokus.domain.model.DocumentPagesResponse
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentDetailDto
+import tech.dokus.domain.model.DocumentListItemDto
 import tech.dokus.domain.model.DocumentRecordStreamEvent
 import tech.dokus.domain.model.DocumentSourceDto
 import tech.dokus.domain.model.DocumentStreamEventNames
@@ -434,7 +434,7 @@ internal class CashflowRemoteDataSourceImpl(
 
     override suspend fun getDocument(documentId: DocumentId): Result<DocumentDto> {
         return runCatching {
-            val response: DocumentRecordDto = httpClient.get(Documents.Id(id = documentId.toString())).body()
+            val response: DocumentDetailDto = httpClient.get(Documents.Id(id = documentId.toString())).body()
             response.document
         }
     }
@@ -465,7 +465,7 @@ internal class CashflowRemoteDataSourceImpl(
     override suspend fun resolveDocumentMatchReview(
         reviewId: DocumentMatchReviewId,
         request: ResolveDocumentMatchReviewRequest
-    ): Result<DocumentRecordDto> {
+    ): Result<DocumentDetailDto> {
         return runCatching {
             httpClient.post(
                 Documents.MatchReviews.Resolve(reviewId = reviewId.toString())
@@ -541,7 +541,7 @@ internal class CashflowRemoteDataSourceImpl(
 
     override suspend fun getCashflowPaymentCandidates(
         entryId: CashflowEntryId
-    ): Result<CashflowPaymentCandidatesResponse> {
+    ): Result<List<BankTransactionDto>> {
         return runCatching {
             val entriesRoute = Cashflow.Entries()
             val idRoute = Cashflow.Entries.Id(parent = entriesRoute, id = entryId.toString())
@@ -612,7 +612,7 @@ internal class CashflowRemoteDataSourceImpl(
         ingestionStatus: IngestionStatus?,
         page: Int,
         limit: Int
-    ): Result<PaginatedResponse<DocumentRecordDto>> {
+    ): Result<PaginatedResponse<DocumentListItemDto>> {
         return runCatching {
             httpClient.get(
                 Documents.Paginated(
@@ -650,7 +650,7 @@ internal class CashflowRemoteDataSourceImpl(
         )
     }
 
-    override suspend fun getDocumentRecord(documentId: DocumentId): Result<DocumentRecordDto> {
+    override suspend fun getDocumentRecord(documentId: DocumentId): Result<DocumentDetailDto> {
         return runCatching {
             httpClient.get(Documents.Id(id = documentId.toString())).body()
         }
@@ -667,7 +667,7 @@ internal class CashflowRemoteDataSourceImpl(
             decodeEvent = { event ->
                 when (event.event) {
                     DocumentStreamEventNames.Snapshot -> event.data?.let { payload ->
-                        runCatching { json.decodeFromString(DocumentRecordDto.serializer(), payload) }
+                        runCatching { json.decodeFromString(DocumentDetailDto.serializer(), payload) }
                             .getOrNull()
                             ?.let { DocumentRecordStreamEvent.Snapshot(record = it) }
                     }
@@ -702,7 +702,7 @@ internal class CashflowRemoteDataSourceImpl(
     override suspend fun updateDocumentDraftContact(
         documentId: DocumentId,
         contactId: ContactId?,
-        counterpartyIntent: CounterpartyIntent?
+        pendingCreation: Boolean
     ): Result<Unit> {
         return runCatching {
             val docIdRoute = Documents.Id(id = documentId.toString())
@@ -711,7 +711,7 @@ internal class CashflowRemoteDataSourceImpl(
                 setBody(
                     UpdateDraftRequest(
                         contactId = contactId?.toString(),
-                        counterpartyIntent = counterpartyIntent
+                        pendingCreation = pendingCreation
                     )
                 )
             }.body<Unit>()
@@ -733,7 +733,7 @@ internal class CashflowRemoteDataSourceImpl(
 
     override suspend fun confirmDocument(
         documentId: DocumentId
-    ): Result<DocumentRecordDto> {
+    ): Result<DocumentDetailDto> {
         return runCatching {
             val docIdRoute = Documents.Id(id = documentId.toString())
             httpClient.post(Documents.Id.Confirm(parent = docIdRoute)) {
@@ -745,7 +745,7 @@ internal class CashflowRemoteDataSourceImpl(
     override suspend fun rejectDocument(
         documentId: DocumentId,
         request: RejectDocumentRequest
-    ): Result<DocumentRecordDto> {
+    ): Result<DocumentDetailDto> {
         return runCatching {
             val docIdRoute = Documents.Id(id = documentId.toString())
             httpClient.post(Documents.Id.Reject(parent = docIdRoute)) {

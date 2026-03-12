@@ -1,7 +1,6 @@
 package tech.dokus.features.cashflow.presentation.review
 
 import pro.respawn.flowmvi.dsl.withState
-import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.ContactId
@@ -72,7 +71,7 @@ internal class DocumentReviewContactBinder(
 
         withState {
             val activeDocumentId = documentId ?: return@withState
-            updateDocumentDraftContact(activeDocumentId, null, CounterpartyIntent.None)
+            updateDocumentDraftContact(activeDocumentId, null)
                 .fold(
                     onSuccess = {
                         updateState {
@@ -80,7 +79,7 @@ internal class DocumentReviewContactBinder(
                                 selectedContactId = null,
                                 selectedContactSnapshot = null,
                                 contactSelectionState = ContactSelectionState.NoContact,
-                                counterpartyIntent = CounterpartyIntent.None,
+                                isPendingCreation = false,
                                 isBindingContact = false,
                                 contactValidationError = null,
                             )
@@ -108,34 +107,29 @@ internal class DocumentReviewContactBinder(
         }
     }
 
-    suspend fun DocumentReviewCtx.handleSetCounterpartyIntent(intent: CounterpartyIntent) {
+    suspend fun DocumentReviewCtx.handleSetPendingCreation() {
         withState {
             updateState { copy(isBindingContact = true) }
         }
 
         withState {
             val activeDocumentId = documentId ?: return@withState
-            updateDocumentDraftContact(activeDocumentId, null, intent)
+            updateDocumentDraftContact(activeDocumentId, null, pendingCreation = true)
                 .fold(
                     onSuccess = {
-                        val isPending = intent == CounterpartyIntent.Pending
                         updateState {
                             copy(
-                                counterpartyIntent = intent,
-                                selectedContactId = if (isPending) null else selectedContactId,
-                                selectedContactSnapshot = if (isPending) null else selectedContactSnapshot,
-                                contactSelectionState = if (isPending) {
-                                    ContactSelectionState.NoContact
-                                } else {
-                                    contactSelectionState
-                                },
+                                isPendingCreation = true,
+                                selectedContactId = null,
+                                selectedContactSnapshot = null,
+                                contactSelectionState = ContactSelectionState.NoContact,
                                 isBindingContact = false,
                                 contactValidationError = null,
                             )
                         }
                     },
                     onFailure = { error ->
-                        logger.e(error) { "Failed to update counterparty intent" }
+                        logger.e(error) { "Failed to set pending creation" }
                         updateState { copy(isBindingContact = false) }
                         val exception = error.asDokusException
                         val displayException = if (exception is DokusException.Unknown) {
@@ -154,7 +148,7 @@ internal class DocumentReviewContactBinder(
             updateState { copy(isBindingContact = true, contactValidationError = null) }
         }
 
-        updateDocumentDraftContact(documentId, contactId, CounterpartyIntent.None)
+        updateDocumentDraftContact(documentId, contactId)
             .fold(
                 onSuccess = {
                     getContact(contactId).fold(
@@ -171,7 +165,7 @@ internal class DocumentReviewContactBinder(
                                             avatarUrl = contact.avatar?.small,
                                         ),
                                         contactSelectionState = ContactSelectionState.Selected,
-                                        counterpartyIntent = CounterpartyIntent.None,
+                                        isPendingCreation = false,
                                         isBindingContact = false,
                                     )
                                 }
@@ -185,7 +179,7 @@ internal class DocumentReviewContactBinder(
                                         selectedContactId = contactId,
                                         selectedContactSnapshot = null,
                                         contactSelectionState = ContactSelectionState.Selected,
-                                        counterpartyIntent = CounterpartyIntent.None,
+                                        isPendingCreation = false,
                                         isBindingContact = false,
                                     )
                                 }

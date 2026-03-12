@@ -70,8 +70,12 @@ internal object DirectionResolutionResolver {
         }
     }
 
-    fun resolvedCounterpartyVat(extraction: FinancialExtractionResult, direction: DocumentDirection): String? {
-        return when (extraction) {
+    fun resolvedCounterpartyVat(
+        extraction: FinancialExtractionResult,
+        direction: DocumentDirection,
+        tenantVat: String? = null
+    ): String? {
+        val raw = when (extraction) {
             is FinancialExtractionResult.Invoice -> when (direction) {
                 DocumentDirection.Inbound -> extraction.data.sellerVat?.normalized
                 DocumentDirection.Outbound -> extraction.data.buyerVat?.normalized
@@ -100,6 +104,9 @@ internal object DirectionResolutionResolver {
             is FinancialExtractionResult.Quote,
             is FinancialExtractionResult.Unsupported -> null
         }
+        // A counterparty VAT that equals the tenant VAT is always wrong (hallucination or extraction error)
+        if (raw != null && tenantVat != null && raw == tenantVat) return null
+        return raw
     }
 
     private fun resolveForParties(
@@ -202,19 +209,38 @@ internal object DirectionResolutionResolver {
     ): DirectionResolution {
         val tenantVat = tenant.vatNumber.normalized.takeIf { it.isNotBlank() }
         if (tenantVat != null && merchantVat != null) {
-            val direction = if (merchantVat == tenantVat) DocumentDirection.Outbound else DocumentDirection.Inbound
-            val counterpartyVat = if (direction == DocumentDirection.Inbound) merchantVat else null
-            return DirectionResolution(
-                direction = direction,
-                source = DirectionResolutionSource.VatMatch,
-                confidence = 1.0,
-                matchedField = "merchantVat",
-                matchedValue = merchantVat,
-                tenantVat = tenantVat,
-                counterpartyVat = counterpartyVat,
-                reasoning = "Resolved receipt direction from merchant VAT comparison"
-            )
+            if (merchantVat != tenantVat) {
+                // Different VAT → definitely inbound from this merchant
+                return DirectionResolution(
+                    direction = DocumentDirection.Inbound,
+                    source = DirectionResolutionSource.VatMatch,
+                    confidence = 1.0,
+                    matchedField = "merchantVat",
+                    matchedValue = merchantVat,
+                    tenantVat = tenantVat,
+                    counterpartyVat = merchantVat,
+                    reasoning = "Resolved receipt direction: merchant VAT differs from tenant"
+                )
+            }
+            // merchantVat == tenantVat — only trust if merchant name also matches tenant
+            val tenantNames = tenantNameCandidates(tenant, associatedPersonNames)
+            if (matchesTenantName(merchantName, tenantNames)) {
+                return DirectionResolution(
+                    direction = DocumentDirection.Outbound,
+                    source = DirectionResolutionSource.VatMatch,
+                    confidence = 1.0,
+                    matchedField = "merchantVat",
+                    matchedValue = merchantVat,
+                    tenantVat = tenantVat,
+                    counterpartyVat = null,
+                    reasoning = "Resolved receipt direction: merchant VAT and name match tenant"
+                )
+            }
+            // VAT matches but name doesn't — likely hallucinated VAT, fall through to name/hint resolution
         }
+
+        // If merchantVat equals tenantVat but name didn't match, the VAT is unreliable (hallucination)
+        val trustedMerchantVat = merchantVat?.takeIf { tenantVat == null || it != tenantVat }
 
         val tenantNames = tenantNameCandidates(tenant, associatedPersonNames)
         if (matchesTenantName(merchantName, tenantNames)) {
@@ -237,7 +263,7 @@ internal object DirectionResolutionResolver {
                 matchedField = "merchantName",
                 matchedValue = merchantName,
                 tenantVat = tenantVat,
-                counterpartyVat = merchantVat,
+                counterpartyVat = trustedMerchantVat,
                 reasoning = "Resolved receipt direction: merchant name differs from tenant"
             )
         }
@@ -251,7 +277,7 @@ internal object DirectionResolutionResolver {
                 matchedField = "directionHint",
                 matchedValue = hintDirection.name,
                 tenantVat = tenantVat,
-                counterpartyVat = if (hintDirection == DocumentDirection.Inbound) merchantVat else null,
+                counterpartyVat = if (hintDirection == DocumentDirection.Inbound) trustedMerchantVat else null,
                 reasoning = "Resolved receipt direction from AI tie-breaker hint"
             )
         }

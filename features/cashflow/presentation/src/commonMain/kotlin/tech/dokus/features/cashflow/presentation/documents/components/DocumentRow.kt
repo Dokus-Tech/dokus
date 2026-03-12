@@ -27,7 +27,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.common_unknown
@@ -35,21 +34,24 @@ import tech.dokus.aura.resources.document_table_amount
 import tech.dokus.aura.resources.document_table_date
 import tech.dokus.aura.resources.documents_table_counterparty
 import tech.dokus.aura.resources.documents_table_description
-import tech.dokus.domain.Money
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.IngestionStatus
-import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.BankStatementDraftData
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.CreditNoteDraftData
+import tech.dokus.domain.model.DocumentDetailDto
+import tech.dokus.domain.model.DocumentListItemDto
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
+import tech.dokus.domain.model.resolvedCounterpartyName
 import tech.dokus.features.cashflow.presentation.common.utils.formatShortDate
 import tech.dokus.features.cashflow.presentation.model.toUiStatus
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.badges.SourceBadge
+import tech.dokus.foundation.aura.components.layout.DokusHeaderColumn
 import tech.dokus.foundation.aura.components.layout.DokusTableCell
 import tech.dokus.foundation.aura.components.layout.DokusTableColumnSpec
+import tech.dokus.foundation.aura.components.layout.DokusTableHeader
 import tech.dokus.foundation.aura.components.layout.DokusTableRow
 import tech.dokus.foundation.aura.components.status.StatusDot
 import tech.dokus.foundation.aura.components.status.StatusDotType
@@ -63,6 +65,7 @@ import tech.dokus.foundation.aura.style.textMuted
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
+import tech.dokus.foundation.aura.components.badges.toUiSource
 import tech.dokus.foundation.aura.components.badges.DocumentSource as UiDocumentSource
 
 private val TableRowHeight = 48.dp
@@ -88,45 +91,21 @@ private object DocumentTableColumns {
 internal fun DocumentTableHeaderRow(
     modifier: Modifier = Modifier
 ) {
-    DokusTableRow(
-        modifier = modifier,
-        minHeight = 40.dp,
-        contentPadding = PaddingValues(horizontal = Constraints.Spacing.large)
-    ) {
-        DokusTableCell(DocumentTableColumns.Vendor) {
-            HeaderLabel(text = stringResource(Res.string.documents_table_counterparty))
-        }
-        DokusTableCell(DocumentTableColumns.Reference) {
-            HeaderLabel(text = stringResource(Res.string.documents_table_description))
-        }
-        DokusTableCell(DocumentTableColumns.Amount) {
-            HeaderLabel(text = stringResource(Res.string.document_table_amount))
-        }
-        DokusTableCell(DocumentTableColumns.Date) {
-            HeaderLabel(text = stringResource(Res.string.document_table_date))
-        }
-        DokusTableCell(DocumentTableColumns.Source) {
-            Spacer(modifier = Modifier.width(1.dp))
-        }
-    }
-}
-
-@Composable
-private fun HeaderLabel(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.labelSmall.copy(
-            fontWeight = FontWeight.SemiBold,
+    DokusTableHeader(
+        columns = listOf(
+            DokusHeaderColumn(label = stringResource(Res.string.documents_table_counterparty), weight = 1f),
+            DokusHeaderColumn(label = stringResource(Res.string.documents_table_description), width = 150.dp),
+            DokusHeaderColumn(label = stringResource(Res.string.document_table_amount), width = 90.dp, alignment = Alignment.End),
+            DokusHeaderColumn(label = stringResource(Res.string.document_table_date), width = 70.dp),
+            DokusHeaderColumn(label = "", width = 64.dp),
         ),
-        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis
+        modifier = modifier,
     )
 }
 
 @Composable
 internal fun DocumentTableRow(
-    document: DocumentRecordDto,
+    document: DocumentListItemDto,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -138,19 +117,19 @@ internal fun DocumentTableRow(
         is DocumentListReferenceValue.Reference -> listReference.value
         is DocumentListReferenceValue.Status -> listReference.value.localized
     }
-    val amountDouble = extractAmountDouble(document)
-    val dateLabel = formatShortDate(extractDocumentDate(document))
+    val amountDouble = document.totalAmount?.toDouble()
+    val dateLabel = formatShortDate(document.uploadedAt.date)
     val needsAttention = when (listStatus) {
         DocumentUiStatus.Queued,
         DocumentUiStatus.Processing,
         DocumentUiStatus.Failed -> true
 
-        null -> computeNeedsAttention(document)
+        null -> computeListItemNeedsAttention(document)
         else -> false
     }
     val isProcessing = listStatus == DocumentUiStatus.Queued ||
         listStatus == DocumentUiStatus.Processing
-    val source = document.document.source.toUiSource()
+    val source = document.effectiveOrigin.toUiSource()
 
     val interactionSource = remember { MutableInteractionSource() }
     val isHovered by interactionSource.collectIsHoveredAsState()
@@ -237,7 +216,7 @@ internal fun DocumentTableRow(
 
 @Composable
 internal fun DocumentMobileRow(
-    document: DocumentRecordDto,
+    document: DocumentListItemDto,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -249,19 +228,19 @@ internal fun DocumentMobileRow(
         is DocumentListReferenceValue.Reference -> listReference.value
         is DocumentListReferenceValue.Status -> listReference.value.localized
     }
-    val amountDouble = extractAmountDouble(document)
-    val dateLabel = formatShortDate(extractDocumentDate(document))
+    val amountDouble = document.totalAmount?.toDouble()
+    val dateLabel = formatShortDate(document.uploadedAt.date)
     val needsAttention = when (listStatus) {
         DocumentUiStatus.Queued,
         DocumentUiStatus.Processing,
         DocumentUiStatus.Failed -> true
 
-        null -> computeNeedsAttention(document)
+        null -> computeListItemNeedsAttention(document)
         else -> false
     }
     val isProcessing = listStatus == DocumentUiStatus.Queued ||
         listStatus == DocumentUiStatus.Processing
-    val source = document.document.source.toUiSource()
+    val source = document.effectiveOrigin.toUiSource()
 
     DokusCardSurface(
         modifier = modifier,
@@ -338,13 +317,86 @@ internal fun DocumentMobileRow(
 }
 
 // =============================================================================
-// Document State Helpers
+// List-item helpers (DocumentListItemDto)
+// =============================================================================
+
+/**
+ * Determines if a list item needs user attention using flat fields.
+ */
+internal fun computeListItemNeedsAttention(document: DocumentListItemDto): Boolean {
+    val documentStatus = document.documentStatus
+    val documentType = document.documentType
+    val ingestionStatus = document.ingestionStatus
+    val hasPendingMatchReview = document.hasPendingMatchReview
+
+    if (documentStatus == DocumentStatus.Rejected) {
+        return false
+    }
+
+    val ingestionNeedsAttention = ingestionStatus == IngestionStatus.Failed
+    val draftNeedsReview = documentStatus == DocumentStatus.NeedsReview
+    // In the list DTO we don't have confirmedEntity, so Confirmed status is treated as ready
+    // unless it has a pending match review.
+    val succeededButNoDraft = documentStatus == null && ingestionStatus == IngestionStatus.Succeeded
+    val isNotConfirmed = documentStatus == null ||
+        documentStatus != DocumentStatus.Confirmed ||
+        documentType != DocumentType.BankStatement
+
+    return hasPendingMatchReview ||
+        (isNotConfirmed && (ingestionNeedsAttention || draftNeedsReview || succeededButNoDraft))
+}
+
+internal fun resolveListInlineStatus(document: DocumentListItemDto): DocumentUiStatus? {
+    if (document.ingestionStatus == null) return null
+
+    return when (val status = document.toUiStatus()) {
+        DocumentUiStatus.Queued,
+        DocumentUiStatus.Processing,
+        DocumentUiStatus.Failed -> status
+
+        DocumentUiStatus.Review,
+        DocumentUiStatus.Ready -> null
+    }
+}
+
+internal fun resolveListReferenceValue(
+    document: DocumentListItemDto,
+    listStatus: DocumentUiStatus? = resolveListInlineStatus(document),
+): DocumentListReferenceValue {
+    return if (listStatus == null) {
+        // Use purposeRendered or filename as reference (no extractedData in list DTO)
+        val ref = document.purposeRendered?.takeIf { it.isNotBlank() }
+            ?: document.filename.takeIf { it.isNotBlank() }
+            ?: "\u2014"
+        DocumentListReferenceValue.Reference(ref)
+    } else {
+        DocumentListReferenceValue.Status(listStatus)
+    }
+}
+
+internal fun resolveListVendorName(
+    document: DocumentListItemDto,
+    unknownLabel: String,
+    listStatus: DocumentUiStatus? = resolveListInlineStatus(document),
+): String {
+    return if (listStatus == null) {
+        document.counterpartyDisplayName?.takeIf { it.isNotBlank() }
+            ?: document.filename.takeIf { it.isNotBlank() }
+            ?: unknownLabel
+    } else {
+        document.filename.takeIf { it.isNotBlank() } ?: unknownLabel
+    }
+}
+
+// =============================================================================
+// DocumentDetailDto helpers (kept for review queue mapper)
 // =============================================================================
 
 /**
  * Determines if a document needs user attention.
+ * Used by [DocumentQueueMapper] in the review context.
  */
-internal fun computeNeedsAttention(document: DocumentRecordDto): Boolean {
+internal fun computeNeedsAttention(document: DocumentDetailDto): Boolean {
     val ingestionStatus = document.latestIngestion?.status
     val documentStatus = document.draft?.documentStatus
     val documentType = document.draft?.documentType
@@ -355,9 +407,7 @@ internal fun computeNeedsAttention(document: DocumentRecordDto): Boolean {
         return false
     }
 
-    val ingestionNeedsAttention = ingestionStatus == IngestionStatus.Failed ||
-        ingestionStatus == IngestionStatus.Processing ||
-        ingestionStatus == IngestionStatus.Queued
+    val ingestionNeedsAttention = ingestionStatus == IngestionStatus.Failed
     val draftNeedsReview = documentStatus == DocumentStatus.NeedsReview
     val confirmedButNoEntity =
         documentStatus == DocumentStatus.Confirmed &&
@@ -376,56 +426,16 @@ internal fun computeNeedsAttention(document: DocumentRecordDto): Boolean {
 /**
  * Determines if a document is currently processing.
  */
-internal fun computeIsProcessing(document: DocumentRecordDto): Boolean {
+internal fun computeIsProcessing(document: DocumentDetailDto): Boolean {
     val ingestionStatus = document.latestIngestion?.status
     return ingestionStatus == IngestionStatus.Processing ||
         ingestionStatus == IngestionStatus.Queued
 }
 
-internal fun resolveListInlineStatus(document: DocumentRecordDto): DocumentUiStatus? {
-    if (document.latestIngestion == null) return null
-
-    return when (val status = document.toUiStatus()) {
-        DocumentUiStatus.Queued,
-        DocumentUiStatus.Processing,
-        DocumentUiStatus.Failed -> status
-
-        DocumentUiStatus.Review,
-        DocumentUiStatus.Ready -> null
-    }
-}
-
-internal fun resolveListReferenceValue(
-    document: DocumentRecordDto,
-    listStatus: DocumentUiStatus? = resolveListInlineStatus(document),
-): DocumentListReferenceValue {
-    return if (listStatus == null) {
-        DocumentListReferenceValue.Reference(extractReference(document))
-    } else {
-        DocumentListReferenceValue.Status(listStatus)
-    }
-}
-
-internal fun resolveListVendorName(
-    document: DocumentRecordDto,
-    unknownLabel: String,
-    listStatus: DocumentUiStatus? = resolveListInlineStatus(document),
-): String {
-    return if (listStatus == null) {
-        resolveCounterparty(document, unknownLabel)
-    } else {
-        document.document.filename.nonBlank() ?: unknownLabel
-    }
-}
-
-// =============================================================================
-// Data Extraction Helpers
-// =============================================================================
-
 /**
- * Resolves the primary description for a document.
+ * Resolves the primary description for a document (detail context).
  */
-internal fun resolveDescription(document: DocumentRecordDto, unknownLabel: String): String {
+internal fun resolveDescription(document: DocumentDetailDto, unknownLabel: String): String {
     val extractedData = document.draft?.extractedData
     val ingestionStatus = document.latestIngestion?.status
     val documentNumber = when (extractedData) {
@@ -435,13 +445,13 @@ internal fun resolveDescription(document: DocumentRecordDto, unknownLabel: Strin
         is BankStatementDraftData -> null
         else -> null
     }
-    val counterparty = document.draft?.counterpartySnapshot?.name.nonBlank()
+    val counterparty = document.draft?.counterpartyDisplayName.nonBlank()
     val filename = document.document.filename.nonBlank()
 
     return when {
-        counterparty != null && documentNumber != null -> "$counterparty — $documentNumber"
-        counterparty == null && documentNumber != null && filename != null -> "$filename — $documentNumber"
-        counterparty == null && documentNumber != null -> "Document — $documentNumber"
+        counterparty != null && documentNumber != null -> "$counterparty \u2014 $documentNumber"
+        counterparty == null && documentNumber != null && filename != null -> "$filename \u2014 $documentNumber"
+        counterparty == null && documentNumber != null -> "Document \u2014 $documentNumber"
         counterparty != null -> counterparty
         ingestionStatus == IngestionStatus.Processing ||
             ingestionStatus == IngestionStatus.Queued -> "Processing document\u2026"
@@ -452,101 +462,28 @@ internal fun resolveDescription(document: DocumentRecordDto, unknownLabel: Strin
 }
 
 /**
- * Resolves the counterparty name for display.
+ * Resolves the counterparty name for display (detail context).
+ * Used by [DocumentQueueMapper] in the review context.
  */
-internal fun resolveCounterparty(document: DocumentRecordDto, emptyLabel: String = "\u2014"): String {
-    val snapshot = document.draft?.counterpartySnapshot?.name.nonBlank()
-    if (snapshot != null) return snapshot
+internal fun resolveCounterparty(document: DocumentDetailDto, emptyLabel: String = "\u2014"): String {
+    val displayName = document.draft?.counterpartyDisplayName.nonBlank()
+    if (displayName != null) return displayName
 
     val fromDraft = when (val data = document.draft?.extractedData) {
         is InvoiceDraftData -> data.seller.name.nonBlank() ?: data.buyer.name.nonBlank()
-        is CreditNoteDraftData -> data.counterpartyName.nonBlank()
+        is CreditNoteDraftData -> data.resolvedCounterpartyName.nonBlank()
         is ReceiptDraftData -> data.merchantName.nonBlank()
-        is BankStatementDraftData -> data.transactions.firstOrNull()?.counterpartyName?.nonBlank()
+        is BankStatementDraftData -> data.transactions.firstOrNull()?.counterparty?.name?.nonBlank()
         else -> null
     }
     return fromDraft ?: document.document.filename.nonBlank() ?: emptyLabel
 }
 
-/**
- * Extracts the document reference number (invoice/receipt/credit note number).
- */
-private fun extractReference(document: DocumentRecordDto): String {
-    val extractedData = document.draft?.extractedData
-    val number = when (extractedData) {
-        is InvoiceDraftData -> extractedData.invoiceNumber.nonBlank()
-        is ReceiptDraftData -> extractedData.receiptNumber.nonBlank()
-        is CreditNoteDraftData -> extractedData.creditNoteNumber.nonBlank()
-        is BankStatementDraftData -> null
-        else -> null
-    }
-    return number ?: document.document.filename.nonBlank() ?: "\u2014"
-}
-
-/**
- * Extracts the total amount as a Double for the Amt component.
- */
-private fun extractAmountDouble(document: DocumentRecordDto): Double? {
-    val extractedData = document.draft?.extractedData
-    val amount = when (extractedData) {
-        is InvoiceDraftData -> extractedData.totalAmount
-        is ReceiptDraftData -> extractedData.totalAmount
-        is CreditNoteDraftData -> extractedData.totalAmount
-        is BankStatementDraftData -> extractedData.transactions.firstOrNull()?.signedAmount
-        else -> null
-    }
-    return amount?.toDouble()
-}
-
-@Composable
-private fun extractAmount(document: DocumentRecordDto): String {
-    val extractedData = document.draft?.extractedData
-    val amount = when (extractedData) {
-        is InvoiceDraftData -> extractedData.totalAmount
-        is ReceiptDraftData -> extractedData.totalAmount
-        is CreditNoteDraftData -> extractedData.totalAmount
-        is BankStatementDraftData -> extractedData.transactions.firstOrNull()?.signedAmount
-        else -> null
-    }
-    val currency = when (extractedData) {
-        is InvoiceDraftData -> extractedData.currency
-        is ReceiptDraftData -> extractedData.currency
-        is CreditNoteDraftData -> extractedData.currency
-        is BankStatementDraftData -> null
-        else -> null
-    }
-
-    return if (amount != null) {
-        "${currency?.displaySign ?: "\u20AC"}${amount.toDisplayStringSafe()}"
-    } else {
-        "\u2014"
-    }
-}
-
-private fun extractDocumentDate(document: DocumentRecordDto): LocalDate {
-    val extractedData = document.draft?.extractedData
-    return when (extractedData) {
-        is InvoiceDraftData -> extractedData.issueDate
-        is ReceiptDraftData -> extractedData.date
-        is CreditNoteDraftData -> extractedData.issueDate
-        is BankStatementDraftData -> extractedData.transactions.firstOrNull()?.transactionDate
-        else -> null
-    }
-        ?: document.document.uploadedAt.date
-}
-
-private fun tech.dokus.domain.enums.DocumentSource.toUiSource(): UiDocumentSource {
-    return when (this) {
-        tech.dokus.domain.enums.DocumentSource.Peppol -> UiDocumentSource.Peppol
-        else -> UiDocumentSource.Pdf
-    }
-}
+// =============================================================================
+// Shared Helpers
+// =============================================================================
 
 private fun String?.nonBlank(): String? = this?.takeIf { it.isNotBlank() }
-
-private fun Money.toDisplayStringSafe(): String {
-    return runCatching { toDisplayString() }.getOrElse { "0.00" }
-}
 
 @Preview
 @Composable

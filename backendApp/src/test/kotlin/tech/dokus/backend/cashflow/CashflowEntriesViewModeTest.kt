@@ -96,12 +96,7 @@ class CashflowEntriesViewModeTest {
     @AfterEach
     fun teardown() {
         transaction(database) {
-            SchemaUtils.drop(
-                CashflowEntriesTable,
-                ContactsTable,
-                DocumentsTable,
-                TenantTable
-            )
+            exec("DROP ALL OBJECTS")
         }
     }
 

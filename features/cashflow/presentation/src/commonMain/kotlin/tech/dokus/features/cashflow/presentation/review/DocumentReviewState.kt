@@ -12,7 +12,6 @@ import tech.dokus.aura.resources.cashflow_confirm_missing_fields
 import tech.dokus.aura.resources.cashflow_confirm_select_contact
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.CashflowEntryStatus
-import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentRejectReason
 import tech.dokus.domain.enums.DocumentSource
@@ -29,12 +28,14 @@ import tech.dokus.domain.model.BankStatementDraftData
 import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentDraftData
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.FinancialDocumentDto
-import tech.dokus.domain.model.ImportedBankTransactionDto
+import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.features.cashflow.presentation.review.models.DocumentUiData
+import tech.dokus.features.cashflow.presentation.review.models.toUiData
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.app.state.isSuccess
 import kotlin.time.Clock
@@ -79,9 +80,9 @@ data class PaymentSheetState(
     val amount: Money? = null,
     val paidAt: LocalDate = Clock.System.todayIn(TimeZone.currentSystemDefault()),
     val note: String = "",
-    val suggestedTransaction: ImportedBankTransactionDto? = null,
-    val selectedTransaction: ImportedBankTransactionDto? = null,
-    val selectableTransactions: List<ImportedBankTransactionDto> = emptyList(),
+    val suggestedTransaction: BankTransactionDto? = null,
+    val selectedTransaction: BankTransactionDto? = null,
+    val selectableTransactions: List<BankTransactionDto> = emptyList(),
     val showTransactionPicker: Boolean = false,
     val isLoadingTransactions: Boolean = false,
     val transactionsError: DokusException? = null,
@@ -104,7 +105,7 @@ enum class ReviewFinancialStatus {
 @Immutable
 data class ReviewDocumentData(
     val documentId: DocumentId,
-    val documentRecord: DocumentRecordDto,
+    val documentRecord: DocumentDetailDto,
     val draftData: DocumentDraftData?,
     val originalData: DocumentDraftData?,
     val previewUrl: String?,
@@ -127,7 +128,7 @@ data class DocumentReviewState(
     val selectedContactSnapshot: ContactSnapshot? = null,
     val contactSelectionState: ContactSelectionState = ContactSelectionState.NoContact,
     val isContactRequired: Boolean = false,
-    val counterpartyIntent: CounterpartyIntent = CounterpartyIntent.None,
+    val isPendingCreation: Boolean = false,
     val contactValidationError: DokusException? = null,
     val isBindingContact: Boolean = false,
     val isRejecting: Boolean = false,
@@ -163,12 +164,16 @@ data class DocumentReviewState(
         get() = documentData?.documentId
 
     /** The document record, available when loaded. */
-    val documentRecord: DocumentRecordDto?
+    val documentRecord: DocumentDetailDto?
         get() = documentData?.documentRecord
 
-    /** The current draft data. */
+    /** The current draft data (store-internal — composables should use [uiData] instead). */
     val draftData: DocumentDraftData?
         get() = documentData?.draftData
+
+    /** Presentation-layer document data for UI rendering. Composables should use this. */
+    val uiData: DocumentUiData?
+        get() = draftData?.toUiData()
 
     /** The original AI draft data. */
     val originalData: DocumentDraftData?
@@ -230,7 +235,7 @@ data class DocumentReviewState(
             if (isDocumentConfirmed || isDocumentRejected) return null
             val draft = draftData ?: return Res.string.cashflow_confirm_missing_fields
             return when {
-                counterpartyIntent == CounterpartyIntent.Pending -> Res.string.cashflow_confirm_select_contact
+                isPendingCreation -> Res.string.cashflow_confirm_select_contact
                 draft.isContactRequired && selectedContactId == null -> Res.string.cashflow_confirm_select_contact
                 !draft.hasKnownDirectionForConfirmation -> Res.string.cashflow_confirm_missing_fields
                 !draft.hasRequiredIdentityForConfirmation -> Res.string.cashflow_confirm_missing_fields
@@ -306,7 +311,7 @@ data class DocumentReviewState(
      */
     val description: String
         get() {
-            val counterparty = documentRecord?.draft?.counterpartySnapshot?.name?.takeIf { it.isNotBlank() }
+            val counterparty = documentRecord?.draft?.counterpartyDisplayName?.takeIf { it.isNotBlank() }
                 ?: selectedContactSnapshot?.name?.takeIf { it.isNotBlank() }
             val context = draftData.displayContextDescription
 

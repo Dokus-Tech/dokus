@@ -1,6 +1,5 @@
 package tech.dokus.app.screens.settings
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -26,7 +25,7 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.app.screens.settings.sections.BankingDetailsSection
 import tech.dokus.app.screens.settings.sections.InvoiceFormatSection
-import tech.dokus.app.screens.settings.sections.LegalIdentitySection
+import tech.dokus.app.screens.settings.sections.CompanyHeroSection
 import tech.dokus.app.screens.settings.sections.PaymentTermsSection
 import tech.dokus.app.screens.settings.sections.PeppolConnectionSection
 import tech.dokus.app.viewmodel.WorkspaceSettingsIntent
@@ -62,7 +61,8 @@ private val ContentPaddingH = 16.dp
 internal fun WorkspaceSettingsScreen(
     state: WorkspaceSettingsState,
     snackbarHostState: SnackbarHostState,
-    onIntent: (WorkspaceSettingsIntent) -> Unit
+    onIntent: (WorkspaceSettingsIntent) -> Unit,
+    onNavigateToPeppol: () -> Unit = {},
 ) {
     val isLargeScreen = LocalScreenSize.current.isLarge
     Scaffold(
@@ -74,18 +74,20 @@ internal fun WorkspaceSettingsScreen(
         WorkspaceSettingsContent(
             state = state,
             onIntent = onIntent,
-            modifier = Modifier.padding(contentPadding)
+            onNavigateToPeppol = onNavigateToPeppol,
+            modifier = Modifier.padding(contentPadding),
         )
     }
 }
 
 /**
- * Workspace settings content -- collapsible sections with PEPPOL hero card.
+ * Workspace settings content -- company hero + collapsible sections.
  */
 @Composable
 fun WorkspaceSettingsContent(
     state: WorkspaceSettingsState,
     onIntent: (WorkspaceSettingsIntent) -> Unit,
+    onNavigateToPeppol: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     // Image picker - uploads directly without cropping
@@ -116,6 +118,7 @@ fun WorkspaceSettingsContent(
                 state = state,
                 data = workspaceData.data,
                 onIntent = onIntent,
+                onNavigateToPeppol = onNavigateToPeppol,
                 avatarPicker = avatarPicker,
                 modifier = modifier,
             )
@@ -128,6 +131,7 @@ private fun WorkspaceSettingsContentScreen(
     state: WorkspaceSettingsState,
     data: WorkspaceSettingsState.WorkspaceData,
     onIntent: (WorkspaceSettingsIntent) -> Unit,
+    onNavigateToPeppol: () -> Unit,
     avatarPicker: FilePickerLauncher,
     modifier: Modifier = Modifier,
 ) {
@@ -140,8 +144,8 @@ private fun WorkspaceSettingsContentScreen(
     val editingSection = state.editingSection
     val isLegalIdentityLocked = state.isLegalIdentityLocked
 
-    // Section expansion state -- PEPPOL always expanded
-    var legalIdentityExpanded by remember { mutableStateOf(!isLegalIdentityLocked) }
+    // Section expansion state
+    var peppolExpanded by remember { mutableStateOf(false) }
     var bankingExpanded by remember { mutableStateOf(false) }
     var invoiceFormatExpanded by remember { mutableStateOf(false) }
     var paymentTermsExpanded by remember { mutableStateOf(false) }
@@ -156,25 +160,12 @@ private fun WorkspaceSettingsContentScreen(
             modifier = Modifier
                 .widthIn(max = MaxContentWidth)
                 .padding(horizontal = ContentPaddingH)
-                .padding(top = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(0.dp),
+                .padding(top = Constraints.Spacing.medium),
         ) {
-            // 1. PEPPOL Connection -- always expanded hero card
-            PeppolConnectionSection(
-                peppolRegistration = peppolRegistration,
-                peppolActivity = peppolActivity,
-                expanded = true,
-                onToggle = { /* always expanded */ },
-            )
-
-            Spacer(Modifier.height(20.dp))
-
-            // 2. Legal Identity
-            LegalIdentitySection(
+            // 1. Company Hero -- non-collapsible, centered avatar
+            CompanyHeroSection(
                 formState = formState,
                 isLocked = isLegalIdentityLocked,
-                expanded = legalIdentityExpanded,
-                onToggle = { legalIdentityExpanded = !legalIdentityExpanded },
                 editMode = editingSection == WorkspaceSettingsState.EditingSection.LegalIdentity,
                 onEdit = {
                     onIntent(WorkspaceSettingsIntent.EnterEditMode(
@@ -191,6 +182,15 @@ private fun WorkspaceSettingsContentScreen(
                 avatarState = avatarState,
                 currentAvatar = currentAvatar,
                 avatarPicker = avatarPicker,
+            )
+
+            // 2. PEPPOL Connection -- collapsible
+            PeppolConnectionSection(
+                peppolRegistration = peppolRegistration,
+                peppolActivity = peppolActivity,
+                expanded = peppolExpanded,
+                onToggle = { peppolExpanded = !peppolExpanded },
+                onConfigurePeppol = onNavigateToPeppol,
             )
 
             // 3. Banking Details
@@ -256,10 +256,10 @@ private fun WorkspaceSettingsContentScreen(
             // Save State Feedback
             SaveStateFeedback(
                 saveState = saveState,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
+                modifier = Modifier.align(Alignment.CenterHorizontally),
             )
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(Constraints.Spacing.xLarge))
         }
     }
 }

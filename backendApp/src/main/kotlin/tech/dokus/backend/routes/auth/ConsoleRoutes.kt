@@ -19,13 +19,12 @@ import tech.dokus.backend.security.requireTenantAccess
 import tech.dokus.backend.services.auth.FirmInviteTokenService
 import tech.dokus.database.repository.auth.FirmRepository
 import tech.dokus.database.repository.auth.TenantRepository
-import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.domain.enums.UserRole
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.auth.AcceptFirmInviteRequest
 import tech.dokus.domain.model.auth.AcceptFirmInviteResponse
 import tech.dokus.domain.model.auth.ConsoleClientSummary
@@ -40,7 +39,6 @@ internal fun Route.consoleRoutes() {
     val firmRepository by inject<FirmRepository>()
     val tenantRepository by inject<TenantRepository>()
     val documentRepository by inject<DocumentRepository>()
-    val draftRepository by inject<DocumentDraftRepository>()
     val ingestionRepository by inject<DocumentIngestionRunRepository>()
     val minioStorage by inject<MinioDocumentStorageService>()
     val inviteTokenService by inject<FirmInviteTokenService>()
@@ -106,9 +104,9 @@ internal fun Route.consoleRoutes() {
             )
 
             val records = documentsWithInfo.map { docInfo ->
-                val documentWithUrl = addDownloadUrl(docInfo.document, minioStorage, logger)
+                val documentWithUrl = addDownloadUrl(docInfo.document, null, minioStorage, logger)
 
-                DocumentRecordDto(
+                DocumentDetailDto(
                     document = documentWithUrl,
                     draft = docInfo.draft?.toDto(),
                     latestIngestion = docInfo.latestIngestion?.toDto(),
@@ -141,13 +139,13 @@ internal fun Route.consoleRoutes() {
 
             val document = documentRepository.getById(tenantId, documentId)
                 ?: throw DokusException.NotFound("Document not found")
-            val documentWithUrl = addDownloadUrl(document, minioStorage, logger)
-            val draft = draftRepository.getByDocumentId(documentId, tenantId)
+            val documentWithUrl = addDownloadUrl(document, null, minioStorage, logger)
+            val draft = documentRepository.getDraftByDocumentId(documentId, tenantId)
             val latestIngestion = ingestionRepository.getLatestForDocument(documentId, tenantId)
 
             call.respond(
                 HttpStatusCode.OK,
-                DocumentRecordDto(
+                DocumentDetailDto(
                     document = documentWithUrl,
                     draft = draft?.toDto(),
                     latestIngestion = latestIngestion?.toDto(

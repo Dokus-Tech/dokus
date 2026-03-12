@@ -1,0 +1,398 @@
+package tech.dokus.features.banking.presentation.payments.components
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.Button
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.unit.dp
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
+import androidx.compose.ui.text.style.TextAlign
+import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.banking_action_add_expense
+import tech.dokus.aura.resources.banking_action_confirm_match
+import tech.dokus.aura.resources.banking_action_ignore
+import tech.dokus.aura.resources.banking_action_link
+import tech.dokus.aura.resources.banking_detail_counterparty
+import tech.dokus.aura.resources.banking_detail_description
+import tech.dokus.aura.resources.banking_detail_evidence
+import tech.dokus.aura.resources.banking_detail_iban
+import tech.dokus.aura.resources.banking_detail_ignored_reason
+import tech.dokus.aura.resources.banking_detail_matched_by
+import tech.dokus.aura.resources.banking_detail_reference
+import tech.dokus.aura.resources.banking_detail_resolution
+import tech.dokus.aura.resources.banking_detail_title
+import tech.dokus.aura.resources.banking_detail_trust
+import tech.dokus.domain.Money
+import tech.dokus.domain.enums.BankTransactionSource
+import tech.dokus.domain.enums.BankTransactionStatus
+import tech.dokus.domain.enums.Currency
+import tech.dokus.domain.enums.IgnoredReason
+import tech.dokus.domain.enums.MatchedBy
+import tech.dokus.domain.enums.ResolutionType
+import tech.dokus.domain.enums.StatementTrust
+import tech.dokus.domain.ids.BankTransactionId
+import tech.dokus.domain.ids.Iban
+import tech.dokus.domain.ids.StructuredCommunication
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.BankTransactionDto
+import tech.dokus.domain.model.TransactionCommunication
+import tech.dokus.domain.model.contact.CounterpartySnapshot
+import tech.dokus.foundation.aura.components.text.Amt
+import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.extensions.localized
+import tech.dokus.foundation.aura.extensions.statusColor
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
+
+@Composable
+internal fun TransactionDetailPane(
+    transaction: BankTransactionDto,
+    onClose: () -> Unit,
+    onLinkDocument: () -> Unit,
+    onIgnore: () -> Unit,
+    onConfirmMatch: () -> Unit,
+    onCreateExpense: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier.padding(Constraints.Spacing.large)) {
+        // Header: title + close
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(Res.string.banking_detail_title),
+                style = MaterialTheme.typography.titleMedium,
+            )
+            IconButton(onClick = onClose) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "Close",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+
+        Spacer(Modifier.height(Constraints.Spacing.large))
+
+        // Hero amount + date
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = Constraints.Spacing.large),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Amt(
+                minorUnits = transaction.signedAmount.minor,
+                size = MaterialTheme.typography.headlineMedium.fontSize,
+                weight = FontWeight.Bold,
+            )
+            Spacer(Modifier.height(Constraints.Spacing.xSmall))
+            Text(
+                text = formatShortDate(transaction.transactionDate),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        Spacer(Modifier.height(Constraints.Spacing.large))
+
+        // Detail rows
+        transaction.counterparty.name?.let {
+            DetailRow(
+                label = stringResource(Res.string.banking_detail_counterparty),
+                value = it,
+            )
+        }
+        transaction.counterparty.iban?.let {
+            DetailRow(
+                label = stringResource(Res.string.banking_detail_iban),
+                value = it.toString(),
+            )
+        }
+        val referenceText = when (val comm = transaction.communication) {
+            is TransactionCommunication.Structured -> comm.raw
+            is TransactionCommunication.FreeForm -> comm.text
+            null -> null
+        }
+        referenceText?.let {
+            DetailRow(
+                label = stringResource(Res.string.banking_detail_reference),
+                value = it,
+            )
+        }
+        transaction.descriptionRaw?.let {
+            Spacer(Modifier.height(Constraints.Spacing.medium))
+            Text(
+                text = stringResource(Res.string.banking_detail_description).uppercase(),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(Constraints.Spacing.xSmall))
+            Text(
+                text = it,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+        }
+
+        Spacer(Modifier.height(Constraints.Spacing.large))
+
+        // Status
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = "\u2022 ",
+                color = transaction.status.statusColor,
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            Text(
+                text = transaction.status.localized,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
+            )
+        }
+
+        // Trust badge
+        if (transaction.statementTrust != StatementTrust.High) {
+            Spacer(Modifier.height(Constraints.Spacing.small))
+            DetailRow(
+                label = stringResource(Res.string.banking_detail_trust),
+                value = transaction.statementTrust.localized,
+            )
+        }
+
+        // Match metadata (when matched)
+        if (transaction.status == BankTransactionStatus.Matched) {
+            transaction.matchedBy?.let {
+                DetailRow(
+                    label = stringResource(Res.string.banking_detail_matched_by),
+                    value = it.localized,
+                )
+            }
+            transaction.resolutionType?.let {
+                DetailRow(
+                    label = stringResource(Res.string.banking_detail_resolution),
+                    value = it.localized,
+                )
+            }
+            transaction.matchEvidence?.takeIf { it.isNotEmpty() }?.let { evidence ->
+                DetailRow(
+                    label = stringResource(Res.string.banking_detail_evidence),
+                    value = evidence.joinToString(", "),
+                )
+            }
+        }
+
+        // Ignored reason (when ignored)
+        if (transaction.status == BankTransactionStatus.Ignored) {
+            transaction.ignoredReason?.let {
+                DetailRow(
+                    label = stringResource(Res.string.banking_detail_ignored_reason),
+                    value = it.localized,
+                )
+            }
+        }
+
+        Spacer(Modifier.height(Constraints.Spacing.xLarge))
+
+        // Action buttons
+        when (transaction.status) {
+            BankTransactionStatus.Unmatched -> {
+                Button(
+                    onClick = onLinkDocument,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(stringResource(Res.string.banking_action_link))
+                }
+                if (transaction.signedAmount.isNegative) {
+                    Spacer(Modifier.height(Constraints.Spacing.small))
+                    OutlinedButton(
+                        onClick = onCreateExpense,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(stringResource(Res.string.banking_action_add_expense))
+                    }
+                }
+                Spacer(Modifier.height(Constraints.Spacing.small))
+                OutlinedButton(
+                    onClick = onIgnore,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(stringResource(Res.string.banking_action_ignore))
+                }
+            }
+            BankTransactionStatus.NeedsReview -> {
+                Button(
+                    onClick = onConfirmMatch,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(stringResource(Res.string.banking_action_confirm_match))
+                }
+                Spacer(Modifier.height(Constraints.Spacing.small))
+                OutlinedButton(
+                    onClick = onLinkDocument,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(stringResource(Res.string.banking_action_link))
+                }
+                if (transaction.signedAmount.isNegative) {
+                    Spacer(Modifier.height(Constraints.Spacing.small))
+                    OutlinedButton(
+                        onClick = onCreateExpense,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(stringResource(Res.string.banking_action_add_expense))
+                    }
+                }
+                Spacer(Modifier.height(Constraints.Spacing.small))
+                OutlinedButton(
+                    onClick = onIgnore,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(stringResource(Res.string.banking_action_ignore))
+                }
+            }
+            BankTransactionStatus.Matched,
+            BankTransactionStatus.Ignored -> {
+                // No actions for resolved transactions
+            }
+        }
+    }
+}
+
+@Composable
+private fun DetailRow(
+    label: String,
+    value: String,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = Constraints.Spacing.xSmall),
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.End,
+        )
+    }
+}
+
+// =============================================================================
+// Previews
+// =============================================================================
+
+private val PreviewDateTime = LocalDateTime(2026, 2, 15, 10, 0)
+private val PreviewTenantId = TenantId.generate()
+
+private val PreviewUnmatchedTx = BankTransactionDto(
+    id = BankTransactionId.generate(),
+    tenantId = PreviewTenantId,
+    source = BankTransactionSource.PdfStatement,
+    transactionDate = LocalDate(2026, 2, 14),
+    signedAmount = Money.parseOrThrow("-1250.00"),
+    counterparty = CounterpartySnapshot(
+        name = "Coolblue Belgi\u00EB NV",
+        iban = Iban("BE68539007547034"),
+    ),
+    communication = TransactionCommunication.Structured(
+        raw = "+++090/9337/55493+++",
+        normalized = StructuredCommunication("+++090/9337/55493+++"),
+    ),
+    descriptionRaw = "Payment for order #12345",
+    status = BankTransactionStatus.Unmatched,
+    currency = Currency.Eur,
+    createdAt = PreviewDateTime,
+    updatedAt = PreviewDateTime,
+)
+
+private val PreviewMatchedTx = BankTransactionDto(
+    id = BankTransactionId.generate(),
+    tenantId = PreviewTenantId,
+    source = BankTransactionSource.PdfStatement,
+    transactionDate = LocalDate(2026, 2, 12),
+    signedAmount = Money.parseOrThrow("-89.99"),
+    counterparty = CounterpartySnapshot(
+        name = "DigitalOcean",
+        iban = Iban("BE71096123456769"),
+    ),
+    communication = TransactionCommunication.FreeForm(text = "DO Invoice #12345"),
+    status = BankTransactionStatus.Matched,
+    matchedBy = MatchedBy.Auto,
+    resolutionType = ResolutionType.Document,
+    matchScore = 1.0,
+    matchEvidence = listOf("exact_amount", "structured_comm_match"),
+    matchedAt = PreviewDateTime,
+    statementTrust = StatementTrust.High,
+    currency = Currency.Eur,
+    createdAt = PreviewDateTime,
+    updatedAt = PreviewDateTime,
+)
+
+@Preview(name = "Detail Pane — Unmatched", widthDp = 280, heightDp = 700)
+@Composable
+private fun TransactionDetailPaneUnmatchedPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
+) {
+    TestWrapper(parameters) {
+        TransactionDetailPane(
+            transaction = PreviewUnmatchedTx,
+            onClose = {},
+            onLinkDocument = {},
+            onIgnore = {},
+            onConfirmMatch = {},
+            onCreateExpense = {},
+            modifier = Modifier.width(280.dp),
+        )
+    }
+}
+
+@Preview(name = "Detail Pane — Matched", widthDp = 280, heightDp = 700)
+@Composable
+private fun TransactionDetailPaneMatchedPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
+) {
+    TestWrapper(parameters) {
+        TransactionDetailPane(
+            transaction = PreviewMatchedTx,
+            onClose = {},
+            onLinkDocument = {},
+            onIgnore = {},
+            onConfirmMatch = {},
+            onCreateExpense = {},
+            modifier = Modifier.width(280.dp),
+        )
+    }
+}
+

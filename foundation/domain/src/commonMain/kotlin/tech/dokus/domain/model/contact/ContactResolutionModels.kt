@@ -3,6 +3,7 @@ package tech.dokus.domain.model.contact
 import kotlinx.serialization.Serializable
 import tech.dokus.domain.Email
 import tech.dokus.domain.enums.Country
+import tech.dokus.domain.ids.Bic
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.VatNumber
@@ -10,17 +11,23 @@ import tech.dokus.domain.model.entity.EntityLookup
 import tech.dokus.domain.model.entity.EntityStatus
 
 @Serializable
-data class CounterpartySnapshot(
-    val name: String? = null,
-    val vatNumber: VatNumber? = null,
-    val iban: Iban? = null,
-    val email: Email? = null,
-    val companyNumber: String? = null,
+data class PostalAddress(
     val streetLine1: String? = null,
     val streetLine2: String? = null,
     val postalCode: String? = null,
     val city: String? = null,
-    val country: Country? = null
+    val country: Country? = null,
+)
+
+@Serializable
+data class CounterpartySnapshot(
+    val name: String? = null,
+    val vatNumber: VatNumber? = null,
+    val iban: Iban? = null,
+    val bic: Bic? = null,
+    val email: Email? = null,
+    val companyNumber: String? = null,
+    val address: PostalAddress = PostalAddress(),
 )
 
 @Serializable

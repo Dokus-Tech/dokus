@@ -6,10 +6,9 @@ import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDateTime
 import org.junit.jupiter.api.Test
-import tech.dokus.database.repository.cashflow.DocumentDraftRepository
+import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.DocumentPurposeSimilarityRepository
 import tech.dokus.database.repository.cashflow.DraftSummary
-import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentPurposeSource
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
@@ -20,12 +19,12 @@ import kotlin.test.assertTrue
 
 class DocumentPurposeSimilarityServiceTest {
 
-    private val draftRepository = mockk<DocumentDraftRepository>()
+    private val documentRepository = mockk<DocumentRepository>()
     private val similarityRepository = mockk<DocumentPurposeSimilarityRepository>(relaxed = true)
     private val embeddingService = mockk<EmbeddingService>()
 
     private val service = DocumentPurposeSimilarityService(
-        draftRepository = draftRepository,
+        documentRepository = documentRepository,
         similarityRepository = similarityRepository,
         embeddingService = embeddingService
     )
@@ -83,7 +82,7 @@ class DocumentPurposeSimilarityServiceTest {
 
     @Test
     fun `indexConfirmedDocument still upserts when embedding fails`() = runTest {
-        coEvery { draftRepository.getByDocumentId(documentId, tenantId) } returns confirmedDraft()
+        coEvery { documentRepository.getDraftByDocumentId(documentId, tenantId) } returns confirmedDraft()
         coEvery { embeddingService.generateEmbedding(any()) } throws RuntimeException("embedding down")
 
         service.indexConfirmedDocument(tenantId = tenantId, documentId = documentId)
@@ -112,7 +111,6 @@ class DocumentPurposeSimilarityServiceTest {
             documentStatus = DocumentStatus.Confirmed,
             documentType = DocumentType.Invoice,
             extractedData = null,
-            aiDraftData = null,
             purposeBase = "ChatGPT subscription",
             purposeRendered = "OpenAI - ChatGPT subscription February 2026",
             purposeSource = DocumentPurposeSource.AiRag,
@@ -122,8 +120,7 @@ class DocumentPurposeSimilarityServiceTest {
             draftVersion = 0,
             draftEditedAt = null,
             draftEditedBy = null,
-            linkedContactId = null,
-            counterpartyIntent = CounterpartyIntent.None,
+            counterparty = null,
             rejectReason = null,
             lastSuccessfulRunId = null,
             createdAt = now,

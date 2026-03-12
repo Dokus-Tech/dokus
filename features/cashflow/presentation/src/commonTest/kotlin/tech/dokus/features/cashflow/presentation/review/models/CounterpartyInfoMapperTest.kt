@@ -3,7 +3,6 @@ package tech.dokus.features.cashflow.presentation.review.models
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import tech.dokus.domain.Money
-import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.Country
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentSource
@@ -16,9 +15,11 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.DocumentDto
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.InvoiceDraftData
+import tech.dokus.domain.model.contact.CounterpartyInfo
 import tech.dokus.domain.model.contact.CounterpartySnapshot
+import tech.dokus.domain.model.contact.PostalAddress
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.ReviewDocumentData
 import tech.dokus.foundation.app.state.DokusState
@@ -35,10 +36,12 @@ class CounterpartyInfoMapperTest {
                 name = "Apple Distribution International Ltd.",
                 vatNumber = VatNumber.from("IE9700053D"),
                 iban = Iban.from("IE29AIBK93115212345678"),
-                streetLine1 = "Hollyhill Industrial Estate",
-                postalCode = "T23",
-                city = "Cork",
-                country = Country.Belgium
+                address = PostalAddress(
+                    streetLine1 = "Hollyhill Industrial Estate",
+                    postalCode = "T23",
+                    city = "Cork",
+                    country = Country.Belgium
+                )
             )
         )
 
@@ -46,7 +49,7 @@ class CounterpartyInfoMapperTest {
         assertEquals("Apple Distribution International Ltd.", info.name)
         assertEquals("IE9700053D", info.vatNumber)
         assertEquals("IE29AIBK93115212345678", info.iban)
-        assertEquals("Hollyhill Industrial Estate, T23 Cork, BE", info.address)
+        assertEquals("Hollyhill Industrial Estate, T23 Cork, BE", info.address?.formatted)
     }
 
     @Test
@@ -72,34 +75,33 @@ class CounterpartyInfoMapperTest {
             subtotalAmount = Money.from("100.00")
         )
 
+        val counterpartyInfo = when {
+            counterpartySnapshot != null -> CounterpartyInfo.Unresolved(snapshot = counterpartySnapshot)
+            else -> null
+        }
+
         val draft = DocumentDraftDto(
             documentId = documentId,
             tenantId = tenantId,
             documentStatus = DocumentStatus.NeedsReview,
             documentType = DocumentType.Invoice,
             extractedData = draftData,
-            aiDraftData = draftData,
             aiDraftSourceRunId = null,
             draftVersion = 0,
             draftEditedAt = null,
             draftEditedBy = null,
-            linkedContactId = contactId,
-            counterpartySnapshot = counterpartySnapshot,
-            counterpartyIntent = CounterpartyIntent.None,
+            counterparty = counterpartyInfo,
             lastSuccessfulRunId = null,
             createdAt = now,
             updatedAt = now
         )
 
-        val record = DocumentRecordDto(
+        val record = DocumentDetailDto(
             document = DocumentDto(
                 id = documentId,
                 tenantId = tenantId,
                 filename = "invoice.pdf",
-                contentType = "application/pdf",
-                sizeBytes = 1200L,
-                storageKey = "documents/$tenantId/invoice.pdf",
-                source = DocumentSource.Upload,
+                effectiveOrigin = DocumentSource.Upload,
                 uploadedAt = now
             ),
             draft = draft,
@@ -120,7 +122,7 @@ class CounterpartyInfoMapperTest {
             ),
             isContactRequired = true,
             selectedContactId = contactId,
-            counterpartyIntent = CounterpartyIntent.None
+            isPendingCreation = false,
         )
     }
 }

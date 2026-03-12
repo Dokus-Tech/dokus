@@ -12,15 +12,14 @@ import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.database.tables.cashflow.CashflowEntriesTable
 import tech.dokus.database.tables.cashflow.InvoicesTable
 import tech.dokus.database.tables.documents.AutoPaymentAuditEventsTable
-import tech.dokus.database.tables.documents.CashflowPaymentCandidatesTable
-import tech.dokus.database.tables.documents.ImportedBankTransactionsTable
+import tech.dokus.database.tables.banking.BankTransactionsTable
 import tech.dokus.database.tables.payment.PaymentsTable
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.AutoPaymentDecision
 import tech.dokus.domain.enums.AutoPaymentTriggerSource
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.CashflowSourceType
-import tech.dokus.domain.enums.ImportedBankTransactionStatus
+import tech.dokus.domain.enums.BankTransactionStatus
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.enums.PaymentCreatedBy
 import tech.dokus.domain.enums.PaymentSource
@@ -133,55 +132,49 @@ class CashflowPaymentService(
             val bankTxId = request.bankTransactionId
             if (bankTxId != null) {
                 val txUuid = bankTxId.value.toJavaUuid()
-                val tx = ImportedBankTransactionsTable.selectAll().where {
-                    (ImportedBankTransactionsTable.id eq txUuid) and
-                        (ImportedBankTransactionsTable.tenantId eq tenantUuid)
+                val tx = BankTransactionsTable.selectAll().where {
+                    (BankTransactionsTable.id eq txUuid) and
+                        (BankTransactionsTable.tenantId eq tenantUuid)
                 }.singleOrNull() ?: throw DokusException.NotFound("Imported bank transaction not found")
 
-                if (tx[ImportedBankTransactionsTable.linkedCashflowEntryId] != null &&
-                    tx[ImportedBankTransactionsTable.linkedCashflowEntryId] != entryUuid
+                if (tx[BankTransactionsTable.matchedCashflowId] != null &&
+                    tx[BankTransactionsTable.matchedCashflowId] != entryUuid
                 ) {
-                    throw DokusException.BadRequest("Imported transaction is already linked")
+                    throw DokusException.BadRequest("Imported transaction is already matched")
                 }
 
-                ImportedBankTransactionsTable.update({
-                    (ImportedBankTransactionsTable.id eq txUuid) and
-                        (ImportedBankTransactionsTable.tenantId eq tenantUuid)
+                BankTransactionsTable.update({
+                    (BankTransactionsTable.id eq txUuid) and
+                        (BankTransactionsTable.tenantId eq tenantUuid)
                 }) {
-                    it[status] = ImportedBankTransactionStatus.Linked
-                    it[linkedCashflowEntryId] = entryUuid
-                    it[suggestedCashflowEntryId] = entryUuid
+                    it[status] = BankTransactionStatus.Matched
+                    it[matchedCashflowId] = entryUuid
+                    it[matchedBy] = tech.dokus.domain.enums.MatchedBy.Manual
+                    it[resolutionType] = tech.dokus.domain.enums.ResolutionType.Document
                 }
-            }
-
-            CashflowPaymentCandidatesTable.deleteWhere {
-                (CashflowPaymentCandidatesTable.tenantId eq tenantUuid) and
-                    (CashflowPaymentCandidatesTable.cashflowEntryId eq entryUuid)
             }
 
             if (request.dismissSuggestedMatch) {
-                ImportedBankTransactionsTable.update({
-                    (ImportedBankTransactionsTable.tenantId eq tenantUuid) and
-                        (ImportedBankTransactionsTable.suggestedCashflowEntryId eq entryUuid) and
-                        (ImportedBankTransactionsTable.status eq ImportedBankTransactionStatus.Suggested)
+                BankTransactionsTable.update({
+                    (BankTransactionsTable.tenantId eq tenantUuid) and
+                        (BankTransactionsTable.matchedCashflowId eq entryUuid) and
+                        (BankTransactionsTable.status eq BankTransactionStatus.NeedsReview)
                 }) {
-                    it[suggestedCashflowEntryId] = null
-                    it[suggestedScore] = null
-                    it[suggestedTier] = null
-                    it[status] = ImportedBankTransactionStatus.Ignored
+                    it[matchedCashflowId] = null
+                    it[matchScore] = null
+                    it[status] = BankTransactionStatus.Ignored
                 }
             }
 
-            ImportedBankTransactionsTable.update({
-                (ImportedBankTransactionsTable.tenantId eq tenantUuid) and
-                    (ImportedBankTransactionsTable.suggestedCashflowEntryId eq entryUuid) and
-                    (ImportedBankTransactionsTable.status neq ImportedBankTransactionStatus.Linked) and
-                    (ImportedBankTransactionsTable.status neq ImportedBankTransactionStatus.Ignored)
+            BankTransactionsTable.update({
+                (BankTransactionsTable.tenantId eq tenantUuid) and
+                    (BankTransactionsTable.matchedCashflowId eq entryUuid) and
+                    (BankTransactionsTable.status neq BankTransactionStatus.Matched) and
+                    (BankTransactionsTable.status neq BankTransactionStatus.Ignored)
             }) {
-                it[suggestedCashflowEntryId] = null
-                it[suggestedScore] = null
-                it[suggestedTier] = null
-                it[status] = ImportedBankTransactionStatus.Unmatched
+                it[matchedCashflowId] = null
+                it[matchScore] = null
+                it[status] = BankTransactionStatus.Unmatched
             }
         }
 

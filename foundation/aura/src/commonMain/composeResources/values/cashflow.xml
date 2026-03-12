@@ -637,6 +637,9 @@
     <string name="inspector_conflict_confirmation">Conflicting financial facts require confirmation.</string>
     <string name="inspector_fuzzy_match">Potential same document found with fuzzy identity match.</string>
     <string name="inspector_label_automation">Automation</string>
+    <string name="inspector_label_period">Period</string>
+    <string name="inspector_label_transactions">Transactions</string>
+    <string name="cashflow_bank_statement_details_section">Bank Statement Details</string>
 
     <!-- Mobile Canonical -->
     <string name="mobile_unknown_vendor">Unknown vendor</string>

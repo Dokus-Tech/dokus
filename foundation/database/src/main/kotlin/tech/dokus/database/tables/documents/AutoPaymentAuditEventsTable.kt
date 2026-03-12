@@ -16,7 +16,7 @@ object AutoPaymentAuditEventsTable : UUIDTable("auto_payment_audit_events") {
     val invoiceId = uuid("invoice_id").references(InvoicesTable.id, onDelete = ReferenceOption.SET_NULL).nullable()
     val cashflowEntryId = uuid("cashflow_entry_id").references(CashflowEntriesTable.id, onDelete = ReferenceOption.SET_NULL).nullable()
     val importedBankTransactionId = uuid("imported_bank_transaction_id")
-        .references(ImportedBankTransactionsTable.id, onDelete = ReferenceOption.SET_NULL)
+        .references(tech.dokus.database.tables.banking.BankTransactionsTable.id, onDelete = ReferenceOption.SET_NULL)
         .nullable()
 
     val triggerSource = dbEnumeration<AutoPaymentTriggerSource>("trigger_source")

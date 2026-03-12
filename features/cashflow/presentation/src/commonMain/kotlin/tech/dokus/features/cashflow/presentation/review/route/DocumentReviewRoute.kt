@@ -23,7 +23,6 @@ import tech.dokus.aura.resources.action_confirm
 import tech.dokus.aura.resources.cashflow_discard_changes_message
 import tech.dokus.aura.resources.cashflow_discard_changes_title
 import tech.dokus.aura.resources.cashflow_document_confirmed
-import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
@@ -41,7 +40,6 @@ import tech.dokus.features.cashflow.presentation.review.components.DocumentRevie
 import tech.dokus.features.cashflow.presentation.review.components.FeedbackDialog
 import tech.dokus.features.cashflow.presentation.review.components.RecordPaymentDialog
 import tech.dokus.features.cashflow.presentation.review.components.RejectDocumentDialog
-import tech.dokus.features.cashflow.presentation.review.components.SourceEvidenceDialog
 import tech.dokus.features.cashflow.presentation.review.screen.DocumentReviewScreen
 import tech.dokus.features.contacts.usecases.ListContactsUseCase
 import tech.dokus.features.cashflow.usecases.ObserveDocumentCollectionChangesUseCase
@@ -236,12 +234,12 @@ internal fun DocumentReviewRoute(
             },
             onCreateContact = { counterparty ->
                 if (isAccountantReadOnly) return@DocumentReviewScreen
-                dispatchIntent(DocumentReviewIntent.SetCounterpartyIntent(CounterpartyIntent.Pending))
+                dispatchIntent(DocumentReviewIntent.SetPendingCreation)
                 navController.navigateTo(
                     ContactsDestination.CreateContact(
                         prefillCompanyName = counterparty.name,
                         prefillVat = counterparty.vatNumber,
-                        prefillAddress = counterparty.address,
+                        prefillAddress = counterparty.address?.formatted,
                         origin = ContactCreateOrigin.DocumentReview.name,
                     )
                 )
@@ -301,15 +299,13 @@ internal fun DocumentReviewRoute(
                 // Close sheet and navigate to contact creation
                 if (isAccountantReadOnly) return@ContactEditSheet
                 dispatchIntent(DocumentReviewIntent.CloseContactSheet)
-                dispatchIntent(
-                    DocumentReviewIntent.SetCounterpartyIntent(CounterpartyIntent.Pending)
-                )
+                dispatchIntent(DocumentReviewIntent.SetPendingCreation)
                 val counterparty = tech.dokus.features.cashflow.presentation.review.models.counterpartyInfo(state)
                 navController.navigateTo(
                     ContactsDestination.CreateContact(
                         prefillCompanyName = counterparty.name,
                         prefillVat = counterparty.vatNumber,
-                        prefillAddress = counterparty.address,
+                        prefillAddress = counterparty.address?.formatted,
                         origin = ContactCreateOrigin.DocumentReview.name,
                     )
                 )
@@ -381,23 +377,12 @@ internal fun DocumentReviewRoute(
         )
     }
 
-    val viewerState = state.sourceViewerState
-    if (isLargeScreen && state.hasContent && viewerState != null) {
-        SourceEvidenceDialog(
-            contentState = state,
-            viewerState = viewerState,
-            onClose = { dispatchIntent(DocumentReviewIntent.CloseSourceModal) },
-            onToggleTechnicalDetails = {
-                dispatchIntent(DocumentReviewIntent.ToggleSourceTechnicalDetails)
-            },
-            onRetry = { dispatchIntent(DocumentReviewIntent.OpenSourceModal(viewerState.sourceId)) },
-        )
-    }
     state.paymentSheetState?.let { paymentState ->
         if (isAccountantReadOnly) return@let
-        val currencySign = when (val data = state.draftData) {
-            is tech.dokus.domain.model.InvoiceDraftData -> data.currency.displaySign
-            is tech.dokus.domain.model.CreditNoteDraftData -> data.currency.displaySign
+        val currencySign = when (val uiData = state.uiData) {
+            is tech.dokus.features.cashflow.presentation.review.models.DocumentUiData.Invoice -> uiData.currencySign
+            is tech.dokus.features.cashflow.presentation.review.models.DocumentUiData.CreditNote -> uiData.currencySign
+            is tech.dokus.features.cashflow.presentation.review.models.DocumentUiData.Receipt -> uiData.currencySign
             else -> "\u20AC"
         }
         RecordPaymentDialog(
@@ -440,7 +425,7 @@ private fun DocumentReviewIntent.isBlockedForAccountantReadOnly(): Boolean = whe
     is DocumentReviewIntent.AcceptSuggestedContact,
     is DocumentReviewIntent.ClearSelectedContact,
     is DocumentReviewIntent.ContactCreated,
-    is DocumentReviewIntent.SetCounterpartyIntent,
+    is DocumentReviewIntent.SetPendingCreation,
     is DocumentReviewIntent.OpenContactSheet,
     is DocumentReviewIntent.CloseContactSheet,
     is DocumentReviewIntent.UpdateContactSheetSearch,

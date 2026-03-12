@@ -18,7 +18,6 @@ import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.database.repository.cashflow.CreditNoteRepository
 import tech.dokus.database.repository.cashflow.DocumentCreatePayload
-import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.ExpenseRepository
@@ -26,6 +25,7 @@ import tech.dokus.database.repository.cashflow.InvoiceNumberRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
 import tech.dokus.database.services.InvoiceNumberGenerator
 import tech.dokus.database.tables.auth.TenantTable
+import tech.dokus.database.tables.auth.UsersTable
 import tech.dokus.database.tables.cashflow.CashflowEntriesTable
 import tech.dokus.database.tables.cashflow.CreditNotesTable
 import tech.dokus.database.tables.cashflow.ExpensesTable
@@ -33,7 +33,6 @@ import tech.dokus.database.tables.cashflow.InvoiceItemsTable
 import tech.dokus.database.tables.cashflow.InvoicesTable
 import tech.dokus.database.tables.contacts.ContactsTable
 import tech.dokus.database.tables.documents.DocumentBlobsTable
-import tech.dokus.database.tables.documents.DocumentDraftsTable
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
 import tech.dokus.database.tables.documents.DocumentSourcesTable
 import tech.dokus.database.tables.documents.DocumentsTable
@@ -77,7 +76,6 @@ class CashflowProjectionReconciliationTest {
     private val tenantRepository = TenantRepository()
     private val documentRepository = DocumentRepository()
     private val ingestionRepository = DocumentIngestionRunRepository()
-    private val draftRepository = DocumentDraftRepository()
     private val invoiceRepository = InvoiceRepository(InvoiceNumberGenerator(InvoiceNumberRepository()))
     private val expenseRepository = ExpenseRepository()
     private val creditNoteRepository = CreditNoteRepository()
@@ -109,12 +107,12 @@ class CashflowProjectionReconciliationTest {
         transaction(database) {
             SchemaUtils.create(
                 TenantTable,
+                UsersTable,
+                ContactsTable,
                 DocumentsTable,
                 DocumentBlobsTable,
                 DocumentSourcesTable,
                 DocumentIngestionRunsTable,
-                DocumentDraftsTable,
-                ContactsTable,
                 InvoicesTable,
                 InvoiceItemsTable,
                 ExpensesTable,
@@ -150,20 +148,7 @@ class CashflowProjectionReconciliationTest {
     @AfterEach
     fun teardown() {
         transaction(database) {
-            SchemaUtils.drop(
-                CashflowEntriesTable,
-                CreditNotesTable,
-                ExpensesTable,
-                InvoiceItemsTable,
-                InvoicesTable,
-                ContactsTable,
-                DocumentDraftsTable,
-                DocumentIngestionRunsTable,
-                DocumentSourcesTable,
-                DocumentBlobsTable,
-                DocumentsTable,
-                TenantTable
-            )
+            exec("DROP ALL OBJECTS")
         }
     }
 
@@ -251,17 +236,13 @@ class CashflowProjectionReconciliationTest {
         val documentId = documentRepository.create(
             tenantId = tenantId,
             payload = DocumentCreatePayload(
-                filename = "invoice.pdf",
-                contentType = "application/pdf",
-                sizeBytes = 100L,
-                storageKey = "test/$tenantUuid/invoice-${UUID.randomUUID()}.pdf",
-                contentHash = null,
-                source = DocumentSource.Upload
+                canonicalContentHash = null,
+                effectiveOrigin = DocumentSource.Upload
             )
         )
 
         val runId = ingestionRepository.createRun(documentId, tenantId)
-        draftRepository.createOrUpdateFromIngestion(
+        documentRepository.createOrUpdateFromIngestion(
             documentId = documentId,
             tenantId = tenantId,
             runId = runId,
@@ -278,7 +259,7 @@ class CashflowProjectionReconciliationTest {
             documentType = DocumentType.Invoice,
             force = true
         )
-        draftRepository.updateDocumentStatus(documentId, tenantId, DocumentStatus.Confirmed)
+        documentRepository.updateDocumentStatus(documentId, tenantId, DocumentStatus.Confirmed)
 
         val invoiceId = UUID.randomUUID()
         val invoiceNumber = "INV-RECON-${UUID.randomUUID().toString().take(8)}"

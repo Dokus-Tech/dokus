@@ -43,9 +43,9 @@ enum class IntelligenceMode(
      */
     Assisted(
         dbValue = "ASSISTED",
-        orchestratorModel = "qwen/qwen3-32b",
+        orchestratorModel = "qwen/qwen3-8b",
         visionModel = "qwen/qwen3-vl-8b",
-        chatModel = "qwen/qwen3-32b",
+        chatModel = "openai/gpt-oss-20b",
         maxIterations = 48,
     ),
 
@@ -63,9 +63,9 @@ enum class IntelligenceMode(
      */
     Autonomous(
         dbValue = "AUTONOMOUS",
-        orchestratorModel = "qwen/qwen3-32b",
+        orchestratorModel = "qwen/qwen3-8b",
         visionModel = "qwen/qwen3-vl-30b",
-        chatModel = "qwen/qwen3-32b",
+        chatModel = "openai/gpt-oss-20b",
         maxIterations = 64,
     ),
 
@@ -84,7 +84,7 @@ enum class IntelligenceMode(
      */
     Sovereign(
         dbValue = "SOVEREIGN",
-        orchestratorModel = "openai/gpt-oss-20b",
+        orchestratorModel = "qwen/qwen3-8b",
         visionModel = "qwen/qwen3-vl-30b",
         chatModel = "openai/gpt-oss-20b",
         maxIterations = 128,

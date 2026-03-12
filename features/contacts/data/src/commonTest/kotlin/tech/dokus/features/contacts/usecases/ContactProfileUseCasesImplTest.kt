@@ -8,6 +8,7 @@ import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.InvoiceStatus
+import tech.dokus.domain.enums.ContactLinkSource
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.ContactNoteId
 import tech.dokus.domain.ids.DocumentId
@@ -15,8 +16,9 @@ import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.InvoiceNumber
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.DocumentDraftDto
+import tech.dokus.domain.model.contact.CounterpartyInfo
 import tech.dokus.domain.model.DocumentDto
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.InvoiceItemDto
@@ -177,7 +179,7 @@ class ContactProfileUseCasesImplTest {
     private class FakeContactRemoteDataSource : ContactRemoteDataSource {
         var outboundInvoices: List<FinancialDocumentDto.InvoiceDto> = emptyList()
         var inboundInvoices: List<FinancialDocumentDto.InvoiceDto> = emptyList()
-        val documentRecords = mutableMapOf<DocumentId, DocumentRecordDto>()
+        val documentRecords = mutableMapOf<DocumentId, DocumentDetailDto>()
         val requestedDocumentIds = mutableListOf<DocumentId>()
 
         override suspend fun listContacts(
@@ -243,7 +245,7 @@ class ContactProfileUseCasesImplTest {
             )
         }
 
-        override suspend fun getDocumentRecord(documentId: DocumentId): Result<DocumentRecordDto> {
+        override suspend fun getDocumentRecord(documentId: DocumentId): Result<DocumentDetailDto> {
             requestedDocumentIds += documentId
             return documentRecords[documentId]
                 ?.let { Result.success(it) }
@@ -359,15 +361,12 @@ private fun documentRecord(
     purposeRendered: String? = null,
     purposeBase: String? = null,
     confirmedEntity: FinancialDocumentDto? = null,
-): DocumentRecordDto {
-    return DocumentRecordDto(
+): DocumentDetailDto {
+    return DocumentDetailDto(
         document = DocumentDto(
             id = documentId,
             tenantId = tenantId,
             filename = filename,
-            contentType = "application/pdf",
-            sizeBytes = 1024,
-            storageKey = "documents/$filename",
             uploadedAt = now
         ),
         draft = DocumentDraftDto(
@@ -376,14 +375,13 @@ private fun documentRecord(
             documentStatus = DocumentStatus.Confirmed,
             documentType = DocumentType.Invoice,
             extractedData = InvoiceDraftData(invoiceNumber = confirmedEntityReference(confirmedEntity)),
-            aiDraftData = null,
             purposeBase = purposeBase,
             purposeRendered = purposeRendered,
             aiDraftSourceRunId = null,
             draftVersion = 0,
             draftEditedAt = null,
             draftEditedBy = null,
-            linkedContactId = contactId,
+            counterparty = if (contactId != null) CounterpartyInfo.Linked(contactId = contactId, source = ContactLinkSource.AI) else null,
             lastSuccessfulRunId = null,
             createdAt = now,
             updatedAt = now

@@ -11,6 +11,7 @@ import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.PaymentMethod
 import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.model.contact.CounterpartySnapshot
 
 /**
  * Canonical, normalized draft data shown to users and used for confirmation.
@@ -19,11 +20,32 @@ import tech.dokus.domain.ids.VatNumber
 @Serializable
 sealed interface DocumentDraftData
 
+fun DocumentDraftData.toDirection(): DocumentDirection = when (this) {
+    is InvoiceDraftData -> direction
+    is CreditNoteDraftData -> direction
+    is ReceiptDraftData -> direction
+    is BankStatementDraftData -> direction
+}
+
 fun DocumentDraftData.toDocumentType(): DocumentType = when (this) {
     is InvoiceDraftData -> DocumentType.Invoice
     is CreditNoteDraftData -> DocumentType.CreditNote
     is ReceiptDraftData -> DocumentType.Receipt
     is BankStatementDraftData -> DocumentType.BankStatement
+}
+
+fun DocumentDraftData.toTotalAmount(): Money? = when (this) {
+    is InvoiceDraftData -> totalAmount
+    is CreditNoteDraftData -> totalAmount
+    is ReceiptDraftData -> totalAmount
+    is BankStatementDraftData -> null
+}
+
+fun DocumentDraftData.toCurrency(): Currency = when (this) {
+    is InvoiceDraftData -> currency
+    is CreditNoteDraftData -> currency
+    is ReceiptDraftData -> currency
+    is BankStatementDraftData -> Currency.default
 }
 
 @Serializable
@@ -73,16 +95,27 @@ data class CreditNoteDraftData(
     val totalAmount: Money? = null,
     val lineItems: List<FinancialLineItem> = emptyList(),
     val vatBreakdown: List<VatBreakdownEntry> = emptyList(),
-    val counterpartyName: String? = null,
-    val counterpartyVat: VatNumber? = null,
     val originalInvoiceNumber: String? = null,
     val reason: String? = null,
     val notes: String? = null,
     // Neutral party model used for deterministic direction and counterparty resolution.
     val seller: PartyDraft = PartyDraft(),
     val buyer: PartyDraft = PartyDraft(),
-) : DocumentDraftData {
-}
+) : DocumentDraftData
+
+val CreditNoteDraftData.resolvedCounterpartyName: String?
+    get() = when (direction) {
+        DocumentDirection.Inbound -> seller.name
+        DocumentDirection.Outbound -> buyer.name
+        else -> seller.name ?: buyer.name
+    }
+
+val CreditNoteDraftData.resolvedCounterpartyVat: VatNumber?
+    get() = when (direction) {
+        DocumentDirection.Inbound -> seller.vat
+        DocumentDirection.Outbound -> buyer.vat
+        else -> seller.vat ?: buyer.vat
+    }
 
 @Serializable
 @SerialName("receipt_draft")
@@ -106,12 +139,11 @@ data class ReceiptDraftData(
 data class BankStatementTransactionDraftRow(
     val transactionDate: LocalDate? = null,
     val signedAmount: Money? = null,
-    val counterpartyName: String? = null,
-    val counterpartyIban: Iban? = null,
-    val structuredCommunicationRaw: String? = null,
+    val counterparty: CounterpartySnapshot = CounterpartySnapshot(),
+    val communication: TransactionCommunication? = null,
     val descriptionRaw: String? = null,
     val rowConfidence: Double = 0.0,
-    val largeAmountFlag: Boolean = false
+    val largeAmountFlag: Boolean = false,
 )
 
 @Serializable
@@ -119,5 +151,10 @@ data class BankStatementTransactionDraftRow(
 data class BankStatementDraftData(
     val direction: DocumentDirection = DocumentDirection.Neutral,
     val transactions: List<BankStatementTransactionDraftRow> = emptyList(),
-    val notes: String? = null
+    val accountIban: Iban? = null,
+    val openingBalance: Money? = null,
+    val closingBalance: Money? = null,
+    val periodStart: LocalDate? = null,
+    val periodEnd: LocalDate? = null,
+    val notes: String? = null,
 ) : DocumentDraftData

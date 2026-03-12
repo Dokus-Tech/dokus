@@ -34,6 +34,13 @@ private val CompactPaddingV = 1.dp
  */
 enum class DocumentSource { Pdf, Peppol }
 
+fun tech.dokus.domain.enums.DocumentSource.toUiSource(): DocumentSource {
+    return when (this) {
+        tech.dokus.domain.enums.DocumentSource.Peppol -> DocumentSource.Peppol
+        else -> DocumentSource.Pdf
+    }
+}
+
 /**
  * Inline badge showing document origin — PDF or PEPPOL.
  *

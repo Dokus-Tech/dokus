@@ -3,25 +3,23 @@ package tech.dokus.domain.model
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
-import tech.dokus.domain.enums.ContactLinkSource
-import tech.dokus.domain.enums.CounterpartyIntent
+import tech.dokus.domain.Money
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentPurposeSource
 import tech.dokus.domain.enums.DocumentRejectReason
+import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.enums.ProcessingOutcome
 import tech.dokus.domain.enums.PurposePeriodMode
 import tech.dokus.domain.ids.CashflowEntryId
-import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
-import tech.dokus.domain.model.contact.CounterpartySnapshot
-import tech.dokus.domain.model.contact.MatchEvidence
-import tech.dokus.domain.model.contact.SuggestedContact
+import tech.dokus.domain.model.contact.CounterpartyInfo
 import kotlin.time.Instant
 
 /**
@@ -72,7 +70,6 @@ data class DocumentDraftDto(
     val documentType: DocumentType?,
     val direction: DocumentDirection = DocumentDirection.Unknown,
     val extractedData: DocumentDraftData?,
-    val aiDraftData: DocumentDraftData?, // Original immutable AI extraction (for diff display)
     val aiKeywords: List<String> = emptyList(),
     val purposeBase: String? = null,
     val purposePeriodYear: Int? = null,
@@ -81,16 +78,12 @@ data class DocumentDraftDto(
     val purposeSource: DocumentPurposeSource? = null,
     val purposeLocked: Boolean = false,
     val purposePeriodMode: PurposePeriodMode = PurposePeriodMode.IssueMonth,
-    val aiDraftSourceRunId: IngestionRunId?, // Which run produced ai_draft_data
+    val aiDraftSourceRunId: IngestionRunId?, // Which run first produced the AI draft
     val draftVersion: Int,
     val draftEditedAt: LocalDateTime?,
     val draftEditedBy: UserId?,
-    val contactSuggestions: List<SuggestedContact> = emptyList(),
-    val counterpartySnapshot: CounterpartySnapshot? = null,
-    val matchEvidence: MatchEvidence? = null,
-    val linkedContactId: ContactId?,
-    val linkedContactSource: ContactLinkSource? = null,
-    val counterpartyIntent: CounterpartyIntent = CounterpartyIntent.None,
+    val counterparty: CounterpartyInfo? = null,
+    val counterpartyDisplayName: String? = null,
     val rejectReason: DocumentRejectReason? = null,
     val lastSuccessfulRunId: IngestionRunId?,
     val createdAt: LocalDateTime,
@@ -98,10 +91,36 @@ data class DocumentDraftDto(
 )
 
 /**
- * Document record DTO - envelope containing full document state.
- * Used as the consistent response type for all document endpoints.
+ * Flattened DTO for document list endpoints.
+ * Contains only the fields needed for rendering a document row in a list/table.
+ * No nested sub-objects — all fields are top-level for efficient serialization.
+ */
+@Serializable
+data class DocumentListItemDto(
+    val documentId: DocumentId,
+    val tenantId: TenantId,
+    val filename: String,
+    val documentType: DocumentType?,
+    val direction: DocumentDirection?,
+    val documentStatus: DocumentStatus?,
+    val ingestionStatus: IngestionStatus?,
+    val effectiveOrigin: DocumentSource,
+    val uploadedAt: LocalDateTime,
+    val counterpartyDisplayName: String?,
+    val purposeRendered: String?,
+    val totalAmount: Money?,
+    val currency: Currency?,
+    val downloadUrl: String? = null,
+    val hasPendingMatchReview: Boolean = false,
+    val sourceCount: Int = 1,
+    val cashflowEntryId: CashflowEntryId? = null,
+)
+
+/**
+ * Full document detail DTO - envelope containing complete document state.
+ * Used for single-document detail/review endpoints.
  *
- * - document: File metadata (always present)
+ * - document: Canonical document metadata (always present)
  * - draft: Editable extraction state (present if document has been processed)
  * - latestIngestion: Current/last ingestion run (present if any runs exist)
  *   - Selection priority: Processing > latest Succeeded/Failed > latest Queued
@@ -109,7 +128,7 @@ data class DocumentDraftDto(
  * - cashflowEntryId: The created cashflow entry ID (present if confirmed)
  */
 @Serializable
-data class DocumentRecordDto(
+data class DocumentDetailDto(
     val document: DocumentDto,
     val draft: DocumentDraftDto?,
     val latestIngestion: DocumentIngestionDto?,
@@ -162,7 +181,7 @@ data class ReprocessResponse(
 data class UpdateDraftRequest(
     val extractedData: DocumentDraftData? = null,
     val contactId: String? = null,
-    val counterpartyIntent: CounterpartyIntent? = null,
+    val pendingCreation: Boolean? = null,
     val purpose: String? = null,
     val purposePeriodMode: PurposePeriodMode? = null,
     val changeDescription: String? = null

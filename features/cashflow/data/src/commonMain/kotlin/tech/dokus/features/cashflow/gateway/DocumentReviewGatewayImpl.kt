@@ -1,7 +1,6 @@
 package tech.dokus.features.cashflow.gateway
 
 import kotlinx.coroutines.flow.Flow
-import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentMatchReviewId
@@ -31,12 +30,12 @@ internal class DocumentReviewGatewayImpl(
     override suspend fun updateDocumentDraftContact(
         documentId: DocumentId,
         contactId: ContactId?,
-        counterpartyIntent: CounterpartyIntent?
+        pendingCreation: Boolean
     ): Result<Unit> {
         return cashflowRemoteDataSource.updateDocumentDraftContact(
             documentId = documentId,
             contactId = contactId,
-            counterpartyIntent = counterpartyIntent
+            pendingCreation = pendingCreation
         )
     }
 

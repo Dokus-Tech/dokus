@@ -31,7 +31,9 @@ import tech.dokus.features.cashflow.presentation.review.compressedStatusDetailLo
 import tech.dokus.features.cashflow.presentation.review.dotType
 import tech.dokus.features.cashflow.presentation.review.statusBadgeLocalized
 import tech.dokus.features.cashflow.presentation.review.components.details.CounterpartyCard
-import tech.dokus.features.cashflow.presentation.review.components.details.InvoiceDetailsCard
+import tech.dokus.features.cashflow.presentation.review.components.details.DocumentDetailsCard
+import tech.dokus.features.cashflow.presentation.review.components.details.UnknownDocumentDetailsCard
+import tech.dokus.features.cashflow.presentation.review.models.DocumentUiData
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.icons.LockIcon
 import tech.dokus.foundation.aura.components.status.StatusDot
@@ -76,31 +78,19 @@ internal fun ReviewInspectorPane(
                 .padding(horizontal = Constraints.Spacing.medium),
             verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
         ) {
-            InspectorFactGroupCard {
-                CounterpartyCard(
-                    state = state,
-                    onIntent = onIntent,
-                    onCorrectContact = onCorrectContact,
-                    onCreateContact = onCreateContact,
-                )
+            val uiData = state.uiData
+            when (uiData) {
+                is DocumentUiData.Invoice -> InspectorBody(state, uiData, isAccountantReadOnly, onIntent, onCorrectContact, onCreateContact)
+                is DocumentUiData.CreditNote -> InspectorBody(state, uiData, isAccountantReadOnly, onIntent, onCorrectContact, onCreateContact)
+                is DocumentUiData.Receipt -> InspectorBody(state, uiData, isAccountantReadOnly, onIntent, onCorrectContact, onCreateContact)
+                is DocumentUiData.BankStatement -> InspectorBody(state, uiData, onIntent)
+                null -> InspectorBody(state, isAccountantReadOnly, onIntent, onCorrectContact, onCreateContact)
             }
-            InspectorFactGroupCard {
-                InvoiceDetailsCard(
-                    state = state,
-                    onIntent = onIntent,
-                )
-            }
-            InspectorAmountSection(state = state)
             InspectorSourcesSection(
                 state = state,
                 isAccountantReadOnly = isAccountantReadOnly,
                 onIntent = onIntent,
                 showSourceList = false,
-            )
-            InspectorPaymentSection(
-                state = state,
-                isAccountantReadOnly = isAccountantReadOnly,
-                onIntent = onIntent,
             )
         }
 
@@ -133,6 +123,160 @@ private fun InspectorFactGroupCard(
         }
     }
 }
+
+// region InspectorBody overloads
+
+@Composable
+private fun InspectorBody(
+    state: DocumentReviewState,
+    data: DocumentUiData.Invoice,
+    isAccountantReadOnly: Boolean,
+    onIntent: (DocumentReviewIntent) -> Unit,
+    onCorrectContact: () -> Unit,
+    onCreateContact: () -> Unit,
+) {
+    FinancialDocumentBody(
+        state = state,
+        isAccountantReadOnly = isAccountantReadOnly,
+        onIntent = onIntent,
+        onCorrectContact = onCorrectContact,
+        onCreateContact = onCreateContact,
+    ) {
+        DocumentDetailsCard(
+            data = data,
+            isReadOnly = isAccountantReadOnly || state.isDocumentConfirmed || state.isDocumentRejected,
+            onDirectionSelected = { onIntent(DocumentReviewIntent.SelectDirection(it)) },
+        )
+    }
+    InspectorAmountSection(
+        total = data.totalAmount,
+        subtotal = data.subtotalAmount,
+        vat = data.vatAmount,
+        currencySign = data.currencySign,
+        financialStatus = state.financialStatus,
+    )
+    InspectorPaymentSection(state = state, isAccountantReadOnly = isAccountantReadOnly, onIntent = onIntent)
+}
+
+@Composable
+private fun InspectorBody(
+    state: DocumentReviewState,
+    data: DocumentUiData.CreditNote,
+    isAccountantReadOnly: Boolean,
+    onIntent: (DocumentReviewIntent) -> Unit,
+    onCorrectContact: () -> Unit,
+    onCreateContact: () -> Unit,
+) {
+    FinancialDocumentBody(
+        state = state,
+        isAccountantReadOnly = isAccountantReadOnly,
+        onIntent = onIntent,
+        onCorrectContact = onCorrectContact,
+        onCreateContact = onCreateContact,
+    ) {
+        DocumentDetailsCard(
+            data = data,
+            isReadOnly = isAccountantReadOnly || state.isDocumentConfirmed || state.isDocumentRejected,
+            onDirectionSelected = { onIntent(DocumentReviewIntent.SelectDirection(it)) },
+        )
+    }
+    InspectorAmountSection(
+        total = data.totalAmount,
+        subtotal = data.subtotalAmount,
+        vat = data.vatAmount,
+        currencySign = data.currencySign,
+        financialStatus = state.financialStatus,
+    )
+    InspectorPaymentSection(state = state, isAccountantReadOnly = isAccountantReadOnly, onIntent = onIntent)
+}
+
+@Composable
+private fun InspectorBody(
+    state: DocumentReviewState,
+    data: DocumentUiData.Receipt,
+    isAccountantReadOnly: Boolean,
+    onIntent: (DocumentReviewIntent) -> Unit,
+    onCorrectContact: () -> Unit,
+    onCreateContact: () -> Unit,
+) {
+    FinancialDocumentBody(
+        state = state,
+        isAccountantReadOnly = isAccountantReadOnly,
+        onIntent = onIntent,
+        onCorrectContact = onCorrectContact,
+        onCreateContact = onCreateContact,
+    ) {
+        DocumentDetailsCard(data = data)
+    }
+    InspectorAmountSection(
+        total = data.totalAmount,
+        subtotal = null,
+        vat = data.vatAmount,
+        currencySign = data.currencySign,
+        financialStatus = state.financialStatus,
+    )
+    InspectorPaymentSection(state = state, isAccountantReadOnly = isAccountantReadOnly, onIntent = onIntent)
+}
+
+@Composable
+private fun InspectorBody(
+    state: DocumentReviewState,
+    data: DocumentUiData.BankStatement,
+    onIntent: (DocumentReviewIntent) -> Unit,
+) {
+    InspectorFactGroupCard {
+        DocumentDetailsCard(data = data)
+    }
+}
+
+@Composable
+private fun InspectorBody(
+    state: DocumentReviewState,
+    isAccountantReadOnly: Boolean,
+    onIntent: (DocumentReviewIntent) -> Unit,
+    onCorrectContact: () -> Unit,
+    onCreateContact: () -> Unit,
+) {
+    InspectorFactGroupCard {
+        CounterpartyCard(
+            state = state,
+            onIntent = onIntent,
+            onCorrectContact = onCorrectContact,
+            onCreateContact = onCreateContact,
+        )
+    }
+    InspectorFactGroupCard {
+        UnknownDocumentDetailsCard(
+            state = state,
+            isAccountantReadOnly = isAccountantReadOnly,
+            onIntent = onIntent,
+        )
+    }
+}
+
+@Composable
+private fun FinancialDocumentBody(
+    state: DocumentReviewState,
+    isAccountantReadOnly: Boolean,
+    onIntent: (DocumentReviewIntent) -> Unit,
+    onCorrectContact: () -> Unit,
+    onCreateContact: () -> Unit,
+    detailsCard: @Composable () -> Unit,
+) {
+    InspectorFactGroupCard {
+        CounterpartyCard(
+            state = state,
+            onIntent = onIntent,
+            onCorrectContact = onCorrectContact,
+            onCreateContact = onCreateContact,
+        )
+    }
+    InspectorFactGroupCard {
+        detailsCard()
+    }
+}
+
+// endregion
 
 @Composable
 private fun InspectorHeader(

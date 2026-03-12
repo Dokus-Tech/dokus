@@ -7,7 +7,7 @@ import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import tech.dokus.backend.services.cashflow.CashflowEntriesService
 import tech.dokus.backend.util.isUniqueViolation
-import tech.dokus.database.repository.cashflow.DocumentDraftRepository
+import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
 import tech.dokus.domain.Money
 import tech.dokus.domain.VatRate
@@ -18,6 +18,8 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.contact.CounterpartyInfo
+import tech.dokus.domain.model.contact.isLinked
 import tech.dokus.domain.model.CreateInvoiceRequest
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.InvoiceItemDto
@@ -33,7 +35,7 @@ import java.util.UUID
 class InvoiceConfirmationService(
     private val invoiceRepository: InvoiceRepository,
     private val cashflowEntriesService: CashflowEntriesService,
-    private val draftRepository: DocumentDraftRepository,
+    private val documentRepository: DocumentRepository,
 ) {
     private val logger = loggerFor()
 
@@ -42,14 +44,16 @@ class InvoiceConfirmationService(
         tenantId: TenantId,
         documentId: DocumentId,
         draftData: InvoiceDraftData,
-        linkedContactId: ContactId?
+        contactId: ContactId?
     ): Result<ConfirmationResult> = runSuspendCatching {
         logger.info("Confirming invoice document: $documentId for tenant: $tenantId")
 
-        val draft = requireConfirmableDraft(draftRepository, tenantId, documentId)
+        val draft = requireConfirmableDraft(documentRepository, tenantId, documentId)
         val isReconfirm = draft.documentStatus == DocumentStatus.NeedsReview
 
-        val contactId = linkedContactId ?: draft.linkedContactId
+        val counterparty = draft.counterparty
+        val contactId = contactId
+            ?: if (counterparty.isLinked()) counterparty.contactId else null
             ?: throw DokusException.BadRequest("Invoice requires a linked contact")
 
         val items = buildInvoiceItems(draftData)
@@ -117,7 +121,7 @@ class InvoiceConfirmationService(
             ).getOrThrow()
         }
 
-        draftRepository.updateDocumentStatus(documentId, tenantId, DocumentStatus.Confirmed)
+        documentRepository.updateDocumentStatus(documentId, tenantId, DocumentStatus.Confirmed)
 
         logger.info("Invoice confirmed: $documentId -> invoiceId=${invoice.id}, entryId=${cashflowEntry.id}")
         ConfirmationResult(entity = invoice, cashflowEntryId = cashflowEntry.id, documentId = documentId)

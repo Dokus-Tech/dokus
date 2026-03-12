@@ -50,7 +50,8 @@ import tech.dokus.aura.resources.payment_suggested_match
 import tech.dokus.aura.resources.payment_use_manual_entry
 import tech.dokus.aura.resources.state_saving
 import tech.dokus.aura.resources.payment_amount_label
-import tech.dokus.domain.ids.ImportedBankTransactionId
+import tech.dokus.domain.ids.BankTransactionId
+import tech.dokus.domain.model.TransactionCommunication
 import tech.dokus.features.cashflow.presentation.review.PaymentSheetState
 import tech.dokus.foundation.aura.components.PDatePickerDialog
 import tech.dokus.foundation.aura.constrains.Constraints
@@ -69,7 +70,7 @@ internal fun RecordPaymentDialog(
     onNoteChange: (String) -> Unit,
     onOpenTransactionPicker: () -> Unit,
     onCloseTransactionPicker: () -> Unit,
-    onSelectTransaction: (ImportedBankTransactionId) -> Unit,
+    onSelectTransaction: (BankTransactionId) -> Unit,
     onClearSelectedTransaction: () -> Unit,
     onSubmit: () -> Unit,
     onDismiss: () -> Unit,
@@ -115,7 +116,7 @@ private fun RecordPaymentDialogContent(
     onNoteChange: (String) -> Unit,
     onOpenTransactionPicker: () -> Unit,
     onCloseTransactionPicker: () -> Unit,
-    onSelectTransaction: (ImportedBankTransactionId) -> Unit,
+    onSelectTransaction: (BankTransactionId) -> Unit,
     onClearSelectedTransaction: () -> Unit,
     onSubmit: () -> Unit,
     onDismiss: () -> Unit,
@@ -164,7 +165,7 @@ private fun RecordPaymentDialogBody(
     onNoteChange: (String) -> Unit,
     onOpenTransactionPicker: () -> Unit,
     onCloseTransactionPicker: () -> Unit,
-    onSelectTransaction: (ImportedBankTransactionId) -> Unit,
+    onSelectTransaction: (BankTransactionId) -> Unit,
     onClearSelectedTransaction: () -> Unit,
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
@@ -242,7 +243,7 @@ private fun PaymentTransactionSection(
     sheetState: PaymentSheetState,
     onOpenTransactionPicker: () -> Unit,
     onCloseTransactionPicker: () -> Unit,
-    onSelectTransaction: (ImportedBankTransactionId) -> Unit,
+    onSelectTransaction: (BankTransactionId) -> Unit,
     onClearSelectedTransaction: () -> Unit,
 ) {
     Column(
@@ -298,10 +299,15 @@ private fun PaymentTransactionSection(
                 ),
                 style = MaterialTheme.typography.bodySmall,
             )
-            selected.counterpartyName?.takeIf { it.isNotBlank() }?.let {
+            selected.counterparty.name?.takeIf { it.isNotBlank() }?.let {
                 Text(stringResource(Res.string.payment_counterparty, it), style = MaterialTheme.typography.bodySmall)
             }
-            selected.structuredCommunicationRaw?.takeIf { it.isNotBlank() }?.let {
+            val referenceText = when (val comm = selected.communication) {
+                is TransactionCommunication.Structured -> comm.raw
+                is TransactionCommunication.FreeForm -> comm.text
+                null -> null
+            }
+            referenceText?.let {
                 Text(stringResource(Res.string.payment_reference, it), style = MaterialTheme.typography.bodySmall)
             }
             Row(horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)) {
@@ -339,7 +345,7 @@ private fun PaymentTransactionSection(
                         ) {
                             Text(
                                 "${transaction.transactionDate} \u2022 ${transaction.signedAmount.toDisplayString()} \u2022 " +
-                                    (transaction.counterpartyName ?: stringResource(Res.string.common_unknown))
+                                    (transaction.counterparty.name ?: stringResource(Res.string.common_unknown))
                             )
                         }
                     }

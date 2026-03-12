@@ -8,6 +8,13 @@ import kotlinx.datetime.LocalDateTime
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import tech.dokus.backend.services.contacts.ContactService
+import tech.dokus.backend.services.documents.resolution.CbeAutoCreateResolver
+import tech.dokus.backend.services.documents.resolution.NameIbanAutoCreateResolver
+import tech.dokus.backend.services.documents.resolution.VatAutoCreateResolver
+import tech.dokus.backend.services.documents.resolution.ContactMatchingUtils
+import tech.dokus.backend.services.documents.resolution.IbanNameResolver
+import tech.dokus.backend.services.documents.resolution.NameSuggestionResolver
+import tech.dokus.backend.services.documents.resolution.VatMatchResolver
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.domain.Name
 import tech.dokus.domain.enums.ClientType
@@ -17,6 +24,7 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.InvoiceDraftData
+import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.ContactResolution
 import tech.dokus.domain.model.contact.CounterpartySnapshot
@@ -30,9 +38,14 @@ class ContactResolutionServiceTest {
     private val cbeApiClient = mockk<CbeApiClient>()
     private val contactService = mockk<ContactService>(relaxed = true)
 
+    private val matchingUtils = ContactMatchingUtils(contactRepository)
     private val service = ContactResolutionService(
-        contactRepository = contactRepository,
-        cbeApiClient = cbeApiClient,
+        vatMatchResolver = VatMatchResolver(contactRepository, cbeApiClient, matchingUtils),
+        ibanNameResolver = IbanNameResolver(contactRepository, matchingUtils),
+        cbeAutoCreateResolver = CbeAutoCreateResolver(cbeApiClient),
+        vatAutoCreateResolver = VatAutoCreateResolver(),
+        nameIbanAutoCreateResolver = NameIbanAutoCreateResolver(),
+        nameSuggestionResolver = NameSuggestionResolver(contactRepository, matchingUtils),
         contactService = contactService
     )
 
@@ -69,7 +82,7 @@ class ContactResolutionServiceTest {
     }
 
     @Test
-    fun `invoice unknown direction with tenant vat is kept pending and never auto-linked`() = runBlocking {
+    fun `counterparty with tenant vat gets vat stripped and never auto-linked by vat`() = runBlocking {
         val result = service.resolve(
             tenantId = tenantId,
             tenantVat = tenantVat,
@@ -81,10 +94,30 @@ class ContactResolutionServiceTest {
         )
 
         assertIs<ContactResolution.PendingReview>(result.resolution)
-        assertEquals("BE0777887045", result.snapshot.vatNumber?.normalized)
+        // Tenant VAT should be stripped from the snapshot
+        assertEquals(null, result.snapshot.vatNumber)
 
         coVerify(exactly = 0) { contactRepository.findByVatNumber(any(), any()) }
         coVerify(exactly = 0) { cbeApiClient.searchByVat(any()) }
+    }
+
+    @Test
+    fun `receipt with hallucinated tenant vat strips vat and uses name resolution`() = runBlocking {
+        val result = service.resolve(
+            tenantId = tenantId,
+            tenantVat = tenantVat,
+            draftData = ReceiptDraftData(direction = DocumentDirection.Inbound),
+            authoritativeSnapshot = CounterpartySnapshot(
+                name = "SSD ASBL",
+                vatNumber = VatNumber.from("BE0777887045")
+            )
+        )
+
+        // Tenant VAT should be stripped, name-based resolution attempted
+        assertEquals(null, result.snapshot.vatNumber)
+        coVerify(exactly = 0) { contactRepository.findByVatNumber(any(), any()) }
+        // Should attempt name-based lookup
+        coVerify(exactly = 1) { contactRepository.findByName(tenantId, "SSD ASBL", 10) }
     }
 
     @Test
@@ -195,6 +228,48 @@ class ContactResolutionServiceTest {
         )
 
         coVerify(exactly = 0) { contactRepository.updateContact(any(), any(), any()) }
+    }
+
+    @Test
+    fun `exact name match with single candidate auto-links`() = runBlocking {
+        val contact = contact(
+            id = "11111111-aaaa-bbbb-cccc-222222222222",
+            name = "Google Cloud EMEA Limited",
+            vat = "IE3668997OH",
+            source = ContactSource.AI
+        )
+        coEvery { contactRepository.findByName(tenantId, "Google Cloud EMEA Limited", 10) } returns Result.success(listOf(contact))
+
+        val result = service.resolve(
+            tenantId = tenantId,
+            tenantVat = tenantVat,
+            draftData = InvoiceDraftData(direction = DocumentDirection.Inbound),
+            authoritativeSnapshot = CounterpartySnapshot(name = "Google Cloud EMEA Limited")
+        )
+
+        val resolution = assertIs<ContactResolution.Matched>(result.resolution)
+        assertEquals(contact.id, resolution.contactId)
+        assertEquals(1.0, resolution.evidence.nameSimilarity)
+    }
+
+    @Test
+    fun `exact name match with unknown direction stays suggested`() = runBlocking {
+        val contact = contact(
+            id = "11111111-aaaa-bbbb-cccc-222222222222",
+            name = "Google Cloud EMEA Limited",
+            vat = "IE3668997OH",
+            source = ContactSource.AI
+        )
+        coEvery { contactRepository.findByName(tenantId, "Google Cloud EMEA Limited", 10) } returns Result.success(listOf(contact))
+
+        val result = service.resolve(
+            tenantId = tenantId,
+            tenantVat = tenantVat,
+            draftData = InvoiceDraftData(direction = DocumentDirection.Unknown),
+            authoritativeSnapshot = CounterpartySnapshot(name = "Google Cloud EMEA Limited")
+        )
+
+        assertIs<ContactResolution.Suggested>(result.resolution)
     }
 
     private fun contact(

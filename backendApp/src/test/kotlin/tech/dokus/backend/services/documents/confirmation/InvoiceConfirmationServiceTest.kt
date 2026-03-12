@@ -7,10 +7,9 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.LocalDateTime
 import org.junit.jupiter.api.Test
 import tech.dokus.backend.services.cashflow.CashflowEntriesService
-import tech.dokus.database.repository.cashflow.DocumentDraftRepository
+import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.DraftSummary
 import tech.dokus.database.repository.cashflow.InvoiceRepository
-import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
@@ -26,12 +25,12 @@ class InvoiceConfirmationServiceTest {
 
     private val invoiceRepository = mockk<InvoiceRepository>()
     private val cashflowEntriesService = mockk<CashflowEntriesService>()
-    private val draftRepository = mockk<DocumentDraftRepository>()
+    private val documentRepository = mockk<DocumentRepository>()
 
     private val service = InvoiceConfirmationService(
         invoiceRepository = invoiceRepository,
         cashflowEntriesService = cashflowEntriesService,
-        draftRepository = draftRepository
+        documentRepository = documentRepository
     )
 
     @Test
@@ -40,13 +39,13 @@ class InvoiceConfirmationServiceTest {
         val documentId = DocumentId.parse("e72f69a8-6913-4d8f-98e7-224db7f4133f")
         val linkedContactId = ContactId.parse("ee14421b-c659-45e3-9a27-e4d3ef6b32eb")
 
-        coEvery { draftRepository.getByDocumentId(documentId, tenantId) } returns needsReviewDraft(documentId, tenantId)
+        coEvery { documentRepository.getDraftByDocumentId(documentId, tenantId) } returns needsReviewDraft(documentId, tenantId)
 
         val result = service.confirm(
             tenantId = tenantId,
             documentId = documentId,
             draftData = InvoiceDraftData(direction = DocumentDirection.Unknown),
-            linkedContactId = linkedContactId
+            contactId = linkedContactId
         )
 
         assertTrue(result.isFailure)
@@ -67,13 +66,11 @@ class InvoiceConfirmationServiceTest {
             documentStatus = DocumentStatus.NeedsReview,
             documentType = DocumentType.Invoice,
             extractedData = null,
-            aiDraftData = null,
             aiDraftSourceRunId = null,
             draftVersion = 0,
             draftEditedAt = null,
             draftEditedBy = null,
-            linkedContactId = null,
-            counterpartyIntent = CounterpartyIntent.None,
+            counterparty = null,
             rejectReason = null,
             lastSuccessfulRunId = null,
             createdAt = now,

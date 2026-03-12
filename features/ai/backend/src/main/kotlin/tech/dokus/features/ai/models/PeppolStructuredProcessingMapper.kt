@@ -4,8 +4,12 @@ import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.model.BankStatementDraftData
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentDraftData
+import tech.dokus.domain.model.resolvedCounterpartyName
+import tech.dokus.domain.model.resolvedCounterpartyVat
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
+import tech.dokus.domain.model.TransactionCommunication
+import tech.dokus.domain.model.toDirection
 import tech.dokus.domain.model.toDocumentType
 import tech.dokus.features.ai.graph.sub.ClassificationResult
 import tech.dokus.features.ai.graph.sub.extraction.financial.BankStatementExtractionResult
@@ -23,7 +27,7 @@ fun DocumentDraftData.toPeppolProcessingResult(snapshotVersion: Int?): DocumentA
     }
 
     val documentType = toDocumentType()
-    val direction = directionOrUnknown()
+    val direction = toDirection()
     val directionSource = if (direction == DocumentDirection.Unknown) {
         DirectionResolutionSource.Unknown
     } else {
@@ -140,9 +144,10 @@ private fun DocumentDraftData.toPeppolExtractionResult(): FinancialExtractionRes
                 BankStatementTransactionExtractionRow(
                     transactionDate = row.transactionDate,
                     signedAmount = row.signedAmount,
-                    counterpartyName = row.counterpartyName,
-                    counterpartyIban = row.counterpartyIban,
-                    structuredCommunicationRaw = row.structuredCommunicationRaw,
+                    counterpartyName = row.counterparty.name,
+                    counterpartyIban = row.counterparty.iban,
+                    structuredCommunicationRaw = (row.communication as? TransactionCommunication.Structured)?.raw,
+                    freeCommunication = (row.communication as? TransactionCommunication.FreeForm)?.text,
                     descriptionRaw = row.descriptionRaw,
                     rowConfidence = row.rowConfidence.coerceIn(0.0, 1.0),
                 )
@@ -183,8 +188,8 @@ private fun counterpartyExtractionForCreditNote(data: CreditNoteDraftData): Coun
         DocumentDirection.Neutral -> CounterpartyRole.Unknown
         DocumentDirection.Unknown -> CounterpartyRole.Unknown
     }
-    val name = data.counterpartyName ?: data.seller.name ?: data.buyer.name
-    val vat = data.counterpartyVat?.value ?: data.seller.vat?.value ?: data.buyer.vat?.value
+    val name = data.resolvedCounterpartyName
+    val vat = data.resolvedCounterpartyVat?.value
     return CounterpartyExtraction(
         name = name,
         vatNumber = vat,
@@ -193,9 +198,3 @@ private fun counterpartyExtractionForCreditNote(data: CreditNoteDraftData): Coun
     )
 }
 
-private fun DocumentDraftData.directionOrUnknown(): DocumentDirection = when (this) {
-    is InvoiceDraftData -> direction
-    is CreditNoteDraftData -> direction
-    is ReceiptDraftData -> direction
-    is BankStatementDraftData -> direction
-}

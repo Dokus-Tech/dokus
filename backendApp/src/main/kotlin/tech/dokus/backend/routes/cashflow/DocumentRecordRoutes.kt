@@ -1,21 +1,28 @@
 package tech.dokus.backend.routes.cashflow
 
-import io.ktor.http.*
-import io.ktor.server.request.*
-import io.ktor.server.resources.*
+import io.ktor.http.ContentDisposition
+import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.request.receive
+import io.ktor.server.resources.delete
+import io.ktor.server.resources.get
 import io.ktor.server.resources.patch
 import io.ktor.server.resources.post
-import io.ktor.server.response.*
+import io.ktor.server.response.header
+import io.ktor.server.response.respond
+import io.ktor.server.response.respondOutputStream
 import io.ktor.server.routing.Route
 import io.ktor.server.sse.heartbeat
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.onSubscription
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.koin.ktor.ext.inject
@@ -39,15 +46,13 @@ import tech.dokus.backend.services.documents.sse.DocumentSnapshotSignal
 import tech.dokus.backend.services.documents.sse.DocumentSsePublisher
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.database.repository.cashflow.CreditNoteRepository
-import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.DocumentSourceRepository
 import tech.dokus.database.repository.cashflow.DocumentSourceSummary
 import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
-import tech.dokus.database.repository.cashflow.selectDefaultSourceFromList
-import tech.dokus.domain.enums.CounterpartyIntent
+import tech.dokus.database.repository.cashflow.selectPreferredSource
 import tech.dokus.domain.enums.DocumentSourceStatus
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
@@ -57,10 +62,13 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentMatchReviewId
 import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.toCurrency
+import tech.dokus.domain.model.toTotalAmount
 import tech.dokus.domain.model.DocumentCollectionChangedEventDto
 import tech.dokus.domain.model.DocumentCountsResponse
 import tech.dokus.domain.model.DocumentDeletedEventDto
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentDetailDto
+import tech.dokus.domain.model.DocumentListItemDto
 import tech.dokus.domain.model.DocumentStreamEventNames
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.RejectDocumentRequest
@@ -70,6 +78,8 @@ import tech.dokus.domain.model.ResolveDocumentMatchReviewRequest
 import tech.dokus.domain.model.UpdateDraftRequest
 import tech.dokus.domain.model.UpdateDraftResponse
 import tech.dokus.domain.model.common.PaginatedResponse
+import tech.dokus.domain.model.contact.isLinked
+import tech.dokus.domain.model.contact.isUnresolved
 import tech.dokus.domain.routes.Documents
 import tech.dokus.domain.utils.json
 import tech.dokus.foundation.backend.security.authenticateJwt
@@ -77,6 +87,7 @@ import tech.dokus.foundation.backend.security.dokusPrincipal
 import tech.dokus.foundation.backend.utils.defaultSseHeartbeatPeriod
 import tech.dokus.foundation.backend.utils.respondSse
 import tech.dokus.foundation.backend.utils.sendJsonEvent
+import kotlin.time.Clock
 import tech.dokus.foundation.backend.storage.DocumentStorageService as MinioDocumentStorageService
 
 /**
@@ -84,7 +95,7 @@ import tech.dokus.foundation.backend.storage.DocumentStorageService as MinioDocu
  *
  * Endpoints:
  * - GET /api/v1/documents - List documents with filters
- * - GET /api/v1/documents/{id} - Get full DocumentRecordDto
+ * - GET /api/v1/documents/{id} - Get full DocumentDetailDto
  * - DELETE /api/v1/documents/{id} - Delete document (cascades)
  * - GET /api/v1/documents/{id}/draft - Get draft
  * - PATCH /api/v1/documents/{id}/draft - Update draft
@@ -96,7 +107,6 @@ import tech.dokus.foundation.backend.storage.DocumentStorageService as MinioDocu
  */
 internal fun Route.documentRecordRoutes() {
     val documentRepository by inject<DocumentRepository>()
-    val draftRepository by inject<DocumentDraftRepository>()
     val ingestionRepository by inject<DocumentIngestionRunRepository>()
     val invoiceRepository by inject<InvoiceRepository>()
     val expenseRepository by inject<ExpenseRepository>()
@@ -144,48 +154,68 @@ internal fun Route.documentRecordRoutes() {
                 limit = limit
             )
 
+            val documentIds = documentsWithInfo.map { it.document.id }
             val confirmedDocumentIds = documentsWithInfo
                 .filter { it.draft?.documentStatus == DocumentStatus.Confirmed }
                 .map { it.document.id }
-            val cashflowEntryIdsByDocumentId = cashflowEntriesRepository
-                .getIdsByDocumentIds(tenantId, confirmedDocumentIds)
-                .getOrThrow()
-            val pendingReviewsByDocumentId = truthService.getPendingReviewsByDocuments(
-                tenantId = tenantId,
-                documentIds = documentsWithInfo.map { it.document.id }
-            )
 
-            // Build full records
-            val records = documentsWithInfo.map { docInfo ->
-                val documentWithUrl = addDownloadUrl(docInfo.document, minioStorage, logger)
-                val draft = docInfo.draft
-                val confirmedEntity = if (draft?.documentStatus == DocumentStatus.Confirmed) {
-                    findConfirmedEntity(
-                        docInfo.document.id,
-                        draft.documentType,
-                        tenantId,
-                        invoiceRepository,
-                        expenseRepository,
-                        creditNoteRepository
-                    )
-                } else {
-                    null
+            // Run independent enrichment queries in parallel
+            val (cashflowEntryIdsByDocumentId, pendingReviewsByDocumentId, sourceEnrichment) = coroutineScope {
+                val cashflowDeferred = async {
+                    cashflowEntriesRepository.getIdsByDocumentIds(tenantId, confirmedDocumentIds).getOrThrow()
                 }
+                val reviewsDeferred = async {
+                    truthService.getPendingReviewsByDocuments(tenantId = tenantId, documentIds = documentIds)
+                }
+                val sourcesDeferred = async {
+                    documentSourceRepository.selectPreferredSourcesByDocumentIds(tenantId, documentIds)
+                }
+                Triple(cashflowDeferred.await(), reviewsDeferred.await(), sourcesDeferred.await())
+            }
 
-                DocumentRecordDto(
-                    document = documentWithUrl,
-                    draft = draft?.toDto(),
-                    latestIngestion = docInfo.latestIngestion?.toDto(),
-                    confirmedEntity = confirmedEntity,
+            // Generate download URLs in parallel
+            val downloadUrlsByDocumentId = coroutineScope {
+                sourceEnrichment.map { (docId, source) ->
+                    async {
+                        val url = try {
+                            minioStorage.getDownloadUrl(source.storageKey)
+                        } catch (e: RuntimeException) {
+                            logger.warn("Failed to get download URL for ${source.storageKey}: ${e.message}")
+                            null
+                        }
+                        docId to url
+                    }
+                }.awaitAll().toMap()
+            }
+
+            // Build flat list items
+            val items = documentsWithInfo.map { docInfo ->
+                val draft = docInfo.draft
+                val preferredSource = sourceEnrichment[docInfo.document.id]
+                DocumentListItemDto(
+                    documentId = docInfo.document.id,
+                    tenantId = docInfo.document.tenantId,
+                    filename = preferredSource?.filename ?: docInfo.document.filename,
+                    documentType = draft?.documentType,
+                    direction = draft?.direction,
+                    documentStatus = draft?.documentStatus,
+                    ingestionStatus = docInfo.latestIngestion?.status,
+                    effectiveOrigin = preferredSource?.sourceChannel ?: docInfo.document.effectiveOrigin,
+                    uploadedAt = preferredSource?.arrivalAt ?: docInfo.document.uploadedAt,
+                    counterpartyDisplayName = draft?.counterpartyDisplayName,
+                    purposeRendered = draft?.purposeRendered,
+                    totalAmount = draft?.extractedData?.toTotalAmount(),
+                    currency = draft?.extractedData?.toCurrency(),
+                    downloadUrl = downloadUrlsByDocumentId[docInfo.document.id],
+                    hasPendingMatchReview = pendingReviewsByDocumentId.containsKey(docInfo.document.id),
                     cashflowEntryId = cashflowEntryIdsByDocumentId[docInfo.document.id],
-                    pendingMatchReview = pendingReviewsByDocumentId[docInfo.document.id]?.toSummaryDto()
                 )
             }
 
             call.respond(
                 HttpStatusCode.OK,
                 PaginatedResponse(
-                    items = records,
+                    items = items,
                     total = total,
                     limit = limit,
                     offset = page * limit
@@ -266,7 +296,7 @@ internal fun Route.documentRecordRoutes() {
                         sendJsonEvent(
                             event = DocumentStreamEventNames.Snapshot,
                             payload = currentRecord,
-                            encode = { json.encodeToString(DocumentRecordDto.serializer(), it) }
+                            encode = { json.encodeToString(DocumentDetailDto.serializer(), it) }
                         )
                         true
                     } else {
@@ -297,7 +327,7 @@ internal fun Route.documentRecordRoutes() {
                     sendJsonEvent(
                         event = DocumentStreamEventNames.Snapshot,
                         payload = initialRecord,
-                        encode = { json.encodeToString(DocumentRecordDto.serializer(), it) }
+                        encode = { json.encodeToString(DocumentDetailDto.serializer(), it) }
                     )
 
                     while (true) {
@@ -305,6 +335,7 @@ internal fun Route.documentRecordRoutes() {
                             DocumentSnapshotSignal.Changed -> {
                                 if (!sendSnapshotOrDeleted()) break
                             }
+
                             DocumentSnapshotSignal.Deleted -> {
                                 sendDeletedEvent()
                                 break
@@ -331,10 +362,12 @@ internal fun Route.documentRecordRoutes() {
             val document = documentRepository.getById(tenantId, documentId)
                 ?: throw DokusException.NotFound("Document not found")
             val sources = truthService.listSources(tenantId, documentId)
-            val defaultSource = selectDefaultSource(sources)
-            val storageKey = defaultSource?.storageKey ?: document.storageKey
-            val resolvedFilename = defaultSource?.filename ?: document.filename
-            val resolvedContentType = defaultSource?.contentType ?: document.contentType
+            val preferredSource = selectPreferredSource(sources)
+            val source = preferredSource
+                ?: throw DokusException.NotFound("No source available for document")
+            val storageKey = source.storageKey
+            val resolvedFilename = source.filename ?: document.filename
+            val resolvedContentType = source.contentType
 
             val stream = try {
                 minioStorage.openDocumentStream(storageKey)
@@ -478,26 +511,25 @@ internal fun Route.documentRecordRoutes() {
                 throw DokusException.NotFound("Document not found")
             }
 
-            val draft = draftRepository.getByDocumentId(documentId, tenantId)
+            val draft = documentRepository.getDraftByDocumentId(documentId, tenantId)
             if (draft?.documentStatus == DocumentStatus.Confirmed) {
                 throw DokusException.BadRequest(
                     "Confirmed documents cannot be fully deleted. Remove sources instead."
                 )
             }
 
-            // Get storage key for MinIO cleanup
-            val document = documentRepository.getById(tenantId, documentId)
-            val storageKey = document?.storageKey
+            // Collect source storage keys before deleting so we can clean up blobs
+            val sources = truthService.listSources(tenantId, documentId)
 
-            // Delete document (cascades to drafts, runs, chunks)
+            // Delete document (cascades to drafts, runs, chunks, sources)
             documentRepository.delete(tenantId, documentId)
 
-            // Delete from MinIO
-            if (storageKey != null) {
+            // Delete source blobs from MinIO
+            for (source in sources) {
                 try {
-                    minioStorage.deleteDocument(storageKey)
+                    minioStorage.deleteDocument(source.storageKey)
                 } catch (e: Exception) {
-                    logger.warn("Failed to delete document from storage: $storageKey", e)
+                    logger.warn("Failed to delete source blob from storage: ${source.storageKey}", e)
                 }
             }
 
@@ -515,7 +547,7 @@ internal fun Route.documentRecordRoutes() {
 
             logger.info("Getting draft: $documentId, tenant=$tenantId")
 
-            val draft = draftRepository.getByDocumentId(documentId, tenantId)
+            val draft = documentRepository.getDraftByDocumentId(documentId, tenantId)
                 ?: throw DokusException.NotFound("Draft not found for document")
 
             call.respond(HttpStatusCode.OK, draft.toDto())
@@ -534,12 +566,12 @@ internal fun Route.documentRecordRoutes() {
 
             logger.info("Updating draft: $documentId, tenant=$tenantId, user=$userId")
 
-            val draft = draftRepository.getByDocumentId(documentId, tenantId)
+            val draft = documentRepository.getDraftByDocumentId(documentId, tenantId)
                 ?: throw DokusException.NotFound("Draft not found for document")
 
             val requestData = request.extractedData
             val hasExtractedData = requestData != null
-            val hasContactUpdate = request.contactId != null || request.counterpartyIntent != null
+            val hasContactUpdate = request.contactId != null || request.pendingCreation != null
             val hasPurposeUpdate = request.purpose != null || request.purposePeriodMode != null
 
             if (!hasExtractedData && !hasContactUpdate && !hasPurposeUpdate) {
@@ -556,7 +588,7 @@ internal fun Route.documentRecordRoutes() {
 
             if (hasExtractedData) {
                 // Update draft (may transition Confirmed -> NeedsReview)
-                val newVersion = draftRepository.updateDraft(
+                val newVersion = documentRepository.updateDraft(
                     documentId = documentId,
                     tenantId = tenantId,
                     userId = userId,
@@ -566,7 +598,7 @@ internal fun Route.documentRecordRoutes() {
                 logger.info("Draft updated: document=$documentId, version=$newVersion")
 
                 if (hasContactUpdate) {
-                    updateDraftCounterparty(draftRepository, documentId, tenantId, request)
+                    updateDraftCounterparty(documentRepository, documentId, tenantId, request)
                 }
                 if (hasPurposeUpdate) {
                     val purpose = request.purpose
@@ -574,7 +606,7 @@ internal fun Route.documentRecordRoutes() {
                     purposeService.applyUserPurposeEdit(
                         tenantId = tenantId,
                         documentId = documentId,
-                        draft = draftRepository.getByDocumentId(documentId, tenantId)
+                        draft = documentRepository.getDraftByDocumentId(documentId, tenantId)
                             ?: throw DokusException.NotFound("Draft not found for document"),
                         purpose = purpose,
                         purposePeriodMode = request.purposePeriodMode
@@ -593,7 +625,7 @@ internal fun Route.documentRecordRoutes() {
                 )
             } else {
                 if (hasContactUpdate) {
-                    updateDraftCounterparty(draftRepository, documentId, tenantId, request)
+                    updateDraftCounterparty(documentRepository, documentId, tenantId, request)
                 }
                 if (hasPurposeUpdate) {
                     val purpose = request.purpose
@@ -645,8 +677,8 @@ internal fun Route.documentRecordRoutes() {
 
             logger.info(
                 "Reprocessing document: $documentId, force=${request.force}, " +
-                    "overrides=[maxPages=${request.maxPages}, dpi=${request.dpi}], " +
-                    "timeoutOverride=${request.timeoutSeconds} (ignored), tenant=$tenantId"
+                        "overrides=[maxPages=${request.maxPages}, dpi=${request.dpi}], " +
+                        "timeoutOverride=${request.timeoutSeconds} (ignored), tenant=$tenantId"
             )
 
             // Check document exists
@@ -704,7 +736,7 @@ internal fun Route.documentRecordRoutes() {
             val documentId = DocumentId.parse(route.parent.id)
             logger.info("Confirming document: $documentId, tenant=$tenantId")
 
-            val draft = draftRepository.getByDocumentId(documentId, tenantId)
+            val draft = documentRepository.getDraftByDocumentId(documentId, tenantId)
                 ?: throw DokusException.NotFound("Draft not found for document")
 
             if (draft.documentStatus == DocumentStatus.Rejected) {
@@ -725,10 +757,6 @@ internal fun Route.documentRecordRoutes() {
                 )
 
                 if (confirmedEntity != null) {
-                    val document = documentRepository.getById(tenantId, documentId)!!
-                    val documentWithUrl = addDownloadUrl(document, minioStorage, logger)
-                    val latestIngestion = ingestionRepository.getLatestForDocument(documentId, tenantId)
-
                     if (confirmedEntity is FinancialDocumentDto.InvoiceDto &&
                         confirmedEntity.paidAmount.minor >= confirmedEntity.totalAmount.minor &&
                         confirmedEntity.paidAt == null
@@ -771,7 +799,8 @@ internal fun Route.documentRecordRoutes() {
                 throw DokusException.BadRequest("Draft is not ready for confirmation: ${draft.documentStatus}")
             }
 
-            if (draft.counterpartyIntent == CounterpartyIntent.Pending) {
+            val counterparty = draft.counterparty
+            if (counterparty.isUnresolved() && counterparty.pendingCreation) {
                 throw DokusException.BadRequest("Counterparty is pending creation")
             }
 
@@ -797,7 +826,7 @@ internal fun Route.documentRecordRoutes() {
                 tenantId,
                 documentId,
                 draftData,
-                draft.linkedContactId
+                if (counterparty.isLinked()) counterparty.contactId else null
             ).getOrThrow()
 
             val entryId = confirmationResult.cashflowEntryId
@@ -839,7 +868,7 @@ internal fun Route.documentRecordRoutes() {
             val documentId = DocumentId.parse(route.parent.id)
             val request = call.receive<RejectDocumentRequest>()
 
-            val draft = draftRepository.getByDocumentId(documentId, tenantId)
+            val draft = documentRepository.getDraftByDocumentId(documentId, tenantId)
                 ?: throw DokusException.NotFound("Draft not found for document")
 
             if (draft.documentStatus == DocumentStatus.Confirmed) {
@@ -848,7 +877,7 @@ internal fun Route.documentRecordRoutes() {
 
             val didReject = draft.documentStatus != DocumentStatus.Rejected
             if (didReject) {
-                draftRepository.rejectDraft(documentId, tenantId, request.reason)
+                documentRepository.rejectDraft(documentId, tenantId, request.reason)
                 documentSsePublisher.publishDocumentChanged(tenantId, documentId)
             }
 
@@ -891,10 +920,6 @@ internal fun Route.documentRecordRoutes() {
 
 internal fun isInboxLifecycle(status: IngestionStatus?): Boolean {
     return status == IngestionStatus.Queued || status == IngestionStatus.Processing
-}
-
-private fun selectDefaultSource(sources: List<DocumentSourceSummary>): DocumentSourceSummary? {
-    return selectDefaultSourceFromList(sources)
 }
 
 private fun publishAffectedDocuments(

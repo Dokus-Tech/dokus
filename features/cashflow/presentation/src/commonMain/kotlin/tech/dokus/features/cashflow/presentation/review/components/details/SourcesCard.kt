@@ -13,7 +13,7 @@ import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_match_review_different_document
 import tech.dokus.aura.resources.cashflow_match_review_same_document
-import tech.dokus.domain.enums.DocumentMatchReviewReasonType
+import tech.dokus.domain.enums.ReviewReason
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.foundation.aura.extensions.localized
 
@@ -51,10 +51,10 @@ internal fun SourcesCard(
             FactField(
                 label = "Possible match",
                 value = when (review.reasonType) {
-                    DocumentMatchReviewReasonType.MaterialConflict ->
+                    ReviewReason.MaterialConflict ->
                         "Conflicting financial facts require confirmation."
 
-                    DocumentMatchReviewReasonType.FuzzyCandidate ->
+                    ReviewReason.FuzzyCandidate ->
                         "Potential same document found with fuzzy identity match."
                 }
             )

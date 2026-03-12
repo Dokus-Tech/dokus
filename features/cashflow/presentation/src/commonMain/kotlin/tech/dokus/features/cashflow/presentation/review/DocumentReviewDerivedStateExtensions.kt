@@ -2,7 +2,7 @@ package tech.dokus.features.cashflow.presentation.review
 
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.daysUntil
-import tech.dokus.domain.enums.DocumentMatchType
+import tech.dokus.domain.enums.SourceMatchKind
 import tech.dokus.domain.enums.DocumentSourceStatus
 import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.foundation.app.state.DokusState
@@ -22,8 +22,8 @@ val DocumentReviewState.hasCrossMatchedSources: Boolean
         (documentRecord?.sources?.any { source ->
             source.status == DocumentSourceStatus.Linked &&
                 source.matchType in setOf(
-                    DocumentMatchType.ExactFile,
-                    DocumentMatchType.SameContent,
-                    DocumentMatchType.SameDocument,
+                    SourceMatchKind.ExactFile,
+                    SourceMatchKind.SameContent,
+                    SourceMatchKind.SameDocument,
                 )
         } == true)

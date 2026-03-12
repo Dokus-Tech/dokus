@@ -21,7 +21,7 @@ internal class DocumentReviewPreview(
     suspend fun DocumentReviewCtx.handleLoadPreviewPages() {
         withState {
             val activeDocumentId = documentId ?: return@withState
-            val contentType = documentRecord?.document?.contentType ?: return@withState
+            val contentType = documentRecord?.sources?.firstOrNull()?.contentType ?: return@withState
             loadPreviewPages(
                 documentId = activeDocumentId,
                 contentType = contentType,
@@ -35,7 +35,7 @@ internal class DocumentReviewPreview(
         withState {
             if (!hasContent) return@withState
             val activeDocumentId = documentId ?: return@withState
-            val contentType = documentRecord?.document?.contentType ?: return@withState
+            val contentType = documentRecord?.sources?.firstOrNull()?.contentType ?: return@withState
             loadPreviewPages(
                 documentId = activeDocumentId,
                 contentType = contentType,

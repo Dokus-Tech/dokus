@@ -75,10 +75,6 @@ class ProcessorIngestionRepositoryTest {
             DocumentsTable.insert {
                 it[id] = documentUuid
                 it[tenantId] = tenantUuid
-                it[filename] = "lease-invoice.pdf"
-                it[contentType] = "application/pdf"
-                it[sizeBytes] = 2048L
-                it[storageKey] = "documents/$tenantUuid/lease-invoice.pdf"
             }
         }
     }
@@ -86,13 +82,7 @@ class ProcessorIngestionRepositoryTest {
     @AfterTest
     fun teardown() {
         transaction(database) {
-            SchemaUtils.drop(
-                DocumentIngestionRunsTable,
-                DocumentSourcesTable,
-                DocumentBlobsTable,
-                DocumentsTable,
-                TenantTable
-            )
+            exec("DROP ALL OBJECTS")
         }
     }
 

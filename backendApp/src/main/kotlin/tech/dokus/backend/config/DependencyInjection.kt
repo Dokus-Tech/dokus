@@ -12,6 +12,11 @@ import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
+import tech.dokus.backend.services.banking.AccountResolutionService
+import tech.dokus.backend.services.banking.BankStatementProcessingService
+import tech.dokus.backend.services.banking.BankingService
+import tech.dokus.backend.services.banking.StatementDedupService
+import tech.dokus.backend.services.banking.StatementTrustCalculator
 import tech.dokus.backend.services.auth.AuthService
 import tech.dokus.backend.services.auth.EmailService
 import tech.dokus.backend.services.auth.EmailTemplateRenderer
@@ -38,13 +43,19 @@ import tech.dokus.backend.services.cashflow.CreditNoteService
 import tech.dokus.backend.services.cashflow.ExpenseService
 import tech.dokus.backend.services.cashflow.InvoiceBankAutomationService
 import tech.dokus.backend.services.cashflow.InvoiceService
-import tech.dokus.backend.services.contacts.ContactMatchingService
 import tech.dokus.backend.services.contacts.ContactNoteService
 import tech.dokus.backend.services.contacts.ContactService
 import tech.dokus.backend.services.contacts.sse.ContactEventHub
 import tech.dokus.backend.services.contacts.sse.ContactSsePublisher
 import tech.dokus.backend.services.documents.AutoConfirmPolicy
 import tech.dokus.backend.services.documents.ContactResolutionService
+import tech.dokus.backend.services.documents.resolution.CbeAutoCreateResolver
+import tech.dokus.backend.services.documents.resolution.ContactMatchingUtils
+import tech.dokus.backend.services.documents.resolution.IbanNameResolver
+import tech.dokus.backend.services.documents.resolution.NameIbanAutoCreateResolver
+import tech.dokus.backend.services.documents.resolution.NameSuggestionResolver
+import tech.dokus.backend.services.documents.resolution.VatAutoCreateResolver
+import tech.dokus.backend.services.documents.resolution.VatMatchResolver
 import tech.dokus.backend.services.documents.DocumentPurposeService
 import tech.dokus.backend.services.documents.DocumentPurposeSimilarityService
 import tech.dokus.backend.services.documents.DocumentRecordLoader
@@ -149,6 +160,7 @@ fun Application.configureDependencyInjection(appConfig: AppBaseConfig) {
 
             // Feature services
             authModule(),
+            bankingModule,
             cashflowModule(),
             contactsModule,
             searchModule,
@@ -211,6 +223,14 @@ private val cryptoModule = module {
 
     singleOf(::JwtGenerator)
     singleOf(::JwtValidator)
+}
+
+private val bankingModule = module {
+    singleOf(::BankingService)
+    singleOf(::StatementTrustCalculator)
+    singleOf(::AccountResolutionService)
+    singleOf(::StatementDedupService)
+    singleOf(::BankStatementProcessingService)
 }
 
 private fun authModule() = module {
@@ -299,7 +319,7 @@ private fun cashflowModule() = module {
     single { ReceiptConfirmationService(get(), get(), get()) }
     single { CreditNoteConfirmationService(get(), get(), get(), get()) }
     single { DocumentConfirmationDispatcher(get(), get(), get(), get()) }
-    single { DocumentTruthService(get(), get(), get(), get(), get(), get(), get()) }
+    singleOf(::DocumentTruthService)
     singleOf(::DocumentCollectionEventHub)
     singleOf(::DocumentSnapshotEventHub)
     singleOf(::DocumentSsePublisher)
@@ -350,7 +370,6 @@ private val contactsModule = module {
     // NOTE: ContactService takes optional PeppolDirectoryCacheRepository for cache invalidation
     single { ContactService(get(), get(), get(), get(), getOrNull()) }
     single { ContactNoteService(get()) }
-    single { ContactMatchingService(get()) }
     singleOf(::ContactEventHub)
     singleOf(::ContactSsePublisher)
 }
@@ -361,9 +380,16 @@ private val searchModule = module {
 
 private fun documentProcessingModule() = module {
     // Bridge: backendApp's DocumentFetcher implementation for the AI module
-    single<DocumentFetcher> { StorageDocumentFetcher(get(), get()) }
+    single<DocumentFetcher> { StorageDocumentFetcher(get(), get(), get()) }
 
     // Contact resolution (deterministic post-processing)
+    singleOf(::ContactMatchingUtils)
+    singleOf(::VatMatchResolver)
+    singleOf(::IbanNameResolver)
+    singleOf(::CbeAutoCreateResolver)
+    singleOf(::VatAutoCreateResolver)
+    singleOf(::NameIbanAutoCreateResolver)
+    singleOf(::NameSuggestionResolver)
     singleOf(::ContactResolutionService)
     singleOf(::AutoConfirmPolicy)
     singleOf(::DocumentPurposeSimilarityService)

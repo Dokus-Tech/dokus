@@ -18,7 +18,7 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentIngestionDto
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.foundation.app.shell.DocQueueStatus
@@ -115,7 +115,7 @@ class DocumentQueueMapperTest {
         dueDate: LocalDate,
         paid: Boolean,
         includeConfirmedEntity: Boolean = true,
-    ): DocumentRecordDto {
+    ): DocumentDetailDto {
         val tenantId = TenantId.parse("44e8ed5c-020a-4bbb-9439-ac85899c5589")
         val documentId = DocumentId.parse("e72f69a8-6913-4d8f-98e7-224db7f4133f")
         val now = LocalDateTime(2026, 2, 11, 0, 0, 0)
@@ -137,12 +137,10 @@ class DocumentQueueMapperTest {
             documentStatus = draftStatus,
             documentType = DocumentType.Invoice,
             extractedData = draftData,
-            aiDraftData = draftData,
             aiDraftSourceRunId = null,
             draftVersion = 1,
             draftEditedAt = null,
             draftEditedBy = null,
-            linkedContactId = null,
             lastSuccessfulRunId = null,
             createdAt = now,
             updatedAt = now,
@@ -188,15 +186,12 @@ class DocumentQueueMapperTest {
             null
         }
 
-        return DocumentRecordDto(
+        return DocumentDetailDto(
             document = DocumentDto(
                 id = documentId,
                 tenantId = tenantId,
                 filename = "invoice.pdf",
-                contentType = "application/pdf",
-                sizeBytes = 1200L,
-                storageKey = "documents/$tenantId/invoice.pdf",
-                source = DocumentSource.Upload,
+                effectiveOrigin = DocumentSource.Upload,
                 uploadedAt = now,
             ),
             draft = draft,

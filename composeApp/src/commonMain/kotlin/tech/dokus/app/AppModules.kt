@@ -12,6 +12,8 @@ import tech.dokus.features.auth.authDataModule
 import tech.dokus.features.auth.authDomainModule
 import tech.dokus.features.auth.authNetworkModule
 import tech.dokus.features.auth.authPlatformModule
+import tech.dokus.features.banking.BankingAppModule
+import tech.dokus.features.banking.di.bankingNetworkModule
 import tech.dokus.features.cashflow.CashflowAppModule
 import tech.dokus.features.cashflow.di.cashflowNetworkModule
 import tech.dokus.features.contacts.ContactsAppModule
@@ -37,6 +39,7 @@ private val baseAppModules = listOf(
     AuthAppModule,
     CashflowAppModule,
     ContactsAppModule,
+    BankingAppModule,
 )
 
 private val conditionalModules = emptyList<AppModule>()
@@ -49,6 +52,7 @@ private val appDataModules: List<Module> = listOf(
     authNetworkModule,
     authDataModule,
     authDomainModule,
+    bankingNetworkModule,
     cashflowNetworkModule,
     contactsNetworkModule,
     contactsDataModule,

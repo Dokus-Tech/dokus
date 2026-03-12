@@ -15,24 +15,23 @@ import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
-import tech.dokus.database.repository.cashflow.CashflowPaymentCandidateRecord
-import tech.dokus.database.repository.cashflow.CashflowPaymentCandidateRepository
-import tech.dokus.database.repository.cashflow.ImportedBankTransactionRepository
+import tech.dokus.database.repository.banking.BankTransactionRepository
 import tech.dokus.database.repository.cashflow.InvoiceBankMatchLinkRepository
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.database.tables.cashflow.InvoicesTable
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.AutoPaymentTriggerSource
+import tech.dokus.domain.enums.BankTransactionStatus
 import tech.dokus.domain.enums.CashflowDirection
 import tech.dokus.domain.enums.InvoiceStatus
-import tech.dokus.domain.enums.PaymentCandidateTier
 import tech.dokus.domain.fromDbDecimal
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.domain.model.CashflowEntry
-import tech.dokus.domain.model.ImportedBankTransactionDto
+import tech.dokus.domain.model.TransactionCommunication
 import tech.dokus.domain.util.JaroWinkler
 import tech.dokus.foundation.backend.utils.loggerFor
 import java.util.UUID
@@ -62,7 +61,7 @@ private data class InvoiceMeta(
 )
 
 private data class Candidate(
-    val transaction: ImportedBankTransactionDto,
+    val transaction: BankTransactionDto,
     val entry: CashflowEntry,
     val score: Double,
     val reasons: List<String>,
@@ -72,8 +71,7 @@ private data class Candidate(
 )
 
 class InvoiceBankAutomationService(
-    private val importedBankTransactionRepository: ImportedBankTransactionRepository,
-    private val cashflowPaymentCandidateRepository: CashflowPaymentCandidateRepository,
+    private val importedBankTransactionRepository: BankTransactionRepository,
     private val cashflowEntriesRepository: CashflowEntriesRepository,
     private val contactRepository: ContactRepository,
     private val autoPaymentService: AutoPaymentService,
@@ -134,7 +132,7 @@ class InvoiceBankAutomationService(
 
     private suspend fun runMatchingAndAutomation(
         tenantId: TenantId,
-        transactions: List<ImportedBankTransactionDto>,
+        transactions: List<BankTransactionDto>,
         candidateEntries: List<CashflowEntry>,
         triggerSource: AutoPaymentTriggerSource
     ) {
@@ -144,8 +142,7 @@ class InvoiceBankAutomationService(
         if (filteredEntries.isEmpty()) return
 
         filteredEntries.forEach { entry ->
-            importedBankTransactionRepository.clearSuggestionsForEntry(tenantId, entry.id)
-            cashflowPaymentCandidateRepository.clearForEntry(tenantId, entry.id)
+            importedBankTransactionRepository.clearCandidatesForEntry(tenantId, entry.id)
         }
 
         val invoiceMeta = loadInvoiceMeta(tenantId, filteredEntries)
@@ -160,10 +157,8 @@ class InvoiceBankAutomationService(
             return contact
         }
 
-        val bestPerEntry = mutableMapOf<CashflowEntryId, Candidate>()
-
         for (tx in transactions) {
-            if (tx.status == tech.dokus.domain.enums.ImportedBankTransactionStatus.Linked) continue
+            if (tx.status == BankTransactionStatus.Matched) continue
 
             val scored = filteredEntries.mapNotNull { entry ->
                 val meta = invoiceMeta[entry.sourceId] ?: return@mapNotNull null
@@ -185,24 +180,15 @@ class InvoiceBankAutomationService(
             val aboveThreshold = scored.count { it.score >= AUTO_MATCH_THRESHOLD }
             val isAutoMatch = best.score >= AUTO_MATCH_THRESHOLD && margin >= MARGIN_THRESHOLD && aboveThreshold == 1
 
-            val tier = when {
-                isAutoMatch -> PaymentCandidateTier.Strong
-                best.score >= POSSIBLE_THRESHOLD -> PaymentCandidateTier.Possible
-                else -> null
-            } ?: continue
+            val isPossible = best.score >= POSSIBLE_THRESHOLD
+            if (!isPossible) continue
 
-            importedBankTransactionRepository.setSuggestion(
+            importedBankTransactionRepository.setMatchCandidate(
                 tenantId = tenantId,
                 transactionId = tx.id,
                 cashflowEntryId = best.entry.id,
                 score = best.score,
-                tier = tier
             )
-
-            val currentBest = bestPerEntry[best.entry.id]
-            if (currentBest == null || best.score > currentBest.score) {
-                bestPerEntry[best.entry.id] = best
-            }
 
             if (!isAutoMatch) {
                 continue
@@ -251,20 +237,6 @@ class InvoiceBankAutomationService(
                 }
             }
         }
-
-        bestPerEntry.values.forEach { candidate ->
-            val tier = if (candidate.score >= AUTO_MATCH_THRESHOLD) PaymentCandidateTier.Strong else PaymentCandidateTier.Possible
-            cashflowPaymentCandidateRepository.upsertBestCandidate(
-                tenantId = tenantId,
-                record = CashflowPaymentCandidateRecord(
-                    cashflowEntryId = candidate.entry.id,
-                    importedBankTransactionId = candidate.transaction.id,
-                    score = candidate.score,
-                    tier = tier,
-                    signalSnapshotJson = Json.encodeToString(candidate.rules)
-                )
-            )
-        }
     }
 
     @OptIn(ExperimentalUuidApi::class)
@@ -303,7 +275,7 @@ class InvoiceBankAutomationService(
     }
 
     private fun scoreCandidate(
-        tx: ImportedBankTransactionDto,
+        tx: BankTransactionDto,
         entry: CashflowEntry,
         invoice: InvoiceMeta,
         contactIban: String?
@@ -317,12 +289,13 @@ class InvoiceBankAutomationService(
 
         val normalizedDescription = tx.descriptionRaw?.uppercase().orEmpty()
         val normalizedInvoiceNumber = invoice.invoiceNumber.uppercase().replace(" ", "")
-        val normalizedTxStructuredRef = normalizeStructuredCommunication(tx.structuredCommunicationRaw)
+        val txStructuredRaw = (tx.communication as? TransactionCommunication.Structured)?.raw
+        val normalizedTxStructuredRef = normalizeStructuredCommunication(txStructuredRaw)
         val structuredMatch = normalizedTxStructuredRef != null && normalizedTxStructuredRef == invoice.structuredReference
         val invoiceNumberMatch = normalizedInvoiceNumber.isNotBlank() &&
             normalizedDescription.replace(" ", "").contains(normalizedInvoiceNumber)
 
-        val normalizedTxIban = tx.counterpartyIban?.value
+        val normalizedTxIban = tx.counterparty.iban?.value
         val normalizedContactIban = normalizeIban(contactIban)
         val ibanMatch = normalizedTxIban != null && normalizedTxIban == normalizedContactIban
 
@@ -330,9 +303,9 @@ class InvoiceBankAutomationService(
         val hardSignal = hardReference || ibanMatch
         if (!hardSignal) return null
 
-        val nameSimilarity = if (!tx.counterpartyName.isNullOrBlank() && !entry.contactName.isNullOrBlank()) {
+        val nameSimilarity = if (!tx.counterparty.name.isNullOrBlank() && !entry.contactName.isNullOrBlank()) {
             JaroWinkler.similarity(
-                tx.counterpartyName!!.trim().lowercase(),
+                tx.counterparty.name!!.trim().lowercase(),
                 entry.contactName!!.trim().lowercase()
             )
         } else {

@@ -1,8 +1,8 @@
 package tech.dokus.backend.services.documents
 
 import kotlinx.datetime.LocalDate
-import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentPurposeTemplateRepository
+import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.DraftSummary
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentPurposeSource
@@ -15,9 +15,13 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.BankStatementDraftData
 import tech.dokus.domain.model.CreditNoteDraftData
+import tech.dokus.domain.model.resolvedCounterpartyName
+import tech.dokus.domain.model.resolvedCounterpartyVat
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
+import tech.dokus.domain.model.contact.CounterpartyInfo
+import tech.dokus.domain.model.contact.isLinked
 import tech.dokus.features.ai.agents.DocumentProcessingAgent
 import tech.dokus.features.ai.models.PurposeEnrichmentInput
 import tech.dokus.foundation.backend.utils.loggerFor
@@ -26,7 +30,7 @@ private const val PurposeBaseMaxLength = 72
 
 @Suppress("LongParameterList")
 class DocumentPurposeService(
-    private val draftRepository: DocumentDraftRepository,
+    private val documentRepository: DocumentRepository,
     private val templateRepository: DocumentPurposeTemplateRepository,
     private val similarityService: DocumentPurposeSimilarityService,
     private val processingAgent: DocumentProcessingAgent
@@ -46,7 +50,7 @@ class DocumentPurposeService(
         val counterpartyKey = currentDraft.counterpartyKey ?: computeCounterpartyKey(linkedContactId, draftData)
         val merchantToken = currentDraft.merchantToken ?: computeMerchantToken(supplierDisplayName)
 
-        draftRepository.updatePurposeContext(
+        documentRepository.updatePurposeContext(
             documentId = documentId,
             tenantId = tenantId,
             counterpartyKey = counterpartyKey,
@@ -82,7 +86,7 @@ class DocumentPurposeService(
             } else {
                 when {
                     !counterpartyKey.isNullOrBlank() -> {
-                        draftRepository.listConfirmedPurposeBasesByCounterparty(
+                        documentRepository.listConfirmedPurposeBasesByCounterparty(
                             tenantId = tenantId,
                             counterpartyKey = counterpartyKey,
                             documentType = documentType,
@@ -91,7 +95,7 @@ class DocumentPurposeService(
                     }
 
                     !merchantToken.isNullOrBlank() -> {
-                        draftRepository.listConfirmedPurposeBasesByMerchantToken(
+                        documentRepository.listConfirmedPurposeBasesByMerchantToken(
                             tenantId = tenantId,
                             merchantToken = merchantToken,
                             documentType = documentType,
@@ -126,7 +130,7 @@ class DocumentPurposeService(
             return
         }
 
-        draftRepository.updatePurposeFields(
+        documentRepository.updatePurposeFields(
             documentId = documentId,
             tenantId = tenantId,
             purposeBase = purposeBase,
@@ -172,7 +176,7 @@ class DocumentPurposeService(
             periodMode = mode
         )?.take(80)
 
-        draftRepository.updatePurposeFields(
+        documentRepository.updatePurposeFields(
             documentId = documentId,
             tenantId = tenantId,
             purposeBase = base,
@@ -184,7 +188,9 @@ class DocumentPurposeService(
             purposePeriodMode = mode
         )
 
-        val counterpartyKey = draft.counterpartyKey ?: computeCounterpartyKey(draft.linkedContactId, draftData)
+        val counterparty = draft.counterparty
+        val draftContactId = if (counterparty.isLinked()) counterparty.contactId else null
+        val counterpartyKey = draft.counterpartyKey ?: computeCounterpartyKey(draftContactId, draftData)
         if (!counterpartyKey.isNullOrBlank()) {
             templateRepository.upsert(
                 tenantId = tenantId,
@@ -226,15 +232,10 @@ class DocumentPurposeService(
             DocumentDirection.Unknown -> draftData.seller.name ?: draftData.buyer.name
         }
 
-        is CreditNoteDraftData -> when (draftData.direction) {
-            DocumentDirection.Inbound -> draftData.seller.name ?: draftData.counterpartyName
-            DocumentDirection.Outbound -> draftData.buyer.name ?: draftData.counterpartyName
-            DocumentDirection.Neutral -> draftData.counterpartyName ?: draftData.seller.name ?: draftData.buyer.name
-            DocumentDirection.Unknown -> draftData.counterpartyName ?: draftData.seller.name ?: draftData.buyer.name
-        }
+        is CreditNoteDraftData -> draftData.resolvedCounterpartyName
 
         is ReceiptDraftData -> draftData.merchantName
-        is BankStatementDraftData -> draftData.transactions.firstNotNullOfOrNull { it.counterpartyName }
+        is BankStatementDraftData -> draftData.transactions.firstNotNullOfOrNull { it.counterparty.name }
     }
 
     private fun extractCounterpartyVat(draftData: DocumentDraftData): VatNumber? = when (draftData) {
@@ -245,12 +246,7 @@ class DocumentPurposeService(
             DocumentDirection.Unknown -> draftData.seller.vat ?: draftData.buyer.vat
         }
 
-        is CreditNoteDraftData -> when (draftData.direction) {
-            DocumentDirection.Inbound -> draftData.seller.vat ?: draftData.counterpartyVat
-            DocumentDirection.Outbound -> draftData.buyer.vat ?: draftData.counterpartyVat
-            DocumentDirection.Neutral -> draftData.counterpartyVat ?: draftData.seller.vat ?: draftData.buyer.vat
-            DocumentDirection.Unknown -> draftData.counterpartyVat ?: draftData.seller.vat ?: draftData.buyer.vat
-        }
+        is CreditNoteDraftData -> draftData.resolvedCounterpartyVat
 
         is ReceiptDraftData -> draftData.merchantVat
         is BankStatementDraftData -> null

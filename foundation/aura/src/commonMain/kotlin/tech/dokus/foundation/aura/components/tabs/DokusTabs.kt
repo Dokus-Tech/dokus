@@ -2,7 +2,6 @@ package tech.dokus.foundation.aura.components.tabs
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,12 +18,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.cashflow_ledger_filter_open
+import tech.dokus.aura.resources.cashflow_ledger_filter_paid
+import tech.dokus.aura.resources.documents_filter_all
 import tech.dokus.foundation.aura.constrains.Constraints
-import tech.dokus.foundation.aura.style.textFaint
 import tech.dokus.foundation.aura.style.textMuted
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
@@ -36,7 +40,6 @@ private val TabPaddingV = 6.dp
 private val BadgePaddingH = 6.dp
 private val BadgePaddingV = 1.dp
 private val BadgeGap = 6.dp
-private val ActiveShadow = 2.dp
 
 /**
  * Tab data for [DokusTabs].
@@ -44,7 +47,7 @@ private val ActiveShadow = 2.dp
 @Immutable
 data class DokusTab(
     val id: String,
-    val label: String,
+    val label: StringResource,
     val count: Int? = null,
     val countColor: Color = Color.Unspecified,
     val countBackground: Color = Color.Unspecified,
@@ -117,7 +120,7 @@ private fun TabItem(
         horizontalArrangement = Arrangement.Center,
     ) {
         Text(
-            text = tab.label,
+            text = stringResource(tab.label),
             fontSize = 12.sp,
             fontWeight = if (isActive) FontWeight.SemiBold else FontWeight.Normal,
             color = if (isActive) {
@@ -169,9 +172,9 @@ private fun DokusTabsPreview(
     TestWrapper(parameters) {
         DokusTabs(
             tabs = listOf(
-                DokusTab(id = "all", label = "All", count = 12),
-                DokusTab(id = "open", label = "Open", count = 3),
-                DokusTab(id = "paid", label = "Paid")
+                DokusTab(id = "all", label = Res.string.documents_filter_all, count = 12),
+                DokusTab(id = "open", label = Res.string.cashflow_ledger_filter_open, count = 3),
+                DokusTab(id = "paid", label = Res.string.cashflow_ledger_filter_paid)
             ),
             activeId = "all",
             onTabSelected = {}

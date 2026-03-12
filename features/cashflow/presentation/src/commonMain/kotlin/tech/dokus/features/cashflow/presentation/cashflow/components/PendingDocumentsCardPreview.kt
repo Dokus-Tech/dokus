@@ -11,18 +11,13 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDateTime
 import tech.dokus.domain.asbtractions.RetryHandler
-import tech.dokus.domain.enums.DocumentDirection
+import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.DocumentDraftDto
-import tech.dokus.domain.model.DocumentDto
-import tech.dokus.domain.model.DocumentRecordDto
-import tech.dokus.domain.model.InvoiceDraftData
-import tech.dokus.domain.model.PartyDraft
-import tech.dokus.domain.model.ReceiptDraftData
+import tech.dokus.domain.model.DocumentListItemDto
 import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.tooling.PreviewParameters
@@ -45,16 +40,6 @@ private const val PreviewHour = 10
 private const val PreviewMinute = 30
 private const val PreviewSecond = 0
 private const val PreviewNanosecond = 0
-
-// Preview mock data file size constants (in bytes)
-private const val InvoiceSizeBytes = 125000L
-private const val InboundInvoiceSizeBytes = 98000L
-private const val ExpenseSizeBytes = 45000L
-private const val ScanSizeBytes = 200000L
-private const val ClientInvoiceSizeBytes = 150000L
-
-// Draft version constant
-private const val InitialDraftVersion = 1
 
 /**
  * Preview for PendingDocumentsCard component with documents.
@@ -184,8 +169,7 @@ fun PendingDocumentsCardWithMoreItemsPreview(
  * Generates sample pending documents for preview.
  */
 @OptIn(kotlin.uuid.ExperimentalUuidApi::class)
-private fun getSamplePendingDocuments(): List<DocumentRecordDto> {
-    // Use static date for preview stability
+private fun getSamplePendingDocuments(): List<DocumentListItemDto> {
     val now = LocalDateTime(
         PreviewYear,
         PreviewMonth,
@@ -198,152 +182,80 @@ private fun getSamplePendingDocuments(): List<DocumentRecordDto> {
     val tenantId = TenantId.generate()
 
     return listOf(
-        // Invoice with extraction data - NeedsReview status
-        DocumentRecordDto(
-            document = DocumentDto(
-                id = DocumentId.generate(),
-                tenantId = tenantId,
-                filename = "invoice-2024-001.pdf",
-                contentType = "application/pdf",
-                sizeBytes = InvoiceSizeBytes,
-                storageKey = "documents/invoice-2024-001.pdf",
-                uploadedAt = now
-            ),
-            draft = DocumentDraftDto(
-                documentId = DocumentId.generate(),
-                tenantId = tenantId,
-                documentStatus = DocumentStatus.NeedsReview,
-                documentType = DocumentType.Invoice,
-                extractedData = InvoiceDraftData(invoiceNumber = "INV-3006-4400"),
-                aiDraftData = null,
-                aiDraftSourceRunId = null,
-                draftVersion = InitialDraftVersion,
-                draftEditedAt = null,
-                draftEditedBy = null,
-                linkedContactId = null,
-                counterpartyIntent = tech.dokus.domain.enums.CounterpartyIntent.None,
-                rejectReason = null,
-                lastSuccessfulRunId = null,
-                createdAt = now,
-                updatedAt = now
-            ),
-            latestIngestion = null,
-            confirmedEntity = null
+        DocumentListItemDto(
+            documentId = DocumentId.generate(),
+            tenantId = tenantId,
+            filename = "invoice-2024-001.pdf",
+            documentType = DocumentType.Invoice,
+            direction = null,
+            documentStatus = DocumentStatus.NeedsReview,
+            ingestionStatus = null,
+            effectiveOrigin = DocumentSource.Upload,
+            uploadedAt = now,
+            counterpartyDisplayName = null,
+            purposeRendered = "INV-3006-4400",
+            totalAmount = null,
+            currency = null,
         ),
-        // Inbound invoice with extraction data - NeedsReview status
-        DocumentRecordDto(
-            document = DocumentDto(
-                id = DocumentId.generate(),
-                tenantId = tenantId,
-                filename = "supplier-inbound-invoice.pdf",
-                contentType = "application/pdf",
-                sizeBytes = InboundInvoiceSizeBytes,
-                storageKey = "documents/supplier-inbound-invoice.pdf",
-                uploadedAt = now
-            ),
-            draft = DocumentDraftDto(
-                documentId = DocumentId.generate(),
-                tenantId = tenantId,
-                documentStatus = DocumentStatus.NeedsReview,
-                documentType = DocumentType.Invoice,
-                extractedData = InvoiceDraftData(
-                    direction = DocumentDirection.Inbound,
-                    invoiceNumber = "INV-2024-123",
-                    seller = PartyDraft(name = "Office Supplies Inc.")
-                ),
-                aiDraftData = null,
-                aiDraftSourceRunId = null,
-                draftVersion = InitialDraftVersion,
-                draftEditedAt = null,
-                draftEditedBy = null,
-                linkedContactId = null,
-                counterpartyIntent = tech.dokus.domain.enums.CounterpartyIntent.None,
-                rejectReason = null,
-                lastSuccessfulRunId = null,
-                createdAt = now,
-                updatedAt = now
-            ),
-            latestIngestion = null,
-            confirmedEntity = null
+        DocumentListItemDto(
+            documentId = DocumentId.generate(),
+            tenantId = tenantId,
+            filename = "supplier-inbound-invoice.pdf",
+            documentType = DocumentType.Invoice,
+            direction = null,
+            documentStatus = DocumentStatus.NeedsReview,
+            ingestionStatus = null,
+            effectiveOrigin = DocumentSource.Upload,
+            uploadedAt = now,
+            counterpartyDisplayName = "Office Supplies Inc.",
+            purposeRendered = "INV-2024-123",
+            totalAmount = null,
+            currency = null,
         ),
-        // Receipt - NeedsReview status
-        DocumentRecordDto(
-            document = DocumentDto(
-                id = DocumentId.generate(),
-                tenantId = tenantId,
-                filename = "receipt-lunch-meeting.jpg",
-                contentType = "image/jpeg",
-                sizeBytes = ExpenseSizeBytes,
-                storageKey = "documents/receipt-lunch-meeting.jpg",
-                uploadedAt = now
-            ),
-            draft = DocumentDraftDto(
-                documentId = DocumentId.generate(),
-                tenantId = tenantId,
-                documentStatus = DocumentStatus.NeedsReview,
-                documentType = DocumentType.Receipt,
-                extractedData = ReceiptDraftData(merchantName = "Restaurant ABC"),
-                aiDraftData = null,
-                aiDraftSourceRunId = null,
-                draftVersion = InitialDraftVersion,
-                draftEditedAt = null,
-                draftEditedBy = null,
-                linkedContactId = null,
-                counterpartyIntent = tech.dokus.domain.enums.CounterpartyIntent.None,
-                rejectReason = null,
-                lastSuccessfulRunId = null,
-                createdAt = now,
-                updatedAt = now
-            ),
-            latestIngestion = null,
-            confirmedEntity = null
+        DocumentListItemDto(
+            documentId = DocumentId.generate(),
+            tenantId = tenantId,
+            filename = "receipt-lunch-meeting.jpg",
+            documentType = DocumentType.Receipt,
+            direction = null,
+            documentStatus = DocumentStatus.NeedsReview,
+            ingestionStatus = null,
+            effectiveOrigin = DocumentSource.Upload,
+            uploadedAt = now,
+            counterpartyDisplayName = "Restaurant ABC",
+            purposeRendered = null,
+            totalAmount = null,
+            currency = null,
         ),
-        // Document without draft yet (still processing)
-        DocumentRecordDto(
-            document = DocumentDto(
-                id = DocumentId.generate(),
-                tenantId = tenantId,
-                filename = "scan-20240525.pdf",
-                contentType = "application/pdf",
-                sizeBytes = ScanSizeBytes,
-                storageKey = "documents/scan-20240525.pdf",
-                uploadedAt = now
-            ),
-            draft = null,
-            latestIngestion = null,
-            confirmedEntity = null
+        DocumentListItemDto(
+            documentId = DocumentId.generate(),
+            tenantId = tenantId,
+            filename = "scan-20240525.pdf",
+            documentType = null,
+            direction = null,
+            documentStatus = null,
+            ingestionStatus = null,
+            effectiveOrigin = DocumentSource.Upload,
+            uploadedAt = now,
+            counterpartyDisplayName = null,
+            purposeRendered = null,
+            totalAmount = null,
+            currency = null,
         ),
-        // Another invoice - NeedsReview status
-        DocumentRecordDto(
-            document = DocumentDto(
-                id = DocumentId.generate(),
-                tenantId = tenantId,
-                filename = "invoice-client-abc.pdf",
-                contentType = "application/pdf",
-                sizeBytes = ClientInvoiceSizeBytes,
-                storageKey = "documents/invoice-client-abc.pdf",
-                uploadedAt = now
-            ),
-            draft = DocumentDraftDto(
-                documentId = DocumentId.generate(),
-                tenantId = tenantId,
-                documentStatus = DocumentStatus.NeedsReview,
-                documentType = DocumentType.Invoice,
-                extractedData = InvoiceDraftData(invoiceNumber = "INV-3006-4401"),
-                aiDraftData = null,
-                aiDraftSourceRunId = null,
-                draftVersion = InitialDraftVersion,
-                draftEditedAt = null,
-                draftEditedBy = null,
-                linkedContactId = null,
-                counterpartyIntent = tech.dokus.domain.enums.CounterpartyIntent.None,
-                rejectReason = null,
-                lastSuccessfulRunId = null,
-                createdAt = now,
-                updatedAt = now
-            ),
-            latestIngestion = null,
-            confirmedEntity = null
-        )
+        DocumentListItemDto(
+            documentId = DocumentId.generate(),
+            tenantId = tenantId,
+            filename = "invoice-client-abc.pdf",
+            documentType = DocumentType.Invoice,
+            direction = null,
+            documentStatus = DocumentStatus.NeedsReview,
+            ingestionStatus = null,
+            effectiveOrigin = DocumentSource.Upload,
+            uploadedAt = now,
+            counterpartyDisplayName = null,
+            purposeRendered = "INV-3006-4401",
+            totalAmount = null,
+            currency = null,
+        ),
     )
 }

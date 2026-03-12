@@ -9,6 +9,8 @@ import org.jetbrains.exposed.v1.jdbc.SchemaUtils
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import tech.dokus.database.tables.auth.TenantTable
+import tech.dokus.database.tables.auth.UsersTable
+import tech.dokus.database.tables.contacts.ContactsTable
 import tech.dokus.database.tables.documents.DocumentBlobsTable
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
 import tech.dokus.database.tables.documents.DocumentSourcesTable
@@ -58,6 +60,8 @@ class DocumentIngestionRunRepositoryStaleRecoveryTest {
         transaction(database) {
             SchemaUtils.create(
                 TenantTable,
+                UsersTable,
+                ContactsTable,
                 DocumentBlobsTable,
                 DocumentsTable,
                 DocumentSourcesTable,
@@ -85,11 +89,7 @@ class DocumentIngestionRunRepositoryStaleRecoveryTest {
             DocumentsTable.insert {
                 it[id] = documentUuid
                 it[tenantId] = tenantUuid
-                it[filename] = "stale-run.pdf"
-                it[contentType] = "application/pdf"
-                it[sizeBytes] = 123L
-                it[storageKey] = "docs/$tenantUuid/stale-run.pdf"
-                it[documentSource] = DocumentSource.Upload
+                it[effectiveOrigin] = DocumentSource.Upload
             }
         }
     }
@@ -97,13 +97,7 @@ class DocumentIngestionRunRepositoryStaleRecoveryTest {
     @AfterTest
     fun teardown() {
         transaction(database) {
-            SchemaUtils.drop(
-                DocumentIngestionRunsTable,
-                DocumentSourcesTable,
-                DocumentBlobsTable,
-                DocumentsTable,
-                TenantTable
-            )
+            exec("DROP ALL OBJECTS")
         }
     }
 

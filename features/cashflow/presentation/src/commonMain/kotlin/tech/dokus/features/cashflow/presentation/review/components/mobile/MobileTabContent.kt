@@ -41,7 +41,6 @@ import tech.dokus.aura.resources.cashflow_preview_error
 import tech.dokus.aura.resources.cashflow_preview_page_failed
 import tech.dokus.aura.resources.cashflow_preview_page_label
 import tech.dokus.domain.model.DocumentPagePreviewDto
-import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.features.cashflow.presentation.review.DocumentPreviewState
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
@@ -49,7 +48,9 @@ import tech.dokus.features.cashflow.presentation.review.ScanningLineOverlay
 import tech.dokus.features.cashflow.presentation.review.components.AnalysisFailedBanner
 import tech.dokus.features.cashflow.presentation.review.components.details.AmountsCard
 import tech.dokus.features.cashflow.presentation.review.components.details.CounterpartyCard
-import tech.dokus.features.cashflow.presentation.review.components.details.InvoiceDetailsCard
+import tech.dokus.features.cashflow.presentation.review.components.details.DocumentDetailsCard
+import tech.dokus.features.cashflow.presentation.review.components.details.UnknownDocumentDetailsCard
+import tech.dokus.features.cashflow.presentation.review.models.DocumentUiData
 import tech.dokus.features.cashflow.presentation.review.components.details.PeppolStatusCard
 import tech.dokus.features.cashflow.presentation.review.components.details.SourcesCard
 import tech.dokus.foundation.app.network.rememberAuthenticatedImageLoader
@@ -262,12 +263,23 @@ internal fun DetailsTabContent(
         )
 
         // Document details section (fact display, not form)
-        InvoiceDetailsCard(
-            state = state,
-            isAccountantReadOnly = isAccountantReadOnly,
-            onIntent = onIntent,
-            modifier = Modifier.fillMaxWidth()
-        )
+        val uiData = state.uiData
+        val isReadOnly = isAccountantReadOnly || state.isDocumentConfirmed || state.isDocumentRejected
+        if (uiData != null) {
+            DocumentDetailsCard(
+                uiData = uiData,
+                isReadOnly = isReadOnly,
+                onDirectionSelected = { onIntent(DocumentReviewIntent.SelectDirection(it)) },
+                modifier = Modifier.fillMaxWidth(),
+            )
+        } else {
+            UnknownDocumentDetailsCard(
+                state = state,
+                isAccountantReadOnly = isAccountantReadOnly,
+                onIntent = onIntent,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
         PeppolStatusCard(
             state = state,
             modifier = Modifier.fillMaxWidth()
@@ -289,16 +301,10 @@ internal fun DetailsTabContent(
 
         // Amounts section (text with tabular nums, not inputs)
         AmountsCard(
-            state = state,
-            onIntent = onIntent,
-            modifier = Modifier.fillMaxWidth()
+            uiData = uiData,
+            isProcessing = state.isProcessing,
+            modifier = Modifier.fillMaxWidth(),
         )
-
-        // Line items (if invoice with items)
-        val invoiceDraft = state.draftData as? InvoiceDraftData
-        if (invoiceDraft != null && invoiceDraft.lineItems.isNotEmpty()) {
-            // LineItemsSection would go here if needed
-        }
 
         // Bottom padding for keyboard
         Spacer(modifier = Modifier.height(Constraints.Spacing.xLarge))

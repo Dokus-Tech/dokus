@@ -1,6 +1,8 @@
 package tech.dokus.foundation.backend.cache
 
 import io.lettuce.core.RedisURI
+import io.lettuce.core.ScanArgs
+import io.lettuce.core.ScanCursor
 import io.lettuce.core.api.StatefulRedisConnection
 import io.lettuce.core.api.async.RedisAsyncCommands
 import io.lettuce.core.support.ConnectionPoolSupport
@@ -161,17 +163,29 @@ class RedisClientImpl(
 
     override suspend fun keys(pattern: String): Set<String> = withConnection { commands ->
         val fullPattern = buildKey(pattern)
-        val keys = commands.keys(fullPattern).await()
+        val result = mutableSetOf<String>()
+        val scanArgs = ScanArgs.Builder.matches(fullPattern).limit(100)
+        var cursor: ScanCursor = ScanCursor.INITIAL
+        do {
+            val scanResult = commands.scan(cursor, scanArgs).await()
+            result.addAll(scanResult.keys)
+            cursor = scanResult
+        } while (!scanResult.isFinished)
         val prefixLength = "$namespace:".length
-        keys.map { it.substring(prefixLength) }.toSet()
+        result.map { it.substring(prefixLength) }.toSet()
     }
 
     override suspend fun clear() = withConnection { commands ->
         val pattern = "$namespace:*"
-        val keys = commands.keys(pattern).await()
-        if (keys.isNotEmpty()) {
-            commands.del(*keys.toTypedArray()).await()
-        }
+        val scanArgs = ScanArgs.Builder.matches(pattern).limit(100)
+        var cursor: ScanCursor = ScanCursor.INITIAL
+        do {
+            val scanResult = commands.scan(cursor, scanArgs).await()
+            if (scanResult.keys.isNotEmpty()) {
+                commands.del(*scanResult.keys.toTypedArray()).await()
+            }
+            cursor = scanResult
+        } while (!scanResult.isFinished)
         Unit
     }
 

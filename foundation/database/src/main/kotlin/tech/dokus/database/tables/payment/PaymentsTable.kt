@@ -7,7 +7,7 @@ import org.jetbrains.exposed.v1.datetime.date
 import org.jetbrains.exposed.v1.datetime.datetime
 import tech.dokus.database.tables.auth.TenantTable
 import tech.dokus.database.tables.cashflow.InvoicesTable
-import tech.dokus.database.tables.documents.ImportedBankTransactionsTable
+import tech.dokus.database.tables.banking.BankTransactionsTable
 import tech.dokus.domain.enums.PaymentCreatedBy
 import tech.dokus.domain.enums.PaymentMethod
 import tech.dokus.domain.enums.PaymentSource
@@ -36,7 +36,7 @@ object PaymentsTable : UUIDTable("payments") {
 
     val transactionId = varchar("transaction_id", 255).nullable() // External ID
     val bankTransactionId = uuid("bank_transaction_id")
-        .references(ImportedBankTransactionsTable.id, onDelete = ReferenceOption.SET_NULL)
+        .references(BankTransactionsTable.id, onDelete = ReferenceOption.SET_NULL)
         .nullable()
     val notes = text("notes").nullable()
     val reversedAt = datetime("reversed_at").nullable()

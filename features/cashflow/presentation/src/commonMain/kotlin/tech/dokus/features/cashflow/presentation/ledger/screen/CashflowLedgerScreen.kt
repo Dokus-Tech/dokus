@@ -50,13 +50,11 @@ import tech.dokus.aura.resources.cashflow_empty_upcoming
 import tech.dokus.aura.resources.cashflow_empty_upcoming_hint
 import tech.dokus.aura.resources.cashflow_empty_upcoming_in
 import tech.dokus.aura.resources.cashflow_empty_upcoming_out
-import tech.dokus.foundation.aura.components.common.DokusEmptyState
 import tech.dokus.features.cashflow.presentation.common.components.pagination.rememberLoadMoreTrigger
 import tech.dokus.features.cashflow.presentation.common.components.table.DokusTableDivider
 import tech.dokus.features.cashflow.presentation.common.components.table.DokusTableSurface
 import tech.dokus.features.cashflow.presentation.ledger.components.CashflowLedgerHeaderRow
 import tech.dokus.features.cashflow.presentation.ledger.components.CashflowLedgerMobileRow
-import tech.dokus.features.cashflow.presentation.ledger.components.CashflowLedgerSkeleton
 import tech.dokus.features.cashflow.presentation.ledger.components.CashflowLedgerTableRow
 import tech.dokus.features.cashflow.presentation.ledger.components.CashflowSummarySection
 import tech.dokus.features.cashflow.presentation.ledger.components.CashflowViewModeFilter
@@ -64,9 +62,9 @@ import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowLedgerIntent
 import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowLedgerState
 import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowViewMode
 import tech.dokus.features.cashflow.presentation.ledger.mvi.DirectionFilter
-import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.app.state.isError
 import tech.dokus.foundation.app.state.isLoading
+import tech.dokus.foundation.aura.components.common.DokusEmptyState
 import tech.dokus.foundation.aura.components.common.DokusErrorBanner
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.common.DokusLoaderSize
@@ -171,7 +169,7 @@ private fun CashflowLedgerContent(
                 ) {
                     // Table body OR loading/error/empty state
                     if (entriesData.isEmpty() && state.entries.isError()) {
-                        val error = state.entries as DokusState.Error
+                        val error = state.entries
                         DokusErrorBanner(
                             exception = error.exception,
                             retryHandler = error.retryHandler,

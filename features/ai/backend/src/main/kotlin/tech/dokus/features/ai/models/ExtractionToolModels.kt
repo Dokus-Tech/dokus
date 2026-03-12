@@ -10,6 +10,8 @@ import kotlin.math.abs
 
 @Serializable
 data class LineItemToolInput(
+    @property:LLMDescription(ExtractionToolDescriptions.LineItemTitle)
+    val title: String?,
     @property:LLMDescription(ExtractionToolDescriptions.LineItemDescription)
     val description: String?,
     @property:LLMDescription(ExtractionToolDescriptions.LineItemQuantity)
@@ -33,7 +35,7 @@ data class VatBreakdownToolInput(
 )
 
 internal fun LineItemToolInput.toDomain(): FinancialLineItem? {
-    val desc = description?.trim().orEmpty()
+    val desc = title?.trim().orEmpty()
     if (desc.isEmpty()) return null
 
     return FinancialLineItem(

@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Navigation -->
+    <string name="nav_section_banking">Banking</string>
+    <string name="banking_balances_title">Balances</string>
+    <string name="banking_balances_subtitle">Account overview</string>
+    <string name="banking_payments_title">Payments</string>
+    <string name="banking_payments_subtitle">Match transactions</string>
+
+    <!-- Filters -->
+    <string name="banking_filter_all">All</string>
+    <string name="banking_filter_needs_review">Needs review</string>
+    <string name="banking_filter_unmatched">Unmatched</string>
+    <string name="banking_filter_matched">Matched</string>
+    <string name="banking_filter_ignored">Ignored</string>
+
+    <string name="banking_filter_all_accounts">All accounts</string>
+
+    <!-- Table columns -->
+    <string name="banking_col_date">Date</string>
+    <string name="banking_col_description">Description</string>
+    <string name="banking_col_counterparty">Counterparty</string>
+    <string name="banking_col_account">Account</string>
+    <string name="banking_col_status">Status</string>
+    <string name="banking_col_amount">Amount</string>
+
+    <!-- Transaction status -->
+    <string name="banking_status_unmatched">Unmatched</string>
+    <string name="banking_status_needs_review">Needs review</string>
+    <string name="banking_status_matched">Matched</string>
+    <string name="banking_status_ignored">Ignored</string>
+
+    <!-- Detail pane -->
+    <string name="banking_detail_title">Transaction details</string>
+    <string name="banking_detail_counterparty">Counterparty</string>
+    <string name="banking_detail_iban">IBAN</string>
+    <string name="banking_detail_reference">Reference</string>
+    <string name="banking_detail_description">Description</string>
+
+    <!-- Actions -->
+    <string name="banking_action_link">Link to document</string>
+    <string name="banking_action_ignore">Ignore</string>
+    <string name="banking_action_confirm_match">Confirm match</string>
+    <string name="banking_action_add_expense">Add expense</string>
+
+    <!-- Ignore dialog -->
+    <string name="banking_ignore_dialog_title">Ignore transaction</string>
+    <string name="banking_ignore_dialog_prompt">Why are you ignoring this transaction?</string>
+    <string name="banking_ignore_dialog_confirm">Ignore</string>
+    <string name="banking_ignore_dialog_cancel">Cancel</string>
+
+    <!-- Ignore reasons -->
+    <string name="banking_ignore_reason_bank_fee">Bank fee</string>
+    <string name="banking_ignore_reason_duplicate">Duplicate import</string>
+    <string name="banking_ignore_reason_personal">Personal transaction</string>
+    <string name="banking_ignore_reason_not_business">Not business-related</string>
+    <string name="banking_ignore_reason_irrelevant">Irrelevant</string>
+    <string name="banking_ignore_reason_other">Other</string>
+
+    <!-- Callout -->
+    <string name="banking_unresolved_callout">%1$d payments without documents</string>
+    <string name="banking_unresolved_amount">%1$s unresolved</string>
+
+    <!-- Statement trust -->
+    <string name="banking_trust_high">High</string>
+    <string name="banking_trust_medium">Medium</string>
+    <string name="banking_trust_low">Low</string>
+    <string name="banking_trust_label">Trust</string>
+
+    <!-- Resolution type -->
+    <string name="banking_resolution_document">Document</string>
+    <string name="banking_resolution_transfer">Transfer</string>
+
+    <!-- Match metadata -->
+    <string name="banking_match_by_auto">Auto</string>
+    <string name="banking_match_by_review">Review</string>
+    <string name="banking_match_by_manual">Manual</string>
+    <string name="banking_detail_matched_by">Matched by</string>
+    <string name="banking_detail_matched_at">Matched at</string>
+    <string name="banking_detail_evidence">Evidence</string>
+    <string name="banking_detail_resolution">Resolution</string>
+    <string name="banking_detail_trust">Trust</string>
+    <string name="banking_detail_ignored_reason">Reason</string>
+
+    <!-- Account status -->
+    <string name="banking_account_status_confirmed">Confirmed</string>
+    <string name="banking_account_status_pending">Pending review</string>
+
+    <!-- Empty / Error -->
+    <string name="banking_empty_title">No transactions</string>
+    <string name="banking_empty_subtitle">Upload a bank statement to get started</string>
+
+    <!-- Balances screen -->
+    <string name="banking_balances_stats_accounts">%1$d connected accounts</string>
+    <string name="banking_balances_stats_missing">%1$d missing documents</string>
+    <string name="banking_balances_stats_matched">%1$d matched this period</string>
+    <string name="banking_balances_stats_last_sync">last sync %1$s</string>
+    <string name="banking_balances_missing_callout">%1$d payments require documents</string>
+    <string name="banking_balances_review_now">Review now</string>
+    <string name="banking_balances_timeline_title">Balance timeline</string>
+    <string name="banking_balances_timeline_subtitle">%1$s across %2$d accounts</string>
+    <string name="banking_balances_accounts_title">Accounts</string>
+    <string name="banking_balances_connect">Connect</string>
+    <string name="banking_balances_upload">Upload</string>
+    <string name="banking_balances_col_account">Account</string>
+    <string name="banking_balances_col_type">Type</string>
+    <string name="banking_balances_col_balance">Balance</string>
+    <string name="banking_balances_col_provider">Provider</string>
+    <string name="banking_balances_col_last_sync">Last sync</string>
+    <string name="banking_balances_col_status">Status</string>
+    <string name="banking_balances_status_synced">Synced</string>
+    <string name="banking_balances_status_inactive">Inactive</string>
+    <string name="banking_balances_empty_title">No accounts connected</string>
+    <string name="banking_balances_empty_subtitle">Connect a bank or upload a statement to get started</string>
+    <string name="banking_balances_tab_7d">7d</string>
+    <string name="banking_balances_tab_30d">30d</string>
+    <string name="banking_balances_tab_90d">90d</string>
+    <string name="banking_balances_tab_1y">1y</string>
+    <string name="banking_balances_legend_total">Total</string>
+    <string name="banking_balances_no_chart_data">No data for this period</string>
+    <string name="banking_balances_time_minutes_ago">%1$dm ago</string>
+    <string name="banking_balances_time_hours_ago">%1$dh ago</string>
+    <string name="banking_balances_time_days_ago">%1$dd ago</string>
+</resources>

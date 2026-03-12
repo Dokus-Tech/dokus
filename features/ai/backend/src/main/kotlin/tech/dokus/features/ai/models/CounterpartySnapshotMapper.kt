@@ -4,6 +4,7 @@ import tech.dokus.domain.Email
 import tech.dokus.domain.enums.Country
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.contact.CounterpartySnapshot
+import tech.dokus.domain.model.contact.PostalAddress
 
 fun FinancialExtractionResult.toAuthoritativeCounterpartySnapshot(): CounterpartySnapshot? = when (this) {
     is FinancialExtractionResult.Invoice -> data.counterparty.toSnapshot()
@@ -33,11 +34,12 @@ private fun CounterpartyExtraction?.toSnapshot(): CounterpartySnapshot? {
         iban = null,
         email = cleanedEmail,
         companyNumber = null,
-        streetLine1 = cleanedStreet,
-        streetLine2 = null,
-        postalCode = cleanedPostal,
-        city = cleanedCity,
-        country = cleanedCountry
+        address = PostalAddress(
+            streetLine1 = cleanedStreet,
+            postalCode = cleanedPostal,
+            city = cleanedCity,
+            country = cleanedCountry
+        )
     )
 
     return snapshot.takeIf { it.name != null || it.vatNumber != null }

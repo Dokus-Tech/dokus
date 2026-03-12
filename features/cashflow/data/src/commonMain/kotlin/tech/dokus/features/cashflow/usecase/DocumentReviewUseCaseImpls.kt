@@ -1,14 +1,13 @@
 package tech.dokus.features.cashflow.usecase
 
 import kotlinx.coroutines.flow.Flow
-import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentMatchReviewId
 import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.model.DocumentMatchResolutionDecision
 import tech.dokus.domain.model.DocumentPagesResponse
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.DocumentRecordStreamEvent
 import tech.dokus.domain.model.RejectDocumentRequest
 import tech.dokus.domain.model.UpdateDraftRequest
@@ -31,7 +30,7 @@ import tech.dokus.features.cashflow.usecases.UpdateDocumentDraftUseCase
 internal class GetDocumentRecordUseCaseImpl(
     private val documentReviewGateway: DocumentReviewGateway
 ) : GetDocumentRecordUseCase {
-    override suspend fun invoke(documentId: DocumentId): Result<DocumentRecordDto> {
+    override suspend fun invoke(documentId: DocumentId): Result<DocumentDetailDto> {
         return documentReviewGateway.getDocumentRecord(documentId)
     }
 }
@@ -61,12 +60,12 @@ internal class UpdateDocumentDraftContactUseCaseImpl(
     override suspend fun invoke(
         documentId: DocumentId,
         contactId: ContactId?,
-        counterpartyIntent: CounterpartyIntent?
+        pendingCreation: Boolean
     ): Result<Unit> {
         return documentReviewGateway.updateDocumentDraftContact(
             documentId = documentId,
             contactId = contactId,
-            counterpartyIntent = counterpartyIntent
+            pendingCreation = pendingCreation
         )
     }
 }
@@ -76,7 +75,7 @@ internal class ConfirmDocumentUseCaseImpl(
 ) : ConfirmDocumentUseCase {
     override suspend fun invoke(
         documentId: DocumentId
-    ): Result<DocumentRecordDto> {
+    ): Result<DocumentDetailDto> {
         return documentReviewGateway.confirmDocument(documentId)
     }
 }
@@ -87,7 +86,7 @@ internal class RejectDocumentUseCaseImpl(
     override suspend fun invoke(
         documentId: DocumentId,
         request: RejectDocumentRequest
-    ): Result<DocumentRecordDto> {
+    ): Result<DocumentDetailDto> {
         return documentReviewGateway.rejectDocument(documentId, request)
     }
 }
@@ -160,7 +159,7 @@ internal class ResolveDocumentMatchReviewUseCaseImpl(
     override suspend fun invoke(
         reviewId: DocumentMatchReviewId,
         decision: DocumentMatchResolutionDecision
-    ): Result<DocumentRecordDto> {
+    ): Result<DocumentDetailDto> {
         return documentReviewGateway.resolveDocumentMatchReview(
             reviewId = reviewId,
             decision = decision

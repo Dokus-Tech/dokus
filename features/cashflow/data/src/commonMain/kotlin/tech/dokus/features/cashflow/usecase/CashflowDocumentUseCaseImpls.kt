@@ -15,7 +15,7 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.model.CreateInvoiceRequest
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentListItemDto
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.features.cashflow.datasource.CashflowRemoteDataSource
 import tech.dokus.features.cashflow.usecases.GetContactPeppolStatusUseCase
@@ -40,7 +40,7 @@ internal class WatchPendingDocumentsUseCaseImpl(
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     override operator fun invoke(
         limit: Int
-    ): Flow<DokusState<List<DocumentRecordDto>>> {
+    ): Flow<DokusState<List<DocumentListItemDto>>> {
         require(limit > 0) { "Limit must be positive" }
 
         return merge(
@@ -55,7 +55,7 @@ internal class WatchPendingDocumentsUseCaseImpl(
                     val statuses = listOf(
                         DocumentStatus.NeedsReview
                     )
-                    val collected = mutableListOf<DocumentRecordDto>()
+                    val collected = mutableListOf<DocumentListItemDto>()
                     for (status in statuses) {
                         val result = cashflowRemoteDataSource.listDocuments(
                             documentStatus = status,
@@ -70,7 +70,7 @@ internal class WatchPendingDocumentsUseCaseImpl(
                         collected += result.getOrThrow().items
                     }
 
-                    val unique = collected.distinctBy { it.document.id }
+                    val unique = collected.distinctBy { it.documentId }
                     emit(DokusState.success(unique))
                 }
             }

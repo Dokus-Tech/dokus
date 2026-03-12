@@ -41,8 +41,8 @@ import tech.dokus.aura.resources.payment_record_title
 import tech.dokus.aura.resources.payment_undo_auto
 import tech.dokus.aura.resources.payment_undoing
 import tech.dokus.domain.enums.AutoMatchStatus
-import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.AutoPaymentStatusDto
+import tech.dokus.features.cashflow.presentation.review.models.DocumentUiData
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.ReviewFinancialStatus
@@ -85,8 +85,24 @@ internal fun MobileCanonicalHeader(
 }
 
 @Composable
-internal fun MobileAmountHeroCard(state: DocumentReviewState) {
-    val currency = currencySign(state)
+internal fun MobileAmountHeroCard(
+    state: DocumentReviewState,
+    uiData: DocumentUiData,
+) {
+    if (uiData is DocumentUiData.BankStatement) return
+
+    val currencySign = when (uiData) {
+        is DocumentUiData.Invoice -> uiData.currencySign
+        is DocumentUiData.CreditNote -> uiData.currencySign
+        is DocumentUiData.Receipt -> uiData.currencySign
+        is DocumentUiData.BankStatement -> return
+    }
+    val primaryDescription = when (uiData) {
+        is DocumentUiData.Invoice -> uiData.primaryDescription
+        is DocumentUiData.CreditNote -> uiData.primaryDescription
+        is DocumentUiData.Receipt -> uiData.primaryDescription
+        is DocumentUiData.BankStatement -> return
+    }
     val amount = state.totalAmount?.toDisplayString() ?: "\u2014"
 
     DokusCardSurface(modifier = Modifier.fillMaxWidth()) {
@@ -110,12 +126,12 @@ internal fun MobileAmountHeroCard(state: DocumentReviewState) {
                 verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
             ) {
                 Text(
-                    text = "$currency$amount",
+                    text = "$currencySign$amount",
                     style = MaterialTheme.typography.displaySmall,
                     fontWeight = FontWeight.Bold,
                 )
                 Text(
-                    text = state.primaryDescription(),
+                    text = primaryDescription,
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.textMuted,
                 )
@@ -126,11 +142,22 @@ internal fun MobileAmountHeroCard(state: DocumentReviewState) {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium),
                 ) {
-                    MobileMetaCell(label = stringResource(Res.string.mobile_label_issued), value = state.issueDate() ?: "\u2014")
-                    if (state.draftData is InvoiceDraftData) {
-                        MobileMetaCell(label = stringResource(Res.string.mobile_label_due), value = state.dueDate() ?: "\u2014")
+                    when (uiData) {
+                        is DocumentUiData.Invoice -> {
+                            MobileMetaCell(label = stringResource(Res.string.mobile_label_issued), value = uiData.issueDate ?: "\u2014")
+                            MobileMetaCell(label = stringResource(Res.string.mobile_label_due), value = uiData.dueDate ?: "\u2014")
+                            MobileMetaCell(label = stringResource(Res.string.mobile_label_invoice), value = uiData.invoiceNumber ?: "\u2014")
+                        }
+                        is DocumentUiData.CreditNote -> {
+                            MobileMetaCell(label = stringResource(Res.string.mobile_label_issued), value = uiData.issueDate ?: "\u2014")
+                            MobileMetaCell(label = stringResource(Res.string.mobile_label_invoice), value = uiData.creditNoteNumber ?: "\u2014")
+                        }
+                        is DocumentUiData.Receipt -> {
+                            MobileMetaCell(label = stringResource(Res.string.mobile_label_issued), value = uiData.date ?: "\u2014")
+                            MobileMetaCell(label = stringResource(Res.string.mobile_label_invoice), value = uiData.receiptNumber ?: "\u2014")
+                        }
+                        is DocumentUiData.BankStatement -> {}
                     }
-                    MobileMetaCell(label = stringResource(Res.string.mobile_label_invoice), value = state.referenceNumber() ?: "\u2014")
                 }
             }
         }

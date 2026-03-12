@@ -158,7 +158,7 @@ private class FakeGetCurrentTenantUseCase : GetCurrentTenantUseCase {
 }
 
 private class FakeWatchPendingDocumentsUseCase : WatchPendingDocumentsUseCase {
-    override fun invoke(limit: Int): Flow<DokusState<List<tech.dokus.domain.model.DocumentRecordDto>>> {
+    override fun invoke(limit: Int): Flow<DokusState<List<tech.dokus.domain.model.DocumentListItemDto>>> {
         return flowOf(DokusState.success(emptyList()))
     }
 

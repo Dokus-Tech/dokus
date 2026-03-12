@@ -9,7 +9,6 @@ import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.processor.ProcessorIngestionRepository
@@ -17,7 +16,6 @@ import tech.dokus.database.tables.auth.TenantTable
 import tech.dokus.database.tables.auth.UsersTable
 import tech.dokus.database.tables.contacts.ContactsTable
 import tech.dokus.database.tables.documents.DocumentBlobsTable
-import tech.dokus.database.tables.documents.DocumentDraftsTable
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
 import tech.dokus.database.tables.documents.DocumentSourcesTable
 import tech.dokus.database.tables.documents.DocumentsTable
@@ -50,7 +48,6 @@ class ProcessorIngestionInvariantTest {
 
     private val documentRepository = DocumentRepository()
     private val ingestionRunRepository = DocumentIngestionRunRepository()
-    private val draftRepository = DocumentDraftRepository()
     private val processorIngestionRepository = ProcessorIngestionRepository()
 
     @BeforeEach
@@ -70,8 +67,7 @@ class ProcessorIngestionInvariantTest {
                 DocumentsTable,
                 DocumentBlobsTable,
                 DocumentSourcesTable,
-                DocumentIngestionRunsTable,
-                DocumentDraftsTable
+                DocumentIngestionRunsTable
             )
         }
 
@@ -93,16 +89,7 @@ class ProcessorIngestionInvariantTest {
     @AfterEach
     fun teardown() {
         transaction(database) {
-            SchemaUtils.drop(
-                DocumentDraftsTable,
-                DocumentIngestionRunsTable,
-                DocumentSourcesTable,
-                DocumentBlobsTable,
-                DocumentsTable,
-                ContactsTable,
-                UsersTable,
-                TenantTable
-            )
+            exec("DROP ALL OBJECTS")
         }
     }
 
@@ -111,12 +98,8 @@ class ProcessorIngestionInvariantTest {
         val documentId = documentRepository.create(
             tenantId = tenantId,
             payload = tech.dokus.database.repository.cashflow.DocumentCreatePayload(
-                filename = "invoice.pdf",
-                contentType = "application/pdf",
-                sizeBytes = 123L,
-                storageKey = "test/$tenantUuid/invoice.pdf",
-                contentHash = null,
-                source = DocumentSource.Upload
+                canonicalContentHash = null,
+                effectiveOrigin = DocumentSource.Upload
             )
         )
 
@@ -146,7 +129,7 @@ class ProcessorIngestionInvariantTest {
         )
         assertTrue(marked)
 
-        val draft = draftRepository.getByDocumentId(documentId, tenantId)
+        val draft = documentRepository.getDraftByDocumentId(documentId, tenantId)
         assertNotNull(draft)
         assertEquals(DocumentStatus.NeedsReview, draft.documentStatus)
     }

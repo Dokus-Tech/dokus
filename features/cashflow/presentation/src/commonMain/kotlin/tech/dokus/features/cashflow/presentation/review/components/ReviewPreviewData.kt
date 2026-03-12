@@ -8,41 +8,43 @@ import tech.dokus.domain.Money
 import tech.dokus.domain.enums.CashflowDirection
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.CashflowSourceType
-import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.AutoMatchStatus
 import tech.dokus.domain.enums.DocumentDirection
-import tech.dokus.domain.enums.DocumentMatchReviewReasonType
+import tech.dokus.domain.enums.ReviewReason
 import tech.dokus.domain.enums.DocumentMatchReviewStatus
-import tech.dokus.domain.enums.DocumentMatchType
+import tech.dokus.domain.enums.SourceMatchKind
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentSourceStatus
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
-import tech.dokus.domain.enums.ImportedBankTransactionStatus
-import tech.dokus.domain.enums.PaymentCandidateTier
+import tech.dokus.domain.enums.BankTransactionStatus
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.DocumentBlobId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentMatchReviewId
 import tech.dokus.domain.ids.DocumentSourceId
-import tech.dokus.domain.ids.ImportedBankTransactionId
+import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.ids.PaymentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.AutoPaymentStatusDto
 import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.DocumentDto
-import tech.dokus.domain.model.ImportedBankTransactionDto
+import tech.dokus.domain.model.BankTransactionDto
+import tech.dokus.domain.model.TransactionCommunication
+import tech.dokus.domain.ids.StructuredCommunication
 import tech.dokus.domain.model.DocumentPagePreviewDto
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.DocumentSourceDto
 import tech.dokus.domain.model.DocumentMatchReviewSummaryDto
 import tech.dokus.domain.model.FinancialLineItem
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.PartyDraft
+import tech.dokus.domain.model.contact.CounterpartyInfo
 import tech.dokus.domain.model.contact.CounterpartySnapshot
+import tech.dokus.domain.model.contact.PostalAddress
 import tech.dokus.features.cashflow.presentation.review.DocumentPreviewState
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.PaymentSheetState
@@ -102,19 +104,21 @@ internal fun previewReviewContentState(
         documentType = DocumentType.Invoice,
         direction = DocumentDirection.Inbound,
         extractedData = draftData,
-        aiDraftData = draftData,
         aiDraftSourceRunId = null,
         draftVersion = 1,
         draftEditedAt = null,
         draftEditedBy = null,
-        linkedContactId = null,
-        counterpartySnapshot = CounterpartySnapshot(
-            name = "KBC Bank NV",
-            streetLine1 = "Havenlaan 2",
-            postalCode = "1080",
-            city = "Brussels"
+        counterparty = CounterpartyInfo.Unresolved(
+            snapshot = CounterpartySnapshot(
+                name = "KBC Bank NV",
+                address = PostalAddress(
+                    streetLine1 = "Havenlaan 2",
+                    postalCode = "1080",
+                    city = "Brussels",
+                ),
+            ),
         ),
-        counterpartyIntent = CounterpartyIntent.None,
+        counterpartyDisplayName = "KBC Bank NV",
         lastSuccessfulRunId = null,
         createdAt = previewNow,
         updatedAt = previewNow,
@@ -151,15 +155,12 @@ internal fun previewReviewContentState(
         )
     }
 
-    val record = DocumentRecordDto(
+    val record = DocumentDetailDto(
         document = DocumentDto(
             id = documentId,
             tenantId = tenantId,
             filename = "KBC_384421507.pdf",
-            contentType = "application/pdf",
-            sizeBytes = 248_200,
-            storageKey = "documents/$tenantId/KBC_384421507.pdf",
-            source = DocumentSource.Upload,
+            effectiveOrigin = DocumentSource.Upload,
             uploadedAt = previewNow,
         ),
         draft = draft,
@@ -169,7 +170,7 @@ internal fun previewReviewContentState(
         pendingMatchReview = if (showPendingMatchReview) {
             DocumentMatchReviewSummaryDto(
                 reviewId = DocumentMatchReviewId.generate(),
-                reasonType = DocumentMatchReviewReasonType.MaterialConflict,
+                reasonType = ReviewReason.MaterialConflict,
                 status = DocumentMatchReviewStatus.Pending,
                 createdAt = previewNow,
             )
@@ -188,7 +189,7 @@ internal fun previewReviewContentState(
                 contentType = "application/pdf",
                 sizeBytes = 248_200,
                 status = DocumentSourceStatus.Linked,
-                matchType = if (hasCrossMatchedSource) DocumentMatchType.SameContent else null,
+                matchType = if (hasCrossMatchedSource) SourceMatchKind.SameContent else null,
             ),
             DocumentSourceDto(
                 id = DocumentSourceId.generate(),
@@ -201,7 +202,7 @@ internal fun previewReviewContentState(
                 contentType = "application/xml",
                 sizeBytes = 4_800,
                 status = DocumentSourceStatus.Linked,
-                matchType = if (hasCrossMatchedSource) DocumentMatchType.SameDocument else null,
+                matchType = if (hasCrossMatchedSource) SourceMatchKind.SameDocument else null,
             ),
         ),
     )
@@ -227,7 +228,7 @@ internal fun previewReviewContentState(
         isUndoingAutoPayment = isUndoingAutoPayment,
         sourceViewerState = sourceViewerState,
         paymentSheetState = paymentSheetState,
-        counterpartyIntent = CounterpartyIntent.None,
+        isPendingCreation = false,
         today = LocalDate(2026, 3, 1),
     )
 }
@@ -239,7 +240,7 @@ internal fun previewAutoPaymentStatus(
     AutoPaymentStatusDto(
         matchStatus = AutoMatchStatus.AutoPaid,
         paymentId = PaymentId.parse("6cc26605-d49d-480a-ad2e-93fca770de95"),
-        bankTransactionId = ImportedBankTransactionId.parse("b038fd5b-c2b7-45b4-a0f2-f3a17d673aa3"),
+        bankTransactionId = BankTransactionId.parse("b038fd5b-c2b7-45b4-a0f2-f3a17d673aa3"),
         confidenceScore = confidenceScore,
         reasons = listOf("structured_reference_match", "exact_amount", "date_proximity"),
         matchedAt = LocalDateTime(2026, 2, 15, 7, 32, 0),
@@ -301,64 +302,50 @@ internal fun previewPaymentSheetState(
     )
 }
 
-internal fun previewImportedTransactions(): List<ImportedBankTransactionDto> = listOf(
-    ImportedBankTransactionDto(
-        id = ImportedBankTransactionId.parse("b038fd5b-c2b7-45b4-a0f2-f3a17d673aa3"),
+internal fun previewImportedTransactions(): List<BankTransactionDto> = listOf(
+    BankTransactionDto(
+        id = BankTransactionId.parse("b038fd5b-c2b7-45b4-a0f2-f3a17d673aa3"),
         tenantId = previewTenantId,
         documentId = previewDocumentId,
         transactionDate = LocalDate(2026, 2, 15),
         signedAmount = Money.from("-289.00")!!,
-        counterpartyName = "KBC Bank NV",
-        counterpartyIban = Iban("BE68539007547034"),
-        structuredCommunicationRaw = "+++123/4567/89123+++",
+        counterparty = CounterpartySnapshot(
+            name = "KBC Bank NV",
+            iban = Iban("BE68539007547034"),
+        ),
+        communication = TransactionCommunication.Structured(
+            raw = "+++123/4567/89123+++",
+            normalized = StructuredCommunication("+++123/4567/89123+++"),
+        ),
         descriptionRaw = "SEPA transfer premium Q1",
-        rowConfidence = 0.97,
-        largeAmountFlag = false,
-        status = ImportedBankTransactionStatus.Suggested,
-        linkedCashflowEntryId = null,
-        suggestedCashflowEntryId = null,
-        score = 0.93,
-        tier = PaymentCandidateTier.Strong,
+        status = BankTransactionStatus.NeedsReview,
+        matchScore = 0.93,
         createdAt = previewNow,
         updatedAt = previewNow,
     ),
-    ImportedBankTransactionDto(
-        id = ImportedBankTransactionId.parse("cbf4ded5-7e9d-4f66-b8f4-9751f98e3b0b"),
+    BankTransactionDto(
+        id = BankTransactionId.parse("cbf4ded5-7e9d-4f66-b8f4-9751f98e3b0b"),
         tenantId = previewTenantId,
         documentId = previewDocumentId,
         transactionDate = LocalDate(2026, 2, 12),
         signedAmount = Money.from("-289.00")!!,
-        counterpartyName = "KBC Bank NV",
-        counterpartyIban = null,
-        structuredCommunicationRaw = null,
+        counterparty = CounterpartySnapshot(name = "KBC Bank NV"),
         descriptionRaw = "Transfer KBC",
-        rowConfidence = 0.91,
-        largeAmountFlag = false,
-        status = ImportedBankTransactionStatus.Unmatched,
-        linkedCashflowEntryId = null,
-        suggestedCashflowEntryId = null,
-        score = 0.74,
-        tier = PaymentCandidateTier.Possible,
+        status = BankTransactionStatus.Unmatched,
+        matchScore = 0.74,
         createdAt = previewNow,
         updatedAt = previewNow,
     ),
-    ImportedBankTransactionDto(
-        id = ImportedBankTransactionId.parse("f1496fba-d577-4f95-84f5-c75ef229f6cb"),
+    BankTransactionDto(
+        id = BankTransactionId.parse("f1496fba-d577-4f95-84f5-c75ef229f6cb"),
         tenantId = previewTenantId,
         documentId = previewDocumentId,
         transactionDate = LocalDate(2026, 2, 10),
         signedAmount = Money.from("-300.00")!!,
-        counterpartyName = "AXA Belgium",
-        counterpartyIban = null,
-        structuredCommunicationRaw = null,
+        counterparty = CounterpartySnapshot(name = "AXA Belgium"),
         descriptionRaw = "AXA insurance transfer",
-        rowConfidence = 0.95,
-        largeAmountFlag = false,
-        status = ImportedBankTransactionStatus.Unmatched,
-        linkedCashflowEntryId = null,
-        suggestedCashflowEntryId = null,
-        score = 0.70,
-        tier = PaymentCandidateTier.Possible,
+        status = BankTransactionStatus.Unmatched,
+        matchScore = 0.70,
         createdAt = previewNow,
         updatedAt = previewNow,
     ),

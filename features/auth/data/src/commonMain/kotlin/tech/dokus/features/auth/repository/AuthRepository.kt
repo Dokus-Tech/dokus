@@ -17,7 +17,8 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.CreateTenantRequest
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentDetailDto
+import tech.dokus.domain.model.DocumentListItemDto
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.UpsertTenantAddressRequest
 import tech.dokus.domain.model.User
@@ -247,7 +248,7 @@ class AuthRepository(
         tenantId: TenantId,
         page: Int,
         limit: Int
-    ): Result<PaginatedResponse<DocumentRecordDto>> {
+    ): Result<PaginatedResponse<DocumentListItemDto>> {
         return accountDataSource.listConsoleClientDocuments(
             firmId = firmId,
             tenantId = tenantId,
@@ -262,7 +263,7 @@ class AuthRepository(
         firmId: FirmId,
         tenantId: TenantId,
         documentId: String
-    ): Result<DocumentRecordDto> {
+    ): Result<DocumentDetailDto> {
         return accountDataSource.getConsoleClientDocument(
             firmId = firmId,
             tenantId = tenantId,

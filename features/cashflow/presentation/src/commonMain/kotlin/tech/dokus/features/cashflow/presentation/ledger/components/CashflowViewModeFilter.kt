@@ -60,19 +60,19 @@ internal fun CashflowViewModeFilter(
             tabs = listOf(
                 DokusTab(
                     id = CashflowViewMode.Upcoming.name,
-                    label = stringResource(Res.string.cashflow_view_upcoming),
+                    label = Res.string.cashflow_view_upcoming,
                     count = upcomingCount.takeIf { it > 0 },
                 ),
                 DokusTab(
                     id = CashflowViewMode.Overdue.name,
-                    label = stringResource(Res.string.cashflow_view_overdue),
+                    label = Res.string.cashflow_view_overdue,
                     count = overdueCount.takeIf { it > 0 },
                     countColor = MaterialTheme.colorScheme.error,
                     countBackground = MaterialTheme.colorScheme.redSoft,
                 ),
                 DokusTab(
                     id = CashflowViewMode.History.name,
-                    label = stringResource(Res.string.cashflow_view_history),
+                    label = Res.string.cashflow_view_history,
                 ),
             ),
             activeId = viewMode.name,
@@ -88,15 +88,15 @@ internal fun CashflowViewModeFilter(
             tabs = listOf(
                 DokusTab(
                     id = DirectionFilter.All.name,
-                    label = stringResource(Res.string.cashflow_direction_all),
+                    label = Res.string.cashflow_direction_all,
                 ),
                 DokusTab(
                     id = DirectionFilter.In.name,
-                    label = stringResource(Res.string.cashflow_direction_in),
+                    label = Res.string.cashflow_direction_in,
                 ),
                 DokusTab(
                     id = DirectionFilter.Out.name,
-                    label = stringResource(Res.string.cashflow_direction_out),
+                    label = Res.string.cashflow_direction_out,
                 ),
             ),
             activeId = direction.name,

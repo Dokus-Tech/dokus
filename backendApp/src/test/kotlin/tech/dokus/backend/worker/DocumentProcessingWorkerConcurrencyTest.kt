@@ -7,7 +7,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import tech.dokus.backend.services.documents.AutoConfirmPolicy
 import tech.dokus.backend.services.cashflow.BankStatementMatchingService
-import tech.dokus.backend.services.cashflow.InvoiceBankAutomationService
+import tech.dokus.backend.services.banking.BankStatementProcessingService
 import tech.dokus.backend.services.documents.ContactResolutionService
 import tech.dokus.backend.services.documents.DocumentPurposeService
 import tech.dokus.backend.services.documents.DocumentTruthService
@@ -16,7 +16,7 @@ import tech.dokus.backend.services.documents.sse.DocumentSsePublisher
 import tech.dokus.database.entity.IngestionItemEntity
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.auth.UserRepository
-import tech.dokus.database.repository.cashflow.DocumentDraftRepository
+import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.processor.ProcessorIngestionRepository
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.ids.DocumentId
@@ -47,10 +47,10 @@ class DocumentProcessingWorkerConcurrencyTest {
         val processingAgent = mockk<DocumentProcessingAgent>()
         val contactResolutionService = mockk<ContactResolutionService>(relaxed = true)
         val purposeService = mockk<DocumentPurposeService>(relaxed = true)
-        val draftRepository = mockk<DocumentDraftRepository>(relaxed = true)
+        val documentRepository = mockk<DocumentRepository>(relaxed = true)
         val documentTruthService = mockk<DocumentTruthService>(relaxed = true)
         val bankStatementMatchingService = mockk<BankStatementMatchingService>(relaxed = true)
-        val invoiceBankAutomationService = mockk<InvoiceBankAutomationService>(relaxed = true)
+        val bankStatementProcessingService = mockk<BankStatementProcessingService>(relaxed = true)
         val autoConfirmPolicy = mockk<AutoConfirmPolicy>(relaxed = true)
         val confirmationDispatcher = mockk<DocumentConfirmationDispatcher>(relaxed = true)
         val documentSsePublisher = mockk<DocumentSsePublisher>(relaxed = true)
@@ -61,9 +61,6 @@ class DocumentProcessingWorkerConcurrencyTest {
             runId = IngestionRunId.generate(),
             documentId = DocumentId.generate(),
             tenantId = TenantId.generate(),
-            storageKey = "docs/claimed.pdf",
-            filename = "claimed.pdf",
-            contentType = "application/pdf"
         )
 
         coEvery { ingestionRepository.recoverStaleRunsDetailed() } returns emptyList()
@@ -79,9 +76,9 @@ class DocumentProcessingWorkerConcurrencyTest {
             contactResolutionService = contactResolutionService,
             purposeService = purposeService,
             documentTruthService = documentTruthService,
-            draftRepository = draftRepository,
+            documentRepository = documentRepository,
             bankStatementMatchingService = bankStatementMatchingService,
-            invoiceBankAutomationService = invoiceBankAutomationService,
+            bankStatementProcessingService = bankStatementProcessingService,
             autoConfirmPolicy = autoConfirmPolicy,
             confirmationDispatcher = confirmationDispatcher,
             documentSsePublisher = documentSsePublisher,
@@ -109,10 +106,10 @@ class DocumentProcessingWorkerConcurrencyTest {
         val processingAgent = mockk<DocumentProcessingAgent>()
         val contactResolutionService = mockk<ContactResolutionService>(relaxed = true)
         val purposeService = mockk<DocumentPurposeService>(relaxed = true)
-        val draftRepository = mockk<DocumentDraftRepository>(relaxed = true)
+        val documentRepository = mockk<DocumentRepository>(relaxed = true)
         val documentTruthService = mockk<DocumentTruthService>(relaxed = true)
         val bankStatementMatchingService = mockk<BankStatementMatchingService>(relaxed = true)
-        val invoiceBankAutomationService = mockk<InvoiceBankAutomationService>(relaxed = true)
+        val bankStatementProcessingService = mockk<BankStatementProcessingService>(relaxed = true)
         val autoConfirmPolicy = mockk<AutoConfirmPolicy>(relaxed = true)
         val confirmationDispatcher = mockk<DocumentConfirmationDispatcher>(relaxed = true)
         val documentSsePublisher = mockk<DocumentSsePublisher>(relaxed = true)
@@ -124,10 +121,7 @@ class DocumentProcessingWorkerConcurrencyTest {
             documentId = DocumentId.generate(),
             tenantId = TenantId.generate(),
             sourceChannel = null,
-            documentSource = DocumentSource.Email,
-            storageKey = "docs/fallback.pdf",
-            filename = "fallback.pdf",
-            contentType = "application/pdf"
+            effectiveOrigin = DocumentSource.Email,
         )
 
         coEvery { ingestionRepository.recoverStaleRunsDetailed() } returns emptyList()
@@ -145,9 +139,9 @@ class DocumentProcessingWorkerConcurrencyTest {
             contactResolutionService = contactResolutionService,
             purposeService = purposeService,
             documentTruthService = documentTruthService,
-            draftRepository = draftRepository,
+            documentRepository = documentRepository,
             bankStatementMatchingService = bankStatementMatchingService,
-            invoiceBankAutomationService = invoiceBankAutomationService,
+            bankStatementProcessingService = bankStatementProcessingService,
             autoConfirmPolicy = autoConfirmPolicy,
             confirmationDispatcher = confirmationDispatcher,
             documentSsePublisher = documentSsePublisher,

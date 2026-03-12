@@ -25,21 +25,23 @@ import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTrans
 import tech.dokus.database.tables.cashflow.CreditNotesTable
 import tech.dokus.database.tables.cashflow.ExpensesTable
 import tech.dokus.database.tables.cashflow.InvoicesTable
-import tech.dokus.database.tables.documents.DocumentDraftsTable
+import tech.dokus.database.tables.contacts.ContactsTable
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
 import tech.dokus.database.tables.documents.DocumentMatchReviewsTable
 import tech.dokus.database.tables.documents.DocumentsTable
+import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentListFilter
 import tech.dokus.domain.enums.DocumentMatchReviewStatus
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.IngestionStatus
-import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.DocumentDraftData
+import tech.dokus.domain.model.DocumentDto
+import tech.dokus.domain.model.contact.isUnresolved
 import tech.dokus.domain.utils.json
 import java.util.UUID
 import kotlin.uuid.toKotlinUuid
@@ -197,9 +199,6 @@ internal object DocumentListingQuery {
         val finishedRun = DocumentIngestionRunsTable.alias("finished_run")
 
         val join = DocumentsTable
-            .join(DocumentDraftsTable, joinType = JoinType.LEFT, onColumn = DocumentsTable.id, otherColumn = DocumentDraftsTable.documentId) {
-                DocumentDraftsTable.tenantId eq DocumentsTable.tenantId
-            }
             .join(processingSelected, joinType = JoinType.LEFT, additionalConstraint = {
                 (processingSelected[DocumentIngestionRunsTable.documentId] eq DocumentsTable.id) and
                     (processingSelected[DocumentIngestionRunsTable.tenantId] eq DocumentsTable.tenantId)
@@ -241,12 +240,12 @@ internal object DocumentListingQuery {
         )
         val entityExists = invoiceExists or expenseExists or creditNoteExists
 
-        val isBankStatementType = DocumentDraftsTable.documentType eq DocumentType.BankStatement
-        val confirmedBankStatement = (DocumentDraftsTable.documentStatus eq DocumentStatus.Confirmed) and isBankStatementType
-        val confirmedStrict = ((DocumentDraftsTable.documentStatus eq DocumentStatus.Confirmed) and entityExists) or
+        val isBankStatementType = DocumentsTable.documentType eq DocumentType.BankStatement
+        val confirmedBankStatement = (DocumentsTable.documentStatus eq DocumentStatus.Confirmed) and isBankStatementType
+        val confirmedStrict = ((DocumentsTable.documentStatus eq DocumentStatus.Confirmed) and entityExists) or
             confirmedBankStatement
         val confirmedButNoEntity =
-            (DocumentDraftsTable.documentStatus eq DocumentStatus.Confirmed) and
+            (DocumentsTable.documentStatus eq DocumentStatus.Confirmed) and
                 not(entityExists) and
                 not(isBankStatementType)
         val hasPendingMatchReview = exists(
@@ -257,9 +256,9 @@ internal object DocumentListingQuery {
             }
         )
 
-        val draftMissing = DocumentDraftsTable.documentId.isNull()
-        val draftNotRejected = DocumentDraftsTable.documentStatus.isNull() or
-            (DocumentDraftsTable.documentStatus neq DocumentStatus.Rejected)
+        val draftMissing = DocumentsTable.documentStatus.isNull()
+        val draftNotRejected = DocumentsTable.documentStatus.isNull() or
+            (DocumentsTable.documentStatus neq DocumentStatus.Rejected)
 
         val latestIsProcessing = processingRunIdExpr.isNotNull()
         val latestIsQueued = processingRunIdExpr.isNull() and finishedRunIdExpr.isNull() and queuedRunIdExpr.isNotNull()
@@ -272,15 +271,15 @@ internal object DocumentListingQuery {
 
         val requiresDraft = effectiveDocumentStatus != null || documentType != null
         if (requiresDraft) {
-            whereOp = whereOp and DocumentDraftsTable.documentId.isNotNull()
+            whereOp = whereOp and DocumentsTable.documentStatus.isNotNull()
         }
 
         if (effectiveDocumentStatus != null) {
-            whereOp = whereOp and (DocumentDraftsTable.documentStatus eq effectiveDocumentStatus)
+            whereOp = whereOp and (DocumentsTable.documentStatus eq effectiveDocumentStatus)
         }
 
         if (documentType != null) {
-            whereOp = whereOp and (DocumentDraftsTable.documentType eq documentType)
+            whereOp = whereOp and (DocumentsTable.documentType eq documentType)
         }
 
         if (effectiveIngestionStatus != null) {
@@ -302,12 +301,12 @@ internal object DocumentListingQuery {
 
             DocumentListFilter.NeedsAttention -> {
                 val isNotConfirmed =
-                    DocumentDraftsTable.documentStatus.isNull() or
-                        (DocumentDraftsTable.documentStatus neq DocumentStatus.Confirmed) or
+                    DocumentsTable.documentStatus.isNull() or
+                        (DocumentsTable.documentStatus neq DocumentStatus.Confirmed) or
                         (not(entityExists) and not(isBankStatementType))
 
-                val ingestionNeedsAttention = latestIsQueued or latestIsProcessing or latestIsFailed
-                val draftNeedsReview = DocumentDraftsTable.documentStatus eq DocumentStatus.NeedsReview
+                val ingestionNeedsAttention = latestIsFailed
+                val draftNeedsReview = DocumentsTable.documentStatus eq DocumentStatus.NeedsReview
                 val succeededButNoDraft = draftMissing and latestIsSucceeded
 
                 whereOp =
@@ -402,20 +401,24 @@ internal object DocumentListingQuery {
         val latestRunIds = pageRows.mapNotNull { row -> row.latestRunId?.let { UUID.fromString(it.toString()) } }
         val tenantIdUuid = baseQuery.tenantIdUuid
 
-        val documentsById = DocumentsTable.selectAll()
+        // Documents and drafts are on the same table — single query with contact join
+        data class DocumentAndDraft(val document: DocumentDto, val draft: DraftSummary?)
+        val documentsById = DocumentsTable
+            .join(ContactsTable, JoinType.LEFT, DocumentsTable.linkedContactId, ContactsTable.id) {
+                ContactsTable.tenantId eq DocumentsTable.tenantId
+            }
+            .selectAll()
             .where {
                 (DocumentsTable.tenantId eq tenantIdUuid) and
                     (DocumentsTable.id inList documentIds)
             }
-            .associate { row -> DocumentId.parse(row[DocumentsTable.id].toString()) to row.toDocumentDto() }
-
-        val draftsByDocumentId = DocumentDraftsTable.selectAll()
-            .where {
-                (DocumentDraftsTable.tenantId eq tenantIdUuid) and
-                    (DocumentDraftsTable.documentId inList documentIds)
-            }
             .associate { row ->
-                DocumentId.parse(row[DocumentDraftsTable.documentId].toString()) to row.toDraftSummary()
+                val docId = DocumentId.parse(row[DocumentsTable.id].toString())
+                val hasDraft = row[DocumentsTable.documentStatus] != null
+                docId to DocumentAndDraft(
+                    document = row.toDocumentDto(),
+                    draft = if (hasDraft) row.toDraftSummary(contactName = row.getOrNull(ContactsTable.name)) else null,
+                )
             }
 
         val latestIngestionsById = if (latestRunIds.isEmpty()) {
@@ -432,10 +435,10 @@ internal object DocumentListingQuery {
         }
 
         val results = pageRows.mapNotNull { row ->
-            val document = documentsById[row.documentId] ?: return@mapNotNull null
+            val docAndDraft = documentsById[row.documentId] ?: return@mapNotNull null
             DocumentWithDraftAndIngestion(
-                document = document,
-                draft = draftsByDocumentId[row.documentId],
+                document = docAndDraft.document,
+                draft = docAndDraft.draft,
                 latestIngestion = row.latestRunId?.let { latestIngestionsById[it] }
             )
         }
@@ -462,37 +465,35 @@ private fun ResultRow.toIngestionRunSummary(): IngestionRunSummary {
     )
 }
 
-private fun ResultRow.toDraftSummary(): DraftSummary {
+private fun ResultRow.toDraftSummary(contactName: String? = null): DraftSummary {
+    val counterparty = DocumentRepository.buildCounterpartyInfo(this)
     return DraftSummary(
-        documentId = DocumentId.parse(this[DocumentDraftsTable.documentId].toString()),
-        tenantId = TenantId(this[DocumentDraftsTable.tenantId].toKotlinUuid()),
-        documentStatus = this[DocumentDraftsTable.documentStatus],
-        documentType = this[DocumentDraftsTable.documentType],
-        extractedData = this[DocumentDraftsTable.extractedData]?.let { json.decodeFromString<DocumentDraftData>(it) },
-        aiDraftData = this[DocumentDraftsTable.aiDraftData]?.let { json.decodeFromString<DocumentDraftData>(it) },
-        aiKeywords = this[DocumentDraftsTable.aiKeywords]?.let { json.decodeFromString(it) } ?: emptyList(),
-        purposeBase = this[DocumentDraftsTable.purposeBase],
-        purposePeriodYear = this[DocumentDraftsTable.purposePeriodYear],
-        purposePeriodMonth = this[DocumentDraftsTable.purposePeriodMonth],
-        purposeRendered = this[DocumentDraftsTable.purposeRendered],
-        purposeSource = this[DocumentDraftsTable.purposeSource],
-        purposeLocked = this[DocumentDraftsTable.purposeLocked],
-        purposePeriodMode = this[DocumentDraftsTable.purposePeriodMode],
-        counterpartyKey = this[DocumentDraftsTable.counterpartyKey],
-        merchantToken = this[DocumentDraftsTable.merchantToken],
-        aiDraftSourceRunId = this[DocumentDraftsTable.aiDraftSourceRunId]?.let { IngestionRunId.parse(it.toString()) },
-        draftVersion = this[DocumentDraftsTable.draftVersion],
-        draftEditedAt = this[DocumentDraftsTable.draftEditedAt],
-        draftEditedBy = this[DocumentDraftsTable.draftEditedBy]?.let { UserId(it.toKotlinUuid()) },
-        contactSuggestions = this[DocumentDraftsTable.contactSuggestions]?.let { json.decodeFromString(it) } ?: emptyList(),
-        counterpartySnapshot = this[DocumentDraftsTable.counterpartySnapshot]?.let { json.decodeFromString(it) },
-        matchEvidence = this[DocumentDraftsTable.matchEvidence]?.let { json.decodeFromString(it) },
-        linkedContactId = this[DocumentDraftsTable.linkedContactId]?.let { ContactId(it.toKotlinUuid()) },
-        linkedContactSource = this[DocumentDraftsTable.linkedContactSource],
-        counterpartyIntent = this[DocumentDraftsTable.counterpartyIntent],
-        rejectReason = this[DocumentDraftsTable.rejectReason],
-        lastSuccessfulRunId = this[DocumentDraftsTable.lastSuccessfulRunId]?.let { IngestionRunId.parse(it.toString()) },
-        createdAt = this[DocumentDraftsTable.createdAt],
-        updatedAt = this[DocumentDraftsTable.updatedAt]
+        documentId = DocumentId.parse(this[DocumentsTable.id].toString()),
+        tenantId = TenantId(this[DocumentsTable.tenantId].toKotlinUuid()),
+        documentStatus = this[DocumentsTable.documentStatus] ?: DocumentStatus.NeedsReview,
+        documentType = this[DocumentsTable.documentType],
+        direction = this[DocumentsTable.direction] ?: DocumentDirection.Unknown,
+        extractedData = this[DocumentsTable.canonicalData]?.let { json.decodeFromString<DocumentDraftData>(it) },
+        aiKeywords = this[DocumentsTable.aiKeywords]?.let { json.decodeFromString(it) } ?: emptyList(),
+        purposeBase = this[DocumentsTable.purposeBase],
+        purposePeriodYear = this[DocumentsTable.purposePeriodYear],
+        purposePeriodMonth = this[DocumentsTable.purposePeriodMonth],
+        purposeRendered = this[DocumentsTable.purposeRendered],
+        purposeSource = this[DocumentsTable.purposeSource],
+        purposeLocked = this[DocumentsTable.purposeLocked],
+        purposePeriodMode = this[DocumentsTable.purposePeriodMode],
+        counterpartyKey = this[DocumentsTable.counterpartyKey],
+        merchantToken = this[DocumentsTable.merchantToken],
+        aiDraftSourceRunId = this[DocumentsTable.aiDraftSourceRunId]?.let { IngestionRunId.parse(it.toString()) },
+        draftVersion = this[DocumentsTable.draftVersion],
+        draftEditedAt = this[DocumentsTable.draftEditedAt],
+        draftEditedBy = this[DocumentsTable.draftEditedBy]?.let { UserId(it.toKotlinUuid()) },
+        counterparty = counterparty,
+        counterpartyDisplayName = contactName
+            ?: if (counterparty.isUnresolved()) counterparty.snapshot?.name else null,
+        rejectReason = this[DocumentsTable.rejectReason],
+        lastSuccessfulRunId = this[DocumentsTable.lastSuccessfulRunId]?.let { IngestionRunId.parse(it.toString()) },
+        createdAt = this[DocumentsTable.uploadedAt],
+        updatedAt = this[DocumentsTable.updatedAt]
     )
 }

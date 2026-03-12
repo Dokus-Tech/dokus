@@ -38,7 +38,6 @@ import tech.dokus.backend.security.FirmHeaderName
 import tech.dokus.backend.security.TenantHeaderName
 import tech.dokus.database.repository.auth.FirmRepository
 import tech.dokus.database.repository.auth.TenantRepository
-import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.domain.DisplayName
@@ -266,7 +265,6 @@ class ConsoleRoutesTest {
                     single<FirmRepository> { firmRepository }
                     single<TenantRepository> { tenantRepository }
                     single<DocumentRepository> { mockk(relaxed = true) }
-                    single<DocumentDraftRepository> { mockk(relaxed = true) }
                     single<DocumentIngestionRunRepository> { mockk(relaxed = true) }
                     single<DocumentStorageService> { mockk(relaxed = true) }
                     single<FirmInviteTokenService> { inviteTokenService }

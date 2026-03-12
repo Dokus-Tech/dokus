@@ -19,8 +19,7 @@ import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.database.tables.cashflow.CashflowEntriesTable
 import tech.dokus.database.tables.cashflow.InvoicesTable
 import tech.dokus.database.tables.documents.AutoPaymentAuditEventsTable
-import tech.dokus.database.tables.documents.CashflowPaymentCandidatesTable
-import tech.dokus.database.tables.documents.ImportedBankTransactionsTable
+import tech.dokus.database.tables.banking.BankTransactionsTable
 import tech.dokus.database.tables.documents.InvoiceBankMatchLinksTable
 import tech.dokus.database.tables.payment.PaymentsTable
 import tech.dokus.domain.Money
@@ -29,7 +28,7 @@ import tech.dokus.domain.enums.AutoPaymentDecision
 import tech.dokus.domain.enums.AutoPaymentTriggerSource
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.CashflowSourceType
-import tech.dokus.domain.enums.ImportedBankTransactionStatus
+import tech.dokus.domain.enums.BankTransactionStatus
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.enums.PaymentCreatedBy
 import tech.dokus.domain.enums.PaymentMethod
@@ -37,13 +36,13 @@ import tech.dokus.domain.enums.PaymentSource
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.fromDbDecimal
 import tech.dokus.domain.ids.CashflowEntryId
-import tech.dokus.domain.ids.ImportedBankTransactionId
+import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.ids.PaymentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.AutoPaymentStatusDto
 import tech.dokus.domain.model.CashflowEntry
-import tech.dokus.domain.model.ImportedBankTransactionDto
+import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.domain.toDbDecimal
 import tech.dokus.foundation.backend.utils.runSuspendCatching
 import java.util.UUID
@@ -62,7 +61,7 @@ class AutoPaymentService(
     suspend fun applyAutoPayment(
         tenantId: TenantId,
         entry: CashflowEntry,
-        transaction: ImportedBankTransactionDto,
+        transaction: BankTransactionDto,
         confidenceScore: Double,
         scoreMargin: Double,
         reasonsJson: String,
@@ -117,7 +116,7 @@ class AutoPaymentService(
         AutoPaymentStatusDto(
             matchStatus = link[InvoiceBankMatchLinksTable.status],
             paymentId = paymentRow?.let { PaymentId.parse(it[PaymentsTable.id].value.toString()) },
-            bankTransactionId = ImportedBankTransactionId.parse(
+            bankTransactionId = BankTransactionId.parse(
                 link[InvoiceBankMatchLinksTable.importedBankTransactionId].toString()
             ),
             confidenceScore = link[InvoiceBankMatchLinksTable.confidenceScore]?.toDouble(),
@@ -220,15 +219,18 @@ class AutoPaymentService(
                 it[paidAt] = link[InvoiceBankMatchLinksTable.cashflowPaidAtBefore]
             }
 
-            ImportedBankTransactionsTable.update({
-                (ImportedBankTransactionsTable.id eq txId) and
-                    (ImportedBankTransactionsTable.tenantId eq tenantUuid)
+            BankTransactionsTable.update({
+                (BankTransactionsTable.id eq txId) and
+                    (BankTransactionsTable.tenantId eq tenantUuid)
             }) {
-                it[status] = ImportedBankTransactionStatus.Unmatched
-                it[linkedCashflowEntryId] = null
-                it[suggestedCashflowEntryId] = null
-                it[suggestedScore] = null
-                it[suggestedTier] = null
+                it[status] = BankTransactionStatus.Unmatched
+                it[matchedCashflowId] = null
+                it[matchedDocumentId] = null
+                it[matchScore] = null
+                it[matchEvidence] = null
+                it[matchedBy] = null
+                it[matchedAt] = null
+                it[resolutionType] = null
                 it[updatedAt] = now
             }
 
@@ -240,11 +242,6 @@ class AutoPaymentService(
                 it[reversedByUserId] = actorUserId?.value?.toJavaUuid()
                 it[reversalReason] = reason
                 it[updatedAt] = now
-            }
-
-            CashflowPaymentCandidatesTable.deleteWhere {
-                (CashflowPaymentCandidatesTable.tenantId eq tenantUuid) and
-                    (CashflowPaymentCandidatesTable.cashflowEntryId eq entryUuid)
             }
 
             appendAudit(
@@ -269,7 +266,7 @@ class AutoPaymentService(
     private suspend fun applyAutoPaymentInTransaction(
         tenantId: TenantId,
         entry: CashflowEntry,
-        transaction: ImportedBankTransactionDto,
+        transaction: BankTransactionDto,
         confidenceScore: Double,
         scoreMargin: Double,
         reasonsJson: String,
@@ -309,7 +306,7 @@ class AutoPaymentService(
             appendAudit(
                 tenantUuid = tenantUuid,
                 triggerSource = triggerSource,
-                decision = AutoPaymentDecision.SuggestedOnly,
+                decision = AutoPaymentDecision.NeedsReviewOnly,
                 invoiceId = invoiceUuid,
                 entryId = entryUuid,
                 txId = txUuid,
@@ -327,7 +324,7 @@ class AutoPaymentService(
             appendAudit(
                 tenantUuid = tenantUuid,
                 triggerSource = triggerSource,
-                decision = AutoPaymentDecision.SuggestedOnly,
+                decision = AutoPaymentDecision.NeedsReviewOnly,
                 invoiceId = invoiceUuid,
                 entryId = entryUuid,
                 txId = txUuid,
@@ -340,19 +337,19 @@ class AutoPaymentService(
             return@newSuspendedTransaction AutoPayApplyResult(false, null)
         }
 
-        val txRow = ImportedBankTransactionsTable.selectAll().where {
-            (ImportedBankTransactionsTable.id eq txUuid) and
-                (ImportedBankTransactionsTable.tenantId eq tenantUuid)
+        val txRow = BankTransactionsTable.selectAll().where {
+            (BankTransactionsTable.id eq txUuid) and
+                (BankTransactionsTable.tenantId eq tenantUuid)
         }.singleOrNull() ?: throw DokusException.NotFound("Imported bank transaction not found")
 
-        if (txRow[ImportedBankTransactionsTable.linkedCashflowEntryId] != null) {
+        if (txRow[BankTransactionsTable.matchedCashflowId] != null) {
             return@newSuspendedTransaction AutoPayApplyResult(false, null)
         }
 
-        val matchingTxIds = ImportedBankTransactionsTable.selectAll().where {
-            (ImportedBankTransactionsTable.tenantId eq tenantUuid) and
-                (ImportedBankTransactionsTable.transactionFingerprint eq txRow[ImportedBankTransactionsTable.transactionFingerprint])
-        }.map { it[ImportedBankTransactionsTable.id].value }
+        val matchingTxIds = BankTransactionsTable.selectAll().where {
+            (BankTransactionsTable.tenantId eq tenantUuid) and
+                (BankTransactionsTable.dedupHash eq txRow[BankTransactionsTable.dedupHash])
+        }.map { it[BankTransactionsTable.id].value }
 
         val existingPayment = PaymentsTable.selectAll().where {
             (PaymentsTable.tenantId eq tenantUuid) and
@@ -425,20 +422,17 @@ class AutoPaymentService(
             it[notes] = "Auto-paid from imported bank transaction"
         }
 
-        ImportedBankTransactionsTable.update({
-            (ImportedBankTransactionsTable.id eq txUuid) and
-                (ImportedBankTransactionsTable.tenantId eq tenantUuid)
+        BankTransactionsTable.update({
+            (BankTransactionsTable.id eq txUuid) and
+                (BankTransactionsTable.tenantId eq tenantUuid)
         }) {
-            it[status] = ImportedBankTransactionStatus.Linked
-            it[linkedCashflowEntryId] = entryUuid
-            it[suggestedCashflowEntryId] = entryUuid
-            it[suggestedScore] = confidenceScore.toBigDecimal()
+            it[status] = BankTransactionStatus.Matched
+            it[matchedCashflowId] = entryUuid
+            it[matchScore] = confidenceScore.toBigDecimal()
+            it[matchedBy] = tech.dokus.domain.enums.MatchedBy.Auto
+            it[matchedAt] = now
+            it[resolutionType] = tech.dokus.domain.enums.ResolutionType.Document
             it[updatedAt] = now
-        }
-
-        CashflowPaymentCandidatesTable.deleteWhere {
-            (CashflowPaymentCandidatesTable.tenantId eq tenantUuid) and
-                (CashflowPaymentCandidatesTable.cashflowEntryId eq entryUuid)
         }
 
         InvoiceBankMatchLinksTable.update({ InvoiceBankMatchLinksTable.id eq linkId }) {

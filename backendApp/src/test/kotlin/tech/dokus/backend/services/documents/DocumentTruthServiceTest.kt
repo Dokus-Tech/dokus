@@ -9,7 +9,6 @@ import kotlinx.datetime.LocalDateTime
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import tech.dokus.database.repository.cashflow.DocumentBlobRepository
-import tech.dokus.database.repository.cashflow.DocumentDraftRepository
 import tech.dokus.database.repository.cashflow.FuzzySourceCandidate
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentMatchReviewRepository
@@ -20,14 +19,10 @@ import tech.dokus.database.repository.cashflow.DocumentSourceSummary
 import tech.dokus.database.repository.cashflow.DraftSummary
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.DocumentDirection
-import tech.dokus.domain.enums.DocumentIntakeOutcome
-import tech.dokus.domain.enums.DocumentMatchReviewReasonType
+import tech.dokus.domain.enums.ReviewReason
 import tech.dokus.domain.enums.DocumentMatchReviewStatus
-import tech.dokus.domain.enums.DocumentMatchType
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentSourceStatus
-import tech.dokus.domain.enums.ContactLinkSource
-import tech.dokus.domain.enums.CounterpartyIntent
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.DocumentBlobId
@@ -42,16 +37,17 @@ import tech.dokus.domain.model.DocumentMatchResolutionDecision
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.PartyDraft
 import tech.dokus.foundation.backend.storage.DocumentStorageService
+import tech.dokus.domain.enums.SourceMatchKind
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class DocumentTruthServiceTest {
 
     private val storageService = mockk<DocumentStorageService>()
     private val documentRepository = mockk<DocumentRepository>(relaxed = true)
     private val ingestionRepository = mockk<DocumentIngestionRunRepository>(relaxed = true)
-    private val draftRepository = mockk<DocumentDraftRepository>(relaxed = true)
     private val blobRepository = mockk<DocumentBlobRepository>(relaxed = true)
     private val sourceRepository = mockk<DocumentSourceRepository>(relaxed = true)
     private val matchReviewRepository = mockk<DocumentMatchReviewRepository>(relaxed = true)
@@ -74,7 +70,6 @@ class DocumentTruthServiceTest {
             storageService = storageService,
             documentRepository = documentRepository,
             ingestionRepository = ingestionRepository,
-            draftRepository = draftRepository,
             blobRepository = blobRepository,
             sourceRepository = sourceRepository,
             matchReviewRepository = matchReviewRepository
@@ -96,7 +91,7 @@ class DocumentTruthServiceTest {
         val result = service.resolveMatchReview(tenantId, userId, reviewId1, DocumentMatchResolutionDecision.SAME)
 
         assertNotNull(result)
-        assertEquals(DocumentIntakeOutcome.LinkedToExisting, result.outcome)
+        assertTrue(result.resolution is IntakeResolution.Linked)
         assertEquals(docId2, result.documentId)
         assertEquals(2, result.sourceCount)
 
@@ -143,7 +138,7 @@ class DocumentTruthServiceTest {
         val result = service.resolveMatchReview(tenantId, userId, reviewId1, DocumentMatchResolutionDecision.DIFFERENT)
 
         assertNotNull(result)
-        assertEquals(DocumentIntakeOutcome.NewDocument, result.outcome)
+        assertTrue(result.resolution is IntakeResolution.NewDocument)
         assertEquals(newDocId, result.documentId)
 
         coVerify {
@@ -185,9 +180,8 @@ class DocumentTruthServiceTest {
             extractedSnapshotJson = "{}"
         )
 
-        assertEquals(DocumentIntakeOutcome.LinkedToExisting, result.outcome)
+        assertTrue(result.resolution is IntakeResolution.Linked.SameContent)
         assertEquals(docId2, result.documentId)
-        assertEquals(DocumentMatchType.SameContent, result.matchType)
     }
 
     @Test
@@ -204,7 +198,7 @@ class DocumentTruthServiceTest {
             sourceRepository.findLinkedDocumentByIdentityKeyHash(tenantId, any(), excludeDocumentId = docId1)
         } returns docId2
         coEvery {
-            draftRepository.getByDocumentId(docId2, tenantId)
+            documentRepository.getDraftByDocumentId(docId2, tenantId)
         } returns draftSummary(extractedData = existingDraft)
         coEvery {
             matchReviewRepository.createPending(tenantId, docId2, sourceId1, any(), any(), any())
@@ -220,8 +214,8 @@ class DocumentTruthServiceTest {
             extractedSnapshotJson = "{}"
         )
 
-        assertEquals(DocumentIntakeOutcome.PendingMatchReview, result.outcome)
-        assertNotNull(result.reviewId)
+        assertTrue(result.resolution is IntakeResolution.NeedsReview)
+        assertNotNull((result.resolution as IntakeResolution.NeedsReview).reviewId)
     }
 
     @Test
@@ -237,7 +231,7 @@ class DocumentTruthServiceTest {
             sourceRepository.findLinkedDocumentByIdentityKeyHash(tenantId, any(), excludeDocumentId = docId1)
         } returns docId2
         coEvery {
-            draftRepository.getByDocumentId(docId2, tenantId)
+            documentRepository.getDraftByDocumentId(docId2, tenantId)
         } returns draftSummary(extractedData = sharedDraft)
         coEvery { sourceRepository.countLinkedSources(tenantId, docId2) } returns 2
         coEvery { sourceRepository.countSources(tenantId, docId1, includeDetached = true) } returns 0
@@ -250,9 +244,8 @@ class DocumentTruthServiceTest {
             extractedSnapshotJson = "{}"
         )
 
-        assertEquals(DocumentIntakeOutcome.LinkedToExisting, result.outcome)
+        assertTrue(result.resolution is IntakeResolution.Linked.IdentityMatch)
         assertEquals(docId2, result.documentId)
-        assertEquals(DocumentMatchType.SameDocument, result.matchType)
     }
 
     @Test
@@ -276,7 +269,7 @@ class DocumentTruthServiceTest {
             extractedSnapshotJson = "{}"
         )
 
-        assertEquals(DocumentIntakeOutcome.NewDocument, result.outcome)
+        assertTrue(result.resolution is IntakeResolution.NewDocument)
         assertEquals(docId1, result.documentId)
     }
 
@@ -309,7 +302,7 @@ class DocumentTruthServiceTest {
                 distance = 1
             )
         )
-        coEvery { draftRepository.getByDocumentId(docId2, tenantId) } returns draftSummary(
+        coEvery { documentRepository.getDraftByDocumentId(docId2, tenantId) } returns draftSummary(
             extractedData = simpleInvoiceDraft(invoiceNumber = "INV-2026-002")
         )
         coEvery {
@@ -326,9 +319,8 @@ class DocumentTruthServiceTest {
             extractedSnapshotJson = "{}"
         )
 
-        assertEquals(DocumentIntakeOutcome.PendingMatchReview, result.outcome)
-        assertEquals(DocumentMatchType.FuzzyCandidate, result.matchType)
-        assertNotNull(result.reviewId)
+        assertTrue(result.resolution is IntakeResolution.NeedsReview.FuzzyCandidate)
+        assertNotNull((result.resolution as IntakeResolution.NeedsReview).reviewId)
         coVerify { documentRepository.delete(tenantId, docId1) }
     }
 
@@ -340,7 +332,7 @@ class DocumentTruthServiceTest {
 
         coEvery { sourceRepository.getById(tenantId, sourceId1) } returns source
         coEvery { sourceRepository.countLinkedSources(tenantId, docId1) } returns 1
-        coEvery { draftRepository.getByDocumentId(docId1, tenantId) } returns draftSummary(
+        coEvery { documentRepository.getDraftByDocumentId(docId1, tenantId) } returns draftSummary(
             documentStatus = DocumentStatus.Confirmed
         )
 
@@ -357,7 +349,7 @@ class DocumentTruthServiceTest {
 
         coEvery { sourceRepository.getById(tenantId, sourceId1) } returns source
         coEvery { sourceRepository.countLinkedSources(tenantId, docId1) } returns 1
-        coEvery { draftRepository.getByDocumentId(docId1, tenantId) } returns draftSummary(
+        coEvery { documentRepository.getDraftByDocumentId(docId1, tenantId) } returns draftSummary(
             documentStatus = DocumentStatus.NeedsReview
         )
         coEvery { sourceRepository.deleteById(tenantId, sourceId1) } returns true
@@ -377,7 +369,7 @@ class DocumentTruthServiceTest {
         documentId: DocumentId = docId1,
         sourceChannel: DocumentSource = DocumentSource.Upload,
         status: DocumentSourceStatus = DocumentSourceStatus.Linked,
-        matchType: DocumentMatchType? = null,
+        matchType: SourceMatchKind? = null,
         extractedSnapshotJson: String? = null,
         identityKeyHash: String? = null,
         contentHash: String? = null
@@ -414,7 +406,7 @@ class DocumentTruthServiceTest {
         tenantId = tenantId,
         documentId = documentId,
         incomingSourceId = incomingSourceId,
-        reasonType = DocumentMatchReviewReasonType.MaterialConflict,
+        reasonType = ReviewReason.MaterialConflict,
         aiSummary = "Test conflict",
         aiConfidence = 0.8,
         status = DocumentMatchReviewStatus.Pending,
@@ -433,18 +425,12 @@ class DocumentTruthServiceTest {
         documentStatus = documentStatus,
         documentType = DocumentType.Invoice,
         extractedData = extractedData,
-        aiDraftData = null,
         aiKeywords = emptyList(),
         aiDraftSourceRunId = null,
         draftVersion = 1,
         draftEditedAt = null,
         draftEditedBy = null,
-        contactSuggestions = emptyList(),
-        counterpartySnapshot = null,
-        matchEvidence = null,
-        linkedContactId = null,
-        linkedContactSource = null,
-        counterpartyIntent = CounterpartyIntent.None,
+        counterparty = null,
         rejectReason = null,
         lastSuccessfulRunId = null,
         createdAt = now,

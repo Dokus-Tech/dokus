@@ -11,7 +11,9 @@ import tech.dokus.domain.Name
 import tech.dokus.domain.Percentage
 import tech.dokus.domain.VatRate
 import tech.dokus.domain.enums.BankAccountType
-import tech.dokus.domain.enums.BankProvider
+import tech.dokus.domain.enums.BankAccountProvider
+import tech.dokus.domain.enums.BankAccountStatus
+import tech.dokus.domain.enums.IgnoredReason
 import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.EntityType
@@ -30,13 +32,13 @@ import tech.dokus.domain.enums.TenantType
 import tech.dokus.domain.enums.UserRole
 import tech.dokus.domain.ids.AddressId
 import tech.dokus.domain.ids.AttachmentId
-import tech.dokus.domain.ids.BankConnectionId
+import tech.dokus.domain.ids.BankAccountId
 import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.ids.Bic
+import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.ExpenseId
-import tech.dokus.domain.ids.ImportedBankTransactionId
 import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.InvitationId
 import tech.dokus.domain.ids.InvoiceId
@@ -239,7 +241,7 @@ data class PaymentDto(
     val paymentDate: LocalDate,
     val paymentMethod: PaymentMethod,
     val transactionId: TransactionId? = null,
-    val bankTransactionId: ImportedBankTransactionId? = null,
+    val bankTransactionId: BankTransactionId? = null,
     val source: PaymentSource = PaymentSource.Manual,
     val createdBy: PaymentCreatedBy = PaymentCreatedBy.User,
     val notes: String? = null,
@@ -254,38 +256,69 @@ data class PaymentDto(
 // ============================================================================
 
 @Serializable
-data class BankConnectionDto(
-    val id: BankConnectionId,
+data class BankAccountDto(
+    val id: BankAccountId,
     val tenantId: TenantId,
-    val provider: BankProvider,
-    val institutionId: String,
+    val iban: Iban,
+    val name: String,
     val institutionName: String,
-    val accountId: String,
-    val accountName: String? = null,
-    val accountType: BankAccountType? = null,
+    val accountType: BankAccountType,
     val currency: Currency = Currency.Eur,
-    val lastSyncedAt: LocalDateTime? = null,
+    val provider: BankAccountProvider,
+    val balance: Money? = null,
+    val balanceUpdatedAt: LocalDateTime? = null,
+    val status: BankAccountStatus = BankAccountStatus.Confirmed,
     val isActive: Boolean = true,
     val createdAt: LocalDateTime,
-    val updatedAt: LocalDateTime
 )
 
 @Serializable
-data class BankTransactionDto(
-    val id: BankTransactionId,
-    val bankConnectionId: BankConnectionId,
-    val tenantId: TenantId,
-    val externalId: String,
+data class BankAccountSummary(
+    val totalBalance: Money,
+    val accountCount: Int,
+    val unmatchedCount: Int,
+    val totalUnresolvedAmount: Money,
+    val matchedThisPeriod: Int = 0,
+    val lastSyncedAt: LocalDateTime? = null,
+)
+
+@Serializable
+data class BankTransactionSummary(
+    val unmatchedCount: Int,
+    val needsReviewCount: Int,
+    val matchedCount: Int,
+    val ignoredCount: Int,
+    val totalCount: Int,
+    val totalUnresolvedAmount: Money
+)
+
+@Serializable
+data class LinkTransactionRequest(
+    val cashflowEntryId: CashflowEntryId,
+)
+
+@Serializable
+data class IgnoreTransactionRequest(
+    val reason: IgnoredReason,
+)
+
+@Serializable
+data class BalanceHistoryResponse(
+    val series: List<AccountBalanceSeries>,
+    val totalSeries: List<BalanceHistoryPoint>,
+)
+
+@Serializable
+data class AccountBalanceSeries(
+    val accountId: BankAccountId,
+    val accountName: String,
+    val points: List<BalanceHistoryPoint>,
+)
+
+@Serializable
+data class BalanceHistoryPoint(
     val date: LocalDate,
-    val amount: Money,
-    val description: String,
-    val merchantName: String? = null,
-    val category: String? = null,
-    val isPending: Boolean = false,
-    val expenseId: ExpenseId? = null,
-    val invoiceId: InvoiceId? = null,
-    val isReconciled: Boolean = false,
-    val createdAt: LocalDateTime
+    val balance: Money,
 )
 
 // ============================================================================

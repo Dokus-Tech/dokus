@@ -6,10 +6,12 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.SchemaUtils
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.update
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -20,7 +22,6 @@ import tech.dokus.database.tables.cashflow.CreditNotesTable
 import tech.dokus.database.tables.cashflow.ExpensesTable
 import tech.dokus.database.tables.cashflow.InvoicesTable
 import tech.dokus.database.tables.contacts.ContactsTable
-import tech.dokus.database.tables.documents.DocumentDraftsTable
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
 import tech.dokus.database.tables.documents.DocumentMatchReviewsTable
 import tech.dokus.database.tables.documents.DocumentBlobsTable
@@ -74,13 +75,12 @@ class DocumentListingFiltersTest {
             SchemaUtils.create(
                 TenantTable,
                 UsersTable,
+                ContactsTable,
                 DocumentsTable,
                 DocumentBlobsTable,
                 DocumentSourcesTable,
                 DocumentMatchReviewsTable,
                 DocumentIngestionRunsTable,
-                DocumentDraftsTable,
-                ContactsTable,
                 InvoicesTable,
                 ExpensesTable,
                 CreditNotesTable
@@ -114,20 +114,7 @@ class DocumentListingFiltersTest {
     @AfterEach
     fun teardown() {
         transaction(database) {
-            SchemaUtils.drop(
-                CreditNotesTable,
-                ExpensesTable,
-                InvoicesTable,
-                ContactsTable,
-                DocumentMatchReviewsTable,
-                DocumentSourcesTable,
-                DocumentBlobsTable,
-                DocumentDraftsTable,
-                DocumentIngestionRunsTable,
-                DocumentsTable,
-                UsersTable,
-                TenantTable
-            )
+            exec("DROP ALL OBJECTS")
         }
     }
 
@@ -177,8 +164,6 @@ class DocumentListingFiltersTest {
 
         val ids = items.map { it.document.id }.toSet()
         val expected = setOf(
-            docQueued,
-            docProcessing,
             docFailed,
             docSucceededNoDraft,
             docNeedsReviewNoIngestion,
@@ -188,6 +173,8 @@ class DocumentListingFiltersTest {
 
         assertEquals(expected, ids)
         assertEquals(expected.size.toLong(), total)
+        assertTrue(DocumentId.parse(docQueued.toString()) !in ids, "Queued must not be in NeedsAttention")
+        assertTrue(DocumentId.parse(docProcessing.toString()) !in ids, "Processing must not be in NeedsAttention")
         assertTrue(DocumentId.parse(docConfirmedWithEntity.toString()) !in ids, "Confirmed+entity must not be in NeedsAttention")
         assertTrue(DocumentId.parse(docRejected.toString()) !in ids, "Rejected must not be in NeedsAttention")
     }
@@ -260,7 +247,7 @@ class DocumentListingFiltersTest {
 
         val counts = documentRepository.getOperationalCounts(tenantId)
 
-        assertEquals(6L, counts.needsAttention)
+        assertEquals(4L, counts.needsAttention)
         assertEquals(1L, counts.confirmed)
     }
 
@@ -324,12 +311,8 @@ class DocumentListingFiltersTest {
             DocumentsTable.insert {
                 it[id] = docUuid
                 it[tenantId] = tenantUuid
-                it[DocumentsTable.filename] = filename
-                it[contentType] = "application/pdf"
-                it[sizeBytes] = 123L
-                it[storageKey] = "test/$docUuid/$filename"
-                it[contentHash] = null
-                it[documentSource] = DocumentSource.Upload
+                it[canonicalContentHash] = null
+                it[effectiveOrigin] = DocumentSource.Upload
             }
         }
         return docUuid
@@ -359,16 +342,12 @@ class DocumentListingFiltersTest {
     private fun insertDraft(documentUuid: UUID, status: DocumentStatus, type: DocumentType) {
         val now = LocalDateTime(2024, 1, 1, 0, 0, 0)
         transaction(database) {
-            DocumentDraftsTable.insert {
-                it[documentId] = documentUuid
-                it[tenantId] = tenantUuid
+            DocumentsTable.update({ DocumentsTable.id eq documentUuid }) {
                 it[documentStatus] = status
                 it[documentType] = type
-                it[aiDraftData] = null
                 it[aiDraftSourceRunId] = null
-                it[extractedData] = null
+                it[canonicalData] = null
                 it[lastSuccessfulRunId] = null
-                it[createdAt] = now
                 it[updatedAt] = now
             }
         }

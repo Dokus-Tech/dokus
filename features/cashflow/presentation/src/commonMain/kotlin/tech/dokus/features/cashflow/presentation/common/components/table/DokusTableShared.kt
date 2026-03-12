@@ -50,21 +50,6 @@ internal fun DokusTableDivider(
 }
 
 @Composable
-internal fun DokusTableHeaderLabel(
-    text: String,
-    textAlign: TextAlign = TextAlign.Start
-) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.labelMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        textAlign = textAlign,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis
-    )
-}
-
-@Composable
 internal fun DokusTableChevronIcon(
     contentDescription: String?,
     modifier: Modifier = Modifier
@@ -88,10 +73,10 @@ private fun DokusTableSharedPreview(
 ) {
     TestWrapper(parameters) {
         DokusTableSurface(
-            header = { DokusTableHeaderLabel(text = "Column Header") }
+            header = { Text("Column Header") }
         ) {
             DokusTableDivider()
-            DokusTableHeaderLabel(text = "Row Content")
+            Text("Row Content")
         }
     }
 }

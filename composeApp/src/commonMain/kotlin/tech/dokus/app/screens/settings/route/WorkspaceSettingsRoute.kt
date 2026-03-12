@@ -24,12 +24,16 @@ import tech.dokus.foundation.app.shell.HomeShellTopBarMode
 import tech.dokus.foundation.app.shell.RegisterHomeShellTopBar
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.navigation.destinations.HomeDestination
+import tech.dokus.navigation.destinations.SettingsDestination
 import tech.dokus.navigation.destinations.route
+import tech.dokus.navigation.local.LocalNavController
+import tech.dokus.navigation.navigateTo
 
 @Composable
 internal fun WorkspaceSettingsRoute(
     container: WorkspaceSettingsContainer = container()
 ) {
+    val navController = LocalNavController.current
     val snackbarHostState = remember { SnackbarHostState() }
     var pendingSuccess by remember { mutableStateOf<WorkspaceSettingsSuccess?>(null) }
     var pendingError by remember { mutableStateOf<DokusException?>(null) }
@@ -83,6 +87,7 @@ internal fun WorkspaceSettingsRoute(
     WorkspaceSettingsScreen(
         state = state,
         snackbarHostState = snackbarHostState,
-        onIntent = { container.store.intent(it) }
+        onIntent = { container.store.intent(it) },
+        onNavigateToPeppol = { navController.navigateTo(SettingsDestination.PeppolRegistration) },
     )
 }

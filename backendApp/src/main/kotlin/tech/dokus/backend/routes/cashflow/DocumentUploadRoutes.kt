@@ -14,9 +14,10 @@ import org.slf4j.LoggerFactory
 import tech.dokus.backend.routes.cashflow.documents.addDownloadUrl
 import tech.dokus.backend.security.requireTenantId
 import tech.dokus.backend.services.documents.DocumentTruthService
+import tech.dokus.database.repository.cashflow.selectPreferredSource
 import tech.dokus.backend.services.documents.sse.DocumentSsePublisher
 import tech.dokus.database.repository.cashflow.DocumentRepository
-import tech.dokus.domain.enums.DocumentIntakeOutcome
+import tech.dokus.backend.services.documents.IntakeResolution
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.DocumentIntakeResult
@@ -62,8 +63,20 @@ internal fun Route.documentUploadRoutes() {
             val document = documentRepository.getById(tenantId, intake.documentId)
                 ?: throw DokusException.InternalError("Failed to retrieve intake document")
 
+            val sources = truthService.listSources(tenantId, intake.documentId)
+            val preferredSource = selectPreferredSource(sources)
+            val enrichedDocument = if (preferredSource != null) {
+                document.copy(
+                    filename = preferredSource.filename ?: document.filename,
+                    effectiveOrigin = preferredSource.sourceChannel,
+                    uploadedAt = preferredSource.arrivalAt,
+                )
+            } else {
+                document
+            }
             val documentWithUrl = addDownloadUrl(
-                document = document,
+                document = enrichedDocument,
+                storageKey = preferredSource?.storageKey,
                 minioStorage = minioStorage,
                 logger = logger
             )
@@ -73,10 +86,10 @@ internal fun Route.documentUploadRoutes() {
                 intake = intake.toOutcomeDto()
             )
 
-            val statusCode = when (intake.outcome) {
-                DocumentIntakeOutcome.NewDocument -> HttpStatusCode.Created
-                DocumentIntakeOutcome.LinkedToExisting,
-                DocumentIntakeOutcome.PendingMatchReview -> HttpStatusCode.OK
+            val statusCode = when (intake.resolution) {
+                is IntakeResolution.NewDocument -> HttpStatusCode.Created
+                is IntakeResolution.Linked,
+                is IntakeResolution.NeedsReview -> HttpStatusCode.OK
             }
 
             call.respond(statusCode, response)

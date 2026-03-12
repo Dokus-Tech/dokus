@@ -54,15 +54,13 @@ import tech.dokus.aura.resources.today_recent
 import tech.dokus.aura.resources.today_review_button
 import tech.dokus.aura.resources.today_view_all
 import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.domain.model.BankStatementDraftData
-import tech.dokus.domain.model.CreditNoteDraftData
-import tech.dokus.domain.model.DocumentRecordDto
-import tech.dokus.domain.model.InvoiceDraftData
-import tech.dokus.domain.model.ReceiptDraftData
+import tech.dokus.domain.model.DocumentListItemDto
+import tech.dokus.foundation.aura.components.badges.toUiSource
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.aura.components.DokusCardSurface
-import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.badges.SourceBadge
+import tech.dokus.foundation.aura.components.common.CalloutTrailing
+import tech.dokus.foundation.aura.components.common.DokusCalloutBanner
 import tech.dokus.foundation.aura.components.status.StatusDot
 import tech.dokus.foundation.aura.components.status.StatusDotType
 import tech.dokus.foundation.aura.components.text.Amt
@@ -77,14 +75,12 @@ import tech.dokus.foundation.aura.style.textMuted
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
-import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.navigation.destinations.AuthDestination
 import tech.dokus.navigation.destinations.CashFlowDestination
 import tech.dokus.navigation.destinations.HomeDestination
 import tech.dokus.navigation.local.LocalNavController
 import tech.dokus.navigation.navigateTo
 import tech.dokus.navigation.navigateToTopLevelTab
-import tech.dokus.foundation.aura.components.badges.DocumentSource as UiDocumentSource
 
 @Composable
 internal fun TodayRoute(
@@ -136,12 +132,12 @@ internal fun TodayRoute(
         snackbarHostState = snackbarHostState,
         onReviewClick = { doc ->
             navController.navigateTo(
-                CashFlowDestination.DocumentReview(doc.document.id.toString())
+                CashFlowDestination.DocumentReview(doc.documentId.toString())
             )
         },
         onDocumentClick = { doc ->
             navController.navigateTo(
-                CashFlowDestination.DocumentReview(doc.document.id.toString())
+                CashFlowDestination.DocumentReview(doc.documentId.toString())
             )
         },
         onViewAllClick = {
@@ -152,10 +148,10 @@ internal fun TodayRoute(
 
 @Composable
 internal fun TodayScreen(
-    documents: List<DocumentRecordDto>,
+    documents: List<DocumentListItemDto>,
     snackbarHostState: SnackbarHostState,
-    onReviewClick: (DocumentRecordDto) -> Unit,
-    onDocumentClick: (DocumentRecordDto) -> Unit,
+    onReviewClick: (DocumentListItemDto) -> Unit,
+    onDocumentClick: (DocumentListItemDto) -> Unit,
     onViewAllClick: () -> Unit,
 ) {
     val isLargeScreen = LocalScreenSize.current.isLarge
@@ -192,12 +188,12 @@ internal fun TodayScreen(
     }
 }
 
-// ── Stat Cards ──────────────────────────────────────────────────────────
+// -- Stat Cards --
 
 @Composable
-private fun TodayStatCards(documents: List<DocumentRecordDto>) {
+private fun TodayStatCards(documents: List<DocumentListItemDto>) {
     val totalAmount = remember(documents) {
-        documents.sumOf { it.extractedTotalMinor() }
+        documents.sumOf { it.totalAmount?.minor ?: 0L }
     }
     val count = documents.size
 
@@ -267,74 +263,34 @@ private fun TodayStatCards(documents: List<DocumentRecordDto>) {
     }
 }
 
-// ── Attention Card ──────────────────────────────────────────────────────
+// -- Attention Card --
 
 @Composable
 private fun TodayAttentionCard(
-    document: DocumentRecordDto,
+    document: DocumentListItemDto,
     onReviewClick: () -> Unit,
 ) {
     val vendorName = document.vendorName()
     val dateText = document.formattedDate()
-    val description = document.draft?.purposeRendered ?: stringResource(Res.string.today_document_needs_review)
+    val description = document.purposeRendered ?: stringResource(Res.string.today_document_needs_review)
+    val subtitle = if (dateText != null) "$dateText \u00b7 $vendorName" else vendorName
 
-    DokusCardSurface(accent = true) {
-        Row(
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
-            StatusDot(
-                type = StatusDotType.Warning,
-                size = 8.dp,
-            )
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = description,
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = FontWeight.SemiBold,
-                    ),
-                    maxLines = 1,
-                )
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                ) {
-                    if (dateText != null) {
-                        Text(
-                            text = dateText,
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontFamily = MaterialTheme.typography.labelLarge.fontFamily,
-                            ),
-                            color = MaterialTheme.colorScheme.textMuted,
-                        )
-                        Text(
-                            text = "\u00b7",
-                            color = MaterialTheme.colorScheme.textFaint,
-                        )
-                    }
-                    Text(
-                        text = vendorName,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.textMuted,
-                        maxLines = 1,
-                    )
-                }
-            }
-            PPrimaryButton(
-                text = stringResource(Res.string.today_review_button),
-                onClick = onReviewClick,
-            )
-        }
-    }
+    DokusCalloutBanner(
+        title = description,
+        subtitle = subtitle,
+        trailing = CalloutTrailing.Cta(
+            text = stringResource(Res.string.today_review_button),
+            onClick = onReviewClick,
+        ),
+    )
 }
 
-// ── Recent Documents Section ────────────────────────────────────────────
+// -- Recent Documents Section --
 
 @Composable
 private fun TodayRecentSection(
-    documents: List<DocumentRecordDto>,
-    onDocumentClick: (DocumentRecordDto) -> Unit,
+    documents: List<DocumentListItemDto>,
+    onDocumentClick: (DocumentListItemDto) -> Unit,
     onViewAllClick: () -> Unit,
 ) {
     Column {
@@ -370,13 +326,13 @@ private fun TodayRecentSection(
 
 @Composable
 private fun TodayRecentRow(
-    document: DocumentRecordDto,
+    document: DocumentListItemDto,
     onClick: () -> Unit,
 ) {
-    val source = document.document.source.toUiSource()
+    val source = document.effectiveOrigin.toUiSource()
     val vendorName = document.vendorName()
     val dateText = document.formattedDate()
-    val amount = document.extractedTotalDouble()
+    val amount = document.totalAmount?.toDouble()
 
     val isLargeScreen = LocalScreenSize.current.isLarge
 
@@ -417,57 +373,19 @@ private fun TodayRecentRow(
     }
 }
 
-// ── Helpers ─────────────────────────────────────────────────────────────
+// -- Helpers --
 
-private fun DocumentRecordDto.vendorName(): String {
-    val snapshot = draft?.counterpartySnapshot?.name
-    if (!snapshot.isNullOrBlank()) return snapshot
-    return when (val data = draft?.extractedData) {
-        is InvoiceDraftData -> data.seller.name ?: data.buyer.name ?: document.filename
-        is CreditNoteDraftData -> data.counterpartyName ?: document.filename
-        is ReceiptDraftData -> data.merchantName ?: document.filename
-        is BankStatementDraftData -> document.filename
-        null -> document.filename
-    }
+private fun DocumentListItemDto.vendorName(): String {
+    val displayName = counterpartyDisplayName
+    if (!displayName.isNullOrBlank()) return displayName
+    return filename.takeIf { it.isNotBlank() } ?: "\u2014"
 }
 
-private fun DocumentRecordDto.formattedDate(): String? {
-    val date = when (val data = draft?.extractedData) {
-        is InvoiceDraftData -> data.issueDate
-        is CreditNoteDraftData -> data.issueDate
-        is ReceiptDraftData -> data.date
-        is BankStatementDraftData -> null
-        null -> null
-    } ?: return null
+private fun DocumentListItemDto.formattedDate(): String? {
+    // List DTO does not carry extracted issue dates; use uploadedAt
+    val date = uploadedAt.date
     val months = arrayOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
-    return "${months[date.month.ordinal]} ${date.day}"
-}
-
-private fun DocumentRecordDto.extractedTotalMinor(): Long {
-    return when (val data = draft?.extractedData) {
-        is InvoiceDraftData -> data.totalAmount?.minor ?: 0L
-        is CreditNoteDraftData -> data.totalAmount?.minor ?: 0L
-        is ReceiptDraftData -> data.totalAmount?.minor ?: 0L
-        is BankStatementDraftData -> 0L
-        null -> 0L
-    }
-}
-
-private fun DocumentRecordDto.extractedTotalDouble(): Double? {
-    return when (val data = draft?.extractedData) {
-        is InvoiceDraftData -> data.totalAmount?.toDouble()
-        is CreditNoteDraftData -> data.totalAmount?.toDouble()
-        is ReceiptDraftData -> data.totalAmount?.toDouble()
-        is BankStatementDraftData -> null
-        null -> null
-    }
-}
-
-private fun DocumentSource.toUiSource(): UiDocumentSource {
-    return when (this) {
-        DocumentSource.Peppol -> UiDocumentSource.Peppol
-        else -> UiDocumentSource.Pdf
-    }
+    return "${months[date.month.ordinal]} ${date.dayOfMonth}"
 }
 
 private fun formatStatAmount(totalMinor: Long): String {

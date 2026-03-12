@@ -9,7 +9,7 @@ import pro.respawn.flowmvi.dsl.updateStateImmediate
 import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.asbtractions.TokenManager
-import tech.dokus.domain.enums.DocumentIntakeOutcome
+import tech.dokus.domain.enums.IntakeOutcome
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.Tenant
 import tech.dokus.features.auth.usecases.ListMyTenantsUseCase
@@ -238,7 +238,7 @@ internal class ShareImportContainer(
             result.onSuccess { intakeResult ->
                 session.statuses[index] = UploadFileStatus.Uploaded(
                     documentId = intakeResult.document.id.toString(),
-                    needsReview = intakeResult.intake.outcome == DocumentIntakeOutcome.PendingMatchReview
+                    needsReview = intakeResult.intake.outcome == IntakeOutcome.PendingMatchReview
                 )
             }.onFailure { error ->
                 logger.e(error) { "Share import upload failed for file: ${sharedFile.name}" }

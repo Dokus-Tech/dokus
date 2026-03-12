@@ -23,15 +23,15 @@ class AutoConfirmPolicy {
         draftData: DocumentDraftData,
         auditPassed: Boolean,
         confidence: Double,
-        linkedContactId: ContactId?,
+        contactId: ContactId?,
         directionResolvedFromAiHintOnly: Boolean
     ): Boolean {
         if (source == DocumentSource.Manual) return false
 
         val draftType = draftData.toDocumentType()
         if (documentType == DocumentType.Unknown || draftType != documentType) return false
-        if (draftData is InvoiceDraftData && linkedContactId == null) return false
-        if (draftData is CreditNoteDraftData && linkedContactId == null) return false
+        if (draftData is InvoiceDraftData && contactId == null) return false
+        if (draftData is CreditNoteDraftData && contactId == null) return false
         if (!hasRequiredFieldsForAutoConfirm(draftData)) return false
         if (directionResolvedFromAiHintOnly) return false
         if (!isDirectionValid(draftData)) return false
@@ -42,7 +42,7 @@ class AutoConfirmPolicy {
             DocumentSource.Upload,
             DocumentSource.Email -> {
                 val meetsConfidence = confidence >= DocumentProcessingConstants.AUTO_CONFIRM_CONFIDENCE_THRESHOLD
-                val counterpartyKnown = linkedContactId != null
+                val counterpartyKnown = contactId != null
                 meetsConfidence && counterpartyKnown
             }
             DocumentSource.Manual -> false

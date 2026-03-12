@@ -1,6 +1,6 @@
 package tech.dokus.features.cashflow.presentation.cashflow.model
 
-import tech.dokus.domain.enums.DocumentIntakeOutcome
+import tech.dokus.domain.enums.IntakeOutcome
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentMatchReviewId
@@ -44,7 +44,7 @@ data class DocumentUploadTask(
     val error: DokusException? = null,
     val documentId: DocumentId? = null,
     val sourceId: DocumentSourceId? = null,
-    val intakeOutcome: DocumentIntakeOutcome? = null,
+    val intakeOutcome: IntakeOutcome? = null,
     val linkedDocumentId: DocumentId? = null,
     val matchReviewId: DocumentMatchReviewId? = null,
     val sourceCount: Int = 1,

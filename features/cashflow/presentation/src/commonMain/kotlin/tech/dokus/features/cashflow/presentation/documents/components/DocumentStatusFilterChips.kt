@@ -5,7 +5,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
-import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.documents_filter_all
 import tech.dokus.aura.resources.documents_filter_confirmed
@@ -34,19 +33,19 @@ internal fun DocumentFilterButtons(
     val tabs = listOf(
         DokusTab(
             id = DocumentFilter.All.name,
-            label = stringResource(Res.string.documents_filter_all),
+            label = Res.string.documents_filter_all,
             count = totalCount.takeIf { it > 0 },
         ),
         DokusTab(
             id = DocumentFilter.NeedsAttention.name,
-            label = stringResource(Res.string.documents_filter_needs_attention),
+            label = Res.string.documents_filter_needs_attention,
             count = needsAttentionCount.takeIf { it > 0 },
             countColor = MaterialTheme.colorScheme.primary,
             countBackground = MaterialTheme.colorScheme.amberSoft,
         ),
         DokusTab(
             id = DocumentFilter.Confirmed.name,
-            label = stringResource(Res.string.documents_filter_confirmed),
+            label = Res.string.documents_filter_confirmed,
             count = confirmedCount.takeIf { it > 0 },
         ),
     )

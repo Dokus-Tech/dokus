@@ -3,7 +3,7 @@ package tech.dokus.features.cashflow.presentation.documents.model
 import androidx.compose.runtime.Immutable
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.DocumentDto
-import tech.dokus.domain.model.DocumentRecordDto
+import tech.dokus.domain.model.DocumentListItemDto
 import tech.dokus.features.cashflow.presentation.cashflow.model.DocumentUploadTask
 import tech.dokus.features.cashflow.presentation.cashflow.model.UploadStatus
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentFilter
@@ -28,12 +28,12 @@ internal fun buildDocumentsLocalUploadRows(
     filter: DocumentFilter,
     uploadTasks: List<DocumentUploadTask>,
     uploadedDocuments: Map<String, DocumentDto>,
-    remoteDocuments: List<DocumentRecordDto>,
+    remoteDocuments: List<DocumentListItemDto>,
     knownRemoteDocumentIds: Set<DocumentId> = emptySet(),
 ): List<DocumentsLocalUploadRow> {
     if (uploadTasks.isEmpty()) return emptyList()
 
-    val remoteIds = remoteDocuments.mapTo(mutableSetOf()) { it.document.id }
+    val remoteIds = remoteDocuments.mapTo(mutableSetOf()) { it.documentId }
 
     return uploadTasks.asReversed().mapNotNull { task ->
         val documentId = task.documentId ?: uploadedDocuments[task.id]?.id

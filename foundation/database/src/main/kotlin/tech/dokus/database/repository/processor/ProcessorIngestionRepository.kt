@@ -16,10 +16,10 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.v1.jdbc.update
 import tech.dokus.database.entity.IngestionItemEntity
-import tech.dokus.database.tables.documents.DocumentDraftsTable
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
 import tech.dokus.database.tables.documents.DocumentSourcesTable
 import tech.dokus.database.tables.documents.DocumentsTable
+import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.IndexingStatus
@@ -28,8 +28,13 @@ import tech.dokus.domain.enums.ProcessingOutcome
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.DocumentSourceId
+import tech.dokus.domain.model.FieldProvenance
+import tech.dokus.domain.model.ProvenanceMergeResult
+import tech.dokus.domain.model.mergeWithProvenance
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.DocumentDraftData
+import tech.dokus.domain.model.toDirection
+import tech.dokus.domain.model.toDocumentType
 import tech.dokus.domain.processing.DocumentProcessingConstants
 import tech.dokus.domain.utils.json
 import java.util.*
@@ -88,12 +93,9 @@ class ProcessorIngestionRepository {
                         tenantId = TenantId(row[DocumentIngestionRunsTable.tenantId].toKotlinUuid()),
                         sourceId = row[DocumentIngestionRunsTable.sourceId]?.toKotlinUuid()?.let { DocumentSourceId(it) },
                         sourceChannel = row.getOrNull(DocumentSourcesTable.sourceChannel),
-                        documentSource = row[DocumentsTable.documentSource],
+                        effectiveOrigin = row[DocumentsTable.effectiveOrigin],
                         peppolStructuredSnapshotJson = row.getOrNull(DocumentSourcesTable.peppolStructuredSnapshotJson),
                         peppolSnapshotVersion = row.getOrNull(DocumentSourcesTable.peppolSnapshotVersion),
-                        storageKey = row[DocumentsTable.storageKey],
-                        filename = row[DocumentsTable.filename],
-                        contentType = row[DocumentsTable.contentType],
                         userFeedback = row[DocumentIngestionRunsTable.userFeedback],
                         overrideMaxPages = row[DocumentIngestionRunsTable.overrideMaxPages],
                         overrideDpi = row[DocumentIngestionRunsTable.overrideDpi]
@@ -192,7 +194,8 @@ class ProcessorIngestionRepository {
         processingOutcome: ProcessingOutcome,
         rawText: String?,
         keywords: List<String> = emptyList(),
-        force: Boolean = false
+        force: Boolean = false,
+        fieldProvenance: Map<String, FieldProvenance>? = null
     ): Boolean {
         // Defense-in-depth: Validate tenantId is provided
         require(tenantId.isNotBlank()) { "tenantId is required for draft operations" }
@@ -222,64 +225,65 @@ class ProcessorIngestionRepository {
 
             if (!runUpdated) return@newSuspendedTransaction false
 
-            // Check if draft exists and get current state
+            // Get current document state to determine draft update rules
             // SECURITY: Always filter by tenantId to prevent cross-tenant access
-            val existingDraft = DocumentDraftsTable.selectAll()
+            val existingDoc = DocumentsTable.selectAll()
                 .where {
-                    (DocumentDraftsTable.documentId eq documentUuid) and
-                            (DocumentDraftsTable.tenantId eq tenantUuid)
+                    (DocumentsTable.id eq documentUuid) and
+                        (DocumentsTable.tenantId eq tenantUuid)
                 }
-                .singleOrNull()
+                .singleOrNull() ?: return@newSuspendedTransaction false
 
-            if (existingDraft == null) {
-                // Create new draft - set both ai_draft_data and extracted_data
-                DocumentDraftsTable.insert {
-                    it[DocumentDraftsTable.documentId] = documentUuid
-                    it[DocumentDraftsTable.tenantId] = tenantUuid
-                    it[documentStatus] = calculatedStatus
-                    it[DocumentDraftsTable.documentType] = documentType
-                    it[aiDraftData] = draftJson
-                    it[DocumentDraftsTable.aiKeywords] = keywordsJson
+            val currentAiDraftSourceRunId = existingDoc[DocumentsTable.aiDraftSourceRunId]
+
+            // aiDraftSourceRunId: set ONLY if null (first successful run)
+            val shouldSetAiDraftRun = currentAiDraftSourceRunId == null
+
+            // Provenance-based merge: determine what data to write
+            val existingData = existingDoc[DocumentsTable.canonicalData]
+                ?.let<String, DocumentDraftData> { json.decodeFromString(it) }
+            val existingProv = existingDoc[DocumentsTable.fieldProvenance]
+                ?.let<String, Map<String, FieldProvenance>> { json.decodeFromString(it) }
+
+            val mergeResult: ProvenanceMergeResult? = when {
+                force || draftData == null || existingData == null -> null // full overwrite
+                existingProv == null -> {
+                    // Legacy doc without provenance: use old binary draftVersion check
+                    val currentVersion = existingDoc[DocumentsTable.draftVersion]
+                    if (currentVersion == 0) null else ProvenanceMergeResult(existingData, emptyMap())
+                }
+                fieldProvenance != null -> {
+                    mergeWithProvenance(existingData, draftData, existingProv, fieldProvenance)
+                }
+                else -> null // incoming has no provenance → full overwrite
+            }
+
+            val dataToWrite = mergeResult?.mergedData ?: draftData
+            val provToWrite = mergeResult?.mergedProvenance ?: fieldProvenance
+
+            // SECURITY: Always filter by tenantId to prevent cross-tenant modification
+            DocumentsTable.update({
+                (DocumentsTable.id eq documentUuid) and
+                    (DocumentsTable.tenantId eq tenantUuid)
+            }) {
+                it[lastSuccessfulRunId] = runUuid
+                it[updatedAt] = now
+
+                if (shouldSetAiDraftRun) {
+                    it[DocumentsTable.aiKeywords] = keywordsJson
                     it[aiDraftSourceRunId] = runUuid
-                    it[DocumentDraftsTable.extractedData] = draftJson
-                    it[draftVersion] = 0
-                    it[lastSuccessfulRunId] = runUuid
-                    it[createdAt] = now
-                    it[updatedAt] = now
                 }
-            } else {
-                // Update existing draft
-                val currentAiDraftData = existingDraft[DocumentDraftsTable.aiDraftData]
-                val currentVersion = existingDraft[DocumentDraftsTable.draftVersion]
 
-                // ai_draft_data: set ONLY if null (first successful run)
-                val shouldSetAiDraft = currentAiDraftData == null
-
-                // extracted_data: set ONLY if draftVersion == 0 (not user-edited) or force
-                val shouldSetExtracted = currentVersion == 0 || force
-
-                // SECURITY: Always filter by tenantId to prevent cross-tenant modification
-                DocumentDraftsTable.update({
-                    (DocumentDraftsTable.documentId eq documentUuid) and
-                            (DocumentDraftsTable.tenantId eq tenantUuid)
-                }) {
-                    it[DocumentDraftsTable.documentType] = documentType
-                    it[lastSuccessfulRunId] = runUuid
-                    it[updatedAt] = now
-
-                    if (shouldSetAiDraft) {
-                        it[aiDraftData] = draftJson
-                        it[DocumentDraftsTable.aiKeywords] = keywordsJson
-                        it[aiDraftSourceRunId] = runUuid
+                if (dataToWrite != null) {
+                    it[DocumentsTable.canonicalData] = json.encodeToString(dataToWrite)
+                    it[DocumentsTable.documentType] = dataToWrite.toDocumentType()
+                    it[DocumentsTable.direction] = dataToWrite.toDirection()
+                    it[documentStatus] = calculatedStatus
+                    if (keywordsJson != null) {
+                        it[DocumentsTable.aiKeywords] = keywordsJson
                     }
-
-                    if (shouldSetExtracted) {
-                        it[DocumentDraftsTable.extractedData] = draftJson
-                        // Update status when we update extracted data
-                        it[documentStatus] = calculatedStatus
-                        if (keywordsJson != null) {
-                            it[DocumentDraftsTable.aiKeywords] = keywordsJson
-                        }
+                    if (provToWrite != null) {
+                        it[DocumentsTable.fieldProvenance] = json.encodeToString(provToWrite)
                     }
                 }
             }

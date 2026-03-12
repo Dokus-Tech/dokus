@@ -27,8 +27,10 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_match_review_different_document
 import tech.dokus.aura.resources.cashflow_match_review_same_document
 import tech.dokus.aura.resources.document_sources_independently_verified
-import tech.dokus.domain.enums.DocumentMatchReviewReasonType
+import tech.dokus.domain.Money
+import tech.dokus.domain.enums.ReviewReason
 import tech.dokus.domain.ids.DocumentSourceId
+import tech.dokus.features.cashflow.presentation.review.models.LineItemUiData
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.hasCrossMatchedSources
@@ -46,48 +48,46 @@ import tech.dokus.foundation.aura.style.textMuted
 
 @Composable
 internal fun MobileItemsAccordion(
-    state: DocumentReviewState,
+    lineItems: List<LineItemUiData>,
+    subtotalAmount: Money?,
+    vatAmount: Money?,
+    totalAmount: Money?,
+    currencySign: String,
     expanded: Boolean,
     onToggle: () -> Unit,
 ) {
-    val lineItems = lineItems(state)
-    val currency = currencySign(state)
-
     MobileAccordionCard(
         title = "Items",
         count = lineItems.size,
         expanded = expanded,
         onToggle = onToggle,
     ) {
-        if (lineItems.isEmpty()) {
-            Text(
-                text = "No line items",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.textMuted,
-            )
-        } else {
-            lineItems.forEach { item ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Top,
-                ) {
-                    Text(
-                        text = item.description.ifBlank { "\u2014" },
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.weight(1f),
-                    )
-                    Text(
-                        text = lineAmount(item, currency),
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier.padding(start = Constraints.Spacing.small),
-                    )
-                }
+        lineItems.forEach { item ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top,
+            ) {
+                Text(
+                    text = item.description,
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    text = item.displayAmount,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(start = Constraints.Spacing.small),
+                )
             }
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            MobileTotalsBlock(state = state, currencySign = currency)
         }
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        MobileTotalsBlock(
+            subtotalAmount = subtotalAmount,
+            vatAmount = vatAmount,
+            totalAmount = totalAmount,
+            currencySign = currencySign,
+        )
     }
 }
 
@@ -137,11 +137,11 @@ internal fun MobileSourcesAccordion(
         state.documentRecord?.pendingMatchReview?.let { pendingReview ->
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             val reasonText = when (pendingReview.reasonType) {
-                DocumentMatchReviewReasonType.MaterialConflict -> {
+                ReviewReason.MaterialConflict -> {
                     "Conflicting source facts need your confirmation."
                 }
 
-                DocumentMatchReviewReasonType.FuzzyCandidate -> {
+                ReviewReason.FuzzyCandidate -> {
                     "Possible duplicate source found."
                 }
             }
@@ -198,11 +198,10 @@ internal fun MobileSourcesAccordion(
 
 @Composable
 internal fun MobileBankDetailsAccordion(
-    state: DocumentReviewState,
+    bankDetails: String?,
     expanded: Boolean,
     onToggle: () -> Unit,
 ) {
-    val bankDetails = state.bankDetails()
     if (bankDetails.isNullOrBlank()) return
 
     MobileAccordionCard(
@@ -220,11 +219,10 @@ internal fun MobileBankDetailsAccordion(
 
 @Composable
 internal fun MobileNotesAccordion(
-    state: DocumentReviewState,
+    notes: String?,
     expanded: Boolean,
     onToggle: () -> Unit,
 ) {
-    val notes = state.notes()
     if (notes.isNullOrBlank()) return
 
     MobileAccordionCard(
@@ -304,22 +302,24 @@ private fun MobileAccordionCard(
 
 @Composable
 private fun MobileTotalsBlock(
-    state: DocumentReviewState,
+    subtotalAmount: Money?,
+    vatAmount: Money?,
+    totalAmount: Money?,
     currencySign: String,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
         Text(
-            text = "Subtotal ${state.subtotalAmount()?.let { "$currencySign${it.toDisplayString()}" } ?: "\u2014"}",
+            text = "Subtotal ${subtotalAmount?.let { "$currencySign${it.toDisplayString()}" } ?: "\u2014"}",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.textMuted,
         )
         Text(
-            text = "VAT 21% ${state.vatAmount()?.let { "$currencySign${it.toDisplayString()}" } ?: "\u2014"}",
+            text = "VAT 21% ${vatAmount?.let { "$currencySign${it.toDisplayString()}" } ?: "\u2014"}",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.textMuted,
         )
         Text(
-            text = "Total $currencySign${state.totalAmount?.toDisplayString() ?: "\u2014"}",
+            text = "Total $currencySign${totalAmount?.toDisplayString() ?: "\u2014"}",
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
         )
