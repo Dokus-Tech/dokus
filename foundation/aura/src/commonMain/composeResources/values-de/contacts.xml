@@ -61,6 +61,7 @@
     <string name="contacts_phone">Telefon</string>
     <string name="contacts_vat_number">USt-IdNr.</string>
     <string name="contacts_company_number">Unternehmensnummer</string>
+    <string name="contacts_iban">IBAN</string>
     <string name="contacts_address">Adresse</string>
     <string name="contacts_city">Stadt</string>
     <string name="contacts_postal_code">Postleitzahl</string>

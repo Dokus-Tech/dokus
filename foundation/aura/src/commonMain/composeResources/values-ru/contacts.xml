@@ -61,6 +61,7 @@
     <string name="contacts_phone">Телефон</string>
     <string name="contacts_vat_number">Номер НДС</string>
     <string name="contacts_company_number">Регистрационный номер</string>
+    <string name="contacts_iban">IBAN</string>
     <string name="contacts_address">Адрес</string>
     <string name="contacts_city">Город</string>
     <string name="contacts_postal_code">Почтовый индекс</string>

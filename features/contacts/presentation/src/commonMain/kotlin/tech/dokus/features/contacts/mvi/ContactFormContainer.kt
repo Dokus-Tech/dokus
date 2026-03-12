@@ -22,6 +22,7 @@ import tech.dokus.domain.enums.ClientType
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.model.contact.UpdateContactRequest
@@ -96,10 +97,12 @@ internal class ContactFormContainer(
                     is ContactFormIntent.UpdateEmail -> handleUpdateEmail(intent.value)
                     is ContactFormIntent.UpdatePhone -> handleUpdatePhone(intent.value)
                     is ContactFormIntent.UpdateContactPerson -> handleUpdateContactPerson(intent.value)
+                    is ContactFormIntent.UpdateWebsiteUrl -> updateFormData { copy(websiteUrl = intent.value) }
 
                     // Business Info Field Updates
                     is ContactFormIntent.UpdateVatNumber -> handleUpdateVatNumber(intent.value)
                     is ContactFormIntent.UpdateCompanyNumber -> handleUpdateCompanyNumber(intent.value)
+                    is ContactFormIntent.UpdateIban -> updateFormData { copy(iban = Iban(intent.value)) }
                     is ContactFormIntent.UpdateBusinessType -> handleUpdateBusinessType(intent.value)
 
                     // Address Field Updates

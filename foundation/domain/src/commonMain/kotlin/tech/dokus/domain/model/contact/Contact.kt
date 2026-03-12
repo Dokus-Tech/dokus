@@ -192,7 +192,8 @@ data class UpdateContactRequest(
     val defaultPaymentTerms: Int? = null,
     val defaultVatRate: String? = null,
     val tags: String? = null,
-    val isActive: Boolean? = null
+    val isActive: Boolean? = null,
+    val websiteUrl: String? = null
 )
 
 /**
