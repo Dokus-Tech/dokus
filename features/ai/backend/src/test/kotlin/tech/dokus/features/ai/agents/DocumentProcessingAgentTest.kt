@@ -13,8 +13,10 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.DocumentId
+import tech.dokus.features.ai.config.KoogAgentRunner
 import tech.dokus.features.ai.graph.AcceptDocumentInput
 import tech.dokus.features.ai.graph.TestAiFixtures
+import tech.dokus.features.ai.models.FinancialExtractionResult
 import tech.dokus.features.ai.services.DocumentFetcher
 import tech.dokus.features.ai.services.DocumentFetcher.FetchedDocumentData
 import tech.dokus.features.ai.validation.CheckType
@@ -34,7 +36,7 @@ class DocumentProcessingAgentTest {
             Result.success(FetchedDocumentData(documentBytes, "application/pdf"))
         }
         val agent = DocumentProcessingAgent(
-            executor = ThrowingPromptExecutor(),
+            agentRunner = KoogAgentRunner(ThrowingPromptExecutor(), TestAiFixtures.aiConfig),
             aiConfig = TestAiFixtures.aiConfig,
             documentFetcher = documentFetcher
         )
@@ -42,7 +44,7 @@ class DocumentProcessingAgentTest {
         val result = agent.process(AcceptDocumentInput(DocumentId.generate(), TestAiFixtures.tenant))
 
         assertEquals(DocumentType.Unknown, result.classification.documentType)
-        assertIs<tech.dokus.features.ai.models.FinancialExtractionResult.Unsupported>(result.extraction)
+        assertIs<FinancialExtractionResult.Unsupported>(result.extraction)
         assertTrue(result.auditReport.criticalFailures.any { it.type == CheckType.AI_CONTRACT })
         assertTrue(result.classification.reasoning.contains("failed", ignoreCase = true))
     }
