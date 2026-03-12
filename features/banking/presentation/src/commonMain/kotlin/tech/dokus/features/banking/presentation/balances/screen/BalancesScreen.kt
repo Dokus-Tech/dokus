@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.banking_balances_accounts_title
+import tech.dokus.aura.resources.banking_balances_title
 import tech.dokus.aura.resources.banking_balances_connect
 import tech.dokus.aura.resources.banking_balances_empty_subtitle
 import tech.dokus.aura.resources.banking_balances_empty_title
@@ -49,6 +50,7 @@ import tech.dokus.foundation.aura.components.PButtonVariant
 import tech.dokus.foundation.aura.components.PIconPosition
 import tech.dokus.foundation.aura.components.common.DokusEmptyState
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.local.ScreenSize
@@ -68,11 +70,19 @@ internal fun BalancesScreen(
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     modifier: Modifier = Modifier,
 ) {
+    val isLargeScreen = LocalScreenSize.current.isLarge
     Scaffold(
+        topBar = {
+            if (!isLargeScreen) PTopAppBar(Res.string.banking_balances_title)
+        },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         modifier = modifier,
-    ) {
-        BalancesContent(state = state, onIntent = onIntent)
+    ) { contentPadding ->
+        BalancesContent(
+            state = state,
+            onIntent = onIntent,
+            modifier = Modifier.padding(contentPadding),
+        )
     }
 }
 
@@ -80,11 +90,12 @@ internal fun BalancesScreen(
 private fun BalancesContent(
     state: BalancesState,
     onIntent: (BalancesIntent) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val isLargeScreen = LocalScreenSize.isLarge
 
     LazyColumn(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .padding(
                 start = Constraints.Spacing.large,

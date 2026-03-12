@@ -47,6 +47,7 @@ import tech.dokus.foundation.aura.model.NavSection
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
+import tech.dokus.navigation.destinations.BankingDestination
 import tech.dokus.navigation.destinations.HomeDestination
 import tech.dokus.navigation.destinations.NavigationDestination
 import tech.dokus.navigation.destinations.SettingsDestination
@@ -145,6 +146,8 @@ internal fun resolveRootMoreDestination(destination: NavigationDestination): Nav
     return when (destination) {
         HomeDestination.WorkspaceDetails -> SettingsDestination.WorkspaceSettings
         HomeDestination.Team -> SettingsDestination.TeamSettings
+        HomeDestination.Balances -> BankingDestination.Balances
+        HomeDestination.Payments -> BankingDestination.Payments
         else -> destination
     }
 }
