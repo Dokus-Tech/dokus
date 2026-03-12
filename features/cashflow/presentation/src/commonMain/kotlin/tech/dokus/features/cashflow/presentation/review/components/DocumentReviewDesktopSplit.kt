@@ -52,6 +52,7 @@ import tech.dokus.foundation.app.shell.dotType
 import tech.dokus.foundation.app.shell.statusLocalized
 import tech.dokus.foundation.aura.components.background.AmbientBackground
 import tech.dokus.foundation.aura.components.common.KeyboardNavigationHint
+import tech.dokus.foundation.aura.extensions.arrowKeyNavigation
 import tech.dokus.foundation.aura.components.icons.LockIcon
 import tech.dokus.foundation.aura.components.queue.DocQueueHeader
 import tech.dokus.foundation.aura.components.queue.DocQueueItemRow
@@ -221,6 +222,13 @@ private fun DocumentReviewQueuePane(
     val positionText = if (selectedIndex >= 0) "${selectedIndex + 1}/${documents.size}" else ""
     val effects = MaterialTheme.dokusEffects
 
+    // Auto-scroll to keep selected item visible (keyboard navigation or external selection)
+    LaunchedEffect(selectedDocumentId) {
+        if (selectedIndex >= 0) {
+            listState.animateScrollToItem(selectedIndex)
+        }
+    }
+
     // Pagination: load more when scrolled near the end
     LaunchedEffect(documents.size, hasMore, isLoadingMore) {
         if (documents.isEmpty()) return@LaunchedEffect
@@ -233,7 +241,22 @@ private fun DocumentReviewQueuePane(
             .collect { onLoadMore() }
     }
 
-    Column(modifier = Modifier.fillMaxHeight()) {
+    Column(
+        modifier = Modifier
+            .fillMaxHeight()
+            .arrowKeyNavigation(
+                onUp = {
+                    val i = documents.indexOfFirst { it.id == selectedDocumentId }
+                    val prev = (i - 1).coerceAtLeast(0)
+                    if (prev != i && i >= 0) onSelectDocument(documents[prev].id)
+                },
+                onDown = {
+                    val i = documents.indexOfFirst { it.id == selectedDocumentId }
+                    val next = (i + 1).coerceAtMost(documents.lastIndex)
+                    if (next != i && i >= 0) onSelectDocument(documents[next].id)
+                },
+            ),
+    ) {
         DocQueueHeader(
             positionText = positionText,
             onExit = onExit,
