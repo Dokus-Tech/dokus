@@ -58,6 +58,7 @@ import tech.dokus.foundation.app.state.isError
 import tech.dokus.foundation.app.state.isLoading
 import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.filter.DokusFilterBar
 import tech.dokus.foundation.aura.components.common.DokusEmptyState
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.DokusLoader
@@ -160,11 +161,7 @@ private fun PaymentsContent(
         }
 
         // Filter tabs + account dropdown
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+        DokusFilterBar(modifier = Modifier.fillMaxWidth()) {
             PaymentFilterTabs(
                 selectedTab = state.filterTab,
                 summary = if (state.summary.isSuccess()) state.summary.data else null,
