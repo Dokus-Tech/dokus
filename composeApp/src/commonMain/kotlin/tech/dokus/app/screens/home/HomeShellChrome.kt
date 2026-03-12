@@ -28,9 +28,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -72,7 +70,6 @@ import tech.dokus.foundation.aura.components.MonogramAvatar
 import tech.dokus.foundation.aura.components.UserAvatarImage
 import tech.dokus.foundation.aura.components.common.ShimmerBox
 import tech.dokus.foundation.aura.components.common.ShimmerLine
-import tech.dokus.foundation.aura.components.navigation.ProfilePopover
 import tech.dokus.foundation.aura.components.text.DokusLogo
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.dokusEffects
@@ -110,11 +107,9 @@ internal fun DesktopSidebarBottomControls(
     tenantState: DokusState<Tenant>,
     selectedFirm: FirmWorkspaceSummary?,
     profileData: HomeShellProfileData?,
-    isLoggingOut: Boolean,
     onWorkspaceClick: () -> Unit,
     onProfileClick: () -> Unit,
     onAppearanceClick: () -> Unit,
-    onLogoutClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val spacing = MaterialTheme.dokusSpacing
@@ -141,9 +136,7 @@ internal fun DesktopSidebarBottomControls(
         )
         DesktopProfileMenuButton(
             profileData = profileData,
-            isLoggingOut = isLoggingOut,
             onProfileClick = onProfileClick,
-            onLogoutClick = onLogoutClick
         )
     }
 }
@@ -261,43 +254,22 @@ private data class WorkspaceCardData(
 @Composable
 private fun DesktopProfileMenuButton(
     profileData: HomeShellProfileData?,
-    isLoggingOut: Boolean,
     onProfileClick: () -> Unit,
-    onLogoutClick: () -> Unit,
 ) {
     val sizing = MaterialTheme.dokusSizing
-    var popoverVisible by remember { mutableStateOf(false) }
     val initials = profileData?.initials ?: ""
     val smallAvatarUrl = rememberResolvedApiUrl(profileData?.avatar?.small)
-    val mediumAvatarUrl = rememberResolvedApiUrl(profileData?.avatar?.medium)
     val imageLoader = rememberAuthenticatedImageLoader()
 
-    Box {
-        UserAvatarImage(
-            avatarUrl = smallAvatarUrl,
-            initials = initials,
-            size = sizing.avatarExtraSmall,
-            radius = sizing.avatarExtraSmall / 4,
-            modifier = Modifier.clickable { popoverVisible = true },
-            imageLoader = imageLoader,
-            contentDescription = stringResource(Res.string.a11y_profile_menu),
-        )
-
-        ProfilePopover(
-            isVisible = popoverVisible,
-            onDismiss = { popoverVisible = false },
-            userName = profileData?.fullName ?: "",
-            userEmail = profileData?.email ?: "",
-            userInitials = initials,
-            userAvatarUrl = mediumAvatarUrl,
-            tierLabel = profileData?.tierLabel ?: "",
-            onProfileClick = onProfileClick,
-            onLogoutClick = {
-                if (!isLoggingOut) onLogoutClick()
-            },
-            imageLoader = imageLoader,
-        )
-    }
+    UserAvatarImage(
+        avatarUrl = smallAvatarUrl,
+        initials = initials,
+        size = sizing.avatarExtraSmall,
+        radius = sizing.avatarExtraSmall / 4,
+        modifier = Modifier.clickable(onClick = onProfileClick),
+        imageLoader = imageLoader,
+        contentDescription = stringResource(Res.string.a11y_profile_menu),
+    )
 }
 
 @Composable

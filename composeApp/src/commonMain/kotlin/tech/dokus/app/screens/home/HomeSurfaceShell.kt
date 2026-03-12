@@ -56,7 +56,6 @@ internal fun HomeSurfaceShell(
     profileData: HomeShellProfileData?,
     pendingHomeCommand: HomeNavigationEnvelope?,
     onConsumeHomeCommand: (Long) -> Unit,
-    onLogoutClick: () -> Unit,
     snackbarHostState: SnackbarHostState,
 ) {
     // --- Nav providers & controller ---
@@ -219,7 +218,6 @@ internal fun HomeSurfaceShell(
         tenantState = shellState.tenantState,
         selectedFirm = selectedFirm,
         profileData = profileData,
-        isLoggingOut = shellState.isLoggingOut,
         snackbarHostState = snackbarHostState,
         onWorkspaceClick = remember(rootNavController) {
             { rootNavController.navigateTo(AuthDestination.WorkspaceSelect) }
@@ -240,7 +238,6 @@ internal fun HomeSurfaceShell(
         onAppearanceClick = remember(rootNavController) {
             { rootNavController.navigateTo(SettingsDestination.AppearanceSettings) }
         },
-        onLogoutClick = onLogoutClick,
         onNavItemClick = remember(onTopLevelNavigate) {
             { navItem: tech.dokus.foundation.aura.model.NavItem ->
                 onTopLevelNavigate(navItem.destination)
