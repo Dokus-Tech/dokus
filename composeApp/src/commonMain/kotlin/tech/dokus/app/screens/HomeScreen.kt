@@ -38,21 +38,19 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.rememberNavController
 import org.jetbrains.compose.resources.stringResource
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
-import tech.dokus.app.navigation.HomeNavigationCommandBus
 import tech.dokus.app.navigation.HomeNavigationCommand
-import tech.dokus.app.screens.home.HomeSurfaceShell
+import tech.dokus.app.navigation.HomeNavigationCommandBus
 import tech.dokus.app.screens.home.DesktopShellTopBar
 import tech.dokus.app.screens.home.DesktopSidebarBottomControls
 import tech.dokus.app.screens.home.HomeShellProfileData
+import tech.dokus.app.screens.home.HomeSurfaceShell
 import tech.dokus.app.screens.home.MobileShellTopBar
 import tech.dokus.app.viewmodel.HomeAction
 import tech.dokus.app.viewmodel.HomeContainer
 import tech.dokus.app.viewmodel.HomeIntent
-import tech.dokus.app.viewmodel.HomeState
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.User
@@ -488,10 +486,6 @@ private fun BottomNavigationLayout(
                 color = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f),
                 tonalElevation = 0.dp,
                 shadowElevation = 0.dp,
-                border = BorderStroke(
-                    1.dp,
-                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.18f)
-                )
             ) {
                 DokusNavigationBar(
                     tabs = mobileTabs,
