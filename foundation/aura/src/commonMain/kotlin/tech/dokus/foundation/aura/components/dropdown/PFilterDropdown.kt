@@ -8,9 +8,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.DropdownMenu
+import com.composables.icons.lucide.ChevronDown
+import com.composables.icons.lucide.Lucide
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -143,7 +143,7 @@ fun <T : FilterOption> PFilterDropdown(
                 Spacer(modifier = Modifier.width(PFilterDropdownDefaults.spacing))
 
                 Icon(
-                    imageVector = Icons.Default.KeyboardArrowDown,
+                    imageVector = Lucide.ChevronDown,
                     contentDescription = contentDescription,
                     modifier = Modifier.size(PFilterDropdownDefaults.iconSize),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant

@@ -21,8 +21,8 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.PersonAdd
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.UserPlus
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -381,7 +381,7 @@ private fun ContactsEmptyState(
             modifier = Modifier.padding(EmptyStatePadding)
         ) {
             Icon(
-                imageVector = Icons.Default.PersonAdd,
+                imageVector = Lucide.UserPlus,
                 contentDescription = null,
                 modifier = Modifier
                     .height(EmptyStateIconSize)
@@ -422,7 +422,7 @@ private fun ContactsEmptyState(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            imageVector = Icons.Default.PersonAdd,
+                            imageVector = Lucide.UserPlus,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary
                         )

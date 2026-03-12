@@ -9,8 +9,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Close
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.X
 import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButton
@@ -152,7 +152,7 @@ private fun SourceDialogHeader(
 
             IconButton(onClick = onClose) {
                 PIcon(
-                    icon = Icons.Outlined.Close,
+                    icon = Lucide.X,
                     description = stringResource(Res.string.action_close),
                     tint = MaterialTheme.colorScheme.textMuted,
                 )

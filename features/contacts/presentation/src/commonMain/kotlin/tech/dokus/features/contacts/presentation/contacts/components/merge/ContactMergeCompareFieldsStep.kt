@@ -12,9 +12,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.CheckCircle
+import com.composables.icons.lucide.ArrowRight
+import com.composables.icons.lucide.CircleCheck
+import com.composables.icons.lucide.Lucide
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -80,7 +80,7 @@ internal fun ContactMergeCompareFieldsStep(
             }
 
             Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                imageVector = Lucide.ArrowRight,
                 contentDescription = null,
                 modifier = Modifier
                     .padding(horizontal = Constraints.Spacing.small)
@@ -117,7 +117,7 @@ internal fun ContactMergeCompareFieldsStep(
                     verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
                 ) {
                     Icon(
-                        imageVector = Icons.Default.CheckCircle,
+                        imageVector = Lucide.CircleCheck,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(Constraints.IconSize.smallMedium)

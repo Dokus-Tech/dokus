@@ -9,8 +9,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Message
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.MessageSquare
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -130,7 +130,7 @@ internal fun ReviewTopBar(
                 if (state.hasContent && state.isDocumentConfirmed) {
                     IconButton(onClick = onChatClick) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.Message,
+                            imageVector = Lucide.MessageSquare,
                             contentDescription = stringResource(Res.string.cashflow_chat_with_document),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )

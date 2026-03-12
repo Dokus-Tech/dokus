@@ -15,9 +15,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.SwapHoriz
-import androidx.compose.material.icons.outlined.Settings
+import com.composables.icons.lucide.ArrowLeftRight
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Settings
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import androidx.compose.material3.HorizontalDivider
@@ -386,7 +386,7 @@ private fun SettingsEmptyState() {
             verticalArrangement = Arrangement.spacedBy(spacing.large)
         ) {
             Icon(
-                imageVector = Icons.Outlined.Settings,
+                imageVector = Lucide.Settings,
                 contentDescription = null,
                 modifier = Modifier.size(sizing.iconXXLarge),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
@@ -439,7 +439,7 @@ private fun WorkspacePickerCard(
                 }
             }
             Icon(
-                imageVector = Icons.Default.SwapHoriz,
+                imageVector = Lucide.ArrowLeftRight,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary
             )

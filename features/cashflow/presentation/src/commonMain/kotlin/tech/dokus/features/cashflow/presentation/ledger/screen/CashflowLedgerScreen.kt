@@ -14,10 +14,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.Payment
+import com.composables.icons.lucide.CircleCheck
+import com.composables.icons.lucide.CreditCard
+import com.composables.icons.lucide.FileText
+import com.composables.icons.lucide.Lucide
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -291,20 +291,20 @@ private fun CashflowLedgerContent(
                     if (state.filters.viewMode != CashflowViewMode.History) {
                         // Record payment
                         MobileActionItem(
-                            icon = Icons.Default.Payment,
+                            icon = Lucide.CreditCard,
                             label = stringResource(Res.string.cashflow_action_record_payment),
                             onClick = { onIntent(CashflowLedgerIntent.RecordPaymentFor(actionsEntry.id)) }
                         )
                         // Mark as paid
                         MobileActionItem(
-                            icon = Icons.Default.CheckCircle,
+                            icon = Lucide.CircleCheck,
                             label = stringResource(Res.string.cashflow_action_mark_paid),
                             onClick = { onIntent(CashflowLedgerIntent.MarkAsPaidQuick(actionsEntry.id)) }
                         )
                     }
                     // View document (all modes)
                     MobileActionItem(
-                        icon = Icons.Default.Description,
+                        icon = Lucide.FileText,
                         label = stringResource(Res.string.cashflow_action_view_document),
                         onClick = { onIntent(CashflowLedgerIntent.ViewDocumentFor(actionsEntry)) }
                     )

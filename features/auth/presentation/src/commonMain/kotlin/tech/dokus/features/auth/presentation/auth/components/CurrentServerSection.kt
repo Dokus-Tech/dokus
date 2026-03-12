@@ -9,9 +9,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Cloud
-import androidx.compose.material.icons.filled.Dns
+import com.composables.icons.lucide.Cloud
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Server
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -71,7 +71,7 @@ fun CurrentServerSection(
                     style = MaterialTheme.typography.titleMedium
                 )
                 Icon(
-                    imageVector = if (currentServer.isCloud) Icons.Default.Cloud else Icons.Default.Dns,
+                    imageVector = if (currentServer.isCloud) Lucide.Cloud else Lucide.Server,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(24.dp)
@@ -124,7 +124,7 @@ fun CurrentServerSection(
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Cloud,
+                        imageVector = Lucide.Cloud,
                         contentDescription = null,
                         modifier = Modifier.size(16.dp)
                     )

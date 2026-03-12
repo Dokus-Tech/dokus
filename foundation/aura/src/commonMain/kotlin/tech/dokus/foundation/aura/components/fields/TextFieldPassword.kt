@@ -9,8 +9,8 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import compose.icons.FeatherIcons
-import compose.icons.feathericons.Key
+import com.composables.icons.lucide.KeyRound
+import com.composables.icons.lucide.Lucide
 import tech.dokus.domain.Password
 import tech.dokus.domain.exceptions.DokusException
 import androidx.compose.ui.tooling.preview.Preview
@@ -20,7 +20,7 @@ import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
 
 object PTextFieldPasswordDefaults {
-    val icon = FeatherIcons.Key
+    val icon = Lucide.KeyRound
     val onAction = {}
     const val singleLine = true
     val keyboardOptions = KeyboardOptions(

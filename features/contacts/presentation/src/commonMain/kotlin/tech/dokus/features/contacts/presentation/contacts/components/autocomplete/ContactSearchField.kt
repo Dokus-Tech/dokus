@@ -11,8 +11,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Clear
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Search
+import com.composables.icons.lucide.X
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
@@ -24,8 +25,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
-import compose.icons.FeatherIcons
-import compose.icons.feathericons.Search
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_clear
@@ -79,7 +78,7 @@ internal fun ContactSearchField(
     ) {
         // Search icon
         PIcon(
-            icon = FeatherIcons.Search,
+            icon = Lucide.Search,
             description = stringResource(Res.string.action_search),
             modifier = Modifier.size(Constraints.IconSize.small)
         )
@@ -132,7 +131,7 @@ internal fun ContactSearchField(
                 modifier = Modifier.size(ClearButtonSize)
             ) {
                 Icon(
-                    imageVector = Icons.Default.Clear,
+                    imageVector = Lucide.X,
                     contentDescription = stringResource(Res.string.action_clear),
                     modifier = Modifier.size(ClearIconSize),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant

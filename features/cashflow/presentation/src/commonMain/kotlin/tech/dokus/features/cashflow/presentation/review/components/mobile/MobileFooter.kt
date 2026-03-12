@@ -17,8 +17,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
-import compose.icons.FeatherIcons
-import compose.icons.feathericons.Check
+import com.composables.icons.lucide.Check
+import com.composables.icons.lucide.Lucide
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_confirm
@@ -77,7 +77,7 @@ internal fun MobileFooter(
             // Confirm button only (right side) - NO Save button on mobile
             PButton(
                 text = stringResource(Res.string.action_confirm),
-                icon = FeatherIcons.Check,
+                icon = Lucide.Check,
                 isLoading = isLoading,
                 isEnabled = canConfirm && !isLoading,
                 onClick = onConfirm,

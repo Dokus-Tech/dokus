@@ -1,9 +1,9 @@
 package tech.dokus.foundation.aura.extensions
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Receipt
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Receipt
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.peppol_provider_recommand_description
@@ -21,7 +21,7 @@ val PeppolProvider.description: String
 
 val PeppolProvider.iconized: ImageVector
     get() = when (this) {
-        PeppolProvider.Recommand -> Icons.Outlined.Receipt
+        PeppolProvider.Recommand -> Lucide.Receipt
     }
 
 val PeppolProvider.websiteUrl: String

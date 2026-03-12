@@ -27,11 +27,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Business
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Warning
+import com.composables.icons.lucide.Building2
+import com.composables.icons.lucide.Check
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.TriangleAlert
+import com.composables.icons.lucide.X
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -192,7 +192,7 @@ fun InvoiceClientSidePanel(
                                         verticalArrangement = Arrangement.spacedBy(ErrorIconSpacing)
                                     ) {
                                         Icon(
-                                            imageVector = Icons.Default.Warning,
+                                            imageVector = Lucide.TriangleAlert,
                                             contentDescription = null,
                                             tint = MaterialTheme.colorScheme.error
                                         )
@@ -293,7 +293,7 @@ private fun ClientSidePanelHeader(
 
         IconButton(onClick = onClose) {
             Icon(
-                imageVector = Icons.Default.Close,
+                imageVector = Lucide.X,
                 contentDescription = stringResource(Res.string.action_close),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -337,7 +337,7 @@ private fun ClientListItem(
     ) {
         // Client icon
         Icon(
-            imageVector = Icons.Default.Business,
+            imageVector = Lucide.Building2,
             contentDescription = null,
             tint = if (isSelected) {
                 MaterialTheme.colorScheme.primary
@@ -381,7 +381,7 @@ private fun ClientListItem(
         // Selected indicator
         if (isSelected) {
             Icon(
-                imageVector = Icons.Default.Check,
+                imageVector = Lucide.Check,
                 contentDescription = stringResource(Res.string.contacts_selected),
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(SelectedIndicatorSize)

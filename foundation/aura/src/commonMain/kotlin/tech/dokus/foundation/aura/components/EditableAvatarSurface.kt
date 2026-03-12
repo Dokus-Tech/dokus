@@ -9,8 +9,8 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Edit
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Pencil
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -95,7 +95,7 @@ fun EditableAvatarSurface(
                 }
             } else {
                 Icon(
-                    imageVector = Icons.Default.Edit,
+                    imageVector = Lucide.Pencil,
                     contentDescription = editContentDescription,
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(EditIconSize),

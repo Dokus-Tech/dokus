@@ -12,10 +12,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Person
+import com.composables.icons.lucide.ChevronRight
+import com.composables.icons.lucide.EllipsisVertical
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.User
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -346,7 +346,7 @@ private fun FinancialDocumentTableRow(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = Icons.Default.Person,
+                    imageVector = Lucide.User,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onSecondaryContainer, // Icon color
                     modifier = Modifier.size(sizing.buttonLoadingIcon)
@@ -416,7 +416,7 @@ private fun FinancialDocumentTableRow(
                 modifier = Modifier.size(sizing.iconMedium)
             ) {
                 Icon(
-                    imageVector = Icons.Default.MoreVert,
+                    imageVector = Lucide.EllipsisVertical,
                     contentDescription = stringResource(Res.string.document_table_more_options),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -428,7 +428,7 @@ private fun FinancialDocumentTableRow(
                 modifier = Modifier.size(sizing.iconMedium)
             ) {
                 Icon(
-                    imageVector = Icons.Default.ChevronRight,
+                    imageVector = Lucide.ChevronRight,
                     contentDescription = stringResource(Res.string.document_table_view_details),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -538,7 +538,7 @@ private fun FinancialDocumentListItem(
 
         // Chevron
         Icon(
-            imageVector = Icons.Default.ChevronRight,
+            imageVector = Lucide.ChevronRight,
             contentDescription = stringResource(Res.string.document_table_view_details),
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(sizing.buttonLoadingIcon)

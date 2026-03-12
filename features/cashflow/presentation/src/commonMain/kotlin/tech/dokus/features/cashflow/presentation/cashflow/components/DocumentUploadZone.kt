@@ -11,10 +11,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeightIn
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.outlined.CameraAlt
-import androidx.compose.material.icons.outlined.Description
+import com.composables.icons.lucide.Camera
+import com.composables.icons.lucide.FileText
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Plus
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -146,11 +146,11 @@ fun DocumentUploadZone(
                 ) {
                     Icon(
                         imageVector = if (isDragging) {
-                            Icons.Default.Add
+                            Lucide.Plus
                         } else {
                             when (icon) {
-                                UploadIcon.Camera -> Icons.Outlined.CameraAlt
-                                UploadIcon.Document -> Icons.Outlined.Description
+                                UploadIcon.Camera -> Lucide.Camera
+                                UploadIcon.Document -> Lucide.FileText
                             }
                         },
                         contentDescription = null,
@@ -244,8 +244,8 @@ fun DocumentUploadZone(
                 ) {
                     Icon(
                         imageVector = when (icon) {
-                            UploadIcon.Camera -> Icons.Outlined.CameraAlt
-                            UploadIcon.Document -> Icons.Outlined.Description
+                            UploadIcon.Camera -> Lucide.Camera
+                            UploadIcon.Document -> Lucide.FileText
                         },
                         contentDescription = null,
                         modifier = Modifier.size(IconSize),

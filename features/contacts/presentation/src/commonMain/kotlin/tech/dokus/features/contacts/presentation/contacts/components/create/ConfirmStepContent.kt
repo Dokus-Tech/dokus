@@ -12,10 +12,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
+import com.composables.icons.lucide.ArrowLeft
+import com.composables.icons.lucide.ChevronDown
+import com.composables.icons.lucide.ChevronUp
+import com.composables.icons.lucide.Lucide
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -166,7 +166,7 @@ private fun ConfirmHeader(
     ) {
         IconButton(onClick = onBack) {
             Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                imageVector = Lucide.ArrowLeft,
                 contentDescription = stringResource(Res.string.action_back),
                 tint = MaterialTheme.colorScheme.onSurface
             )
@@ -242,9 +242,9 @@ private fun CompanyInfoCard(
                     )
                     Icon(
                         imageVector = if (showAddress) {
-                            Icons.Default.KeyboardArrowUp
+                            Lucide.ChevronUp
                         } else {
-                            Icons.Default.KeyboardArrowDown
+                            Lucide.ChevronDown
                         },
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary

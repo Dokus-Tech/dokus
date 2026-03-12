@@ -20,9 +20,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Edit
+import com.composables.icons.lucide.ChevronRight
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Pencil
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -200,7 +200,7 @@ private fun ContactFactDisplay(
                 exit = fadeOut()
             ) {
                 Icon(
-                    imageVector = Icons.Default.Edit,
+                    imageVector = Lucide.Pencil,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.textMuted,
                     modifier = Modifier.size(PencilIconSize)
@@ -269,7 +269,7 @@ private fun ContactMissingPrompt(
 
         if (!isReadOnly) {
             Icon(
-                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                imageVector = Lucide.ChevronRight,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.textMuted,
                 modifier = Modifier.size(ChevronIconSize)
@@ -420,7 +420,7 @@ fun FactField(
             if (isClickable && (!isLargeScreen || isHovered)) {
                 Spacer(Modifier.width(Constraints.Spacing.xSmall))
                 Icon(
-                    imageVector = Icons.Default.Edit,
+                    imageVector = Lucide.Pencil,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.textMuted,
                     modifier = Modifier.size(14.dp)

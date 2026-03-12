@@ -21,8 +21,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import compose.icons.FeatherIcons
-import compose.icons.feathericons.X
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.X
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_close
@@ -119,7 +119,7 @@ private fun SheetHeader(
 
         IconButton(onClick = onClose) {
             PIcon(
-                icon = FeatherIcons.X,
+                icon = Lucide.X,
                 description = stringResource(Res.string.action_close),
                 modifier = Modifier.size(CloseIconSize),
             )

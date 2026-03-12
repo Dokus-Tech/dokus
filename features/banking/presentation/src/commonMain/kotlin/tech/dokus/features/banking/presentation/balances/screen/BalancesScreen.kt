@@ -8,8 +8,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Plus
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -154,7 +154,7 @@ private fun BalancesContent(
                     PButton(
                         text = stringResource(Res.string.banking_balances_connect),
                         variant = PButtonVariant.Outline,
-                        icon = Icons.Default.Add,
+                        icon = Lucide.Plus,
                         iconPosition = PIconPosition.Leading,
                         onClick = { onIntent(BalancesIntent.ConnectAccount) },
                     )

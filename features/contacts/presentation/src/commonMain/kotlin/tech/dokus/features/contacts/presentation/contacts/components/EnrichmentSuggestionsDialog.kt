@@ -9,8 +9,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AutoAwesome
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Sparkles
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -76,7 +76,7 @@ internal fun EnrichmentSuggestionsDialog(
         title = stringResource(Res.string.contacts_enrichment_suggestions),
         icon = {
             Icon(
-                imageVector = Icons.Default.AutoAwesome,
+                imageVector = Lucide.Sparkles,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary
             )
@@ -272,7 +272,7 @@ private fun SourceBadge(source: String) {
             horizontalArrangement = Arrangement.spacedBy(SpacingSmall)
         ) {
             Icon(
-                imageVector = Icons.Default.AutoAwesome,
+                imageVector = Lucide.Sparkles,
                 contentDescription = null,
                 modifier = Modifier.size(IconSizeSmall),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant

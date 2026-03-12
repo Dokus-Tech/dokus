@@ -13,8 +13,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Search
+import com.composables.icons.lucide.X
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -39,8 +40,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import compose.icons.FeatherIcons
-import compose.icons.feathericons.Search
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -156,7 +155,7 @@ fun LookupStepContent(
         PTextFieldStandard(
             fieldName = stringResource(Res.string.contacts_lookup_label),
             value = query,
-            icon = FeatherIcons.Search,
+            icon = Lucide.Search,
             singleLine = true,
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Text,
@@ -346,7 +345,7 @@ private fun LookupHeader(
         )
         IconButton(onClick = onClose) {
             Icon(
-                imageVector = Icons.Default.Close,
+                imageVector = Lucide.X,
                 contentDescription = stringResource(Res.string.action_close),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -365,7 +364,7 @@ private fun LookupHint(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Icon(
-            imageVector = FeatherIcons.Search,
+            imageVector = Lucide.Search,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
             modifier = Modifier.size(48.dp)

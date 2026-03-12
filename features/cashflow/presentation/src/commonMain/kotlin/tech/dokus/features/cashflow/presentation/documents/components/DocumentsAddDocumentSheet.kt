@@ -15,10 +15,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.CameraAlt
-import androidx.compose.material.icons.outlined.Description
-import androidx.compose.material.icons.outlined.PhotoLibrary
+import com.composables.icons.lucide.Camera
+import com.composables.icons.lucide.FileText
+import com.composables.icons.lucide.Images
+import com.composables.icons.lucide.Lucide
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -85,7 +85,7 @@ internal fun DocumentsAddDocumentSheet(
                 subtitle = stringResource(Res.string.documents_add_sheet_scan_subtitle),
                 icon = {
                     Icon(
-                        imageVector = Icons.Outlined.CameraAlt,
+                        imageVector = Lucide.Camera,
                         contentDescription = null
                     )
                 },
@@ -99,7 +99,7 @@ internal fun DocumentsAddDocumentSheet(
                 subtitle = stringResource(Res.string.documents_add_sheet_upload_subtitle),
                 icon = {
                     Icon(
-                        imageVector = Icons.Outlined.Description,
+                        imageVector = Lucide.FileText,
                         contentDescription = null
                     )
                 },
@@ -113,7 +113,7 @@ internal fun DocumentsAddDocumentSheet(
                 subtitle = stringResource(Res.string.documents_add_sheet_import_photos_subtitle),
                 icon = {
                     Icon(
-                        imageVector = Icons.Outlined.PhotoLibrary,
+                        imageVector = Lucide.Images,
                         contentDescription = null
                     )
                 },

@@ -30,12 +30,12 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Business
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Warning
+import com.composables.icons.lucide.Building2
+import com.composables.icons.lucide.Check
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Plus
+import com.composables.icons.lucide.TriangleAlert
+import com.composables.icons.lucide.X
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -386,7 +386,7 @@ private fun ContactSheetContent(
             modifier = Modifier.fillMaxWidth()
         ) {
             Icon(
-                imageVector = Icons.Default.Add,
+                imageVector = Lucide.Plus,
                 contentDescription = null,
                 modifier = Modifier.size(Constraints.IconSize.small),
                 tint = MaterialTheme.colorScheme.primary
@@ -418,7 +418,7 @@ private fun ContactSheetHeader(
 
         IconButton(onClick = onClose) {
             Icon(
-                imageVector = Icons.Default.Close,
+                imageVector = Lucide.X,
                 contentDescription = stringResource(Res.string.action_close),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -508,7 +508,7 @@ private fun SuggestionChip(
 
             if (isSelected) {
                 Icon(
-                    imageVector = Icons.Default.Check,
+                    imageVector = Lucide.Check,
                     contentDescription = stringResource(Res.string.contacts_selected),
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(SelectedIndicatorSize)
@@ -550,7 +550,7 @@ private fun ContactList(
                     verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Warning,
+                        imageVector = Lucide.TriangleAlert,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.error
                     )
@@ -657,7 +657,7 @@ private fun ContactListItem(
     ) {
         // Contact icon
         Icon(
-            imageVector = Icons.Default.Business,
+            imageVector = Lucide.Building2,
             contentDescription = null,
             tint = if (isSelected) {
                 MaterialTheme.colorScheme.primary
@@ -696,7 +696,7 @@ private fun ContactListItem(
         // Selected indicator
         if (isSelected) {
             Icon(
-                imageVector = Icons.Default.Check,
+                imageVector = Lucide.Check,
                 contentDescription = stringResource(Res.string.contacts_selected),
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(SelectedIndicatorSize)

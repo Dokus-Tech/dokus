@@ -5,8 +5,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CloudOff
+import com.composables.icons.lucide.CloudOff
+import com.composables.icons.lucide.Lucide
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -85,7 +85,7 @@ fun OfflineOverlay(
                         .padding(6.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.CloudOff,
+                        imageVector = Lucide.CloudOff,
                         contentDescription = stringResource(Res.string.state_offline),
                         modifier = Modifier.size(16.dp),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant

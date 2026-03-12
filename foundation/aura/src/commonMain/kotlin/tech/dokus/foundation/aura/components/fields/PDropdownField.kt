@@ -23,8 +23,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
-import compose.icons.FeatherIcons
-import compose.icons.feathericons.ChevronDown
+import com.composables.icons.lucide.ChevronDown
+import com.composables.icons.lucide.Lucide
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.constrains.Constraints
@@ -83,7 +83,7 @@ fun <T> PDropdownField(
                     },
                 )
                 Icon(
-                    imageVector = FeatherIcons.ChevronDown,
+                    imageVector = Lucide.ChevronDown,
                     contentDescription = placeholder,
                     modifier = Modifier.size(Constraints.IconSize.small),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,

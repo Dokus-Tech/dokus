@@ -8,11 +8,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.Receipt
-import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.filled.ShoppingCart
+import com.composables.icons.lucide.Clock
+import com.composables.icons.lucide.FileText
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Receipt
+import com.composables.icons.lucide.ShoppingCart
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -120,7 +120,7 @@ private fun ActivitySummaryContent(
             horizontalArrangement = Arrangement.spacedBy(SectionSpacing)
         ) {
             ActivityStatCard(
-                icon = Icons.Default.Description,
+                icon = Lucide.FileText,
                 title = stringResource(Res.string.contacts_invoices),
                 count = activity.invoiceCount.toString(),
                 total = activity.invoiceTotal,
@@ -129,7 +129,7 @@ private fun ActivitySummaryContent(
             )
 
             ActivityStatCard(
-                icon = Icons.Default.Receipt,
+                icon = Lucide.Receipt,
                 title = stringResource(Res.string.contacts_inbound_invoices),
                 count = activity.inboundInvoiceCount.toString(),
                 total = activity.inboundInvoiceTotal,
@@ -138,7 +138,7 @@ private fun ActivitySummaryContent(
             )
 
             ActivityStatCard(
-                icon = Icons.Default.ShoppingCart,
+                icon = Lucide.ShoppingCart,
                 title = stringResource(Res.string.contacts_expenses),
                 count = activity.expenseCount.toString(),
                 total = activity.expenseTotal,
@@ -156,7 +156,7 @@ private fun ActivitySummaryContent(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = Icons.Default.Schedule,
+                    imageVector = Lucide.Clock,
                     contentDescription = null,
                     modifier = Modifier.size(LastActivityIconSize),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant

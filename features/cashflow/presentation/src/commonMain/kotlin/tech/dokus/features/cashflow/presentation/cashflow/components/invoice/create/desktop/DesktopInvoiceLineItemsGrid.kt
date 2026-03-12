@@ -13,9 +13,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.KeyboardArrowDown
+import com.composables.icons.lucide.ChevronDown
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.X
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
@@ -228,7 +228,7 @@ private fun LineItemRow(
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = Icons.Default.Close,
+                imageVector = Lucide.X,
                 contentDescription = stringResource(Res.string.invoice_remove_line_item),
                 tint = MaterialTheme.colorScheme.textMuted
             )
@@ -334,7 +334,7 @@ private fun VatCell(
             textAlign = TextAlign.Center
         )
         Icon(
-            imageVector = Icons.Default.KeyboardArrowDown,
+            imageVector = Lucide.ChevronDown,
             contentDescription = stringResource(Res.string.invoice_select_vat_rate),
             tint = MaterialTheme.colorScheme.textMuted
         )

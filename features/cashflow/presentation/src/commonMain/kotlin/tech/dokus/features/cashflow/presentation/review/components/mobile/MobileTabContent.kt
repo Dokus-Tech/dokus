@@ -21,9 +21,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import coil3.ImageLoader
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -32,8 +29,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import coil3.compose.SubcomposeAsyncImage
-import compose.icons.FeatherIcons
-import compose.icons.feathericons.AlertCircle
+import com.composables.icons.lucide.CircleAlert
+import com.composables.icons.lucide.FileText
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.RefreshCw
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_no_preview
@@ -86,7 +85,7 @@ internal fun PreviewTabContent(
             is DocumentPreviewState.Error -> {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(
-                        imageVector = FeatherIcons.AlertCircle,
+                        imageVector = Lucide.CircleAlert,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.error
                     )
@@ -161,7 +160,7 @@ private fun MobilePdfPageImage(
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Icon(
-                                imageVector = Icons.Default.Refresh,
+                                imageVector = Lucide.RefreshCw,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.onErrorContainer
                             )
@@ -195,7 +194,7 @@ private fun NoPreviewPlaceholder(modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.Center
     ) {
         Icon(
-            imageVector = Icons.Default.Description,
+            imageVector = Lucide.FileText,
             contentDescription = null,
             modifier = Modifier.padding(bottom = Constraints.Spacing.medium),
             tint = MaterialTheme.colorScheme.onSurfaceVariant

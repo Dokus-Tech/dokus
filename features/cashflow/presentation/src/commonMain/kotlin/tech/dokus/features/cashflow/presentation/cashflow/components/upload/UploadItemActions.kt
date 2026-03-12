@@ -1,11 +1,11 @@
 package tech.dokus.features.cashflow.presentation.cashflow.components.upload
 
 import androidx.compose.foundation.layout.Row
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Undo
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Refresh
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.RefreshCw
+import com.composables.icons.lucide.Trash2
+import com.composables.icons.lucide.Undo2
+import com.composables.icons.lucide.X
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -41,7 +41,7 @@ fun CancelUploadAction(
         modifier = modifier
     ) {
         Icon(
-            imageVector = Icons.Default.Close,
+            imageVector = Lucide.X,
             contentDescription = stringResource(Res.string.upload_action_cancel),
             tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -66,7 +66,7 @@ fun RetryUploadAction(
         modifier = modifier
     ) {
         Icon(
-            imageVector = Icons.Default.Refresh,
+            imageVector = Lucide.RefreshCw,
             contentDescription = stringResource(Res.string.upload_action_retry),
             tint = MaterialTheme.colorScheme.primary
         )
@@ -91,7 +91,7 @@ fun DeleteDocumentAction(
         modifier = modifier
     ) {
         Icon(
-            imageVector = Icons.Default.Delete,
+            imageVector = Lucide.Trash2,
             contentDescription = stringResource(Res.string.upload_action_delete),
             tint = MaterialTheme.colorScheme.error
         )
@@ -116,7 +116,7 @@ fun UndoDeleteAction(
         modifier = modifier
     ) {
         Icon(
-            imageVector = Icons.AutoMirrored.Filled.Undo,
+            imageVector = Lucide.Undo2,
             contentDescription = stringResource(Res.string.upload_action_undo),
             tint = MaterialTheme.colorScheme.primary
         )

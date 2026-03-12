@@ -8,15 +8,15 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Business
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Payments
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Phone
-import androidx.compose.material.icons.filled.Receipt
-import androidx.compose.material.icons.filled.Schedule
+import com.composables.icons.lucide.Banknote
+import com.composables.icons.lucide.Building2
+import com.composables.icons.lucide.Clock
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Mail
+import com.composables.icons.lucide.MapPin
+import com.composables.icons.lucide.Phone
+import com.composables.icons.lucide.Receipt
+import com.composables.icons.lucide.User
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -107,7 +107,7 @@ internal fun ContactInfoContent(
 
         contact.email?.let {
             ContactInfoRow(
-                icon = Icons.Default.Email,
+                icon = Lucide.Mail,
                 label = stringResource(Res.string.contacts_email),
                 value = it.value
             )
@@ -115,7 +115,7 @@ internal fun ContactInfoContent(
 
         contact.phone?.let {
             ContactInfoRow(
-                icon = Icons.Default.Phone,
+                icon = Lucide.Phone,
                 label = stringResource(Res.string.contacts_phone),
                 value = it.value
             )
@@ -123,7 +123,7 @@ internal fun ContactInfoContent(
 
         contact.contactPerson?.let {
             ContactInfoRow(
-                icon = Icons.Default.Person,
+                icon = Lucide.User,
                 label = stringResource(Res.string.contacts_contact_person),
                 value = it
             )
@@ -131,7 +131,7 @@ internal fun ContactInfoContent(
 
         contact.vatNumber?.let {
             ContactInfoRow(
-                icon = Icons.Default.Receipt,
+                icon = Lucide.Receipt,
                 label = stringResource(Res.string.contacts_vat_number),
                 value = it.value
             )
@@ -139,7 +139,7 @@ internal fun ContactInfoContent(
 
         contact.companyNumber?.let {
             ContactInfoRow(
-                icon = Icons.Default.Business,
+                icon = Lucide.Building2,
                 label = stringResource(Res.string.contacts_company_number),
                 value = it
             )
@@ -166,7 +166,7 @@ internal fun ContactInfoContent(
             }
 
             ContactInfoRow(
-                icon = Icons.Default.LocationOn,
+                icon = Lucide.MapPin,
                 label = stringResource(Res.string.contacts_address),
                 value = addressLines.joinToString("\n")
             )
@@ -176,14 +176,14 @@ internal fun ContactInfoContent(
         // in PeppolDirectoryCacheTable, resolved via /contacts/{id}/peppol-status endpoint
 
         ContactInfoRow(
-            icon = Icons.Default.Schedule,
+            icon = Lucide.Clock,
             label = stringResource(Res.string.contacts_payment_terms),
             value = stringResource(Res.string.contacts_payment_terms_value, contact.defaultPaymentTerms)
         )
 
         contact.defaultVatRate?.let { rate ->
             ContactInfoRow(
-                icon = Icons.Default.Payments,
+                icon = Lucide.Banknote,
                 label = stringResource(Res.string.contacts_default_vat_rate),
                 value = stringResource(Res.string.common_percent_value, rate.toDisplayString())
             )

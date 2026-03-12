@@ -1,10 +1,10 @@
 package tech.dokus.app.module
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Business
-import androidx.compose.material.icons.filled.Group
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Palette
+import com.composables.icons.lucide.Bell
+import com.composables.icons.lucide.Building2
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Palette
+import com.composables.icons.lucide.Users
 import tech.dokus.app.diModuleApp
 import tech.dokus.app.diModuleUseCases
 import tech.dokus.app.navigation.AppNavigationProvider
@@ -145,7 +145,7 @@ internal object AppMainModule : AppModule {
             sections = listOf(
                 ModuleSettingsSection(
                     title = Res.string.settings_notifications,
-                    icon = Icons.Default.Notifications,
+                    icon = Lucide.Bell,
                     destination = SettingsDestination.NotificationPreferences
                 )
             )
@@ -156,12 +156,12 @@ internal object AppMainModule : AppModule {
             sections = listOf(
                 ModuleSettingsSection(
                     title = Res.string.settings_workspace_details,
-                    icon = Icons.Default.Business,
+                    icon = Lucide.Building2,
                     destination = SettingsDestination.WorkspaceSettings
                 ),
                 ModuleSettingsSection(
                     title = Res.string.settings_team,
-                    icon = Icons.Default.Group,
+                    icon = Lucide.Users,
                     destination = SettingsDestination.TeamSettings
                 )
             )
@@ -172,7 +172,7 @@ internal object AppMainModule : AppModule {
             sections = listOf(
                 ModuleSettingsSection(
                     title = Res.string.settings_appearance,
-                    icon = Icons.Default.Palette,
+                    icon = Lucide.Palette,
                     destination = SettingsDestination.AppearanceSettings
                 )
             )

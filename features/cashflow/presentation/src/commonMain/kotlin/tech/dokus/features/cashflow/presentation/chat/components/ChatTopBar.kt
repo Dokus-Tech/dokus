@@ -2,10 +2,10 @@ package tech.dokus.features.cashflow.presentation.chat.components
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.MoreVert
+import com.composables.icons.lucide.EllipsisVertical
+import com.composables.icons.lucide.History
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Plus
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -94,7 +94,7 @@ internal fun ChatTopBar(
                 if (sessionData != null) {
                     IconButton(onClick = onNewChat) {
                         Icon(
-                            imageVector = Icons.Default.Add,
+                            imageVector = Lucide.Plus,
                             contentDescription = stringResource(Res.string.chat_new_conversation),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -102,7 +102,7 @@ internal fun ChatTopBar(
 
                     IconButton(onClick = onShowHistory) {
                         Icon(
-                            imageVector = Icons.Default.History,
+                            imageVector = Lucide.History,
                             contentDescription = stringResource(Res.string.chat_history_action),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -111,7 +111,7 @@ internal fun ChatTopBar(
                     Box {
                         IconButton(onClick = { showMenu = true }) {
                             Icon(
-                                imageVector = Icons.Default.MoreVert,
+                                imageVector = Lucide.EllipsisVertical,
                                 contentDescription = stringResource(Res.string.chat_more_options),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )

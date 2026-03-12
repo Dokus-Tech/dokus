@@ -7,8 +7,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ErrorOutline
+import com.composables.icons.lucide.CircleAlert
+import com.composables.icons.lucide.Lucide
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -53,7 +53,7 @@ fun DokusErrorBanner(
             horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium),
         ) {
             Icon(
-                imageVector = Icons.Default.ErrorOutline,
+                imageVector = Lucide.CircleAlert,
                 contentDescription = null,
                 modifier = Modifier.size(Constraints.IconSize.medium),
                 tint = MaterialTheme.colorScheme.error,

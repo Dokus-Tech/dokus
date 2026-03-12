@@ -1,10 +1,10 @@
 package tech.dokus.foundation.aura.extensions
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.composables.icons.lucide.ArrowLeftRight
+import com.composables.icons.lucide.FileText
+import com.composables.icons.lucide.Lucide
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.banking_resolution_document
@@ -19,6 +19,6 @@ val ResolutionType.localized: String
 
 val ResolutionType.iconized: ImageVector
     get() = when (this) {
-        ResolutionType.Document -> Icons.Default.Description
-        ResolutionType.Transfer -> Icons.Default.SwapHoriz
+        ResolutionType.Document -> Lucide.FileText
+        ResolutionType.Transfer -> Lucide.ArrowLeftRight
     }

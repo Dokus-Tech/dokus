@@ -20,8 +20,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
-import compose.icons.FeatherIcons
-import compose.icons.feathericons.Calendar
+import com.composables.icons.lucide.Calendar
+import com.composables.icons.lucide.Lucide
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
@@ -82,7 +82,7 @@ fun PDateField(
                 },
             )
             Icon(
-                imageVector = FeatherIcons.Calendar,
+                imageVector = Lucide.Calendar,
                 contentDescription = placeholder,
                 modifier = Modifier.size(Constraints.IconSize.small),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
