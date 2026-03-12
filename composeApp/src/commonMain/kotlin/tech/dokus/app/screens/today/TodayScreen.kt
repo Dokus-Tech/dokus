@@ -39,38 +39,32 @@ import tech.dokus.app.navigation.local.LocalRootNavController
 import tech.dokus.app.viewmodel.TodayAction
 import tech.dokus.app.viewmodel.TodayContainer
 import tech.dokus.app.viewmodel.TodayIntent
-import tech.dokus.app.viewmodel.TodayState
 import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.home_today
 import tech.dokus.aura.resources.today_awaiting_processing
 import tech.dokus.aura.resources.today_document_needs_review
-import tech.dokus.aura.resources.today_documents
 import tech.dokus.aura.resources.today_due_this_week
 import tech.dokus.aura.resources.today_invoice_pending
 import tech.dokus.aura.resources.today_invoices_pending
-import tech.dokus.aura.resources.today_needs_review
 import tech.dokus.aura.resources.today_overdue
 import tech.dokus.aura.resources.today_recent
 import tech.dokus.aura.resources.today_review_button
 import tech.dokus.aura.resources.today_view_all
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.DocumentListItemDto
-import tech.dokus.foundation.aura.components.badges.toUiSource
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.badges.SourceBadge
+import tech.dokus.foundation.aura.components.badges.toUiSource
 import tech.dokus.foundation.aura.components.common.CalloutTrailing
 import tech.dokus.foundation.aura.components.common.DokusCalloutBanner
 import tech.dokus.foundation.aura.components.status.StatusDot
 import tech.dokus.foundation.aura.components.status.StatusDotType
 import tech.dokus.foundation.aura.components.text.Amt
 import tech.dokus.foundation.aura.components.text.DokusLabel
-import tech.dokus.foundation.aura.components.text.MobilePageTitle
 import tech.dokus.foundation.aura.components.text.SectionTitle
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.local.LocalScreenSize
-import tech.dokus.foundation.aura.style.textFaint
 import tech.dokus.foundation.aura.style.textMuted
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
@@ -385,7 +379,7 @@ private fun DocumentListItemDto.formattedDate(): String? {
     // List DTO does not carry extracted issue dates; use uploadedAt
     val date = uploadedAt.date
     val months = arrayOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
-    return "${months[date.month.ordinal]} ${date.dayOfMonth}"
+    return "${months[date.month.ordinal]} ${date.day}"
 }
 
 private fun formatStatAmount(totalMinor: Long): String {

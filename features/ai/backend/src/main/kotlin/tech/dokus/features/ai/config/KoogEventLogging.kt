@@ -6,7 +6,7 @@ import tech.dokus.foundation.backend.utils.loggerFor
 
 private val logger = loggerFor("KoogEventLogging")
 
-internal fun FeatureContext.installKoogEventLogging(
+@PublishedApi internal fun FeatureContext.installKoogEventLogging(
     agentName: String,
     enabled: Boolean,
 ) {

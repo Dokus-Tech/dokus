@@ -1,5 +1,6 @@
 package tech.dokus.features.ai.graph.nodes
 
+import ai.koog.agents.core.agent.entity.AIAgentStorageKey
 import ai.koog.agents.core.dsl.builder.AIAgentNodeDelegate
 import ai.koog.agents.core.dsl.builder.AIAgentSubgraphBuilderBase
 import tech.dokus.domain.enums.TenantType
@@ -17,7 +18,7 @@ internal inline fun <reified Input> AIAgentSubgraphBuilderBase<*, *>.tenantConte
         llm.writeSession {
             appendPrompt {
                 user {
-                    text(buildTenantPrompt(tenant, emptyList()))
+                    text(buildClassificationTenantPrompt(tenant, emptyList()))
                 }
             }
         }
@@ -30,7 +31,7 @@ internal inline fun <reified Input : InputWithTenantContext> AIAgentSubgraphBuil
         llm.writeSession {
             appendPrompt {
                 user {
-                    text(buildTenantPrompt(args.tenant, args.associatedPersonNames))
+                    text(buildClassificationTenantPrompt(args.tenant, args.associatedPersonNames))
                 }
             }
         }
@@ -38,7 +39,25 @@ internal inline fun <reified Input : InputWithTenantContext> AIAgentSubgraphBuil
     }
 }
 
-private fun buildTenantPrompt(tenant: Tenant, associatedPersonNames: List<String>): String = with(tenant) {
+internal inline fun <reified Input> AIAgentSubgraphBuilderBase<*, *>.extractionTenantContextInjectorNode(
+    tenantKey: AIAgentStorageKey<Tenant>,
+    associatedNamesKey: AIAgentStorageKey<List<String>>,
+): AIAgentNodeDelegate<Input, Input> {
+    return node<Input, Input>("inject-extraction-tenant-context") { args ->
+        val tenant = storage.getValue(tenantKey)
+        val names = storage.getValue(associatedNamesKey)
+        llm.writeSession {
+            appendPrompt {
+                user {
+                    text(buildExtractionTenantPrompt(tenant, names))
+                }
+            }
+        }
+        args
+    }
+}
+
+private fun buildClassificationTenantPrompt(tenant: Tenant, associatedPersonNames: List<String>): String = with(tenant) {
     buildString {
         appendLine("## TENANT CONTEXT")
         appendLine()
@@ -54,16 +73,29 @@ private fun buildTenantPrompt(tenant: Tenant, associatedPersonNames: List<String
         appendLine()
         appendLine("## HOW TO USE THIS CONTEXT")
         appendLine()
-        appendLine("**For CLASSIFICATION:**")
         appendLine("- Classify by legal document nature (Invoice/CreditNote/Receipt/etc.), not business direction.")
         appendLine("- If the paper is an invoice, classify as INVOICE regardless of seller/buyer perspective.")
         appendLine("- Incoming/outgoing direction is resolved later using seller/buyer facts and tenant matching.")
+    }.trim()
+}
+
+private fun buildExtractionTenantPrompt(tenant: Tenant, associatedPersonNames: List<String>): String = with(tenant) {
+    buildString {
+        appendLine("## TENANT CONTEXT FOR EXTRACTION")
         appendLine()
-        appendLine("**For EXTRACTION:**")
+        appendLine("**Company:** ${legalName.value}")
+        appendLine("**Language:** ${language.code} (prefer this for field names if ambiguous)")
+        appendLine("**Type:** ${type.description}")
+        if (associatedPersonNames.isNotEmpty()) {
+            appendLine("**Associated persons:** ${associatedPersonNames.joinToString(", ")}")
+        }
+        appendLine()
+        appendLine("## EXTRACTION RULES")
+        appendLine()
         appendLine("- \"${legalName.value}\" is the tenant — the business that owns this document.")
         appendLine("- Extract seller/issuer and buyer/recipient as neutral facts from the document.")
         appendLine("- Do not swap roles based on assumptions; direction is resolved in deterministic code.")
-        appendLine("- Prefer ${language.code} field labels when document is multilingual")
+        appendLine("- Prefer ${language.code} field labels when document is multilingual.")
         appendLine()
         appendLine("**Counterparty Rule:**")
         appendLine("- \"${legalName.value}\" is YOUR tenant — never the counterparty.")

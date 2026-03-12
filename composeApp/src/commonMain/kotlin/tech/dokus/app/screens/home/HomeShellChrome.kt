@@ -57,16 +57,15 @@ import tech.dokus.aura.resources.settings_current_workspace
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.auth.FirmWorkspaceSummary
 import tech.dokus.foundation.app.NavContext
+import tech.dokus.foundation.app.network.rememberAuthenticatedImageLoader
+import tech.dokus.foundation.app.network.rememberResolvedApiUrl
 import tech.dokus.foundation.app.shell.HomeShellTopBarAction
 import tech.dokus.foundation.app.shell.HomeShellTopBarConfig
 import tech.dokus.foundation.app.shell.HomeShellTopBarMode
-import tech.dokus.foundation.app.network.rememberAuthenticatedImageLoader
-import tech.dokus.foundation.app.network.rememberResolvedApiUrl
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.AvatarShape
 import tech.dokus.foundation.aura.components.AvatarSize
 import tech.dokus.foundation.aura.components.CompanyAvatarImage
-import tech.dokus.foundation.aura.components.MonogramAvatar
 import tech.dokus.foundation.aura.components.UserAvatarImage
 import tech.dokus.foundation.aura.components.common.ShimmerBox
 import tech.dokus.foundation.aura.components.common.ShimmerLine
@@ -158,14 +157,16 @@ private fun DesktopWorkspaceArea(
         navContext == NavContext.FIRM && selectedFirm != null -> WorkspaceCardData(
             name = selectedFirm.name.value,
             subtitle = selectedFirm.vatNumber.formatted,
-            initial = selectedFirm.name.value.trim().firstOrNull()?.uppercaseChar()?.toString() ?: "D",
+            initial = selectedFirm.name.value.trim().firstOrNull()?.uppercaseChar()?.toString()
+                ?: "D",
             avatarUrl = null,
         )
 
         tenant != null -> WorkspaceCardData(
             name = tenant.displayName.value,
             subtitle = tenant.vatNumber.formatted,
-            initial = tenant.displayName.value.trim().firstOrNull()?.uppercaseChar()?.toString() ?: "D",
+            initial = tenant.displayName.value.trim().firstOrNull()?.uppercaseChar()?.toString()
+                ?: "D",
             avatarUrl = rememberResolvedApiUrl(tenant.avatar?.small),
         )
 
@@ -360,6 +361,7 @@ internal fun MobileShellTopBar(
 ) {
     val effects = MaterialTheme.dokusEffects
     val sizing = MaterialTheme.dokusSizing
+    val spacing = MaterialTheme.dokusSpacing
     val avatarUrl = rememberResolvedApiUrl(profileData?.avatar?.small)
     val imageLoader = rememberAuthenticatedImageLoader()
     Column(
@@ -375,7 +377,9 @@ internal fun MobileShellTopBar(
                     initials = profileData?.initials ?: "",
                     size = sizing.avatarExtraSmall,
                     radius = sizing.avatarExtraSmall / 4,
-                    modifier = Modifier.clickable(onClick = onProfileClick),
+                    modifier = Modifier
+                        .clickable(onClick = onProfileClick)
+                        .padding(end = spacing.small),
                     imageLoader = imageLoader,
                     contentDescription = stringResource(Res.string.a11y_profile_menu),
                 )

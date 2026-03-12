@@ -3,8 +3,6 @@ package tech.dokus.features.ai.graph
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.config.AIAgentConfig
 import ai.koog.agents.core.annotation.ExperimentalAgentsApi
-import ai.koog.agents.core.dsl.builder.forwardTo
-import ai.koog.agents.core.dsl.builder.strategy
 import ai.koog.agents.core.tools.ToolRegistry
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -14,7 +12,6 @@ import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.features.ai.config.AIProviderFactory
 import tech.dokus.features.ai.config.asVisionModel
-import tech.dokus.features.ai.graph.sub.documentProcessingSubGraph
 import tech.dokus.features.ai.models.DocumentAiProcessingResult
 import tech.dokus.features.ai.models.FinancialExtractionResult
 import tech.dokus.features.ai.services.DocumentFetcher
@@ -40,16 +37,10 @@ class InvoiceExtractionGoldenTest {
 
         val toolRegistry = ToolRegistry { }
 
-        val strategy = strategy<AcceptDocumentInput, DocumentAiProcessingResult>("test") {
-            val process by documentProcessingSubGraph(TestAiFixtures.aiConfig, mockFetcher)
-            edge(nodeStart forwardTo process)
-            edge(process forwardTo nodeFinish)
-        }
-
         val agent = AIAgent(
             promptExecutor = AIProviderFactory.createOpenAiExecutor(TestAiFixtures.aiConfig),
             toolRegistry = toolRegistry,
-            strategy = strategy,
+            strategy = acceptDocumentGraph(TestAiFixtures.aiConfig, mockFetcher),
             agentConfig = AIAgentConfig.withSystemPrompt(
                 prompt = "You are a document processor.",
                 llm = TestAiFixtures.aiConfig.mode.asVisionModel,
