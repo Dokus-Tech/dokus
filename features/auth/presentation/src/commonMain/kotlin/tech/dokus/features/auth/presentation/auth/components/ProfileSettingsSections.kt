@@ -23,44 +23,44 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import kotlinx.datetime.LocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_change
 import tech.dokus.aura.resources.action_upload
-import tech.dokus.aura.resources.common_empty_value
 import tech.dokus.aura.resources.profile_cancel
 import tech.dokus.aura.resources.profile_change_password
 import tech.dokus.aura.resources.profile_danger_zone
 import tech.dokus.aura.resources.profile_deactivate_account
 import tech.dokus.aura.resources.profile_deactivate_warning
-import tech.dokus.aura.resources.profile_edit
 import tech.dokus.aura.resources.profile_email
 import tech.dokus.aura.resources.profile_email_not_verified
 import tech.dokus.aura.resources.profile_email_verification
 import tech.dokus.aura.resources.profile_email_verified
 import tech.dokus.aura.resources.profile_first_name
 import tech.dokus.aura.resources.profile_last_name
-import tech.dokus.aura.resources.profile_load_failed
 import tech.dokus.aura.resources.profile_logout
 import tech.dokus.aura.resources.profile_personal_info
+import tech.dokus.aura.resources.profile_resend_verification
+import tech.dokus.aura.resources.profile_save
 import tech.dokus.aura.resources.profile_server_change
 import tech.dokus.aura.resources.profile_server_dokus_cloud
 import tech.dokus.aura.resources.profile_server_label
-import tech.dokus.aura.resources.profile_server_reset_to_cloud
 import tech.dokus.aura.resources.profile_server_url
 import tech.dokus.aura.resources.profile_server_version
-import tech.dokus.aura.resources.profile_sessions_description
-import tech.dokus.aura.resources.profile_version_footer
-import tech.dokus.aura.resources.profile_resend_verification
-import tech.dokus.aura.resources.profile_save
 import tech.dokus.aura.resources.profile_sessions
+import tech.dokus.aura.resources.profile_version_footer
 import tech.dokus.aura.resources.state_uploading
 import tech.dokus.aura.resources.user_avatar_content_description
+import tech.dokus.domain.Email
 import tech.dokus.domain.Name
 import tech.dokus.domain.config.ServerConfig
+import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.User
 import tech.dokus.features.auth.mvi.AvatarState
 import tech.dokus.foundation.app.network.rememberAuthenticatedImageLoader
@@ -82,11 +82,6 @@ import tech.dokus.foundation.aura.style.textMuted
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
-import tech.dokus.domain.Email
-import tech.dokus.domain.ids.UserId
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
-import kotlinx.datetime.LocalDateTime
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -278,9 +273,7 @@ internal fun SecurityCard(
             )
             SettingsRow(
                 label = stringResource(Res.string.profile_sessions),
-                value = stringResource(Res.string.profile_sessions_description),
                 chevron = true,
-                showDivider = false,
                 onClick = onMySessions,
             )
         }
@@ -329,21 +322,6 @@ internal fun ServerCard(
                 showDivider = !currentServer.isCloud,
                 onClick = onChangeServer,
             )
-
-            // Reset to cloud (only on self-hosted)
-            if (!currentServer.isCloud) {
-                Box(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 10.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = stringResource(Res.string.profile_server_reset_to_cloud),
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.primary,
-                    )
-                }
-            }
         }
     }
 }
