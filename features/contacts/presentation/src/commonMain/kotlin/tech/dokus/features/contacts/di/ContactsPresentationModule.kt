@@ -50,7 +50,8 @@ val contactsPresentationModule = module {
             getCachedContacts = get(),
             cacheContacts = get(),
             getCurrentTenantId = get(),
-            observeContactChanges = get()
+            observeContactChanges = get(),
+            updateContact = get()
         )
     }
     container<ContactFormContainer, ContactFormState, ContactFormIntent, ContactFormAction> {

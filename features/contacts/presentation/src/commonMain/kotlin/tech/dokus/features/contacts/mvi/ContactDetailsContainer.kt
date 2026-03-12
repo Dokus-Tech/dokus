@@ -31,6 +31,9 @@ import tech.dokus.features.contacts.usecases.GetContactUseCase
 import tech.dokus.features.contacts.usecases.ListContactNotesUseCase
 import tech.dokus.features.contacts.usecases.ObserveContactChangesUseCase
 import tech.dokus.features.contacts.usecases.UpdateContactNoteUseCase
+import tech.dokus.features.contacts.usecases.UpdateContactUseCase
+import tech.dokus.features.contacts.mvi.extensions.toFormData
+import tech.dokus.features.contacts.mvi.extensions.toUpdateRequest
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.app.state.isSuccess
@@ -67,6 +70,7 @@ internal class ContactDetailsContainer(
     private val cacheContacts: CacheContactsUseCase,
     private val getCurrentTenantId: GetCurrentTenantIdUseCase,
     private val observeContactChanges: ObserveContactChangesUseCase,
+    private val updateContact: UpdateContactUseCase,
 ) : Container<ContactDetailsState, ContactDetailsIntent, ContactDetailsAction> {
 
     companion object {
@@ -123,6 +127,12 @@ internal class ContactDetailsContainer(
                     is ContactDetailsIntent.ApplyEnrichmentSuggestions -> handleApplyEnrichmentSuggestions(
                         intent.suggestions
                     )
+
+                    // Inline Edit
+                    is ContactDetailsIntent.StartEditing -> handleStartEditing()
+                    is ContactDetailsIntent.CancelEditing -> handleCancelEditing()
+                    is ContactDetailsIntent.SaveEdit -> handleSaveEdit()
+                    is ContactDetailsIntent.UpdateEditFormData -> handleUpdateEditFormData(intent.formData)
                 }
             }
         }
@@ -669,6 +679,74 @@ internal class ContactDetailsContainer(
             ContactDetailsAction.ShowSuccess(
                 ContactDetailsSuccess.EnrichmentApplied(suggestions.size)
             )
+        )
+    }
+
+    // ============================================================================
+    // INLINE EDIT HANDLERS
+    // ============================================================================
+
+    private suspend fun ContactDetailsCtx.handleStartEditing() {
+        withState {
+            if (!contact.isSuccess()) return@withState
+            val formData = contact.data.toFormData()
+            updateState { copy(editFormData = formData) }
+        }
+    }
+
+    private suspend fun ContactDetailsCtx.handleCancelEditing() {
+        updateState { copy(editFormData = null) }
+    }
+
+    private suspend fun ContactDetailsCtx.handleUpdateEditFormData(formData: ContactFormData) {
+        updateState { copy(editFormData = formData) }
+    }
+
+    private suspend fun ContactDetailsCtx.handleSaveEdit() {
+        var capturedContactId: ContactId? = null
+        var capturedFormData: ContactFormData? = null
+
+        withState {
+            capturedContactId = contactId
+            capturedFormData = editFormData
+        }
+
+        val editContactId = capturedContactId ?: return
+        val form = capturedFormData ?: return
+
+        if (form.name.value.isBlank()) {
+            updateState {
+                copy(
+                    editFormData = form.copy(
+                        errors = mapOf("name" to DokusException.Validation.ContactNameRequired)
+                    )
+                )
+            }
+            return
+        }
+
+        updateState { copy(isSavingEdit = true) }
+        logger.d { "Saving inline edit for contact $editContactId" }
+
+        val request = form.toUpdateRequest()
+        updateContact(editContactId, request).fold(
+            onSuccess = { updatedContact ->
+                logger.i { "Contact updated: ${updatedContact.id}" }
+                updateState {
+                    copy(
+                        contact = DokusState.success(updatedContact),
+                        editFormData = null,
+                        isSavingEdit = false,
+                    )
+                }
+                cacheContact(updatedContact)
+                action(ContactDetailsAction.ShowSuccess(ContactDetailsSuccess.ContactUpdated))
+            },
+            onFailure = { error ->
+                logger.e(error) { "Failed to update contact: $editContactId" }
+                updateState { copy(isSavingEdit = false) }
+                action(ContactDetailsAction.ShowError(error.asDokusException))
+            }
         )
     }
 }
