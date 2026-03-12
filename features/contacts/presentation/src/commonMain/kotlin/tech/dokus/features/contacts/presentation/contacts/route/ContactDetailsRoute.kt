@@ -17,6 +17,7 @@ import tech.dokus.aura.resources.contacts_enrichment_applied_single
 import tech.dokus.aura.resources.contacts_note_added
 import tech.dokus.aura.resources.contacts_note_deleted
 import tech.dokus.aura.resources.contacts_note_updated
+import tech.dokus.aura.resources.contacts_update_success
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.features.contacts.mvi.ContactDetailsAction
@@ -65,6 +66,8 @@ internal fun ContactDetailsRoute(
                     stringResource(Res.string.contacts_enrichment_applied_plural, success.count)
                 }
             }
+            ContactDetailsSuccess.ContactUpdated ->
+                stringResource(Res.string.contacts_update_success)
         }
     }
     val errorMessage = pendingError?.localized
@@ -86,11 +89,6 @@ internal fun ContactDetailsRoute(
     val state by container.store.subscribe(DefaultLifecycle) { action ->
         when (action) {
             ContactDetailsAction.NavigateBack -> navController.popBackStack()
-            is ContactDetailsAction.NavigateToEditContact -> {
-                navController.navigateTo(
-                    ContactsDestination.EditContact(action.contactId.toString())
-                )
-            }
             is ContactDetailsAction.NavigateToMergedContact -> {
                 navController.navigateTo(
                     ContactsDestination.ContactDetails(action.contactId.toString())
@@ -114,9 +112,6 @@ internal fun ContactDetailsRoute(
         snackbarHostState = snackbarHostState,
         onIntent = { container.store.intent(it) },
         onBackClick = { navController.popBackStack() },
-        onEditClick = {
-            navController.navigateTo(ContactsDestination.EditContact(contactId))
-        },
         onDocumentClick = { documentId ->
             navController.navigateTo(CashFlowDestination.DocumentReview(documentId.toString()))
         },
