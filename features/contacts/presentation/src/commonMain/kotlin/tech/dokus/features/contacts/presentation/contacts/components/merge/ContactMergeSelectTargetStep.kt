@@ -10,8 +10,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Search
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Search
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import androidx.compose.material3.Icon
@@ -75,7 +75,7 @@ internal fun ContactMergeSelectTargetStep(
             placeholder = { Text(stringResource(Res.string.contacts_merge_search_placeholder)) },
             leadingIcon = {
                 Icon(
-                    imageVector = Icons.Default.Search,
+                    imageVector = Lucide.Search,
                     contentDescription = null,
                     modifier = Modifier.size(Constraints.IconSize.smallMedium)
                 )

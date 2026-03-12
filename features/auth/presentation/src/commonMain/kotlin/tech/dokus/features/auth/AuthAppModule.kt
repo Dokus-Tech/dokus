@@ -1,7 +1,7 @@
 package tech.dokus.features.auth
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Person
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.User
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.settings_group_account
 import tech.dokus.aura.resources.settings_profile
@@ -32,7 +32,7 @@ object AuthAppModule : AppModule {
             sections = listOf(
                 ModuleSettingsSection(
                     title = Res.string.settings_profile,
-                    icon = Icons.Default.Person,
+                    icon = Lucide.User,
                     destination = AuthDestination.ProfileSettings
                 )
             )

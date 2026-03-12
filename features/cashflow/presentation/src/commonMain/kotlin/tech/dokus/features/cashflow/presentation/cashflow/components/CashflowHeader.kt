@@ -9,8 +9,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Plus
+import com.composables.icons.lucide.Search
+import com.composables.icons.lucide.CloudUpload
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -21,9 +23,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
-import compose.icons.FeatherIcons
-import compose.icons.feathericons.Search
-import compose.icons.feathericons.UploadCloud
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_search
@@ -75,7 +74,7 @@ fun CashflowHeaderSearch(
                 modifier = Modifier.size(40.dp)
             ) {
                 Icon(
-                    imageVector = FeatherIcons.Search,
+                    imageVector = Lucide.Search,
                     contentDescription = stringResource(Res.string.action_search)
                 )
             }
@@ -129,7 +128,7 @@ fun CashflowHeaderActions(
             enabled = isOnline
         ) {
             Icon(
-                imageVector = FeatherIcons.UploadCloud,
+                imageVector = Lucide.CloudUpload,
                 contentDescription = stringResource(Res.string.cashflow_upload_document),
                 tint = if (!isOnline) {
                     MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
@@ -144,7 +143,7 @@ fun CashflowHeaderActions(
         PButton(
             text = stringResource(Res.string.cashflow_create_invoice),
             variant = PButtonVariant.Outline,
-            icon = Icons.Default.Add,
+            icon = Lucide.Plus,
             iconPosition = PIconPosition.Trailing,
             onClick = onCreateInvoiceClick,
             isEnabled = isOnline

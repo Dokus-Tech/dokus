@@ -5,8 +5,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Trash2
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -73,7 +73,7 @@ fun InvoiceLineItemCard(
                 if (canDelete) {
                     IconButton(onClick = onDelete) {
                         Icon(
-                            imageVector = Icons.Default.Delete,
+                            imageVector = Lucide.Trash2,
                             contentDescription = stringResource(Res.string.invoice_remove),
                             tint = MaterialTheme.colorScheme.error
                         )

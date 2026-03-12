@@ -15,9 +15,9 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.Refresh
+import com.composables.icons.lucide.FileText
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.RefreshCw
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -148,7 +148,7 @@ private fun ErrorPreview(
         )
         PButton(
             text = stringResource(Res.string.state_retry),
-            icon = Icons.Default.Refresh,
+            icon = Lucide.RefreshCw,
             modifier = Modifier.padding(top = RetryButtonTopPadding),
             onClick = onRetry,
         )
@@ -253,7 +253,7 @@ private fun PdfPageImage(
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Icon(
-                                imageVector = Icons.Default.Refresh,
+                                imageVector = Lucide.RefreshCw,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.onErrorContainer,
                             )
@@ -304,7 +304,7 @@ private fun NoPreviewPlaceholder(modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.Center
     ) {
         Icon(
-            imageVector = Icons.Default.Description,
+            imageVector = Lucide.FileText,
             contentDescription = null,
             modifier = Modifier.padding(bottom = PlaceholderIconBottomPadding),
             tint = MaterialTheme.colorScheme.onSurfaceVariant

@@ -9,11 +9,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.MergeType
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Edit
+import com.composables.icons.lucide.ArrowLeft
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Merge
+import com.composables.icons.lucide.Pencil
+import com.composables.icons.lucide.Sparkles
 import androidx.compose.material3.Badge
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -74,7 +74,7 @@ internal fun ContactDetailsTopBar(
                 if (showBackButton) {
                     IconButton(onClick = onBackClick) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            imageVector = Lucide.ArrowLeft,
                             contentDescription = stringResource(Res.string.action_back)
                         )
                     }
@@ -138,7 +138,7 @@ internal fun ContactDetailsTopBar(
                                 IconButton(onClick = onEnrichmentClick) {
                                     Box {
                                         Icon(
-                                            imageVector = Icons.Default.AutoAwesome,
+                                            imageVector = Lucide.Sparkles,
                                             contentDescription = stringResource(Res.string.contacts_enrichment_available),
                                             tint = MaterialTheme.colorScheme.primary
                                         )
@@ -154,7 +154,7 @@ internal fun ContactDetailsTopBar(
                                 enabled = isOnline
                             ) {
                                 Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.MergeType,
+                                    imageVector = Lucide.Merge,
                                     contentDescription = stringResource(Res.string.contacts_merge)
                                 )
                             }
@@ -163,7 +163,7 @@ internal fun ContactDetailsTopBar(
                                 enabled = isOnline
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.Edit,
+                                    imageVector = Lucide.Pencil,
                                     contentDescription = stringResource(Res.string.contacts_edit_contact)
                                 )
                             }

@@ -6,8 +6,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Info
+import com.composables.icons.lucide.Info
+import com.composables.icons.lucide.Lucide
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -63,7 +63,7 @@ internal fun AnalysisFailedBanner(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
-                    imageVector = Icons.Outlined.Info,
+                    imageVector = Lucide.Info,
                     contentDescription = null,
                     modifier = Modifier.size(Constraints.IconSize.medium),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,

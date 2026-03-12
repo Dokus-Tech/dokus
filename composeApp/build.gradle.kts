@@ -114,7 +114,7 @@ kotlin {
             implementation(compose.preview)
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.lifecycle.runtime.compose)
-            implementation(compose.materialIconsExtended)
+
 
             implementation(project.dependencies.platform(libs.koin.bom))
             implementation(libs.koin.core)

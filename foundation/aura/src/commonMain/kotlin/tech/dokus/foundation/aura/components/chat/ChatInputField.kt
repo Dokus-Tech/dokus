@@ -11,8 +11,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Send
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Send
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -164,7 +164,7 @@ fun PChatInputField(
             )
         ) {
             Icon(
-                imageVector = Icons.AutoMirrored.Filled.Send,
+                imageVector = Lucide.Send,
                 contentDescription = stringResource(Res.string.chat_send_message),
                 modifier = Modifier.size(Constraints.IconSize.medium)
             )

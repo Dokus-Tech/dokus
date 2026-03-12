@@ -5,9 +5,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ZoomIn
-import androidx.compose.material.icons.filled.ZoomOut
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.ZoomIn
+import com.composables.icons.lucide.ZoomOut
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -76,7 +76,7 @@ fun ZoomControls(
             onClick = { onZoomChange((zoomLevel - ZoomStep).coerceAtLeast(ZoomMin)) }
         ) {
             Icon(
-                imageVector = Icons.Default.ZoomOut,
+                imageVector = Lucide.ZoomOut,
                 contentDescription = stringResource(Res.string.action_zoom_out)
             )
         }
@@ -91,7 +91,7 @@ fun ZoomControls(
             onClick = { onZoomChange((zoomLevel + ZoomStep).coerceAtMost(ZoomMax)) }
         ) {
             Icon(
-                imageVector = Icons.Default.ZoomIn,
+                imageVector = Lucide.ZoomIn,
                 contentDescription = stringResource(Res.string.action_zoom_in)
             )
         }

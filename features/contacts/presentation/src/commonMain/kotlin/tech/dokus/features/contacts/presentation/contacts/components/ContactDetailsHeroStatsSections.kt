@@ -10,10 +10,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.MergeType
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Edit
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Merge
+import com.composables.icons.lucide.Pencil
+import com.composables.icons.lucide.Sparkles
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -156,7 +156,7 @@ internal fun ContactHeroSection(
                                 enabled = isOnline
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.AutoAwesome,
+                                    imageVector = Lucide.Sparkles,
                                     contentDescription = null,
                                     tint = MaterialTheme.colorScheme.statusWarning
                                 )
@@ -168,7 +168,7 @@ internal fun ContactHeroSection(
                             enabled = isOnline
                         ) {
                             Icon(
-                                imageVector = Icons.AutoMirrored.Filled.MergeType,
+                                imageVector = Lucide.Merge,
                                 contentDescription = null
                             )
                         }
@@ -178,7 +178,7 @@ internal fun ContactHeroSection(
                             enabled = isOnline && !isEditing
                         ) {
                             Icon(
-                                imageVector = Icons.Default.Edit,
+                                imageVector = Lucide.Pencil,
                                 contentDescription = null
                             )
                         }

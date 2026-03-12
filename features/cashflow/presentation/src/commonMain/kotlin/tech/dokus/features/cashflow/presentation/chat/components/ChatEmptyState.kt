@@ -20,8 +20,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
-import compose.icons.FeatherIcons
-import compose.icons.feathericons.MessageCircle
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.MessageCircle
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.chat_empty_description_all
@@ -64,7 +64,7 @@ internal fun EmptyStateContent(
         verticalArrangement = Arrangement.Center
     ) {
         Icon(
-            imageVector = FeatherIcons.MessageCircle,
+            imageVector = Lucide.MessageCircle,
             contentDescription = null,
             modifier = Modifier.size(64.dp),
             tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)

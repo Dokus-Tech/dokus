@@ -11,8 +11,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
+import com.composables.icons.lucide.Check
+import com.composables.icons.lucide.Lucide
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -229,7 +229,7 @@ internal fun MobilePaymentStateCard(
                 ) {
                     if (state.financialStatus == ReviewFinancialStatus.Paid) {
                         PIcon(
-                            icon = Icons.Filled.Check,
+                            icon = Lucide.Check,
                             description = null,
                             tint = state.financialStatus.financialStatusColorized,
                         )

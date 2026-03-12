@@ -10,8 +10,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Warning
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.TriangleAlert
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -111,7 +111,7 @@ private fun DuplicateWarningHeader(
         modifier = modifier
     ) {
         Icon(
-            imageVector = Icons.Default.Warning,
+            imageVector = Lucide.TriangleAlert,
             contentDescription = stringResource(Res.string.contacts_duplicate_warning),
             tint = MaterialTheme.colorScheme.error,
             modifier = Modifier.size(Constraints.IconSize.medium)

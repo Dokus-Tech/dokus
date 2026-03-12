@@ -10,8 +10,8 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.intl.Locale
-import compose.icons.FeatherIcons
-import compose.icons.feathericons.User
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.User
 import tech.dokus.domain.Name
 import tech.dokus.domain.exceptions.DokusException
 import androidx.compose.ui.tooling.preview.Preview
@@ -22,7 +22,7 @@ import tech.dokus.foundation.aura.tooling.TestWrapper
 import tech.dokus.foundation.aura.tooling.mockName
 
 object PTextFieldNameDefaults {
-    val icon = FeatherIcons.User
+    val icon = Lucide.User
     val onAction = {}
     const val singleLine = true
     val keyboardOptions = KeyboardOptions(

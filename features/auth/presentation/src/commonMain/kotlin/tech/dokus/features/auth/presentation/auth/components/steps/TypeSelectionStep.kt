@@ -9,10 +9,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Business
-import androidx.compose.material.icons.outlined.Description
-import androidx.compose.material.icons.outlined.Person
+import com.composables.icons.lucide.Building2
+import com.composables.icons.lucide.FileText
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.User
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -84,7 +84,7 @@ internal fun TypeSelectionStep(
                     horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium),
                 ) {
                     TypeCard(
-                        icon = Icons.Outlined.Business,
+                        icon = Lucide.Building2,
                         title = stringResource(Res.string.workspace_type_company),
                         description = stringResource(Res.string.auth_workspace_type_company_description),
                         isEnabled = true,
@@ -92,7 +92,7 @@ internal fun TypeSelectionStep(
                         modifier = Modifier.weight(1f),
                     )
                     TypeCard(
-                        icon = Icons.Outlined.Person,
+                        icon = Lucide.User,
                         title = stringResource(Res.string.workspace_type_freelancer),
                         description = stringResource(Res.string.auth_workspace_type_freelancer_description),
                         isEnabled = !hasFreelancerWorkspace,
@@ -100,7 +100,7 @@ internal fun TypeSelectionStep(
                         modifier = Modifier.weight(1f),
                     )
                     TypeCard(
-                        icon = Icons.Outlined.Description,
+                        icon = Lucide.FileText,
                         title = stringResource(Res.string.workspace_type_bookkeeper),
                         description = stringResource(Res.string.auth_workspace_type_bookkeeper_description),
                         isEnabled = true,
@@ -114,7 +114,7 @@ internal fun TypeSelectionStep(
                     verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium),
                 ) {
                     TypeCard(
-                        icon = Icons.Outlined.Business,
+                        icon = Lucide.Building2,
                         title = stringResource(Res.string.workspace_type_company),
                         description = stringResource(Res.string.auth_workspace_type_company_description),
                         isEnabled = true,
@@ -122,7 +122,7 @@ internal fun TypeSelectionStep(
                         modifier = Modifier.fillMaxWidth(),
                     )
                     TypeCard(
-                        icon = Icons.Outlined.Person,
+                        icon = Lucide.User,
                         title = stringResource(Res.string.workspace_type_freelancer),
                         description = stringResource(Res.string.auth_workspace_type_freelancer_description),
                         isEnabled = !hasFreelancerWorkspace,
@@ -130,7 +130,7 @@ internal fun TypeSelectionStep(
                         modifier = Modifier.fillMaxWidth(),
                     )
                     TypeCard(
-                        icon = Icons.Outlined.Description,
+                        icon = Lucide.FileText,
                         title = stringResource(Res.string.workspace_type_bookkeeper),
                         description = stringResource(Res.string.auth_workspace_type_bookkeeper_description),
                         isEnabled = true,

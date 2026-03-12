@@ -19,9 +19,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.ExpandMore
+import com.composables.icons.lucide.ChevronDown
+import com.composables.icons.lucide.FileText
+import com.composables.icons.lucide.Lucide
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -139,7 +139,7 @@ fun ChatSourceCitation(
                 modifier = Modifier.weight(1f)
             ) {
                 Icon(
-                    imageVector = Icons.Default.Description,
+                    imageVector = Lucide.FileText,
                     contentDescription = null,
                     modifier = Modifier.size(ChatSourceCitationDefaults.iconSize),
                     tint = MaterialTheme.colorScheme.primary
@@ -173,7 +173,7 @@ fun ChatSourceCitation(
 
             // Expand/collapse icon
             Icon(
-                imageVector = Icons.Default.ExpandMore,
+                imageVector = Lucide.ChevronDown,
                 contentDescription = stringResource(
                     if (isExpanded) {
                         Res.string.chat_collapse_citation
@@ -324,7 +324,7 @@ fun ChatSourceCitationList(
                 color = MaterialTheme.colorScheme.onSurface
             )
             Icon(
-                imageVector = Icons.Default.ExpandMore,
+                imageVector = Lucide.ChevronDown,
                 contentDescription = stringResource(
                     if (isExpanded) {
                         Res.string.chat_collapse_sources

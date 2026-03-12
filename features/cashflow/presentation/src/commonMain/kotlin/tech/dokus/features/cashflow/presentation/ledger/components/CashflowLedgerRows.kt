@@ -19,8 +19,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
+import com.composables.icons.lucide.EllipsisVertical
+import com.composables.icons.lucide.Lucide
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -222,7 +222,7 @@ internal fun CashflowLedgerTableRow(
                             .alpha(actionsAlpha)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.MoreVert,
+                            imageVector = Lucide.EllipsisVertical,
                             contentDescription = "Actions",
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(Constraints.IconSize.smallMedium)
@@ -316,7 +316,7 @@ internal fun CashflowLedgerMobileRow(
             modifier = Modifier.size(Constraints.CropGuide.cornerLength)
         ) {
             Icon(
-                imageVector = Icons.Default.MoreVert,
+                imageVector = Lucide.EllipsisVertical,
                 contentDescription = "Actions",
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(Constraints.IconSize.smallMedium)

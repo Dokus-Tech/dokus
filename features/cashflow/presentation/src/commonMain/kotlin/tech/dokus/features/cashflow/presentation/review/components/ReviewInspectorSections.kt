@@ -11,9 +11,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.outlined.Check
+import com.composables.icons.lucide.Check
+import com.composables.icons.lucide.ChevronRight
+import com.composables.icons.lucide.Lucide
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -232,7 +232,7 @@ internal fun InspectorSourcesSection(
                         contentAlignment = Alignment.Center,
                     ) {
                         PIcon(
-                            icon = Icons.Outlined.Check,
+                            icon = Lucide.Check,
                             description = null,
                             tint = MaterialTheme.colorScheme.statusConfirmed,
                             modifier = Modifier.size(Constraints.IconSize.xSmall),
@@ -488,7 +488,7 @@ private fun SourceRow(
             overflow = TextOverflow.Ellipsis,
         )
         PIcon(
-            icon = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            icon = Lucide.ChevronRight,
             description = null,
             tint = MaterialTheme.colorScheme.textMuted,
         )

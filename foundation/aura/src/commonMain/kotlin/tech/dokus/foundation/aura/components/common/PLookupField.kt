@@ -30,8 +30,8 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
-import compose.icons.FeatherIcons
-import compose.icons.feathericons.Search
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Search
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_search
@@ -94,7 +94,7 @@ fun PLookupField(
         horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
     ) {
         PIcon(
-            icon = FeatherIcons.Search,
+            icon = Lucide.Search,
             description = stringResource(Res.string.action_search),
             modifier = Modifier.size(Constraints.IconSize.small),
             tint = MaterialTheme.colorScheme.onSurfaceVariant

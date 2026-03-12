@@ -11,8 +11,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Warning
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.TriangleAlert
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -290,7 +290,7 @@ private fun DeleteContactConfirmationDialog(
         title = stringResource(Res.string.contacts_delete_contact),
         icon = {
             Icon(
-                imageVector = Icons.Default.Warning,
+                imageVector = Lucide.TriangleAlert,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.error
             )

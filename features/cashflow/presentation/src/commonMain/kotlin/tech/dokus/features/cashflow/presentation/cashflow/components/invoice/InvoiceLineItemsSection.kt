@@ -5,8 +5,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Plus
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -60,7 +60,7 @@ fun InvoiceLineItemsSection(
 
             TextButton(onClick = onAddItem) {
                 Icon(
-                    imageVector = Icons.Default.Add,
+                    imageVector = Lucide.Plus,
                     contentDescription = stringResource(Res.string.invoice_add_line_item),
                     modifier = Modifier.padding(end = 4.dp)
                 )

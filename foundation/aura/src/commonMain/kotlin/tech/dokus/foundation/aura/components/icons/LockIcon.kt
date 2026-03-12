@@ -1,8 +1,8 @@
 package tech.dokus.foundation.aura.components.icons
 
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Lock
+import com.composables.icons.lucide.Lock
+import com.composables.icons.lucide.Lucide
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -33,7 +33,7 @@ fun LockIcon(
     tint: Color = MaterialTheme.colorScheme.textMuted,
 ) {
     Icon(
-        imageVector = Icons.Default.Lock,
+        imageVector = Lucide.Lock,
         contentDescription = null,
         modifier = modifier.size(Constraints.IconSize.small),
         tint = tint,

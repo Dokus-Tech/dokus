@@ -8,8 +8,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
-import compose.icons.FeatherIcons
-import compose.icons.feathericons.Hash
+import com.composables.icons.lucide.Hash
+import com.composables.icons.lucide.Lucide
 import tech.dokus.domain.exceptions.DokusException
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -18,7 +18,7 @@ import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
 
 object PTextFieldTaxNumberDefaults {
-    val icon = FeatherIcons.Hash
+    val icon = Lucide.Hash
     val onAction = {}
     const val singleLine = true
     val keyboardOptions = KeyboardOptions(

@@ -3,8 +3,8 @@ package tech.dokus.foundation.aura.components.common
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import com.composables.icons.lucide.ArrowLeft
+import com.composables.icons.lucide.Lucide
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -47,7 +47,7 @@ fun PBackIconButton(
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                imageVector = Lucide.ArrowLeft,
                 contentDescription = contentDescription,
                 modifier = Modifier.size(BackIconSize),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,

@@ -3,8 +3,8 @@ package tech.dokus.features.cashflow.presentation.common.components.table
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ChevronRight
+import com.composables.icons.lucide.ChevronRight
+import com.composables.icons.lucide.Lucide
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -55,7 +55,7 @@ internal fun DokusTableChevronIcon(
     modifier: Modifier = Modifier
 ) {
     Icon(
-        imageVector = Icons.Default.ChevronRight,
+        imageVector = Lucide.ChevronRight,
         contentDescription = contentDescription,
         tint = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = modifier

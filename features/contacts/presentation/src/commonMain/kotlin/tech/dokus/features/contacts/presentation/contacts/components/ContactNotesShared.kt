@@ -13,11 +13,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Note
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Warning
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Pencil
+import com.composables.icons.lucide.StickyNote
+import com.composables.icons.lucide.Trash2
+import com.composables.icons.lucide.TriangleAlert
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -196,7 +196,7 @@ internal fun ContactNotesList(
                     verticalArrangement = Arrangement.spacedBy(SpacingSmall)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Warning,
+                        imageVector = Lucide.TriangleAlert,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.error
                     )
@@ -223,7 +223,7 @@ internal fun ContactNotesList(
                         verticalArrangement = Arrangement.spacedBy(SpacingSmall)
                     ) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.Note,
+                            imageVector = Lucide.StickyNote,
                             contentDescription = null,
                             modifier = Modifier.size(IconSizeLarge),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = IconAlphaDisabled)
@@ -272,7 +272,7 @@ internal fun ContactNotesList(
                                             horizontalArrangement = Arrangement.spacedBy(SpacingSmall)
                                         ) {
                                             Icon(
-                                                imageVector = Icons.AutoMirrored.Filled.Note,
+                                                imageVector = Lucide.StickyNote,
                                                 contentDescription = null,
                                                 modifier = Modifier.size(IconSizeSmall),
                                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
@@ -302,7 +302,7 @@ internal fun ContactNotesList(
                                     Row {
                                         IconButton(onClick = { onEditClick(note) }) {
                                             Icon(
-                                                imageVector = Icons.Default.Edit,
+                                                imageVector = Lucide.Pencil,
                                                 contentDescription = stringResource(Res.string.contacts_edit_note),
                                                 modifier = Modifier.size(IconSizeMedium),
                                                 tint = if (editingNote?.id == note.id) {
@@ -314,7 +314,7 @@ internal fun ContactNotesList(
                                         }
                                         IconButton(onClick = { onDeleteClick(note) }) {
                                             Icon(
-                                                imageVector = Icons.Default.Delete,
+                                                imageVector = Lucide.Trash2,
                                                 contentDescription = stringResource(Res.string.contacts_delete_note),
                                                 modifier = Modifier.size(IconSizeMedium),
                                                 tint = MaterialTheme.colorScheme.error
@@ -344,7 +344,7 @@ internal fun ContactNoteDeleteDialog(
         modifier = Modifier.testTag(ContactNotesTestTags.DeleteConfirmationRoot),
         icon = {
             Icon(
-                imageVector = Icons.Default.Delete,
+                imageVector = Lucide.Trash2,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.error
             )

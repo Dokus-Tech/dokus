@@ -9,9 +9,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.ArrowDropUp
+import com.composables.icons.lucide.Calendar
+import com.composables.icons.lucide.ChevronDown
+import com.composables.icons.lucide.ChevronUp
+import com.composables.icons.lucide.Lucide
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -26,8 +27,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import compose.icons.FeatherIcons
-import compose.icons.feathericons.Calendar
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.number
 import tech.dokus.features.cashflow.mvi.CreateInvoiceIntent
@@ -278,7 +277,7 @@ private fun DateInfoCell(
                 color = MaterialTheme.colorScheme.onSurface
             )
             Icon(
-                imageVector = FeatherIcons.Calendar,
+                imageVector = Lucide.Calendar,
                 contentDescription = stringResource(Res.string.invoice_select_date),
                 tint = MaterialTheme.colorScheme.onSurface,
             )
@@ -315,7 +314,7 @@ private fun TermsCell(
                 color = MaterialTheme.colorScheme.onSurface
             )
             Icon(
-                imageVector = if (expanded) Icons.Default.ArrowDropUp else Icons.Default.ArrowDropDown,
+                imageVector = if (expanded) Lucide.ChevronUp else Lucide.ChevronDown,
                 contentDescription = stringResource(Res.string.invoice_payment_terms)
             )
         }

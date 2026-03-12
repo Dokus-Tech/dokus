@@ -46,7 +46,7 @@ buildkonfig = "0.17.1"
 navigation-compose = "2.9.2"
 settings = "1.3.0"
 calf = "0.9.0"
-compose-icons = "1.1.1"
+compose-icons-lucide = "1.1.0"
 # kolor 3.0.+ is broken in skiko
 materialKolor = "4.1.1"
 
@@ -242,8 +242,7 @@ calf-filePicker = { group = "com.mohamedrejeb.calf", name = "calf-file-picker", 
 
 materialKolor = { group = "com.materialkolor", name = "material-kolor", version.ref = "materialKolor" }
 
-composeIcons-feather = { group = "br.com.devsrsouza.compose.icons", name = "feather", version.ref = "compose-icons" }
-composeIcons-fontAwesome = { module = "br.com.devsrsouza.compose.icons:font-awesome", version.ref = "compose-icons" }
+composeIcons-lucide = { module = "com.composables:icons-lucide", version.ref = "compose-icons-lucide" }
 
 persistence-settings = { group = "com.russhwolf", name = "multiplatform-settings-no-arg", version.ref = "settings" }
 persistence-settingsTest = { group = "com.russhwolf", name = "multiplatform-settings-test", version.ref = "settings" }

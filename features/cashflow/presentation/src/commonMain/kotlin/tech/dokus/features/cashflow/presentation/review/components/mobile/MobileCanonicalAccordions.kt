@@ -10,8 +10,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import com.composables.icons.lucide.ChevronRight
+import com.composables.icons.lucide.Lucide
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -127,7 +127,7 @@ internal fun MobileSourcesAccordion(
                     modifier = Modifier.weight(1f),
                 )
                 PIcon(
-                    icon = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    icon = Lucide.ChevronRight,
                     description = null,
                     tint = MaterialTheme.colorScheme.textMuted,
                 )

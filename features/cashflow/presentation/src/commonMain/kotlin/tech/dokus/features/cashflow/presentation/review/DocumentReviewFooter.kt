@@ -25,11 +25,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
-import compose.icons.FeatherIcons
-import compose.icons.feathericons.Check
-import compose.icons.feathericons.CheckCircle
-import compose.icons.feathericons.MessageSquare
-import compose.icons.feathericons.Save
+import com.composables.icons.lucide.Check
+import com.composables.icons.lucide.CircleCheck
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.MessageSquare
+import com.composables.icons.lucide.Save
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
@@ -198,7 +198,7 @@ private fun PendingFooter(
                     PButton(
                         text = stringResource(Res.string.action_save),
                         variant = PButtonVariant.Outline,
-                        icon = FeatherIcons.Save,
+                        icon = Lucide.Save,
                         isLoading = isSaving,
                         isEnabled = !isLoading,
                         onClick = onSaveChanges,
@@ -208,7 +208,7 @@ private fun PendingFooter(
                 // Confirm button
                 PButton(
                     text = stringResource(Res.string.action_confirm),
-                    icon = FeatherIcons.Check,
+                    icon = Lucide.Check,
                     isLoading = isConfirming || isBindingContact,
                     isEnabled = canConfirm && !isLoading,
                     onClick = onConfirm,
@@ -241,7 +241,7 @@ private fun ConfirmedFooter(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
-                imageVector = FeatherIcons.CheckCircle,
+                imageVector = Lucide.CircleCheck,
                 contentDescription = null,
                 modifier = Modifier.size(20.dp),
                 tint = MaterialTheme.colorScheme.tertiary,
@@ -284,7 +284,7 @@ private fun ConfirmedFooter(
         if (showChat) {
             PButton(
                 text = stringResource(Res.string.cashflow_chat_with_document),
-                icon = FeatherIcons.MessageSquare,
+                icon = Lucide.MessageSquare,
                 modifier = Modifier.fillMaxWidth(),
                 onClick = onOpenChat,
             )

@@ -18,8 +18,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Settings
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Settings
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.constrains.Constraints
@@ -81,6 +81,6 @@ private fun ListSettingsItemPreview(
     @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
 ) {
     TestWrapper(parameters) {
-        ListSettingsItem(text = "General", icon = Icons.Default.Settings, onClick = {})
+        ListSettingsItem(text = "General", icon = Lucide.Settings, onClick = {})
     }
 }

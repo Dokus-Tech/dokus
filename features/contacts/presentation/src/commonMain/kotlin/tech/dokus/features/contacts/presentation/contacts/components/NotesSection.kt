@@ -10,11 +10,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Note
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Pencil
+import com.composables.icons.lucide.Plus
+import com.composables.icons.lucide.StickyNote
+import com.composables.icons.lucide.Trash2
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -99,7 +99,7 @@ internal fun NotesSection(
 
                 TextButton(onClick = onAddNote) {
                     Icon(
-                        imageVector = Icons.Default.Add,
+                        imageVector = Lucide.Plus,
                         contentDescription = null,
                         modifier = Modifier.size(IconSizeMedium)
                     )
@@ -184,7 +184,7 @@ private fun NoteItem(
                         horizontalArrangement = Arrangement.spacedBy(SpacingDefault)
                     ) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.Note,
+                            imageVector = Lucide.StickyNote,
                             contentDescription = null,
                             modifier = Modifier.size(IconSizeSmall),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
@@ -214,13 +214,13 @@ private fun NoteItem(
                 Row {
                     IconButton(onClick = onEdit) {
                         Icon(
-                            imageVector = Icons.Default.Edit,
+                            imageVector = Lucide.Pencil,
                             contentDescription = stringResource(Res.string.contacts_edit_note),
                         )
                     }
                     IconButton(onClick = onDelete) {
                         Icon(
-                            imageVector = Icons.Default.Delete,
+                            imageVector = Lucide.Trash2,
                             contentDescription = stringResource(Res.string.contacts_delete_note),
                         )
                     }
@@ -239,7 +239,7 @@ private fun NotesEmptyState() {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Icon(
-            imageVector = Icons.AutoMirrored.Filled.Note,
+            imageVector = Lucide.StickyNote,
             contentDescription = null,
             modifier = Modifier.size(IconSizeLarge),
             tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = IconAlphaDisabled)

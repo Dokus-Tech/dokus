@@ -1,13 +1,12 @@
 package tech.dokus.foundation.aura.extensions
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import compose.icons.FeatherIcons
-import compose.icons.feathericons.Inbox
+import com.composables.icons.lucide.Inbox
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.TriangleAlert
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.notification_type_compliance_blocker
@@ -55,7 +54,7 @@ val NotificationType.isCritical: Boolean
  * Extension property to get the appropriate icon for a NotificationType.
  */
 val NotificationType.icon: ImageVector
-    get() = if (isCritical) Icons.Default.Warning else FeatherIcons.Inbox
+    get() = if (isCritical) Lucide.TriangleAlert else Lucide.Inbox
 
 /**
  * Extension property to get the icon tint color for a NotificationType.

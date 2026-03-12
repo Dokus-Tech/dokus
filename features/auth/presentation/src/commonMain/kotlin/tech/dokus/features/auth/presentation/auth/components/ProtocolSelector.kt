@@ -6,9 +6,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.LockOpen
+import com.composables.icons.lucide.Lock
+import com.composables.icons.lucide.LockOpen
+import com.composables.icons.lucide.Lucide
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -78,9 +78,9 @@ fun ProtocolSelector(
                 ) {
                     Icon(
                         imageVector = if (option == ProtocolOption.HTTPS) {
-                            Icons.Default.Lock
+                            Lucide.Lock
                         } else {
-                            Icons.Default.LockOpen
+                            Lucide.LockOpen
                         },
                         contentDescription = null,
                     )

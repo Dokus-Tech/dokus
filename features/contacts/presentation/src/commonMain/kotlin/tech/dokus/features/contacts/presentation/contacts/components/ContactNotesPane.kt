@@ -21,9 +21,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Plus
+import com.composables.icons.lucide.X
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -152,14 +152,14 @@ internal fun ContactNotesPane(
                             ) {
                                 IconButton(onClick = onShowAddNote) {
                                     Icon(
-                                        imageVector = Icons.Default.Add,
+                                        imageVector = Lucide.Plus,
                                         contentDescription = stringResource(Res.string.contacts_add_note),
                                         tint = MaterialTheme.colorScheme.primary
                                     )
                                 }
                                 IconButton(onClick = onDismiss) {
                                     Icon(
-                                        imageVector = Icons.Default.Close,
+                                        imageVector = Lucide.X,
                                         contentDescription = stringResource(Res.string.action_close)
                                     )
                                 }

@@ -1,8 +1,8 @@
 package tech.dokus.features.contacts.presentation.contacts.components.merge
 
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.MergeType
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Merge
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -95,7 +95,7 @@ internal fun ContactMergeDialog(
         title = title,
         icon = {
             Icon(
-                imageVector = Icons.AutoMirrored.Filled.MergeType,
+                imageVector = Lucide.Merge,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(28.dp)

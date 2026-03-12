@@ -10,8 +10,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Mail
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -215,7 +215,7 @@ private fun ContactInfoRowPreview(
 ) {
     TestWrapper(parameters) {
         ContactInfoRow(
-            icon = Icons.Filled.Email,
+            icon = Lucide.Mail,
             label = "Email",
             value = "info@acme.be"
         )

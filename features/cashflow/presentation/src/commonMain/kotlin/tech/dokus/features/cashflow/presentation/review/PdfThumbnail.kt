@@ -12,9 +12,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Description
+import com.composables.icons.lucide.ChevronRight
+import com.composables.icons.lucide.FileText
+import com.composables.icons.lucide.Lucide
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -134,7 +134,7 @@ fun PdfThumbnail(
 @Composable
 private fun PlaceholderIcon() {
     Icon(
-        imageVector = Icons.Default.Description,
+        imageVector = Lucide.FileText,
         contentDescription = null,
         modifier = Modifier.size(Constraints.AvatarSize.small),
         tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
@@ -200,7 +200,7 @@ fun PdfPreviewRow(
 
         // Chevron indicator
         Icon(
-            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            imageVector = Lucide.ChevronRight,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(Constraints.IconSize.medium),

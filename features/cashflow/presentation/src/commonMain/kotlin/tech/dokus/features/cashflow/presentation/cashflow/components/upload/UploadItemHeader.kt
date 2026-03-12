@@ -9,10 +9,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Error
+import com.composables.icons.lucide.CircleAlert
+import com.composables.icons.lucide.CircleCheck
+import com.composables.icons.lucide.File
+import com.composables.icons.lucide.Lucide
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -55,7 +55,7 @@ fun FileIconWithOverlay(
         contentAlignment = Alignment.Center
     ) {
         Icon(
-            imageVector = Icons.AutoMirrored.Filled.InsertDriveFile,
+            imageVector = Lucide.File,
             contentDescription = null,
             modifier = Modifier.size(Constraints.AvatarSize.small),
             tint = MaterialTheme.colorScheme.onSurfaceVariant
@@ -125,7 +125,7 @@ fun androidx.compose.foundation.layout.BoxScope.StatusBadgeOverlay(
 @Composable
 fun androidx.compose.foundation.layout.BoxScope.UploadedOverlay() {
     StatusBadgeOverlay(
-        icon = Icons.Default.CheckCircle,
+        icon = Lucide.CircleCheck,
         tint = MaterialTheme.colorScheme.primary
     )
 }
@@ -136,7 +136,7 @@ fun androidx.compose.foundation.layout.BoxScope.UploadedOverlay() {
 @Composable
 fun androidx.compose.foundation.layout.BoxScope.FailedOverlay() {
     StatusBadgeOverlay(
-        icon = Icons.Default.Error,
+        icon = Lucide.CircleAlert,
         tint = MaterialTheme.colorScheme.error
     )
 }
@@ -155,7 +155,7 @@ fun DeletingFileIcon(
         contentAlignment = Alignment.Center
     ) {
         Icon(
-            imageVector = Icons.AutoMirrored.Filled.InsertDriveFile,
+            imageVector = Lucide.File,
             contentDescription = null,
             modifier = Modifier.size(Constraints.AvatarSize.small),
             tint = MaterialTheme.colorScheme.error.copy(alpha = 0.5f)

@@ -7,8 +7,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
-import compose.icons.FeatherIcons
-import compose.icons.feathericons.Phone
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Phone
 import tech.dokus.domain.PhoneNumber
 import tech.dokus.domain.exceptions.DokusException
 import androidx.compose.ui.tooling.preview.Preview
@@ -18,7 +18,7 @@ import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
 
 object PTextFieldPhoneDefaults {
-    val icon = FeatherIcons.Phone
+    val icon = Lucide.Phone
     val onAction = {}
     const val singleLine = true
     val keyboardOptions = KeyboardOptions(
