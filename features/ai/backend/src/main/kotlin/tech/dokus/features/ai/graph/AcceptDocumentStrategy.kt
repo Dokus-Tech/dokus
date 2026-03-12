@@ -99,7 +99,10 @@ fun acceptDocumentGraph(
             val skipUnsupported by node<ClassificationResult, DocumentAiProcessingResult>("skip-unsupported") { result ->
                 DocumentAiProcessingResult(
                     classification = result,
-                    extraction = FinancialExtractionResult.Unsupported,
+                    extraction = FinancialExtractionResult.Unsupported(
+                        documentType = result.documentType.name,
+                        reason = "Classification-only: extraction not supported for ${result.documentType.name}"
+                    ),
                     directionResolution = DirectionResolution(),
                     auditReport = AuditReport.EMPTY
                 )

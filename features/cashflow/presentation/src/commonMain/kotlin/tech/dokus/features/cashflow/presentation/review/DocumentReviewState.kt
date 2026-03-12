@@ -381,7 +381,55 @@ data class DocumentReviewState(
             is InvoiceDraftData -> draft.totalAmount
             is ReceiptDraftData -> draft.totalAmount
             is CreditNoteDraftData -> draft.totalAmount
-            is BankStatementDraftData -> null
+            is BankStatementDraftData,
+            is ProFormaDraftData,
+            is QuoteDraftData,
+            is OrderConfirmationDraftData,
+            is DeliveryNoteDraftData,
+            is ReminderDraftData,
+            is StatementOfAccountDraftData,
+            is PurchaseOrderDraftData,
+            is ExpenseClaimDraftData,
+            is BankFeeDraftData,
+            is InterestStatementDraftData,
+            is PaymentConfirmationDraftData,
+            is VatReturnDraftData,
+            is VatListingDraftData,
+            is VatAssessmentDraftData,
+            is IcListingDraftData,
+            is OssReturnDraftData,
+            is CorporateTaxDraftData,
+            is CorporateTaxAdvanceDraftData,
+            is TaxAssessmentDraftData,
+            is PersonalTaxDraftData,
+            is WithholdingTaxDraftData,
+            is SocialContributionDraftData,
+            is SocialFundDraftData,
+            is SelfEmployedContributionDraftData,
+            is VapzDraftData,
+            is SalarySlipDraftData,
+            is PayrollSummaryDraftData,
+            is EmploymentContractDraftData,
+            is DimonaDraftData,
+            is C4DraftData,
+            is HolidayPayDraftData,
+            is ContractDraftData,
+            is LeaseDraftData,
+            is LoanDraftData,
+            is InsuranceDraftData,
+            is DividendDraftData,
+            is ShareholderRegisterDraftData,
+            is CompanyExtractDraftData,
+            is AnnualAccountsDraftData,
+            is BoardMinutesDraftData,
+            is SubsidyDraftData,
+            is FineDraftData,
+            is PermitDraftData,
+            is CustomsDeclarationDraftData,
+            is IntrastatDraftData,
+            is DepreciationScheduleDraftData,
+            is InventoryDraftData,
+            is OtherDraftData,
             null -> null
         }
 
@@ -806,6 +854,54 @@ private val DocumentDraftData.hasCoherentAmountsForConfirmation: Boolean
                 val amount = row.signedAmount
                 amount != null && !amount.isZero
             }
+            is ProFormaDraftData,
+            is QuoteDraftData,
+            is OrderConfirmationDraftData,
+            is DeliveryNoteDraftData,
+            is ReminderDraftData,
+            is StatementOfAccountDraftData,
+            is PurchaseOrderDraftData,
+            is ExpenseClaimDraftData,
+            is BankFeeDraftData,
+            is InterestStatementDraftData,
+            is PaymentConfirmationDraftData,
+            is VatReturnDraftData,
+            is VatListingDraftData,
+            is VatAssessmentDraftData,
+            is IcListingDraftData,
+            is OssReturnDraftData,
+            is CorporateTaxDraftData,
+            is CorporateTaxAdvanceDraftData,
+            is TaxAssessmentDraftData,
+            is PersonalTaxDraftData,
+            is WithholdingTaxDraftData,
+            is SocialContributionDraftData,
+            is SocialFundDraftData,
+            is SelfEmployedContributionDraftData,
+            is VapzDraftData,
+            is SalarySlipDraftData,
+            is PayrollSummaryDraftData,
+            is EmploymentContractDraftData,
+            is DimonaDraftData,
+            is C4DraftData,
+            is HolidayPayDraftData,
+            is ContractDraftData,
+            is LeaseDraftData,
+            is LoanDraftData,
+            is InsuranceDraftData,
+            is DividendDraftData,
+            is ShareholderRegisterDraftData,
+            is CompanyExtractDraftData,
+            is AnnualAccountsDraftData,
+            is BoardMinutesDraftData,
+            is SubsidyDraftData,
+            is FineDraftData,
+            is PermitDraftData,
+            is CustomsDeclarationDraftData,
+            is IntrastatDraftData,
+            is DepreciationScheduleDraftData,
+            is InventoryDraftData,
+            is OtherDraftData -> true
         }
     }
 
@@ -815,13 +911,7 @@ internal val DocumentDraftData?.isContactRequired: Boolean
 
 /** Derive DocumentType from sealed subtype. */
 internal val DocumentDraftData?.documentType: DocumentType
-    get() = when (this) {
-        is InvoiceDraftData -> DocumentType.Invoice
-        is CreditNoteDraftData -> DocumentType.CreditNote
-        is ReceiptDraftData -> DocumentType.Receipt
-        is BankStatementDraftData -> DocumentType.BankStatement
-        null -> DocumentType.Unknown
-    }
+    get() = this?.toDocumentType() ?: DocumentType.Unknown
 
 /** Context/description text for understanding line. */
 private val DocumentDraftData?.displayContextDescription: String?
@@ -830,6 +920,54 @@ private val DocumentDraftData?.displayContextDescription: String?
         is ReceiptDraftData -> notes?.takeIf { it.isNotBlank() }
         is CreditNoteDraftData -> reason?.takeIf { it.isNotBlank() }
         is BankStatementDraftData -> notes?.takeIf { it.isNotBlank() }
+        is ProFormaDraftData,
+        is QuoteDraftData,
+        is OrderConfirmationDraftData,
+        is DeliveryNoteDraftData,
+        is ReminderDraftData,
+        is StatementOfAccountDraftData,
+        is PurchaseOrderDraftData,
+        is ExpenseClaimDraftData,
+        is BankFeeDraftData,
+        is InterestStatementDraftData,
+        is PaymentConfirmationDraftData,
+        is VatReturnDraftData,
+        is VatListingDraftData,
+        is VatAssessmentDraftData,
+        is IcListingDraftData,
+        is OssReturnDraftData,
+        is CorporateTaxDraftData,
+        is CorporateTaxAdvanceDraftData,
+        is TaxAssessmentDraftData,
+        is PersonalTaxDraftData,
+        is WithholdingTaxDraftData,
+        is SocialContributionDraftData,
+        is SocialFundDraftData,
+        is SelfEmployedContributionDraftData,
+        is VapzDraftData,
+        is SalarySlipDraftData,
+        is PayrollSummaryDraftData,
+        is EmploymentContractDraftData,
+        is DimonaDraftData,
+        is C4DraftData,
+        is HolidayPayDraftData,
+        is ContractDraftData,
+        is LeaseDraftData,
+        is LoanDraftData,
+        is InsuranceDraftData,
+        is DividendDraftData,
+        is ShareholderRegisterDraftData,
+        is CompanyExtractDraftData,
+        is AnnualAccountsDraftData,
+        is BoardMinutesDraftData,
+        is SubsidyDraftData,
+        is FineDraftData,
+        is PermitDraftData,
+        is CustomsDeclarationDraftData,
+        is IntrastatDraftData,
+        is DepreciationScheduleDraftData,
+        is InventoryDraftData,
+        is OtherDraftData,
         null -> null
     }
 

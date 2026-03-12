@@ -39,12 +39,62 @@ import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.model.AnnualAccountsDraftData
+import tech.dokus.domain.model.BankFeeDraftData
+import tech.dokus.domain.model.BankStatementDraftData
+import tech.dokus.domain.model.BoardMinutesDraftData
+import tech.dokus.domain.model.C4DraftData
+import tech.dokus.domain.model.CompanyExtractDraftData
+import tech.dokus.domain.model.ContractDraftData
+import tech.dokus.domain.model.CorporateTaxAdvanceDraftData
+import tech.dokus.domain.model.CorporateTaxDraftData
 import tech.dokus.domain.model.CreditNoteDraftData
+import tech.dokus.domain.model.CustomsDeclarationDraftData
+import tech.dokus.domain.model.DeliveryNoteDraftData
+import tech.dokus.domain.model.DepreciationScheduleDraftData
+import tech.dokus.domain.model.DimonaDraftData
+import tech.dokus.domain.model.DividendDraftData
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.DocumentIntakeOutcomeDto
 import tech.dokus.domain.model.DocumentMatchResolutionDecision
+import tech.dokus.domain.model.EmploymentContractDraftData
+import tech.dokus.domain.model.ExpenseClaimDraftData
+import tech.dokus.domain.model.FineDraftData
+import tech.dokus.domain.model.HolidayPayDraftData
+import tech.dokus.domain.model.IcListingDraftData
+import tech.dokus.domain.model.InsuranceDraftData
+import tech.dokus.domain.model.InterestStatementDraftData
+import tech.dokus.domain.model.IntrastatDraftData
+import tech.dokus.domain.model.InventoryDraftData
 import tech.dokus.domain.model.InvoiceDraftData
+import tech.dokus.domain.model.LeaseDraftData
+import tech.dokus.domain.model.LoanDraftData
+import tech.dokus.domain.model.OrderConfirmationDraftData
+import tech.dokus.domain.model.OssReturnDraftData
+import tech.dokus.domain.model.OtherDraftData
+import tech.dokus.domain.model.PaymentConfirmationDraftData
+import tech.dokus.domain.model.PayrollSummaryDraftData
+import tech.dokus.domain.model.PermitDraftData
+import tech.dokus.domain.model.PersonalTaxDraftData
+import tech.dokus.domain.model.ProFormaDraftData
+import tech.dokus.domain.model.PurchaseOrderDraftData
+import tech.dokus.domain.model.QuoteDraftData
+import tech.dokus.domain.model.ReceiptDraftData
+import tech.dokus.domain.model.ReminderDraftData
+import tech.dokus.domain.model.SalarySlipDraftData
+import tech.dokus.domain.model.SelfEmployedContributionDraftData
+import tech.dokus.domain.model.ShareholderRegisterDraftData
+import tech.dokus.domain.model.SocialContributionDraftData
+import tech.dokus.domain.model.SocialFundDraftData
+import tech.dokus.domain.model.StatementOfAccountDraftData
+import tech.dokus.domain.model.SubsidyDraftData
+import tech.dokus.domain.model.TaxAssessmentDraftData
+import tech.dokus.domain.model.VapzDraftData
+import tech.dokus.domain.model.VatAssessmentDraftData
 import tech.dokus.domain.model.VatBreakdownEntry
+import tech.dokus.domain.model.VatListingDraftData
+import tech.dokus.domain.model.VatReturnDraftData
+import tech.dokus.domain.model.WithholdingTaxDraftData
 import tech.dokus.domain.model.toDocumentType
 import tech.dokus.domain.utils.json
 import tech.dokus.foundation.backend.storage.DocumentStorageService
@@ -812,7 +862,56 @@ class DocumentTruthService(
                 )
             }
 
-            else -> null
+            is ReceiptDraftData -> null
+            is BankStatementDraftData -> null
+            is ProFormaDraftData -> null
+            is QuoteDraftData -> null
+            is OrderConfirmationDraftData -> null
+            is DeliveryNoteDraftData -> null
+            is ReminderDraftData -> null
+            is StatementOfAccountDraftData -> null
+            is PurchaseOrderDraftData -> null
+            is ExpenseClaimDraftData -> null
+            is BankFeeDraftData -> null
+            is InterestStatementDraftData -> null
+            is PaymentConfirmationDraftData -> null
+            is VatReturnDraftData -> null
+            is VatListingDraftData -> null
+            is VatAssessmentDraftData -> null
+            is IcListingDraftData -> null
+            is OssReturnDraftData -> null
+            is CorporateTaxDraftData -> null
+            is CorporateTaxAdvanceDraftData -> null
+            is TaxAssessmentDraftData -> null
+            is PersonalTaxDraftData -> null
+            is WithholdingTaxDraftData -> null
+            is SocialContributionDraftData -> null
+            is SocialFundDraftData -> null
+            is SelfEmployedContributionDraftData -> null
+            is VapzDraftData -> null
+            is SalarySlipDraftData -> null
+            is PayrollSummaryDraftData -> null
+            is EmploymentContractDraftData -> null
+            is DimonaDraftData -> null
+            is C4DraftData -> null
+            is HolidayPayDraftData -> null
+            is ContractDraftData -> null
+            is LeaseDraftData -> null
+            is LoanDraftData -> null
+            is InsuranceDraftData -> null
+            is DividendDraftData -> null
+            is ShareholderRegisterDraftData -> null
+            is CompanyExtractDraftData -> null
+            is AnnualAccountsDraftData -> null
+            is BoardMinutesDraftData -> null
+            is SubsidyDraftData -> null
+            is FineDraftData -> null
+            is PermitDraftData -> null
+            is CustomsDeclarationDraftData -> null
+            is IntrastatDraftData -> null
+            is DepreciationScheduleDraftData -> null
+            is InventoryDraftData -> null
+            is OtherDraftData -> null
         }
     }
 

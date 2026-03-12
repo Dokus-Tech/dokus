@@ -89,19 +89,71 @@ internal fun MobileAmountHeroCard(
     state: DocumentReviewState,
     uiData: DocumentUiData,
 ) {
-    if (uiData is DocumentUiData.BankStatement) return
+    // Only financial types with amounts get the hero card
+    when (uiData) {
+        is DocumentUiData.Invoice,
+        is DocumentUiData.CreditNote,
+        is DocumentUiData.Receipt -> { /* continue */ }
+        is DocumentUiData.BankStatement,
+        is DocumentUiData.ProForma,
+        is DocumentUiData.Quote,
+        is DocumentUiData.OrderConfirmation,
+        is DocumentUiData.DeliveryNote,
+        is DocumentUiData.Reminder,
+        is DocumentUiData.StatementOfAccount,
+        is DocumentUiData.PurchaseOrder,
+        is DocumentUiData.ExpenseClaim,
+        is DocumentUiData.BankFee,
+        is DocumentUiData.InterestStatement,
+        is DocumentUiData.PaymentConfirmation,
+        is DocumentUiData.VatReturn,
+        is DocumentUiData.VatListing,
+        is DocumentUiData.VatAssessment,
+        is DocumentUiData.IcListing,
+        is DocumentUiData.OssReturn,
+        is DocumentUiData.CorporateTax,
+        is DocumentUiData.CorporateTaxAdvance,
+        is DocumentUiData.TaxAssessment,
+        is DocumentUiData.PersonalTax,
+        is DocumentUiData.WithholdingTax,
+        is DocumentUiData.SocialContribution,
+        is DocumentUiData.SocialFund,
+        is DocumentUiData.SelfEmployedContribution,
+        is DocumentUiData.Vapz,
+        is DocumentUiData.SalarySlip,
+        is DocumentUiData.PayrollSummary,
+        is DocumentUiData.EmploymentContract,
+        is DocumentUiData.Dimona,
+        is DocumentUiData.C4,
+        is DocumentUiData.HolidayPay,
+        is DocumentUiData.Contract,
+        is DocumentUiData.Lease,
+        is DocumentUiData.Loan,
+        is DocumentUiData.Insurance,
+        is DocumentUiData.Dividend,
+        is DocumentUiData.ShareholderRegister,
+        is DocumentUiData.CompanyExtract,
+        is DocumentUiData.AnnualAccounts,
+        is DocumentUiData.BoardMinutes,
+        is DocumentUiData.Subsidy,
+        is DocumentUiData.Fine,
+        is DocumentUiData.Permit,
+        is DocumentUiData.CustomsDeclaration,
+        is DocumentUiData.Intrastat,
+        is DocumentUiData.DepreciationSchedule,
+        is DocumentUiData.Inventory,
+        is DocumentUiData.Other -> return
+    }
 
     val currencySign = when (uiData) {
         is DocumentUiData.Invoice -> uiData.currencySign
         is DocumentUiData.CreditNote -> uiData.currencySign
         is DocumentUiData.Receipt -> uiData.currencySign
-        is DocumentUiData.BankStatement -> return
     }
     val primaryDescription = when (uiData) {
         is DocumentUiData.Invoice -> uiData.primaryDescription
         is DocumentUiData.CreditNote -> uiData.primaryDescription
         is DocumentUiData.Receipt -> uiData.primaryDescription
-        is DocumentUiData.BankStatement -> return
     }
     val amount = state.totalAmount?.toDisplayString() ?: "\u2014"
 
@@ -156,7 +208,6 @@ internal fun MobileAmountHeroCard(
                             MobileMetaCell(label = stringResource(Res.string.mobile_label_issued), value = uiData.date ?: "\u2014")
                             MobileMetaCell(label = stringResource(Res.string.mobile_label_invoice), value = uiData.receiptNumber ?: "\u2014")
                         }
-                        is DocumentUiData.BankStatement -> {}
                     }
                 }
             }

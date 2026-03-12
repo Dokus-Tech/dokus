@@ -546,6 +546,54 @@ class DocumentPurposeService(
             is CreditNoteDraftData -> draftData.reason ?: draftData.notes
             is ReceiptDraftData -> draftData.notes
             is BankStatementDraftData -> draftData.notes
+            is ProFormaDraftData,
+            is QuoteDraftData,
+            is OrderConfirmationDraftData,
+            is DeliveryNoteDraftData,
+            is ReminderDraftData,
+            is StatementOfAccountDraftData,
+            is PurchaseOrderDraftData,
+            is ExpenseClaimDraftData,
+            is BankFeeDraftData,
+            is InterestStatementDraftData,
+            is PaymentConfirmationDraftData,
+            is VatReturnDraftData,
+            is VatListingDraftData,
+            is VatAssessmentDraftData,
+            is IcListingDraftData,
+            is OssReturnDraftData,
+            is CorporateTaxDraftData,
+            is CorporateTaxAdvanceDraftData,
+            is TaxAssessmentDraftData,
+            is PersonalTaxDraftData,
+            is WithholdingTaxDraftData,
+            is SocialContributionDraftData,
+            is SocialFundDraftData,
+            is SelfEmployedContributionDraftData,
+            is VapzDraftData,
+            is SalarySlipDraftData,
+            is PayrollSummaryDraftData,
+            is EmploymentContractDraftData,
+            is DimonaDraftData,
+            is C4DraftData,
+            is HolidayPayDraftData,
+            is ContractDraftData,
+            is LeaseDraftData,
+            is LoanDraftData,
+            is InsuranceDraftData,
+            is DividendDraftData,
+            is ShareholderRegisterDraftData,
+            is CompanyExtractDraftData,
+            is AnnualAccountsDraftData,
+            is BoardMinutesDraftData,
+            is SubsidyDraftData,
+            is FineDraftData,
+            is PermitDraftData,
+            is CustomsDeclarationDraftData,
+            is IntrastatDraftData,
+            is DepreciationScheduleDraftData,
+            is InventoryDraftData,
+            is OtherDraftData -> null
         }?.trim()?.take(PurposeBaseMaxLength)
         return deriveFallbackPurposeBase(draftData)
             ?: explicitHint?.takeIf { it.isNotBlank() }
@@ -599,10 +647,4 @@ class DocumentPurposeService(
         else -> "Month"
     }
 
-    private fun DocumentDraftData.toDocumentType(): DocumentType = when (this) {
-        is InvoiceDraftData -> DocumentType.Invoice
-        is CreditNoteDraftData -> DocumentType.CreditNote
-        is ReceiptDraftData -> DocumentType.Receipt
-        is BankStatementDraftData -> DocumentType.BankStatement
-    }
 }
