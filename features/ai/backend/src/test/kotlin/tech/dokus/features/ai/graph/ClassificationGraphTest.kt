@@ -39,6 +39,7 @@ private val folderToDocumentType = mapOf(
     "salary" to DocumentType.SalarySlip,
     "self-employed-contribution" to DocumentType.SelfEmployedContribution,
     "vat-return" to DocumentType.VatReturn,
+    "personal-tax" to DocumentType.PersonalTax,
 )
 
 class ClassificationGraphTest {
@@ -108,6 +109,9 @@ class ClassificationGraphTest {
         }
 
         assertEquals(expectedType, result.documentType, "File: ${pdfFile.name}")
-        assertTrue(result.confidence >= 0.7, "Low confidence ${result.confidence} for ${pdfFile.name}")
+        assertTrue(
+            result.confidence >= 0.7,
+            "Low confidence ${result.confidence} for ${pdfFile.name}"
+        )
     }
 }

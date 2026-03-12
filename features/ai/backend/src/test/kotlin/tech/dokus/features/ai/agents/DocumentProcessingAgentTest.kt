@@ -13,6 +13,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.DocumentId
+import tech.dokus.features.ai.config.KoogAgentRunner
 import tech.dokus.features.ai.graph.AcceptDocumentInput
 import tech.dokus.features.ai.graph.TestAiFixtures
 import tech.dokus.features.ai.services.DocumentFetcher
@@ -34,7 +35,7 @@ class DocumentProcessingAgentTest {
             Result.success(FetchedDocumentData(documentBytes, "application/pdf"))
         }
         val agent = DocumentProcessingAgent(
-            executor = ThrowingPromptExecutor(),
+            agentRunner = KoogAgentRunner(ThrowingPromptExecutor(), TestAiFixtures.aiConfig),
             aiConfig = TestAiFixtures.aiConfig,
             documentFetcher = documentFetcher
         )

@@ -12,6 +12,7 @@ import tech.dokus.features.ai.agents.BusinessLogoFallbackAgent
 import tech.dokus.features.ai.agents.ChatAgent
 import tech.dokus.features.ai.agents.DocumentProcessingAgent
 import tech.dokus.features.ai.config.AIModels
+import tech.dokus.features.ai.config.KoogAgentRunner
 import tech.dokus.features.ai.config.AIProviderFactory
 import tech.dokus.features.ai.config.ModelSet
 import tech.dokus.features.ai.queue.LlmModelSlot
@@ -72,6 +73,12 @@ fun aiModule() = module {
     singleOf(::ChunkingService)
     singleOf(::EmbeddingService)
     singleOf(::RAGService)
+
+    // =========================================================================
+    // AI Agent Runner (shared lifecycle for graph-based agents)
+    // =========================================================================
+
+    singleOf(::KoogAgentRunner)
 
     // =========================================================================
     // AI Agents
