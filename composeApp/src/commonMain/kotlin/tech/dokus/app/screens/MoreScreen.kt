@@ -33,7 +33,6 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import tech.dokus.app.allNavItems
 import tech.dokus.app.navSectionsCombined
-import tech.dokus.app.navigation.local.LocalHomeNavController
 import tech.dokus.app.navigation.local.LocalRootNavController
 import tech.dokus.app.screens.home.filterTenantNavItems
 import tech.dokus.aura.resources.Res
@@ -52,14 +51,12 @@ import tech.dokus.navigation.destinations.HomeDestination
 import tech.dokus.navigation.destinations.NavigationDestination
 import tech.dokus.navigation.destinations.SettingsDestination
 import tech.dokus.navigation.navigateTo
-import tech.dokus.navigation.navigateToTopLevelTab
 
 @Composable
 internal fun MoreRoute(
     getCurrentTenantUseCase: GetCurrentTenantUseCase = koinInject()
 ) {
     val rootNavController = LocalRootNavController.current
-    val homeNavController = LocalHomeNavController.current
     val appModules = LocalAppModules.current
     val navSections = remember(appModules) { appModules.navSectionsCombined }
     val allNavItems = remember(appModules) { appModules.allNavItems }
@@ -101,7 +98,6 @@ internal fun MoreRoute(
             if (!item.comingSoon) {
                 dispatchMoreNavigation(
                     destination = item.destination,
-                    onNavigateHome = { homeNavController.navigateToTopLevelTab(it) },
                     onNavigateRoot = { rootNavController.navigateTo(it) },
                 )
             }
@@ -140,13 +136,16 @@ internal fun MoreScreen(
 
 internal fun dispatchMoreNavigation(
     destination: NavigationDestination,
-    onNavigateHome: (NavigationDestination) -> Unit,
     onNavigateRoot: (NavigationDestination) -> Unit,
 ) {
-    when (destination) {
-        HomeDestination.WorkspaceDetails -> onNavigateRoot(SettingsDestination.WorkspaceSettings)
-        HomeDestination.Team -> onNavigateRoot(SettingsDestination.TeamSettings)
-        else -> onNavigateHome(destination)
+    onNavigateRoot(resolveRootMoreDestination(destination))
+}
+
+internal fun resolveRootMoreDestination(destination: NavigationDestination): NavigationDestination {
+    return when (destination) {
+        HomeDestination.WorkspaceDetails -> SettingsDestination.WorkspaceSettings
+        HomeDestination.Team -> SettingsDestination.TeamSettings
+        else -> destination
     }
 }
 

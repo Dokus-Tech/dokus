@@ -1,7 +1,7 @@
 package tech.dokus.app.screens
 
+import tech.dokus.navigation.destinations.AuthDestination
 import tech.dokus.navigation.destinations.HomeDestination
-import tech.dokus.navigation.destinations.NavigationDestination
 import tech.dokus.navigation.destinations.SettingsDestination
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -15,7 +15,6 @@ class MoreScreenCallbackContractTest {
 
         dispatchMoreNavigation(
             destination = HomeDestination.WorkspaceDetails,
-            onNavigateHome = { error("Should not navigate home") },
             onNavigateRoot = { destination ->
                 rootCallCount++
                 rootDestination = destination as? SettingsDestination
@@ -33,7 +32,6 @@ class MoreScreenCallbackContractTest {
 
         dispatchMoreNavigation(
             destination = HomeDestination.Team,
-            onNavigateHome = { error("Should not navigate home") },
             onNavigateRoot = { destination ->
                 rootCallCount++
                 rootDestination = destination as? SettingsDestination
@@ -45,38 +43,26 @@ class MoreScreenCallbackContractTest {
     }
 
     @Test
-    fun `home destination dispatches to home callback`() {
-        var homeCallCount = 0
-        var homeDestination: NavigationDestination? = null
+    fun `console clients dispatches to root callback`() {
+        var rootCallCount = 0
 
         dispatchMoreNavigation(
-            destination = HomeDestination.Balances,
-            onNavigateHome = { destination ->
-                homeCallCount++
-                homeDestination = destination
-            },
-            onNavigateRoot = { error("Should not navigate root") }
+            destination = HomeDestination.ConsoleClients,
+            onNavigateRoot = { rootCallCount++ }
         )
 
-        assertEquals(1, homeCallCount)
-        assertEquals(HomeDestination.Balances, homeDestination)
+        assertEquals(1, rootCallCount)
     }
 
     @Test
-    fun `payments destination dispatches to home callback`() {
-        var homeCallCount = 0
-        var homeDestination: NavigationDestination? = null
+    fun `auth destination dispatches to root callback`() {
+        var rootCallCount = 0
 
         dispatchMoreNavigation(
-            destination = HomeDestination.Payments,
-            onNavigateHome = { destination ->
-                homeCallCount++
-                homeDestination = destination
-            },
-            onNavigateRoot = { error("Should not navigate root") }
+            destination = AuthDestination.ProfileSettings,
+            onNavigateRoot = { rootCallCount++ }
         )
 
-        assertEquals(1, homeCallCount)
-        assertEquals(HomeDestination.Payments, homeDestination)
+        assertEquals(1, rootCallCount)
     }
 }
