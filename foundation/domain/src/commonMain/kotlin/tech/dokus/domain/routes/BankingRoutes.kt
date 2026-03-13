@@ -99,6 +99,20 @@ class Banking {
             @Serializable
             @Resource("create-expense")
             class CreateExpense(val parent: Id)
+
+            /**
+             * POST /api/v1/banking/transactions/{id}/reject-match - Reject suggested match
+             */
+            @Serializable
+            @Resource("reject-match")
+            class RejectMatch(val parent: Id)
+
+            /**
+             * POST /api/v1/banking/transactions/{id}/undo-match - Undo a confirmed/auto match
+             */
+            @Serializable
+            @Resource("undo-match")
+            class UndoMatch(val parent: Id)
         }
     }
 }

@@ -6,7 +6,7 @@ import tech.dokus.domain.model.TransactionCommunication
 /**
  * Validates and compares Belgian OGM structured communications.
  */
-internal object OgmValidator {
+object OgmValidator {
 
     /**
      * Extract and normalize the OGM from a transaction's communication.

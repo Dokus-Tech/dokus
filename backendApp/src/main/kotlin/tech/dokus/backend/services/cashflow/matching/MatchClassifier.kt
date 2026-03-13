@@ -11,7 +11,7 @@ import tech.dokus.domain.enums.StatementTrust
  * 4. Not disqualified (rejected guard not fired)
  * 5. Sufficient margin over second-best candidate
  */
-internal object MatchClassifier {
+object MatchClassifier {
 
     fun classify(
         best: ScoredCandidate,

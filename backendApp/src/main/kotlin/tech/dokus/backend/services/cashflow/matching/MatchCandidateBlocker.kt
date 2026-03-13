@@ -13,7 +13,7 @@ import kotlin.math.max
  * Applies direction coherence + amount tolerance window to reduce the candidate set
  * before the (more expensive) scoring pass.
  */
-internal object MatchCandidateBlocker {
+object MatchCandidateBlocker {
 
     /**
      * Determine the expected direction for matching based on the transaction's signed amount.

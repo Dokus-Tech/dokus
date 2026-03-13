@@ -11,7 +11,7 @@ import java.util.UUID
  * Records confirmed and rejected matches into the learning tables
  * (MatchPatternsTable and RejectedMatchPairsTable).
  */
-internal class MatchFeedbackStore(
+class MatchFeedbackStore(
     private val matchingRepository: MatchingRepository,
 ) {
     private val logger = loggerFor()

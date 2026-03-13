@@ -6,7 +6,7 @@ package tech.dokus.backend.services.cashflow.matching
  * All log-odds weights are calibrated so that the sigmoid output maps to
  * a probability (0–1). Positive = evidence for match, negative = evidence against.
  */
-internal object MatchingConstants {
+object MatchingConstants {
 
     // ── Decision thresholds ─────────────────────────────────────────────
     /** Minimum calibrated score for AUTO_MATCH classification. */

@@ -9,6 +9,7 @@ import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
+import org.jetbrains.exposed.v1.jdbc.update
 import org.jetbrains.exposed.v1.jdbc.upsert
 import tech.dokus.database.tables.banking.BankTransactionsTable
 import tech.dokus.database.tables.banking.MatchPatternsTable
@@ -34,7 +35,7 @@ import kotlin.uuid.toJavaUuid
 /**
  * Data needed from an invoice for matching signals.
  */
-internal data class InvoiceMatchMeta(
+data class InvoiceMatchMeta(
     val id: UUID,
     val status: InvoiceStatus,
     val structuredReference: String?,
@@ -44,7 +45,7 @@ internal data class InvoiceMatchMeta(
 /**
  * A learned IBAN → contact mapping.
  */
-internal data class MatchPattern(
+data class MatchPattern(
     val counterpartyIban: String,
     val contactId: ContactId,
     val matchCount: Int,
@@ -54,7 +55,7 @@ internal data class MatchPattern(
  * Repository layer for all matching-engine queries.
  */
 @OptIn(ExperimentalUuidApi::class)
-internal class MatchingRepository {
+class MatchingRepository {
 
     /**
      * Load candidate cashflow entries that could match a transaction.
@@ -191,7 +192,11 @@ internal class MatchingRepository {
 
         if (existing != null) {
             val currentCount = existing[MatchPatternsTable.matchCount]
-            org.jetbrains.exposed.v1.jdbc.update(MatchPatternsTable) {
+            MatchPatternsTable.update({
+                (MatchPatternsTable.tenantId eq tenantUuid) and
+                    (MatchPatternsTable.counterpartyIban eq counterpartyIban) and
+                    (MatchPatternsTable.contactId eq contactId.value.toJavaUuid())
+            }) {
                 it[MatchPatternsTable.matchCount] = currentCount + 1
                 it[MatchPatternsTable.lastMatchedAt] = now
             }

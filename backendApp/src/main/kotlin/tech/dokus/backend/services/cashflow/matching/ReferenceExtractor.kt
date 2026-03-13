@@ -5,7 +5,7 @@ import tech.dokus.domain.model.TransactionCommunication
 /**
  * Extracts invoice references from free-form transaction communication text.
  */
-internal object ReferenceExtractor {
+object ReferenceExtractor {
 
     /**
      * Check if the free-form communication contains an invoice number reference.

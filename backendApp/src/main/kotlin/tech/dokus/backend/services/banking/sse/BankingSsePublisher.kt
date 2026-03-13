@@ -21,7 +21,7 @@ private const val DefaultBufferCapacity = 32
 /**
  * Signal emitted when a bank transaction's match state changes.
  */
-internal sealed interface BankingMatchSignal {
+sealed interface BankingMatchSignal {
     data class MatchUpdated(val transactionId: BankTransactionId) : BankingMatchSignal
     data class MatchRemoved(val transactionId: BankTransactionId) : BankingMatchSignal
 }
@@ -30,7 +30,7 @@ internal sealed interface BankingMatchSignal {
  * Event hub for banking collection-level SSE.
  * Follows the same pattern as [DocumentCollectionEventHub].
  */
-internal class BankingCollectionEventHub {
+class BankingCollectionEventHub {
     private val streams = ConcurrentHashMap<TenantId, MutableSharedFlow<BankingMatchSignal>>()
 
     fun publish(tenantId: TenantId, signal: BankingMatchSignal) {
@@ -57,7 +57,7 @@ private data class TransactionKey(
  * Event hub for per-transaction SSE (detail view).
  * Auto-evicts flows when no subscribers remain.
  */
-internal class BankingTransactionEventHub {
+class BankingTransactionEventHub {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val streams = ConcurrentHashMap<TransactionKey, MutableSharedFlow<BankingMatchSignal>>()
 
@@ -113,7 +113,7 @@ internal class BankingTransactionEventHub {
  * Publishes banking match state changes to SSE subscribers.
  * Facade over collection and per-transaction event hubs.
  */
-internal class BankingSsePublisher(
+class BankingSsePublisher(
     private val collectionHub: BankingCollectionEventHub,
     private val transactionHub: BankingTransactionEventHub,
 ) {

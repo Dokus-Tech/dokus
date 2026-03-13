@@ -14,6 +14,7 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.domain.model.CashflowEntry
+import tech.dokus.backend.services.banking.sse.BankingSsePublisher
 import tech.dokus.backend.services.cashflow.AutoPaymentService
 import tech.dokus.foundation.backend.utils.loggerFor
 import tech.dokus.foundation.backend.utils.runSuspendCatching
@@ -29,13 +30,14 @@ import java.util.UUID
  * 5. Classify decision (AutoMatch / NeedsReview / Discard)
  * 6. Persist match links and trigger auto-payment
  */
-internal class MatchingEngine(
+class MatchingEngine(
     private val matchingRepository: MatchingRepository,
     private val matchScorer: MatchScorer,
     private val matchFeedbackStore: MatchFeedbackStore,
     private val bankTransactionRepository: BankTransactionRepository,
     private val contactRepository: ContactRepository,
     private val autoPaymentService: AutoPaymentService,
+    private val bankingSsePublisher: BankingSsePublisher,
 ) {
     private val logger = loggerFor()
 
@@ -202,6 +204,8 @@ internal class MatchingEngine(
             )
         }
 
+        bankingSsePublisher.publishMatchUpdated(tenantId, best.transaction.id)
+
         logger.info(
             "Auto-matched tx {} → entry {} (score={}, margin={}, signals={})",
             best.transaction.id, best.entryId, "%.4f".format(best.score), "%.4f".format(margin), best.evidenceStrings,
@@ -216,6 +220,8 @@ internal class MatchingEngine(
             score = best.score,
             evidence = best.evidenceStrings,
         )
+
+        bankingSsePublisher.publishMatchUpdated(tenantId, best.transaction.id)
 
         logger.debug(
             "Needs-review tx {} → entry {} (score={}, signals={})",

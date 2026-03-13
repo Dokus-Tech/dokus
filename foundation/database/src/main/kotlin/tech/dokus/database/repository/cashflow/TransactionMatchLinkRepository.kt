@@ -23,6 +23,7 @@ import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.fromDbDecimal
 import tech.dokus.domain.toDbDecimal
 import java.util.UUID
 import kotlin.uuid.ExperimentalUuidApi

@@ -7,7 +7,7 @@ package tech.dokus.backend.services.cashflow.matching
  * Uses the margin between best and second-best scores to determine
  * whether the best candidate can be auto-matched or needs review.
  */
-internal object MatchConflictResolver {
+object MatchConflictResolver {
 
     /**
      * Given a list of scored candidates (sorted descending by score),

@@ -8,7 +8,7 @@ import tech.dokus.domain.model.BankTransactionDto
  * Identifies salary payments, tax transfers, bank fees, and internal transfers
  * using Belgian government IBANs, SEPA purpose codes, CODA family codes, and keywords.
  */
-internal object TransactionPreClassifier {
+object TransactionPreClassifier {
 
     /** Belgian government / known non-business IBANs (prefix matching). */
     private val GovernmentIbanPrefixes = listOf(
@@ -29,7 +29,7 @@ internal object TransactionPreClassifier {
     /**
      * Result of pre-classification.
      */
-    internal data class PreClassification(
+    data class PreClassification(
         val shouldSkip: Boolean,
         val reason: String? = null,
     )

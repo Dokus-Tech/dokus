@@ -1,6 +1,8 @@
 package tech.dokus.backend.services.banking
 
+import tech.dokus.backend.services.banking.sse.BankingSsePublisher
 import tech.dokus.backend.services.cashflow.ExpenseService
+import tech.dokus.backend.services.cashflow.matching.MatchFeedbackStore
 import tech.dokus.database.repository.banking.BankTransactionRepository
 import tech.dokus.database.repository.banking.BankAccountRepository
 import tech.dokus.domain.Money
@@ -38,6 +40,8 @@ class BankingService(
     private val bankTransactionRepository: BankTransactionRepository,
     private val bankAccountRepository: BankAccountRepository,
     private val expenseService: ExpenseService,
+    private val bankingSsePublisher: BankingSsePublisher,
+    private val matchFeedbackStore: MatchFeedbackStore,
 ) {
     private val logger = loggerFor()
 
@@ -123,7 +127,7 @@ class BankingService(
         transactionId: BankTransactionId,
         cashflowEntryId: CashflowEntryId
     ): Result<BankTransactionDto> = runSuspendCatching {
-        updateAndRefetch(tenantId, transactionId, "Linked transaction {} to entry {} for tenant {}", transactionId, cashflowEntryId, tenantId) {
+        val result = updateAndRefetch(tenantId, transactionId, "Linked transaction {} to entry {} for tenant {}", transactionId, cashflowEntryId, tenantId) {
             bankTransactionRepository.markMatched(
                 tenantId = tenantId,
                 transactionId = transactionId,
@@ -132,6 +136,8 @@ class BankingService(
                 resolutionType = ResolutionType.Document,
             )
         }
+        bankingSsePublisher.publishMatchUpdated(tenantId, transactionId)
+        result
     }
 
     suspend fun ignoreTransaction(
@@ -155,7 +161,7 @@ class BankingService(
         val matchedEntryId = transaction.matchedCashflowId
             ?: throw DokusException.BadRequest("Transaction has no suggested match to confirm")
 
-        updateAndRefetch(tenantId, transactionId, "Confirmed match for transaction {} -> entry {} for tenant {}", transactionId, matchedEntryId, tenantId) {
+        val result = updateAndRefetch(tenantId, transactionId, "Confirmed match for transaction {} -> entry {} for tenant {}", transactionId, matchedEntryId, tenantId) {
             bankTransactionRepository.markMatched(
                 tenantId = tenantId,
                 transactionId = transactionId,
@@ -164,6 +170,73 @@ class BankingService(
                 resolutionType = ResolutionType.Document,
             )
         }
+
+        // Record confirmed pattern for learning
+        runSuspendCatching {
+            matchFeedbackStore.recordConfirmedMatch(
+                tenantId = tenantId,
+                counterpartyIban = transaction.counterparty.iban?.value,
+                contactId = null, // Contact resolved at matching time, not available here
+            )
+        }
+
+        bankingSsePublisher.publishMatchUpdated(tenantId, transactionId)
+        result
+    }
+
+    suspend fun rejectMatch(
+        tenantId: TenantId,
+        transactionId: BankTransactionId,
+        rejectedBy: java.util.UUID?,
+    ): Result<BankTransactionDto> = runSuspendCatching {
+        val transaction = bankTransactionRepository.findById(tenantId, transactionId)
+            ?: throw DokusException.NotFound("Bank transaction not found")
+
+        if (transaction.status != BankTransactionStatus.NeedsReview) {
+            throw DokusException.BadRequest("Only NeedsReview transactions can be rejected")
+        }
+
+        val documentId = transaction.matchedDocumentId
+
+        val result = updateAndRefetch(tenantId, transactionId, "Rejected match for transaction {} for tenant {}", transactionId, tenantId) {
+            bankTransactionRepository.clearMatch(tenantId, transactionId)
+        }
+
+        // Record rejected pair to prevent re-matching
+        if (documentId != null) {
+            runSuspendCatching {
+                matchFeedbackStore.recordRejectedMatch(
+                    tenantId = tenantId,
+                    transactionId = transactionId,
+                    documentId = documentId,
+                    rejectedBy = rejectedBy,
+                )
+            }
+        }
+
+        bankingSsePublisher.publishMatchRemoved(tenantId, transactionId)
+        result
+    }
+
+    suspend fun undoMatch(
+        tenantId: TenantId,
+        transactionId: BankTransactionId,
+    ): Result<BankTransactionDto> = runSuspendCatching {
+        val transaction = bankTransactionRepository.findById(tenantId, transactionId)
+            ?: throw DokusException.NotFound("Bank transaction not found")
+
+        if (transaction.status != BankTransactionStatus.Matched &&
+            transaction.status != BankTransactionStatus.NeedsReview
+        ) {
+            throw DokusException.BadRequest("Only matched or needs-review transactions can be undone")
+        }
+
+        val result = updateAndRefetch(tenantId, transactionId, "Undid match for transaction {} for tenant {}", transactionId, tenantId) {
+            bankTransactionRepository.clearMatch(tenantId, transactionId)
+        }
+
+        bankingSsePublisher.publishMatchRemoved(tenantId, transactionId)
+        result
     }
 
     @OptIn(ExperimentalUuidApi::class)

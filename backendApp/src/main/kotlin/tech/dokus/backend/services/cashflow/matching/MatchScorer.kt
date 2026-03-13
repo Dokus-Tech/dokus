@@ -15,7 +15,7 @@ import kotlin.math.exp
  * Bayesian scorer: evaluates 8 weighted signals per (transaction, entry) pair,
  * aggregates log-odds, and converts to a calibrated 0–1 probability via sigmoid.
  */
-internal class MatchScorer(
+class MatchScorer(
     private val matchingRepository: MatchingRepository,
 ) {
 

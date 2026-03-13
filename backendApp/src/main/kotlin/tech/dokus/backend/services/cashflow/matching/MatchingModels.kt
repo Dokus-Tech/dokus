@@ -15,7 +15,7 @@ import tech.dokus.domain.model.CashflowEntry
 /**
  * Result of a single signal evaluation during scoring.
  */
-internal data class SignalResult(
+data class SignalResult(
     val signal: MatchSignalType,
     val fired: Boolean,
     val logOdds: Double,
@@ -26,7 +26,7 @@ internal data class SignalResult(
  * A candidate document/entry that could match a transaction,
  * before scoring.
  */
-internal data class MatchCandidate(
+data class MatchCandidate(
     val entry: CashflowEntry,
     val contactIban: String?,
     val contactName: String?,
@@ -37,7 +37,7 @@ internal data class MatchCandidate(
 /**
  * A scored candidate with full signal breakdown.
  */
-internal data class ScoredCandidate(
+data class ScoredCandidate(
     val candidate: MatchCandidate,
     val transaction: BankTransactionDto,
     val score: Double,
@@ -52,7 +52,7 @@ internal data class ScoredCandidate(
 /**
  * Classification of a match decision.
  */
-internal enum class MatchDecisionType {
+enum class MatchDecisionType {
     /** Strong enough for auto-match + auto-pay. */
     AutoMatch,
     /** Decent score but needs human review. */
@@ -64,7 +64,7 @@ internal enum class MatchDecisionType {
 /**
  * Final decision for a transaction after conflict resolution.
  */
-internal data class MatchDecision(
+data class MatchDecision(
     val transactionId: BankTransactionId,
     val tenantId: TenantId,
     val type: MatchDecisionType,
@@ -76,7 +76,7 @@ internal data class MatchDecision(
 /**
  * Lightweight candidate filter criteria for SQL-level blocking.
  */
-internal data class CandidateBlockCriteria(
+data class CandidateBlockCriteria(
     val tenantId: TenantId,
     val direction: CashflowDirection,
     val absoluteAmount: Money,
