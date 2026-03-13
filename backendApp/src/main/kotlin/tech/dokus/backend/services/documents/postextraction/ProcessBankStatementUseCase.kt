@@ -2,7 +2,7 @@ package tech.dokus.backend.services.documents.postextraction
 
 import tech.dokus.backend.services.banking.BankStatementProcessingService
 import tech.dokus.backend.services.banking.StatementDedupService.StatementDedupOutcome
-import tech.dokus.backend.services.cashflow.BankStatementMatchingService
+import tech.dokus.backend.services.cashflow.matching.MatchingEngine
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.model.BankStatementDraftData
@@ -12,7 +12,7 @@ import tech.dokus.foundation.backend.utils.runSuspendCatching
 
 internal class ProcessBankStatementUseCase(
     private val bankStatementProcessingService: BankStatementProcessingService,
-    private val bankStatementMatchingService: BankStatementMatchingService,
+    private val matchingEngine: MatchingEngine,
     private val documentRepository: DocumentRepository,
     private val resolveContact: ResolveDocumentContactUseCase,
 ) {
@@ -44,7 +44,7 @@ internal class ProcessBankStatementUseCase(
 
         if (bankProcessing.validRows > 0) {
             runSuspendCatching {
-                bankStatementMatchingService.runMatching(
+                matchingEngine.matchBankStatement(
                     tenantId = context.tenantId,
                     documentId = context.documentId,
                 )

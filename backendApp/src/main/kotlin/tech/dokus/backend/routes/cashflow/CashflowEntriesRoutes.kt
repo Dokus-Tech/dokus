@@ -9,7 +9,7 @@ import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
 import tech.dokus.backend.security.requireTenantId
 import tech.dokus.backend.services.cashflow.AutoPaymentService
-import tech.dokus.backend.services.cashflow.BankStatementMatchingService
+import tech.dokus.backend.services.cashflow.matching.MatchingEngine
 import tech.dokus.backend.services.cashflow.CashflowEntriesService
 import tech.dokus.backend.services.cashflow.CashflowPaymentService
 import tech.dokus.domain.enums.CashflowEntryStatus
@@ -41,7 +41,7 @@ private const val MAX_PAGE_SIZE = 200
 @Suppress("LongMethod", "CyclomaticComplexMethod", "ThrowsCount")
 internal fun Route.cashflowEntriesRoutes() {
     val cashflowEntriesService by inject<CashflowEntriesService>()
-    val bankStatementMatchingService by inject<BankStatementMatchingService>()
+    val matchingEngine by inject<MatchingEngine>()
     val cashflowPaymentService by inject<CashflowPaymentService>()
     val autoPaymentService by inject<AutoPaymentService>()
 
@@ -165,7 +165,7 @@ internal fun Route.cashflowEntriesRoutes() {
             }
 
             val response = runSuspendCatching {
-                bankStatementMatchingService.getPaymentCandidates(
+                matchingEngine.getPaymentCandidates(
                     tenantId = tenantId,
                     cashflowEntryId = entryId
                 )

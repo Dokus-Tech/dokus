@@ -20,7 +20,7 @@ import tech.dokus.database.tables.cashflow.CashflowEntriesTable
 import tech.dokus.database.tables.cashflow.InvoicesTable
 import tech.dokus.database.tables.documents.AutoPaymentAuditEventsTable
 import tech.dokus.database.tables.banking.BankTransactionsTable
-import tech.dokus.database.tables.documents.InvoiceBankMatchLinksTable
+import tech.dokus.database.tables.documents.TransactionMatchLinksTable
 import tech.dokus.database.tables.payment.PaymentsTable
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.AutoMatchStatus
@@ -92,18 +92,18 @@ class AutoPaymentService(
         val tenantUuid = tenantId.value.toJavaUuid()
         val entryUuid = entryId.value.toJavaUuid()
 
-        val link = InvoiceBankMatchLinksTable.selectAll().where {
-            (InvoiceBankMatchLinksTable.tenantId eq tenantUuid) and
-                (InvoiceBankMatchLinksTable.cashflowEntryId eq entryUuid) and
-                (InvoiceBankMatchLinksTable.reversedAt.isNull())
-        }.orderBy(InvoiceBankMatchLinksTable.createdAt)
+        val link = TransactionMatchLinksTable.selectAll().where {
+            (TransactionMatchLinksTable.tenantId eq tenantUuid) and
+                (TransactionMatchLinksTable.cashflowEntryId eq entryUuid) and
+                (TransactionMatchLinksTable.reversedAt.isNull())
+        }.orderBy(TransactionMatchLinksTable.createdAt)
             .lastOrNull() ?: return@newSuspendedTransaction AutoPaymentStatusDto()
 
-        val invoiceUuid = link[InvoiceBankMatchLinksTable.invoiceId]
+        val invoiceUuid = link[TransactionMatchLinksTable.documentId]
         val paymentRow = PaymentsTable.selectAll().where {
             (PaymentsTable.tenantId eq tenantUuid) and
                 (PaymentsTable.invoiceId eq invoiceUuid) and
-                (PaymentsTable.bankTransactionId eq link[InvoiceBankMatchLinksTable.importedBankTransactionId]) and
+                (PaymentsTable.bankTransactionId eq link[TransactionMatchLinksTable.importedBankTransactionId]) and
                 (PaymentsTable.reversedAt.isNull())
         }.singleOrNull()
 
@@ -114,19 +114,19 @@ class AutoPaymentService(
         }.count()
 
         AutoPaymentStatusDto(
-            matchStatus = link[InvoiceBankMatchLinksTable.status],
+            matchStatus = link[TransactionMatchLinksTable.status],
             paymentId = paymentRow?.let { PaymentId.parse(it[PaymentsTable.id].value.toString()) },
             bankTransactionId = BankTransactionId.parse(
-                link[InvoiceBankMatchLinksTable.importedBankTransactionId].toString()
+                link[TransactionMatchLinksTable.importedBankTransactionId].toString()
             ),
-            confidenceScore = link[InvoiceBankMatchLinksTable.confidenceScore]?.toDouble(),
-            scoreMargin = link[InvoiceBankMatchLinksTable.scoreMargin]?.toDouble(),
-            reasons = parseJsonArray(link[InvoiceBankMatchLinksTable.reasonsJson]),
-            matchSignals = parseJsonArray(link[InvoiceBankMatchLinksTable.rulesJson]),
-            matchedAt = link[InvoiceBankMatchLinksTable.matchedAt],
-            autoPaidAt = link[InvoiceBankMatchLinksTable.autoPaidAt],
+            confidenceScore = link[TransactionMatchLinksTable.confidenceScore]?.toDouble(),
+            scoreMargin = link[TransactionMatchLinksTable.scoreMargin]?.toDouble(),
+            reasons = parseJsonArray(link[TransactionMatchLinksTable.reasonsJson]),
+            matchSignals = parseJsonArray(link[TransactionMatchLinksTable.rulesJson]),
+            matchedAt = link[TransactionMatchLinksTable.matchedAt],
+            autoPaidAt = link[TransactionMatchLinksTable.autoPaidAt],
             canUndo =
-            link[InvoiceBankMatchLinksTable.status] == AutoMatchStatus.AutoPaid &&
+            link[TransactionMatchLinksTable.status] == AutoMatchStatus.AutoPaid &&
                 paymentRow != null &&
                 nonReversedPayments == 1L
         )
@@ -143,16 +143,16 @@ class AutoPaymentService(
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         newSuspendedTransaction {
-            val link = InvoiceBankMatchLinksTable.selectAll().where {
-                (InvoiceBankMatchLinksTable.tenantId eq tenantUuid) and
-                    (InvoiceBankMatchLinksTable.cashflowEntryId eq entryUuid) and
-                    (InvoiceBankMatchLinksTable.status eq AutoMatchStatus.AutoPaid) and
-                    (InvoiceBankMatchLinksTable.reversedAt.isNull())
-            }.orderBy(InvoiceBankMatchLinksTable.createdAt).lastOrNull()
+            val link = TransactionMatchLinksTable.selectAll().where {
+                (TransactionMatchLinksTable.tenantId eq tenantUuid) and
+                    (TransactionMatchLinksTable.cashflowEntryId eq entryUuid) and
+                    (TransactionMatchLinksTable.status eq AutoMatchStatus.AutoPaid) and
+                    (TransactionMatchLinksTable.reversedAt.isNull())
+            }.orderBy(TransactionMatchLinksTable.createdAt).lastOrNull()
                 ?: throw DokusException.BadRequest("No active auto payment found")
 
-            val invoiceId = link[InvoiceBankMatchLinksTable.invoiceId]
-            val txId = link[InvoiceBankMatchLinksTable.importedBankTransactionId]
+            val invoiceId = link[TransactionMatchLinksTable.documentId]
+            val txId = link[TransactionMatchLinksTable.importedBankTransactionId]
 
             val payment = PaymentsTable.selectAll().where {
                 (PaymentsTable.tenantId eq tenantUuid) and
@@ -176,22 +176,22 @@ class AutoPaymentService(
                     invoiceId = invoiceId,
                     entryId = entryUuid,
                     txId = txId,
-                    score = link[InvoiceBankMatchLinksTable.confidenceScore]?.toDouble(),
-                    margin = link[InvoiceBankMatchLinksTable.scoreMargin]?.toDouble(),
-                    reasonsJson = link[InvoiceBankMatchLinksTable.reasonsJson],
-                    rulesJson = link[InvoiceBankMatchLinksTable.rulesJson],
+                    score = link[TransactionMatchLinksTable.confidenceScore]?.toDouble(),
+                    margin = link[TransactionMatchLinksTable.scoreMargin]?.toDouble(),
+                    reasonsJson = link[TransactionMatchLinksTable.reasonsJson],
+                    rulesJson = link[TransactionMatchLinksTable.rulesJson],
                     actorUserId = actorUserId
                 )
                 throw DokusException.BadRequest("Undo is blocked because dependent payments exist")
             }
 
-            val invoiceStatusBefore = link[InvoiceBankMatchLinksTable.invoiceStatusBefore]
+            val invoiceStatusBefore = link[TransactionMatchLinksTable.invoiceStatusBefore]
                 ?: throw DokusException.BadRequest("Undo snapshot missing invoice status")
-            val invoicePaidAmountBefore = link[InvoiceBankMatchLinksTable.invoicePaidAmountBefore]
+            val invoicePaidAmountBefore = link[TransactionMatchLinksTable.invoicePaidAmountBefore]
                 ?: throw DokusException.BadRequest("Undo snapshot missing invoice paid amount")
-            val cashflowStatusBefore = link[InvoiceBankMatchLinksTable.cashflowStatusBefore]
+            val cashflowStatusBefore = link[TransactionMatchLinksTable.cashflowStatusBefore]
                 ?: throw DokusException.BadRequest("Undo snapshot missing cashflow status")
-            val cashflowRemainingBefore = link[InvoiceBankMatchLinksTable.cashflowRemainingBefore]
+            val cashflowRemainingBefore = link[TransactionMatchLinksTable.cashflowRemainingBefore]
                 ?: throw DokusException.BadRequest("Undo snapshot missing cashflow remaining amount")
 
             PaymentsTable.update({
@@ -208,7 +208,7 @@ class AutoPaymentService(
             }) {
                 it[paidAmount] = invoicePaidAmountBefore
                 it[status] = invoiceStatusBefore
-                it[paidAt] = link[InvoiceBankMatchLinksTable.invoicePaidAtBefore]
+                it[paidAt] = link[TransactionMatchLinksTable.invoicePaidAtBefore]
             }
 
             CashflowEntriesTable.update({
@@ -216,7 +216,7 @@ class AutoPaymentService(
             }) {
                 it[remainingAmount] = cashflowRemainingBefore
                 it[status] = cashflowStatusBefore
-                it[paidAt] = link[InvoiceBankMatchLinksTable.cashflowPaidAtBefore]
+                it[paidAt] = link[TransactionMatchLinksTable.cashflowPaidAtBefore]
             }
 
             BankTransactionsTable.update({
@@ -234,8 +234,8 @@ class AutoPaymentService(
                 it[updatedAt] = now
             }
 
-            InvoiceBankMatchLinksTable.update(
-                { InvoiceBankMatchLinksTable.id eq link[InvoiceBankMatchLinksTable.id].value }
+            TransactionMatchLinksTable.update(
+                { TransactionMatchLinksTable.id eq link[TransactionMatchLinksTable.id].value }
             ) {
                 it[status] = AutoMatchStatus.Reversed
                 it[reversedAt] = now
@@ -251,10 +251,10 @@ class AutoPaymentService(
                 invoiceId = invoiceId,
                 entryId = entryUuid,
                 txId = txId,
-                score = link[InvoiceBankMatchLinksTable.confidenceScore]?.toDouble(),
-                margin = link[InvoiceBankMatchLinksTable.scoreMargin]?.toDouble(),
-                reasonsJson = link[InvoiceBankMatchLinksTable.reasonsJson],
-                rulesJson = link[InvoiceBankMatchLinksTable.rulesJson],
+                score = link[TransactionMatchLinksTable.confidenceScore]?.toDouble(),
+                margin = link[TransactionMatchLinksTable.scoreMargin]?.toDouble(),
+                reasonsJson = link[TransactionMatchLinksTable.reasonsJson],
+                rulesJson = link[TransactionMatchLinksTable.rulesJson],
                 actorUserId = actorUserId
             )
         }
@@ -435,15 +435,15 @@ class AutoPaymentService(
             it[updatedAt] = now
         }
 
-        InvoiceBankMatchLinksTable.update({ InvoiceBankMatchLinksTable.id eq linkId }) {
+        TransactionMatchLinksTable.update({ TransactionMatchLinksTable.id eq linkId }) {
             it[status] = AutoMatchStatus.AutoPaid
             it[autoPaidAt] = now
-            it[InvoiceBankMatchLinksTable.invoiceStatusBefore] = invoiceStatusBefore
-            it[InvoiceBankMatchLinksTable.invoicePaidAmountBefore] = invoicePaidAmountBefore.toDbDecimal()
-            it[InvoiceBankMatchLinksTable.invoicePaidAtBefore] = invoicePaidAtBefore
-            it[InvoiceBankMatchLinksTable.cashflowStatusBefore] = cashflowStatusBefore
-            it[InvoiceBankMatchLinksTable.cashflowRemainingBefore] = cashflowRemainingBefore.toDbDecimal()
-            it[InvoiceBankMatchLinksTable.cashflowPaidAtBefore] = cashflowPaidAtBefore
+            it[TransactionMatchLinksTable.invoiceStatusBefore] = invoiceStatusBefore
+            it[TransactionMatchLinksTable.invoicePaidAmountBefore] = invoicePaidAmountBefore.toDbDecimal()
+            it[TransactionMatchLinksTable.invoicePaidAtBefore] = invoicePaidAtBefore
+            it[TransactionMatchLinksTable.cashflowStatusBefore] = cashflowStatusBefore
+            it[TransactionMatchLinksTable.cashflowRemainingBefore] = cashflowRemainingBefore.toDbDecimal()
+            it[TransactionMatchLinksTable.cashflowPaidAtBefore] = cashflowPaidAtBefore
             it[updatedAt] = now
         }
 
@@ -476,39 +476,39 @@ class AutoPaymentService(
         now: LocalDateTime,
         status: AutoMatchStatus
     ): UUID {
-        val existing = InvoiceBankMatchLinksTable.selectAll().where {
-            (InvoiceBankMatchLinksTable.tenantId eq tenantUuid) and
-                (InvoiceBankMatchLinksTable.invoiceId eq invoiceUuid) and
-                (InvoiceBankMatchLinksTable.importedBankTransactionId eq txUuid)
+        val existing = TransactionMatchLinksTable.selectAll().where {
+            (TransactionMatchLinksTable.tenantId eq tenantUuid) and
+                (TransactionMatchLinksTable.documentId eq invoiceUuid) and
+                (TransactionMatchLinksTable.importedBankTransactionId eq txUuid)
         }.singleOrNull()
 
         return if (existing == null) {
             val id = UUID.randomUUID()
-            InvoiceBankMatchLinksTable.insertAndGetId {
-                it[InvoiceBankMatchLinksTable.id] = id
+            TransactionMatchLinksTable.insertAndGetId {
+                it[TransactionMatchLinksTable.id] = id
                 it[tenantId] = tenantUuid
-                it[invoiceId] = invoiceUuid
+                it[documentId] = invoiceUuid
                 it[cashflowEntryId] = entryUuid
                 it[importedBankTransactionId] = txUuid
-                it[InvoiceBankMatchLinksTable.status] = status
+                it[TransactionMatchLinksTable.status] = status
                 it[createdBy] = PaymentCreatedBy.Auto
-                it[InvoiceBankMatchLinksTable.confidenceScore] = confidenceScore.toBigDecimal()
-                it[InvoiceBankMatchLinksTable.scoreMargin] = scoreMargin.toBigDecimal()
-                it[InvoiceBankMatchLinksTable.reasonsJson] = reasonsJson
-                it[InvoiceBankMatchLinksTable.rulesJson] = rulesJson
+                it[TransactionMatchLinksTable.confidenceScore] = confidenceScore.toBigDecimal()
+                it[TransactionMatchLinksTable.scoreMargin] = scoreMargin.toBigDecimal()
+                it[TransactionMatchLinksTable.reasonsJson] = reasonsJson
+                it[TransactionMatchLinksTable.rulesJson] = rulesJson
                 it[matchedAt] = now
                 it[createdAt] = now
                 it[updatedAt] = now
             }.value
         } else {
-            val existingId = existing[InvoiceBankMatchLinksTable.id].value
-            InvoiceBankMatchLinksTable.update({ InvoiceBankMatchLinksTable.id eq existingId }) {
+            val existingId = existing[TransactionMatchLinksTable.id].value
+            TransactionMatchLinksTable.update({ TransactionMatchLinksTable.id eq existingId }) {
                 it[cashflowEntryId] = entryUuid
-                it[InvoiceBankMatchLinksTable.status] = status
-                it[InvoiceBankMatchLinksTable.confidenceScore] = confidenceScore.toBigDecimal()
-                it[InvoiceBankMatchLinksTable.scoreMargin] = scoreMargin.toBigDecimal()
-                it[InvoiceBankMatchLinksTable.reasonsJson] = reasonsJson
-                it[InvoiceBankMatchLinksTable.rulesJson] = rulesJson
+                it[TransactionMatchLinksTable.status] = status
+                it[TransactionMatchLinksTable.confidenceScore] = confidenceScore.toBigDecimal()
+                it[TransactionMatchLinksTable.scoreMargin] = scoreMargin.toBigDecimal()
+                it[TransactionMatchLinksTable.reasonsJson] = reasonsJson
+                it[TransactionMatchLinksTable.rulesJson] = rulesJson
                 it[matchedAt] = now
                 it[reversedAt] = null
                 it[reversedByUserId] = null

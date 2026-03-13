@@ -13,6 +13,9 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
 import tech.dokus.backend.services.banking.AccountResolutionService
+import tech.dokus.backend.services.banking.sse.BankingCollectionEventHub
+import tech.dokus.backend.services.banking.sse.BankingSsePublisher
+import tech.dokus.backend.services.banking.sse.BankingTransactionEventHub
 import tech.dokus.backend.services.banking.BankStatementProcessingService
 import tech.dokus.backend.services.banking.BankingService
 import tech.dokus.backend.services.banking.StatementDedupService
@@ -34,7 +37,6 @@ import tech.dokus.backend.services.business.BusinessProfileService
 import tech.dokus.backend.services.business.BusinessWebsiteProbe
 import tech.dokus.backend.services.business.BusinessWebsiteRanker
 import tech.dokus.backend.services.cashflow.AutoPaymentService
-import tech.dokus.backend.services.cashflow.BankStatementMatchingService
 import tech.dokus.backend.services.cashflow.CashflowEntriesService
 import tech.dokus.backend.services.cashflow.CashflowOverviewService
 import tech.dokus.backend.services.cashflow.CashflowPaymentService
@@ -42,6 +44,10 @@ import tech.dokus.backend.services.cashflow.CashflowProjectionReconciliationServ
 import tech.dokus.backend.services.cashflow.CreditNoteService
 import tech.dokus.backend.services.cashflow.ExpenseService
 import tech.dokus.backend.services.cashflow.InvoiceBankAutomationService
+import tech.dokus.backend.services.cashflow.matching.MatchFeedbackStore
+import tech.dokus.backend.services.cashflow.matching.MatchScorer
+import tech.dokus.backend.services.cashflow.matching.MatchingEngine
+import tech.dokus.backend.services.cashflow.matching.MatchingRepository
 import tech.dokus.backend.services.cashflow.InvoiceService
 import tech.dokus.backend.services.contacts.ContactNoteService
 import tech.dokus.backend.services.contacts.ContactService
@@ -236,6 +242,11 @@ private val bankingModule = module {
     singleOf(::AccountResolutionService)
     singleOf(::StatementDedupService)
     singleOf(::BankStatementProcessingService)
+
+    // Banking SSE
+    singleOf(::BankingCollectionEventHub)
+    singleOf(::BankingTransactionEventHub)
+    singleOf(::BankingSsePublisher)
 }
 
 private fun authModule() = module {
@@ -316,7 +327,12 @@ private fun cashflowModule() = module {
     single { CashflowEntriesService(get()) }
     singleOf(::CashflowPaymentService)
     singleOf(::AutoPaymentService)
-    singleOf(::BankStatementMatchingService)
+
+    // Matching engine
+    singleOf(::MatchingRepository)
+    singleOf(::MatchScorer)
+    singleOf(::MatchFeedbackStore)
+    singleOf(::MatchingEngine)
     singleOf(::InvoiceBankAutomationService)
     single { CashflowProjectionReconciliationService(get(), get()) }
     single { CashflowOverviewService(get(), get(), get()) }
