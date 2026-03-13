@@ -11,7 +11,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -53,12 +55,12 @@ import tech.dokus.foundation.aura.components.layout.DokusTableCell
 import tech.dokus.foundation.aura.components.layout.DokusTableColumnSpec
 import tech.dokus.foundation.aura.components.layout.DokusTableHeader
 import tech.dokus.foundation.aura.components.layout.DokusTableRow
-import tech.dokus.foundation.aura.components.status.StatusDot
-import tech.dokus.foundation.aura.components.status.StatusDotType
 import tech.dokus.foundation.aura.components.text.Amt
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.extensions.iconizedOrDefault
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.model.DocumentUiStatus
+import tech.dokus.foundation.aura.style.statusWarning
 import tech.dokus.foundation.aura.style.surfaceHover
 import tech.dokus.foundation.aura.style.textFaint
 import tech.dokus.foundation.aura.style.textMuted
@@ -153,9 +155,15 @@ internal fun DocumentTableRow(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                StatusDot(
-                    type = if (needsAttention) StatusDotType.Warning else StatusDotType.Confirmed,
-                    size = 5.dp,
+                Icon(
+                    imageVector = document.documentType.iconizedOrDefault(),
+                    contentDescription = null,
+                    modifier = Modifier.size(Constraints.IconSize.xSmall),
+                    tint = if (needsAttention) {
+                        MaterialTheme.colorScheme.statusWarning
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
                 )
                 Text(
                     text = vendorName,
@@ -255,9 +263,15 @@ internal fun DocumentMobileRow(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            StatusDot(
-                type = if (needsAttention) StatusDotType.Warning else StatusDotType.Confirmed,
-                size = 6.dp,
+            Icon(
+                imageVector = document.documentType.iconizedOrDefault(),
+                contentDescription = null,
+                modifier = Modifier.size(Constraints.IconSize.xSmall),
+                tint = if (needsAttention) {
+                    MaterialTheme.colorScheme.statusWarning
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
             )
 
             // Content

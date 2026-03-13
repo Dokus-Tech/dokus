@@ -50,6 +50,7 @@ import tech.dokus.domain.model.contact.SuggestedContact
 import tech.dokus.domain.model.contact.isUnresolved
 import tech.dokus.domain.model.toDirection
 import tech.dokus.domain.model.toDocumentType
+import tech.dokus.domain.model.toSortDate
 import tech.dokus.domain.repository.DocumentStatusChecker
 import tech.dokus.domain.utils.json
 import java.util.UUID
@@ -138,12 +139,14 @@ class DocumentRepository : DocumentStatusChecker {
         payload: DocumentCreatePayload
     ): DocumentId = newSuspendedTransaction {
         val id = DocumentId.generate()
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         DocumentsTable.insert {
             it[DocumentsTable.id] = UUID.fromString(id.toString())
             it[DocumentsTable.tenantId] = UUID.fromString(tenantId.toString())
             it[DocumentsTable.canonicalContentHash] = payload.canonicalContentHash
             it[DocumentsTable.canonicalIdentityKey] = payload.canonicalIdentityKey
             it[DocumentsTable.effectiveOrigin] = payload.effectiveOrigin
+            it[DocumentsTable.sortDate] = now.date
         }
         id
     }
@@ -272,6 +275,7 @@ class DocumentRepository : DocumentStatusChecker {
         documentStatus: DocumentStatus? = null,
         documentType: DocumentType? = null,
         ingestionStatus: IngestionStatus? = null,
+        sortBy: String? = null,
         page: Int = 0,
         limit: Int = 20
     ): DocumentListPage<DocumentWithDraftAndIngestion> {
@@ -282,6 +286,7 @@ class DocumentRepository : DocumentStatusChecker {
             documentStatus = documentStatus,
             documentType = documentType,
             ingestionStatus = ingestionStatus,
+            sortBy = sortBy,
             page = page,
             limit = limit
         )
@@ -424,6 +429,7 @@ class DocumentRepository : DocumentStatusChecker {
             it[DocumentsTable.documentType] = dataToWrite.toDocumentType()
             it[DocumentsTable.direction] = dataToWrite.toDirection()
             it[DocumentsTable.documentStatus] = DocumentStatus.NeedsReview
+            it[DocumentsTable.sortDate] = dataToWrite.toSortDate() ?: existing[DocumentsTable.uploadedAt].date
             if (keywordsJson != null) {
                 it[DocumentsTable.aiKeywords] = keywordsJson
             }
@@ -532,6 +538,7 @@ class DocumentRepository : DocumentStatusChecker {
             it[DocumentsTable.documentType] = updatedData.toDocumentType()
             it[direction] = updatedData.toDirection()
             it[canonicalData] = json.encodeToString(updatedData)
+            it[DocumentsTable.sortDate] = updatedData.toSortDate() ?: current[DocumentsTable.uploadedAt].date
             it[draftVersion] = newVersion
             it[draftEditedAt] = now
             it[draftEditedBy] = UUID.fromString(userId.toString())
@@ -554,6 +561,7 @@ class DocumentRepository : DocumentStatusChecker {
         status: DocumentStatus
     ): Boolean = newSuspendedTransaction {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+        val extractedSortDate = extractedData.toSortDate()
         DocumentsTable.update({
             (DocumentsTable.id eq UUID.fromString(documentId.toString())) and
                 (DocumentsTable.tenantId eq UUID.fromString(tenantId.toString()))
@@ -562,6 +570,9 @@ class DocumentRepository : DocumentStatusChecker {
             it[DocumentsTable.documentType] = extractedData.toDocumentType()
             it[DocumentsTable.direction] = extractedData.toDirection()
             it[DocumentsTable.documentStatus] = status
+            if (extractedSortDate != null) {
+                it[DocumentsTable.sortDate] = extractedSortDate
+            }
             it[updatedAt] = now
         } > 0
     }

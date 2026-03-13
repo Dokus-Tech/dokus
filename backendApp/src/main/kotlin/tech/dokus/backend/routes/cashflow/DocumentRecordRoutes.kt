@@ -137,7 +137,9 @@ internal fun Route.documentRecordRoutes() {
             val limit = route.limit.coerceIn(1, 100)
             val filter = route.filter
 
-            logger.info("Listing documents: tenant=$tenantId, filter=$filter, page=$page, limit=$limit")
+            val sortBy = route.sortBy
+
+            logger.info("Listing documents: tenant=$tenantId, filter=$filter, page=$page, limit=$limit, sortBy=$sortBy")
 
             if (filter != null && (route.documentStatus != null || route.ingestionStatus != null)) {
                 throw DokusException.BadRequest("Do not combine 'filter' with 'documentStatus' or 'ingestionStatus'")
@@ -150,6 +152,7 @@ internal fun Route.documentRecordRoutes() {
                 documentStatus = route.documentStatus,
                 documentType = route.documentType,
                 ingestionStatus = route.ingestionStatus,
+                sortBy = sortBy,
                 page = page,
                 limit = limit
             )
@@ -202,6 +205,7 @@ internal fun Route.documentRecordRoutes() {
                     ingestionStatus = docInfo.latestIngestion?.status,
                     effectiveOrigin = preferredSource?.sourceChannel ?: docInfo.document.effectiveOrigin,
                     uploadedAt = preferredSource?.arrivalAt ?: docInfo.document.uploadedAt,
+                    sortDate = docInfo.document.sortDate,
                     counterpartyDisplayName = draft?.counterpartyDisplayName,
                     purposeRendered = draft?.purposeRendered,
                     totalAmount = draft?.extractedData?.toTotalAmount(),

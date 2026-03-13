@@ -1,5 +1,6 @@
 package tech.dokus.domain.model
 
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
@@ -110,6 +111,7 @@ data class DocumentListItemDto(
     val purposeRendered: String?,
     val totalAmount: Money?,
     val currency: Currency?,
+    val sortDate: LocalDate? = null,
     val downloadUrl: String? = null,
     val hasPendingMatchReview: Boolean = false,
     val sourceCount: Int = 1,

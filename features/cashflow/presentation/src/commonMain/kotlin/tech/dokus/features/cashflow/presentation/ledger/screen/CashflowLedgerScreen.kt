@@ -35,7 +35,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_action_mark_paid
 import tech.dokus.aura.resources.cashflow_action_record_payment
@@ -50,6 +52,7 @@ import tech.dokus.aura.resources.cashflow_empty_upcoming
 import tech.dokus.aura.resources.cashflow_empty_upcoming_hint
 import tech.dokus.aura.resources.cashflow_empty_upcoming_in
 import tech.dokus.aura.resources.cashflow_empty_upcoming_out
+import tech.dokus.foundation.aura.components.common.MonthSeparatorRow
 import tech.dokus.features.cashflow.presentation.common.components.pagination.rememberLoadMoreTrigger
 import tech.dokus.features.cashflow.presentation.common.components.table.DokusTableDivider
 import tech.dokus.features.cashflow.presentation.common.components.table.DokusTableSurface
@@ -72,6 +75,11 @@ import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
+
+private sealed interface CashflowDisplayRow {
+    data class EntryRow(val entry: CashflowEntry) : CashflowDisplayRow
+    data class MonthHeader(val year: Int, val month: Int) : CashflowDisplayRow
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -119,6 +127,27 @@ private fun CashflowLedgerContent(
     LaunchedEffect(shouldLoadMore) {
         if (shouldLoadMore) {
             onIntent(CashflowLedgerIntent.LoadMore)
+        }
+    }
+
+    // Build display rows with month separators (History mode only)
+    val displayRows: List<CashflowDisplayRow> = remember(entriesData, state.filters.viewMode) {
+        if (state.filters.viewMode != CashflowViewMode.History) {
+            entriesData.map<_, CashflowDisplayRow> { CashflowDisplayRow.EntryRow(it) }
+        } else {
+            buildList {
+                var lastYear = -1
+                var lastMonth = -1
+                for (entry in entriesData) {
+                    val date: LocalDate = entry.paidAt?.date ?: entry.eventDate
+                    if (date.year != lastYear || date.monthNumber != lastMonth) {
+                        add(CashflowDisplayRow.MonthHeader(date.year, date.monthNumber))
+                        lastYear = date.year
+                        lastMonth = date.monthNumber
+                    }
+                    add(CashflowDisplayRow.EntryRow(entry))
+                }
+            }
         }
     }
 
@@ -214,34 +243,48 @@ private fun CashflowLedgerContent(
                             modifier = Modifier.weight(1f)
                         ) {
                             itemsIndexed(
-                                items = entriesData,
-                                key = { _, entry -> entry.id.toString() }
-                            ) { index, entry ->
-                                if (isLargeScreen) {
-                                    CashflowLedgerTableRow(
-                                        entry = entry,
-                                        viewMode = state.filters.viewMode,
-                                        isHighlighted = entry.id == state.highlightedEntryId,
-                                        showActionsMenu = state.actionsEntryId == entry.id,
-                                        onClick = { onIntent(CashflowLedgerIntent.OpenEntry(entry)) },
-                                        onShowActions = { onIntent(CashflowLedgerIntent.ShowRowActions(entry.id)) },
-                                        onHideActions = { onIntent(CashflowLedgerIntent.HideRowActions) },
-                                        onRecordPayment = { onIntent(CashflowLedgerIntent.RecordPaymentFor(entry.id)) },
-                                        onMarkAsPaid = { onIntent(CashflowLedgerIntent.MarkAsPaidQuick(entry.id)) },
-                                        onViewDocument = { onIntent(CashflowLedgerIntent.ViewDocumentFor(entry)) }
-                                    )
-                                } else {
-                                    CashflowLedgerMobileRow(
-                                        entry = entry,
-                                        viewMode = state.filters.viewMode,
-                                        onClick = { onIntent(CashflowLedgerIntent.OpenEntry(entry)) },
-                                        onShowActions = { onIntent(CashflowLedgerIntent.ShowRowActions(entry.id)) }
-                                    )
+                                items = displayRows,
+                                key = { _, row ->
+                                    when (row) {
+                                        is CashflowDisplayRow.EntryRow -> row.entry.id.toString()
+                                        is CashflowDisplayRow.MonthHeader -> "month-${row.year}-${row.month}"
+                                    }
                                 }
+                            ) { index, row ->
+                                when (row) {
+                                    is CashflowDisplayRow.MonthHeader -> {
+                                        MonthSeparatorRow(year = row.year, month = row.month)
+                                    }
+                                    is CashflowDisplayRow.EntryRow -> {
+                                        val entry = row.entry
+                                        if (isLargeScreen) {
+                                            CashflowLedgerTableRow(
+                                                entry = entry,
+                                                viewMode = state.filters.viewMode,
+                                                isHighlighted = entry.id == state.highlightedEntryId,
+                                                showActionsMenu = state.actionsEntryId == entry.id,
+                                                onClick = { onIntent(CashflowLedgerIntent.OpenEntry(entry)) },
+                                                onShowActions = { onIntent(CashflowLedgerIntent.ShowRowActions(entry.id)) },
+                                                onHideActions = { onIntent(CashflowLedgerIntent.HideRowActions) },
+                                                onRecordPayment = { onIntent(CashflowLedgerIntent.RecordPaymentFor(entry.id)) },
+                                                onMarkAsPaid = { onIntent(CashflowLedgerIntent.MarkAsPaidQuick(entry.id)) },
+                                                onViewDocument = { onIntent(CashflowLedgerIntent.ViewDocumentFor(entry)) }
+                                            )
+                                        } else {
+                                            CashflowLedgerMobileRow(
+                                                entry = entry,
+                                                viewMode = state.filters.viewMode,
+                                                onClick = { onIntent(CashflowLedgerIntent.OpenEntry(entry)) },
+                                                onShowActions = { onIntent(CashflowLedgerIntent.ShowRowActions(entry.id)) }
+                                            )
+                                        }
 
-                                // Dividers only between rows
-                                if (index < entriesData.size - 1) {
-                                    DokusTableDivider()
+                                        // Dividers only between entry rows
+                                        val nextRow = displayRows.getOrNull(index + 1)
+                                        if (nextRow is CashflowDisplayRow.EntryRow) {
+                                            DokusTableDivider()
+                                        }
+                                    }
                                 }
                             }
 

@@ -48,6 +48,13 @@ fun DocumentDraftData.toCurrency(): Currency = when (this) {
     is BankStatementDraftData -> Currency.default
 }
 
+fun DocumentDraftData.toSortDate(): LocalDate? = when (this) {
+    is InvoiceDraftData -> issueDate
+    is CreditNoteDraftData -> issueDate
+    is ReceiptDraftData -> date
+    is BankStatementDraftData -> periodEnd
+}
+
 @Serializable
 data class PartyDraft(
     val name: String? = null,

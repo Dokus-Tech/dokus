@@ -38,6 +38,7 @@ import tech.dokus.aura.resources.documents_filter_no_match
 import tech.dokus.aura.resources.documents_upload
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.DocumentListItemDto
+import tech.dokus.foundation.aura.components.common.MonthSeparatorRow
 import tech.dokus.features.cashflow.presentation.common.components.pagination.rememberLoadMoreTrigger
 import tech.dokus.features.cashflow.presentation.common.components.table.DokusTableDivider
 import tech.dokus.features.cashflow.presentation.common.components.table.DokusTableSurface
@@ -50,6 +51,7 @@ import tech.dokus.features.cashflow.presentation.documents.components.DocumentTa
 import tech.dokus.features.cashflow.presentation.documents.components.DocumentsDropHintTableRow
 import tech.dokus.features.cashflow.presentation.documents.model.DocumentsLocalUploadRow
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentFilter
+import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentSortField
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsIntent
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsState
 import tech.dokus.foundation.app.state.isLoading
@@ -58,6 +60,7 @@ import tech.dokus.foundation.aura.components.common.DokusEmptyState
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import tech.dokus.foundation.aura.local.LocalScreenSize
+import tech.dokus.features.cashflow.presentation.documents.components.DocumentSortDropdown
 
 private val DocumentsState.documentItems: List<DocumentListItemDto>
     get() = documents.lastData?.data ?: emptyList()
@@ -65,6 +68,7 @@ private val DocumentsState.documentItems: List<DocumentListItemDto>
 private sealed interface DocumentsDisplayRow {
     data class Local(val row: DocumentsLocalUploadRow) : DocumentsDisplayRow
     data class Remote(val row: DocumentListItemDto) : DocumentsDisplayRow
+    data class MonthHeader(val year: Int, val month: Int) : DocumentsDisplayRow
 }
 
 @Composable
@@ -89,7 +93,17 @@ internal fun DocumentsScreen(
     val displayRows = remember(localUploadRows, remoteDocuments) {
         buildList {
             localUploadRows.forEach { add(DocumentsDisplayRow.Local(it)) }
-            remoteDocuments.forEach { add(DocumentsDisplayRow.Remote(it)) }
+            var lastYear = -1
+            var lastMonth = -1
+            remoteDocuments.forEach { doc ->
+                val date = doc.sortDate ?: doc.uploadedAt.date
+                if (date.year != lastYear || date.monthNumber != lastMonth) {
+                    lastYear = date.year
+                    lastMonth = date.monthNumber
+                    add(DocumentsDisplayRow.MonthHeader(lastYear, lastMonth))
+                }
+                add(DocumentsDisplayRow.Remote(doc))
+            }
         }
     }
 
@@ -241,6 +255,11 @@ private fun DocumentsToolbar(
                 onFilterSelected = { onIntent(DocumentsIntent.UpdateFilter(it)) },
             )
 
+            DocumentSortDropdown(
+                selectedSort = state.sortField,
+                onSortSelected = { onIntent(DocumentsIntent.UpdateSort(it)) },
+            )
+
             Spacer(modifier = Modifier.weight(1f))
 
             PPrimaryButton(
@@ -302,10 +321,15 @@ private fun DesktopDocumentsTable(
                             when (row) {
                                 is DocumentsDisplayRow.Local -> "local-${row.row.taskId}"
                                 is DocumentsDisplayRow.Remote -> row.row.documentId.toString()
+                                is DocumentsDisplayRow.MonthHeader -> "month-${row.year}-${row.month}"
                             }
                         }
                     ) { index, row ->
                         when (row) {
+                            is DocumentsDisplayRow.MonthHeader -> {
+                                MonthSeparatorRow(year = row.year, month = row.month)
+                            }
+
                             is DocumentsDisplayRow.Local -> {
                                 DocumentLocalUploadTableRow(
                                     row = row.row,
@@ -322,7 +346,7 @@ private fun DesktopDocumentsTable(
                             }
                         }
 
-                        if (index < displayRows.size - 1) {
+                        if (index < displayRows.size - 1 && row !is DocumentsDisplayRow.MonthHeader) {
                             DokusTableDivider()
                         }
                     }
@@ -384,10 +408,15 @@ private fun MobileDocumentsList(
                     when (row) {
                         is DocumentsDisplayRow.Local -> "local-${row.row.taskId}"
                         is DocumentsDisplayRow.Remote -> row.row.documentId.toString()
+                        is DocumentsDisplayRow.MonthHeader -> "month-${row.year}-${row.month}"
                     }
                 }
             ) { _, row ->
                 when (row) {
+                    is DocumentsDisplayRow.MonthHeader -> {
+                        MonthSeparatorRow(year = row.year, month = row.month)
+                    }
+
                     is DocumentsDisplayRow.Local -> {
                         DocumentLocalUploadMobileRow(
                             row = row.row,

@@ -361,6 +361,7 @@ internal object DocumentListingQuery {
         documentStatus: DocumentStatus?,
         documentType: DocumentType?,
         ingestionStatus: IngestionStatus?,
+        sortBy: String? = null,
         page: Int,
         limit: Int
     ): DocumentListPage<DocumentWithDraftAndIngestion> = newSuspendedTransaction {
@@ -380,8 +381,9 @@ internal object DocumentListingQuery {
         )
 
         val offset = (page * limit).toLong()
+        val sortColumn = if (sortBy == "uploadedAt") DocumentsTable.uploadedAt else DocumentsTable.sortDate
         val pageRows = baseQuery.query
-            .orderBy(DocumentsTable.uploadedAt to SortOrder.DESC, DocumentsTable.id to SortOrder.DESC)
+            .orderBy(sortColumn to SortOrder.DESC, DocumentsTable.uploadedAt to SortOrder.DESC, DocumentsTable.id to SortOrder.DESC)
             .limit(limit)
             .offset(offset)
             .mapNotNull { row ->
