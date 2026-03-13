@@ -303,6 +303,7 @@ fun DocumentDraftData.toSortDate(): LocalDate? = when (this) {
     is CreditNoteDraftData -> issueDate
     is ReceiptDraftData -> date
     is BankStatementDraftData -> periodEnd
+    else -> null
 }
 
 @Serializable

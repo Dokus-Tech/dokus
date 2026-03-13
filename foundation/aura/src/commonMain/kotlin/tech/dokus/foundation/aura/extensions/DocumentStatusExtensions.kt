@@ -8,6 +8,7 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.draft_status_confirmed
 import tech.dokus.aura.resources.draft_status_needs_review
 import tech.dokus.aura.resources.draft_status_rejected
+import tech.dokus.aura.resources.draft_status_unsupported
 import tech.dokus.domain.enums.DocumentStatus
 
 /**
@@ -26,6 +27,7 @@ val DocumentStatus.localized: String
         DocumentStatus.NeedsReview -> stringResource(Res.string.draft_status_needs_review)
         DocumentStatus.Confirmed -> stringResource(Res.string.draft_status_confirmed)
         DocumentStatus.Rejected -> stringResource(Res.string.draft_status_rejected)
+        DocumentStatus.Unsupported -> stringResource(Res.string.draft_status_unsupported)
     }
 
 /**
@@ -59,6 +61,7 @@ val DocumentStatus.color: Color
         DocumentStatus.NeedsReview -> MaterialTheme.colorScheme.primaryContainer
         DocumentStatus.Confirmed -> MaterialTheme.colorScheme.tertiaryContainer
         DocumentStatus.Rejected -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
+        DocumentStatus.Unsupported -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
     }
 
 /**
@@ -77,6 +80,7 @@ val DocumentStatus.onColor: Color
         DocumentStatus.NeedsReview -> MaterialTheme.colorScheme.onPrimaryContainer
         DocumentStatus.Confirmed -> MaterialTheme.colorScheme.onTertiaryContainer
         DocumentStatus.Rejected -> MaterialTheme.colorScheme.onSurfaceVariant
+        DocumentStatus.Unsupported -> MaterialTheme.colorScheme.onSurfaceVariant
     }
 
 /**
@@ -89,4 +93,4 @@ val DocumentStatus.needsAttention: Boolean
  * Checks if this draft status indicates the document is in a final/completed state.
  */
 val DocumentStatus.isFinal: Boolean
-    get() = this == DocumentStatus.Confirmed || this == DocumentStatus.Rejected
+    get() = this == DocumentStatus.Confirmed || this == DocumentStatus.Rejected || this == DocumentStatus.Unsupported

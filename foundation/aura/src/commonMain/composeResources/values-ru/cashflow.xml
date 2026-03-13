@@ -159,6 +159,7 @@
     <string name="draft_status_ready">Готово</string>
     <string name="draft_status_confirmed">Подтверждено</string>
     <string name="draft_status_rejected">Отклонено</string>
+    <string name="draft_status_unsupported">Не поддерживается</string>
 
     <!-- Cashflow Actions -->
     <string name="cashflow_upload_document">Загрузить документ</string>

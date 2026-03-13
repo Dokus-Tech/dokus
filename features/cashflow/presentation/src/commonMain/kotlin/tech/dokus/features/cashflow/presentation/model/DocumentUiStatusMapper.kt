@@ -48,7 +48,7 @@ fun DocumentDetailDto.toUiStatus(): DocumentUiStatus {
 private fun DocumentDetailDto.determineSucceededStatus(): DocumentUiStatus {
     val draft = draft ?: return DocumentUiStatus.Review
     return when (draft.documentStatus) {
-        DocumentStatus.Confirmed -> DocumentUiStatus.Ready
+        DocumentStatus.Confirmed, DocumentStatus.Unsupported -> DocumentUiStatus.Ready
         DocumentStatus.NeedsReview, DocumentStatus.Rejected -> DocumentUiStatus.Review
     }
 }
@@ -83,7 +83,7 @@ fun DocumentListItemDto.toUiStatus(): DocumentUiStatus {
 private fun DocumentListItemDto.determineListItemSucceededStatus(): DocumentUiStatus {
     val status = documentStatus ?: return DocumentUiStatus.Review
     return when (status) {
-        DocumentStatus.Confirmed -> DocumentUiStatus.Ready
+        DocumentStatus.Confirmed, DocumentStatus.Unsupported -> DocumentUiStatus.Ready
         DocumentStatus.NeedsReview, DocumentStatus.Rejected -> DocumentUiStatus.Review
     }
 }

@@ -290,7 +290,11 @@ enum class DocumentStatus(override val dbValue: String) : DbEnum {
 
     /** User rejected extraction */
     @SerialName("REJECTED")
-    Rejected("REJECTED");
+    Rejected("REJECTED"),
+
+    /** Document type is not supported — stored for record-keeping only */
+    @SerialName("UNSUPPORTED")
+    Unsupported("UNSUPPORTED");
 
     companion object {
         fun fromDbValue(value: String): DocumentStatus = entries.find { it.dbValue == value }!!

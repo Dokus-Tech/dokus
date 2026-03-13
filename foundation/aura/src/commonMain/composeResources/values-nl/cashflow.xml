@@ -159,6 +159,7 @@
     <string name="draft_status_ready">Klaar</string>
     <string name="draft_status_confirmed">Bevestigd</string>
     <string name="draft_status_rejected">Afgewezen</string>
+    <string name="draft_status_unsupported">Niet ondersteund</string>
 
     <!-- Cashflow Actions -->
     <string name="cashflow_upload_document">Document uploaden</string>

@@ -4,6 +4,7 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.toStdlibInstant
 import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
@@ -18,36 +19,32 @@ import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTrans
 import org.jetbrains.exposed.v1.jdbc.update
 import tech.dokus.database.tables.contacts.ContactsTable
 import tech.dokus.database.tables.documents.DocumentsTable
-import tech.dokus.domain.enums.ContactLinkSource
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentListFilter
 import tech.dokus.domain.enums.DocumentPurposeSource
 import tech.dokus.domain.enums.DocumentRejectReason
 import tech.dokus.domain.enums.DocumentSource
-import tech.dokus.domain.enums.SourceTrust
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.enums.PurposePeriodMode
+import tech.dokus.domain.enums.SourceTrust
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
-import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentDraftData
+import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.FieldProvenance
-import tech.dokus.domain.model.InvoiceDraftData
-import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.ProvenanceMergeResult
-import tech.dokus.domain.model.ReceiptDraftData
-import tech.dokus.domain.model.diffFieldPaths
-import tech.dokus.domain.model.mergeWithProvenance
 import tech.dokus.domain.model.contact.CounterpartyInfo
 import tech.dokus.domain.model.contact.CounterpartySnapshot
 import tech.dokus.domain.model.contact.MatchEvidence
 import tech.dokus.domain.model.contact.SuggestedContact
 import tech.dokus.domain.model.contact.isUnresolved
+import tech.dokus.domain.model.diffFieldPaths
+import tech.dokus.domain.model.mergeWithProvenance
 import tech.dokus.domain.model.toDirection
 import tech.dokus.domain.model.toDocumentType
 import tech.dokus.domain.model.toSortDate
@@ -372,7 +369,7 @@ class DocumentRepository : DocumentStatusChecker {
         force: Boolean = false,
         fieldProvenance: Map<String, FieldProvenance>? = null
     ): Boolean = newSuspendedTransaction {
-        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+        val now = Clock.System.now().toStdlibInstant().toLocalDateTime(TimeZone.UTC)
         val docIdUuid = UUID.fromString(documentId.toString())
         val tenantIdUuid = UUID.fromString(tenantId.toString())
         val runIdUuid = UUID.fromString(runId.toString())

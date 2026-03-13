@@ -29,7 +29,7 @@ internal class PostExtractionOrchestrator(
             documentRepository.updateDocumentStatus(
                 documentId = context.documentId,
                 tenantId = context.tenantId,
-                status = DocumentStatus.Confirmed,
+                status = DocumentStatus.Unsupported,
             )
             return PostExtractionOutcome.UnsupportedConfirmed
         }

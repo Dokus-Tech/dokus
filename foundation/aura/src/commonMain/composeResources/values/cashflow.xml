@@ -296,6 +296,7 @@
     <string name="draft_status_ready">Ready</string>
     <string name="draft_status_confirmed">Confirmed</string>
     <string name="draft_status_rejected">Rejected</string>
+    <string name="draft_status_unsupported">Unsupported</string>
 
     <!-- Invoice Creation - Sections -->
     <string name="invoice_recipient">Invoice to</string>

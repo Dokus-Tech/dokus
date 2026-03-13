@@ -241,13 +241,15 @@ internal object DocumentListingQuery {
         val entityExists = invoiceExists or expenseExists or creditNoteExists
 
         val isBankStatementType = DocumentsTable.documentType eq DocumentType.BankStatement
+        val isNotUnsupported = DocumentsTable.documentStatus neq DocumentStatus.Unsupported
         val confirmedBankStatement = (DocumentsTable.documentStatus eq DocumentStatus.Confirmed) and isBankStatementType
-        val confirmedStrict = ((DocumentsTable.documentStatus eq DocumentStatus.Confirmed) and entityExists) or
-            confirmedBankStatement
+        val confirmedStrict = (((DocumentsTable.documentStatus eq DocumentStatus.Confirmed) and entityExists) or
+            confirmedBankStatement) and isNotUnsupported
         val confirmedButNoEntity =
             (DocumentsTable.documentStatus eq DocumentStatus.Confirmed) and
                 not(entityExists) and
-                not(isBankStatementType)
+                not(isBankStatementType) and
+                isNotUnsupported
         val hasPendingMatchReview = exists(
             DocumentMatchReviewsTable.select(DocumentMatchReviewsTable.id).where {
                 (DocumentMatchReviewsTable.tenantId eq DocumentsTable.tenantId) and

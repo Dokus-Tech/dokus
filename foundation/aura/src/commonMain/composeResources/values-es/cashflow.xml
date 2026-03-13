@@ -159,6 +159,7 @@
     <string name="draft_status_ready">Listo</string>
     <string name="draft_status_confirmed">Confirmado</string>
     <string name="draft_status_rejected">Rechazado</string>
+    <string name="draft_status_unsupported">No compatible</string>
 
     <!-- Cashflow Actions -->
     <string name="cashflow_upload_document">Subir documento</string>
