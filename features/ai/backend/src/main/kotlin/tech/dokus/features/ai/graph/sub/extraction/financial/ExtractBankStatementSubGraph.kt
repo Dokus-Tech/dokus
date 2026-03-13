@@ -40,6 +40,8 @@ data class BankStatementExtractionResult(
     val closingBalance: Money? = null,
     val periodStart: LocalDate? = null,
     val periodEnd: LocalDate? = null,
+    val institutionName: String? = null,
+    val institutionBic: String? = null,
     val confidence: Double,
     val reasoning: String? = null,
 )
@@ -90,6 +92,10 @@ data class BankStatementExtractionToolInput(
     val periodStart: LocalDate? = null,
     @property:LLMDescription(ExtractionToolDescriptions.BankPeriodEnd)
     val periodEnd: LocalDate? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.BankInstitutionName)
+    val institutionName: String? = null,
+    @property:LLMDescription(ExtractionToolDescriptions.BankInstitutionBic)
+    val institutionBic: String? = null,
     @property:LLMDescription(ExtractionToolDescriptions.Confidence)
     val confidence: Double,
     @property:LLMDescription(ExtractionToolDescriptions.Reasoning)
@@ -123,6 +129,8 @@ private class BankStatementExtractionFinishTool :
                 closingBalance = Money.from(args.closingBalance),
                 periodStart = args.periodStart,
                 periodEnd = args.periodEnd,
+                institutionName = args.institutionName?.trim()?.takeIf { it.isNotEmpty() },
+                institutionBic = args.institutionBic?.trim()?.takeIf { it.isNotEmpty() },
                 confidence = args.confidence.coerceIn(0.0, 1.0),
                 reasoning = args.reasoning
             )
@@ -143,6 +151,8 @@ private val ExtractDocumentInput.bankStatementPrompt
     - closingBalance: the closing/new balance shown on the statement (signed)
     - periodStart: the start date of the statement period
     - periodEnd: the end date of the statement period
+    - institutionName: the legal or trading name of the bank/financial institution that issued this statement (e.g. "Wise Europe SA", "KBC Bank NV"). Look in the header, logo, or footer.
+    - institutionBic: the BIC/SWIFT code of the issuing bank if visible (e.g. "TRWIBEB1XXX")
 
     TRANSACTION FIELD RULES
     Bank statements often show a bold transfer type header (e.g. "SENDING MONEY TO", "EUROPEAN DIRECT DEBIT",

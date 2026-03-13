@@ -406,6 +406,7 @@ data class BankStatementDraftData(
     val closingBalance: Money? = null,
     val periodStart: LocalDate? = null,
     val periodEnd: LocalDate? = null,
+    val institution: PartyDraft = PartyDraft(),
     val notes: String? = null,
 ) : DocumentDraftData
 

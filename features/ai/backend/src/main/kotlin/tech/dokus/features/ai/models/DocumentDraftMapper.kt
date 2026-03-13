@@ -116,6 +116,7 @@ private fun FinancialExtractionResult.toDraftData(direction: DocumentDirection):
         closingBalance = data.closingBalance,
         periodStart = data.periodStart,
         periodEnd = data.periodEnd,
+        institution = PartyDraft(name = data.institutionName),
         notes = null
     )
 

@@ -85,6 +85,8 @@ object ExtractionToolDescriptions {
     const val BankClosingBalance = "Closing/new balance as signed plain number string (e.g. '1234.56'). Null if not visible."
     const val BankPeriodStart = "Start date of the statement period. Null if not visible."
     const val BankPeriodEnd = "End date of the statement period. Null if not visible."
+    const val BankInstitutionName = "Legal or trading name of the bank/financial institution that issued this statement (e.g. 'Wise Europe SA', 'KBC Bank NV', 'ING Belgium'). Look in the header, logo, or footer. Null if not visible."
+    const val BankInstitutionBic = "BIC/SWIFT code of the issuing bank if visible (e.g. 'TRWIBEB1XXX'). Null if not visible."
 
     const val LineItems = "Line items table. Leave empty list if not itemized."
     const val VatBreakdown = "VAT breakdown rows per rate (rate/base/amount). Leave empty list if not shown. Use rate 0 and VAT amount 0 for reverse charge."

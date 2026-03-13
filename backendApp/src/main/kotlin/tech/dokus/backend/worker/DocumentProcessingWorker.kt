@@ -533,6 +533,77 @@ internal class DocumentProcessingWorker(
                             )
                         }
                     }
+                    // Contact resolution for bank institution
+                    val authoritativeSnapshot = result.extraction.toAuthoritativeCounterpartySnapshot()
+                    if (authoritativeSnapshot != null) {
+                        runSuspendCatching {
+                            val resolution = contactResolutionService.resolve(
+                                tenantId = parsedTenantId,
+                                draftData = bankProcessing.sanitizedDraft,
+                                authoritativeSnapshot = authoritativeSnapshot,
+                                tenantVat = tenant.vatNumber
+                            )
+                            when (val decision = resolution.resolution) {
+                                is ContactResolution.Matched -> {
+                                    documentRepository.updateContactResolution(
+                                        documentId = documentId,
+                                        tenantId = parsedTenantId,
+                                        counterpartySnapshot = resolution.snapshot,
+                                        counterparty = CounterpartyInfo.Linked(
+                                            contactId = decision.contactId,
+                                            source = ContactLinkSource.AI,
+                                            evidence = decision.evidence,
+                                        )
+                                    )
+                                }
+                                is ContactResolution.AutoCreate -> {
+                                    val contactId = contactResolutionService.createContactFromResolution(
+                                        tenantId = parsedTenantId,
+                                        resolution = decision
+                                    )
+                                    documentRepository.updateContactResolution(
+                                        documentId = documentId,
+                                        tenantId = parsedTenantId,
+                                        counterpartySnapshot = resolution.snapshot,
+                                        counterparty = if (contactId != null) {
+                                            CounterpartyInfo.Linked(
+                                                contactId = contactId,
+                                                source = ContactLinkSource.AI,
+                                                evidence = decision.evidence,
+                                            )
+                                        } else {
+                                            CounterpartyInfo.Unresolved(snapshot = resolution.snapshot)
+                                        }
+                                    )
+                                }
+                                is ContactResolution.Suggested -> {
+                                    documentRepository.updateContactResolution(
+                                        documentId = documentId,
+                                        tenantId = parsedTenantId,
+                                        counterpartySnapshot = resolution.snapshot,
+                                        counterparty = CounterpartyInfo.Unresolved(
+                                            suggestions = decision.candidates,
+                                        )
+                                    )
+                                }
+                                is ContactResolution.PendingReview -> {
+                                    documentRepository.updateContactResolution(
+                                        documentId = documentId,
+                                        tenantId = parsedTenantId,
+                                        counterpartySnapshot = resolution.snapshot,
+                                        counterparty = CounterpartyInfo.Unresolved()
+                                    )
+                                }
+                            }
+                        }.onFailure {
+                            logger.warn(
+                                "Contact resolution failed for bank statement {}: {}",
+                                documentId,
+                                it.message,
+                            )
+                        }
+                    }
+
                     logger.info(
                         "Processed bank statement {}: validRows={}, discardedRows={}, trust={}, dedup={}",
                         documentId,

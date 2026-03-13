@@ -10,7 +10,10 @@ fun FinancialExtractionResult.toAuthoritativeCounterpartySnapshot(): Counterpart
     is FinancialExtractionResult.Invoice -> data.counterparty.toSnapshot()
     is FinancialExtractionResult.CreditNote -> data.counterparty.toSnapshot()
     is FinancialExtractionResult.Receipt -> data.counterparty.toSnapshot()
-    is FinancialExtractionResult.BankStatement -> null
+    is FinancialExtractionResult.BankStatement -> data.institutionName
+        ?.trim()
+        ?.takeIf { it.isNotEmpty() }
+        ?.let { CounterpartySnapshot(name = it) }
     is FinancialExtractionResult.Quote,
     is FinancialExtractionResult.ProForma,
     is FinancialExtractionResult.PurchaseOrder,
