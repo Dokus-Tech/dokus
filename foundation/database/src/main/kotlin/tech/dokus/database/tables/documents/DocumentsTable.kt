@@ -3,6 +3,7 @@ package tech.dokus.database.tables.documents
 import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
+import org.jetbrains.exposed.v1.datetime.date
 import org.jetbrains.exposed.v1.datetime.datetime
 import tech.dokus.database.tables.auth.TenantTable
 import tech.dokus.database.tables.auth.UsersTable
@@ -157,6 +158,15 @@ object DocumentsTable : UUIDTable("documents") {
     val rejectReason = dbEnumeration<DocumentRejectReason>("reject_reason").nullable()
 
     // ============================================
+    // Sorting
+    // ============================================
+
+    // Canonical sorting date: issueDate for invoices/credit notes, receipt date for receipts,
+    // periodEnd for bank statements, falls back to uploadedAt on creation.
+    // Updated when canonical data is written.
+    val sortDate = date("sort_date").nullable()
+
+    // ============================================
     // Timestamps
     // ============================================
     val uploadedAt = datetime("uploaded_at").defaultExpression(CurrentDateTime)
@@ -176,5 +186,7 @@ object DocumentsTable : UUIDTable("documents") {
         // For purpose template and similarity retrieval
         index(false, tenantId, counterpartyKey, documentType, documentStatus)
         index(false, tenantId, merchantToken, documentType, documentStatus)
+        // For sorting documents by canonical date
+        index(false, tenantId, sortDate)
     }
 }

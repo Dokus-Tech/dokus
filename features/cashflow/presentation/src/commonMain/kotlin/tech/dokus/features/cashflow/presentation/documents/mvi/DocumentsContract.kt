@@ -25,6 +25,18 @@ import tech.dokus.navigation.destinations.CashFlowDestination
 // ============================================================================
 
 /**
+ * Sort field for the documents list.
+ */
+@Immutable
+enum class DocumentSortField(val apiValue: String?) {
+    /** Sort by issue date / canonical sort_date (default) */
+    SortDate(null),
+
+    /** Sort by upload date */
+    UploadDate("uploadedAt"),
+}
+
+/**
  * Simplified document filter options.
  * Replaces the complex DocumentDisplayStatus for filtering.
  */
@@ -48,6 +60,7 @@ enum class DocumentFilter {
 data class DocumentsState(
     val documents: DokusState<PaginationState<DocumentListItemDto>>,
     val filter: DocumentFilter,
+    val sortField: DocumentSortField = DocumentSortField.SortDate,
     val totalCount: Int,
     val needsAttentionCount: Int,
     val confirmedCount: Int,
@@ -59,6 +72,7 @@ data class DocumentsState(
             DocumentsState(
                 documents = DokusState.loading(),
                 filter = DocumentFilter.All,
+                sortField = DocumentSortField.SortDate,
                 totalCount = 0,
                 needsAttentionCount = 0,
                 confirmedCount = 0
@@ -85,6 +99,9 @@ sealed interface DocumentsIntent : MVIIntent {
 
     /** Update document filter */
     data class UpdateFilter(val filter: DocumentFilter) : DocumentsIntent
+
+    /** Update sort field */
+    data class UpdateSort(val sort: DocumentSortField) : DocumentsIntent
 
     /** Open a document for review */
     data class OpenDocument(val documentId: DocumentId) : DocumentsIntent

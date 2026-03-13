@@ -57,6 +57,7 @@ import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.app.state.isError
 import tech.dokus.foundation.app.state.isLoading
 import tech.dokus.foundation.app.state.isSuccess
+import tech.dokus.foundation.aura.components.common.MonthSeparatorRow
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.filter.DokusFilterBar
 import tech.dokus.foundation.aura.components.common.DokusEmptyState
@@ -71,6 +72,11 @@ import tech.dokus.foundation.aura.local.isLarge
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
+
+private sealed interface TransactionDisplayRow {
+    data class TxRow(val transaction: BankTransactionDto) : TransactionDisplayRow
+    data class MonthHeader(val year: Int, val month: Int) : TransactionDisplayRow
+}
 
 private val DetailPaneWidth = 280.dp
 
@@ -117,6 +123,21 @@ private fun PaymentsContent(
         allTxData.filter { it.bankAccountId == state.selectedAccountId }
     } else {
         allTxData
+    }
+    val displayRows = remember(txData) {
+        buildList {
+            var lastYear = -1
+            var lastMonth = -1
+            for (tx in txData) {
+                val date = tx.transactionDate
+                if (date.year != lastYear || date.monthNumber != lastMonth) {
+                    add(TransactionDisplayRow.MonthHeader(date.year, date.monthNumber))
+                    lastYear = date.year
+                    lastMonth = date.monthNumber
+                }
+                add(TransactionDisplayRow.TxRow(tx))
+            }
+        }
     }
     val isRefreshing = state.transactions.isLoading()
     val listState = rememberLazyListState()
@@ -210,7 +231,7 @@ private fun PaymentsContent(
                     else -> {
                         if (isLargeScreen) {
                             DesktopTransactionTable(
-                                transactions = txData,
+                                displayRows = displayRows,
                                 selectedTransactionId = state.selectedTransactionId,
                                 accountNames = state.accountNames,
                                 isRefreshing = isRefreshing,
@@ -221,7 +242,7 @@ private fun PaymentsContent(
                             )
                         } else {
                             MobileTransactionList(
-                                transactions = txData,
+                                displayRows = displayRows,
                                 selectedTransactionId = state.selectedTransactionId,
                                 isRefreshing = isRefreshing,
                                 listState = listState,
@@ -269,7 +290,7 @@ private fun PaymentsContent(
 
 @Composable
 private fun DesktopTransactionTable(
-    transactions: List<BankTransactionDto>,
+    displayRows: List<TransactionDisplayRow>,
     selectedTransactionId: BankTransactionId?,
     accountNames: Map<BankAccountId, String>,
     isRefreshing: Boolean,
@@ -284,17 +305,33 @@ private fun DesktopTransactionTable(
             state = listState,
             modifier = Modifier.fillMaxSize(),
         ) {
-            items(
-                items = transactions,
-                key = { it.id.toString() },
-            ) { tx ->
-                TransactionRow(
-                    transaction = tx,
-                    isSelected = tx.id == selectedTransactionId,
-                    onClick = { onSelectTransaction(tx.id) },
-                    accountName = tx.bankAccountId?.let { accountNames[it] },
-                )
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            itemsIndexed(
+                items = displayRows,
+                key = { _, row ->
+                    when (row) {
+                        is TransactionDisplayRow.TxRow -> row.transaction.id.toString()
+                        is TransactionDisplayRow.MonthHeader -> "month-${row.year}-${row.month}"
+                    }
+                },
+            ) { index, row ->
+                when (row) {
+                    is TransactionDisplayRow.MonthHeader -> {
+                        MonthSeparatorRow(year = row.year, month = row.month)
+                    }
+                    is TransactionDisplayRow.TxRow -> {
+                        val tx = row.transaction
+                        TransactionRow(
+                            transaction = tx,
+                            isSelected = tx.id == selectedTransactionId,
+                            onClick = { onSelectTransaction(tx.id) },
+                            accountName = tx.bankAccountId?.let { accountNames[it] },
+                        )
+                        val nextRow = displayRows.getOrNull(index + 1)
+                        if (nextRow is TransactionDisplayRow.TxRow) {
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                        }
+                    }
+                }
             }
 
             if (isRefreshing) {
@@ -319,7 +356,7 @@ private fun DesktopTransactionTable(
 
 @Composable
 private fun MobileTransactionList(
-    transactions: List<BankTransactionDto>,
+    displayRows: List<TransactionDisplayRow>,
     selectedTransactionId: BankTransactionId?,
     isRefreshing: Boolean,
     listState: LazyListState,
@@ -330,16 +367,30 @@ private fun MobileTransactionList(
         modifier = Modifier.fillMaxSize(),
     ) {
         itemsIndexed(
-            items = transactions,
-            key = { _, tx -> tx.id.toString() },
-        ) { index, tx ->
-            TransactionCard(
-                transaction = tx,
-                isSelected = tx.id == selectedTransactionId,
-                onClick = { onSelectTransaction(tx.id) },
-            )
-            if (index < transactions.size - 1) {
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            items = displayRows,
+            key = { _, row ->
+                when (row) {
+                    is TransactionDisplayRow.TxRow -> row.transaction.id.toString()
+                    is TransactionDisplayRow.MonthHeader -> "month-${row.year}-${row.month}"
+                }
+            },
+        ) { index, row ->
+            when (row) {
+                is TransactionDisplayRow.MonthHeader -> {
+                    MonthSeparatorRow(year = row.year, month = row.month)
+                }
+                is TransactionDisplayRow.TxRow -> {
+                    val tx = row.transaction
+                    TransactionCard(
+                        transaction = tx,
+                        isSelected = tx.id == selectedTransactionId,
+                        onClick = { onSelectTransaction(tx.id) },
+                    )
+                    val nextRow = displayRows.getOrNull(index + 1)
+                    if (nextRow is TransactionDisplayRow.TxRow) {
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    }
+                }
             }
         }
 

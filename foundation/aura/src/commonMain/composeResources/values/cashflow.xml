@@ -309,6 +309,11 @@
     <string name="cashflow_sort_amount_highest">Amount (high to low)</string>
     <string name="cashflow_sort_amount_lowest">Amount (low to high)</string>
     <string name="cashflow_sort_type">Type</string>
+
+    <!-- Document Sort -->
+    <string name="documents_sort_issue_date">Issue date</string>
+    <string name="documents_sort_upload_date">Upload date</string>
+
     <string name="cashflow_document_number_expense">Expense %1$s</string>
     <string name="cashflow_document_number_inbound_invoice">Inbound Invoice %1$s</string>
     <string name="cashflow_amount_with_currency">%1$s %2$s</string>

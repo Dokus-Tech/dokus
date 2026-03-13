@@ -16,5 +16,6 @@ interface LoadDocumentRecordsUseCase {
         filter: DocumentListFilter? = null,
         documentStatus: DocumentStatus? = null,
         ingestionStatus: IngestionStatus? = null,
+        sortBy: String? = null,
     ): Result<PaginatedResponse<DocumentListItemDto>>
 }

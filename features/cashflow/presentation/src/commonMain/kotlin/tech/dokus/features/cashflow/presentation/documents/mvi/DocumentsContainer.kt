@@ -43,6 +43,7 @@ internal class DocumentsContainer(
                     is DocumentsIntent.ExternalDocumentsChanged -> handleRefresh()
                     is DocumentsIntent.LoadMore -> handleLoadMore()
                     is DocumentsIntent.UpdateFilter -> handleUpdateFilter(intent.filter)
+                    is DocumentsIntent.UpdateSort -> handleUpdateSort(intent.sort)
                     is DocumentsIntent.OpenDocument -> handleOpenDocument(intent.documentId)
                 }
             }
@@ -58,6 +59,7 @@ internal class DocumentsContainer(
                 page = 0,
                 pageSize = PAGE_SIZE,
                 filter = filter.toListFilter(),
+                sortBy = sortField.apiValue,
             ).fold(
                 onSuccess = { response ->
                     val documents = DokusState.success(
@@ -102,6 +104,7 @@ internal class DocumentsContainer(
                 page = nextPage,
                 pageSize = PAGE_SIZE,
                 filter = filter.toListFilter(),
+                sortBy = sortField.apiValue,
             ).fold(
                 onSuccess = { response ->
                     val documents = DokusState.success(
@@ -132,42 +135,87 @@ internal class DocumentsContainer(
     }
 
     private suspend fun DocumentsCtx.handleUpdateFilter(filter: DocumentFilter) {
-        updateState {
-            copy(documents = documents.asLoading, filter = filter)
-        }
+        withState {
+            val currentSortBy = sortField.apiValue
+            updateState {
+                copy(documents = documents.asLoading, filter = filter)
+            }
 
-        loadDocumentRecords(
-            page = 0,
-            pageSize = PAGE_SIZE,
-            filter = filter.toListFilter(),
-        ).fold(
-            onSuccess = { response ->
-                val documents = DokusState.success(
-                    PaginationState(
-                        data = response.items,
-                        hasMorePages = response.hasMore,
-                        currentPage = 0,
-                        pageSize = PAGE_SIZE,
-                    )
-                )
-                updateState {
-                    copy(documents = documents)
-                }
-            },
-            onFailure = { error ->
-                logger.e(error) { "Failed to load documents" }
-                val dokusError = error.asDokusException
-                updateState {
-                    copy(
-                        documents = DokusState.error(
-                            exception = dokusError,
-                            retryHandler = { intent(DocumentsIntent.Refresh) },
-                            lastData = documents.lastData
+            loadDocumentRecords(
+                page = 0,
+                pageSize = PAGE_SIZE,
+                filter = filter.toListFilter(),
+                sortBy = currentSortBy,
+            ).fold(
+                onSuccess = { response ->
+                    val documents = DokusState.success(
+                        PaginationState(
+                            data = response.items,
+                            hasMorePages = response.hasMore,
+                            currentPage = 0,
+                            pageSize = PAGE_SIZE,
                         )
                     )
+                    updateState {
+                        copy(documents = documents)
+                    }
+                },
+                onFailure = { error ->
+                    logger.e(error) { "Failed to load documents" }
+                    val dokusError = error.asDokusException
+                    updateState {
+                        copy(
+                            documents = DokusState.error(
+                                exception = dokusError,
+                                retryHandler = { intent(DocumentsIntent.Refresh) },
+                                lastData = documents.lastData
+                            )
+                        )
+                    }
                 }
+            )
+        }
+    }
+
+    private suspend fun DocumentsCtx.handleUpdateSort(sort: DocumentSortField) {
+        withState {
+            val currentFilter = filter
+            updateState {
+                copy(documents = documents.asLoading, sortField = sort)
             }
-        )
+
+            loadDocumentRecords(
+                page = 0,
+                pageSize = PAGE_SIZE,
+                filter = currentFilter.toListFilter(),
+                sortBy = sort.apiValue,
+            ).fold(
+                onSuccess = { response ->
+                    val documents = DokusState.success(
+                        PaginationState(
+                            data = response.items,
+                            hasMorePages = response.hasMore,
+                            currentPage = 0,
+                            pageSize = PAGE_SIZE,
+                        )
+                    )
+                    updateState { copy(documents = documents) }
+                },
+                onFailure = { error ->
+                    logger.e(error) { "Failed to load documents" }
+                    val dokusError = error.asDokusException
+                    updateState {
+                        copy(
+                            documents = DokusState.error(
+                                exception = dokusError,
+                                retryHandler = { intent(DocumentsIntent.Refresh) },
+                                lastData = documents.lastData
+                            )
+                        )
+                    }
+                }
+            )
+        }
     }
 
     private suspend fun DocumentsCtx.handleOpenDocument(documentId: DocumentId) {
