@@ -165,6 +165,7 @@ tasks.register("clearScreenshots") {
             "composeApp/src/androidUnitTest/snapshots",
             "foundation/aura/src/androidUnitTest/snapshots",
             "features/auth/presentation/src/androidUnitTest/snapshots",
+            "features/banking/presentation/src/androidUnitTest/snapshots",
             "features/cashflow/presentation/src/androidUnitTest/snapshots",
             "features/contacts/presentation/src/androidUnitTest/snapshots"
         ).forEach { path ->
@@ -180,6 +181,7 @@ tasks.register("recordScreenshots") {
         ":composeApp:recordRoborazziDebug",
         ":foundation:aura:recordRoborazziDebug",
         ":features:auth:presentation:recordRoborazziDebug",
+        ":features:banking:presentation:recordRoborazziDebug",
         ":features:cashflow:presentation:recordRoborazziDebug",
         ":features:contacts:presentation:recordRoborazziDebug"
     )
@@ -192,6 +194,7 @@ tasks.register("verifyScreenshots") {
         ":composeApp:verifyRoborazziDebug",
         ":foundation:aura:verifyRoborazziDebug",
         ":features:auth:presentation:verifyRoborazziDebug",
+        ":features:banking:presentation:verifyRoborazziDebug",
         ":features:cashflow:presentation:verifyRoborazziDebug",
         ":features:contacts:presentation:verifyRoborazziDebug"
     )

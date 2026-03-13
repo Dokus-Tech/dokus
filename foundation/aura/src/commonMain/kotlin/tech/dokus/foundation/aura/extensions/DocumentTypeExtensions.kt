@@ -28,5 +28,5 @@ val DocumentType.iconized: ImageVector
         }
     }
 
-val DocumentType?.iconized: ImageVector
-    get() = this?.iconized ?: Lucide.File
+@Suppress("NOTHING_TO_INLINE")
+inline fun DocumentType?.iconizedOrDefault(): ImageVector = this?.iconized ?: Lucide.File

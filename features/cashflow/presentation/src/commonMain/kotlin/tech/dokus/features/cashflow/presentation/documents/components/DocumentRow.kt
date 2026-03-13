@@ -57,7 +57,7 @@ import tech.dokus.foundation.aura.components.layout.DokusTableHeader
 import tech.dokus.foundation.aura.components.layout.DokusTableRow
 import tech.dokus.foundation.aura.components.text.Amt
 import tech.dokus.foundation.aura.constrains.Constraints
-import tech.dokus.foundation.aura.extensions.iconized
+import tech.dokus.foundation.aura.extensions.iconizedOrDefault
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.model.DocumentUiStatus
 import tech.dokus.foundation.aura.style.statusWarning
@@ -156,7 +156,7 @@ internal fun DocumentTableRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Icon(
-                    imageVector = document.documentType.iconized,
+                    imageVector = document.documentType.iconizedOrDefault(),
                     contentDescription = null,
                     modifier = Modifier.size(Constraints.IconSize.xSmall),
                     tint = if (needsAttention) {
@@ -264,7 +264,7 @@ internal fun DocumentMobileRow(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Icon(
-                imageVector = document.documentType.iconized,
+                imageVector = document.documentType.iconizedOrDefault(),
                 contentDescription = null,
                 modifier = Modifier.size(Constraints.IconSize.xSmall),
                 tint = if (needsAttention) {
