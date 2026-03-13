@@ -40,8 +40,14 @@ import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.DocumentSourceDto
 import tech.dokus.domain.model.DocumentMatchReviewSummaryDto
 import tech.dokus.domain.model.FinancialLineItem
+import tech.dokus.domain.model.BankStatementDraftData
+import tech.dokus.domain.model.CreditNoteDraftData
+import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.PartyDraft
+import tech.dokus.domain.model.ReceiptDraftData
+import tech.dokus.domain.model.toDocumentType
+import tech.dokus.domain.model.toEmptyDraftData
 import tech.dokus.domain.model.contact.CounterpartyInfo
 import tech.dokus.domain.model.contact.CounterpartySnapshot
 import tech.dokus.domain.model.contact.PostalAddress
@@ -300,6 +306,183 @@ internal fun previewPaymentSheetState(
             null
         },
     )
+}
+
+internal fun previewStateForDocumentType(
+    documentType: DocumentType,
+): DocumentReviewState {
+    val tenantId = previewTenantId
+    val documentId = previewDocumentId
+    val draftData = previewDraftData(documentType)
+    val resolvedType = draftData.toDocumentType()
+
+    val hasFinancialEntry = resolvedType == DocumentType.Invoice ||
+        resolvedType == DocumentType.CreditNote ||
+        resolvedType == DocumentType.Receipt
+
+    val draft = DocumentDraftDto(
+        documentId = documentId,
+        tenantId = tenantId,
+        documentStatus = if (resolvedType.supported) DocumentStatus.Confirmed else DocumentStatus.Confirmed,
+        documentType = resolvedType,
+        direction = when (draftData) {
+            is InvoiceDraftData -> draftData.direction
+            is CreditNoteDraftData -> draftData.direction
+            is ReceiptDraftData -> draftData.direction
+            is BankStatementDraftData -> draftData.direction
+            else -> DocumentDirection.Unknown
+        },
+        extractedData = draftData,
+        aiDraftSourceRunId = null,
+        draftVersion = 1,
+        draftEditedAt = null,
+        draftEditedBy = null,
+        counterparty = CounterpartyInfo.Unresolved(
+            snapshot = CounterpartySnapshot(name = "KBC Bank NV"),
+        ),
+        counterpartyDisplayName = "KBC Bank NV",
+        lastSuccessfulRunId = null,
+        createdAt = previewNow,
+        updatedAt = previewNow,
+    )
+
+    val cashflowEntry = if (hasFinancialEntry) {
+        CashflowEntry(
+            id = CashflowEntryId.generate(),
+            tenantId = tenantId,
+            sourceType = CashflowSourceType.Invoice,
+            sourceId = "DOC-${resolvedType.dbValue}",
+            documentId = documentId,
+            direction = CashflowDirection.Out,
+            eventDate = previewDueDate,
+            amountGross = Money.from("289.00")!!,
+            amountVat = Money.from("49.33")!!,
+            remainingAmount = Money.from("289.00")!!,
+            currency = Currency.Eur,
+            status = CashflowEntryStatus.Open,
+            paidAt = null,
+            contactId = null,
+            contactName = "KBC Bank NV",
+            description = "Preview - ${resolvedType.name}",
+            createdAt = previewNow,
+            updatedAt = previewNow,
+        )
+    } else {
+        null
+    }
+
+    val record = DocumentDetailDto(
+        document = DocumentDto(
+            id = documentId,
+            tenantId = tenantId,
+            filename = "${resolvedType.dbValue.lowercase()}_sample.pdf",
+            effectiveOrigin = DocumentSource.Upload,
+            uploadedAt = previewNow,
+        ),
+        draft = draft,
+        latestIngestion = null,
+        confirmedEntity = null,
+        cashflowEntryId = cashflowEntry?.id,
+        pendingMatchReview = null,
+        sources = listOf(
+            DocumentSourceDto(
+                id = DocumentSourceId.generate(),
+                tenantId = tenantId,
+                documentId = documentId,
+                blobId = DocumentBlobId.generate(),
+                sourceChannel = DocumentSource.Upload,
+                arrivalAt = previewNow,
+                filename = "${resolvedType.dbValue.lowercase()}_sample.pdf",
+                contentType = "application/pdf",
+                sizeBytes = 248_200,
+                status = DocumentSourceStatus.Linked,
+                matchType = null,
+            ),
+        ),
+    )
+
+    return DocumentReviewState(
+        document = DokusState.success(
+            ReviewDocumentData(
+                documentId = documentId,
+                documentRecord = record,
+                draftData = draftData,
+                originalData = draftData,
+                previewUrl = null,
+                contactSuggestions = emptyList(),
+            )
+        ),
+        previewState = DocumentPreviewState.Ready(
+            pages = listOf(DocumentPagePreviewDto(page = 1, imageUrl = "/api/v1/documents/preview/pages/1.png")),
+            totalPages = 1,
+            renderedPages = 1,
+            dpi = 180,
+            hasMore = false,
+        ),
+        hasUnsavedChanges = false,
+        isDocumentConfirmed = true,
+        isDocumentRejected = false,
+        confirmedCashflowEntryId = cashflowEntry?.id,
+        cashflowEntryState = cashflowEntry?.let { DokusState.success(it) } ?: DokusState.idle(),
+        autoPaymentStatus = DokusState.idle(),
+        isUndoingAutoPayment = false,
+        sourceViewerState = null,
+        paymentSheetState = null,
+        isPendingCreation = false,
+        today = LocalDate(2026, 3, 1),
+    )
+}
+
+@Suppress("CyclomaticComplexMethod")
+private fun previewDraftData(type: DocumentType): DocumentDraftData = when (type) {
+    DocumentType.Invoice -> InvoiceDraftData(
+        direction = DocumentDirection.Inbound,
+        invoiceNumber = "384421507",
+        issueDate = previewIssueDate,
+        dueDate = previewDueDate,
+        currency = Currency.Eur,
+        subtotalAmount = Money.from("239.67"),
+        vatAmount = Money.from("49.33"),
+        totalAmount = Money.from("289.00"),
+        lineItems = listOf(
+            FinancialLineItem(description = "Insurance premium - Q1 2026", quantity = 1, netAmount = 28900),
+        ),
+        notes = "Insurance premium - Q1 2026",
+        seller = PartyDraft(name = "KBC Bank NV"),
+    )
+    DocumentType.CreditNote -> CreditNoteDraftData(
+        direction = DocumentDirection.Inbound,
+        creditNoteNumber = "CN-2026-0042",
+        issueDate = previewIssueDate,
+        originalInvoiceNumber = "384421507",
+        currency = Currency.Eur,
+        subtotalAmount = Money.from("82.64"),
+        vatAmount = Money.from("17.36"),
+        totalAmount = Money.from("100.00"),
+        lineItems = listOf(
+            FinancialLineItem(description = "Pricing correction", quantity = 1, netAmount = 10000),
+        ),
+        reason = "Pricing correction",
+        seller = PartyDraft(name = "KBC Bank NV"),
+    )
+    DocumentType.Receipt -> ReceiptDraftData(
+        receiptNumber = "R-2026-0199",
+        date = previewIssueDate,
+        totalAmount = Money.from("45.50"),
+        vatAmount = Money.from("7.89"),
+        currency = Currency.Eur,
+        notes = "Office supplies",
+    )
+    DocumentType.BankStatement -> BankStatementDraftData(
+        accountIban = Iban("BE68539007547034"),
+        periodStart = previewIssueDate,
+        periodEnd = previewDueDate,
+    )
+    DocumentType.Unknown -> InvoiceDraftData(
+        direction = DocumentDirection.Unknown,
+        currency = Currency.Eur,
+    )
+    else -> type.toEmptyDraftData()
 }
 
 internal fun previewImportedTransactions(): List<BankTransactionDto> = listOf(
