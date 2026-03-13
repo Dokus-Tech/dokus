@@ -18,40 +18,28 @@ import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.slf4j.MDC
-import tech.dokus.backend.services.banking.BankStatementProcessingService
-import tech.dokus.backend.services.banking.StatementDedupService.StatementDedupOutcome
-import tech.dokus.backend.services.cashflow.BankStatementMatchingService
-import tech.dokus.backend.services.documents.AutoConfirmPolicy
-import tech.dokus.backend.services.documents.ContactResolutionService
 import tech.dokus.backend.services.documents.DocumentIntakeServiceResult
-import tech.dokus.backend.services.documents.DocumentPurposeService
-import tech.dokus.backend.services.documents.DocumentTruthService
-import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
+import tech.dokus.backend.services.documents.postextraction.PostExtractionContext
+import tech.dokus.backend.services.documents.postextraction.PostExtractionOrchestrator
+import tech.dokus.backend.services.documents.postextraction.PostExtractionOutcome
 import tech.dokus.backend.services.documents.sse.DocumentSsePublisher
 import tech.dokus.database.entity.IngestionItemEntity
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.processor.ProcessorIngestionRepository
-import tech.dokus.domain.enums.ContactLinkSource
 import tech.dokus.domain.enums.DocumentSource
-import tech.dokus.domain.model.contact.CounterpartyInfo
-import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.enums.SourceTrust
-import tech.dokus.domain.model.BankStatementDraftData
 import tech.dokus.domain.model.buildProvenance
-import tech.dokus.domain.model.contact.ContactResolution
 import tech.dokus.domain.processing.DocumentProcessingConstants
 import tech.dokus.domain.utils.json
 import tech.dokus.features.ai.agents.DocumentProcessingAgent
 import tech.dokus.features.ai.graph.AcceptDocumentInput
-import tech.dokus.features.ai.models.DirectionResolutionSource
 import tech.dokus.features.ai.models.FinancialExtractionResult
 import tech.dokus.features.ai.models.confidenceScore
-import tech.dokus.features.ai.models.toAuthoritativeCounterpartySnapshot
 import tech.dokus.features.ai.models.toDraftData
 import tech.dokus.features.ai.models.toProcessingOutcome
 import tech.dokus.features.ai.queue.LlmQueue
@@ -77,23 +65,16 @@ import kotlin.time.Duration
  * - Graceful shutdown support
  * - Example-based few-shot learning for repeat vendors
  */
-@Suppress("LongParameterList")
 internal class DocumentProcessingWorker(
     private val ingestionRepository: ProcessorIngestionRepository,
     private val processingAgent: DocumentProcessingAgent,
-    private val contactResolutionService: ContactResolutionService,
-    private val purposeService: DocumentPurposeService,
-    private val documentTruthService: DocumentTruthService,
     private val documentRepository: DocumentRepository,
-    private val bankStatementProcessingService: BankStatementProcessingService,
-    private val bankStatementMatchingService: BankStatementMatchingService,
-    private val autoConfirmPolicy: AutoConfirmPolicy,
-    private val confirmationDispatcher: DocumentConfirmationDispatcher,
     private val documentSsePublisher: DocumentSsePublisher,
     private val config: ProcessorConfig,
     private val tenantRepository: TenantRepository,
     private val userRepository: UserRepository,
     private val llmQueue: LlmQueue,
+    private val postExtractionOrchestrator: PostExtractionOrchestrator,
 ) {
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
@@ -463,293 +444,36 @@ internal class DocumentProcessingWorker(
                 fieldProvenance = provenance
             )
 
-            // Unsupported types: auto-confirm immediately, skip contact/purpose enrichment
-            if (draftData != null && !documentType.supported) {
-                documentRepository.updateDocumentStatus(
-                    documentId = documentId,
-                    tenantId = parsedTenantId,
-                    status = DocumentStatus.Confirmed
-                )
-                documentSsePublisher.publishDocumentChanged(parsedTenantId, documentId)
-                return AttemptResult.Succeeded
-            }
+            val postExtractionContext = PostExtractionContext(
+                tenantId = parsedTenantId,
+                documentId = documentId,
+                sourceId = ingestion.sourceId,
+                sourceChannel = sourceChannel,
+                documentType = documentType,
+                draftData = draftData,
+                confidence = confidence,
+                auditPassed = result.auditReport.isValid,
+                directionSource = result.directionResolution.source,
+                extraction = result.extraction,
+                tenantVat = tenant.vatNumber,
+            )
+            val outcome = postExtractionOrchestrator.orchestrate(postExtractionContext)
 
-            if (draftData != null) {
-                val matchOutcome = documentTruthService.applyPostExtractionMatching(
-                    tenantId = parsedTenantId,
-                    documentId = documentId,
-                    sourceId = ingestion.sourceId,
-                    draftData = draftData,
-                    extractedSnapshotJson = json.encodeToString(draftData)
-                )
-                if (matchOutcome.documentId != documentId ||
-                    matchOutcome.resolution is tech.dokus.backend.services.documents.IntakeResolution.NeedsReview
-                ) {
-                    logger.info(
-                        "Document {} source {} resolved by truth matcher: resolution={}, target={}",
-                        documentId,
-                        ingestion.sourceId,
-                        matchOutcome.resolution,
-                        matchOutcome.documentId
-                    )
+            when (outcome) {
+                is PostExtractionOutcome.TruthResolved -> {
                     publishResolvedDocumentState(
                         tenantId = parsedTenantId,
                         originalDocumentId = documentId,
-                        matchOutcome = matchOutcome
+                        matchOutcome = outcome.matchOutcome,
                     )
-                    return AttemptResult.Succeeded
                 }
-
-                if (draftData is BankStatementDraftData) {
-                    val bankProcessing = bankStatementProcessingService.process(
-                        tenantId = parsedTenantId,
-                        documentId = documentId,
-                        sourceId = ingestion.sourceId,
-                        draftData = draftData,
-                    )
-                    if (bankProcessing.dedupOutcome is StatementDedupOutcome.Skip) {
-                        logger.info("Bank statement {} skipped (duplicate)", documentId)
-                        documentSsePublisher.publishDocumentChanged(parsedTenantId, documentId)
-                        return AttemptResult.Succeeded
-                    }
-                    val targetStatus = DocumentStatus.NeedsReview
-                    documentRepository.updateExtractedDataAndStatus(
-                        documentId = documentId,
-                        tenantId = parsedTenantId,
-                        extractedData = bankProcessing.sanitizedDraft,
-                        status = targetStatus,
-                    )
-                    if (bankProcessing.validRows > 0) {
-                        runSuspendCatching {
-                            bankStatementMatchingService.runMatching(
-                                tenantId = parsedTenantId,
-                                documentId = documentId,
-                            )
-                        }.onFailure {
-                            logger.warn(
-                                "Bank statement matching failed for {}: {}",
-                                documentId,
-                                it.message,
-                            )
-                        }
-                    }
-                    // Contact resolution for bank institution
-                    val authoritativeSnapshot = result.extraction.toAuthoritativeCounterpartySnapshot()
-                    if (authoritativeSnapshot != null) {
-                        runSuspendCatching {
-                            val resolution = contactResolutionService.resolve(
-                                tenantId = parsedTenantId,
-                                draftData = bankProcessing.sanitizedDraft,
-                                authoritativeSnapshot = authoritativeSnapshot,
-                                tenantVat = tenant.vatNumber
-                            )
-                            when (val decision = resolution.resolution) {
-                                is ContactResolution.Matched -> {
-                                    documentRepository.updateContactResolution(
-                                        documentId = documentId,
-                                        tenantId = parsedTenantId,
-                                        counterpartySnapshot = resolution.snapshot,
-                                        counterparty = CounterpartyInfo.Linked(
-                                            contactId = decision.contactId,
-                                            source = ContactLinkSource.AI,
-                                            evidence = decision.evidence,
-                                        )
-                                    )
-                                }
-                                is ContactResolution.AutoCreate -> {
-                                    val contactId = contactResolutionService.createContactFromResolution(
-                                        tenantId = parsedTenantId,
-                                        resolution = decision
-                                    )
-                                    documentRepository.updateContactResolution(
-                                        documentId = documentId,
-                                        tenantId = parsedTenantId,
-                                        counterpartySnapshot = resolution.snapshot,
-                                        counterparty = if (contactId != null) {
-                                            CounterpartyInfo.Linked(
-                                                contactId = contactId,
-                                                source = ContactLinkSource.AI,
-                                                evidence = decision.evidence,
-                                            )
-                                        } else {
-                                            CounterpartyInfo.Unresolved(snapshot = resolution.snapshot)
-                                        }
-                                    )
-                                }
-                                is ContactResolution.Suggested -> {
-                                    documentRepository.updateContactResolution(
-                                        documentId = documentId,
-                                        tenantId = parsedTenantId,
-                                        counterpartySnapshot = resolution.snapshot,
-                                        counterparty = CounterpartyInfo.Unresolved(
-                                            suggestions = decision.candidates,
-                                        )
-                                    )
-                                }
-                                is ContactResolution.PendingReview -> {
-                                    documentRepository.updateContactResolution(
-                                        documentId = documentId,
-                                        tenantId = parsedTenantId,
-                                        counterpartySnapshot = resolution.snapshot,
-                                        counterparty = CounterpartyInfo.Unresolved()
-                                    )
-                                }
-                            }
-                        }.onFailure {
-                            logger.warn(
-                                "Contact resolution failed for bank statement {}: {}",
-                                documentId,
-                                it.message,
-                            )
-                        }
-                    }
-
-                    logger.info(
-                        "Processed bank statement {}: validRows={}, discardedRows={}, trust={}, dedup={}",
-                        documentId,
-                        bankProcessing.validRows,
-                        bankProcessing.discardedRows.size,
-                        bankProcessing.statementTrust,
-                        bankProcessing.dedupOutcome,
-                    )
+                is PostExtractionOutcome.UnsupportedConfirmed,
+                is PostExtractionOutcome.BankStatementProcessed,
+                is PostExtractionOutcome.StandardProcessed,
+                is PostExtractionOutcome.Skipped -> {
                     documentSsePublisher.publishDocumentChanged(parsedTenantId, documentId)
-                    return AttemptResult.Succeeded
-                }
-
-                // Ensure drafts start in NeedsReview; auto-confirm will set Confirmed explicitly.
-                documentRepository.updateDocumentStatus(
-                    documentId = documentId,
-                    tenantId = parsedTenantId,
-                    status = DocumentStatus.NeedsReview
-                )
-
-                var linkedContactId: tech.dokus.domain.ids.ContactId? = null
-                val authoritativeSnapshot = result.extraction.toAuthoritativeCounterpartySnapshot()
-                if (authoritativeSnapshot == null) {
-                    logger.warn(
-                        "Missing authoritative counterparty snapshot for document {} in run {}; forcing PendingReview",
-                        documentId,
-                        runId
-                    )
-                    documentRepository.updateContactResolution(
-                        documentId = documentId,
-                        tenantId = parsedTenantId,
-                        counterpartySnapshot = null,
-                        counterparty = CounterpartyInfo.Unresolved()
-                    )
-                } else {
-                    val resolution = contactResolutionService.resolve(
-                        tenantId = parsedTenantId,
-                        draftData = draftData,
-                        authoritativeSnapshot = authoritativeSnapshot,
-                        tenantVat = tenant.vatNumber
-                    )
-                    when (val decision = resolution.resolution) {
-                        is ContactResolution.Matched -> {
-                            linkedContactId = decision.contactId
-                            documentRepository.updateContactResolution(
-                                documentId = documentId,
-                                tenantId = parsedTenantId,
-                                counterpartySnapshot = resolution.snapshot,
-                                counterparty = CounterpartyInfo.Linked(
-                                    contactId = decision.contactId,
-                                    source = ContactLinkSource.AI,
-                                    evidence = decision.evidence,
-                                )
-                            )
-                        }
-
-                        is ContactResolution.AutoCreate -> {
-                            val contactId = contactResolutionService.createContactFromResolution(
-                                tenantId = parsedTenantId,
-                                resolution = decision
-                            )
-                            linkedContactId = contactId
-                            documentRepository.updateContactResolution(
-                                documentId = documentId,
-                                tenantId = parsedTenantId,
-                                counterpartySnapshot = resolution.snapshot,
-                                counterparty = if (contactId != null) {
-                                    CounterpartyInfo.Linked(
-                                        contactId = contactId,
-                                        source = ContactLinkSource.AI,
-                                        evidence = decision.evidence,
-                                    )
-                                } else {
-                                    CounterpartyInfo.Unresolved(snapshot = resolution.snapshot)
-                                }
-                            )
-                        }
-
-                        is ContactResolution.Suggested -> {
-                            documentRepository.updateContactResolution(
-                                documentId = documentId,
-                                tenantId = parsedTenantId,
-                                counterpartySnapshot = resolution.snapshot,
-                                counterparty = CounterpartyInfo.Unresolved(
-                                    suggestions = decision.candidates,
-                                )
-                            )
-                        }
-
-                        is ContactResolution.PendingReview -> {
-                            documentRepository.updateContactResolution(
-                                documentId = documentId,
-                                tenantId = parsedTenantId,
-                                counterpartySnapshot = resolution.snapshot,
-                                counterparty = CounterpartyInfo.Unresolved()
-                            )
-                        }
-                    }
-                }
-
-                val currentDraft = documentRepository.getDraftByDocumentId(documentId, parsedTenantId)
-                if (currentDraft != null) {
-                    runSuspendCatching {
-                        purposeService.enrichAfterContactResolution(
-                            tenantId = parsedTenantId,
-                            documentId = documentId,
-                            documentType = documentType,
-                            draftData = draftData,
-                            linkedContactId = linkedContactId,
-                            currentDraft = currentDraft
-                        )
-                    }.onFailure { e ->
-                        logger.warn("Purpose enrichment failed for document {}, skipping", documentId, e)
-                    }
-                }
-
-                val canAutoConfirm = autoConfirmPolicy.canAutoConfirm(
-                    tenantId = parsedTenantId,
-                    documentId = documentId,
-                    source = sourceChannel,
-                    documentType = documentType,
-                    draftData = draftData,
-                    auditPassed = result.auditReport.isValid,
-                    confidence = confidence,
-                    contactId = linkedContactId,
-                    directionResolvedFromAiHintOnly = result.directionResolution.source == DirectionResolutionSource.AiHint
-                )
-
-                if (canAutoConfirm) {
-                    try {
-                        confirmationDispatcher.confirm(
-                            parsedTenantId,
-                            documentId,
-                            draftData,
-                            linkedContactId
-                        ).getOrThrow()
-                    } catch (e: Exception) {
-                        logger.error("Auto-confirm failed for document $documentId", e)
-                        documentRepository.updateDocumentStatus(
-                            documentId = documentId,
-                            tenantId = parsedTenantId,
-                            status = DocumentStatus.NeedsReview
-                        )
-                    }
                 }
             }
-            documentSsePublisher.publishDocumentChanged(parsedTenantId, documentId)
             return AttemptResult.Succeeded
         } catch (e: CancellationException) {
             if (!isRunning.get()) throw e
