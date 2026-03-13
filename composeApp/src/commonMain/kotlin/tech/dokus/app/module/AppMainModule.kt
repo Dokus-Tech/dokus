@@ -134,6 +134,7 @@ internal object AppMainModule : AppModule {
                     iconRes = Res.drawable.users,
                     destination = HomeDestination.Team,
                     priority = 20,
+                    shellTopBar = ShellTopBarDefault.Title,
                 ),
             ),
         ),

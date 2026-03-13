@@ -17,6 +17,7 @@ import tech.dokus.app.viewmodel.WorkspaceSettingsIntent
 import tech.dokus.app.viewmodel.WorkspaceSettingsSuccess
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.settings_saved_successfully
+import tech.dokus.aura.resources.workspace_settings_title
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.app.shell.HomeShellTopBarConfig
@@ -38,10 +39,12 @@ internal fun WorkspaceSettingsRoute(
     var pendingSuccess by remember { mutableStateOf<WorkspaceSettingsSuccess?>(null) }
     var pendingError by remember { mutableStateOf<DokusException?>(null) }
 
+    val workspaceTitle = stringResource(Res.string.workspace_settings_title)
+
     RegisterHomeShellTopBar(
         route = HomeDestination.WorkspaceDetails.route,
-        config = remember {
-            HomeShellTopBarConfig(mode = HomeShellTopBarMode.Transparent)
+        config = remember(workspaceTitle) {
+            HomeShellTopBarConfig(mode = HomeShellTopBarMode.Title(title = workspaceTitle))
         }
     )
 
