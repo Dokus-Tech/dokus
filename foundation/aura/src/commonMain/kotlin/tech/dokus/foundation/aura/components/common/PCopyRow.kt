@@ -13,11 +13,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.platform.LocalClipboard
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import tech.dokus.foundation.aura.createPlainTextClipEntry
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.components.DokusCardSurface
@@ -41,7 +43,8 @@ fun PCopyRow(
     copyText: String = "Copy",
     copiedText: String = "Copied",
 ) {
-    val clipboard = LocalClipboardManager.current
+    val clipboard = LocalClipboard.current
+    val scope = rememberCoroutineScope()
     var copied by remember { mutableStateOf(false) }
 
     LaunchedEffect(copied) {
@@ -77,7 +80,7 @@ fun PCopyRow(
 
             TextButton(
                 onClick = {
-                    clipboard.setText(AnnotatedString(value))
+                    scope.launch { clipboard.setClipEntry(createPlainTextClipEntry(value)) }
                     copied = true
                 }
             ) {

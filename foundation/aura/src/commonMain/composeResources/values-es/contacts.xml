@@ -61,6 +61,7 @@
     <string name="contacts_phone">Teléfono</string>
     <string name="contacts_vat_number">Número de IVA</string>
     <string name="contacts_company_number">Número de empresa</string>
+    <string name="contacts_iban">IBAN</string>
     <string name="contacts_address">Dirección</string>
     <string name="contacts_city">Ciudad</string>
     <string name="contacts_postal_code">Código postal</string>

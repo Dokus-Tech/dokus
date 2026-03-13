@@ -199,6 +199,18 @@ class ContactService(
             }
         }
 
+        // Update business profile (websiteUrl) if provided
+        if (!request.websiteUrl.isNullOrBlank()) {
+            runCatching {
+                businessProfileService.updateContactProfile(
+                    tenantId, contactId,
+                    UpdateBusinessProfileRequest(websiteUrl = request.websiteUrl)
+                )
+            }.onFailure { error ->
+                logger.warn("Failed to update business profile websiteUrl for {}: {}", contactId, error.message)
+            }
+        }
+
         return contactRepository.updateContact(contactId, tenantId, request)
             .map { updated ->
                 val matchingRelevantChange = before?.let {
