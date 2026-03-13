@@ -366,8 +366,13 @@ private fun InspectorHeader(
             CompressedStatusLine(state)
         }
 
-        val isBankStatement = state.uiData is DocumentUiData.BankStatement
-        if (!isBankStatement && !isAccountantReadOnly && !state.isDocumentConfirmed && !state.isDocumentRejected &&
+        val supportsManualConfirm = when (state.uiData) {
+            is DocumentUiData.Invoice,
+            is DocumentUiData.CreditNote,
+            is DocumentUiData.Receipt -> true
+            else -> false
+        }
+        if (supportsManualConfirm && !isAccountantReadOnly && !state.isDocumentConfirmed && !state.isDocumentRejected &&
             state.financialStatus == ReviewFinancialStatus.Review
         ) {
             PButton(
@@ -376,7 +381,7 @@ private fun InspectorHeader(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = { onIntent(DocumentReviewIntent.Confirm) },
             )
-        } else if (!isBankStatement && !isAccountantReadOnly && state.canRecordPayment) {
+        } else if (supportsManualConfirm && !isAccountantReadOnly && state.canRecordPayment) {
             PButton(
                 text = "Record payment",
                 variant = PButtonVariant.Outline,

@@ -75,8 +75,14 @@ internal fun ReviewTopBar(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
-                    // Understanding line: amount + status (skip for non-financial types like BankStatement)
-                    if (state.hasContent && state.totalAmount != null) {
+                    // Understanding line: amount + status — only for financial document types
+                    val showAmountLine = state.hasContent && when (state.uiData) {
+                        is DocumentUiData.Invoice,
+                        is DocumentUiData.CreditNote,
+                        is DocumentUiData.Receipt -> true
+                        else -> false
+                    }
+                    if (showAmountLine) {
                         UnderstandingLine(
                             totalAmount = state.totalAmount?.toDisplayString(),
                             isBlocking = state.isBlocking,
@@ -90,11 +96,16 @@ internal fun ReviewTopBar(
                 PBackButton(onBackPress = onBackClick)
             },
             actions = {
-                val isBankStatement = state.uiData is DocumentUiData.BankStatement
+                val supportsManualConfirm = when (state.uiData) {
+                    is DocumentUiData.Invoice,
+                    is DocumentUiData.CreditNote,
+                    is DocumentUiData.Receipt -> true
+                    else -> false
+                }
                 val showActions = state.hasContent &&
                     isLargeScreen &&
                     !isAccountantReadOnly &&
-                    !isBankStatement &&
+                    supportsManualConfirm &&
                     !state.isDocumentConfirmed &&
                     !state.isDocumentRejected
                 if (showActions) {
