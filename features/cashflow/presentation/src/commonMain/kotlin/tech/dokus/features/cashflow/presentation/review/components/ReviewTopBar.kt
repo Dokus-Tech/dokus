@@ -37,6 +37,7 @@ import tech.dokus.aura.resources.cashflow_needs_input
 import tech.dokus.aura.resources.cashflow_somethings_wrong
 import tech.dokus.aura.resources.state_confirming
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
+import tech.dokus.features.cashflow.presentation.review.models.DocumentUiData
 import tech.dokus.foundation.aura.components.PBackButton
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.constrains.Constraints
@@ -74,8 +75,8 @@ internal fun ReviewTopBar(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
-                    // Understanding line: amount + status
-                    if (state.hasContent) {
+                    // Understanding line: amount + status (skip for non-financial types like BankStatement)
+                    if (state.hasContent && state.totalAmount != null) {
                         UnderstandingLine(
                             totalAmount = state.totalAmount?.toDisplayString(),
                             isBlocking = state.isBlocking,
@@ -89,9 +90,11 @@ internal fun ReviewTopBar(
                 PBackButton(onBackPress = onBackClick)
             },
             actions = {
+                val isBankStatement = state.uiData is DocumentUiData.BankStatement
                 val showActions = state.hasContent &&
                     isLargeScreen &&
                     !isAccountantReadOnly &&
+                    !isBankStatement &&
                     !state.isDocumentConfirmed &&
                     !state.isDocumentRejected
                 if (showActions) {

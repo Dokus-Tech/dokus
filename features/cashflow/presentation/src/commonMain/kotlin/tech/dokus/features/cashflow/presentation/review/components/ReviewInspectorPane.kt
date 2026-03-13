@@ -85,7 +85,7 @@ internal fun ReviewInspectorPane(
                 is DocumentUiData.Invoice -> InspectorBody(state, uiData, isAccountantReadOnly, onIntent, onCorrectContact, onCreateContact)
                 is DocumentUiData.CreditNote -> InspectorBody(state, uiData, isAccountantReadOnly, onIntent, onCorrectContact, onCreateContact)
                 is DocumentUiData.Receipt -> InspectorBody(state, uiData, isAccountantReadOnly, onIntent, onCorrectContact, onCreateContact)
-                is DocumentUiData.BankStatement -> InspectorBody(state, uiData, onIntent)
+                is DocumentUiData.BankStatement -> InspectorBody(state, uiData, isAccountantReadOnly, onIntent, onCorrectContact, onCreateContact)
                 // --- Classified-only document types ---
                 is DocumentUiData.ProForma -> ClassifiedOnlyInspectorBody(uiData.documentType)
                 is DocumentUiData.Quote -> ClassifiedOnlyInspectorBody(uiData.documentType)
@@ -273,8 +273,19 @@ private fun InspectorBody(
 private fun InspectorBody(
     state: DocumentReviewState,
     data: DocumentUiData.BankStatement,
+    isAccountantReadOnly: Boolean,
     onIntent: (DocumentReviewIntent) -> Unit,
+    onCorrectContact: () -> Unit,
+    onCreateContact: () -> Unit,
 ) {
+    InspectorFactGroupCard {
+        CounterpartyCard(
+            state = state,
+            onIntent = onIntent,
+            onCorrectContact = onCorrectContact,
+            onCreateContact = onCreateContact,
+        )
+    }
     InspectorFactGroupCard {
         DocumentDetailsCard(data = data)
     }
@@ -355,7 +366,8 @@ private fun InspectorHeader(
             CompressedStatusLine(state)
         }
 
-        if (!isAccountantReadOnly && !state.isDocumentConfirmed && !state.isDocumentRejected &&
+        val isBankStatement = state.uiData is DocumentUiData.BankStatement
+        if (!isBankStatement && !isAccountantReadOnly && !state.isDocumentConfirmed && !state.isDocumentRejected &&
             state.financialStatus == ReviewFinancialStatus.Review
         ) {
             PButton(
@@ -364,7 +376,7 @@ private fun InspectorHeader(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = { onIntent(DocumentReviewIntent.Confirm) },
             )
-        } else if (!isAccountantReadOnly && state.canRecordPayment) {
+        } else if (!isBankStatement && !isAccountantReadOnly && state.canRecordPayment) {
             PButton(
                 text = "Record payment",
                 variant = PButtonVariant.Outline,
