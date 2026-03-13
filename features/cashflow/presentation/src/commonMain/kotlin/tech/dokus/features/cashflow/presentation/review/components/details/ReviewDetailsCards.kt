@@ -42,6 +42,7 @@ import tech.dokus.aura.resources.cashflow_bank_statement_details_section
 import tech.dokus.aura.resources.common_date
 import tech.dokus.aura.resources.contacts_address
 import tech.dokus.aura.resources.contacts_vat_number
+import tech.dokus.aura.resources.document_type_classified_placeholder
 import tech.dokus.aura.resources.document_type_credit_note
 import tech.dokus.aura.resources.document_type_invoice
 import tech.dokus.aura.resources.document_type_receipt
@@ -52,6 +53,7 @@ import tech.dokus.aura.resources.invoice_issue_date
 import tech.dokus.aura.resources.workspace_iban
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentType
+import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.features.cashflow.presentation.review.ContactSelectionState
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
@@ -238,6 +240,55 @@ internal fun DocumentDetailsCard(
         is DocumentUiData.CreditNote -> DocumentDetailsCard(uiData, isReadOnly, onDirectionSelected, modifier)
         is DocumentUiData.Receipt -> DocumentDetailsCard(uiData, modifier)
         is DocumentUiData.BankStatement -> DocumentDetailsCard(uiData, modifier)
+        // --- Classified-only document types ---
+        is DocumentUiData.ProForma -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
+        is DocumentUiData.Quote -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
+        is DocumentUiData.OrderConfirmation -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
+        is DocumentUiData.DeliveryNote -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
+        is DocumentUiData.Reminder -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
+        is DocumentUiData.StatementOfAccount -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
+        is DocumentUiData.PurchaseOrder -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
+        is DocumentUiData.ExpenseClaim -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
+        is DocumentUiData.BankFee -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
+        is DocumentUiData.InterestStatement -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
+        is DocumentUiData.PaymentConfirmation -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
+        is DocumentUiData.VatReturn -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
+        is DocumentUiData.VatListing -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
+        is DocumentUiData.VatAssessment -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
+        is DocumentUiData.IcListing -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
+        is DocumentUiData.OssReturn -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
+        is DocumentUiData.CorporateTax -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
+        is DocumentUiData.CorporateTaxAdvance -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
+        is DocumentUiData.TaxAssessment -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
+        is DocumentUiData.PersonalTax -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
+        is DocumentUiData.WithholdingTax -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
+        is DocumentUiData.SocialContribution -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
+        is DocumentUiData.SocialFund -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
+        is DocumentUiData.SelfEmployedContribution -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
+        is DocumentUiData.Vapz -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
+        is DocumentUiData.SalarySlip -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
+        is DocumentUiData.PayrollSummary -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
+        is DocumentUiData.EmploymentContract -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
+        is DocumentUiData.Dimona -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
+        is DocumentUiData.C4 -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
+        is DocumentUiData.HolidayPay -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
+        is DocumentUiData.Contract -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
+        is DocumentUiData.Lease -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
+        is DocumentUiData.Loan -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
+        is DocumentUiData.Insurance -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
+        is DocumentUiData.Dividend -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
+        is DocumentUiData.ShareholderRegister -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
+        is DocumentUiData.CompanyExtract -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
+        is DocumentUiData.AnnualAccounts -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
+        is DocumentUiData.BoardMinutes -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
+        is DocumentUiData.Subsidy -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
+        is DocumentUiData.Fine -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
+        is DocumentUiData.Permit -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
+        is DocumentUiData.CustomsDeclaration -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
+        is DocumentUiData.Intrastat -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
+        is DocumentUiData.DepreciationSchedule -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
+        is DocumentUiData.Inventory -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
+        is DocumentUiData.Other -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
     }
 }
 
@@ -362,6 +413,21 @@ internal fun UnknownDocumentDetailsCard(
                 }
             }
         }
+    }
+}
+
+@Composable
+internal fun ClassifiedOnlyDetailsCard(
+    documentType: DocumentType,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        MicroLabel(text = documentType.localized)
+        Text(
+            text = stringResource(Res.string.document_type_classified_placeholder),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 

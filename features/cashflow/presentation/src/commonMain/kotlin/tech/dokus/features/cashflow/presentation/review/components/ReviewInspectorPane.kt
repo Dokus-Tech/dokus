@@ -28,6 +28,8 @@ import tech.dokus.features.cashflow.presentation.review.ReviewFinancialStatus
 import tech.dokus.features.cashflow.presentation.review.compressedStatusDetailLocalized
 import tech.dokus.features.cashflow.presentation.review.dotType
 import tech.dokus.features.cashflow.presentation.review.statusBadgeLocalized
+import tech.dokus.domain.enums.DocumentType
+import tech.dokus.features.cashflow.presentation.review.components.details.ClassifiedOnlyDetailsCard
 import tech.dokus.features.cashflow.presentation.review.components.details.CounterpartyCard
 import tech.dokus.features.cashflow.presentation.review.components.details.DocumentDetailsCard
 import tech.dokus.features.cashflow.presentation.review.components.details.UnknownDocumentDetailsCard
@@ -83,7 +85,56 @@ internal fun ReviewInspectorPane(
                 is DocumentUiData.Invoice -> InspectorBody(state, uiData, isAccountantReadOnly, onIntent, onCorrectContact, onCreateContact)
                 is DocumentUiData.CreditNote -> InspectorBody(state, uiData, isAccountantReadOnly, onIntent, onCorrectContact, onCreateContact)
                 is DocumentUiData.Receipt -> InspectorBody(state, uiData, isAccountantReadOnly, onIntent, onCorrectContact, onCreateContact)
-                is DocumentUiData.BankStatement -> InspectorBody(state, uiData, onIntent)
+                is DocumentUiData.BankStatement -> InspectorBody(state, uiData, isAccountantReadOnly, onIntent, onCorrectContact, onCreateContact)
+                // --- Classified-only document types ---
+                is DocumentUiData.ProForma -> ClassifiedOnlyInspectorBody(uiData.documentType)
+                is DocumentUiData.Quote -> ClassifiedOnlyInspectorBody(uiData.documentType)
+                is DocumentUiData.OrderConfirmation -> ClassifiedOnlyInspectorBody(uiData.documentType)
+                is DocumentUiData.DeliveryNote -> ClassifiedOnlyInspectorBody(uiData.documentType)
+                is DocumentUiData.Reminder -> ClassifiedOnlyInspectorBody(uiData.documentType)
+                is DocumentUiData.StatementOfAccount -> ClassifiedOnlyInspectorBody(uiData.documentType)
+                is DocumentUiData.PurchaseOrder -> ClassifiedOnlyInspectorBody(uiData.documentType)
+                is DocumentUiData.ExpenseClaim -> ClassifiedOnlyInspectorBody(uiData.documentType)
+                is DocumentUiData.BankFee -> ClassifiedOnlyInspectorBody(uiData.documentType)
+                is DocumentUiData.InterestStatement -> ClassifiedOnlyInspectorBody(uiData.documentType)
+                is DocumentUiData.PaymentConfirmation -> ClassifiedOnlyInspectorBody(uiData.documentType)
+                is DocumentUiData.VatReturn -> ClassifiedOnlyInspectorBody(uiData.documentType)
+                is DocumentUiData.VatListing -> ClassifiedOnlyInspectorBody(uiData.documentType)
+                is DocumentUiData.VatAssessment -> ClassifiedOnlyInspectorBody(uiData.documentType)
+                is DocumentUiData.IcListing -> ClassifiedOnlyInspectorBody(uiData.documentType)
+                is DocumentUiData.OssReturn -> ClassifiedOnlyInspectorBody(uiData.documentType)
+                is DocumentUiData.CorporateTax -> ClassifiedOnlyInspectorBody(uiData.documentType)
+                is DocumentUiData.CorporateTaxAdvance -> ClassifiedOnlyInspectorBody(uiData.documentType)
+                is DocumentUiData.TaxAssessment -> ClassifiedOnlyInspectorBody(uiData.documentType)
+                is DocumentUiData.PersonalTax -> ClassifiedOnlyInspectorBody(uiData.documentType)
+                is DocumentUiData.WithholdingTax -> ClassifiedOnlyInspectorBody(uiData.documentType)
+                is DocumentUiData.SocialContribution -> ClassifiedOnlyInspectorBody(uiData.documentType)
+                is DocumentUiData.SocialFund -> ClassifiedOnlyInspectorBody(uiData.documentType)
+                is DocumentUiData.SelfEmployedContribution -> ClassifiedOnlyInspectorBody(uiData.documentType)
+                is DocumentUiData.Vapz -> ClassifiedOnlyInspectorBody(uiData.documentType)
+                is DocumentUiData.SalarySlip -> ClassifiedOnlyInspectorBody(uiData.documentType)
+                is DocumentUiData.PayrollSummary -> ClassifiedOnlyInspectorBody(uiData.documentType)
+                is DocumentUiData.EmploymentContract -> ClassifiedOnlyInspectorBody(uiData.documentType)
+                is DocumentUiData.Dimona -> ClassifiedOnlyInspectorBody(uiData.documentType)
+                is DocumentUiData.C4 -> ClassifiedOnlyInspectorBody(uiData.documentType)
+                is DocumentUiData.HolidayPay -> ClassifiedOnlyInspectorBody(uiData.documentType)
+                is DocumentUiData.Contract -> ClassifiedOnlyInspectorBody(uiData.documentType)
+                is DocumentUiData.Lease -> ClassifiedOnlyInspectorBody(uiData.documentType)
+                is DocumentUiData.Loan -> ClassifiedOnlyInspectorBody(uiData.documentType)
+                is DocumentUiData.Insurance -> ClassifiedOnlyInspectorBody(uiData.documentType)
+                is DocumentUiData.Dividend -> ClassifiedOnlyInspectorBody(uiData.documentType)
+                is DocumentUiData.ShareholderRegister -> ClassifiedOnlyInspectorBody(uiData.documentType)
+                is DocumentUiData.CompanyExtract -> ClassifiedOnlyInspectorBody(uiData.documentType)
+                is DocumentUiData.AnnualAccounts -> ClassifiedOnlyInspectorBody(uiData.documentType)
+                is DocumentUiData.BoardMinutes -> ClassifiedOnlyInspectorBody(uiData.documentType)
+                is DocumentUiData.Subsidy -> ClassifiedOnlyInspectorBody(uiData.documentType)
+                is DocumentUiData.Fine -> ClassifiedOnlyInspectorBody(uiData.documentType)
+                is DocumentUiData.Permit -> ClassifiedOnlyInspectorBody(uiData.documentType)
+                is DocumentUiData.CustomsDeclaration -> ClassifiedOnlyInspectorBody(uiData.documentType)
+                is DocumentUiData.Intrastat -> ClassifiedOnlyInspectorBody(uiData.documentType)
+                is DocumentUiData.DepreciationSchedule -> ClassifiedOnlyInspectorBody(uiData.documentType)
+                is DocumentUiData.Inventory -> ClassifiedOnlyInspectorBody(uiData.documentType)
+                is DocumentUiData.Other -> ClassifiedOnlyInspectorBody(uiData.documentType)
                 null -> InspectorBody(state, isAccountantReadOnly, onIntent, onCorrectContact, onCreateContact)
             }
             InspectorSourcesSection(
@@ -222,10 +273,28 @@ private fun InspectorBody(
 private fun InspectorBody(
     state: DocumentReviewState,
     data: DocumentUiData.BankStatement,
+    isAccountantReadOnly: Boolean,
     onIntent: (DocumentReviewIntent) -> Unit,
+    onCorrectContact: () -> Unit,
+    onCreateContact: () -> Unit,
 ) {
     InspectorFactGroupCard {
+        CounterpartyCard(
+            state = state,
+            onIntent = onIntent,
+            onCorrectContact = onCorrectContact,
+            onCreateContact = onCreateContact,
+        )
+    }
+    InspectorFactGroupCard {
         DocumentDetailsCard(data = data)
+    }
+}
+
+@Composable
+private fun ClassifiedOnlyInspectorBody(documentType: DocumentType) {
+    InspectorFactGroupCard {
+        ClassifiedOnlyDetailsCard(documentType = documentType)
     }
 }
 
@@ -297,7 +366,13 @@ private fun InspectorHeader(
             CompressedStatusLine(state)
         }
 
-        if (!isAccountantReadOnly && !state.isDocumentConfirmed && !state.isDocumentRejected &&
+        val supportsManualConfirm = when (state.uiData) {
+            is DocumentUiData.Invoice,
+            is DocumentUiData.CreditNote,
+            is DocumentUiData.Receipt -> true
+            else -> false
+        }
+        if (supportsManualConfirm && !isAccountantReadOnly && !state.isDocumentConfirmed && !state.isDocumentRejected &&
             state.financialStatus == ReviewFinancialStatus.Review
         ) {
             PButton(
@@ -306,7 +381,7 @@ private fun InspectorHeader(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = { onIntent(DocumentReviewIntent.Confirm) },
             )
-        } else if (!isAccountantReadOnly && state.canRecordPayment) {
+        } else if (supportsManualConfirm && !isAccountantReadOnly && state.canRecordPayment) {
             PButton(
                 text = "Record payment",
                 variant = PButtonVariant.Outline,

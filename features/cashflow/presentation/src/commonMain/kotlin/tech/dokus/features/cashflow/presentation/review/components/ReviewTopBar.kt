@@ -37,6 +37,7 @@ import tech.dokus.aura.resources.cashflow_needs_input
 import tech.dokus.aura.resources.cashflow_somethings_wrong
 import tech.dokus.aura.resources.state_confirming
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
+import tech.dokus.features.cashflow.presentation.review.models.DocumentUiData
 import tech.dokus.foundation.aura.components.PBackButton
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.constrains.Constraints
@@ -74,8 +75,14 @@ internal fun ReviewTopBar(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
-                    // Understanding line: amount + status
-                    if (state.hasContent) {
+                    // Understanding line: amount + status — only for financial document types
+                    val showAmountLine = state.hasContent && when (state.uiData) {
+                        is DocumentUiData.Invoice,
+                        is DocumentUiData.CreditNote,
+                        is DocumentUiData.Receipt -> true
+                        else -> false
+                    }
+                    if (showAmountLine) {
                         UnderstandingLine(
                             totalAmount = state.totalAmount?.toDisplayString(),
                             isBlocking = state.isBlocking,
@@ -89,9 +96,16 @@ internal fun ReviewTopBar(
                 PBackButton(onBackPress = onBackClick)
             },
             actions = {
+                val supportsManualConfirm = when (state.uiData) {
+                    is DocumentUiData.Invoice,
+                    is DocumentUiData.CreditNote,
+                    is DocumentUiData.Receipt -> true
+                    else -> false
+                }
                 val showActions = state.hasContent &&
                     isLargeScreen &&
                     !isAccountantReadOnly &&
+                    supportsManualConfirm &&
                     !state.isDocumentConfirmed &&
                     !state.isDocumentRejected
                 if (showActions) {

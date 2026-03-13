@@ -6,6 +6,8 @@ import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.response.respond
+import io.ktor.util.cio.ChannelWriteException
+import io.ktor.utils.io.ClosedWriteChannelException
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.foundation.backend.utils.loggerFor
 import java.net.ConnectException
@@ -67,6 +69,14 @@ fun Application.configureErrorHandling() {
                 HttpStatusCode.GatewayTimeout,
                 DokusException.ConnectionError(cause.message ?: "Downstream service timed out"),
             )
+        }
+
+        // SSE client disconnects — channel is already closed, nothing to respond with
+        exception<ClosedWriteChannelException> { _, cause ->
+            logger.debug("SSE client disconnected: {}", cause.message)
+        }
+        exception<ChannelWriteException> { _, cause ->
+            logger.debug("SSE client disconnected: {}", cause.message)
         }
 
         exception<Throwable> { call, cause ->

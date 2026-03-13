@@ -36,6 +36,7 @@ fun mergeWithProvenance(
             mergeReceipt(existing, incoming, existingProvenance, incomingProvenance)
         existing is BankStatementDraftData && incoming is BankStatementDraftData ->
             mergeBankStatement(existing, incoming, existingProvenance, incomingProvenance)
+        // Classified-only types have only `direction` — incoming always wins
         else -> ProvenanceMergeResult(incoming, incomingProvenance)
     }
 }
@@ -54,7 +55,7 @@ fun diffFieldPaths(
             ?: updated.let { (it as? CreditNoteDraftData)?.let(::creditNotePopulated) }
             ?: updated.let { (it as? ReceiptDraftData)?.let(::receiptPopulated) }
             ?: updated.let { (it as? BankStatementDraftData)?.let(::bankStatementPopulated) }
-            ?: emptySet()
+            ?: classifiedOnlyPopulated(updated)
     }
     return when {
         existing is InvoiceDraftData && updated is InvoiceDraftData ->
@@ -65,7 +66,8 @@ fun diffFieldPaths(
             diffReceipt(existing, updated)
         existing is BankStatementDraftData && updated is BankStatementDraftData ->
             diffBankStatement(existing, updated)
-        else -> emptySet()
+        // Classified-only types: only direction can differ
+        else -> diffClassifiedOnly(existing.toDirection(), updated.toDirection())
     }
 }
 
@@ -204,6 +206,16 @@ private fun bankStatementPopulated(d: BankStatementDraftData): Set<String> = bui
     if (d.periodEnd != null) add("periodEnd")
     if (d.notes != null) add("notes")
 }
+
+/** Populated fields for classified-only types (direction is the only field). */
+private fun classifiedOnlyPopulated(@Suppress("UNUSED_PARAMETER") d: DocumentDraftData): Set<String> =
+    setOf("direction")
+
+/** Diff for classified-only types: only the direction field can differ. */
+private fun diffClassifiedOnly(
+    oldDirection: tech.dokus.domain.enums.DocumentDirection,
+    newDirection: tech.dokus.domain.enums.DocumentDirection,
+): Set<String> = if (oldDirection != newDirection) setOf("direction") else emptySet()
 
 private fun MutableSet<String>.addPopulatedParty(prefix: String, party: PartyDraft) {
     if (party.name != null) add("$prefix.name")

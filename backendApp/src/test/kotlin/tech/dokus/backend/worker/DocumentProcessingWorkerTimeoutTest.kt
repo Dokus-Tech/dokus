@@ -7,13 +7,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.junit.jupiter.api.Test
-import tech.dokus.backend.services.documents.AutoConfirmPolicy
-import tech.dokus.backend.services.cashflow.BankStatementMatchingService
-import tech.dokus.backend.services.banking.BankStatementProcessingService
-import tech.dokus.backend.services.documents.ContactResolutionService
-import tech.dokus.backend.services.documents.DocumentPurposeService
-import tech.dokus.backend.services.documents.DocumentTruthService
-import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
+import tech.dokus.backend.services.documents.postextraction.PostExtractionOrchestrator
 import tech.dokus.backend.services.documents.sse.DocumentSsePublisher
 import tech.dokus.database.entity.IngestionItemEntity
 import tech.dokus.database.repository.auth.TenantRepository
@@ -36,17 +30,11 @@ class DocumentProcessingWorkerTimeoutTest {
     fun `timed out run does not block other runs in same batch`() = runBlocking {
         val ingestionRepository = mockk<ProcessorIngestionRepository>()
         val processingAgent = mockk<DocumentProcessingAgent>()
-        val contactResolutionService = mockk<ContactResolutionService>(relaxed = true)
-        val purposeService = mockk<DocumentPurposeService>(relaxed = true)
         val documentRepository = mockk<DocumentRepository>(relaxed = true)
-        val documentTruthService = mockk<DocumentTruthService>(relaxed = true)
-        val bankStatementMatchingService = mockk<BankStatementMatchingService>(relaxed = true)
-        val bankStatementProcessingService = mockk<BankStatementProcessingService>(relaxed = true)
-        val autoConfirmPolicy = mockk<AutoConfirmPolicy>(relaxed = true)
-        val confirmationDispatcher = mockk<DocumentConfirmationDispatcher>(relaxed = true)
         val documentSsePublisher = mockk<DocumentSsePublisher>(relaxed = true)
         val tenantRepository = mockk<TenantRepository>()
         val userRepository = mockk<UserRepository>()
+        val postExtractionOrchestrator = mockk<PostExtractionOrchestrator>(relaxed = true)
 
         val firstRun = IngestionItemEntity(
             runId = IngestionRunId.generate(),
@@ -78,14 +66,7 @@ class DocumentProcessingWorkerTimeoutTest {
         val worker = DocumentProcessingWorker(
             ingestionRepository = ingestionRepository,
             processingAgent = processingAgent,
-            contactResolutionService = contactResolutionService,
-            purposeService = purposeService,
-            documentTruthService = documentTruthService,
             documentRepository = documentRepository,
-            bankStatementMatchingService = bankStatementMatchingService,
-            bankStatementProcessingService = bankStatementProcessingService,
-            autoConfirmPolicy = autoConfirmPolicy,
-            confirmationDispatcher = confirmationDispatcher,
             documentSsePublisher = documentSsePublisher,
             config = ProcessorConfig(
                 pollingInterval = 1_000,
@@ -94,7 +75,8 @@ class DocumentProcessingWorkerTimeoutTest {
             ),
             tenantRepository = tenantRepository,
             userRepository = userRepository,
-            llmQueue = llmQueue
+            llmQueue = llmQueue,
+            postExtractionOrchestrator = postExtractionOrchestrator,
         )
 
         try {

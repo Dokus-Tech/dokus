@@ -48,6 +48,11 @@ import tech.dokus.backend.services.contacts.ContactService
 import tech.dokus.backend.services.contacts.sse.ContactEventHub
 import tech.dokus.backend.services.contacts.sse.ContactSsePublisher
 import tech.dokus.backend.services.documents.AutoConfirmPolicy
+import tech.dokus.backend.services.documents.postextraction.AutoConfirmDocumentUseCase
+import tech.dokus.backend.services.documents.postextraction.EnrichDocumentPurposeUseCase
+import tech.dokus.backend.services.documents.postextraction.PostExtractionOrchestrator
+import tech.dokus.backend.services.documents.postextraction.ProcessBankStatementUseCase
+import tech.dokus.backend.services.documents.postextraction.ResolveDocumentContactUseCase
 import tech.dokus.backend.services.documents.ContactResolutionService
 import tech.dokus.backend.services.documents.resolution.CbeAutoCreateResolver
 import tech.dokus.backend.services.documents.resolution.ContactMatchingUtils
@@ -394,6 +399,13 @@ private fun documentProcessingModule() = module {
     singleOf(::AutoConfirmPolicy)
     singleOf(::DocumentPurposeSimilarityService)
     singleOf(::DocumentPurposeService)
+
+    // Post-extraction use cases + orchestrator
+    singleOf(::ResolveDocumentContactUseCase)
+    singleOf(::ProcessBankStatementUseCase)
+    singleOf(::EnrichDocumentPurposeUseCase)
+    singleOf(::AutoConfirmDocumentUseCase)
+    singleOf(::PostExtractionOrchestrator)
 
     // Document Processing Worker
     singleOf(::DocumentProcessingWorker)
