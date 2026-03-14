@@ -193,6 +193,7 @@ class DocumentQueueMapperTest {
                 filename = "invoice.pdf",
                 effectiveOrigin = DocumentSource.Upload,
                 uploadedAt = now,
+                sortDate = LocalDate(2026, 1, 1),
             ),
             draft = draft,
             latestIngestion = ingestion,

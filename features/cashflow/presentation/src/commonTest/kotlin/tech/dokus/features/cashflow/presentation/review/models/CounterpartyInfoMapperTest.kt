@@ -102,7 +102,8 @@ class CounterpartyInfoMapperTest {
                 tenantId = tenantId,
                 filename = "invoice.pdf",
                 effectiveOrigin = DocumentSource.Upload,
-                uploadedAt = now
+                uploadedAt = now,
+                sortDate = LocalDate(2026, 2, 11),
             ),
             draft = draft,
             latestIngestion = null,
