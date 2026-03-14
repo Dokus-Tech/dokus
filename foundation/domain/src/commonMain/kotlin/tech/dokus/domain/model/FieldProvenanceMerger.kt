@@ -31,22 +31,34 @@ fun mergeWithProvenance(
         return ProvenanceMergeResult(incoming, incomingProvenance)
     }
 
-    return when {
-        existing is InvoiceDraftData && incoming is InvoiceDraftData &&
-            existingProvenance is InvoiceFieldProvenance && incomingProvenance is InvoiceFieldProvenance ->
-            mergeInvoice(existing, incoming, existingProvenance, incomingProvenance)
+    return when (existing) {
+        is InvoiceDraftData if incoming is InvoiceDraftData && existingProvenance is InvoiceFieldProvenance && incomingProvenance is InvoiceFieldProvenance -> mergeInvoice(
+            existing,
+            incoming,
+            existingProvenance,
+            incomingProvenance
+        )
 
-        existing is CreditNoteDraftData && incoming is CreditNoteDraftData &&
-            existingProvenance is CreditNoteFieldProvenance && incomingProvenance is CreditNoteFieldProvenance ->
-            mergeCreditNote(existing, incoming, existingProvenance, incomingProvenance)
+        is CreditNoteDraftData if incoming is CreditNoteDraftData && existingProvenance is CreditNoteFieldProvenance && incomingProvenance is CreditNoteFieldProvenance -> mergeCreditNote(
+            existing,
+            incoming,
+            existingProvenance,
+            incomingProvenance
+        )
 
-        existing is ReceiptDraftData && incoming is ReceiptDraftData &&
-            existingProvenance is ReceiptFieldProvenance && incomingProvenance is ReceiptFieldProvenance ->
-            mergeReceipt(existing, incoming, existingProvenance, incomingProvenance)
+        is ReceiptDraftData if incoming is ReceiptDraftData && existingProvenance is ReceiptFieldProvenance && incomingProvenance is ReceiptFieldProvenance -> mergeReceipt(
+            existing,
+            incoming,
+            existingProvenance,
+            incomingProvenance
+        )
 
-        existing is BankStatementDraftData && incoming is BankStatementDraftData &&
-            existingProvenance is BankStatementFieldProvenance && incomingProvenance is BankStatementFieldProvenance ->
-            mergeBankStatement(existing, incoming, existingProvenance, incomingProvenance)
+        is BankStatementDraftData if incoming is BankStatementDraftData && existingProvenance is BankStatementFieldProvenance && incomingProvenance is BankStatementFieldProvenance -> mergeBankStatement(
+            existing,
+            incoming,
+            existingProvenance,
+            incomingProvenance
+        )
 
         // Classified-only types or provenance type mismatch — incoming always wins
         else -> ProvenanceMergeResult(incoming, incomingProvenance)
@@ -86,17 +98,18 @@ private inline fun <T> pickValue(
     }
 }
 
-private fun pickParty(existing: PartyFieldProvenance, incoming: PartyFieldProvenance) = PartyFieldProvenance(
-    name = pick(existing.name, incoming.name),
-    vat = pick(existing.vat, incoming.vat),
-    email = pick(existing.email, incoming.email),
-    iban = pick(existing.iban, incoming.iban),
-    streetLine1 = pick(existing.streetLine1, incoming.streetLine1),
-    streetLine2 = pick(existing.streetLine2, incoming.streetLine2),
-    postalCode = pick(existing.postalCode, incoming.postalCode),
-    city = pick(existing.city, incoming.city),
-    country = pick(existing.country, incoming.country),
-)
+private fun pickParty(existing: PartyFieldProvenance, incoming: PartyFieldProvenance) =
+    PartyFieldProvenance(
+        name = pick(existing.name, incoming.name),
+        vat = pick(existing.vat, incoming.vat),
+        email = pick(existing.email, incoming.email),
+        iban = pick(existing.iban, incoming.iban),
+        streetLine1 = pick(existing.streetLine1, incoming.streetLine1),
+        streetLine2 = pick(existing.streetLine2, incoming.streetLine2),
+        postalCode = pick(existing.postalCode, incoming.postalCode),
+        city = pick(existing.city, incoming.city),
+        country = pick(existing.country, incoming.country),
+    )
 
 private fun pickPartyValue(
     existing: PartyDraft,
@@ -108,11 +121,31 @@ private fun pickPartyValue(
     vat = pickValue(existing.vat, incoming.vat, existingProv.vat, incomingProv.vat),
     email = pickValue(existing.email, incoming.email, existingProv.email, incomingProv.email),
     iban = pickValue(existing.iban, incoming.iban, existingProv.iban, incomingProv.iban),
-    streetLine1 = pickValue(existing.streetLine1, incoming.streetLine1, existingProv.streetLine1, incomingProv.streetLine1),
-    streetLine2 = pickValue(existing.streetLine2, incoming.streetLine2, existingProv.streetLine2, incomingProv.streetLine2),
-    postalCode = pickValue(existing.postalCode, incoming.postalCode, existingProv.postalCode, incomingProv.postalCode),
+    streetLine1 = pickValue(
+        existing.streetLine1,
+        incoming.streetLine1,
+        existingProv.streetLine1,
+        incomingProv.streetLine1
+    ),
+    streetLine2 = pickValue(
+        existing.streetLine2,
+        incoming.streetLine2,
+        existingProv.streetLine2,
+        incomingProv.streetLine2
+    ),
+    postalCode = pickValue(
+        existing.postalCode,
+        incoming.postalCode,
+        existingProv.postalCode,
+        incomingProv.postalCode
+    ),
     city = pickValue(existing.city, incoming.city, existingProv.city, incomingProv.city),
-    country = pickValue(existing.country, incoming.country, existingProv.country, incomingProv.country),
+    country = pickValue(
+        existing.country,
+        incoming.country,
+        existingProv.country,
+        incomingProv.country
+    ),
 )
 
 // ---------------------------------------------------------------------------
@@ -144,15 +177,35 @@ private fun mergeInvoice(
     )
     val mergedData = InvoiceDraftData(
         direction = pickValue(existing.direction, incoming.direction, ep.direction, ip.direction),
-        invoiceNumber = pickValue(existing.invoiceNumber, incoming.invoiceNumber, ep.invoiceNumber, ip.invoiceNumber),
+        invoiceNumber = pickValue(
+            existing.invoiceNumber,
+            incoming.invoiceNumber,
+            ep.invoiceNumber,
+            ip.invoiceNumber
+        ),
         issueDate = pickValue(existing.issueDate, incoming.issueDate, ep.issueDate, ip.issueDate),
         dueDate = pickValue(existing.dueDate, incoming.dueDate, ep.dueDate, ip.dueDate),
         currency = pickValue(existing.currency, incoming.currency, ep.currency, ip.currency),
-        subtotalAmount = pickValue(existing.subtotalAmount, incoming.subtotalAmount, ep.subtotalAmount, ip.subtotalAmount),
+        subtotalAmount = pickValue(
+            existing.subtotalAmount,
+            incoming.subtotalAmount,
+            ep.subtotalAmount,
+            ip.subtotalAmount
+        ),
         vatAmount = pickValue(existing.vatAmount, incoming.vatAmount, ep.vatAmount, ip.vatAmount),
-        totalAmount = pickValue(existing.totalAmount, incoming.totalAmount, ep.totalAmount, ip.totalAmount),
+        totalAmount = pickValue(
+            existing.totalAmount,
+            incoming.totalAmount,
+            ep.totalAmount,
+            ip.totalAmount
+        ),
         lineItems = pickValue(existing.lineItems, incoming.lineItems, ep.lineItems, ip.lineItems),
-        vatBreakdown = pickValue(existing.vatBreakdown, incoming.vatBreakdown, ep.vatBreakdown, ip.vatBreakdown),
+        vatBreakdown = pickValue(
+            existing.vatBreakdown,
+            incoming.vatBreakdown,
+            ep.vatBreakdown,
+            ip.vatBreakdown
+        ),
         iban = pickValue(existing.iban, incoming.iban, ep.iban, ip.iban),
         payment = pickValue(existing.payment, incoming.payment, ep.payment, ip.payment),
         notes = pickValue(existing.notes, incoming.notes, ep.notes, ip.notes),
@@ -186,15 +239,40 @@ private fun mergeCreditNote(
     )
     val mergedData = CreditNoteDraftData(
         direction = pickValue(existing.direction, incoming.direction, ep.direction, ip.direction),
-        creditNoteNumber = pickValue(existing.creditNoteNumber, incoming.creditNoteNumber, ep.creditNoteNumber, ip.creditNoteNumber),
+        creditNoteNumber = pickValue(
+            existing.creditNoteNumber,
+            incoming.creditNoteNumber,
+            ep.creditNoteNumber,
+            ip.creditNoteNumber
+        ),
         issueDate = pickValue(existing.issueDate, incoming.issueDate, ep.issueDate, ip.issueDate),
         currency = pickValue(existing.currency, incoming.currency, ep.currency, ip.currency),
-        subtotalAmount = pickValue(existing.subtotalAmount, incoming.subtotalAmount, ep.subtotalAmount, ip.subtotalAmount),
+        subtotalAmount = pickValue(
+            existing.subtotalAmount,
+            incoming.subtotalAmount,
+            ep.subtotalAmount,
+            ip.subtotalAmount
+        ),
         vatAmount = pickValue(existing.vatAmount, incoming.vatAmount, ep.vatAmount, ip.vatAmount),
-        totalAmount = pickValue(existing.totalAmount, incoming.totalAmount, ep.totalAmount, ip.totalAmount),
+        totalAmount = pickValue(
+            existing.totalAmount,
+            incoming.totalAmount,
+            ep.totalAmount,
+            ip.totalAmount
+        ),
         lineItems = pickValue(existing.lineItems, incoming.lineItems, ep.lineItems, ip.lineItems),
-        vatBreakdown = pickValue(existing.vatBreakdown, incoming.vatBreakdown, ep.vatBreakdown, ip.vatBreakdown),
-        originalInvoiceNumber = pickValue(existing.originalInvoiceNumber, incoming.originalInvoiceNumber, ep.originalInvoiceNumber, ip.originalInvoiceNumber),
+        vatBreakdown = pickValue(
+            existing.vatBreakdown,
+            incoming.vatBreakdown,
+            ep.vatBreakdown,
+            ip.vatBreakdown
+        ),
+        originalInvoiceNumber = pickValue(
+            existing.originalInvoiceNumber,
+            incoming.originalInvoiceNumber,
+            ep.originalInvoiceNumber,
+            ip.originalInvoiceNumber
+        ),
         reason = pickValue(existing.reason, incoming.reason, ep.reason, ip.reason),
         notes = pickValue(existing.notes, incoming.notes, ep.notes, ip.notes),
         seller = pickPartyValue(existing.seller, incoming.seller, ep.seller, ip.seller),
@@ -225,16 +303,46 @@ private fun mergeReceipt(
     )
     val mergedData = ReceiptDraftData(
         direction = pickValue(existing.direction, incoming.direction, ep.direction, ip.direction),
-        merchantName = pickValue(existing.merchantName, incoming.merchantName, ep.merchantName, ip.merchantName),
-        merchantVat = pickValue(existing.merchantVat, incoming.merchantVat, ep.merchantVat, ip.merchantVat),
+        merchantName = pickValue(
+            existing.merchantName,
+            incoming.merchantName,
+            ep.merchantName,
+            ip.merchantName
+        ),
+        merchantVat = pickValue(
+            existing.merchantVat,
+            incoming.merchantVat,
+            ep.merchantVat,
+            ip.merchantVat
+        ),
         date = pickValue(existing.date, incoming.date, ep.date, ip.date),
         currency = pickValue(existing.currency, incoming.currency, ep.currency, ip.currency),
-        totalAmount = pickValue(existing.totalAmount, incoming.totalAmount, ep.totalAmount, ip.totalAmount),
+        totalAmount = pickValue(
+            existing.totalAmount,
+            incoming.totalAmount,
+            ep.totalAmount,
+            ip.totalAmount
+        ),
         vatAmount = pickValue(existing.vatAmount, incoming.vatAmount, ep.vatAmount, ip.vatAmount),
         lineItems = pickValue(existing.lineItems, incoming.lineItems, ep.lineItems, ip.lineItems),
-        vatBreakdown = pickValue(existing.vatBreakdown, incoming.vatBreakdown, ep.vatBreakdown, ip.vatBreakdown),
-        receiptNumber = pickValue(existing.receiptNumber, incoming.receiptNumber, ep.receiptNumber, ip.receiptNumber),
-        paymentMethod = pickValue(existing.paymentMethod, incoming.paymentMethod, ep.paymentMethod, ip.paymentMethod),
+        vatBreakdown = pickValue(
+            existing.vatBreakdown,
+            incoming.vatBreakdown,
+            ep.vatBreakdown,
+            ip.vatBreakdown
+        ),
+        receiptNumber = pickValue(
+            existing.receiptNumber,
+            incoming.receiptNumber,
+            ep.receiptNumber,
+            ip.receiptNumber
+        ),
+        paymentMethod = pickValue(
+            existing.paymentMethod,
+            incoming.paymentMethod,
+            ep.paymentMethod,
+            ip.paymentMethod
+        ),
         notes = pickValue(existing.notes, incoming.notes, ep.notes, ip.notes),
     )
     return ProvenanceMergeResult(mergedData, mergedProv)
@@ -258,11 +366,36 @@ private fun mergeBankStatement(
     )
     val mergedData = BankStatementDraftData(
         direction = pickValue(existing.direction, incoming.direction, ep.direction, ip.direction),
-        transactions = pickValue(existing.transactions, incoming.transactions, ep.transactions, ip.transactions),
-        accountIban = pickValue(existing.accountIban, incoming.accountIban, ep.accountIban, ip.accountIban),
-        openingBalance = pickValue(existing.openingBalance, incoming.openingBalance, ep.openingBalance, ip.openingBalance),
-        closingBalance = pickValue(existing.closingBalance, incoming.closingBalance, ep.closingBalance, ip.closingBalance),
-        periodStart = pickValue(existing.periodStart, incoming.periodStart, ep.periodStart, ip.periodStart),
+        transactions = pickValue(
+            existing.transactions,
+            incoming.transactions,
+            ep.transactions,
+            ip.transactions
+        ),
+        accountIban = pickValue(
+            existing.accountIban,
+            incoming.accountIban,
+            ep.accountIban,
+            ip.accountIban
+        ),
+        openingBalance = pickValue(
+            existing.openingBalance,
+            incoming.openingBalance,
+            ep.openingBalance,
+            ip.openingBalance
+        ),
+        closingBalance = pickValue(
+            existing.closingBalance,
+            incoming.closingBalance,
+            ep.closingBalance,
+            ip.closingBalance
+        ),
+        periodStart = pickValue(
+            existing.periodStart,
+            incoming.periodStart,
+            ep.periodStart,
+            ip.periodStart
+        ),
         periodEnd = pickValue(existing.periodEnd, incoming.periodEnd, ep.periodEnd, ip.periodEnd),
         notes = pickValue(existing.notes, incoming.notes, ep.notes, ip.notes),
     )
@@ -283,24 +416,40 @@ fun applyUserLocks(
     updated: DocumentDraftData,
     lockedAt: LocalDateTime,
     lockedBy: UserId,
-): DocumentFieldProvenance = when {
-    existing is InvoiceDraftData && updated is InvoiceDraftData &&
-        provenance is InvoiceFieldProvenance ->
-        lockInvoice(provenance, existing, updated, lockedAt, lockedBy)
+): DocumentFieldProvenance = when (existing) {
+    is InvoiceDraftData if updated is InvoiceDraftData && provenance is InvoiceFieldProvenance -> lockInvoice(
+        provenance,
+        existing,
+        updated,
+        lockedAt,
+        lockedBy
+    )
 
-    existing is CreditNoteDraftData && updated is CreditNoteDraftData &&
-        provenance is CreditNoteFieldProvenance ->
-        lockCreditNote(provenance, existing, updated, lockedAt, lockedBy)
+    is CreditNoteDraftData if updated is CreditNoteDraftData && provenance is CreditNoteFieldProvenance -> lockCreditNote(
+        provenance,
+        existing,
+        updated,
+        lockedAt,
+        lockedBy
+    )
 
-    existing is ReceiptDraftData && updated is ReceiptDraftData &&
-        provenance is ReceiptFieldProvenance ->
-        lockReceipt(provenance, existing, updated, lockedAt, lockedBy)
+    is ReceiptDraftData if updated is ReceiptDraftData && provenance is ReceiptFieldProvenance -> lockReceipt(
+        provenance,
+        existing,
+        updated,
+        lockedAt,
+        lockedBy
+    )
 
-    existing is BankStatementDraftData && updated is BankStatementDraftData &&
-        provenance is BankStatementFieldProvenance ->
-        lockBankStatement(provenance, existing, updated, lockedAt, lockedBy)
+    is BankStatementDraftData if updated is BankStatementDraftData && provenance is BankStatementFieldProvenance -> lockBankStatement(
+        provenance,
+        existing,
+        updated,
+        lockedAt,
+        lockedBy
+    )
 
-    // Type changed or classified-only — rebuild from scratch
+// Type changed or classified-only — rebuild from scratch
     else -> updated.buildProvenance(
         sourceTrust = SourceTrust.ManualEntry,
     )
@@ -371,7 +520,13 @@ private fun lockCreditNote(
     by: UserId,
 ) = prov.copy(
     direction = lockField(old.direction, new.direction, prov.direction, at, by),
-    creditNoteNumber = lockField(old.creditNoteNumber, new.creditNoteNumber, prov.creditNoteNumber, at, by),
+    creditNoteNumber = lockField(
+        old.creditNoteNumber,
+        new.creditNoteNumber,
+        prov.creditNoteNumber,
+        at,
+        by
+    ),
     issueDate = lockField(old.issueDate, new.issueDate, prov.issueDate, at, by),
     currency = lockField(old.currency, new.currency, prov.currency, at, by),
     subtotalAmount = lockField(old.subtotalAmount, new.subtotalAmount, prov.subtotalAmount, at, by),
@@ -379,7 +534,13 @@ private fun lockCreditNote(
     totalAmount = lockField(old.totalAmount, new.totalAmount, prov.totalAmount, at, by),
     lineItems = lockField(old.lineItems, new.lineItems, prov.lineItems, at, by),
     vatBreakdown = lockField(old.vatBreakdown, new.vatBreakdown, prov.vatBreakdown, at, by),
-    originalInvoiceNumber = lockField(old.originalInvoiceNumber, new.originalInvoiceNumber, prov.originalInvoiceNumber, at, by),
+    originalInvoiceNumber = lockField(
+        old.originalInvoiceNumber,
+        new.originalInvoiceNumber,
+        prov.originalInvoiceNumber,
+        at,
+        by
+    ),
     reason = lockField(old.reason, new.reason, prov.reason, at, by),
     notes = lockField(old.notes, new.notes, prov.notes, at, by),
     seller = lockParty(prov.seller, old.seller, new.seller, at, by),
