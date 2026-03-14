@@ -35,6 +35,7 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.toDirection
 import tech.dokus.domain.model.toDocumentType
+import tech.dokus.domain.model.toSortDate
 import tech.dokus.domain.processing.DocumentProcessingConstants
 import tech.dokus.domain.utils.json
 import java.util.*
@@ -284,6 +285,10 @@ class ProcessorIngestionRepository {
                     }
                     if (provToWrite != null) {
                         it[DocumentsTable.fieldProvenance] = json.encodeToString(provToWrite)
+                    }
+                    val extractedSortDate = dataToWrite.toSortDate()
+                    if (extractedSortDate != null) {
+                        it[DocumentsTable.sortDate] = extractedSortDate
                     }
                 }
             }
