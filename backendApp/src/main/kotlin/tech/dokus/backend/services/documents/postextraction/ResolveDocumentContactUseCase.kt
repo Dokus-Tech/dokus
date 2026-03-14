@@ -8,6 +8,7 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.DocumentDraftData
+import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.domain.model.contact.ContactResolution
 import tech.dokus.domain.model.contact.CounterpartyInfo
 import tech.dokus.domain.model.contact.CounterpartySnapshot
@@ -48,6 +49,19 @@ internal class ResolveDocumentContactUseCase(
             }
 
             is ContactResolution.AutoCreate -> {
+                // Receipts should not auto-create contacts — one-off merchants
+                // (restaurants, parking, etc.) would pollute the contacts list.
+                if (draftData is ReceiptDraftData) {
+                    logger.info("Skipping auto-create for receipt document {}", documentId)
+                    documentRepository.updateContactResolution(
+                        documentId = documentId,
+                        tenantId = tenantId,
+                        counterpartySnapshot = resolution.snapshot,
+                        counterparty = CounterpartyInfo.Unresolved(snapshot = resolution.snapshot)
+                    )
+                    return null
+                }
+
                 val contactId = contactResolutionService.createContactFromResolution(
                     tenantId = tenantId,
                     resolution = decision,
