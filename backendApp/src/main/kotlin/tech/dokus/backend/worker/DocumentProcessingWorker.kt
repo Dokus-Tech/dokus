@@ -429,6 +429,21 @@ internal class DocumentProcessingWorker(
                 extractionConfidence = confidence,
             )
 
+            // Override direction field confidence with direction resolution confidence
+            // when it's higher — direction resolution via VAT_MATCH (1.0) should beat
+            // a stale UNKNOWN direction from a previous run with equal extraction confidence.
+            val directionConfidence = result.directionResolution.confidence
+            val finalProvenance = if (provenance != null && directionConfidence > confidence) {
+                val directionProv = provenance["direction"]
+                if (directionProv != null) {
+                    provenance + ("direction" to directionProv.copy(extractionConfidence = directionConfidence))
+                } else {
+                    provenance
+                }
+            } else {
+                provenance
+            }
+
             ingestionRepository.markAsSucceeded(
                 runId = runId.toString(),
                 tenantId = tenantId.toString(),
@@ -441,7 +456,7 @@ internal class DocumentProcessingWorker(
                 rawText = null,
                 keywords = emptyList(),
                 force = false,
-                fieldProvenance = provenance
+                fieldProvenance = finalProvenance
             )
 
             val postExtractionContext = PostExtractionContext(
