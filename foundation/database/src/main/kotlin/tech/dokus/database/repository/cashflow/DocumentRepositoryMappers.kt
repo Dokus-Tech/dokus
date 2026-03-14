@@ -16,7 +16,7 @@ internal fun ResultRow.toDocumentDto(): DocumentDto {
         filename = "", // Resolved from preferred source by service layer
         effectiveOrigin = this[DocumentsTable.effectiveOrigin],
         uploadedAt = this[DocumentsTable.uploadedAt],
-        sortDate = this[DocumentsTable.sortDate],
+        sortDate = this[DocumentsTable.sortDate] ?: this[DocumentsTable.uploadedAt].date,
         downloadUrl = null // Generated on-demand by the service layer
     )
 }

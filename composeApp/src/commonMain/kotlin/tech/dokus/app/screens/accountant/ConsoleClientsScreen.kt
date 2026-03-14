@@ -33,6 +33,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.Month
 import org.jetbrains.compose.resources.StringResource
@@ -71,6 +72,7 @@ import tech.dokus.aura.resources.console_clients_search_placeholder
 import tech.dokus.aura.resources.console_no_documents_yet
 import tech.dokus.aura.resources.console_requests_period_label
 import tech.dokus.domain.DisplayName
+import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.FirmId
@@ -976,7 +978,7 @@ private fun DocumentListItemDto.toConsoleDocumentRow(index: Int): ConsoleDocumen
             2 -> "receipt"
             else -> "bank"
         },
-        origin = if (effectiveOrigin == tech.dokus.domain.enums.DocumentSource.Peppol) {
+        origin = if (effectiveOrigin == DocumentSource.Peppol) {
             BadgeDocumentSource.Peppol
         } else {
             BadgeDocumentSource.Pdf
@@ -1103,8 +1105,9 @@ private fun previewDocumentRecords(): List<DocumentListItemDto> = listOf(
         direction = null,
         documentStatus = null,
         ingestionStatus = null,
-        effectiveOrigin = tech.dokus.domain.enums.DocumentSource.Upload,
+        effectiveOrigin = DocumentSource.Upload,
         uploadedAt = LocalDateTime(2026, 2, 14, 9, 0),
+        sortDate = LocalDate(2026, 2, 14),
         counterpartyDisplayName = null,
         purposeRendered = null,
         totalAmount = null,
@@ -1118,8 +1121,9 @@ private fun previewDocumentRecords(): List<DocumentListItemDto> = listOf(
         direction = null,
         documentStatus = null,
         ingestionStatus = null,
-        effectiveOrigin = tech.dokus.domain.enums.DocumentSource.Peppol,
+        effectiveOrigin = DocumentSource.Peppol,
         uploadedAt = LocalDateTime(2026, 2, 15, 11, 30),
+        sortDate = LocalDate(2026, 2, 14),
         counterpartyDisplayName = null,
         purposeRendered = null,
         totalAmount = null,

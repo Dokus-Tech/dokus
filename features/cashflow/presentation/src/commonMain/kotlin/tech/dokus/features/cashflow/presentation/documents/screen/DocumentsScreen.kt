@@ -96,7 +96,7 @@ internal fun DocumentsScreen(
             var lastYear = -1
             var lastMonth = -1
             remoteDocuments.forEach { doc ->
-                val date = doc.sortDate ?: doc.uploadedAt.date
+                val date = doc.sortDate
                 if (date.year != lastYear || date.monthNumber != lastMonth) {
                     lastYear = date.year
                     lastMonth = date.monthNumber

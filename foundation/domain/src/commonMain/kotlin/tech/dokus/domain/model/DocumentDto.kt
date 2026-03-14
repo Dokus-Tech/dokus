@@ -21,6 +21,6 @@ data class DocumentDto(
     val filename: String = "",
     val effectiveOrigin: DocumentSource = DocumentSource.Upload,
     val uploadedAt: LocalDateTime,
-    val sortDate: LocalDate? = null,
+    val sortDate: LocalDate,
     val downloadUrl: String? = null
 )

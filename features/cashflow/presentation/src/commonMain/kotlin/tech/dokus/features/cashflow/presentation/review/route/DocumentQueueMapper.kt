@@ -96,7 +96,7 @@ internal fun DocumentListItemDto.toDocQueueItem(): DocQueueItem {
     return DocQueueItem(
         id = documentId,
         vendorName = DisplayName(vendorName),
-        date = uploadedAt.date,
+        date = sortDate,
         amount = totalAmount,
         currency = currency ?: Currency.default,
         status = status,

@@ -111,7 +111,7 @@ data class DocumentListItemDto(
     val purposeRendered: String?,
     val totalAmount: Money?,
     val currency: Currency?,
-    val sortDate: LocalDate? = null,
+    val sortDate: LocalDate,
     val downloadUrl: String? = null,
     val hasPendingMatchReview: Boolean = false,
     val sourceCount: Int = 1,
