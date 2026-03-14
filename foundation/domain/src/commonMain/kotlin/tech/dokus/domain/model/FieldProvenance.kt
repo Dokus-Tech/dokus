@@ -22,10 +22,9 @@ import tech.dokus.domain.ids.UserId
  *
  * Within the same SourceTrust level, higher extractionConfidence wins.
  *
- * Storage: Map<String, FieldProvenance> where keys are field paths:
- * - Top-level: "invoiceNumber", "totalAmount", "direction", "issueDate"
- * - Nested: "seller.vat", "seller.name", "buyer.city"
- * - Absent key = no provenance recorded (legacy data or computed field)
+ * Storage: via [DocumentFieldProvenance] sealed hierarchy — each document type
+ * has its own typed provenance class with named properties (no string keys).
+ * Null property = no provenance recorded.
  */
 @Serializable
 data class FieldProvenance(

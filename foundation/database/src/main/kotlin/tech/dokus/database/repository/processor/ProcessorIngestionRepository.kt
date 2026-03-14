@@ -11,7 +11,6 @@ import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.isNull
 import org.jetbrains.exposed.v1.core.lessEq
 import org.jetbrains.exposed.v1.core.or
-import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.v1.jdbc.update
@@ -19,26 +18,24 @@ import tech.dokus.database.entity.IngestionItemEntity
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
 import tech.dokus.database.tables.documents.DocumentSourcesTable
 import tech.dokus.database.tables.documents.DocumentsTable
-import tech.dokus.domain.enums.DocumentDirection
-import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DocumentStatus
-import tech.dokus.domain.enums.IndexingStatus
+import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.enums.ProcessingOutcome
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.DocumentSourceId
-import tech.dokus.domain.model.FieldProvenance
-import tech.dokus.domain.model.ProvenanceMergeResult
-import tech.dokus.domain.model.mergeWithProvenance
+import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.DocumentDraftData
+import tech.dokus.domain.model.DocumentFieldProvenance
+import tech.dokus.domain.model.ProvenanceMergeResult
+import tech.dokus.domain.model.mergeWithProvenance
 import tech.dokus.domain.model.toDirection
 import tech.dokus.domain.model.toDocumentType
 import tech.dokus.domain.model.toSortDate
 import tech.dokus.domain.processing.DocumentProcessingConstants
 import tech.dokus.domain.utils.json
-import java.util.*
+import java.util.UUID
 import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toKotlinUuid
@@ -76,7 +73,7 @@ class ProcessorIngestionRepository {
                     joinType = JoinType.LEFT,
                     additionalConstraint = {
                         (DocumentIngestionRunsTable.sourceId eq DocumentSourcesTable.id) and
-                            (DocumentIngestionRunsTable.tenantId eq DocumentSourcesTable.tenantId)
+                                (DocumentIngestionRunsTable.tenantId eq DocumentSourcesTable.tenantId)
                     }
                 )
 
@@ -92,7 +89,8 @@ class ProcessorIngestionRepository {
                         runId = IngestionRunId(row[DocumentIngestionRunsTable.id].value.toKotlinUuid()),
                         documentId = DocumentId(row[DocumentIngestionRunsTable.documentId].toKotlinUuid()),
                         tenantId = TenantId(row[DocumentIngestionRunsTable.tenantId].toKotlinUuid()),
-                        sourceId = row[DocumentIngestionRunsTable.sourceId]?.toKotlinUuid()?.let { DocumentSourceId(it) },
+                        sourceId = row[DocumentIngestionRunsTable.sourceId]?.toKotlinUuid()
+                            ?.let { DocumentSourceId(it) },
                         sourceChannel = row.getOrNull(DocumentSourcesTable.sourceChannel),
                         effectiveOrigin = row[DocumentsTable.effectiveOrigin],
                         peppolStructuredSnapshotJson = row.getOrNull(DocumentSourcesTable.peppolStructuredSnapshotJson),
@@ -112,10 +110,10 @@ class ProcessorIngestionRepository {
     @OptIn(ExperimentalTime::class)
     suspend fun markAsProcessing(runId: String, provider: String): Boolean =
         newSuspendedTransaction {
-            val now = Clock.System.now().toStdlibInstant().toLocalDateTime(TimeZone.Companion.UTC)
+            val now = Clock.System.now().toStdlibInstant().toLocalDateTime(TimeZone.UTC)
             DocumentIngestionRunsTable.update({
                 (DocumentIngestionRunsTable.id eq UUID.fromString(runId)) and
-                    (DocumentIngestionRunsTable.status eq IngestionStatus.Queued)
+                        (DocumentIngestionRunsTable.status eq IngestionStatus.Queued)
             }) {
                 it[status] = IngestionStatus.Processing
                 it[startedAt] = now
@@ -196,17 +194,17 @@ class ProcessorIngestionRepository {
         rawText: String?,
         keywords: List<String> = emptyList(),
         force: Boolean = false,
-        fieldProvenance: Map<String, FieldProvenance>? = null
+        fieldProvenance: DocumentFieldProvenance? = null
     ): Boolean {
         // Defense-in-depth: Validate tenantId is provided
         require(tenantId.isNotBlank()) { "tenantId is required for draft operations" }
 
         return newSuspendedTransaction {
-            val now = Clock.System.now().toLocalDateTime(TimeZone.Companion.UTC)
+            val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
             val runUuid = UUID.fromString(runId)
             val documentUuid = UUID.fromString(documentId)
             val tenantUuid = UUID.fromString(tenantId)
-            val draftJson = draftData?.let { json.encodeToString(it) }
+            draftData?.let { json.encodeToString(it) }
             val keywordsJson = keywords.takeIf { it.isNotEmpty() }?.let { json.encodeToString(it) }
             val calculatedStatus = DocumentStatus.NeedsReview
 
@@ -220,7 +218,8 @@ class ProcessorIngestionRepository {
                 it[DocumentIngestionRunsTable.rawExtractionJson] = rawExtractionJson
                 it[DocumentIngestionRunsTable.confidence] = confidence.toBigDecimal()
                 it[DocumentIngestionRunsTable.processingOutcome] = processingOutcome
-                it[DocumentIngestionRunsTable.processingVersion] = DocumentProcessingConstants.PROCESSING_VERSION
+                it[DocumentIngestionRunsTable.processingVersion] =
+                    DocumentProcessingConstants.PROCESSING_VERSION
                 it[fieldConfidences] = null
                 it[errorMessage] = null
             } > 0
@@ -232,7 +231,7 @@ class ProcessorIngestionRepository {
             val existingDoc = DocumentsTable.selectAll()
                 .where {
                     (DocumentsTable.id eq documentUuid) and
-                        (DocumentsTable.tenantId eq tenantUuid)
+                            (DocumentsTable.tenantId eq tenantUuid)
                 }
                 .singleOrNull() ?: return@newSuspendedTransaction false
 
@@ -245,18 +244,15 @@ class ProcessorIngestionRepository {
             val existingData = existingDoc[DocumentsTable.canonicalData]
                 ?.let<String, DocumentDraftData> { json.decodeFromString(it) }
             val existingProv = existingDoc[DocumentsTable.fieldProvenance]
-                ?.let<String, Map<String, FieldProvenance>> { json.decodeFromString(it) }
+                ?.let<String, DocumentFieldProvenance> { json.decodeFromString(it) }
 
             val mergeResult: ProvenanceMergeResult? = when {
                 force || draftData == null || existingData == null -> null // full overwrite
-                existingProv == null -> {
-                    // Legacy doc without provenance: use old binary draftVersion check
-                    val currentVersion = existingDoc[DocumentsTable.draftVersion]
-                    if (currentVersion == 0) null else ProvenanceMergeResult(existingData, emptyMap())
-                }
+                existingProv == null -> null // no existing provenance → full overwrite
                 fieldProvenance != null -> {
                     mergeWithProvenance(existingData, draftData, existingProv, fieldProvenance)
                 }
+
                 else -> null // incoming has no provenance → full overwrite
             }
 
@@ -266,7 +262,7 @@ class ProcessorIngestionRepository {
             // SECURITY: Always filter by tenantId to prevent cross-tenant modification
             DocumentsTable.update({
                 (DocumentsTable.id eq documentUuid) and
-                    (DocumentsTable.tenantId eq tenantUuid)
+                        (DocumentsTable.tenantId eq tenantUuid)
             }) {
                 it[lastSuccessfulRunId] = runUuid
                 it[updatedAt] = now
@@ -302,17 +298,16 @@ class ProcessorIngestionRepository {
      * Mark an ingestion run as failed.
      */
     @OptIn(ExperimentalTime::class)
-    suspend fun markAsFailed(runId: String, error: String): Boolean =
-        newSuspendedTransaction {
-            val now = Clock.System.now().toStdlibInstant().toLocalDateTime(TimeZone.Companion.UTC)
-            DocumentIngestionRunsTable.update({
-                DocumentIngestionRunsTable.id eq UUID.fromString(runId)
-            }) {
-                it[status] = IngestionStatus.Failed
-                it[finishedAt] = now
-                it[errorMessage] = error
-            } > 0
-        }
+    suspend fun markAsFailed(runId: String, error: String): Boolean = newSuspendedTransaction {
+        val now = Clock.System.now().toStdlibInstant().toLocalDateTime(TimeZone.UTC)
+        DocumentIngestionRunsTable.update({
+            DocumentIngestionRunsTable.id eq UUID.fromString(runId)
+        }) {
+            it[status] = IngestionStatus.Failed
+            it[finishedAt] = now
+            it[errorMessage] = error
+        } > 0
+    }
 
     /**
      * Recover ingestion runs stuck in Processing state.
@@ -328,14 +323,14 @@ class ProcessorIngestionRepository {
         newSuspendedTransaction {
             val cutoff = (Clock.System.now() - DocumentProcessingConstants.INGESTION_RUN_TIMEOUT)
                 .toStdlibInstant()
-                .toLocalDateTime(TimeZone.Companion.UTC)
-            val now = Clock.System.now().toStdlibInstant().toLocalDateTime(TimeZone.Companion.UTC)
+                .toLocalDateTime(TimeZone.UTC)
+            val now = Clock.System.now().toStdlibInstant().toLocalDateTime(TimeZone.UTC)
             val staleRuns = DocumentIngestionRunsTable
                 .selectAll()
                 .where {
                     (DocumentIngestionRunsTable.status eq IngestionStatus.Processing) and
-                        (DocumentIngestionRunsTable.startedAt.isNull() or
-                            (DocumentIngestionRunsTable.startedAt lessEq cutoff))
+                            (DocumentIngestionRunsTable.startedAt.isNull() or
+                                    (DocumentIngestionRunsTable.startedAt lessEq cutoff))
                 }
                 .map { row ->
                     RecoveredIngestionRun(
@@ -350,8 +345,8 @@ class ProcessorIngestionRepository {
 
             DocumentIngestionRunsTable.update({
                 (DocumentIngestionRunsTable.status eq IngestionStatus.Processing) and
-                    (DocumentIngestionRunsTable.startedAt.isNull() or
-                        (DocumentIngestionRunsTable.startedAt lessEq cutoff))
+                        (DocumentIngestionRunsTable.startedAt.isNull() or
+                                (DocumentIngestionRunsTable.startedAt lessEq cutoff))
             }) {
                 it[status] = IngestionStatus.Failed
                 it[finishedAt] = now
@@ -360,52 +355,4 @@ class ProcessorIngestionRepository {
 
             staleRuns
         }
-
-    /**
-     * Update the indexing status for an ingestion run.
-     *
-     * This is called after chunk indexing completes (success or failure).
-     * Indexing status is tracked separately from ingestion status to allow
-     * retry of RAG indexing independently.
-     *
-     * @param runId The ingestion run ID
-     * @param status The new indexing status
-     * @param chunksCount Number of chunks created (for SUCCEEDED)
-     * @param errorMessage Error message (for FAILED)
-     */
-    @OptIn(ExperimentalTime::class)
-    suspend fun updateIndexingStatus(
-        runId: String,
-        status: IndexingStatus,
-        chunksCount: Int? = null,
-        errorMessage: String? = null
-    ): Boolean = newSuspendedTransaction {
-        val now = Clock.System.now().toStdlibInstant().toLocalDateTime(TimeZone.Companion.UTC)
-        DocumentIngestionRunsTable.update({
-            DocumentIngestionRunsTable.id eq UUID.fromString(runId)
-        }) {
-            it[indexingStatus] = status
-            it[indexedAt] = now
-            if (chunksCount != null) {
-                it[DocumentIngestionRunsTable.chunksCount] = chunksCount
-            }
-            if (errorMessage != null) {
-                it[indexingErrorMessage] = errorMessage
-            }
-        } > 0
-    }
-
-    /**
-     * Store processing trace JSON for a run.
-     */
-    suspend fun updateProcessingTrace(
-        runId: String,
-        traceJson: String?
-    ): Boolean = newSuspendedTransaction {
-        DocumentIngestionRunsTable.update({
-            DocumentIngestionRunsTable.id eq UUID.fromString(runId)
-        }) {
-            it[processingTrace] = traceJson
-        } > 0
-    }
 }

@@ -33,7 +33,6 @@ import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.enums.PurposePeriodMode
-import tech.dokus.domain.enums.SourceTrust
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentSourceId
@@ -42,14 +41,14 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.DocumentDto
-import tech.dokus.domain.model.FieldProvenance
+import tech.dokus.domain.model.DocumentFieldProvenance
 import tech.dokus.domain.model.ProvenanceMergeResult
+import tech.dokus.domain.model.applyUserLocks
 import tech.dokus.domain.model.contact.CounterpartyInfo
 import tech.dokus.domain.model.contact.CounterpartySnapshot
 import tech.dokus.domain.model.contact.MatchEvidence
 import tech.dokus.domain.model.contact.SuggestedContact
 import tech.dokus.domain.model.contact.isUnresolved
-import tech.dokus.domain.model.diffFieldPaths
 import tech.dokus.domain.model.mergeWithProvenance
 import tech.dokus.domain.model.toDirection
 import tech.dokus.domain.model.toDocumentType
@@ -510,7 +509,7 @@ class DocumentRepository : DocumentStatusChecker {
         documentType: DocumentType,
         aiKeywords: List<String> = emptyList(),
         force: Boolean = false,
-        fieldProvenance: Map<String, FieldProvenance>? = null
+        fieldProvenance: DocumentFieldProvenance? = null
     ): Boolean = newSuspendedTransaction {
         val now = Clock.System.now().toStdlibInstant().toLocalDateTime(TimeZone.UTC)
         val docIdUuid = UUID.fromString(documentId.toString())
@@ -532,20 +531,16 @@ class DocumentRepository : DocumentStatusChecker {
         val existingData = existing[DocumentsTable.canonicalData]
             ?.let<String, DocumentDraftData> { json.decodeFromString(it) }
         val existingProv = existing[DocumentsTable.fieldProvenance]
-            ?.let<String, Map<String, FieldProvenance>> { json.decodeFromString(it) }
+            ?.let<String, DocumentFieldProvenance> { json.decodeFromString(it) }
 
         // Merge logic:
         // - force → full overwrite
         // - no existing data → full write (first extraction)
-        // - no existing provenance (legacy) → fall back to binary draftVersion==0 check
+        // - no existing provenance → full overwrite
         // - has provenance → per-field merge using trust comparison
         val mergeResult: ProvenanceMergeResult? = when {
             force || existingData == null -> null // null = full overwrite
-            existingProv == null -> {
-                // Legacy doc without provenance: use old binary check
-                val currentVersion = existing[DocumentsTable.draftVersion]
-                if (currentVersion == 0) null else ProvenanceMergeResult(existingData, emptyMap())
-            }
+            existingProv == null -> null // no existing provenance → full overwrite
             fieldProvenance != null -> {
                 mergeWithProvenance(existingData, extractedData, existingProv, fieldProvenance)
             }
@@ -643,30 +638,16 @@ class DocumentRepository : DocumentStatusChecker {
         val existingData = current[DocumentsTable.canonicalData]
             ?.let<String, DocumentDraftData> { json.decodeFromString(it) }
         val existingProv = current[DocumentsTable.fieldProvenance]
-            ?.let<String, Map<String, FieldProvenance>> { json.decodeFromString(it) }
-            ?: emptyMap()
+            ?.let<String, DocumentFieldProvenance> { json.decodeFromString(it) }
 
-        val changedFields = if (existingData != null) {
-            diffFieldPaths(existingData, updatedData)
-        } else {
-            emptySet()
-        }
-
-        val updatedProv = if (changedFields.isNotEmpty()) {
-            val mutable = existingProv.toMutableMap()
-            for (field in changedFields) {
-                val existing = mutable[field]
-                mutable[field] = FieldProvenance(
-                    sourceId = existing?.sourceId,
-                    sourceRunId = existing?.sourceRunId,
-                    sourceTrust = existing?.sourceTrust ?: SourceTrust.ManualEntry,
-                    extractionConfidence = existing?.extractionConfidence,
-                    userLocked = true,
-                    lockedAt = now,
-                    lockedBy = userId,
-                )
-            }
-            mutable
+        val updatedProv: DocumentFieldProvenance? = if (existingData != null && existingProv != null) {
+            applyUserLocks(
+                provenance = existingProv,
+                existing = existingData,
+                updated = updatedData,
+                lockedAt = now,
+                lockedBy = userId,
+            )
         } else {
             null
         }

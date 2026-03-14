@@ -434,9 +434,9 @@ internal class DocumentProcessingWorker(
             // a stale UNKNOWN direction from a previous run with equal extraction confidence.
             val directionConfidence = result.directionResolution.confidence
             val finalProvenance = if (provenance != null && directionConfidence > confidence) {
-                val directionProv = provenance["direction"]
+                val directionProv = provenance.direction
                 if (directionProv != null) {
-                    provenance + ("direction" to directionProv.copy(extractionConfidence = directionConfidence))
+                    provenance.withDirectionConfidence(directionConfidence)
                 } else {
                     provenance
                 }
