@@ -25,5 +25,8 @@ enum class DocumentUiStatus {
     Ready,
 
     /** Processing failed */
-    Failed
+    Failed,
+
+    /** Document type is not supported */
+    Unsupported
 }

@@ -417,7 +417,8 @@ internal fun resolveListInlineStatus(document: DocumentListItemDto): DocumentUiS
         DocumentUiStatus.Failed -> status
 
         DocumentUiStatus.Review,
-        DocumentUiStatus.Ready -> null
+        DocumentUiStatus.Ready,
+        DocumentUiStatus.Unsupported -> null
     }
 }
 

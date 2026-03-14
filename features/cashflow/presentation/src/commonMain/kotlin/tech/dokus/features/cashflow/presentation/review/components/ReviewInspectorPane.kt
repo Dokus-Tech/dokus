@@ -372,7 +372,8 @@ private fun InspectorHeader(
             is DocumentUiData.Receipt -> true
             else -> false
         }
-        if (supportsManualConfirm && !isAccountantReadOnly && !state.isDocumentConfirmed && !state.isDocumentRejected &&
+        if (supportsManualConfirm && !isAccountantReadOnly &&
+            !state.isDocumentConfirmed && !state.isDocumentRejected && !state.isDocumentUnsupported &&
             state.financialStatus == ReviewFinancialStatus.Review
         ) {
             PButton(
@@ -397,7 +398,7 @@ private fun CompressedStatusLine(state: DocumentReviewState) {
     val statusColor = state.financialStatus.financialStatusColorized
     val detailText = state.compressedStatusDetailLocalized
 
-    if (state.financialStatus == ReviewFinancialStatus.Review && !state.isDocumentConfirmed) {
+    if (state.financialStatus == ReviewFinancialStatus.Review && !state.isDocumentConfirmed && !state.isDocumentUnsupported) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall),

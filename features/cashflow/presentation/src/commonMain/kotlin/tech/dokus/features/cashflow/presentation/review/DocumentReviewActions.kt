@@ -174,6 +174,7 @@ internal class DocumentReviewActions(
                         val draft = record.draft
                         val isConfirmed = draft?.documentStatus == DocumentStatus.Confirmed
                         val isRejected = draft?.documentStatus == DocumentStatus.Rejected
+                        val isUnsupported = draft?.documentStatus == DocumentStatus.Unsupported
                         val cashflowEntryId = record.cashflowEntryId
                         withState {
                             val currentData = documentData ?: return@withState
@@ -191,6 +192,7 @@ internal class DocumentReviewActions(
                                     isConfirming = false,
                                     isDocumentConfirmed = isConfirmed,
                                     isDocumentRejected = isRejected,
+                                    isDocumentUnsupported = isUnsupported,
                                     confirmedCashflowEntryId = cashflowEntryId,
                                     isContactRequired = draft?.extractedData?.let {
                                         it.isContactRequired
@@ -285,6 +287,7 @@ internal class DocumentReviewActions(
                                         isRejecting = false,
                                         isDocumentRejected = draft?.documentStatus == DocumentStatus.Rejected,
                                         isDocumentConfirmed = draft?.documentStatus == DocumentStatus.Confirmed,
+                                        isDocumentUnsupported = draft?.documentStatus == DocumentStatus.Unsupported,
                                         rejectDialogState = null
                                     )
                                 }
@@ -366,7 +369,8 @@ internal class DocumentReviewActions(
                             isPendingCreation = draft?.counterparty.let { it.isUnresolved() && it.pendingCreation },
                             confirmedCashflowEntryId = record.cashflowEntryId,
                             isDocumentConfirmed = draft?.documentStatus == DocumentStatus.Confirmed,
-                            isDocumentRejected = draft?.documentStatus == DocumentStatus.Rejected
+                            isDocumentRejected = draft?.documentStatus == DocumentStatus.Rejected,
+                            isDocumentUnsupported = draft?.documentStatus == DocumentStatus.Unsupported,
                         )
                     }
                 }

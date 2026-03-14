@@ -10,6 +10,7 @@ import tech.dokus.aura.resources.document_status_processing
 import tech.dokus.aura.resources.document_status_queued
 import tech.dokus.aura.resources.document_status_ready
 import tech.dokus.aura.resources.document_status_review
+import tech.dokus.aura.resources.draft_status_unsupported
 import tech.dokus.foundation.aura.model.DocumentUiStatus
 
 /**
@@ -30,6 +31,7 @@ val DocumentUiStatus.localized: String
         DocumentUiStatus.Review -> stringResource(Res.string.document_status_review)
         DocumentUiStatus.Ready -> stringResource(Res.string.document_status_ready)
         DocumentUiStatus.Failed -> stringResource(Res.string.document_status_failed)
+        DocumentUiStatus.Unsupported -> stringResource(Res.string.draft_status_unsupported)
     }
 
 /**
@@ -49,6 +51,7 @@ val DocumentUiStatus.color: Color
         DocumentUiStatus.Review -> MaterialTheme.colorScheme.secondaryContainer
         DocumentUiStatus.Ready -> MaterialTheme.colorScheme.tertiaryContainer
         DocumentUiStatus.Failed -> MaterialTheme.colorScheme.errorContainer
+        DocumentUiStatus.Unsupported -> MaterialTheme.colorScheme.surfaceVariant
     }
 
 /**
@@ -69,4 +72,5 @@ val DocumentUiStatus.statusColor: Color
         DocumentUiStatus.Review -> MaterialTheme.colorScheme.secondary
         DocumentUiStatus.Ready -> MaterialTheme.colorScheme.tertiary
         DocumentUiStatus.Failed -> MaterialTheme.colorScheme.error
+        DocumentUiStatus.Unsupported -> MaterialTheme.colorScheme.onSurfaceVariant
     }

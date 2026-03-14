@@ -184,6 +184,7 @@ data class DocumentReviewState(
     val isResolvingMatchReview: Boolean = false,
     val isDocumentConfirmed: Boolean = false,
     val isDocumentRejected: Boolean = false,
+    val isDocumentUnsupported: Boolean = false,
     val confirmedCashflowEntryId: CashflowEntryId? = null,
     val cashflowEntryState: DokusState<CashflowEntry> = DokusState.idle(),
     val autoPaymentStatus: DokusState<AutoPaymentStatusDto> = DokusState.idle(),
@@ -281,7 +282,7 @@ data class DocumentReviewState(
 
     val confirmBlockedReason: StringResource?
         get() {
-            if (isDocumentConfirmed || isDocumentRejected) return null
+            if (isDocumentConfirmed || isDocumentRejected || isDocumentUnsupported) return null
             val draft = draftData ?: return Res.string.cashflow_confirm_missing_fields
             return when {
                 isPendingCreation -> Res.string.cashflow_confirm_select_contact
