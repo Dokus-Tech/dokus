@@ -3,6 +3,7 @@ package tech.dokus.app.screens.accountant
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import pro.respawn.flowmvi.test.subscribeAndTest
 import tech.dokus.domain.DisplayName
@@ -343,6 +344,7 @@ private fun listItemRecord(
         ingestionStatus = null,
         effectiveOrigin = DocumentSource.Upload,
         uploadedAt = LocalDateTime(2026, 2, 1, 10, 0),
+        sortDate = LocalDate(2026, 2, 1),
         counterpartyDisplayName = null,
         purposeRendered = null,
         totalAmount = null,
@@ -362,6 +364,7 @@ private fun documentDetailRecord(
             filename = filename,
             effectiveOrigin = DocumentSource.Upload,
             uploadedAt = LocalDateTime(2026, 2, 1, 10, 0),
+            sortDate = LocalDate(2026, 2, 1),
         ),
         draft = null,
         latestIngestion = null,

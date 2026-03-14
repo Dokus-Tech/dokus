@@ -1,6 +1,7 @@
 package tech.dokus.app.share
 
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import tech.dokus.domain.DisplayName
 import tech.dokus.domain.LegalName
@@ -140,6 +141,7 @@ internal fun testDocument(
     filename = "invoice.pdf",
     effectiveOrigin = DocumentSource.Upload,
     uploadedAt = LocalDateTime(2024, 1, 1, 0, 0),
+    sortDate = LocalDate(2024, 1, 1),
     downloadUrl = null
 )
 

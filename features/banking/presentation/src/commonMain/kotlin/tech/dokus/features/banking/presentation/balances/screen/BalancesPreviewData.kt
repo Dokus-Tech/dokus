@@ -33,7 +33,7 @@ private val PreviewAccounts = listOf(
         currency = Currency.Eur,
         provider = BankAccountProvider.Tink,
         balance = Money(1438042),
-        balanceUpdatedAt = LocalDateTime(2026, 3, 9, 15, 0),
+        balanceUpdatedAt = null,
         status = BankAccountStatus.Confirmed,
         isActive = true,
         createdAt = LocalDateTime(2026, 1, 1, 0, 0),
@@ -48,7 +48,7 @@ private val PreviewAccounts = listOf(
         currency = Currency.Eur,
         provider = BankAccountProvider.Coda,
         balance = Money(340000),
-        balanceUpdatedAt = LocalDateTime(2026, 3, 8, 10, 0),
+        balanceUpdatedAt = null,
         status = BankAccountStatus.Confirmed,
         isActive = true,
         createdAt = LocalDateTime(2026, 1, 1, 0, 0),
@@ -61,7 +61,7 @@ private val PreviewSummary = BankAccountSummary(
     unmatchedCount = 3,
     totalUnresolvedAmount = Money(842050),
     matchedThisPeriod = 12,
-    lastSyncedAt = LocalDateTime(2026, 3, 9, 15, 0),
+    lastSyncedAt = null,
 )
 
 private val PreviewTransactionSummary = BankTransactionSummary(
