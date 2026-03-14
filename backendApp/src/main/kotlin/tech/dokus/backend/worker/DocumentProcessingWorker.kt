@@ -452,7 +452,7 @@ internal class DocumentProcessingWorker(
                 documentType = documentType,
                 draftData = draftData,
                 confidence = confidence,
-                auditPassed = result.auditReport.isValid,
+                auditPassed = result.auditReport.isAutoConfirmSafe,
                 directionSource = result.directionResolution.source,
                 extraction = result.extraction,
                 tenantVat = tenant.vatNumber,

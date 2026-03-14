@@ -1,5 +1,6 @@
 package tech.dokus.backend.services.documents.postextraction
 
+import tech.dokus.backend.services.documents.AutoConfirmInput
 import tech.dokus.backend.services.documents.AutoConfirmPolicy
 import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
 import tech.dokus.database.repository.cashflow.DocumentRepository
@@ -21,9 +22,7 @@ internal class AutoConfirmDocumentUseCase(
     ): Boolean {
         val draftData = context.draftData ?: return false
 
-        val canAutoConfirm = autoConfirmPolicy.canAutoConfirm(
-            tenantId = context.tenantId,
-            documentId = context.documentId,
+        val input = AutoConfirmInput(
             source = context.sourceChannel,
             documentType = context.documentType,
             draftData = draftData,
@@ -33,7 +32,11 @@ internal class AutoConfirmDocumentUseCase(
             directionResolvedFromAiHintOnly = context.directionSource == DirectionResolutionSource.AiHint,
         )
 
-        if (!canAutoConfirm) return false
+        val rejection = autoConfirmPolicy.evaluate(input)
+        if (rejection != null) {
+            logger.debug("Auto-confirm rejected for {}: {}", context.documentId, rejection)
+            return false
+        }
 
         return try {
             confirmationDispatcher.confirm(
