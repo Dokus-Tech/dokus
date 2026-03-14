@@ -66,7 +66,7 @@ private val previewDocumentId = DocumentId.parse("e72f69a8-6913-4d8f-98e7-224db7
 
 internal fun previewReviewContentState(
     entryStatus: CashflowEntryStatus? = CashflowEntryStatus.Open,
-    isDocumentConfirmed: Boolean = true,
+    documentStatus: DocumentStatus = DocumentStatus.Confirmed,
     hasUnsyncedChanges: Boolean = false,
     previewState: DocumentPreviewState = DocumentPreviewState.Ready(
         pages = listOf(DocumentPagePreviewDto(page = 1, imageUrl = "/api/v1/documents/preview/pages/1.png")),
@@ -106,7 +106,7 @@ internal fun previewReviewContentState(
     val draft = DocumentDraftDto(
         documentId = documentId,
         tenantId = tenantId,
-        documentStatus = if (isDocumentConfirmed) DocumentStatus.Confirmed else DocumentStatus.NeedsReview,
+        documentStatus = documentStatus,
         documentType = DocumentType.Invoice,
         direction = DocumentDirection.Inbound,
         extractedData = draftData,
@@ -227,8 +227,7 @@ internal fun previewReviewContentState(
         ),
         previewState = previewState,
         hasUnsavedChanges = hasUnsyncedChanges,
-        isDocumentConfirmed = isDocumentConfirmed,
-        isDocumentRejected = false,
+        documentStatus = documentStatus,
         confirmedCashflowEntryId = cashflowEntry?.id,
         cashflowEntryState = cashflowEntry?.let { DokusState.success(it) } ?: DokusState.idle(),
         autoPaymentStatus = autoPaymentStatus,
@@ -422,8 +421,7 @@ internal fun previewStateForDocumentType(
             hasMore = false,
         ),
         hasUnsavedChanges = false,
-        isDocumentConfirmed = true,
-        isDocumentRejected = false,
+        documentStatus = DocumentStatus.Confirmed,
         confirmedCashflowEntryId = cashflowEntry?.id,
         cashflowEntryState = cashflowEntry?.let { DokusState.success(it) } ?: DokusState.idle(),
         autoPaymentStatus = DokusState.idle(),

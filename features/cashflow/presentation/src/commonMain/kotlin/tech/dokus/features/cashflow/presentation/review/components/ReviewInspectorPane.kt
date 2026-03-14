@@ -22,6 +22,7 @@ import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.document_detail_confirmed
 import tech.dokus.domain.enums.CashflowEntryStatus
+import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.ReviewFinancialStatus
@@ -514,7 +515,7 @@ private fun ReviewInspectorPaneReviewPreview(
 ) {
     TestWrapper(parameters) {
         ReviewInspectorPane(
-            state = previewReviewContentState(entryStatus = null, isDocumentConfirmed = false),
+            state = previewReviewContentState(entryStatus = null, documentStatus = DocumentStatus.NeedsReview),
             isAccountantReadOnly = false,
             onIntent = {},
             onCorrectContact = {},

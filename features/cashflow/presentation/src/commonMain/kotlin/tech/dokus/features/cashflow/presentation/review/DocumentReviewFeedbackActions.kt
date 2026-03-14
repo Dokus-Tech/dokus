@@ -139,8 +139,7 @@ internal class DocumentReviewFeedbackActions(
                                     hasUnsavedChanges = false,
                                     isResolvingMatchReview = false,
                                     isPendingCreation = draft?.counterparty.let { it.isUnresolved() && it.pendingCreation },
-                                    isDocumentConfirmed = draft?.documentStatus == DocumentStatus.Confirmed,
-                                    isDocumentRejected = draft?.documentStatus == DocumentStatus.Rejected,
+                                    documentStatus = draft?.documentStatus,
                                 )
                             }
                         }

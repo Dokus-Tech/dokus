@@ -182,9 +182,7 @@ data class DocumentReviewState(
     val isBindingContact: Boolean = false,
     val isRejecting: Boolean = false,
     val isResolvingMatchReview: Boolean = false,
-    val isDocumentConfirmed: Boolean = false,
-    val isDocumentRejected: Boolean = false,
-    val isDocumentUnsupported: Boolean = false,
+    val documentStatus: DocumentStatus? = null,
     val confirmedCashflowEntryId: CashflowEntryId? = null,
     val cashflowEntryState: DokusState<CashflowEntry> = DokusState.idle(),
     val autoPaymentStatus: DokusState<AutoPaymentStatusDto> = DokusState.idle(),
@@ -212,6 +210,10 @@ data class DocumentReviewState(
     /** The active document ID, available once data has loaded at least once. */
     val documentId: DocumentId?
         get() = documentData?.documentId
+
+    val isDocumentConfirmed: Boolean get() = documentStatus == DocumentStatus.Confirmed
+    val isDocumentRejected: Boolean get() = documentStatus == DocumentStatus.Rejected
+    val isDocumentUnsupported: Boolean get() = documentStatus == DocumentStatus.Unsupported
 
     /** The document record, available when loaded. */
     val documentRecord: DocumentDetailDto?
