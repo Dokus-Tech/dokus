@@ -135,10 +135,14 @@ private fun CashflowLedgerContent(
         if (state.filters.viewMode != CashflowViewMode.History) {
             entriesData.map<_, CashflowDisplayRow> { CashflowDisplayRow.EntryRow(it) }
         } else {
+            // Sort by display date to ensure monotonic month grouping.
+            // Server sorts by paidAt DESC but entries with null paidAt fall back to eventDate,
+            // which can break month ordering.
+            val sorted = entriesData.sortedByDescending { it.paidAt?.date ?: it.eventDate }
             buildList {
                 var lastYear = -1
                 var lastMonth = -1
-                for (entry in entriesData) {
+                for (entry in sorted) {
                     val date: LocalDate = entry.paidAt?.date ?: entry.eventDate
                     if (date.year != lastYear || date.monthNumber != lastMonth) {
                         add(CashflowDisplayRow.MonthHeader(date.year, date.monthNumber))
