@@ -66,6 +66,9 @@ import tech.dokus.domain.model.PeppolValidationResult
 import tech.dokus.domain.model.PeppolVerifyResponse
 import tech.dokus.domain.model.RecordPaymentRequest
 import tech.dokus.domain.model.RejectDocumentRequest
+import tech.dokus.domain.model.BulkReprocessRequest
+import tech.dokus.domain.model.BulkReprocessResponse
+import tech.dokus.domain.model.ProcessingHealthRecommendation
 import tech.dokus.domain.model.ReprocessRequest
 import tech.dokus.domain.model.ReprocessResponse
 import tech.dokus.domain.model.ResolveDocumentMatchReviewRequest
@@ -529,6 +532,20 @@ interface CashflowRemoteDataSource {
         documentId: DocumentId,
         request: ReprocessRequest = ReprocessRequest()
     ): Result<ReprocessResponse>
+
+    /**
+     * Get processing health recommendation for the workspace.
+     * GET /api/v1/documents/processing-health
+     */
+    suspend fun getProcessingHealth(): Result<ProcessingHealthRecommendation>
+
+    /**
+     * Bulk reprocess eligible documents.
+     * POST /api/v1/documents/bulk-reprocess
+     */
+    suspend fun bulkReprocess(
+        request: BulkReprocessRequest = BulkReprocessRequest()
+    ): Result<BulkReprocessResponse>
 
     /**
      * Confirm a document and create financial entity (Invoice/Expense).

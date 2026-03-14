@@ -25,4 +25,12 @@ object DocumentProcessingConstants {
      */
     val INGESTION_TIMEOUT_ERROR_MESSAGE: String =
         "Processing timed out after ${INGESTION_RUN_TIMEOUT.inWholeMinutes} minutes"
+
+    /**
+     * Simple manual version gate for replay eligibility.
+     * Bump when extraction logic changes meaningfully (model, prompts, validation).
+     * Stored on each ingestion run at completion; used to identify documents
+     * processed with older logic that may benefit from reprocessing.
+     */
+    const val PROCESSING_VERSION: Int = 1
 }

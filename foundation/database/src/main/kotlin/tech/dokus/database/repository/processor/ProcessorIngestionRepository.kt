@@ -220,6 +220,7 @@ class ProcessorIngestionRepository {
                 it[DocumentIngestionRunsTable.rawExtractionJson] = rawExtractionJson
                 it[DocumentIngestionRunsTable.confidence] = confidence.toBigDecimal()
                 it[DocumentIngestionRunsTable.processingOutcome] = processingOutcome
+                it[DocumentIngestionRunsTable.processingVersion] = DocumentProcessingConstants.PROCESSING_VERSION
                 it[fieldConfidences] = null
                 it[errorMessage] = null
             } > 0

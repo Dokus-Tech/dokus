@@ -85,6 +85,22 @@ class Documents {
     class Events(val parent: Documents = Documents())
 
     /**
+     * GET /api/v1/documents/processing-health
+     * Processing health recommendation for the workspace.
+     */
+    @Serializable
+    @Resource("processing-health")
+    class ProcessingHealth(val parent: Documents = Documents())
+
+    /**
+     * POST /api/v1/documents/bulk-reprocess
+     * Bulk reprocess eligible documents (NeedsReview + Failed, recent, max 100).
+     */
+    @Serializable
+    @Resource("bulk-reprocess")
+    class BulkReprocess(val parent: Documents = Documents())
+
+    /**
      * /api/v1/documents/match-reviews/...
      */
     @Serializable

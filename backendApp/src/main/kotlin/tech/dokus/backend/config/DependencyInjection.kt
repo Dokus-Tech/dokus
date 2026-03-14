@@ -71,6 +71,7 @@ import tech.dokus.backend.services.documents.DocumentPurposeService
 import tech.dokus.backend.services.documents.DocumentPurposeSimilarityService
 import tech.dokus.backend.services.documents.DocumentRecordLoader
 import tech.dokus.backend.services.documents.DocumentTruthService
+import tech.dokus.backend.services.documents.ProcessingHealthService
 import tech.dokus.backend.services.documents.StorageDocumentFetcher
 import tech.dokus.backend.services.documents.confirmation.CreditNoteConfirmationService
 import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
@@ -341,6 +342,7 @@ private fun cashflowModule() = module {
     single { CreditNoteConfirmationService(get(), get(), get(), get()) }
     single { DocumentConfirmationDispatcher(get(), get(), get(), get()) }
     singleOf(::DocumentTruthService)
+    singleOf(::ProcessingHealthService)
     singleOf(::DocumentCollectionEventHub)
     singleOf(::DocumentSnapshotEventHub)
     singleOf(::DocumentSsePublisher)

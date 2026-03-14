@@ -10,7 +10,11 @@ import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.greaterEq
 import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.core.isNull
+import org.jetbrains.exposed.v1.core.less
+import org.jetbrains.exposed.v1.core.or
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.select
@@ -18,6 +22,7 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.v1.jdbc.update
 import tech.dokus.database.tables.contacts.ContactsTable
+import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
 import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentListFilter
@@ -31,6 +36,7 @@ import tech.dokus.domain.enums.PurposePeriodMode
 import tech.dokus.domain.enums.SourceTrust
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
@@ -51,6 +57,7 @@ import tech.dokus.domain.model.toSortDate
 import tech.dokus.domain.repository.DocumentStatusChecker
 import tech.dokus.domain.utils.json
 import java.util.UUID
+import kotlin.time.Duration.Companion.days
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toKotlinUuid
 
@@ -316,6 +323,142 @@ class DocumentRepository : DocumentStatusChecker {
                 ingestionStatus = null
             )
         )
+    }
+
+    // ── Processing health ────────────────────────────────────────────
+
+    data class ProcessingHealthStats(
+        val totalProcessedLast30Days: Int,
+        val needsReviewCount: Int,
+        val failedCount: Int,
+        val eligibleForReprocessCount: Int,
+    )
+
+    /**
+     * Compute processing health stats for the workspace.
+     * Scoped to last 30 days. Joins with ingestion runs to check processing version.
+     * CRITICAL: filters by tenantId.
+     */
+    suspend fun getProcessingHealthStats(
+        tenantId: TenantId,
+        currentProcessingVersion: Int,
+    ): ProcessingHealthStats = newSuspendedTransaction {
+        val tenantUuid = UUID.fromString(tenantId.toString())
+        val cutoff = Clock.System.now().minus(30.days).toLocalDateTime(TimeZone.UTC)
+        val runs = DocumentIngestionRunsTable
+
+        // Base: documents for this tenant updated in last 30 days
+        val base = DocumentsTable
+            .join(runs, JoinType.LEFT, additionalConstraint = {
+                DocumentsTable.lastSuccessfulRunId eq runs.id
+            })
+            .selectAll()
+            .where {
+                (DocumentsTable.tenantId eq tenantUuid) and
+                    (DocumentsTable.updatedAt greaterEq cutoff)
+            }
+
+        val rows = base.toList()
+
+        var total = 0
+        var needsReview = 0
+        var failed = 0
+        var eligible = 0
+
+        for (row in rows) {
+            total++
+            val status = row[DocumentsTable.documentStatus]
+            when (status) {
+                DocumentStatus.NeedsReview -> needsReview++
+                DocumentStatus.Rejected -> {} // count toward total only
+                DocumentStatus.Confirmed -> {} // count toward total only
+                DocumentStatus.Unsupported -> {} // count toward total only
+                null -> {} // no draft yet
+            }
+
+            // Check if this document has a failed latest ingestion (no successful run)
+            val lastRunId = row.getOrNull(DocumentsTable.lastSuccessfulRunId)
+            if (lastRunId == null && status != DocumentStatus.Confirmed) {
+                // Document exists but never had a successful run — likely failed
+                failed++
+            }
+
+            // Eligible: NeedsReview or has no successful run, with old/null processing version
+            if (status == DocumentStatus.NeedsReview || lastRunId == null) {
+                val version = row.getOrNull(runs.processingVersion) ?: 0
+                if (version < currentProcessingVersion) {
+                    eligible++
+                }
+            }
+        }
+
+        ProcessingHealthStats(
+            totalProcessedLast30Days = total,
+            needsReviewCount = needsReview,
+            failedCount = failed,
+            eligibleForReprocessCount = eligible,
+        )
+    }
+
+    data class DocumentReprocessCandidate(
+        val documentId: DocumentId,
+        val sourceId: DocumentSourceId?,
+    )
+
+    /**
+     * Find documents eligible for bulk reprocessing.
+     * Scope: NeedsReview + documents without successful runs, last 30 days,
+     * processing_version < currentVersion or null.
+     * Excludes documents with active (Queued/Processing) ingestion runs.
+     *
+     * Safety: reuses existing source, does not mutate document, does not
+     * overwrite confirmed truth — only identifies candidates for new runs.
+     *
+     * CRITICAL: filters by tenantId.
+     */
+    @OptIn(ExperimentalUuidApi::class)
+    suspend fun findDocumentsEligibleForReprocess(
+        tenantId: TenantId,
+        currentProcessingVersion: Int,
+        limit: Int = 100,
+    ): List<DocumentReprocessCandidate> = newSuspendedTransaction {
+        val tenantUuid = UUID.fromString(tenantId.toString())
+        val cutoff = Clock.System.now().minus(30.days).toLocalDateTime(TimeZone.UTC)
+        val runs = DocumentIngestionRunsTable
+
+        // Find NeedsReview documents from last 30 days with old/null processing version
+        val candidates = DocumentsTable
+            .join(runs, JoinType.LEFT, additionalConstraint = {
+                DocumentsTable.lastSuccessfulRunId eq runs.id
+            })
+            .select(DocumentsTable.id)
+            .where {
+                (DocumentsTable.tenantId eq tenantUuid) and
+                    (DocumentsTable.updatedAt greaterEq cutoff) and
+                    (DocumentsTable.documentStatus eq DocumentStatus.NeedsReview) and
+                    ((runs.processingVersion.isNull()) or (runs.processingVersion less currentProcessingVersion))
+            }
+            .limit(limit)
+            .map { row -> DocumentId(row[DocumentsTable.id].value.toKotlinUuid()) }
+
+        // Filter out documents that already have active runs
+        val activeDocIds = if (candidates.isNotEmpty()) {
+            DocumentIngestionRunsTable
+                .select(DocumentIngestionRunsTable.documentId)
+                .where {
+                    (DocumentIngestionRunsTable.tenantId eq tenantUuid) and
+                        (DocumentIngestionRunsTable.documentId inList candidates.map { UUID.fromString(it.toString()) }) and
+                        (DocumentIngestionRunsTable.status inList listOf(IngestionStatus.Queued, IngestionStatus.Processing))
+                }
+                .map { it[DocumentIngestionRunsTable.documentId] }
+                .toSet()
+        } else {
+            emptySet()
+        }
+
+        candidates
+            .filter { UUID.fromString(it.toString()) !in activeDocIds }
+            .map { docId -> DocumentReprocessCandidate(documentId = docId, sourceId = null) }
     }
 
     /**

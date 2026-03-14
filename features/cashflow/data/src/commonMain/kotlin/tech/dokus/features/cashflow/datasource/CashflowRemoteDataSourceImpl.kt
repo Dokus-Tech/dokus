@@ -82,6 +82,9 @@ import tech.dokus.domain.model.PeppolValidationResult
 import tech.dokus.domain.model.PeppolVerifyResponse
 import tech.dokus.domain.model.RecordPaymentRequest
 import tech.dokus.domain.model.RejectDocumentRequest
+import tech.dokus.domain.model.BulkReprocessRequest
+import tech.dokus.domain.model.BulkReprocessResponse
+import tech.dokus.domain.model.ProcessingHealthRecommendation
 import tech.dokus.domain.model.ReprocessRequest
 import tech.dokus.domain.model.ReprocessResponse
 import tech.dokus.domain.model.ResolveDocumentMatchReviewRequest
@@ -727,6 +730,23 @@ internal class CashflowRemoteDataSourceImpl(
         return runCatching {
             val docIdRoute = Documents.Id(id = documentId.toString())
             httpClient.post(Documents.Id.Reprocess(parent = docIdRoute)) {
+                contentType(ContentType.Application.Json)
+                setBody(request)
+            }.body()
+        }
+    }
+
+    override suspend fun getProcessingHealth(): Result<ProcessingHealthRecommendation> {
+        return runCatching {
+            httpClient.get(Documents.ProcessingHealth()).body()
+        }
+    }
+
+    override suspend fun bulkReprocess(
+        request: BulkReprocessRequest
+    ): Result<BulkReprocessResponse> {
+        return runCatching {
+            httpClient.post(Documents.BulkReprocess()) {
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }.body()

@@ -100,6 +100,10 @@ object DocumentIngestionRunsTable : UUIDTable("document_ingestion_runs") {
     // Number of chunks created (for diagnostics)
     val chunksCount = integer("chunks_count").nullable()
 
+    // Processing version stamped on successful completion.
+    // Null for runs that predate version tracking (treated as version 0).
+    val processingVersion = integer("processing_version").nullable()
+
     init {
         // For processor: find runs to process by status
         index(false, tenantId, status, queuedAt)

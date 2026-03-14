@@ -10,6 +10,8 @@ import tech.dokus.features.cashflow.datasource.ChatRemoteDataSource
 import tech.dokus.features.cashflow.datasource.ChatRemoteDataSourceImpl
 import tech.dokus.features.cashflow.gateway.DocumentReviewGateway
 import tech.dokus.features.cashflow.gateway.DocumentReviewGatewayImpl
+import tech.dokus.features.cashflow.gateway.ProcessingHealthGateway
+import tech.dokus.features.cashflow.gateway.ProcessingHealthGatewayImpl
 import tech.dokus.features.cashflow.gateway.DocumentUploadGateway
 import tech.dokus.features.cashflow.gateway.DocumentUploadGatewayImpl
 import tech.dokus.features.cashflow.gateway.PeppolConnectionGateway
@@ -49,6 +51,8 @@ import tech.dokus.features.cashflow.usecase.ListPeppolTransmissionsUseCaseImpl
 import tech.dokus.features.cashflow.usecase.LoadDocumentRecordsUseCaseImpl
 import tech.dokus.features.cashflow.usecase.PollPeppolInboxUseCaseImpl
 import tech.dokus.features.cashflow.usecase.RejectDocumentUseCaseImpl
+import tech.dokus.features.cashflow.usecase.ExecuteBulkReprocessUseCaseImpl
+import tech.dokus.features.cashflow.usecase.GetProcessingHealthUseCaseImpl
 import tech.dokus.features.cashflow.usecase.ReprocessDocumentUseCaseImpl
 import tech.dokus.features.cashflow.usecase.ResolveDocumentMatchReviewUseCaseImpl
 import tech.dokus.features.cashflow.usecase.SendChatMessageUseCaseImpl
@@ -159,6 +163,7 @@ val cashflowNetworkModule = module {
     singleOf(::PeppolTransmissionsGatewayImpl) bind PeppolTransmissionsGateway::class
     singleOf(::DocumentReviewGatewayImpl) bind DocumentReviewGateway::class
     singleOf(::DocumentUploadGatewayImpl) bind DocumentUploadGateway::class
+    singleOf(::ProcessingHealthGatewayImpl) bind ProcessingHealthGateway::class
 
     // ============================================================================
     // USE CASES
@@ -184,6 +189,8 @@ val cashflowNetworkModule = module {
     singleOf(::GetDocumentSourceContentUseCaseImpl) bind GetDocumentSourceContentUseCase::class
     singleOf(::ReprocessDocumentUseCaseImpl) bind ReprocessDocumentUseCase::class
     singleOf(::ResolveDocumentMatchReviewUseCaseImpl) bind ResolveDocumentMatchReviewUseCase::class
+    singleOf(::GetProcessingHealthUseCaseImpl) bind GetProcessingHealthUseCase::class
+    singleOf(::ExecuteBulkReprocessUseCaseImpl) bind ExecuteBulkReprocessUseCase::class
 
     // Document upload
     singleOf(::UploadDocumentUseCaseImpl) bind UploadDocumentUseCase::class
