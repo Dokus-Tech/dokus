@@ -10,6 +10,7 @@ import tech.dokus.domain.model.PeppolActivityDto
 import tech.dokus.domain.model.PeppolRegistrationDto
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.TenantSettings
+import tech.dokus.domain.model.ProcessingHealthRecommendation
 import tech.dokus.domain.model.common.Thumbnail
 import tech.dokus.foundation.app.state.DokusState
 
@@ -55,6 +56,8 @@ data class WorkspaceSettingsState(
     val avatarState: AvatarState = AvatarState.Idle,
     val currentAvatar: Thumbnail? = null,
     val editingSection: EditingSection? = null,
+    val processingHealth: DokusState<ProcessingHealthRecommendation> = DokusState.loading(),
+    val bulkReprocessState: BulkReprocessState = BulkReprocessState.Idle,
 ) : MVIState {
 
     /**
@@ -134,6 +137,17 @@ data class WorkspaceSettingsState(
         data object Success : AvatarState
         data class Error(val error: DokusException) : AvatarState
     }
+
+    /**
+     * State for bulk reprocess operation.
+     */
+    @Immutable
+    sealed interface BulkReprocessState {
+        data object Idle : BulkReprocessState
+        data object InProgress : BulkReprocessState
+        data class Done(val queuedCount: Int) : BulkReprocessState
+        data class Failed(val error: DokusException) : BulkReprocessState
+    }
 }
 
 // ============================================================================
@@ -210,6 +224,13 @@ sealed interface WorkspaceSettingsIntent : MVIIntent {
 
     /** Reset avatar state to idle */
     data object ResetAvatarState : WorkspaceSettingsIntent
+
+    // Processing health
+    /** Load processing health recommendation */
+    data object LoadProcessingHealth : WorkspaceSettingsIntent
+
+    /** Execute bulk reprocess of eligible documents */
+    data object ExecuteBulkReprocess : WorkspaceSettingsIntent
 }
 
 // ============================================================================

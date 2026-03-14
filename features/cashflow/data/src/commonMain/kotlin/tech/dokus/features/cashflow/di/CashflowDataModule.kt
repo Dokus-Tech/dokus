@@ -102,6 +102,8 @@ import tech.dokus.features.cashflow.usecases.ListPeppolTransmissionsUseCase
 import tech.dokus.features.cashflow.usecases.LoadDocumentRecordsUseCase
 import tech.dokus.features.cashflow.usecases.PollPeppolInboxUseCase
 import tech.dokus.features.cashflow.usecases.RejectDocumentUseCase
+import tech.dokus.features.cashflow.usecases.ExecuteBulkReprocessUseCase
+import tech.dokus.features.cashflow.usecases.GetProcessingHealthUseCase
 import tech.dokus.features.cashflow.usecases.ReprocessDocumentUseCase
 import tech.dokus.features.cashflow.usecases.ResolveDocumentMatchReviewUseCase
 import tech.dokus.features.cashflow.usecases.SendChatMessageUseCase

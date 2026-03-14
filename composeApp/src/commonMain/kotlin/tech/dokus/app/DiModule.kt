@@ -132,6 +132,8 @@ internal val diModuleApp = module {
             watchCurrentTenantUseCase = get(),
             getPeppolRegistration = get(),
             getPeppolActivity = get(),
+            getProcessingHealth = get(),
+            executeBulkReprocess = get(),
         )
     }
     container<TeamSettingsContainer, TeamSettingsState, TeamSettingsIntent, TeamSettingsAction> {

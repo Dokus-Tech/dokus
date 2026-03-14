@@ -20,8 +20,10 @@ import tech.dokus.features.auth.usecases.GetTenantSettingsUseCase
 import tech.dokus.features.auth.usecases.UpdateTenantSettingsUseCase
 import tech.dokus.features.auth.usecases.UploadWorkspaceAvatarUseCase
 import tech.dokus.features.auth.usecases.WatchCurrentTenantUseCase
+import tech.dokus.features.cashflow.usecases.ExecuteBulkReprocessUseCase
 import tech.dokus.features.cashflow.usecases.GetPeppolActivityUseCase
 import tech.dokus.features.cashflow.usecases.GetPeppolRegistrationUseCase
+import tech.dokus.features.cashflow.usecases.GetProcessingHealthUseCase
 import tech.dokus.foundation.app.picker.inferImageContentType
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.platform.Logger
@@ -51,6 +53,8 @@ internal class WorkspaceSettingsContainer(
     private val watchCurrentTenantUseCase: WatchCurrentTenantUseCase,
     private val getPeppolRegistration: GetPeppolRegistrationUseCase,
     private val getPeppolActivity: GetPeppolActivityUseCase,
+    private val getProcessingHealth: GetProcessingHealthUseCase,
+    private val executeBulkReprocess: ExecuteBulkReprocessUseCase,
 ) : Container<WorkspaceSettingsState, WorkspaceSettingsIntent, WorkspaceSettingsAction> {
 
     private val logger = Logger.forClass<WorkspaceSettingsContainer>()
@@ -82,6 +86,8 @@ internal class WorkspaceSettingsContainer(
                     is WorkspaceSettingsIntent.UploadAvatar -> handleUploadAvatar(intent.imageBytes, intent.filename)
                     is WorkspaceSettingsIntent.DeleteAvatar -> handleDeleteAvatar()
                     is WorkspaceSettingsIntent.ResetAvatarState -> handleResetAvatarState()
+                    is WorkspaceSettingsIntent.LoadProcessingHealth -> handleLoadProcessingHealth()
+                    is WorkspaceSettingsIntent.ExecuteBulkReprocess -> handleExecuteBulkReprocess()
                 }
             }
         }
@@ -120,6 +126,8 @@ internal class WorkspaceSettingsContainer(
                     currentAvatar = tenant.avatar,
                 )
             }
+            // Load processing health in the background
+            handleLoadProcessingHealth()
         } else {
             val error = tenantResult.exceptionOrNull() ?: settingsResult.exceptionOrNull()
                 ?: IllegalStateException("Failed to load workspace settings")
@@ -403,6 +411,46 @@ internal class WorkspaceSettingsContainer(
 
     private suspend fun WorkspaceSettingsCtx.handleResetAvatarState() {
         updateState { copy(avatarState = WorkspaceSettingsState.AvatarState.Idle) }
+    }
+
+    // Processing health handlers
+    private suspend fun WorkspaceSettingsCtx.handleLoadProcessingHealth() {
+        getProcessingHealth().fold(
+            onSuccess = { recommendation ->
+                updateState { copy(processingHealth = DokusState.success(recommendation)) }
+            },
+            onFailure = { error ->
+                logger.e(error) { "Failed to load processing health" }
+                updateState {
+                    copy(
+                        processingHealth = DokusState.error(
+                            exception = error.asDokusException,
+                            retryHandler = { intent(WorkspaceSettingsIntent.LoadProcessingHealth) }
+                        )
+                    )
+                }
+            }
+        )
+    }
+
+    private suspend fun WorkspaceSettingsCtx.handleExecuteBulkReprocess() {
+        updateState { copy(bulkReprocessState = WorkspaceSettingsState.BulkReprocessState.InProgress) }
+        executeBulkReprocess().fold(
+            onSuccess = { response ->
+                logger.i { "Bulk reprocess completed: ${response.queuedCount} queued" }
+                updateState {
+                    copy(bulkReprocessState = WorkspaceSettingsState.BulkReprocessState.Done(response.queuedCount))
+                }
+            },
+            onFailure = { error ->
+                logger.e(error) { "Bulk reprocess failed" }
+                updateState {
+                    copy(
+                        bulkReprocessState = WorkspaceSettingsState.BulkReprocessState.Failed(error.asDokusException)
+                    )
+                }
+            }
+        )
     }
 }
 
