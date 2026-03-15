@@ -114,6 +114,11 @@ object ExtractionToolDescriptions {
     - Dutch VAT: "NL" + 9 digits + "B" + 2 digits (e.g., NL123456789B02).
     - German VAT: "DE" + exactly 9 digits (e.g., DE123456789).
     - French VAT: "FR" + 2 alphanumeric chars + 9 digits (e.g., FRXX123456789).
+    - Austrian VAT (UID-Nr.): "ATU" + exactly 8 digits (e.g., ATU12345678).
+    - Luxembourg VAT: "LU" + exactly 8 digits (e.g., LU12345678).
+    - Italian VAT: "IT" + exactly 11 digits (e.g., IT12345678901).
+    - Spanish VAT: "ES" + 1 letter + 7 digits + 1 alphanumeric (e.g., ESX1234567X).
+    - "UID", "UID-Nr.", "USt-IdNr.", "TVA", "BTW", "MwSt" are all labels for VAT numbers.
     - Remove dots/spaces from the VAT (e.g., "BE 0123.456.789" → "BE0123456789").
     - If you cannot isolate the exact VAT number, return null."""
 }
