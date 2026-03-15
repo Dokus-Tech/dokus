@@ -105,7 +105,7 @@ internal class DocumentReviewPreview(
         sourceId: DocumentSourceId,
         sourceType: DocumentSource,
         contentType: String,
-        dpi: Int,
+        dpi: Dpi,
         maxPages: Int
     ) {
         val isPdf = contentType.contains("pdf", ignoreCase = true)
@@ -227,7 +227,7 @@ internal class DocumentReviewPreview(
     private suspend fun DocumentReviewCtx.loadPreviewPages(
         documentId: DocumentId,
         contentType: String,
-        dpi: Int,
+        dpi: Dpi,
         maxPages: Int
     ) {
         if (!contentType.contains("pdf", ignoreCase = true)) {

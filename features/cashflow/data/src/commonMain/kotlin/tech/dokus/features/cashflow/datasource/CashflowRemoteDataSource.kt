@@ -53,6 +53,7 @@ import tech.dokus.domain.model.DocumentListItemDto
 import tech.dokus.domain.model.DocumentPagesResponse
 import tech.dokus.domain.model.DocumentRecordStreamEvent
 import tech.dokus.domain.model.DocumentSourceDto
+import tech.dokus.domain.model.Dpi
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.PeppolConnectRequest
 import tech.dokus.domain.model.PeppolConnectResponse
@@ -584,7 +585,7 @@ interface CashflowRemoteDataSource {
      */
     suspend fun getDocumentPages(
         documentId: DocumentId,
-        dpi: Int,
+        dpi: Dpi,
         maxPages: Int = 10
     ): Result<DocumentPagesResponse>
 
@@ -604,7 +605,7 @@ interface CashflowRemoteDataSource {
     suspend fun getDocumentSourcePages(
         documentId: DocumentId,
         sourceId: DocumentSourceId,
-        dpi: Int = 150,
+        dpi: Dpi,
         maxPages: Int = 10
     ): Result<DocumentPagesResponse>
 

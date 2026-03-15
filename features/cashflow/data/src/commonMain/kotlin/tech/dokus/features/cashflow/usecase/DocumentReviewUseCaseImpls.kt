@@ -5,6 +5,7 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentMatchReviewId
 import tech.dokus.domain.ids.DocumentSourceId
+import tech.dokus.domain.model.Dpi
 import tech.dokus.domain.model.DocumentMatchResolutionDecision
 import tech.dokus.domain.model.DocumentPagesResponse
 import tech.dokus.domain.model.DocumentDetailDto
@@ -96,7 +97,7 @@ internal class GetDocumentPagesUseCaseImpl(
 ) : GetDocumentPagesUseCase {
     override suspend fun invoke(
         documentId: DocumentId,
-        dpi: Int,
+        dpi: Dpi,
         maxPages: Int
     ): Result<DocumentPagesResponse> {
         return documentReviewGateway.getDocumentPages(
@@ -113,7 +114,7 @@ internal class GetDocumentSourcePagesUseCaseImpl(
     override suspend fun invoke(
         documentId: DocumentId,
         sourceId: DocumentSourceId,
-        dpi: Int,
+        dpi: Dpi,
         maxPages: Int
     ): Result<DocumentPagesResponse> {
         return documentReviewGateway.getDocumentSourcePages(

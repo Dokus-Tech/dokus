@@ -5,6 +5,7 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentMatchReviewId
 import tech.dokus.domain.ids.DocumentSourceId
+import tech.dokus.domain.model.Dpi
 import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.DocumentMatchResolutionDecision
 import tech.dokus.domain.model.DocumentPagesResponse
@@ -72,7 +73,7 @@ interface RejectDocumentUseCase {
 interface GetDocumentPagesUseCase {
     suspend operator fun invoke(
         documentId: DocumentId,
-        dpi: Int,
+        dpi: Dpi,
         maxPages: Int = 10
     ): Result<DocumentPagesResponse>
 }
@@ -84,7 +85,7 @@ interface GetDocumentSourcePagesUseCase {
     suspend operator fun invoke(
         documentId: DocumentId,
         sourceId: DocumentSourceId,
-        dpi: Int = 150,
+        dpi: Dpi,
         maxPages: Int = 10
     ): Result<DocumentPagesResponse>
 }

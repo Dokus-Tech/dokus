@@ -7,6 +7,7 @@ import tech.dokus.domain.model.contact.CounterpartyInfo
 import tech.dokus.domain.model.contact.isUnresolved
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.model.Dpi
 import tech.dokus.domain.model.DocumentMatchResolutionDecision
 import tech.dokus.domain.model.ReprocessRequest
 import tech.dokus.features.cashflow.usecases.ReprocessDocumentUseCase
@@ -58,7 +59,7 @@ internal class DocumentReviewFeedbackActions(
                     activeDocumentId,
                     ReprocessRequest(
                         force = true,
-                        dpi = 220,
+                        dpi = Dpi.create(220),
                         userFeedback = feedback
                     )
                 ).fold(

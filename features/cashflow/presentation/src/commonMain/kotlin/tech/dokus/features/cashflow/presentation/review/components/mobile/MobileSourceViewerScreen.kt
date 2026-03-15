@@ -21,6 +21,7 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.document_source_original_document
 import tech.dokus.aura.resources.document_source_technical_details
 import tech.dokus.domain.enums.DocumentSource
+import tech.dokus.domain.model.Dpi
 import tech.dokus.features.cashflow.presentation.review.DocumentPreviewState
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.SourceEvidenceViewerState
@@ -134,7 +135,7 @@ private fun MobileSourceViewerPdfPreview(
                     pages = emptyList(),
                     totalPages = 1,
                     renderedPages = 0,
-                    dpi = 180,
+                    dpi = Dpi.create(180),
                     hasMore = false,
                 ),
             ),

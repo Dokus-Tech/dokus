@@ -35,6 +35,7 @@ import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.domain.model.TransactionCommunication
 import tech.dokus.domain.ids.StructuredCommunication
+import tech.dokus.domain.model.Dpi
 import tech.dokus.domain.model.DocumentPagePreviewDto
 import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.DocumentSourceDto
@@ -72,7 +73,7 @@ internal fun previewReviewContentState(
         pages = listOf(DocumentPagePreviewDto(page = 1, imageUrl = "/api/v1/documents/preview/pages/1.png")),
         totalPages = 1,
         renderedPages = 1,
-        dpi = 180,
+        dpi = Dpi.create(180),
         hasMore = false,
     ),
     sourceViewerState: SourceEvidenceViewerState? = null,
@@ -417,7 +418,7 @@ internal fun previewStateForDocumentType(
             pages = listOf(DocumentPagePreviewDto(page = 1, imageUrl = "/api/v1/documents/preview/pages/1.png")),
             totalPages = 1,
             renderedPages = 1,
-            dpi = 180,
+            dpi = Dpi.create(180),
             hasMore = false,
         ),
         hasUnsavedChanges = false,

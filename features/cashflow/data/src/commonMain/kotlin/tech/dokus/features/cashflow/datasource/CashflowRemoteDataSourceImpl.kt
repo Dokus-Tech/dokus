@@ -58,6 +58,7 @@ import tech.dokus.domain.model.UndoAutoPaymentRequest
 import tech.dokus.domain.model.CreateExpenseRequest
 import tech.dokus.domain.model.CreateInvoiceRequest
 import tech.dokus.domain.model.DocumentDraftDto
+import tech.dokus.domain.model.Dpi
 import tech.dokus.domain.model.DocumentCountsResponse
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentIngestionDto
@@ -786,7 +787,7 @@ internal class CashflowRemoteDataSourceImpl(
 
     override suspend fun getDocumentPages(
         documentId: DocumentId,
-        dpi: Int,
+        dpi: Dpi,
         maxPages: Int
     ): Result<DocumentPagesResponse> {
         return runCatching {
@@ -817,7 +818,7 @@ internal class CashflowRemoteDataSourceImpl(
     override suspend fun getDocumentSourcePages(
         documentId: DocumentId,
         sourceId: DocumentSourceId,
-        dpi: Int,
+        dpi: Dpi,
         maxPages: Int
     ): Result<DocumentPagesResponse> {
         return runCatching {
