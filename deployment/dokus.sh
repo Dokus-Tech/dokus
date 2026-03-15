@@ -73,7 +73,9 @@ DB_NAME="dokus"
 #   - lite:  Self-host low resource, HTTP:8000 (docker-compose.lite.yml) [default]
 PROFILE_FILE=".dokus-profile"
 DEBUG_MODE_FILE=".dokus-debug"
+LANGFUSE_MODE_FILE=".dokus-langfuse"
 DEBUG_MODE=false
+LANGFUSE_MODE=false
 
 # Load saved profile or prompt user to select
 load_profile() {
@@ -185,6 +187,31 @@ save_debug_mode() {
     echo "$DEBUG_MODE" > "$DEBUG_MODE_FILE"
 }
 
+# Load Langfuse mode state (enabled by default for cloud/pro, disabled for lite)
+load_langfuse_mode() {
+    if [ -f "$LANGFUSE_MODE_FILE" ]; then
+        LANGFUSE_MODE=$(cat "$LANGFUSE_MODE_FILE")
+    else
+        # Default: enabled for cloud/pro, disabled for lite
+        case "${DOKUS_PROFILE:-lite}" in
+            cloud|pro) LANGFUSE_MODE=true ;;
+            *)         LANGFUSE_MODE=false ;;
+        esac
+    fi
+}
+
+# Save Langfuse mode state
+save_langfuse_mode() {
+    echo "$LANGFUSE_MODE" > "$LANGFUSE_MODE_FILE"
+}
+
+# Get Langfuse overlay flag (returns "-f docker-compose.langfuse.yml" or empty)
+langfuse_overlay() {
+    if [ "$LANGFUSE_MODE" = "true" ] && [ -f "docker-compose.langfuse.yml" ]; then
+        echo "-f docker-compose.langfuse.yml"
+    fi
+}
+
 # Toggle debug mode - restarts services with/without debug override
 toggle_debug_mode() {
     if ! check_env; then
@@ -195,10 +222,10 @@ toggle_debug_mode() {
         print_gradient_header "Disabling Debug Mode" "Restarting without JDWP"
 
         print_status info "Stopping services..."
-        docker compose -f "$COMPOSE_FILE" down
+        docker compose -f "$COMPOSE_FILE" $(langfuse_overlay) down
 
         print_status info "Starting services (normal mode)..."
-        docker compose --compatibility -f "$COMPOSE_FILE" up -d
+        docker compose --compatibility -f "$COMPOSE_FILE" $(langfuse_overlay) up -d
 
         DEBUG_MODE=false
         save_debug_mode
@@ -208,10 +235,10 @@ toggle_debug_mode() {
         print_gradient_header "Enabling Debug Mode" "Restarting with JDWP on port 5005"
 
         print_status info "Stopping services..."
-        docker compose -f "$COMPOSE_FILE" down
+        docker compose -f "$COMPOSE_FILE" $(langfuse_overlay) down
 
         print_status info "Starting services with debug override..."
-        docker compose --compatibility -f "$COMPOSE_FILE" -f docker-compose.debug.yml up -d
+        docker compose --compatibility -f "$COMPOSE_FILE" $(langfuse_overlay) -f docker-compose.debug.yml up -d
 
         DEBUG_MODE=true
         save_debug_mode
@@ -230,6 +257,7 @@ toggle_debug_mode() {
 # Initialize profile
 load_profile
 load_debug_mode
+load_langfuse_mode
 
 # Gateway configuration
 GATEWAY_PORT="8000"
@@ -438,7 +466,7 @@ check_env() {
 show_status() {
     print_gradient_header "📊 Service Status" "Docker compose + health probes"
 
-    docker compose -f "$COMPOSE_FILE" ps
+    docker compose -f "$COMPOSE_FILE" $(langfuse_overlay) ps
     echo ""
 
     print_separator
@@ -450,24 +478,24 @@ show_status() {
     echo_e "  ${SOFT_GRAY}├─────────────────────────┼──────────────────┤${NC}"
 
     printf "  ${SOFT_GRAY}│${NC} PostgreSQL (${DB_NAME})     ${SOFT_GRAY}│${NC} "
-    if docker compose -f "$COMPOSE_FILE" exec -T $DB_CONTAINER pg_isready -U $DB_USER -d $DB_NAME &>/dev/null; then
+    if docker compose -f "$COMPOSE_FILE" $(langfuse_overlay) exec -T $DB_CONTAINER pg_isready -U $DB_USER -d $DB_NAME &>/dev/null; then
         echo_e "${SOFT_GREEN}◎ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
     else
         echo_e "${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}"
     fi
 
     printf "  ${SOFT_GRAY}│${NC} Redis Cache             ${SOFT_GRAY}│${NC} "
-    if docker compose -f "$COMPOSE_FILE" exec -T redis redis-cli --no-auth-warning -a "${REDIS_PASSWORD}" ping &>/dev/null 2>&1; then
+    if docker compose -f "$COMPOSE_FILE" $(langfuse_overlay) exec -T redis redis-cli --no-auth-warning -a "${REDIS_PASSWORD}" ping &>/dev/null 2>&1; then
         echo_e "${SOFT_GREEN}◎ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
     else
         echo_e "${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}"
     fi
 
     printf "  ${SOFT_GRAY}│${NC} MinIO Storage           ${SOFT_GRAY}│${NC} "
-    if docker compose -f "$COMPOSE_FILE" exec -T minio curl -fs http://localhost:9000/minio/health/live &>/dev/null 2>&1; then
+    if docker compose -f "$COMPOSE_FILE" $(langfuse_overlay) exec -T minio curl -fs http://localhost:9000/minio/health/live &>/dev/null 2>&1; then
         echo_e "${SOFT_GREEN}◎ HEALTHY${NC}       ${SOFT_GRAY}│${NC}"
     else
-        if docker compose -f "$COMPOSE_FILE" ps --status running -q minio 2>/dev/null | grep -q .; then
+        if docker compose -f "$COMPOSE_FILE" $(langfuse_overlay) ps --status running -q minio 2>/dev/null | grep -q .; then
             echo_e "${SOFT_YELLOW}◒ RUNNING${NC}      ${SOFT_GRAY}│${NC}"
         else
             echo_e "${SOFT_RED}⨯ DOWN${NC}          ${SOFT_GRAY}│${NC}"
@@ -570,10 +598,10 @@ start_services() {
     print_gradient_header "🚀 Launching Dokus" "Compose stack + health probes"
 
     print_status info "Pulling latest images..."
-    docker compose -f "$COMPOSE_FILE" pull -q
+    docker compose -f "$COMPOSE_FILE" $(langfuse_overlay) pull -q
 
     print_status info "Starting services..."
-    docker compose --compatibility -f "$COMPOSE_FILE" up -d
+    docker compose --compatibility -f "$COMPOSE_FILE" $(langfuse_overlay) up -d
 
     if [ $? -eq 0 ]; then
         print_status success "Containers ignited"
@@ -592,7 +620,7 @@ start_services() {
 
 stop_services() {
     print_gradient_header "🛑 Stopping Services"
-    docker compose -f "$COMPOSE_FILE" down
+    docker compose -f "$COMPOSE_FILE" $(langfuse_overlay) down
     echo ""
     print_status success "All services stopped"
     echo ""
@@ -612,23 +640,23 @@ update_services() {
     print_gradient_header "⬆️ Updating Dokus" "Pulling new images + applying updates"
 
     print_status info "Checking registry and pulling images..."
-    docker compose -f "$COMPOSE_FILE" pull
+    docker compose -f "$COMPOSE_FILE" $(langfuse_overlay) pull
 
     echo ""
     print_status info "Applying updates (restart/recreate as needed)..."
-    docker compose --compatibility -f "$COMPOSE_FILE" up -d --remove-orphans
+    docker compose --compatibility -f "$COMPOSE_FILE" $(langfuse_overlay) up -d --remove-orphans
 
     echo ""
     print_status success "Update complete"
-    docker compose -f "$COMPOSE_FILE" ps
+    docker compose -f "$COMPOSE_FILE" $(langfuse_overlay) ps
 }
 
 show_logs() {
     service=$1
     if [ -z "$service" ]; then
-        docker compose -f "$COMPOSE_FILE" logs -f
+        docker compose -f "$COMPOSE_FILE" $(langfuse_overlay) logs -f
     else
-        docker compose -f "$COMPOSE_FILE" logs -f $service
+        docker compose -f "$COMPOSE_FILE" $(langfuse_overlay) logs -f $service
     fi
 }
 
@@ -636,7 +664,7 @@ access_db() {
     print_gradient_header "🗄️  Database CLI"
     print_status info "Connecting to PostgreSQL (${DB_NAME})..."
     echo ""
-    docker compose -f "$COMPOSE_FILE" exec $DB_CONTAINER psql -U $DB_USER -d $DB_NAME
+    docker compose -f "$COMPOSE_FILE" $(langfuse_overlay) exec $DB_CONTAINER psql -U $DB_USER -d $DB_NAME
 }
 
 # Function to show mobile app connection info with QR code
@@ -977,12 +1005,12 @@ EOF
 
     echo ""
     print_status task "Pulling latest Docker images"
-    docker compose -f "$COMPOSE_FILE" pull
+    docker compose -f "$COMPOSE_FILE" $(langfuse_overlay) pull
     print_status success "Images pulled"
 
     echo ""
     print_status task "Starting Dokus services"
-    docker compose --compatibility -f "$COMPOSE_FILE" up -d
+    docker compose --compatibility -f "$COMPOSE_FILE" $(langfuse_overlay) up -d
     print_status success "Services started"
 
     echo ""
@@ -997,15 +1025,15 @@ EOF
         local minio_ok=0
         local api_ok=0
 
-        if docker compose -f "$COMPOSE_FILE" exec -T postgres pg_isready -U $DB_USER -d $DB_NAME &>/dev/null; then
+        if docker compose -f "$COMPOSE_FILE" $(langfuse_overlay) exec -T postgres pg_isready -U $DB_USER -d $DB_NAME &>/dev/null; then
             pg_ok=1
         fi
 
-        if docker compose -f "$COMPOSE_FILE" exec -T redis redis-cli --no-auth-warning -a "${REDIS_PASSWORD}" ping &>/dev/null 2>&1; then
+        if docker compose -f "$COMPOSE_FILE" $(langfuse_overlay) exec -T redis redis-cli --no-auth-warning -a "${REDIS_PASSWORD}" ping &>/dev/null 2>&1; then
             redis_ok=1
         fi
 
-        if docker compose -f "$COMPOSE_FILE" exec -T minio curl -fs http://localhost:9000/minio/health/live &>/dev/null 2>&1; then
+        if docker compose -f "$COMPOSE_FILE" $(langfuse_overlay) exec -T minio curl -fs http://localhost:9000/minio/health/live &>/dev/null 2>&1; then
             minio_ok=1
         fi
 
