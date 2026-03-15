@@ -6,7 +6,7 @@ import kotlin.jvm.JvmInline
 private const val DpiMin = 75
 private const val DpiLow = 100
 private const val DpiMedium = 250
-private const val DpiHigh = 350
+private const val DpiHigh = 300
 private const val DpiMax = 600
 
 @Serializable

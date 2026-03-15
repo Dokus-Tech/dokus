@@ -17,6 +17,12 @@ object DocumentProcessingConstants {
     const val AUTO_CONFIRM_CONFIDENCE_THRESHOLD = 0.90
 
     /**
+     * Confidence threshold for extraction retry eligibility.
+     * Below this, the extraction is too uncertain and should be retried.
+     */
+    const val RETRY_CONFIDENCE_THRESHOLD = 0.55
+
+    /**
      * Maximum allowed runtime for a single ingestion run before it is considered stuck.
      */
     val INGESTION_RUN_TIMEOUT: Duration = 30.minutes

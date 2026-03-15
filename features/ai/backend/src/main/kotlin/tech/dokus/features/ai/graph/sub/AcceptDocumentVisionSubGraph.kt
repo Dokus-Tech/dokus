@@ -8,6 +8,7 @@ import ai.koog.agents.ext.agent.ConditionResult
 import ai.koog.agents.ext.agent.subgraphWithRetrySimple
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.processing.DocumentProcessingConstants.AUTO_CONFIRM_CONFIDENCE_THRESHOLD
+import tech.dokus.domain.processing.DocumentProcessingConstants.RETRY_CONFIDENCE_THRESHOLD
 import tech.dokus.features.ai.graph.AcceptDocumentInput
 import tech.dokus.features.ai.graph.nodes.DirectionResolutionResolver
 import tech.dokus.features.ai.graph.nodes.documentImagesInjectorNode
@@ -105,18 +106,16 @@ internal fun AIAgentSubgraphBuilderBase<*, *>.acceptDocumentOnVisionSubGraph(
             },
             condition = { result ->
                 val extractionConfidence = result.extraction.confidenceScore()
-                val isValid = result.auditReport.isValid
                 val hasDualPartyIssue = hasSameTenantDualPartyAmbiguity(result)
 
-                if (extractionConfidence >= confirmThreshold && isValid && !hasDualPartyIssue) {
-                    ConditionResult.Approve
+                val shouldRetry = !result.auditReport.isAutoConfirmSafe
+                    || extractionConfidence < RETRY_CONFIDENCE_THRESHOLD
+                    || hasDualPartyIssue
+
+                if (shouldRetry) {
+                    ConditionResult.Reject(buildExtractionRetryFeedback(result, confirmThreshold))
                 } else {
-                    ConditionResult.Reject(
-                        buildExtractionRetryFeedback(
-                            result,
-                            confirmThreshold
-                        )
-                    )
+                    ConditionResult.Approve
                 }
             }
         ) {
