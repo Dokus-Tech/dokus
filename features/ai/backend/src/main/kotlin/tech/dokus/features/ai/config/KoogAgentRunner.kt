@@ -37,6 +37,7 @@ class KoogAgentRunner(
                     agentName = agentName,
                     enabled = aiConfig.koogEventLoggingEnabled
                 )
+                installLangfuseTracing(aiConfig.langfuse)
             }
         )
         return try {

@@ -1,0 +1,185 @@
+# Dokus Docker Compose - Langfuse Overlay (AI Observability)
+# Adds self-hosted Langfuse v3 for Koog agent tracing.
+#
+# Usage (combine with any profile):
+#   docker compose -f docker-compose.pro.yml -f docker-compose.langfuse.yml up -d
+#   docker compose -f docker-compose.lite.yml -f docker-compose.langfuse.yml up -d
+#
+# Langfuse UI accessible at: http://<host>:3000
+
+x-langfuse-healthcheck: &langfuse-healthcheck
+  interval: 30s
+  timeout: 10s
+  retries: 3
+  start_period: 30s
+
+services:
+  # ==========================================================================
+  # LANGFUSE INFRASTRUCTURE (all internal, not exposed)
+  # ==========================================================================
+  langfuse-postgres:
+    image: postgres:17-alpine
+    container_name: dokus-langfuse-postgres
+    environment:
+      POSTGRES_DB: langfuse
+      POSTGRES_USER: langfuse
+      POSTGRES_PASSWORD: ${LANGFUSE_DB_PASSWORD}
+    volumes:
+      - langfuse-postgres-data:/var/lib/postgresql/data
+    networks:
+      - dokus-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U langfuse -d langfuse"]
+      <<: *langfuse-healthcheck
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  langfuse-clickhouse:
+    image: clickhouse/clickhouse-server:24
+    container_name: dokus-langfuse-clickhouse
+    environment:
+      CLICKHOUSE_DB: langfuse
+      CLICKHOUSE_USER: langfuse
+      CLICKHOUSE_PASSWORD: ${LANGFUSE_CLICKHOUSE_PASSWORD}
+    volumes:
+      - langfuse-clickhouse-data:/var/lib/clickhouse
+    networks:
+      - dokus-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+  langfuse-redis:
+    image: redis:8-alpine
+    container_name: dokus-langfuse-redis
+    command: >
+      redis-server
+      --requirepass ${LANGFUSE_REDIS_PASSWORD}
+      --maxmemory 128mb
+      --maxmemory-policy allkeys-lru
+    volumes:
+      - langfuse-redis-data:/data
+    networks:
+      - dokus-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  langfuse-minio:
+    image: minio/minio:latest
+    container_name: dokus-langfuse-minio
+    environment:
+      MINIO_ROOT_USER: langfuse
+      MINIO_ROOT_PASSWORD: ${LANGFUSE_MINIO_PASSWORD}
+    command: server /data
+    volumes:
+      - langfuse-minio-data:/data
+    networks:
+      - dokus-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  # ==========================================================================
+  # LANGFUSE APPLICATION
+  # ==========================================================================
+  langfuse-web:
+    image: langfuse/langfuse:3
+    container_name: dokus-langfuse-web
+    depends_on:
+      langfuse-postgres:
+        condition: service_healthy
+    environment:
+      # Database
+      DATABASE_URL: postgresql://langfuse:${LANGFUSE_DB_PASSWORD}@langfuse-postgres:5432/langfuse
+      # ClickHouse
+      CLICKHOUSE_URL: http://langfuse-clickhouse:8123
+      CLICKHOUSE_USER: langfuse
+      CLICKHOUSE_PASSWORD: ${LANGFUSE_CLICKHOUSE_PASSWORD}
+      # Redis
+      REDIS_CONNECTION_STRING: redis://:${LANGFUSE_REDIS_PASSWORD}@langfuse-redis:6379
+      # S3 (MinIO)
+      LANGFUSE_S3_EVENT_UPLOAD_BUCKET: langfuse
+      LANGFUSE_S3_EVENT_UPLOAD_ENDPOINT: http://langfuse-minio:9000
+      LANGFUSE_S3_EVENT_UPLOAD_ACCESS_KEY_ID: langfuse
+      LANGFUSE_S3_EVENT_UPLOAD_SECRET_ACCESS_KEY: ${LANGFUSE_MINIO_PASSWORD}
+      LANGFUSE_S3_EVENT_UPLOAD_FORCE_PATH_STYLE: "true"
+      LANGFUSE_S3_EVENT_UPLOAD_REGION: auto
+      # Auth
+      NEXTAUTH_SECRET: ${LANGFUSE_ENCRYPTION_KEY}
+      NEXTAUTH_URL: http://localhost:3000
+      SALT: ${LANGFUSE_SALT}
+      # Auto-provisioned org, project, and admin user
+      LANGFUSE_INIT_ORG_ID: dokus
+      LANGFUSE_INIT_ORG_NAME: Dokus
+      LANGFUSE_INIT_PROJECT_ID: dokus-ai
+      LANGFUSE_INIT_PROJECT_NAME: "Dokus Document Processing"
+      LANGFUSE_INIT_PROJECT_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY}
+      LANGFUSE_INIT_PROJECT_SECRET_KEY: ${LANGFUSE_SECRET_KEY}
+      LANGFUSE_INIT_USER_EMAIL: ${LANGFUSE_INIT_EMAIL:-admin@dokus.tech}
+      LANGFUSE_INIT_USER_PASSWORD: ${LANGFUSE_INIT_PASSWORD:-changeme}
+      LANGFUSE_INIT_USER_NAME: Admin
+    ports:
+      - "3000:3000"
+    networks:
+      - dokus-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+  langfuse-worker:
+    image: langfuse/langfuse-worker:3
+    container_name: dokus-langfuse-worker
+    depends_on:
+      langfuse-postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://langfuse:${LANGFUSE_DB_PASSWORD}@langfuse-postgres:5432/langfuse
+      CLICKHOUSE_URL: http://langfuse-clickhouse:8123
+      CLICKHOUSE_USER: langfuse
+      CLICKHOUSE_PASSWORD: ${LANGFUSE_CLICKHOUSE_PASSWORD}
+      REDIS_CONNECTION_STRING: redis://:${LANGFUSE_REDIS_PASSWORD}@langfuse-redis:6379
+      LANGFUSE_S3_EVENT_UPLOAD_BUCKET: langfuse
+      LANGFUSE_S3_EVENT_UPLOAD_ENDPOINT: http://langfuse-minio:9000
+      LANGFUSE_S3_EVENT_UPLOAD_ACCESS_KEY_ID: langfuse
+      LANGFUSE_S3_EVENT_UPLOAD_SECRET_ACCESS_KEY: ${LANGFUSE_MINIO_PASSWORD}
+      LANGFUSE_S3_EVENT_UPLOAD_FORCE_PATH_STYLE: "true"
+      LANGFUSE_S3_EVENT_UPLOAD_REGION: auto
+    networks:
+      - dokus-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  # ==========================================================================
+  # DOKUS SERVER OVERRIDE (enables Langfuse tracing)
+  # ==========================================================================
+  dokus-server:
+    environment:
+      LANGFUSE_ENABLED: "true"
+      LANGFUSE_HOST: http://langfuse-web:3000
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY}
+
+networks:
+  dokus-network:
+    external: true
+
+volumes:
+  langfuse-postgres-data:
+  langfuse-clickhouse-data:
+  langfuse-redis-data:
+  langfuse-minio-data:

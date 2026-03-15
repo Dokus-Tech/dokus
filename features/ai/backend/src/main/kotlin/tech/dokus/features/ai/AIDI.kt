@@ -6,18 +6,17 @@ import io.ktor.client.HttpClient
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
-import tech.dokus.features.ai.agents.BusinessProfileEnrichmentAgent
-import tech.dokus.features.ai.agents.BusinessProfileContentExtractionAgent
 import tech.dokus.features.ai.agents.BusinessLogoFallbackAgent
+import tech.dokus.features.ai.agents.BusinessProfileContentExtractionAgent
 import tech.dokus.features.ai.agents.ChatAgent
 import tech.dokus.features.ai.agents.DocumentProcessingAgent
 import tech.dokus.features.ai.config.AIModels
-import tech.dokus.features.ai.config.KoogAgentRunner
 import tech.dokus.features.ai.config.AIProviderFactory
+import tech.dokus.features.ai.config.KoogAgentRunner
 import tech.dokus.features.ai.config.ModelSet
+import tech.dokus.features.ai.prompts.ChatPrompt
 import tech.dokus.features.ai.queue.LlmModelSlot
 import tech.dokus.features.ai.queue.LlmQueue
-import tech.dokus.features.ai.prompts.ChatPrompt
 import tech.dokus.features.ai.services.ChunkingService
 import tech.dokus.features.ai.services.DocumentImageCache
 import tech.dokus.features.ai.services.EmbeddingService
@@ -85,7 +84,6 @@ fun aiModule() = module {
     // =========================================================================
 
     singleOf(::DocumentProcessingAgent)
-    singleOf(::BusinessProfileEnrichmentAgent)
     singleOf(::BusinessProfileContentExtractionAgent)
     singleOf(::BusinessLogoFallbackAgent)
 

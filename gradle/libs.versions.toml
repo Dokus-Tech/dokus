@@ -190,6 +190,7 @@ detekt-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", 
 koog-agents = { module = "ai.koog:koog-agents", version.ref = "koog" }
 koog-executor-openai-client = { module = "ai.koog:prompt-executor-openai-client", version.ref = "koog" }
 koog-features-event-handler = { module = "ai.koog:agents-features-event-handler", version.ref = "koog" }
+koog-features-opentelemetry = { module = "ai.koog:agents-features-opentelemetry", version.ref = "koog" }
 
 resilience4j-kotlin = { module = "io.github.resilience4j:resilience4j-kotlin", version.ref = "resilience4j" }
 resilience4j-circuitbreaker = { module = "io.github.resilience4j:resilience4j-circuitbreaker", version.ref = "resilience4j" }
@@ -267,7 +268,7 @@ rpc-client = ["kotlinx-rpc-krpc-client", "kotlinx-rpc-krpc-ktor-client", "kotlin
 rpc-server = ["kotlinx-rpc-krpc-server", "kotlinx-rpc-krpc-ktor-server", "kotlinx-rpc-krpc-serialization-json"]
 #krpc-base = ["kotlinx-rpc-core", "kotlinx-rpc-krpc-serialization-json"]
 koin-compose = ["koin-core", "koin-compose", "koin-viewmodel", "koin-navigation"]
-koog = ["koog-agents", "koog-executor-openai-client", "koog-features-event-handler"]
+koog = ["koog-agents", "koog-executor-openai-client", "koog-features-event-handler", "koog-features-opentelemetry"]
 roborazzi = ["roborazzi", "roborazzi-compose", "roborazzi-junit-rule"]
 roborazzi-scanner = ["composable-preview-scanner", "roborazzi-compose-preview-scanner"]
 
