@@ -53,7 +53,8 @@ val DocumentType.classifyHint: String
 
         DocumentType.StatementOfAccount ->
             "Overview of ALL transactions with one counterparty over a period (multiple invoices, payments, credits) with a running total — " +
-                    "'Rekeningoverzicht / Relevé de compte', may show aging buckets (30/60/90 days); NOT a single invoice."
+                    "'Rekeningoverzicht / Relevé de compte', may show aging buckets (30/60/90 days); NOT a single invoice. " +
+                    "NOT a bank or fintech account statement with IBAN and transaction rows (→ BANK_STATEMENT)."
 
         DocumentType.Receipt ->
             "Small POS/till receipt from a RETAIL or HOSPITALITY issuer proving payment was ALREADY made — " +
@@ -75,11 +76,12 @@ val DocumentType.classifyHint: String
         // ═══════════════════════════════════════════════════════════════════
 
         DocumentType.BankStatement ->
-            "Official bank account statement (dagafschrift / rekeninguitreksel / extrait de compte) from a Belgian bank " +
-                    "(KBC, Belfius, BNP Paribas Fortis, ING, Argenta, Crelan, Triodos…) — " +
-                    "has the bank's branding, an IBAN account number, opening and closing balance, a covered date range, " +
+            "Official account statement from a bank or payment institution " +
+                    "(KBC, Belfius, BNP Paribas Fortis, ING, Argenta, Crelan, Triodos, Wise, Revolut, N26, Starling, bunq…) — " +
+                    "has the institution's branding, an IBAN or account number, opening and/or closing balance, a covered date range, " +
                     "and one or more debit/credit transaction lines; even a single-transaction daily statement is BANK_STATEMENT. " +
-                    "NOT a retail till receipt (→ RECEIPT) and NOT a document from a non-bank issuer."
+                    "A statement from a FINTECH or PAYMENT INSTITUTION (Wise, Revolut, N26) is still a BANK_STATEMENT. " +
+                    "NOT a retail till receipt (→ RECEIPT) and NOT a supplier's invoice/account overview (→ STATEMENT_OF_ACCOUNT)."
 
         DocumentType.BankFee ->
             "Bank's own document itemising the fees/charges for account services over a period — " +

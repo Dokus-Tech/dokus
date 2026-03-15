@@ -42,6 +42,17 @@ class ContactService(
         request: CreateContactRequest
     ): Result<ContactDto> {
         logger.info("Creating contact for tenant: $tenantId, name: ${request.name}")
+
+        // Check for existing contact by VAT to avoid duplicate key race conditions
+        val vatNumber = request.vatNumber
+        if (vatNumber != null) {
+            val existing = contactRepository.findByVatNumber(tenantId, vatNumber.value).getOrNull()
+            if (existing != null) {
+                logger.info("Contact with VAT ${vatNumber.value} already exists: ${existing.id}, skipping creation")
+                return Result.success(existing)
+            }
+        }
+
         return runCatching {
             val created = contactRepository.createContact(tenantId, request).getOrThrow()
             var allAddressesPersisted = true

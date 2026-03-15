@@ -87,7 +87,15 @@ sealed interface IngestionItemEntity {
                     overrideDpi = overrideDpi
                 )
 
-                else -> throw IllegalArgumentException("Unknown source channel: $sourceChannel")
+                null -> Upload(
+                    runId = runId,
+                    documentId = documentId,
+                    tenantId = tenantId,
+                    sourceId = sourceId,
+                    userFeedback = userFeedback,
+                    overrideMaxPages = overrideMaxPages,
+                    overrideDpi = overrideDpi
+                )
             }
         }
     }
