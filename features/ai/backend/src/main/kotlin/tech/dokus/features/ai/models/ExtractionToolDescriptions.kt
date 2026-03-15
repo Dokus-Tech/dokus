@@ -34,7 +34,7 @@ object ExtractionToolDescriptions {
     const val SupplierEmail = "Supplier email if visible."
 
     const val SellerName = "Seller/issuer legal or trading name (header/logo area). Null if unclear."
-    const val SellerVat = "Seller VAT number if shown. Null if not visible."
+    const val SellerVat = "Seller VAT number if shown. Often in micro-print footer or legal block at the very bottom of the page — read carefully. Null if not visible."
     const val SellerEmail = "Seller email if visible."
     const val SellerStreet = "Seller street and number if visible."
     const val SellerPostalCode = "Seller postal code if visible."

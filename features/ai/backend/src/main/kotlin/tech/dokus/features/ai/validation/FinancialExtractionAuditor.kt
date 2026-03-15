@@ -49,6 +49,8 @@ object FinancialExtractionAuditor {
         )
         add(ChecksumValidator.auditIban(data.iban))
         add(ChecksumValidator.auditOgm(data.payment?.structuredComm))
+        add(ChecksumValidator.auditVatFormat(data.sellerVat, "sellerVat"))
+        add(ChecksumValidator.auditVatFormat(data.buyerVat, "buyerVat"))
     }
 
     private fun auditReceipt(data: ReceiptExtractionResult): List<AuditCheck> = buildList {
@@ -88,6 +90,8 @@ object FinancialExtractionAuditor {
                 required = true
             )
         )
+        add(ChecksumValidator.auditVatFormat(data.sellerVat, "sellerVat"))
+        add(ChecksumValidator.auditVatFormat(data.buyerVat, "buyerVat"))
     }
 
     private fun auditQuote(data: QuoteExtractionResult): List<AuditCheck> = buildList {

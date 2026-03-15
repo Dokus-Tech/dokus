@@ -2,6 +2,7 @@ package tech.dokus.features.ai.validation
 
 import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.StructuredCommunication
+import tech.dokus.domain.ids.VatNumber
 
 /**
  * Wraps checksum validators (OGM, IBAN) and produces AuditCheck results.
@@ -76,6 +77,41 @@ object ChecksumValidator {
                 hint = buildIbanHint(raw),
                 expected = "Valid IBAN (mod-97 check)",
                 actual = raw
+            )
+        }
+    }
+
+    /**
+     * Validates a VAT number format and returns an AuditCheck.
+     *
+     * @param vat The VAT number to validate (may be null)
+     * @param fieldName The field name for reporting (e.g. "sellerVat", "buyerVat")
+     * @return AuditCheck with validation result
+     */
+    fun auditVatFormat(vat: VatNumber?, fieldName: String): AuditCheck {
+        if (vat == null) {
+            return AuditCheck.incomplete(
+                type = CheckType.COUNTERPARTY_INTEGRITY,
+                field = fieldName,
+                message = "No $fieldName to validate"
+            )
+        }
+        return if (vat.isValid) {
+            AuditCheck.passed(
+                type = CheckType.COUNTERPARTY_INTEGRITY,
+                field = fieldName,
+                message = "$fieldName format verified: ${vat.normalized}"
+            )
+        } else {
+            AuditCheck.warning(
+                type = CheckType.COUNTERPARTY_INTEGRITY,
+                field = fieldName,
+                message = "$fieldName appears malformed: ${vat.value}",
+                hint = "The extracted $fieldName '${vat.value}' does not match any known EU VAT format. " +
+                    "Re-read the document footer and legal block carefully for the correct VAT number. " +
+                    "Belgian VAT = BE + exactly 10 digits. If you cannot find a valid VAT, set it to null.",
+                expected = "Valid EU VAT number format",
+                actual = vat.value,
             )
         }
     }
