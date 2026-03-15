@@ -20,7 +20,7 @@ class AIProviderFactoryTest {
             mode = IntelligenceMode.Sovereign,
             ollamaHost = "http://localhost:11434",
             lmStudioHost = "http://localhost:1234/v1",
-            langfuse = LangfuseConfig(enabled = false, host = "", publicKey = "", secretKey = ""),
+            langfuse = LangfuseConfig.disabled,
         )
 
         val executor = AIProviderFactory.createOpenAiExecutor(config)

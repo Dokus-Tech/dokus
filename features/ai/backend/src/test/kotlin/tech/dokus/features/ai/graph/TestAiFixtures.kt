@@ -11,8 +11,8 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.Tenant
 import tech.dokus.foundation.backend.config.AIConfig
-import tech.dokus.foundation.backend.config.LangfuseConfig
 import tech.dokus.foundation.backend.config.IntelligenceMode
+import tech.dokus.foundation.backend.config.LangfuseConfig
 import java.io.File
 
 object TestAiFixtures {
@@ -20,12 +20,7 @@ object TestAiFixtures {
         mode = IntelligenceMode.Sovereign,
         ollamaHost = "",
         lmStudioHost = "http://192.168.0.150:1234",
-        langfuse = LangfuseConfig(
-            enabled = false,
-            host = "",
-            publicKey = "",
-            secretKey = "",
-        ),
+        langfuse = LangfuseConfig.disabled,
     )
 
     val tenant = Tenant(

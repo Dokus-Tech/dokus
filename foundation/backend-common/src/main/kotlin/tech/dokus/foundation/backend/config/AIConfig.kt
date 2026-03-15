@@ -10,7 +10,16 @@ data class LangfuseConfig(
     val host: String,
     val publicKey: String,
     val secretKey: String,
-)
+) {
+    companion object {
+        val disabled = LangfuseConfig(
+            enabled = false,
+            host = "",
+            publicKey = "",
+            secretKey = "",
+        )
+    }
+}
 
 /**
  * AI configuration - simplified to just mode and Ollama connection.
