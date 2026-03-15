@@ -181,6 +181,11 @@ private val ExtractDocumentInput.creditNotePrompt: String
     - Do NOT guess. If not visible, return null.
     - Amount fields must be numeric strings using '.' as decimal separator (e.g., "1234.56").
 
+    ## VAT NUMBER FORMAT
+    - Belgian VAT: "BE" followed by exactly 10 digits (e.g., BE0731016012). Never include enterprise numbers, RPR references, or other identifiers in the VAT field.
+    - If the VAT has dots/spaces (e.g., "BE 0731.016.012"), normalize to continuous form: "BE0731016012".
+    - If you cannot isolate the exact VAT number, return null.
+
     ## PARTY EXTRACTION (CRITICAL)
     - `seller*`: entity that ISSUED the credit note.
     - Prioritize issuer evidence from logo/header legal block and footer issuer/contact/VAT block.

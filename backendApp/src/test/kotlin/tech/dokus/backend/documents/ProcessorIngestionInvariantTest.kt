@@ -94,7 +94,7 @@ class ProcessorIngestionInvariantTest {
     }
 
     @Test
-    fun `markAsSucceeded never confirms draft even when AutoConfirmEligible`() = runBlocking {
+    fun `markAsSucceeded never confirms draft even when HighConfidence`() = runBlocking {
         val documentId = documentRepository.create(
             tenantId = tenantId,
             payload = tech.dokus.database.repository.cashflow.DocumentCreatePayload(
@@ -124,7 +124,7 @@ class ProcessorIngestionInvariantTest {
             draftData = draftData,
             rawExtractionJson = "{}",
             confidence = 0.99,
-            processingOutcome = ProcessingOutcome.AutoConfirmEligible,
+            processingOutcome = ProcessingOutcome.HighConfidence,
             rawText = null
         )
         assertTrue(marked)

@@ -57,7 +57,9 @@ object FinancialExtractionAuditor {
         val subtotal = derivedSubtotal(total, vat)
 
         add(BelgianVatRateValidator.verify(subtotal, vat, data.date, null))
-        addAll(LineItemsValidator.verify(data.lineItems, subtotal, required = false))
+        // Line item math validation skipped for receipts: receipt unitPrices are typically
+        // VAT-inclusive (as printed) while netAmounts are VAT-exclusive, causing false positive
+        // MATH warnings that block auto-confirm. Total-level validation via VAT breakdown is sufficient.
         addAll(
             VatBreakdownValidator.verify(
                 vatBreakdown = data.vatBreakdown,

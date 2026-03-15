@@ -154,6 +154,11 @@ private val ExtractDocumentInput.receiptPrompt
     - Do NOT guess. If not visible, return null.
     - Amount fields must be numeric strings using '.' as decimal separator (e.g., "12.50").
 
+    ## VAT NUMBER FORMAT
+    - Belgian VAT: "BE" followed by exactly 10 digits (e.g., BE0801704208). Never include enterprise numbers, RPR references, or other identifiers in the VAT field.
+    - If the VAT has dots/spaces (e.g., "BE 0801.704.208"), normalize to continuous form: "BE0801704208".
+    - If you cannot isolate the exact VAT number, return null.
+
     ## MERCHANT
     - Look for the store/merchant name at the TOP of the receipt (header/logo area).
     - Extract the actual business name, not taglines or slogans.

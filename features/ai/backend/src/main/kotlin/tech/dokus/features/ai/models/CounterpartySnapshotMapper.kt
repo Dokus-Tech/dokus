@@ -24,7 +24,7 @@ private fun CounterpartyExtraction?.toSnapshot(): CounterpartySnapshot? {
     if (this == null) return null
 
     val cleanedName = name.cleanText()
-    val cleanedVat = vatNumber.cleanText()?.let { VatNumber.from(it) }?.takeIf { it.isValid }
+    val cleanedVat = vatNumber.cleanText()?.let { VatNumber.tryNormalize(it) }
     val cleanedEmail = email.cleanText()?.let { Email.from(it) }
     val cleanedStreet = streetLine1.cleanText()
     val cleanedPostal = postalCode.cleanText()

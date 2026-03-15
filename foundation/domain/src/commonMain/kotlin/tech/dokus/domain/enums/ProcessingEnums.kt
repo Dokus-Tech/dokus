@@ -256,18 +256,20 @@ enum class IngestionStatus(override val dbValue: String) : DbEnum {
 }
 
 /**
- * Outcome of a processing run, derived from confidence thresholds.
+ * Extraction quality signal from a processing run, derived from confidence thresholds and audit checks.
+ * This is NOT a confirmation prediction — additional policy gates (counterparty resolution, direction
+ * validation, etc.) run independently after extraction.
  * Stored on ingestion runs for audit/history.
  */
 @Serializable
 enum class ProcessingOutcome(override val dbValue: String) : DbEnum {
-    /** Confidence meets auto-confirm threshold */
-    @SerialName("AUTO_CONFIRM_ELIGIBLE")
-    AutoConfirmEligible("AUTO_CONFIRM_ELIGIBLE"),
+    /** Extraction confidence meets threshold and audit checks passed */
+    @SerialName("HIGH_CONFIDENCE")
+    HighConfidence("HIGH_CONFIDENCE"),
 
-    /** Confidence below auto-confirm threshold; manual review required */
-    @SerialName("MANUAL_REVIEW_REQUIRED")
-    ManualReviewRequired("MANUAL_REVIEW_REQUIRED");
+    /** Extraction confidence below threshold or audit checks flagged issues */
+    @SerialName("LOW_CONFIDENCE")
+    LowConfidence("LOW_CONFIDENCE");
 
     companion object {
         fun fromDbValue(value: String): ProcessingOutcome = entries.find { it.dbValue == value }!!

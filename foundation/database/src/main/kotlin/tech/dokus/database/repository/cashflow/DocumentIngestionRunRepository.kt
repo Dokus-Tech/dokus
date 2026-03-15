@@ -273,9 +273,9 @@ class DocumentIngestionRunRepository {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         val outcome = confidence?.let {
             if (it >= DocumentProcessingConstants.AUTO_CONFIRM_CONFIDENCE_THRESHOLD) {
-                ProcessingOutcome.AutoConfirmEligible
+                ProcessingOutcome.HighConfidence
             } else {
-                ProcessingOutcome.ManualReviewRequired
+                ProcessingOutcome.LowConfidence
             }
         }
         DocumentIngestionRunsTable.update({

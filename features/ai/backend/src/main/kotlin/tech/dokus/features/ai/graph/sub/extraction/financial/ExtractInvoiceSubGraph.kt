@@ -234,6 +234,11 @@ private val ExtractDocumentInput.prompt
     - Amount fields must be numeric strings using '.' as decimal separator (e.g., "1234.56").
     - If multiple totals exist, prefer the "Total" / "Totaal" / "Total TTC" style final payable amount.
 
+    ## VAT NUMBER FORMAT
+    - Belgian VAT: "BE" followed by exactly 10 digits (e.g., BE0731016012). Never include enterprise numbers, RPR references, or other identifiers in the VAT field.
+    - If the VAT has dots/spaces (e.g., "BE 0731.016.012"), normalize to continuous form: "BE0731016012".
+    - If you cannot isolate the exact VAT number, return null.
+
     ## PARTY EXTRACTION (CRITICAL)
     - `seller*`: entity that ISSUED the invoice.
     - Prioritize issuer evidence from logo/header legal block and footer issuer/contact/VAT block.
