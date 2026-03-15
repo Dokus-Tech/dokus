@@ -132,17 +132,40 @@ value class VatNumber(override val value: String) : ValueClass<String>, Validata
             val countryCode = cleaned.substring(0, 2)
             val body = cleaned.substring(2)
 
-            val expectedLength = COUNTRY_VAT_DIGIT_LENGTHS[countryCode] ?: return null
+            val expectedLength = COUNTRY_VAT_BODY_LENGTHS[countryCode] ?: return null
             if (body.length <= expectedLength) return null
 
             val truncated = VatNumber("$countryCode${body.substring(0, expectedLength)}")
             return truncated.takeIf { it.isValid }
         }
 
-        private val COUNTRY_VAT_DIGIT_LENGTHS = mapOf(
-            "BE" to 10, "DE" to 9, "NL" to 12, "FR" to 11,
-            "LU" to 8, "IT" to 11, "ES" to 9, "PT" to 9,
-            "AT" to 9, "FI" to 8, "PL" to 10, "SI" to 8,
+        /**
+         * Expected body length (characters after country code) for EU VATs with fixed-length formats.
+         * Variable-length countries (BG, CZ, LT, RO, IE) are excluded — truncation is unsafe for those.
+         */
+        private val COUNTRY_VAT_BODY_LENGTHS = mapOf(
+            "AT" to 9,  // U + 8 digits
+            "BE" to 10, // 10 digits
+            "DE" to 9,  // 9 digits
+            "DK" to 8,  // 8 digits
+            "EE" to 9,  // 9 digits
+            "EL" to 9,  // 9 digits (Greece)
+            "ES" to 9,  // letter + 7 digits + letter
+            "FI" to 8,  // 8 digits
+            "FR" to 11, // 2 chars + 9 digits
+            "GR" to 9,  // 9 digits (Greece alt)
+            "HR" to 11, // 11 digits
+            "HU" to 8,  // 8 digits
+            "IT" to 11, // 11 digits
+            "LU" to 8,  // 8 digits
+            "LV" to 11, // 11 digits
+            "MT" to 8,  // 8 digits
+            "NL" to 12, // 9 digits + B + 2 digits
+            "PL" to 10, // 10 digits
+            "PT" to 9,  // 9 digits
+            "SE" to 12, // 12 digits
+            "SI" to 8,  // 8 digits
+            "SK" to 10, // 10 digits
         )
 
         fun fromCountryAndCompanyNumber(countryCode: String, companyNumber: String): VatNumber {

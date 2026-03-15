@@ -155,8 +155,12 @@ private val ExtractDocumentInput.receiptPrompt
     - Amount fields must be numeric strings using '.' as decimal separator (e.g., "12.50").
 
     ## VAT NUMBER FORMAT
-    - Belgian VAT: "BE" followed by exactly 10 digits (e.g., BE0801704208). Never include enterprise numbers, RPR references, or other identifiers in the VAT field.
-    - If the VAT has dots/spaces (e.g., "BE 0801.704.208"), normalize to continuous form: "BE0801704208".
+    - VAT numbers are COUNTRY CODE + DIGITS (and sometimes letters). Extract ONLY the VAT number, never enterprise numbers, RPR references, or other identifiers.
+    - Belgian VAT: "BE" + exactly 10 digits (e.g., BE0801704208).
+    - Dutch VAT: "NL" + 9 digits + "B" + 2 digits (e.g., NL123456789B02).
+    - German VAT: "DE" + exactly 9 digits (e.g., DE123456789).
+    - French VAT: "FR" + 2 alphanumeric chars + 9 digits (e.g., FRXX123456789).
+    - Remove dots/spaces from the VAT (e.g., "BE 0801.704.208" → "BE0801704208").
     - If you cannot isolate the exact VAT number, return null.
 
     ## MERCHANT
