@@ -27,30 +27,12 @@ internal inline fun <reified Input> AIAgentSubgraphBuilderBase<*, *>.documentIma
             return@node args
         }
 
-        val maxPagesOverride = args.maxPagesOverride
-        val dpiOverride = args.dpiOverride
-        val images = when {
-            maxPagesOverride != null && dpiOverride != null -> DocumentImageService.getDocumentImages(
-                document.bytes,
-                document.mimeType,
-                pageCount = maxPagesOverride,
-                dpi = dpiOverride
-            )
-            maxPagesOverride != null -> DocumentImageService.getDocumentImages(
-                document.bytes,
-                document.mimeType,
-                pageCount = maxPagesOverride
-            )
-            dpiOverride != null -> DocumentImageService.getDocumentImages(
-                document.bytes,
-                document.mimeType,
-                dpi = dpiOverride
-            )
-            else -> DocumentImageService.getDocumentImages(
-                document.bytes,
-                document.mimeType,
-            )
-        }
+        val images = DocumentImageService.getDocumentImages(
+            documentBytes = document.bytes,
+            mimeType = document.mimeType,
+            pageCount = args.maxPagesOverride ?: DocumentImageService.DEFAULT_PAGE_COUNT,
+            dpi = args.dpiOverride ?: Dpi.default,
+        )
         llm.writeSession {
             appendPrompt {
                 user {

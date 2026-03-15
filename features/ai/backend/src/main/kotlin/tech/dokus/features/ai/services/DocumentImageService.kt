@@ -26,7 +26,7 @@ object DocumentImageService {
 
     private const val MIN_PAGE_COUNT = 1
     private const val MAX_PAGE_COUNT = 10
-    private const val DEFAULT_PAGE_COUNT = 6
+    const val DEFAULT_PAGE_COUNT = 6
 
     private val SUPPORTED_IMAGE_TYPES = setOf(
         "image/jpeg",
@@ -87,8 +87,8 @@ object DocumentImageService {
         documentBytes: ByteArray,
         mimeType: String,
         startPage: Int = 1,
-        pageCount: Int = DEFAULT_PAGE_COUNT,
-        dpi: Dpi = Dpi.default
+        pageCount: Int,
+        dpi: Dpi,
     ): DocumentImages = withContext(Dispatchers.IO) {
         val clampedPageCount = pageCount.coerceIn(MIN_PAGE_COUNT, MAX_PAGE_COUNT)
 
