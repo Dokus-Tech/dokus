@@ -23,9 +23,9 @@ import javax.imageio.ImageIO
 object DocumentImageService {
     private val logger = loggerFor()
 
-    private const val MIN_DPI = 72
-    private const val MAX_DPI = 300
-    private const val DEFAULT_DPI = 150
+    private const val MIN_DPI = 150
+    private const val MAX_DPI = 600
+    private const val DEFAULT_DPI = 300
     private const val MIN_PAGE_COUNT = 1
     private const val MAX_PAGE_COUNT = 10
     private const val DEFAULT_PAGE_COUNT = 6
