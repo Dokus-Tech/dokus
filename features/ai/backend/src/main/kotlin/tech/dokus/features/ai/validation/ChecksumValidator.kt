@@ -69,7 +69,7 @@ object ChecksumValidator {
                 message = "IBAN checksum verified: ${iban.value}"
             )
         } else {
-            AuditCheck.criticalFailure(
+            AuditCheck.warning(
                 type = CheckType.CHECKSUM_IBAN,
                 field = "iban",
                 message = "IBAN checksum failed",

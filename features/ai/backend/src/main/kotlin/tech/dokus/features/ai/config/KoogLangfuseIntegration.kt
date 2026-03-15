@@ -19,5 +19,6 @@ internal fun FeatureContext.installLangfuseTracing(config: LangfuseConfig) {
             langfusePublicKey = config.publicKey,
             langfuseSecretKey = config.secretKey,
         )
+        setVerbose(true)
     }
 }
