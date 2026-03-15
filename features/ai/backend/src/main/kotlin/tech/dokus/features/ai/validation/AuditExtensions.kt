@@ -29,7 +29,10 @@ fun rawVatInvariantCheck(tenantVat: String?, rawMerchantOrSellerVat: String?): A
         type = CheckType.COUNTERPARTY_INTEGRITY,
         field = "rawMerchantVat",
         message = "Extracted merchant/seller VAT equals tenant VAT ($tenantVat) — possible hallucination",
-        hint = "Verify that the tenant VAT actually appears on the document as the merchant/seller",
+        hint = "The extracted merchant/seller VAT '$rawMerchantOrSellerVat' is the tenant's own VAT number — " +
+            "this is almost certainly a hallucination. " +
+            "Look carefully at the document: if no merchant/seller VAT is visibly printed, set merchantVat/sellerVat to null. " +
+            "Do NOT copy the buyer/customer VAT into the seller field.",
         expected = "merchant VAT != tenant VAT (or confirmed on document)",
         actual = "$rawMerchantOrSellerVat == $tenantVat"
     )
