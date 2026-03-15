@@ -1,12 +1,13 @@
 package tech.dokus.features.cashflow.presentation.review
 
 import kotlinx.coroutines.launch
-import pro.respawn.flowmvi.dsl.withState
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentSourceId
+import tech.dokus.domain.model.DEFAULT_MAX_PAGES
+import tech.dokus.domain.model.Dpi
 import tech.dokus.features.cashflow.usecases.GetDocumentPagesUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentSourceContentUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentSourcePagesUseCase
@@ -25,8 +26,8 @@ internal class DocumentReviewPreview(
             loadPreviewPages(
                 documentId = activeDocumentId,
                 contentType = contentType,
-                dpi = PreviewConfig.dpi.value,
-                maxPages = PreviewConfig.DEFAULT_MAX_PAGES
+                dpi = Dpi.default,
+                maxPages = DEFAULT_MAX_PAGES
             )
         }
     }
@@ -39,7 +40,7 @@ internal class DocumentReviewPreview(
             loadPreviewPages(
                 documentId = activeDocumentId,
                 contentType = contentType,
-                dpi = PreviewConfig.dpi.value,
+                dpi = Dpi.default,
                 maxPages = maxPages
             )
         }
@@ -67,8 +68,8 @@ internal class DocumentReviewPreview(
                     sourceId = source.id,
                     sourceType = source.sourceChannel,
                     contentType = source.contentType.orEmpty(),
-                    dpi = PreviewConfig.dpi.value,
-                    maxPages = PreviewConfig.DEFAULT_MAX_PAGES,
+                    dpi = Dpi.default,
+                    maxPages = DEFAULT_MAX_PAGES,
                 )
             }
         }

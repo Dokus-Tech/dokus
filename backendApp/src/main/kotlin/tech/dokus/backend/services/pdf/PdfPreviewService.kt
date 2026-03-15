@@ -40,7 +40,6 @@ class PdfPreviewService(
         private const val CACHE_PREFIX = "pdf_previews"
         private const val MIN_DPI = 72
         private const val MAX_DPI = 300
-        private const val DEFAULT_DPI = 150
         private const val MIN_MAX_PAGES = 1
         private const val MAX_MAX_PAGES = 50
         private const val DEFAULT_MAX_PAGES = 10
