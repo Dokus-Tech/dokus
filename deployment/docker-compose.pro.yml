@@ -216,10 +216,10 @@ services:
       resources:
         limits:
           cpus: '2.0'
-          memory: 1G
+          memory: 2G
         reservations:
           cpus: '0.5'
-          memory: 512M
+          memory: 1G
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       <<: *healthcheck-defaults

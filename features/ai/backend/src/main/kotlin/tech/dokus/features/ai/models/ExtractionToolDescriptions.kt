@@ -110,10 +110,10 @@ object ExtractionToolDescriptions {
     const val VatNumberFormatGuidance = """
     ## VAT NUMBER FORMAT
     - VAT numbers are COUNTRY CODE + DIGITS (and sometimes letters). Extract ONLY the VAT number, never enterprise numbers, RPR references, or other identifiers.
-    - Belgian VAT: "BE" + exactly 10 digits (e.g., BE0731016012).
+    - Belgian VAT: "BE" + exactly 10 digits (e.g., BE0123456789). When multiple BE-prefixed numbers appear in a footer, pick the one with exactly 10 digits — longer numbers are bank account identifiers, not VAT numbers.
     - Dutch VAT: "NL" + 9 digits + "B" + 2 digits (e.g., NL123456789B02).
     - German VAT: "DE" + exactly 9 digits (e.g., DE123456789).
     - French VAT: "FR" + 2 alphanumeric chars + 9 digits (e.g., FRXX123456789).
-    - Remove dots/spaces from the VAT (e.g., "BE 0731.016.012" → "BE0731016012").
+    - Remove dots/spaces from the VAT (e.g., "BE 0123.456.789" → "BE0123456789").
     - If you cannot isolate the exact VAT number, return null."""
 }

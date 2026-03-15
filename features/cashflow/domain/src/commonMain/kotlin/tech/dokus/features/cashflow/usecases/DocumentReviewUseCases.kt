@@ -1,18 +1,18 @@
 package tech.dokus.features.cashflow.usecases
 
 import kotlinx.coroutines.flow.Flow
-import tech.dokus.domain.ids.DocumentMatchReviewId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.ids.DocumentMatchReviewId
 import tech.dokus.domain.ids.DocumentSourceId
+import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.DocumentMatchResolutionDecision
 import tech.dokus.domain.model.DocumentPagesResponse
-import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.DocumentRecordStreamEvent
 import tech.dokus.domain.model.RejectDocumentRequest
-import tech.dokus.domain.model.UpdateDraftRequest
 import tech.dokus.domain.model.ReprocessRequest
 import tech.dokus.domain.model.ReprocessResponse
+import tech.dokus.domain.model.UpdateDraftRequest
 import tech.dokus.domain.model.UpdateDraftResponse
 
 /**
@@ -72,7 +72,7 @@ interface RejectDocumentUseCase {
 interface GetDocumentPagesUseCase {
     suspend operator fun invoke(
         documentId: DocumentId,
-        dpi: Int = 150,
+        dpi: Int,
         maxPages: Int = 10
     ): Result<DocumentPagesResponse>
 }

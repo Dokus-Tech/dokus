@@ -2,9 +2,9 @@ package tech.dokus.domain.routes
 
 import io.ktor.resources.Resource
 import kotlinx.serialization.Serializable
-import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DocumentListFilter
 import tech.dokus.domain.enums.DocumentStatus
+import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.IngestionStatus
 
 /**
@@ -261,7 +261,7 @@ class Documents {
         @Resource("pages")
         class Pages(
             val parent: Id,
-            val dpi: Int = 150,
+            val dpi: Int,
             val maxPages: Int = 10
         )
 
