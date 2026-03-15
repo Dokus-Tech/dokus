@@ -121,7 +121,7 @@ export MINIO_PASSWORD="dokusadminpassword"
 # Langfuse observability (always enabled in dev)
 export LANGFUSE_PUBLIC_KEY="pk-lf-dev-dokus"
 export LANGFUSE_SECRET_KEY="sk-lf-dev-dokus"
-export LANGFUSE_ENCRYPTION_KEY="dev-langfuse-encryption-key-32chars!!"
+export LANGFUSE_ENCRYPTION_KEY="0000000000000000000000000000000000000000000000000000000000000000"
 export LANGFUSE_SALT="dev-langfuse-salt"
 export LANGFUSE_DB_PASSWORD="langfusedevpass"
 export LANGFUSE_CLICKHOUSE_PASSWORD="langfuseclickhouse"
