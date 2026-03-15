@@ -14,7 +14,7 @@ import tech.dokus.domain.model.Tenant
 import tech.dokus.features.ai.config.asVisionModel
 import tech.dokus.features.ai.config.finishToolOnly
 import tech.dokus.features.ai.config.finishToolVisionAssistantResponseRepeatMax
-import tech.dokus.features.ai.extensions.description
+import tech.dokus.features.ai.extensions.classifyHint
 import tech.dokus.features.ai.graph.nodes.InputWithDocumentId
 import tech.dokus.features.ai.graph.nodes.InputWithTenantContext
 import tech.dokus.foundation.backend.config.AIConfig
@@ -80,6 +80,7 @@ data class ClassificationResult(
     val reasoning: String
 )
 
+@Suppress("UnusedReceiverParameter")
 private val ClassifyDocumentInput.prompt
     get() = """
     You will receive document pages as images in context.
@@ -91,7 +92,7 @@ private val ClassifyDocumentInput.prompt
 
     ${
         DocumentType.entries.joinToString("\n") { type ->
-            "- ${type.name}: ${type.description}"
+            "- ${type.name}: ${type.classifyHint}"
         }
     }
 
