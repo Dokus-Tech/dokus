@@ -177,4 +177,5 @@ data class InvoiceLineItem(
         get() = description.isBlank() && unitPrice.isBlank()
 }
 
-fun formatMoney(amount: Money): String = "€${amount.toDisplayString()}"
+fun formatMoney(amount: Money, currencySign: String = "€"): String =
+    "$currencySign${amount.toDisplayString()}"
