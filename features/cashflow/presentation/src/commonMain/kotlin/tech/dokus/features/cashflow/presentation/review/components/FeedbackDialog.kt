@@ -21,6 +21,7 @@ import tech.dokus.features.cashflow.presentation.review.FeedbackDialogState
 import tech.dokus.foundation.aura.components.dialog.DokusDialog
 import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.extensions.submitOnEnter
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
@@ -51,7 +52,12 @@ internal fun FeedbackDialog(
                     value = state.feedbackText,
                     onValueChange = onFeedbackChanged,
                     placeholder = { Text(stringResource(Res.string.cashflow_feedback_placeholder)) },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .submitOnEnter(
+                            enabled = state.feedbackText.isNotBlank() && !state.isSubmitting,
+                            onSubmit = onSubmit,
+                        ),
                     enabled = !state.isSubmitting,
                     minLines = 2,
                     maxLines = 4,

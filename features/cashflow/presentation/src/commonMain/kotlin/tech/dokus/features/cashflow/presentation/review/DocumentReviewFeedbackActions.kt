@@ -45,10 +45,23 @@ internal class DocumentReviewFeedbackActions(
 
     suspend fun DocumentReviewCtx.handleSubmitFeedback() {
         withState {
-            val activeDocumentId = documentId ?: return@withState
-            val dialogState = feedbackDialogState ?: return@withState
+            val activeDocumentId = documentId
+            if (activeDocumentId == null) {
+                logger.w { "SubmitFeedback: documentId is null, aborting" }
+                return@withState
+            }
+            val dialogState = feedbackDialogState
+            if (dialogState == null) {
+                logger.w { "SubmitFeedback: feedbackDialogState is null, aborting" }
+                return@withState
+            }
             val feedback = dialogState.feedbackText.trim()
-            if (feedback.isBlank()) return@withState
+            if (feedback.isBlank()) {
+                logger.w { "SubmitFeedback: feedback text is blank, aborting" }
+                return@withState
+            }
+
+            logger.d { "SubmitFeedback: proceeding with feedback for $activeDocumentId" }
 
             updateState {
                 copy(feedbackDialogState = dialogState.copy(isSubmitting = true))
