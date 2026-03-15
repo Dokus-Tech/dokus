@@ -4,7 +4,6 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.DocumentDirection
-import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.IngestionStatus
@@ -191,7 +190,6 @@ class DocumentQueueMapperTest {
                 id = documentId,
                 tenantId = tenantId,
                 filename = "invoice.pdf",
-                effectiveOrigin = DocumentSource.Upload,
                 uploadedAt = now,
                 sortDate = LocalDate(2026, 1, 1),
             ),

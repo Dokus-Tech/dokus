@@ -10,6 +10,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import tech.dokus.foundation.backend.config.AIConfig
 import tech.dokus.foundation.backend.config.IntelligenceMode
+import tech.dokus.foundation.backend.config.LangfuseConfig
 
 class AIProviderFactoryTest {
 
@@ -19,6 +20,7 @@ class AIProviderFactoryTest {
             mode = IntelligenceMode.Sovereign,
             ollamaHost = "http://localhost:11434",
             lmStudioHost = "http://localhost:1234/v1",
+            langfuse = LangfuseConfig(enabled = false, host = "", publicKey = "", secretKey = ""),
         )
 
         val executor = AIProviderFactory.createOpenAiExecutor(config)

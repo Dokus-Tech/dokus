@@ -160,7 +160,6 @@ abstract class SearchTestFixture {
             DocumentsTable.insert {
                 it[DocumentsTable.id] = id
                 it[tenantId] = tenant
-                it[effectiveOrigin] = DocumentSource.Upload
                 it[uploadedAt] = now
             }
         }

@@ -12,7 +12,7 @@ import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.processor.ProcessorIngestionRepository
-import tech.dokus.domain.enums.DocumentSource
+import tech.dokus.features.ai.graph.AcceptDocumentInput
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
@@ -124,7 +124,7 @@ class DocumentProcessingWorkerConcurrencyTest {
         }
 
         coVerify(exactly = 1) {
-            processingAgent.process(match { input -> input.sourceChannel == DocumentSource.Email })
+            processingAgent.process(match { input -> input is AcceptDocumentInput.Upload })
         }
         coVerify(exactly = 1) {
             ingestionRepository.markAsFailed(

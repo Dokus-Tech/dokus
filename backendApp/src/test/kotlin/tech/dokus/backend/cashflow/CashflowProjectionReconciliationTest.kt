@@ -237,7 +237,6 @@ class CashflowProjectionReconciliationTest {
             tenantId = tenantId,
             payload = DocumentCreatePayload(
                 canonicalContentHash = null,
-                effectiveOrigin = DocumentSource.Upload
             )
         )
 

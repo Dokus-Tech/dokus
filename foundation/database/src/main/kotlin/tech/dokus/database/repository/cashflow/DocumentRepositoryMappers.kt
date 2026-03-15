@@ -14,7 +14,6 @@ internal fun ResultRow.toDocumentDto(): DocumentDto {
         id = DocumentId.parse(this[DocumentsTable.id].toString()),
         tenantId = TenantId(this[DocumentsTable.tenantId].toKotlinUuid()),
         filename = "", // Resolved from preferred source by service layer
-        effectiveOrigin = this[DocumentsTable.effectiveOrigin],
         uploadedAt = this[DocumentsTable.uploadedAt],
         sortDate = this[DocumentsTable.sortDate] ?: this[DocumentsTable.uploadedAt].date,
         downloadUrl = null // Generated on-demand by the service layer

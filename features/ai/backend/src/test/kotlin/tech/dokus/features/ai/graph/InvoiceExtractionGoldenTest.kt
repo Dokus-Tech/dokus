@@ -49,7 +49,14 @@ class InvoiceExtractionGoldenTest {
         )
 
         val result = withTimeout(180.seconds) {
-            agent.run(AcceptDocumentInput(DocumentId.generate(), TestAiFixtures.tenant))
+            agent.run(AcceptDocumentInput.Upload(
+                documentId = DocumentId.generate(),
+                tenant = TestAiFixtures.tenant,
+                associatedPersonNames = emptyList(),
+                userFeedback = null,
+                maxPagesOverride = null,
+                dpiOverride = null,
+            ))
         }
 
         assertEquals(

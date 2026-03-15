@@ -362,7 +362,6 @@ private fun documentDetailRecord(
             id = documentId,
             tenantId = tenantId,
             filename = filename,
-            effectiveOrigin = DocumentSource.Upload,
             uploadedAt = LocalDateTime(2026, 2, 1, 10, 0),
             sortDate = LocalDate(2026, 2, 1),
         ),

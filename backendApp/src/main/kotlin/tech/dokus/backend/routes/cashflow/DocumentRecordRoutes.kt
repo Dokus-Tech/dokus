@@ -54,6 +54,7 @@ import tech.dokus.database.repository.cashflow.DocumentSourceSummary
 import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
 import tech.dokus.database.repository.cashflow.selectPreferredSource
+import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentSourceStatus
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
@@ -206,7 +207,7 @@ internal fun Route.documentRecordRoutes() {
                     direction = draft?.direction,
                     documentStatus = draft?.documentStatus,
                     ingestionStatus = docInfo.latestIngestion?.status,
-                    effectiveOrigin = preferredSource?.sourceChannel ?: docInfo.document.effectiveOrigin,
+                    effectiveOrigin = preferredSource?.sourceChannel ?: DocumentSource.Upload,
                     uploadedAt = preferredSource?.arrivalAt ?: docInfo.document.uploadedAt,
                     sortDate = docInfo.document.sortDate,
                     counterpartyDisplayName = draft?.counterpartyDisplayName,

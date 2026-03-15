@@ -99,7 +99,6 @@ class ProcessorIngestionInvariantTest {
             tenantId = tenantId,
             payload = tech.dokus.database.repository.cashflow.DocumentCreatePayload(
                 canonicalContentHash = null,
-                effectiveOrigin = DocumentSource.Upload
             )
         )
 
@@ -117,9 +116,9 @@ class ProcessorIngestionInvariantTest {
         )
 
         val marked = processorIngestionRepository.markAsSucceeded(
-            runId = runId.toString(),
-            tenantId = tenantUuid.toString(),
-            documentId = documentId.toString(),
+            runId = runId,
+            tenantId = tenantId,
+            documentId = documentId,
             documentType = DocumentType.Invoice,
             draftData = draftData,
             rawExtractionJson = "{}",

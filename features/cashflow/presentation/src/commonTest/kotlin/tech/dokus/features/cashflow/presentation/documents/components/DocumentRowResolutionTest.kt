@@ -199,7 +199,6 @@ class DocumentRowResolutionTest {
                 id = documentId,
                 tenantId = tenantId,
                 filename = "apple-invoice.pdf",
-                effectiveOrigin = DocumentSource.Upload,
                 uploadedAt = now,
                 sortDate = LocalDate(2026, 2, 11),
             ),

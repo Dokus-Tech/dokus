@@ -28,7 +28,6 @@ import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentListFilter
 import tech.dokus.domain.enums.DocumentPurposeSource
 import tech.dokus.domain.enums.DocumentRejectReason
-import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.IngestionStatus
@@ -86,7 +85,6 @@ data class DocumentOperationalCounts(
 data class DocumentCreatePayload(
     val canonicalContentHash: String?,
     val canonicalIdentityKey: String? = null,
-    val effectiveOrigin: DocumentSource = DocumentSource.Upload
 )
 
 /**
@@ -148,7 +146,6 @@ class DocumentRepository : DocumentStatusChecker {
             it[DocumentsTable.tenantId] = UUID.fromString(tenantId.toString())
             it[DocumentsTable.canonicalContentHash] = payload.canonicalContentHash
             it[DocumentsTable.canonicalIdentityKey] = payload.canonicalIdentityKey
-            it[DocumentsTable.effectiveOrigin] = payload.effectiveOrigin
             it[DocumentsTable.sortDate] = now.date
         }
         id

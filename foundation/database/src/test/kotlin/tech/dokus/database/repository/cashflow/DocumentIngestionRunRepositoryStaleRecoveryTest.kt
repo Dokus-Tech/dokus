@@ -89,7 +89,6 @@ class DocumentIngestionRunRepositoryStaleRecoveryTest {
             DocumentsTable.insert {
                 it[id] = documentUuid
                 it[tenantId] = tenantUuid
-                it[effectiveOrigin] = DocumentSource.Upload
             }
         }
     }

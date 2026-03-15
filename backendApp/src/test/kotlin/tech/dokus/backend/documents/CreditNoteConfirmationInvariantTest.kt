@@ -233,7 +233,6 @@ class CreditNoteConfirmationInvariantTest {
             tenantId = tenantId,
             payload = DocumentCreatePayload(
                 canonicalContentHash = null,
-                effectiveOrigin = DocumentSource.Upload
             )
         )
         val invoiceId = UUID.randomUUID()
@@ -265,7 +264,6 @@ class CreditNoteConfirmationInvariantTest {
             tenantId = tenantId,
             payload = DocumentCreatePayload(
                 canonicalContentHash = null,
-                effectiveOrigin = DocumentSource.Upload
             )
         )
 

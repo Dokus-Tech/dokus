@@ -49,7 +49,7 @@ class DocumentProcessingGraphTest {
 
         val result = withTimeout(180.seconds) {
             try {
-                agent.run(AcceptDocumentInput(DocumentId.generate(), TestAiFixtures.tenant))
+                agent.run(AcceptDocumentInput.Upload(documentId = DocumentId.generate(), tenant = TestAiFixtures.tenant, associatedPersonNames = emptyList(), userFeedback = null, maxPagesOverride = null, dpiOverride = null))
             } finally {
                 runCatching { agent.close() }
             }

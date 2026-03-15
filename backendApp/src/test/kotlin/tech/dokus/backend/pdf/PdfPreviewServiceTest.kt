@@ -7,6 +7,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import tech.dokus.backend.services.pdf.PdfPreviewService
 import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.model.Dpi
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.foundation.backend.storage.DocumentStorageService
 import tech.dokus.foundation.backend.storage.ObjectStorage
@@ -36,33 +37,6 @@ class PdfPreviewServiceTest {
         objectStorage = mockk()
         documentStorage = mockk()
         service = PdfPreviewService(objectStorage, documentStorage)
-    }
-
-    // =========================================================================
-    // DPI Clamping Tests
-    // =========================================================================
-
-    @Test
-    fun `clampDpi should clamp low values to minimum 72`() {
-        assertEquals(72, service.clampDpi(50))
-        assertEquals(72, service.clampDpi(0))
-        assertEquals(72, service.clampDpi(-100))
-        assertEquals(72, service.clampDpi(71))
-    }
-
-    @Test
-    fun `clampDpi should clamp high values to maximum 300`() {
-        assertEquals(300, service.clampDpi(400))
-        assertEquals(300, service.clampDpi(1000))
-        assertEquals(300, service.clampDpi(301))
-    }
-
-    @Test
-    fun `clampDpi should keep values within range unchanged`() {
-        assertEquals(72, service.clampDpi(72))
-        assertEquals(150, service.clampDpi(150))
-        assertEquals(300, service.clampDpi(300))
-        assertEquals(200, service.clampDpi(200))
     }
 
     // =========================================================================
@@ -99,7 +73,7 @@ class PdfPreviewServiceTest {
         val tenantId = TenantId(Uuid.parse("11111111-1111-1111-1111-111111111111"))
         val documentId = DocumentId.parse("22222222-2222-2222-2222-222222222222")
 
-        val key = service.generateCacheKey(tenantId, documentId, 150, 1)
+        val key = service.generateCacheKey(tenantId, documentId, Dpi.create(150), 1)
 
         assertEquals(
             "pdf_previews/$tenantId/$documentId/default/dpi-150/page-1.png",
@@ -112,8 +86,8 @@ class PdfPreviewServiceTest {
         val tenantId = TenantId(Uuid.parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"))
         val documentId = DocumentId.parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")
 
-        val key1 = service.generateCacheKey(tenantId, documentId, 72, 1)
-        val key2 = service.generateCacheKey(tenantId, documentId, 300, 10)
+        val key1 = service.generateCacheKey(tenantId, documentId, Dpi.create(72), 1)
+        val key2 = service.generateCacheKey(tenantId, documentId, Dpi.create(300), 10)
 
         assertEquals(
             "pdf_previews/$tenantId/$documentId/default/dpi-72/page-1.png",
@@ -130,9 +104,9 @@ class PdfPreviewServiceTest {
         val tenantId = TenantId(Uuid.parse("11111111-1111-1111-1111-111111111111"))
         val documentId = DocumentId.parse("22222222-2222-2222-2222-222222222222")
 
-        val key72 = service.generateCacheKey(tenantId, documentId, 72, 1)
-        val key150 = service.generateCacheKey(tenantId, documentId, 150, 1)
-        val key300 = service.generateCacheKey(tenantId, documentId, 300, 1)
+        val key72 = service.generateCacheKey(tenantId, documentId, Dpi.create(72), 1)
+        val key150 = service.generateCacheKey(tenantId, documentId, Dpi.create(150), 1)
+        val key300 = service.generateCacheKey(tenantId, documentId, Dpi.create(300), 1)
 
         // All keys should be unique
         val keys = setOf(key72, key150, key300)
@@ -144,9 +118,9 @@ class PdfPreviewServiceTest {
         val tenantId = TenantId(Uuid.parse("11111111-1111-1111-1111-111111111111"))
         val documentId = DocumentId.parse("22222222-2222-2222-2222-222222222222")
 
-        val keyPage1 = service.generateCacheKey(tenantId, documentId, 150, 1)
-        val keyPage2 = service.generateCacheKey(tenantId, documentId, 150, 2)
-        val keyPage3 = service.generateCacheKey(tenantId, documentId, 150, 3)
+        val keyPage1 = service.generateCacheKey(tenantId, documentId, Dpi.create(150), 1)
+        val keyPage2 = service.generateCacheKey(tenantId, documentId, Dpi.create(150), 2)
+        val keyPage3 = service.generateCacheKey(tenantId, documentId, Dpi.create(150), 3)
 
         // All keys should be unique
         val keys = setOf(keyPage1, keyPage2, keyPage3)
@@ -172,7 +146,7 @@ class PdfPreviewServiceTest {
         // Page < 1 should cause an error when rendering
         val exception = assertFailsWith<IllegalArgumentException> {
             runBlocking {
-                service.getPageImage(tenantId, documentId, "storage/key", 0, 150)
+                service.getPageImage(tenantId, documentId, "storage/key", 0, Dpi.create(150))
             }
         }
 
