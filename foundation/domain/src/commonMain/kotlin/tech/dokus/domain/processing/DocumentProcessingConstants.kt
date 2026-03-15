@@ -1,5 +1,6 @@
 package tech.dokus.domain.processing
 
+import tech.dokus.domain.processing.DocumentProcessingConstants.INGESTION_RUN_TIMEOUT
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 

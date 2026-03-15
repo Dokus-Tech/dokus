@@ -7,9 +7,9 @@ import org.apache.pdfbox.rendering.ImageType
 import org.apache.pdfbox.rendering.PDFRenderer
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.Dpi
 import tech.dokus.domain.model.DocumentPagePreviewDto
 import tech.dokus.domain.model.DocumentPagesResponse
+import tech.dokus.domain.model.Dpi
 import tech.dokus.foundation.backend.storage.DocumentStorageService
 import tech.dokus.foundation.backend.storage.ObjectStorage
 import tech.dokus.foundation.backend.utils.loggerFor
@@ -41,7 +41,6 @@ class PdfPreviewService(
         private const val CACHE_PREFIX = "pdf_previews"
         private const val MIN_MAX_PAGES = 1
         private const val MAX_MAX_PAGES = 50
-        private const val DEFAULT_MAX_PAGES = 10
     }
 
     /**

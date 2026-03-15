@@ -3,12 +3,13 @@ package tech.dokus.features.ai.graph.nodes
 import ai.koog.agents.core.agent.entity.AIAgentStorageKey
 import ai.koog.agents.core.dsl.builder.AIAgentNodeDelegate
 import ai.koog.agents.core.dsl.builder.AIAgentSubgraphBuilderBase
+import tech.dokus.domain.Name
 import tech.dokus.domain.enums.TenantType
 import tech.dokus.domain.model.Tenant
 
-internal interface InputWithTenantContext {
+interface InputWithTenantContext {
     val tenant: Tenant
-    val associatedPersonNames: List<String> get() = emptyList()
+    val associatedPersonNames: List<Name> get() = emptyList()
 }
 
 internal inline fun <reified Input> AIAgentSubgraphBuilderBase<*, *>.tenantContextInjectorNode(
@@ -57,7 +58,7 @@ internal inline fun <reified Input> AIAgentSubgraphBuilderBase<*, *>.extractionT
     }
 }
 
-private fun buildClassificationTenantPrompt(tenant: Tenant, associatedPersonNames: List<String>): String = with(tenant) {
+private fun buildClassificationTenantPrompt(tenant: Tenant, associatedPersonNames: List<Name>): String = with(tenant) {
     buildString {
         appendLine("## TENANT CONTEXT")
         appendLine()
@@ -67,7 +68,7 @@ private fun buildClassificationTenantPrompt(tenant: Tenant, associatedPersonName
         appendLine("**Language:** ${language.code} (prefer this for field names if ambiguous)")
         appendLine("**Type:** ${type.description}")
         if (associatedPersonNames.isNotEmpty()) {
-            appendLine("**Associated persons:** ${associatedPersonNames.joinToString(", ")}")
+            appendLine("**Associated persons:** ${associatedPersonNames.joinToString(", ") { it.value }}")
             appendLine("These people are part of \"${legalName.value}\". If any of them appear in the buyer/client section, the document is addressed TO the tenant.")
         }
         appendLine()

@@ -20,6 +20,7 @@ import tech.dokus.features.ai.graph.nodes.userFeedbackInjectorNode
 import tech.dokus.features.ai.graph.sub.ClassificationResult
 import tech.dokus.features.ai.graph.sub.ClassifyDocumentInput
 import tech.dokus.features.ai.graph.sub.classifyDocumentSubGraph
+import tech.dokus.features.ai.graph.AcceptDocumentInput
 import tech.dokus.features.ai.services.DocumentFetcher
 import tech.dokus.features.ai.services.DocumentFetcher.FetchedDocumentData
 import java.io.File

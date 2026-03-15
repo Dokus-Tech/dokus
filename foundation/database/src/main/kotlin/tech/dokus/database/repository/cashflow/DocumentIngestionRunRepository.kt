@@ -12,23 +12,20 @@ import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.isNull
 import org.jetbrains.exposed.v1.core.lessEq
 import org.jetbrains.exposed.v1.core.or
-import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.v1.jdbc.update
-import tech.dokus.database.entity.IngestionItemEntity
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
-import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.enums.ProcessingOutcome
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.DocumentSourceId
+import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.Dpi
 import tech.dokus.domain.processing.DocumentProcessingConstants
-import java.util.*
+import java.util.UUID
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid
 import kotlin.uuid.toKotlinUuid
@@ -77,17 +74,16 @@ class DocumentIngestionRunRepository {
         overrideDpi: Dpi? = null,
     ): IngestionRunId = newSuspendedTransaction {
         val sanitizedMaxPages = overrideMaxPages?.takeIf { it > 0 }
-        val sanitizedDpi = overrideDpi
         return@newSuspendedTransaction IngestionRunId.generate().also { id ->
             DocumentIngestionRunsTable.insert {
                 it[DocumentIngestionRunsTable.id] = id.value.toJavaUuid()
-                it[DocumentIngestionRunsTable.documentId] = UUID.fromString(documentId.toString())
-                it[DocumentIngestionRunsTable.tenantId] = UUID.fromString(tenantId.toString())
-                it[DocumentIngestionRunsTable.sourceId] = sourceId?.let { value -> UUID.fromString(value.toString()) }
+                it[DocumentIngestionRunsTable.documentId] = documentId.value.toJavaUuid()
+                it[DocumentIngestionRunsTable.tenantId] = tenantId.value.toJavaUuid()
+                it[DocumentIngestionRunsTable.sourceId] = sourceId?.value?.toJavaUuid()
                 it[status] = IngestionStatus.Queued
                 it[DocumentIngestionRunsTable.userFeedback] = userFeedback?.takeIf { fb -> fb.isNotBlank() }
                 it[DocumentIngestionRunsTable.overrideMaxPages] = sanitizedMaxPages
-                it[DocumentIngestionRunsTable.overrideDpi] = sanitizedDpi?.value
+                it[DocumentIngestionRunsTable.overrideDpi] = overrideDpi?.value
             }
         }
     }
@@ -217,52 +213,6 @@ class DocumentIngestionRunRepository {
     }
 
     /**
-     * Find pending runs for processing (Queued status).
-     * Note: This is typically called by the processor without tenant filtering
-     * since the processor processes all tenants.
-     */
-    suspend fun findPendingForProcessing(
-        limit: Int = 10
-    ): List<IngestionItemEntity> = newSuspendedTransaction {
-        (DocumentIngestionRunsTable innerJoin DocumentsTable)
-            .selectAll()
-            .where {
-                DocumentIngestionRunsTable.status eq IngestionStatus.Queued
-            }
-            .orderBy(DocumentIngestionRunsTable.queuedAt to SortOrder.ASC)
-            .limit(limit)
-            .map { row ->
-                IngestionItemEntity(
-                    runId = IngestionRunId(row[DocumentIngestionRunsTable.id].value.toKotlinUuid()),
-                    documentId = DocumentId(row[DocumentIngestionRunsTable.documentId].toKotlinUuid()),
-                    tenantId = TenantId(row[DocumentIngestionRunsTable.tenantId].toKotlinUuid()),
-                    sourceId = row[DocumentIngestionRunsTable.sourceId]?.toKotlinUuid()?.let { DocumentSourceId(it) },
-                    effectiveOrigin = row[DocumentsTable.effectiveOrigin],
-                    userFeedback = row[DocumentIngestionRunsTable.userFeedback],
-                    overrideMaxPages = row[DocumentIngestionRunsTable.overrideMaxPages],
-                    overrideDpi = row[DocumentIngestionRunsTable.overrideDpi]?.let { Dpi.create(it) },
-                )
-            }
-    }
-
-    /**
-     * Mark a run as processing.
-     */
-    suspend fun markAsProcessing(
-        runId: IngestionRunId,
-        provider: String
-    ): Boolean = newSuspendedTransaction {
-        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-        DocumentIngestionRunsTable.update({
-            DocumentIngestionRunsTable.id eq UUID.fromString(runId.toString())
-        }) {
-            it[status] = IngestionStatus.Processing
-            it[startedAt] = now
-            it[DocumentIngestionRunsTable.provider] = provider
-        } > 0
-    }
-
-    /**
      * Mark a run as succeeded with extraction results.
      */
     suspend fun markAsSucceeded(
@@ -293,43 +243,8 @@ class DocumentIngestionRunRepository {
         } > 0
     }
 
-    /**
-     * Mark a run as failed with error message.
-     */
-    suspend fun markAsFailed(
-        runId: IngestionRunId,
-        error: String
-    ): Boolean = newSuspendedTransaction {
-        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-        DocumentIngestionRunsTable.update({
-            DocumentIngestionRunsTable.id eq UUID.fromString(runId.toString())
-        }) {
-            it[status] = IngestionStatus.Failed
-            it[finishedAt] = now
-            it[errorMessage] = error
-        } > 0
-    }
-
     suspend fun recoverStaleProcessingRunsForTenant(tenantId: TenantId): Int = newSuspendedTransaction {
         recoverStaleProcessingRunsInternal(UUID.fromString(tenantId.toString()))
-    }
-
-    suspend fun recoverStaleProcessingRuns(): Int = newSuspendedTransaction {
-        recoverStaleProcessingRunsInternal(tenantId = null)
-    }
-
-    /**
-     * Delete all runs for a document.
-     * CRITICAL: Must filter by tenantId.
-     */
-    suspend fun deleteByDocument(
-        documentId: DocumentId,
-        tenantId: TenantId
-    ): Int = newSuspendedTransaction {
-        DocumentIngestionRunsTable.deleteWhere {
-            (DocumentIngestionRunsTable.documentId eq UUID.fromString(documentId.toString())) and
-                    (DocumentIngestionRunsTable.tenantId eq UUID.fromString(tenantId.toString()))
-        }
     }
 
     private fun ResultRow.toIngestionRunSummary(): IngestionRunSummary {

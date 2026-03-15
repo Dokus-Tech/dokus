@@ -12,7 +12,6 @@ import tech.dokus.domain.enums.ContactLinkSource
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentPurposeSource
 import tech.dokus.domain.enums.DocumentRejectReason
-import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.PurposePeriodMode
@@ -57,9 +56,6 @@ object DocumentsTable : UUIDTable("documents") {
 
     // Draft review status (null = unprocessed)
     val documentStatus = dbEnumeration<DocumentStatus>("document_status").nullable()
-
-    // Effective origin — highest-trust source channel for this document
-    val effectiveOrigin = dbEnumeration<DocumentSource>("document_source").default(DocumentSource.Upload)
 
     // ============================================
     // Canonical Document Data

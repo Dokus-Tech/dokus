@@ -18,21 +18,22 @@ import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.slf4j.MDC
+import tech.dokus.backend.mappers.from
 import tech.dokus.backend.services.documents.DocumentIntakeServiceResult
 import tech.dokus.backend.services.documents.postextraction.PostExtractionContext
 import tech.dokus.backend.services.documents.postextraction.PostExtractionOrchestrator
 import tech.dokus.backend.services.documents.postextraction.PostExtractionOutcome
 import tech.dokus.backend.services.documents.sse.DocumentSsePublisher
 import tech.dokus.database.entity.IngestionItemEntity
+import tech.dokus.database.entity.isPeppol
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.auth.UserRepository
-import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.processor.ProcessorIngestionRepository
-import tech.dokus.domain.enums.DocumentSource
+import tech.dokus.domain.Name
+import tech.dokus.domain.enums.SourceTrust
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.enums.SourceTrust
 import tech.dokus.domain.model.buildProvenance
 import tech.dokus.domain.processing.DocumentProcessingConstants
 import tech.dokus.domain.utils.json
@@ -68,7 +69,6 @@ import kotlin.time.Duration
 internal class DocumentProcessingWorker(
     private val ingestionRepository: ProcessorIngestionRepository,
     private val processingAgent: DocumentProcessingAgent,
-    private val documentRepository: DocumentRepository,
     private val documentSsePublisher: DocumentSsePublisher,
     private val config: ProcessorConfig,
     private val tenantRepository: TenantRepository,
@@ -102,8 +102,7 @@ internal class DocumentProcessingWorker(
         }
 
         logger.info(
-            "Starting worker (KOOG-GRAPH): interval=${config.pollingInterval}ms, " +
-                "batchSize=${config.batchSize}"
+            "Starting worker (KOOG-GRAPH): interval=${config.pollingInterval}ms, batchSize=${config.batchSize}"
         )
 
         pollingJob = scope.launch {
@@ -179,7 +178,10 @@ internal class DocumentProcessingWorker(
                     val startedAtNanos = System.nanoTime()
                     var attemptResult = AttemptResult.FailedUnexpected
                     try {
-                        val claimed = ingestionRepository.markAsProcessing(ingestion.runId.toString(), "koog-graph")
+                        val claimed = ingestionRepository.markAsProcessing(
+                            ingestion.runId.toString(),
+                            "koog-graph"
+                        )
                         if (!claimed) {
                             logger.info(
                                 "Skipping ingestion run {} for document {} because it was already claimed",
@@ -189,13 +191,16 @@ internal class DocumentProcessingWorker(
                             attemptResult = AttemptResult.SkippedAlreadyClaimed
                             return@async
                         }
-                        documentSsePublisher.publishDocumentChanged(ingestion.tenantId, ingestion.documentId)
+                        documentSsePublisher.publishDocumentChanged(
+                            ingestion.tenantId,
+                            ingestion.documentId
+                        )
                         attemptResult = processIngestionRunWithTimeout(ingestion, timeout)
                     } catch (e: CancellationException) {
                         if (!isRunning.get()) throw e
                         logger.error(
                             "Unexpected cancellation while processing ingestion run ${ingestion.runId} " +
-                                "for document ${ingestion.documentId}",
+                                    "for document ${ingestion.documentId}",
                             e
                         )
                         markRunFailedSafely(
@@ -208,7 +213,7 @@ internal class DocumentProcessingWorker(
                     } catch (e: Exception) {
                         logger.error(
                             "Failed to process ingestion run ${ingestion.runId} " +
-                                "for document ${ingestion.documentId}",
+                                    "for document ${ingestion.documentId}",
                             e
                         )
                         val providerFailure = isProviderFailure(e)
@@ -311,7 +316,7 @@ internal class DocumentProcessingWorker(
         val processingTimeMs = (System.nanoTime() - startedAtNanos) / 1_000_000
         logger.info(
             "Ingestion attempt completed: runId={}, documentId={}, queueDepthAtClaim={}, processingTimeMs={}, " +
-                "attemptResult={}",
+                    "attemptResult={}",
             ingestion.runId,
             ingestion.documentId,
             queueDepthAtClaim,
@@ -351,25 +356,16 @@ internal class DocumentProcessingWorker(
             val parsedTenantId = tenantId
             val tenant = tenantRepository.findById(parsedTenantId)
                 ?: error("Tenant not found: $tenantId")
-            val sourceChannel = ingestion.sourceChannel ?: ingestion.effectiveOrigin
-            if (ingestion.sourceChannel == null) {
-                logger.warn(
-                    "Missing source channel for run {} document {}; using document source {}",
-                    runId,
-                    documentId,
-                    sourceChannel
-                )
-            }
+            val sourceChannel = ingestion.effectiveOrigin
 
             val members = userRepository.listByTenant(parsedTenantId, activeOnly = true)
             val personNames = members.mapNotNull { m ->
                 listOfNotNull(m.user.firstName?.value, m.user.lastName?.value)
-                    .joinToString(" ").ifBlank { null }
-            }
+                    .joinToString(" ")
+                    .ifBlank { null }
+            }.map { Name(it) }
 
-            if (sourceChannel == DocumentSource.Peppol &&
-                ingestion.peppolStructuredSnapshotJson.isNullOrBlank()
-            ) {
+            if (ingestion.isPeppol()) {
                 logger.warn(
                     "PEPPOL run {} has no structured snapshot; falling back to vision extraction",
                     runId
@@ -377,19 +373,7 @@ internal class DocumentProcessingWorker(
             }
 
             val result = llmQueue.documentProcessing("doc-extract:$documentId") {
-                processingAgent.process(
-                    AcceptDocumentInput(
-                        documentId = documentId,
-                        tenant = tenant,
-                        sourceChannel = sourceChannel,
-                        peppolStructuredSnapshotJson = ingestion.peppolStructuredSnapshotJson,
-                        peppolSnapshotVersion = ingestion.peppolSnapshotVersion,
-                        associatedPersonNames = personNames,
-                        userFeedback = ingestion.userFeedback,
-                        maxPagesOverride = ingestion.overrideMaxPages,
-                        dpiOverride = ingestion.overrideDpi
-                    )
-                )
+                processingAgent.process(AcceptDocumentInput.from(ingestion, tenant, personNames))
             }
 
             val counterpartyInvariantFailure = result.auditReport.criticalFailures.firstOrNull {
@@ -445,9 +429,9 @@ internal class DocumentProcessingWorker(
             }
 
             ingestionRepository.markAsSucceeded(
-                runId = runId.toString(),
-                tenantId = tenantId.toString(),
-                documentId = documentId.toString(),
+                runId = runId,
+                tenantId = tenantId,
+                documentId = documentId,
                 documentType = documentType,
                 draftData = draftData,
                 rawExtractionJson = rawExtractionJson,
@@ -472,9 +456,7 @@ internal class DocumentProcessingWorker(
                 extraction = result.extraction,
                 tenantVat = tenant.vatNumber,
             )
-            val outcome = postExtractionOrchestrator.orchestrate(postExtractionContext)
-
-            when (outcome) {
+            when (val outcome = postExtractionOrchestrator.orchestrate(postExtractionContext)) {
                 is PostExtractionOutcome.TruthResolved -> {
                     publishResolvedDocumentState(
                         tenantId = parsedTenantId,
@@ -482,6 +464,7 @@ internal class DocumentProcessingWorker(
                         matchOutcome = outcome.matchOutcome,
                     )
                 }
+
                 is PostExtractionOutcome.UnsupportedConfirmed,
                 is PostExtractionOutcome.BankStatementProcessed,
                 is PostExtractionOutcome.StandardProcessed,

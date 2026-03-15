@@ -3,7 +3,7 @@ package tech.dokus.features.ai.graph.nodes
 import ai.koog.agents.core.dsl.builder.AIAgentNodeDelegate
 import ai.koog.agents.core.dsl.builder.AIAgentSubgraphBuilderBase
 
-internal interface InputWithUserFeedback {
+interface InputWithUserFeedback {
     val userFeedback: String? get() = null
 }
 

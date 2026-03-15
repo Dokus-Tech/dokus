@@ -10,7 +10,7 @@ import tech.dokus.features.ai.services.DocumentFetcher
 import tech.dokus.features.ai.services.DocumentImageService
 import tech.dokus.features.ai.tools.DocumentImagesFetcherTool
 
-internal interface InputWithDocumentId {
+interface InputWithDocumentId {
     val documentId: DocumentId
     val maxPagesOverride: Int? get() = null
     val dpiOverride: Dpi? get() = null

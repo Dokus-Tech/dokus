@@ -26,9 +26,9 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.Dpi
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.DocumentFieldProvenance
+import tech.dokus.domain.model.Dpi
 import tech.dokus.domain.model.ProvenanceMergeResult
 import tech.dokus.domain.model.mergeWithProvenance
 import tech.dokus.domain.model.toDirection
@@ -39,6 +39,7 @@ import tech.dokus.domain.utils.json
 import java.util.UUID
 import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.toJavaUuid
 import kotlin.uuid.toKotlinUuid
 
 /**
@@ -90,15 +91,13 @@ class ProcessorIngestionRepository {
                         runId = IngestionRunId(row[DocumentIngestionRunsTable.id].value.toKotlinUuid()),
                         documentId = DocumentId(row[DocumentIngestionRunsTable.documentId].toKotlinUuid()),
                         tenantId = TenantId(row[DocumentIngestionRunsTable.tenantId].toKotlinUuid()),
-                        sourceId = row[DocumentIngestionRunsTable.sourceId]?.toKotlinUuid()
-                            ?.let { DocumentSourceId(it) },
+                        sourceId = row[DocumentIngestionRunsTable.sourceId]?.toKotlinUuid()?.let { DocumentSourceId(it) },
                         sourceChannel = row.getOrNull(DocumentSourcesTable.sourceChannel),
-                        effectiveOrigin = row[DocumentsTable.effectiveOrigin],
                         peppolStructuredSnapshotJson = row.getOrNull(DocumentSourcesTable.peppolStructuredSnapshotJson),
                         peppolSnapshotVersion = row.getOrNull(DocumentSourcesTable.peppolSnapshotVersion),
                         userFeedback = row[DocumentIngestionRunsTable.userFeedback],
                         overrideMaxPages = row[DocumentIngestionRunsTable.overrideMaxPages],
-                        overrideDpi = row[DocumentIngestionRunsTable.overrideDpi]?.let { Dpi.create(it) }
+                        overrideDpi = row[DocumentIngestionRunsTable.overrideDpi]?.let(Dpi::create)
                     )
                 }
         }
@@ -109,8 +108,7 @@ class ProcessorIngestionRepository {
      * Uses compare-and-set semantics (Queued -> Processing) to avoid duplicate claims.
      */
     @OptIn(ExperimentalTime::class)
-    suspend fun markAsProcessing(runId: String, provider: String): Boolean =
-        newSuspendedTransaction {
+    suspend fun markAsProcessing(runId: String, provider: String): Boolean = newSuspendedTransaction {
             val now = Clock.System.now().toStdlibInstant().toLocalDateTime(TimeZone.UTC)
             DocumentIngestionRunsTable.update({
                 (DocumentIngestionRunsTable.id eq UUID.fromString(runId)) and
@@ -183,10 +181,11 @@ class ProcessorIngestionRepository {
      * @param keywords AI-generated keywords (optional)
      * @param force If true, overwrite extracted_data even if user has edited
      */
+    @OptIn(ExperimentalUuidApi::class)
     suspend fun markAsSucceeded(
-        runId: String,
-        tenantId: String,
-        documentId: String,
+        runId: IngestionRunId,
+        tenantId: TenantId,
+        documentId: DocumentId,
         documentType: DocumentType,
         draftData: DocumentDraftData?,
         rawExtractionJson: String,
@@ -197,14 +196,11 @@ class ProcessorIngestionRepository {
         force: Boolean = false,
         fieldProvenance: DocumentFieldProvenance? = null
     ): Boolean {
-        // Defense-in-depth: Validate tenantId is provided
-        require(tenantId.isNotBlank()) { "tenantId is required for draft operations" }
-
         return newSuspendedTransaction {
             val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-            val runUuid = UUID.fromString(runId)
-            val documentUuid = UUID.fromString(documentId)
-            val tenantUuid = UUID.fromString(tenantId)
+            val runUuid = runId.value.toJavaUuid()
+            val documentUuid = documentId.value.toJavaUuid()
+            val tenantUuid = tenantId.value.toJavaUuid()
             draftData?.let { json.encodeToString(it) }
             val keywordsJson = keywords.takeIf { it.isNotEmpty() }?.let { json.encodeToString(it) }
             val calculatedStatus = DocumentStatus.NeedsReview
