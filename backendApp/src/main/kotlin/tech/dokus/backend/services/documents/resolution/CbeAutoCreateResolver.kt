@@ -16,7 +16,24 @@ class CbeAutoCreateResolver(
         val vat = snapshot.vatNumber
         if (vat == null || !vat.isValid || !vat.isBelgian) return ResolverOutcome.Partial()
 
-        val cbeLookup = cbeApiClient.searchByVat(vat).getOrNull() ?: return ResolverOutcome.Partial()
+        val cbeLookup = cbeApiClient.searchByVat(vat).getOrNull()
+        if (cbeLookup == null) {
+            // CBE unavailable — auto-create with snapshot data, enrich later
+            val name = snapshot.name ?: return ResolverOutcome.Partial()
+            return ResolverOutcome.Resolved(
+                ContactResolution.AutoCreate(
+                    contactData = snapshot,
+                    cbeVerified = null,
+                    evidence = MatchEvidence(
+                        vatMatch = false,
+                        ibanMatch = false,
+                        nameSimilarity = null,
+                        ambiguityCount = 0,
+                        cbeStatus = null,
+                    )
+                )
+            )
+        }
 
         return when (cbeLookup.status) {
             EntityStatus.Active -> ResolverOutcome.Resolved(
