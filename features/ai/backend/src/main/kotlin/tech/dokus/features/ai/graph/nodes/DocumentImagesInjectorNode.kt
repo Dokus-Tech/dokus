@@ -5,6 +5,7 @@ import ai.koog.agents.core.dsl.builder.AIAgentSubgraphBuilderBase
 import ai.koog.prompt.message.AttachmentContent
 import ai.koog.prompt.message.ContentPart
 import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.model.Dpi
 import tech.dokus.features.ai.services.DocumentFetcher
 import tech.dokus.features.ai.services.DocumentImageService
 import tech.dokus.features.ai.tools.DocumentImagesFetcherTool
@@ -12,7 +13,7 @@ import tech.dokus.features.ai.tools.DocumentImagesFetcherTool
 internal interface InputWithDocumentId {
     val documentId: DocumentId
     val maxPagesOverride: Int? get() = null
-    val dpiOverride: Int? get() = null
+    val dpiOverride: Dpi? get() = null
 }
 
 internal inline fun <reified Input> AIAgentSubgraphBuilderBase<*, *>.documentImagesInjectorNode(

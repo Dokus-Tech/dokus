@@ -7,6 +7,7 @@ import org.apache.pdfbox.rendering.ImageType
 import org.apache.pdfbox.rendering.PDFRenderer
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.Dpi
 import tech.dokus.domain.model.DocumentPagePreviewDto
 import tech.dokus.domain.model.DocumentPagesResponse
 import tech.dokus.foundation.backend.storage.DocumentStorageService
@@ -38,17 +39,10 @@ class PdfPreviewService(
 
     companion object {
         private const val CACHE_PREFIX = "pdf_previews"
-        private const val MIN_DPI = 72
-        private const val MAX_DPI = 300
         private const val MIN_MAX_PAGES = 1
         private const val MAX_MAX_PAGES = 50
         private const val DEFAULT_MAX_PAGES = 10
     }
-
-    /**
-     * Clamp DPI to safe range (72-300).
-     */
-    fun clampDpi(dpi: Int): Int = dpi.coerceIn(MIN_DPI, MAX_DPI)
 
     /**
      * Clamp maxPages to safe range (1-50).
@@ -62,14 +56,14 @@ class PdfPreviewService(
     fun generateCacheKey(
         tenantId: TenantId,
         documentId: DocumentId,
-        dpi: Int,
+        dpi: Dpi,
         page: Int,
         cacheScope: String = "default"
     ): String {
         val normalizedScope = cacheScope
             .lowercase()
             .replace("[^a-z0-9._-]".toRegex(), "_")
-        return "$CACHE_PREFIX/$tenantId/$documentId/$normalizedScope/dpi-$dpi/page-$page.png"
+        return "$CACHE_PREFIX/$tenantId/$documentId/$normalizedScope/dpi-${dpi.value}/page-$page.png"
     }
 
     /**
@@ -103,14 +97,13 @@ class PdfPreviewService(
         documentId: DocumentId,
         storageKey: String,
         page: Int,
-        dpi: Int,
+        dpi: Dpi,
         cacheScope: String = "default"
     ): ByteArray {
-        val clampedDpi = clampDpi(dpi)
         val cacheKey = generateCacheKey(
             tenantId = tenantId,
             documentId = documentId,
-            dpi = clampedDpi,
+            dpi = dpi,
             page = page,
             cacheScope = cacheScope
         )
@@ -126,7 +119,7 @@ class PdfPreviewService(
         // Render page
         val imageBytes = withContext(Dispatchers.IO) {
             val pdfBytes = documentStorage.downloadDocument(storageKey)
-            renderPage(pdfBytes, page, clampedDpi)
+            renderPage(pdfBytes, page, dpi.value)
         }
 
         // Store in cache
@@ -156,11 +149,10 @@ class PdfPreviewService(
         tenantId: TenantId,
         documentId: DocumentId,
         storageKey: String,
-        dpi: Int,
+        dpi: Dpi,
         maxPages: Int,
         pageImageBasePath: String = "/api/v1/documents/$documentId/pages"
     ): DocumentPagesResponse {
-        val clampedDpi = clampDpi(dpi)
         val clampedMaxPages = clampMaxPages(maxPages)
 
         val totalPages = getPageCount(storageKey)
@@ -169,13 +161,13 @@ class PdfPreviewService(
         val pages = (1..renderedPages).map { pageNum ->
             DocumentPagePreviewDto(
                 page = pageNum,
-                imageUrl = "$pageImageBasePath/$pageNum.png?dpi=$clampedDpi"
+                imageUrl = "$pageImageBasePath/$pageNum.png?dpi=${dpi.value}"
             )
         }
 
         return DocumentPagesResponse(
             documentId = documentId,
-            dpi = clampedDpi,
+            dpi = dpi,
             totalPages = totalPages,
             renderedPages = renderedPages,
             pages = pages

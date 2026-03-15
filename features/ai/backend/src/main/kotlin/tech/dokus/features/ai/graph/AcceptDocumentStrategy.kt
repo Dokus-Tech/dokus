@@ -9,6 +9,7 @@ import ai.koog.agents.ext.agent.subgraphWithRetrySimple
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.Serializable
 import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.model.Dpi
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.processing.DocumentProcessingConstants.AUTO_CONFIRM_CONFIDENCE_THRESHOLD
 import tech.dokus.domain.enums.DocumentSource
@@ -50,7 +51,7 @@ data class AcceptDocumentInput(
     override val associatedPersonNames: List<String> = emptyList(),
     override val userFeedback: String? = null,
     override val maxPagesOverride: Int? = null,
-    override val dpiOverride: Int? = null
+    override val dpiOverride: Dpi? = null
 ) : InputWithDocumentId, InputWithTenantContext, InputWithUserFeedback
 
 fun acceptDocumentGraph(

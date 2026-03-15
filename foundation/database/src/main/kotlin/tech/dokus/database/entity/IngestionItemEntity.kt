@@ -5,6 +5,7 @@ import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.enums.DocumentSource
+import tech.dokus.domain.model.Dpi
 
 /**
  * Item representing a document ready for processing.
@@ -21,5 +22,5 @@ data class IngestionItemEntity(
     val peppolSnapshotVersion: Int? = null,
     val userFeedback: String? = null,
     val overrideMaxPages: Int? = null,
-    val overrideDpi: Int? = null,
+    val overrideDpi: Dpi? = null,
 )

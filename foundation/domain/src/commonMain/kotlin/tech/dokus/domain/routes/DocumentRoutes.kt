@@ -6,6 +6,7 @@ import tech.dokus.domain.enums.DocumentListFilter
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.IngestionStatus
+import tech.dokus.domain.model.Dpi
 
 /**
  * Type-safe route definitions for Document Management API.
@@ -197,7 +198,7 @@ class Documents {
         class SourcePages(
             val parent: Id,
             val sourceId: String,
-            val dpi: Int = 150,
+            val dpi: Dpi,
             val maxPages: Int = 10
         )
 
@@ -211,7 +212,7 @@ class Documents {
             val parent: Id,
             val sourceId: String,
             val page: Int,
-            val dpi: Int = 150
+            val dpi: Dpi
         )
 
         /**
@@ -261,7 +262,7 @@ class Documents {
         @Resource("pages")
         class Pages(
             val parent: Id,
-            val dpi: Int,
+            val dpi: Dpi,
             val maxPages: Int = 10
         )
 
@@ -277,7 +278,7 @@ class Documents {
         class PageImage(
             val parent: Id,
             val page: Int,
-            val dpi: Int = 150
+            val dpi: Dpi
         )
     }
 }

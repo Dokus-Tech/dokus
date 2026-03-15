@@ -5,6 +5,7 @@ import kotlinx.coroutines.withContext
 import org.apache.pdfbox.Loader
 import org.apache.pdfbox.rendering.ImageType
 import org.apache.pdfbox.rendering.PDFRenderer
+import tech.dokus.domain.model.Dpi
 import tech.dokus.foundation.backend.utils.loggerFor
 import java.io.ByteArrayOutputStream
 import javax.imageio.ImageIO
@@ -23,9 +24,6 @@ import javax.imageio.ImageIO
 object DocumentImageService {
     private val logger = loggerFor()
 
-    private const val MIN_DPI = 150
-    private const val MAX_DPI = 600
-    private const val DEFAULT_DPI = 300
     private const val MIN_PAGE_COUNT = 1
     private const val MAX_PAGE_COUNT = 10
     private const val DEFAULT_PAGE_COUNT = 6
@@ -90,15 +88,14 @@ object DocumentImageService {
         mimeType: String,
         startPage: Int = 1,
         pageCount: Int = DEFAULT_PAGE_COUNT,
-        dpi: Int = DEFAULT_DPI
+        dpi: Dpi = Dpi.default
     ): DocumentImages = withContext(Dispatchers.IO) {
-        val clampedDpi = dpi.coerceIn(MIN_DPI, MAX_DPI)
         val clampedPageCount = pageCount.coerceIn(MIN_PAGE_COUNT, MAX_PAGE_COUNT)
 
         when (mimeType) {
             "application/pdf" -> {
-                logger.debug("Rendering PDF pages (startPage=$startPage, pageCount=$clampedPageCount, dpi=$clampedDpi)")
-                renderPdfToImages(documentBytes, startPage, clampedPageCount, clampedDpi)
+                logger.debug("Rendering PDF pages (startPage=$startPage, pageCount=$clampedPageCount, dpi=${dpi.value})")
+                renderPdfToImages(documentBytes, startPage, clampedPageCount, dpi.value)
             }
 
             in SUPPORTED_IMAGE_TYPES -> {

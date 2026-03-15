@@ -26,6 +26,7 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.Dpi
 import tech.dokus.domain.processing.DocumentProcessingConstants
 import java.util.*
 import kotlin.uuid.ExperimentalUuidApi
@@ -73,10 +74,10 @@ class DocumentIngestionRunRepository {
         sourceId: DocumentSourceId? = null,
         userFeedback: String? = null,
         overrideMaxPages: Int? = null,
-        overrideDpi: Int? = null,
+        overrideDpi: Dpi? = null,
     ): IngestionRunId = newSuspendedTransaction {
         val sanitizedMaxPages = overrideMaxPages?.takeIf { it > 0 }
-        val sanitizedDpi = overrideDpi?.takeIf { it > 0 }
+        val sanitizedDpi = overrideDpi
         return@newSuspendedTransaction IngestionRunId.generate().also { id ->
             DocumentIngestionRunsTable.insert {
                 it[DocumentIngestionRunsTable.id] = id.value.toJavaUuid()
@@ -86,7 +87,7 @@ class DocumentIngestionRunRepository {
                 it[status] = IngestionStatus.Queued
                 it[DocumentIngestionRunsTable.userFeedback] = userFeedback?.takeIf { fb -> fb.isNotBlank() }
                 it[DocumentIngestionRunsTable.overrideMaxPages] = sanitizedMaxPages
-                it[DocumentIngestionRunsTable.overrideDpi] = sanitizedDpi
+                it[DocumentIngestionRunsTable.overrideDpi] = sanitizedDpi?.value
             }
         }
     }
@@ -239,7 +240,7 @@ class DocumentIngestionRunRepository {
                     effectiveOrigin = row[DocumentsTable.effectiveOrigin],
                     userFeedback = row[DocumentIngestionRunsTable.userFeedback],
                     overrideMaxPages = row[DocumentIngestionRunsTable.overrideMaxPages],
-                    overrideDpi = row[DocumentIngestionRunsTable.overrideDpi],
+                    overrideDpi = row[DocumentIngestionRunsTable.overrideDpi]?.let { Dpi.create(it) },
                 )
             }
     }

@@ -1,6 +1,7 @@
 package tech.dokus.features.cashflow.presentation.review
 
 import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.model.Dpi
 import tech.dokus.domain.model.DocumentPagePreviewDto
 
 /**
@@ -25,7 +26,7 @@ sealed interface DocumentPreviewState {
         val pages: List<DocumentPagePreviewDto>,
         val totalPages: Int,
         val renderedPages: Int,
-        val dpi: Int,
+        val dpi: Dpi,
         val hasMore: Boolean
     ) : DocumentPreviewState
 

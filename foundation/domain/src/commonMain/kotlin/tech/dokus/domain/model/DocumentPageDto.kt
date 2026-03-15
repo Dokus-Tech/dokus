@@ -16,7 +16,7 @@ data class DocumentPagesResponse(
     val documentId: DocumentId,
 
     /** The DPI used for rendering these page previews */
-    val dpi: Int,
+    val dpi: Dpi,
 
     /** Total number of pages in the PDF */
     val totalPages: Int,

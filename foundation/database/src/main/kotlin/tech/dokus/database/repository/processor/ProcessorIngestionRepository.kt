@@ -26,6 +26,7 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.Dpi
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.DocumentFieldProvenance
 import tech.dokus.domain.model.ProvenanceMergeResult
@@ -97,7 +98,7 @@ class ProcessorIngestionRepository {
                         peppolSnapshotVersion = row.getOrNull(DocumentSourcesTable.peppolSnapshotVersion),
                         userFeedback = row[DocumentIngestionRunsTable.userFeedback],
                         overrideMaxPages = row[DocumentIngestionRunsTable.overrideMaxPages],
-                        overrideDpi = row[DocumentIngestionRunsTable.overrideDpi]
+                        overrideDpi = row[DocumentIngestionRunsTable.overrideDpi]?.let { Dpi.create(it) }
                     )
                 }
         }
