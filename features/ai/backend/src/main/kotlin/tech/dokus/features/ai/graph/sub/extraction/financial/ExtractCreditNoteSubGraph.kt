@@ -181,14 +181,7 @@ private val ExtractDocumentInput.creditNotePrompt: String
     - Do NOT guess. If not visible, return null.
     - Amount fields must be numeric strings using '.' as decimal separator (e.g., "1234.56").
 
-    ## VAT NUMBER FORMAT
-    - VAT numbers are COUNTRY CODE + DIGITS (and sometimes letters). Extract ONLY the VAT number, never enterprise numbers, RPR references, or other identifiers.
-    - Belgian VAT: "BE" + exactly 10 digits (e.g., BE0731016012).
-    - Dutch VAT: "NL" + 9 digits + "B" + 2 digits (e.g., NL123456789B02).
-    - German VAT: "DE" + exactly 9 digits (e.g., DE123456789).
-    - French VAT: "FR" + 2 alphanumeric chars + 9 digits (e.g., FRXX123456789).
-    - Remove dots/spaces from the VAT (e.g., "BE 0731.016.012" → "BE0731016012").
-    - If you cannot isolate the exact VAT number, return null.
+    ${ExtractionToolDescriptions.VatNumberFormatGuidance}
 
     ## PARTY EXTRACTION (CRITICAL)
     - `seller*`: entity that ISSUED the credit note.

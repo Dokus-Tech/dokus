@@ -106,4 +106,14 @@ object ExtractionToolDescriptions {
     const val CreditNoteReason = "Reason for credit note if explicitly stated. Null if not visible."
 
     const val PaymentMethod = "Payment method if visible."
+
+    const val VatNumberFormatGuidance = """
+    ## VAT NUMBER FORMAT
+    - VAT numbers are COUNTRY CODE + DIGITS (and sometimes letters). Extract ONLY the VAT number, never enterprise numbers, RPR references, or other identifiers.
+    - Belgian VAT: "BE" + exactly 10 digits (e.g., BE0731016012).
+    - Dutch VAT: "NL" + 9 digits + "B" + 2 digits (e.g., NL123456789B02).
+    - German VAT: "DE" + exactly 9 digits (e.g., DE123456789).
+    - French VAT: "FR" + 2 alphanumeric chars + 9 digits (e.g., FRXX123456789).
+    - Remove dots/spaces from the VAT (e.g., "BE 0731.016.012" → "BE0731016012").
+    - If you cannot isolate the exact VAT number, return null."""
 }

@@ -92,6 +92,40 @@ object ValidateVatNumberUseCase : Validator<VatNumber> {
         "XI" to Regex("^([0-9]{9}|[0-9]{12}|GD[0-9]{3}|HA[0-9]{3})$"),
     )
 
+    /**
+     * Expected body length (characters after country code) for EU VATs with fixed-length formats.
+     * Used by [tech.dokus.domain.ids.VatNumber.tryNormalize] to recover valid VATs from over-long
+     * AI extractions by truncating from the right and re-validating.
+     *
+     * Excluded countries:
+     * - BG, CZ, LT, RO, IE: variable-length formats — truncation target is ambiguous
+     * - ES: check character is position-dependent at the end — right-truncation corrupts it
+     * - XI: variable-length formats
+     */
+    internal val FIXED_BODY_LENGTHS: Map<String, Int> = mapOf(
+        "AT" to 9,  // U + 8 digits
+        "BE" to 10, // 10 digits
+        "DE" to 9,  // 9 digits
+        "DK" to 8,  // 8 digits
+        "EE" to 9,  // 9 digits
+        "EL" to 9,  // 9 digits (Greece)
+        "FI" to 8,  // 8 digits
+        "FR" to 11, // 2 alphanumeric + 9 digits
+        "GR" to 9,  // 9 digits (Greece alt)
+        "HR" to 11, // 11 digits
+        "HU" to 8,  // 8 digits
+        "IT" to 11, // 11 digits
+        "LU" to 8,  // 8 digits
+        "LV" to 11, // 11 digits
+        "MT" to 8,  // 8 digits
+        "NL" to 12, // 9 digits + B + 2 digits
+        "PL" to 10, // 10 digits
+        "PT" to 9,  // 9 digits
+        "SE" to 12, // 12 digits
+        "SI" to 8,  // 8 digits
+        "SK" to 10, // 10 digits
+    )
+
     override operator fun invoke(value: VatNumber): Boolean {
         if (value.value.isBlank()) return false
 
