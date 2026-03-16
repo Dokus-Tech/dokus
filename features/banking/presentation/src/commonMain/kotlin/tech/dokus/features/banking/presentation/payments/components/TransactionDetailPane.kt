@@ -74,6 +74,8 @@ internal fun TransactionDetailPane(
     onIgnore: () -> Unit,
     onConfirmMatch: () -> Unit,
     onCreateExpense: () -> Unit,
+    onMarkTransfer: () -> Unit,
+    onUndoTransfer: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.padding(Constraints.Spacing.large)) {
@@ -227,6 +229,13 @@ internal fun TransactionDetailPane(
                     modifier = Modifier.fillMaxWidth(),
                     onClick = onLinkDocument,
                 )
+                Spacer(Modifier.height(Constraints.Spacing.small))
+                PButton(
+                    text = "Mark as transfer",
+                    variant = PButtonVariant.Outline,
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = onMarkTransfer,
+                )
                 if (transaction.signedAmount.isNegative) {
                     Spacer(Modifier.height(Constraints.Spacing.small))
                     PButton(
@@ -257,6 +266,13 @@ internal fun TransactionDetailPane(
                     modifier = Modifier.fillMaxWidth(),
                     onClick = onLinkDocument,
                 )
+                Spacer(Modifier.height(Constraints.Spacing.small))
+                PButton(
+                    text = "Mark as transfer",
+                    variant = PButtonVariant.Outline,
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = onMarkTransfer,
+                )
                 if (transaction.signedAmount.isNegative) {
                     Spacer(Modifier.height(Constraints.Spacing.small))
                     PButton(
@@ -274,9 +290,18 @@ internal fun TransactionDetailPane(
                     onClick = onIgnore,
                 )
             }
-            BankTransactionStatus.Matched,
+            BankTransactionStatus.Matched -> {
+                if (transaction.resolutionType == ResolutionType.Transfer) {
+                    PButton(
+                        text = "Undo transfer",
+                        variant = PButtonVariant.OutlineMuted,
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = onUndoTransfer,
+                    )
+                }
+            }
             BankTransactionStatus.Ignored -> {
-                // No actions for resolved transactions
+                // No actions for ignored transactions
             }
         }
     }
@@ -371,6 +396,8 @@ private fun TransactionDetailPaneUnmatchedPreview(
             onIgnore = {},
             onConfirmMatch = {},
             onCreateExpense = {},
+            onMarkTransfer = {},
+            onUndoTransfer = {},
             modifier = Modifier.width(280.dp),
         )
     }
@@ -389,6 +416,8 @@ private fun TransactionDetailPaneMatchedPreview(
             onIgnore = {},
             onConfirmMatch = {},
             onCreateExpense = {},
+            onMarkTransfer = {},
+            onUndoTransfer = {},
             modifier = Modifier.width(280.dp),
         )
     }
