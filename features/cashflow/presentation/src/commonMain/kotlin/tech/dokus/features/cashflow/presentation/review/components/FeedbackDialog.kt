@@ -16,18 +16,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.cashflow_feedback_category_missing_info
-import tech.dokus.aura.resources.cashflow_feedback_category_other
-import tech.dokus.aura.resources.cashflow_feedback_category_wrong_amount
-import tech.dokus.aura.resources.cashflow_feedback_category_wrong_contact
-import tech.dokus.aura.resources.cashflow_feedback_category_wrong_date
-import tech.dokus.aura.resources.cashflow_feedback_category_wrong_type
 import tech.dokus.aura.resources.cashflow_feedback_details_placeholder
 import tech.dokus.aura.resources.cashflow_feedback_reject_instead
 import tech.dokus.aura.resources.cashflow_feedback_submit
 import tech.dokus.aura.resources.cashflow_feedback_title
 import tech.dokus.features.cashflow.presentation.review.FeedbackCategory
 import tech.dokus.features.cashflow.presentation.review.FeedbackDialogState
+import tech.dokus.features.cashflow.presentation.review.localized
 import tech.dokus.foundation.aura.components.dialog.DokusDialog
 import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
 import tech.dokus.foundation.aura.constrains.Constraints
@@ -71,7 +66,7 @@ internal fun FeedbackDialog(
                         FilterChip(
                             selected = state.selectedCategory == category,
                             onClick = { onCategorySelected(category) },
-                            label = { Text(categoryLabel(category)) },
+                            label = { Text(category.localized) },
                             enabled = !state.isSubmitting,
                         )
                     }
@@ -114,16 +109,6 @@ internal fun FeedbackDialog(
         dismissOnBackPress = !state.isSubmitting,
         dismissOnClickOutside = !state.isSubmitting,
     )
-}
-
-@Composable
-private fun categoryLabel(category: FeedbackCategory): String = when (category) {
-    FeedbackCategory.WrongContact -> stringResource(Res.string.cashflow_feedback_category_wrong_contact)
-    FeedbackCategory.WrongAmount -> stringResource(Res.string.cashflow_feedback_category_wrong_amount)
-    FeedbackCategory.WrongDate -> stringResource(Res.string.cashflow_feedback_category_wrong_date)
-    FeedbackCategory.WrongType -> stringResource(Res.string.cashflow_feedback_category_wrong_type)
-    FeedbackCategory.MissingInfo -> stringResource(Res.string.cashflow_feedback_category_missing_info)
-    FeedbackCategory.Other -> stringResource(Res.string.cashflow_feedback_category_other)
 }
 
 @Preview
