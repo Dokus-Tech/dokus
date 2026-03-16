@@ -5,159 +5,148 @@ import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.ids.IngestionRunId
 
 /**
- * Builds a per-field provenance map for a [DocumentDraftData].
+ * Builds a typed [DocumentFieldProvenance] for a [DocumentDraftData].
  *
  * Only populated (non-null, non-default) fields get provenance entries.
- * All fields from the same extraction share the same source trust and confidence.
- *
- * Line items and VAT breakdown are treated as single units ("lineItems", "vatBreakdown")
- * — no per-row provenance in v1.
+ * All fields from the same extraction share the same base provenance.
  */
 fun DocumentDraftData.buildProvenance(
     sourceTrust: SourceTrust,
     sourceId: DocumentSourceId? = null,
     sourceRunId: IngestionRunId? = null,
     extractionConfidence: Double? = null,
-): Map<String, FieldProvenance> {
-    val fields = populatedFieldPaths()
-    if (fields.isEmpty()) return emptyMap()
-
-    val provenance = FieldProvenance(
+): DocumentFieldProvenance {
+    val base = FieldProvenance(
         sourceId = sourceId,
         sourceRunId = sourceRunId,
         sourceTrust = sourceTrust,
         extractionConfidence = extractionConfidence,
     )
-    return fields.associateWith { provenance }
+    return when (this) {
+        is InvoiceDraftData -> buildInvoiceProvenance(base)
+        is CreditNoteDraftData -> buildCreditNoteProvenance(base)
+        is ReceiptDraftData -> buildReceiptProvenance(base)
+        is BankStatementDraftData -> buildBankStatementProvenance(base)
+        is ProFormaDraftData,
+        is QuoteDraftData,
+        is OrderConfirmationDraftData,
+        is DeliveryNoteDraftData,
+        is ReminderDraftData,
+        is StatementOfAccountDraftData,
+        is PurchaseOrderDraftData,
+        is ExpenseClaimDraftData,
+        is BankFeeDraftData,
+        is InterestStatementDraftData,
+        is PaymentConfirmationDraftData,
+        is VatReturnDraftData,
+        is VatListingDraftData,
+        is VatAssessmentDraftData,
+        is IcListingDraftData,
+        is OssReturnDraftData,
+        is CorporateTaxDraftData,
+        is CorporateTaxAdvanceDraftData,
+        is TaxAssessmentDraftData,
+        is PersonalTaxDraftData,
+        is WithholdingTaxDraftData,
+        is SocialContributionDraftData,
+        is SocialFundDraftData,
+        is SelfEmployedContributionDraftData,
+        is VapzDraftData,
+        is SalarySlipDraftData,
+        is PayrollSummaryDraftData,
+        is EmploymentContractDraftData,
+        is DimonaDraftData,
+        is C4DraftData,
+        is HolidayPayDraftData,
+        is ContractDraftData,
+        is LeaseDraftData,
+        is LoanDraftData,
+        is InsuranceDraftData,
+        is DividendDraftData,
+        is ShareholderRegisterDraftData,
+        is CompanyExtractDraftData,
+        is AnnualAccountsDraftData,
+        is BoardMinutesDraftData,
+        is SubsidyDraftData,
+        is FineDraftData,
+        is PermitDraftData,
+        is CustomsDeclarationDraftData,
+        is IntrastatDraftData,
+        is DepreciationScheduleDraftData,
+        is InventoryDraftData,
+        is OtherDraftData -> DirectionOnlyFieldProvenance(direction = base)
+    }
 }
 
-/**
- * Returns the set of field paths that have non-null/non-default values.
- */
-private fun DocumentDraftData.populatedFieldPaths(): Set<String> = when (this) {
-    is InvoiceDraftData -> populatedFields()
-    is CreditNoteDraftData -> populatedFields()
-    is ReceiptDraftData -> populatedFields()
-    is BankStatementDraftData -> populatedFields()
-    is ProFormaDraftData,
-    is QuoteDraftData,
-    is OrderConfirmationDraftData,
-    is DeliveryNoteDraftData,
-    is ReminderDraftData,
-    is StatementOfAccountDraftData,
-    is PurchaseOrderDraftData,
-    is ExpenseClaimDraftData,
-    is BankFeeDraftData,
-    is InterestStatementDraftData,
-    is PaymentConfirmationDraftData,
-    is VatReturnDraftData,
-    is VatListingDraftData,
-    is VatAssessmentDraftData,
-    is IcListingDraftData,
-    is OssReturnDraftData,
-    is CorporateTaxDraftData,
-    is CorporateTaxAdvanceDraftData,
-    is TaxAssessmentDraftData,
-    is PersonalTaxDraftData,
-    is WithholdingTaxDraftData,
-    is SocialContributionDraftData,
-    is SocialFundDraftData,
-    is SelfEmployedContributionDraftData,
-    is VapzDraftData,
-    is SalarySlipDraftData,
-    is PayrollSummaryDraftData,
-    is EmploymentContractDraftData,
-    is DimonaDraftData,
-    is C4DraftData,
-    is HolidayPayDraftData,
-    is ContractDraftData,
-    is LeaseDraftData,
-    is LoanDraftData,
-    is InsuranceDraftData,
-    is DividendDraftData,
-    is ShareholderRegisterDraftData,
-    is CompanyExtractDraftData,
-    is AnnualAccountsDraftData,
-    is BoardMinutesDraftData,
-    is SubsidyDraftData,
-    is FineDraftData,
-    is PermitDraftData,
-    is CustomsDeclarationDraftData,
-    is IntrastatDraftData,
-    is DepreciationScheduleDraftData,
-    is InventoryDraftData,
-    is OtherDraftData -> setOf("direction")
-}
+private fun InvoiceDraftData.buildInvoiceProvenance(base: FieldProvenance) = InvoiceFieldProvenance(
+    direction = base,
+    invoiceNumber = if (invoiceNumber != null) base else null,
+    issueDate = if (issueDate != null) base else null,
+    dueDate = if (dueDate != null) base else null,
+    currency = base,
+    subtotalAmount = if (subtotalAmount != null) base else null,
+    vatAmount = if (vatAmount != null) base else null,
+    totalAmount = if (totalAmount != null) base else null,
+    lineItems = if (lineItems.isNotEmpty()) base else null,
+    vatBreakdown = if (vatBreakdown.isNotEmpty()) base else null,
+    iban = if (iban != null) base else null,
+    payment = if (payment != null) base else null,
+    notes = if (notes != null) base else null,
+    seller = seller.buildPartyProvenance(base),
+    buyer = buyer.buildPartyProvenance(base),
+)
 
-private fun InvoiceDraftData.populatedFields(): Set<String> = buildSet {
-    add("direction")
-    if (invoiceNumber != null) add("invoiceNumber")
-    if (issueDate != null) add("issueDate")
-    if (dueDate != null) add("dueDate")
-    add("currency")
-    if (subtotalAmount != null) add("subtotalAmount")
-    if (vatAmount != null) add("vatAmount")
-    if (totalAmount != null) add("totalAmount")
-    if (lineItems.isNotEmpty()) add("lineItems")
-    if (vatBreakdown.isNotEmpty()) add("vatBreakdown")
-    if (iban != null) add("iban")
-    if (payment != null) add("payment")
-    if (notes != null) add("notes")
-    addPartyFields("seller", seller)
-    addPartyFields("buyer", buyer)
-}
+private fun CreditNoteDraftData.buildCreditNoteProvenance(base: FieldProvenance) = CreditNoteFieldProvenance(
+    direction = base,
+    creditNoteNumber = if (creditNoteNumber != null) base else null,
+    issueDate = if (issueDate != null) base else null,
+    currency = base,
+    subtotalAmount = if (subtotalAmount != null) base else null,
+    vatAmount = if (vatAmount != null) base else null,
+    totalAmount = if (totalAmount != null) base else null,
+    lineItems = if (lineItems.isNotEmpty()) base else null,
+    vatBreakdown = if (vatBreakdown.isNotEmpty()) base else null,
+    originalInvoiceNumber = if (originalInvoiceNumber != null) base else null,
+    reason = if (reason != null) base else null,
+    notes = if (notes != null) base else null,
+    seller = seller.buildPartyProvenance(base),
+    buyer = buyer.buildPartyProvenance(base),
+)
 
-private fun CreditNoteDraftData.populatedFields(): Set<String> = buildSet {
-    add("direction")
-    if (creditNoteNumber != null) add("creditNoteNumber")
-    if (issueDate != null) add("issueDate")
-    add("currency")
-    if (subtotalAmount != null) add("subtotalAmount")
-    if (vatAmount != null) add("vatAmount")
-    if (totalAmount != null) add("totalAmount")
-    if (lineItems.isNotEmpty()) add("lineItems")
-    if (vatBreakdown.isNotEmpty()) add("vatBreakdown")
-    if (originalInvoiceNumber != null) add("originalInvoiceNumber")
-    if (reason != null) add("reason")
-    if (notes != null) add("notes")
-    addPartyFields("seller", seller)
-    addPartyFields("buyer", buyer)
-}
+private fun ReceiptDraftData.buildReceiptProvenance(base: FieldProvenance) = ReceiptFieldProvenance(
+    direction = base,
+    merchantName = if (merchantName != null) base else null,
+    merchantVat = if (merchantVat != null) base else null,
+    date = if (date != null) base else null,
+    currency = base,
+    totalAmount = if (totalAmount != null) base else null,
+    vatAmount = if (vatAmount != null) base else null,
+    lineItems = if (lineItems.isNotEmpty()) base else null,
+    vatBreakdown = if (vatBreakdown.isNotEmpty()) base else null,
+    receiptNumber = if (receiptNumber != null) base else null,
+    paymentMethod = if (paymentMethod != null) base else null,
+    notes = if (notes != null) base else null,
+)
 
-private fun ReceiptDraftData.populatedFields(): Set<String> = buildSet {
-    add("direction")
-    if (merchantName != null) add("merchantName")
-    if (merchantVat != null) add("merchantVat")
-    if (date != null) add("date")
-    add("currency")
-    if (totalAmount != null) add("totalAmount")
-    if (vatAmount != null) add("vatAmount")
-    if (lineItems.isNotEmpty()) add("lineItems")
-    if (vatBreakdown.isNotEmpty()) add("vatBreakdown")
-    if (receiptNumber != null) add("receiptNumber")
-    if (paymentMethod != null) add("paymentMethod")
-    if (notes != null) add("notes")
-}
+private fun BankStatementDraftData.buildBankStatementProvenance(base: FieldProvenance) = BankStatementFieldProvenance(
+    direction = base,
+    transactions = if (transactions.isNotEmpty()) base else null,
+    accountIban = if (accountIban != null) base else null,
+    openingBalance = if (openingBalance != null) base else null,
+    closingBalance = if (closingBalance != null) base else null,
+    periodStart = if (periodStart != null) base else null,
+    periodEnd = if (periodEnd != null) base else null,
+    notes = if (notes != null) base else null,
+)
 
-private fun BankStatementDraftData.populatedFields(): Set<String> = buildSet {
-    add("direction")
-    if (transactions.isNotEmpty()) add("transactions")
-    if (accountIban != null) add("accountIban")
-    if (openingBalance != null) add("openingBalance")
-    if (closingBalance != null) add("closingBalance")
-    if (periodStart != null) add("periodStart")
-    if (periodEnd != null) add("periodEnd")
-    if (notes != null) add("notes")
-}
-
-private fun MutableSet<String>.addPartyFields(prefix: String, party: PartyDraft) {
-    if (party.name != null) add("$prefix.name")
-    if (party.vat != null) add("$prefix.vat")
-    if (party.email != null) add("$prefix.email")
-    if (party.iban != null) add("$prefix.iban")
-    if (party.streetLine1 != null) add("$prefix.streetLine1")
-    if (party.streetLine2 != null) add("$prefix.streetLine2")
-    if (party.postalCode != null) add("$prefix.postalCode")
-    if (party.city != null) add("$prefix.city")
-    if (party.country != null) add("$prefix.country")
-}
+private fun PartyDraft.buildPartyProvenance(base: FieldProvenance) = PartyFieldProvenance(
+    name = if (name != null) base else null,
+    vat = if (vat != null) base else null,
+    email = if (email != null) base else null,
+    iban = if (iban != null) base else null,
+    streetLine1 = if (streetLine1 != null) base else null,
+    streetLine2 = if (streetLine2 != null) base else null,
+    postalCode = if (postalCode != null) base else null,
+    city = if (city != null) base else null,
+    country = if (country != null) base else null,
+)

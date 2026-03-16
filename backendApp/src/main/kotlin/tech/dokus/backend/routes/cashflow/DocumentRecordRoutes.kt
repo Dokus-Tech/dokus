@@ -39,6 +39,7 @@ import tech.dokus.backend.services.documents.DocumentIntakeServiceResult
 import tech.dokus.backend.services.documents.DocumentPurposeService
 import tech.dokus.backend.services.documents.DocumentRecordLoader
 import tech.dokus.backend.services.documents.DocumentTruthService
+import tech.dokus.backend.services.documents.ProcessingHealthService
 import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
 import tech.dokus.backend.services.documents.sse.DocumentCollectionEventHub
 import tech.dokus.backend.services.documents.sse.DocumentSnapshotEventHub
@@ -53,6 +54,7 @@ import tech.dokus.database.repository.cashflow.DocumentSourceSummary
 import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
 import tech.dokus.database.repository.cashflow.selectPreferredSource
+import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentSourceStatus
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
@@ -72,6 +74,7 @@ import tech.dokus.domain.model.DocumentListItemDto
 import tech.dokus.domain.model.DocumentStreamEventNames
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.RejectDocumentRequest
+import tech.dokus.domain.model.BulkReprocessRequest
 import tech.dokus.domain.model.ReprocessRequest
 import tech.dokus.domain.model.ReprocessResponse
 import tech.dokus.domain.model.ResolveDocumentMatchReviewRequest
@@ -123,6 +126,7 @@ internal fun Route.documentRecordRoutes() {
     val documentCollectionEventHub by inject<DocumentCollectionEventHub>()
     val documentSnapshotEventHub by inject<DocumentSnapshotEventHub>()
     val documentSsePublisher by inject<DocumentSsePublisher>()
+    val processingHealthService by inject<ProcessingHealthService>()
     val logger = LoggerFactory.getLogger("DocumentRecordRoutes")
 
     authenticateJwt {
@@ -203,7 +207,7 @@ internal fun Route.documentRecordRoutes() {
                     direction = draft?.direction,
                     documentStatus = draft?.documentStatus,
                     ingestionStatus = docInfo.latestIngestion?.status,
-                    effectiveOrigin = preferredSource?.sourceChannel ?: docInfo.document.effectiveOrigin,
+                    effectiveOrigin = preferredSource?.sourceChannel ?: DocumentSource.Upload,
                     uploadedAt = preferredSource?.arrivalAt ?: docInfo.document.uploadedAt,
                     sortDate = docInfo.document.sortDate,
                     counterpartyDisplayName = draft?.counterpartyDisplayName,
@@ -241,6 +245,33 @@ internal fun Route.documentRecordRoutes() {
                     confirmed = counts.confirmed
                 )
             )
+        }
+
+        // ── Processing health ────────────────────────────────────────
+
+        /**
+         * GET /api/v1/documents/processing-health
+         * Processing health recommendation for the workspace.
+         */
+        get<Documents.ProcessingHealth> {
+            val tenantId = requireTenantId()
+            val recommendation = processingHealthService.getRecommendation(tenantId)
+            call.respond(HttpStatusCode.OK, recommendation)
+        }
+
+        /**
+         * POST /api/v1/documents/bulk-reprocess
+         * Bulk reprocess eligible documents (NeedsReview, recent, max 100).
+         */
+        post<Documents.BulkReprocess> {
+            val tenantId = requireTenantId()
+            val request = try {
+                call.receive<BulkReprocessRequest>()
+            } catch (_: Exception) {
+                BulkReprocessRequest()
+            }
+            val result = processingHealthService.executeBulkReprocess(tenantId, request.maxDocuments)
+            call.respond(HttpStatusCode.OK, result)
         }
 
         get<Documents.Events> {

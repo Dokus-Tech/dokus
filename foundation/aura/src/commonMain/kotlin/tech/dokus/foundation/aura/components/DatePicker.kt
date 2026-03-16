@@ -81,7 +81,7 @@ private fun PDatePickerDialogPreview(
 ) {
     TestWrapper(parameters) {
         PDatePickerDialog(
-            initialDate = null,
+            initialDate = LocalDate(2026, 1, 15),
             onDateSelected = {},
             onDismiss = {},
         )

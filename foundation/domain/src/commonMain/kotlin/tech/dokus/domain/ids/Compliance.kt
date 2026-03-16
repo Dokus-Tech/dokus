@@ -113,6 +113,32 @@ value class VatNumber(override val value: String) : ValueClass<String>, Validata
             .uppercase()
             .replace(Regex("[^A-Z0-9]"), "")
 
+        /**
+         * Attempt to recover a valid VAT from a potentially over-long AI extraction.
+         *
+         * First tries the normal [from] path. If the result is invalid and the normalized
+         * value is longer than the expected length for its country code, truncates from
+         * the right and validates the checksum (e.g., mod-97 for Belgian VATs).
+         * Returns null if no valid VAT can be recovered.
+         */
+        fun tryNormalize(raw: String?): VatNumber? {
+            val normal = from(raw)
+            if (normal == null) return null
+            if (normal.value.isEmpty()) return null
+            if (normal.isValid) return normal
+
+            val cleaned = normal.value // already normalized by from()
+            if (cleaned.length < 3) return null
+            val countryCode = cleaned.substring(0, 2)
+            val body = cleaned.substring(2)
+
+            val expectedLength = ValidateVatNumberUseCase.FIXED_BODY_LENGTHS[countryCode] ?: return null
+            if (body.length <= expectedLength) return null
+
+            val truncated = VatNumber("$countryCode${body.substring(0, expectedLength)}")
+            return truncated.takeIf { it.isValid }
+        }
+
         fun fromCountryAndCompanyNumber(countryCode: String, companyNumber: String): VatNumber {
             val normalizedCountry = countryCode.trim().uppercase()
             val normalizedCompany = normalize(companyNumber)

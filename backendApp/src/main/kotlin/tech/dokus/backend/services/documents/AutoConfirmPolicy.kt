@@ -4,8 +4,6 @@ import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.ContactId
-import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.AnnualAccountsDraftData
 import tech.dokus.domain.model.BankFeeDraftData
 import tech.dokus.domain.model.BankStatementDraftData
@@ -62,38 +60,57 @@ import tech.dokus.domain.model.WithholdingTaxDraftData
 import tech.dokus.domain.model.toDocumentType
 import tech.dokus.domain.processing.DocumentProcessingConstants
 
+data class AutoConfirmInput(
+    val source: DocumentSource,
+    val documentType: DocumentType,
+    val draftData: DocumentDraftData,
+    val auditPassed: Boolean,
+    val confidence: Double,
+    val contactId: ContactId?,
+    val directionResolvedFromAiHintOnly: Boolean,
+)
+
+enum class AutoConfirmRejection {
+    ManualSource,
+    TypeMismatch,
+    MissingRequiredFields,
+    DirectionFromAiHintOnly,
+    InvalidDirection,
+    NonPositiveAmount,
+    AuditFailed,
+    InsufficientConfidence,
+    UnresolvedCounterparty,
+}
+
 class AutoConfirmPolicy {
-    suspend fun canAutoConfirm(
-        tenantId: TenantId,
-        documentId: DocumentId,
-        source: DocumentSource,
-        documentType: DocumentType,
-        draftData: DocumentDraftData,
-        auditPassed: Boolean,
-        confidence: Double,
-        contactId: ContactId?,
-        directionResolvedFromAiHintOnly: Boolean
-    ): Boolean {
-        if (source == DocumentSource.Manual) return false
+
+    fun evaluate(input: AutoConfirmInput): AutoConfirmRejection? {
+        val (source, documentType, draftData, auditPassed, confidence, contactId, directionFromAiHint) = input
+
+        if (source == DocumentSource.Manual) return AutoConfirmRejection.ManualSource
 
         val draftType = draftData.toDocumentType()
-        if (documentType == DocumentType.Unknown || draftType != documentType) return false
-        if (draftData is InvoiceDraftData && contactId == null) return false
-        if (draftData is CreditNoteDraftData && contactId == null) return false
-        if (!hasRequiredFieldsForAutoConfirm(draftData)) return false
-        if (directionResolvedFromAiHintOnly) return false
-        if (!isDirectionValid(draftData)) return false
-        if (!isAmountPositive(draftData)) return false
-        if (!auditPassed) return false
+        if (documentType == DocumentType.Unknown || draftType != documentType) return AutoConfirmRejection.TypeMismatch
+        if (draftData is InvoiceDraftData && contactId == null) return AutoConfirmRejection.UnresolvedCounterparty
+        if (draftData is CreditNoteDraftData && contactId == null) return AutoConfirmRejection.UnresolvedCounterparty
+        if (!hasRequiredFieldsForAutoConfirm(draftData)) return AutoConfirmRejection.MissingRequiredFields
+        if (directionFromAiHint) return AutoConfirmRejection.DirectionFromAiHintOnly
+        if (!isDirectionValid(draftData)) return AutoConfirmRejection.InvalidDirection
+        if (!isAmountPositive(draftData)) return AutoConfirmRejection.NonPositiveAmount
+        if (!auditPassed) return AutoConfirmRejection.AuditFailed
+
         return when (source) {
-            DocumentSource.Peppol -> true
+            DocumentSource.Peppol -> null
             DocumentSource.Upload,
             DocumentSource.Email -> {
                 val meetsConfidence = confidence >= DocumentProcessingConstants.AUTO_CONFIRM_CONFIDENCE_THRESHOLD
-                val counterpartyKnown = contactId != null
-                meetsConfidence && counterpartyKnown
+                if (!meetsConfidence) return AutoConfirmRejection.InsufficientConfidence
+                if (contactId == null && draftData !is ReceiptDraftData) {
+                    return AutoConfirmRejection.UnresolvedCounterparty
+                }
+                null
             }
-            DocumentSource.Manual -> false
+            DocumentSource.Manual -> AutoConfirmRejection.ManualSource
         }
     }
 
@@ -159,7 +176,7 @@ class AutoConfirmPolicy {
             is InvoiceDraftData -> draftData.totalAmount?.isPositive == true
             is ReceiptDraftData -> draftData.totalAmount?.isPositive == true
             is CreditNoteDraftData -> draftData.totalAmount?.isPositive == true
-            is BankStatementDraftData -> false
+            is BankStatementDraftData -> true
             is ProFormaDraftData,
             is QuoteDraftData,
             is OrderConfirmationDraftData,

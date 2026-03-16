@@ -6,19 +6,25 @@ import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
 import tech.dokus.database.tables.auth.TenantTable
 import tech.dokus.database.tables.cashflow.CashflowEntriesTable
-import tech.dokus.database.tables.cashflow.InvoicesTable
 import tech.dokus.domain.enums.AutoMatchStatus
 import tech.dokus.domain.enums.PaymentCreatedBy
 import tech.dokus.domain.enums.CashflowEntryStatus
+import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.foundation.backend.database.dbEnumeration
 
-object InvoiceBankMatchLinksTable : UUIDTable("invoice_bank_match_links") {
+object TransactionMatchLinksTable : UUIDTable("transaction_match_links") {
     val tenantId = uuid("tenant_id").references(TenantTable.id, onDelete = ReferenceOption.CASCADE)
-    val invoiceId = uuid("invoice_id").references(InvoicesTable.id, onDelete = ReferenceOption.CASCADE)
+    val documentId = uuid("document_id").references(
+        tech.dokus.database.tables.documents.DocumentsTable.id,
+        onDelete = ReferenceOption.CASCADE,
+    )
     val cashflowEntryId = uuid("cashflow_entry_id").references(CashflowEntriesTable.id, onDelete = ReferenceOption.CASCADE)
     val importedBankTransactionId = uuid("imported_bank_transaction_id")
         .references(tech.dokus.database.tables.banking.BankTransactionsTable.id, onDelete = ReferenceOption.CASCADE)
+
+    val documentType = dbEnumeration<DocumentType>("document_type").nullable()
+    val allocatedAmount = decimal("allocated_amount", 12, 2).nullable()
 
     val status = dbEnumeration<AutoMatchStatus>("status")
     val createdBy = dbEnumeration<PaymentCreatedBy>("created_by").default(PaymentCreatedBy.Auto)
@@ -33,6 +39,7 @@ object InvoiceBankMatchLinksTable : UUIDTable("invoice_bank_match_links") {
     val reversedByUserId = uuid("reversed_by_user_id").nullable()
     val reversalReason = text("reversal_reason").nullable()
 
+    // Snapshot columns for undo (invoice-specific for v1)
     val invoiceStatusBefore = dbEnumeration<InvoiceStatus>("invoice_status_before").nullable()
     val invoicePaidAmountBefore = decimal("invoice_paid_amount_before", 12, 2).nullable()
     val invoicePaidAtBefore = datetime("invoice_paid_at_before").nullable()
@@ -44,7 +51,7 @@ object InvoiceBankMatchLinksTable : UUIDTable("invoice_bank_match_links") {
     val updatedAt = datetime("updated_at").defaultExpression(CurrentDateTime)
 
     init {
-        uniqueIndex("ux_invoice_bank_match_links_pair", tenantId, invoiceId, importedBankTransactionId)
+        uniqueIndex("ux_transaction_match_links_pair", tenantId, documentId, importedBankTransactionId)
         index(false, tenantId, cashflowEntryId)
         index(false, tenantId, status)
         index(false, tenantId, importedBankTransactionId)

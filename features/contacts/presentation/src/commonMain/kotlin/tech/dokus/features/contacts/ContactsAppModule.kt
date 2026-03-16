@@ -1,6 +1,7 @@
 package tech.dokus.features.contacts
 
 import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.contact
 import tech.dokus.aura.resources.contacts_subtitle
 import tech.dokus.aura.resources.nav_contacts
 import tech.dokus.aura.resources.nav_section_company
@@ -40,7 +41,7 @@ object ContactsAppModule : AppModule {
                 NavItem(
                     id = "contacts",
                     titleRes = Res.string.nav_contacts,
-                    iconRes = Res.drawable.users,
+                    iconRes = Res.drawable.contact,
                     destination = HomeDestination.Contacts,
                     priority = 10,
                     shellTopBar = ShellTopBarDefault.Title,

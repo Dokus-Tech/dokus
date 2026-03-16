@@ -236,4 +236,16 @@
     <string name="appearance_theme_dark">Dark</string>
     <string name="appearance_theme_system">System</string>
     <string name="appearance_language">Language</string>
+
+    <!-- Processing Health Section -->
+    <string name="processing_health_title">Processing health</string>
+    <string name="processing_health_subtitle">Operational status of document processing</string>
+    <string name="processing_health_recent_processed">Recent documents processed</string>
+    <string name="processing_health_needs_review">Needs review</string>
+    <string name="processing_health_failed">Failed</string>
+    <string name="processing_health_eligible">Eligible for reprocessing</string>
+    <string name="processing_health_recommendation">A high share of recent documents still require review. Reprocessing is available.</string>
+    <string name="processing_health_recommendation_retry">This can retry recent documents using the current processing logic.</string>
+    <string name="processing_health_reprocess_button">Reprocess documents</string>
+    <string name="processing_health_reprocess_done">%1$d documents queued for reprocessing.</string>
 </resources>

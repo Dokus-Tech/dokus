@@ -12,6 +12,7 @@ import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
 import tech.dokus.database.tables.documents.DocumentSourcesTable
 import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.domain.enums.Language
+import tech.dokus.domain.model.Dpi
 import tech.dokus.domain.enums.SubscriptionTier
 import tech.dokus.domain.enums.TenantStatus
 import tech.dokus.domain.enums.TenantType
@@ -92,7 +93,7 @@ class ProcessorIngestionRepositoryTest {
             documentId = documentId,
             tenantId = tenantId,
             overrideMaxPages = 9,
-            overrideDpi = 220
+            overrideDpi = Dpi.create(220)
         )
 
         val pending = processorIngestionRepository.findPendingForProcessing(limit = 10)
@@ -100,6 +101,6 @@ class ProcessorIngestionRepositoryTest {
 
         assertNotNull(queued)
         assertEquals(9, queued.overrideMaxPages)
-        assertEquals(220, queued.overrideDpi)
+        assertEquals(Dpi.create(220), queued.overrideDpi)
     }
 }

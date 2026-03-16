@@ -199,8 +199,8 @@ class DocumentRowResolutionTest {
                 id = documentId,
                 tenantId = tenantId,
                 filename = "apple-invoice.pdf",
-                effectiveOrigin = DocumentSource.Upload,
-                uploadedAt = now
+                uploadedAt = now,
+                sortDate = LocalDate(2026, 2, 11),
             ),
             draft = draft,
             latestIngestion = ingestionStatus?.let {
@@ -245,6 +245,7 @@ class DocumentRowResolutionTest {
             purposeRendered = purposeRendered,
             totalAmount = null,
             currency = null,
+            sortDate = LocalDate(2026, 2, 11),
         )
     }
 }

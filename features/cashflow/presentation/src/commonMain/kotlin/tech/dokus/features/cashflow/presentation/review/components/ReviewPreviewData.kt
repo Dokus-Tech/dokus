@@ -35,6 +35,7 @@ import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.domain.model.TransactionCommunication
 import tech.dokus.domain.ids.StructuredCommunication
+import tech.dokus.domain.model.Dpi
 import tech.dokus.domain.model.DocumentPagePreviewDto
 import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.DocumentSourceDto
@@ -66,13 +67,13 @@ private val previewDocumentId = DocumentId.parse("e72f69a8-6913-4d8f-98e7-224db7
 
 internal fun previewReviewContentState(
     entryStatus: CashflowEntryStatus? = CashflowEntryStatus.Open,
-    isDocumentConfirmed: Boolean = true,
+    documentStatus: DocumentStatus = DocumentStatus.Confirmed,
     hasUnsyncedChanges: Boolean = false,
     previewState: DocumentPreviewState = DocumentPreviewState.Ready(
         pages = listOf(DocumentPagePreviewDto(page = 1, imageUrl = "/api/v1/documents/preview/pages/1.png")),
         totalPages = 1,
         renderedPages = 1,
-        dpi = 180,
+        dpi = Dpi.create(180),
         hasMore = false,
     ),
     sourceViewerState: SourceEvidenceViewerState? = null,
@@ -106,7 +107,7 @@ internal fun previewReviewContentState(
     val draft = DocumentDraftDto(
         documentId = documentId,
         tenantId = tenantId,
-        documentStatus = if (isDocumentConfirmed) DocumentStatus.Confirmed else DocumentStatus.NeedsReview,
+        documentStatus = documentStatus,
         documentType = DocumentType.Invoice,
         direction = DocumentDirection.Inbound,
         extractedData = draftData,
@@ -166,8 +167,8 @@ internal fun previewReviewContentState(
             id = documentId,
             tenantId = tenantId,
             filename = "KBC_384421507.pdf",
-            effectiveOrigin = DocumentSource.Upload,
             uploadedAt = previewNow,
+            sortDate = previewNow.date,
         ),
         draft = draft,
         latestIngestion = null,
@@ -226,8 +227,7 @@ internal fun previewReviewContentState(
         ),
         previewState = previewState,
         hasUnsavedChanges = hasUnsyncedChanges,
-        isDocumentConfirmed = isDocumentConfirmed,
-        isDocumentRejected = false,
+        documentStatus = documentStatus,
         confirmedCashflowEntryId = cashflowEntry?.id,
         cashflowEntryState = cashflowEntry?.let { DokusState.success(it) } ?: DokusState.idle(),
         autoPaymentStatus = autoPaymentStatus,
@@ -376,8 +376,8 @@ internal fun previewStateForDocumentType(
             id = documentId,
             tenantId = tenantId,
             filename = "${resolvedType.dbValue.lowercase()}_sample.pdf",
-            effectiveOrigin = DocumentSource.Upload,
             uploadedAt = previewNow,
+            sortDate = previewNow.date,
         ),
         draft = draft,
         latestIngestion = null,
@@ -416,12 +416,11 @@ internal fun previewStateForDocumentType(
             pages = listOf(DocumentPagePreviewDto(page = 1, imageUrl = "/api/v1/documents/preview/pages/1.png")),
             totalPages = 1,
             renderedPages = 1,
-            dpi = 180,
+            dpi = Dpi.create(180),
             hasMore = false,
         ),
         hasUnsavedChanges = false,
-        isDocumentConfirmed = true,
-        isDocumentRejected = false,
+        documentStatus = DocumentStatus.Confirmed,
         confirmedCashflowEntryId = cashflowEntry?.id,
         cashflowEntryState = cashflowEntry?.let { DokusState.success(it) } ?: DokusState.idle(),
         autoPaymentStatus = DokusState.idle(),

@@ -3,7 +3,6 @@ package tech.dokus.domain.model
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
-import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 
@@ -19,8 +18,7 @@ data class DocumentDto(
     val id: DocumentId,
     val tenantId: TenantId,
     val filename: String = "",
-    val effectiveOrigin: DocumentSource = DocumentSource.Upload,
     val uploadedAt: LocalDateTime,
-    val sortDate: LocalDate? = null,
+    val sortDate: LocalDate,
     val downloadUrl: String? = null
 )

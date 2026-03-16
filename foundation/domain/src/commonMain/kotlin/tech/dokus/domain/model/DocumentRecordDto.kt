@@ -111,7 +111,7 @@ data class DocumentListItemDto(
     val purposeRendered: String?,
     val totalAmount: Money?,
     val currency: Currency?,
-    val sortDate: LocalDate? = null,
+    val sortDate: LocalDate,
     val downloadUrl: String? = null,
     val hasPendingMatchReview: Boolean = false,
     val sourceCount: Int = 1,
@@ -161,7 +161,7 @@ data class ReprocessRequest(
     val force: Boolean = false,
     val preferredProvider: String? = null,
     val maxPages: Int? = null,
-    val dpi: Int? = null,
+    val dpi: Dpi? = null,
     val timeoutSeconds: Int? = null,
     val userFeedback: String? = null
 )

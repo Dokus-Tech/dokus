@@ -1,5 +1,6 @@
 package tech.dokus.domain.processing
 
+import tech.dokus.domain.processing.DocumentProcessingConstants.INGESTION_RUN_TIMEOUT
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
@@ -16,6 +17,12 @@ object DocumentProcessingConstants {
     const val AUTO_CONFIRM_CONFIDENCE_THRESHOLD = 0.90
 
     /**
+     * Confidence threshold for extraction retry eligibility.
+     * Below this, the extraction is too uncertain and should be retried.
+     */
+    const val RETRY_CONFIDENCE_THRESHOLD = 0.55
+
+    /**
      * Maximum allowed runtime for a single ingestion run before it is considered stuck.
      */
     val INGESTION_RUN_TIMEOUT: Duration = 30.minutes
@@ -25,4 +32,12 @@ object DocumentProcessingConstants {
      */
     val INGESTION_TIMEOUT_ERROR_MESSAGE: String =
         "Processing timed out after ${INGESTION_RUN_TIMEOUT.inWholeMinutes} minutes"
+
+    /**
+     * Simple manual version gate for replay eligibility.
+     * Bump when extraction logic changes meaningfully (model, prompts, validation).
+     * Stored on each ingestion run at completion; used to identify documents
+     * processed with older logic that may benefit from reprocessing.
+     */
+    const val PROCESSING_VERSION: Int = 1
 }

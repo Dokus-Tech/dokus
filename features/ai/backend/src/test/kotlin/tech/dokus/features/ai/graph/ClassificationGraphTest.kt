@@ -20,6 +20,7 @@ import tech.dokus.features.ai.graph.nodes.userFeedbackInjectorNode
 import tech.dokus.features.ai.graph.sub.ClassificationResult
 import tech.dokus.features.ai.graph.sub.ClassifyDocumentInput
 import tech.dokus.features.ai.graph.sub.classifyDocumentSubGraph
+import tech.dokus.features.ai.graph.AcceptDocumentInput
 import tech.dokus.features.ai.services.DocumentFetcher
 import tech.dokus.features.ai.services.DocumentFetcher.FetchedDocumentData
 import java.io.File
@@ -106,7 +107,7 @@ class ClassificationGraphTest {
 
         val result = withTimeout(120.seconds) {
             try {
-                agent.run(AcceptDocumentInput(DocumentId.generate(), TestAiFixtures.tenant))
+                agent.run(AcceptDocumentInput.Upload(documentId = DocumentId.generate(), tenant = TestAiFixtures.tenant, associatedPersonNames = emptyList(), userFeedback = null, maxPagesOverride = null, dpiOverride = null))
             } finally {
                 runCatching { agent.close() }
             }

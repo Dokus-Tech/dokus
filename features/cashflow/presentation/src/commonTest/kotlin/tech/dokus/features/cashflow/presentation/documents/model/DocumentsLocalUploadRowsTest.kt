@@ -1,5 +1,6 @@
 package tech.dokus.features.cashflow.presentation.documents.model
 
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.ids.DocumentId
@@ -221,6 +222,7 @@ class DocumentsLocalUploadRowsTest {
             purposeRendered = null,
             totalAmount = null,
             currency = null,
+            sortDate = LocalDate(2026, 1, 1),
         )
     }
 
@@ -231,6 +233,7 @@ class DocumentsLocalUploadRowsTest {
             filename = filename,
             effectiveOrigin = DocumentSource.Upload,
             uploadedAt = LocalDateTime(2026, 1, 1, 10, 0),
+            sortDate = LocalDate(2026, 1, 1),
             downloadUrl = null
         )
     }

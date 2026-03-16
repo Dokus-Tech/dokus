@@ -336,7 +336,46 @@ enum class Currency(
     Usd("USD", "usd", "$"),
 
     @SerialName("GBP")
-    Gbp("GBP", "gbp", "£");
+    Gbp("GBP", "gbp", "£"),
+
+    @SerialName("CHF")
+    Chf("CHF", "chf", "CHF"),
+
+    @SerialName("SEK")
+    Sek("SEK", "sek", "SEK"),
+
+    @SerialName("NOK")
+    Nok("NOK", "nok", "NOK"),
+
+    @SerialName("DKK")
+    Dkk("DKK", "dkk", "DKK"),
+
+    @SerialName("PLN")
+    Pln("PLN", "pln", "zł"),
+
+    @SerialName("CZK")
+    Czk("CZK", "czk", "Kč"),
+
+    @SerialName("HUF")
+    Huf("HUF", "huf", "Ft"),
+
+    @SerialName("RON")
+    Ron("RON", "ron", "RON"),
+
+    @SerialName("BGN")
+    Bgn("BGN", "bgn", "лв"),
+
+    @SerialName("RSD")
+    Rsd("RSD", "rsd", "RSD"),
+
+    @SerialName("JPY")
+    Jpy("JPY", "jpy", "¥"),
+
+    @SerialName("CAD")
+    Cad("CAD", "cad", "CA$"),
+
+    @SerialName("AUD")
+    Aud("AUD", "aud", "A$");
 
     companion object {
         val default = Eur

@@ -22,6 +22,7 @@ import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.document_detail_confirmed
 import tech.dokus.domain.enums.CashflowEntryStatus
+import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.ReviewFinancialStatus
@@ -372,7 +373,8 @@ private fun InspectorHeader(
             is DocumentUiData.Receipt -> true
             else -> false
         }
-        if (supportsManualConfirm && !isAccountantReadOnly && !state.isDocumentConfirmed && !state.isDocumentRejected &&
+        if (supportsManualConfirm && !isAccountantReadOnly &&
+            !state.isDocumentConfirmed && !state.isDocumentRejected && !state.isDocumentUnsupported &&
             state.financialStatus == ReviewFinancialStatus.Review
         ) {
             PButton(
@@ -397,7 +399,7 @@ private fun CompressedStatusLine(state: DocumentReviewState) {
     val statusColor = state.financialStatus.financialStatusColorized
     val detailText = state.compressedStatusDetailLocalized
 
-    if (state.financialStatus == ReviewFinancialStatus.Review && !state.isDocumentConfirmed) {
+    if (state.financialStatus == ReviewFinancialStatus.Review && !state.isDocumentConfirmed && !state.isDocumentUnsupported) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall),
@@ -513,7 +515,7 @@ private fun ReviewInspectorPaneReviewPreview(
 ) {
     TestWrapper(parameters) {
         ReviewInspectorPane(
-            state = previewReviewContentState(entryStatus = null, isDocumentConfirmed = false),
+            state = previewReviewContentState(entryStatus = null, documentStatus = DocumentStatus.NeedsReview),
             isAccountantReadOnly = false,
             onIntent = {},
             onCorrectContact = {},

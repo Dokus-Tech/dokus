@@ -181,6 +181,8 @@ private val ExtractDocumentInput.creditNotePrompt: String
     - Do NOT guess. If not visible, return null.
     - Amount fields must be numeric strings using '.' as decimal separator (e.g., "1234.56").
 
+    ${ExtractionToolDescriptions.VatNumberFormatGuidance}
+
     ## PARTY EXTRACTION (CRITICAL)
     - `seller*`: entity that ISSUED the credit note.
     - Prioritize issuer evidence from logo/header legal block and footer issuer/contact/VAT block.

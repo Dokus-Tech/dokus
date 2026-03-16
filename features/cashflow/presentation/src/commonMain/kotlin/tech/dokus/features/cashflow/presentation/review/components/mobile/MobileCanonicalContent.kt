@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.domain.enums.CashflowEntryStatus
+import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.features.cashflow.presentation.review.models.DocumentUiData
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
@@ -214,7 +215,7 @@ private fun MobileCanonicalContentReviewPreview(
 ) {
     TestWrapper(parameters) {
         MobileCanonicalContent(
-            state = previewReviewContentState(entryStatus = null, isDocumentConfirmed = false),
+            state = previewReviewContentState(entryStatus = null, documentStatus = DocumentStatus.NeedsReview),
             isAccountantReadOnly = false,
             onIntent = {},
             onBackClick = {},

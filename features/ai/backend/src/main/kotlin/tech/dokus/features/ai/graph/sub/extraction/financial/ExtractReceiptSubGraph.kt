@@ -154,6 +154,8 @@ private val ExtractDocumentInput.receiptPrompt
     - Do NOT guess. If not visible, return null.
     - Amount fields must be numeric strings using '.' as decimal separator (e.g., "12.50").
 
+    ${ExtractionToolDescriptions.VatNumberFormatGuidance}
+
     ## MERCHANT
     - Look for the store/merchant name at the TOP of the receipt (header/logo area).
     - Extract the actual business name, not taglines or slogans.

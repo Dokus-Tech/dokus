@@ -16,8 +16,8 @@ import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.enums.CashflowViewMode
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentListFilter
-import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DocumentStatus
+import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.ExpenseCategory
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.enums.InvoiceStatus
@@ -33,25 +33,27 @@ import tech.dokus.domain.ids.ExpenseId
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.AttachmentDto
-import tech.dokus.domain.model.CancelEntryRequest
 import tech.dokus.domain.model.AutoPaymentStatusDto
+import tech.dokus.domain.model.BankTransactionDto
+import tech.dokus.domain.model.BulkReprocessRequest
+import tech.dokus.domain.model.BulkReprocessResponse
+import tech.dokus.domain.model.CancelEntryRequest
 import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.model.CashflowOverview
-import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.domain.model.CashflowPaymentRequest
-import tech.dokus.domain.model.UndoAutoPaymentRequest
 import tech.dokus.domain.model.CreateExpenseRequest
 import tech.dokus.domain.model.CreateInvoiceRequest
-import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.DocumentCountsResponse
+import tech.dokus.domain.model.DocumentDetailDto
+import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentIngestionDto
 import tech.dokus.domain.model.DocumentIntakeResult
-import tech.dokus.domain.model.DocumentPagesResponse
-import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.DocumentListItemDto
+import tech.dokus.domain.model.DocumentPagesResponse
 import tech.dokus.domain.model.DocumentRecordStreamEvent
 import tech.dokus.domain.model.DocumentSourceDto
+import tech.dokus.domain.model.Dpi
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.PeppolConnectRequest
 import tech.dokus.domain.model.PeppolConnectResponse
@@ -64,12 +66,14 @@ import tech.dokus.domain.model.PeppolStatusResponse
 import tech.dokus.domain.model.PeppolTransmissionDto
 import tech.dokus.domain.model.PeppolValidationResult
 import tech.dokus.domain.model.PeppolVerifyResponse
+import tech.dokus.domain.model.ProcessingHealthRecommendation
 import tech.dokus.domain.model.RecordPaymentRequest
 import tech.dokus.domain.model.RejectDocumentRequest
 import tech.dokus.domain.model.ReprocessRequest
 import tech.dokus.domain.model.ReprocessResponse
 import tech.dokus.domain.model.ResolveDocumentMatchReviewRequest
 import tech.dokus.domain.model.SendInvoiceViaPeppolResponse
+import tech.dokus.domain.model.UndoAutoPaymentRequest
 import tech.dokus.domain.model.UpdateDraftRequest
 import tech.dokus.domain.model.UpdateDraftResponse
 import tech.dokus.domain.model.common.PaginatedResponse
@@ -531,6 +535,20 @@ interface CashflowRemoteDataSource {
     ): Result<ReprocessResponse>
 
     /**
+     * Get processing health recommendation for the workspace.
+     * GET /api/v1/documents/processing-health
+     */
+    suspend fun getProcessingHealth(): Result<ProcessingHealthRecommendation>
+
+    /**
+     * Bulk reprocess eligible documents.
+     * POST /api/v1/documents/bulk-reprocess
+     */
+    suspend fun bulkReprocess(
+        request: BulkReprocessRequest = BulkReprocessRequest()
+    ): Result<BulkReprocessResponse>
+
+    /**
      * Confirm a document and create financial entity (Invoice/Expense).
      * POST /api/v1/documents/{id}/confirm
      *
@@ -567,7 +585,7 @@ interface CashflowRemoteDataSource {
      */
     suspend fun getDocumentPages(
         documentId: DocumentId,
-        dpi: Int = 150,
+        dpi: Dpi,
         maxPages: Int = 10
     ): Result<DocumentPagesResponse>
 
@@ -587,7 +605,7 @@ interface CashflowRemoteDataSource {
     suspend fun getDocumentSourcePages(
         documentId: DocumentId,
         sourceId: DocumentSourceId,
-        dpi: Int = 150,
+        dpi: Dpi,
         maxPages: Int = 10
     ): Result<DocumentPagesResponse>
 

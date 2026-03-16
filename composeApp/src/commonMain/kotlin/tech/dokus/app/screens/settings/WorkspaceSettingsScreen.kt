@@ -28,6 +28,7 @@ import tech.dokus.app.screens.settings.sections.InvoiceFormatSection
 import tech.dokus.app.screens.settings.sections.CompanyHeroSection
 import tech.dokus.app.screens.settings.sections.PaymentTermsSection
 import tech.dokus.app.screens.settings.sections.PeppolConnectionSection
+import tech.dokus.app.screens.settings.sections.ProcessingHealthSection
 import tech.dokus.app.viewmodel.WorkspaceSettingsIntent
 import tech.dokus.app.viewmodel.WorkspaceSettingsState
 import tech.dokus.aura.resources.Res
@@ -149,6 +150,7 @@ private fun WorkspaceSettingsContentScreen(
     var bankingExpanded by remember { mutableStateOf(false) }
     var invoiceFormatExpanded by remember { mutableStateOf(false) }
     var paymentTermsExpanded by remember { mutableStateOf(false) }
+    var processingHealthExpanded by remember { mutableStateOf(false) }
 
     Column(
         modifier = modifier
@@ -251,6 +253,15 @@ private fun WorkspaceSettingsContentScreen(
                 },
                 onCancel = { onIntent(WorkspaceSettingsIntent.CancelEditMode) },
                 onIntent = onIntent,
+            )
+
+            // 6. Processing Health -- maintenance section
+            ProcessingHealthSection(
+                processingHealth = state.processingHealth,
+                bulkReprocessState = state.bulkReprocessState,
+                expanded = processingHealthExpanded,
+                onToggle = { processingHealthExpanded = !processingHealthExpanded },
+                onReprocess = { onIntent(WorkspaceSettingsIntent.ExecuteBulkReprocess) },
             )
 
             // Save State Feedback

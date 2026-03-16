@@ -1,11 +1,15 @@
 package tech.dokus.domain.model
 
+import kotlinx.datetime.LocalDateTime
+import tech.dokus.domain.enums.SourceTrust
+import tech.dokus.domain.ids.UserId
+
 /**
  * Result of merging two DocumentDraftData instances using field provenance.
  */
 data class ProvenanceMergeResult(
     val mergedData: DocumentDraftData,
-    val mergedProvenance: Map<String, FieldProvenance>,
+    val mergedProvenance: DocumentFieldProvenance,
 )
 
 /**
@@ -19,276 +23,129 @@ data class ProvenanceMergeResult(
 fun mergeWithProvenance(
     existing: DocumentDraftData,
     incoming: DocumentDraftData,
-    existingProvenance: Map<String, FieldProvenance>,
-    incomingProvenance: Map<String, FieldProvenance>,
+    existingProvenance: DocumentFieldProvenance,
+    incomingProvenance: DocumentFieldProvenance,
 ): ProvenanceMergeResult {
     // Type change = reclassification — incoming wins entirely
     if (existing::class != incoming::class) {
         return ProvenanceMergeResult(incoming, incomingProvenance)
     }
 
-    return when {
-        existing is InvoiceDraftData && incoming is InvoiceDraftData ->
-            mergeInvoice(existing, incoming, existingProvenance, incomingProvenance)
-        existing is CreditNoteDraftData && incoming is CreditNoteDraftData ->
-            mergeCreditNote(existing, incoming, existingProvenance, incomingProvenance)
-        existing is ReceiptDraftData && incoming is ReceiptDraftData ->
-            mergeReceipt(existing, incoming, existingProvenance, incomingProvenance)
-        existing is BankStatementDraftData && incoming is BankStatementDraftData ->
-            mergeBankStatement(existing, incoming, existingProvenance, incomingProvenance)
-        // Classified-only types have only `direction` — incoming always wins
+    return when (existing) {
+        is InvoiceDraftData if incoming is InvoiceDraftData && existingProvenance is InvoiceFieldProvenance && incomingProvenance is InvoiceFieldProvenance -> mergeInvoice(
+            existing,
+            incoming,
+            existingProvenance,
+            incomingProvenance
+        )
+
+        is CreditNoteDraftData if incoming is CreditNoteDraftData && existingProvenance is CreditNoteFieldProvenance && incomingProvenance is CreditNoteFieldProvenance -> mergeCreditNote(
+            existing,
+            incoming,
+            existingProvenance,
+            incomingProvenance
+        )
+
+        is ReceiptDraftData if incoming is ReceiptDraftData && existingProvenance is ReceiptFieldProvenance && incomingProvenance is ReceiptFieldProvenance -> mergeReceipt(
+            existing,
+            incoming,
+            existingProvenance,
+            incomingProvenance
+        )
+
+        is BankStatementDraftData if incoming is BankStatementDraftData && existingProvenance is BankStatementFieldProvenance && incomingProvenance is BankStatementFieldProvenance -> mergeBankStatement(
+            existing,
+            incoming,
+            existingProvenance,
+            incomingProvenance
+        )
+
+        // Classified-only types or provenance type mismatch — incoming always wins
         else -> ProvenanceMergeResult(incoming, incomingProvenance)
     }
 }
 
+// ---------------------------------------------------------------------------
+// Pick helpers — no string keys, no maps, no mutable state
+// ---------------------------------------------------------------------------
+
 /**
- * Returns field paths that differ between [existing] and [updated].
- * Used to detect which fields the user actually changed during editing.
- * If types differ (reclassification), all populated fields of [updated] are returned.
+ * Picks the winning provenance between existing and incoming.
  */
-fun diffFieldPaths(
-    existing: DocumentDraftData,
-    updated: DocumentDraftData,
-): Set<String> {
-    if (existing::class != updated::class) {
-        return updated.let { (it as? InvoiceDraftData)?.let(::invoicePopulated) }
-            ?: updated.let { (it as? CreditNoteDraftData)?.let(::creditNotePopulated) }
-            ?: updated.let { (it as? ReceiptDraftData)?.let(::receiptPopulated) }
-            ?: updated.let { (it as? BankStatementDraftData)?.let(::bankStatementPopulated) }
-            ?: classifiedOnlyPopulated(updated)
-    }
-    return when {
-        existing is InvoiceDraftData && updated is InvoiceDraftData ->
-            diffInvoice(existing, updated)
-        existing is CreditNoteDraftData && updated is CreditNoteDraftData ->
-            diffCreditNote(existing, updated)
-        existing is ReceiptDraftData && updated is ReceiptDraftData ->
-            diffReceipt(existing, updated)
-        existing is BankStatementDraftData && updated is BankStatementDraftData ->
-            diffBankStatement(existing, updated)
-        // Classified-only types: only direction can differ
-        else -> diffClassifiedOnly(existing.toDirection(), updated.toDirection())
-    }
+private fun pick(existing: FieldProvenance?, incoming: FieldProvenance?): FieldProvenance? = when {
+    existing == null -> incoming
+    existing.userLocked -> existing
+    incoming == null -> existing
+    existing.shouldBeOverwrittenBy(incoming) -> incoming
+    else -> existing
 }
 
-// ---------------------------------------------------------------------------
-// Per-variant diff
-// ---------------------------------------------------------------------------
-
-private fun diffInvoice(old: InvoiceDraftData, new: InvoiceDraftData): Set<String> = buildSet {
-    if (old.direction != new.direction) add("direction")
-    if (old.invoiceNumber != new.invoiceNumber) add("invoiceNumber")
-    if (old.issueDate != new.issueDate) add("issueDate")
-    if (old.dueDate != new.dueDate) add("dueDate")
-    if (old.currency != new.currency) add("currency")
-    if (old.subtotalAmount != new.subtotalAmount) add("subtotalAmount")
-    if (old.vatAmount != new.vatAmount) add("vatAmount")
-    if (old.totalAmount != new.totalAmount) add("totalAmount")
-    if (old.lineItems != new.lineItems) add("lineItems")
-    if (old.vatBreakdown != new.vatBreakdown) add("vatBreakdown")
-    if (old.iban != new.iban) add("iban")
-    if (old.payment != new.payment) add("payment")
-    if (old.notes != new.notes) add("notes")
-    addPartyDiff("seller", old.seller, new.seller)
-    addPartyDiff("buyer", old.buyer, new.buyer)
-}
-
-private fun diffCreditNote(old: CreditNoteDraftData, new: CreditNoteDraftData): Set<String> = buildSet {
-    if (old.direction != new.direction) add("direction")
-    if (old.creditNoteNumber != new.creditNoteNumber) add("creditNoteNumber")
-    if (old.issueDate != new.issueDate) add("issueDate")
-    if (old.currency != new.currency) add("currency")
-    if (old.subtotalAmount != new.subtotalAmount) add("subtotalAmount")
-    if (old.vatAmount != new.vatAmount) add("vatAmount")
-    if (old.totalAmount != new.totalAmount) add("totalAmount")
-    if (old.lineItems != new.lineItems) add("lineItems")
-    if (old.vatBreakdown != new.vatBreakdown) add("vatBreakdown")
-    if (old.originalInvoiceNumber != new.originalInvoiceNumber) add("originalInvoiceNumber")
-    if (old.reason != new.reason) add("reason")
-    if (old.notes != new.notes) add("notes")
-    addPartyDiff("seller", old.seller, new.seller)
-    addPartyDiff("buyer", old.buyer, new.buyer)
-}
-
-private fun diffReceipt(old: ReceiptDraftData, new: ReceiptDraftData): Set<String> = buildSet {
-    if (old.direction != new.direction) add("direction")
-    if (old.merchantName != new.merchantName) add("merchantName")
-    if (old.merchantVat != new.merchantVat) add("merchantVat")
-    if (old.date != new.date) add("date")
-    if (old.currency != new.currency) add("currency")
-    if (old.totalAmount != new.totalAmount) add("totalAmount")
-    if (old.vatAmount != new.vatAmount) add("vatAmount")
-    if (old.lineItems != new.lineItems) add("lineItems")
-    if (old.vatBreakdown != new.vatBreakdown) add("vatBreakdown")
-    if (old.receiptNumber != new.receiptNumber) add("receiptNumber")
-    if (old.paymentMethod != new.paymentMethod) add("paymentMethod")
-    if (old.notes != new.notes) add("notes")
-}
-
-private fun diffBankStatement(old: BankStatementDraftData, new: BankStatementDraftData): Set<String> = buildSet {
-    if (old.direction != new.direction) add("direction")
-    if (old.transactions != new.transactions) add("transactions")
-    if (old.accountIban != new.accountIban) add("accountIban")
-    if (old.openingBalance != new.openingBalance) add("openingBalance")
-    if (old.closingBalance != new.closingBalance) add("closingBalance")
-    if (old.periodStart != new.periodStart) add("periodStart")
-    if (old.periodEnd != new.periodEnd) add("periodEnd")
-    if (old.notes != new.notes) add("notes")
-}
-
-private fun MutableSet<String>.addPartyDiff(prefix: String, old: PartyDraft, new: PartyDraft) {
-    if (old.name != new.name) add("$prefix.name")
-    if (old.vat != new.vat) add("$prefix.vat")
-    if (old.email != new.email) add("$prefix.email")
-    if (old.iban != new.iban) add("$prefix.iban")
-    if (old.streetLine1 != new.streetLine1) add("$prefix.streetLine1")
-    if (old.streetLine2 != new.streetLine2) add("$prefix.streetLine2")
-    if (old.postalCode != new.postalCode) add("$prefix.postalCode")
-    if (old.city != new.city) add("$prefix.city")
-    if (old.country != new.country) add("$prefix.country")
-}
-
-// Populated-field helpers for reclassification (all fields in updated type)
-private fun invoicePopulated(d: InvoiceDraftData): Set<String> = buildSet {
-    add("direction"); add("currency")
-    if (d.invoiceNumber != null) add("invoiceNumber")
-    if (d.issueDate != null) add("issueDate")
-    if (d.dueDate != null) add("dueDate")
-    if (d.subtotalAmount != null) add("subtotalAmount")
-    if (d.vatAmount != null) add("vatAmount")
-    if (d.totalAmount != null) add("totalAmount")
-    if (d.lineItems.isNotEmpty()) add("lineItems")
-    if (d.vatBreakdown.isNotEmpty()) add("vatBreakdown")
-    if (d.iban != null) add("iban")
-    if (d.payment != null) add("payment")
-    if (d.notes != null) add("notes")
-    addPopulatedParty("seller", d.seller)
-    addPopulatedParty("buyer", d.buyer)
-}
-
-private fun creditNotePopulated(d: CreditNoteDraftData): Set<String> = buildSet {
-    add("direction"); add("currency")
-    if (d.creditNoteNumber != null) add("creditNoteNumber")
-    if (d.issueDate != null) add("issueDate")
-    if (d.subtotalAmount != null) add("subtotalAmount")
-    if (d.vatAmount != null) add("vatAmount")
-    if (d.totalAmount != null) add("totalAmount")
-    if (d.lineItems.isNotEmpty()) add("lineItems")
-    if (d.vatBreakdown.isNotEmpty()) add("vatBreakdown")
-    if (d.originalInvoiceNumber != null) add("originalInvoiceNumber")
-    if (d.reason != null) add("reason")
-    if (d.notes != null) add("notes")
-    addPopulatedParty("seller", d.seller)
-    addPopulatedParty("buyer", d.buyer)
-}
-
-private fun receiptPopulated(d: ReceiptDraftData): Set<String> = buildSet {
-    add("direction"); add("currency")
-    if (d.merchantName != null) add("merchantName")
-    if (d.merchantVat != null) add("merchantVat")
-    if (d.date != null) add("date")
-    if (d.totalAmount != null) add("totalAmount")
-    if (d.vatAmount != null) add("vatAmount")
-    if (d.lineItems.isNotEmpty()) add("lineItems")
-    if (d.vatBreakdown.isNotEmpty()) add("vatBreakdown")
-    if (d.receiptNumber != null) add("receiptNumber")
-    if (d.paymentMethod != null) add("paymentMethod")
-    if (d.notes != null) add("notes")
-}
-
-private fun bankStatementPopulated(d: BankStatementDraftData): Set<String> = buildSet {
-    add("direction")
-    if (d.transactions.isNotEmpty()) add("transactions")
-    if (d.accountIban != null) add("accountIban")
-    if (d.openingBalance != null) add("openingBalance")
-    if (d.closingBalance != null) add("closingBalance")
-    if (d.periodStart != null) add("periodStart")
-    if (d.periodEnd != null) add("periodEnd")
-    if (d.notes != null) add("notes")
-}
-
-/** Populated fields for classified-only types (direction is the only field). */
-private fun classifiedOnlyPopulated(@Suppress("UNUSED_PARAMETER") d: DocumentDraftData): Set<String> =
-    setOf("direction")
-
-/** Diff for classified-only types: only the direction field can differ. */
-private fun diffClassifiedOnly(
-    oldDirection: tech.dokus.domain.enums.DocumentDirection,
-    newDirection: tech.dokus.domain.enums.DocumentDirection,
-): Set<String> = if (oldDirection != newDirection) setOf("direction") else emptySet()
-
-private fun MutableSet<String>.addPopulatedParty(prefix: String, party: PartyDraft) {
-    if (party.name != null) add("$prefix.name")
-    if (party.vat != null) add("$prefix.vat")
-    if (party.email != null) add("$prefix.email")
-    if (party.iban != null) add("$prefix.iban")
-    if (party.streetLine1 != null) add("$prefix.streetLine1")
-    if (party.streetLine2 != null) add("$prefix.streetLine2")
-    if (party.postalCode != null) add("$prefix.postalCode")
-    if (party.city != null) add("$prefix.city")
-    if (party.country != null) add("$prefix.country")
-}
-
-// ---------------------------------------------------------------------------
-// Per-field pick helper
-// ---------------------------------------------------------------------------
-
-private inline fun <T> pickField(
-    field: String,
+/**
+ * Picks the winning value and provenance for a single field.
+ */
+private inline fun <T> pickValue(
     existingValue: T,
     incomingValue: T,
-    existingProvenance: Map<String, FieldProvenance>,
-    incomingProvenance: Map<String, FieldProvenance>,
-    mergedProvenance: MutableMap<String, FieldProvenance>,
+    existingProv: FieldProvenance?,
+    incomingProv: FieldProvenance?,
 ): T {
-    val ep = existingProvenance[field]
-    val ip = incomingProvenance[field]
-
     return when {
-        ep == null -> {
-            if (ip != null) mergedProvenance[field] = ip
-            incomingValue
-        }
-        ep.userLocked -> {
-            mergedProvenance[field] = ep
-            existingValue
-        }
-        ip == null -> {
-            mergedProvenance[field] = ep
-            existingValue
-        }
-        ep.shouldBeOverwrittenBy(ip) -> {
-            mergedProvenance[field] = ip
-            incomingValue
-        }
-        else -> {
-            mergedProvenance[field] = ep
-            existingValue
-        }
+        existingProv == null -> incomingValue
+        existingProv.userLocked -> existingValue
+        incomingProv == null -> existingValue
+        existingProv.shouldBeOverwrittenBy(incomingProv) -> incomingValue
+        else -> existingValue
     }
 }
 
-// ---------------------------------------------------------------------------
-// Party merge helper
-// ---------------------------------------------------------------------------
+private fun pickParty(existing: PartyFieldProvenance, incoming: PartyFieldProvenance) =
+    PartyFieldProvenance(
+        name = pick(existing.name, incoming.name),
+        vat = pick(existing.vat, incoming.vat),
+        email = pick(existing.email, incoming.email),
+        iban = pick(existing.iban, incoming.iban),
+        streetLine1 = pick(existing.streetLine1, incoming.streetLine1),
+        streetLine2 = pick(existing.streetLine2, incoming.streetLine2),
+        postalCode = pick(existing.postalCode, incoming.postalCode),
+        city = pick(existing.city, incoming.city),
+        country = pick(existing.country, incoming.country),
+    )
 
-private fun pickParty(
-    prefix: String,
+private fun pickPartyValue(
     existing: PartyDraft,
     incoming: PartyDraft,
-    existingProv: Map<String, FieldProvenance>,
-    incomingProv: Map<String, FieldProvenance>,
-    merged: MutableMap<String, FieldProvenance>,
-): PartyDraft = PartyDraft(
-    name = pickField("$prefix.name", existing.name, incoming.name, existingProv, incomingProv, merged),
-    vat = pickField("$prefix.vat", existing.vat, incoming.vat, existingProv, incomingProv, merged),
-    email = pickField("$prefix.email", existing.email, incoming.email, existingProv, incomingProv, merged),
-    iban = pickField("$prefix.iban", existing.iban, incoming.iban, existingProv, incomingProv, merged),
-    streetLine1 = pickField("$prefix.streetLine1", existing.streetLine1, incoming.streetLine1, existingProv, incomingProv, merged),
-    streetLine2 = pickField("$prefix.streetLine2", existing.streetLine2, incoming.streetLine2, existingProv, incomingProv, merged),
-    postalCode = pickField("$prefix.postalCode", existing.postalCode, incoming.postalCode, existingProv, incomingProv, merged),
-    city = pickField("$prefix.city", existing.city, incoming.city, existingProv, incomingProv, merged),
-    country = pickField("$prefix.country", existing.country, incoming.country, existingProv, incomingProv, merged),
+    existingProv: PartyFieldProvenance,
+    incomingProv: PartyFieldProvenance,
+) = PartyDraft(
+    name = pickValue(existing.name, incoming.name, existingProv.name, incomingProv.name),
+    vat = pickValue(existing.vat, incoming.vat, existingProv.vat, incomingProv.vat),
+    email = pickValue(existing.email, incoming.email, existingProv.email, incomingProv.email),
+    iban = pickValue(existing.iban, incoming.iban, existingProv.iban, incomingProv.iban),
+    streetLine1 = pickValue(
+        existing.streetLine1,
+        incoming.streetLine1,
+        existingProv.streetLine1,
+        incomingProv.streetLine1
+    ),
+    streetLine2 = pickValue(
+        existing.streetLine2,
+        incoming.streetLine2,
+        existingProv.streetLine2,
+        incomingProv.streetLine2
+    ),
+    postalCode = pickValue(
+        existing.postalCode,
+        incoming.postalCode,
+        existingProv.postalCode,
+        incomingProv.postalCode
+    ),
+    city = pickValue(existing.city, incoming.city, existingProv.city, incomingProv.city),
+    country = pickValue(
+        existing.country,
+        incoming.country,
+        existingProv.country,
+        incomingProv.country
+    ),
 )
 
 // ---------------------------------------------------------------------------
@@ -298,112 +155,432 @@ private fun pickParty(
 private fun mergeInvoice(
     existing: InvoiceDraftData,
     incoming: InvoiceDraftData,
-    existingProv: Map<String, FieldProvenance>,
-    incomingProv: Map<String, FieldProvenance>,
+    ep: InvoiceFieldProvenance,
+    ip: InvoiceFieldProvenance,
 ): ProvenanceMergeResult {
-    val merged = mutableMapOf<String, FieldProvenance>()
-
-    fun <T> pick(field: String, e: T, i: T): T =
-        pickField(field, e, i, existingProv, incomingProv, merged)
-
-    val result = InvoiceDraftData(
-        direction = pick("direction", existing.direction, incoming.direction),
-        invoiceNumber = pick("invoiceNumber", existing.invoiceNumber, incoming.invoiceNumber),
-        issueDate = pick("issueDate", existing.issueDate, incoming.issueDate),
-        dueDate = pick("dueDate", existing.dueDate, incoming.dueDate),
-        currency = pick("currency", existing.currency, incoming.currency),
-        subtotalAmount = pick("subtotalAmount", existing.subtotalAmount, incoming.subtotalAmount),
-        vatAmount = pick("vatAmount", existing.vatAmount, incoming.vatAmount),
-        totalAmount = pick("totalAmount", existing.totalAmount, incoming.totalAmount),
-        lineItems = pick("lineItems", existing.lineItems, incoming.lineItems),
-        vatBreakdown = pick("vatBreakdown", existing.vatBreakdown, incoming.vatBreakdown),
-        iban = pick("iban", existing.iban, incoming.iban),
-        payment = pick("payment", existing.payment, incoming.payment),
-        notes = pick("notes", existing.notes, incoming.notes),
-        seller = pickParty("seller", existing.seller, incoming.seller, existingProv, incomingProv, merged),
-        buyer = pickParty("buyer", existing.buyer, incoming.buyer, existingProv, incomingProv, merged),
+    val mergedProv = InvoiceFieldProvenance(
+        direction = pick(ep.direction, ip.direction),
+        invoiceNumber = pick(ep.invoiceNumber, ip.invoiceNumber),
+        issueDate = pick(ep.issueDate, ip.issueDate),
+        dueDate = pick(ep.dueDate, ip.dueDate),
+        currency = pick(ep.currency, ip.currency),
+        subtotalAmount = pick(ep.subtotalAmount, ip.subtotalAmount),
+        vatAmount = pick(ep.vatAmount, ip.vatAmount),
+        totalAmount = pick(ep.totalAmount, ip.totalAmount),
+        lineItems = pick(ep.lineItems, ip.lineItems),
+        vatBreakdown = pick(ep.vatBreakdown, ip.vatBreakdown),
+        iban = pick(ep.iban, ip.iban),
+        payment = pick(ep.payment, ip.payment),
+        notes = pick(ep.notes, ip.notes),
+        seller = pickParty(ep.seller, ip.seller),
+        buyer = pickParty(ep.buyer, ip.buyer),
     )
-    return ProvenanceMergeResult(result, merged)
+    val mergedData = InvoiceDraftData(
+        direction = pickValue(existing.direction, incoming.direction, ep.direction, ip.direction),
+        invoiceNumber = pickValue(
+            existing.invoiceNumber,
+            incoming.invoiceNumber,
+            ep.invoiceNumber,
+            ip.invoiceNumber
+        ),
+        issueDate = pickValue(existing.issueDate, incoming.issueDate, ep.issueDate, ip.issueDate),
+        dueDate = pickValue(existing.dueDate, incoming.dueDate, ep.dueDate, ip.dueDate),
+        currency = pickValue(existing.currency, incoming.currency, ep.currency, ip.currency),
+        subtotalAmount = pickValue(
+            existing.subtotalAmount,
+            incoming.subtotalAmount,
+            ep.subtotalAmount,
+            ip.subtotalAmount
+        ),
+        vatAmount = pickValue(existing.vatAmount, incoming.vatAmount, ep.vatAmount, ip.vatAmount),
+        totalAmount = pickValue(
+            existing.totalAmount,
+            incoming.totalAmount,
+            ep.totalAmount,
+            ip.totalAmount
+        ),
+        lineItems = pickValue(existing.lineItems, incoming.lineItems, ep.lineItems, ip.lineItems),
+        vatBreakdown = pickValue(
+            existing.vatBreakdown,
+            incoming.vatBreakdown,
+            ep.vatBreakdown,
+            ip.vatBreakdown
+        ),
+        iban = pickValue(existing.iban, incoming.iban, ep.iban, ip.iban),
+        payment = pickValue(existing.payment, incoming.payment, ep.payment, ip.payment),
+        notes = pickValue(existing.notes, incoming.notes, ep.notes, ip.notes),
+        seller = pickPartyValue(existing.seller, incoming.seller, ep.seller, ip.seller),
+        buyer = pickPartyValue(existing.buyer, incoming.buyer, ep.buyer, ip.buyer),
+    )
+    return ProvenanceMergeResult(mergedData, mergedProv)
 }
 
 private fun mergeCreditNote(
     existing: CreditNoteDraftData,
     incoming: CreditNoteDraftData,
-    existingProv: Map<String, FieldProvenance>,
-    incomingProv: Map<String, FieldProvenance>,
+    ep: CreditNoteFieldProvenance,
+    ip: CreditNoteFieldProvenance,
 ): ProvenanceMergeResult {
-    val merged = mutableMapOf<String, FieldProvenance>()
-
-    fun <T> pick(field: String, e: T, i: T): T =
-        pickField(field, e, i, existingProv, incomingProv, merged)
-
-    val result = CreditNoteDraftData(
-        direction = pick("direction", existing.direction, incoming.direction),
-        creditNoteNumber = pick("creditNoteNumber", existing.creditNoteNumber, incoming.creditNoteNumber),
-        issueDate = pick("issueDate", existing.issueDate, incoming.issueDate),
-        currency = pick("currency", existing.currency, incoming.currency),
-        subtotalAmount = pick("subtotalAmount", existing.subtotalAmount, incoming.subtotalAmount),
-        vatAmount = pick("vatAmount", existing.vatAmount, incoming.vatAmount),
-        totalAmount = pick("totalAmount", existing.totalAmount, incoming.totalAmount),
-        lineItems = pick("lineItems", existing.lineItems, incoming.lineItems),
-        vatBreakdown = pick("vatBreakdown", existing.vatBreakdown, incoming.vatBreakdown),
-        originalInvoiceNumber = pick("originalInvoiceNumber", existing.originalInvoiceNumber, incoming.originalInvoiceNumber),
-        reason = pick("reason", existing.reason, incoming.reason),
-        notes = pick("notes", existing.notes, incoming.notes),
-        seller = pickParty("seller", existing.seller, incoming.seller, existingProv, incomingProv, merged),
-        buyer = pickParty("buyer", existing.buyer, incoming.buyer, existingProv, incomingProv, merged),
+    val mergedProv = CreditNoteFieldProvenance(
+        direction = pick(ep.direction, ip.direction),
+        creditNoteNumber = pick(ep.creditNoteNumber, ip.creditNoteNumber),
+        issueDate = pick(ep.issueDate, ip.issueDate),
+        currency = pick(ep.currency, ip.currency),
+        subtotalAmount = pick(ep.subtotalAmount, ip.subtotalAmount),
+        vatAmount = pick(ep.vatAmount, ip.vatAmount),
+        totalAmount = pick(ep.totalAmount, ip.totalAmount),
+        lineItems = pick(ep.lineItems, ip.lineItems),
+        vatBreakdown = pick(ep.vatBreakdown, ip.vatBreakdown),
+        originalInvoiceNumber = pick(ep.originalInvoiceNumber, ip.originalInvoiceNumber),
+        reason = pick(ep.reason, ip.reason),
+        notes = pick(ep.notes, ip.notes),
+        seller = pickParty(ep.seller, ip.seller),
+        buyer = pickParty(ep.buyer, ip.buyer),
     )
-    return ProvenanceMergeResult(result, merged)
+    val mergedData = CreditNoteDraftData(
+        direction = pickValue(existing.direction, incoming.direction, ep.direction, ip.direction),
+        creditNoteNumber = pickValue(
+            existing.creditNoteNumber,
+            incoming.creditNoteNumber,
+            ep.creditNoteNumber,
+            ip.creditNoteNumber
+        ),
+        issueDate = pickValue(existing.issueDate, incoming.issueDate, ep.issueDate, ip.issueDate),
+        currency = pickValue(existing.currency, incoming.currency, ep.currency, ip.currency),
+        subtotalAmount = pickValue(
+            existing.subtotalAmount,
+            incoming.subtotalAmount,
+            ep.subtotalAmount,
+            ip.subtotalAmount
+        ),
+        vatAmount = pickValue(existing.vatAmount, incoming.vatAmount, ep.vatAmount, ip.vatAmount),
+        totalAmount = pickValue(
+            existing.totalAmount,
+            incoming.totalAmount,
+            ep.totalAmount,
+            ip.totalAmount
+        ),
+        lineItems = pickValue(existing.lineItems, incoming.lineItems, ep.lineItems, ip.lineItems),
+        vatBreakdown = pickValue(
+            existing.vatBreakdown,
+            incoming.vatBreakdown,
+            ep.vatBreakdown,
+            ip.vatBreakdown
+        ),
+        originalInvoiceNumber = pickValue(
+            existing.originalInvoiceNumber,
+            incoming.originalInvoiceNumber,
+            ep.originalInvoiceNumber,
+            ip.originalInvoiceNumber
+        ),
+        reason = pickValue(existing.reason, incoming.reason, ep.reason, ip.reason),
+        notes = pickValue(existing.notes, incoming.notes, ep.notes, ip.notes),
+        seller = pickPartyValue(existing.seller, incoming.seller, ep.seller, ip.seller),
+        buyer = pickPartyValue(existing.buyer, incoming.buyer, ep.buyer, ip.buyer),
+    )
+    return ProvenanceMergeResult(mergedData, mergedProv)
 }
 
 private fun mergeReceipt(
     existing: ReceiptDraftData,
     incoming: ReceiptDraftData,
-    existingProv: Map<String, FieldProvenance>,
-    incomingProv: Map<String, FieldProvenance>,
+    ep: ReceiptFieldProvenance,
+    ip: ReceiptFieldProvenance,
 ): ProvenanceMergeResult {
-    val merged = mutableMapOf<String, FieldProvenance>()
-
-    fun <T> pick(field: String, e: T, i: T): T =
-        pickField(field, e, i, existingProv, incomingProv, merged)
-
-    val result = ReceiptDraftData(
-        direction = pick("direction", existing.direction, incoming.direction),
-        merchantName = pick("merchantName", existing.merchantName, incoming.merchantName),
-        merchantVat = pick("merchantVat", existing.merchantVat, incoming.merchantVat),
-        date = pick("date", existing.date, incoming.date),
-        currency = pick("currency", existing.currency, incoming.currency),
-        totalAmount = pick("totalAmount", existing.totalAmount, incoming.totalAmount),
-        vatAmount = pick("vatAmount", existing.vatAmount, incoming.vatAmount),
-        lineItems = pick("lineItems", existing.lineItems, incoming.lineItems),
-        vatBreakdown = pick("vatBreakdown", existing.vatBreakdown, incoming.vatBreakdown),
-        receiptNumber = pick("receiptNumber", existing.receiptNumber, incoming.receiptNumber),
-        paymentMethod = pick("paymentMethod", existing.paymentMethod, incoming.paymentMethod),
-        notes = pick("notes", existing.notes, incoming.notes),
+    val mergedProv = ReceiptFieldProvenance(
+        direction = pick(ep.direction, ip.direction),
+        merchantName = pick(ep.merchantName, ip.merchantName),
+        merchantVat = pick(ep.merchantVat, ip.merchantVat),
+        date = pick(ep.date, ip.date),
+        currency = pick(ep.currency, ip.currency),
+        totalAmount = pick(ep.totalAmount, ip.totalAmount),
+        vatAmount = pick(ep.vatAmount, ip.vatAmount),
+        lineItems = pick(ep.lineItems, ip.lineItems),
+        vatBreakdown = pick(ep.vatBreakdown, ip.vatBreakdown),
+        receiptNumber = pick(ep.receiptNumber, ip.receiptNumber),
+        paymentMethod = pick(ep.paymentMethod, ip.paymentMethod),
+        notes = pick(ep.notes, ip.notes),
     )
-    return ProvenanceMergeResult(result, merged)
+    val mergedData = ReceiptDraftData(
+        direction = pickValue(existing.direction, incoming.direction, ep.direction, ip.direction),
+        merchantName = pickValue(
+            existing.merchantName,
+            incoming.merchantName,
+            ep.merchantName,
+            ip.merchantName
+        ),
+        merchantVat = pickValue(
+            existing.merchantVat,
+            incoming.merchantVat,
+            ep.merchantVat,
+            ip.merchantVat
+        ),
+        date = pickValue(existing.date, incoming.date, ep.date, ip.date),
+        currency = pickValue(existing.currency, incoming.currency, ep.currency, ip.currency),
+        totalAmount = pickValue(
+            existing.totalAmount,
+            incoming.totalAmount,
+            ep.totalAmount,
+            ip.totalAmount
+        ),
+        vatAmount = pickValue(existing.vatAmount, incoming.vatAmount, ep.vatAmount, ip.vatAmount),
+        lineItems = pickValue(existing.lineItems, incoming.lineItems, ep.lineItems, ip.lineItems),
+        vatBreakdown = pickValue(
+            existing.vatBreakdown,
+            incoming.vatBreakdown,
+            ep.vatBreakdown,
+            ip.vatBreakdown
+        ),
+        receiptNumber = pickValue(
+            existing.receiptNumber,
+            incoming.receiptNumber,
+            ep.receiptNumber,
+            ip.receiptNumber
+        ),
+        paymentMethod = pickValue(
+            existing.paymentMethod,
+            incoming.paymentMethod,
+            ep.paymentMethod,
+            ip.paymentMethod
+        ),
+        notes = pickValue(existing.notes, incoming.notes, ep.notes, ip.notes),
+    )
+    return ProvenanceMergeResult(mergedData, mergedProv)
 }
 
 private fun mergeBankStatement(
     existing: BankStatementDraftData,
     incoming: BankStatementDraftData,
-    existingProv: Map<String, FieldProvenance>,
-    incomingProv: Map<String, FieldProvenance>,
+    ep: BankStatementFieldProvenance,
+    ip: BankStatementFieldProvenance,
 ): ProvenanceMergeResult {
-    val merged = mutableMapOf<String, FieldProvenance>()
-
-    fun <T> pick(field: String, e: T, i: T): T =
-        pickField(field, e, i, existingProv, incomingProv, merged)
-
-    val result = BankStatementDraftData(
-        direction = pick("direction", existing.direction, incoming.direction),
-        transactions = pick("transactions", existing.transactions, incoming.transactions),
-        accountIban = pick("accountIban", existing.accountIban, incoming.accountIban),
-        openingBalance = pick("openingBalance", existing.openingBalance, incoming.openingBalance),
-        closingBalance = pick("closingBalance", existing.closingBalance, incoming.closingBalance),
-        periodStart = pick("periodStart", existing.periodStart, incoming.periodStart),
-        periodEnd = pick("periodEnd", existing.periodEnd, incoming.periodEnd),
-        notes = pick("notes", existing.notes, incoming.notes),
+    val mergedProv = BankStatementFieldProvenance(
+        direction = pick(ep.direction, ip.direction),
+        transactions = pick(ep.transactions, ip.transactions),
+        accountIban = pick(ep.accountIban, ip.accountIban),
+        openingBalance = pick(ep.openingBalance, ip.openingBalance),
+        closingBalance = pick(ep.closingBalance, ip.closingBalance),
+        periodStart = pick(ep.periodStart, ip.periodStart),
+        periodEnd = pick(ep.periodEnd, ip.periodEnd),
+        notes = pick(ep.notes, ip.notes),
     )
-    return ProvenanceMergeResult(result, merged)
+    val mergedData = BankStatementDraftData(
+        direction = pickValue(existing.direction, incoming.direction, ep.direction, ip.direction),
+        transactions = pickValue(
+            existing.transactions,
+            incoming.transactions,
+            ep.transactions,
+            ip.transactions
+        ),
+        accountIban = pickValue(
+            existing.accountIban,
+            incoming.accountIban,
+            ep.accountIban,
+            ip.accountIban
+        ),
+        openingBalance = pickValue(
+            existing.openingBalance,
+            incoming.openingBalance,
+            ep.openingBalance,
+            ip.openingBalance
+        ),
+        closingBalance = pickValue(
+            existing.closingBalance,
+            incoming.closingBalance,
+            ep.closingBalance,
+            ip.closingBalance
+        ),
+        periodStart = pickValue(
+            existing.periodStart,
+            incoming.periodStart,
+            ep.periodStart,
+            ip.periodStart
+        ),
+        periodEnd = pickValue(existing.periodEnd, incoming.periodEnd, ep.periodEnd, ip.periodEnd),
+        notes = pickValue(existing.notes, incoming.notes, ep.notes, ip.notes),
+    )
+    return ProvenanceMergeResult(mergedData, mergedProv)
 }
+
+// ---------------------------------------------------------------------------
+// User lock helpers — typed diff + lock in one step
+// ---------------------------------------------------------------------------
+
+/**
+ * Applies user locks to provenance for fields that changed between [existing] and [updated].
+ * Returns a new provenance with changed fields marked as user-locked.
+ */
+fun applyUserLocks(
+    provenance: DocumentFieldProvenance,
+    existing: DocumentDraftData,
+    updated: DocumentDraftData,
+    lockedAt: LocalDateTime,
+    lockedBy: UserId,
+): DocumentFieldProvenance = when (existing) {
+    is InvoiceDraftData if updated is InvoiceDraftData && provenance is InvoiceFieldProvenance -> lockInvoice(
+        provenance,
+        existing,
+        updated,
+        lockedAt,
+        lockedBy
+    )
+
+    is CreditNoteDraftData if updated is CreditNoteDraftData && provenance is CreditNoteFieldProvenance -> lockCreditNote(
+        provenance,
+        existing,
+        updated,
+        lockedAt,
+        lockedBy
+    )
+
+    is ReceiptDraftData if updated is ReceiptDraftData && provenance is ReceiptFieldProvenance -> lockReceipt(
+        provenance,
+        existing,
+        updated,
+        lockedAt,
+        lockedBy
+    )
+
+    is BankStatementDraftData if updated is BankStatementDraftData && provenance is BankStatementFieldProvenance -> lockBankStatement(
+        provenance,
+        existing,
+        updated,
+        lockedAt,
+        lockedBy
+    )
+
+// Type changed or classified-only — rebuild from scratch
+    else -> updated.buildProvenance(
+        sourceTrust = SourceTrust.ManualEntry,
+    )
+}
+
+private fun lockField(
+    old: Any?,
+    new: Any?,
+    prov: FieldProvenance?,
+    lockedAt: LocalDateTime,
+    lockedBy: UserId,
+): FieldProvenance? {
+    if (old == new) return prov
+    return (prov ?: FieldProvenance(sourceTrust = SourceTrust.ManualEntry)).copy(
+        userLocked = true,
+        lockedAt = lockedAt,
+        lockedBy = lockedBy,
+    )
+}
+
+private fun lockParty(
+    prov: PartyFieldProvenance,
+    old: PartyDraft,
+    new: PartyDraft,
+    lockedAt: LocalDateTime,
+    lockedBy: UserId,
+) = PartyFieldProvenance(
+    name = lockField(old.name, new.name, prov.name, lockedAt, lockedBy),
+    vat = lockField(old.vat, new.vat, prov.vat, lockedAt, lockedBy),
+    email = lockField(old.email, new.email, prov.email, lockedAt, lockedBy),
+    iban = lockField(old.iban, new.iban, prov.iban, lockedAt, lockedBy),
+    streetLine1 = lockField(old.streetLine1, new.streetLine1, prov.streetLine1, lockedAt, lockedBy),
+    streetLine2 = lockField(old.streetLine2, new.streetLine2, prov.streetLine2, lockedAt, lockedBy),
+    postalCode = lockField(old.postalCode, new.postalCode, prov.postalCode, lockedAt, lockedBy),
+    city = lockField(old.city, new.city, prov.city, lockedAt, lockedBy),
+    country = lockField(old.country, new.country, prov.country, lockedAt, lockedBy),
+)
+
+private fun lockInvoice(
+    prov: InvoiceFieldProvenance,
+    old: InvoiceDraftData,
+    new: InvoiceDraftData,
+    at: LocalDateTime,
+    by: UserId,
+) = prov.copy(
+    direction = lockField(old.direction, new.direction, prov.direction, at, by),
+    invoiceNumber = lockField(old.invoiceNumber, new.invoiceNumber, prov.invoiceNumber, at, by),
+    issueDate = lockField(old.issueDate, new.issueDate, prov.issueDate, at, by),
+    dueDate = lockField(old.dueDate, new.dueDate, prov.dueDate, at, by),
+    currency = lockField(old.currency, new.currency, prov.currency, at, by),
+    subtotalAmount = lockField(old.subtotalAmount, new.subtotalAmount, prov.subtotalAmount, at, by),
+    vatAmount = lockField(old.vatAmount, new.vatAmount, prov.vatAmount, at, by),
+    totalAmount = lockField(old.totalAmount, new.totalAmount, prov.totalAmount, at, by),
+    lineItems = lockField(old.lineItems, new.lineItems, prov.lineItems, at, by),
+    vatBreakdown = lockField(old.vatBreakdown, new.vatBreakdown, prov.vatBreakdown, at, by),
+    iban = lockField(old.iban, new.iban, prov.iban, at, by),
+    payment = lockField(old.payment, new.payment, prov.payment, at, by),
+    notes = lockField(old.notes, new.notes, prov.notes, at, by),
+    seller = lockParty(prov.seller, old.seller, new.seller, at, by),
+    buyer = lockParty(prov.buyer, old.buyer, new.buyer, at, by),
+)
+
+private fun lockCreditNote(
+    prov: CreditNoteFieldProvenance,
+    old: CreditNoteDraftData,
+    new: CreditNoteDraftData,
+    at: LocalDateTime,
+    by: UserId,
+) = prov.copy(
+    direction = lockField(old.direction, new.direction, prov.direction, at, by),
+    creditNoteNumber = lockField(
+        old.creditNoteNumber,
+        new.creditNoteNumber,
+        prov.creditNoteNumber,
+        at,
+        by
+    ),
+    issueDate = lockField(old.issueDate, new.issueDate, prov.issueDate, at, by),
+    currency = lockField(old.currency, new.currency, prov.currency, at, by),
+    subtotalAmount = lockField(old.subtotalAmount, new.subtotalAmount, prov.subtotalAmount, at, by),
+    vatAmount = lockField(old.vatAmount, new.vatAmount, prov.vatAmount, at, by),
+    totalAmount = lockField(old.totalAmount, new.totalAmount, prov.totalAmount, at, by),
+    lineItems = lockField(old.lineItems, new.lineItems, prov.lineItems, at, by),
+    vatBreakdown = lockField(old.vatBreakdown, new.vatBreakdown, prov.vatBreakdown, at, by),
+    originalInvoiceNumber = lockField(
+        old.originalInvoiceNumber,
+        new.originalInvoiceNumber,
+        prov.originalInvoiceNumber,
+        at,
+        by
+    ),
+    reason = lockField(old.reason, new.reason, prov.reason, at, by),
+    notes = lockField(old.notes, new.notes, prov.notes, at, by),
+    seller = lockParty(prov.seller, old.seller, new.seller, at, by),
+    buyer = lockParty(prov.buyer, old.buyer, new.buyer, at, by),
+)
+
+private fun lockReceipt(
+    prov: ReceiptFieldProvenance,
+    old: ReceiptDraftData,
+    new: ReceiptDraftData,
+    at: LocalDateTime,
+    by: UserId,
+) = prov.copy(
+    direction = lockField(old.direction, new.direction, prov.direction, at, by),
+    merchantName = lockField(old.merchantName, new.merchantName, prov.merchantName, at, by),
+    merchantVat = lockField(old.merchantVat, new.merchantVat, prov.merchantVat, at, by),
+    date = lockField(old.date, new.date, prov.date, at, by),
+    currency = lockField(old.currency, new.currency, prov.currency, at, by),
+    totalAmount = lockField(old.totalAmount, new.totalAmount, prov.totalAmount, at, by),
+    vatAmount = lockField(old.vatAmount, new.vatAmount, prov.vatAmount, at, by),
+    lineItems = lockField(old.lineItems, new.lineItems, prov.lineItems, at, by),
+    vatBreakdown = lockField(old.vatBreakdown, new.vatBreakdown, prov.vatBreakdown, at, by),
+    receiptNumber = lockField(old.receiptNumber, new.receiptNumber, prov.receiptNumber, at, by),
+    paymentMethod = lockField(old.paymentMethod, new.paymentMethod, prov.paymentMethod, at, by),
+    notes = lockField(old.notes, new.notes, prov.notes, at, by),
+)
+
+private fun lockBankStatement(
+    prov: BankStatementFieldProvenance,
+    old: BankStatementDraftData,
+    new: BankStatementDraftData,
+    at: LocalDateTime,
+    by: UserId,
+) = prov.copy(
+    direction = lockField(old.direction, new.direction, prov.direction, at, by),
+    transactions = lockField(old.transactions, new.transactions, prov.transactions, at, by),
+    accountIban = lockField(old.accountIban, new.accountIban, prov.accountIban, at, by),
+    openingBalance = lockField(old.openingBalance, new.openingBalance, prov.openingBalance, at, by),
+    closingBalance = lockField(old.closingBalance, new.closingBalance, prov.closingBalance, at, by),
+    periodStart = lockField(old.periodStart, new.periodStart, prov.periodStart, at, by),
+    periodEnd = lockField(old.periodEnd, new.periodEnd, prov.periodEnd, at, by),
+    notes = lockField(old.notes, new.notes, prov.notes, at, by),
+)

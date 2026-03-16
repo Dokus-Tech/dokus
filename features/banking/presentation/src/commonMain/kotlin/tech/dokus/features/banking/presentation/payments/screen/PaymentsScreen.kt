@@ -126,14 +126,12 @@ private fun PaymentsContent(
     }
     val displayRows = remember(txData) {
         buildList {
-            var lastYear = -1
-            var lastMonth = -1
+            val seenMonths = mutableSetOf<Long>()
             for (tx in txData) {
                 val date = tx.transactionDate
-                if (date.year != lastYear || date.monthNumber != lastMonth) {
+                val monthKey = date.year.toLong() * 100 + date.monthNumber
+                if (seenMonths.add(monthKey)) {
                     add(TransactionDisplayRow.MonthHeader(date.year, date.monthNumber))
-                    lastYear = date.year
-                    lastMonth = date.monthNumber
                 }
                 add(TransactionDisplayRow.TxRow(tx))
             }

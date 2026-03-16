@@ -32,6 +32,7 @@ import com.composables.icons.lucide.MessageSquare
 import com.composables.icons.lucide.Save
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_confirm
 import tech.dokus.aura.resources.action_save
@@ -88,8 +89,7 @@ fun DocumentReviewFooter(
     isBindingContact: Boolean,
     isRejecting: Boolean,
     hasUnsavedChanges: Boolean,
-    isDocumentConfirmed: Boolean,
-    isDocumentRejected: Boolean,
+    documentStatus: DocumentStatus?,
     hasCashflowEntry: Boolean,
     confirmBlockedReason: StringResource?,
     onConfirm: () -> Unit,
@@ -105,18 +105,20 @@ fun DocumentReviewFooter(
         tonalElevation = 0.dp,
         shadowElevation = 0.dp,
     ) {
-        if (isDocumentConfirmed || isDocumentRejected) {
+        val isConfirmed = documentStatus == DocumentStatus.Confirmed
+        val isRejected = documentStatus == DocumentStatus.Rejected
+        if (isConfirmed || isRejected) {
             ConfirmedFooter(
                 onOpenChat = onOpenChat,
                 onViewEntity = onViewEntity,
                 onViewCashflowEntry = onViewCashflowEntry,
-                label = if (isDocumentRejected) {
+                label = if (isRejected) {
                     stringResource(Res.string.cashflow_document_rejected)
                 } else {
                     stringResource(Res.string.cashflow_document_confirmed)
                 },
-                showChat = !isDocumentRejected,
-                showViewActions = isDocumentConfirmed,
+                showChat = !isRejected,
+                showViewActions = isConfirmed,
                 hasCashflowEntry = hasCashflowEntry
             )
         } else {
@@ -309,8 +311,7 @@ private fun DocumentReviewFooterPreview(
             isBindingContact = false,
             isRejecting = false,
             hasUnsavedChanges = false,
-            isDocumentConfirmed = false,
-            isDocumentRejected = false,
+            documentStatus = DocumentStatus.NeedsReview,
             hasCashflowEntry = false,
             confirmBlockedReason = null,
             onConfirm = {},

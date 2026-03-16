@@ -312,7 +312,6 @@ class DocumentListingFiltersTest {
                 it[id] = docUuid
                 it[tenantId] = tenantUuid
                 it[canonicalContentHash] = null
-                it[effectiveOrigin] = DocumentSource.Upload
             }
         }
         return docUuid

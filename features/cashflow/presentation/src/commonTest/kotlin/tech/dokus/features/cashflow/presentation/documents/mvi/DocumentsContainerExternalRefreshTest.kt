@@ -21,6 +21,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -138,5 +139,6 @@ private fun externalRefreshDocumentRecord(documentId: String): DocumentListItemD
         purposeRendered = null,
         totalAmount = null,
         currency = null,
+        sortDate = LocalDate(2026, 1, 1),
     )
 }

@@ -34,7 +34,7 @@ object ExtractionToolDescriptions {
     const val SupplierEmail = "Supplier email if visible."
 
     const val SellerName = "Seller/issuer legal or trading name (header/logo area). Null if unclear."
-    const val SellerVat = "Seller VAT number if shown. Null if not visible."
+    const val SellerVat = "Seller VAT number if shown. Often in micro-print footer or legal block at the very bottom of the page — read carefully. Null if not visible."
     const val SellerEmail = "Seller email if visible."
     const val SellerStreet = "Seller street and number if visible."
     const val SellerPostalCode = "Seller postal code if visible."
@@ -106,4 +106,19 @@ object ExtractionToolDescriptions {
     const val CreditNoteReason = "Reason for credit note if explicitly stated. Null if not visible."
 
     const val PaymentMethod = "Payment method if visible."
+
+    const val VatNumberFormatGuidance = """
+    ## VAT NUMBER FORMAT
+    - VAT numbers are COUNTRY CODE + DIGITS (and sometimes letters). Extract ONLY the VAT number, never enterprise numbers, RPR references, or other identifiers.
+    - Belgian VAT: "BE" + exactly 10 digits (e.g., BE0123456789). When multiple BE-prefixed numbers appear in a footer, pick the one with exactly 10 digits — longer numbers are bank account identifiers, not VAT numbers.
+    - Dutch VAT: "NL" + 9 digits + "B" + 2 digits (e.g., NL123456789B02).
+    - German VAT: "DE" + exactly 9 digits (e.g., DE123456789).
+    - French VAT: "FR" + 2 alphanumeric chars + 9 digits (e.g., FRXX123456789).
+    - Austrian VAT (UID-Nr.): "ATU" + exactly 8 digits (e.g., ATU12345678).
+    - Luxembourg VAT: "LU" + exactly 8 digits (e.g., LU12345678).
+    - Italian VAT: "IT" + exactly 11 digits (e.g., IT12345678901).
+    - Spanish VAT: "ES" + 1 letter + 7 digits + 1 alphanumeric (e.g., ESX1234567X).
+    - "UID", "UID-Nr.", "USt-IdNr.", "TVA", "BTW", "MwSt" are all labels for VAT numbers.
+    - Remove dots/spaces from the VAT (e.g., "BE 0123.456.789" → "BE0123456789").
+    - If you cannot isolate the exact VAT number, return null."""
 }

@@ -172,6 +172,12 @@ data class AuditCheck(
     }
 }
 
+/** Warning types severe enough to block auto-confirmation */
+private val AUTO_CONFIRM_BLOCKING_WARNING_TYPES = setOf(
+    CheckType.COUNTERPARTY_INTEGRITY,
+    CheckType.MATH,
+)
+
 /**
  * Complete audit report from Layer 3 validation.
  */
@@ -201,6 +207,11 @@ data class AuditReport(
 
     /** Whether the audit passed (no critical failures) */
     val isValid: Boolean = criticalFailures.isEmpty()
+
+    /** Whether the audit is safe for auto-confirmation (no critical failures AND no blocking warnings) */
+    val isAutoConfirmSafe: Boolean = isValid && warnings.none {
+        it.type in AUTO_CONFIRM_BLOCKING_WARNING_TYPES
+    }
 
     /** Whether there are any issues (failures or warnings) */
     val hasIssues: Boolean = failedCount > 0

@@ -58,6 +58,7 @@ import tech.dokus.domain.model.UndoAutoPaymentRequest
 import tech.dokus.domain.model.CreateExpenseRequest
 import tech.dokus.domain.model.CreateInvoiceRequest
 import tech.dokus.domain.model.DocumentDraftDto
+import tech.dokus.domain.model.Dpi
 import tech.dokus.domain.model.DocumentCountsResponse
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentIngestionDto
@@ -82,6 +83,9 @@ import tech.dokus.domain.model.PeppolValidationResult
 import tech.dokus.domain.model.PeppolVerifyResponse
 import tech.dokus.domain.model.RecordPaymentRequest
 import tech.dokus.domain.model.RejectDocumentRequest
+import tech.dokus.domain.model.BulkReprocessRequest
+import tech.dokus.domain.model.BulkReprocessResponse
+import tech.dokus.domain.model.ProcessingHealthRecommendation
 import tech.dokus.domain.model.ReprocessRequest
 import tech.dokus.domain.model.ReprocessResponse
 import tech.dokus.domain.model.ResolveDocumentMatchReviewRequest
@@ -733,6 +737,23 @@ internal class CashflowRemoteDataSourceImpl(
         }
     }
 
+    override suspend fun getProcessingHealth(): Result<ProcessingHealthRecommendation> {
+        return runCatching {
+            httpClient.get(Documents.ProcessingHealth()).body()
+        }
+    }
+
+    override suspend fun bulkReprocess(
+        request: BulkReprocessRequest
+    ): Result<BulkReprocessResponse> {
+        return runCatching {
+            httpClient.post(Documents.BulkReprocess()) {
+                contentType(ContentType.Application.Json)
+                setBody(request)
+            }.body()
+        }
+    }
+
     override suspend fun confirmDocument(
         documentId: DocumentId
     ): Result<DocumentDetailDto> {
@@ -766,7 +787,7 @@ internal class CashflowRemoteDataSourceImpl(
 
     override suspend fun getDocumentPages(
         documentId: DocumentId,
-        dpi: Int,
+        dpi: Dpi,
         maxPages: Int
     ): Result<DocumentPagesResponse> {
         return runCatching {
@@ -797,7 +818,7 @@ internal class CashflowRemoteDataSourceImpl(
     override suspend fun getDocumentSourcePages(
         documentId: DocumentId,
         sourceId: DocumentSourceId,
-        dpi: Int,
+        dpi: Dpi,
         maxPages: Int
     ): Result<DocumentPagesResponse> {
         return runCatching {

@@ -9,10 +9,10 @@ fun DocumentAiProcessingResult.toProcessingOutcome(
     val classificationConfidence = classification.confidence
     val extractionConfidence = extraction.confidenceScore()
     val meetsConfidence = classificationConfidence >= threshold && extractionConfidence >= threshold
-    val isValid = auditReport.isValid
+    val isValid = auditReport.isAutoConfirmSafe
     return if (meetsConfidence && isValid) {
-        ProcessingOutcome.AutoConfirmEligible
+        ProcessingOutcome.HighConfidence
     } else {
-        ProcessingOutcome.ManualReviewRequired
+        ProcessingOutcome.LowConfidence
     }
 }

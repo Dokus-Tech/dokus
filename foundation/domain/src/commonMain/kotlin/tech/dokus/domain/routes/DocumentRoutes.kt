@@ -2,10 +2,11 @@ package tech.dokus.domain.routes
 
 import io.ktor.resources.Resource
 import kotlinx.serialization.Serializable
-import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DocumentListFilter
 import tech.dokus.domain.enums.DocumentStatus
+import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.IngestionStatus
+import tech.dokus.domain.model.Dpi
 
 /**
  * Type-safe route definitions for Document Management API.
@@ -83,6 +84,22 @@ class Documents {
     @Serializable
     @Resource("events")
     class Events(val parent: Documents = Documents())
+
+    /**
+     * GET /api/v1/documents/processing-health
+     * Processing health recommendation for the workspace.
+     */
+    @Serializable
+    @Resource("processing-health")
+    class ProcessingHealth(val parent: Documents = Documents())
+
+    /**
+     * POST /api/v1/documents/bulk-reprocess
+     * Bulk reprocess eligible documents (NeedsReview + Failed, recent, max 100).
+     */
+    @Serializable
+    @Resource("bulk-reprocess")
+    class BulkReprocess(val parent: Documents = Documents())
 
     /**
      * /api/v1/documents/match-reviews/...
@@ -181,7 +198,7 @@ class Documents {
         class SourcePages(
             val parent: Id,
             val sourceId: String,
-            val dpi: Int = 150,
+            val dpi: Dpi,
             val maxPages: Int = 10
         )
 
@@ -195,7 +212,7 @@ class Documents {
             val parent: Id,
             val sourceId: String,
             val page: Int,
-            val dpi: Int = 150
+            val dpi: Dpi
         )
 
         /**
@@ -245,7 +262,7 @@ class Documents {
         @Resource("pages")
         class Pages(
             val parent: Id,
-            val dpi: Int = 150,
+            val dpi: Dpi,
             val maxPages: Int = 10
         )
 
@@ -261,7 +278,7 @@ class Documents {
         class PageImage(
             val parent: Id,
             val page: Int,
-            val dpi: Int = 150
+            val dpi: Dpi
         )
     }
 }

@@ -136,6 +136,37 @@ enum class AutoPaymentTriggerSource(override val dbValue: String) : DbEnum {
     ManualPayment("MANUAL_PAYMENT")
 }
 
+/**
+ * Type of signal used during transaction-to-document matching.
+ * Each signal contributes a weighted log-odds value to the Bayesian score.
+ */
+@Serializable
+enum class MatchSignalType(override val dbValue: String) : DbEnum {
+    @SerialName("OGM")
+    Ogm("OGM"),
+
+    @SerialName("INVOICE_REF")
+    InvoiceRef("INVOICE_REF"),
+
+    @SerialName("COUNTERPARTY_IBAN")
+    CounterpartyIban("COUNTERPARTY_IBAN"),
+
+    @SerialName("AMOUNT")
+    Amount("AMOUNT"),
+
+    @SerialName("CONTACT_NAME")
+    ContactName("CONTACT_NAME"),
+
+    @SerialName("DATE_PROXIMITY")
+    DateProximity("DATE_PROXIMITY"),
+
+    @SerialName("HISTORICAL_PATTERN")
+    HistoricalPattern("HISTORICAL_PATTERN"),
+
+    @SerialName("REJECTED_GUARD")
+    RejectedGuard("REJECTED_GUARD"),
+}
+
 @Serializable
 enum class AutoPaymentDecision(override val dbValue: String) : DbEnum {
     @SerialName("SKIPPED")

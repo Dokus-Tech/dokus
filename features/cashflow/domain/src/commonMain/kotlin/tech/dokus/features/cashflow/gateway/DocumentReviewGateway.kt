@@ -5,14 +5,15 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentMatchReviewId
 import tech.dokus.domain.ids.DocumentSourceId
+import tech.dokus.domain.model.Dpi
+import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.DocumentMatchResolutionDecision
 import tech.dokus.domain.model.DocumentPagesResponse
-import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.DocumentRecordStreamEvent
 import tech.dokus.domain.model.RejectDocumentRequest
-import tech.dokus.domain.model.UpdateDraftRequest
 import tech.dokus.domain.model.ReprocessRequest
 import tech.dokus.domain.model.ReprocessResponse
+import tech.dokus.domain.model.UpdateDraftRequest
 import tech.dokus.domain.model.UpdateDraftResponse
 
 /**
@@ -44,14 +45,14 @@ interface DocumentReviewGateway {
 
     suspend fun getDocumentPages(
         documentId: DocumentId,
-        dpi: Int = 150,
+        dpi: Dpi,
         maxPages: Int = 10
     ): Result<DocumentPagesResponse>
 
     suspend fun getDocumentSourcePages(
         documentId: DocumentId,
         sourceId: DocumentSourceId,
-        dpi: Int = 150,
+        dpi: Dpi,
         maxPages: Int = 10
     ): Result<DocumentPagesResponse>
 

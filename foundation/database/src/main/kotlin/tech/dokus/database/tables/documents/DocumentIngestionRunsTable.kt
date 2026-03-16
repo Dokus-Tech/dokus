@@ -5,7 +5,6 @@ import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
 import org.jetbrains.exposed.v1.datetime.datetime
 import tech.dokus.database.tables.auth.TenantTable
-import tech.dokus.domain.enums.IndexingStatus
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.enums.ProcessingOutcome
 import tech.dokus.foundation.backend.database.dbEnumeration
@@ -86,19 +85,9 @@ object DocumentIngestionRunsTable : UUIDTable("document_ingestion_runs") {
     // Per-field confidence scores as JSON
     val fieldConfidences = text("field_confidences").nullable()
 
-    // Chunk indexing status (tracked separately from ingestion status)
-    // Allows RAG indexing to be retried independently
-    val indexingStatus = dbEnumeration<IndexingStatus>("indexing_status")
-        .default(IndexingStatus.Pending)
-
-    // Error message if chunk indexing failed
-    val indexingErrorMessage = text("indexing_error_message").nullable()
-
-    // When chunk indexing completed
-    val indexedAt = datetime("indexed_at").nullable()
-
-    // Number of chunks created (for diagnostics)
-    val chunksCount = integer("chunks_count").nullable()
+    // Processing version stamped on successful completion.
+    // Null for runs that predate version tracking (treated as version 0).
+    val processingVersion = integer("processing_version").nullable()
 
     init {
         // For processor: find runs to process by status

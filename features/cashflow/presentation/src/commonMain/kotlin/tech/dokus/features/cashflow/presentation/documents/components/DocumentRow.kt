@@ -168,7 +168,7 @@ internal fun DocumentTableRow(
         is DocumentListReferenceValue.Status -> listReference.value.localized
     }
     val amountDouble = document.totalAmount?.toDouble()
-    val dateLabel = formatShortDate(document.uploadedAt.date)
+    val dateLabel = formatShortDate(document.sortDate)
     val needsAttention = when (listStatus) {
         DocumentUiStatus.Queued,
         DocumentUiStatus.Processing,
@@ -285,7 +285,7 @@ internal fun DocumentMobileRow(
         is DocumentListReferenceValue.Status -> listReference.value.localized
     }
     val amountDouble = document.totalAmount?.toDouble()
-    val dateLabel = formatShortDate(document.uploadedAt.date)
+    val dateLabel = formatShortDate(document.sortDate)
     val needsAttention = when (listStatus) {
         DocumentUiStatus.Queued,
         DocumentUiStatus.Processing,
@@ -417,7 +417,8 @@ internal fun resolveListInlineStatus(document: DocumentListItemDto): DocumentUiS
         DocumentUiStatus.Failed -> status
 
         DocumentUiStatus.Review,
-        DocumentUiStatus.Ready -> null
+        DocumentUiStatus.Ready,
+        DocumentUiStatus.Unsupported -> null
     }
 }
 

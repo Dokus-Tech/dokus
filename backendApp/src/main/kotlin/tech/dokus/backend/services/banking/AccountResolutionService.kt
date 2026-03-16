@@ -127,6 +127,8 @@ class AccountResolutionService(
             "103" to "Argenta",
             "539" to "KBC Brussels",
             "737" to "Triodos",
+            "905" to "Wise",
+            "967" to "bunq",
         )
     }
 }

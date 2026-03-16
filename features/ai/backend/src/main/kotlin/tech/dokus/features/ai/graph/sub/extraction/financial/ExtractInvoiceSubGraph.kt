@@ -234,6 +234,8 @@ private val ExtractDocumentInput.prompt
     - Amount fields must be numeric strings using '.' as decimal separator (e.g., "1234.56").
     - If multiple totals exist, prefer the "Total" / "Totaal" / "Total TTC" style final payable amount.
 
+    ${ExtractionToolDescriptions.VatNumberFormatGuidance}
+
     ## PARTY EXTRACTION (CRITICAL)
     - `seller*`: entity that ISSUED the invoice.
     - Prioritize issuer evidence from logo/header legal block and footer issuer/contact/VAT block.

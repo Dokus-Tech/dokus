@@ -39,7 +39,9 @@ import tech.dokus.database.tables.documents.DocumentPurposeTemplatesTable
 import tech.dokus.database.tables.documents.DocumentSourcesTable
 import tech.dokus.database.tables.documents.DocumentLinksTable
 import tech.dokus.database.tables.documents.DocumentsTable
-import tech.dokus.database.tables.documents.InvoiceBankMatchLinksTable
+import tech.dokus.database.tables.banking.MatchPatternsTable
+import tech.dokus.database.tables.banking.RejectedMatchPairsTable
+import tech.dokus.database.tables.documents.TransactionMatchLinksTable
 import tech.dokus.database.tables.documents.AutoPaymentAuditEventsTable
 import tech.dokus.database.tables.notifications.NotificationPreferencesTable
 import tech.dokus.database.tables.notifications.NotificationsTable
@@ -97,7 +99,9 @@ object DokusSchema {
                 DocumentPurposeTemplatesTable,
                 DocumentPurposeExamplesTable,
                 BankTransactionsTable,
-                InvoiceBankMatchLinksTable,
+                TransactionMatchLinksTable,
+                MatchPatternsTable,
+                RejectedMatchPairsTable,
                 AutoPaymentAuditEventsTable,
                 DocumentLinksTable,
 

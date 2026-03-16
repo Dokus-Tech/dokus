@@ -41,7 +41,7 @@ class DocumentProcessingAgentTest {
             documentFetcher = documentFetcher
         )
 
-        val result = agent.process(AcceptDocumentInput(DocumentId.generate(), TestAiFixtures.tenant))
+        val result = agent.process(AcceptDocumentInput.Upload(documentId = DocumentId.generate(), tenant = TestAiFixtures.tenant, associatedPersonNames = emptyList(), userFeedback = null, maxPagesOverride = null, dpiOverride = null))
 
         assertEquals(DocumentType.Unknown, result.classification.documentType)
         assertIs<FinancialExtractionResult.Unsupported>(result.extraction)

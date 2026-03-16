@@ -197,8 +197,8 @@ class DocumentReviewCanonicalStateTest {
                 id = documentId,
                 tenantId = tenantId,
                 filename = "invoice.pdf",
-                effectiveOrigin = DocumentSource.Upload,
                 uploadedAt = now,
+                sortDate = LocalDate(2026, 2, 11),
             ),
             draft = draft,
             latestIngestion = ingestion,
@@ -221,7 +221,7 @@ class DocumentReviewCanonicalStateTest {
             selectedContactId = ContactId.generate(),
             contactSelectionState = ContactSelectionState.Selected,
             isContactRequired = true,
-            isDocumentConfirmed = isDocumentConfirmed,
+            documentStatus = if (isDocumentConfirmed) DocumentStatus.Confirmed else DocumentStatus.NeedsReview,
             cashflowEntryState = cashflowEntryState,
         )
     }

@@ -41,7 +41,6 @@ internal class DocumentRecordLoader(
         val effectiveDocument = if (preferredSource != null) {
             document.copy(
                 filename = preferredSource.filename ?: document.filename,
-                effectiveOrigin = preferredSource.sourceChannel,
                 uploadedAt = preferredSource.arrivalAt,
             )
         } else {

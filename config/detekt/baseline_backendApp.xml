@@ -3,6 +3,7 @@
   <ManuallySuppressedIssues>
     <ID>TooGenericExceptionCaught:TokenManager.kt$TokenManagerImpl$e: Exception</ID>
     <ID>MaxLineLength:MySessionsContainer.kt$private</ID>
+    <ID>LongParameterList:IngestionItemEntity.kt$IngestionItemEntity.Companion$( runId: IngestionRunId, documentId: DocumentId, tenantId: TenantId, sourceId: DocumentSourceId? = null, peppolStructuredSnapshotJson: String? = null, peppolSnapshotVersion: Int? = null, userFeedback: String? = null, overrideMaxPages: Int? = null, overrideDpi: Dpi? = null, sourceChannel: DocumentSource? = null, )</ID>
   </ManuallySuppressedIssues>
   <CurrentIssues>
     <ID>ArgumentListWrapping:AttachmentRoutes.kt$(DocumentUploadValidator.DEFAULT_MAX_FILE_SIZE_BYTES)</ID>

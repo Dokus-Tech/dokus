@@ -5,6 +5,8 @@ import tech.dokus.aura.resources.banking_balances_subtitle
 import tech.dokus.aura.resources.banking_balances_title
 import tech.dokus.aura.resources.banking_payments_subtitle
 import tech.dokus.aura.resources.banking_payments_title
+import tech.dokus.aura.resources.credit_card
+import tech.dokus.aura.resources.landmark
 import tech.dokus.aura.resources.nav_section_banking
 import tech.dokus.aura.resources.wallet_2
 import tech.dokus.features.banking.di.bankingPresentationModule
@@ -37,7 +39,7 @@ object BankingAppModule : AppModule {
                 NavItem(
                     id = "banking_balances",
                     titleRes = Res.string.banking_balances_title,
-                    iconRes = Res.drawable.wallet_2,
+                    iconRes = Res.drawable.landmark,
                     destination = HomeDestination.Balances,
                     priority = 0,
                     shellTopBar = ShellTopBarDefault.Title,
@@ -46,7 +48,7 @@ object BankingAppModule : AppModule {
                 NavItem(
                     id = "banking_payments",
                     titleRes = Res.string.banking_payments_title,
-                    iconRes = Res.drawable.wallet_2,
+                    iconRes = Res.drawable.credit_card,
                     destination = HomeDestination.Payments,
                     priority = 1,
                     shellTopBar = ShellTopBarDefault.Title,

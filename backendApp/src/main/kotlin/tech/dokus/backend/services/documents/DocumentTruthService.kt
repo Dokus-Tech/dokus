@@ -294,7 +294,6 @@ class DocumentTruthService(
                     it[DocumentsTable.id] = UUID.fromString(documentId.toString())
                     it[DocumentsTable.tenantId] = tenantUuid
                     it[DocumentsTable.canonicalContentHash] = null
-                    it[DocumentsTable.effectiveOrigin] = sourceChannel
                 }
 
                 val sourceId = DocumentSourceId.generate()
@@ -577,7 +576,6 @@ class DocumentTruthService(
                     payload = DocumentCreatePayload(
                         canonicalContentHash = source.contentHash,
                         canonicalIdentityKey = source.identityKeyHash,
-                        effectiveOrigin = source.sourceChannel
                     )
                 )
                 sourceRepository.reassignToDocument(

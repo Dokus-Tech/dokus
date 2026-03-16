@@ -12,8 +12,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_payments_invoice_manual
     WHERE bank_transaction_id IS NULL AND reversed_at IS NULL;
 
 -- Prevent duplicate active match links per bank transaction
-CREATE UNIQUE INDEX IF NOT EXISTS uq_invoice_bank_match_links_active_tx
-    ON invoice_bank_match_links (tenant_id, imported_bank_transaction_id)
+CREATE UNIQUE INDEX IF NOT EXISTS uq_transaction_match_links_active_tx
+    ON transaction_match_links (tenant_id, imported_bank_transaction_id)
     WHERE reversed_at IS NULL;
 
 -- HNSW index for purpose similarity search (pgvector cosine distance)

@@ -10,7 +10,11 @@ import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.greaterEq
 import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.core.isNull
+import org.jetbrains.exposed.v1.core.less
+import org.jetbrains.exposed.v1.core.or
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.select
@@ -18,32 +22,32 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.v1.jdbc.update
 import tech.dokus.database.tables.contacts.ContactsTable
+import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
 import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentListFilter
 import tech.dokus.domain.enums.DocumentPurposeSource
 import tech.dokus.domain.enums.DocumentRejectReason
-import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.enums.PurposePeriodMode
-import tech.dokus.domain.enums.SourceTrust
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.DocumentDto
-import tech.dokus.domain.model.FieldProvenance
+import tech.dokus.domain.model.DocumentFieldProvenance
 import tech.dokus.domain.model.ProvenanceMergeResult
+import tech.dokus.domain.model.applyUserLocks
 import tech.dokus.domain.model.contact.CounterpartyInfo
 import tech.dokus.domain.model.contact.CounterpartySnapshot
 import tech.dokus.domain.model.contact.MatchEvidence
 import tech.dokus.domain.model.contact.SuggestedContact
 import tech.dokus.domain.model.contact.isUnresolved
-import tech.dokus.domain.model.diffFieldPaths
 import tech.dokus.domain.model.mergeWithProvenance
 import tech.dokus.domain.model.toDirection
 import tech.dokus.domain.model.toDocumentType
@@ -51,6 +55,7 @@ import tech.dokus.domain.model.toSortDate
 import tech.dokus.domain.repository.DocumentStatusChecker
 import tech.dokus.domain.utils.json
 import java.util.UUID
+import kotlin.time.Duration.Companion.days
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toKotlinUuid
 
@@ -80,7 +85,6 @@ data class DocumentOperationalCounts(
 data class DocumentCreatePayload(
     val canonicalContentHash: String?,
     val canonicalIdentityKey: String? = null,
-    val effectiveOrigin: DocumentSource = DocumentSource.Upload
 )
 
 /**
@@ -142,7 +146,6 @@ class DocumentRepository : DocumentStatusChecker {
             it[DocumentsTable.tenantId] = UUID.fromString(tenantId.toString())
             it[DocumentsTable.canonicalContentHash] = payload.canonicalContentHash
             it[DocumentsTable.canonicalIdentityKey] = payload.canonicalIdentityKey
-            it[DocumentsTable.effectiveOrigin] = payload.effectiveOrigin
             it[DocumentsTable.sortDate] = now.date
         }
         id
@@ -318,6 +321,142 @@ class DocumentRepository : DocumentStatusChecker {
         )
     }
 
+    // ── Processing health ────────────────────────────────────────────
+
+    data class ProcessingHealthStats(
+        val totalProcessedLast30Days: Int,
+        val needsReviewCount: Int,
+        val failedCount: Int,
+        val eligibleForReprocessCount: Int,
+    )
+
+    /**
+     * Compute processing health stats for the workspace.
+     * Scoped to last 30 days. Joins with ingestion runs to check processing version.
+     * CRITICAL: filters by tenantId.
+     */
+    suspend fun getProcessingHealthStats(
+        tenantId: TenantId,
+        currentProcessingVersion: Int,
+    ): ProcessingHealthStats = newSuspendedTransaction {
+        val tenantUuid = UUID.fromString(tenantId.toString())
+        val cutoff = Clock.System.now().minus(30.days).toLocalDateTime(TimeZone.UTC)
+        val runs = DocumentIngestionRunsTable
+
+        // Base: documents for this tenant updated in last 30 days
+        val base = DocumentsTable
+            .join(runs, JoinType.LEFT, additionalConstraint = {
+                DocumentsTable.lastSuccessfulRunId eq runs.id
+            })
+            .selectAll()
+            .where {
+                (DocumentsTable.tenantId eq tenantUuid) and
+                    (DocumentsTable.updatedAt greaterEq cutoff)
+            }
+
+        val rows = base.toList()
+
+        var total = 0
+        var needsReview = 0
+        var failed = 0
+        var eligible = 0
+
+        for (row in rows) {
+            total++
+            val status = row[DocumentsTable.documentStatus]
+            when (status) {
+                DocumentStatus.NeedsReview -> needsReview++
+                DocumentStatus.Rejected -> {} // count toward total only
+                DocumentStatus.Confirmed -> {} // count toward total only
+                DocumentStatus.Unsupported -> {} // count toward total only
+                null -> {} // no draft yet
+            }
+
+            // Check if this document has a failed latest ingestion (no successful run)
+            val lastRunId = row.getOrNull(DocumentsTable.lastSuccessfulRunId)
+            if (lastRunId == null && status != DocumentStatus.Confirmed) {
+                // Document exists but never had a successful run — likely failed
+                failed++
+            }
+
+            // Eligible: NeedsReview or has no successful run, with old/null processing version
+            if (status == DocumentStatus.NeedsReview || lastRunId == null) {
+                val version = row.getOrNull(runs.processingVersion) ?: 0
+                if (version < currentProcessingVersion) {
+                    eligible++
+                }
+            }
+        }
+
+        ProcessingHealthStats(
+            totalProcessedLast30Days = total,
+            needsReviewCount = needsReview,
+            failedCount = failed,
+            eligibleForReprocessCount = eligible,
+        )
+    }
+
+    data class DocumentReprocessCandidate(
+        val documentId: DocumentId,
+        val sourceId: DocumentSourceId?,
+    )
+
+    /**
+     * Find documents eligible for bulk reprocessing.
+     * Scope: NeedsReview + documents without successful runs, last 30 days,
+     * processing_version < currentVersion or null.
+     * Excludes documents with active (Queued/Processing) ingestion runs.
+     *
+     * Safety: reuses existing source, does not mutate document, does not
+     * overwrite confirmed truth — only identifies candidates for new runs.
+     *
+     * CRITICAL: filters by tenantId.
+     */
+    @OptIn(ExperimentalUuidApi::class)
+    suspend fun findDocumentsEligibleForReprocess(
+        tenantId: TenantId,
+        currentProcessingVersion: Int,
+        limit: Int = 100,
+    ): List<DocumentReprocessCandidate> = newSuspendedTransaction {
+        val tenantUuid = UUID.fromString(tenantId.toString())
+        val cutoff = Clock.System.now().minus(30.days).toLocalDateTime(TimeZone.UTC)
+        val runs = DocumentIngestionRunsTable
+
+        // Find NeedsReview documents from last 30 days with old/null processing version
+        val candidates = DocumentsTable
+            .join(runs, JoinType.LEFT, additionalConstraint = {
+                DocumentsTable.lastSuccessfulRunId eq runs.id
+            })
+            .select(DocumentsTable.id)
+            .where {
+                (DocumentsTable.tenantId eq tenantUuid) and
+                    (DocumentsTable.updatedAt greaterEq cutoff) and
+                    (DocumentsTable.documentStatus eq DocumentStatus.NeedsReview) and
+                    ((runs.processingVersion.isNull()) or (runs.processingVersion less currentProcessingVersion))
+            }
+            .limit(limit)
+            .map { row -> DocumentId(row[DocumentsTable.id].value.toKotlinUuid()) }
+
+        // Filter out documents that already have active runs
+        val activeDocIds = if (candidates.isNotEmpty()) {
+            DocumentIngestionRunsTable
+                .select(DocumentIngestionRunsTable.documentId)
+                .where {
+                    (DocumentIngestionRunsTable.tenantId eq tenantUuid) and
+                        (DocumentIngestionRunsTable.documentId inList candidates.map { UUID.fromString(it.toString()) }) and
+                        (DocumentIngestionRunsTable.status inList listOf(IngestionStatus.Queued, IngestionStatus.Processing))
+                }
+                .map { it[DocumentIngestionRunsTable.documentId] }
+                .toSet()
+        } else {
+            emptySet()
+        }
+
+        candidates
+            .filter { UUID.fromString(it.toString()) !in activeDocIds }
+            .map { docId -> DocumentReprocessCandidate(documentId = docId, sourceId = null) }
+    }
+
     /**
      * Delete a document.
      * CRITICAL: Must filter by tenantId.
@@ -367,7 +506,7 @@ class DocumentRepository : DocumentStatusChecker {
         documentType: DocumentType,
         aiKeywords: List<String> = emptyList(),
         force: Boolean = false,
-        fieldProvenance: Map<String, FieldProvenance>? = null
+        fieldProvenance: DocumentFieldProvenance? = null
     ): Boolean = newSuspendedTransaction {
         val now = Clock.System.now().toStdlibInstant().toLocalDateTime(TimeZone.UTC)
         val docIdUuid = UUID.fromString(documentId.toString())
@@ -389,20 +528,16 @@ class DocumentRepository : DocumentStatusChecker {
         val existingData = existing[DocumentsTable.canonicalData]
             ?.let<String, DocumentDraftData> { json.decodeFromString(it) }
         val existingProv = existing[DocumentsTable.fieldProvenance]
-            ?.let<String, Map<String, FieldProvenance>> { json.decodeFromString(it) }
+            ?.let<String, DocumentFieldProvenance> { json.decodeFromString(it) }
 
         // Merge logic:
         // - force → full overwrite
         // - no existing data → full write (first extraction)
-        // - no existing provenance (legacy) → fall back to binary draftVersion==0 check
+        // - no existing provenance → full overwrite
         // - has provenance → per-field merge using trust comparison
         val mergeResult: ProvenanceMergeResult? = when {
             force || existingData == null -> null // null = full overwrite
-            existingProv == null -> {
-                // Legacy doc without provenance: use old binary check
-                val currentVersion = existing[DocumentsTable.draftVersion]
-                if (currentVersion == 0) null else ProvenanceMergeResult(existingData, emptyMap())
-            }
+            existingProv == null -> null // no existing provenance → full overwrite
             fieldProvenance != null -> {
                 mergeWithProvenance(existingData, extractedData, existingProv, fieldProvenance)
             }
@@ -500,30 +635,16 @@ class DocumentRepository : DocumentStatusChecker {
         val existingData = current[DocumentsTable.canonicalData]
             ?.let<String, DocumentDraftData> { json.decodeFromString(it) }
         val existingProv = current[DocumentsTable.fieldProvenance]
-            ?.let<String, Map<String, FieldProvenance>> { json.decodeFromString(it) }
-            ?: emptyMap()
+            ?.let<String, DocumentFieldProvenance> { json.decodeFromString(it) }
 
-        val changedFields = if (existingData != null) {
-            diffFieldPaths(existingData, updatedData)
-        } else {
-            emptySet()
-        }
-
-        val updatedProv = if (changedFields.isNotEmpty()) {
-            val mutable = existingProv.toMutableMap()
-            for (field in changedFields) {
-                val existing = mutable[field]
-                mutable[field] = FieldProvenance(
-                    sourceId = existing?.sourceId,
-                    sourceRunId = existing?.sourceRunId,
-                    sourceTrust = existing?.sourceTrust ?: SourceTrust.ManualEntry,
-                    extractionConfidence = existing?.extractionConfidence,
-                    userLocked = true,
-                    lockedAt = now,
-                    lockedBy = userId,
-                )
-            }
-            mutable
+        val updatedProv: DocumentFieldProvenance? = if (existingData != null && existingProv != null) {
+            applyUserLocks(
+                provenance = existingProv,
+                existing = existingData,
+                updated = updatedData,
+                lockedAt = now,
+                lockedBy = userId,
+            )
         } else {
             null
         }

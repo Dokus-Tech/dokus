@@ -24,12 +24,13 @@ private const val TypographicMinus = '\u2212' // −
 /**
  * Formatted currency amount with sign-based coloring.
  *
- * Format: German locale — `€1.306,12` (dot thousands, comma decimals).
+ * Format: `€1.306,12` (dot thousands, comma decimals).
  * Negative amounts use typographic minus `−` (U+2212).
  *
  * @param value Amount (negative = expense)
  * @param size Font size (default 13sp)
  * @param weight Font weight (default SemiBold/600)
+ * @param currencySign Currency symbol to display (default "€")
  */
 @Composable
 fun Amt(
@@ -37,6 +38,7 @@ fun Amt(
     modifier: Modifier = Modifier,
     size: TextUnit = 13.sp,
     weight: FontWeight = FontWeight.SemiBold,
+    currencySign: String = "€",
 ) {
     val color = when {
         value < 0 -> MaterialTheme.colorScheme.positionNegative
@@ -45,7 +47,7 @@ fun Amt(
     }
 
     Text(
-        text = formatEuroCurrency(value),
+        text = formatCurrency(value, currencySign),
         modifier = modifier,
         color = color,
         fontSize = size,
@@ -62,6 +64,7 @@ fun Amt(
  * @param minorUnits Amount in minor units (e.g. 130612 = €1.306,12)
  * @param size Font size (default 13sp)
  * @param weight Font weight (default SemiBold/600)
+ * @param currencySign Currency symbol to display (default "€")
  */
 @Composable
 fun Amt(
@@ -69,12 +72,14 @@ fun Amt(
     modifier: Modifier = Modifier,
     size: TextUnit = 13.sp,
     weight: FontWeight = FontWeight.SemiBold,
+    currencySign: String = "€",
 ) {
     Amt(
         value = minorUnits / 100.0,
         modifier = modifier,
         size = size,
         weight = weight,
+        currencySign = currencySign,
     )
 }
 
@@ -89,9 +94,10 @@ private fun AmtPreview(
 }
 
 /**
- * Formats a Double as Euro currency in German locale: `€1.306,12` or `−€1.306,12`.
+ * Formats a Double as currency: `€1.306,12` or `−€1.306,12`.
+ * Uses dot thousands separator, comma decimal separator.
  */
-fun formatEuroCurrency(value: Double): String {
+fun formatCurrency(value: Double, sign: String = "€"): String {
     val absValue = abs(value)
     val cents = (absValue * 100).roundToLong()
     val intPart = cents / 100
@@ -111,9 +117,12 @@ fun formatEuroCurrency(value: Double): String {
 
     return buildString {
         if (value < 0) append(TypographicMinus)
-        append('€')
+        append(sign)
         append(withThousands)
         append(',')
         append(decStr)
     }
 }
+
+@Deprecated("Use formatCurrency", ReplaceWith("formatCurrency(value)"))
+fun formatEuroCurrency(value: Double): String = formatCurrency(value)

@@ -102,7 +102,7 @@ SYMBOL_SMALL="⋄"
 
 # Configuration
 PROJECT_NAME="dokus"
-COMPOSE_FILE="deployment/docker-compose.pro.yml -f deployment/docker-compose.local.yml"
+COMPOSE_FILE="deployment/docker-compose.pro.yml -f deployment/docker-compose.local.yml -f deployment/docker-compose.langfuse.yml"
 SERVER_SERVICE_DIR="backendApp"
 
 # Database configuration - consolidated single database
@@ -117,6 +117,17 @@ DB_PASSWORD="devpassword"
 export DB_PASSWORD="devpassword"
 export REDIS_PASSWORD="devredispass"
 export MINIO_PASSWORD="dokusadminpassword"
+
+# Langfuse observability (always enabled in dev)
+export LANGFUSE_PUBLIC_KEY="pk-lf-dev-dokus"
+export LANGFUSE_SECRET_KEY="sk-lf-dev-dokus"
+export LANGFUSE_ENCRYPTION_KEY="0000000000000000000000000000000000000000000000000000000000000000"
+export LANGFUSE_SALT="dev-langfuse-salt"
+export LANGFUSE_DB_PASSWORD="langfusedevpass"
+export LANGFUSE_CLICKHOUSE_PASSWORD="langfuseclickhouse"
+export LANGFUSE_REDIS_PASSWORD="langfuseredispass"
+export LANGFUSE_MINIO_PASSWORD="langfuseminiopass"
+export LANGFUSE_INIT_PASSWORD="adminadmin"
 
 # Ensure empty .env exists (compose validates before applying overrides)
 touch deployment/.env 2>/dev/null || true

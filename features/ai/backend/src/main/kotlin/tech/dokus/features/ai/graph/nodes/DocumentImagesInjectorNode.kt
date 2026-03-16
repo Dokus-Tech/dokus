@@ -5,14 +5,15 @@ import ai.koog.agents.core.dsl.builder.AIAgentSubgraphBuilderBase
 import ai.koog.prompt.message.AttachmentContent
 import ai.koog.prompt.message.ContentPart
 import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.model.Dpi
 import tech.dokus.features.ai.services.DocumentFetcher
 import tech.dokus.features.ai.services.DocumentImageService
 import tech.dokus.features.ai.tools.DocumentImagesFetcherTool
 
-internal interface InputWithDocumentId {
+interface InputWithDocumentId {
     val documentId: DocumentId
     val maxPagesOverride: Int? get() = null
-    val dpiOverride: Int? get() = null
+    val dpiOverride: Dpi? get() = null
 }
 
 internal inline fun <reified Input> AIAgentSubgraphBuilderBase<*, *>.documentImagesInjectorNode(
@@ -26,30 +27,12 @@ internal inline fun <reified Input> AIAgentSubgraphBuilderBase<*, *>.documentIma
             return@node args
         }
 
-        val maxPagesOverride = args.maxPagesOverride
-        val dpiOverride = args.dpiOverride
-        val images = when {
-            maxPagesOverride != null && dpiOverride != null -> DocumentImageService.getDocumentImages(
-                document.bytes,
-                document.mimeType,
-                pageCount = maxPagesOverride,
-                dpi = dpiOverride
-            )
-            maxPagesOverride != null -> DocumentImageService.getDocumentImages(
-                document.bytes,
-                document.mimeType,
-                pageCount = maxPagesOverride
-            )
-            dpiOverride != null -> DocumentImageService.getDocumentImages(
-                document.bytes,
-                document.mimeType,
-                dpi = dpiOverride
-            )
-            else -> DocumentImageService.getDocumentImages(
-                document.bytes,
-                document.mimeType,
-            )
-        }
+        val images = DocumentImageService.getDocumentImages(
+            documentBytes = document.bytes,
+            mimeType = document.mimeType,
+            pageCount = args.maxPagesOverride ?: DocumentImageService.DEFAULT_PAGE_COUNT,
+            dpi = args.dpiOverride ?: Dpi.default,
+        )
         llm.writeSession {
             appendPrompt {
                 user {

@@ -66,7 +66,6 @@ class DocumentProcessingWorkerTimeoutTest {
         val worker = DocumentProcessingWorker(
             ingestionRepository = ingestionRepository,
             processingAgent = processingAgent,
-            documentRepository = documentRepository,
             documentSsePublisher = documentSsePublisher,
             config = ProcessorConfig(
                 pollingInterval = 1_000,

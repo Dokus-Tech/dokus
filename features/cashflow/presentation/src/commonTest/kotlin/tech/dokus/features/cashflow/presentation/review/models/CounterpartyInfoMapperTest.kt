@@ -5,7 +5,6 @@ import kotlinx.datetime.LocalDateTime
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.Country
 import tech.dokus.domain.enums.DocumentDirection
-import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.ContactId
@@ -101,8 +100,8 @@ class CounterpartyInfoMapperTest {
                 id = documentId,
                 tenantId = tenantId,
                 filename = "invoice.pdf",
-                effectiveOrigin = DocumentSource.Upload,
-                uploadedAt = now
+                uploadedAt = now,
+                sortDate = LocalDate(2026, 2, 11),
             ),
             draft = draft,
             latestIngestion = null,

@@ -137,8 +137,7 @@ internal class DocumentReviewLoader(
                         // Preserve existing UI state where available
                         isContactRequired = false,
                         isPendingCreation = draft?.counterparty.let { it.isUnresolved() && it.pendingCreation },
-                        isDocumentConfirmed = draft?.documentStatus == DocumentStatus.Confirmed,
-                        isDocumentRejected = draft?.documentStatus == DocumentStatus.Rejected,
+                        documentStatus = draft?.documentStatus,
                         confirmedCashflowEntryId = document.cashflowEntryId,
                         selectedQueueDocumentId = selectedQueueDocumentId ?: this@transitionToDocumentState.let {
                             var id: DocumentId? = null
@@ -187,9 +186,6 @@ internal class DocumentReviewLoader(
                 vatNumber = suggestion.vatNumber?.value
             )
         }
-        val documentStatus = draft.documentStatus
-        val isDocumentConfirmed = documentStatus == DocumentStatus.Confirmed
-        val isDocumentRejected = documentStatus == DocumentStatus.Rejected
         val isPendingCreation = counterparty.isUnresolved() && counterparty.pendingCreation
         val (contactSelectionState, linkedContactId, selectedContactSnapshot) =
             buildContactSelectionState(document, suggestions)
@@ -233,8 +229,7 @@ internal class DocumentReviewLoader(
                 contactSelectionState = contactSelectionState,
                 isContactRequired = extractedData.isContactRequired,
                 isPendingCreation = isPendingCreation,
-                isDocumentConfirmed = isDocumentConfirmed,
-                isDocumentRejected = isDocumentRejected,
+                documentStatus = draft.documentStatus,
                 confirmedCashflowEntryId = document.cashflowEntryId,
                 cashflowEntryState = previousCashflowEntryState,
                 autoPaymentStatus = previousAutoPaymentStatus,

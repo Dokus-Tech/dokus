@@ -22,6 +22,7 @@ import tech.dokus.foundation.backend.security.dokusPrincipal
 import tech.dokus.foundation.backend.utils.loggerFor
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
+import kotlin.uuid.toJavaUuid
 
 private val logger = loggerFor("BankingRoutes")
 private const val MAX_PAGE_SIZE = 200
@@ -175,6 +176,37 @@ internal fun Route.bankingRoutes() {
                     throw (error as? DokusException
                         ?: DokusException.InternalError("Failed to create expense: ${error.message}"))
                 }
+            call.respond(HttpStatusCode.OK, updated)
+        }
+
+        // POST /api/v1/banking/transactions/{id}/reject-match
+        post<Banking.Transactions.Id.RejectMatch> { route ->
+            val tenantId = requireTenantId()
+            val transactionId = parseTransactionId(route.parent.id)
+
+            val updated = bankingService.rejectMatch(
+                tenantId = tenantId,
+                transactionId = transactionId,
+                rejectedBy = dokusPrincipal.userId.value.toJavaUuid(),
+            ).getOrElse { error ->
+                throw (error as? DokusException
+                    ?: DokusException.InternalError("Failed to reject match: ${error.message}"))
+            }
+            call.respond(HttpStatusCode.OK, updated)
+        }
+
+        // POST /api/v1/banking/transactions/{id}/undo-match
+        post<Banking.Transactions.Id.UndoMatch> { route ->
+            val tenantId = requireTenantId()
+            val transactionId = parseTransactionId(route.parent.id)
+
+            val updated = bankingService.undoMatch(
+                tenantId = tenantId,
+                transactionId = transactionId,
+            ).getOrElse { error ->
+                throw (error as? DokusException
+                    ?: DokusException.InternalError("Failed to undo match: ${error.message}"))
+            }
             call.respond(HttpStatusCode.OK, updated)
         }
     }

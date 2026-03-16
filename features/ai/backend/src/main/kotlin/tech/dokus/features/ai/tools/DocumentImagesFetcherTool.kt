@@ -5,6 +5,7 @@ import ai.koog.agents.core.tools.annotations.LLMDescription
 import kotlinx.serialization.Serializable
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.Dpi
 import tech.dokus.features.ai.services.DocumentFetcher
 import tech.dokus.features.ai.services.DocumentImageService
 import kotlin.uuid.ExperimentalUuidApi
@@ -43,7 +44,7 @@ class DocumentImagesFetcherTool(
             document.mimeType,
             args.startPage,
             args.pageCount,
-            args.dpi
+            Dpi.create(args.dpi)
         )
         return Output.DocumentFound(
             images = images.images.map {

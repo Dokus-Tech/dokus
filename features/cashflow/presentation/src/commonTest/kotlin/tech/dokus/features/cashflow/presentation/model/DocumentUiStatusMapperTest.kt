@@ -1,5 +1,6 @@
 package tech.dokus.features.cashflow.presentation.model
 
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import tech.dokus.domain.enums.ContactLinkSource
 import tech.dokus.domain.enums.DocumentType
@@ -224,7 +225,8 @@ class DocumentUiStatusMapperTest {
             id = DocumentId.generate(),
             tenantId = TenantId.generate(),
             filename = "test-invoice.pdf",
-            uploadedAt = LocalDateTime(2024, 1, 1, 12, 0, 0)
+            uploadedAt = LocalDateTime(2024, 1, 1, 12, 0, 0),
+            sortDate = LocalDate(2024, 1, 1),
         )
     }
 }

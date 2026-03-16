@@ -93,14 +93,12 @@ internal fun DocumentsScreen(
     val displayRows = remember(localUploadRows, remoteDocuments) {
         buildList {
             localUploadRows.forEach { add(DocumentsDisplayRow.Local(it)) }
-            var lastYear = -1
-            var lastMonth = -1
+            val seenMonths = mutableSetOf<Long>()
             remoteDocuments.forEach { doc ->
-                val date = doc.sortDate ?: doc.uploadedAt.date
-                if (date.year != lastYear || date.monthNumber != lastMonth) {
-                    lastYear = date.year
-                    lastMonth = date.monthNumber
-                    add(DocumentsDisplayRow.MonthHeader(lastYear, lastMonth))
+                val date = doc.sortDate
+                val monthKey = date.year.toLong() * 100 + date.monthNumber
+                if (seenMonths.add(monthKey)) {
+                    add(DocumentsDisplayRow.MonthHeader(date.year, date.monthNumber))
                 }
                 add(DocumentsDisplayRow.Remote(doc))
             }

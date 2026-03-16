@@ -133,6 +133,13 @@ class BankStatementProcessingService(
         val accountId = (accountResolution as? AccountResolution.Resolved)?.accountId
         val accountStatus = (accountResolution as? AccountResolution.Resolved)?.accountStatus
 
+        if (accountId == null) {
+            logger.warn(
+                "No bank account resolved for document {}: IBAN={}, tenant={}",
+                documentId, draftData.accountIban?.value, tenantId
+            )
+        }
+
         // 4. Trust calculation
         val trustResult = trustCalculator.calculate(
             draftData = draftData,

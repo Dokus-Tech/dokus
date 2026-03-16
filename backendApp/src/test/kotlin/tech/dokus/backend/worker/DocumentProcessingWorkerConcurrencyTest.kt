@@ -12,7 +12,7 @@ import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.processor.ProcessorIngestionRepository
-import tech.dokus.domain.enums.DocumentSource
+import tech.dokus.features.ai.graph.AcceptDocumentInput
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
@@ -39,7 +39,6 @@ class DocumentProcessingWorkerConcurrencyTest {
     fun `run already claimed by another worker is skipped without side effects`() = runBlocking {
         val ingestionRepository = mockk<ProcessorIngestionRepository>()
         val processingAgent = mockk<DocumentProcessingAgent>()
-        val documentRepository = mockk<DocumentRepository>(relaxed = true)
         val documentSsePublisher = mockk<DocumentSsePublisher>(relaxed = true)
         val tenantRepository = mockk<TenantRepository>(relaxed = true)
         val userRepository = mockk<UserRepository>(relaxed = true)
@@ -61,7 +60,6 @@ class DocumentProcessingWorkerConcurrencyTest {
         val worker = DocumentProcessingWorker(
             ingestionRepository = ingestionRepository,
             processingAgent = processingAgent,
-            documentRepository = documentRepository,
             documentSsePublisher = documentSsePublisher,
             config = testConfig(),
             tenantRepository = tenantRepository,
@@ -97,7 +95,6 @@ class DocumentProcessingWorkerConcurrencyTest {
             documentId = DocumentId.generate(),
             tenantId = TenantId.generate(),
             sourceChannel = null,
-            effectiveOrigin = DocumentSource.Email,
         )
 
         coEvery { ingestionRepository.recoverStaleRunsDetailed() } returns emptyList()
@@ -112,7 +109,6 @@ class DocumentProcessingWorkerConcurrencyTest {
         val worker = DocumentProcessingWorker(
             ingestionRepository = ingestionRepository,
             processingAgent = processingAgent,
-            documentRepository = documentRepository,
             documentSsePublisher = documentSsePublisher,
             config = testConfig(),
             tenantRepository = tenantRepository,
@@ -128,7 +124,7 @@ class DocumentProcessingWorkerConcurrencyTest {
         }
 
         coVerify(exactly = 1) {
-            processingAgent.process(match { input -> input.sourceChannel == DocumentSource.Email })
+            processingAgent.process(match { input -> input is AcceptDocumentInput.Upload })
         }
         coVerify(exactly = 1) {
             ingestionRepository.markAsFailed(

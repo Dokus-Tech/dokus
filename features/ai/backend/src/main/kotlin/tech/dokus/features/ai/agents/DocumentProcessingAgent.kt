@@ -5,6 +5,7 @@ import tech.dokus.domain.enums.DocumentType
 import tech.dokus.features.ai.config.KoogAgentRunner
 import tech.dokus.features.ai.graph.AcceptDocumentInput
 import tech.dokus.features.ai.graph.acceptDocumentGraph
+import tech.dokus.features.ai.graph.isPeppol
 import tech.dokus.features.ai.graph.purposeEnrichmentGraph
 import tech.dokus.features.ai.graph.sub.ClassificationResult
 import tech.dokus.features.ai.models.DirectionResolution
@@ -18,6 +19,7 @@ import tech.dokus.features.ai.validation.AuditReport
 import tech.dokus.features.ai.validation.CheckType
 import tech.dokus.foundation.backend.config.AIConfig
 import tech.dokus.foundation.backend.utils.loggerFor
+import tech.dokus.foundation.backend.utils.runSuspendCatching
 
 class DocumentProcessingAgent(
     private val agentRunner: KoogAgentRunner,
@@ -27,34 +29,30 @@ class DocumentProcessingAgent(
     private val logger = loggerFor()
 
     suspend fun process(input: AcceptDocumentInput): DocumentAiProcessingResult {
-        return try {
+        return runSuspendCatching {
             agentRunner.run(
                 input = input,
                 strategy = acceptDocumentGraph(aiConfig, documentFetcher),
                 agentName = "document-processing",
                 systemPrompt = "You classify and extract structured financial data from provided document pages."
             )
-        } catch (exception: Exception) {
-            if (isPeppolDeserializationFailure(exception) && input.peppolStructuredSnapshotJson != null) {
+        }.recover {
+            if (isPeppolDeserializationFailure(it) && input.isPeppol()) {
                 logger.warn(
                     "PEPPOL snapshot deserialization failed for documentId=${input.documentId}, falling back to vision",
-                    exception
+                    it
                 )
-                try {
-                    agentRunner.run(
-                        input = input.copy(peppolStructuredSnapshotJson = null),
-                        strategy = acceptDocumentGraph(aiConfig, documentFetcher),
-                        agentName = "document-processing",
-                        systemPrompt = "You classify and extract structured financial data from provided document pages."
-                    )
-                } catch (fallbackException: Exception) {
-                    logger.warn("Vision fallback also failed: documentId=${input.documentId}", fallbackException)
-                    failureResult(input, fallbackException)
-                }
+                agentRunner.run(
+                    input = input.asUpload,
+                    strategy = acceptDocumentGraph(aiConfig, documentFetcher),
+                    agentName = "document-processing",
+                    systemPrompt = "You classify and extract structured financial data from provided document pages."
+                )
             } else {
-                logger.warn("Document processing failed: documentId=${input.documentId}", exception)
-                failureResult(input, exception)
+                throw it
             }
+        }.getOrElse { exception ->
+            failureResult(input, exception)
         }
     }
 
@@ -69,7 +67,7 @@ class DocumentProcessingAgent(
 
     private fun failureResult(
         input: AcceptDocumentInput,
-        exception: Exception,
+        exception: Throwable,
     ): DocumentAiProcessingResult {
         return DocumentAiProcessingResult(
             classification = ClassificationResult(
@@ -90,7 +88,7 @@ class DocumentProcessingAgent(
         )
     }
 
-    private fun contractFailureAudit(exception: Exception): AuditReport {
+    private fun contractFailureAudit(exception: Throwable): AuditReport {
         return AuditReport.fromChecks(
             listOf(
                 AuditCheck.criticalFailure(
@@ -105,12 +103,12 @@ class DocumentProcessingAgent(
         )
     }
 
-    private fun failureReason(exception: Exception): String {
+    private fun failureReason(exception: Throwable): String {
         val message = exception.message?.takeIf { it.isNotBlank() } ?: "no error message"
         return "processing failed with ${exception::class.simpleName}: $message"
     }
 
-    private fun isPeppolDeserializationFailure(exception: Exception): Boolean {
+    private fun isPeppolDeserializationFailure(exception: Throwable): Boolean {
         var current: Throwable? = exception
         while (current != null) {
             if (current is SerializationException) return true

@@ -81,8 +81,8 @@ import tech.dokus.domain.model.VatAssessmentDraftData
 import tech.dokus.domain.model.VatListingDraftData
 import tech.dokus.domain.model.VatReturnDraftData
 import tech.dokus.domain.model.WithholdingTaxDraftData
-import tech.dokus.domain.model.toDocumentType
 import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.domain.model.toDocumentType
 import tech.dokus.features.cashflow.presentation.review.models.DocumentUiData
 import tech.dokus.features.cashflow.presentation.review.models.toUiData
 import tech.dokus.foundation.app.state.DokusState
@@ -182,8 +182,7 @@ data class DocumentReviewState(
     val isBindingContact: Boolean = false,
     val isRejecting: Boolean = false,
     val isResolvingMatchReview: Boolean = false,
-    val isDocumentConfirmed: Boolean = false,
-    val isDocumentRejected: Boolean = false,
+    val documentStatus: DocumentStatus? = null,
     val confirmedCashflowEntryId: CashflowEntryId? = null,
     val cashflowEntryState: DokusState<CashflowEntry> = DokusState.idle(),
     val autoPaymentStatus: DokusState<AutoPaymentStatusDto> = DokusState.idle(),
@@ -211,6 +210,10 @@ data class DocumentReviewState(
     /** The active document ID, available once data has loaded at least once. */
     val documentId: DocumentId?
         get() = documentData?.documentId
+
+    val isDocumentConfirmed: Boolean get() = documentStatus == DocumentStatus.Confirmed
+    val isDocumentRejected: Boolean get() = documentStatus == DocumentStatus.Rejected
+    val isDocumentUnsupported: Boolean get() = documentStatus == DocumentStatus.Unsupported
 
     /** The document record, available when loaded. */
     val documentRecord: DocumentDetailDto?
@@ -281,7 +284,7 @@ data class DocumentReviewState(
 
     val confirmBlockedReason: StringResource?
         get() {
-            if (isDocumentConfirmed || isDocumentRejected) return null
+            if (isDocumentConfirmed || isDocumentRejected || isDocumentUnsupported) return null
             val draft = draftData ?: return Res.string.cashflow_confirm_missing_fields
             return when {
                 isPendingCreation -> Res.string.cashflow_confirm_select_contact
@@ -311,18 +314,15 @@ data class DocumentReviewState(
     val contactMatchStatus: ContactMatchStatus
         get() = when {
             // User explicitly selected
-            contactSelectionState is ContactSelectionState.Selected ->
-                ContactMatchStatus.Matched
+            contactSelectionState is ContactSelectionState.Selected -> ContactMatchStatus.Matched
             // Suggested contact exists for required types, but needs user confirmation
             contactSelectionState is ContactSelectionState.Suggested &&
                 draftData.isContactRequired ->
                 ContactMatchStatus.Uncertain
             // No contact, but required for this document type (Invoice/CreditNote)
-            draftData.isContactRequired ->
-                ContactMatchStatus.MissingButRequired
+            draftData.isContactRequired -> ContactMatchStatus.MissingButRequired
             // No contact, but acceptable (Receipt)
-            else ->
-                ContactMatchStatus.NotRequired
+            else -> ContactMatchStatus.NotRequired
         }
 
     /**
@@ -349,9 +349,7 @@ data class DocumentReviewState(
             // Due date missing for invoices (only when not confirmed)
             val needsDueDate = (draftData is InvoiceDraftData) &&
                 !isDocumentConfirmed
-            if (needsDueDate && (draftData as? InvoiceDraftData)?.dueDate == null) return true
-
-            return false
+            return needsDueDate && (draftData as? InvoiceDraftData)?.dueDate == null
         }
 
     /**

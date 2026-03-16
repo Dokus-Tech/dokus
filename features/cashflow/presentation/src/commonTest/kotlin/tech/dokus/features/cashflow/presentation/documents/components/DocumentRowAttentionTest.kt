@@ -118,7 +118,8 @@ class DocumentRowAttentionTest {
                 id = documentId,
                 tenantId = TENANT_ID,
                 filename = "test.pdf",
-                uploadedAt = NOW
+                uploadedAt = NOW,
+                sortDate = LocalDate(2024, 1, 1),
             ),
             draft = draftStatus?.let { createDraft(documentId, it) },
             latestIngestion = ingestionStatus?.let { createIngestion(documentId, it) },

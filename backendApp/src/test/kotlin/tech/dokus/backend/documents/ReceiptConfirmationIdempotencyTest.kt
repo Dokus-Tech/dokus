@@ -185,7 +185,6 @@ class ReceiptConfirmationIdempotencyTest {
             tenantId = tenantId,
             payload = tech.dokus.database.repository.cashflow.DocumentCreatePayload(
                 canonicalContentHash = null,
-                effectiveOrigin = DocumentSource.Upload
             )
         )
 
