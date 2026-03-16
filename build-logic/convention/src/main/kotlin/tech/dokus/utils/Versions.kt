@@ -10,7 +10,7 @@ package tech.dokus.utils
  */
 object AppVersion {
     /** Default version name for development builds */
-    const val NAME = "1.2.1"
+    const val NAME = "1.2.2"
 
     /** Version code: git commit count (set by CI) */
     const val CODE = 1

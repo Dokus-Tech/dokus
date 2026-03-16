@@ -4,6 +4,18 @@ All notable changes to Dokus are documented in this file.
 
 The format follows Keep a Changelog principles with pragmatic release summaries.
 
+## [1.2.2] - 2026-03-16
+
+### Changed
+- Needs-review and bulk reprocess candidate selection now include additional non-confirmed documents and use a shared eligibility predicate for more consistent behavior (#238).
+
+### Fixed
+- Backend CORS defaults now allow `app.dokus.tech`, so the deployed web app can call the server without extra host overrides (#239).
+- Web/WASM image loading now uses a browser-safe Coil configuration and decoder, restoring avatars and other images in the browser (#240).
+
+### Internal
+- Splash, payments, documents, and ledger screenshots were refreshed after the latest UI cleanup.
+
 ## [1.2.1] - 2026-03-16
 
 ### Added
