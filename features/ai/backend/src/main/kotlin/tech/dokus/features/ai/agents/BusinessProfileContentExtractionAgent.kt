@@ -15,10 +15,12 @@ import tech.dokus.features.ai.graph.businessProfileContentExtractionGraph
 import tech.dokus.features.ai.models.BusinessProfileContentExtractionInput
 import tech.dokus.features.ai.models.BusinessProfileContentExtractionResult
 import tech.dokus.foundation.backend.config.AIConfig
+import tech.dokus.foundation.backend.config.ServerInfoConfig
 
 class BusinessProfileContentExtractionAgent(
     private val executor: PromptExecutor,
     private val aiConfig: AIConfig,
+    private val serverInfo: ServerInfoConfig,
 ) {
     @OptIn(ExperimentalAgentsApi::class)
     suspend fun extract(input: BusinessProfileContentExtractionInput): BusinessProfileContentExtractionResult {
@@ -44,6 +46,8 @@ class BusinessProfileContentExtractionAgent(
                     LangfuseTraceContext(
                         tags = listOf(LangfuseTraceTag.BusinessEnrichment),
                     ),
+                    serviceName = serverInfo.name,
+                    serviceVersion = serverInfo.version,
                 )
             }
         )

@@ -15,10 +15,12 @@ import tech.dokus.features.ai.graph.businessLogoFallbackGraph
 import tech.dokus.features.ai.models.BusinessLogoFallbackInput
 import tech.dokus.features.ai.models.BusinessLogoFallbackResult
 import tech.dokus.foundation.backend.config.AIConfig
+import tech.dokus.foundation.backend.config.ServerInfoConfig
 
 class BusinessLogoFallbackAgent(
     private val executor: PromptExecutor,
     private val aiConfig: AIConfig,
+    private val serverInfo: ServerInfoConfig,
 ) {
     @OptIn(ExperimentalAgentsApi::class)
     suspend fun findLogoCandidates(input: BusinessLogoFallbackInput): BusinessLogoFallbackResult {
@@ -42,6 +44,8 @@ class BusinessLogoFallbackAgent(
                 installLangfuseTracing(
                     aiConfig.langfuse,
                     LangfuseTraceContext(tags = listOf(LangfuseTraceTag.LogoFallback)),
+                    serviceName = serverInfo.name,
+                    serviceVersion = serverInfo.version,
                 )
             }
         )

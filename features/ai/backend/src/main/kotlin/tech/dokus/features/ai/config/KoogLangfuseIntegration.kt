@@ -39,6 +39,8 @@ data class LangfuseTraceContext(
 internal fun FeatureContext.installLangfuseTracing(
     config: LangfuseConfig,
     traceContext: LangfuseTraceContext = LangfuseTraceContext(),
+    serviceName: String = "dokus",
+    serviceVersion: String = "unknown",
 ) {
     if (!config.enabled) return
 
@@ -54,7 +56,7 @@ internal fun FeatureContext.installLangfuseTracing(
     }
 
     install(OpenTelemetry) {
-        setServiceInfo("dokus-ai", "1.0.0")
+        setServiceInfo(serviceName, serviceVersion)
         addLangfuseExporter(
             langfuseUrl = config.host,
             langfusePublicKey = config.publicKey,

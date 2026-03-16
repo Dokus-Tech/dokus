@@ -9,10 +9,12 @@ import ai.koog.prompt.dsl.prompt
 import ai.koog.prompt.llm.LLModel
 import ai.koog.prompt.executor.model.PromptExecutor
 import tech.dokus.foundation.backend.config.AIConfig
+import tech.dokus.foundation.backend.config.ServerInfoConfig
 
 class KoogAgentRunner(
     @PublishedApi internal val executor: PromptExecutor,
     @PublishedApi internal val aiConfig: AIConfig,
+    @PublishedApi internal val serverInfo: ServerInfoConfig,
 ) {
     @OptIn(ExperimentalAgentsApi::class)
     suspend inline fun <reified Input, reified Output> run(
@@ -38,7 +40,12 @@ class KoogAgentRunner(
                     agentName = agentName,
                     enabled = aiConfig.koogEventLoggingEnabled
                 )
-                installLangfuseTracing(aiConfig.langfuse, traceContext)
+                installLangfuseTracing(
+                    aiConfig.langfuse,
+                    traceContext,
+                    serviceName = serverInfo.name,
+                    serviceVersion = serverInfo.version,
+                )
             }
         )
         return try {

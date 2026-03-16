@@ -3,7 +3,6 @@ package tech.dokus.features.ai.agents
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.singleRunStrategy
 import ai.koog.agents.core.tools.ToolRegistry
-import ai.koog.prompt.dsl.prompt
 import ai.koog.prompt.executor.model.PromptExecutor
 import ai.koog.prompt.llm.LLModel
 import kotlinx.serialization.Serializable
@@ -17,6 +16,7 @@ import tech.dokus.features.ai.config.installLangfuseTracing
 import tech.dokus.features.ai.prompts.AgentPrompt
 import tech.dokus.features.ai.services.RAGService
 import tech.dokus.foundation.backend.config.LangfuseConfig
+import tech.dokus.foundation.backend.config.ServerInfoConfig
 
 /**
  * Agent responsible for RAG-backed document Q&A with citations.
@@ -56,6 +56,7 @@ class ChatAgent(
     private val model: LLModel,
     private val ragService: RAGService,
     private val prompt: AgentPrompt,
+    private val serverInfo: ServerInfoConfig,
     private val langfuseConfig: LangfuseConfig = LangfuseConfig.disabled,
 ) {
     private val logger = LoggerFactory.getLogger(ChatAgent::class.java)
@@ -271,6 +272,8 @@ class ChatAgent(
                             documentId?.let { put("documentId", it.toString()) }
                         },
                     ),
+                    serviceName = serverInfo.name,
+                    serviceVersion = serverInfo.version,
                 )
             }
 
