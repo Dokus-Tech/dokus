@@ -416,7 +416,7 @@ class DocumentRepository : DocumentStatusChecker {
     suspend fun findDocumentsEligibleForReprocess(
         tenantId: TenantId,
         currentProcessingVersion: Int,
-        limit: Int = 100,
+        limit: Int = 500,
     ): List<DocumentReprocessCandidate> = newSuspendedTransaction {
         val tenantUuid = UUID.fromString(tenantId.toString())
         val cutoff = Clock.System.now().minus(30.days).toLocalDateTime(TimeZone.UTC)

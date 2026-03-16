@@ -32,7 +32,7 @@ class ProcessingHealthService(
         private const val MIN_TOTAL_FOR_RECOVERY = 20
         private const val MIN_NEEDS_REVIEW_FOR_RECOVERY = 10
         private const val MIN_NEEDS_REVIEW_PERCENT = 0.30
-        private const val MAX_BULK_REPROCESS = 100
+        private const val DEFAULT_BULK_REPROCESS_LIMIT = 500
     }
 
     suspend fun getRecommendation(tenantId: TenantId): ProcessingHealthRecommendation {
@@ -78,9 +78,9 @@ class ProcessingHealthService(
      */
     suspend fun executeBulkReprocess(
         tenantId: TenantId,
-        maxDocuments: Int = MAX_BULK_REPROCESS,
+        maxDocuments: Int = DEFAULT_BULK_REPROCESS_LIMIT,
     ): BulkReprocessResponse {
-        val limit = maxDocuments.coerceIn(1, MAX_BULK_REPROCESS)
+        val limit = maxDocuments.coerceAtLeast(1)
         val currentVersion = DocumentProcessingConstants.PROCESSING_VERSION
 
         val candidates = documentRepository.findDocumentsEligibleForReprocess(

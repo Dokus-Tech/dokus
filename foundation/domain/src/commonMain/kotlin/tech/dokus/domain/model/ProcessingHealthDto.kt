@@ -29,7 +29,7 @@ enum class ReprocessRecommendationReason {
 
 @Serializable
 data class BulkReprocessRequest(
-    val maxDocuments: Int = 100,
+    val maxDocuments: Int = 500,
 )
 
 @Serializable
