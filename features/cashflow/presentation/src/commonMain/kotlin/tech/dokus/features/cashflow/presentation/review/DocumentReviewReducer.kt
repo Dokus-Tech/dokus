@@ -318,9 +318,6 @@ internal class DocumentReviewReducer(
     suspend fun DocumentReviewCtx.handleConfirmReject() =
         with(actions) { handleConfirmReject() }
 
-    suspend fun DocumentReviewCtx.handleOpenChat() =
-        with(actions) { handleOpenChat() }
-
     suspend fun DocumentReviewCtx.handleViewCashflowEntry() =
         with(actions) { handleViewCashflowEntry() }
 

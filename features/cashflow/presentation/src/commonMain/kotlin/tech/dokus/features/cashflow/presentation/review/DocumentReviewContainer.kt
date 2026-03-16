@@ -184,7 +184,6 @@ internal class DocumentReviewContainer(
 
                 // === Actions ===
                 is DocumentReviewIntent.Confirm -> handleConfirm()
-                is DocumentReviewIntent.OpenChat -> handleOpenChat()
                 is DocumentReviewIntent.ViewCashflowEntry -> handleViewCashflowEntry()
                 is DocumentReviewIntent.ViewEntity -> handleViewEntity()
 

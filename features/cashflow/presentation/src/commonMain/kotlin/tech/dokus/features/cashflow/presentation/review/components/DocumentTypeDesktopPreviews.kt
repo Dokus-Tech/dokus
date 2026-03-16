@@ -21,7 +21,6 @@ private fun DesktopPreviewContent(type: DocumentType) {
         isAccountantReadOnly = false,
         onIntent = {},
         onBackClick = {},
-        onOpenChat = {},
         onOpenSource = {},
         onCorrectContact = {},
         onCreateContact = {},

@@ -32,7 +32,6 @@ internal fun DocumentReviewScreen(
     isAccountantReadOnly: Boolean,
     onIntent: (DocumentReviewIntent) -> Unit,
     onBackClick: () -> Unit,
-    onOpenChat: () -> Unit,
     onOpenSource: (DocumentSourceId) -> Unit,
     onCorrectContact: (CounterpartyInfo) -> Unit,
     onCreateContact: (CounterpartyInfo) -> Unit,
@@ -86,7 +85,7 @@ private fun DocumentReviewScreenLoadingPreview(
             isAccountantReadOnly = false,
             onIntent = {},
             onBackClick = {},
-            onOpenChat = {},
+
             onOpenSource = {},
             onCorrectContact = {},
             onCreateContact = {},
@@ -107,7 +106,7 @@ private fun DocumentReviewScreenDesktopOpenPreview(
             isAccountantReadOnly = false,
             onIntent = {},
             onBackClick = {},
-            onOpenChat = {},
+
             onOpenSource = {},
             onCorrectContact = {},
             onCreateContact = {},
@@ -137,7 +136,7 @@ private fun DocumentReviewScreenDesktopSourcePreview(
             isAccountantReadOnly = false,
             onIntent = {},
             onBackClick = {},
-            onOpenChat = {},
+
             onOpenSource = {},
             onCorrectContact = {},
             onCreateContact = {},
@@ -158,7 +157,7 @@ private fun DocumentReviewScreenDesktopPaidPreview(
             isAccountantReadOnly = false,
             onIntent = {},
             onBackClick = {},
-            onOpenChat = {},
+
             onOpenSource = {},
             onCorrectContact = {},
             onCreateContact = {},

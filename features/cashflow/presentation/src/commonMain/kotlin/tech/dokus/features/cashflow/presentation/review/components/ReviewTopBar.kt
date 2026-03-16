@@ -10,12 +10,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.MessageSquare
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -29,7 +25,6 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.cashflow_chat_with_document
 import tech.dokus.aura.resources.cashflow_document_review_title
 import tech.dokus.aura.resources.cashflow_needs_attention
 import tech.dokus.aura.resources.cashflow_needs_input
@@ -50,7 +45,6 @@ private val StatusDotSize = 6.dp
 internal fun ReviewTopBar(
     state: DocumentReviewState,
     onBackClick: () -> Unit,
-    onChatClick: () -> Unit,
 ) {
     Column {
         TopAppBar(
@@ -87,17 +81,7 @@ internal fun ReviewTopBar(
             navigationIcon = {
                 PBackButton(onBackPress = onBackClick)
             },
-            actions = {
-                if (state.hasContent && state.isDocumentConfirmed) {
-                    IconButton(onClick = onChatClick) {
-                        Icon(
-                            imageVector = Lucide.MessageSquare,
-                            contentDescription = stringResource(Res.string.cashflow_chat_with_document),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            },
+            actions = {},
             colors = TopAppBarDefaults.topAppBarColors(
                 containerColor = MaterialTheme.colorScheme.surface,
                 navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
@@ -199,7 +183,6 @@ private fun ReviewTopBarPreview(
         ReviewTopBar(
             state = DocumentReviewState(),
             onBackClick = {},
-            onChatClick = {},
         )
     }
 }

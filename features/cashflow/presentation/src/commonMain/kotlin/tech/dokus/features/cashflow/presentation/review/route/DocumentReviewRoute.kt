@@ -136,9 +136,6 @@ internal fun DocumentReviewRoute(
                 markDocumentsRefreshRequired()
                 navController.popBackStack()
             }
-            is DocumentReviewAction.NavigateToChat -> {
-                navController.navigateTo(CashFlowDestination.DocumentChat(action.documentId.toString()))
-            }
             is DocumentReviewAction.NavigateToEntity -> {
                 markDocumentsRefreshRequired()
                 navController.popBackStack()
@@ -217,7 +214,6 @@ internal fun DocumentReviewRoute(
             isAccountantReadOnly = isAccountantReadOnly,
             onIntent = { dispatchIntent(it) },
             onBackClick = requestBackNavigation,
-            onOpenChat = { dispatchIntent(DocumentReviewIntent.OpenChat) },
             onOpenSource = { sourceId ->
                 val activeDocumentId = state.documentId?.toString()
                     ?: route.documentId

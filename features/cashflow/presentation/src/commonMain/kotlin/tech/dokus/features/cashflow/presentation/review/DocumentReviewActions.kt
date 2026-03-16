@@ -331,13 +331,6 @@ internal class DocumentReviewActions(
         }
     }
 
-    suspend fun DocumentReviewCtx.handleOpenChat() {
-        withState {
-            val activeDocumentId = documentId ?: return@withState
-            action(DocumentReviewAction.NavigateToChat(activeDocumentId))
-        }
-    }
-
     suspend fun DocumentReviewCtx.handleViewCashflowEntry() {
         withState {
             val entryId = confirmedCashflowEntryId ?: return@withState

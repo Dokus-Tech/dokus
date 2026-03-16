@@ -22,11 +22,9 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.CircleCheck
 import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.MessageSquare
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.cashflow_chat_with_document
 import tech.dokus.aura.resources.cashflow_document_confirmed
 import tech.dokus.aura.resources.cashflow_document_rejected
 import tech.dokus.aura.resources.cashflow_somethings_wrong
@@ -51,7 +49,6 @@ fun DocumentReviewFooter(
     documentStatus: DocumentStatus?,
     hasCashflowEntry: Boolean,
     onSomethingsWrong: () -> Unit,
-    onOpenChat: () -> Unit,
     onViewEntity: () -> Unit,
     onViewCashflowEntry: () -> Unit,
     modifier: Modifier = Modifier,
@@ -65,7 +62,6 @@ fun DocumentReviewFooter(
         val isRejected = documentStatus == DocumentStatus.Rejected
         if (isConfirmed || isRejected) {
             ConfirmedFooter(
-                onOpenChat = onOpenChat,
                 onViewEntity = onViewEntity,
                 onViewCashflowEntry = onViewCashflowEntry,
                 label = if (isRejected) {
@@ -73,7 +69,6 @@ fun DocumentReviewFooter(
                 } else {
                     stringResource(Res.string.cashflow_document_confirmed)
                 },
-                showChat = !isRejected,
                 showViewActions = isConfirmed,
                 hasCashflowEntry = hasCashflowEntry
             )
@@ -107,11 +102,9 @@ private fun PendingFooter(
 
 @Composable
 private fun ConfirmedFooter(
-    onOpenChat: () -> Unit,
     onViewEntity: () -> Unit,
     onViewCashflowEntry: () -> Unit,
     label: String,
-    showChat: Boolean,
     showViewActions: Boolean,
     hasCashflowEntry: Boolean,
     modifier: Modifier = Modifier,
@@ -167,15 +160,6 @@ private fun ConfirmedFooter(
             }
         }
 
-        // Chat button
-        if (showChat) {
-            PButton(
-                text = stringResource(Res.string.cashflow_chat_with_document),
-                icon = Lucide.MessageSquare,
-                modifier = Modifier.fillMaxWidth(),
-                onClick = onOpenChat,
-            )
-        }
     }
 }
 
@@ -193,7 +177,6 @@ private fun DocumentReviewFooterPreview(
             documentStatus = DocumentStatus.NeedsReview,
             hasCashflowEntry = false,
             onSomethingsWrong = {},
-            onOpenChat = {},
             onViewEntity = {},
             onViewCashflowEntry = {}
         )
