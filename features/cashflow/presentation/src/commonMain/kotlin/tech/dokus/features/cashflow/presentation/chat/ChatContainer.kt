@@ -107,6 +107,7 @@ internal class ChatContainer(
                     is ChatIntent.CollapseAllCitations -> handleCollapseAllCitations()
 
                     // === Session Management ===
+                    is ChatIntent.ToggleSessionsPanel -> updateState { copy(isSessionsPanelOpen = !isSessionsPanelOpen) }
                     is ChatIntent.ShowSessionPicker -> handleShowSessionPicker()
                     is ChatIntent.HideSessionPicker -> handleHideSessionPicker()
                     is ChatIntent.StartNewConversation -> handleStartNewConversation()

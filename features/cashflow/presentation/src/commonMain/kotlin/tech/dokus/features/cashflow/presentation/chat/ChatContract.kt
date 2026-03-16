@@ -139,6 +139,7 @@ data class ChatState(
     val isSending: Boolean = false,
     val expandedCitationIds: Set<String> = emptySet(),
     val showSessionPicker: Boolean = false,
+    val isSessionsPanelOpen: Boolean = true,
 ) : MVIState {
 
     companion object {
@@ -236,6 +237,9 @@ sealed interface ChatIntent : MVIIntent {
 
     /** Hide the session picker dialog */
     data object HideSessionPicker : ChatIntent
+
+    /** Toggle the sessions side panel open/closed */
+    data object ToggleSessionsPanel : ChatIntent
 
     /** Start a new conversation (clear current session) */
     data object StartNewConversation : ChatIntent

@@ -17,11 +17,9 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.features.cashflow.presentation.chat.ChatAction
 import tech.dokus.features.cashflow.presentation.chat.ChatContainer
 import tech.dokus.features.cashflow.presentation.chat.ChatIntent
-import tech.dokus.features.cashflow.presentation.chat.screen.ChatScreen
+import tech.dokus.features.cashflow.presentation.chat.screen.IntelligenceScreen
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.aura.extensions.localized
-import tech.dokus.foundation.aura.local.LocalScreenSize
-import tech.dokus.foundation.aura.local.isLarge
 import tech.dokus.navigation.local.LocalNavController
 
 @Composable
@@ -30,7 +28,6 @@ internal fun ChatRoute(
     container: ChatContainer = container(),
 ) {
     val navController = LocalNavController.current
-    val isLargeScreen = LocalScreenSize.isLarge
     val snackbarHostState = remember { SnackbarHostState() }
     var pendingError by remember { mutableStateOf<DokusException?>(null) }
     val scope = rememberCoroutineScope()
@@ -82,12 +79,10 @@ internal fun ChatRoute(
         }
     }
 
-    ChatScreen(
+    IntelligenceScreen(
         state = state,
         listState = listState,
-        isLargeScreen = isLargeScreen,
         snackbarHostState = snackbarHostState,
         onIntent = { container.store.intent(it) },
-        onBackClick = { navController.popBackStack() },
     )
 }
