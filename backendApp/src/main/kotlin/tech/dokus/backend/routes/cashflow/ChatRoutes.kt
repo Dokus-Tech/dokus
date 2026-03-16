@@ -427,6 +427,14 @@ private suspend fun processChat(
         null
     }
 
+    // Parse structured content blocks from LLM response
+    val contentBlocks = ChatResponseParser.parse(chatResult.answer)
+    // Use plain text content (without XML tags) for the content field
+    val plainContent = contentBlocks
+        .filterIsInstance<ChatContentBlock.Text>()
+        .joinToString("\n\n") { it.content }
+        .ifBlank { chatResult.answer }
+
     // Create and save assistant message
     val assistantMessageId = ChatMessageId.generate()
     val assistantSequence = userSequence + 1
@@ -436,10 +444,11 @@ private suspend fun processChat(
         userId = userId,
         sessionId = sessionId,
         role = MessageRole.Assistant,
-        content = chatResult.answer,
+        content = plainContent,
         scope = request.scope,
         documentId = documentId,
         citations = citations,
+        contentBlocks = contentBlocks,
         chunksRetrieved = chatResult.chunksRetrieved,
         aiModel = chatModelId,
         aiProvider = "lm-studio",
