@@ -34,11 +34,19 @@ internal fun ChatRoute(
     documentId: String? = null,
     container: ChatContainer = container(),
     endpointProvider: DynamicDokusEndpointProvider = koinInject(),
+    uploadContainer: AddDocumentContainer = koinInject(),
 ) {
     val navController = LocalNavController.current
     val uriHandler = LocalUriHandler.current
     val endpoint = endpointProvider.currentEndpointSnapshot()
     val snackbarHostState = remember { SnackbarHostState() }
+    val uploadManager = remember(uploadContainer) { uploadContainer.provideUploadManager() }
+
+    val filePickerLauncher = rememberDocumentFilePicker { files ->
+        if (files.isNotEmpty()) {
+            uploadManager.enqueueFiles(files)
+        }
+    }
     var pendingError by remember { mutableStateOf<DokusException?>(null) }
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
@@ -124,5 +132,6 @@ internal fun ChatRoute(
                 CashFlowDestination.DocumentReview(documentId = docId)
             )
         },
+        onUploadClick = { filePickerLauncher.launch() },
     )
 }
