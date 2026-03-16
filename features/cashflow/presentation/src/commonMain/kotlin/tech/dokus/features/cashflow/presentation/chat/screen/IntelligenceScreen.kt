@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
@@ -37,12 +39,16 @@ import tech.dokus.foundation.app.state.isError
 import tech.dokus.foundation.app.state.isLoading
 import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.aura.components.chat.ChatAttachedFileChips
 import tech.dokus.foundation.aura.components.chat.ChatGridBackground
 import tech.dokus.foundation.aura.components.chat.ChatInputBar
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.local.isLarge
 import tech.dokus.foundation.aura.style.textMuted
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Intelligence chat screen matching v29 design.
@@ -181,6 +187,14 @@ internal fun IntelligenceScreen(
                         }
                     }
 
+                    // Attached file chips (above input bar)
+                    if (state.attachedFiles.isNotEmpty()) {
+                        ChatAttachedFileChips(
+                            files = state.attachedFiles,
+                            onRemove = { refId -> onIntent(ChatIntent.RemoveAttachedFile(refId)) },
+                        )
+                    }
+
                     // Input bar (always visible when loaded)
                     if (sessionState.isSuccess()) {
                         ChatInputBar(
@@ -201,5 +215,20 @@ internal fun IntelligenceScreen(
                 )
             }
         }
+    }
+}
+
+@Preview
+@Composable
+private fun IntelligenceScreenPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        IntelligenceScreen(
+            state = ChatState(),
+            listState = rememberLazyListState(),
+            snackbarHostState = remember { SnackbarHostState() },
+            onIntent = {},
+        )
     }
 }

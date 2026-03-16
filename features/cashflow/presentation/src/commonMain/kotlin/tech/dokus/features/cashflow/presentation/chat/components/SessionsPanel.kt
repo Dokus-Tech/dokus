@@ -21,6 +21,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
@@ -36,6 +38,10 @@ import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.amberSoft
 import tech.dokus.foundation.aura.style.borderAmber
 import tech.dokus.foundation.aura.style.textMuted
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
+import kotlinx.datetime.LocalDateTime
 
 private val PanelWidth = 200.dp
 private val ActiveBorderWidth = 2.dp
@@ -181,4 +187,47 @@ private fun ScopeBadge(scope: ChatScope) {
             )
             .padding(horizontal = Constraints.Spacing.xSmall, vertical = Constraints.Spacing.xxSmall),
     )
+}
+
+@Preview
+@Composable
+private fun SessionsPanelPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    val fixedDate = LocalDateTime(2026, 3, 16, 10, 0)
+    val sessions = listOf(
+        ChatSessionSummary(
+            sessionId = ChatSessionId.parse("00000000-0000-0000-0000-000000000001"),
+            scope = ChatScope.AllDocs,
+            title = "Q4 expense analysis",
+            messageCount = 8,
+            createdAt = fixedDate,
+            lastMessageAt = fixedDate,
+        ),
+        ChatSessionSummary(
+            sessionId = ChatSessionId.parse("00000000-0000-0000-0000-000000000002"),
+            scope = ChatScope.SingleDoc,
+            title = "Tesla invoices question",
+            messageCount = 4,
+            createdAt = fixedDate,
+            lastMessageAt = fixedDate,
+        ),
+        ChatSessionSummary(
+            sessionId = ChatSessionId.parse("00000000-0000-0000-0000-000000000003"),
+            scope = ChatScope.AllDocs,
+            title = "Cash position forecast",
+            messageCount = 6,
+            createdAt = fixedDate,
+            lastMessageAt = fixedDate,
+        ),
+    )
+    TestWrapper(parameters) {
+        SessionsPanel(
+            sessions = sessions,
+            activeSessionId = sessions[0].sessionId,
+            onSessionClick = {},
+            onNewConversation = {},
+            onCollapse = {},
+        )
+    }
 }

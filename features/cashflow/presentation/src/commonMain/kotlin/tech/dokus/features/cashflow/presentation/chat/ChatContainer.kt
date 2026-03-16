@@ -106,6 +106,12 @@ internal class ChatContainer(
                     is ChatIntent.ExpandAllCitations -> handleExpandAllCitations()
                     is ChatIntent.CollapseAllCitations -> handleCollapseAllCitations()
 
+                    // === File Attachments ===
+                    is ChatIntent.AttachFile -> handleAttachFile(intent.filename, intent.bytes)
+                    is ChatIntent.RemoveAttachedFile -> updateState {
+                        copy(attachedFiles = attachedFiles.filter { it.refId != intent.refId })
+                    }
+
                     // === Session Management ===
                     is ChatIntent.ToggleSessionsPanel -> updateState { copy(isSessionsPanelOpen = !isSessionsPanelOpen) }
                     is ChatIntent.ShowSessionPicker -> handleShowSessionPicker()

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
@@ -17,6 +18,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import kotlinx.datetime.LocalDateTime
 import tech.dokus.domain.model.ai.ChatCitation
 import tech.dokus.domain.model.ai.ChatContentBlock
 import tech.dokus.domain.model.ai.ChatMessageDto
@@ -31,6 +35,14 @@ import tech.dokus.foundation.aura.components.chat.ChatTransactionChip
 import tech.dokus.foundation.aura.components.chat.ChatUserBubble
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.textMuted
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.UserId
+import tech.dokus.domain.model.ai.ChatMessageId
+import tech.dokus.domain.model.ai.ChatScope
+import tech.dokus.domain.model.ai.ChatSessionId
 
 /**
  * Message list for the Intelligence chat screen.
@@ -161,5 +173,50 @@ private fun AssistantMessageWithBlocks(
                 onCitationClick = onCitationClick,
             )
         }
+    }
+}
+
+@Preview
+@Composable
+private fun IntelligenceMessagesPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    val fixedDate = LocalDateTime(2026, 3, 16, 10, 0)
+    val tenantId = TenantId.parse("00000000-0000-0000-0000-000000000001")
+    val userId = UserId("00000000-0000-0000-0000-000000000002")
+    val sessionId = ChatSessionId.parse("00000000-0000-0000-0000-000000000003")
+    val messages = listOf(
+        ChatMessageDto(
+            id = ChatMessageId.parse("00000000-0000-0000-0000-000000000010"),
+            tenantId = tenantId,
+            userId = userId,
+            sessionId = sessionId,
+            role = MessageRole.User,
+            content = "What were my biggest expenses in Q4?",
+            scope = ChatScope.AllDocs,
+            sequenceNumber = 0,
+            createdAt = fixedDate,
+        ),
+        ChatMessageDto(
+            id = ChatMessageId.parse("00000000-0000-0000-0000-000000000011"),
+            tenantId = tenantId,
+            userId = userId,
+            sessionId = sessionId,
+            role = MessageRole.Assistant,
+            content = "Based on your confirmed documents, the largest expense was \u20ac798.60 from SRL Accounting & Tax.",
+            scope = ChatScope.AllDocs,
+            sequenceNumber = 1,
+            createdAt = fixedDate,
+        ),
+    )
+    TestWrapper(parameters) {
+        IntelligenceMessages(
+            messages = messages,
+            listState = rememberLazyListState(),
+            onDocumentDownload = {},
+            onDocumentClick = {},
+            onDownloadAllZip = {},
+            onCitationClick = {},
+        )
     }
 }

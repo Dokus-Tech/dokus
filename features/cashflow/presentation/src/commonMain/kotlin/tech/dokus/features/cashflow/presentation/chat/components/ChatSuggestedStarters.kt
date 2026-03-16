@@ -13,6 +13,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.chat_ask_anything
@@ -22,6 +24,9 @@ import tech.dokus.aura.resources.chat_starter_q4_summary
 import tech.dokus.aura.resources.chat_starter_unmatched_payments
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.textMuted
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Empty state with suggested starter questions.
@@ -72,5 +77,15 @@ internal fun ChatSuggestedStarters(
                 }
             }
         }
+    }
+}
+
+@Preview
+@Composable
+private fun ChatSuggestedStartersPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        ChatSuggestedStarters(onStarterClick = {})
     }
 }

@@ -6,6 +6,7 @@ import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.model.ai.ChatAttachedFile
 import tech.dokus.domain.model.ai.ChatCitation
 import tech.dokus.domain.model.ai.ChatConfiguration
 import tech.dokus.domain.model.ai.ChatMessageDto
@@ -140,6 +141,7 @@ data class ChatState(
     val expandedCitationIds: Set<String> = emptySet(),
     val showSessionPicker: Boolean = false,
     val isSessionsPanelOpen: Boolean = true,
+    val attachedFiles: List<ChatAttachedFile> = emptyList(),
 ) : MVIState {
 
     companion object {
@@ -204,6 +206,14 @@ sealed interface ChatIntent : MVIIntent {
 
     /** Send the current message */
     data object SendMessage : ChatIntent
+
+    // === File Attachments ===
+
+    /** Attach a file to the chat (temporary upload for Q&A) */
+    data class AttachFile(val filename: String, val bytes: ByteArray) : ChatIntent
+
+    /** Remove an attached file */
+    data class RemoveAttachedFile(val refId: String) : ChatIntent
 
     // === Scope Selection ===
 
