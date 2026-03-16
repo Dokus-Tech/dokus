@@ -154,6 +154,10 @@ internal fun IntelligenceScreen(
                                 IntelligenceMessages(
                                     messages = data.messages,
                                     listState = listState,
+                                    onDocumentDownload = { /* M3: wire to download */ },
+                                    onDocumentClick = { /* M4: navigate to review */ },
+                                    onDownloadAllZip = { /* M3: wire to ZIP download */ },
+                                    onCitationClick = { /* M4: navigate to source */ },
                                     modifier = Modifier.weight(1f),
                                 )
                             }
