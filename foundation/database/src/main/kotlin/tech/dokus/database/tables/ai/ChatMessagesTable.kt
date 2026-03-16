@@ -65,6 +65,9 @@ object ChatMessagesTable : UUIDTable("chat_messages") {
     // Format: [{"chunkId": "uuid", "documentId": "uuid", "pageNumber": 1, "excerpt": "..."}]
     val citations = text("citations").nullable()
 
+    // Structured content blocks as JSON (for ASSISTANT messages with rich rendering)
+    val contentBlocks = text("content_blocks").nullable()
+
     // Number of chunks retrieved for RAG context (for ASSISTANT messages)
     val chunksRetrieved = integer("chunks_retrieved").nullable()
 

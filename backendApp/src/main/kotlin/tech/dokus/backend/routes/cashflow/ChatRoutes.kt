@@ -31,7 +31,9 @@ import tech.dokus.domain.model.ai.ChatSessionListResponse
 import tech.dokus.domain.model.ai.MessageRole
 import tech.dokus.domain.repository.ChatRepository
 import tech.dokus.domain.routes.Chat
+import tech.dokus.domain.model.ai.ChatContentBlock
 import tech.dokus.features.ai.agents.ChatAgent
+import tech.dokus.features.ai.agents.ChatResponseParser
 import tech.dokus.features.ai.agents.ConversationMessage
 import tech.dokus.features.ai.config.ModelSet
 import tech.dokus.features.ai.queue.LlmQueue

@@ -67,6 +67,11 @@ class ChatRepositoryImpl : ChatRepository {
                 json.encodeToString(ListSerializer(ChatCitation.serializer()), cites)
             }
 
+            // Serialize content blocks as JSON array
+            val contentBlocksJson = message.contentBlocks?.takeIf { it.isNotEmpty() }?.let { blocks ->
+                json.encodeToString(ListSerializer(ChatContentBlock.serializer()), blocks)
+            }
+
             ChatMessagesTable.insert {
                 it[id] = messageId
                 it[tenantId] = tenantUuid
@@ -79,6 +84,7 @@ class ChatRepositoryImpl : ChatRepository {
                     UUID.fromString(docId.toString())
                 }
                 it[citations] = citationsJson
+                it[contentBlocks] = contentBlocksJson
                 it[chunksRetrieved] = message.chunksRetrieved
                 it[aiModel] = message.aiModel
                 it[aiProvider] = message.aiProvider
@@ -397,6 +403,16 @@ class ChatRepositoryImpl : ChatRepository {
             }
         }
 
+        val contentBlocksJson = this[ChatMessagesTable.contentBlocks]
+        val contentBlocks = contentBlocksJson?.let {
+            try {
+                json.decodeFromString<List<ChatContentBlock>>(it)
+            } catch (e: Exception) {
+                logger.warn("Failed to parse content blocks JSON: ${e.message}")
+                null
+            }
+        }
+
         return ChatMessageDto(
             id = ChatMessageId.parse(this[ChatMessagesTable.id].value.toString()),
             tenantId = TenantId.parse(this[ChatMessagesTable.tenantId].toString()),
@@ -409,6 +425,7 @@ class ChatRepositoryImpl : ChatRepository {
                 DocumentId.parse(it.toString())
             },
             citations = citations,
+            contentBlocks = contentBlocks,
             chunksRetrieved = this[ChatMessagesTable.chunksRetrieved],
             aiModel = this[ChatMessagesTable.aiModel],
             aiProvider = this[ChatMessagesTable.aiProvider],
