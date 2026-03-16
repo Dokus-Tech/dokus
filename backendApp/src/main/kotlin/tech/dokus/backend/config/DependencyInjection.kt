@@ -48,6 +48,7 @@ import tech.dokus.backend.services.cashflow.matching.MatchFeedbackStore
 import tech.dokus.backend.services.cashflow.matching.MatchScorer
 import tech.dokus.backend.services.cashflow.matching.MatchingEngine
 import tech.dokus.backend.services.cashflow.matching.MatchingRepository
+import tech.dokus.backend.services.cashflow.matching.TransferDetector
 import tech.dokus.backend.services.cashflow.InvoiceService
 import tech.dokus.backend.services.contacts.ContactNoteService
 import tech.dokus.backend.services.contacts.ContactService
@@ -333,6 +334,7 @@ private fun cashflowModule() = module {
     singleOf(::MatchingRepository)
     singleOf(::MatchScorer)
     singleOf(::MatchFeedbackStore)
+    singleOf(::TransferDetector)
     singleOf(::MatchingEngine)
     singleOf(::InvoiceBankAutomationService)
     single { CashflowProjectionReconciliationService(get(), get()) }

@@ -259,7 +259,7 @@ data class PaymentDto(
 data class BankAccountDto(
     val id: BankAccountId,
     val tenantId: TenantId,
-    val iban: Iban,
+    val iban: Iban? = null,
     val name: String,
     val institutionName: String,
     val accountType: BankAccountType,
@@ -270,6 +270,8 @@ data class BankAccountDto(
     val status: BankAccountStatus = BankAccountStatus.Confirmed,
     val isActive: Boolean = true,
     val createdAt: LocalDateTime,
+    val parentAccountId: BankAccountId? = null,
+    val providerAccountId: String? = null,
 )
 
 @Serializable

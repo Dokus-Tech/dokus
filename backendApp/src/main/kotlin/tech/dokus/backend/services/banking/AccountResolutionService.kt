@@ -48,14 +48,27 @@ class AccountResolutionService(
         tenantId: TenantId,
         draftData: BankStatementDraftData,
         validRowAmounts: Long,
+        providerAccountId: String? = null,
     ): Result<AccountResolution> = runSuspendCatching {
+        // 1. Provider account ID match (first-class for non-IBAN accounts)
+        if (!providerAccountId.isNullOrBlank()) {
+            val byProvider = bankAccountRepository.findByProviderAccountId(tenantId, providerAccountId)
+            if (byProvider != null) {
+                logger.info("Resolved providerAccountId {} to account {} for tenant {}", providerAccountId, byProvider.id, tenantId)
+                return@runSuspendCatching AccountResolution.Resolved(
+                    accountId = byProvider.id,
+                    accountStatus = byProvider.status,
+                )
+            }
+        }
+
+        // 2. IBAN match
         val iban = draftData.accountIban
         if (iban == null || iban.value.isBlank()) {
             logger.info("No IBAN in statement for tenant {}, account unresolved", tenantId)
             return@runSuspendCatching AccountResolution.Unresolved
         }
 
-        // Check existing account
         val existing = bankAccountRepository.findByIban(tenantId, iban)
         if (existing != null) {
             logger.info("Resolved IBAN {} to existing account {} for tenant {}", iban, existing.id, tenantId)

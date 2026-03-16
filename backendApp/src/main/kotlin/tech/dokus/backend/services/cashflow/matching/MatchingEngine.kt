@@ -38,6 +38,7 @@ class MatchingEngine(
     private val contactRepository: ContactRepository,
     private val autoPaymentService: AutoPaymentService,
     private val bankingSsePublisher: BankingSsePublisher,
+    private val transferDetector: TransferDetector,
 ) {
     private val logger = loggerFor()
 
@@ -92,6 +93,20 @@ class MatchingEngine(
         }
 
         for (tx in transactions) {
+            // Step 0: Transfer detection — runs before document matching
+            val transferResult = runSuspendCatching { transferDetector.detect(tenantId, tx) }.getOrNull()
+            when (transferResult) {
+                is TransferResult.ClearPair -> {
+                    applyAutoTransfer(tenantId, tx, transferResult)
+                    continue
+                }
+                is TransferResult.LikelyTransfer -> {
+                    applySuggestTransfer(tenantId, tx, transferResult)
+                    continue
+                }
+                null -> { /* Not a transfer — continue to document matching */ }
+            }
+
             // Step 1: Pre-classify
             val preClass = TransactionPreClassifier.classify(tx)
             if (preClass.shouldSkip) {
@@ -226,6 +241,60 @@ class MatchingEngine(
         logger.debug(
             "Needs-review tx {} → entry {} (score={}, signals={})",
             best.transaction.id, best.entryId, "%.4f".format(best.score), best.evidenceStrings,
+        )
+    }
+
+    // ─── Transfer resolution ────────────────────────────────────────────
+
+    @OptIn(kotlin.uuid.ExperimentalUuidApi::class)
+    private suspend fun applyAutoTransfer(
+        tenantId: TenantId,
+        tx: BankTransactionDto,
+        result: TransferResult.ClearPair,
+    ) {
+        val pairId = kotlin.uuid.Uuid.random()
+
+        // Mark both sides
+        bankTransactionRepository.markTransfer(
+            tenantId = tenantId,
+            transactionId = tx.id,
+            transferPairId = pairId,
+            matchedBy = MatchedBy.Auto,
+        )
+        bankTransactionRepository.markTransfer(
+            tenantId = tenantId,
+            transactionId = result.counterpartTransactionId,
+            transferPairId = pairId,
+            matchedBy = MatchedBy.Auto,
+        )
+
+        bankingSsePublisher.publishMatchUpdated(tenantId, tx.id)
+        bankingSsePublisher.publishMatchUpdated(tenantId, result.counterpartTransactionId)
+
+        logger.info(
+            "Auto-transfer: {} ↔ {} (pairId={}, dest={})",
+            tx.id, result.counterpartTransactionId, pairId, result.destinationAccountId,
+        )
+    }
+
+    private suspend fun applySuggestTransfer(
+        tenantId: TenantId,
+        tx: BankTransactionDto,
+        result: TransferResult.LikelyTransfer,
+    ) {
+        // Set to NEEDS_REVIEW — do NOT auto-match one-sided transfers.
+        // The transfer suggestion is stored in matchEvidence for UI to display.
+        bankTransactionRepository.suggestTransfer(
+            tenantId = tenantId,
+            transactionId = tx.id,
+            evidence = listOf("transfer_suggestion:${result.destinationAccountId}", result.reason),
+        )
+
+        bankingSsePublisher.publishMatchUpdated(tenantId, tx.id)
+
+        logger.info(
+            "Likely transfer (one-sided): {} → account {} ({})",
+            tx.id, result.destinationAccountId, result.reason,
         )
     }
 }
