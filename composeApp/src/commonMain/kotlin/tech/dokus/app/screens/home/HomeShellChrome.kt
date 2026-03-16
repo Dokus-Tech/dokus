@@ -53,7 +53,6 @@ import tech.dokus.aura.resources.date_month_short_may
 import tech.dokus.aura.resources.date_month_short_nov
 import tech.dokus.aura.resources.date_month_short_oct
 import tech.dokus.aura.resources.date_month_short_sep
-import tech.dokus.aura.resources.settings_current_workspace
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.auth.FirmWorkspaceSummary
 import tech.dokus.foundation.app.NavContext
@@ -233,14 +232,29 @@ private fun DesktopWorkspaceArea(
                 )
             }
         } else {
-            Text(
-                text = stringResource(Res.string.settings_current_workspace),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.textMuted,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f)
+            ShimmerBox(
+                modifier = Modifier
+                    .size(sizing.iconMedium)
+                    .clip(MaterialTheme.shapes.extraSmall)
             )
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(spacing.xSmall)
+            ) {
+                Text(
+                    text = "",
+                    style = MaterialTheme.typography.bodySmall,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = "",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.textMuted,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
     }
 }
