@@ -2,9 +2,6 @@ package tech.dokus.features.auth.presentation.auth.route
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.features.auth.mvi.WorkspaceCreateAction
 import tech.dokus.features.auth.mvi.WorkspaceCreateContainer
@@ -23,26 +20,17 @@ internal fun WorkspaceCreateRoute(
 ) {
     val navController = LocalNavController.current
     val bcCallback = LocalBookkeeperConsoleCallback.current
-    var triggerWarp by remember { mutableStateOf(false) }
-    var pendingConsoleNavigation by remember { mutableStateOf(false) }
-    var shouldOpenPeppolOnComplete by remember { mutableStateOf(false) }
 
-    // WorkspaceContextStore is mutated here because the route is the coordination
-    // point between the auth flow action and the app shell's surface context.
-    // The container emits the navigation action; the route translates it into a
-    // global context switch before triggering the warp animation.
     val state by container.store.subscribe { action ->
         when (action) {
             WorkspaceCreateAction.NavigateHome -> {
                 WorkspaceContextStore.selectTenantWorkspace()
-                shouldOpenPeppolOnComplete = true
-                triggerWarp = true
+                navController.replace(SettingsDestination.PeppolRegistration)
             }
             is WorkspaceCreateAction.NavigateToBookkeeperConsole -> {
                 WorkspaceContextStore.selectFirmWorkspace(action.firmId)
-                pendingConsoleNavigation = true
-                shouldOpenPeppolOnComplete = false
-                triggerWarp = true
+                bcCallback?.invoke()
+                navController.replace(CoreDestination.Home)
             }
             WorkspaceCreateAction.NavigateBack -> navController.navigateUp()
             is WorkspaceCreateAction.ShowCreationError -> {
@@ -55,21 +43,5 @@ internal fun WorkspaceCreateRoute(
         state = state,
         onIntent = { container.store.intent(it) },
         onNavigateUp = { navController.navigateUp() },
-        triggerWarp = triggerWarp,
-        onWarpComplete = {
-            if (pendingConsoleNavigation) {
-                pendingConsoleNavigation = false
-                triggerWarp = false
-                bcCallback?.invoke()
-                navController.replace(CoreDestination.Home)
-                return@WorkspaceCreateScreen
-            }
-
-            triggerWarp = false
-            if (shouldOpenPeppolOnComplete) {
-                shouldOpenPeppolOnComplete = false
-                navController.replace(SettingsDestination.PeppolRegistration)
-            }
-        },
     )
 }

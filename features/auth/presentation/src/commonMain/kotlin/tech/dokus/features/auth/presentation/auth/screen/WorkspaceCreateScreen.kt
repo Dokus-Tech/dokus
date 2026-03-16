@@ -2,13 +2,8 @@
 
 package tech.dokus.features.auth.presentation.auth.screen
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.widthIn
@@ -17,10 +12,6 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -38,17 +29,14 @@ import tech.dokus.features.auth.presentation.auth.model.WorkspaceCreateType
 import tech.dokus.features.auth.presentation.auth.model.WorkspaceWizardStep
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.features.auth.mvi.WorkspaceCreateUserInfo
-import tech.dokus.foundation.aura.components.background.RadialRevealEffect
 import tech.dokus.foundation.aura.extensions.dismissKeyboardOnTapOutside
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
 
-private const val ContentFadeOutDurationMs = 600
 private const val CompanyLookupDebounceMs = 300L
 private const val CompanyLookupMinCharacters = 3
 private val StepContentMinHeight = 320.dp
-private val WizardContentMaxWidth = 520.dp
 private val WizardTypeSelectionMaxWidth = 560.dp
 private val WorkspaceCreateDefaultShellMaxWidth = 520.dp
 private val WorkspaceCreateLookupShellMaxWidth = 980.dp
@@ -60,52 +48,27 @@ internal fun WorkspaceCreateScreen(
     state: WorkspaceCreateState,
     onIntent: (WorkspaceCreateIntent) -> Unit,
     onNavigateUp: () -> Unit,
-    triggerWarp: Boolean,
-    onWarpComplete: () -> Unit,
     copyrightYear: String? = null,
 ) {
-    var isRevealActive by remember { mutableStateOf(false) }
-    var contentVisible by remember { mutableStateOf(true) }
-
-    LaunchedEffect(triggerWarp) {
-        if (triggerWarp) {
-            isRevealActive = true
-            contentVisible = false
-        }
-    }
-
     Scaffold {
-        Box(modifier = Modifier.fillMaxSize()) {
-            AnimatedVisibility(
-                visible = contentVisible,
-                enter = fadeIn(),
-                exit = fadeOut(animationSpec = tween(ContentFadeOutDurationMs)),
+        if (state.isReady) {
+            OnboardingCenteredShell(
+                modifier = Modifier.dismissKeyboardOnTapOutside(),
+                copyrightYear = copyrightYear,
+                contentMaxWidth = when (state.step) {
+                    WorkspaceWizardStep.CompanyName,
+                    WorkspaceWizardStep.VatAndAddress -> WorkspaceCreateLookupShellMaxWidth
+
+                    WorkspaceWizardStep.TypeSelection -> WorkspaceCreateDefaultShellMaxWidth
+                },
             ) {
-                if (state.isReady) {
-                    OnboardingCenteredShell(
-                        modifier = Modifier.dismissKeyboardOnTapOutside(),
-                        copyrightYear = copyrightYear,
-                        contentMaxWidth = when (state.step) {
-                            WorkspaceWizardStep.CompanyName,
-                            WorkspaceWizardStep.VatAndAddress -> WorkspaceCreateLookupShellMaxWidth
-
-                            WorkspaceWizardStep.TypeSelection -> WorkspaceCreateDefaultShellMaxWidth
-                        },
-                    ) {
-                        WorkspaceCreateContent(
-                            state = state,
-                            onIntent = onIntent,
-                            onBackPress = onNavigateUp,
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                    }
-                }
+                WorkspaceCreateContent(
+                    state = state,
+                    onIntent = onIntent,
+                    onBackPress = onNavigateUp,
+                    modifier = Modifier.fillMaxWidth(),
+                )
             }
-
-            RadialRevealEffect(
-                isActive = isRevealActive,
-                onAnimationComplete = onWarpComplete,
-            )
         }
     }
 }
@@ -236,8 +199,6 @@ private fun WorkspaceCreateScreenPreview(
             ),
             onIntent = {},
             onNavigateUp = {},
-            triggerWarp = false,
-            onWarpComplete = {},
             copyrightYear = "2026",
         )
     }
@@ -258,8 +219,6 @@ private fun WorkspaceCreateScreenDesktopPreview(
             ),
             onIntent = {},
             onNavigateUp = {},
-            triggerWarp = false,
-            onWarpComplete = {},
             copyrightYear = "2026",
         )
     }

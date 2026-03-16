@@ -13,6 +13,7 @@ import tech.dokus.foundation.app.NavContext
 data class WorkspaceContext(
     val navContext: NavContext = NavContext.TENANT,
     val selectedFirmId: FirmId? = null,
+    val isTransitionPending: Boolean = false,
 )
 
 object WorkspaceContextStore {
@@ -20,7 +21,11 @@ object WorkspaceContextStore {
     val state: StateFlow<WorkspaceContext> = mutableState.asStateFlow()
 
     fun selectTenantWorkspace() {
-        mutableState.value = WorkspaceContext(navContext = NavContext.TENANT, selectedFirmId = null)
+        mutableState.value = WorkspaceContext(
+            navContext = NavContext.TENANT,
+            selectedFirmId = null,
+            isTransitionPending = true,
+        )
     }
 
     fun switchToTenantWorkspace() {
@@ -32,7 +37,15 @@ object WorkspaceContextStore {
     }
 
     fun selectFirmWorkspace(firmId: FirmId) {
-        mutableState.value = WorkspaceContext(navContext = NavContext.FIRM, selectedFirmId = firmId)
+        mutableState.value = WorkspaceContext(
+            navContext = NavContext.FIRM,
+            selectedFirmId = firmId,
+            isTransitionPending = true,
+        )
+    }
+
+    fun clearTransition() {
+        mutableState.value = mutableState.value.copy(isTransitionPending = false)
     }
 
     fun reset() {

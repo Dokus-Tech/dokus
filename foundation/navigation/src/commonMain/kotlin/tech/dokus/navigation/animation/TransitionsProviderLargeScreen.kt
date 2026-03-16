@@ -13,6 +13,7 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hasRoute
+import tech.dokus.navigation.destinations.AuthDestination
 import tech.dokus.navigation.destinations.CoreDestination
 
 private const val AnimationDurationMs = 300
@@ -35,9 +36,17 @@ private fun AnimatedContentTransitionScope<NavBackStackEntry>.isMainToSplash(): 
         targetState.destination.hasRoute<CoreDestination.Splash>()
 }
 
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.isAuthToMain(): Boolean {
+    return (initialState.destination.hasRoute<AuthDestination.WorkspaceSelect>() ||
+        initialState.destination.hasRoute<AuthDestination.WorkspaceCreate>()) &&
+        targetState.destination.hasRoute<CoreDestination.Home>()
+}
+
 internal class TransitionsProviderLargeScreen : TransitionsProvider {
     override val AnimatedContentTransitionScope<NavBackStackEntry>.enterTransition: EnterTransition
         get() {
+            if (isAuthToMain()) return EnterTransition.None
+
             if (isSplashToMain()) {
                 return fadeIn(
                     animationSpec = tween(
@@ -62,6 +71,8 @@ internal class TransitionsProviderLargeScreen : TransitionsProvider {
 
     override val AnimatedContentTransitionScope<NavBackStackEntry>.exitTransition: ExitTransition
         get() {
+            if (isAuthToMain()) return ExitTransition.None
+
             if (isSplashToMain()) {
                 return fadeOut(
                     animationSpec = tween(SplashHandoffExitDurationMs, easing = FastOutSlowInEasing),
@@ -78,6 +89,8 @@ internal class TransitionsProviderLargeScreen : TransitionsProvider {
 
     override val AnimatedContentTransitionScope<NavBackStackEntry>.popEnterTransition: EnterTransition
         get() {
+            if (isAuthToMain()) return EnterTransition.None
+
             if (isMainToSplash()) {
                 return fadeIn(
                     animationSpec = tween(SplashHandoffExitDurationMs, easing = FastOutSlowInEasing),
@@ -94,6 +107,8 @@ internal class TransitionsProviderLargeScreen : TransitionsProvider {
 
     override val AnimatedContentTransitionScope<NavBackStackEntry>.popExitTransition: ExitTransition
         get() {
+            if (isAuthToMain()) return ExitTransition.None
+
             if (isMainToSplash()) {
                 return fadeOut(
                     animationSpec = tween(SplashHandoffExitDurationMs, easing = FastOutSlowInEasing),
