@@ -2,7 +2,10 @@ package tech.dokus.features.cashflow.presentation.review.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -13,10 +16,17 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.cashflow_feedback_placeholder
+import tech.dokus.aura.resources.cashflow_feedback_category_missing_info
+import tech.dokus.aura.resources.cashflow_feedback_category_other
+import tech.dokus.aura.resources.cashflow_feedback_category_wrong_amount
+import tech.dokus.aura.resources.cashflow_feedback_category_wrong_contact
+import tech.dokus.aura.resources.cashflow_feedback_category_wrong_date
+import tech.dokus.aura.resources.cashflow_feedback_category_wrong_type
+import tech.dokus.aura.resources.cashflow_feedback_details_placeholder
 import tech.dokus.aura.resources.cashflow_feedback_reject_instead
 import tech.dokus.aura.resources.cashflow_feedback_submit
 import tech.dokus.aura.resources.cashflow_feedback_title
+import tech.dokus.features.cashflow.presentation.review.FeedbackCategory
 import tech.dokus.features.cashflow.presentation.review.FeedbackDialogState
 import tech.dokus.foundation.aura.components.dialog.DokusDialog
 import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
@@ -27,18 +37,22 @@ import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
- * Dialog for providing correction feedback before re-analysis.
- * Correction-first: user describes what's wrong, system re-processes with feedback.
+ * Structured correction dialog with category chips.
+ * User selects what's wrong (category), optionally adds details, then re-analyzes.
  * "Reject document" is accessible as a secondary text link.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun FeedbackDialog(
     state: FeedbackDialogState,
+    onCategorySelected: (FeedbackCategory) -> Unit,
     onFeedbackChanged: (String) -> Unit,
     onSubmit: () -> Unit,
     onRejectInstead: () -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val canSubmit = state.selectedCategory != null && !state.isSubmitting
+
     DokusDialog(
         onDismissRequest = {
             if (!state.isSubmitting) onDismiss()
@@ -48,14 +62,30 @@ internal fun FeedbackDialog(
             Column(
                 verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
             ) {
+                // Category chips
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
+                    verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall),
+                ) {
+                    FeedbackCategory.entries.forEach { category ->
+                        FilterChip(
+                            selected = state.selectedCategory == category,
+                            onClick = { onCategorySelected(category) },
+                            label = { Text(categoryLabel(category)) },
+                            enabled = !state.isSubmitting,
+                        )
+                    }
+                }
+
+                // Optional details text field
                 OutlinedTextField(
                     value = state.feedbackText,
                     onValueChange = onFeedbackChanged,
-                    placeholder = { Text(stringResource(Res.string.cashflow_feedback_placeholder)) },
+                    placeholder = { Text(stringResource(Res.string.cashflow_feedback_details_placeholder)) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .submitOnEnter(
-                            enabled = state.feedbackText.isNotBlank() && !state.isSubmitting,
+                            enabled = canSubmit,
                             onSubmit = onSubmit,
                         ),
                     enabled = !state.isSubmitting,
@@ -79,11 +109,21 @@ internal fun FeedbackDialog(
             text = stringResource(Res.string.cashflow_feedback_submit),
             onClick = onSubmit,
             isLoading = state.isSubmitting,
-            enabled = state.feedbackText.isNotBlank() && !state.isSubmitting,
+            enabled = canSubmit,
         ),
         dismissOnBackPress = !state.isSubmitting,
         dismissOnClickOutside = !state.isSubmitting,
     )
+}
+
+@Composable
+private fun categoryLabel(category: FeedbackCategory): String = when (category) {
+    FeedbackCategory.WrongContact -> stringResource(Res.string.cashflow_feedback_category_wrong_contact)
+    FeedbackCategory.WrongAmount -> stringResource(Res.string.cashflow_feedback_category_wrong_amount)
+    FeedbackCategory.WrongDate -> stringResource(Res.string.cashflow_feedback_category_wrong_date)
+    FeedbackCategory.WrongType -> stringResource(Res.string.cashflow_feedback_category_wrong_type)
+    FeedbackCategory.MissingInfo -> stringResource(Res.string.cashflow_feedback_category_missing_info)
+    FeedbackCategory.Other -> stringResource(Res.string.cashflow_feedback_category_other)
 }
 
 @Preview
@@ -94,6 +134,7 @@ private fun FeedbackDialogPreview(
     TestWrapper(parameters) {
         FeedbackDialog(
             state = FeedbackDialogState(),
+            onCategorySelected = {},
             onFeedbackChanged = {},
             onSubmit = {},
             onRejectInstead = {},

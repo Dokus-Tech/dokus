@@ -46,12 +46,8 @@ internal fun DocumentReviewScreen(
             if (isLargeScreen && !isInDetailMode) {
                 ReviewTopBar(
                     state = state,
-                    isLargeScreen = isLargeScreen,
-                    isAccountantReadOnly = isAccountantReadOnly,
                     onBackClick = onBackClick,
                     onChatClick = onOpenChat,
-                    onConfirmClick = { onIntent(DocumentReviewIntent.Confirm) },
-                    onRejectClick = { onIntent(DocumentReviewIntent.ShowFeedbackDialog) },
                 )
             }
         },

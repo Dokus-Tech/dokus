@@ -456,7 +456,13 @@
     <string name="cashflow_action_keep_reviewing">Keep Reviewing</string>
     <string name="cashflow_reject_note_optional">Additional notes (optional)</string>
     <string name="cashflow_feedback_title">What needs correction?</string>
-    <string name="cashflow_feedback_placeholder">e.g., This is a Inbound Invoice from Google, not an outgoing invoice</string>
+    <string name="cashflow_feedback_category_wrong_contact">Wrong contact</string>
+    <string name="cashflow_feedback_category_wrong_amount">Wrong amount</string>
+    <string name="cashflow_feedback_category_wrong_date">Wrong date</string>
+    <string name="cashflow_feedback_category_wrong_type">Wrong type</string>
+    <string name="cashflow_feedback_category_missing_info">Missing info</string>
+    <string name="cashflow_feedback_category_other">Something else</string>
+    <string name="cashflow_feedback_details_placeholder">Additional details (optional)</string>
     <string name="cashflow_feedback_submit">Re-analyze</string>
     <string name="cashflow_feedback_reject_instead">Reject document instead</string>
     <string name="cashflow_discard_changes_title">Discard changes?</string>

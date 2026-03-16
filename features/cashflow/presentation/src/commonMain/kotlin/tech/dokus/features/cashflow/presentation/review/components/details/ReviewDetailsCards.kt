@@ -20,8 +20,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.cashflow_choose_different
-import tech.dokus.aura.resources.cashflow_contact_create_new
 import tech.dokus.aura.resources.cashflow_contact_label
 import tech.dokus.aura.resources.cashflow_credit_note_details_section
 import tech.dokus.aura.resources.cashflow_credit_note_number
@@ -30,14 +28,11 @@ import tech.dokus.aura.resources.cashflow_direction_in
 import tech.dokus.aura.resources.cashflow_direction_out
 import tech.dokus.aura.resources.cashflow_invoice_details_section
 import tech.dokus.aura.resources.cashflow_invoice_number
-import tech.dokus.aura.resources.cashflow_no_contact_selected
 import tech.dokus.aura.resources.cashflow_processing_identifying_type
 import tech.dokus.aura.resources.cashflow_receipt_details_section
 import tech.dokus.aura.resources.cashflow_receipt_number
-import tech.dokus.aura.resources.cashflow_select_contact
 import tech.dokus.aura.resources.cashflow_select_document_type
 import tech.dokus.aura.resources.cashflow_suggested_contact
-import tech.dokus.aura.resources.cashflow_use_this_contact
 import tech.dokus.aura.resources.cashflow_bank_statement_details_section
 import tech.dokus.aura.resources.common_date
 import tech.dokus.aura.resources.contacts_address
@@ -59,7 +54,6 @@ import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.models.DocumentUiData
 import tech.dokus.foundation.aura.components.POutlinedButton
-import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.textMuted
 
@@ -127,101 +121,28 @@ internal fun CounterpartyCard(
             }
         }
 
-        if (!isReadOnly) {
+        // Show suggested contact info when no contact is explicitly bound
+        if (!isReadOnly && state.selectedContactSnapshot == null) {
             when (val selection = state.contactSelectionState) {
                 is ContactSelectionState.Suggested -> {
-                    SuggestedContactCard(
-                        name = selection.name,
-                        vatNumber = selection.vatNumber,
-                        onAccept = { onIntent(DocumentReviewIntent.AcceptSuggestedContact) },
-                        onChooseDifferent = onCorrectContact,
+                    MicroLabel(
+                        text = stringResource(Res.string.cashflow_suggested_contact),
                         modifier = Modifier.padding(top = Constraints.Spacing.small),
                     )
-                }
-                ContactSelectionState.NoContact -> {
-                    if (hasExtractedData && state.selectedContactSnapshot == null) {
-                        PendingContactCard(
-                            name = counterparty.name,
-                            vatNumber = counterparty.vatNumber,
-                            iban = counterparty.iban,
-                            onLinkExisting = onCorrectContact,
-                            onCreateNew = onCreateContact,
-                            modifier = Modifier.padding(top = Constraints.Spacing.small),
+                    FactField(
+                        label = stringResource(Res.string.cashflow_contact_label),
+                        value = selection.name
+                    )
+                    selection.vatNumber?.let { vat ->
+                        FactField(
+                            label = stringResource(Res.string.contacts_vat_number),
+                            value = vat
                         )
                     }
                 }
+                ContactSelectionState.NoContact -> Unit
                 ContactSelectionState.Selected -> Unit
             }
-        }
-    }
-}
-
-@Composable
-private fun SuggestedContactCard(
-    name: String,
-    vatNumber: String?,
-    onAccept: () -> Unit,
-    onChooseDifferent: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall),
-    ) {
-        MicroLabel(text = stringResource(Res.string.cashflow_suggested_contact))
-        FactField(
-            label = stringResource(Res.string.cashflow_contact_label),
-            value = name
-        )
-        vatNumber?.let { vat ->
-            FactField(
-                label = stringResource(Res.string.contacts_vat_number),
-                value = vat
-            )
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)) {
-            PPrimaryButton(
-                text = stringResource(Res.string.cashflow_use_this_contact),
-                onClick = onAccept,
-                modifier = Modifier.weight(1f)
-            )
-            POutlinedButton(
-                text = stringResource(Res.string.cashflow_choose_different),
-                onClick = onChooseDifferent,
-                modifier = Modifier.weight(1f)
-            )
-        }
-    }
-}
-
-@Composable
-private fun PendingContactCard(
-    name: String?,
-    vatNumber: String?,
-    iban: String?,
-    onLinkExisting: () -> Unit,
-    onCreateNew: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall),
-    ) {
-        MicroLabel(text = stringResource(Res.string.cashflow_no_contact_selected))
-        name?.let { FactField(label = stringResource(Res.string.cashflow_contact_label), value = it) }
-        vatNumber?.let { FactField(label = stringResource(Res.string.contacts_vat_number), value = it) }
-        iban?.let { FactField(label = stringResource(Res.string.workspace_iban), value = it) }
-        Row(horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)) {
-            PPrimaryButton(
-                text = stringResource(Res.string.cashflow_select_contact),
-                onClick = onLinkExisting,
-                modifier = Modifier.weight(1f)
-            )
-            POutlinedButton(
-                text = stringResource(Res.string.cashflow_contact_create_new),
-                onClick = onCreateNew,
-                modifier = Modifier.weight(1f)
-            )
         }
     }
 }
@@ -569,7 +490,8 @@ private fun DirectionSelector(
     onDirectionSelected: (DocumentDirection) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    if (isReadOnly) {
+    // Show toggle only when direction is Unknown and editable; otherwise read-only text
+    if (isReadOnly || direction != DocumentDirection.Unknown) {
         FactField(
             label = stringResource(Res.string.cashflow_direction),
             value = cashflowDirectionLabel(direction),

@@ -341,6 +341,9 @@ internal fun DocumentReviewRoute(
         if (isAccountantReadOnly) return@let
         FeedbackDialog(
             state = dialogState,
+            onCategorySelected = { category ->
+                dispatchIntent(DocumentReviewIntent.SelectFeedbackCategory(category))
+            },
             onFeedbackChanged = { text ->
                 dispatchIntent(DocumentReviewIntent.UpdateFeedbackText(text))
             },
