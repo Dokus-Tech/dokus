@@ -40,6 +40,8 @@ import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.chat.ChatGridBackground
 import tech.dokus.foundation.aura.components.chat.ChatInputBar
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.local.LocalScreenSize
+import tech.dokus.foundation.aura.local.isLarge
 import tech.dokus.foundation.aura.style.textMuted
 
 /**
@@ -59,9 +61,11 @@ internal fun IntelligenceScreen(
     onDownloadZip: (List<String>) -> Unit = {},
     onNavigateToDocument: (String) -> Unit = {},
 ) {
+    val isLargeScreen = LocalScreenSize.isLarge
     val sessionState = state.session
     val sessionData = (sessionState as? DokusState.Success)?.data
     val messageCount = sessionData?.messages?.size ?: 0
+    val showSessionsPanel = isLargeScreen && state.isSessionsPanelOpen
 
     LaunchedEffect(messageCount) {
         if (messageCount > 0) {
@@ -71,9 +75,9 @@ internal fun IntelligenceScreen(
 
     Box(modifier = Modifier.fillMaxSize()) {
         Row(modifier = Modifier.fillMaxSize()) {
-            // Sessions panel (collapsible)
+            // Sessions panel (collapsible, desktop only)
             AnimatedVisibility(
-                visible = state.isSessionsPanelOpen,
+                visible = showSessionsPanel,
                 enter = expandHorizontally(expandFrom = Alignment.Start),
                 exit = shrinkHorizontally(shrinkTowards = Alignment.Start),
             ) {
@@ -93,8 +97,8 @@ internal fun IntelligenceScreen(
                 // Grid background
                 ChatGridBackground()
 
-                // Expand button when panel is collapsed
-                if (!state.isSessionsPanelOpen) {
+                // Expand button when panel is collapsed (desktop only)
+                if (isLargeScreen && !state.isSessionsPanelOpen) {
                     Box(
                         modifier = Modifier
                             .padding(Constraints.Spacing.small)
