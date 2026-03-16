@@ -113,6 +113,20 @@ class Banking {
             @Serializable
             @Resource("undo-match")
             class UndoMatch(val parent: Id)
+
+            /**
+             * POST /api/v1/banking/transactions/{id}/mark-transfer - Mark as internal transfer
+             */
+            @Serializable
+            @Resource("mark-transfer")
+            class MarkTransfer(val parent: Id)
+
+            /**
+             * POST /api/v1/banking/transactions/{id}/undo-transfer - Undo transfer resolution
+             */
+            @Serializable
+            @Resource("undo-transfer")
+            class UndoTransfer(val parent: Id)
         }
     }
 }

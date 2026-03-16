@@ -240,6 +240,65 @@ class BankingService(
     }
 
     @OptIn(ExperimentalUuidApi::class)
+    suspend fun markTransfer(
+        tenantId: TenantId,
+        transactionId: BankTransactionId,
+        mode: tech.dokus.domain.model.MarkTransferMode,
+        counterpartTransactionId: BankTransactionId?,
+        destinationAccountId: tech.dokus.domain.ids.BankAccountId?,
+    ): Result<BankTransactionDto> = runSuspendCatching {
+        val transaction = bankTransactionRepository.findById(tenantId, transactionId)
+            ?: throw DokusException.NotFound("Bank transaction not found")
+
+        if (transaction.status != BankTransactionStatus.Unmatched &&
+            transaction.status != BankTransactionStatus.NeedsReview
+        ) {
+            throw DokusException.BadRequest("Transaction must be unmatched or needs review to mark as transfer")
+        }
+
+        val pairId = kotlin.uuid.Uuid.random()
+
+        when (mode) {
+            tech.dokus.domain.model.MarkTransferMode.Pair -> {
+                requireNotNull(counterpartTransactionId) { "counterpartTransactionId required for PAIR mode" }
+                bankTransactionRepository.markTransfer(tenantId, transactionId, pairId, MatchedBy.Manual)
+                bankTransactionRepository.markTransfer(tenantId, counterpartTransactionId, pairId, MatchedBy.Manual)
+                bankingSsePublisher.publishMatchUpdated(tenantId, counterpartTransactionId)
+            }
+            tech.dokus.domain.model.MarkTransferMode.OneSided -> {
+                bankTransactionRepository.markTransfer(tenantId, transactionId, pairId, MatchedBy.Manual)
+            }
+        }
+
+        bankingSsePublisher.publishMatchUpdated(tenantId, transactionId)
+        logger.info("Marked transfer: {} mode={} pairId={}", transactionId, mode, pairId)
+
+        bankTransactionRepository.findById(tenantId, transactionId)
+            ?: throw DokusException.InternalError("Transaction disappeared after marking transfer")
+    }
+
+    @OptIn(ExperimentalUuidApi::class)
+    suspend fun undoTransfer(
+        tenantId: TenantId,
+        transactionId: BankTransactionId,
+    ): Result<BankTransactionDto> = runSuspendCatching {
+        val transaction = bankTransactionRepository.findById(tenantId, transactionId)
+            ?: throw DokusException.NotFound("Bank transaction not found")
+
+        if (transaction.resolutionType != ResolutionType.Transfer) {
+            throw DokusException.BadRequest("Transaction is not a transfer")
+        }
+
+        bankTransactionRepository.undoTransfer(tenantId, transactionId)
+
+        bankingSsePublisher.publishMatchRemoved(tenantId, transactionId)
+        logger.info("Undid transfer: {}", transactionId)
+
+        bankTransactionRepository.findById(tenantId, transactionId)
+            ?: throw DokusException.InternalError("Transaction disappeared after undoing transfer")
+    }
+
+    @OptIn(ExperimentalUuidApi::class)
     suspend fun createExpenseFromTransaction(
         tenantId: TenantId,
         transactionId: BankTransactionId,
