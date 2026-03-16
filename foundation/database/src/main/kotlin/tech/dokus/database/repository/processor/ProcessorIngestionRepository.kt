@@ -1,6 +1,7 @@
 package tech.dokus.database.repository.processor
 
 import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.toStdlibInstant
@@ -50,9 +51,10 @@ import kotlin.uuid.toKotlinUuid
  * 2. Mark as processing
  * 3. Mark as succeeded (and update draft)
  * 4. Mark as failed
+ * 5. Schedule retry (re-queue with backoff)
  *
- * Each run is a single processing attempt. Retries are handled via
- * the /reprocess endpoint which creates new runs.
+ * Transient failures (provider errors, timeouts) are automatically retried
+ * up to maxAttempts. The /reprocess endpoint creates new runs for manual retries.
  */
 class ProcessorIngestionRepository {
 
@@ -60,15 +62,19 @@ class ProcessorIngestionRepository {
         val runId: IngestionRunId,
         val documentId: DocumentId,
         val tenantId: TenantId,
+        val requeued: Boolean,
     )
 
     /**
      * Find pending ingestion runs ready for processing.
-     * Only picks up runs with status=Queued, ordered by queue time (FIFO).
+     * Only picks up runs with status=Queued where nextAttemptAt has passed (or is null).
+     * Ordered by queue time (FIFO).
      */
-    @OptIn(ExperimentalUuidApi::class)
+    @OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
     suspend fun findPendingForProcessing(limit: Int = 10): List<IngestionItemEntity> =
         newSuspendedTransaction {
+            val now = Clock.System.now().toStdlibInstant().toLocalDateTime(TimeZone.UTC)
+
             val sourceJoin = (DocumentIngestionRunsTable innerJoin DocumentsTable)
                 .join(
                     DocumentSourcesTable,
@@ -82,7 +88,9 @@ class ProcessorIngestionRepository {
             sourceJoin
                 .selectAll()
                 .where {
-                    DocumentIngestionRunsTable.status eq IngestionStatus.Queued
+                    (DocumentIngestionRunsTable.status eq IngestionStatus.Queued) and
+                        (DocumentIngestionRunsTable.nextAttemptAt.isNull() or
+                            (DocumentIngestionRunsTable.nextAttemptAt lessEq now))
                 }
                 .orderBy(DocumentIngestionRunsTable.queuedAt to SortOrder.ASC)
                 .limit(limit)
@@ -97,7 +105,8 @@ class ProcessorIngestionRepository {
                         peppolSnapshotVersion = row.getOrNull(DocumentSourcesTable.peppolSnapshotVersion),
                         userFeedback = row[DocumentIngestionRunsTable.userFeedback],
                         overrideMaxPages = row[DocumentIngestionRunsTable.overrideMaxPages],
-                        overrideDpi = row[DocumentIngestionRunsTable.overrideDpi]?.let(Dpi::create)
+                        overrideDpi = row[DocumentIngestionRunsTable.overrideDpi]?.let(Dpi::create),
+                        attemptCount = row[DocumentIngestionRunsTable.attemptCount],
                     )
                 }
         }
@@ -292,7 +301,7 @@ class ProcessorIngestionRepository {
     }
 
     /**
-     * Mark an ingestion run as failed.
+     * Mark an ingestion run as failed (terminal).
      */
     @OptIn(ExperimentalTime::class)
     suspend fun markAsFailed(runId: String, error: String): Boolean = newSuspendedTransaction {
@@ -307,49 +316,98 @@ class ProcessorIngestionRepository {
     }
 
     /**
+     * Schedule a retry for a failed ingestion run.
+     * Resets status to Queued with a future nextAttemptAt and incremented attemptCount.
+     */
+    @OptIn(ExperimentalUuidApi::class)
+    suspend fun scheduleRetry(
+        runId: IngestionRunId,
+        attemptCount: Int,
+        nextAttemptAt: LocalDateTime,
+        error: String,
+    ): Boolean = newSuspendedTransaction {
+        DocumentIngestionRunsTable.update({
+            DocumentIngestionRunsTable.id eq runId.value.toJavaUuid()
+        }) {
+            it[status] = IngestionStatus.Queued
+            it[DocumentIngestionRunsTable.attemptCount] = attemptCount
+            it[DocumentIngestionRunsTable.nextAttemptAt] = nextAttemptAt
+            it[startedAt] = null
+            it[finishedAt] = null
+            it[errorMessage] = error.take(2000)
+        } > 0
+    }
+
+    /**
      * Recover ingestion runs stuck in Processing state.
      *
      * Finds runs where status=Processing and startedAt is older than
-     * [DocumentProcessingConstants.INGESTION_RUN_TIMEOUT],
-     * then marks them as Failed. This handles worker crashes that leave runs stuck mid-flight.
+     * [DocumentProcessingConstants.INGESTION_RUN_TIMEOUT].
      *
-     * @return Number of runs recovered
+     * Runs with remaining retry budget are re-queued (status=Queued).
+     * Runs that have exhausted retries are marked Failed (terminal).
      */
     @OptIn(ExperimentalTime::class, ExperimentalUuidApi::class)
-    suspend fun recoverStaleRunsDetailed(): List<RecoveredIngestionRun> =
+    suspend fun recoverStaleRunsDetailed(maxAttempts: Int): List<RecoveredIngestionRun> =
         newSuspendedTransaction {
             val cutoff = (Clock.System.now() - DocumentProcessingConstants.INGESTION_RUN_TIMEOUT)
                 .toStdlibInstant()
                 .toLocalDateTime(TimeZone.UTC)
             val now = Clock.System.now().toStdlibInstant().toLocalDateTime(TimeZone.UTC)
+
+            data class StaleRun(
+                val runId: IngestionRunId,
+                val documentId: DocumentId,
+                val tenantId: TenantId,
+                val attemptCount: Int,
+            )
+
             val staleRuns = DocumentIngestionRunsTable
                 .selectAll()
                 .where {
                     (DocumentIngestionRunsTable.status eq IngestionStatus.Processing) and
-                            (DocumentIngestionRunsTable.startedAt.isNull() or
-                                    (DocumentIngestionRunsTable.startedAt lessEq cutoff))
+                        (DocumentIngestionRunsTable.startedAt.isNull() or
+                            (DocumentIngestionRunsTable.startedAt lessEq cutoff))
                 }
                 .map { row ->
-                    RecoveredIngestionRun(
+                    StaleRun(
                         runId = IngestionRunId(row[DocumentIngestionRunsTable.id].value.toKotlinUuid()),
                         documentId = DocumentId(row[DocumentIngestionRunsTable.documentId].toKotlinUuid()),
                         tenantId = TenantId(row[DocumentIngestionRunsTable.tenantId].toKotlinUuid()),
+                        attemptCount = row[DocumentIngestionRunsTable.attemptCount],
                     )
                 }
             if (staleRuns.isEmpty()) {
                 return@newSuspendedTransaction emptyList()
             }
 
-            DocumentIngestionRunsTable.update({
-                (DocumentIngestionRunsTable.status eq IngestionStatus.Processing) and
-                        (DocumentIngestionRunsTable.startedAt.isNull() or
-                                (DocumentIngestionRunsTable.startedAt lessEq cutoff))
-            }) {
-                it[status] = IngestionStatus.Failed
-                it[finishedAt] = now
-                it[errorMessage] = DocumentProcessingConstants.INGESTION_TIMEOUT_ERROR_MESSAGE
-            }
+            // Process each stale run individually: re-queue or fail based on retry budget
+            staleRuns.map { run ->
+                val nextAttemptCount = run.attemptCount + 1
+                val canRetry = nextAttemptCount < maxAttempts
 
-            staleRuns
+                DocumentIngestionRunsTable.update({
+                    DocumentIngestionRunsTable.id eq run.runId.value.toJavaUuid()
+                }) {
+                    if (canRetry) {
+                        it[status] = IngestionStatus.Queued
+                        it[attemptCount] = nextAttemptCount
+                        it[nextAttemptAt] = now
+                        it[startedAt] = null
+                        it[finishedAt] = null
+                    } else {
+                        it[status] = IngestionStatus.Failed
+                        it[finishedAt] = now
+                    }
+                    it[errorMessage] = DocumentProcessingConstants.INGESTION_TIMEOUT_ERROR_MESSAGE
+                }
+
+                RecoveredIngestionRun(
+                    runId = run.runId,
+                    documentId = run.documentId,
+                    tenantId = run.tenantId,
+                    requeued = canRetry,
+                )
+            }
         }
 }
