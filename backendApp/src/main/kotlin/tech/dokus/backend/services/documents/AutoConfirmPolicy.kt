@@ -176,7 +176,7 @@ class AutoConfirmPolicy {
             is InvoiceDraftData -> draftData.totalAmount?.isPositive == true
             is ReceiptDraftData -> draftData.totalAmount?.isPositive == true
             is CreditNoteDraftData -> draftData.totalAmount?.isPositive == true
-            is BankStatementDraftData -> false
+            is BankStatementDraftData -> true
             is ProFormaDraftData,
             is QuoteDraftData,
             is OrderConfirmationDraftData,

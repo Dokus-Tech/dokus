@@ -15,6 +15,7 @@ internal class ProcessBankStatementUseCase(
     private val matchingEngine: MatchingEngine,
     private val documentRepository: DocumentRepository,
     private val resolveContact: ResolveDocumentContactUseCase,
+    private val autoConfirm: AutoConfirmDocumentUseCase,
 ) {
     private val logger = loggerFor()
 
@@ -58,6 +59,7 @@ internal class ProcessBankStatementUseCase(
         }
 
         // Contact resolution for bank institution
+        var linkedContactId: tech.dokus.domain.ids.ContactId? = null
         val authoritativeSnapshot = context.extraction.toAuthoritativeCounterpartySnapshot()
         if (authoritativeSnapshot != null) {
             runSuspendCatching {
@@ -68,6 +70,8 @@ internal class ProcessBankStatementUseCase(
                     authoritativeSnapshot = authoritativeSnapshot,
                     tenantVat = context.tenantVat,
                 )
+            }.onSuccess { contactId ->
+                linkedContactId = contactId
             }.onFailure {
                 logger.warn(
                     "Contact resolution failed for bank statement {}: {}",
@@ -76,6 +80,9 @@ internal class ProcessBankStatementUseCase(
                 )
             }
         }
+
+        // Auto-confirm (same logic as standard documents)
+        autoConfirm(context, linkedContactId)
 
         logger.info(
             "Processed bank statement {}: validRows={}, discardedRows={}, trust={}, dedup={}",
