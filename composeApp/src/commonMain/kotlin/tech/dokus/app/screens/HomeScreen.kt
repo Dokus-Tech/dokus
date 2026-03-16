@@ -64,6 +64,7 @@ import tech.dokus.foundation.app.shell.HomeShellTopBarMode
 import tech.dokus.foundation.app.shell.WorkspaceContextStore
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.background.AmbientBackground
+import tech.dokus.foundation.aura.components.background.WorkspaceEntryOverlay
 import tech.dokus.foundation.aura.components.navigation.DokusNavigationBar
 import tech.dokus.foundation.aura.components.navigation.DokusNavigationRailSectioned
 import tech.dokus.foundation.aura.components.text.DokusLogo
@@ -162,18 +163,26 @@ internal fun HomeRoute(
 
     val onConsumeHomeCommand = remember { { id: Long -> HomeNavigationCommandBus.consume(id) } }
 
-    HomeSurfaceShell(
-        navContext = activeNavContext,
-        appModules = appModules,
-        rootNavController = navController,
-        isLargeScreen = isLargeScreen,
-        shellState = shellState,
-        selectedFirm = selectedFirm,
-        profileData = profileData,
-        pendingHomeCommand = pendingHomeCommand,
-        onConsumeHomeCommand = onConsumeHomeCommand,
-        snackbarHostState = snackbarHostState,
-    )
+    Box(modifier = Modifier.fillMaxSize()) {
+        HomeSurfaceShell(
+            navContext = activeNavContext,
+            appModules = appModules,
+            rootNavController = navController,
+            isLargeScreen = isLargeScreen,
+            shellState = shellState,
+            selectedFirm = selectedFirm,
+            profileData = profileData,
+            pendingHomeCommand = pendingHomeCommand,
+            onConsumeHomeCommand = onConsumeHomeCommand,
+            snackbarHostState = snackbarHostState,
+        )
+
+        if (workspaceContext.isTransitionPending) {
+            WorkspaceEntryOverlay(
+                onFadeComplete = { WorkspaceContextStore.clearTransition() },
+            )
+        }
+    }
 }
 
 private fun resolveActiveSurface(

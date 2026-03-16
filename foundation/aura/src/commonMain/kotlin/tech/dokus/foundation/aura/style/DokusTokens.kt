@@ -115,16 +115,7 @@ data class DokusEffects(
     val uploadTrailOuter: Color,
     val uploadHeatGlowInner: Color,
     val uploadHeatGlowOuter: Color,
-    val warpSilver: Color,
-    val warpLightSilver: Color,
-    val warpGainsboro: Color,
-    val warpLightGray: Color,
-    val warpGray: Color,
-    val warpMediumSilver: Color,
-    val warpNeutralGray: Color,
-    val warpPaleGray: Color,
-    val warpFlashColor: Color,
-    val warpFadeColor: Color,
+    val revealSurface: Color,
 )
 
 internal val DefaultDokusSpacing = DokusSpacing()
@@ -164,16 +155,7 @@ internal fun createDokusEffects(colorScheme: ColorScheme): DokusEffects = if (co
         uploadTrailOuter = Color(0xFFFFAA00),
         uploadHeatGlowInner = Color(0xFFFF4400),
         uploadHeatGlowOuter = Color(0xFFFF6600),
-        warpSilver = Color(0xFFC0C0C0),
-        warpLightSilver = Color(0xFFE8E8E8),
-        warpGainsboro = Color(0xFFDCDCDC),
-        warpLightGray = Color(0xFFD3D3D3),
-        warpGray = Color(0xFFBDBDBD),
-        warpMediumSilver = Color(0xFFB8B8B8),
-        warpNeutralGray = Color(0xFFCCCCCC),
-        warpPaleGray = Color(0xFFE0E0E0),
-        warpFlashColor = Color.White,
-        warpFadeColor = Color.Black,
+        revealSurface = Color(0xFF0F0E0C),
     )
 } else {
     DokusEffects(
@@ -208,16 +190,7 @@ internal fun createDokusEffects(colorScheme: ColorScheme): DokusEffects = if (co
         uploadTrailOuter = Color(0xFFFFAA00),
         uploadHeatGlowInner = Color(0xFFFF4400),
         uploadHeatGlowOuter = Color(0xFFFF6600),
-        warpSilver = Color(0xFFC0C0C0),
-        warpLightSilver = Color(0xFFE8E8E8),
-        warpGainsboro = Color(0xFFDCDCDC),
-        warpLightGray = Color(0xFFD3D3D3),
-        warpGray = Color(0xFFBDBDBD),
-        warpMediumSilver = Color(0xFFB8B8B8),
-        warpNeutralGray = Color(0xFFCCCCCC),
-        warpPaleGray = Color(0xFFE0E0E0),
-        warpFlashColor = Color.White,
-        warpFadeColor = Color.Black,
+        revealSurface = Color(0xFFF5F3EF),
     )
 }
 
