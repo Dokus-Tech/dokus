@@ -14,6 +14,7 @@ import org.jetbrains.exposed.v1.core.greaterEq
 import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.isNull
 import org.jetbrains.exposed.v1.core.less
+import org.jetbrains.exposed.v1.core.neq
 import org.jetbrains.exposed.v1.core.or
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
@@ -422,7 +423,8 @@ class DocumentRepository : DocumentStatusChecker {
         val cutoff = Clock.System.now().minus(30.days).toLocalDateTime(TimeZone.UTC)
         val runs = DocumentIngestionRunsTable
 
-        // Find NeedsReview documents from last 30 days with old/null processing version
+        // Find eligible documents from last 30 days with old/null processing version.
+        // Matches health stats criteria: NeedsReview OR no successful run (excluding Confirmed).
         val candidates = DocumentsTable
             .join(runs, JoinType.LEFT, additionalConstraint = {
                 DocumentsTable.lastSuccessfulRunId eq runs.id
@@ -431,7 +433,11 @@ class DocumentRepository : DocumentStatusChecker {
             .where {
                 (DocumentsTable.tenantId eq tenantUuid) and
                     (DocumentsTable.updatedAt greaterEq cutoff) and
-                    (DocumentsTable.documentStatus eq DocumentStatus.NeedsReview) and
+                    (DocumentsTable.documentStatus neq DocumentStatus.Confirmed) and
+                    (
+                        (DocumentsTable.documentStatus eq DocumentStatus.NeedsReview) or
+                            (DocumentsTable.lastSuccessfulRunId.isNull())
+                        ) and
                     ((runs.processingVersion.isNull()) or (runs.processingVersion less currentProcessingVersion))
             }
             .limit(limit)
