@@ -143,7 +143,7 @@ private fun SessionItem(
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = session.documentName ?: session.lastMessagePreview ?: "Conversation",
+                text = session.title ?: session.lastMessagePreview ?: "Conversation",
                 style = MaterialTheme.typography.bodySmall,
                 fontWeight = if (isActive) FontWeight.SemiBold else FontWeight.Normal,
                 color = MaterialTheme.colorScheme.onSurface,

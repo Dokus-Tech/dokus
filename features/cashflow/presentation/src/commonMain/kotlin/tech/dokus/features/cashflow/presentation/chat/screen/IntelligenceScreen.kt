@@ -60,6 +60,7 @@ internal fun IntelligenceScreen(
     onDownloadDocument: (String) -> Unit = {},
     onDownloadZip: (List<String>) -> Unit = {},
     onNavigateToDocument: (String) -> Unit = {},
+    onUploadClick: () -> Unit = {},
 ) {
     val isLargeScreen = LocalScreenSize.isLarge
     val sessionState = state.session
@@ -186,7 +187,7 @@ internal fun IntelligenceScreen(
                             text = state.inputText,
                             onTextChange = { onIntent(ChatIntent.UpdateInputText(it)) },
                             onSend = { onIntent(ChatIntent.SendMessage) },
-                            onUpload = { /* M4: wire to document upload */ },
+                            onUpload = onUploadClick,
                             isSending = state.isSending,
                             maxLength = sessionData?.maxMessageLength ?: 4000,
                         )

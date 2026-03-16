@@ -17,6 +17,8 @@ import org.koin.compose.koinInject
 import tech.dokus.domain.config.DynamicDokusEndpointProvider
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
+import tech.dokus.features.cashflow.mvi.AddDocumentContainer
+import tech.dokus.features.cashflow.presentation.cashflow.components.rememberDocumentFilePicker
 import tech.dokus.features.cashflow.presentation.chat.ChatAction
 import tech.dokus.features.cashflow.presentation.chat.ChatContainer
 import tech.dokus.features.cashflow.presentation.chat.ChatIntent

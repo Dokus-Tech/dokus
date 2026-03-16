@@ -238,6 +238,9 @@ class ChatRepositoryImpl : ChatRepository {
                 val firstMessage = messages.minByOrNull { it[ChatMessagesTable.sequenceNumber] }!!
                 val lastMessage = messages.maxByOrNull { it[ChatMessagesTable.sequenceNumber] }!!
 
+                val firstUserMessage = messages
+                    .firstOrNull { it[ChatMessagesTable.role] == MessageRole.User.dbValue }
+
                 ChatSessionSummary(
                     sessionId = ChatSessionId.parse(sessionUuid.toString()),
                     scope = ChatScope.fromDbValue(firstMessage[ChatMessagesTable.scope]),
@@ -245,6 +248,7 @@ class ChatRepositoryImpl : ChatRepository {
                         DocumentId.parse(it.toString())
                     },
                     documentName = null, // Would need join for this
+                    title = firstUserMessage?.get(ChatMessagesTable.content)?.take(50),
                     messageCount = messages.size,
                     lastMessagePreview = lastMessage[ChatMessagesTable.content].take(100),
                     createdAt = firstMessage[ChatMessagesTable.createdAt],
@@ -293,6 +297,9 @@ class ChatRepositoryImpl : ChatRepository {
             }
         }
 
+        val firstUserMessage = messages
+            .firstOrNull { it[ChatMessagesTable.role] == MessageRole.User.dbValue }
+
         ChatSessionSummary(
             sessionId = ChatSessionId.parse(sessionUuid.toString()),
             scope = ChatScope.fromDbValue(firstMessage[ChatMessagesTable.scope]),
@@ -300,6 +307,7 @@ class ChatRepositoryImpl : ChatRepository {
                 DocumentId.parse(it.toString())
             },
             documentName = documentName,
+            title = firstUserMessage?.get(ChatMessagesTable.content)?.take(50),
             messageCount = messages.size,
             lastMessagePreview = lastMessage[ChatMessagesTable.content].take(100),
             createdAt = firstMessage[ChatMessagesTable.createdAt],
@@ -374,6 +382,9 @@ class ChatRepositoryImpl : ChatRepository {
                 val lastMessage =
                     sessionMessages.maxByOrNull { it[ChatMessagesTable.sequenceNumber] }!!
 
+                val firstUserMsg = sessionMessages
+                    .firstOrNull { it[ChatMessagesTable.role] == MessageRole.User.dbValue }
+
                 ChatSessionSummary(
                     sessionId = ChatSessionId.parse(sessionUuid.toString()),
                     scope = ChatScope.fromDbValue(firstMessage[ChatMessagesTable.scope]),
@@ -381,6 +392,7 @@ class ChatRepositoryImpl : ChatRepository {
                         DocumentId.parse(it.toString())
                     },
                     documentName = null,
+                    title = firstUserMsg?.get(ChatMessagesTable.content)?.take(50),
                     messageCount = sessionMessages.size,
                     lastMessagePreview = lastMessage[ChatMessagesTable.content].take(100),
                     createdAt = firstMessage[ChatMessagesTable.createdAt],

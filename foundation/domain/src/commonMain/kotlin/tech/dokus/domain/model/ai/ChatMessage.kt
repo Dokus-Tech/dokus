@@ -225,6 +225,9 @@ data class ChatSessionSummary(
     /** Document name (if SINGLE_DOC scope) */
     val documentName: String? = null,
 
+    /** Session title (auto-generated from first user message) */
+    val title: String? = null,
+
     /** Number of messages in the session */
     val messageCount: Int,
 
