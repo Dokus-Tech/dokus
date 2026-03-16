@@ -18,7 +18,7 @@ value class Dpi private constructor(val value: Int) {
         val high = Dpi(DpiHigh)
         val max = Dpi(DpiMax)
 
-        val default = high
+        val default = medium
 
         fun create(value: Int): Dpi = Dpi(value.coerceIn(DpiMin, DpiMax))
     }
