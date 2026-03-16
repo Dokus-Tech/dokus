@@ -310,6 +310,18 @@ sealed interface ChatAction : MVIAction {
 
     // === UI Effects ===
 
+    /**
+     * Download a single document PDF.
+     * @param documentId Document to download
+     */
+    data class DownloadDocument(val documentId: String) : ChatAction
+
+    /**
+     * Download multiple documents as a ZIP archive.
+     * @param documentIds Document IDs to bundle
+     */
+    data class DownloadDocumentsZip(val documentIds: List<String>) : ChatAction
+
     /** Scroll to the bottom of the message list */
     data object ScrollToBottom : ChatAction
 

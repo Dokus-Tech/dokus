@@ -12,6 +12,9 @@ import androidx.compose.runtime.setValue
 import kotlinx.coroutines.launch
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
+import androidx.compose.ui.platform.LocalUriHandler
+import org.koin.compose.koinInject
+import tech.dokus.domain.config.DynamicDokusEndpointProvider
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.features.cashflow.presentation.chat.ChatAction
@@ -20,14 +23,19 @@ import tech.dokus.features.cashflow.presentation.chat.ChatIntent
 import tech.dokus.features.cashflow.presentation.chat.screen.IntelligenceScreen
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.aura.extensions.localized
+import tech.dokus.navigation.destinations.CashFlowDestination
 import tech.dokus.navigation.local.LocalNavController
+import tech.dokus.navigation.navigateTo
 
 @Composable
 internal fun ChatRoute(
     documentId: String? = null,
     container: ChatContainer = container(),
+    endpointProvider: DynamicDokusEndpointProvider = koinInject(),
 ) {
     val navController = LocalNavController.current
+    val uriHandler = LocalUriHandler.current
+    val endpoint = endpointProvider.currentEndpointSnapshot()
     val snackbarHostState = remember { SnackbarHostState() }
     var pendingError by remember { mutableStateOf<DokusException?>(null) }
     val scope = rememberCoroutineScope()
@@ -45,10 +53,24 @@ internal fun ChatRoute(
         when (action) {
             is ChatAction.NavigateBack -> navController.popBackStack()
             is ChatAction.NavigateToDocumentReview -> {
-                // TODO: Navigate to document review screen
+                navController.navigateTo(
+                    CashFlowDestination.DocumentReview(documentId = action.documentId.toString())
+                )
             }
             is ChatAction.NavigateToDocumentPreview -> {
-                // TODO: Navigate to document preview with page number
+                navController.navigateTo(
+                    CashFlowDestination.DocumentReview(documentId = action.documentId.toString())
+                )
+            }
+            is ChatAction.DownloadDocument -> {
+                val baseUrl = "${endpoint.protocol}://${endpoint.host}:${endpoint.port}"
+                uriHandler.openUri("$baseUrl/api/v1/documents/${action.documentId}/content")
+            }
+            is ChatAction.DownloadDocumentsZip -> {
+                action.documentIds.forEach { docId ->
+                    val baseUrl = "${endpoint.protocol}://${endpoint.host}:${endpoint.port}"
+                    uriHandler.openUri("$baseUrl/api/v1/documents/$docId/content")
+                }
             }
             is ChatAction.ShowError -> pendingError = action.error
             is ChatAction.ShowSuccess -> {
@@ -84,5 +106,21 @@ internal fun ChatRoute(
         listState = listState,
         snackbarHostState = snackbarHostState,
         onIntent = { container.store.intent(it) },
+        onDownloadDocument = { docId ->
+            val baseUrl = "${endpoint.protocol}://${endpoint.host}:${endpoint.port}"
+            uriHandler.openUri("$baseUrl/api/v1/documents/$docId/content")
+        },
+        onDownloadZip = { docIds ->
+            // ZIP download requires POST — for now download individually
+            docIds.forEach { docId ->
+                val baseUrl = "${endpoint.protocol}://${endpoint.host}:${endpoint.port}"
+                uriHandler.openUri("$baseUrl/api/v1/documents/$docId/content")
+            }
+        },
+        onNavigateToDocument = { docId ->
+            navController.navigateTo(
+                CashFlowDestination.DocumentReview(documentId = docId)
+            )
+        },
     )
 }

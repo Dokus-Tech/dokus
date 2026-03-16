@@ -55,6 +55,9 @@ internal fun IntelligenceScreen(
     listState: LazyListState,
     snackbarHostState: SnackbarHostState,
     onIntent: (ChatIntent) -> Unit,
+    onDownloadDocument: (String) -> Unit = {},
+    onDownloadZip: (List<String>) -> Unit = {},
+    onNavigateToDocument: (String) -> Unit = {},
 ) {
     val sessionState = state.session
     val sessionData = (sessionState as? DokusState.Success)?.data
@@ -154,10 +157,19 @@ internal fun IntelligenceScreen(
                                 IntelligenceMessages(
                                     messages = data.messages,
                                     listState = listState,
-                                    onDocumentDownload = { /* M3: wire to download */ },
-                                    onDocumentClick = { /* M4: navigate to review */ },
-                                    onDownloadAllZip = { /* M3: wire to ZIP download */ },
-                                    onCitationClick = { /* M4: navigate to source */ },
+                                    onDocumentDownload = { doc ->
+                                        doc.documentId?.let { onDownloadDocument(it) }
+                                    },
+                                    onDocumentClick = { doc ->
+                                        doc.documentId?.let { onNavigateToDocument(it) }
+                                    },
+                                    onDownloadAllZip = { docs ->
+                                        val ids = docs.mapNotNull { it.documentId }
+                                        if (ids.isNotEmpty()) onDownloadZip(ids)
+                                    },
+                                    onCitationClick = { citation ->
+                                        onNavigateToDocument(citation.documentId)
+                                    },
                                     modifier = Modifier.weight(1f),
                                 )
                             }
