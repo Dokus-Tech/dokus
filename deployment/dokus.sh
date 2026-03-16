@@ -264,9 +264,9 @@ GATEWAY_PORT="8000"
 GATEWAY_DASHBOARD_PORT="8080"
 DEFAULT_DOMAIN="localhost"
 
-# Cloud gateway domain (used for Host-based Traefik routing)
+# Cloud gateway domain (used for public URLs and diagnostics)
 get_cloud_domain() {
-    local domain="app.dokus.tech"
+    local domain="dokus.invoid.vision"
     if [ -f .env ]; then
         local line
         line=$(grep -E '^DOMAIN=' .env 2>/dev/null | head -n 1 || true)
@@ -551,10 +551,10 @@ print_services_info() {
     # Cloud profile uses HTTPS with domain
     if [ "${DOKUS_PROFILE:-}" = "cloud" ]; then
         # Load domain from .env if available
-        local DOMAIN="app.dokus.tech"
+        local DOMAIN="dokus.invoid.vision"
         if [ -f .env ]; then
             source <(grep -E '^DOMAIN=' .env 2>/dev/null || true)
-            DOMAIN="${DOMAIN:-app.dokus.tech}"
+            DOMAIN="${DOMAIN:-dokus.invoid.vision}"
         fi
 
         echo_e "  ${SOFT_GRAY}┌──────────────────────────────────────────────────────────────────┐${NC}"
@@ -680,10 +680,10 @@ show_mobile_connection() {
         SERVER_PROTOCOL="https"
         SERVER_PORT="443"
         # Load domain from .env if available
-        SERVER_HOST="app.dokus.tech"
+        SERVER_HOST="dokus.invoid.vision"
         if [ -f .env ]; then
             source <(grep -E '^DOMAIN=' .env 2>/dev/null || true)
-            SERVER_HOST="${DOMAIN:-app.dokus.tech}"
+            SERVER_HOST="${DOMAIN:-dokus.invoid.vision}"
         fi
         print_status info "Cloud domain: ${SERVER_HOST}"
     else
@@ -872,7 +872,7 @@ initial_setup() {
         echo ""
         print_status task "Cloud Gateway Configuration (Traefik + Let's Encrypt)"
 
-        DOMAIN=$(prompt_with_default "Domain for your Dokus instance:" "app.dokus.tech" "DOMAIN")
+        DOMAIN=$(prompt_with_default "Domain for your Dokus instance:" "dokus.invoid.vision" "DOMAIN")
         ACME_EMAIL=$(prompt_with_default "Email for Let's Encrypt certificates:" "contact@dokus.tech" "ACME_EMAIL")
 
         echo ""
