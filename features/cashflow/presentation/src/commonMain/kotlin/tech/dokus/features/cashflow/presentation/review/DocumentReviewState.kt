@@ -82,6 +82,7 @@ import tech.dokus.domain.model.VatListingDraftData
 import tech.dokus.domain.model.VatReturnDraftData
 import tech.dokus.domain.model.WithholdingTaxDraftData
 import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.domain.model.contact.isUnresolved
 import tech.dokus.domain.model.toDocumentType
 import tech.dokus.features.cashflow.presentation.review.models.DocumentUiData
 import tech.dokus.features.cashflow.presentation.review.models.toUiData
@@ -297,20 +298,26 @@ data class DocumentReviewState(
         get() = hasUnsavedChanges || isSaving
 
     /**
-     * True when contact is required but neither bound nor suggested.
+     * True when contact is required but neither bound, suggested, nor extractable.
      * A suggested contact does NOT block — confirm will auto-bind it.
+     * Extracted counterparty data (name) does NOT block — backend will auto-create.
+     * Only blocks when there is truly zero contact data.
      */
     val hasUnresolvedContact: Boolean
-        get() = draftData?.isContactRequired == true &&
-            selectedContactId == null &&
-            contactSelectionState !is ContactSelectionState.Suggested
+        get() {
+            if (draftData?.isContactRequired != true) return false
+            if (selectedContactId != null) return false
+            if (contactSelectionState is ContactSelectionState.Suggested) return false
+            val counterparty = documentRecord?.draft?.counterparty
+            if (counterparty.isUnresolved() && counterparty.snapshot?.name != null) return false
+            return true
+        }
 
     val confirmBlockedReason: StringResource?
         get() {
             if (isDocumentConfirmed || isDocumentRejected || isDocumentUnsupported) return null
             val draft = draftData ?: return Res.string.cashflow_confirm_missing_fields
             return when {
-                isPendingCreation -> Res.string.cashflow_confirm_select_contact
                 hasUnresolvedContact -> Res.string.cashflow_confirm_select_contact
                 !draft.hasKnownDirectionForConfirmation -> Res.string.cashflow_confirm_missing_fields
                 !draft.hasRequiredIdentityForConfirmation -> Res.string.cashflow_confirm_missing_fields

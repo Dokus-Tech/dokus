@@ -40,6 +40,7 @@ import tech.dokus.backend.services.documents.DocumentPurposeService
 import tech.dokus.backend.services.documents.DocumentRecordLoader
 import tech.dokus.backend.services.documents.DocumentTruthService
 import tech.dokus.backend.services.documents.ProcessingHealthService
+import tech.dokus.backend.services.contacts.ContactService
 import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
 import tech.dokus.backend.services.documents.sse.DocumentCollectionEventHub
 import tech.dokus.backend.services.documents.sse.DocumentSnapshotEventHub
@@ -54,6 +55,7 @@ import tech.dokus.database.repository.cashflow.DocumentSourceSummary
 import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
 import tech.dokus.database.repository.cashflow.selectPreferredSource
+import tech.dokus.domain.Name
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentSourceStatus
 import tech.dokus.domain.enums.DocumentStatus
@@ -81,6 +83,11 @@ import tech.dokus.domain.model.ResolveDocumentMatchReviewRequest
 import tech.dokus.domain.model.UpdateDraftRequest
 import tech.dokus.domain.model.UpdateDraftResponse
 import tech.dokus.domain.model.common.PaginatedResponse
+import tech.dokus.domain.enums.ContactLinkSource
+import tech.dokus.domain.enums.ContactSource
+import tech.dokus.domain.model.contact.ContactAddressInput
+import tech.dokus.domain.model.contact.CounterpartyInfo
+import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.model.contact.isLinked
 import tech.dokus.domain.model.contact.isUnresolved
 import tech.dokus.domain.routes.Documents
@@ -120,6 +127,7 @@ internal fun Route.documentRecordRoutes() {
     val invoiceBankAutomationService by inject<InvoiceBankAutomationService>()
     val minioStorage by inject<MinioDocumentStorageService>()
     val confirmationDispatcher by inject<DocumentConfirmationDispatcher>()
+    val contactService by inject<ContactService>()
     val truthService by inject<DocumentTruthService>()
     val purposeService by inject<DocumentPurposeService>()
     val documentRecordLoader by inject<DocumentRecordLoader>()
@@ -857,12 +865,51 @@ internal fun Route.documentRecordRoutes() {
                 creditNoteRepository
             )
 
+            // Resolve contact: linked > auto-create from snapshot > null
+            val linkedContactId = when {
+                counterparty.isLinked() -> counterparty.contactId
+                counterparty.isUnresolved() && counterparty.snapshot?.name != null -> {
+                    val snapshot = counterparty.snapshot!!
+                    val created = contactService.createContact(
+                        tenantId,
+                        CreateContactRequest(
+                            name = Name(snapshot.name!!),
+                            vatNumber = snapshot.vatNumber,
+                            iban = snapshot.iban,
+                            addresses = snapshot.address?.let { addr ->
+                                listOf(
+                                    ContactAddressInput(
+                                        streetLine1 = addr.streetLine1,
+                                        streetLine2 = addr.streetLine2,
+                                        city = addr.city,
+                                        postalCode = addr.postalCode,
+                                        country = addr.country?.dbValue,
+                                    )
+                                )
+                            } ?: emptyList(),
+                            source = ContactSource.AI,
+                        )
+                    ).getOrThrow()
+                    documentRepository.updateCounterparty(
+                        documentId = documentId,
+                        tenantId = tenantId,
+                        counterparty = CounterpartyInfo.Linked(
+                            contactId = created.id,
+                            source = ContactLinkSource.AI,
+                        ),
+                    )
+                    logger.info("Auto-created contact {} for document {} during confirm", created.id, documentId)
+                    created.id
+                }
+                else -> null
+            }
+
             // Confirm document: creates entity + cashflow entry + marks draft confirmed
             val confirmationResult = confirmationDispatcher.confirm(
                 tenantId,
                 documentId,
                 draftData,
-                if (counterparty.isLinked()) counterparty.contactId else null
+                linkedContactId
             ).getOrThrow()
 
             val entryId = confirmationResult.cashflowEntryId
