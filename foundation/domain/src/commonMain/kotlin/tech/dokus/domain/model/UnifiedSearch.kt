@@ -55,6 +55,7 @@ data class SearchDocumentHit(
     val status: DocumentStatus? = null,
     val counterpartyName: String? = null,
     val counterpartyVat: String? = null,
+    val amount: Money? = null,
 )
 
 @Serializable
