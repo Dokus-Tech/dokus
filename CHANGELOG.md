@@ -4,6 +4,20 @@ All notable changes to Dokus are documented in this file.
 
 The format follows Keep a Changelog principles with pragmatic release summaries.
 
+## [1.2.1] - 2026-03-16
+
+### Added
+- Internal bank transfer detection plus mark-as-transfer and undo-transfer flows in banking (#235).
+- Radial reveal workspace entry transitions with responsive skeleton states for auth and workspace flows (#236).
+
+### Changed
+- Auth-to-main navigation on small screens now avoids the unwanted handoff animation and uses a cleaner workspace entry overlay (#236).
+- Langfuse tracing for AI agents is now structured and enriched with server metadata.
+- Default bulk reprocessing limits were raised to support larger document batches (#237).
+
+### Fixed
+- Cloud Traefik routing for `/api` and `/storage` no longer depends on the forwarded `Host` header, avoiding false 404s behind an edge proxy.
+
 ## [1.2.0] - 2026-03-16
 
 ### Added
