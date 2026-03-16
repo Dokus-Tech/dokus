@@ -41,6 +41,7 @@ import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.style.dokusEffects
 import tech.dokus.foundation.aura.style.dokusSizing
 import kotlin.math.sqrt
@@ -168,30 +169,50 @@ fun RadialRevealEffect(
             )
             .background(effects.revealSurface),
     ) {
-        // App shell skeleton
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(sizing.shellPadding)
-                .graphicsLayer {
-                    alpha = skeletonAlpha.value
-                    translationY = with(density) { skeletonOffsetY.value.dp.toPx() }
-                },
-            horizontalArrangement = Arrangement.spacedBy(sizing.shellGap),
-        ) {
-            // Sidebar skeleton
-            SidebarSkeleton(
-                modifier = Modifier
-                    .width(sizing.shellSidebarWidth)
-                    .fillMaxHeight(),
-            )
+        val isLargeScreen = LocalScreenSize.current.isLarge
 
-            // Content skeleton
-            ContentSkeleton(
+        // App shell skeleton — adaptive layout
+        if (isLargeScreen) {
+            // Desktop: sidebar + content
+            Row(
                 modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight(),
-            )
+                    .fillMaxSize()
+                    .padding(sizing.shellPadding)
+                    .graphicsLayer {
+                        alpha = skeletonAlpha.value
+                        translationY = with(density) { skeletonOffsetY.value.dp.toPx() }
+                    },
+                horizontalArrangement = Arrangement.spacedBy(sizing.shellGap),
+            ) {
+                SidebarSkeleton(
+                    modifier = Modifier
+                        .width(sizing.shellSidebarWidth)
+                        .fillMaxHeight(),
+                )
+                ContentSkeleton(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
+                )
+            }
+        } else {
+            // Mobile: top bar + content + bottom nav
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer {
+                        alpha = skeletonAlpha.value
+                        translationY = with(density) { skeletonOffsetY.value.dp.toPx() }
+                    },
+            ) {
+                MobileTopBarSkeleton()
+                ContentSkeleton(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                )
+                BottomNavSkeleton()
+            }
         }
     }
 }
@@ -310,6 +331,79 @@ private fun ContentSkeleton(modifier: Modifier = Modifier) {
                                 alpha = 0.015f + index * 0.003f
                             )
                         ),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun MobileTopBarSkeleton() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp)
+            .padding(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+    ) {
+        // Logo
+        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .width(SkeletonLogoSize)
+                    .height(SkeletonLogoSize)
+                    .clip(RoundedCornerShape(SkeletonLogoRadius))
+                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)),
+            )
+            Spacer(Modifier.width(8.dp))
+            Box(
+                modifier = Modifier
+                    .width(52.dp)
+                    .height(13.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f)),
+            )
+        }
+        // Action placeholder
+        Box(
+            modifier = Modifier
+                .width(24.dp)
+                .height(24.dp)
+                .clip(RoundedCornerShape(4.dp))
+                .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.03f)),
+        )
+    }
+}
+
+@Composable
+private fun BottomNavSkeleton() {
+    val sizing = MaterialTheme.dokusSizing
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(sizing.navigationBarHeight)
+            .padding(horizontal = 24.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+    ) {
+        repeat(4) {
+            Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
+                Box(
+                    modifier = Modifier
+                        .width(24.dp)
+                        .height(24.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f)),
+                )
+                Spacer(Modifier.height(4.dp))
+                Box(
+                    modifier = Modifier
+                        .width(32.dp)
+                        .height(6.dp)
+                        .clip(RoundedCornerShape(3.dp))
+                        .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.03f)),
                 )
             }
         }
