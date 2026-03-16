@@ -49,7 +49,6 @@ internal fun DocumentReviewScreen(
                     isLargeScreen = isLargeScreen,
                     isAccountantReadOnly = isAccountantReadOnly,
                     onBackClick = onBackClick,
-                    onChatClick = onOpenChat,
                     onConfirmClick = { onIntent(DocumentReviewIntent.Confirm) },
                     onRejectClick = { onIntent(DocumentReviewIntent.ShowFeedbackDialog) },
                 )

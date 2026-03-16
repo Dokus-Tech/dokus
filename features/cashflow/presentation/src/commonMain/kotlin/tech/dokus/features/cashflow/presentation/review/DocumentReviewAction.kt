@@ -10,7 +10,6 @@ import tech.dokus.domain.ids.DocumentId
 @Immutable
 sealed interface DocumentReviewAction : MVIAction {
     data object NavigateBack : DocumentReviewAction
-    data class NavigateToChat(val documentId: DocumentId) : DocumentReviewAction
     data class NavigateToEntity(val entityId: String, val entityType: DocumentType) : DocumentReviewAction
     data class NavigateToCashflowEntry(val entryId: CashflowEntryId) : DocumentReviewAction
 

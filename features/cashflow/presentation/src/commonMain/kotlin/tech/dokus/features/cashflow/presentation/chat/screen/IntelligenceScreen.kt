@@ -134,7 +134,7 @@ internal fun IntelligenceScreen(
                         sessionState.isError() -> {
                             DokusErrorContent(
                                 exception = sessionState.exception,
-                                onRetry = sessionState.retryHandler,
+                                retryHandler = sessionState.retryHandler,
                                 modifier = Modifier.weight(1f).fillMaxSize(),
                             )
                         }

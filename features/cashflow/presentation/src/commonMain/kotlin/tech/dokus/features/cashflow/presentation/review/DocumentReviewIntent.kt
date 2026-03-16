@@ -63,7 +63,6 @@ sealed interface DocumentReviewIntent : MVIIntent {
     data class SelectFieldForProvenance(val fieldPath: String?) : DocumentReviewIntent
 
     data object Confirm : DocumentReviewIntent
-    data object OpenChat : DocumentReviewIntent
     data object ViewCashflowEntry : DocumentReviewIntent
     data object ViewEntity : DocumentReviewIntent
 
