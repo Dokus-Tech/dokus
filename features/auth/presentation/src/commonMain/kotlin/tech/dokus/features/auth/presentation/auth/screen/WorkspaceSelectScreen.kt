@@ -17,7 +17,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import kotlinx.coroutines.delay
 import tech.dokus.domain.DisplayName
 import tech.dokus.domain.enums.FirmRole
 import tech.dokus.domain.enums.TenantType
@@ -33,10 +32,9 @@ import tech.dokus.features.auth.mvi.WorkspaceSelectState
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.features.auth.presentation.auth.components.WorkspaceSelectionBody
 import tech.dokus.features.auth.presentation.auth.components.onboarding.OnboardingCenteredShell
-import tech.dokus.foundation.aura.components.background.WarpJumpEffect
+import tech.dokus.foundation.aura.components.background.RadialRevealEffect
 
 private const val ContentFadeOutDurationMs = 600
-private const val NavigationDelayMs = 100L
 
 @Composable
 internal fun WorkspaceSelectScreen(
@@ -46,22 +44,14 @@ internal fun WorkspaceSelectScreen(
     triggerWarp: Boolean,
     onWarpComplete: () -> Unit,
 ) {
-    var isWarpActive by remember { mutableStateOf(false) }
+    var isRevealActive by remember { mutableStateOf(false) }
     var selectedItemPosition by remember { mutableStateOf<Offset?>(null) }
-    var shouldNavigate by remember { mutableStateOf(false) }
     var contentVisible by remember { mutableStateOf(true) }
 
     LaunchedEffect(triggerWarp) {
         if (triggerWarp) {
-            isWarpActive = true
+            isRevealActive = true
             contentVisible = false
-        }
-    }
-
-    LaunchedEffect(shouldNavigate) {
-        if (shouldNavigate) {
-            delay(NavigationDelayMs)
-            onWarpComplete()
         }
     }
 
@@ -86,12 +76,10 @@ internal fun WorkspaceSelectScreen(
                 }
             }
 
-            WarpJumpEffect(
-                isActive = isWarpActive,
-                selectedItemPosition = selectedItemPosition,
-                onAnimationComplete = {
-                    shouldNavigate = true
-                },
+            RadialRevealEffect(
+                isActive = isRevealActive,
+                origin = selectedItemPosition,
+                onAnimationComplete = onWarpComplete,
             )
         }
     }

@@ -38,14 +38,13 @@ import tech.dokus.features.auth.presentation.auth.model.WorkspaceCreateType
 import tech.dokus.features.auth.presentation.auth.model.WorkspaceWizardStep
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.features.auth.mvi.WorkspaceCreateUserInfo
-import tech.dokus.foundation.aura.components.background.WarpJumpEffect
+import tech.dokus.foundation.aura.components.background.RadialRevealEffect
 import tech.dokus.foundation.aura.extensions.dismissKeyboardOnTapOutside
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
 
 private const val ContentFadeOutDurationMs = 600
-private const val NavigationDelayMs = 100L
 private const val CompanyLookupDebounceMs = 300L
 private const val CompanyLookupMinCharacters = 3
 private val StepContentMinHeight = 320.dp
@@ -65,21 +64,13 @@ internal fun WorkspaceCreateScreen(
     onWarpComplete: () -> Unit,
     copyrightYear: String? = null,
 ) {
-    var isWarpActive by remember { mutableStateOf(false) }
-    var shouldNavigate by remember { mutableStateOf(false) }
+    var isRevealActive by remember { mutableStateOf(false) }
     var contentVisible by remember { mutableStateOf(true) }
 
     LaunchedEffect(triggerWarp) {
         if (triggerWarp) {
-            isWarpActive = true
+            isRevealActive = true
             contentVisible = false
-        }
-    }
-
-    LaunchedEffect(shouldNavigate) {
-        if (shouldNavigate) {
-            delay(NavigationDelayMs)
-            onWarpComplete()
         }
     }
 
@@ -111,12 +102,9 @@ internal fun WorkspaceCreateScreen(
                 }
             }
 
-            WarpJumpEffect(
-                isActive = isWarpActive,
-                selectedItemPosition = null,
-                onAnimationComplete = {
-                    shouldNavigate = true
-                },
+            RadialRevealEffect(
+                isActive = isRevealActive,
+                onAnimationComplete = onWarpComplete,
             )
         }
     }

@@ -5,6 +5,7 @@ package tech.dokus.foundation.aura.components.background
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -115,9 +116,9 @@ fun RadialRevealEffect(
     LaunchedEffect(Unit) {
         // Delayed skeleton fade-up
         kotlinx.coroutines.delay(SkeletonFadeDelayMs.toLong())
-        // Run both alpha and offset in parallel via coroutineScope
+        // Run both alpha and offset in parallel
         kotlinx.coroutines.coroutineScope {
-            kotlinx.coroutines.launch {
+            launch {
                 skeletonAlpha.animateTo(
                     targetValue = 1f,
                     animationSpec = tween(
@@ -126,7 +127,7 @@ fun RadialRevealEffect(
                     ),
                 )
             }
-            kotlinx.coroutines.launch {
+            launch {
                 skeletonOffsetY.animateTo(
                     targetValue = 0f,
                     animationSpec = tween(
