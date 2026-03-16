@@ -164,6 +164,9 @@ data class ChatMessageDto(
     /** Source citations for ASSISTANT messages */
     val citations: List<ChatCitation>? = null,
 
+    /** Structured content blocks for rich rendering (null = plain text fallback) */
+    val contentBlocks: List<ChatContentBlock>? = null,
+
     /** Number of chunks retrieved for RAG context */
     val chunksRetrieved: Int? = null,
 
