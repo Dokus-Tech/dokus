@@ -1,4 +1,8 @@
+@file:OptIn(ExperimentalUuidApi::class)
+
 package tech.dokus.features.cashflow.presentation.chat.components
+
+import kotlin.uuid.ExperimentalUuidApi
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues

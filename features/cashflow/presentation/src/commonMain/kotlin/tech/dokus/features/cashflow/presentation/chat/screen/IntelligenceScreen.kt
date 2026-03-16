@@ -36,7 +36,7 @@ import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.app.state.isError
 import tech.dokus.foundation.app.state.isLoading
 import tech.dokus.foundation.app.state.isSuccess
-import tech.dokus.foundation.aura.components.DokusErrorContent
+import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.chat.ChatGridBackground
 import tech.dokus.foundation.aura.components.chat.ChatInputBar
 import tech.dokus.foundation.aura.constrains.Constraints
