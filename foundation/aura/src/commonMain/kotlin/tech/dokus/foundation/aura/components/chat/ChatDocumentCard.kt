@@ -103,7 +103,7 @@ fun ChatDocumentCard(
                 }
                 doc.amount?.let { amount ->
                     Text(
-                        text = "\u20ac${String.format("%.2f", amount)}",
+                        text = "\u20ac${formatAmount(amount)}",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.textMuted,
                     )
