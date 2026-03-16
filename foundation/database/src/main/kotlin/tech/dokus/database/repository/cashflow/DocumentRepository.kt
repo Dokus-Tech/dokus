@@ -332,6 +332,29 @@ class DocumentRepository : DocumentStatusChecker {
     )
 
     /**
+     * Shared eligibility predicate for reprocessing.
+     * A document is eligible when:
+     * - Not Confirmed
+     * - NeedsReview OR has no successful run (lastSuccessfulRunId IS NULL)
+     * - Processing version is older than current (or null)
+     *
+     * Used by both [getProcessingHealthStats] and [findDocumentsEligibleForReprocess]
+     * to guarantee the same criteria.
+     */
+    private fun isEligibleForReprocess(
+        status: DocumentStatus?,
+        lastSuccessfulRunId: Any?,
+        processingVersion: Int?,
+        currentProcessingVersion: Int,
+    ): Boolean {
+        if (status == DocumentStatus.Confirmed) return false
+        val isCandidate = status == DocumentStatus.NeedsReview || lastSuccessfulRunId == null
+        if (!isCandidate) return false
+        val version = processingVersion ?: 0
+        return version < currentProcessingVersion
+    }
+
+    /**
      * Compute processing health stats for the workspace.
      * Scoped to last 30 days. Joins with ingestion runs to check processing version.
      * CRITICAL: filters by tenantId.
@@ -344,8 +367,7 @@ class DocumentRepository : DocumentStatusChecker {
         val cutoff = Clock.System.now().minus(30.days).toLocalDateTime(TimeZone.UTC)
         val runs = DocumentIngestionRunsTable
 
-        // Base: documents for this tenant updated in last 30 days
-        val base = DocumentsTable
+        val rows = DocumentsTable
             .join(runs, JoinType.LEFT, additionalConstraint = {
                 DocumentsTable.lastSuccessfulRunId eq runs.id
             })
@@ -354,8 +376,7 @@ class DocumentRepository : DocumentStatusChecker {
                 (DocumentsTable.tenantId eq tenantUuid) and
                     (DocumentsTable.updatedAt greaterEq cutoff)
             }
-
-        val rows = base.toList()
+            .toList()
 
         var total = 0
         var needsReview = 0
@@ -365,27 +386,22 @@ class DocumentRepository : DocumentStatusChecker {
         for (row in rows) {
             total++
             val status = row[DocumentsTable.documentStatus]
+            val lastRunId = row.getOrNull(DocumentsTable.lastSuccessfulRunId)
+
             when (status) {
                 DocumentStatus.NeedsReview -> needsReview++
-                DocumentStatus.Rejected -> {} // count toward total only
-                DocumentStatus.Confirmed -> {} // count toward total only
-                DocumentStatus.Unsupported -> {} // count toward total only
-                null -> {} // no draft yet
+                DocumentStatus.Rejected,
+                DocumentStatus.Confirmed,
+                DocumentStatus.Unsupported,
+                null -> {}
             }
 
-            // Check if this document has a failed latest ingestion (no successful run)
-            val lastRunId = row.getOrNull(DocumentsTable.lastSuccessfulRunId)
             if (lastRunId == null && status != DocumentStatus.Confirmed) {
-                // Document exists but never had a successful run — likely failed
                 failed++
             }
 
-            // Eligible: NeedsReview or has no successful run, with old/null processing version
-            if (status == DocumentStatus.NeedsReview || lastRunId == null) {
-                val version = row.getOrNull(runs.processingVersion) ?: 0
-                if (version < currentProcessingVersion) {
-                    eligible++
-                }
+            if (isEligibleForReprocess(status, lastRunId, row.getOrNull(runs.processingVersion), currentProcessingVersion)) {
+                eligible++
             }
         }
 
@@ -404,8 +420,7 @@ class DocumentRepository : DocumentStatusChecker {
 
     /**
      * Find documents eligible for bulk reprocessing.
-     * Scope: NeedsReview + documents without successful runs, last 30 days,
-     * processing_version < currentVersion or null.
+     * Uses the same eligibility criteria as [getProcessingHealthStats].
      * Excludes documents with active (Queued/Processing) ingestion runs.
      *
      * Safety: reuses existing source, does not mutate document, does not
@@ -423,8 +438,8 @@ class DocumentRepository : DocumentStatusChecker {
         val cutoff = Clock.System.now().minus(30.days).toLocalDateTime(TimeZone.UTC)
         val runs = DocumentIngestionRunsTable
 
-        // Find eligible documents from last 30 days with old/null processing version.
-        // Matches health stats criteria: NeedsReview OR no successful run (excluding Confirmed).
+        // Same eligibility criteria as getProcessingHealthStats:
+        // not Confirmed, (NeedsReview OR no successful run), old/null processing version
         val candidates = DocumentsTable
             .join(runs, JoinType.LEFT, additionalConstraint = {
                 DocumentsTable.lastSuccessfulRunId eq runs.id
