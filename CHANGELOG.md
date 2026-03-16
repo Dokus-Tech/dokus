@@ -4,6 +4,29 @@ All notable changes to Dokus are documented in this file.
 
 The format follows Keep a Changelog principles with pragmatic release summaries.
 
+## [1.2.0] - 2026-03-16
+
+### Added
+- End-to-end banking workflows, including accounts, payments, balances, statement ingestion, manual expense creation, transaction ignore reasons, Bayesian matching, rejection/undo flows, and bank statement auto-confirmation (#217, #233).
+- Expanded document workflow coverage with comprehensive and classified-only document types, unsupported document handling, bank statement review improvements, sortable `sortDate` grouping, and processing health with bulk reprocessing (#231, #232).
+- Search by numeric amount in unified search (#234).
+- Langfuse observability and tracing for AI agents, plus deployment and local environment integration.
+
+### Changed
+- AI document processing now uses a cleaner classification/extraction split with improved line-item extraction, counterparty rules, VAT validation, DPI handling, and contact auto-creation fallbacks (#214, #227).
+- Contacts and profile flows were streamlined with inline contact editing, richer contact details, direct profile navigation, CompanyHeroSection updates, and better shell/app-bar alignment (#215, #216, #219, #220, #230).
+- Shared UI primitives were rolled out more broadly with `PButton`, `DokusFilterBar`, and Lucide icons across the app (#221, #226).
+
+### Fixed
+- Banking mobile navigation and filter issues that could break screen access or state transitions (#222, #225).
+- Document review state issues around queue switching, date-based list grouping, status handling, and null source channels (#223).
+- Incorrect "needs attention" counts and contact details metadata/notes edge cases (#213, #215).
+- Backend SSE disconnect handling during document updates.
+
+### Internal
+- Gradle toolchain and Foojay resolver configuration updated for builds.
+- UI previews, screenshots, fixtures, and tests refreshed to cover the new banking and document flows.
+
 ## [1.1.0] - 2026-03-09
 
 ### Added

@@ -149,7 +149,8 @@ fun BootstrapBackground(
     layout: BootstrapBackgroundLayout = BootstrapBackgroundLayout.Desktop,
     modifier: Modifier = Modifier,
 ) {
-    val inspection = LocalInspectionMode.current
+    if (LocalInspectionMode.current) return
+
     val isDark = MaterialTheme.colorScheme.isDark
     val primary = MaterialTheme.colorScheme.primary
     val onSurface = MaterialTheme.colorScheme.onSurface
@@ -164,8 +165,7 @@ fun BootstrapBackground(
 
     var elapsedSeconds by remember { mutableFloatStateOf(0f) }
 
-    LaunchedEffect(inspection) {
-        if (inspection) return@LaunchedEffect
+    LaunchedEffect(Unit) {
         var lastFrameNanos = 0L
         while (true) {
             withFrameNanos { frameNanos ->
@@ -189,15 +189,18 @@ fun BootstrapBackground(
         )
         val scale = size.width * spec.cubeWidthFraction * 0.5f
 
-        val timeSeconds = if (inspection) 0f else elapsedSeconds
+        val timeSeconds = elapsedSeconds
         val yaw = (timeSeconds / CubeRotationSecondsPerTurn) * TwoPI
         val pitch = CubePitchRad
 
         val progressEased = easeInOutCubic(clampedProgress)
-        val wireframeGhostAlpha = (1f - progressEased) * if (isDark) WireframeGhostAlphaDark else WireframeGhostAlphaLight
-        val wireframeSolidAlpha = progressEased * if (isDark) WireframeSolidAlphaDark else WireframeSolidAlphaLight
+        val wireframeGhostAlpha =
+            (1f - progressEased) * if (isDark) WireframeGhostAlphaDark else WireframeGhostAlphaLight
+        val wireframeSolidAlpha =
+            progressEased * if (isDark) WireframeSolidAlphaDark else WireframeSolidAlphaLight
 
-        val neutralParticleColor = if (isDark) onSurface.copy(alpha = 0.78f) else onSurface.copy(alpha = 0.56f)
+        val neutralParticleColor =
+            if (isDark) onSurface.copy(alpha = 0.78f) else onSurface.copy(alpha = 0.56f)
         val brightParticleColor = if (isDark) Color.White else onSurface
 
         drawCubeWireframe(
@@ -226,7 +229,8 @@ fun BootstrapBackground(
             val formation = easeInOutCubic(localProgress)
             val scatter = 1f - formation
 
-            val wobble = sin((timeSeconds * 1.4f) + particle.phase) * particle.wobbleDistance * scatter
+            val wobble =
+                sin((timeSeconds * 1.4f) + particle.phase) * particle.wobbleDistance * scatter
             val drift = particle.scatterDistance * scatter
 
             val x = particle.homeX + (particle.outwardX * drift) + (particle.tangentX * wobble)
@@ -338,7 +342,8 @@ private fun generateParticles(
             else -> sqrt((x * x + y * y) * 0.5f)
         }
 
-        val delay = (faceDistance * DelayScale + random.nextFloat() * DelayJitter).coerceIn(0f, 0.76f)
+        val delay =
+            (faceDistance * DelayScale + random.nextFloat() * DelayJitter).coerceIn(0f, 0.76f)
         val outward = normalize(
             x + randomCentered(random) * 0.25f,
             y + randomCentered(random) * 0.25f,
@@ -364,10 +369,10 @@ private fun generateParticles(
             tangentZ = tangent.third,
             delay = delay,
             scatterDistance = (
-                ScatterDistanceMin +
-                    random.nextFloat() * (ScatterDistanceMax - ScatterDistanceMin) +
-                    (faceDistance * 0.08f)
-                ) * scatterMultiplier,
+                    ScatterDistanceMin +
+                            random.nextFloat() * (ScatterDistanceMax - ScatterDistanceMin) +
+                            (faceDistance * 0.08f)
+                    ) * scatterMultiplier,
             wobbleDistance = WobbleDistanceMin + random.nextFloat() * (WobbleDistanceMax - WobbleDistanceMin),
             size = ParticleSizeMin + random.nextFloat() * (ParticleSizeMax - ParticleSizeMin),
             phase = random.nextFloat() * TwoPI,

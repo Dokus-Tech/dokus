@@ -1,6 +1,7 @@
 package tech.dokus.foundation.backend.routes
 
 import io.ktor.http.HttpStatusCode
+import io.ktor.server.config.propertyOrNull
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Routing
 import io.ktor.server.routing.get
@@ -72,13 +73,16 @@ fun Routing.healthRoutes() {
         val memoryMXBean = ManagementFactory.getMemoryMXBean()
         val threadMXBean = ManagementFactory.getThreadMXBean()
         val osMXBean = ManagementFactory.getOperatingSystemMXBean()
+        val config = call.application.environment.config
+        val serverVersion = config.propertyOrNull("server.version")?.getString() ?: "unknown"
+        val environment = config.propertyOrNull("server.environment")?.getString() ?: "local"
 
         val healthInfo = DetailedHealthInfo(
             status = ServerStatus.UP,
             application = ApplicationInfo(
                 name = "dokus-service",
-                version = "1.0.0",
-                environment = System.getenv("ENVIRONMENT") ?: "local"
+                version = serverVersion,
+                environment = environment
             ),
             jvm = JvmInfo(
                 version = System.getProperty("java.version"),

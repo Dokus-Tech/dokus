@@ -231,7 +231,6 @@ class DocumentsLocalUploadRowsTest {
             id = documentId,
             tenantId = TenantId.parse("00000000-0000-0000-0000-000000000001"),
             filename = filename,
-            effectiveOrigin = DocumentSource.Upload,
             uploadedAt = LocalDateTime(2026, 1, 1, 10, 0),
             sortDate = LocalDate(2026, 1, 1),
             downloadUrl = null
