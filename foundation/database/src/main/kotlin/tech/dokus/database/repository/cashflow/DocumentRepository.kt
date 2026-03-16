@@ -448,7 +448,10 @@ class DocumentRepository : DocumentStatusChecker {
             .where {
                 (DocumentsTable.tenantId eq tenantUuid) and
                     (DocumentsTable.updatedAt greaterEq cutoff) and
-                    (DocumentsTable.documentStatus neq DocumentStatus.Confirmed) and
+                    (
+                        DocumentsTable.documentStatus.isNull() or
+                            (DocumentsTable.documentStatus neq DocumentStatus.Confirmed)
+                        ) and
                     (
                         (DocumentsTable.documentStatus eq DocumentStatus.NeedsReview) or
                             (DocumentsTable.lastSuccessfulRunId.isNull())
