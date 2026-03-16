@@ -11,8 +11,12 @@ import org.slf4j.LoggerFactory
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.repository.RetrievedChunk
+import tech.dokus.features.ai.config.LangfuseTraceContext
+import tech.dokus.features.ai.config.LangfuseTraceTag
+import tech.dokus.features.ai.config.installLangfuseTracing
 import tech.dokus.features.ai.prompts.AgentPrompt
 import tech.dokus.features.ai.services.RAGService
+import tech.dokus.foundation.backend.config.LangfuseConfig
 
 /**
  * Agent responsible for RAG-backed document Q&A with citations.
@@ -51,7 +55,8 @@ class ChatAgent(
     private val executor: PromptExecutor,
     private val model: LLModel,
     private val ragService: RAGService,
-    private val prompt: AgentPrompt
+    private val prompt: AgentPrompt,
+    private val langfuseConfig: LangfuseConfig = LangfuseConfig.disabled,
 ) {
     private val logger = LoggerFactory.getLogger(ChatAgent::class.java)
 
@@ -255,8 +260,19 @@ class ChatAgent(
                 strategy = singleRunStrategy(),
                 toolRegistry = ToolRegistry.EMPTY,
                 id = "chat-agent",
-                systemPrompt = systemPrompt
-            )
+                systemPrompt = systemPrompt,
+            ) {
+                installLangfuseTracing(
+                    langfuseConfig,
+                    LangfuseTraceContext(
+                        tenantId = tenantId.toString(),
+                        tags = listOf(LangfuseTraceTag.Chat),
+                        metadata = buildMap {
+                            documentId?.let { put("documentId", it.toString()) }
+                        },
+                    ),
+                )
+            }
 
             agent.run(userPrompt)
         } catch (e: Exception) {

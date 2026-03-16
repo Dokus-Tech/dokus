@@ -89,7 +89,7 @@ fun aiModule() = module {
 
     single {
         val models = get<ModelSet>()
-        ChatAgent(get(), models.chat, get<RAGService>(), ChatPrompt)
+        ChatAgent(get(), models.chat, get<RAGService>(), ChatPrompt, get<AIConfig>().langfuse)
     }
 
     // =========================================================================

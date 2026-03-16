@@ -7,6 +7,8 @@ import ai.koog.agents.core.tools.ToolRegistry
 import ai.koog.prompt.dsl.prompt
 import ai.koog.prompt.executor.model.PromptExecutor
 import tech.dokus.features.ai.config.asOrchestratorModel
+import tech.dokus.features.ai.config.LangfuseTraceContext
+import tech.dokus.features.ai.config.LangfuseTraceTag
 import tech.dokus.features.ai.config.installKoogEventLogging
 import tech.dokus.features.ai.config.installLangfuseTracing
 import tech.dokus.features.ai.graph.businessProfileContentExtractionGraph
@@ -37,7 +39,12 @@ class BusinessProfileContentExtractionAgent(
                     agentName = "business-profile-content-extraction",
                     enabled = aiConfig.koogEventLoggingEnabled
                 )
-                installLangfuseTracing(aiConfig.langfuse)
+                installLangfuseTracing(
+                    aiConfig.langfuse,
+                    LangfuseTraceContext(
+                        tags = listOf(LangfuseTraceTag.BusinessEnrichment),
+                    ),
+                )
             }
         )
 

@@ -22,6 +22,7 @@ class KoogAgentRunner(
         systemPrompt: String,
         model: LLModel = aiConfig.mode.asVisionModel,
         toolRegistry: ToolRegistry = ToolRegistry.EMPTY,
+        traceContext: LangfuseTraceContext = LangfuseTraceContext(),
     ): Output {
         val agent = AIAgent(
             promptExecutor = executor,
@@ -37,7 +38,7 @@ class KoogAgentRunner(
                     agentName = agentName,
                     enabled = aiConfig.koogEventLoggingEnabled
                 )
-                installLangfuseTracing(aiConfig.langfuse)
+                installLangfuseTracing(aiConfig.langfuse, traceContext)
             }
         )
         return try {
