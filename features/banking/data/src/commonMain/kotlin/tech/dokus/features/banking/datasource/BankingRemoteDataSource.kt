@@ -44,4 +44,11 @@ interface BankingRemoteDataSource {
     suspend fun createExpenseFromTransaction(transactionId: BankTransactionId): Result<BankTransactionDto>
 
     suspend fun getBalanceHistory(days: Int = 30): Result<BalanceHistoryResponse>
+
+    suspend fun markTransfer(
+        transactionId: BankTransactionId,
+        request: tech.dokus.domain.model.MarkTransferRequest,
+    ): Result<BankTransactionDto>
+
+    suspend fun undoTransfer(transactionId: BankTransactionId): Result<BankTransactionDto>
 }

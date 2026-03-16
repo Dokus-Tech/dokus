@@ -2,6 +2,7 @@ package tech.dokus.domain.model
 
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import tech.dokus.domain.DisplayName
 import tech.dokus.domain.Email
@@ -259,7 +260,7 @@ data class PaymentDto(
 data class BankAccountDto(
     val id: BankAccountId,
     val tenantId: TenantId,
-    val iban: Iban,
+    val iban: Iban? = null,
     val name: String,
     val institutionName: String,
     val accountType: BankAccountType,
@@ -270,6 +271,8 @@ data class BankAccountDto(
     val status: BankAccountStatus = BankAccountStatus.Confirmed,
     val isActive: Boolean = true,
     val createdAt: LocalDateTime,
+    val parentAccountId: BankAccountId? = null,
+    val providerAccountId: String? = null,
 )
 
 @Serializable
@@ -300,6 +303,21 @@ data class LinkTransactionRequest(
 @Serializable
 data class IgnoreTransactionRequest(
     val reason: IgnoredReason,
+)
+
+@Serializable
+enum class MarkTransferMode {
+    @SerialName("PAIR")
+    Pair,
+    @SerialName("ONE_SIDED")
+    OneSided,
+}
+
+@Serializable
+data class MarkTransferRequest(
+    val mode: MarkTransferMode,
+    val counterpartTransactionId: BankTransactionId? = null,
+    val destinationAccountId: BankAccountId? = null,
 )
 
 @Serializable

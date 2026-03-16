@@ -21,6 +21,7 @@ sealed interface IngestionItemEntity {
     val userFeedback: String?
     val overrideMaxPages: Int?
     val overrideDpi: Dpi?
+    val attemptCount: Int
     val effectiveOrigin: DocumentSource
 
     data class Upload(
@@ -31,6 +32,7 @@ sealed interface IngestionItemEntity {
         override val userFeedback: String? = null,
         override val overrideMaxPages: Int? = null,
         override val overrideDpi: Dpi? = null,
+        override val attemptCount: Int = 0,
     ) : IngestionItemEntity {
         override val effectiveOrigin: DocumentSource = DocumentSource.Upload
     }
@@ -45,6 +47,7 @@ sealed interface IngestionItemEntity {
         override val userFeedback: String? = null,
         override val overrideMaxPages: Int? = null,
         override val overrideDpi: Dpi? = null,
+        override val attemptCount: Int = 0,
     ) : IngestionItemEntity {
         override val effectiveOrigin: DocumentSource = DocumentSource.Peppol
     }
@@ -61,6 +64,7 @@ sealed interface IngestionItemEntity {
             overrideMaxPages: Int? = null,
             overrideDpi: Dpi? = null,
             sourceChannel: DocumentSource? = null,
+            attemptCount: Int = 0,
         ): IngestionItemEntity {
             return when (sourceChannel) {
                 DocumentSource.Peppol -> Peppol(
@@ -72,7 +76,8 @@ sealed interface IngestionItemEntity {
                     peppolSnapshotVersion = requireNotNull(peppolSnapshotVersion) { "Peppol snapshot version cannot be null" },
                     userFeedback = userFeedback,
                     overrideMaxPages = overrideMaxPages,
-                    overrideDpi = overrideDpi
+                    overrideDpi = overrideDpi,
+                    attemptCount = attemptCount,
                 )
 
                 DocumentSource.Email,
@@ -84,7 +89,8 @@ sealed interface IngestionItemEntity {
                     sourceId = sourceId,
                     userFeedback = userFeedback,
                     overrideMaxPages = overrideMaxPages,
-                    overrideDpi = overrideDpi
+                    overrideDpi = overrideDpi,
+                    attemptCount = attemptCount,
                 )
 
                 null -> Upload(
@@ -94,7 +100,8 @@ sealed interface IngestionItemEntity {
                     sourceId = sourceId,
                     userFeedback = userFeedback,
                     overrideMaxPages = overrideMaxPages,
-                    overrideDpi = overrideDpi
+                    overrideDpi = overrideDpi,
+                    attemptCount = attemptCount,
                 )
             }
         }

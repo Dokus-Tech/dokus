@@ -216,6 +216,24 @@ class BankTransactionRepository {
         } > 0
     }
 
+    suspend fun suggestTransfer(
+        tenantId: TenantId,
+        transactionId: BankTransactionId,
+        evidence: List<String> = emptyList(),
+    ): Boolean = newSuspendedTransaction {
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+        BankTransactionsTable.update({
+            (BankTransactionsTable.tenantId eq tenantId.value.toJavaUuid()) and
+                (BankTransactionsTable.id eq transactionId.value.toJavaUuid())
+        }) {
+            it[status] = BankTransactionStatus.NeedsReview
+            if (evidence.isNotEmpty()) {
+                it[matchEvidence] = json.encodeToString(evidence)
+            }
+            it[updatedAt] = now
+        } > 0
+    }
+
     suspend fun markMatched(
         tenantId: TenantId,
         transactionId: BankTransactionId,
@@ -395,6 +413,87 @@ class BankTransactionRepository {
             it[ignoredAt] = now
             it[updatedAt] = now
         } > 0
+    }
+
+    suspend fun markTransfer(
+        tenantId: TenantId,
+        transactionId: BankTransactionId,
+        transferPairId: kotlin.uuid.Uuid,
+        matchedBy: MatchedBy,
+    ): Boolean = newSuspendedTransaction {
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+        BankTransactionsTable.update({
+            (BankTransactionsTable.tenantId eq tenantId.value.toJavaUuid()) and
+                (BankTransactionsTable.id eq transactionId.value.toJavaUuid())
+        }) {
+            it[status] = BankTransactionStatus.Matched
+            it[resolutionType] = ResolutionType.Transfer
+            it[BankTransactionsTable.transferPairId] = transferPairId.toJavaUuid()
+            it[BankTransactionsTable.matchedBy] = matchedBy
+            it[matchedAt] = now
+            it[updatedAt] = now
+        } > 0
+    }
+
+    suspend fun undoTransfer(
+        tenantId: TenantId,
+        transactionId: BankTransactionId,
+    ): kotlin.uuid.Uuid? = newSuspendedTransaction {
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+        // Get the transferPairId before clearing so we can undo the counterpart too
+        val pairId = BankTransactionsTable.select(BankTransactionsTable.transferPairId)
+            .where {
+                (BankTransactionsTable.tenantId eq tenantId.value.toJavaUuid()) and
+                    (BankTransactionsTable.id eq transactionId.value.toJavaUuid())
+            }.singleOrNull()?.get(BankTransactionsTable.transferPairId)?.toKotlinUuid()
+
+        // Clear this transaction
+        BankTransactionsTable.update({
+            (BankTransactionsTable.tenantId eq tenantId.value.toJavaUuid()) and
+                (BankTransactionsTable.id eq transactionId.value.toJavaUuid())
+        }) {
+            it[status] = BankTransactionStatus.Unmatched
+            it[resolutionType] = null
+            it[transferPairId] = null
+            it[matchedBy] = null
+            it[matchedAt] = null
+            it[updatedAt] = now
+        }
+
+        // Also revert the counterpart if it exists
+        if (pairId != null) {
+            BankTransactionsTable.update({
+                (BankTransactionsTable.tenantId eq tenantId.value.toJavaUuid()) and
+                    (BankTransactionsTable.transferPairId eq pairId.toJavaUuid()) and
+                    (BankTransactionsTable.id neq transactionId.value.toJavaUuid())
+            }) {
+                it[status] = BankTransactionStatus.Unmatched
+                it[resolutionType] = null
+                it[transferPairId] = null
+                it[matchedBy] = null
+                it[matchedAt] = null
+                it[updatedAt] = now
+            }
+        }
+        pairId
+    }
+
+    suspend fun findUnmatchedByAccountAndDateRange(
+        tenantId: TenantId,
+        accountId: BankAccountId,
+        startDate: LocalDate,
+        endDate: LocalDate,
+    ): List<BankTransactionDto> = newSuspendedTransaction {
+        BankTransactionsTable.selectAll().where {
+            (BankTransactionsTable.tenantId eq tenantId.value.toJavaUuid()) and
+                (BankTransactionsTable.bankAccountId eq accountId.value.toJavaUuid()) and
+                (BankTransactionsTable.transactionDate greaterEq startDate) and
+                (BankTransactionsTable.transactionDate lessEq endDate) and
+                (BankTransactionsTable.status inList listOf(
+                    BankTransactionStatus.Unmatched,
+                    BankTransactionStatus.NeedsReview,
+                ))
+        }.map { it.toDto() }
     }
 
     suspend fun clearMatch(

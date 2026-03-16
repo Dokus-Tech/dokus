@@ -15,6 +15,7 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.model.IgnoreTransactionRequest
 import tech.dokus.domain.model.LinkTransactionRequest
+import tech.dokus.domain.model.MarkTransferRequest
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.routes.Banking
 import tech.dokus.foundation.backend.security.authenticateJwt
@@ -206,6 +207,40 @@ internal fun Route.bankingRoutes() {
             ).getOrElse { error ->
                 throw (error as? DokusException
                     ?: DokusException.InternalError("Failed to undo match: ${error.message}"))
+            }
+            call.respond(HttpStatusCode.OK, updated)
+        }
+
+        // POST /api/v1/banking/transactions/{id}/mark-transfer
+        post<Banking.Transactions.Id.MarkTransfer> { route ->
+            val tenantId = requireTenantId()
+            val transactionId = parseTransactionId(route.parent.id)
+            val request = call.receive<MarkTransferRequest>()
+
+            val updated = bankingService.markTransfer(
+                tenantId = tenantId,
+                transactionId = transactionId,
+                mode = request.mode,
+                counterpartTransactionId = request.counterpartTransactionId,
+                destinationAccountId = request.destinationAccountId,
+            ).getOrElse { error ->
+                throw (error as? DokusException
+                    ?: DokusException.InternalError("Failed to mark transfer: ${error.message}"))
+            }
+            call.respond(HttpStatusCode.OK, updated)
+        }
+
+        // POST /api/v1/banking/transactions/{id}/undo-transfer
+        post<Banking.Transactions.Id.UndoTransfer> { route ->
+            val tenantId = requireTenantId()
+            val transactionId = parseTransactionId(route.parent.id)
+
+            val updated = bankingService.undoTransfer(
+                tenantId = tenantId,
+                transactionId = transactionId,
+            ).getOrElse { error ->
+                throw (error as? DokusException
+                    ?: DokusException.InternalError("Failed to undo transfer: ${error.message}"))
             }
             call.respond(HttpStatusCode.OK, updated)
         }

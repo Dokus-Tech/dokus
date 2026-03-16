@@ -21,6 +21,9 @@ import tech.dokus.features.banking.usecases.GetTransactionSummaryUseCase
 import tech.dokus.features.banking.usecases.IgnoreTransactionUseCase
 import tech.dokus.features.banking.usecases.ListBankAccountsUseCase
 import tech.dokus.features.banking.usecases.ListBankTransactionsUseCase
+import tech.dokus.features.banking.usecases.MarkTransferTransactionUseCase
+import tech.dokus.features.banking.usecases.UndoTransferTransactionUseCase
+import tech.dokus.domain.model.MarkTransferMode
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.platform.Logger
@@ -36,6 +39,8 @@ internal class PaymentsContainer(
     private val ignoreTransaction: IgnoreTransactionUseCase,
     private val confirmTransaction: ConfirmTransactionUseCase,
     private val createExpenseFromTransaction: CreateExpenseFromTransactionUseCase,
+    private val markTransferTransaction: MarkTransferTransactionUseCase,
+    private val undoTransferTransaction: UndoTransferTransactionUseCase,
 ) : Container<PaymentsState, PaymentsIntent, PaymentsAction> {
 
     private val logger = Logger.forClass<PaymentsContainer>()
@@ -60,6 +65,11 @@ internal class PaymentsContainer(
                     is PaymentsIntent.DismissIgnoreDialog -> handleDismissIgnoreDialog()
                     is PaymentsIntent.ConfirmMatch -> handleConfirmMatch(intent.transactionId)
                     is PaymentsIntent.CreateExpense -> handleCreateExpense(intent.transactionId)
+                    is PaymentsIntent.MarkTransfer -> handleOpenTransferDialog(intent.transactionId)
+                    is PaymentsIntent.SelectTransferDestination -> handleSelectTransferDestination(intent.accountId)
+                    is PaymentsIntent.ConfirmTransfer -> handleConfirmTransfer()
+                    is PaymentsIntent.DismissTransferDialog -> handleDismissTransferDialog()
+                    is PaymentsIntent.UndoTransfer -> handleUndoTransfer(intent.transactionId)
                 }
             }
         }
@@ -148,6 +158,72 @@ internal class PaymentsContainer(
 
     private suspend fun PaymentsCtx.handleCreateExpense(transactionId: BankTransactionId) {
         createExpenseFromTransaction(transactionId).fold(
+            onSuccess = { updatedTx ->
+                updateTransactionInList(updatedTx.id) { updatedTx }
+                refreshSummary()
+            },
+            onFailure = { error ->
+                action(PaymentsAction.ShowError(error.asDokusException))
+            }
+        )
+    }
+
+    // ─── Transfer handlers ────────────────────────────────────────────
+
+    private suspend fun PaymentsCtx.handleOpenTransferDialog(transactionId: BankTransactionId) {
+        withState {
+            val tx = transactions.lastData?.data?.find { it.id == transactionId } ?: return@withState
+            val accounts = listAccounts().getOrNull() ?: emptyList()
+            val filtered = accounts.filter { it.id != tx.bankAccountId && it.isActive }
+            updateState {
+                copy(
+                    transferDialogState = TransferDialogState(
+                        transactionId = transactionId,
+                        sourceAccountId = tx.bankAccountId,
+                        availableAccounts = filtered,
+                    )
+                )
+            }
+        }
+    }
+
+    private suspend fun PaymentsCtx.handleSelectTransferDestination(accountId: BankAccountId) {
+        updateState {
+            copy(transferDialogState = transferDialogState?.copy(selectedDestinationAccountId = accountId))
+        }
+    }
+
+    private suspend fun PaymentsCtx.handleDismissTransferDialog() {
+        updateState { copy(transferDialogState = null) }
+    }
+
+    private suspend fun PaymentsCtx.handleConfirmTransfer() {
+        withState {
+            val dialog = transferDialogState ?: return@withState
+            val destinationId = dialog.selectedDestinationAccountId ?: return@withState
+
+            updateState { copy(transferDialogState = dialog.copy(isSubmitting = true)) }
+
+            markTransferTransaction(
+                transactionId = dialog.transactionId,
+                mode = MarkTransferMode.OneSided,
+                destinationAccountId = destinationId,
+            ).fold(
+                onSuccess = { updatedTx ->
+                    updateState { copy(transferDialogState = null) }
+                    updateTransactionInList(updatedTx.id) { updatedTx }
+                    refreshSummary()
+                },
+                onFailure = { error ->
+                    updateState { copy(transferDialogState = transferDialogState?.copy(isSubmitting = false)) }
+                    action(PaymentsAction.ShowError(error.asDokusException))
+                }
+            )
+        }
+    }
+
+    private suspend fun PaymentsCtx.handleUndoTransfer(transactionId: BankTransactionId) {
+        undoTransferTransaction(transactionId).fold(
             onSuccess = { updatedTx ->
                 updateTransactionInList(updatedTx.id) { updatedTx }
                 refreshSummary()

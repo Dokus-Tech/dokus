@@ -17,6 +17,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import org.slf4j.MDC
 import tech.dokus.backend.mappers.from
 import tech.dokus.backend.services.documents.DocumentIntakeServiceResult
@@ -51,6 +54,7 @@ import tech.dokus.foundation.backend.utils.loggerFor
 import tech.dokus.foundation.backend.utils.runSuspendCatching
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 
 /**
  * Background worker that polls for pending documents and processes them with AI extraction.
@@ -62,7 +66,7 @@ import kotlin.time.Duration
  *
  * Features:
  * - Polling-based processing (configurable interval)
- * - Automatic retry with backoff
+ * - Automatic retry with backoff for transient failures
  * - Graceful shutdown support
  * - Example-based few-shot learning for repeat vendors
  */
@@ -102,7 +106,8 @@ internal class DocumentProcessingWorker(
         }
 
         logger.info(
-            "Starting worker (KOOG-GRAPH): interval=${config.pollingInterval}ms, batchSize=${config.batchSize}"
+            "Starting worker (KOOG-GRAPH): interval=${config.pollingInterval}ms, " +
+                "batchSize=${config.batchSize}, maxAttempts=${config.maxAttempts}"
         )
 
         pollingJob = scope.launch {
@@ -144,15 +149,21 @@ internal class DocumentProcessingWorker(
     ) {
         // Recover any runs stuck in Processing from a previous crash
         runSuspendCatching {
-            val recoveredRuns = ingestionRepository.recoverStaleRunsDetailed()
+            val recoveredRuns = ingestionRepository.recoverStaleRunsDetailed(config.maxAttempts)
             if (recoveredRuns.isNotEmpty()) {
-                recoveredRuns.forEach { recoveredRun ->
+                val requeued = recoveredRuns.count { it.requeued }
+                val failed = recoveredRuns.count { !it.requeued }
+                // Only publish SSE for terminal failures (not retries)
+                recoveredRuns.filter { !it.requeued }.forEach { recoveredRun ->
                     documentSsePublisher.publishDocumentChanged(
                         tenantId = recoveredRun.tenantId,
                         documentId = recoveredRun.documentId
                     )
                 }
-                logger.info("Recovered ${recoveredRuns.size} stale ingestion run(s) (marked as Failed)")
+                logger.info(
+                    "Recovered {} stale ingestion run(s): {} re-queued for retry, {} marked as Failed",
+                    recoveredRuns.size, requeued, failed
+                )
             }
         }.onFailure { e ->
             logger.error("Failed to recover stale runs", e)
@@ -203,10 +214,12 @@ internal class DocumentProcessingWorker(
                                     "for document ${ingestion.documentId}",
                             e
                         )
-                        markRunFailedSafely(
+                        handleFailure(
                             runId = ingestion.runId,
                             tenantId = ingestion.tenantId,
                             documentId = ingestion.documentId,
+                            attemptCount = ingestion.attemptCount,
+                            attemptResult = AttemptResult.FailedCancelled,
                             message = "Processing cancelled: ${e.message ?: "Unknown cancellation"}"
                         )
                         attemptResult = AttemptResult.FailedCancelled
@@ -217,21 +230,24 @@ internal class DocumentProcessingWorker(
                             e
                         )
                         val providerFailure = isProviderFailure(e)
-                        markRunFailedSafely(
+                        val result = if (providerFailure) {
+                            AttemptResult.FailedProvider
+                        } else {
+                            AttemptResult.FailedUnexpected
+                        }
+                        handleFailure(
                             runId = ingestion.runId,
                             tenantId = ingestion.tenantId,
                             documentId = ingestion.documentId,
+                            attemptCount = ingestion.attemptCount,
+                            attemptResult = result,
                             message = if (providerFailure) {
                                 "Processing provider error: ${e.message ?: "Unknown provider error"}"
                             } else {
                                 "Processing error: ${e.message ?: "Unknown error"}"
                             }
                         )
-                        attemptResult = if (providerFailure) {
-                            AttemptResult.FailedProvider
-                        } else {
-                            AttemptResult.FailedUnexpected
-                        }
+                        attemptResult = result
                     } finally {
                         logIngestionAttemptComplete(
                             ingestion = ingestion,
@@ -272,10 +288,12 @@ internal class DocumentProcessingWorker(
                 timeout,
                 e
             )
-            markRunFailedSafely(
+            handleFailure(
                 runId = ingestion.runId,
                 tenantId = ingestion.tenantId,
                 documentId = ingestion.documentId,
+                attemptCount = ingestion.attemptCount,
+                attemptResult = AttemptResult.FailedTimeout,
                 message = timeoutMessage
             )
             AttemptResult.FailedTimeout
@@ -289,20 +307,56 @@ internal class DocumentProcessingWorker(
         }
     }
 
-    private suspend fun markRunFailedSafely(
+    /**
+     * Handle a processing failure: schedule retry if transient and under maxAttempts,
+     * otherwise mark as terminal failure.
+     */
+    private suspend fun handleFailure(
         runId: IngestionRunId,
         tenantId: TenantId,
         documentId: DocumentId,
-        message: String
+        attemptCount: Int,
+        attemptResult: AttemptResult,
+        message: String,
     ) {
         withContext(NonCancellable) {
             try {
-                val didMarkFail = ingestionRepository.markAsFailed(runId.toString(), message)
-                if (didMarkFail) {
+                val nextAttemptCount = attemptCount + 1
+                if (attemptResult.isRetryable && nextAttemptCount < config.maxAttempts) {
+                    val backoff = retryDelay(nextAttemptCount)
+                    val nextAttemptAt = (Clock.System.now() + backoff).toLocalDateTime(TimeZone.UTC)
+                    val scheduled = ingestionRepository.scheduleRetry(
+                        runId = runId,
+                        attemptCount = nextAttemptCount,
+                        nextAttemptAt = nextAttemptAt,
+                        error = message,
+                    )
+                    if (scheduled) {
+                        logger.info(
+                            "Scheduled retry for run {} (attempt {}/{}, backoff={}, next at {})",
+                            runId, nextAttemptCount, config.maxAttempts, backoff, nextAttemptAt
+                        )
+                        // No SSE — document stays "in-flight" from the user's perspective
+                    } else {
+                        logger.warn(
+                            "Failed to schedule retry for run {}, falling back to terminal failure",
+                            runId
+                        )
+                        ingestionRepository.markAsFailed(runId.toString(), message)
+                        documentSsePublisher.publishDocumentChanged(tenantId, documentId)
+                    }
+                } else {
+                    if (attemptResult.isRetryable) {
+                        logger.warn(
+                            "Run {} exhausted retries ({}/{}), marking as terminal failure",
+                            runId, nextAttemptCount, config.maxAttempts
+                        )
+                    }
+                    ingestionRepository.markAsFailed(runId.toString(), message)
                     documentSsePublisher.publishDocumentChanged(tenantId, documentId)
                 }
             } catch (markError: Exception) {
-                logger.error("Failed to mark ingestion run {} as failed", runId, markError)
+                logger.error("Failed to handle failure for ingestion run {}", runId, markError)
             }
         }
     }
@@ -315,10 +369,12 @@ internal class DocumentProcessingWorker(
     ) {
         val processingTimeMs = (System.nanoTime() - startedAtNanos) / 1_000_000
         logger.info(
-            "Ingestion attempt completed: runId={}, documentId={}, queueDepthAtClaim={}, processingTimeMs={}, " +
-                    "attemptResult={}",
+            "Ingestion attempt completed: runId={}, documentId={}, attempt={}/{}, " +
+                "queueDepthAtClaim={}, processingTimeMs={}, attemptResult={}",
             ingestion.runId,
             ingestion.documentId,
+            ingestion.attemptCount + 1,
+            config.maxAttempts,
             queueDepthAtClaim,
             processingTimeMs,
             attemptResult.label
@@ -334,11 +390,25 @@ internal class DocumentProcessingWorker(
         return false
     }
 
+    private val AttemptResult.isRetryable: Boolean
+        get() = when (this) {
+            AttemptResult.FailedTimeout,
+            AttemptResult.FailedProvider,
+            AttemptResult.FailedUnexpected,
+            AttemptResult.FailedCancelled -> true
+            AttemptResult.FailedValidation,
+            AttemptResult.Succeeded,
+            AttemptResult.SkippedAlreadyClaimed -> false
+        }
+
+    private fun retryDelay(attemptCount: Int): Duration = when (attemptCount) {
+        1 -> 1.minutes
+        2 -> 5.minutes
+        else -> 15.minutes
+    }
+
     /**
      * Process a single ingestion run.
-     *
-     * Each ingestion run is a single processing attempt. If it fails, it stays failed.
-     * Retries are handled via the /reprocess endpoint which creates new runs.
      */
     private suspend fun processIngestionRun(ingestion: IngestionItemEntity): AttemptResult {
         val runId = ingestion.runId
@@ -349,7 +419,10 @@ internal class DocumentProcessingWorker(
         MDC.put("documentId", documentId.toString())
         MDC.put("tenantId", tenantId.toString())
 
-        logger.info("Processing ingestion run: $runId for document: $documentId")
+        logger.info(
+            "Processing ingestion run: {} for document: {} (attempt {}/{})",
+            runId, documentId, ingestion.attemptCount + 1, config.maxAttempts
+        )
 
         try {
             // Fetch tenant context for improved invoice classification and direction resolution
@@ -387,10 +460,12 @@ internal class DocumentProcessingWorker(
                     documentId,
                     errorMessage
                 )
-                markRunFailedSafely(
+                handleFailure(
                     runId = runId,
                     tenantId = parsedTenantId,
                     documentId = documentId,
+                    attemptCount = ingestion.attemptCount,
+                    attemptResult = AttemptResult.FailedValidation,
                     message = errorMessage
                 )
                 return AttemptResult.FailedValidation
@@ -476,27 +551,32 @@ internal class DocumentProcessingWorker(
         } catch (e: CancellationException) {
             if (!isRunning.get()) throw e
             logger.error("Unexpected cancellation while processing document $documentId", e)
-            markRunFailedSafely(
+            handleFailure(
                 runId = runId,
                 tenantId = tenantId,
                 documentId = documentId,
+                attemptCount = ingestion.attemptCount,
+                attemptResult = AttemptResult.FailedCancelled,
                 message = "Processing cancelled: ${e.message ?: "Unknown cancellation"}"
             )
             return AttemptResult.FailedCancelled
         } catch (e: Exception) {
             val providerFailure = isProviderFailure(e)
             logger.error("Unexpected error processing document $documentId", e)
-            markRunFailedSafely(
+            val result = if (providerFailure) AttemptResult.FailedProvider else AttemptResult.FailedUnexpected
+            handleFailure(
                 runId = runId,
                 tenantId = tenantId,
                 documentId = documentId,
+                attemptCount = ingestion.attemptCount,
+                attemptResult = result,
                 message = if (providerFailure) {
                     "Processing provider error: ${e.message ?: "Unknown provider error"}"
                 } else {
                     "Processing error: ${e.message ?: "Unknown error"}"
                 }
             )
-            return if (providerFailure) AttemptResult.FailedProvider else AttemptResult.FailedUnexpected
+            return result
         } finally {
             MDC.remove("runId")
             MDC.remove("documentId")

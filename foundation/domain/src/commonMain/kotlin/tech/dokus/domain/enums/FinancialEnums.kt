@@ -913,7 +913,13 @@ enum class BankAccountType(override val dbValue: String) : DbEnum {
     Savings("SAVINGS"),
 
     @SerialName("CREDIT_CARD")
-    CreditCard("CREDIT_CARD")
+    CreditCard("CREDIT_CARD"),
+
+    @SerialName("POCKET")
+    Pocket("POCKET"),
+
+    @SerialName("CARD_ACCOUNT")
+    CardAccount("CARD_ACCOUNT")
 }
 
 // ============================================================================

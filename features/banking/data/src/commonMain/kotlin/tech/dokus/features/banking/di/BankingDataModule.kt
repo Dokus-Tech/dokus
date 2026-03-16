@@ -16,6 +16,8 @@ import tech.dokus.features.banking.usecase.IgnoreTransactionUseCaseImpl
 import tech.dokus.features.banking.usecase.LinkTransactionUseCaseImpl
 import tech.dokus.features.banking.usecase.ListBankAccountsUseCaseImpl
 import tech.dokus.features.banking.usecase.ListBankTransactionsUseCaseImpl
+import tech.dokus.features.banking.usecase.MarkTransferTransactionUseCaseImpl
+import tech.dokus.features.banking.usecase.UndoTransferTransactionUseCaseImpl
 import tech.dokus.features.banking.usecases.ConfirmTransactionUseCase
 import tech.dokus.features.banking.usecases.CreateExpenseFromTransactionUseCase
 import tech.dokus.features.banking.usecases.GetAccountSummaryUseCase
@@ -26,6 +28,8 @@ import tech.dokus.features.banking.usecases.IgnoreTransactionUseCase
 import tech.dokus.features.banking.usecases.LinkTransactionUseCase
 import tech.dokus.features.banking.usecases.ListBankAccountsUseCase
 import tech.dokus.features.banking.usecases.ListBankTransactionsUseCase
+import tech.dokus.features.banking.usecases.MarkTransferTransactionUseCase
+import tech.dokus.features.banking.usecases.UndoTransferTransactionUseCase
 
 val bankingNetworkModule = module {
     single<BankingRemoteDataSource> {
@@ -42,4 +46,6 @@ val bankingNetworkModule = module {
     singleOf(::CreateExpenseFromTransactionUseCaseImpl) bind CreateExpenseFromTransactionUseCase::class
     singleOf(::ListBankAccountsUseCaseImpl) bind ListBankAccountsUseCase::class
     singleOf(::GetBalanceHistoryUseCaseImpl) bind GetBalanceHistoryUseCase::class
+    singleOf(::MarkTransferTransactionUseCaseImpl) bind MarkTransferTransactionUseCase::class
+    singleOf(::UndoTransferTransactionUseCaseImpl) bind UndoTransferTransactionUseCase::class
 }

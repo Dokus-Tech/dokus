@@ -7,16 +7,20 @@ import ai.koog.agents.core.tools.ToolRegistry
 import ai.koog.prompt.dsl.prompt
 import ai.koog.prompt.executor.model.PromptExecutor
 import tech.dokus.features.ai.config.asOrchestratorModel
+import tech.dokus.features.ai.config.LangfuseTraceContext
+import tech.dokus.features.ai.config.LangfuseTraceTag
 import tech.dokus.features.ai.config.installKoogEventLogging
 import tech.dokus.features.ai.config.installLangfuseTracing
 import tech.dokus.features.ai.graph.businessProfileContentExtractionGraph
 import tech.dokus.features.ai.models.BusinessProfileContentExtractionInput
 import tech.dokus.features.ai.models.BusinessProfileContentExtractionResult
 import tech.dokus.foundation.backend.config.AIConfig
+import tech.dokus.foundation.backend.config.ServerInfoConfig
 
 class BusinessProfileContentExtractionAgent(
     private val executor: PromptExecutor,
     private val aiConfig: AIConfig,
+    private val serverInfo: ServerInfoConfig,
 ) {
     @OptIn(ExperimentalAgentsApi::class)
     suspend fun extract(input: BusinessProfileContentExtractionInput): BusinessProfileContentExtractionResult {
@@ -37,7 +41,14 @@ class BusinessProfileContentExtractionAgent(
                     agentName = "business-profile-content-extraction",
                     enabled = aiConfig.koogEventLoggingEnabled
                 )
-                installLangfuseTracing(aiConfig.langfuse)
+                installLangfuseTracing(
+                    aiConfig.langfuse,
+                    LangfuseTraceContext(
+                        tags = listOf(LangfuseTraceTag.BusinessEnrichment),
+                    ),
+                    serviceName = serverInfo.name,
+                    serviceVersion = serverInfo.version,
+                )
             }
         )
 

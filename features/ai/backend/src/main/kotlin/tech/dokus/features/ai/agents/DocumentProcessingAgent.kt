@@ -3,6 +3,8 @@ package tech.dokus.features.ai.agents
 import kotlinx.serialization.SerializationException
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.features.ai.config.KoogAgentRunner
+import tech.dokus.features.ai.config.LangfuseTraceContext
+import tech.dokus.features.ai.config.LangfuseTraceTag
 import tech.dokus.features.ai.graph.AcceptDocumentInput
 import tech.dokus.features.ai.graph.acceptDocumentGraph
 import tech.dokus.features.ai.graph.isPeppol
@@ -29,12 +31,23 @@ class DocumentProcessingAgent(
     private val logger = loggerFor()
 
     suspend fun process(input: AcceptDocumentInput): DocumentAiProcessingResult {
+        val traceContext = LangfuseTraceContext(
+            tenantId = input.tenant.id.toString(),
+            sessionId = input.documentId.toString(),
+            tags = listOf(
+                LangfuseTraceTag.DocumentProcessing,
+                if (input.isPeppol()) LangfuseTraceTag.SourcePeppol else LangfuseTraceTag.SourceUpload,
+            ),
+            metadata = mapOf("documentId" to input.documentId.toString()),
+        )
+
         return runSuspendCatching {
             agentRunner.run(
                 input = input,
                 strategy = acceptDocumentGraph(aiConfig, documentFetcher),
                 agentName = "document-processing",
-                systemPrompt = "You classify and extract structured financial data from provided document pages."
+                systemPrompt = "You classify and extract structured financial data from provided document pages.",
+                traceContext = traceContext,
             )
         }.recover {
             if (isPeppolDeserializationFailure(it) && input.isPeppol()) {
@@ -46,7 +59,10 @@ class DocumentProcessingAgent(
                     input = input.asUpload,
                     strategy = acceptDocumentGraph(aiConfig, documentFetcher),
                     agentName = "document-processing",
-                    systemPrompt = "You classify and extract structured financial data from provided document pages."
+                    systemPrompt = "You classify and extract structured financial data from provided document pages.",
+                    traceContext = traceContext.copy(
+                        tags = listOf(LangfuseTraceTag.DocumentProcessing, LangfuseTraceTag.SourceUpload),
+                    ),
                 )
             } else {
                 throw it
@@ -61,7 +77,11 @@ class DocumentProcessingAgent(
             input = input,
             strategy = purposeEnrichmentGraph(),
             agentName = "purpose-enrichment",
-            systemPrompt = "You render canonical document purpose labels."
+            systemPrompt = "You render canonical document purpose labels.",
+            traceContext = LangfuseTraceContext(
+                tenantId = input.tenantId.toString(),
+                tags = listOf(LangfuseTraceTag.PurposeEnrichment),
+            ),
         )
     }
 

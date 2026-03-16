@@ -20,9 +20,11 @@ object BankAccountsTable : UUIDTable("bank_accounts") {
         onDelete = ReferenceOption.CASCADE
     ).index()
 
-    val iban = varchar("iban", 34)
+    val iban = varchar("iban", 34).nullable()
     val name = varchar("name", 255)
     val institutionName = varchar("institution_name", 255)
+    val parentAccountId = uuid("parent_account_id").nullable()
+    val providerAccountId = varchar("provider_account_id", 255).nullable()
     val accountType = dbEnumeration<BankAccountType>("account_type")
     val currency = dbEnumeration<Currency>("currency").default(Currency.Eur)
     val provider = dbEnumeration<BankAccountProvider>("provider").default(BankAccountProvider.Unknown)
@@ -35,6 +37,7 @@ object BankAccountsTable : UUIDTable("bank_accounts") {
 
     init {
         index(false, tenantId, isActive)
-        uniqueIndex(tenantId, iban)
+        // Note: IBAN uniqueness is enforced at application level via findByIban()
+        // because pockets/sub-accounts may have null IBANs.
     }
 }

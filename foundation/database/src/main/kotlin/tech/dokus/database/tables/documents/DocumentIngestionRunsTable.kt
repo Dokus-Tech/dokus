@@ -89,11 +89,20 @@ object DocumentIngestionRunsTable : UUIDTable("document_ingestion_runs") {
     // Null for runs that predate version tracking (treated as version 0).
     val processingVersion = integer("processing_version").nullable()
 
+    // Retry tracking: how many times this run has been attempted (0 = first attempt)
+    val attemptCount = integer("attempt_count").default(0)
+
+    // Earliest time this run is eligible for processing (null = immediately eligible)
+    val nextAttemptAt = datetime("next_attempt_at").nullable()
+
     init {
         // For processor: find runs to process by status
         index(false, tenantId, status, queuedAt)
 
         // For fetching latest run for a document
         index(false, documentId, finishedAt)
+
+        // For processor: find retry-eligible runs by status and scheduled time
+        index(false, status, nextAttemptAt)
     }
 }

@@ -136,7 +136,7 @@ internal fun AccountTableRow(
                     maxLines = 1,
                 )
                 Text(
-                    text = formatIban(account.iban.value),
+                    text = account.iban?.value?.let { formatIban(it) } ?: account.institutionName,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.textMuted,
                     maxLines = 1,
@@ -225,7 +225,7 @@ internal fun MobileAccountCard(
                 maxLines = 1,
             )
             Text(
-                text = formatIban(account.iban.value),
+                text = account.iban?.value?.let { formatIban(it) } ?: account.institutionName,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.textMuted,
                 maxLines = 1,
@@ -259,6 +259,8 @@ internal fun AccountTypeBadge(
             BankAccountType.Current -> Color(0xFF3B82F6).copy(alpha = 0.12f) to Color(0xFF3B82F6)
             BankAccountType.Savings -> Color(0xFF10B981).copy(alpha = 0.12f) to Color(0xFF10B981)
             BankAccountType.CreditCard -> Color(0xFFF59E0B).copy(alpha = 0.12f) to Color(0xFFF59E0B)
+            BankAccountType.Pocket -> Color(0xFF8B5CF6).copy(alpha = 0.12f) to Color(0xFF8B5CF6)
+            BankAccountType.CardAccount -> Color(0xFFF59E0B).copy(alpha = 0.12f) to Color(0xFFF59E0B)
         }
     }
 

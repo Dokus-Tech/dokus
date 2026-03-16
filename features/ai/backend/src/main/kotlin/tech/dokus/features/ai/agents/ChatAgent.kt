@@ -3,7 +3,6 @@ package tech.dokus.features.ai.agents
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.singleRunStrategy
 import ai.koog.agents.core.tools.ToolRegistry
-import ai.koog.prompt.dsl.prompt
 import ai.koog.prompt.executor.model.PromptExecutor
 import ai.koog.prompt.llm.LLModel
 import kotlinx.serialization.Serializable
@@ -11,8 +10,13 @@ import org.slf4j.LoggerFactory
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.repository.RetrievedChunk
+import tech.dokus.features.ai.config.LangfuseTraceContext
+import tech.dokus.features.ai.config.LangfuseTraceTag
+import tech.dokus.features.ai.config.installLangfuseTracing
 import tech.dokus.features.ai.prompts.AgentPrompt
 import tech.dokus.features.ai.services.RAGService
+import tech.dokus.foundation.backend.config.LangfuseConfig
+import tech.dokus.foundation.backend.config.ServerInfoConfig
 
 /**
  * Agent responsible for RAG-backed document Q&A with citations.
@@ -51,7 +55,9 @@ class ChatAgent(
     private val executor: PromptExecutor,
     private val model: LLModel,
     private val ragService: RAGService,
-    private val prompt: AgentPrompt
+    private val prompt: AgentPrompt,
+    private val serverInfo: ServerInfoConfig,
+    private val langfuseConfig: LangfuseConfig = LangfuseConfig.disabled,
 ) {
     private val logger = LoggerFactory.getLogger(ChatAgent::class.java)
 
@@ -255,8 +261,21 @@ class ChatAgent(
                 strategy = singleRunStrategy(),
                 toolRegistry = ToolRegistry.EMPTY,
                 id = "chat-agent",
-                systemPrompt = systemPrompt
-            )
+                systemPrompt = systemPrompt,
+            ) {
+                installLangfuseTracing(
+                    langfuseConfig,
+                    LangfuseTraceContext(
+                        tenantId = tenantId.toString(),
+                        tags = listOf(LangfuseTraceTag.Chat),
+                        metadata = buildMap {
+                            documentId?.let { put("documentId", it.toString()) }
+                        },
+                    ),
+                    serviceName = serverInfo.name,
+                    serviceVersion = serverInfo.version,
+                )
+            }
 
             agent.run(userPrompt)
         } catch (e: Exception) {

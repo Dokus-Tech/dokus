@@ -22,6 +22,7 @@ import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.domain.model.BankTransactionSummary
 import tech.dokus.domain.model.IgnoreTransactionRequest
 import tech.dokus.domain.model.LinkTransactionRequest
+import tech.dokus.domain.model.MarkTransferRequest
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.routes.Banking
 
@@ -111,5 +112,25 @@ internal class BankingRemoteDataSourceImpl(
 
     override suspend fun getBalanceHistory(days: Int): Result<BalanceHistoryResponse> = runCatching {
         httpClient.get(Banking.AccountsBalanceHistory(days = days)).body()
+    }
+
+    override suspend fun markTransfer(
+        transactionId: BankTransactionId,
+        request: MarkTransferRequest,
+    ): Result<BankTransactionDto> = runCatching {
+        val txRoute = Banking.Transactions()
+        val idRoute = Banking.Transactions.Id(parent = txRoute, id = transactionId.toString())
+        httpClient.resourcePost(Banking.Transactions.Id.MarkTransfer(parent = idRoute)) {
+            contentType(ContentType.Application.Json)
+            setBody(request)
+        }.body()
+    }
+
+    override suspend fun undoTransfer(
+        transactionId: BankTransactionId,
+    ): Result<BankTransactionDto> = runCatching {
+        val txRoute = Banking.Transactions()
+        val idRoute = Banking.Transactions.Id(parent = txRoute, id = transactionId.toString())
+        httpClient.resourcePost(Banking.Transactions.Id.UndoTransfer(parent = idRoute)).body()
     }
 }

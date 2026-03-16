@@ -42,6 +42,7 @@ import tech.dokus.domain.ids.BankAccountId
 import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.features.banking.presentation.payments.components.IgnoreReasonDialog
+import tech.dokus.features.banking.presentation.payments.components.TransferDialog
 import tech.dokus.features.banking.presentation.payments.components.AccountFilterDropdown
 import tech.dokus.features.banking.presentation.payments.components.PaymentFilterTabs
 import tech.dokus.features.banking.presentation.payments.components.PaymentsSkeleton
@@ -93,6 +94,17 @@ internal fun PaymentsScreen(
             onReasonSelected = { onIntent(PaymentsIntent.SelectIgnoreReason(it)) },
             onConfirm = { onIntent(PaymentsIntent.ConfirmIgnore) },
             onDismiss = { onIntent(PaymentsIntent.DismissIgnoreDialog) },
+        )
+    }
+
+    state.transferDialogState?.let { dialogState ->
+        TransferDialog(
+            availableAccounts = dialogState.availableAccounts,
+            selectedAccountId = dialogState.selectedDestinationAccountId,
+            isSubmitting = dialogState.isSubmitting,
+            onAccountSelected = { onIntent(PaymentsIntent.SelectTransferDestination(it)) },
+            onConfirm = { onIntent(PaymentsIntent.ConfirmTransfer) },
+            onDismiss = { onIntent(PaymentsIntent.DismissTransferDialog) },
         )
     }
 
@@ -272,6 +284,12 @@ private fun PaymentsContent(
                     },
                     onCreateExpense = {
                         onIntent(PaymentsIntent.CreateExpense(selectedTx.id))
+                    },
+                    onMarkTransfer = {
+                        onIntent(PaymentsIntent.MarkTransfer(selectedTx.id))
+                    },
+                    onUndoTransfer = {
+                        onIntent(PaymentsIntent.UndoTransfer(selectedTx.id))
                     },
                     modifier = Modifier
                         .width(DetailPaneWidth)

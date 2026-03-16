@@ -20,6 +20,8 @@ val bankingViewModelModule = module {
             ignoreTransaction = get(),
             confirmTransaction = get(),
             createExpenseFromTransaction = get(),
+            markTransferTransaction = get(),
+            undoTransferTransaction = get(),
         )
     }
 
