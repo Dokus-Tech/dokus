@@ -23,6 +23,11 @@ import tech.dokus.features.banking.usecases.IgnoreTransactionUseCase
 import tech.dokus.features.banking.usecases.LinkTransactionUseCase
 import tech.dokus.features.banking.usecases.ListBankAccountsUseCase
 import tech.dokus.features.banking.usecases.ListBankTransactionsUseCase
+import tech.dokus.features.banking.usecases.MarkTransferTransactionUseCase
+import tech.dokus.features.banking.usecases.UndoTransferTransactionUseCase
+import tech.dokus.domain.model.MarkTransferMode
+import tech.dokus.domain.model.MarkTransferRequest
+import tech.dokus.domain.ids.BankAccountId
 import kotlin.time.Duration
 
 internal class ListBankTransactionsUseCaseImpl(
@@ -119,5 +124,33 @@ internal class GetBalanceHistoryUseCaseImpl(
 ) : GetBalanceHistoryUseCase {
     override suspend fun invoke(duration: Duration): Result<BalanceHistoryResponse> {
         return dataSource.getBalanceHistory(duration.inWholeDays.toInt())
+    }
+}
+
+internal class MarkTransferTransactionUseCaseImpl(
+    private val dataSource: BankingRemoteDataSource,
+) : MarkTransferTransactionUseCase {
+    override suspend fun invoke(
+        transactionId: BankTransactionId,
+        mode: MarkTransferMode,
+        counterpartTransactionId: BankTransactionId?,
+        destinationAccountId: BankAccountId?,
+    ): Result<BankTransactionDto> {
+        return dataSource.markTransfer(
+            transactionId,
+            MarkTransferRequest(
+                mode = mode,
+                counterpartTransactionId = counterpartTransactionId,
+                destinationAccountId = destinationAccountId,
+            )
+        )
+    }
+}
+
+internal class UndoTransferTransactionUseCaseImpl(
+    private val dataSource: BankingRemoteDataSource,
+) : UndoTransferTransactionUseCase {
+    override suspend fun invoke(transactionId: BankTransactionId): Result<BankTransactionDto> {
+        return dataSource.undoTransfer(transactionId)
     }
 }

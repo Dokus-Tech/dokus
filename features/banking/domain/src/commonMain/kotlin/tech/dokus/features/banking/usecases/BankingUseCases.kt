@@ -72,3 +72,18 @@ interface CreateExpenseFromTransactionUseCase {
         transactionId: BankTransactionId,
     ): Result<BankTransactionDto>
 }
+
+interface MarkTransferTransactionUseCase {
+    suspend operator fun invoke(
+        transactionId: BankTransactionId,
+        mode: tech.dokus.domain.model.MarkTransferMode,
+        counterpartTransactionId: BankTransactionId? = null,
+        destinationAccountId: tech.dokus.domain.ids.BankAccountId? = null,
+    ): Result<BankTransactionDto>
+}
+
+interface UndoTransferTransactionUseCase {
+    suspend operator fun invoke(
+        transactionId: BankTransactionId,
+    ): Result<BankTransactionDto>
+}
