@@ -1,5 +1,6 @@
 package tech.dokus.database.repository.search
 
+import java.math.BigDecimal
 import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.LowerCase
 import org.jetbrains.exposed.v1.core.ResultRow
@@ -99,17 +100,18 @@ class SearchRepository(
 
         val escaped = escapeLike(normalizedQuery.lowercase())
         val pattern = "%$escaped%"
+        val amountDecimal = parseAmountDecimal(normalizedQuery)
 
-        val documentCount = countDocuments(tenantId, pattern)
+        val documentCount = countDocuments(tenantId, pattern, amountDecimal)
         val contactCount = countContacts(tenantId, pattern)
-        val transactionCount = countTransactions(tenantId, pattern)
+        val transactionCount = countTransactions(tenantId, pattern, amountDecimal)
 
         val includeDocuments = scope == UnifiedSearchScope.All || scope == UnifiedSearchScope.Documents
         val includeContacts = scope == UnifiedSearchScope.All || scope == UnifiedSearchScope.Contacts
         val includeTransactions = scope == UnifiedSearchScope.All || scope == UnifiedSearchScope.Transactions
 
         val documents = if (includeDocuments) {
-            searchDocuments(tenantId, pattern, effectiveLimit)
+            searchDocuments(tenantId, pattern, amountDecimal, effectiveLimit)
         } else {
             emptyList()
         }
@@ -121,12 +123,12 @@ class SearchRepository(
         }
 
         val transactions = if (includeTransactions) {
-            searchTransactions(tenantId, pattern, effectiveLimit)
+            searchTransactions(tenantId, pattern, amountDecimal, effectiveLimit)
         } else {
             emptyList()
         }
 
-        val aggregates = transactionAggregates(tenantId, pattern)
+        val aggregates = transactionAggregates(tenantId, pattern, amountDecimal)
 
         UnifiedSearchResponse(
             query = normalizedQuery,
@@ -146,9 +148,10 @@ class SearchRepository(
 
     private suspend fun countDocuments(
         tenantId: TenantId,
-        pattern: String
+        pattern: String,
+        amountDecimal: BigDecimal?,
     ): Long = dbQuery {
-        documentQuery(tenantId, pattern).count()
+        documentQuery(tenantId, pattern, amountDecimal).count()
     }
 
     private suspend fun countContacts(
@@ -160,17 +163,19 @@ class SearchRepository(
 
     private suspend fun countTransactions(
         tenantId: TenantId,
-        pattern: String
+        pattern: String,
+        amountDecimal: BigDecimal?,
     ): Long = dbQuery {
-        transactionQuery(tenantId, pattern).count()
+        transactionQuery(tenantId, pattern, amountDecimal).count()
     }
 
     private suspend fun searchDocuments(
         tenantId: TenantId,
         pattern: String,
-        limit: Int
+        amountDecimal: BigDecimal?,
+        limit: Int,
     ): List<SearchDocumentHit> = dbQuery {
-        documentQuery(tenantId, pattern)
+        documentQuery(tenantId, pattern, amountDecimal)
             .orderBy(DocumentsTable.uploadedAt to SortOrder.DESC)
             .limit(limit)
             .map(::mapDocumentHit)
@@ -190,9 +195,10 @@ class SearchRepository(
     private suspend fun searchTransactions(
         tenantId: TenantId,
         pattern: String,
-        limit: Int
+        amountDecimal: BigDecimal?,
+        limit: Int,
     ): List<SearchTransactionHit> = dbQuery {
-        transactionQuery(tenantId, pattern)
+        transactionQuery(tenantId, pattern, amountDecimal)
             .orderBy(CashflowEntriesTable.eventDate to SortOrder.DESC)
             .limit(limit)
             .map(::mapTransactionHit)
@@ -201,10 +207,11 @@ class SearchRepository(
     private suspend fun transactionAggregates(
         tenantId: TenantId,
         pattern: String,
+        amountDecimal: BigDecimal?,
     ): SearchAggregates = dbQuery {
-        val total = sumTransactionAmount(tenantId, pattern, direction = null)
-        val incoming = sumTransactionAmount(tenantId, pattern, direction = CashflowDirection.In)
-        val outgoing = sumTransactionAmount(tenantId, pattern, direction = CashflowDirection.Out)
+        val total = sumTransactionAmount(tenantId, pattern, amountDecimal, direction = null)
+        val incoming = sumTransactionAmount(tenantId, pattern, amountDecimal, direction = CashflowDirection.In)
+        val outgoing = sumTransactionAmount(tenantId, pattern, amountDecimal, direction = CashflowDirection.Out)
         SearchAggregates(
             transactionTotal = total,
             incomingTotal = incoming,
@@ -215,10 +222,11 @@ class SearchRepository(
     private fun sumTransactionAmount(
         tenantId: TenantId,
         pattern: String,
+        amountDecimal: BigDecimal?,
         direction: CashflowDirection?,
     ): Money {
         val amountSum = CashflowEntriesTable.amountGross.sum()
-        val query = transactionQuery(tenantId, pattern).apply {
+        val query = transactionQuery(tenantId, pattern, amountDecimal).apply {
             if (direction != null) {
                 andWhere { CashflowEntriesTable.direction eq direction }
             }
@@ -228,7 +236,7 @@ class SearchRepository(
         return Money.fromDbDecimal(sum)
     }
 
-    private fun documentQuery(tenantId: TenantId, pattern: String): Query {
+    private fun documentQuery(tenantId: TenantId, pattern: String, amountDecimal: BigDecimal? = null): Query {
         val tenantUuid = UUID.fromString(tenantId.toString())
 
         val invoiceExists = exists(
@@ -268,15 +276,42 @@ class SearchRepository(
                     entityExists
             }
 
-        query = query.andWhere {
-            (LowerCase(DocumentsTable.purposeRendered) like pattern) or
-                (LowerCase(DocumentsTable.purposeBase) like pattern) or
-                (LowerCase(DocumentsTable.aiKeywords) like pattern) or
-                (LowerCase(DocumentsTable.counterpartySnapshot) like pattern) or
-                (LowerCase(ContactsTable.name) like pattern) or
-                (LowerCase(ContactsTable.email) like pattern) or
-                (LowerCase(ContactsTable.vatNumber) like pattern) or
-                (LowerCase(ContactsTable.companyNumber) like pattern)
+        val textMatch = (LowerCase(DocumentsTable.purposeRendered) like pattern) or
+            (LowerCase(DocumentsTable.purposeBase) like pattern) or
+            (LowerCase(DocumentsTable.aiKeywords) like pattern) or
+            (LowerCase(DocumentsTable.counterpartySnapshot) like pattern) or
+            (LowerCase(ContactsTable.name) like pattern) or
+            (LowerCase(ContactsTable.email) like pattern) or
+            (LowerCase(ContactsTable.vatNumber) like pattern) or
+            (LowerCase(ContactsTable.companyNumber) like pattern)
+
+        if (amountDecimal != null) {
+            val invoiceAmountMatch = exists(
+                InvoicesTable.select(InvoicesTable.id).where {
+                    (InvoicesTable.tenantId eq DocumentsTable.tenantId) and
+                        (InvoicesTable.documentId eq DocumentsTable.id) and
+                        (InvoicesTable.totalAmount eq amountDecimal)
+                }
+            )
+            val creditNoteAmountMatch = exists(
+                CreditNotesTable.select(CreditNotesTable.id).where {
+                    (CreditNotesTable.tenantId eq DocumentsTable.tenantId) and
+                        (CreditNotesTable.documentId eq DocumentsTable.id) and
+                        (CreditNotesTable.totalAmount eq amountDecimal)
+                }
+            )
+            val expenseAmountMatch = exists(
+                ExpensesTable.select(ExpensesTable.id).where {
+                    (ExpensesTable.tenantId eq DocumentsTable.tenantId) and
+                        (ExpensesTable.documentId eq DocumentsTable.id) and
+                        (ExpensesTable.amount eq amountDecimal)
+                }
+            )
+            query = query.andWhere {
+                textMatch or invoiceAmountMatch or creditNoteAmountMatch or expenseAmountMatch
+            }
+        } else {
+            query = query.andWhere { textMatch }
         }
 
         return query
@@ -297,7 +332,7 @@ class SearchRepository(
         return query
     }
 
-    private fun transactionQuery(tenantId: TenantId, pattern: String): Query {
+    private fun transactionQuery(tenantId: TenantId, pattern: String, amountDecimal: BigDecimal? = null): Query {
         var query = CashflowEntriesTable
             .join(
                 ContactsTable,
@@ -343,14 +378,20 @@ class SearchRepository(
                     (CashflowEntriesTable.status inList SearchStatuses)
             }
 
-        query = query.andWhere {
-            (LowerCase(ContactsTable.name) like pattern) or
-                (LowerCase(ContactsTable.email) like pattern) or
-                (LowerCase(ContactsTable.vatNumber) like pattern) or
-                (LowerCase(DocumentsTable.purposeRendered) like pattern) or
-                (LowerCase(ExpensesTable.description) like pattern) or
-                (LowerCase(InvoicesTable.invoiceNumber) like pattern) or
-                (LowerCase(InvoicesTable.notes) like pattern)
+        val textMatch = (LowerCase(ContactsTable.name) like pattern) or
+            (LowerCase(ContactsTable.email) like pattern) or
+            (LowerCase(ContactsTable.vatNumber) like pattern) or
+            (LowerCase(DocumentsTable.purposeRendered) like pattern) or
+            (LowerCase(ExpensesTable.description) like pattern) or
+            (LowerCase(InvoicesTable.invoiceNumber) like pattern) or
+            (LowerCase(InvoicesTable.notes) like pattern)
+
+        if (amountDecimal != null) {
+            query = query.andWhere {
+                textMatch or (CashflowEntriesTable.amountGross eq amountDecimal)
+            }
+        } else {
+            query = query.andWhere { textMatch }
         }
 
         return query
@@ -421,6 +462,23 @@ class SearchRepository(
             .replace("\\", "\\\\")
             .replace("%", "\\%")
             .replace("_", "\\_")
+    }
+
+    /**
+     * Parses a search query as an amount in DB decimal format (e.g., "962.52" → BigDecimal("962.52")).
+     * Handles comma as decimal separator (European format).
+     * Returns null if the query doesn't look like a number.
+     */
+    private fun parseAmountDecimal(query: String): BigDecimal? {
+        val cleaned = query.replace(",", ".").replace(" ", "").trim()
+        if (cleaned.isEmpty()) return null
+        return try {
+            val value = BigDecimal(cleaned)
+            if (value <= BigDecimal.ZERO || value > BigDecimal("999999999")) null
+            else value.setScale(2, java.math.RoundingMode.HALF_UP)
+        } catch (_: NumberFormatException) {
+            null
+        }
     }
 }
 
