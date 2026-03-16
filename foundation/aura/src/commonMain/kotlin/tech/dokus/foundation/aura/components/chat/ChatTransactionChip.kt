@@ -84,8 +84,11 @@ fun ChatTransactionChip(
         }
 
         // Amount
+        val absAmount = abs(tx.amount)
+        val whole = absAmount.toLong()
+        val cents = ((absAmount - whole) * 100).toLong()
         Text(
-            text = "\u2212\u20ac${String.format("%.2f", abs(tx.amount))}",
+            text = "\u2212\u20ac$whole.${cents.toString().padStart(2, '0')}",
             style = MaterialTheme.typography.bodySmall,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.statusError,

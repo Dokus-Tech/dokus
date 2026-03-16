@@ -120,6 +120,12 @@ fun ChatDocumentCard(
     }
 }
 
+private fun formatAmount(amount: Double): String {
+    val whole = amount.toLong()
+    val cents = ((amount - whole) * 100).toLong().let { kotlin.math.abs(it) }
+    return "$whole.${cents.toString().padStart(2, '0')}"
+}
+
 @Preview
 @Composable
 private fun ChatDocumentCardPreview(
