@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.HorizontalDivider
@@ -31,7 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
-import kotlinx.datetime.LocalDate
+import kotlinx.datetime.number
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.banking_empty_subtitle
@@ -41,31 +40,30 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.BankAccountId
 import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.model.BankTransactionDto
-import tech.dokus.features.banking.presentation.payments.components.IgnoreReasonDialog
-import tech.dokus.features.banking.presentation.payments.components.TransferDialog
 import tech.dokus.features.banking.presentation.payments.components.AccountFilterDropdown
+import tech.dokus.features.banking.presentation.payments.components.IgnoreReasonDialog
 import tech.dokus.features.banking.presentation.payments.components.PaymentFilterTabs
 import tech.dokus.features.banking.presentation.payments.components.PaymentsSkeleton
 import tech.dokus.features.banking.presentation.payments.components.TransactionCard
 import tech.dokus.features.banking.presentation.payments.components.TransactionDetailPane
 import tech.dokus.features.banking.presentation.payments.components.TransactionHeaderRow
 import tech.dokus.features.banking.presentation.payments.components.TransactionRow
+import tech.dokus.features.banking.presentation.payments.components.TransferDialog
 import tech.dokus.features.banking.presentation.payments.components.UnresolvedCallout
-import tech.dokus.features.banking.presentation.payments.components.formatShortDate
 import tech.dokus.features.banking.presentation.payments.mvi.PaymentsIntent
 import tech.dokus.features.banking.presentation.payments.mvi.PaymentsState
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.app.state.isError
 import tech.dokus.foundation.app.state.isLoading
 import tech.dokus.foundation.app.state.isSuccess
-import tech.dokus.foundation.aura.components.common.MonthSeparatorRow
 import tech.dokus.foundation.aura.components.DokusCardSurface
-import tech.dokus.foundation.aura.components.filter.DokusFilterBar
 import tech.dokus.foundation.aura.components.common.DokusEmptyState
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.DokusLoader
-import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.components.common.DokusLoaderSize
+import tech.dokus.foundation.aura.components.common.MonthSeparatorRow
+import tech.dokus.foundation.aura.components.common.PTopAppBar
+import tech.dokus.foundation.aura.components.filter.DokusFilterBar
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.local.ScreenSize
@@ -141,9 +139,9 @@ private fun PaymentsContent(
             val seenMonths = mutableSetOf<Long>()
             for (tx in txData) {
                 val date = tx.transactionDate
-                val monthKey = date.year.toLong() * 100 + date.monthNumber
+                val monthKey = date.year.toLong() * 100 + date.month.number
                 if (seenMonths.add(monthKey)) {
-                    add(TransactionDisplayRow.MonthHeader(date.year, date.monthNumber))
+                    add(TransactionDisplayRow.MonthHeader(date.year, date.month.number))
                 }
                 add(TransactionDisplayRow.TxRow(tx))
             }

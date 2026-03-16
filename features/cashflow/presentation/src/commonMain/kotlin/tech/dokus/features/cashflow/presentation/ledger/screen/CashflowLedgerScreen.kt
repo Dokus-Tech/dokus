@@ -14,10 +14,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import com.composables.icons.lucide.CircleCheck
-import com.composables.icons.lucide.CreditCard
-import com.composables.icons.lucide.FileText
-import com.composables.icons.lucide.Lucide
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -35,9 +31,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import com.composables.icons.lucide.CircleCheck
+import com.composables.icons.lucide.CreditCard
+import com.composables.icons.lucide.FileText
+import com.composables.icons.lucide.Lucide
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.number
 import org.jetbrains.compose.resources.stringResource
-import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_action_mark_paid
 import tech.dokus.aura.resources.cashflow_action_record_payment
@@ -52,7 +52,7 @@ import tech.dokus.aura.resources.cashflow_empty_upcoming
 import tech.dokus.aura.resources.cashflow_empty_upcoming_hint
 import tech.dokus.aura.resources.cashflow_empty_upcoming_in
 import tech.dokus.aura.resources.cashflow_empty_upcoming_out
-import tech.dokus.foundation.aura.components.common.MonthSeparatorRow
+import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.features.cashflow.presentation.common.components.pagination.rememberLoadMoreTrigger
 import tech.dokus.features.cashflow.presentation.common.components.table.DokusTableDivider
 import tech.dokus.features.cashflow.presentation.common.components.table.DokusTableSurface
@@ -71,6 +71,7 @@ import tech.dokus.foundation.aura.components.common.DokusEmptyState
 import tech.dokus.foundation.aura.components.common.DokusErrorBanner
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.common.DokusLoaderSize
+import tech.dokus.foundation.aura.components.common.MonthSeparatorRow
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
@@ -144,10 +145,10 @@ private fun CashflowLedgerContent(
                 var lastMonth = -1
                 for (entry in sorted) {
                     val date: LocalDate = entry.paidAt?.date ?: entry.eventDate
-                    if (date.year != lastYear || date.monthNumber != lastMonth) {
-                        add(CashflowDisplayRow.MonthHeader(date.year, date.monthNumber))
+                    if (date.year != lastYear || date.month.number != lastMonth) {
+                        add(CashflowDisplayRow.MonthHeader(date.year, date.month.number))
                         lastYear = date.year
-                        lastMonth = date.monthNumber
+                        lastMonth = date.month.number
                     }
                     add(CashflowDisplayRow.EntryRow(entry))
                 }

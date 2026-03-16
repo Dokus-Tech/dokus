@@ -1,8 +1,7 @@
 package tech.dokus.app.screens
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -11,7 +10,8 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,12 +35,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
-import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -63,9 +64,9 @@ import tech.dokus.domain.config.appVersion
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.aura.components.background.BootstrapBackground
 import tech.dokus.foundation.aura.components.background.BootstrapBackgroundLayout
-import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.components.text.DokusLogo
 import tech.dokus.foundation.aura.components.text.DokusLogoEmphasis
+import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.style.dokusSpacing
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
@@ -119,6 +120,7 @@ internal fun SplashRoute(
             BootstrapAction.NavigateToAccountConfirmation -> navController.replace(
                 AuthDestination.PendingConfirmAccount
             )
+
             BootstrapAction.NavigateToTenantSelection -> navController.replace(AuthDestination.WorkspaceSelect)
             is BootstrapAction.NavigateToMain -> {
                 if (!mainNavigationScheduled) {
@@ -153,7 +155,8 @@ internal fun SplashScreen(
     } else {
         BootstrapBackgroundLayout.Mobile
     }
-    val logoTopPadding = if (isLargeScreen) SplashLogoTopPaddingDesktop else SplashLogoTopPaddingMobile
+    val logoTopPadding =
+        if (isLargeScreen) SplashLogoTopPaddingDesktop else SplashLogoTopPaddingMobile
     val checklistBottomPadding = if (isLargeScreen) {
         SplashChecklistBottomPaddingDesktop
     } else {
@@ -163,7 +166,10 @@ internal fun SplashScreen(
     val progressTarget = (completedSteps.toFloat() / BootstrapStepCount.toFloat()).coerceIn(0f, 1f)
     val progress by animateFloatAsState(
         targetValue = progressTarget,
-        animationSpec = tween(durationMillis = ProgressAnimationDuration.toMillisInt(), easing = FastOutSlowInEasing),
+        animationSpec = tween(
+            durationMillis = ProgressAnimationDuration.toMillisInt(),
+            easing = FastOutSlowInEasing
+        ),
         label = "splashProgress",
     )
 
@@ -189,8 +195,10 @@ internal fun SplashScreen(
         }
 
         val tier = stringResource(Res.string.subscription_tier_core)
-        val footerText = stringResource(Res.string.bootstrap_version_footer, appVersion.versionName, tier)
+        val footerText =
+            stringResource(Res.string.bootstrap_version_footer, appVersion.versionName, tier)
 
+        if (LocalInspectionMode.current) return@Box
         Text(
             text = footerText,
             modifier = Modifier
@@ -227,10 +235,18 @@ private fun BootstrapStatesList(
         steps.forEachIndexed { index, step ->
             AnimatedVisibility(
                 visible = index < visibleCount,
-                enter = fadeIn(animationSpec = tween(StepRevealDuration.toMillisInt(), easing = FastOutSlowInEasing)) +
-                    slideInVertically(
-                        animationSpec = tween(StepRevealDuration.toMillisInt(), easing = FastOutSlowInEasing),
-                    ) { it / 2 },
+                enter = fadeIn(
+                    animationSpec = tween(
+                        StepRevealDuration.toMillisInt(),
+                        easing = FastOutSlowInEasing
+                    )
+                ) +
+                        slideInVertically(
+                            animationSpec = tween(
+                                StepRevealDuration.toMillisInt(),
+                                easing = FastOutSlowInEasing
+                            ),
+                        ) { it / 2 },
             ) {
                 BootstrapStateItem(step = step)
             }
@@ -252,7 +268,10 @@ private fun BootstrapStateItem(
         initialValue = 1f,
         targetValue = 1.7f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = ActivePulseDuration.toMillisInt(), easing = LinearEasing),
+            animation = tween(
+                durationMillis = ActivePulseDuration.toMillisInt(),
+                easing = LinearEasing
+            ),
             repeatMode = RepeatMode.Restart,
         ),
         label = "ringScale",
@@ -261,7 +280,10 @@ private fun BootstrapStateItem(
         initialValue = 0.65f,
         targetValue = 0f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = ActivePulseDuration.toMillisInt(), easing = LinearEasing),
+            animation = tween(
+                durationMillis = ActivePulseDuration.toMillisInt(),
+                easing = LinearEasing
+            ),
             repeatMode = RepeatMode.Restart,
         ),
         label = "ringAlpha",
@@ -270,7 +292,10 @@ private fun BootstrapStateItem(
         initialValue = 0.74f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = ActivePulseDuration.toMillisInt(), easing = FastOutSlowInEasing),
+            animation = tween(
+                durationMillis = ActivePulseDuration.toMillisInt(),
+                easing = FastOutSlowInEasing
+            ),
             repeatMode = RepeatMode.Reverse,
         ),
         label = "currentTextPulse",
@@ -281,7 +306,10 @@ private fun BootstrapStateItem(
             isCompleted -> accent.copy(alpha = 0.86f)
             else -> onSurface.copy(alpha = 0.20f)
         },
-        animationSpec = tween(durationMillis = SettledTransitionDuration.toMillisInt(), easing = FastOutSlowInEasing),
+        animationSpec = tween(
+            durationMillis = SettledTransitionDuration.toMillisInt(),
+            easing = FastOutSlowInEasing
+        ),
         label = "settledDotColor",
     )
     val settledTextColor by animateColorAsState(
@@ -289,7 +317,10 @@ private fun BootstrapStateItem(
             isCompleted -> onSurface.copy(alpha = 0.74f)
             else -> onSurface.copy(alpha = 0.36f)
         },
-        animationSpec = tween(durationMillis = SettledTransitionDuration.toMillisInt(), easing = FastOutSlowInEasing),
+        animationSpec = tween(
+            durationMillis = SettledTransitionDuration.toMillisInt(),
+            easing = FastOutSlowInEasing
+        ),
         label = "settledTextColor",
     )
     val dotScale by animateFloatAsState(
@@ -298,7 +329,10 @@ private fun BootstrapStateItem(
             isCompleted -> 0.96f
             else -> 0.90f
         },
-        animationSpec = tween(durationMillis = DotScaleTransitionDuration.toMillisInt(), easing = FastOutSlowInEasing),
+        animationSpec = tween(
+            durationMillis = DotScaleTransitionDuration.toMillisInt(),
+            easing = FastOutSlowInEasing
+        ),
         label = "dotScale",
     )
 
@@ -353,7 +387,11 @@ private fun SplashScreenPreview(
                 BootstrapStep(BootstrapStepType.InitializeApp, isActive = true, isCurrent = false),
                 BootstrapStep(BootstrapStepType.CheckUpdate, isActive = true, isCurrent = true),
                 BootstrapStep(BootstrapStepType.CheckingLogin, isActive = false, isCurrent = false),
-                BootstrapStep(BootstrapStepType.CheckingAccountStatus, isActive = false, isCurrent = false),
+                BootstrapStep(
+                    BootstrapStepType.CheckingAccountStatus,
+                    isActive = false,
+                    isCurrent = false
+                ),
             ),
         )
     }

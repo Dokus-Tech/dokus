@@ -14,8 +14,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.Plus
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
@@ -30,6 +28,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Plus
+import kotlinx.datetime.number
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.documents_drop_to_upload
@@ -38,7 +39,6 @@ import tech.dokus.aura.resources.documents_filter_no_match
 import tech.dokus.aura.resources.documents_upload
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.DocumentListItemDto
-import tech.dokus.foundation.aura.components.common.MonthSeparatorRow
 import tech.dokus.features.cashflow.presentation.common.components.pagination.rememberLoadMoreTrigger
 import tech.dokus.features.cashflow.presentation.common.components.table.DokusTableDivider
 import tech.dokus.features.cashflow.presentation.common.components.table.DokusTableSurface
@@ -46,12 +46,12 @@ import tech.dokus.features.cashflow.presentation.documents.components.DocumentFi
 import tech.dokus.features.cashflow.presentation.documents.components.DocumentLocalUploadMobileRow
 import tech.dokus.features.cashflow.presentation.documents.components.DocumentLocalUploadTableRow
 import tech.dokus.features.cashflow.presentation.documents.components.DocumentMobileRow
+import tech.dokus.features.cashflow.presentation.documents.components.DocumentSortDropdown
 import tech.dokus.features.cashflow.presentation.documents.components.DocumentTableHeaderRow
 import tech.dokus.features.cashflow.presentation.documents.components.DocumentTableRow
 import tech.dokus.features.cashflow.presentation.documents.components.DocumentsDropHintTableRow
 import tech.dokus.features.cashflow.presentation.documents.model.DocumentsLocalUploadRow
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentFilter
-import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentSortField
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsIntent
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsState
 import tech.dokus.foundation.app.state.isLoading
@@ -59,8 +59,8 @@ import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.common.DokusEmptyState
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.common.DokusLoaderSize
+import tech.dokus.foundation.aura.components.common.MonthSeparatorRow
 import tech.dokus.foundation.aura.local.LocalScreenSize
-import tech.dokus.features.cashflow.presentation.documents.components.DocumentSortDropdown
 
 private val DocumentsState.documentItems: List<DocumentListItemDto>
     get() = documents.lastData?.data ?: emptyList()
@@ -96,9 +96,9 @@ internal fun DocumentsScreen(
             val seenMonths = mutableSetOf<Long>()
             remoteDocuments.forEach { doc ->
                 val date = doc.sortDate
-                val monthKey = date.year.toLong() * 100 + date.monthNumber
+                val monthKey = date.year.toLong() * 100 + date.month.number
                 if (seenMonths.add(monthKey)) {
-                    add(DocumentsDisplayRow.MonthHeader(date.year, date.monthNumber))
+                    add(DocumentsDisplayRow.MonthHeader(date.year, date.month.number))
                 }
                 add(DocumentsDisplayRow.Remote(doc))
             }
