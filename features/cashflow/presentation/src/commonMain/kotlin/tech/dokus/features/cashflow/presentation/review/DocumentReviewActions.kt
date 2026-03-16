@@ -20,12 +20,14 @@ import tech.dokus.domain.model.UpdateDraftRequest
 import tech.dokus.features.cashflow.usecases.ConfirmDocumentUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentRecordUseCase
 import tech.dokus.features.cashflow.usecases.RejectDocumentUseCase
+import tech.dokus.features.cashflow.usecases.UpdateDocumentDraftContactUseCase
 import tech.dokus.features.cashflow.usecases.UpdateDocumentDraftUseCase
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.platform.Logger
 
 internal class DocumentReviewActions(
     private val updateDocumentDraft: UpdateDocumentDraftUseCase,
+    private val updateDocumentDraftContact: UpdateDocumentDraftContactUseCase,
     private val confirmDocument: ConfirmDocumentUseCase,
     private val rejectDocument: RejectDocumentUseCase,
     private val getDocumentRecord: GetDocumentRecordUseCase,
@@ -129,6 +131,10 @@ internal class DocumentReviewActions(
                 return@withState
             }
 
+            // Capture suggested contact for auto-bind (before launch to avoid stale reads)
+            val suggestedContactId = (contactSelectionState as? ContactSelectionState.Suggested)?.contactId
+            val needsContactBind = suggestedContactId != null && selectedContactId == null
+
             inlineDraftSyncToken += 1
             inlineDraftSyncJob?.cancel()
             inlineDraftSyncJob = null
@@ -137,6 +143,27 @@ internal class DocumentReviewActions(
             updateState { copy(isConfirming = true) }
 
             launch {
+                // Auto-bind suggested contact before confirming
+                if (needsContactBind) {
+                    logger.d { "Auto-binding suggested contact $suggestedContactId for $activeDocumentId" }
+                    updateState { copy(isBindingContact = true) }
+                    val bindResult = updateDocumentDraftContact(activeDocumentId, suggestedContactId)
+                    if (bindResult.isFailure) {
+                        val error = bindResult.exceptionOrNull()!!
+                        logger.e(error) { "Failed to auto-bind contact before confirm: $activeDocumentId" }
+                        updateState { copy(isBindingContact = false, isConfirming = false) }
+                        action(DocumentReviewAction.ShowError(error.asDokusException))
+                        return@launch
+                    }
+                    updateState {
+                        copy(
+                            selectedContactId = suggestedContactId,
+                            contactSelectionState = ContactSelectionState.Selected,
+                            isBindingContact = false,
+                        )
+                    }
+                }
+
                 if (hasUnsavedChanges) {
                     val updateResult = updateDocumentDraft(
                         activeDocumentId,

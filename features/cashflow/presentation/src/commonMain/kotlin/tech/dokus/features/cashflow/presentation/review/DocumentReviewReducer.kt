@@ -27,7 +27,6 @@ import tech.dokus.domain.model.DividendDraftData
 import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.EmploymentContractDraftData
 import tech.dokus.domain.model.ExpenseClaimDraftData
-import tech.dokus.domain.model.FinancialLineItem
 import tech.dokus.domain.model.FineDraftData
 import tech.dokus.domain.model.HolidayPayDraftData
 import tech.dokus.domain.model.IcListingDraftData
@@ -109,10 +108,10 @@ internal class DocumentReviewReducer(
         getDocumentSourceContent = getDocumentSourceContent,
         logger = logger
     )
-    private val lineItems = DocumentReviewLineItems()
     private val provenance = DocumentReviewProvenance()
     private val actions = DocumentReviewActions(
         updateDocumentDraft,
+        updateDocumentDraftContact,
         confirmDocument,
         rejectDocument,
         getDocumentRecord,
@@ -297,15 +296,6 @@ internal class DocumentReviewReducer(
     suspend fun DocumentReviewCtx.handleToggleSourceTechnicalDetails() =
         with(preview) { handleToggleSourceTechnicalDetails() }
 
-    suspend fun DocumentReviewCtx.handleAddLineItem() =
-        with(lineItems) { handleAddLineItem() }
-
-    suspend fun DocumentReviewCtx.handleUpdateLineItem(index: Int, item: FinancialLineItem) =
-        with(lineItems) { handleUpdateLineItem(index, item) }
-
-    suspend fun DocumentReviewCtx.handleRemoveLineItem(index: Int) =
-        with(lineItems) { handleRemoveLineItem(index) }
-
     suspend fun DocumentReviewCtx.handleSelectFieldForProvenance(fieldPath: String?) =
         with(provenance) { handleSelectFieldForProvenance(fieldPath) }
 
@@ -385,6 +375,9 @@ internal class DocumentReviewReducer(
 
     suspend fun DocumentReviewCtx.handleDismissFeedbackDialog() =
         with(feedbackActions) { handleDismissFeedbackDialog() }
+
+    suspend fun DocumentReviewCtx.handleSelectFeedbackCategory(category: FeedbackCategory) =
+        with(feedbackActions) { handleSelectFeedbackCategory(category) }
 
     suspend fun DocumentReviewCtx.handleUpdateFeedbackText(text: String) =
         with(feedbackActions) { handleUpdateFeedbackText(text) }

@@ -101,11 +101,25 @@ data class RejectDialogState(
 )
 
 /**
+ * Structured correction categories for the feedback dialog.
+ * Sent as a prefix in the feedback text to the reprocess pipeline.
+ */
+enum class FeedbackCategory {
+    WrongContact,
+    WrongAmount,
+    WrongDate,
+    WrongType,
+    MissingInfo,
+    Other,
+}
+
+/**
  * State for the "What needs correction?" feedback dialog.
  * Shown when user clicks "Something's wrong" -- correction-first approach.
  */
 @Immutable
 data class FeedbackDialogState(
+    val selectedCategory: FeedbackCategory? = null,
     val feedbackText: String = "",
     val isSubmitting: Boolean = false,
 )
@@ -282,20 +296,28 @@ data class DocumentReviewState(
     val hasUnsyncedLocalChanges: Boolean
         get() = hasUnsavedChanges || isSaving
 
+    /**
+     * True when contact is required but neither bound nor suggested.
+     * A suggested contact does NOT block — confirm will auto-bind it.
+     */
+    val hasUnresolvedContact: Boolean
+        get() = draftData?.isContactRequired == true &&
+            selectedContactId == null &&
+            contactSelectionState !is ContactSelectionState.Suggested
+
     val confirmBlockedReason: StringResource?
         get() {
             if (isDocumentConfirmed || isDocumentRejected || isDocumentUnsupported) return null
             val draft = draftData ?: return Res.string.cashflow_confirm_missing_fields
             return when {
                 isPendingCreation -> Res.string.cashflow_confirm_select_contact
-                draft.isContactRequired && selectedContactId == null -> Res.string.cashflow_confirm_select_contact
+                hasUnresolvedContact -> Res.string.cashflow_confirm_select_contact
                 !draft.hasKnownDirectionForConfirmation -> Res.string.cashflow_confirm_missing_fields
                 !draft.hasRequiredIdentityForConfirmation -> Res.string.cashflow_confirm_missing_fields
                 !draft.hasRequiredDates -> Res.string.cashflow_confirm_missing_fields
                 !draft.hasRequiredSubtotalForConfirmation -> Res.string.cashflow_confirm_missing_fields
                 !draft.hasRequiredTotalForConfirmation -> Res.string.cashflow_confirm_missing_fields
                 !draft.hasRequiredVatForConfirmation -> Res.string.cashflow_confirm_missing_fields
-                !draft.hasCoherentAmountsForConfirmation -> Res.string.cashflow_confirm_missing_fields
                 else -> null
             }
         }
@@ -825,82 +847,6 @@ private val DocumentDraftData.hasRequiredVatForConfirmation: Boolean
         is DepreciationScheduleDraftData,
         is InventoryDraftData,
         is OtherDraftData -> true
-    }
-
-/** Whether amount math is coherent when all required values are present. */
-private val DocumentDraftData.hasCoherentAmountsForConfirmation: Boolean
-    get() {
-        return when (this) {
-            is InvoiceDraftData -> {
-                val subtotal = subtotalAmount
-                val vat = vatAmount
-                val total = totalAmount
-                if (subtotal == null || vat == null || total == null) return true
-                val expected = subtotal + vat
-                kotlin.math.abs(expected.minor - total.minor) <= 1L
-            }
-            is ReceiptDraftData -> true
-            is CreditNoteDraftData -> {
-                val subtotal = subtotalAmount
-                val vat = vatAmount
-                val total = totalAmount
-                if (subtotal == null || vat == null || total == null) return true
-                val expected = subtotal + vat
-                kotlin.math.abs(expected.minor - total.minor) <= 1L
-            }
-            is BankStatementDraftData -> transactions.all { row ->
-                val amount = row.signedAmount
-                amount != null && !amount.isZero
-            }
-            is ProFormaDraftData,
-            is QuoteDraftData,
-            is OrderConfirmationDraftData,
-            is DeliveryNoteDraftData,
-            is ReminderDraftData,
-            is StatementOfAccountDraftData,
-            is PurchaseOrderDraftData,
-            is ExpenseClaimDraftData,
-            is BankFeeDraftData,
-            is InterestStatementDraftData,
-            is PaymentConfirmationDraftData,
-            is VatReturnDraftData,
-            is VatListingDraftData,
-            is VatAssessmentDraftData,
-            is IcListingDraftData,
-            is OssReturnDraftData,
-            is CorporateTaxDraftData,
-            is CorporateTaxAdvanceDraftData,
-            is TaxAssessmentDraftData,
-            is PersonalTaxDraftData,
-            is WithholdingTaxDraftData,
-            is SocialContributionDraftData,
-            is SocialFundDraftData,
-            is SelfEmployedContributionDraftData,
-            is VapzDraftData,
-            is SalarySlipDraftData,
-            is PayrollSummaryDraftData,
-            is EmploymentContractDraftData,
-            is DimonaDraftData,
-            is C4DraftData,
-            is HolidayPayDraftData,
-            is ContractDraftData,
-            is LeaseDraftData,
-            is LoanDraftData,
-            is InsuranceDraftData,
-            is DividendDraftData,
-            is ShareholderRegisterDraftData,
-            is CompanyExtractDraftData,
-            is AnnualAccountsDraftData,
-            is BoardMinutesDraftData,
-            is SubsidyDraftData,
-            is FineDraftData,
-            is PermitDraftData,
-            is CustomsDeclarationDraftData,
-            is IntrastatDraftData,
-            is DepreciationScheduleDraftData,
-            is InventoryDraftData,
-            is OtherDraftData -> true
-        }
     }
 
 /** Whether a contact is required for this document type. */

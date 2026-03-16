@@ -33,6 +33,16 @@ internal class DocumentReviewFeedbackActions(
         updateState { copy(feedbackDialogState = null) }
     }
 
+    suspend fun DocumentReviewCtx.handleSelectFeedbackCategory(category: FeedbackCategory) {
+        withState {
+            feedbackDialogState?.let { dialogState ->
+                updateState {
+                    copy(feedbackDialogState = dialogState.copy(selectedCategory = category))
+                }
+            }
+        }
+    }
+
     suspend fun DocumentReviewCtx.handleUpdateFeedbackText(text: String) {
         withState {
             feedbackDialogState?.let { dialogState ->
@@ -55,10 +65,16 @@ internal class DocumentReviewFeedbackActions(
                 logger.w { "SubmitFeedback: feedbackDialogState is null, aborting" }
                 return@withState
             }
-            val feedback = dialogState.feedbackText.trim()
-            if (feedback.isBlank()) {
-                logger.w { "SubmitFeedback: feedback text is blank, aborting" }
+            val category = dialogState.selectedCategory
+            val feedbackText = dialogState.feedbackText.trim()
+            if (category == null && feedbackText.isBlank()) {
+                logger.w { "SubmitFeedback: no category and blank text, aborting" }
                 return@withState
+            }
+
+            val fullFeedback = when (category) {
+                null -> feedbackText
+                else -> if (feedbackText.isNotBlank()) "[${category.name}] $feedbackText" else "[${category.name}]"
             }
 
             logger.d { "SubmitFeedback: proceeding with feedback for $activeDocumentId" }
@@ -73,7 +89,7 @@ internal class DocumentReviewFeedbackActions(
                     ReprocessRequest(
                         force = true,
                         dpi = Dpi.create(220),
-                        userFeedback = feedback
+                        userFeedback = fullFeedback
                     )
                 ).fold(
                     onSuccess = { response ->
