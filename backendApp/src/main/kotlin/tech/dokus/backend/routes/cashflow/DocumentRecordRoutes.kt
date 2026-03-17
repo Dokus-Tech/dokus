@@ -77,6 +77,7 @@ import tech.dokus.domain.model.RejectDocumentRequest
 import tech.dokus.domain.model.BulkReprocessRequest
 import tech.dokus.domain.model.ReprocessRequest
 import tech.dokus.domain.model.ReprocessResponse
+import tech.dokus.domain.model.DownloadZipRequest
 import tech.dokus.domain.model.ResolveDocumentMatchReviewRequest
 import tech.dokus.domain.model.UpdateDraftRequest
 import tech.dokus.domain.model.UpdateDraftResponse
@@ -272,6 +273,65 @@ internal fun Route.documentRecordRoutes() {
             }
             val result = processingHealthService.executeBulkReprocess(tenantId, request.maxDocuments)
             call.respond(HttpStatusCode.OK, result)
+        }
+
+        /**
+         * POST /api/v1/documents/download-zip
+         * Download multiple documents as a single ZIP archive.
+         * Streams ZIP on-the-fly from blob storage.
+         */
+        post<Documents.DownloadZip> {
+            val tenantId = requireTenantId()
+            val request = call.receive<DownloadZipRequest>()
+
+            if (request.documentIds.isEmpty()) {
+                throw DokusException.BadRequest("No document IDs provided")
+            }
+
+            val documentIds = request.documentIds.map { DocumentId.parse(it) }
+
+            // Resolve preferred source for each document (parallel)
+            val resolvedSources = coroutineScope {
+                documentIds.map { docId ->
+                    async {
+                        val docSources = truthService.listSources(tenantId, docId)
+                        val preferred = selectPreferredSource(docSources)
+                            ?: return@async null
+                        docId to preferred
+                    }
+                }.awaitAll().filterNotNull()
+            }
+
+            if (resolvedSources.isEmpty()) {
+                throw DokusException.NotFound("No downloadable documents found")
+            }
+
+            call.response.header(
+                HttpHeaders.ContentDisposition,
+                ContentDisposition.Attachment.withParameter(
+                    ContentDisposition.Parameters.FileName,
+                    "dokus-documents.zip"
+                ).toString()
+            )
+
+            call.respondOutputStream(
+                contentType = ContentType.Application.Zip,
+                status = HttpStatusCode.OK,
+            ) {
+                val zipOut = java.util.zip.ZipOutputStream(this)
+                for ((docId, source) in resolvedSources) {
+                    try {
+                        val stream = minioStorage.openDocumentStream(source.storageKey)
+                        val filename = source.filename ?: "$docId.pdf"
+                        zipOut.putNextEntry(java.util.zip.ZipEntry(filename))
+                        stream.use { it.copyTo(this) }
+                        zipOut.closeEntry()
+                    } catch (e: Exception) {
+                        logger.warn("Failed to include document {} in ZIP: {}", docId, e.message)
+                    }
+                }
+                zipOut.finish()
+            }
         }
 
         get<Documents.Events> {

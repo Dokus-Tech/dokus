@@ -19,6 +19,7 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
+import tech.dokus.domain.model.ai.ChatAttachedFile
 import tech.dokus.domain.model.ai.ChatConfiguration
 import tech.dokus.domain.model.ai.ChatMessageDto
 import tech.dokus.domain.model.ai.ChatMessageId
@@ -511,6 +512,27 @@ internal class ChatContainer(
         }
 
         action(ChatAction.NavigateToDocumentPreview(docId, pageNumber))
+    }
+
+    private suspend fun ChatCtx.handleAttachFile(filename: String, bytes: ByteArray) {
+        // Add file as "uploading" placeholder immediately
+        val tempRefId = "temp-${kotlin.time.Clock.System.now().toEpochMilliseconds()}"
+        val pendingFile = ChatAttachedFile(
+            refId = tempRefId,
+            filename = filename,
+            isUploading = true,
+        )
+        updateState { copy(attachedFiles = attachedFiles + pendingFile) }
+
+        // TODO: Call POST /api/v1/chat/upload to upload to temp storage + RAG index
+        // For now, mark as uploaded immediately (backend endpoint not yet implemented)
+        updateState {
+            copy(
+                attachedFiles = attachedFiles.map { file ->
+                    if (file.refId == tempRefId) file.copy(isUploading = false) else file
+                }
+            )
+        }
     }
 
     // =========================================================================

@@ -118,7 +118,9 @@ internal fun ChatRoute(
             uriHandler.openUri("$baseUrl/api/v1/documents/$docId/content")
         },
         onDownloadZip = { docIds ->
-            // ZIP download requires POST — for now download individually
+            // Backend ZIP endpoint: POST /api/v1/documents/download-zip
+            // UriHandler can only do GET — download individually for now
+            // TODO: Use platform-specific POST download (form submission on web)
             docIds.forEach { docId ->
                 val baseUrl = "${endpoint.protocol}://${endpoint.host}:${endpoint.port}"
                 uriHandler.openUri("$baseUrl/api/v1/documents/$docId/content")
