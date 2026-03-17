@@ -25,6 +25,7 @@ import tech.dokus.domain.model.ai.ChatCitation
 import tech.dokus.domain.model.ai.ChatContentBlock
 import tech.dokus.domain.model.ai.ChatMessageDto
 import tech.dokus.domain.model.ai.DocumentReference
+import tech.dokus.domain.model.ai.DocumentReferenceType
 import tech.dokus.domain.model.ai.MessageRole
 import tech.dokus.foundation.aura.components.chat.ChatAssistantMessage
 import tech.dokus.foundation.aura.components.chat.ChatCitationChips
@@ -136,7 +137,7 @@ private fun AssistantMessageWithBlocks(
                                                 documentId = id,
                                                 name = block.name,
                                                 ref = block.ref,
-                                                type = "Invoice",
+                                                type = DocumentReferenceType.Invoice,
                                             )
                                         )
                                     }
