@@ -28,6 +28,8 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_document_review_title
 import tech.dokus.aura.resources.cashflow_needs_attention
 import tech.dokus.aura.resources.cashflow_needs_input
+import tech.dokus.aura.resources.cashflow_review_status_processing
+import tech.dokus.aura.resources.cashflow_review_status_ready
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.models.DocumentUiData
 import tech.dokus.foundation.aura.components.PBackButton
@@ -129,7 +131,7 @@ private fun UnderstandingLine(
         when {
             isProcessing -> {
                 Text(
-                    text = "Processing…",
+                    text = stringResource(Res.string.cashflow_review_status_processing),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.textMuted
                 )
@@ -165,7 +167,7 @@ private fun UnderstandingLine(
             else -> {
                 // Ready / normal state
                 Text(
-                    text = "Ready",
+                    text = stringResource(Res.string.cashflow_review_status_ready),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.textMuted
                 )
