@@ -38,6 +38,8 @@ import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.domain.model.TransactionCommunication
+import tech.dokus.domain.model.TransactionIgnoreInfo
+import tech.dokus.domain.model.TransactionMatchInfo
 import tech.dokus.domain.model.contact.CounterpartySnapshot
 import tech.dokus.domain.toDbDecimal
 import java.util.UUID
@@ -547,17 +549,26 @@ class BankTransactionRepository {
             descriptionRaw = this[BankTransactionsTable.descriptionRaw],
             status = this[BankTransactionsTable.status],
             resolutionType = this[BankTransactionsTable.resolutionType],
-            matchedCashflowId = this[BankTransactionsTable.matchedCashflowId]
-                ?.let { CashflowEntryId.parse(it.toString()) },
-            matchedDocumentId = this[BankTransactionsTable.matchedDocumentId]
-                ?.let { DocumentId.parse(it.toString()) },
-            matchScore = this[BankTransactionsTable.matchScore]?.toDouble(),
-            matchEvidence = evidenceList,
-            matchedBy = this[BankTransactionsTable.matchedBy],
-            matchedAt = this[BankTransactionsTable.matchedAt],
-            ignoredReason = this[BankTransactionsTable.ignoredReason],
-            ignoredAt = this[BankTransactionsTable.ignoredAt],
-            ignoredBy = this[BankTransactionsTable.ignoredBy],
+            matchInfo = this[BankTransactionsTable.matchedCashflowId]?.let { cashflowId ->
+                TransactionMatchInfo(
+                    cashflowEntryId = CashflowEntryId.parse(cashflowId.toString()),
+                    documentId = this[BankTransactionsTable.matchedDocumentId]
+                        ?.let { DocumentId.parse(it.toString()) },
+                    score = this[BankTransactionsTable.matchScore]?.toDouble() ?: 0.0,
+                    evidence = evidenceList ?: emptyList(),
+                    matchedBy = this[BankTransactionsTable.matchedBy] ?: MatchedBy.Auto,
+                    matchedAt = this[BankTransactionsTable.matchedAt]
+                        ?: this[BankTransactionsTable.updatedAt],
+                )
+            },
+            ignoreInfo = this[BankTransactionsTable.ignoredReason]?.let { reason ->
+                TransactionIgnoreInfo(
+                    reason = reason,
+                    ignoredAt = this[BankTransactionsTable.ignoredAt]
+                        ?: this[BankTransactionsTable.updatedAt],
+                    ignoredBy = this[BankTransactionsTable.ignoredBy],
+                )
+            },
             statementTrust = this[BankTransactionsTable.statementTrust],
             transferPairId = this[BankTransactionsTable.transferPairId]
                 ?.let { BankTransactionId(it.toKotlinUuid()) },

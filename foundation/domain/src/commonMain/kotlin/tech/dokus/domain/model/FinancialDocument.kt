@@ -85,14 +85,10 @@ sealed interface FinancialDocumentDto {
         val deliveryMethod: InvoiceDeliveryMethod = InvoiceDeliveryMethod.PdfExport,
         val termsAndConditions: String? = null,
         val items: List<InvoiceItemDto> = emptyList(),
-        val peppolId: PeppolId? = null,
-        val peppolSentAt: LocalDateTime? = null,
-        val peppolStatus: PeppolStatus? = null,
+        val peppol: InvoicePeppolInfo? = null,
         override val documentId: DocumentId? = null,
-        val paymentLink: String? = null,
-        val paymentLinkExpiresAt: LocalDateTime? = null,
-        val paidAt: LocalDateTime? = null,
-        val paymentMethod: PaymentMethod? = null,
+        val paymentLinkInfo: PaymentLinkInfo? = null,
+        val paymentInfo: InvoicePaymentInfo? = null,
         override val createdAt: LocalDateTime,
         override val updatedAt: LocalDateTime
     ) : FinancialDocumentDto {
@@ -278,4 +274,30 @@ data class InvoiceItemDto(
     val lineTotal: Money,
     val vatAmount: Money,
     val sortOrder: Int = 0
+)
+
+// ============================================================================
+// Invoice grouped field types
+// ============================================================================
+
+/** Peppol e-invoicing info — present when invoice is sent via Peppol. */
+@Serializable
+data class InvoicePeppolInfo(
+    val peppolId: PeppolId,
+    val sentAt: LocalDateTime,
+    val status: PeppolStatus,
+)
+
+/** Payment link info — present when a payment link was generated. */
+@Serializable
+data class PaymentLinkInfo(
+    val url: String,
+    val expiresAt: LocalDateTime? = null,
+)
+
+/** Payment info — present when invoice is paid. */
+@Serializable
+data class InvoicePaymentInfo(
+    val paidAt: LocalDateTime,
+    val paymentMethod: PaymentMethod,
 )

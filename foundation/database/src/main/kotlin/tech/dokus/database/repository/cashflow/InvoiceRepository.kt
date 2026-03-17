@@ -42,6 +42,9 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.CreateInvoiceRequest
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.InvoiceItemDto
+import tech.dokus.domain.model.InvoicePaymentInfo
+import tech.dokus.domain.model.InvoicePeppolInfo
+import tech.dokus.domain.model.PaymentLinkInfo
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.toDbDecimal
 import tech.dokus.foundation.backend.database.dbQuery
@@ -617,13 +620,25 @@ class InvoiceRepository(
             deliveryMethod = row[InvoicesTable.deliveryMethod],
             termsAndConditions = row[InvoicesTable.termsAndConditions],
             items = items,
-            peppolId = row[InvoicesTable.peppolId]?.let { PeppolId(it) },
-            peppolSentAt = row[InvoicesTable.peppolSentAt],
-            peppolStatus = row[InvoicesTable.peppolStatus],
-            paymentLink = row[InvoicesTable.paymentLink],
-            paymentLinkExpiresAt = row[InvoicesTable.paymentLinkExpiresAt],
-            paidAt = row[InvoicesTable.paidAt],
-            paymentMethod = row[InvoicesTable.paymentMethod],
+            peppol = row[InvoicesTable.peppolId]?.let { peppolId ->
+                InvoicePeppolInfo(
+                    peppolId = PeppolId(peppolId),
+                    sentAt = row[InvoicesTable.peppolSentAt]!!,
+                    status = row[InvoicesTable.peppolStatus]!!,
+                )
+            },
+            paymentLinkInfo = row[InvoicesTable.paymentLink]?.let { url ->
+                PaymentLinkInfo(
+                    url = url,
+                    expiresAt = row[InvoicesTable.paymentLinkExpiresAt],
+                )
+            },
+            paymentInfo = row[InvoicesTable.paidAt]?.let { paidAt ->
+                InvoicePaymentInfo(
+                    paidAt = paidAt,
+                    paymentMethod = row[InvoicesTable.paymentMethod]!!,
+                )
+            },
             documentId = row[InvoicesTable.documentId]?.let { DocumentId.parse(it.toString()) },
             createdAt = row[InvoicesTable.createdAt],
             updatedAt = row[InvoicesTable.updatedAt]
