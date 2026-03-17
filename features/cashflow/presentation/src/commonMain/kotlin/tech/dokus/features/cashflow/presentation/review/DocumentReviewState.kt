@@ -24,7 +24,7 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.model.AnnualAccountsDraftData
-import tech.dokus.domain.model.AutoPaymentStatusDto
+import tech.dokus.domain.model.AutoPaymentStatus
 import tech.dokus.domain.model.BankFeeDraftData
 import tech.dokus.domain.model.BankStatementDraftData
 import tech.dokus.domain.model.BankTransactionDto
@@ -185,7 +185,7 @@ data class DocumentReviewState(
     val documentStatus: DocumentStatus? = null,
     val confirmedCashflowEntryId: CashflowEntryId? = null,
     val cashflowEntryState: DokusState<CashflowEntry> = DokusState.idle(),
-    val autoPaymentStatus: DokusState<AutoPaymentStatusDto> = DokusState.idle(),
+    val autoPaymentStatus: DokusState<AutoPaymentStatus> = DokusState.idle(),
     val isUndoingAutoPayment: Boolean = false,
     val sourceViewerState: SourceEvidenceViewerState? = null,
     val paymentSheetState: PaymentSheetState? = null,

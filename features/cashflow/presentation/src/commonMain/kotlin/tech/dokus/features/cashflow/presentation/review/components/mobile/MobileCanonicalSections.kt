@@ -39,7 +39,7 @@ import tech.dokus.aura.resources.payment_record_title
 import tech.dokus.aura.resources.payment_undo_auto
 import tech.dokus.aura.resources.payment_undoing
 import tech.dokus.domain.enums.AutoMatchStatus
-import tech.dokus.domain.model.AutoPaymentStatusDto
+import tech.dokus.domain.model.AutoPaymentStatus
 import tech.dokus.features.cashflow.presentation.review.models.DocumentUiData
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
@@ -221,7 +221,7 @@ internal fun MobilePaymentStateCard(
     isAccountantReadOnly: Boolean,
     onIntent: (DocumentReviewIntent) -> Unit,
 ) {
-    val autoPaymentStatus = (state.autoPaymentStatus as? DokusState.Success<*>)?.data as? AutoPaymentStatusDto
+    val autoPaymentStatus = (state.autoPaymentStatus as? DokusState.Success<*>)?.data as? AutoPaymentStatus
     val (title, subtitle) = when (state.financialStatus) {
         ReviewFinancialStatus.Paid -> {
             state.paidHeadlineLocalized to state.paidMethodLocalized
@@ -342,7 +342,7 @@ internal fun MobilePaymentStateCard(
                     }
 
                     is DokusState.Success -> {
-                        if (autoPaymentStatus?.matchStatus == AutoMatchStatus.AutoPaid) {
+                        if (autoPaymentStatus is AutoPaymentStatus.AutoPaid) {
                             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                             Text(
                                 text = stringResource(Res.string.payment_auto_paid),

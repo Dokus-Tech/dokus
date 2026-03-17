@@ -171,7 +171,7 @@ internal fun CashflowLedgerTableRow(
         // Contact (500 weight)
         DokusTableCell(CashflowTableColumns.Contact) {
             Text(
-                text = entry.contactName ?: "\u2014",
+                text = entry.contact?.name ?: "\u2014",
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontWeight = FontWeight.Medium,
                     fontSize = 12.5.sp,
@@ -285,7 +285,7 @@ internal fun CashflowLedgerMobileRow(
             verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall),
         ) {
             Text(
-                text = entry.contactName ?: "\u2014",
+                text = entry.contact?.name ?: "\u2014",
                 style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,

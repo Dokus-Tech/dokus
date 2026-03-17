@@ -49,7 +49,7 @@ import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.AttachmentDto
 import tech.dokus.domain.model.CancelEntryRequest
-import tech.dokus.domain.model.AutoPaymentStatusDto
+import tech.dokus.domain.model.AutoPaymentStatus
 import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.model.CashflowOverview
 import tech.dokus.domain.model.BankTransactionDto
@@ -555,7 +555,7 @@ internal class CashflowRemoteDataSourceImpl(
 
     override suspend fun getAutoPaymentStatus(
         entryId: CashflowEntryId
-    ): Result<AutoPaymentStatusDto> {
+    ): Result<AutoPaymentStatus> {
         return runCatching {
             val entriesRoute = Cashflow.Entries()
             val idRoute = Cashflow.Entries.Id(parent = entriesRoute, id = entryId.toString())

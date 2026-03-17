@@ -44,7 +44,7 @@ class CashflowProjectionReconciliationService(
                     if (it.isNegative) Money.ZERO else it
                 }
                 val status = if (remainingAmount.isZero) CashflowEntryStatus.Paid else CashflowEntryStatus.Open
-                val paidAt = if (status == CashflowEntryStatus.Paid) entity.paidAt else null
+                val paidAt = if (status == CashflowEntryStatus.Paid) entity.paymentInfo?.paidAt else null
 
                 val needsSync = ensuredEntry.remainingAmount != remainingAmount ||
                     ensuredEntry.status != status ||

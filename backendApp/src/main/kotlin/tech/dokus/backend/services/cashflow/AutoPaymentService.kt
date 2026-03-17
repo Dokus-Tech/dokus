@@ -40,7 +40,7 @@ import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.ids.PaymentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
-import tech.dokus.domain.model.AutoPaymentStatusDto
+import tech.dokus.domain.model.AutoPaymentStatus
 import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.domain.toDbDecimal
@@ -88,7 +88,7 @@ class AutoPaymentService(
     suspend fun getAutoPaymentStatus(
         tenantId: TenantId,
         entryId: CashflowEntryId
-    ): AutoPaymentStatusDto = newSuspendedTransaction {
+    ): AutoPaymentStatus = newSuspendedTransaction {
         val tenantUuid = tenantId.value.toJavaUuid()
         val entryUuid = entryId.value.toJavaUuid()
 
@@ -97,7 +97,17 @@ class AutoPaymentService(
                 (TransactionMatchLinksTable.cashflowEntryId eq entryUuid) and
                 (TransactionMatchLinksTable.reversedAt.isNull())
         }.orderBy(TransactionMatchLinksTable.createdAt)
-            .lastOrNull() ?: return@newSuspendedTransaction AutoPaymentStatusDto()
+            .lastOrNull() ?: return@newSuspendedTransaction AutoPaymentStatus.None
+
+        val matchStatus = link[TransactionMatchLinksTable.status]
+        val bankTransactionId = BankTransactionId.parse(
+            link[TransactionMatchLinksTable.importedBankTransactionId].toString()
+        )
+        val confidenceScore = link[TransactionMatchLinksTable.confidenceScore]?.toDouble() ?: 0.0
+
+        if (matchStatus == AutoMatchStatus.Reversed) {
+            return@newSuspendedTransaction AutoPaymentStatus.Reversed
+        }
 
         val invoiceUuid = link[TransactionMatchLinksTable.documentId]
         val paymentRow = PaymentsTable.selectAll().where {
@@ -107,29 +117,32 @@ class AutoPaymentService(
                 (PaymentsTable.reversedAt.isNull())
         }.singleOrNull()
 
-        val nonReversedPayments = PaymentsTable.selectAll().where {
-            (PaymentsTable.tenantId eq tenantUuid) and
-                (PaymentsTable.invoiceId eq invoiceUuid) and
-                (PaymentsTable.reversedAt.isNull())
-        }.count()
+        if (matchStatus == AutoMatchStatus.AutoPaid && paymentRow != null) {
+            val nonReversedPayments = PaymentsTable.selectAll().where {
+                (PaymentsTable.tenantId eq tenantUuid) and
+                    (PaymentsTable.invoiceId eq invoiceUuid) and
+                    (PaymentsTable.reversedAt.isNull())
+            }.count()
 
-        AutoPaymentStatusDto(
-            matchStatus = link[TransactionMatchLinksTable.status],
-            paymentId = paymentRow?.let { PaymentId.parse(it[PaymentsTable.id].value.toString()) },
-            bankTransactionId = BankTransactionId.parse(
-                link[TransactionMatchLinksTable.importedBankTransactionId].toString()
-            ),
-            confidenceScore = link[TransactionMatchLinksTable.confidenceScore]?.toDouble(),
-            scoreMargin = link[TransactionMatchLinksTable.scoreMargin]?.toDouble(),
-            reasons = parseJsonArray(link[TransactionMatchLinksTable.reasonsJson]),
-            matchSignals = parseJsonArray(link[TransactionMatchLinksTable.rulesJson]),
-            matchedAt = link[TransactionMatchLinksTable.matchedAt],
-            autoPaidAt = link[TransactionMatchLinksTable.autoPaidAt],
-            canUndo =
-            link[TransactionMatchLinksTable.status] == AutoMatchStatus.AutoPaid &&
-                paymentRow != null &&
-                nonReversedPayments == 1L
-        )
+            AutoPaymentStatus.AutoPaid(
+                paymentId = PaymentId.parse(paymentRow[PaymentsTable.id].value.toString()),
+                bankTransactionId = bankTransactionId,
+                confidenceScore = confidenceScore,
+                reasons = parseJsonArray(link[TransactionMatchLinksTable.reasonsJson]),
+                autoPaidAt = link[TransactionMatchLinksTable.autoPaidAt]
+                    ?: link[TransactionMatchLinksTable.matchedAt],
+                canUndo = nonReversedPayments == 1L,
+            )
+        } else {
+            AutoPaymentStatus.Matched(
+                bankTransactionId = bankTransactionId,
+                confidenceScore = confidenceScore,
+                scoreMargin = link[TransactionMatchLinksTable.scoreMargin]?.toDouble(),
+                reasons = parseJsonArray(link[TransactionMatchLinksTable.reasonsJson]),
+                matchSignals = parseJsonArray(link[TransactionMatchLinksTable.rulesJson]),
+                matchedAt = link[TransactionMatchLinksTable.matchedAt],
+            )
+        }
     }
 
     suspend fun undoAutoPayment(

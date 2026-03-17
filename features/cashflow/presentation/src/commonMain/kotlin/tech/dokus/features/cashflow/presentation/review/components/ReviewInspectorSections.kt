@@ -57,7 +57,7 @@ import tech.dokus.domain.enums.AutoMatchStatus
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.ReviewReason
 import tech.dokus.domain.enums.DocumentSource
-import tech.dokus.domain.model.AutoPaymentStatusDto
+import tech.dokus.domain.model.AutoPaymentStatus
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.ReviewFinancialStatus
@@ -258,7 +258,7 @@ internal fun InspectorPaymentSection(
     isAccountantReadOnly: Boolean,
     onIntent: (DocumentReviewIntent) -> Unit,
 ) {
-    val autoPaymentStatus = (state.autoPaymentStatus as? DokusState.Success<*>)?.data as? AutoPaymentStatusDto
+    val autoPaymentStatus = (state.autoPaymentStatus as? DokusState.Success<*>)?.data as? AutoPaymentStatus
     InspectorSectionCard(title = stringResource(Res.string.document_section_payment)) {
         when (val entryState = state.cashflowEntryState) {
             is DokusState.Success -> {
@@ -304,16 +304,14 @@ internal fun InspectorPaymentSection(
                                     color = state.financialStatus.financialStatusColorized,
                                 )
                             }
-                            if (autoPaymentStatus?.matchStatus == AutoMatchStatus.AutoPaid) {
+                            if (autoPaymentStatus is AutoPaymentStatus.AutoPaid) {
                                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                                 Text(
                                     text = stringResource(Res.string.payment_auto_paid),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurface,
                                 )
-                                val confidenceText = autoPaymentStatus.confidenceScore
-                                    ?.let { score -> "${(score * 100).toInt()}%" }
-                                    ?: "\u2014"
+                                val confidenceText = "${(autoPaymentStatus.confidenceScore * 100).toInt()}%"
                                 Text(
                                     text = stringResource(Res.string.payment_confidence, confidenceText),
                                     style = MaterialTheme.typography.bodySmall,

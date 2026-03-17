@@ -126,7 +126,7 @@ private fun extractQueueStatus(doc: DocumentDetailDto): DocQueueStatus {
     return when {
         computeNeedsAttention(doc) -> DocQueueStatus.Review
         invoiceEntity != null &&
-            (invoiceEntity.paidAt != null || invoiceEntity.paidAmount >= invoiceEntity.totalAmount) ->
+            (invoiceEntity.paymentInfo != null || invoiceEntity.paidAmount >= invoiceEntity.totalAmount) ->
             DocQueueStatus.Paid
         invoiceEntity != null && invoiceEntity.dueDate < today -> DocQueueStatus.Overdue
         invoiceEntity != null -> DocQueueStatus.Unpaid

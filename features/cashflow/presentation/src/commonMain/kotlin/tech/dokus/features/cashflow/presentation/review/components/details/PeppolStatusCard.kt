@@ -21,31 +21,24 @@ internal fun PeppolStatusCard(
     modifier: Modifier = Modifier
 ) {
     val invoice = state.documentRecord?.confirmedEntity as? FinancialDocumentDto.InvoiceDto ?: return
-    val shouldShow = invoice.peppolStatus != null ||
-        invoice.peppolSentAt != null ||
-        invoice.peppolId != null
-    if (!shouldShow) return
+    val peppolInfo = invoice.peppol ?: return
 
     Column(modifier = modifier.fillMaxWidth()) {
         MicroLabel(text = stringResource(Res.string.peppol_status_card_title))
 
         FactField(
             label = stringResource(Res.string.peppol_status_card_transmission),
-            value = invoice.peppolStatus?.localized ?: stringResource(Res.string.peppol_status_card_not_sent)
+            value = peppolInfo.status.localized
         )
 
-        invoice.peppolId?.let { peppolId ->
-            FactField(
-                label = stringResource(Res.string.peppol_status_card_recipient_id),
-                value = peppolId.toString()
-            )
-        }
+        FactField(
+            label = stringResource(Res.string.peppol_status_card_recipient_id),
+            value = peppolInfo.peppolId.toString()
+        )
 
-        invoice.peppolSentAt?.let { sentAt ->
-            FactField(
-                label = stringResource(Res.string.peppol_status_card_last_update),
-                value = sentAt.toString()
-            )
-        }
+        FactField(
+            label = stringResource(Res.string.peppol_status_card_last_update),
+            value = peppolInfo.sentAt.toString()
+        )
     }
 }
