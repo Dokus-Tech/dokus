@@ -19,6 +19,8 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.domain.model.BankTransactionSummary
 import tech.dokus.domain.model.TransactionCommunication
+import tech.dokus.domain.model.TransactionIgnoreInfo
+import tech.dokus.domain.model.TransactionMatchInfo
 import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.domain.model.contact.CounterpartySnapshot
 import tech.dokus.features.banking.presentation.payments.mvi.PaymentFilterTab
