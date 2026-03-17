@@ -6,7 +6,6 @@ import ai.koog.agents.core.tools.ToolRegistry
 import ai.koog.prompt.executor.model.PromptExecutor
 import ai.koog.prompt.llm.LLModel
 import kotlinx.serialization.Serializable
-import org.slf4j.LoggerFactory
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.repository.RetrievedChunk
@@ -17,6 +16,7 @@ import tech.dokus.features.ai.prompts.AgentPrompt
 import tech.dokus.features.ai.services.RAGService
 import tech.dokus.foundation.backend.config.LangfuseConfig
 import tech.dokus.foundation.backend.config.ServerInfoConfig
+import tech.dokus.foundation.backend.utils.loggerFor
 
 /**
  * Agent responsible for RAG-backed document Q&A with citations.
@@ -59,7 +59,7 @@ class ChatAgent(
     private val serverInfo: ServerInfoConfig,
     private val langfuseConfig: LangfuseConfig = LangfuseConfig.disabled,
 ) {
-    private val logger = LoggerFactory.getLogger(ChatAgent::class.java)
+    private val logger = loggerFor()
 
     companion object {
         /** Default number of chunks to retrieve for context */
@@ -201,7 +201,6 @@ class ChatAgent(
                 DocumentState.NOT_CONFIRMED -> "Please confirm the document first before using chat."
                 DocumentState.PROCESSING -> "Document is still being processed. Please wait and try again shortly."
                 DocumentState.NOT_INDEXED -> "Document has not been indexed for chat. Please ensure the document has been processed."
-                else -> "Document is not available for chat."
             }
             return ChatResponse(
                 answer = message,
