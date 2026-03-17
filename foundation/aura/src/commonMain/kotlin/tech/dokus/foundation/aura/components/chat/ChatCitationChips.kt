@@ -15,6 +15,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.chat_citation_document_fallback
 import tech.dokus.domain.model.ai.ChatCitation
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.textMuted
@@ -62,7 +65,7 @@ fun ChatCitationChips(
                     color = MaterialTheme.colorScheme.textMuted.copy(alpha = 0.6f),
                 )
                 Text(
-                    text = citation.documentName ?: "Document",
+                    text = citation.documentName ?: stringResource(Res.string.chat_citation_document_fallback),
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.textMuted,

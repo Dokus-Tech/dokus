@@ -21,6 +21,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.X
+import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.chat_remove_file
 import tech.dokus.domain.model.ai.ChatAttachedFile
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.amberSoft

@@ -29,6 +29,7 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.chat_new_conversation
 import tech.dokus.aura.resources.chat_scope_all
 import tech.dokus.aura.resources.chat_scope_doc
+import tech.dokus.aura.resources.chat_session_fallback
 import tech.dokus.aura.resources.chat_sessions_label
 import tech.dokus.domain.model.ai.ChatScope
 import tech.dokus.domain.model.ai.ChatSessionId
@@ -149,7 +150,7 @@ private fun SessionItem(
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = session.title ?: session.lastMessagePreview ?: "Conversation",
+                text = session.title ?: session.lastMessagePreview ?: stringResource(Res.string.chat_session_fallback),
                 style = MaterialTheme.typography.bodySmall,
                 fontWeight = if (isActive) FontWeight.SemiBold else FontWeight.Normal,
                 color = MaterialTheme.colorScheme.onSurface,

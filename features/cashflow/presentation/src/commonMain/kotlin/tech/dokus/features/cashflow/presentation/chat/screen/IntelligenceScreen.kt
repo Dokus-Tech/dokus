@@ -38,6 +38,9 @@ import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.app.state.isError
 import tech.dokus.foundation.app.state.isLoading
 import tech.dokus.foundation.app.state.isSuccess
+import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.chat_loading
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.chat.ChatAttachedFileChips
 import tech.dokus.foundation.aura.components.chat.ChatGridBackground
@@ -139,7 +142,7 @@ internal fun IntelligenceScreen(
                                 contentAlignment = Alignment.Center,
                             ) {
                                 Text(
-                                    text = "Loading...",
+                                    text = stringResource(Res.string.chat_loading),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.textMuted,
                                 )

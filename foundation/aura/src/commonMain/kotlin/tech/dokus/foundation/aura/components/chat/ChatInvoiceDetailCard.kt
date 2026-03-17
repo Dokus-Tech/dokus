@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.chat_download_pdf
+import tech.dokus.aura.resources.chat_invoice_total
 import tech.dokus.domain.model.ai.ChatContentBlock
 import tech.dokus.domain.model.ai.InvoiceLine
 import tech.dokus.foundation.aura.components.PButton
@@ -33,7 +34,6 @@ import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
 
 private val CardShape = RoundedCornerShape(7.dp)
-private val VatColumnWidth = 36.dp
 
 /**
  * Invoice detail breakdown card for AI chat responses.
@@ -104,7 +104,7 @@ fun ChatInvoiceDetailCard(
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             Text(
-                text = "Total",
+                text = stringResource(Res.string.chat_invoice_total),
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
