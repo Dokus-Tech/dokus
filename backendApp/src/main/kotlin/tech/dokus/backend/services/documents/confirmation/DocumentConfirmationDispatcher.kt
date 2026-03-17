@@ -60,6 +60,7 @@ import tech.dokus.domain.model.VatReturnDraftData
 import tech.dokus.domain.model.WithholdingTaxDraftData
 import tech.dokus.domain.model.toDocumentType
 import tech.dokus.foundation.backend.utils.loggerFor
+import tech.dokus.backend.services.documents.RAGIndexingService
 import tech.dokus.foundation.backend.utils.runSuspendCatching
 
 /**
@@ -71,6 +72,7 @@ class DocumentConfirmationDispatcher(
     private val receiptService: ReceiptConfirmationService,
     private val creditNoteService: CreditNoteConfirmationService,
     private val purposeSimilarityService: DocumentPurposeSimilarityService,
+    private val ragIndexingService: RAGIndexingService,
 ) {
     private val logger = loggerFor()
 
@@ -242,6 +244,17 @@ class DocumentConfirmationDispatcher(
             }.onFailure { error ->
                 logger.warn(
                     "Purpose similarity indexing failed after confirmation for document {}: {}",
+                    documentId,
+                    error.message
+                )
+            }
+
+            // Index document for RAG-powered chat (best-effort)
+            runSuspendCatching {
+                ragIndexingService.indexDocument(tenantId, documentId)
+            }.onFailure { error ->
+                logger.warn(
+                    "RAG indexing failed after confirmation for document {}: {}",
                     documentId,
                     error.message
                 )

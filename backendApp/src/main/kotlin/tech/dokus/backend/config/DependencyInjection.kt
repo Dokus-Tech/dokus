@@ -342,7 +342,16 @@ private fun cashflowModule() = module {
     single { InvoiceConfirmationService(get(), get(), get()) }
     single { ReceiptConfirmationService(get(), get(), get()) }
     single { CreditNoteConfirmationService(get(), get(), get(), get()) }
-    single { DocumentConfirmationDispatcher(get(), get(), get(), get()) }
+    single {
+        tech.dokus.backend.worker.handlers.RAGPipelineHandler(
+            chunkingService = getOrNull(),
+            embeddingService = getOrNull(),
+            chunkRepository = getOrNull(),
+            logger = org.slf4j.LoggerFactory.getLogger("RAGPipelineHandler"),
+        )
+    }
+    single { tech.dokus.backend.services.documents.RAGIndexingService(get(), get()) }
+    single { DocumentConfirmationDispatcher(get(), get(), get(), get(), get()) }
     singleOf(::DocumentTruthService)
     singleOf(::ProcessingHealthService)
     singleOf(::DocumentCollectionEventHub)

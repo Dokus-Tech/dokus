@@ -155,21 +155,44 @@ internal class ChatContainer(
     }
 
     private suspend fun ChatCtx.handleInitCrossDocChat() {
+        // Don't reset if we already have a cross-doc session with messages
+        withState {
+            val existing = (session as? DokusState.Success<ChatSessionData>)?.data
+            if (existing != null && existing.scope == ChatScope.AllDocs && existing.sessionId != null) {
+                logger.d { "Cross-doc session already active: ${existing.sessionId}" }
+                // Refresh the session list
+                intent(ChatIntent.LoadRecentSessions)
+                return@withState
+            }
+        }
+
         logger.d { "Initializing cross-doc chat" }
         updateState { copy(session = DokusState.loading()) }
 
-        // Load configuration
         val config = loadConfiguration()
+
+        // Try to load the most recent cross-doc session
+        val recentSessions = listChatSessionsUseCase(
+            scope = ChatScope.AllDocs,
+            limit = 1,
+        ).getOrNull()
+        val lastSession = recentSessions?.items?.firstOrNull()
 
         updateState {
             copy(
                 session = DokusState.success(
                     ChatSessionData(
                         scope = ChatScope.AllDocs,
-                        configuration = config
+                        configuration = config,
+                        recentSessions = recentSessions?.items ?: emptyList(),
                     )
                 )
             )
+        }
+
+        // If there's a recent session, load its history
+        if (lastSession != null) {
+            intent(ChatIntent.LoadSession(lastSession.sessionId))
         }
     }
 
