@@ -1,6 +1,5 @@
 package tech.dokus.database.repository.banking
 
-import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
@@ -9,7 +8,6 @@ import org.jetbrains.exposed.v1.jdbc.andWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
-import org.jetbrains.exposed.v1.jdbc.update
 import tech.dokus.database.tables.banking.BankAccountsTable
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.BankAccountProvider
@@ -21,7 +19,6 @@ import tech.dokus.domain.ids.BankAccountId
 import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.BankAccountDto
-import tech.dokus.domain.toDbDecimal
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid
 import kotlin.uuid.toKotlinUuid
@@ -65,16 +62,6 @@ class BankAccountRepository {
         }.single().toBankAccountDto()
     }
 
-    suspend fun getAccount(
-        tenantId: TenantId,
-        accountId: BankAccountId,
-    ): BankAccountDto? = newSuspendedTransaction {
-        BankAccountsTable.selectAll().where {
-            (BankAccountsTable.id eq accountId.value.toJavaUuid()) and
-                (BankAccountsTable.tenantId eq tenantId.value.toJavaUuid())
-        }.singleOrNull()?.toBankAccountDto()
-    }
-
     suspend fun listAccounts(
         tenantId: TenantId,
         activeOnly: Boolean = true,
@@ -95,7 +82,7 @@ class BankAccountRepository {
     ): BankAccountDto? = newSuspendedTransaction {
         BankAccountsTable.selectAll().where {
             (BankAccountsTable.tenantId eq tenantId.value.toJavaUuid()) and
-                (BankAccountsTable.iban eq iban.value)
+                    (BankAccountsTable.iban eq iban.value)
         }.singleOrNull()?.toBankAccountDto()
     }
 
@@ -105,48 +92,8 @@ class BankAccountRepository {
     ): BankAccountDto? = newSuspendedTransaction {
         BankAccountsTable.selectAll().where {
             (BankAccountsTable.tenantId eq tenantId.value.toJavaUuid()) and
-                (BankAccountsTable.providerAccountId eq providerAccountId)
+                    (BankAccountsTable.providerAccountId eq providerAccountId)
         }.singleOrNull()?.toBankAccountDto()
-    }
-
-    suspend fun updateBalance(
-        tenantId: TenantId,
-        accountId: BankAccountId,
-        balance: Money,
-        balanceUpdatedAt: LocalDateTime,
-    ): Boolean = newSuspendedTransaction {
-        BankAccountsTable.update({
-            (BankAccountsTable.id eq accountId.value.toJavaUuid()) and
-                (BankAccountsTable.tenantId eq tenantId.value.toJavaUuid())
-        }) {
-            it[BankAccountsTable.balance] = balance.toDbDecimal()
-            it[BankAccountsTable.balanceUpdatedAt] = balanceUpdatedAt
-        } > 0
-    }
-
-    suspend fun updateStatus(
-        tenantId: TenantId,
-        accountId: BankAccountId,
-        status: BankAccountStatus,
-    ): Boolean = newSuspendedTransaction {
-        BankAccountsTable.update({
-            (BankAccountsTable.id eq accountId.value.toJavaUuid()) and
-                (BankAccountsTable.tenantId eq tenantId.value.toJavaUuid())
-        }) {
-            it[BankAccountsTable.status] = status
-        } > 0
-    }
-
-    suspend fun deactivateAccount(
-        tenantId: TenantId,
-        accountId: BankAccountId,
-    ): Boolean = newSuspendedTransaction {
-        BankAccountsTable.update({
-            (BankAccountsTable.id eq accountId.value.toJavaUuid()) and
-                (BankAccountsTable.tenantId eq tenantId.value.toJavaUuid())
-        }) {
-            it[isActive] = false
-        } > 0
     }
 
     private fun ResultRow.toBankAccountDto(): BankAccountDto {
@@ -164,7 +111,8 @@ class BankAccountRepository {
             status = this[BankAccountsTable.status],
             isActive = this[BankAccountsTable.isActive],
             createdAt = this[BankAccountsTable.createdAt],
-            parentAccountId = this[BankAccountsTable.parentAccountId]?.toKotlinUuid()?.let { BankAccountId(it) },
+            parentAccountId = this[BankAccountsTable.parentAccountId]?.toKotlinUuid()
+                ?.let { BankAccountId(it) },
             providerAccountId = this[BankAccountsTable.providerAccountId],
         )
     }
