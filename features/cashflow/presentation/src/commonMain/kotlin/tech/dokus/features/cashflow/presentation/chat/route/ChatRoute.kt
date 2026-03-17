@@ -37,6 +37,7 @@ internal fun ChatRoute(
     val navController = LocalNavController.current
     val uriHandler = LocalUriHandler.current
     val endpoint = endpointProvider.currentEndpointSnapshot()
+    val apiBaseUrl = "${endpoint.protocol}://${endpoint.host}:${endpoint.port}"
     val snackbarHostState = remember { SnackbarHostState() }
 
     val filePickerLauncher = rememberDocumentFilePicker { files ->
@@ -70,8 +71,7 @@ internal fun ChatRoute(
                 )
             }
             is ChatAction.DownloadDocument -> {
-                val baseUrl = "${endpoint.protocol}://${endpoint.host}:${endpoint.port}"
-                uriHandler.openUri("$baseUrl/api/v1/documents/${action.documentId}/content")
+                uriHandler.openUri("$apiBaseUrl/api/v1/documents/${action.documentId}/content")
             }
             is ChatAction.DownloadDocumentsZip -> {
                 action.documentIds.forEach { docId ->
@@ -122,8 +122,7 @@ internal fun ChatRoute(
             // UriHandler can only do GET — download individually for now
             // TODO: Use platform-specific POST download (form submission on web)
             docIds.forEach { docId ->
-                val baseUrl = "${endpoint.protocol}://${endpoint.host}:${endpoint.port}"
-                uriHandler.openUri("$baseUrl/api/v1/documents/$docId/content")
+                uriHandler.openUri("$apiBaseUrl/api/v1/documents/$docId/content")
             }
         },
         onNavigateToDocument = { docId ->

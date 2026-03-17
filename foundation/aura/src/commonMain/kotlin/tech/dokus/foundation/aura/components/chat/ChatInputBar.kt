@@ -38,7 +38,9 @@ import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.chat_input_placeholder_v2
 import tech.dokus.aura.resources.chat_rag_footer
+import tech.dokus.aura.resources.chat_send
 import tech.dokus.aura.resources.chat_send_shortcut
+import tech.dokus.aura.resources.chat_upload_document
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.constrains.Constraints
@@ -128,7 +130,7 @@ fun ChatInputBar(
             ) {
                 Icon(
                     imageVector = Lucide.ArrowUp,
-                    contentDescription = "Upload document",
+                    contentDescription = stringResource(Res.string.chat_upload_document),
                     modifier = Modifier.size(Constraints.IconSize.small),
                     tint = MaterialTheme.colorScheme.textMuted,
                 )
@@ -199,7 +201,7 @@ fun ChatInputBar(
             ) {
                 Icon(
                     imageVector = Lucide.ArrowRight,
-                    contentDescription = "Send",
+                    contentDescription = stringResource(Res.string.chat_send),
                     modifier = Modifier.size(Constraints.IconSize.small),
                     tint = if (canSend) {
                         MaterialTheme.colorScheme.onPrimary

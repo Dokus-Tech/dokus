@@ -24,6 +24,7 @@ import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.chat_download_pdf
 import tech.dokus.domain.model.ai.DocumentReference
+import tech.dokus.domain.model.ai.DocumentReferenceType
 import tech.dokus.foundation.aura.components.PButton
 import tech.dokus.foundation.aura.components.PButtonVariant
 import tech.dokus.foundation.aura.constrains.Constraints
@@ -53,9 +54,9 @@ fun ChatDocumentCard(
     compact: Boolean = false,
 ) {
     val typeColor = when (doc.type) {
-        "Invoice" -> MaterialTheme.colorScheme.primary
-        "Expense", "Receipt" -> MaterialTheme.colorScheme.statusError
-        else -> MaterialTheme.colorScheme.textMuted
+        DocumentReferenceType.Invoice -> MaterialTheme.colorScheme.primary
+        DocumentReferenceType.Expense, DocumentReferenceType.Receipt -> MaterialTheme.colorScheme.statusError
+        DocumentReferenceType.CreditNote -> MaterialTheme.colorScheme.textMuted
     }
 
     Row(
@@ -69,7 +70,7 @@ fun ChatDocumentCard(
             .clickable(onClick = onClick)
             .padding(
                 horizontal = if (compact) Constraints.Spacing.small else Constraints.Spacing.medium,
-                vertical = if (compact) Constraints.Spacing.small else Constraints.Spacing.small,
+                vertical = if (compact) Constraints.Spacing.xSmall else Constraints.Spacing.small,
             ),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
@@ -103,7 +104,7 @@ fun ChatDocumentCard(
                 }
                 doc.amount?.let { amount ->
                     Text(
-                        text = "\u20ac${formatAmount(amount)}",
+                        text = amount,
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.textMuted,
                     )
@@ -120,12 +121,6 @@ fun ChatDocumentCard(
     }
 }
 
-private fun formatAmount(amount: Double): String {
-    val whole = amount.toLong()
-    val cents = ((amount - whole) * 100).toLong().let { kotlin.math.abs(it) }
-    return "$whole.${cents.toString().padStart(2, '0')}"
-}
-
 @Preview
 @Composable
 private fun ChatDocumentCardPreview(
@@ -136,8 +131,8 @@ private fun ChatDocumentCardPreview(
             doc = DocumentReference(
                 name = "SRL Accounting & Tax",
                 ref = "20260050",
-                type = "Invoice",
-                amount = 798.60,
+                type = DocumentReferenceType.Invoice,
+                amount = "\u20ac798.60",
             ),
             onDownload = {},
             onClick = {},

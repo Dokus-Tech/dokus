@@ -56,12 +56,20 @@ data class SummaryRow(
 )
 
 @Serializable
+enum class DocumentReferenceType {
+    @SerialName("Invoice") Invoice,
+    @SerialName("Receipt") Receipt,
+    @SerialName("CreditNote") CreditNote,
+    @SerialName("Expense") Expense,
+}
+
+@Serializable
 data class DocumentReference(
     val documentId: String? = null,
     val name: String,
     val ref: String? = null,
-    val type: String,
-    val amount: Double? = null,
+    val type: DocumentReferenceType,
+    val amount: String? = null,
     val currency: String = "EUR",
 )
 
@@ -73,10 +81,17 @@ data class InvoiceLine(
 )
 
 @Serializable
+enum class TransactionStatus {
+    @SerialName("unmatched") Unmatched,
+    @SerialName("review") Review,
+    @SerialName("matched") Matched,
+}
+
+@Serializable
 data class TransactionReference(
     val description: String,
-    val amount: Double,
+    val amount: String,
     val date: String? = null,
-    val status: String, // "unmatched", "review", "matched"
+    val status: TransactionStatus,
     val transactionId: String? = null,
 )

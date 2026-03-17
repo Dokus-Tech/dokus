@@ -187,7 +187,6 @@ data class DocumentReviewState(
     val cashflowEntryState: DokusState<CashflowEntry> = DokusState.idle(),
     val autoPaymentStatus: DokusState<AutoPaymentStatusDto> = DokusState.idle(),
     val isUndoingAutoPayment: Boolean = false,
-    val isEditMode: Boolean = false,
     val sourceViewerState: SourceEvidenceViewerState? = null,
     val paymentSheetState: PaymentSheetState? = null,
     val rejectDialogState: RejectDialogState? = null,

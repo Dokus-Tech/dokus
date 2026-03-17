@@ -84,7 +84,7 @@ fun ChatAttachedFileChips(
                     ) {
                         Icon(
                             imageVector = Lucide.X,
-                            contentDescription = "Remove",
+                            contentDescription = stringResource(Res.string.chat_remove_file),
                             modifier = Modifier.size(12.dp),
                             tint = MaterialTheme.colorScheme.textMuted,
                         )

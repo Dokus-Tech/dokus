@@ -182,4 +182,12 @@
     <string name="chat_starter_unmatched_payments">Show me unmatched bank payments</string>
     <string name="chat_starter_q4_summary">Summarize my Q4 financial activity</string>
     <string name="chat_ask_anything">Ask anything about your documents</string>
+    <string name="chat_upload_document">Upload document</string>
+    <string name="chat_send">Send</string>
+    <string name="chat_remove_file">Remove</string>
+    <string name="chat_session_fallback">Conversation</string>
+    <string name="chat_citation_document_fallback">Document</string>
+    <string name="chat_invoice_total">Total</string>
+    <string name="cashflow_review_status_processing">Processing\u2026</string>
+    <string name="cashflow_review_status_ready">Ready</string>
 </resources>

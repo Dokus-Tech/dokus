@@ -210,7 +210,7 @@ sealed interface ChatIntent : MVIIntent {
     // === File Attachments ===
 
     /** Attach a file to the chat (temporary upload for Q&A) */
-    data class AttachFile(val filename: String, val bytes: ByteArray) : ChatIntent
+    class AttachFile(val filename: String, val bytes: ByteArray) : ChatIntent
 
     /** Remove an attached file */
     data class RemoveAttachedFile(val refId: String) : ChatIntent

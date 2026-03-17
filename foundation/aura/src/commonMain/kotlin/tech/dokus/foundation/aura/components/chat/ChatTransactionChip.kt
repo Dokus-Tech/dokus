@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import tech.dokus.domain.model.ai.TransactionReference
+import tech.dokus.domain.model.ai.TransactionStatus
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.statusConfirmed
 import tech.dokus.foundation.aura.style.statusError
@@ -27,7 +28,6 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
-import kotlin.math.abs
 
 private val ChipShape = RoundedCornerShape(6.dp)
 private val StatusDotSize = 5.dp
@@ -42,9 +42,9 @@ fun ChatTransactionChip(
     modifier: Modifier = Modifier,
 ) {
     val statusColor = when (tx.status) {
-        "unmatched" -> MaterialTheme.colorScheme.statusError
-        "matched" -> MaterialTheme.colorScheme.statusConfirmed
-        else -> MaterialTheme.colorScheme.primary // "review"
+        TransactionStatus.Unmatched -> MaterialTheme.colorScheme.statusError
+        TransactionStatus.Matched -> MaterialTheme.colorScheme.statusConfirmed
+        TransactionStatus.Review -> MaterialTheme.colorScheme.primary
     }
 
     Row(
@@ -84,19 +84,21 @@ fun ChatTransactionChip(
         }
 
         // Amount
-        val absAmount = abs(tx.amount)
-        val whole = absAmount.toLong()
-        val cents = ((absAmount - whole) * 100).toLong()
         Text(
-            text = "\u2212\u20ac$whole.${cents.toString().padStart(2, '0')}",
+            text = tx.amount,
             style = MaterialTheme.typography.bodySmall,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.statusError,
         )
 
         // Status badge
+        val statusLabel = when (tx.status) {
+            TransactionStatus.Unmatched -> "Unmatched"
+            TransactionStatus.Review -> "Review"
+            TransactionStatus.Matched -> "Matched"
+        }
         Text(
-            text = tx.status.replaceFirstChar { it.uppercase() },
+            text = statusLabel,
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
             color = statusColor,
@@ -116,8 +118,8 @@ private fun ChatTransactionChipPreview(
         ChatTransactionChip(
             tx = TransactionReference(
                 description = "Adobe Creative Cloud",
-                amount = -59.99,
-                status = "unmatched",
+                amount = "\u2212\u20ac59.99",
+                status = TransactionStatus.Unmatched,
                 date = "Mar 2",
             )
         )
