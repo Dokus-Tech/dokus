@@ -209,11 +209,8 @@ sealed interface ChatIntent : MVIIntent {
 
     // === File Attachments ===
 
-    /** Attach a file to the chat (temporary upload for Q&A) */
-    data class AttachFile(val filename: String, val bytes: ByteArray) : ChatIntent {
-        override fun equals(other: Any?) = this === other
-        override fun hashCode() = System.identityHashCode(this)
-    }
+    @Suppress("ArrayInDataClass") // ByteArray has no structural equality — intent is fire-and-forget, never compared
+    data class AttachFile(val filename: String, val bytes: ByteArray) : ChatIntent
 
     /** Remove an attached file */
     data class RemoveAttachedFile(val refId: String) : ChatIntent

@@ -32,7 +32,6 @@ internal class DocumentReviewLoader(
                 feedbackDialogState = null,
                 selectedFieldPath = null,
                 hasUnsavedChanges = false,
-                isEditMode = false,
                 failureBannerDismissed = false,
                 showContactSheet = false,
             )
