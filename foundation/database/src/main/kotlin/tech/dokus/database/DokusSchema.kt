@@ -2,6 +2,7 @@ package tech.dokus.database
 
 import org.jetbrains.exposed.v1.jdbc.SchemaUtils
 import tech.dokus.database.tables.ai.ChatMessagesTable
+import tech.dokus.database.tables.drafts.*
 import tech.dokus.database.tables.ai.DocumentChunksTable
 import tech.dokus.database.tables.ai.DocumentExamplesTable
 import tech.dokus.database.tables.auth.AddressTable
@@ -124,6 +125,72 @@ object DokusSchema {
                 CreditNotesTable,
                 RefundClaimsTable,
                 CashflowEntriesTable,
+
+                // ----------------------------
+                // Document drafts (per-type structured tables)
+                // ----------------------------
+                // Core financial drafts
+                InvoiceDraftsTable,
+                InvoiceDraftItemsTable,
+                CreditNoteDraftsTable,
+                CreditNoteDraftItemsTable,
+                ReceiptDraftsTable,
+                BankStatementDraftsTable,
+                // Commercial drafts + confirmed
+                ProFormaDraftsTable, ProFormaConfirmedTable,
+                QuoteDraftsTable, QuoteConfirmedTable,
+                OrderConfirmationDraftsTable, OrderConfirmationConfirmedTable,
+                DeliveryNoteDraftsTable, DeliveryNoteConfirmedTable,
+                ReminderDraftsTable, ReminderConfirmedTable,
+                StatementOfAccountDraftsTable, StatementOfAccountConfirmedTable,
+                PurchaseOrderDraftsTable, PurchaseOrderConfirmedTable,
+                ExpenseClaimDraftsTable, ExpenseClaimConfirmedTable,
+                // Banking misc drafts + confirmed
+                BankFeeDraftsTable, BankFeeConfirmedTable,
+                InterestStatementDraftsTable, InterestStatementConfirmedTable,
+                PaymentConfirmationDraftsTable, PaymentConfirmationConfirmedTable,
+                // Tax drafts + confirmed
+                VatReturnDraftsTable, VatReturnConfirmedTable,
+                VatListingDraftsTable, VatListingConfirmedTable,
+                VatAssessmentDraftsTable, VatAssessmentConfirmedTable,
+                IcListingDraftsTable, IcListingConfirmedTable,
+                OssReturnDraftsTable, OssReturnConfirmedTable,
+                CorporateTaxDraftsTable, CorporateTaxConfirmedTable,
+                CorporateTaxAdvanceDraftsTable, CorporateTaxAdvanceConfirmedTable,
+                TaxAssessmentDraftsTable, TaxAssessmentConfirmedTable,
+                PersonalTaxDraftsTable, PersonalTaxConfirmedTable,
+                WithholdingTaxDraftsTable, WithholdingTaxConfirmedTable,
+                // Social drafts + confirmed
+                SocialContributionDraftsTable, SocialContributionConfirmedTable,
+                SocialFundDraftsTable, SocialFundConfirmedTable,
+                SelfEmployedContributionDraftsTable, SelfEmployedContributionConfirmedTable,
+                VapzDraftsTable, VapzConfirmedTable,
+                // Employment drafts + confirmed
+                SalarySlipDraftsTable, SalarySlipConfirmedTable,
+                PayrollSummaryDraftsTable, PayrollSummaryConfirmedTable,
+                EmploymentContractDraftsTable, EmploymentContractConfirmedTable,
+                DimonaDraftsTable, DimonaConfirmedTable,
+                C4DraftsTable, C4ConfirmedTable,
+                HolidayPayDraftsTable, HolidayPayConfirmedTable,
+                // Legal drafts + confirmed
+                ContractDraftsTable, ContractConfirmedTable,
+                LeaseDraftsTable, LeaseConfirmedTable,
+                LoanDraftsTable, LoanConfirmedTable,
+                InsuranceDraftsTable, InsuranceConfirmedTable,
+                DividendDraftsTable, DividendConfirmedTable,
+                ShareholderRegisterDraftsTable, ShareholderRegisterConfirmedTable,
+                CompanyExtractDraftsTable, CompanyExtractConfirmedTable,
+                AnnualAccountsDraftsTable, AnnualAccountsConfirmedTable,
+                BoardMinutesDraftsTable, BoardMinutesConfirmedTable,
+                // Compliance drafts + confirmed
+                SubsidyDraftsTable, SubsidyConfirmedTable,
+                FineDraftsTable, FineConfirmedTable,
+                PermitDraftsTable, PermitConfirmedTable,
+                CustomsDeclarationDraftsTable, CustomsDeclarationConfirmedTable,
+                IntrastatDraftsTable, IntrastatConfirmedTable,
+                DepreciationScheduleDraftsTable, DepreciationScheduleConfirmedTable,
+                InventoryDraftsTable, InventoryConfirmedTable,
+                OtherDraftsTable, OtherConfirmedTable,
 
                 // ----------------------------
                 // Payments / Banking
