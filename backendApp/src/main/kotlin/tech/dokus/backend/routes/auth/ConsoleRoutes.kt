@@ -16,18 +16,14 @@ import tech.dokus.backend.security.requireAnyRole
 import tech.dokus.backend.security.requireFirmAccess
 import tech.dokus.backend.security.requireFirmClientAccess
 import tech.dokus.backend.security.requireTenantAccess
+import tech.dokus.backend.services.admin.ConsoleService
 import tech.dokus.backend.services.auth.FirmInviteTokenService
-import tech.dokus.database.repository.auth.FirmRepository
-import tech.dokus.database.repository.auth.TenantRepository
-import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
-import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.domain.enums.UserRole
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.auth.AcceptFirmInviteRequest
 import tech.dokus.domain.model.auth.AcceptFirmInviteResponse
-import tech.dokus.domain.model.auth.ConsoleClientSummary
 import tech.dokus.domain.model.auth.ResolveFirmInviteResponse
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.routes.Console
@@ -36,10 +32,7 @@ import tech.dokus.foundation.backend.security.dokusPrincipal
 import tech.dokus.foundation.backend.storage.DocumentStorageService as MinioDocumentStorageService
 
 internal fun Route.consoleRoutes() {
-    val firmRepository by inject<FirmRepository>()
-    val tenantRepository by inject<TenantRepository>()
-    val documentRepository by inject<DocumentRepository>()
-    val ingestionRepository by inject<DocumentIngestionRunRepository>()
+    val consoleService by inject<ConsoleService>()
     val minioStorage by inject<MinioDocumentStorageService>()
     val inviteTokenService by inject<FirmInviteTokenService>()
     val logger = LoggerFactory.getLogger("ConsoleRoutes")
@@ -51,27 +44,7 @@ internal fun Route.consoleRoutes() {
          */
         get<Console.Clients> {
             val firmAccess = requireFirmAccess()
-
-            val accessRows = firmRepository.listActiveAccessByFirm(firmAccess.firmId)
-            if (accessRows.isEmpty()) {
-                call.respond(HttpStatusCode.OK, emptyList<ConsoleClientSummary>())
-                return@get
-            }
-
-            val tenantsById = tenantRepository.findByIds(accessRows.map { it.tenantId })
-                .associateBy { it.id }
-
-            val clients = accessRows
-                .mapNotNull { access ->
-                    val tenant = tenantsById[access.tenantId] ?: return@mapNotNull null
-                    ConsoleClientSummary(
-                        tenantId = tenant.id,
-                        companyName = tenant.displayName,
-                        vatNumber = tenant.vatNumber.takeIf { it.value.isNotBlank() }
-                    )
-                }
-                .sortedBy { it.companyName.value.lowercase() }
-
+            val clients = consoleService.listClientSummaries(firmAccess.firmId)
             call.respond(HttpStatusCode.OK, clients)
         }
 
@@ -80,7 +53,7 @@ internal fun Route.consoleRoutes() {
          */
         get<Console.Client.Documents> { route ->
             requireFirmClientAccess(
-                firmRepository = firmRepository,
+                firmRepository = consoleService.firmRepositoryForAccessCheck,
                 tenantId = route.parent.tenantId
             )
 
@@ -93,7 +66,7 @@ internal fun Route.consoleRoutes() {
                 throw DokusException.BadRequest("Do not combine 'filter' with 'documentStatus' or 'ingestionStatus'")
             }
 
-            val (documentsWithInfo, total) = documentRepository.listWithDraftsAndIngestion(
+            val (documentsWithInfo, total) = consoleService.listDocuments(
                 tenantId = tenantId,
                 filter = filter,
                 documentStatus = route.documentStatus,
@@ -129,18 +102,18 @@ internal fun Route.consoleRoutes() {
          */
         get<Console.Client.Document> { route ->
             requireFirmClientAccess(
-                firmRepository = firmRepository,
+                firmRepository = consoleService.firmRepositoryForAccessCheck,
                 tenantId = route.parent.tenantId
             )
 
             val tenantId = route.parent.tenantId
             val documentId = DocumentId.parse(route.documentId)
 
-            val document = documentRepository.getById(tenantId, documentId)
+            val document = consoleService.getDocument(tenantId, documentId)
                 ?: throw DokusException.NotFound("Document not found")
             val documentWithUrl = addDownloadUrl(document, null, minioStorage, logger)
-            val draft = documentRepository.getDraftByDocumentId(documentId, tenantId)
-            val latestIngestion = ingestionRepository.getLatestForDocument(documentId, tenantId)
+            val draft = consoleService.getDraft(documentId, tenantId)
+            val latestIngestion = consoleService.getLatestIngestion(documentId, tenantId)
 
             call.respond(
                 HttpStatusCode.OK,
@@ -160,7 +133,7 @@ internal fun Route.consoleRoutes() {
          */
         get<Console.InviteLinks.Resolve> { route ->
             val payload = inviteTokenService.parse(route.token)
-            val firm = firmRepository.findById(payload.firmId)
+            val firm = consoleService.findFirmById(payload.firmId)
                 ?: throw DokusException.NotFound("Firm not found")
 
             call.respond(
@@ -186,7 +159,7 @@ internal fun Route.consoleRoutes() {
                 .requireAnyRole(UserRole.Admin, UserRole.Owner)
             val tenantId = tenantAccess.tenantId
 
-            val activated = firmRepository.activateAccess(
+            val activated = consoleService.activateFirmAccess(
                 firmId = payload.firmId,
                 tenantId = tenantId,
                 grantedByUserId = principal.userId,

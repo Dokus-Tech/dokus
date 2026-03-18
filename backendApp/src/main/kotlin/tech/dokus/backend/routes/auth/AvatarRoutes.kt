@@ -15,9 +15,8 @@ import io.ktor.server.response.respondBytes
 import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
 import tech.dokus.backend.services.avatar.buildUserAvatarThumbnail
+import tech.dokus.backend.services.admin.TenantManagementService
 import tech.dokus.backend.services.business.BusinessProfileService
-import tech.dokus.database.repository.auth.TenantRepository
-import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
@@ -31,15 +30,14 @@ import tech.dokus.foundation.backend.utils.loggerFor
 private val logger = loggerFor("AvatarRoutes")
 
 internal fun Route.avatarRoutes() {
-    val tenantRepository by inject<TenantRepository>()
-    val userRepository by inject<UserRepository>()
+    val tenantManagementService by inject<TenantManagementService>()
     val avatarStorageService by inject<AvatarStorageService>()
     val businessProfileService by inject<BusinessProfileService>()
 
     get<Tenants.AvatarImageById> { route ->
         val tenantId = parseTenantId(route.id)
         val imageBytes = loadAvatarImageBytes(
-            storageKey = tenantRepository.getAvatarStorageKey(tenantId),
+            storageKey = tenantManagementService.getTenantAvatarStorageKey(tenantId),
             size = route.size,
             avatarStorageService = avatarStorageService,
             ownerLabel = "tenant: $tenantId"
@@ -55,7 +53,7 @@ internal fun Route.avatarRoutes() {
     get<Users.AvatarImageById> { route ->
         val userId = parseUserId(route.id)
         val imageBytes = loadAvatarImageBytes(
-            storageKey = userRepository.getAvatarStorageKey(userId),
+            storageKey = tenantManagementService.getUserAvatarStorageKey(userId),
             size = route.size,
             avatarStorageService = avatarStorageService,
             ownerLabel = "user: $userId"
@@ -72,13 +70,13 @@ internal fun Route.avatarRoutes() {
         post<Tenants.Id.Avatar> { route ->
             val principal = dokusPrincipal
             val tenantId = parseTenantId(route.parent.id)
-            requireTenantMembership(userRepository, principal.userId, tenantId)
+            requireTenantMembership(tenantManagementService, principal.userId, tenantId)
 
             logger.info("Avatar upload request for tenant: $tenantId")
 
             val upload = call.receiveAvatarUploadPayload()
             deleteExistingAvatarIfPresent(
-                storageKey = tenantRepository.getAvatarStorageKey(tenantId),
+                storageKey = tenantManagementService.getTenantAvatarStorageKey(tenantId),
                 avatarStorageService = avatarStorageService,
                 ownerLabel = "tenant: $tenantId"
             )
@@ -89,7 +87,7 @@ internal fun Route.avatarRoutes() {
                 throw DokusException.BadRequest(error.message ?: "Invalid image")
             }
 
-            tenantRepository.updateAvatarStorageKey(tenantId, result.storageKeyPrefix)
+            tenantManagementService.updateTenantAvatarStorageKey(tenantId, result.storageKeyPrefix)
             businessProfileService.markTenantAvatarUploaded(tenantId, result.storageKeyPrefix)
 
             call.respond(
@@ -101,10 +99,10 @@ internal fun Route.avatarRoutes() {
         get<Tenants.Id.Avatar> { route ->
             val principal = dokusPrincipal
             val tenantId = parseTenantId(route.parent.id)
-            requireTenantMembership(userRepository, principal.userId, tenantId)
+            requireTenantMembership(tenantManagementService, principal.userId, tenantId)
 
             val storageKey = ensureAvatarMetadataAvailable(
-                storageKey = tenantRepository.getAvatarStorageKey(tenantId),
+                storageKey = tenantManagementService.getTenantAvatarStorageKey(tenantId),
                 avatarStorageService = avatarStorageService,
                 ownerLabel = "tenant: $tenantId"
             )
@@ -115,9 +113,9 @@ internal fun Route.avatarRoutes() {
         delete<Tenants.Id.Avatar> { route ->
             val principal = dokusPrincipal
             val tenantId = parseTenantId(route.parent.id)
-            requireTenantMembership(userRepository, principal.userId, tenantId)
+            requireTenantMembership(tenantManagementService, principal.userId, tenantId)
 
-            val storageKey = tenantRepository.getAvatarStorageKey(tenantId)
+            val storageKey = tenantManagementService.getTenantAvatarStorageKey(tenantId)
             if (storageKey == null) {
                 call.respond(HttpStatusCode.NoContent)
                 return@delete
@@ -129,7 +127,7 @@ internal fun Route.avatarRoutes() {
                 ownerLabel = "tenant: $tenantId"
             )
 
-            tenantRepository.updateAvatarStorageKey(tenantId, null)
+            tenantManagementService.updateTenantAvatarStorageKey(tenantId, null)
             businessProfileService.markTenantAvatarDeleted(tenantId)
 
             call.respond(HttpStatusCode.NoContent)
@@ -144,7 +142,7 @@ internal fun Route.avatarRoutes() {
 
             val upload = call.receiveAvatarUploadPayload()
             deleteExistingAvatarIfPresent(
-                storageKey = userRepository.getAvatarStorageKey(userId),
+                storageKey = tenantManagementService.getUserAvatarStorageKey(userId),
                 avatarStorageService = avatarStorageService,
                 ownerLabel = "user: $userId"
             )
@@ -155,7 +153,7 @@ internal fun Route.avatarRoutes() {
                 throw DokusException.BadRequest(error.message ?: "Invalid image")
             }
 
-            userRepository.updateAvatarStorageKey(userId, result.storageKeyPrefix)
+            tenantManagementService.updateUserAvatarStorageKey(userId, result.storageKeyPrefix)
 
             call.respond(HttpStatusCode.Created, buildUserAvatarThumbnail(userId, result.storageKeyPrefix))
         }
@@ -163,7 +161,7 @@ internal fun Route.avatarRoutes() {
         get<Users.Id.Avatar> { route ->
             val userId = parseUserId(route.parent.id)
             val storageKey = ensureAvatarMetadataAvailable(
-                storageKey = userRepository.getAvatarStorageKey(userId),
+                storageKey = tenantManagementService.getUserAvatarStorageKey(userId),
                 avatarStorageService = avatarStorageService,
                 ownerLabel = "user: $userId"
             )
@@ -176,7 +174,7 @@ internal fun Route.avatarRoutes() {
             val userId = parseUserId(route.parent.id)
             requireSelf(principal.userId, userId)
 
-            val storageKey = userRepository.getAvatarStorageKey(userId)
+            val storageKey = tenantManagementService.getUserAvatarStorageKey(userId)
             if (storageKey == null) {
                 call.respond(HttpStatusCode.NoContent)
                 return@delete
@@ -188,7 +186,7 @@ internal fun Route.avatarRoutes() {
                 ownerLabel = "user: $userId"
             )
 
-            userRepository.updateAvatarStorageKey(userId, null)
+            tenantManagementService.updateUserAvatarStorageKey(userId, null)
 
             call.respond(HttpStatusCode.NoContent)
         }
@@ -196,11 +194,11 @@ internal fun Route.avatarRoutes() {
 }
 
 private suspend fun requireTenantMembership(
-    userRepository: UserRepository,
+    tenantManagementService: TenantManagementService,
     userId: UserId,
     tenantId: TenantId
 ) {
-    val membership = userRepository.getMembership(userId, tenantId)
+    val membership = tenantManagementService.getMembership(userId, tenantId)
     if (membership == null || !membership.isActive) {
         throw DokusException.NotAuthorized("You do not have access to tenant $tenantId")
     }

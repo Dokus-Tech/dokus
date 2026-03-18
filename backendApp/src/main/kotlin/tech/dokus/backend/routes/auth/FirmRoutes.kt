@@ -11,9 +11,8 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
+import tech.dokus.backend.services.admin.FirmService
 import tech.dokus.backend.services.auth.FirmInviteTokenService
-import tech.dokus.database.repository.auth.FirmRepository
-import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.domain.enums.FirmRole
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.auth.CreateFirmRequest
@@ -26,8 +25,7 @@ import tech.dokus.foundation.backend.security.dokusPrincipal
 import kotlin.time.Duration.Companion.days
 
 internal fun Route.firmRoutes() {
-    val firmRepository by inject<FirmRepository>()
-    val tenantRepository by inject<TenantRepository>()
+    val firmService by inject<FirmService>()
     val inviteTokenService by inject<FirmInviteTokenService>()
     val logger = LoggerFactory.getLogger("FirmRoutes")
 
@@ -43,7 +41,7 @@ internal fun Route.firmRoutes() {
                 if (!hasMembership) {
                     throw DokusException.NotAuthorized("Tenant prefill not allowed for this user")
                 }
-                tenantRepository.findById(tenantId)
+                firmService.findTenantById(tenantId)
             }
 
             val resolvedName = request.name
@@ -53,7 +51,7 @@ internal fun Route.firmRoutes() {
                 ?: prefillTenant?.vatNumber
                 ?: throw DokusException.BadRequest("Firm VAT number is required")
 
-            val createdFirm = firmRepository.createFirm(
+            val createdFirm = firmService.createFirm(
                 name = resolvedName,
                 vatNumber = resolvedVat,
                 ownerUserId = principal.userId
@@ -108,7 +106,7 @@ internal fun Route.firmRoutes() {
                 throw DokusException.NotAuthorized("Owner or admin role is required")
             }
 
-            val revoked = firmRepository.revokeAccess(route.parent.firmId, route.tenantId)
+            val revoked = firmService.revokeAccess(route.parent.firmId, route.tenantId)
             if (!revoked) {
                 throw DokusException.NotFound("Active firm access not found")
             }

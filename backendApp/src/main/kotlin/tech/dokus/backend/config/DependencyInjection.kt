@@ -20,6 +20,9 @@ import tech.dokus.backend.services.banking.BankStatementProcessingService
 import tech.dokus.backend.services.banking.BankingService
 import tech.dokus.backend.services.banking.StatementDedupService
 import tech.dokus.backend.services.banking.StatementTrustCalculator
+import tech.dokus.backend.services.admin.ConsoleService
+import tech.dokus.backend.services.admin.FirmService
+import tech.dokus.backend.services.admin.TenantManagementService
 import tech.dokus.backend.services.auth.AuthService
 import tech.dokus.backend.services.auth.EmailService
 import tech.dokus.backend.services.auth.EmailTemplateRenderer
@@ -253,6 +256,11 @@ private val bankingModule = module {
 
 private fun authModule() = module {
     singleOf(::FirmInviteTokenService)
+
+    // Admin services (route-facing wrappers for repositories)
+    singleOf(::ConsoleService)
+    singleOf(::FirmService)
+    singleOf(::TenantManagementService)
 
     single<EmailService> {
         ResendEmailService(get())
