@@ -226,8 +226,8 @@ data class TransferOwnershipRequest(
 // NOTE: ClientDto has been replaced by ContactDto in Contact.kt
 // Use ContactDto from Contact.kt for all customer/vendor operations
 
-// NOTE: Invoice and Expense classes have been consolidated into FinancialDocumentDto
-// Use InvoiceDto and ExpenseDto from FinancialDocument.kt
+// NOTE: Invoice/Expense entities are in database module (InvoiceEntity, ExpenseEntity).
+// API layer uses DocDto sealed hierarchy (DocDto.Invoice.Confirmed, DocDto.Receipt.Confirmed).
 
 // ============================================================================
 // PAYMENTS

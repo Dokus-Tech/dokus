@@ -571,16 +571,12 @@ internal class CreateInvoiceContainer(
                 if (state.formState.selectedClient?.id != client.id) return@updateInvoice state
                 val formState = synchronizeDueDate(
                     state.formState.copy(
-                        paymentTermsDays = latest.paymentTermsDays ?: state.formState.paymentTermsDays,
-                        dueDateMode = latest.dueDateMode,
-                        senderIban = latest.senderIban?.value.orEmpty().ifBlank { state.formState.senderIban },
-                        senderBic = latest.senderBic?.value.orEmpty().ifBlank { state.formState.senderBic }
+                        senderIban = latest.iban?.value.orEmpty().ifBlank { state.formState.senderIban }
                     )
                 )
                 state.copy(
                     formState = formState,
                     uiState = state.uiState.copy(
-                        selectedDeliveryPreference = latest.deliveryMethod,
                         latestInvoiceSuggestion = latest.toSuggestion()
                     )
                 )
@@ -815,16 +811,17 @@ internal class CreateInvoiceContainer(
         return ValidateOgmUseCase.generate(base)
     }
 
-    private fun tech.dokus.domain.model.FinancialDocumentDto.InvoiceDto.toSuggestion(): LatestInvoiceSuggestion? {
-        if (items.isEmpty()) return null
+    private fun tech.dokus.domain.model.DocDto.Invoice.Confirmed.toSuggestion(): LatestInvoiceSuggestion? {
+        if (lineItems.isEmpty()) return null
+        val date = issueDate ?: return null
         return LatestInvoiceSuggestion(
-            issueDate = issueDate,
-            lines = items.map { item ->
+            issueDate = date,
+            lines = lineItems.map { item ->
                 InvoiceLineItem(
                     description = item.description,
-                    quantity = item.quantity,
-                    unitPrice = item.unitPrice.toDisplayString(),
-                    vatRatePercent = item.vatRate.basisPoints / 100
+                    quantity = item.quantity?.value ?: 1.0,
+                    unitPrice = item.unitPrice?.toDisplayString().orEmpty(),
+                    vatRatePercent = item.vatRate?.basisPoints?.div(100) ?: 21
                 )
             }
         )

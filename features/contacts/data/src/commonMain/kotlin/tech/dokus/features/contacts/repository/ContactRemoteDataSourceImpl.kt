@@ -16,7 +16,7 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.ContactNoteId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.DocumentDetailDto
-import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.DocDto
 import tech.dokus.domain.model.PeppolStatusResponse
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.model.contact.ContactActivitySummary
@@ -220,7 +220,7 @@ internal class ContactRemoteDataSourceImpl(
         direction: DocumentDirection?,
         limit: Int,
         offset: Int
-    ): Result<PaginatedResponse<FinancialDocumentDto.InvoiceDto>> {
+    ): Result<PaginatedResponse<DocDto.Invoice.Confirmed>> {
         logger.d {
             "Listing invoices for contact: $contactId, direction=$direction, limit=$limit, offset=$offset"
         }
@@ -232,7 +232,7 @@ internal class ContactRemoteDataSourceImpl(
                     limit = limit,
                     offset = offset
                 )
-            ).body<PaginatedResponse<FinancialDocumentDto.InvoiceDto>>()
+            ).body<PaginatedResponse<DocDto.Invoice.Confirmed>>()
         }.onSuccess { response ->
             logger.i {
                 "Listed ${response.items.size} invoices for $contactId (hasMore=${response.hasMore})"

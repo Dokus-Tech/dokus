@@ -16,7 +16,7 @@ import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.model.CreateInvoiceRequest
 import tech.dokus.domain.model.DocumentListItemDto
-import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.DocDto
 import tech.dokus.features.cashflow.datasource.CashflowRemoteDataSource
 import tech.dokus.features.cashflow.usecases.GetContactPeppolStatusUseCase
 import tech.dokus.features.cashflow.usecases.GetLatestInvoiceForContactUseCase
@@ -97,7 +97,7 @@ internal class SubmitInvoiceUseCaseImpl(
 ) : SubmitInvoiceUseCase {
     override suspend fun invoke(
         request: CreateInvoiceRequest
-    ): Result<FinancialDocumentDto.InvoiceDto> {
+    ): Result<DocDto.Invoice.Confirmed> {
         return cashflowRemoteDataSource.createInvoice(request)
     }
 }
@@ -105,7 +105,7 @@ internal class SubmitInvoiceUseCaseImpl(
 internal class GetLatestInvoiceForContactUseCaseImpl(
     private val cashflowRemoteDataSource: CashflowRemoteDataSource
 ) : GetLatestInvoiceForContactUseCase {
-    override suspend fun invoke(contactId: ContactId): Result<FinancialDocumentDto.InvoiceDto?> {
+    override suspend fun invoke(contactId: ContactId): Result<DocDto.Invoice.Confirmed?> {
         return cashflowRemoteDataSource.listInvoices(
             direction = DocumentDirection.Outbound,
             contactId = contactId,

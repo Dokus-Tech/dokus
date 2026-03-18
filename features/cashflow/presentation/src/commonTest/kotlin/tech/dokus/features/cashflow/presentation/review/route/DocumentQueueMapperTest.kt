@@ -13,14 +13,12 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.InvoiceId
-import tech.dokus.domain.ids.InvoiceNumber
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.DocDto
 import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentIngestionDto
 import tech.dokus.domain.model.DocumentDetailDto
-import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.InvoicePaymentInfo
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.toDocDto
@@ -163,12 +161,12 @@ class DocumentQueueMapperTest {
         )
 
         val confirmedContent: DocDto? = if (includeConfirmedEntity) {
-            FinancialDocumentDto.InvoiceDto(
+            DocDto.Invoice.Confirmed(
                 id = InvoiceId.generate(),
                 tenantId = tenantId,
                 direction = DocumentDirection.Outbound,
                 contactId = ContactId.generate(),
-                invoiceNumber = InvoiceNumber("INV-2026-001"),
+                invoiceNumber = "INV-2026-001",
                 issueDate = LocalDate(2026, 1, 1),
                 dueDate = dueDate,
                 subtotalAmount = Money.from("100.00")!!,
@@ -187,7 +185,7 @@ class DocumentQueueMapperTest {
                 ) else null,
                 createdAt = now,
                 updatedAt = now,
-            ).toDocDto()
+            )
         } else {
             null
         }

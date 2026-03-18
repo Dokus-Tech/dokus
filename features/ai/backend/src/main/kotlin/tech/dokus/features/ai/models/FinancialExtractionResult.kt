@@ -14,7 +14,7 @@ import tech.dokus.features.ai.graph.sub.extraction.financial.ReceiptExtractionRe
  * Unified extraction output for all financial document extractors.
  *
  * Use this to converge multiple extractor subgraphs into a single mapper node:
- *   FinancialExtractionResult -> FinancialDocumentDto
+ *   FinancialExtractionResult -> DocDto
  *
  * IMPORTANT:
  * - This is "facts only" extraction output (no ids/status/timestamps).

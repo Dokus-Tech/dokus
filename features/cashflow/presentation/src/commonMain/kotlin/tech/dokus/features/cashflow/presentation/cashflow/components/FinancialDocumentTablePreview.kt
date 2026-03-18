@@ -16,9 +16,8 @@ import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.InvoiceId
-import tech.dokus.domain.ids.InvoiceNumber
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.DocDto
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
@@ -57,17 +56,17 @@ fun FinancialDocumentTablePreview(
  * Generates sample financial documents for preview.
  */
 @OptIn(kotlin.uuid.ExperimentalUuidApi::class)
-fun getSampleFinancialDocuments(): List<FinancialDocumentDto> {
+fun getSampleFinancialDocuments(): List<DocDto> {
     val now = LocalDateTime(PreviewYear, PreviewMonth, PreviewDay, PreviewHour, PreviewMinute)
     val date = LocalDate(PreviewYear, PreviewMonth, PreviewDay)
 
     return listOf(
         // Invoice with alert (Sent status)
-        FinancialDocumentDto.InvoiceDto(
+        DocDto.Invoice.Confirmed(
             id = InvoiceId.generate(),
             tenantId = TenantId.generate(),
             contactId = ContactId.generate(),
-            invoiceNumber = InvoiceNumber("INV-3006-4400"),
+            invoiceNumber = "INV-3006-4400",
             issueDate = date,
             dueDate = date,
             subtotalAmount = Money.parseOrThrow("1240.00"),
@@ -76,18 +75,15 @@ fun getSampleFinancialDocuments(): List<FinancialDocumentDto> {
             paidAmount = Money.ZERO,
             status = InvoiceStatus.Sent,
             currency = Currency.Eur,
-            notes = null,
-            termsAndConditions = null,
-            items = emptyList(),
             createdAt = now,
             updatedAt = now
         ),
         // Invoice without alert (Paid status)
-        FinancialDocumentDto.InvoiceDto(
+        DocDto.Invoice.Confirmed(
             id = InvoiceId.generate(),
             tenantId = TenantId.generate(),
             contactId = ContactId.generate(),
-            invoiceNumber = InvoiceNumber("INV-3006-4401"),
+            invoiceNumber = "INV-3006-4401",
             issueDate = date,
             dueDate = date,
             subtotalAmount = Money.parseOrThrow("1240.00"),
@@ -96,18 +92,15 @@ fun getSampleFinancialDocuments(): List<FinancialDocumentDto> {
             paidAmount = Money.parseOrThrow("1500.00"),
             status = InvoiceStatus.Paid,
             currency = Currency.Eur,
-            notes = null,
-            termsAndConditions = null,
-            items = emptyList(),
             createdAt = now,
             updatedAt = now
         ),
         // Invoice with Overdue status
-        FinancialDocumentDto.InvoiceDto(
+        DocDto.Invoice.Confirmed(
             id = InvoiceId.generate(),
             tenantId = TenantId.generate(),
             contactId = ContactId.generate(),
-            invoiceNumber = InvoiceNumber("INV-3006-4402"),
+            invoiceNumber = "INV-3006-4402",
             issueDate = date,
             dueDate = date,
             subtotalAmount = Money.parseOrThrow("1240.00"),
@@ -116,18 +109,15 @@ fun getSampleFinancialDocuments(): List<FinancialDocumentDto> {
             paidAmount = Money.ZERO,
             status = InvoiceStatus.Overdue,
             currency = Currency.Eur,
-            notes = null,
-            termsAndConditions = null,
-            items = emptyList(),
             createdAt = now,
             updatedAt = now
         ),
         // Invoice with Draft status
-        FinancialDocumentDto.InvoiceDto(
+        DocDto.Invoice.Confirmed(
             id = InvoiceId.generate(),
             tenantId = TenantId.generate(),
             contactId = ContactId.generate(),
-            invoiceNumber = InvoiceNumber("INV-3006-4403"),
+            invoiceNumber = "INV-3006-4403",
             issueDate = date,
             dueDate = date,
             subtotalAmount = Money.parseOrThrow("1240.00"),
@@ -136,18 +126,15 @@ fun getSampleFinancialDocuments(): List<FinancialDocumentDto> {
             paidAmount = Money.ZERO,
             status = InvoiceStatus.Draft,
             currency = Currency.Eur,
-            notes = null,
-            termsAndConditions = null,
-            items = emptyList(),
             createdAt = now,
             updatedAt = now
         ),
         // Invoice with Viewed status
-        FinancialDocumentDto.InvoiceDto(
+        DocDto.Invoice.Confirmed(
             id = InvoiceId.generate(),
             tenantId = TenantId.generate(),
             contactId = ContactId.generate(),
-            invoiceNumber = InvoiceNumber("INV-3006-4404"),
+            invoiceNumber = "INV-3006-4404",
             issueDate = date,
             dueDate = date,
             subtotalAmount = Money.parseOrThrow("1240.00"),
@@ -156,18 +143,15 @@ fun getSampleFinancialDocuments(): List<FinancialDocumentDto> {
             paidAmount = Money.ZERO,
             status = InvoiceStatus.Viewed,
             currency = Currency.Eur,
-            notes = null,
-            termsAndConditions = null,
-            items = emptyList(),
             createdAt = now,
             updatedAt = now
         ),
         // Invoice with PartiallyPaid status
-        FinancialDocumentDto.InvoiceDto(
+        DocDto.Invoice.Confirmed(
             id = InvoiceId.generate(),
             tenantId = TenantId.generate(),
             contactId = ContactId.generate(),
-            invoiceNumber = InvoiceNumber("INV-3006-4405"),
+            invoiceNumber = "INV-3006-4405",
             issueDate = date,
             dueDate = date,
             subtotalAmount = Money.parseOrThrow("1240.00"),
@@ -176,9 +160,6 @@ fun getSampleFinancialDocuments(): List<FinancialDocumentDto> {
             paidAmount = Money.parseOrThrow("750.00"),
             status = InvoiceStatus.PartiallyPaid,
             currency = Currency.Eur,
-            notes = null,
-            termsAndConditions = null,
-            items = emptyList(),
             createdAt = now,
             updatedAt = now
         )

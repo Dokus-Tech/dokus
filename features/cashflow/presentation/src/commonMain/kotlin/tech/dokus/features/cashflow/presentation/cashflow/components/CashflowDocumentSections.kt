@@ -19,7 +19,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_no_documents
-import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.DocDto
 import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
@@ -68,9 +68,9 @@ private val LoadingMoreVerticalPadding = Constraints.Spacing.large
  */
 @Composable
 fun CashflowDocumentsTableSection(
-    state: DokusState<PaginationState<FinancialDocumentDto>>,
-    onDocumentClick: (FinancialDocumentDto) -> Unit,
-    onMoreClick: (FinancialDocumentDto) -> Unit,
+    state: DokusState<PaginationState<DocDto>>,
+    onDocumentClick: (DocDto) -> Unit,
+    onMoreClick: (DocDto) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -123,8 +123,8 @@ fun CashflowDocumentsTableSection(
  */
 @Composable
 fun CashflowMobileDocumentsSection(
-    state: DokusState<PaginationState<FinancialDocumentDto>>,
-    onDocumentClick: (FinancialDocumentDto) -> Unit,
+    state: DokusState<PaginationState<DocDto>>,
+    onDocumentClick: (DocDto) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(

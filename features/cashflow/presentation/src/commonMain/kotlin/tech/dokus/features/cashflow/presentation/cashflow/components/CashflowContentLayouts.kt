@@ -15,8 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
+import tech.dokus.domain.model.DocDto
 import tech.dokus.domain.model.DocumentListItemDto
-import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.app.state.isLoading
@@ -51,14 +51,14 @@ private const val InfiniteScrollThreshold = 5
  */
 @Composable
 fun DesktopCashflowContent(
-    documentsState: DokusState<PaginationState<FinancialDocumentDto>>,
+    documentsState: DokusState<PaginationState<DocDto>>,
     vatSummaryState: DokusState<VatSummaryData>,
     pendingDocumentsState: DokusState<PaginationState<DocumentListItemDto>>,
     sortOption: DocumentSortOption,
     contentPadding: PaddingValues,
     onSortOptionSelected: (DocumentSortOption) -> Unit,
-    onDocumentClick: (FinancialDocumentDto) -> Unit,
-    onMoreClick: (FinancialDocumentDto) -> Unit,
+    onDocumentClick: (DocDto) -> Unit,
+    onMoreClick: (DocDto) -> Unit,
     onLoadMore: () -> Unit,
     onPendingDocumentClick: (DocumentListItemDto) -> Unit,
     onPendingLoadMore: () -> Unit,
@@ -141,11 +141,11 @@ fun DesktopCashflowContent(
  */
 @Composable
 fun MobileCashflowContent(
-    documentsState: DokusState<PaginationState<FinancialDocumentDto>>,
+    documentsState: DokusState<PaginationState<DocDto>>,
     sortOption: DocumentSortOption,
     contentPadding: PaddingValues,
     onSortOptionSelected: (DocumentSortOption) -> Unit,
-    onDocumentClick: (FinancialDocumentDto) -> Unit,
+    onDocumentClick: (DocDto) -> Unit,
     onLoadMore: () -> Unit
 ) {
     val listState = rememberLazyListState()

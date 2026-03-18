@@ -69,7 +69,7 @@ import tech.dokus.domain.model.DocumentListItemDto
 import tech.dokus.domain.model.DocumentRecordStreamEvent
 import tech.dokus.domain.model.DocumentSourceDto
 import tech.dokus.domain.model.DocumentStreamEventNames
-import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.DocDto
 import tech.dokus.domain.model.PeppolConnectRequest
 import tech.dokus.domain.model.PeppolConnectResponse
 import tech.dokus.domain.model.PeppolIdVerificationResult
@@ -123,7 +123,7 @@ internal class CashflowRemoteDataSourceImpl(
     // INVOICE MANAGEMENT
     // ============================================================================
 
-    override suspend fun createInvoice(request: CreateInvoiceRequest): Result<FinancialDocumentDto.InvoiceDto> {
+    override suspend fun createInvoice(request: CreateInvoiceRequest): Result<DocDto.Invoice.Confirmed> {
         return runCatching {
             httpClient.post(Invoices()) {
                 contentType(ContentType.Application.Json)
@@ -132,7 +132,7 @@ internal class CashflowRemoteDataSourceImpl(
         }
     }
 
-    override suspend fun getInvoice(id: InvoiceId): Result<FinancialDocumentDto.InvoiceDto> {
+    override suspend fun getInvoice(id: InvoiceId): Result<DocDto.Invoice.Confirmed> {
         return runCatching {
             httpClient.get(Invoices.Id(id = id.toString())).body()
         }
@@ -146,7 +146,7 @@ internal class CashflowRemoteDataSourceImpl(
         toDate: LocalDate?,
         limit: Int,
         offset: Int
-    ): Result<PaginatedResponse<FinancialDocumentDto.InvoiceDto>> {
+    ): Result<PaginatedResponse<DocDto.Invoice.Confirmed>> {
         return runCatching {
             httpClient.get(
                 Invoices(
@@ -162,7 +162,7 @@ internal class CashflowRemoteDataSourceImpl(
         }
     }
 
-    override suspend fun listOverdueInvoices(): Result<List<FinancialDocumentDto.InvoiceDto>> {
+    override suspend fun listOverdueInvoices(): Result<List<DocDto.Invoice.Confirmed>> {
         return runCatching {
             httpClient.get(Invoices.Overdue()).body()
         }
@@ -184,7 +184,7 @@ internal class CashflowRemoteDataSourceImpl(
     override suspend fun updateInvoice(
         invoiceId: InvoiceId,
         request: CreateInvoiceRequest
-    ): Result<FinancialDocumentDto.InvoiceDto> {
+    ): Result<DocDto.Invoice.Confirmed> {
         return runCatching {
             httpClient.put(Invoices.Id(id = invoiceId.toString())) {
                 contentType(ContentType.Application.Json)
@@ -239,7 +239,7 @@ internal class CashflowRemoteDataSourceImpl(
     // EXPENSE MANAGEMENT
     // ============================================================================
 
-    override suspend fun getExpense(id: ExpenseId): Result<FinancialDocumentDto.ExpenseDto> {
+    override suspend fun getExpense(id: ExpenseId): Result<DocDto.Receipt.Confirmed> {
         return runCatching {
             httpClient.get(Expenses.Id(id = id.toString())).body()
         }
@@ -251,7 +251,7 @@ internal class CashflowRemoteDataSourceImpl(
         toDate: LocalDate?,
         limit: Int,
         offset: Int
-    ): Result<PaginatedResponse<FinancialDocumentDto.ExpenseDto>> {
+    ): Result<PaginatedResponse<DocDto.Receipt.Confirmed>> {
         return runCatching {
             httpClient.get(
                 Expenses(
@@ -268,7 +268,7 @@ internal class CashflowRemoteDataSourceImpl(
     override suspend fun updateExpense(
         expenseId: ExpenseId,
         request: CreateExpenseRequest
-    ): Result<FinancialDocumentDto.ExpenseDto> {
+    ): Result<DocDto.Receipt.Confirmed> {
         return runCatching {
             httpClient.put(Expenses.Id(id = expenseId.toString())) {
                 contentType(ContentType.Application.Json)

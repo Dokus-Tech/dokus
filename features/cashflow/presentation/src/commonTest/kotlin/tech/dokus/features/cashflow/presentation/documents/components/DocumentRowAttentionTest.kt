@@ -16,8 +16,6 @@ import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentIngestionDto
 import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.DocDto
-import tech.dokus.domain.model.FinancialDocumentDto
-import tech.dokus.domain.model.toDocDto
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -53,7 +51,7 @@ class DocumentRowAttentionTest {
             documentId = documentId,
             draftStatus = DocumentStatus.Confirmed,
             ingestionStatus = IngestionStatus.Succeeded,
-            confirmedContent = createConfirmedExpense(documentId).toDocDto()
+            confirmedContent = createConfirmedExpense(documentId)
         )
 
         assertFalse(computeNeedsAttention(document))
@@ -160,13 +158,13 @@ class DocumentRowAttentionTest {
         )
     }
 
-    private fun createConfirmedExpense(documentId: DocumentId): FinancialDocumentDto {
-        return FinancialDocumentDto.ExpenseDto(
+    private fun createConfirmedExpense(documentId: DocumentId): DocDto.Receipt.Confirmed {
+        return DocDto.Receipt.Confirmed(
             id = ExpenseId.generate(),
             tenantId = TENANT_ID,
             date = LocalDate(2024, 1, 1),
-            merchant = "Vendor",
-            amount = Money.fromInt(100),
+            merchantName = "Vendor",
+            totalAmount = Money.fromInt(100),
             category = ExpenseCategory.Other,
             documentId = documentId,
             createdAt = NOW,
