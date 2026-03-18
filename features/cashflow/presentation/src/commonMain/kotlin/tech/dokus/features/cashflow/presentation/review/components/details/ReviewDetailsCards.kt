@@ -32,11 +32,9 @@ import tech.dokus.aura.resources.cashflow_processing_identifying_type
 import tech.dokus.aura.resources.cashflow_receipt_details_section
 import tech.dokus.aura.resources.cashflow_receipt_number
 import tech.dokus.aura.resources.cashflow_select_document_type
-import tech.dokus.aura.resources.cashflow_suggested_contact
 import tech.dokus.aura.resources.cashflow_bank_statement_details_section
 import tech.dokus.aura.resources.common_date
 import tech.dokus.aura.resources.contacts_address
-import tech.dokus.aura.resources.contacts_vat_number
 import tech.dokus.aura.resources.document_type_classified_placeholder
 import tech.dokus.aura.resources.document_type_credit_note
 import tech.dokus.aura.resources.document_type_invoice
@@ -49,7 +47,7 @@ import tech.dokus.aura.resources.workspace_iban
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.foundation.aura.extensions.localized
-import tech.dokus.features.cashflow.presentation.review.ContactSelectionState
+import tech.dokus.domain.model.contact.ResolvedContact
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.models.DocumentUiData
@@ -74,8 +72,8 @@ internal fun CounterpartyCard(
     isAccountantReadOnly: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
-    val counterparty = tech.dokus.features.cashflow.presentation.review.models.counterpartyInfo(state)
     val isReadOnly = isAccountantReadOnly || state.isDocumentConfirmed || state.isDocumentRejected
+    val contact = state.effectiveContact
 
     Column(modifier = modifier.fillMaxWidth()) {
         // Subtle micro-label
@@ -83,65 +81,32 @@ internal fun CounterpartyCard(
 
         // Use ContactBlock for unified display + edit behavior
         ContactBlock(
-            contact = state.selectedContactSnapshot,
+            displayState = contact,
             onEditClick = onCorrectContact,
             isReadOnly = isReadOnly
         )
 
-        // Show extracted data below if different from bound contact
-        val hasExtractedData = counterparty.name != null ||
-            counterparty.vatNumber != null ||
-            counterparty.iban != null ||
-            counterparty.address != null
-
-        if (hasExtractedData) {
-            // Show extracted data as secondary info
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall)
-            ) {
-                counterparty.vatNumber?.let { vat ->
-                    FactField(
-                        label = stringResource(Res.string.contacts_vat_number),
-                        value = vat
-                    )
-                }
-                counterparty.iban?.let { iban ->
-                    FactField(
-                        label = stringResource(Res.string.workspace_iban),
-                        value = iban
-                    )
-                }
-                counterparty.address?.formatted?.let { address ->
-                    FactField(
-                        label = stringResource(Res.string.contacts_address),
-                        value = address
-                    )
-                }
-            }
-        }
-
-        // Show suggested contact info when no contact is explicitly bound
-        if (!isReadOnly && state.selectedContactSnapshot == null) {
-            when (val selection = state.contactSelectionState) {
-                is ContactSelectionState.Suggested -> {
-                    MicroLabel(
-                        text = stringResource(Res.string.cashflow_suggested_contact),
-                        modifier = Modifier.padding(top = Constraints.Spacing.small),
-                    )
-                    FactField(
-                        label = stringResource(Res.string.cashflow_contact_label),
-                        value = selection.name
-                    )
-                    selection.vatNumber?.let { vat ->
+        // Show extracted IBAN/address below only for Detected contacts
+        if (contact is ResolvedContact.Detected) {
+            val hasExtractedData = contact.iban != null || contact.address != null
+            if (hasExtractedData) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall)
+                ) {
+                    contact.iban?.let { iban ->
                         FactField(
-                            label = stringResource(Res.string.contacts_vat_number),
-                            value = vat
+                            label = stringResource(Res.string.workspace_iban),
+                            value = iban
+                        )
+                    }
+                    contact.address?.let { address ->
+                        FactField(
+                            label = stringResource(Res.string.contacts_address),
+                            value = address
                         )
                     }
                 }
-                ContactSelectionState.NoContact -> Unit
-                ContactSelectionState.Selected -> Unit
             }
         }
     }

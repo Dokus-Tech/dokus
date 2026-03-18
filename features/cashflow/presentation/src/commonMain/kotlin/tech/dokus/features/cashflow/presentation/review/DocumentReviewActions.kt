@@ -5,10 +5,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import pro.respawn.flowmvi.dsl.withState
 import tech.dokus.domain.enums.DocumentRejectReason
-import tech.dokus.domain.model.contact.CounterpartyInfo
-import tech.dokus.domain.model.contact.isLinked
-import tech.dokus.domain.model.contact.isUnresolved
 import tech.dokus.domain.enums.DocumentStatus
+import tech.dokus.domain.model.contact.ResolvedContact
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.DocumentId
@@ -131,9 +129,8 @@ internal class DocumentReviewActions(
                 return@withState
             }
 
-            // Capture suggested contact for auto-bind (before launch to avoid stale reads)
-            val suggestedContactId = (contactSelectionState as? ContactSelectionState.Suggested)?.contactId
-            val needsContactBind = suggestedContactId != null && selectedContactId == null
+            // Capture effective contact for auto-bind (before launch to avoid stale reads)
+            val effective = effectiveContact
 
             inlineDraftSyncToken += 1
             inlineDraftSyncJob?.cancel()
@@ -144,24 +141,34 @@ internal class DocumentReviewActions(
 
             launch {
                 // Auto-bind suggested contact before confirming
-                if (needsContactBind) {
-                    logger.d { "Auto-binding suggested contact $suggestedContactId for $activeDocumentId" }
-                    updateState { copy(isBindingContact = true) }
-                    val bindResult = updateDocumentDraftContact(activeDocumentId, suggestedContactId)
-                    if (bindResult.isFailure) {
-                        val error = bindResult.exceptionOrNull()!!
-                        logger.e(error) { "Failed to auto-bind contact before confirm: $activeDocumentId" }
-                        updateState { copy(isBindingContact = false, isConfirming = false) }
-                        action(DocumentReviewAction.ShowError(error.asDokusException))
-                        return@launch
+                when (effective) {
+                    is ResolvedContact.Linked -> { /* already linked, proceed */ }
+                    is ResolvedContact.Suggested -> {
+                        logger.d { "Auto-binding suggested contact ${effective.contactId} for $activeDocumentId" }
+                        updateState { copy(isBindingContact = true) }
+                        val bindResult = updateDocumentDraftContact(activeDocumentId, effective.contactId)
+                        if (bindResult.isFailure) {
+                            val error = bindResult.exceptionOrNull()!!
+                            logger.e(error) { "Failed to auto-bind contact before confirm: $activeDocumentId" }
+                            updateState { copy(isBindingContact = false, isConfirming = false) }
+                            action(DocumentReviewAction.ShowError(error.asDokusException))
+                            return@launch
+                        }
+                        updateState {
+                            copy(
+                                selectedContactOverride = ResolvedContact.Linked(
+                                    contactId = effective.contactId,
+                                    name = effective.name,
+                                    vatNumber = effective.vatNumber,
+                                    email = null,
+                                    avatarPath = null,
+                                ),
+                                isBindingContact = false,
+                            )
+                        }
                     }
-                    updateState {
-                        copy(
-                            selectedContactId = suggestedContactId,
-                            contactSelectionState = ContactSelectionState.Selected,
-                            isBindingContact = false,
-                        )
-                    }
+                    is ResolvedContact.Detected -> { /* backend auto-creates, just proceed */ }
+                    is ResolvedContact.Unknown -> { /* should be blocked by canConfirm */ }
                 }
 
                 if (hasUnsavedChanges) {
@@ -202,7 +209,6 @@ internal class DocumentReviewActions(
                         val cashflowEntryId = record.cashflowEntryId
                         withState {
                             val currentData = documentData ?: return@withState
-                            val counterparty = draft?.counterparty
                             updateState {
                                 copy(
                                     document = DokusState.success(
@@ -219,13 +225,6 @@ internal class DocumentReviewActions(
                                     isContactRequired = draft?.extractedData?.let {
                                         it.isContactRequired
                                     } ?: isContactRequired,
-                                    isPendingCreation = counterparty.isUnresolved() && counterparty.pendingCreation,
-                                    selectedContactId = if (counterparty.isLinked()) counterparty.contactId else selectedContactId,
-                                    contactSelectionState = if (counterparty.isLinked()) {
-                                        ContactSelectionState.Selected
-                                    } else {
-                                        contactSelectionState
-                                    }
                                 )
                             }
                         }
@@ -379,7 +378,6 @@ internal class DocumentReviewActions(
                             isContactRequired = draft?.extractedData?.let {
                                 it.isContactRequired
                             } ?: isContactRequired,
-                            isPendingCreation = draft?.counterparty.let { it.isUnresolved() && it.pendingCreation },
                             confirmedCashflowEntryId = record.cashflowEntryId,
                             documentStatus = draft?.documentStatus,
                         )

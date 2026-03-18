@@ -82,7 +82,8 @@ import tech.dokus.domain.model.VatListingDraftData
 import tech.dokus.domain.model.VatReturnDraftData
 import tech.dokus.domain.model.WithholdingTaxDraftData
 import tech.dokus.domain.model.contact.ContactDto
-import tech.dokus.domain.model.contact.isUnresolved
+import tech.dokus.domain.model.contact.ContactSuggestionDto
+import tech.dokus.domain.model.contact.ResolvedContact
 import tech.dokus.domain.model.toDocumentType
 import tech.dokus.features.cashflow.presentation.review.models.DocumentUiData
 import tech.dokus.features.cashflow.presentation.review.models.toUiData
@@ -173,7 +174,7 @@ data class ReviewDocumentData(
     val draftData: DocumentDraftData?,
     val originalData: DocumentDraftData?,
     val previewUrl: String?,
-    val contactSuggestions: List<ContactSuggestion>,
+    val contactSuggestions: List<ContactSuggestionDto>,
 )
 
 @Immutable
@@ -188,11 +189,8 @@ data class DocumentReviewState(
     val isSaving: Boolean = false,
     val isConfirming: Boolean = false,
     val selectedFieldPath: String? = null,
-    val selectedContactId: ContactId? = null,
-    val selectedContactSnapshot: ContactSnapshot? = null,
-    val contactSelectionState: ContactSelectionState = ContactSelectionState.NoContact,
+    val selectedContactOverride: ResolvedContact.Linked? = null,
     val isContactRequired: Boolean = false,
-    val isPendingCreation: Boolean = false,
     val contactValidationError: DokusException? = null,
     val isBindingContact: Boolean = false,
     val isRejecting: Boolean = false,
@@ -251,7 +249,7 @@ data class DocumentReviewState(
         get() = documentData?.previewUrl
 
     /** Contact suggestions from extraction. */
-    val contactSuggestions: List<ContactSuggestion>
+    val contactSuggestions: List<ContactSuggestionDto>
         get() = documentData?.contactSuggestions.orEmpty()
 
     /** The underlying data, if loaded. */
@@ -298,19 +296,22 @@ data class DocumentReviewState(
         get() = hasUnsavedChanges || isSaving
 
     /**
-     * True when contact is required but neither bound, suggested, nor extractable.
-     * A suggested contact does NOT block — confirm will auto-bind it.
-     * Extracted counterparty data (name) does NOT block — backend will auto-create.
-     * Only blocks when there is truly zero contact data.
+     * The effective contact for display and confirm logic.
+     * User override (from contact sheet) takes priority over backend resolution.
+     */
+    val effectiveContact: ResolvedContact
+        get() = selectedContactOverride
+            ?: documentRecord?.draft?.resolvedContact
+            ?: ResolvedContact.Unknown
+
+    /**
+     * True when contact is required but no contact data is available.
+     * Linked, Suggested, and Detected all provide enough data — only Unknown blocks.
      */
     val hasUnresolvedContact: Boolean
         get() {
             if (draftData?.isContactRequired != true) return false
-            if (selectedContactId != null) return false
-            if (contactSelectionState is ContactSelectionState.Suggested) return false
-            val counterparty = documentRecord?.draft?.counterparty
-            if (counterparty.isUnresolved() && counterparty.snapshot?.name != null) return false
-            return true
+            return effectiveContact is ResolvedContact.Unknown
         }
 
     val confirmBlockedReason: StringResource?
@@ -342,15 +343,12 @@ data class DocumentReviewState(
      */
     val contactMatchStatus: ContactMatchStatus
         get() = when {
-            // User explicitly selected
-            contactSelectionState is ContactSelectionState.Selected -> ContactMatchStatus.Matched
-            // Suggested contact exists for required types, but needs user confirmation
-            contactSelectionState is ContactSelectionState.Suggested &&
-                draftData.isContactRequired ->
+            effectiveContact is ResolvedContact.Linked -> ContactMatchStatus.Matched
+            effectiveContact is ResolvedContact.Suggested && draftData.isContactRequired ->
                 ContactMatchStatus.Uncertain
-            // No contact, but required for this document type (Invoice/CreditNote)
+            effectiveContact is ResolvedContact.Detected && draftData.isContactRequired ->
+                ContactMatchStatus.Uncertain
             draftData.isContactRequired -> ContactMatchStatus.MissingButRequired
-            // No contact, but acceptable (Receipt)
             else -> ContactMatchStatus.NotRequired
         }
 
@@ -387,14 +385,18 @@ data class DocumentReviewState(
      */
     val description: String
         get() {
-            val counterparty = documentRecord?.draft?.counterpartyDisplayName?.takeIf { it.isNotBlank() }
-                ?: selectedContactSnapshot?.name?.takeIf { it.isNotBlank() }
+            val contactName = when (val c = effectiveContact) {
+                is ResolvedContact.Linked -> c.name
+                is ResolvedContact.Suggested -> c.name
+                is ResolvedContact.Detected -> c.name
+                is ResolvedContact.Unknown -> null
+            }?.takeIf { it.isNotBlank() }
             val context = draftData.displayContextDescription
 
             return when {
-                counterparty != null && context != null -> "$counterparty — $context"
+                contactName != null && context != null -> "$contactName — $context"
                 context != null -> context
-                counterparty != null -> counterparty
+                contactName != null -> contactName
                 isProcessing -> "Processing document..."
                 else -> documentRecord?.document?.filename ?: ""
             }
