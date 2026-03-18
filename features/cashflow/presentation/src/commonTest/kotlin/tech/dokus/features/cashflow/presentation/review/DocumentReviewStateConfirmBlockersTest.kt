@@ -13,6 +13,7 @@ import tech.dokus.domain.model.contact.ResolvedContact
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.DocumentDraftDto
+import tech.dokus.domain.model.toDocDto
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.InvoiceDraftData
@@ -183,7 +184,7 @@ class DocumentReviewStateConfirmBlockersTest {
             tenantId = tenantId,
             documentStatus = DocumentStatus.NeedsReview,
             documentType = draftData.toType(),
-            extractedData = draftData,
+            content = draftData.toDocDto(),
             aiDraftSourceRunId = null,
             draftVersion = 1,
             draftEditedAt = null,
@@ -204,7 +205,6 @@ class DocumentReviewStateConfirmBlockersTest {
             ),
             draft = draft,
             latestIngestion = null,
-            confirmedEntity = null,
         )
 
         return DocumentReviewState(
@@ -212,8 +212,8 @@ class DocumentReviewStateConfirmBlockersTest {
                 ReviewDocumentData(
                     documentId = documentId,
                     documentRecord = record,
-                    draftData = draftData,
-                    originalData = draftData,
+                    draftData = draftData.toDocDto(),
+                    originalData = draftData.toDocDto(),
                     previewUrl = null,
                     contactSuggestions = emptyList(),
                 )

@@ -1,9 +1,25 @@
 package tech.dokus.database.repository.cashflow
 
 import kotlinx.datetime.LocalDate
+import tech.dokus.database.entity.ExpenseEntity
+import tech.dokus.database.entity.InvoiceEntity
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.common.PaginatedResponse
+
+/**
+ * Combined financial document for the cashflow list.
+ */
+sealed interface CashflowDocumentEntity {
+    val date: LocalDate
+
+    data class InvoiceItem(val entity: InvoiceEntity) : CashflowDocumentEntity {
+        override val date: LocalDate get() = entity.issueDate
+    }
+
+    data class ExpenseItem(val entity: ExpenseEntity) : CashflowDocumentEntity {
+        override val date: LocalDate get() = entity.date
+    }
+}
 
 class CashflowRepository(
     private val invoiceRepository: InvoiceRepository,
@@ -16,7 +32,7 @@ class CashflowRepository(
         toDate: LocalDate?,
         limit: Int,
         offset: Int
-    ): Result<PaginatedResponse<FinancialDocumentDto>> = runCatching {
+    ): Result<PaginatedResponse<CashflowDocumentEntity>> = runCatching {
         val fetchSize = limit + offset
 
         val invoicePage = invoiceRepository.listInvoices(
@@ -38,8 +54,10 @@ class CashflowRepository(
         ).getOrThrow()
 
         val total = invoicePage.total + expensePage.total
-        val combined = (invoicePage.items + expensePage.items)
-            .sortedByDescending { it.date }
+        val combined = (
+            invoicePage.items.map { CashflowDocumentEntity.InvoiceItem(it) } +
+                expensePage.items.map { CashflowDocumentEntity.ExpenseItem(it) }
+            ).sortedByDescending { it.date }
         val items = combined
             .drop(offset)
             .take(limit)

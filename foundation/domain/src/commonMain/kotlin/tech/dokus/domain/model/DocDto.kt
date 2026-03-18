@@ -75,8 +75,7 @@ sealed interface DocDto {
             override val notes: String? = null,
             val vatBreakdown: List<VatBreakdownEntry> = emptyList(),
             val payment: CanonicalPayment? = null,
-            val seller: PartyDraft = PartyDraft(),
-            val buyer: PartyDraft = PartyDraft(),
+            val counterparty: PartyDraft = PartyDraft(),
         ) : Invoice
 
         @Serializable
@@ -139,8 +138,7 @@ sealed interface DocDto {
             override val notes: String? = null,
             val vatBreakdown: List<VatBreakdownEntry> = emptyList(),
             val originalInvoiceNumber: String? = null,
-            val seller: PartyDraft = PartyDraft(),
-            val buyer: PartyDraft = PartyDraft(),
+            val counterparty: PartyDraft = PartyDraft(),
         ) : CreditNote
 
         @Serializable

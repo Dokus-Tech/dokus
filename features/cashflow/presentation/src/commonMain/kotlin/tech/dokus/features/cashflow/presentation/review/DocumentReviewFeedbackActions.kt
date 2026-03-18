@@ -159,8 +159,8 @@ internal class DocumentReviewFeedbackActions(
                                     document = DokusState.success(
                                         currentData.copy(
                                             documentRecord = record,
-                                            draftData = draft?.extractedData,
-                                            originalData = draft?.extractedData,
+                                            draftData = draft?.content,
+                                            originalData = draft?.content,
                                         )
                                     ),
                                     hasUnsavedChanges = false,

@@ -20,7 +20,9 @@ import tech.dokus.domain.model.contact.CounterpartyInfo
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.FinancialDocumentDto
-import tech.dokus.domain.model.InvoiceDraftData
+import tech.dokus.domain.model.DocDto
+import tech.dokus.domain.model.toDocDto
+import tech.dokus.domain.model.contact.ResolvedContact
 import tech.dokus.domain.model.InvoiceItemDto
 import tech.dokus.domain.model.PeppolStatusResponse
 import tech.dokus.domain.model.common.PaginatedResponse
@@ -362,32 +364,39 @@ private fun documentRecord(
     purposeBase: String? = null,
     confirmedEntity: FinancialDocumentDto? = null,
 ): DocumentDetailDto {
+    val content = confirmedEntity?.toDocDto()
+        ?: DocDto.Invoice.Draft(invoiceNumber = null)
+
     return DocumentDetailDto(
         document = DocumentDto(
             id = documentId,
             tenantId = tenantId,
             filename = filename,
-            uploadedAt = now
+            uploadedAt = now,
+            sortDate = now.date,
         ),
         draft = DocumentDraftDto(
             documentId = documentId,
             tenantId = tenantId,
             documentStatus = DocumentStatus.Confirmed,
             documentType = DocumentType.Invoice,
-            extractedData = InvoiceDraftData(invoiceNumber = confirmedEntityReference(confirmedEntity)),
+            content = content,
             purposeBase = purposeBase,
             purposeRendered = purposeRendered,
+            resolvedContact = if (contactId != null) {
+                ResolvedContact.Linked(contactId = contactId, name = "", vatNumber = null, email = null, avatarPath = null)
+            } else {
+                ResolvedContact.Unknown
+            },
             aiDraftSourceRunId = null,
             draftVersion = 0,
             draftEditedAt = null,
             draftEditedBy = null,
-            counterparty = if (contactId != null) CounterpartyInfo.Linked(contactId = contactId, source = ContactLinkSource.AI) else null,
             lastSuccessfulRunId = null,
             createdAt = now,
             updatedAt = now
         ),
         latestIngestion = null,
-        confirmedEntity = confirmedEntity
     )
 }
 

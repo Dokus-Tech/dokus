@@ -1,12 +1,13 @@
 package tech.dokus.backend.services.cashflow
 
+import tech.dokus.database.entity.ExpenseEntity
+import tech.dokus.database.entity.InvoiceEntity
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.FinancialDocumentDto
 import java.util.UUID
 
 /**
@@ -19,7 +20,7 @@ class CashflowProjectionReconciliationService(
     suspend fun ensureProjectionIfMissing(
         tenantId: TenantId,
         documentId: DocumentId,
-        entity: FinancialDocumentDto
+        entity: Any
     ): Result<CashflowEntryId?> = runCatching {
         val existingEntryId = cashflowEntriesRepository
             .getByDocumentId(tenantId, documentId)
@@ -28,7 +29,7 @@ class CashflowProjectionReconciliationService(
         if (existingEntryId != null) return@runCatching existingEntryId
 
         when (entity) {
-            is FinancialDocumentDto.InvoiceDto -> {
+            is InvoiceEntity -> {
                 val ensuredEntry = cashflowEntriesService.createFromInvoice(
                     tenantId = tenantId,
                     invoiceId = UUID.fromString(entity.id.toString()),
@@ -63,7 +64,7 @@ class CashflowProjectionReconciliationService(
                 ensuredEntry.id
             }
 
-            is FinancialDocumentDto.ExpenseDto -> cashflowEntriesService.createFromExpense(
+            is ExpenseEntity -> cashflowEntriesService.createFromExpense(
                 tenantId = tenantId,
                 expenseId = UUID.fromString(entity.id.toString()),
                 documentId = documentId,

@@ -39,62 +39,10 @@ import tech.dokus.aura.resources.documents_table_description
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.IngestionStatus
-import tech.dokus.domain.model.AnnualAccountsDraftData
-import tech.dokus.domain.model.BankFeeDraftData
-import tech.dokus.domain.model.BankStatementDraftData
-import tech.dokus.domain.model.BoardMinutesDraftData
-import tech.dokus.domain.model.C4DraftData
-import tech.dokus.domain.model.CompanyExtractDraftData
-import tech.dokus.domain.model.ContractDraftData
-import tech.dokus.domain.model.CorporateTaxAdvanceDraftData
-import tech.dokus.domain.model.CorporateTaxDraftData
-import tech.dokus.domain.model.CreditNoteDraftData
-import tech.dokus.domain.model.CustomsDeclarationDraftData
-import tech.dokus.domain.model.DeliveryNoteDraftData
-import tech.dokus.domain.model.DepreciationScheduleDraftData
-import tech.dokus.domain.model.DimonaDraftData
-import tech.dokus.domain.model.DividendDraftData
+import tech.dokus.domain.model.DocDto
 import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.DocumentListItemDto
-import tech.dokus.domain.model.EmploymentContractDraftData
-import tech.dokus.domain.model.ExpenseClaimDraftData
-import tech.dokus.domain.model.FineDraftData
-import tech.dokus.domain.model.HolidayPayDraftData
-import tech.dokus.domain.model.IcListingDraftData
-import tech.dokus.domain.model.InsuranceDraftData
-import tech.dokus.domain.model.InterestStatementDraftData
-import tech.dokus.domain.model.IntrastatDraftData
-import tech.dokus.domain.model.InventoryDraftData
-import tech.dokus.domain.model.InvoiceDraftData
-import tech.dokus.domain.model.LeaseDraftData
-import tech.dokus.domain.model.LoanDraftData
-import tech.dokus.domain.model.OrderConfirmationDraftData
-import tech.dokus.domain.model.OssReturnDraftData
-import tech.dokus.domain.model.OtherDraftData
-import tech.dokus.domain.model.PaymentConfirmationDraftData
-import tech.dokus.domain.model.PayrollSummaryDraftData
-import tech.dokus.domain.model.PermitDraftData
-import tech.dokus.domain.model.PersonalTaxDraftData
-import tech.dokus.domain.model.ProFormaDraftData
-import tech.dokus.domain.model.PurchaseOrderDraftData
-import tech.dokus.domain.model.QuoteDraftData
-import tech.dokus.domain.model.ReceiptDraftData
-import tech.dokus.domain.model.ReminderDraftData
-import tech.dokus.domain.model.SalarySlipDraftData
-import tech.dokus.domain.model.SelfEmployedContributionDraftData
-import tech.dokus.domain.model.ShareholderRegisterDraftData
-import tech.dokus.domain.model.SocialContributionDraftData
-import tech.dokus.domain.model.SocialFundDraftData
-import tech.dokus.domain.model.StatementOfAccountDraftData
-import tech.dokus.domain.model.SubsidyDraftData
-import tech.dokus.domain.model.TaxAssessmentDraftData
-import tech.dokus.domain.model.VapzDraftData
-import tech.dokus.domain.model.VatAssessmentDraftData
-import tech.dokus.domain.model.VatListingDraftData
-import tech.dokus.domain.model.VatReturnDraftData
-import tech.dokus.domain.model.WithholdingTaxDraftData
 import tech.dokus.domain.model.contact.ResolvedContact
-import tech.dokus.domain.model.resolvedCounterpartyName
 import tech.dokus.features.cashflow.presentation.common.utils.formatShortDate
 import tech.dokus.features.cashflow.presentation.model.toUiStatus
 import tech.dokus.foundation.aura.components.DokusCardSurface
@@ -464,7 +412,14 @@ internal fun computeNeedsAttention(document: DocumentDetailDto): Boolean {
     val ingestionStatus = document.latestIngestion?.status
     val documentStatus = document.draft?.documentStatus
     val documentType = document.draft?.documentType
-    val hasConfirmedEntity = document.confirmedEntity != null
+    val content = document.draft?.content
+    // For core financial types, confirmed content means the entity was created.
+    // ClassifiedDoc types don't produce separate entities, so treat them as confirmed.
+    val hasConfirmedContent = content is DocDto.Invoice.Confirmed ||
+        content is DocDto.CreditNote.Confirmed ||
+        content is DocDto.Receipt.Confirmed ||
+        content is DocDto.BankStatement.Confirmed ||
+        (documentStatus == DocumentStatus.Confirmed && content is DocDto.ClassifiedDoc)
     val hasPendingMatchReview = document.pendingMatchReview != null
 
     if (documentStatus == DocumentStatus.Rejected) {
@@ -475,12 +430,12 @@ internal fun computeNeedsAttention(document: DocumentDetailDto): Boolean {
     val draftNeedsReview = documentStatus == DocumentStatus.NeedsReview
     val confirmedButNoEntity =
         documentStatus == DocumentStatus.Confirmed &&
-            !hasConfirmedEntity &&
+            !hasConfirmedContent &&
             documentType != DocumentType.BankStatement
     val succeededButNoDraft = document.draft == null && ingestionStatus == IngestionStatus.Succeeded
     val isNotConfirmed = documentStatus == null ||
         documentStatus != DocumentStatus.Confirmed ||
-        (!hasConfirmedEntity && documentType != DocumentType.BankStatement)
+        (!hasConfirmedContent && documentType != DocumentType.BankStatement)
 
     return hasPendingMatchReview ||
         confirmedButNoEntity ||
@@ -500,61 +455,14 @@ internal fun computeIsProcessing(document: DocumentDetailDto): Boolean {
  * Resolves the primary description for a document (detail context).
  */
 internal fun resolveDescription(document: DocumentDetailDto, unknownLabel: String): String {
-    val extractedData = document.draft?.extractedData
+    val content = document.draft?.content
     val ingestionStatus = document.latestIngestion?.status
-    val documentNumber = when (extractedData) {
-        is InvoiceDraftData -> extractedData.invoiceNumber.nonBlank()
-        is ReceiptDraftData -> extractedData.receiptNumber.nonBlank()
-        is CreditNoteDraftData -> extractedData.creditNoteNumber.nonBlank()
-        is BankStatementDraftData,
-        is ProFormaDraftData,
-        is QuoteDraftData,
-        is OrderConfirmationDraftData,
-        is DeliveryNoteDraftData,
-        is ReminderDraftData,
-        is StatementOfAccountDraftData,
-        is PurchaseOrderDraftData,
-        is ExpenseClaimDraftData,
-        is BankFeeDraftData,
-        is InterestStatementDraftData,
-        is PaymentConfirmationDraftData,
-        is VatReturnDraftData,
-        is VatListingDraftData,
-        is VatAssessmentDraftData,
-        is IcListingDraftData,
-        is OssReturnDraftData,
-        is CorporateTaxDraftData,
-        is CorporateTaxAdvanceDraftData,
-        is TaxAssessmentDraftData,
-        is PersonalTaxDraftData,
-        is WithholdingTaxDraftData,
-        is SocialContributionDraftData,
-        is SocialFundDraftData,
-        is SelfEmployedContributionDraftData,
-        is VapzDraftData,
-        is SalarySlipDraftData,
-        is PayrollSummaryDraftData,
-        is EmploymentContractDraftData,
-        is DimonaDraftData,
-        is C4DraftData,
-        is HolidayPayDraftData,
-        is ContractDraftData,
-        is LeaseDraftData,
-        is LoanDraftData,
-        is InsuranceDraftData,
-        is DividendDraftData,
-        is ShareholderRegisterDraftData,
-        is CompanyExtractDraftData,
-        is AnnualAccountsDraftData,
-        is BoardMinutesDraftData,
-        is SubsidyDraftData,
-        is FineDraftData,
-        is PermitDraftData,
-        is CustomsDeclarationDraftData,
-        is IntrastatDraftData,
-        is DepreciationScheduleDraftData,
-        is InventoryDraftData,
-        is OtherDraftData,
+    val documentNumber = when (content) {
+        is DocDto.Invoice -> content.invoiceNumber.nonBlank()
+        is DocDto.Receipt -> content.receiptNumber.nonBlank()
+        is DocDto.CreditNote -> content.creditNoteNumber.nonBlank()
+        is DocDto.BankStatement,
+        is DocDto.ClassifiedDoc,
         null -> null
     }
     val counterparty = document.draft?.resolvedContact.displayName.nonBlank()
@@ -581,59 +489,15 @@ internal fun resolveCounterparty(document: DocumentDetailDto, emptyLabel: String
     val displayName = document.draft?.resolvedContact.displayName.nonBlank()
     if (displayName != null) return displayName
 
-    val fromDraft = when (val data = document.draft?.extractedData) {
-        is InvoiceDraftData -> data.seller.name.nonBlank() ?: data.buyer.name.nonBlank()
-        is CreditNoteDraftData -> data.resolvedCounterpartyName.nonBlank()
-        is ReceiptDraftData -> data.merchantName.nonBlank()
-        is BankStatementDraftData -> data.transactions.firstOrNull()?.counterparty?.name?.nonBlank()
-        is ProFormaDraftData,
-        is QuoteDraftData,
-        is OrderConfirmationDraftData,
-        is DeliveryNoteDraftData,
-        is ReminderDraftData,
-        is StatementOfAccountDraftData,
-        is PurchaseOrderDraftData,
-        is ExpenseClaimDraftData,
-        is BankFeeDraftData,
-        is InterestStatementDraftData,
-        is PaymentConfirmationDraftData,
-        is VatReturnDraftData,
-        is VatListingDraftData,
-        is VatAssessmentDraftData,
-        is IcListingDraftData,
-        is OssReturnDraftData,
-        is CorporateTaxDraftData,
-        is CorporateTaxAdvanceDraftData,
-        is TaxAssessmentDraftData,
-        is PersonalTaxDraftData,
-        is WithholdingTaxDraftData,
-        is SocialContributionDraftData,
-        is SocialFundDraftData,
-        is SelfEmployedContributionDraftData,
-        is VapzDraftData,
-        is SalarySlipDraftData,
-        is PayrollSummaryDraftData,
-        is EmploymentContractDraftData,
-        is DimonaDraftData,
-        is C4DraftData,
-        is HolidayPayDraftData,
-        is ContractDraftData,
-        is LeaseDraftData,
-        is LoanDraftData,
-        is InsuranceDraftData,
-        is DividendDraftData,
-        is ShareholderRegisterDraftData,
-        is CompanyExtractDraftData,
-        is AnnualAccountsDraftData,
-        is BoardMinutesDraftData,
-        is SubsidyDraftData,
-        is FineDraftData,
-        is PermitDraftData,
-        is CustomsDeclarationDraftData,
-        is IntrastatDraftData,
-        is DepreciationScheduleDraftData,
-        is InventoryDraftData,
-        is OtherDraftData,
+    val fromDraft = when (val data = document.draft?.content) {
+        is DocDto.Invoice.Draft -> data.counterparty.name.nonBlank()
+        is DocDto.Invoice.Confirmed -> null
+        is DocDto.CreditNote.Draft -> data.counterparty.name.nonBlank()
+        is DocDto.CreditNote.Confirmed -> null
+        is DocDto.Receipt -> data.merchantName.nonBlank()
+        is DocDto.BankStatement.Draft -> data.transactions.firstOrNull()?.counterparty?.name?.nonBlank()
+        is DocDto.BankStatement.Confirmed -> null
+        is DocDto.ClassifiedDoc,
         null -> null
     }
     return fromDraft ?: document.document.filename.nonBlank() ?: emptyLabel

@@ -18,6 +18,7 @@ import tech.dokus.domain.model.DocumentIngestionDto
 import tech.dokus.domain.model.DocumentListItemDto
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.contact.ResolvedContact
+import tech.dokus.domain.model.toDocDto
 import tech.dokus.foundation.aura.model.DocumentUiStatus
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -179,7 +180,7 @@ class DocumentRowResolutionTest {
             tenantId = tenantId,
             documentStatus = draftStatus,
             documentType = DocumentType.Invoice,
-            extractedData = extractedData,
+            content = extractedData.toDocDto(),
             aiDraftSourceRunId = null,
             draftVersion = 0,
             draftEditedAt = null,
@@ -215,7 +216,6 @@ class DocumentRowResolutionTest {
                     confidence = null
                 )
             },
-            confirmedEntity = null
         )
     }
 

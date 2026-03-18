@@ -11,7 +11,7 @@ import tech.dokus.aura.resources.peppol_status_card_not_sent
 import tech.dokus.aura.resources.peppol_status_card_recipient_id
 import tech.dokus.aura.resources.peppol_status_card_title
 import tech.dokus.aura.resources.peppol_status_card_transmission
-import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.DocDto
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.foundation.aura.extensions.localized
 
@@ -20,7 +20,7 @@ internal fun PeppolStatusCard(
     state: DocumentReviewState,
     modifier: Modifier = Modifier
 ) {
-    val invoice = state.documentRecord?.confirmedEntity as? FinancialDocumentDto.InvoiceDto ?: return
+    val invoice = state.documentRecord?.draft?.content as? DocDto.Invoice.Confirmed ?: return
     val shouldShow = invoice.peppolStatus != null ||
         invoice.peppolSentAt != null ||
         invoice.peppolId != null

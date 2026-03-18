@@ -10,11 +10,13 @@ import tech.dokus.domain.model.contact.ResolvedContact
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.model.DocumentDraftData
+import tech.dokus.domain.model.DocDto
 import tech.dokus.domain.model.DocumentDetailDto
-import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.RejectDocumentRequest
 import tech.dokus.domain.model.UpdateDraftRequest
+import tech.dokus.domain.model.isContactRequired
+import tech.dokus.domain.model.toDocDto
+import tech.dokus.domain.model.toDraftData
 import tech.dokus.features.cashflow.usecases.ConfirmDocumentUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentRecordUseCase
 import tech.dokus.features.cashflow.usecases.RejectDocumentUseCase
@@ -33,7 +35,7 @@ internal class DocumentReviewActions(
 ) {
     private data class DraftSyncPayload(
         val documentId: DocumentId,
-        val draftData: DocumentDraftData,
+        val draftData: DocDto,
         val token: Long,
     )
 
@@ -67,26 +69,27 @@ internal class DocumentReviewActions(
         inlineDraftSyncJob = launch {
             val result = updateDocumentDraft(
                 syncPayload.documentId,
-                UpdateDraftRequest(extractedData = syncPayload.draftData)
+                UpdateDraftRequest(extractedData = syncPayload.draftData.toDraftData())
             )
 
             result.fold(
                 onSuccess = { response ->
                     if (syncPayload.token != inlineDraftSyncToken) return@fold
                     inlineDraftSyncJob = null
+                    val responseContent = response.extractedData.toDocDto()
                     withState {
                         val currentData = documentData ?: return@withState
                         updateState {
                             copy(
                                 document = DokusState.success(
                                     currentData.copy(
-                                        draftData = response.extractedData,
-                                        originalData = response.extractedData,
+                                        draftData = responseContent,
+                                        originalData = responseContent,
                                     )
                                 ),
                                 hasUnsavedChanges = false,
                                 isSaving = false,
-                                isContactRequired = response.extractedData.isContactRequired,
+                                isContactRequired = responseContent.isContactRequired,
                             )
                         }
                     }
@@ -174,7 +177,7 @@ internal class DocumentReviewActions(
                 if (hasUnsavedChanges) {
                     val updateResult = updateDocumentDraft(
                         activeDocumentId,
-                        UpdateDraftRequest(extractedData = updatedData)
+                        UpdateDraftRequest(extractedData = updatedData.toDraftData())
                     )
                     val updateFailure = updateResult.exceptionOrNull()
                     if (updateFailure != null) {
@@ -185,19 +188,19 @@ internal class DocumentReviewActions(
                         action(DocumentReviewAction.ShowError(updateFailure.asDokusException))
                         return@launch
                     }
-                    val savedData = updateResult.getOrThrow().extractedData
+                    val savedContent = updateResult.getOrThrow().extractedData.toDocDto()
                     withState {
                         val currentData = documentData ?: return@withState
                         updateState {
                             copy(
                                 document = DokusState.success(
                                     currentData.copy(
-                                        draftData = savedData,
-                                        originalData = savedData,
+                                        draftData = savedContent,
+                                        originalData = savedContent,
                                     )
                                 ),
                                 hasUnsavedChanges = false,
-                                isContactRequired = savedData.isContactRequired,
+                                isContactRequired = savedContent.isContactRequired,
                             )
                         }
                     }
@@ -214,17 +217,12 @@ internal class DocumentReviewActions(
                                     document = DokusState.success(
                                         currentData.copy(
                                             documentRecord = record,
-                                            draftData = draft?.extractedData,
-                                            originalData = draft?.extractedData,
                                         )
                                     ),
                                     hasUnsavedChanges = false,
                                     isConfirming = false,
                                     documentStatus = draft?.documentStatus,
                                     confirmedCashflowEntryId = cashflowEntryId,
-                                    isContactRequired = draft?.extractedData?.let {
-                                        it.isContactRequired
-                                    } ?: isContactRequired,
                                 )
                             }
                         }
@@ -339,15 +337,12 @@ internal class DocumentReviewActions(
 
     suspend fun DocumentReviewCtx.handleViewEntity() {
         withState {
-            val confirmedEntityId = documentRecord?.confirmedEntity?.let { entity ->
-                when (entity) {
-                    is FinancialDocumentDto.InvoiceDto -> entity.id.toString()
-                    is FinancialDocumentDto.ExpenseDto -> entity.id.toString()
-                    is FinancialDocumentDto.CreditNoteDto -> entity.id.toString()
-                    is FinancialDocumentDto.ProFormaDto -> entity.id.toString()
-                    is FinancialDocumentDto.QuoteDto -> entity.id.toString()
-                    is FinancialDocumentDto.PurchaseOrderDto -> entity.id.toString()
-                }
+            val content = documentRecord?.draft?.content
+            val confirmedEntityId = when (content) {
+                is DocDto.Invoice.Confirmed -> content.id.toString()
+                is DocDto.CreditNote.Confirmed -> content.id.toString()
+                is DocDto.Receipt.Confirmed -> content.id.toString()
+                else -> null
             }
             if (confirmedEntityId != null) {
                 action(
@@ -371,13 +366,8 @@ internal class DocumentReviewActions(
                             document = DokusState.success(
                                 currentData.copy(
                                     documentRecord = record,
-                                    draftData = draft?.extractedData,
-                                    originalData = draft?.extractedData,
                                 )
                             ),
-                            isContactRequired = draft?.extractedData?.let {
-                                it.isContactRequired
-                            } ?: isContactRequired,
                             confirmedCashflowEntryId = record.cashflowEntryId,
                             documentStatus = draft?.documentStatus,
                         )

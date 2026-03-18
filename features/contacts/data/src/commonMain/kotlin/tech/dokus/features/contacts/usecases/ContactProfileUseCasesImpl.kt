@@ -23,6 +23,7 @@ import tech.dokus.domain.model.DepreciationScheduleDraftData
 import tech.dokus.domain.model.DimonaDraftData
 import tech.dokus.domain.model.DividendDraftData
 import tech.dokus.domain.model.DocumentDraftData
+import tech.dokus.domain.model.DocDto
 import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.EmploymentContractDraftData
 import tech.dokus.domain.model.ExpenseClaimDraftData
@@ -185,7 +186,7 @@ internal fun resolveRecentDocumentSummary(
 ): String? {
     return documentRecord?.draft?.purposeRendered.normalizeRecentDocumentText()
         ?: documentRecord?.draft?.purposeBase.normalizeRecentDocumentText()
-        ?: documentRecord?.confirmedEntity?.recentDocumentSummary()
+        ?: documentRecord?.draft?.content?.recentDocumentSummary()
         ?: invoice.notes.normalizeRecentDocumentText()
 }
 
@@ -193,8 +194,7 @@ internal fun resolveRecentDocumentReference(
     invoice: FinancialDocumentDto.InvoiceDto,
     documentRecord: DocumentDetailDto?
 ): String? {
-    return documentRecord?.draft?.extractedData?.recentDocumentReference()
-        ?: documentRecord?.confirmedEntity?.recentDocumentReference()
+    return documentRecord?.draft?.content?.recentDocumentReference()
         ?: invoice.invoiceNumber.toString().normalizeRecentDocumentText()
         ?: documentRecord?.document?.filename.normalizeRecentDocumentText()
 }
@@ -295,6 +295,25 @@ private fun DocumentDraftData.recentDocumentReference(): String? {
         is InventoryDraftData,
         is OtherDraftData -> null
     }
+}
+
+private fun DocDto.recentDocumentSummary(): String? = when (this) {
+    is DocDto.Invoice -> lineItems.firstOrNull()?.description.normalizeRecentDocumentText()
+        ?: notes.normalizeRecentDocumentText()
+    is DocDto.CreditNote -> reason.normalizeRecentDocumentText()
+        ?: notes.normalizeRecentDocumentText()
+    is DocDto.Receipt -> merchantName.normalizeRecentDocumentText()
+        ?: notes.normalizeRecentDocumentText()
+    is DocDto.BankStatement -> notes.normalizeRecentDocumentText()
+    is DocDto.ClassifiedDoc -> null
+}
+
+private fun DocDto.recentDocumentReference(): String? = when (this) {
+    is DocDto.Invoice -> invoiceNumber.normalizeRecentDocumentText()
+    is DocDto.CreditNote -> creditNoteNumber.normalizeRecentDocumentText()
+    is DocDto.Receipt -> receiptNumber.normalizeRecentDocumentText()
+    is DocDto.BankStatement,
+    is DocDto.ClassifiedDoc -> null
 }
 
 private fun String?.normalizeRecentDocumentText(): String? {

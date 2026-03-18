@@ -169,7 +169,6 @@ class DocumentUiStatusMapperTest {
             document = createDocument(),
             draft = draft,
             latestIngestion = latestIngestion,
-            confirmedEntity = null
         )
     }
 
@@ -204,7 +203,7 @@ class DocumentUiStatusMapperTest {
             tenantId = TenantId.generate(),
             documentStatus = documentStatus,
             documentType = documentType,
-            extractedData = null,
+            content = null,
             aiDraftSourceRunId = null,
             draftVersion = 1,
             draftEditedAt = null,

@@ -15,6 +15,7 @@ import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.InvoiceNumber
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.DocDto
 import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentIngestionDto
@@ -22,6 +23,7 @@ import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.InvoicePaymentInfo
 import tech.dokus.domain.model.InvoiceDraftData
+import tech.dokus.domain.model.toDocDto
 import tech.dokus.foundation.app.shell.DocQueueStatus
 import tech.dokus.foundation.app.shell.DocQueueStatusDetail
 import kotlin.test.Test
@@ -137,7 +139,7 @@ class DocumentQueueMapperTest {
             tenantId = tenantId,
             documentStatus = draftStatus,
             documentType = DocumentType.Invoice,
-            extractedData = draftData,
+            content = draftData.toDocDto(),
             aiDraftSourceRunId = null,
             draftVersion = 1,
             draftEditedAt = null,
@@ -160,7 +162,7 @@ class DocumentQueueMapperTest {
             confidence = 0.92,
         )
 
-        val confirmedEntity = if (includeConfirmedEntity) {
+        val confirmedContent: DocDto? = if (includeConfirmedEntity) {
             FinancialDocumentDto.InvoiceDto(
                 id = InvoiceId.generate(),
                 tenantId = tenantId,
@@ -185,9 +187,15 @@ class DocumentQueueMapperTest {
                 ) else null,
                 createdAt = now,
                 updatedAt = now,
-            )
+            ).toDocDto()
         } else {
             null
+        }
+
+        val finalDraft = if (confirmedContent != null) {
+            draft.copy(content = confirmedContent)
+        } else {
+            draft
         }
 
         return DocumentDetailDto(
@@ -198,9 +206,8 @@ class DocumentQueueMapperTest {
                 uploadedAt = now,
                 sortDate = LocalDate(2026, 1, 1),
             ),
-            draft = draft,
+            draft = finalDraft,
             latestIngestion = ingestion,
-            confirmedEntity = confirmedEntity,
         )
     }
 }

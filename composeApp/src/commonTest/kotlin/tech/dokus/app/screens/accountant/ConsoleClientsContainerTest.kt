@@ -367,6 +367,5 @@ private fun documentDetailRecord(
         ),
         draft = null,
         latestIngestion = null,
-        confirmedEntity = null,
     )
 }

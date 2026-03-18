@@ -22,8 +22,8 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.CreditNoteId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.database.entity.CreditNoteEntity
 import tech.dokus.domain.model.CreateCreditNoteRequest
-import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.toDbDecimal
 import tech.dokus.foundation.backend.database.dbQuery
@@ -46,7 +46,7 @@ class CreditNoteRepository {
     suspend fun createCreditNote(
         tenantId: TenantId,
         request: CreateCreditNoteRequest
-    ): Result<FinancialDocumentDto.CreditNoteDto> = runCatching {
+    ): Result<CreditNoteEntity> = runCatching {
         dbQuery {
             val creditNoteId = CreditNotesTable.insertAndGetId {
                 it[CreditNotesTable.tenantId] = UUID.fromString(tenantId.toString())
@@ -70,7 +70,7 @@ class CreditNoteRepository {
                 (CreditNotesTable.id eq creditNoteId.value) and
                     (CreditNotesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.single().let { row ->
-                mapRowToDto(row)
+                mapRowToEntity(row)
             }
         }
     }
@@ -82,13 +82,13 @@ class CreditNoteRepository {
     suspend fun getCreditNote(
         creditNoteId: CreditNoteId,
         tenantId: TenantId
-    ): Result<FinancialDocumentDto.CreditNoteDto?> = runCatching {
+    ): Result<CreditNoteEntity?> = runCatching {
         dbQuery {
             CreditNotesTable.selectAll().where {
                 (CreditNotesTable.id eq UUID.fromString(creditNoteId.toString())) and
                     (CreditNotesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.singleOrNull()?.let { row ->
-                mapRowToDto(row)
+                mapRowToEntity(row)
             }
         }
     }
@@ -106,7 +106,7 @@ class CreditNoteRepository {
         toDate: LocalDate? = null,
         limit: Int = 50,
         offset: Int = 0
-    ): Result<PaginatedResponse<FinancialDocumentDto.CreditNoteDto>> = runCatching {
+    ): Result<PaginatedResponse<CreditNoteEntity>> = runCatching {
         dbQuery {
             var query = CreditNotesTable.selectAll().where {
                 CreditNotesTable.tenantId eq UUID.fromString(tenantId.toString())
@@ -135,7 +135,7 @@ class CreditNoteRepository {
 
             val items = query.orderBy(CreditNotesTable.issueDate to SortOrder.DESC)
                 .limit(limit + offset)
-                .map { row -> mapRowToDto(row) }
+                .map { row -> mapRowToEntity(row) }
                 .drop(offset)
 
             PaginatedResponse(
@@ -157,7 +157,7 @@ class CreditNoteRepository {
         creditNoteId: CreditNoteId,
         tenantId: TenantId,
         request: CreateCreditNoteRequest
-    ): Result<FinancialDocumentDto.CreditNoteDto> = runCatching {
+    ): Result<CreditNoteEntity> = runCatching {
         dbQuery {
             val updated = CreditNotesTable.update({
                 (CreditNotesTable.id eq UUID.fromString(creditNoteId.toString())) and
@@ -185,7 +185,7 @@ class CreditNoteRepository {
                 (CreditNotesTable.id eq UUID.fromString(creditNoteId.toString())) and
                     (CreditNotesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.single().let { row ->
-                mapRowToDto(row)
+                mapRowToEntity(row)
             }
         }
     }
@@ -237,12 +237,12 @@ class CreditNoteRepository {
     suspend fun findByDocumentId(
         tenantId: TenantId,
         documentId: DocumentId
-    ): FinancialDocumentDto.CreditNoteDto? = dbQuery {
+    ): CreditNoteEntity? = dbQuery {
         CreditNotesTable.selectAll().where {
             (CreditNotesTable.tenantId eq UUID.fromString(tenantId.toString())) and
                 (CreditNotesTable.documentId eq UUID.fromString(documentId.toString()))
         }.singleOrNull()?.let { row ->
-            mapRowToDto(row)
+            mapRowToEntity(row)
         }
     }
 
@@ -279,8 +279,8 @@ class CreditNoteRepository {
         }
     }
 
-    private fun mapRowToDto(row: ResultRow): FinancialDocumentDto.CreditNoteDto {
-        return FinancialDocumentDto.CreditNoteDto(
+    private fun mapRowToEntity(row: ResultRow): CreditNoteEntity {
+        return CreditNoteEntity(
             id = CreditNoteId.parse(row[CreditNotesTable.id].value.toString()),
             tenantId = TenantId.parse(row[CreditNotesTable.tenantId].toString()),
             contactId = ContactId.parse(row[CreditNotesTable.contactId].toString()),

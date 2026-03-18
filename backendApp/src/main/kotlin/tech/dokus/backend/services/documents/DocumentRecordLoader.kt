@@ -1,6 +1,7 @@
 package tech.dokus.backend.services.documents
 
 import tech.dokus.backend.routes.cashflow.documents.addDownloadUrl
+import tech.dokus.backend.routes.cashflow.documents.confirmedEntityToDocDto
 import tech.dokus.backend.routes.cashflow.documents.findConfirmedEntity
 import tech.dokus.backend.routes.cashflow.documents.toDto
 import tech.dokus.backend.routes.cashflow.documents.toSummaryDto
@@ -17,10 +18,12 @@ import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.DocumentDetailDto
+import tech.dokus.domain.model.DocDto
 import tech.dokus.domain.model.contact.ContactSuggestionDto
 import tech.dokus.domain.model.contact.CounterpartyInfo
 import tech.dokus.domain.model.contact.CounterpartySnapshot
 import tech.dokus.domain.model.contact.ResolvedContact
+import tech.dokus.domain.model.toDocDto
 import tech.dokus.foundation.backend.storage.DocumentStorageService
 import tech.dokus.foundation.backend.utils.loggerFor
 
@@ -60,6 +63,7 @@ internal class DocumentRecordLoader(
         val contactSuggestions = buildContactSuggestions(draft)
         val latestIngestion = ingestionRepository.getLatestForDocument(documentId, tenantId)
         val pendingReview = truthService.getPendingReviewByDocument(tenantId, documentId)
+        // Build DocDto content: Confirmed variant if confirmed, Draft variant otherwise
         val confirmedEntity = if (draft?.documentStatus == DocumentStatus.Confirmed) {
             findConfirmedEntity(
                 documentId = documentId,
@@ -72,6 +76,12 @@ internal class DocumentRecordLoader(
         } else {
             null
         }
+        val content = if (confirmedEntity != null) {
+            confirmedEntityToDocDto(confirmedEntity)
+        } else {
+            draft?.extractedData?.toDocDto()
+        }
+
         val cashflowEntryId = if (draft?.documentStatus == DocumentStatus.Confirmed) {
             cashflowEntriesRepository.getByDocumentId(tenantId, documentId).getOrNull()?.id
         } else {
@@ -80,12 +90,11 @@ internal class DocumentRecordLoader(
 
         return DocumentDetailDto(
             document = documentWithUrl,
-            draft = draft?.toDto(resolvedContact, contactSuggestions),
+            draft = draft?.toDto(resolvedContact, contactSuggestions, content),
             latestIngestion = latestIngestion?.toDto(
                 includeRawExtraction = true,
                 includeTrace = true,
             ),
-            confirmedEntity = confirmedEntity,
             cashflowEntryId = cashflowEntryId,
             pendingMatchReview = pendingReview?.toSummaryDto(),
             sources = sources.map { it.toDto() },

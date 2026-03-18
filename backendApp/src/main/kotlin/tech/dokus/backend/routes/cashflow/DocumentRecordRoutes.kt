@@ -74,7 +74,7 @@ import tech.dokus.domain.model.DocumentDeletedEventDto
 import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.DocumentListItemDto
 import tech.dokus.domain.model.DocumentStreamEventNames
-import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.database.entity.InvoiceEntity
 import tech.dokus.domain.model.RejectDocumentRequest
 import tech.dokus.domain.model.BulkReprocessRequest
 import tech.dokus.domain.model.ReprocessRequest
@@ -801,7 +801,7 @@ internal fun Route.documentRecordRoutes() {
                 )
 
                 if (confirmedEntity != null) {
-                    if (confirmedEntity is FinancialDocumentDto.InvoiceDto &&
+                    if (confirmedEntity is InvoiceEntity &&
                         confirmedEntity.paidAmount.minor >= confirmedEntity.totalAmount.minor &&
                         confirmedEntity.paidAt == null
                     ) {
@@ -915,7 +915,7 @@ internal fun Route.documentRecordRoutes() {
             val entryId = confirmationResult.cashflowEntryId
             logger.info("Document confirmed: $documentId -> $draftType, cashflowEntryId=$entryId")
 
-            if (confirmationResult.entity is FinancialDocumentDto.InvoiceDto && entryId != null) {
+            if (confirmationResult.entity is InvoiceEntity && entryId != null) {
                 runCatching {
                     invoiceBankAutomationService.onInvoiceConfirmed(
                         tenantId = tenantId,

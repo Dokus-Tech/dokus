@@ -4,6 +4,7 @@ import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.DocumentDetailDto
+import tech.dokus.domain.model.isContactRequired
 import tech.dokus.features.cashflow.usecases.GetDocumentRecordUseCase
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.platform.Logger
@@ -108,9 +109,9 @@ internal class DocumentReviewLoader(
             selectedQueueDocumentId = if (queueState != null) documentId else null
         }
         val draft = document.draft
-        val extractedData = draft?.extractedData
+        val content = draft?.content
 
-        if (extractedData == null) {
+        if (content == null) {
             val isFailed = document.latestIngestion?.status == IngestionStatus.Failed
             if (isFailed) {
                 // Failed extraction -> show as content with null draft data
@@ -190,15 +191,15 @@ internal class DocumentReviewLoader(
                     ReviewDocumentData(
                         documentId = documentId,
                         documentRecord = document,
-                        draftData = extractedData,
-                        originalData = extractedData,
+                        draftData = content,
+                        originalData = content,
                         previewUrl = previewUrl,
                         contactSuggestions = contactSuggestions,
                     )
                 ),
                 isAwaitingExtraction = false,
                 previewState = previewState,
-                isContactRequired = extractedData.isContactRequired,
+                isContactRequired = content.isContactRequired,
                 documentStatus = draft.documentStatus,
                 confirmedCashflowEntryId = document.cashflowEntryId,
                 cashflowEntryState = previousCashflowEntryState,

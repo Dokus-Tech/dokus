@@ -110,8 +110,7 @@ internal fun Route.consoleRoutes() {
                     document = documentWithUrl,
                     draft = docInfo.draft?.toDto(),
                     latestIngestion = docInfo.latestIngestion?.toDto(),
-                    confirmedEntity = null,
-                )
+                                    )
             }
 
             call.respond(
@@ -152,8 +151,7 @@ internal fun Route.consoleRoutes() {
                         includeRawExtraction = true,
                         includeTrace = true
                     ),
-                    confirmedEntity = null,
-                )
+                                    )
             )
         }
 

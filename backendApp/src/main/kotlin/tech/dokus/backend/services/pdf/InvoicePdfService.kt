@@ -6,7 +6,7 @@ import org.apache.pdfbox.pdmodel.PDPageContentStream
 import org.apache.pdfbox.pdmodel.common.PDRectangle
 import org.apache.pdfbox.pdmodel.font.PDType1Font
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts
-import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.database.entity.InvoiceEntity
 import tech.dokus.foundation.backend.storage.DocumentStorageService
 import tech.dokus.foundation.backend.storage.UploadResult
 import tech.dokus.foundation.backend.utils.loggerFor
@@ -26,7 +26,7 @@ class InvoicePdfService(
     private val logger = loggerFor()
 
     suspend fun generateAndUploadPdf(
-        invoice: FinancialDocumentDto.InvoiceDto,
+        invoice: InvoiceEntity,
         contactDisplayName: String
     ): Result<UploadResult> = runCatching {
         val bytes = renderPdf(invoice, contactDisplayName)
@@ -42,7 +42,7 @@ class InvoicePdfService(
     }
 
     private fun renderPdf(
-        invoice: FinancialDocumentDto.InvoiceDto,
+        invoice: InvoiceEntity,
         contactDisplayName: String
     ): ByteArray {
         PDDocument().use { document ->
