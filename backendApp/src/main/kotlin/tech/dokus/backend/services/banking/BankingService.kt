@@ -158,7 +158,7 @@ class BankingService(
         val transaction = bankTransactionRepository.findById(tenantId, transactionId)
             ?: throw DokusException.NotFound("Bank transaction not found")
 
-        val matchedEntryId = transaction.matchInfo?.cashflowEntryId
+        val matchedEntryId = transaction.matchedCashflowId
             ?: throw DokusException.BadRequest("Transaction has no suggested match to confirm")
 
         val result = updateAndRefetch(tenantId, transactionId, "Confirmed match for transaction {} -> entry {} for tenant {}", transactionId, matchedEntryId, tenantId) {
@@ -196,7 +196,7 @@ class BankingService(
             throw DokusException.BadRequest("Only NeedsReview transactions can be rejected")
         }
 
-        val documentId = transaction.matchInfo?.documentId
+        val documentId = transaction.matchedDocumentId
 
         val result = updateAndRefetch(tenantId, transactionId, "Rejected match for transaction {} for tenant {}", transactionId, tenantId) {
             bankTransactionRepository.clearMatch(tenantId, transactionId)
