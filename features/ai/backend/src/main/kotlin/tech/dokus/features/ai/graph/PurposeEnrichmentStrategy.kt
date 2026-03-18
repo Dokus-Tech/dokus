@@ -3,6 +3,7 @@ package tech.dokus.features.ai.graph
 import ai.koog.agents.core.agent.entity.AIAgentGraphStrategy
 import ai.koog.agents.core.dsl.builder.forwardTo
 import ai.koog.agents.core.dsl.builder.strategy
+import kotlinx.datetime.number
 import tech.dokus.domain.enums.DocumentPurposeSource
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.PurposePeriodMode
@@ -22,7 +23,9 @@ fun purposeEnrichmentGraph(): AIAgentGraphStrategy<PurposeEnrichmentInput, Purpo
 
             val resolvedBase = templateBase ?: ragBase ?: fallbackBase
             val resolvedMode = when {
-                !templateBase.isNullOrBlank() -> input.templatePeriodMode ?: PurposePeriodMode.IssueMonth
+                !templateBase.isNullOrBlank() -> input.templatePeriodMode
+                    ?: PurposePeriodMode.IssueMonth
+
                 else -> PurposePeriodMode.IssueMonth
             }
             val source = when {
@@ -37,12 +40,11 @@ fun purposeEnrichmentGraph(): AIAgentGraphStrategy<PurposeEnrichmentInput, Purpo
                 PurposePeriodMode.None -> null
             }
             val (periodYear, periodMonth) = if (periodDate != null) {
-                periodDate.year to periodDate.monthNumber
+                periodDate.year to periodDate.month.number
             } else {
                 null to null
             }
             val rendered = renderPurpose(
-                supplierDisplayName = input.supplierDisplayName,
                 purposeBase = resolvedBase,
                 periodYear = periodYear,
                 periodMonth = periodMonth,
@@ -80,29 +82,20 @@ private fun defaultPurposeBase(documentType: DocumentType): String = when (docum
 }
 
 private fun renderPurpose(
-    supplierDisplayName: String?,
     purposeBase: String?,
     periodYear: Int?,
     periodMonth: Int?,
     periodMode: PurposePeriodMode
 ): String? {
     val base = purposeBase?.takeIf { it.isNotBlank() } ?: return null
-    val supplier = supplierDisplayName
-        ?.trim()
-        ?.replace(Regex("\\s+"), " ")
-        ?.takeIf { it.isNotBlank() }
-
-    val periodLabel = if (periodMode == PurposePeriodMode.None || periodYear == null || periodMonth == null) {
-        null
-    } else {
-        "${monthLabel(periodMonth)} $periodYear"
-    }
+    val periodLabel =
+        if (periodMode == PurposePeriodMode.None || periodYear == null || periodMonth == null) {
+            null
+        } else {
+            "${monthLabel(periodMonth)} $periodYear"
+        }
 
     return buildString {
-        if (!supplier.isNullOrBlank()) {
-            append(supplier)
-            append(" - ")
-        }
         append(base)
         if (!periodLabel.isNullOrBlank()) {
             append(" ")
