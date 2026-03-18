@@ -106,7 +106,7 @@ class CashflowProjectionReconciliationWorker(
 
                             if (entity is FinancialDocumentDto.InvoiceDto &&
                                 entity.paidAmount.minor >= entity.totalAmount.minor &&
-                                entity.paymentInfo?.paidAt == null
+                                entity.paidAt == null
                             ) {
                                 paidWithoutPaidAtDetected += 1
                                 logger.warn(

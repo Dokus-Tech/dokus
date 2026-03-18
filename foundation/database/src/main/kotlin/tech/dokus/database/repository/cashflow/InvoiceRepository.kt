@@ -39,12 +39,9 @@ import tech.dokus.domain.ids.Bic
 import tech.dokus.domain.ids.PeppolId
 import tech.dokus.domain.ids.StructuredCommunication
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.database.entity.InvoiceEntity
+import tech.dokus.database.entity.InvoiceItemEntity
 import tech.dokus.domain.model.CreateInvoiceRequest
-import tech.dokus.domain.model.FinancialDocumentDto
-import tech.dokus.domain.model.InvoiceItemDto
-import tech.dokus.domain.model.InvoicePaymentInfo
-import tech.dokus.domain.model.InvoicePeppolInfo
-import tech.dokus.domain.model.PaymentLinkInfo
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.toDbDecimal
 import tech.dokus.foundation.backend.database.dbQuery
@@ -70,7 +67,7 @@ class InvoiceRepository(
     suspend fun createInvoice(
         tenantId: TenantId,
         request: CreateInvoiceRequest
-    ): Result<FinancialDocumentDto.InvoiceDto> = runCatching {
+    ): Result<InvoiceEntity> = runCatching {
         // Generate invoice number atomically BEFORE creating the invoice.
         // This ensures gap-less numbering as required by Belgian tax law.
         // The number is consumed even if invoice creation fails.
@@ -148,7 +145,7 @@ class InvoiceRepository(
     suspend fun getInvoice(
         invoiceId: InvoiceId,
         tenantId: TenantId
-    ): Result<FinancialDocumentDto.InvoiceDto?> = runCatching {
+    ): Result<InvoiceEntity?> = runCatching {
         dbQuery {
             val row = InvoicesTable.selectAll().where {
                 (InvoicesTable.id eq UUID.fromString(invoiceId.toString())) and
@@ -181,7 +178,7 @@ class InvoiceRepository(
         toDate: LocalDate? = null,
         limit: Int = 50,
         offset: Int = 0
-    ): Result<PaginatedResponse<FinancialDocumentDto.InvoiceDto>> = runCatching {
+    ): Result<PaginatedResponse<InvoiceEntity>> = runCatching {
         dbQuery {
             var query = InvoicesTable.selectAll().where {
                 InvoicesTable.tenantId eq UUID.fromString(tenantId.toString())
@@ -232,7 +229,7 @@ class InvoiceRepository(
     suspend fun listOverdueInvoices(
         tenantId: TenantId,
         direction: DocumentDirection = DocumentDirection.Outbound
-    ): Result<List<FinancialDocumentDto.InvoiceDto>> =
+    ): Result<List<InvoiceEntity>> =
         runCatching {
             dbQuery {
                 val today = Clock.System.now()
@@ -358,7 +355,7 @@ class InvoiceRepository(
         invoiceId: InvoiceId,
         tenantId: TenantId,
         request: CreateInvoiceRequest
-    ): Result<FinancialDocumentDto.InvoiceDto> = runCatching {
+    ): Result<InvoiceEntity> = runCatching {
         dbQuery {
             // Verify invoice exists and belongs to tenant
             val exists = InvoicesTable.selectAll().where {
@@ -510,7 +507,7 @@ class InvoiceRepository(
     suspend fun findByDocumentId(
         tenantId: TenantId,
         documentId: DocumentId
-    ): FinancialDocumentDto.InvoiceDto? = dbQuery {
+    ): InvoiceEntity? = dbQuery {
         InvoicesTable.selectAll().where {
             (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString())) and
                 (InvoicesTable.documentId eq UUID.fromString(documentId.toString()))
@@ -535,7 +532,7 @@ class InvoiceRepository(
     suspend fun findByInvoiceNumber(
         tenantId: TenantId,
         invoiceNumber: String
-    ): FinancialDocumentDto.InvoiceDto? = dbQuery {
+    ): InvoiceEntity? = dbQuery {
         InvoicesTable.selectAll().where {
             (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString())) and
                 (InvoicesTable.invoiceNumber eq invoiceNumber)
@@ -555,7 +552,7 @@ class InvoiceRepository(
     suspend fun getLatestInvoiceForContact(
         tenantId: TenantId,
         contactId: ContactId
-    ): Result<FinancialDocumentDto.InvoiceDto?> = runCatching {
+    ): Result<InvoiceEntity?> = runCatching {
         dbQuery {
             val row = InvoicesTable.selectAll().where {
                 (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString())) and
@@ -579,8 +576,8 @@ class InvoiceRepository(
     private fun mapItemRow(
         itemRow: ResultRow,
         invoiceId: InvoiceId
-    ): InvoiceItemDto {
-        return InvoiceItemDto(
+    ): InvoiceItemEntity {
+        return InvoiceItemEntity(
             id = itemRow[InvoiceItemsTable.id].value.toString(),
             invoiceId = invoiceId,
             description = itemRow[InvoiceItemsTable.description],
@@ -595,9 +592,9 @@ class InvoiceRepository(
 
     private fun mapInvoiceRow(
         row: ResultRow,
-        items: List<InvoiceItemDto>
-    ): FinancialDocumentDto.InvoiceDto {
-        return FinancialDocumentDto.InvoiceDto(
+        items: List<InvoiceItemEntity>
+    ): InvoiceEntity {
+        return InvoiceEntity(
             id = InvoiceId.parse(row[InvoicesTable.id].value.toString()),
             tenantId = TenantId.parse(row[InvoicesTable.tenantId].toString()),
             direction = row[InvoicesTable.direction],
@@ -620,26 +617,14 @@ class InvoiceRepository(
             deliveryMethod = row[InvoicesTable.deliveryMethod],
             termsAndConditions = row[InvoicesTable.termsAndConditions],
             items = items,
-            peppol = row[InvoicesTable.peppolId]?.let { peppolId ->
-                InvoicePeppolInfo(
-                    peppolId = PeppolId(peppolId),
-                    sentAt = row[InvoicesTable.peppolSentAt]!!,
-                    status = row[InvoicesTable.peppolStatus]!!,
-                )
-            },
-            paymentLinkInfo = row[InvoicesTable.paymentLink]?.let { url ->
-                PaymentLinkInfo(
-                    url = url,
-                    expiresAt = row[InvoicesTable.paymentLinkExpiresAt],
-                )
-            },
-            paymentInfo = row[InvoicesTable.paidAt]?.let { paidAt ->
-                InvoicePaymentInfo(
-                    paidAt = paidAt,
-                    paymentMethod = row[InvoicesTable.paymentMethod]!!,
-                )
-            },
+            peppolId = row[InvoicesTable.peppolId]?.let(::PeppolId),
+            peppolSentAt = row[InvoicesTable.peppolSentAt],
+            peppolStatus = row[InvoicesTable.peppolStatus],
             documentId = row[InvoicesTable.documentId]?.let { DocumentId.parse(it.toString()) },
+            paymentLink = row[InvoicesTable.paymentLink],
+            paymentLinkExpiresAt = row[InvoicesTable.paymentLinkExpiresAt],
+            paidAt = row[InvoicesTable.paidAt],
+            paymentMethod = row[InvoicesTable.paymentMethod],
             createdAt = row[InvoicesTable.createdAt],
             updatedAt = row[InvoicesTable.updatedAt]
         )

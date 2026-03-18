@@ -855,7 +855,7 @@ internal fun Route.documentRecordRoutes() {
                 if (confirmedEntity != null) {
                     if (confirmedEntity is FinancialDocumentDto.InvoiceDto &&
                         confirmedEntity.paidAmount.minor >= confirmedEntity.totalAmount.minor &&
-                        confirmedEntity.paymentInfo?.paidAt == null
+                        confirmedEntity.paidAt == null
                     ) {
                         logger.warn(
                             "Detected paid invoice without paidAt during confirm-path reconciliation: tenant={}, document={}, invoice={}",
