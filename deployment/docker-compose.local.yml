@@ -12,6 +12,7 @@ services:
     environment:
       POSTGRES_USER: dev
       POSTGRES_PASSWORD: devpassword
+      POSTGRES_DB: dokus
     deploy:
 
   redis:
