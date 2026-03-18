@@ -1,6 +1,9 @@
 package tech.dokus.backend
 
 import io.ktor.server.application.Application
+import kotlinx.coroutines.runBlocking
+import org.koin.ktor.ext.get
+import tech.dokus.backend.services.documents.DraftTableMigration
 import io.ktor.server.application.install
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
@@ -54,6 +57,9 @@ fun Application.module(appConfig: AppBaseConfig) {
     // Dependency injection first (JwtValidator, DatabaseFactory, etc)
     configureDependencyInjection(appConfig)
     configureDatabase()
+
+    // One-time data migration: populate draft tables from extracted_data JSON
+    runBlocking { get<DraftTableMigration>().migrateIfNeeded() }
 
     // Ktor plugins
     install(Resources)

@@ -17,6 +17,7 @@ import tech.dokus.database.repository.cashflow.DocumentMatchReviewSummary
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.DocumentSourceRepository
 import tech.dokus.database.repository.cashflow.DocumentSourceSummary
+import tech.dokus.database.repository.drafts.DraftRepository
 import tech.dokus.database.tables.documents.DocumentBlobsTable
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
 import tech.dokus.database.tables.documents.DocumentSourcesTable
@@ -194,7 +195,8 @@ class DocumentTruthService(
     private val ingestionRepository: DocumentIngestionRunRepository,
     private val blobRepository: DocumentBlobRepository,
     private val sourceRepository: DocumentSourceRepository,
-    private val matchReviewRepository: DocumentMatchReviewRepository
+    private val matchReviewRepository: DocumentMatchReviewRepository,
+    private val draftRepository: DraftRepository,
 ) {
     private val logger = loggerFor()
 
@@ -606,6 +608,11 @@ class DocumentTruthService(
                             extractedData = draftData,
                             documentType = draftData.toDocumentType(),
                             force = true
+                        )
+                        draftRepository.saveDraftFromExtraction(
+                            tenantId = tenantId,
+                            documentId = newDocumentId,
+                            extractedData = draftData,
                         )
                     }.onFailure { error ->
                         logger.warn(

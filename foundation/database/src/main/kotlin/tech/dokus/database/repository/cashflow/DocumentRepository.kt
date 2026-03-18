@@ -10,6 +10,7 @@ import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.isNotNull
 import org.jetbrains.exposed.v1.core.greaterEq
 import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.isNull
@@ -618,6 +619,17 @@ class DocumentRepository : DocumentStatusChecker {
             }
             .map { it.toDraftSummary(contactName = it.getOrNull(ContactsTable.name)) }
             .singleOrNull()
+    }
+
+    /**
+     * List all documents that have extracted_data (for migration to draft tables).
+     * Returns lightweight DraftSummary with just the fields needed for migration.
+     */
+    suspend fun listAllDraftsWithExtractedData(): List<DraftSummary> = newSuspendedTransaction {
+        DocumentsTable
+            .selectAll()
+            .where { DocumentsTable.canonicalData.isNotNull() }
+            .map { it.toDraftSummary() }
     }
 
     /**

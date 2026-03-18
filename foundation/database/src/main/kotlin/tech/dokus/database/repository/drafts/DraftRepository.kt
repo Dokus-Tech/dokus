@@ -8,14 +8,20 @@ import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
+import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.insertAndGetId
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import tech.dokus.database.entity.*
 import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.drafts.*
+import tech.dokus.domain.Money
+import tech.dokus.domain.VatRate
+import tech.dokus.domain.toDbDecimal
+import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.DocDto
+import tech.dokus.domain.model.*
 import tech.dokus.foundation.backend.database.dbQuery
 import kotlin.uuid.toJavaUuid
 
@@ -206,6 +212,220 @@ class DraftRepository {
                 (docCol eq documentId.value.toJavaUuid())
         }
         deleted > 0
+    }
+
+    /**
+     * Save extracted draft data to the appropriate per-type draft table.
+     * Upserts: deletes existing draft for this document, then inserts new one.
+     * Called by the AI extraction pipeline after successful extraction.
+     */
+    @Suppress("CyclomaticComplexMethod", "LongMethod")
+    suspend fun saveDraftFromExtraction(
+        tenantId: TenantId,
+        documentId: DocumentId,
+        extractedData: DocumentDraftData,
+    ): Boolean {
+        val docType = extractedData.toDocumentType()
+        deleteDraft(tenantId, documentId, docType)
+
+        return when (extractedData) {
+            is InvoiceDraftData -> saveInvoiceDraft(tenantId, documentId, extractedData)
+            is CreditNoteDraftData -> saveCreditNoteDraft(tenantId, documentId, extractedData)
+            is ReceiptDraftData -> saveReceiptDraft(tenantId, documentId, extractedData)
+            is BankStatementDraftData -> saveBankStatementDraft(tenantId, documentId, extractedData)
+            is ProFormaDraftData -> insertClassifiedDraft(tenantId, documentId, ProFormaDraftsTable, extractedData.direction)
+            is QuoteDraftData -> insertClassifiedDraft(tenantId, documentId, QuoteDraftsTable, extractedData.direction)
+            is OrderConfirmationDraftData -> insertClassifiedDraft(tenantId, documentId, OrderConfirmationDraftsTable, extractedData.direction)
+            is DeliveryNoteDraftData -> insertClassifiedDraft(tenantId, documentId, DeliveryNoteDraftsTable, extractedData.direction)
+            is ReminderDraftData -> insertClassifiedDraft(tenantId, documentId, ReminderDraftsTable, extractedData.direction)
+            is StatementOfAccountDraftData -> insertClassifiedDraft(tenantId, documentId, StatementOfAccountDraftsTable, extractedData.direction)
+            is PurchaseOrderDraftData -> insertClassifiedDraft(tenantId, documentId, PurchaseOrderDraftsTable, extractedData.direction)
+            is ExpenseClaimDraftData -> insertClassifiedDraft(tenantId, documentId, ExpenseClaimDraftsTable, extractedData.direction)
+            is BankFeeDraftData -> insertClassifiedDraft(tenantId, documentId, BankFeeDraftsTable, extractedData.direction)
+            is InterestStatementDraftData -> insertClassifiedDraft(tenantId, documentId, InterestStatementDraftsTable, extractedData.direction)
+            is PaymentConfirmationDraftData -> insertClassifiedDraft(tenantId, documentId, PaymentConfirmationDraftsTable, extractedData.direction)
+            is VatReturnDraftData -> insertClassifiedDraft(tenantId, documentId, VatReturnDraftsTable, extractedData.direction)
+            is VatListingDraftData -> insertClassifiedDraft(tenantId, documentId, VatListingDraftsTable, extractedData.direction)
+            is VatAssessmentDraftData -> insertClassifiedDraft(tenantId, documentId, VatAssessmentDraftsTable, extractedData.direction)
+            is IcListingDraftData -> insertClassifiedDraft(tenantId, documentId, IcListingDraftsTable, extractedData.direction)
+            is OssReturnDraftData -> insertClassifiedDraft(tenantId, documentId, OssReturnDraftsTable, extractedData.direction)
+            is CorporateTaxDraftData -> insertClassifiedDraft(tenantId, documentId, CorporateTaxDraftsTable, extractedData.direction)
+            is CorporateTaxAdvanceDraftData -> insertClassifiedDraft(tenantId, documentId, CorporateTaxAdvanceDraftsTable, extractedData.direction)
+            is TaxAssessmentDraftData -> insertClassifiedDraft(tenantId, documentId, TaxAssessmentDraftsTable, extractedData.direction)
+            is PersonalTaxDraftData -> insertClassifiedDraft(tenantId, documentId, PersonalTaxDraftsTable, extractedData.direction)
+            is WithholdingTaxDraftData -> insertClassifiedDraft(tenantId, documentId, WithholdingTaxDraftsTable, extractedData.direction)
+            is SocialContributionDraftData -> insertClassifiedDraft(tenantId, documentId, SocialContributionDraftsTable, extractedData.direction)
+            is SocialFundDraftData -> insertClassifiedDraft(tenantId, documentId, SocialFundDraftsTable, extractedData.direction)
+            is SelfEmployedContributionDraftData -> insertClassifiedDraft(tenantId, documentId, SelfEmployedContributionDraftsTable, extractedData.direction)
+            is VapzDraftData -> insertClassifiedDraft(tenantId, documentId, VapzDraftsTable, extractedData.direction)
+            is SalarySlipDraftData -> insertClassifiedDraft(tenantId, documentId, SalarySlipDraftsTable, extractedData.direction)
+            is PayrollSummaryDraftData -> insertClassifiedDraft(tenantId, documentId, PayrollSummaryDraftsTable, extractedData.direction)
+            is EmploymentContractDraftData -> insertClassifiedDraft(tenantId, documentId, EmploymentContractDraftsTable, extractedData.direction)
+            is DimonaDraftData -> insertClassifiedDraft(tenantId, documentId, DimonaDraftsTable, extractedData.direction)
+            is C4DraftData -> insertClassifiedDraft(tenantId, documentId, C4DraftsTable, extractedData.direction)
+            is HolidayPayDraftData -> insertClassifiedDraft(tenantId, documentId, HolidayPayDraftsTable, extractedData.direction)
+            is ContractDraftData -> insertClassifiedDraft(tenantId, documentId, ContractDraftsTable, extractedData.direction)
+            is LeaseDraftData -> insertClassifiedDraft(tenantId, documentId, LeaseDraftsTable, extractedData.direction)
+            is LoanDraftData -> insertClassifiedDraft(tenantId, documentId, LoanDraftsTable, extractedData.direction)
+            is InsuranceDraftData -> insertClassifiedDraft(tenantId, documentId, InsuranceDraftsTable, extractedData.direction)
+            is DividendDraftData -> insertClassifiedDraft(tenantId, documentId, DividendDraftsTable, extractedData.direction)
+            is ShareholderRegisterDraftData -> insertClassifiedDraft(tenantId, documentId, ShareholderRegisterDraftsTable, extractedData.direction)
+            is CompanyExtractDraftData -> insertClassifiedDraft(tenantId, documentId, CompanyExtractDraftsTable, extractedData.direction)
+            is AnnualAccountsDraftData -> insertClassifiedDraft(tenantId, documentId, AnnualAccountsDraftsTable, extractedData.direction)
+            is BoardMinutesDraftData -> insertClassifiedDraft(tenantId, documentId, BoardMinutesDraftsTable, extractedData.direction)
+            is SubsidyDraftData -> insertClassifiedDraft(tenantId, documentId, SubsidyDraftsTable, extractedData.direction)
+            is FineDraftData -> insertClassifiedDraft(tenantId, documentId, FineDraftsTable, extractedData.direction)
+            is PermitDraftData -> insertClassifiedDraft(tenantId, documentId, PermitDraftsTable, extractedData.direction)
+            is CustomsDeclarationDraftData -> insertClassifiedDraft(tenantId, documentId, CustomsDeclarationDraftsTable, extractedData.direction)
+            is IntrastatDraftData -> insertClassifiedDraft(tenantId, documentId, IntrastatDraftsTable, extractedData.direction)
+            is DepreciationScheduleDraftData -> insertClassifiedDraft(tenantId, documentId, DepreciationScheduleDraftsTable, extractedData.direction)
+            is InventoryDraftData -> insertClassifiedDraft(tenantId, documentId, InventoryDraftsTable, extractedData.direction)
+            is OtherDraftData -> insertClassifiedDraft(tenantId, documentId, OtherDraftsTable, extractedData.direction)
+        }
+    }
+
+    // ==========================================================================
+    // Core financial draft writers
+    // ==========================================================================
+
+    private suspend fun saveInvoiceDraft(
+        tenantId: TenantId,
+        documentId: DocumentId,
+        data: InvoiceDraftData,
+    ): Boolean = dbQuery {
+        val draftId = InvoiceDraftsTable.insertAndGetId {
+            it[InvoiceDraftsTable.tenantId] = tenantId.value.toJavaUuid()
+            it[InvoiceDraftsTable.documentId] = documentId.value.toJavaUuid()
+            it[InvoiceDraftsTable.invoiceNumber] = data.invoiceNumber
+            it[InvoiceDraftsTable.issueDate] = data.issueDate
+            it[InvoiceDraftsTable.dueDate] = data.dueDate
+            it[InvoiceDraftsTable.direction] = data.direction
+            it[InvoiceDraftsTable.currency] = data.currency
+            it[InvoiceDraftsTable.subtotalAmount] = data.subtotalAmount?.toDbDecimal()
+            it[InvoiceDraftsTable.vatAmount] = data.vatAmount?.toDbDecimal()
+            it[InvoiceDraftsTable.totalAmount] = data.totalAmount?.toDbDecimal()
+            it[InvoiceDraftsTable.notes] = data.notes
+            it[InvoiceDraftsTable.senderIban] = data.iban?.value
+            it[InvoiceDraftsTable.structuredCommunication] = data.payment?.structuredComm?.value
+        }
+        data.lineItems.forEachIndexed { index, item ->
+            InvoiceDraftItemsTable.insert {
+                it[InvoiceDraftItemsTable.draftId] = draftId.value
+                it[InvoiceDraftItemsTable.description] = item.description
+                it[InvoiceDraftItemsTable.quantity] = item.quantity?.toBigDecimal()
+                it[InvoiceDraftItemsTable.unitPrice] = item.unitPrice?.let { price -> Money(price).toDbDecimal() }
+                it[InvoiceDraftItemsTable.vatRate] = item.vatRate?.let { rate -> VatRate(rate).toDbDecimal() }
+                it[InvoiceDraftItemsTable.lineTotal] = item.netAmount?.let { amount -> Money(amount).toDbDecimal() }
+                it[InvoiceDraftItemsTable.vatAmount] = null
+                it[InvoiceDraftItemsTable.sortOrder] = index
+            }
+        }
+        true
+    }
+
+    private suspend fun saveCreditNoteDraft(
+        tenantId: TenantId,
+        documentId: DocumentId,
+        data: CreditNoteDraftData,
+    ): Boolean = dbQuery {
+        val draftId = CreditNoteDraftsTable.insertAndGetId {
+            it[CreditNoteDraftsTable.tenantId] = tenantId.value.toJavaUuid()
+            it[CreditNoteDraftsTable.documentId] = documentId.value.toJavaUuid()
+            it[CreditNoteDraftsTable.creditNoteNumber] = data.creditNoteNumber
+            it[CreditNoteDraftsTable.issueDate] = data.issueDate
+            it[CreditNoteDraftsTable.direction] = data.direction
+            it[CreditNoteDraftsTable.currency] = data.currency
+            it[CreditNoteDraftsTable.subtotalAmount] = data.subtotalAmount?.toDbDecimal()
+            it[CreditNoteDraftsTable.vatAmount] = data.vatAmount?.toDbDecimal()
+            it[CreditNoteDraftsTable.totalAmount] = data.totalAmount?.toDbDecimal()
+            it[CreditNoteDraftsTable.originalInvoiceNumber] = data.originalInvoiceNumber
+            it[CreditNoteDraftsTable.reason] = data.reason
+            it[CreditNoteDraftsTable.notes] = data.notes
+        }
+        data.lineItems.forEachIndexed { index, item ->
+            CreditNoteDraftItemsTable.insert {
+                it[CreditNoteDraftItemsTable.draftId] = draftId.value
+                it[CreditNoteDraftItemsTable.description] = item.description
+                it[CreditNoteDraftItemsTable.quantity] = item.quantity?.toBigDecimal()
+                it[CreditNoteDraftItemsTable.unitPrice] = item.unitPrice?.let { price -> Money(price).toDbDecimal() }
+                it[CreditNoteDraftItemsTable.vatRate] = item.vatRate?.let { rate -> VatRate(rate).toDbDecimal() }
+                it[CreditNoteDraftItemsTable.lineTotal] = item.netAmount?.let { amount -> Money(amount).toDbDecimal() }
+                it[CreditNoteDraftItemsTable.vatAmount] = null
+                it[CreditNoteDraftItemsTable.sortOrder] = index
+            }
+        }
+        true
+    }
+
+    private suspend fun saveReceiptDraft(
+        tenantId: TenantId,
+        documentId: DocumentId,
+        data: ReceiptDraftData,
+    ): Boolean = dbQuery {
+        ReceiptDraftsTable.insert {
+            it[ReceiptDraftsTable.tenantId] = tenantId.value.toJavaUuid()
+            it[ReceiptDraftsTable.documentId] = documentId.value.toJavaUuid()
+            it[ReceiptDraftsTable.merchantName] = data.merchantName
+            it[ReceiptDraftsTable.merchantVat] = data.merchantVat?.value
+            it[ReceiptDraftsTable.date] = data.date
+            it[ReceiptDraftsTable.direction] = data.direction
+            it[ReceiptDraftsTable.currency] = data.currency
+            it[ReceiptDraftsTable.totalAmount] = data.totalAmount?.toDbDecimal()
+            it[ReceiptDraftsTable.vatAmount] = data.vatAmount?.toDbDecimal()
+            it[ReceiptDraftsTable.receiptNumber] = data.receiptNumber
+            it[ReceiptDraftsTable.paymentMethod] = data.paymentMethod
+            it[ReceiptDraftsTable.notes] = data.notes
+        }
+        true
+    }
+
+    private suspend fun saveBankStatementDraft(
+        tenantId: TenantId,
+        documentId: DocumentId,
+        data: BankStatementDraftData,
+    ): Boolean = dbQuery {
+        BankStatementDraftsTable.insert {
+            it[BankStatementDraftsTable.tenantId] = tenantId.value.toJavaUuid()
+            it[BankStatementDraftsTable.documentId] = documentId.value.toJavaUuid()
+            it[BankStatementDraftsTable.direction] = data.direction
+            it[BankStatementDraftsTable.accountIban] = data.accountIban?.value
+            it[BankStatementDraftsTable.openingBalance] = data.openingBalance?.toDbDecimal()
+            it[BankStatementDraftsTable.closingBalance] = data.closingBalance?.toDbDecimal()
+            it[BankStatementDraftsTable.periodStart] = data.periodStart
+            it[BankStatementDraftsTable.periodEnd] = data.periodEnd
+            it[BankStatementDraftsTable.notes] = data.notes
+        }
+        true
+    }
+
+    // ==========================================================================
+    // Classified draft writer (generic helper)
+    // ==========================================================================
+
+    /**
+     * Generic helper to insert a classified draft into any table that follows
+     * the standard classified schema (id, tenant_id, document_id, direction).
+     */
+    @Suppress("UNCHECKED_CAST")
+    private suspend fun insertClassifiedDraft(
+        tenantId: TenantId,
+        documentId: DocumentId,
+        table: UUIDTable,
+        direction: DocumentDirection,
+    ): Boolean = dbQuery {
+        val tenantCol = table.columns.first { it.name == "tenant_id" }
+            as org.jetbrains.exposed.v1.core.Column<java.util.UUID>
+        val docCol = table.columns.first { it.name == "document_id" }
+            as org.jetbrains.exposed.v1.core.Column<java.util.UUID>
+        val dirCol = table.columns.first { it.name == "direction" }
+            as org.jetbrains.exposed.v1.core.Column<DocumentDirection>
+
+        table.insert {
+            it[tenantCol] = tenantId.value.toJavaUuid()
+            it[docCol] = documentId.value.toJavaUuid()
+            it[dirCol] = direction
+        }
+        true
     }
 }
 

@@ -74,6 +74,8 @@ import tech.dokus.backend.services.documents.resolution.VatMatchResolver
 import tech.dokus.backend.services.documents.DocumentPurposeService
 import tech.dokus.backend.services.documents.DocumentPurposeSimilarityService
 import tech.dokus.backend.services.documents.DocumentRecordLoader
+import tech.dokus.backend.services.documents.DraftTableMigration
+import tech.dokus.database.repository.drafts.DraftRepository
 import tech.dokus.backend.services.documents.DocumentTruthService
 import tech.dokus.backend.services.documents.ProcessingHealthService
 import tech.dokus.backend.services.documents.StorageDocumentFetcher
@@ -357,6 +359,8 @@ private fun cashflowModule() = module {
     singleOf(::DocumentSnapshotEventHub)
     singleOf(::DocumentSsePublisher)
     singleOf(::DocumentRecordLoader)
+    singleOf(::DraftRepository)
+    singleOf(::DraftTableMigration)
     singleOf(::CashflowProjectionReconciliationWorker)
 
     // PDF

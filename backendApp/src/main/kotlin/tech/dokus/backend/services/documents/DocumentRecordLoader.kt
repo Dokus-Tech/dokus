@@ -14,6 +14,7 @@ import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
 import tech.dokus.database.repository.cashflow.selectPreferredSource
 import tech.dokus.database.repository.contacts.ContactRepository
+import tech.dokus.database.repository.drafts.DraftRepository
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
@@ -36,6 +37,7 @@ internal class DocumentRecordLoader(
     private val creditNoteRepository: CreditNoteRepository,
     private val cashflowEntriesRepository: CashflowEntriesRepository,
     private val contactRepository: ContactRepository,
+    private val draftRepository: DraftRepository,
     private val truthService: DocumentTruthService,
     private val documentStorageService: DocumentStorageService,
 ) {
@@ -79,7 +81,9 @@ internal class DocumentRecordLoader(
         val content = if (confirmedEntity != null) {
             confirmedEntityToDocDto(confirmedEntity)
         } else {
-            draft?.extractedData?.toDocDto()
+            // Draft tables first, JSON blob fallback during migration
+            draftRepository.getDraftAsDocDto(tenantId, documentId, draft?.documentType)
+                ?: draft?.extractedData?.toDocDto()
         }
 
         val cashflowEntryId = if (draft?.documentStatus == DocumentStatus.Confirmed) {
