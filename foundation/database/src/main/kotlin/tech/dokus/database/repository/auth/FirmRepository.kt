@@ -14,9 +14,7 @@ import org.jetbrains.exposed.v1.jdbc.insertAndGetId
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
-import tech.dokus.database.mapper.FirmMappers.toFirm
-import tech.dokus.database.mapper.FirmMappers.toFirmAccess
-import tech.dokus.database.mapper.FirmMappers.toFirmMembership
+import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.auth.FirmAccessTable
 import tech.dokus.database.tables.auth.FirmMembersTable
 import tech.dokus.database.tables.auth.FirmsTable
@@ -59,11 +57,12 @@ class FirmRepository {
 
         logger.info("Created firm {} for owner {}", firmId, ownerUserId)
 
-        FirmsTable
-            .selectAll()
-            .where { FirmsTable.id eq firmId }
-            .single()
-            .toFirm()
+        Firm.from(
+            FirmsTable
+                .selectAll()
+                .where { FirmsTable.id eq firmId }
+                .single()
+        )
     }
 
     suspend fun findById(firmId: FirmId): Firm? = dbQuery {
@@ -74,7 +73,7 @@ class FirmRepository {
                     (FirmsTable.isActive eq true)
             }
             .singleOrNull()
-            ?.toFirm()
+            ?.let { Firm.from(it) }
     }
 
     suspend fun getMembership(userId: UserId, firmId: FirmId): FirmMembership? = dbQuery {
@@ -85,7 +84,7 @@ class FirmRepository {
                     (FirmMembersTable.firmId eq firmId.value.toJavaUuid())
             }
             .singleOrNull()
-            ?.toFirmMembership()
+            ?.let { FirmMembership.from(it) }
     }
 
     suspend fun listUserMemberships(userId: UserId, activeOnly: Boolean = true): List<FirmMembership> = dbQuery {
@@ -95,7 +94,7 @@ class FirmRepository {
                 val userFilter = FirmMembersTable.userId eq userId.value.toJavaUuid()
                 if (activeOnly) userFilter and (FirmMembersTable.isActive eq true) else userFilter
             }
-            .map { it.toFirmMembership() }
+            .map { FirmMembership.from(it) }
     }
 
     suspend fun listFirmsByIds(firmIds: List<FirmId>): List<Firm> = dbQuery {
@@ -107,7 +106,7 @@ class FirmRepository {
                 (FirmsTable.id inList firmIds.map { it.value.toJavaUuid() }) and
                     (FirmsTable.isActive eq true)
             }
-            .map { it.toFirm() }
+            .map { Firm.from(it) }
     }
 
     suspend fun searchActiveFirmsByNameOrVat(query: String, limit: Int): List<Firm> = dbQuery {
@@ -126,7 +125,7 @@ class FirmRepository {
             }
             .orderBy(FirmsTable.name to SortOrder.ASC)
             .limit(boundedLimit)
-            .map { it.toFirm() }
+            .map { Firm.from(it) }
     }
 
     suspend fun countActiveClientsByFirmIds(firmIds: List<FirmId>): Map<FirmId, Int> = dbQuery {
@@ -152,7 +151,7 @@ class FirmRepository {
                 (FirmAccessTable.firmId eq firmId.value.toJavaUuid()) and
                     (FirmAccessTable.status eq FirmAccessStatus.Active)
             }
-            .map { it.toFirmAccess() }
+            .map { FirmAccess.from(it) }
     }
 
     suspend fun listActiveAccessByTenant(tenantId: TenantId): List<FirmAccess> = dbQuery {
@@ -162,7 +161,7 @@ class FirmRepository {
                 (FirmAccessTable.tenantId eq tenantId.value.toJavaUuid()) and
                     (FirmAccessTable.status eq FirmAccessStatus.Active)
             }
-            .map { it.toFirmAccess() }
+            .map { FirmAccess.from(it) }
     }
 
     suspend fun hasActiveAccess(firmId: FirmId, tenantId: TenantId): Boolean = dbQuery {

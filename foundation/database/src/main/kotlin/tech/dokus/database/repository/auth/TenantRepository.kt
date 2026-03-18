@@ -7,8 +7,7 @@ import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.insertAndGetId
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
-import tech.dokus.database.mapper.TenantMappers.toTenant
-import tech.dokus.database.mapper.TenantMappers.toTenantSettings
+import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.auth.AddressTable
 import tech.dokus.database.tables.auth.TenantSettingsTable
 import tech.dokus.database.tables.auth.TenantTable
@@ -102,7 +101,7 @@ class TenantRepository {
             .singleOrNull()
             ?: return@dbQuery null
 
-        tenantRow.toTenant()
+        Tenant.from(tenantRow)
     }
 
     suspend fun findByIds(ids: List<TenantId>): List<Tenant> = dbQuery {
@@ -111,7 +110,7 @@ class TenantRepository {
         TenantTable
             .selectAll()
             .where { TenantTable.id inList javaUuids }
-            .map { it.toTenant() }
+            .map { Tenant.from(it) }
     }
 
     suspend fun getSettings(tenantId: TenantId): TenantSettings = dbQuery {
@@ -120,7 +119,7 @@ class TenantRepository {
             .selectAll()
             .where { TenantSettingsTable.tenantId eq javaUuid }
             .singleOrNull()
-            ?.toTenantSettings()
+            ?.let { TenantSettings.from(it) }
             ?: throw IllegalArgumentException("No settings found for tenant: $tenantId")
     }
 
@@ -170,7 +169,7 @@ class TenantRepository {
         TenantTable
             .selectAll()
             .where { TenantTable.status eq TenantStatus.Active }
-            .map { it.toTenant() }
+            .map { Tenant.from(it) }
     }
 
     /**
