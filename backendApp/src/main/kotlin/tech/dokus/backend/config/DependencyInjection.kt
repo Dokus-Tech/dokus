@@ -350,7 +350,7 @@ private fun cashflowModule() = module {
             logger = org.slf4j.LoggerFactory.getLogger("RAGPipelineHandler"),
         )
     }
-    single { tech.dokus.backend.services.documents.RAGIndexingService(get(), get()) }
+    singleOf(::RAGIndexingService)
     single { DocumentConfirmationDispatcher(get(), get(), get(), get(), get()) }
     singleOf(::DocumentTruthService)
     singleOf(::ProcessingHealthService)
