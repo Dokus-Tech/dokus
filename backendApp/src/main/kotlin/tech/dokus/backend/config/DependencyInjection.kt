@@ -75,7 +75,6 @@ import tech.dokus.backend.services.documents.DocumentPurposeService
 import tech.dokus.backend.services.documents.RAGIndexingService
 import tech.dokus.backend.services.documents.DocumentPurposeSimilarityService
 import tech.dokus.backend.services.documents.DocumentRecordLoader
-import tech.dokus.backend.services.documents.DraftTableMigration
 import tech.dokus.database.repository.drafts.DraftRepository
 import tech.dokus.backend.services.documents.DocumentTruthService
 import tech.dokus.backend.services.documents.ProcessingHealthService
