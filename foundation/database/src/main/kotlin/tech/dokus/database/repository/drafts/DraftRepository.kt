@@ -5,6 +5,7 @@ package tech.dokus.database.repository.drafts
 
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
@@ -17,7 +18,9 @@ import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.drafts.*
 import tech.dokus.domain.Money
 import tech.dokus.domain.VatRate
+import tech.dokus.domain.fromDbDecimal
 import tech.dokus.domain.toDbDecimal
+import kotlin.uuid.toKotlinUuid
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.DocumentId
@@ -213,6 +216,62 @@ class DraftRepository {
                 (docCol eq documentId.value.toJavaUuid())
         }
         deleted > 0
+    }
+
+    /**
+     * Batch-fetch total amounts and currency for a list of documents from draft tables.
+     * Groups by document type and queries each draft table once.
+     * Returns a map of documentId → (totalAmount, currency).
+     */
+    suspend fun batchGetAmounts(
+        tenantId: TenantId,
+        documents: List<kotlin.Pair<DocumentId, DocumentType?>>,
+    ): Map<DocumentId, kotlin.Pair<Money?, tech.dokus.domain.enums.Currency?>> = dbQuery {
+        val result = mutableMapOf<DocumentId, kotlin.Pair<Money?, tech.dokus.domain.enums.Currency?>>()
+        val tenantUuid = tenantId.value.toJavaUuid()
+
+        // Group by type for batch queries
+        val invoiceDocIds = documents.filter { it.second == DocumentType.Invoice }.map { it.first }
+        val creditNoteDocIds = documents.filter { it.second == DocumentType.CreditNote }.map { it.first }
+        val receiptDocIds = documents.filter { it.second == DocumentType.Receipt }.map { it.first }
+
+        if (invoiceDocIds.isNotEmpty()) {
+            InvoiceDraftsTable.selectAll().where {
+                (InvoiceDraftsTable.tenantId eq tenantUuid) and
+                    (InvoiceDraftsTable.documentId inList invoiceDocIds.map { it.value.toJavaUuid() })
+            }.forEach { row ->
+                val docId = DocumentId(row[InvoiceDraftsTable.documentId].toKotlinUuid())
+                val amount = row[InvoiceDraftsTable.totalAmount]?.let { Money.fromDbDecimal(it) }
+                val currency = row[InvoiceDraftsTable.currency]
+                result[docId] = amount to currency
+            }
+        }
+
+        if (creditNoteDocIds.isNotEmpty()) {
+            CreditNoteDraftsTable.selectAll().where {
+                (CreditNoteDraftsTable.tenantId eq tenantUuid) and
+                    (CreditNoteDraftsTable.documentId inList creditNoteDocIds.map { it.value.toJavaUuid() })
+            }.forEach { row ->
+                val docId = DocumentId(row[CreditNoteDraftsTable.documentId].toKotlinUuid())
+                val amount = row[CreditNoteDraftsTable.totalAmount]?.let { Money.fromDbDecimal(it) }
+                val currency = row[CreditNoteDraftsTable.currency]
+                result[docId] = amount to currency
+            }
+        }
+
+        if (receiptDocIds.isNotEmpty()) {
+            ReceiptDraftsTable.selectAll().where {
+                (ReceiptDraftsTable.tenantId eq tenantUuid) and
+                    (ReceiptDraftsTable.documentId inList receiptDocIds.map { it.value.toJavaUuid() })
+            }.forEach { row ->
+                val docId = DocumentId(row[ReceiptDraftsTable.documentId].toKotlinUuid())
+                val amount = row[ReceiptDraftsTable.totalAmount]?.let { Money.fromDbDecimal(it) }
+                val currency = row[ReceiptDraftsTable.currency]
+                result[docId] = amount to currency
+            }
+        }
+
+        result
     }
 
     /**

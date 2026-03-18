@@ -13,10 +13,12 @@ import org.jetbrains.exposed.v1.jdbc.insertAndGetId
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
 import tech.dokus.database.tables.cashflow.CreditNotesTable
+import tech.dokus.domain.Money
 import tech.dokus.domain.enums.CreditNoteStatus
 import tech.dokus.domain.enums.CreditNoteType
 import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.SettlementIntent
+import tech.dokus.domain.fromDbDecimal
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.CreditNoteId
 import tech.dokus.domain.ids.DocumentId

@@ -9,6 +9,7 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.CreditNoteId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.UserId
 
 fun CreditNoteEntity.Companion.from(row: ResultRow): CreditNoteEntity = CreditNoteEntity(
     id = CreditNoteId.parse(row[CreditNotesTable.id].value.toString()),
@@ -26,6 +27,8 @@ fun CreditNoteEntity.Companion.from(row: ResultRow): CreditNoteEntity = CreditNo
     reason = row[CreditNotesTable.reason],
     currency = row[CreditNotesTable.currency],
     notes = row[CreditNotesTable.notes],
+    confirmedAt = row[CreditNotesTable.confirmedAt],
+    confirmedBy = row[CreditNotesTable.confirmedBy]?.let { UserId.parse(it.toString()) },
     createdAt = row[CreditNotesTable.createdAt],
     updatedAt = row[CreditNotesTable.updatedAt],
 )

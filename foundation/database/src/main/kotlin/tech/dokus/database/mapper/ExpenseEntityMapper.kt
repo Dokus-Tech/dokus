@@ -11,6 +11,7 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.ExpenseId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.UserId
 
 fun ExpenseEntity.Companion.from(row: ResultRow): ExpenseEntity = ExpenseEntity(
     id = ExpenseId.parse(row[ExpensesTable.id].value.toString()),
@@ -29,6 +30,8 @@ fun ExpenseEntity.Companion.from(row: ResultRow): ExpenseEntity = ExpenseEntity(
     paymentMethod = row[ExpensesTable.paymentMethod],
     isRecurring = row[ExpensesTable.isRecurring],
     notes = row[ExpensesTable.notes],
+    confirmedAt = row[ExpensesTable.confirmedAt],
+    confirmedBy = row[ExpensesTable.confirmedBy]?.let { UserId.parse(it.toString()) },
     createdAt = row[ExpensesTable.createdAt],
     updatedAt = row[ExpensesTable.updatedAt],
 )

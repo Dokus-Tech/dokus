@@ -141,6 +141,8 @@ internal fun InvoiceEntity.toDocDto(): DocDto.Invoice.Confirmed = DocDto.Invoice
         paymentMethod = paymentMethod ?: tech.dokus.domain.enums.PaymentMethod.BankTransfer
     ) else null,
     documentId = documentId,
+    confirmedAt = confirmedAt,
+    confirmedBy = confirmedBy,
     createdAt = createdAt,
     updatedAt = updatedAt,
 )
@@ -165,6 +167,8 @@ internal fun ExpenseEntity.toDocDto(): DocDto.Receipt.Confirmed = DocDto.Receipt
     paymentMethod = paymentMethod,
     contactId = contactId,
     documentId = documentId,
+    confirmedAt = confirmedAt,
+    confirmedBy = confirmedBy,
     createdAt = createdAt,
     updatedAt = updatedAt,
 )
@@ -190,6 +194,8 @@ internal fun CreditNoteEntity.toDocDto(): DocDto.CreditNote.Confirmed = DocDto.C
     reason = reason,
     notes = notes,
     documentId = documentId,
+    confirmedAt = confirmedAt,
+    confirmedBy = confirmedBy,
     createdAt = createdAt,
     updatedAt = updatedAt,
 )

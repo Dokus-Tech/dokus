@@ -55,7 +55,9 @@ import tech.dokus.database.repository.cashflow.DocumentSourceSummary
 import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
 import tech.dokus.database.repository.cashflow.selectPreferredSource
+import tech.dokus.domain.Money
 import tech.dokus.domain.Name
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentSourceStatus
 import tech.dokus.domain.enums.DocumentStatus
@@ -204,10 +206,29 @@ internal fun Route.documentRecordRoutes() {
                 }.awaitAll().toMap()
             }
 
+            // Batch-fetch amounts: confirmed entities first, draft tables as fallback
+            val confirmedAmounts = mutableMapOf<DocumentId, Pair<Money?, Currency?>>()
+
+            if (confirmedDocumentIds.isNotEmpty()) {
+                confirmedAmounts += invoiceRepository.batchGetAmountsByDocumentIds(tenantId, confirmedDocumentIds)
+                confirmedAmounts += expenseRepository.batchGetAmountsByDocumentIds(tenantId, confirmedDocumentIds)
+                confirmedAmounts += creditNoteRepository.batchGetAmountsByDocumentIds(tenantId, confirmedDocumentIds)
+            }
+
+            // For unconfirmed documents, fall back to draft tables
+            val unconfirmedDocs = documentsWithInfo
+                .filter { it.document.id !in confirmedAmounts }
+                .map { it.document.id to it.draft?.documentType }
+            val draftAmounts = draftRepository.batchGetAmounts(tenantId, unconfirmedDocs)
+
+            // Merge: confirmed takes priority
+            val allAmounts = draftAmounts + confirmedAmounts
+
             // Build flat list items
             val items = documentsWithInfo.map { docInfo ->
                 val draft = docInfo.draft
                 val preferredSource = sourceEnrichment[docInfo.document.id]
+                val (amount, currency) = allAmounts[docInfo.document.id] ?: (null to null)
                 DocumentListItemDto(
                     documentId = docInfo.document.id,
                     tenantId = docInfo.document.tenantId,
@@ -221,8 +242,8 @@ internal fun Route.documentRecordRoutes() {
                     sortDate = docInfo.document.sortDate,
                     counterpartyDisplayName = draft?.counterpartyDisplayName,
                     purposeRendered = draft?.purposeRendered,
-                    totalAmount = null,
-                    currency = null,
+                    totalAmount = amount,
+                    currency = currency,
                     downloadUrl = downloadUrlsByDocumentId[docInfo.document.id],
                     hasPendingMatchReview = pendingReviewsByDocumentId.containsKey(docInfo.document.id),
                     cashflowEntryId = cashflowEntryIdsByDocumentId[docInfo.document.id],

@@ -12,8 +12,12 @@ import org.jetbrains.exposed.v1.jdbc.insertAndGetId
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
 import tech.dokus.database.tables.cashflow.ExpensesTable
+import org.jetbrains.exposed.v1.core.inList
+import tech.dokus.domain.Money
 import tech.dokus.domain.Percentage
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.ExpenseCategory
+import tech.dokus.domain.fromDbDecimal
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.ExpenseId
 import tech.dokus.domain.ids.TenantId
@@ -217,6 +221,26 @@ class ExpenseRepository {
                 (ExpensesTable.id eq UUID.fromString(expenseId.toString())) and
                     (ExpensesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.count() > 0
+        }
+    }
+
+    /**
+     * Batch-fetch amounts for confirmed expenses by document IDs.
+     * ExpensesTable has no currency column; defaults to EUR.
+     * CRITICAL: MUST filter by tenant_id
+     */
+    suspend fun batchGetAmountsByDocumentIds(
+        tenantId: TenantId,
+        documentIds: List<DocumentId>,
+    ): Map<DocumentId, Pair<Money, Currency>> = dbQuery {
+        if (documentIds.isEmpty()) return@dbQuery emptyMap()
+        ExpensesTable.selectAll().where {
+            (ExpensesTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                (ExpensesTable.documentId inList documentIds.map { UUID.fromString(it.toString()) })
+        }.associate { row ->
+            val docId = DocumentId.parse(row[ExpensesTable.documentId]!!.toString())
+            val amount = Money.fromDbDecimal(row[ExpensesTable.amount])
+            docId to (amount to Currency.Eur)
         }
     }
 

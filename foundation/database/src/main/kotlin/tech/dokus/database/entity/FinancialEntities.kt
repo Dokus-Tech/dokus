@@ -28,6 +28,7 @@ import tech.dokus.domain.ids.PeppolId
 import tech.dokus.domain.ids.StructuredCommunication
 import kotlinx.serialization.Serializable
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.UserId
 
 @Serializable
 data class InvoiceEntity(
@@ -61,6 +62,8 @@ data class InvoiceEntity(
     val paymentLinkExpiresAt: LocalDateTime? = null,
     val paidAt: LocalDateTime? = null,
     val paymentMethod: PaymentMethod? = null,
+    val confirmedAt: LocalDateTime? = null,
+    val confirmedBy: UserId? = null,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime,
 ) {
@@ -100,6 +103,8 @@ data class ExpenseEntity(
     val paymentMethod: PaymentMethod? = null,
     val isRecurring: Boolean = false,
     val notes: String? = null,
+    val confirmedAt: LocalDateTime? = null,
+    val confirmedBy: UserId? = null,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime,
 ) {
@@ -123,6 +128,8 @@ data class CreditNoteEntity(
     val reason: String? = null,
     val currency: Currency = Currency.Eur,
     val notes: String? = null,
+    val confirmedAt: LocalDateTime? = null,
+    val confirmedBy: UserId? = null,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime,
 ) {

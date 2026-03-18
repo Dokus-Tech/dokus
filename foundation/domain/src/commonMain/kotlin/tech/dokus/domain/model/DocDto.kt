@@ -26,6 +26,7 @@ import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.StructuredCommunication
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.contact.CounterpartySnapshot
 
@@ -103,6 +104,8 @@ sealed interface DocDto {
             val paymentInfo: InvoicePaymentInfo? = null,
             val cashflowEntryId: CashflowEntryId? = null,
             val documentId: DocumentId? = null,
+            val confirmedAt: LocalDateTime? = null,
+            val confirmedBy: UserId? = null,
             val createdAt: LocalDateTime,
             val updatedAt: LocalDateTime,
         ) : Invoice
@@ -161,6 +164,8 @@ sealed interface DocDto {
             override val reason: String? = null,
             override val notes: String? = null,
             val documentId: DocumentId? = null,
+            val confirmedAt: LocalDateTime? = null,
+            val confirmedBy: UserId? = null,
             val createdAt: LocalDateTime,
             val updatedAt: LocalDateTime,
         ) : CreditNote
@@ -220,6 +225,8 @@ sealed interface DocDto {
             val paymentMethod: PaymentMethod? = null,
             val contactId: ContactId? = null,
             val documentId: DocumentId? = null,
+            val confirmedAt: LocalDateTime? = null,
+            val confirmedBy: UserId? = null,
             val createdAt: LocalDateTime,
             val updatedAt: LocalDateTime,
         ) : Receipt

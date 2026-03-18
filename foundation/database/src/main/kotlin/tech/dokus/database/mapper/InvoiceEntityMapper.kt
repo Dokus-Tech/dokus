@@ -17,6 +17,7 @@ import tech.dokus.domain.ids.InvoiceNumber
 import tech.dokus.domain.ids.PeppolId
 import tech.dokus.domain.ids.StructuredCommunication
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.UserId
 
 fun InvoiceEntity.Companion.from(
     row: ResultRow,
@@ -52,6 +53,8 @@ fun InvoiceEntity.Companion.from(
     paymentLinkExpiresAt = row[InvoicesTable.paymentLinkExpiresAt],
     paidAt = row[InvoicesTable.paidAt],
     paymentMethod = row[InvoicesTable.paymentMethod],
+    confirmedAt = row[InvoicesTable.confirmedAt],
+    confirmedBy = row[InvoicesTable.confirmedBy]?.let { UserId.parse(it.toString()) },
     createdAt = row[InvoicesTable.createdAt],
     updatedAt = row[InvoicesTable.updatedAt],
 )
