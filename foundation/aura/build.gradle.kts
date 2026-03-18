@@ -68,6 +68,9 @@ kotlin {
 
             api(libs.materialKolor)
 
+            // Markdown rendering for AI chat
+            api(libs.multiplatform.markdown.renderer)
+
             // Coil - Remote image loading
             api(libs.coil.compose)
             api(libs.coil.compose.core)

@@ -49,6 +49,7 @@ calf = "0.9.0"
 compose-icons-lucide = "1.1.0"
 # kolor 3.0.+ is broken in skiko
 materialKolor = "4.1.1"
+multiplatform-markdown = "0.39.2"
 
 flywayDatabasePostgresql = "12.0.3"
 flywayCore = "12.0.3"
@@ -242,6 +243,7 @@ calf-ui = { group = "com.mohamedrejeb.calf", name = "calf-ui", version.ref = "ca
 calf-filePicker = { group = "com.mohamedrejeb.calf", name = "calf-file-picker", version.ref = "calf" }
 
 materialKolor = { group = "com.materialkolor", name = "material-kolor", version.ref = "materialKolor" }
+multiplatform-markdown-renderer = { module = "com.mikepenz:multiplatform-markdown-renderer-m3", version.ref = "multiplatform-markdown" }
 
 composeIcons-lucide = { module = "com.composables:icons-lucide", version.ref = "compose-icons-lucide" }
 

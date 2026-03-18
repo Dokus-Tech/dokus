@@ -28,6 +28,7 @@ import tech.dokus.domain.model.ai.DocumentReference
 import tech.dokus.domain.model.ai.DocumentReferenceType
 import tech.dokus.domain.model.ai.MessageRole
 import tech.dokus.foundation.aura.components.chat.ChatAssistantMessage
+import tech.dokus.foundation.aura.components.chat.ChatMarkdownText
 import tech.dokus.foundation.aura.components.chat.ChatCitationChips
 import tech.dokus.foundation.aura.components.chat.ChatDocumentCardList
 import tech.dokus.foundation.aura.components.chat.ChatInvoiceDetailCard
@@ -109,12 +110,7 @@ private fun AssistantMessageWithBlocks(
                 blocks.forEach { block ->
                     when (block) {
                         is ChatContentBlock.Text -> {
-                            Text(
-                                text = block.content,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                lineHeight = MaterialTheme.typography.bodyMedium.lineHeight,
-                            )
+                            ChatMarkdownText(content = block.content)
                         }
                         is ChatContentBlock.Summary -> {
                             ChatSummaryCard(rows = block.rows)
@@ -153,13 +149,8 @@ private fun AssistantMessageWithBlocks(
                 }
             }
         } else {
-            // Fallback: plain text
-            Text(
-                text = message.content,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                lineHeight = MaterialTheme.typography.bodyMedium.lineHeight,
-            )
+            // Fallback: markdown text
+            ChatMarkdownText(content = message.content)
         }
 
         // Follow-up text (if content has blocks, the trailing text from AI)
