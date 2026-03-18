@@ -5,8 +5,9 @@ import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.enums.MatchSignalType
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.model.BankTransactionDto
+import tech.dokus.database.entity.BankTransactionEntity
 import tech.dokus.domain.model.CashflowEntry
+import tech.dokus.domain.model.TransactionCommunication
 import tech.dokus.domain.util.JaroWinkler
 import kotlin.math.abs
 import kotlin.math.exp
@@ -24,7 +25,7 @@ class MatchScorer(
      * Returns null if the pair is fundamentally incompatible.
      */
     suspend fun score(
-        tx: BankTransactionDto,
+        tx: BankTransactionEntity,
         candidate: MatchCandidate,
         invoiceMeta: InvoiceMatchMeta?,
         rejectedDocumentIds: Set<DocumentId>,
@@ -35,8 +36,11 @@ class MatchScorer(
         var logOdds = MatchingConstants.PRIOR_LOG_ODDS
         var hasHardSignal = false
 
+        // Reconstruct communication from flat entity fields
+        val txCommunication = TransactionCommunication.from(tx.structuredCommunicationRaw, tx.freeCommunication)
+
         // ── Signal 1: OGM match ────────────────────────────────────────
-        val ogmMatch = OgmValidator.matches(tx.communication, invoiceMeta?.structuredReference)
+        val ogmMatch = OgmValidator.matches(txCommunication, invoiceMeta?.structuredReference)
         signals += SignalResult(MatchSignalType.Ogm, ogmMatch, if (ogmMatch) MatchingConstants.WEIGHT_OGM else 0.0)
         if (ogmMatch) {
             logOdds += MatchingConstants.WEIGHT_OGM
@@ -44,7 +48,7 @@ class MatchScorer(
         }
 
         // ── Signal 2: Invoice reference in free-form text ──────────────
-        val refMatch = ReferenceExtractor.containsInvoiceNumber(tx.communication, invoiceMeta?.invoiceNumber)
+        val refMatch = ReferenceExtractor.containsInvoiceNumber(txCommunication, invoiceMeta?.invoiceNumber)
         signals += SignalResult(MatchSignalType.InvoiceRef, refMatch, if (refMatch) MatchingConstants.WEIGHT_INVOICE_REF else 0.0)
         if (refMatch) {
             logOdds += MatchingConstants.WEIGHT_INVOICE_REF
@@ -52,8 +56,8 @@ class MatchScorer(
         }
 
         // ── Signal 3: Counterparty IBAN match ──────────────────────────
-        val ibanMatch = !tx.counterparty.iban?.value.isNullOrBlank() &&
-            tx.counterparty.iban?.value == candidate.contactIban
+        val ibanMatch = !tx.counterpartyIban?.value.isNullOrBlank() &&
+            tx.counterpartyIban?.value == candidate.contactIban
         signals += SignalResult(MatchSignalType.CounterpartyIban, ibanMatch, if (ibanMatch) MatchingConstants.WEIGHT_COUNTERPARTY_IBAN else 0.0)
         if (ibanMatch) {
             logOdds += MatchingConstants.WEIGHT_COUNTERPARTY_IBAN
@@ -80,9 +84,9 @@ class MatchScorer(
         logOdds += amountWeight
 
         // ── Signal 5: Contact name similarity ──────────────────────────
-        val nameSimilarity = if (!tx.counterparty.name.isNullOrBlank() && !candidate.contactName.isNullOrBlank()) {
+        val nameSimilarity = if (!tx.counterpartyName.isNullOrBlank() && !candidate.contactName.isNullOrBlank()) {
             JaroWinkler.similarity(
-                tx.counterparty.name!!.trim().lowercase(),
+                tx.counterpartyName!!.trim().lowercase(),
                 candidate.contactName!!.trim().lowercase(),
             )
         } else {
@@ -118,7 +122,7 @@ class MatchScorer(
 
         // ── Signal 7: Historical pattern ───────────────────────────────
         val historicalFired = candidate.contactId != null &&
-            !tx.counterparty.iban?.value.isNullOrBlank() &&
+            !tx.counterpartyIban?.value.isNullOrBlank() &&
             checkHistoricalPattern(tx, candidate.contactId)
         val historicalWeight = if (historicalFired) MatchingConstants.WEIGHT_HISTORICAL_PATTERN else 0.0
         signals += SignalResult(MatchSignalType.HistoricalPattern, historicalFired, historicalWeight)
@@ -146,10 +150,10 @@ class MatchScorer(
     }
 
     private suspend fun checkHistoricalPattern(
-        tx: BankTransactionDto,
+        tx: BankTransactionEntity,
         contactId: ContactId,
     ): Boolean {
-        val iban = tx.counterparty.iban?.value ?: return false
+        val iban = tx.counterpartyIban?.value ?: return false
         val patterns = matchingRepository.loadMatchPatterns(tx.tenantId, iban)
         return patterns.any { it.contactId == contactId }
     }
