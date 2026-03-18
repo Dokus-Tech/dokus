@@ -2,8 +2,10 @@ package tech.dokus.backend.services.documents
 
 import tech.dokus.backend.worker.handlers.RAGPipelineHandler
 import tech.dokus.database.repository.cashflow.DocumentRepository
+import tech.dokus.database.repository.drafts.DraftRepository
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.toDraftData
 import tech.dokus.features.ai.services.DraftDataTextRenderer
 import tech.dokus.foundation.backend.utils.loggerFor
 
@@ -19,6 +21,7 @@ import tech.dokus.foundation.backend.utils.loggerFor
 class RAGIndexingService(
     private val ragPipelineHandler: RAGPipelineHandler,
     private val documentRepository: DocumentRepository,
+    private val draftRepository: DraftRepository,
 ) {
     private val logger = loggerFor()
 
@@ -41,7 +44,8 @@ class RAGIndexingService(
             return
         }
 
-        val draftData = draft.extractedData
+        val docDto = draftRepository.getDraftAsDocDto(tenantId, documentId, draft.documentType)
+        val draftData = docDto?.toDraftData()
         if (draftData == null) {
             logger.debug("No extracted data for document {}, skipping RAG indexing", documentId)
             return
