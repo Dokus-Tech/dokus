@@ -183,9 +183,7 @@ class ReceiptConfirmationIdempotencyTest {
     private suspend fun createReceiptDocument(draftAmount: Money): Pair<DocumentId, ReceiptDraftData> {
         val documentId = documentRepository.create(
             tenantId = tenantId,
-            payload = tech.dokus.database.repository.cashflow.DocumentCreatePayload(
-                canonicalContentHash = null,
-            )
+            payload = tech.dokus.database.repository.cashflow.DocumentCreatePayload()
         )
 
         val runId = ingestionRepository.createRun(documentId, tenantId)

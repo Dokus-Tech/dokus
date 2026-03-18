@@ -66,6 +66,7 @@ class DocumentProcessingWorkerConcurrencyTest {
             userRepository = userRepository,
             llmQueue = llmQueue,
             postExtractionOrchestrator = postExtractionOrchestrator,
+            draftRepository = mockk(relaxed = true),
         )
 
         try {
@@ -115,6 +116,7 @@ class DocumentProcessingWorkerConcurrencyTest {
             userRepository = userRepository,
             llmQueue = llmQueue,
             postExtractionOrchestrator = postExtractionOrchestrator,
+            draftRepository = mockk(relaxed = true),
         )
 
         try {

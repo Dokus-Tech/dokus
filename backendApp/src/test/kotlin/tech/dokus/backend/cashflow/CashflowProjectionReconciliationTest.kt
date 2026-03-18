@@ -235,9 +235,7 @@ class CashflowProjectionReconciliationTest {
     ): Pair<DocumentId, InvoiceEntity> {
         val documentId = documentRepository.create(
             tenantId = tenantId,
-            payload = DocumentCreatePayload(
-                canonicalContentHash = null,
-            )
+            payload = DocumentCreatePayload()
         )
 
         val runId = ingestionRepository.createRun(documentId, tenantId)

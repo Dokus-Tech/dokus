@@ -10,7 +10,6 @@ import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
-import org.jetbrains.exposed.v1.core.isNotNull
 import org.jetbrains.exposed.v1.core.greaterEq
 import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.isNull
@@ -44,14 +43,11 @@ import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentFieldProvenance
-import tech.dokus.domain.model.ProvenanceMergeResult
-import tech.dokus.domain.model.applyUserLocks
 import tech.dokus.domain.model.contact.CounterpartyInfo
 import tech.dokus.domain.model.contact.CounterpartySnapshot
 import tech.dokus.domain.model.contact.MatchEvidence
 import tech.dokus.domain.model.contact.SuggestedContact
 import tech.dokus.domain.model.contact.isUnresolved
-import tech.dokus.domain.model.mergeWithProvenance
 import tech.dokus.domain.model.toDirection
 import tech.dokus.domain.model.toDocumentType
 import tech.dokus.domain.model.toSortDate
@@ -86,7 +82,6 @@ data class DocumentOperationalCounts(
 )
 
 data class DocumentCreatePayload(
-    val canonicalContentHash: String?,
     val canonicalIdentityKey: String? = null,
 )
 
@@ -99,7 +94,6 @@ data class DraftSummary(
     val documentStatus: DocumentStatus,
     val documentType: DocumentType?,
     val direction: DocumentDirection = DocumentDirection.Unknown,
-    val extractedData: DocumentDraftData?,
     val aiKeywords: List<String> = emptyList(),
     val purposeBase: String? = null,
     val purposePeriodYear: Int? = null,
@@ -147,7 +141,6 @@ class DocumentRepository : DocumentStatusChecker {
         DocumentsTable.insert {
             it[DocumentsTable.id] = UUID.fromString(id.toString())
             it[DocumentsTable.tenantId] = UUID.fromString(tenantId.toString())
-            it[DocumentsTable.canonicalContentHash] = payload.canonicalContentHash
             it[DocumentsTable.canonicalIdentityKey] = payload.canonicalIdentityKey
             it[DocumentsTable.sortDate] = now.date
         }
@@ -163,37 +156,6 @@ class DocumentRepository : DocumentStatusChecker {
             DocumentsTable.selectAll()
                 .where {
                     (DocumentsTable.id eq UUID.fromString(documentId.toString())) and
-                        (DocumentsTable.tenantId eq UUID.fromString(tenantId.toString()))
-                }
-                .map { it.toDocumentDto() }
-                .singleOrNull()
-        }
-
-    /**
-     * Get the content hash for a document by ID.
-     * CRITICAL: Must filter by tenantId.
-     */
-    suspend fun getContentHash(tenantId: TenantId, documentId: DocumentId): String? =
-        newSuspendedTransaction {
-            DocumentsTable
-                .select(DocumentsTable.canonicalContentHash)
-                .where {
-                    (DocumentsTable.id eq UUID.fromString(documentId.toString())) and
-                        (DocumentsTable.tenantId eq UUID.fromString(tenantId.toString()))
-                }
-                .singleOrNull()
-                ?.get(DocumentsTable.canonicalContentHash)
-        }
-
-    /**
-     * Get a document by content hash.
-     * CRITICAL: Must filter by tenantId.
-     */
-    suspend fun getByContentHash(tenantId: TenantId, contentHash: String): DocumentDto? =
-        newSuspendedTransaction {
-            DocumentsTable.selectAll()
-                .where {
-                    (DocumentsTable.canonicalContentHash eq contentHash) and
                         (DocumentsTable.tenantId eq UUID.fromString(tenantId.toString()))
                 }
                 .map { it.toDocumentDto() }
@@ -225,19 +187,6 @@ class DocumentRepository : DocumentStatusChecker {
                 (DocumentsTable.tenantId eq UUID.fromString(tenantId.toString()))
         }) {
             it[DocumentsTable.canonicalIdentityKey] = canonicalIdentityKey
-        } > 0
-    }
-
-    suspend fun updateCanonicalContentHash(
-        tenantId: TenantId,
-        documentId: DocumentId,
-        canonicalContentHash: String?
-    ): Boolean = newSuspendedTransaction {
-        DocumentsTable.update({
-            (DocumentsTable.id eq UUID.fromString(documentId.toString())) and
-                (DocumentsTable.tenantId eq UUID.fromString(tenantId.toString()))
-        }) {
-            it[DocumentsTable.canonicalContentHash] = canonicalContentHash
         } > 0
     }
 
@@ -550,29 +499,6 @@ class DocumentRepository : DocumentStatusChecker {
 
         val hasAiDraftRun = existing[DocumentsTable.aiDraftSourceRunId] != null
 
-        // Determine what data to write using provenance-based merge
-        val existingData = existing[DocumentsTable.canonicalData]
-            ?.let<String, DocumentDraftData> { json.decodeFromString(it) }
-        val existingProv = existing[DocumentsTable.fieldProvenance]
-            ?.let<String, DocumentFieldProvenance> { json.decodeFromString(it) }
-
-        // Merge logic:
-        // - force → full overwrite
-        // - no existing data → full write (first extraction)
-        // - no existing provenance → full overwrite
-        // - has provenance → per-field merge using trust comparison
-        val mergeResult: ProvenanceMergeResult? = when {
-            force || existingData == null -> null // null = full overwrite
-            existingProv == null -> null // no existing provenance → full overwrite
-            fieldProvenance != null -> {
-                mergeWithProvenance(existingData, extractedData, existingProv, fieldProvenance)
-            }
-            else -> null // incoming has no provenance → full overwrite
-        }
-
-        val dataToWrite = mergeResult?.mergedData ?: extractedData
-        val provToWrite = mergeResult?.mergedProvenance ?: fieldProvenance
-
         DocumentsTable.update({
             (DocumentsTable.id eq docIdUuid) and
                 (DocumentsTable.tenantId eq tenantIdUuid)
@@ -583,16 +509,15 @@ class DocumentRepository : DocumentStatusChecker {
                 it[aiDraftSourceRunId] = runIdUuid
             }
 
-            it[DocumentsTable.canonicalData] = json.encodeToString(dataToWrite)
-            it[DocumentsTable.documentType] = dataToWrite.toDocumentType()
-            it[DocumentsTable.direction] = dataToWrite.toDirection()
+            it[DocumentsTable.documentType] = extractedData.toDocumentType()
+            it[DocumentsTable.direction] = extractedData.toDirection()
             it[DocumentsTable.documentStatus] = DocumentStatus.NeedsReview
-            it[DocumentsTable.sortDate] = dataToWrite.toSortDate() ?: existing[DocumentsTable.uploadedAt].date
+            it[DocumentsTable.sortDate] = extractedData.toSortDate() ?: existing[DocumentsTable.uploadedAt].date
             if (keywordsJson != null) {
                 it[DocumentsTable.aiKeywords] = keywordsJson
             }
-            if (provToWrite != null) {
-                it[DocumentsTable.fieldProvenance] = json.encodeToString(provToWrite)
+            if (fieldProvenance != null) {
+                it[DocumentsTable.fieldProvenance] = json.encodeToString(fieldProvenance)
             }
 
             it[lastSuccessfulRunId] = runIdUuid
@@ -619,17 +544,6 @@ class DocumentRepository : DocumentStatusChecker {
             }
             .map { it.toDraftSummary(contactName = it.getOrNull(ContactsTable.name)) }
             .singleOrNull()
-    }
-
-    /**
-     * List all documents that have extracted_data (for migration to draft tables).
-     * Returns lightweight DraftSummary with just the fields needed for migration.
-     */
-    suspend fun listAllDraftsWithExtractedData(): List<DraftSummary> = newSuspendedTransaction {
-        DocumentsTable
-            .selectAll()
-            .where { DocumentsTable.canonicalData.isNotNull() }
-            .map { it.toDraftSummary() }
     }
 
     /**
@@ -668,38 +582,16 @@ class DocumentRepository : DocumentStatusChecker {
             currentStatus
         }
 
-        // Mark changed fields as user-locked in provenance
-        val existingData = current[DocumentsTable.canonicalData]
-            ?.let<String, DocumentDraftData> { json.decodeFromString(it) }
-        val existingProv = current[DocumentsTable.fieldProvenance]
-            ?.let<String, DocumentFieldProvenance> { json.decodeFromString(it) }
-
-        val updatedProv: DocumentFieldProvenance? = if (existingData != null && existingProv != null) {
-            applyUserLocks(
-                provenance = existingProv,
-                existing = existingData,
-                updated = updatedData,
-                lockedAt = now,
-                lockedBy = userId,
-            )
-        } else {
-            null
-        }
-
         DocumentsTable.update({
             (DocumentsTable.id eq docIdUuid) and
                 (DocumentsTable.tenantId eq tenantIdUuid)
         }) {
             it[DocumentsTable.documentType] = updatedData.toDocumentType()
             it[direction] = updatedData.toDirection()
-            it[canonicalData] = json.encodeToString(updatedData)
             it[DocumentsTable.sortDate] = updatedData.toSortDate() ?: current[DocumentsTable.uploadedAt].date
             it[draftVersion] = newVersion
             it[draftEditedAt] = now
             it[draftEditedBy] = UUID.fromString(userId.toString())
-            if (updatedProv != null) {
-                it[DocumentsTable.fieldProvenance] = json.encodeToString(updatedProv)
-            }
             if (nextStatus != currentStatus) {
                 it[DocumentsTable.documentStatus] = nextStatus
             }
@@ -721,7 +613,6 @@ class DocumentRepository : DocumentStatusChecker {
             (DocumentsTable.id eq UUID.fromString(documentId.toString())) and
                 (DocumentsTable.tenantId eq UUID.fromString(tenantId.toString()))
         }) {
-            it[DocumentsTable.canonicalData] = json.encodeToString(extractedData)
             it[DocumentsTable.documentType] = extractedData.toDocumentType()
             it[DocumentsTable.direction] = extractedData.toDirection()
             it[DocumentsTable.documentStatus] = status
@@ -1026,7 +917,6 @@ class DocumentRepository : DocumentStatusChecker {
             documentStatus = this[DocumentsTable.documentStatus] ?: DocumentStatus.NeedsReview,
             documentType = this[DocumentsTable.documentType],
             direction = this[DocumentsTable.direction] ?: DocumentDirection.Unknown,
-            extractedData = this[DocumentsTable.canonicalData]?.let { json.decodeFromString(it) },
             aiKeywords = this[DocumentsTable.aiKeywords]?.let { json.decodeFromString(it) } ?: emptyList(),
             purposeBase = this[DocumentsTable.purposeBase],
             purposePeriodYear = this[DocumentsTable.purposePeriodYear],

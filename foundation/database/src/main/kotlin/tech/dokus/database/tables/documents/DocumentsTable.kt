@@ -17,7 +17,7 @@ import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.PurposePeriodMode
 import tech.dokus.foundation.backend.database.dbEnumeration
 
-private const val ContentHashLength = 64
+private const val IdentityKeyHashLength = 64
 
 /**
  * Documents table — canonical document record.
@@ -27,7 +27,7 @@ private const val ContentHashLength = 64
  * The file columns here are vestigial and will be removed in a future stage.
  *
  * This table is the merged result of the former DocumentsTable + DocumentDraftsTable.
- * Draft columns (status, type, direction, canonical data, counterparty, purpose, etc.)
+ * Draft columns (status, type, direction, counterparty, purpose, etc.)
  * are nullable — null means "unprocessed" (no draft yet).
  *
  * OWNER: documents service
@@ -57,13 +57,6 @@ object DocumentsTable : UUIDTable("documents") {
     // Draft review status (null = unprocessed)
     val documentStatus = dbEnumeration<DocumentStatus>("document_status").nullable()
 
-    // ============================================
-    // Canonical Document Data
-    // ============================================
-
-    // Canonical document data — the single reviewable truth (may include user edits)
-    val canonicalData = text("extracted_data").nullable()
-
     // AI-generated keywords for search (JSON array)
     val aiKeywords = text("ai_keywords").nullable()
 
@@ -79,11 +72,8 @@ object DocumentsTable : UUIDTable("documents") {
     // Identity & Dedup
     // ============================================
 
-    // Canonical content fingerprint for deduplication (SHA-256 hex)
-    val canonicalContentHash = varchar("content_hash", ContentHashLength).nullable()
-
     // Canonical identity fingerprint for legal identity matching
-    val canonicalIdentityKey = varchar("identity_key_hash", ContentHashLength).nullable()
+    val canonicalIdentityKey = varchar("identity_key_hash", IdentityKeyHashLength).nullable()
 
     // ============================================
     // Purpose / Filing

@@ -19,12 +19,10 @@ import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.DocumentDetailDto
-import tech.dokus.domain.model.DocDto
 import tech.dokus.domain.model.contact.ContactSuggestionDto
 import tech.dokus.domain.model.contact.CounterpartyInfo
 import tech.dokus.domain.model.contact.CounterpartySnapshot
 import tech.dokus.domain.model.contact.ResolvedContact
-import tech.dokus.domain.model.toDocDto
 import tech.dokus.foundation.backend.storage.DocumentStorageService
 import tech.dokus.foundation.backend.utils.loggerFor
 
@@ -81,9 +79,7 @@ internal class DocumentRecordLoader(
         val content = if (confirmedEntity != null) {
             confirmedEntityToDocDto(confirmedEntity)
         } else {
-            // Draft tables first, JSON blob fallback during migration
             draftRepository.getDraftAsDocDto(tenantId, documentId, draft?.documentType)
-                ?: draft?.extractedData?.toDocDto()
         }
 
         val cashflowEntryId = if (draft?.documentStatus == DocumentStatus.Confirmed) {

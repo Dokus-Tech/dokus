@@ -66,8 +66,8 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentMatchReviewId
 import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.toCurrency
-import tech.dokus.domain.model.toTotalAmount
+import tech.dokus.domain.model.toDraftData
+import tech.dokus.domain.model.toDocumentType
 import tech.dokus.domain.model.DocumentCollectionChangedEventDto
 import tech.dokus.domain.model.DocumentCountsResponse
 import tech.dokus.domain.model.DocumentDeletedEventDto
@@ -126,6 +126,7 @@ internal fun Route.documentRecordRoutes() {
     val projectionReconciliationService by inject<CashflowProjectionReconciliationService>()
     val invoiceBankAutomationService by inject<InvoiceBankAutomationService>()
     val minioStorage by inject<MinioDocumentStorageService>()
+    val draftRepository by inject<tech.dokus.database.repository.drafts.DraftRepository>()
     val confirmationDispatcher by inject<DocumentConfirmationDispatcher>()
     val contactService by inject<ContactService>()
     val truthService by inject<DocumentTruthService>()
@@ -220,8 +221,8 @@ internal fun Route.documentRecordRoutes() {
                     sortDate = docInfo.document.sortDate,
                     counterpartyDisplayName = draft?.counterpartyDisplayName,
                     purposeRendered = draft?.purposeRendered,
-                    totalAmount = draft?.extractedData?.toTotalAmount(),
-                    currency = draft?.extractedData?.toCurrency(),
+                    totalAmount = null,
+                    currency = null,
                     downloadUrl = downloadUrlsByDocumentId[docInfo.document.id],
                     hasPendingMatchReview = pendingReviewsByDocumentId.containsKey(docInfo.document.id),
                     cashflowEntryId = cashflowEntryIdsByDocumentId[docInfo.document.id],
@@ -641,6 +642,17 @@ internal fun Route.documentRecordRoutes() {
 
                 logger.info("Draft updated: document=$documentId, version=$newVersion")
 
+                // Update per-type draft table
+                if (requestData != null) {
+                    // If document type changed, delete old type's draft
+                    val oldType = draft.documentType
+                    val newType = requestData.toDocumentType()
+                    if (oldType != null && oldType != newType) {
+                        draftRepository.deleteDraft(tenantId, documentId, oldType)
+                    }
+                    draftRepository.saveDraftFromExtraction(tenantId, documentId, requestData)
+                }
+
                 if (hasContactUpdate) {
                     updateDraftCounterparty(documentRepository, documentId, tenantId, request)
                 }
@@ -852,7 +864,8 @@ internal fun Route.documentRecordRoutes() {
                 throw DokusException.BadRequest("Document type must be resolved before confirmation")
             }
 
-            val draftData = draft.extractedData
+            val docDto = draftRepository.getDraftAsDocDto(tenantId, documentId, draftType)
+            val draftData = docDto?.toDraftData()
                 ?: throw DokusException.BadRequest("No draft data available for confirmation")
 
             // Determine if an entity already exists (re-confirm path)
@@ -914,6 +927,12 @@ internal fun Route.documentRecordRoutes() {
 
             val entryId = confirmationResult.cashflowEntryId
             logger.info("Document confirmed: $documentId -> $draftType, cashflowEntryId=$entryId")
+
+            // Clean up draft table row after successful confirmation
+            val docType = draft.documentType
+            if (docType != null) {
+                draftRepository.deleteDraft(tenantId, documentId, docType)
+            }
 
             if (confirmationResult.entity is InvoiceEntity && entryId != null) {
                 runCatching {
