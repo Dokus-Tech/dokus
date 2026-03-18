@@ -31,6 +31,7 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 import kotlin.uuid.toJavaUuid
 import kotlin.uuid.toKotlinUuid
+import tech.dokus.foundation.backend.utils.runSuspendCatching
 
 /**
  * Repository for managing contact addresses.
@@ -57,7 +58,7 @@ class ContactAddressRepository {
         tenantId: TenantId,
         contactId: ContactId,
         input: ContactAddressInput
-    ): Result<ContactAddressDto> = runCatching {
+    ): Result<ContactAddressDto> = runSuspendCatching {
         dbQuery {
             val tenantUuid = tenantId.value.toJavaUuid()
             val contactUuid = contactId.value.toJavaUuid()
@@ -136,7 +137,7 @@ class ContactAddressRepository {
         tenantId: TenantId,
         contactAddressId: ContactAddressId,
         input: ContactAddressInput
-    ): Result<ContactAddressDto> = runCatching {
+    ): Result<ContactAddressDto> = runSuspendCatching {
         dbQuery {
             val tenantUuid = tenantId.value.toJavaUuid()
             val contactAddressUuid = contactAddressId.value.toJavaUuid()
@@ -219,7 +220,7 @@ class ContactAddressRepository {
     suspend fun removeAddress(
         tenantId: TenantId,
         contactAddressId: ContactAddressId
-    ): Result<Boolean> = runCatching {
+    ): Result<Boolean> = runSuspendCatching {
         dbQuery {
             val tenantUuid = tenantId.value.toJavaUuid()
             val contactAddressUuid = contactAddressId.value.toJavaUuid()
@@ -265,7 +266,7 @@ class ContactAddressRepository {
     suspend fun listAddresses(
         tenantId: TenantId,
         contactId: ContactId
-    ): Result<List<ContactAddressDto>> = runCatching {
+    ): Result<List<ContactAddressDto>> = runSuspendCatching {
         dbQuery {
             val tenantUuid = tenantId.value.toJavaUuid()
             val contactUuid = contactId.value.toJavaUuid()
@@ -312,9 +313,9 @@ class ContactAddressRepository {
     suspend fun batchLoadAddresses(
         tenantId: TenantId,
         contactIds: List<ContactId>
-    ): Result<Map<ContactId, List<ContactAddressDto>>> = runCatching {
+    ): Result<Map<ContactId, List<ContactAddressDto>>> = runSuspendCatching {
         if (contactIds.isEmpty()) {
-            return@runCatching emptyMap()
+            return@runSuspendCatching emptyMap()
         }
 
         dbQuery {
@@ -358,7 +359,7 @@ class ContactAddressRepository {
         tenantId: TenantId,
         contactId: ContactId,
         addressType: AddressType? = null
-    ): Result<ContactAddressDto?> = runCatching {
+    ): Result<ContactAddressDto?> = runSuspendCatching {
         dbQuery {
             val tenantUuid = tenantId.value.toJavaUuid()
             val contactUuid = contactId.value.toJavaUuid()
@@ -411,7 +412,7 @@ class ContactAddressRepository {
     suspend fun setDefaultAddress(
         tenantId: TenantId,
         contactAddressId: ContactAddressId
-    ): Result<Boolean> = runCatching {
+    ): Result<Boolean> = runSuspendCatching {
         dbQuery {
             val tenantUuid = tenantId.value.toJavaUuid()
             val contactAddressUuid = contactAddressId.value.toJavaUuid()

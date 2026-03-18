@@ -191,6 +191,14 @@ data class ChunkWithEmbedding(
  *
  * CRITICAL: All implementations MUST filter by tenantId for multi-tenant isolation.
  */
+/**
+ * Paginated result for chat queries.
+ */
+data class ChatPage<T>(
+    val items: List<T>,
+    val totalCount: Long
+)
+
 interface ChatRepository {
 
     // =========================================================================
@@ -219,7 +227,7 @@ interface ChatRepository {
         limit: Int = 100,
         offset: Int = 0,
         descending: Boolean = false
-    ): Pair<List<ChatMessageDto>, Long>
+    ): ChatPage<ChatMessageDto>
 
     /**
      * Get messages for a specific document (across all sessions).
@@ -229,7 +237,7 @@ interface ChatRepository {
         documentId: DocumentId,
         limit: Int = 50,
         offset: Int = 0
-    ): Pair<List<ChatMessageDto>, Long>
+    ): ChatPage<ChatMessageDto>
 
     /**
      * Get the next sequence number for a session.
@@ -252,7 +260,7 @@ interface ChatRepository {
         documentId: DocumentId? = null,
         limit: Int = 20,
         offset: Int = 0
-    ): Pair<List<ChatSessionSummary>, Long>
+    ): ChatPage<ChatSessionSummary>
 
     /**
      * Get session summary by ID.

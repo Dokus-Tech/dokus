@@ -37,6 +37,7 @@ object BankAccountsTable : UUIDTable("bank_accounts") {
 
     init {
         index(false, tenantId, isActive)
+        index(false, tenantId, iban)
         // Note: IBAN uniqueness is enforced at application level via findByIban()
         // because pockets/sub-accounts may have null IBANs.
     }

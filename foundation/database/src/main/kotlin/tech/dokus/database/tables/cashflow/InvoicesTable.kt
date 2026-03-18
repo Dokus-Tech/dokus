@@ -71,7 +71,7 @@ object InvoicesTable : UUIDTable("invoices") {
     val peppolStatus = dbEnumeration<PeppolStatus>("peppol_status").nullable()
 
     // Document attachment (references DocumentsTable)
-    val documentId = uuid("document_id").references(DocumentsTable.id).nullable()
+    val documentId = uuid("document_id").references(DocumentsTable.id, onDelete = ReferenceOption.SET_NULL).nullable()
 
     // Payment
     val paymentLink = varchar("payment_link", 500).nullable()

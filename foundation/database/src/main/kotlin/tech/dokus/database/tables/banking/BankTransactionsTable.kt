@@ -34,7 +34,7 @@ object BankTransactionsTable : UUIDTable("bank_transactions") {
     val tenantId = uuid("tenant_id").references(
         TenantTable.id,
         onDelete = ReferenceOption.CASCADE
-    )
+    ).index()
 
     // --- Source identification ---
     val txSource = dbEnumeration<BankTransactionSource>("source").default(BankTransactionSource.PdfStatement)

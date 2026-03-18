@@ -38,7 +38,7 @@ object ExpensesTable : UUIDTable("expenses") {
     val description = text("description").nullable()
 
     // Document attachment (references DocumentsTable)
-    val documentId = uuid("document_id").references(DocumentsTable.id).nullable()
+    val documentId = uuid("document_id").references(DocumentsTable.id, onDelete = ReferenceOption.SET_NULL).nullable()
 
     // Contact (vendor) reference - RESTRICT prevents deleting contacts with linked expenses
     val contactId = uuid("contact_id")

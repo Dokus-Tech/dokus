@@ -38,6 +38,7 @@ import tech.dokus.database.tables.documents.DocumentMatchReviewsTable
 import tech.dokus.database.tables.documents.DocumentPurposeExamplesTable
 import tech.dokus.database.tables.documents.DocumentPurposeTemplatesTable
 import tech.dokus.database.tables.documents.DocumentSourcesTable
+import tech.dokus.database.tables.documents.DocumentLineItemsTable
 import tech.dokus.database.tables.documents.DocumentLinksTable
 import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.database.tables.banking.MatchPatternsTable
@@ -99,12 +100,8 @@ object DokusSchema {
                 DocumentMatchReviewsTable,
                 DocumentPurposeTemplatesTable,
                 DocumentPurposeExamplesTable,
-                BankTransactionsTable,
-                TransactionMatchLinksTable,
-                MatchPatternsTable,
-                RejectedMatchPairsTable,
-                AutoPaymentAuditEventsTable,
                 DocumentLinksTable,
+                DocumentLineItemsTable,
 
                 // ----------------------------
                 // Contacts (depends on docs/users/addresses)
@@ -198,6 +195,11 @@ object DokusSchema {
                 PaymentsTable,
                 BankAccountsTable,
                 BankStatementsTable,
+                BankTransactionsTable,
+                TransactionMatchLinksTable,
+                MatchPatternsTable,
+                RejectedMatchPairsTable,
+                AutoPaymentAuditEventsTable,
 
                 // ----------------------------
                 // Search telemetry

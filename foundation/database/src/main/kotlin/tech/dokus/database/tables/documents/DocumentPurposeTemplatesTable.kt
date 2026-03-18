@@ -13,7 +13,7 @@ object DocumentPurposeTemplatesTable : UUIDTable("document_purpose_templates") {
     val tenantId = uuid("tenant_id").references(
         TenantTable.id,
         onDelete = ReferenceOption.CASCADE
-    )
+    ).index()
     val counterpartyKey = varchar("counterparty_key", 255)
     val documentType = dbEnumeration<DocumentType>("document_type")
     val purposeBase = text("purpose_base")

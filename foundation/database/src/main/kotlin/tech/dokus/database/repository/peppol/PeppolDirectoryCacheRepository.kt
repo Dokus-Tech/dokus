@@ -26,6 +26,7 @@ import tech.dokus.foundation.backend.utils.loggerFor
 import java.util.UUID
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
+import tech.dokus.foundation.backend.utils.runSuspendCatching
 
 /**
  * Repository for PEPPOL directory cache.
@@ -53,7 +54,7 @@ class PeppolDirectoryCacheRepository {
      * Get cache entry for a contact.
      * Returns null if no entry exists.
      */
-    suspend fun getByContactId(tenantId: TenantId, contactId: ContactId): Result<PeppolResolution?> = runCatching {
+    suspend fun getByContactId(tenantId: TenantId, contactId: ContactId): Result<PeppolResolution?> = runSuspendCatching {
         dbQuery {
             PeppolDirectoryCacheTable.selectAll()
                 .where {
@@ -79,7 +80,7 @@ class PeppolDirectoryCacheRepository {
         vatNumberSnapshot: String?,
         companyNumberSnapshot: String?,
         errorMessage: String?
-    ): Result<PeppolResolution> = runCatching {
+    ): Result<PeppolResolution> = runSuspendCatching {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         val tenantUuid = UUID.fromString(tenantId.toString())
         val contactUuid = UUID.fromString(contactId.toString())
@@ -154,7 +155,7 @@ class PeppolDirectoryCacheRepository {
     /**
      * Delete cache entry for a contact.
      */
-    suspend fun invalidateForContact(tenantId: TenantId, contactId: ContactId): Result<Boolean> = runCatching {
+    suspend fun invalidateForContact(tenantId: TenantId, contactId: ContactId): Result<Boolean> = runSuspendCatching {
         dbQuery {
             val deleted = PeppolDirectoryCacheTable.deleteWhere {
                 (PeppolDirectoryCacheTable.tenantId eq UUID.fromString(tenantId.toString())) and
@@ -188,7 +189,7 @@ class PeppolDirectoryCacheRepository {
      * Delete all expired entries for a tenant.
      * Returns number of deleted rows.
      */
-    suspend fun deleteExpired(tenantId: TenantId): Result<Int> = runCatching {
+    suspend fun deleteExpired(tenantId: TenantId): Result<Int> = runSuspendCatching {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         dbQuery {
             PeppolDirectoryCacheTable.deleteWhere {

@@ -5,6 +5,7 @@ import tech.dokus.database.entity.ExpenseEntity
 import tech.dokus.database.entity.InvoiceEntity
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.common.PaginatedResponse
+import tech.dokus.foundation.backend.utils.runSuspendCatching
 
 /**
  * Combined financial document for the cashflow list.
@@ -32,7 +33,7 @@ class CashflowRepository(
         toDate: LocalDate?,
         limit: Int,
         offset: Int
-    ): Result<PaginatedResponse<CashflowDocumentEntity>> = runCatching {
+    ): Result<PaginatedResponse<CashflowDocumentEntity>> = runSuspendCatching {
         val fetchSize = limit + offset
 
         val invoicePage = invoiceRepository.listInvoices(

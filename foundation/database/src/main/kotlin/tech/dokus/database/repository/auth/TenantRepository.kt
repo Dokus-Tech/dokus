@@ -29,6 +29,7 @@ import tech.dokus.foundation.backend.utils.loggerFor
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid
 import kotlin.uuid.toKotlinUuid
+import tech.dokus.foundation.backend.utils.runSuspendCatching
 
 /**
  * Configuration for invoice number generation.
@@ -215,7 +216,7 @@ class TenantRepository {
      * @param tenantId The tenant to fetch configuration for
      * @return Result containing the invoice config, or failure if not found
      */
-    suspend fun getInvoiceConfig(tenantId: TenantId): Result<TenantInvoiceConfig> = runCatching {
+    suspend fun getInvoiceConfig(tenantId: TenantId): Result<TenantInvoiceConfig> = runSuspendCatching {
         dbQuery {
             val javaUuid = tenantId.value.toJavaUuid()
 

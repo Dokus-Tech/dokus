@@ -26,6 +26,7 @@ import tech.dokus.domain.model.SearchResultEntityType
 import tech.dokus.domain.model.SearchSignalEventType
 import tech.dokus.foundation.backend.database.dbQuery
 import java.util.UUID
+import tech.dokus.foundation.backend.utils.runSuspendCatching
 
 data class SearchSignalStat(
     val signalType: SearchSignalEventType,
@@ -43,7 +44,7 @@ class SearchSignalRepository {
         signalType: SearchSignalEventType,
         normalizedText: String,
         displayText: String,
-    ): Result<Unit> = runCatching {
+    ): Result<Unit> = runSuspendCatching {
         val tenantUuid = UUID.fromString(tenantId.toString())
         val userUuid = UUID.fromString(userId.toString())
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
@@ -77,7 +78,7 @@ class SearchSignalRepository {
         tenantId: TenantId,
         userId: UserId,
         limit: Int,
-    ): Result<List<SearchSignalStat>> = runCatching {
+    ): Result<List<SearchSignalStat>> = runSuspendCatching {
         val tenantUuid = UUID.fromString(tenantId.toString())
         val userUuid = UUID.fromString(userId.toString())
         val safeLimit = limit.coerceIn(1, 100)
@@ -109,9 +110,9 @@ class SearchSignalRepository {
         tenantId: TenantId,
         entityType: SearchResultEntityType,
         entityId: String,
-    ): Result<String?> = runCatching {
+    ): Result<String?> = runSuspendCatching {
         val tenantUuid = UUID.fromString(tenantId.toString())
-        val entityUuid = parseUuid(entityId) ?: return@runCatching null
+        val entityUuid = parseUuid(entityId) ?: return@runSuspendCatching null
 
         dbQuery {
             when (entityType) {

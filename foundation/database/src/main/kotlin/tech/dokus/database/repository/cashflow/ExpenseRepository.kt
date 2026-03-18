@@ -24,6 +24,7 @@ import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.toDbDecimal
 import tech.dokus.foundation.backend.database.dbQuery
 import java.util.UUID
+import tech.dokus.foundation.backend.utils.runSuspendCatching
 
 /**
  * Repository for managing expenses
@@ -42,7 +43,7 @@ class ExpenseRepository {
     suspend fun createExpense(
         tenantId: TenantId,
         request: CreateExpenseRequest
-    ): Result<ExpenseEntity> = runCatching {
+    ): Result<ExpenseEntity> = runSuspendCatching {
         dbQuery {
             val expenseId = ExpensesTable.insertAndGetId {
                 it[ExpensesTable.tenantId] = UUID.fromString(tenantId.toString())
@@ -79,7 +80,7 @@ class ExpenseRepository {
     suspend fun getExpense(
         expenseId: ExpenseId,
         tenantId: TenantId
-    ): Result<ExpenseEntity?> = runCatching {
+    ): Result<ExpenseEntity?> = runSuspendCatching {
         dbQuery {
             ExpensesTable.selectAll().where {
                 (ExpensesTable.id eq UUID.fromString(expenseId.toString())) and
@@ -101,7 +102,7 @@ class ExpenseRepository {
         toDate: LocalDate? = null,
         limit: Int = 50,
         offset: Int = 0
-    ): Result<PaginatedResponse<ExpenseEntity>> = runCatching {
+    ): Result<PaginatedResponse<ExpenseEntity>> = runSuspendCatching {
         dbQuery {
             var query = ExpensesTable.selectAll().where {
                 ExpensesTable.tenantId eq UUID.fromString(tenantId.toString())
@@ -143,7 +144,7 @@ class ExpenseRepository {
         expenseId: ExpenseId,
         tenantId: TenantId,
         request: CreateExpenseRequest
-    ): Result<ExpenseEntity> = runCatching {
+    ): Result<ExpenseEntity> = runSuspendCatching {
         dbQuery {
             // Verify expense exists and belongs to tenant
             val exists = ExpensesTable.selectAll().where {
@@ -193,7 +194,7 @@ class ExpenseRepository {
     suspend fun deleteExpense(
         expenseId: ExpenseId,
         tenantId: TenantId
-    ): Result<Boolean> = runCatching {
+    ): Result<Boolean> = runSuspendCatching {
         dbQuery {
             val deletedRows = ExpensesTable.deleteWhere {
                 (ExpensesTable.id eq UUID.fromString(expenseId.toString())) and
@@ -210,7 +211,7 @@ class ExpenseRepository {
     suspend fun exists(
         expenseId: ExpenseId,
         tenantId: TenantId
-    ): Result<Boolean> = runCatching {
+    ): Result<Boolean> = runSuspendCatching {
         dbQuery {
             ExpensesTable.selectAll().where {
                 (ExpensesTable.id eq UUID.fromString(expenseId.toString())) and
@@ -227,7 +228,7 @@ class ExpenseRepository {
         expenseId: ExpenseId,
         tenantId: TenantId,
         documentId: DocumentId
-    ): Result<Boolean> = runCatching {
+    ): Result<Boolean> = runSuspendCatching {
         dbQuery {
             val updatedRows = ExpensesTable.update({
                 (ExpensesTable.id eq UUID.fromString(expenseId.toString())) and

@@ -14,7 +14,7 @@ import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.foundation.backend.database.dbEnumeration
 
 object TransactionMatchLinksTable : UUIDTable("transaction_match_links") {
-    val tenantId = uuid("tenant_id").references(TenantTable.id, onDelete = ReferenceOption.CASCADE)
+    val tenantId = uuid("tenant_id").references(TenantTable.id, onDelete = ReferenceOption.CASCADE).index()
     val documentId = uuid("document_id").references(
         tech.dokus.database.tables.documents.DocumentsTable.id,
         onDelete = ReferenceOption.CASCADE,

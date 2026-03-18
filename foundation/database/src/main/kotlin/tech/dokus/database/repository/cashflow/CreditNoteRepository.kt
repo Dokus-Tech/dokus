@@ -26,6 +26,7 @@ import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.toDbDecimal
 import tech.dokus.foundation.backend.database.dbQuery
 import java.util.UUID
+import tech.dokus.foundation.backend.utils.runSuspendCatching
 
 /**
  * Repository for managing credit notes.
@@ -44,7 +45,7 @@ class CreditNoteRepository {
     suspend fun createCreditNote(
         tenantId: TenantId,
         request: CreateCreditNoteRequest
-    ): Result<CreditNoteEntity> = runCatching {
+    ): Result<CreditNoteEntity> = runSuspendCatching {
         dbQuery {
             val creditNoteId = CreditNotesTable.insertAndGetId {
                 it[CreditNotesTable.tenantId] = UUID.fromString(tenantId.toString())
@@ -80,7 +81,7 @@ class CreditNoteRepository {
     suspend fun getCreditNote(
         creditNoteId: CreditNoteId,
         tenantId: TenantId
-    ): Result<CreditNoteEntity?> = runCatching {
+    ): Result<CreditNoteEntity?> = runSuspendCatching {
         dbQuery {
             CreditNotesTable.selectAll().where {
                 (CreditNotesTable.id eq UUID.fromString(creditNoteId.toString())) and
@@ -104,7 +105,7 @@ class CreditNoteRepository {
         toDate: LocalDate? = null,
         limit: Int = 50,
         offset: Int = 0
-    ): Result<PaginatedResponse<CreditNoteEntity>> = runCatching {
+    ): Result<PaginatedResponse<CreditNoteEntity>> = runSuspendCatching {
         dbQuery {
             var query = CreditNotesTable.selectAll().where {
                 CreditNotesTable.tenantId eq UUID.fromString(tenantId.toString())
@@ -155,7 +156,7 @@ class CreditNoteRepository {
         creditNoteId: CreditNoteId,
         tenantId: TenantId,
         request: CreateCreditNoteRequest
-    ): Result<CreditNoteEntity> = runCatching {
+    ): Result<CreditNoteEntity> = runSuspendCatching {
         dbQuery {
             val updated = CreditNotesTable.update({
                 (CreditNotesTable.id eq UUID.fromString(creditNoteId.toString())) and
@@ -196,7 +197,7 @@ class CreditNoteRepository {
         creditNoteId: CreditNoteId,
         tenantId: TenantId,
         status: CreditNoteStatus
-    ): Result<Boolean> = runCatching {
+    ): Result<Boolean> = runSuspendCatching {
         dbQuery {
             val updatedRows = CreditNotesTable.update({
                 (CreditNotesTable.id eq UUID.fromString(creditNoteId.toString())) and
@@ -216,7 +217,7 @@ class CreditNoteRepository {
         creditNoteId: CreditNoteId,
         tenantId: TenantId,
         settlementIntent: SettlementIntent
-    ): Result<Boolean> = runCatching {
+    ): Result<Boolean> = runSuspendCatching {
         dbQuery {
             val updatedRows = CreditNotesTable.update({
                 (CreditNotesTable.id eq UUID.fromString(creditNoteId.toString())) and
@@ -251,7 +252,7 @@ class CreditNoteRepository {
     suspend fun deleteCreditNote(
         creditNoteId: CreditNoteId,
         tenantId: TenantId
-    ): Result<Boolean> = runCatching {
+    ): Result<Boolean> = runSuspendCatching {
         dbQuery {
             val deletedRows = CreditNotesTable.deleteWhere {
                 (CreditNotesTable.id eq UUID.fromString(creditNoteId.toString())) and
@@ -268,7 +269,7 @@ class CreditNoteRepository {
     suspend fun exists(
         creditNoteId: CreditNoteId,
         tenantId: TenantId
-    ): Result<Boolean> = runCatching {
+    ): Result<Boolean> = runSuspendCatching {
         dbQuery {
             CreditNotesTable.selectAll().where {
                 (CreditNotesTable.id eq UUID.fromString(creditNoteId.toString())) and

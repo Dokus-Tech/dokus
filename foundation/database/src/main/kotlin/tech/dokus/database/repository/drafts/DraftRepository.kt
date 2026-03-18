@@ -11,6 +11,7 @@ import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.insertAndGetId
 import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import tech.dokus.database.entity.*
 import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.drafts.*
@@ -224,11 +225,25 @@ class DraftRepository {
         tenantId: TenantId,
         documentId: DocumentId,
         extractedData: DocumentDraftData,
-    ): Boolean {
+    ): Boolean = newSuspendedTransaction {
         val docType = extractedData.toDocumentType()
-        deleteDraft(tenantId, documentId, docType)
 
-        return when (extractedData) {
+        // Delete existing draft inline to keep delete + insert atomic
+        val table = draftTableFor(docType)
+        if (table != null) {
+            @Suppress("UNCHECKED_CAST")
+            val tenantCol = table.columns.first { it.name == "tenant_id" }
+                as org.jetbrains.exposed.v1.core.Column<java.util.UUID>
+            @Suppress("UNCHECKED_CAST")
+            val docCol = table.columns.first { it.name == "document_id" }
+                as org.jetbrains.exposed.v1.core.Column<java.util.UUID>
+            table.deleteWhere {
+                (tenantCol eq tenantId.value.toJavaUuid()) and
+                    (docCol eq documentId.value.toJavaUuid())
+            }
+        }
+
+        when (extractedData) {
             is InvoiceDraftData -> saveInvoiceDraft(tenantId, documentId, extractedData)
             is CreditNoteDraftData -> saveCreditNoteDraft(tenantId, documentId, extractedData)
             is ReceiptDraftData -> saveReceiptDraft(tenantId, documentId, extractedData)

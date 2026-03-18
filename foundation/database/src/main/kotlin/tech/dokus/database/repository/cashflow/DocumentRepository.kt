@@ -717,7 +717,6 @@ class DocumentRepository : DocumentStatusChecker {
      * List drafts by status with optional document type filter.
      * CRITICAL: Must filter by tenantId.
      *
-     * @return Pair of (drafts, totalCount)
      */
     suspend fun listByStatus(
         tenantId: TenantId,
@@ -725,7 +724,7 @@ class DocumentRepository : DocumentStatusChecker {
         documentType: DocumentType? = null,
         page: Int = 0,
         limit: Int = 20
-    ): Pair<List<DraftSummary>, Long> = newSuspendedTransaction {
+    ): DocumentListPage<DraftSummary> = newSuspendedTransaction {
         val tenantIdUuid = UUID.fromString(tenantId.toString())
 
         val baseQuery = DocumentsTable.selectAll()
@@ -747,7 +746,7 @@ class DocumentRepository : DocumentStatusChecker {
             .offset((page * limit).toLong())
             .map { it.toDraftSummary() }
 
-        drafts to total
+        DocumentListPage(drafts, total)
     }
 
     // =========================================================================
