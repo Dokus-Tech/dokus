@@ -76,7 +76,7 @@ import tech.dokus.domain.model.VatAssessmentDraftData
 import tech.dokus.domain.model.VatListingDraftData
 import tech.dokus.domain.model.VatReturnDraftData
 import tech.dokus.domain.model.WithholdingTaxDraftData
-import tech.dokus.domain.model.resolvedCounterpartyName
+import tech.dokus.domain.model.contact.ResolvedContact
 import tech.dokus.features.cashflow.presentation.common.utils.formatShortDate
 import tech.dokus.features.cashflow.presentation.review.DocumentPreviewState
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
@@ -190,9 +190,16 @@ private fun SourceStructuredEvidence(
             color = MaterialTheme.colorScheme.textMuted,
         )
 
+        val vendorName = when (val c = contentState.effectiveContact) {
+            is ResolvedContact.Linked -> c.name
+            is ResolvedContact.Suggested -> c.name
+            is ResolvedContact.Detected -> c.name
+            is ResolvedContact.Unknown -> null
+        }
+
         when (draft) {
             is InvoiceDraftData -> {
-                StructuredValue("Vendor", contentState.documentRecord?.draft?.counterpartyDisplayName ?: "\u2014")
+                StructuredValue("Vendor", vendorName ?: "\u2014")
                 StructuredValue("Invoice", draft.invoiceNumber ?: "\u2014")
                 StructuredValue("Date", draft.issueDate?.let { formatShortDate(it) } ?: "\u2014")
                 StructuredValue("Due", draft.dueDate?.let { formatShortDate(it) } ?: "\u2014")
@@ -215,7 +222,7 @@ private fun SourceStructuredEvidence(
             }
 
             is CreditNoteDraftData -> {
-                StructuredValue("Counterparty", draft.resolvedCounterpartyName ?: "\u2014")
+                StructuredValue("Counterparty", vendorName ?: "\u2014")
                 StructuredValue("Credit note", draft.creditNoteNumber ?: "\u2014")
                 StructuredValue("Date", draft.issueDate?.let { formatShortDate(it) } ?: "\u2014")
                 StructuredValue("Total", draft.totalAmount?.toDisplayString() ?: "\u2014", emphasized = true)

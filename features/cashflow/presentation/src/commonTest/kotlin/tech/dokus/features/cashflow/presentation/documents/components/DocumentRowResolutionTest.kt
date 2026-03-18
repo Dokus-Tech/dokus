@@ -17,8 +17,7 @@ import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentIngestionDto
 import tech.dokus.domain.model.DocumentListItemDto
 import tech.dokus.domain.model.InvoiceDraftData
-import tech.dokus.domain.model.contact.CounterpartyInfo
-import tech.dokus.domain.model.contact.CounterpartySnapshot
+import tech.dokus.domain.model.contact.ResolvedContact
 import tech.dokus.foundation.aura.model.DocumentUiStatus
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -185,10 +184,9 @@ class DocumentRowResolutionTest {
             draftVersion = 0,
             draftEditedAt = null,
             draftEditedBy = null,
-            counterparty = counterpartyName?.let {
-                CounterpartyInfo.Unresolved(snapshot = CounterpartySnapshot(name = it))
-            },
-            counterpartyDisplayName = counterpartyName,
+            resolvedContact = counterpartyName?.let {
+                ResolvedContact.Detected(name = it, vatNumber = null, iban = null, address = null)
+            } ?: ResolvedContact.Unknown,
             lastSuccessfulRunId = null,
             createdAt = now,
             updatedAt = now

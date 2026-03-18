@@ -34,6 +34,7 @@ import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.DocumentSourceDto
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
+import tech.dokus.domain.model.contact.ResolvedContact
 import tech.dokus.domain.model.toDocumentType
 import tech.dokus.foundation.app.state.DokusState
 import kotlin.test.Test
@@ -218,8 +219,13 @@ class DocumentReviewCanonicalStateTest {
                     contactSuggestions = emptyList(),
                 )
             ),
-            selectedContactId = ContactId.generate(),
-            contactSelectionState = ContactSelectionState.Selected,
+            selectedContactOverride = ResolvedContact.Linked(
+                contactId = ContactId.generate(),
+                name = "Test Contact",
+                vatNumber = null,
+                email = null,
+                avatarPath = null,
+            ),
             isContactRequired = true,
             documentStatus = if (isDocumentConfirmed) DocumentStatus.Confirmed else DocumentStatus.NeedsReview,
             cashflowEntryState = cashflowEntryState,
@@ -267,7 +273,7 @@ class DocumentReviewCanonicalStateTest {
         currency = Currency.Eur,
         status = status,
         paidAt = if (status == CashflowEntryStatus.Paid) LocalDateTime(2026, 2, 15, 0, 0, 0) else null,
-        contactId = null,
+        contact = null,
         createdAt = LocalDateTime(2026, 2, 11, 0, 0, 0),
         updatedAt = LocalDateTime(2026, 2, 11, 0, 0, 0),
     )

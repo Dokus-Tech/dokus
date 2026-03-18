@@ -19,7 +19,7 @@ import tech.dokus.features.cashflow.presentation.review.components.ReviewContent
 import tech.dokus.features.cashflow.presentation.review.components.ReviewTopBar
 import tech.dokus.features.cashflow.presentation.review.components.previewReviewContentState
 import tech.dokus.features.cashflow.presentation.review.components.previewSourceEvidenceViewerState
-import tech.dokus.features.cashflow.presentation.review.models.CounterpartyInfo
+import tech.dokus.domain.model.contact.ResolvedContact
 import tech.dokus.foundation.app.shell.LocalIsInDocDetailMode
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
@@ -33,8 +33,8 @@ internal fun DocumentReviewScreen(
     onIntent: (DocumentReviewIntent) -> Unit,
     onBackClick: () -> Unit,
     onOpenSource: (DocumentSourceId) -> Unit,
-    onCorrectContact: (CounterpartyInfo) -> Unit,
-    onCreateContact: (CounterpartyInfo) -> Unit,
+    onCorrectContact: (ResolvedContact) -> Unit,
+    onCreateContact: (ResolvedContact) -> Unit,
     snackbarHostState: SnackbarHostState,
 ) {
     val isInDetailMode = LocalIsInDocDetailMode.current

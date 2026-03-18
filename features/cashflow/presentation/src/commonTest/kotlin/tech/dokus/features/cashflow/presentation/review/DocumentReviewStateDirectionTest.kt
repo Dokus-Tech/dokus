@@ -3,7 +3,6 @@ package tech.dokus.features.cashflow.presentation.review
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import tech.dokus.domain.Money
-import tech.dokus.domain.enums.ContactLinkSource
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
@@ -15,8 +14,7 @@ import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.PartyDraft
-import tech.dokus.domain.model.contact.CounterpartyInfo
-import tech.dokus.domain.model.contact.CounterpartySnapshot
+import tech.dokus.domain.model.contact.ResolvedContact
 import tech.dokus.foundation.app.state.DokusState
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -83,15 +81,21 @@ class DocumentReviewStateDirectionTest {
             seller = PartyDraft(name = sellerName)
         )
 
-        val counterparty = when {
-            selectedContactId != null -> CounterpartyInfo.Linked(
+        val resolvedContact = when {
+            selectedContactId != null -> ResolvedContact.Linked(
                 contactId = selectedContactId,
-                source = ContactLinkSource.AI,
+                name = counterpartySnapshotName ?: "Test Contact",
+                vatNumber = null,
+                email = null,
+                avatarPath = null,
             )
-            counterpartySnapshotName != null -> CounterpartyInfo.Unresolved(
-                snapshot = CounterpartySnapshot(name = counterpartySnapshotName),
+            counterpartySnapshotName != null -> ResolvedContact.Detected(
+                name = counterpartySnapshotName,
+                vatNumber = null,
+                iban = null,
+                address = null,
             )
-            else -> null
+            else -> ResolvedContact.Unknown
         }
 
         val draft = DocumentDraftDto(
@@ -104,8 +108,7 @@ class DocumentReviewStateDirectionTest {
             draftVersion = 0,
             draftEditedAt = null,
             draftEditedBy = null,
-            counterparty = counterparty,
-            counterpartyDisplayName = counterpartySnapshotName,
+            resolvedContact = resolvedContact,
             lastSuccessfulRunId = null,
             createdAt = now,
             updatedAt = now
@@ -136,8 +139,7 @@ class DocumentReviewStateDirectionTest {
                 )
             ),
             isContactRequired = isContactRequired,
-            selectedContactId = selectedContactId,
-            isPendingCreation = false,
+            selectedContactOverride = (resolvedContact as? ResolvedContact.Linked),
         )
     }
 }

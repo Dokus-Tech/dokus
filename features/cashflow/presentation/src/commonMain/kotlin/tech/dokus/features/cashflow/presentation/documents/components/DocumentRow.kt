@@ -93,6 +93,7 @@ import tech.dokus.domain.model.VatAssessmentDraftData
 import tech.dokus.domain.model.VatListingDraftData
 import tech.dokus.domain.model.VatReturnDraftData
 import tech.dokus.domain.model.WithholdingTaxDraftData
+import tech.dokus.domain.model.contact.ResolvedContact
 import tech.dokus.domain.model.resolvedCounterpartyName
 import tech.dokus.features.cashflow.presentation.common.utils.formatShortDate
 import tech.dokus.features.cashflow.presentation.model.toUiStatus
@@ -556,7 +557,7 @@ internal fun resolveDescription(document: DocumentDetailDto, unknownLabel: Strin
         is OtherDraftData,
         null -> null
     }
-    val counterparty = document.draft?.counterpartyDisplayName.nonBlank()
+    val counterparty = document.draft?.resolvedContact.displayName.nonBlank()
     val filename = document.document.filename.nonBlank()
 
     return when {
@@ -577,7 +578,7 @@ internal fun resolveDescription(document: DocumentDetailDto, unknownLabel: Strin
  * Used by [DocumentQueueMapper] in the review context.
  */
 internal fun resolveCounterparty(document: DocumentDetailDto, emptyLabel: String = "\u2014"): String {
-    val displayName = document.draft?.counterpartyDisplayName.nonBlank()
+    val displayName = document.draft?.resolvedContact.displayName.nonBlank()
     if (displayName != null) return displayName
 
     val fromDraft = when (val data = document.draft?.extractedData) {
@@ -641,6 +642,14 @@ internal fun resolveCounterparty(document: DocumentDetailDto, emptyLabel: String
 // =============================================================================
 // Shared Helpers
 // =============================================================================
+
+private val ResolvedContact?.displayName: String?
+    get() = when (this) {
+        is ResolvedContact.Linked -> name
+        is ResolvedContact.Suggested -> name
+        is ResolvedContact.Detected -> name
+        is ResolvedContact.Unknown, null -> null
+    }
 
 private fun String?.nonBlank(): String? = this?.takeIf { it.isNotBlank() }
 

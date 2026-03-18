@@ -2,9 +2,6 @@ package tech.dokus.features.cashflow.presentation.review
 
 import kotlinx.coroutines.launch
 import pro.respawn.flowmvi.dsl.withState
-import tech.dokus.domain.enums.DocumentStatus
-import tech.dokus.domain.model.contact.CounterpartyInfo
-import tech.dokus.domain.model.contact.isUnresolved
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.Dpi
@@ -168,7 +165,6 @@ internal class DocumentReviewFeedbackActions(
                                     ),
                                     hasUnsavedChanges = false,
                                     isResolvingMatchReview = false,
-                                    isPendingCreation = draft?.counterparty.let { it.isUnresolved() && it.pendingCreation },
                                     documentStatus = draft?.documentStatus,
                                 )
                             }

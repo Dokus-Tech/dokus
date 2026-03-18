@@ -493,6 +493,8 @@
     <string name="cashflow_contact_selected">Contact selected</string>
     <string name="cashflow_bound_to">Bound to %1$s</string>
     <string name="cashflow_ai_suggested">AI suggested</string>
+    <string name="cashflow_contact_suggested_label">Suggested</string>
+    <string name="cashflow_contact_detected_label">Detected</string>
 
     <!-- Document Review Messages -->
     <string name="cashflow_contact_clear_failed">Failed to clear contact</string>

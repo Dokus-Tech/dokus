@@ -39,9 +39,11 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.cashflow_contact_detected_label
+import tech.dokus.aura.resources.cashflow_contact_suggested_label
 import tech.dokus.aura.resources.cashflow_tap_to_identify
 import tech.dokus.aura.resources.cashflow_who_issued_document
-import tech.dokus.features.cashflow.presentation.review.ContactSnapshot
+import tech.dokus.domain.model.contact.ResolvedContact
 import tech.dokus.foundation.app.network.rememberAuthenticatedImageLoader
 import tech.dokus.foundation.app.network.rememberResolvedApiUrl
 import tech.dokus.foundation.aura.components.AvatarShape
@@ -66,17 +68,18 @@ private val FactFieldCornerRadius = 6.dp
 
 /**
  * Contact display as a fact block with hover-to-edit behavior.
+ * Renders based on [ResolvedContact] sealed subtype:
+ * - Linked: full contact display (avatar, name, VAT, email)
+ * - Suggested/Detected: contact display with subtle indicator label
+ * - Unknown: amber attention prompt
  *
- * - When contact exists: shows name, VAT, address as text with hover-reveal pencil
- * - When no contact: shows subtle amber border + dot + prompt text
- *
- * @param contact The contact snapshot to display, or null if no contact
+ * @param displayState The resolved contact from the backend
  * @param onEditClick Callback when user wants to edit/select contact
  * @param isReadOnly Whether editing is disabled (e.g., confirmed document)
  */
 @Composable
 fun ContactBlock(
-    contact: ContactSnapshot?,
+    displayState: ResolvedContact,
     onEditClick: () -> Unit,
     isReadOnly: Boolean = false,
     modifier: Modifier = Modifier
@@ -84,35 +87,67 @@ fun ContactBlock(
     val interactionSource = remember { MutableInteractionSource() }
     val isHovered by interactionSource.collectIsHoveredAsState()
     val isLargeScreen = LocalScreenSize.current.isLarge
-
-    // On mobile, always show the edit affordance; on desktop, show on hover
     val showEditAffordance = !isReadOnly && (!isLargeScreen || isHovered)
 
-    if (contact != null) {
-        // Contact exists - show as fact
-        ContactFactDisplay(
-            contact = contact,
+    when (displayState) {
+        is ResolvedContact.Linked -> ContactFactDisplay(
+            name = displayState.name,
+            vatNumber = displayState.vatNumber,
+            email = displayState.email,
+            avatarPath = displayState.avatarPath,
+            subtitle = null,
             isHovered = isHovered,
             showEditAffordance = showEditAffordance,
             isReadOnly = isReadOnly,
             onEditClick = onEditClick,
             interactionSource = interactionSource,
-            modifier = modifier
+            modifier = modifier,
         )
-    } else {
-        // No contact - show attention prompt
-        ContactMissingPrompt(
+
+        is ResolvedContact.Suggested -> ContactFactDisplay(
+            name = displayState.name,
+            vatNumber = displayState.vatNumber,
+            email = null,
+            avatarPath = null,
+            subtitle = stringResource(Res.string.cashflow_contact_suggested_label),
+            isHovered = isHovered,
+            showEditAffordance = showEditAffordance,
+            isReadOnly = isReadOnly,
+            onEditClick = onEditClick,
+            interactionSource = interactionSource,
+            modifier = modifier,
+        )
+
+        is ResolvedContact.Detected -> ContactFactDisplay(
+            name = displayState.name,
+            vatNumber = displayState.vatNumber,
+            email = null,
+            avatarPath = null,
+            subtitle = stringResource(Res.string.cashflow_contact_detected_label),
+            isHovered = isHovered,
+            showEditAffordance = showEditAffordance,
+            isReadOnly = isReadOnly,
+            onEditClick = onEditClick,
+            interactionSource = interactionSource,
+            modifier = modifier,
+        )
+
+        is ResolvedContact.Unknown -> ContactMissingPrompt(
             onEditClick = onEditClick,
             isReadOnly = isReadOnly,
             interactionSource = interactionSource,
-            modifier = modifier
+            modifier = modifier,
         )
     }
 }
 
 @Composable
 private fun ContactFactDisplay(
-    contact: ContactSnapshot,
+    name: String,
+    vatNumber: String?,
+    email: String?,
+    avatarPath: String?,
+    subtitle: String?,
     isHovered: Boolean,
     showEditAffordance: Boolean,
     isReadOnly: Boolean,
@@ -121,7 +156,7 @@ private fun ContactFactDisplay(
     modifier: Modifier = Modifier
 ) {
     val imageLoader = rememberAuthenticatedImageLoader()
-    val avatarUrl = rememberResolvedApiUrl(contact.avatarUrl)
+    val avatarUrl = rememberResolvedApiUrl(avatarPath)
 
     Box(
         modifier = modifier
@@ -151,7 +186,7 @@ private fun ContactFactDisplay(
         ) {
             CompanyAvatarImage(
                 avatarUrl = avatarUrl,
-                initial = contactInitials(contact.name),
+                initial = contactInitials(name),
                 size = AvatarSize.Small,
                 shape = AvatarShape.RoundedSquare,
                 imageLoader = imageLoader,
@@ -161,17 +196,15 @@ private fun ContactFactDisplay(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
-                // Name (primary)
                 Text(
-                    text = contact.name,
+                    text = name,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
 
-                // VAT number (monospace)
-                contact.vatNumber?.let { vat ->
+                vatNumber?.let { vat ->
                     Text(
                         text = vat,
                         style = MaterialTheme.typography.bodyMedium,
@@ -181,19 +214,25 @@ private fun ContactFactDisplay(
                     )
                 }
 
-                // Email
-                contact.email?.let { email ->
+                email?.let {
                     Text(
-                        text = email,
+                        text = it,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                 }
+
+                subtitle?.let {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.textMuted,
+                    )
+                }
             }
 
-            // Edit icon (visible on hover/mobile)
             AnimatedVisibility(
                 visible = showEditAffordance,
                 enter = fadeIn(),
@@ -485,7 +524,7 @@ private fun ContactBlockEmptyPreview(
 ) {
     TestWrapper(parameters) {
         ContactBlock(
-            contact = null,
+            displayState = ResolvedContact.Unknown,
             onEditClick = {}
         )
     }

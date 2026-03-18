@@ -100,7 +100,7 @@ internal class DocumentReviewReducer(
     private val getContact: GetContactUseCase,
     private val logger: Logger,
 ) {
-    private val loader = DocumentReviewLoader(getDocumentRecord, getContact, logger)
+    private val loader = DocumentReviewLoader(getDocumentRecord, logger)
     private val contactBinder = DocumentReviewContactBinder(updateDocumentDraftContact, getContact, logger)
     private val preview = DocumentReviewPreview(
         getDocumentPages = getDocumentPages,

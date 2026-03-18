@@ -23,7 +23,9 @@ import tech.dokus.domain.model.DocumentProcessingStepDto
 import tech.dokus.domain.model.DocumentSourceDto
 import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.UpdateDraftRequest
+import tech.dokus.domain.model.contact.ContactSuggestionDto
 import tech.dokus.domain.model.contact.CounterpartyInfo
+import tech.dokus.domain.model.contact.ResolvedContact
 import tech.dokus.domain.utils.parseSafe
 import tech.dokus.foundation.backend.storage.DocumentStorageService as MinioDocumentStorageService
 
@@ -75,7 +77,10 @@ internal suspend fun findConfirmedEntity(
 /**
  * Convert DraftSummary to DocumentDraftDto.
  */
-internal fun DraftSummary.toDto(): DocumentDraftDto = DocumentDraftDto(
+internal fun DraftSummary.toDto(
+    resolvedContact: ResolvedContact = ResolvedContact.Unknown,
+    contactSuggestions: List<ContactSuggestionDto> = emptyList(),
+): DocumentDraftDto = DocumentDraftDto(
     documentId = documentId,
     tenantId = tenantId,
     documentStatus = documentStatus,
@@ -94,8 +99,8 @@ internal fun DraftSummary.toDto(): DocumentDraftDto = DocumentDraftDto(
     draftVersion = draftVersion,
     draftEditedAt = draftEditedAt,
     draftEditedBy = draftEditedBy,
-    counterparty = counterparty,
-    counterpartyDisplayName = counterpartyDisplayName,
+    resolvedContact = resolvedContact,
+    contactSuggestions = contactSuggestions,
     rejectReason = rejectReason,
     lastSuccessfulRunId = lastSuccessfulRunId,
     createdAt = createdAt,

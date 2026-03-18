@@ -49,9 +49,8 @@ import tech.dokus.domain.model.PartyDraft
 import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.domain.model.toDocumentType
 import tech.dokus.domain.model.toEmptyDraftData
-import tech.dokus.domain.model.contact.CounterpartyInfo
 import tech.dokus.domain.model.contact.CounterpartySnapshot
-import tech.dokus.domain.model.contact.PostalAddress
+import tech.dokus.domain.model.contact.ResolvedContact
 import tech.dokus.features.cashflow.presentation.review.DocumentPreviewState
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.PaymentSheetState
@@ -115,17 +114,12 @@ internal fun previewReviewContentState(
         draftVersion = 1,
         draftEditedAt = null,
         draftEditedBy = null,
-        counterparty = CounterpartyInfo.Unresolved(
-            snapshot = CounterpartySnapshot(
-                name = "KBC Bank NV",
-                address = PostalAddress(
-                    streetLine1 = "Havenlaan 2",
-                    postalCode = "1080",
-                    city = "Brussels",
-                ),
-            ),
+        resolvedContact = ResolvedContact.Detected(
+            name = "KBC Bank NV",
+            vatNumber = null,
+            iban = null,
+            address = "Havenlaan 2, 1080 Brussels",
         ),
-        counterpartyDisplayName = "KBC Bank NV",
         lastSuccessfulRunId = null,
         createdAt = previewNow,
         updatedAt = previewNow,
@@ -234,7 +228,6 @@ internal fun previewReviewContentState(
         isUndoingAutoPayment = isUndoingAutoPayment,
         sourceViewerState = sourceViewerState,
         paymentSheetState = paymentSheetState,
-        isPendingCreation = false,
         today = LocalDate(2026, 3, 1),
     )
 }
@@ -337,10 +330,12 @@ internal fun previewStateForDocumentType(
         draftVersion = 1,
         draftEditedAt = null,
         draftEditedBy = null,
-        counterparty = CounterpartyInfo.Unresolved(
-            snapshot = CounterpartySnapshot(name = "KBC Bank NV"),
+        resolvedContact = ResolvedContact.Detected(
+            name = "KBC Bank NV",
+            vatNumber = null,
+            iban = null,
+            address = null,
         ),
-        counterpartyDisplayName = "KBC Bank NV",
         lastSuccessfulRunId = null,
         createdAt = previewNow,
         updatedAt = previewNow,
@@ -427,7 +422,6 @@ internal fun previewStateForDocumentType(
         isUndoingAutoPayment = false,
         sourceViewerState = null,
         paymentSheetState = null,
-        isPendingCreation = false,
         today = LocalDate(2026, 3, 1),
     )
 }

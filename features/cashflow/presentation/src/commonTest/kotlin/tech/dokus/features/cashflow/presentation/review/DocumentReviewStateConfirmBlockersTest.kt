@@ -3,14 +3,13 @@ package tech.dokus.features.cashflow.presentation.review
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import tech.dokus.domain.Money
-import tech.dokus.domain.enums.ContactLinkSource
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.contact.CounterpartyInfo
+import tech.dokus.domain.model.contact.ResolvedContact
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.DocumentDraftDto
@@ -168,13 +167,15 @@ class DocumentReviewStateConfirmBlockersTest {
         val documentId = DocumentId.parse("e72f69a8-6913-4d8f-98e7-224db7f4133f")
         val now = LocalDateTime(2026, 2, 11, 0, 0, 0)
 
-        val counterparty = when {
-            selectedContactId != null -> CounterpartyInfo.Linked(
+        val resolvedContact = when {
+            selectedContactId != null -> ResolvedContact.Linked(
                 contactId = selectedContactId,
-                source = ContactLinkSource.AI,
+                name = "Test Contact",
+                vatNumber = null,
+                email = null,
+                avatarPath = null,
             )
-            isPendingCreation -> CounterpartyInfo.Unresolved(pendingCreation = true)
-            else -> null
+            else -> ResolvedContact.Unknown
         }
 
         val draft = DocumentDraftDto(
@@ -187,7 +188,7 @@ class DocumentReviewStateConfirmBlockersTest {
             draftVersion = 1,
             draftEditedAt = null,
             draftEditedBy = null,
-            counterparty = counterparty,
+            resolvedContact = resolvedContact,
             lastSuccessfulRunId = null,
             createdAt = now,
             updatedAt = now,
@@ -220,8 +221,7 @@ class DocumentReviewStateConfirmBlockersTest {
             hasUnsavedChanges = hasUnsavedChanges,
             isSaving = isSaving,
             isContactRequired = true,
-            selectedContactId = selectedContactId,
-            isPendingCreation = isPendingCreation,
+            selectedContactOverride = (resolvedContact as? ResolvedContact.Linked),
         )
     }
 

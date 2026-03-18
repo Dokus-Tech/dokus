@@ -20,7 +20,8 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
-import tech.dokus.domain.model.contact.CounterpartyInfo
+import tech.dokus.domain.model.contact.ContactSuggestionDto
+import tech.dokus.domain.model.contact.ResolvedContact
 import kotlin.time.Instant
 
 /**
@@ -83,8 +84,8 @@ data class DocumentDraftDto(
     val draftVersion: Int,
     val draftEditedAt: LocalDateTime?,
     val draftEditedBy: UserId?,
-    val counterparty: CounterpartyInfo? = null,
-    val counterpartyDisplayName: String? = null,
+    val resolvedContact: ResolvedContact = ResolvedContact.Unknown,
+    val contactSuggestions: List<ContactSuggestionDto> = emptyList(),
     val rejectReason: DocumentRejectReason? = null,
     val lastSuccessfulRunId: IngestionRunId?,
     val createdAt: LocalDateTime,

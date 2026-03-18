@@ -44,8 +44,7 @@ import tech.dokus.features.cashflow.presentation.review.components.mobile.Mobile
 import tech.dokus.features.cashflow.presentation.review.components.mobile.MobileCanonicalHeader
 import tech.dokus.features.cashflow.presentation.review.components.mobile.MobileDocumentDetailTopBar
 import tech.dokus.features.cashflow.presentation.review.components.mobile.PreviewTabContent
-import tech.dokus.features.cashflow.presentation.review.models.CounterpartyInfo
-import tech.dokus.features.cashflow.presentation.review.models.counterpartyInfo
+import tech.dokus.domain.model.contact.ResolvedContact
 import tech.dokus.foundation.app.state.isError
 import tech.dokus.foundation.app.state.isLoading
 import tech.dokus.foundation.aura.components.DokusCardSurface
@@ -70,8 +69,8 @@ internal fun ReviewContent(
     isAccountantReadOnly: Boolean,
     contentPadding: PaddingValues,
     onIntent: (DocumentReviewIntent) -> Unit,
-    onCorrectContact: (CounterpartyInfo) -> Unit,
-    onCreateContact: (CounterpartyInfo) -> Unit,
+    onCorrectContact: (ResolvedContact) -> Unit,
+    onCreateContact: (ResolvedContact) -> Unit,
     onBackClick: () -> Unit,
     onOpenSource: (DocumentSourceId) -> Unit,
 ) {
@@ -205,8 +204,8 @@ private fun DesktopReviewContent(
     isAccountantReadOnly: Boolean,
     contentPadding: PaddingValues,
     onIntent: (DocumentReviewIntent) -> Unit,
-    onCorrectContact: (CounterpartyInfo) -> Unit,
-    onCreateContact: (CounterpartyInfo) -> Unit,
+    onCorrectContact: (ResolvedContact) -> Unit,
+    onCreateContact: (ResolvedContact) -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -226,8 +225,8 @@ private fun DesktopReviewContent(
             state = state,
             isAccountantReadOnly = isAccountantReadOnly,
             onIntent = onIntent,
-            onCorrectContact = { onCorrectContact(counterpartyInfo(state)) },
-            onCreateContact = { onCreateContact(counterpartyInfo(state)) },
+            onCorrectContact = { onCorrectContact(state.effectiveContact) },
+            onCreateContact = { onCreateContact(state.effectiveContact) },
             modifier = Modifier
                 .width(DesktopInspectorWidth)
                 .fillMaxHeight(),

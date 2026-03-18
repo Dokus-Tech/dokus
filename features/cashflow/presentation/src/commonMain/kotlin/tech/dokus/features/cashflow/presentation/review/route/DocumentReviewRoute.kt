@@ -27,6 +27,7 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.domain.model.contact.ResolvedContact
 import tech.dokus.features.cashflow.presentation.documents.route.DOCUMENTS_REFRESH_REQUIRED_RESULT_KEY
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewAction
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewContainer
@@ -228,14 +229,20 @@ internal fun DocumentReviewRoute(
                 // Open the contact sheet instead of navigating away
                 dispatchIntent(DocumentReviewIntent.OpenContactSheet)
             },
-            onCreateContact = { counterparty ->
+            onCreateContact = { resolvedContact ->
                 if (isAccountantReadOnly) return@DocumentReviewScreen
                 dispatchIntent(DocumentReviewIntent.SetPendingCreation)
+                val detected = resolvedContact as? ResolvedContact.Detected
                 navController.navigateTo(
                     ContactsDestination.CreateContact(
-                        prefillCompanyName = counterparty.name,
-                        prefillVat = counterparty.vatNumber,
-                        prefillAddress = counterparty.address?.formatted,
+                        prefillCompanyName = when (resolvedContact) {
+                            is ResolvedContact.Linked -> resolvedContact.name
+                            is ResolvedContact.Suggested -> resolvedContact.name
+                            is ResolvedContact.Detected -> resolvedContact.name
+                            is ResolvedContact.Unknown -> null
+                        },
+                        prefillVat = detected?.vatNumber,
+                        prefillAddress = detected?.address,
                         origin = ContactCreateOrigin.DocumentReview.name,
                     )
                 )
@@ -282,7 +289,8 @@ internal fun DocumentReviewRoute(
             onDismiss = { dispatchIntent(DocumentReviewIntent.CloseContactSheet) },
             suggestions = state.contactSuggestions,
             contactsState = contactsState,
-            selectedContactId = state.selectedContactId,
+            selectedContactId = (state.effectiveContact as? ResolvedContact.Linked)?.contactId
+                ?: (state.effectiveContact as? ResolvedContact.Suggested)?.contactId,
             searchQuery = state.contactSheetSearchQuery,
             onSearchQueryChange = { query ->
                 dispatchIntent(DocumentReviewIntent.UpdateContactSheetSearch(query))
@@ -296,12 +304,18 @@ internal fun DocumentReviewRoute(
                 if (isAccountantReadOnly) return@ContactEditSheet
                 dispatchIntent(DocumentReviewIntent.CloseContactSheet)
                 dispatchIntent(DocumentReviewIntent.SetPendingCreation)
-                val counterparty = tech.dokus.features.cashflow.presentation.review.models.counterpartyInfo(state)
+                val contact = state.effectiveContact
+                val detected = contact as? ResolvedContact.Detected
                 navController.navigateTo(
                     ContactsDestination.CreateContact(
-                        prefillCompanyName = counterparty.name,
-                        prefillVat = counterparty.vatNumber,
-                        prefillAddress = counterparty.address?.formatted,
+                        prefillCompanyName = when (contact) {
+                            is ResolvedContact.Linked -> contact.name
+                            is ResolvedContact.Suggested -> contact.name
+                            is ResolvedContact.Detected -> contact.name
+                            is ResolvedContact.Unknown -> null
+                        },
+                        prefillVat = detected?.vatNumber,
+                        prefillAddress = detected?.address,
                         origin = ContactCreateOrigin.DocumentReview.name,
                     )
                 )

@@ -8,6 +8,7 @@ import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.enums.InvoiceStatus
+import tech.dokus.domain.enums.PaymentMethod
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
@@ -19,6 +20,7 @@ import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentIngestionDto
 import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.InvoicePaymentInfo
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.foundation.app.shell.DocQueueStatus
 import tech.dokus.foundation.app.shell.DocQueueStatusDetail
@@ -177,7 +179,10 @@ class DocumentQueueMapperTest {
                     else -> InvoiceStatus.Sent
                 },
                 documentId = documentId,
-                paidAt = if (paid) LocalDateTime(2026, 1, 2, 0, 0, 0) else null,
+                paymentInfo = if (paid) InvoicePaymentInfo(
+                    paidAt = LocalDateTime(2026, 1, 2, 0, 0, 0),
+                    paymentMethod = PaymentMethod.BankTransfer,
+                ) else null,
                 createdAt = now,
                 updatedAt = now,
             )
