@@ -72,6 +72,7 @@ import tech.dokus.backend.services.documents.resolution.NameSuggestionResolver
 import tech.dokus.backend.services.documents.resolution.VatAutoCreateResolver
 import tech.dokus.backend.services.documents.resolution.VatMatchResolver
 import tech.dokus.backend.services.documents.DocumentPurposeService
+import tech.dokus.backend.services.documents.RAGIndexingService
 import tech.dokus.backend.services.documents.DocumentPurposeSimilarityService
 import tech.dokus.backend.services.documents.DocumentRecordLoader
 import tech.dokus.backend.services.documents.DraftTableMigration
@@ -360,7 +361,6 @@ private fun cashflowModule() = module {
     singleOf(::DocumentSsePublisher)
     singleOf(::DocumentRecordLoader)
     singleOf(::DraftRepository)
-    singleOf(::DraftTableMigration)
     singleOf(::CashflowProjectionReconciliationWorker)
 
     // PDF
