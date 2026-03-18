@@ -15,6 +15,7 @@ import tech.dokus.domain.enums.InvoiceDueDateMode
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.enums.PaymentMethod
 import tech.dokus.domain.enums.PeppolStatus
+import tech.dokus.database.tables.auth.UsersTable
 import tech.dokus.foundation.backend.database.dbEnumeration
 import java.math.BigDecimal
 
@@ -45,10 +46,10 @@ object InvoicesTable : UUIDTable("invoices") {
     val dueDate = date("due_date").index()
 
     // Amounts (NUMERIC for exact decimal arithmetic - NEVER Float!)
-    val subtotalAmount = decimal("subtotal_amount", 12, 2)
-    val vatAmount = decimal("vat_amount", 12, 2)
-    val totalAmount = decimal("total_amount", 12, 2)
-    val paidAmount = decimal("paid_amount", 12, 2).default(BigDecimal.ZERO)
+    val subtotalAmount = decimal("subtotal_amount", 19, 4)
+    val vatAmount = decimal("vat_amount", 19, 4)
+    val totalAmount = decimal("total_amount", 19, 4)
+    val paidAmount = decimal("paid_amount", 19, 4).default(BigDecimal.ZERO)
 
     // Status
     val status = dbEnumeration<InvoiceStatus>("status").default(InvoiceStatus.Draft).index()
@@ -78,6 +79,10 @@ object InvoicesTable : UUIDTable("invoices") {
     val paymentLinkExpiresAt = datetime("payment_link_expires_at").nullable()
     val paidAt = datetime("paid_at").nullable()
     val paymentMethod = dbEnumeration<PaymentMethod>("payment_method").nullable()
+
+    // Audit: confirmation tracking
+    val confirmedAt = datetime("confirmed_at").nullable()
+    val confirmedBy = uuid("confirmed_by").references(UsersTable.id).nullable()
 
     // Timestamps
     val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)

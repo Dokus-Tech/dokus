@@ -40,14 +40,14 @@ object DocumentLineItemsTable : UUIDTable("document_line_items") {
 
     // Line item fields
     val description = text("description")
-    val quantity = decimal("quantity", 10, 2).nullable()
-    val unitPrice = decimal("unit_price", 12, 2).nullable()
+    val quantity = decimal("quantity", 10, 4).nullable()
+    val unitPrice = decimal("unit_price", 19, 4).nullable()
 
     // Amounts - net and gross are required for stable money model
-    val netAmount = decimal("net_amount", 12, 2)  // NOT NULL
+    val netAmount = decimal("net_amount", 19, 4)  // NOT NULL
     val vatRate = decimal("vat_rate", 5, 4).nullable() // e.g., 0.2100 for 21%
-    val vatAmount = decimal("vat_amount", 12, 2).nullable()
-    val grossAmount = decimal("gross_amount", 12, 2)  // NOT NULL
+    val vatAmount = decimal("vat_amount", 19, 4).nullable()
+    val grossAmount = decimal("gross_amount", 19, 4)  // NOT NULL
 
     // Currency
     val currency = dbEnumeration<Currency>("currency")

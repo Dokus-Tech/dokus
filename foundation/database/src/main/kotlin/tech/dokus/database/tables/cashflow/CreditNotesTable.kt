@@ -12,6 +12,7 @@ import tech.dokus.domain.enums.CreditNoteStatus
 import tech.dokus.domain.enums.CreditNoteType
 import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.SettlementIntent
+import tech.dokus.database.tables.auth.UsersTable
 import tech.dokus.foundation.backend.database.dbEnumeration
 
 private const val CreditNoteNumberMaxLength = 50
@@ -55,9 +56,9 @@ object CreditNotesTable : UUIDTable("credit_notes") {
 
     // Amounts (positive values, sign determined by type)
     // NUMERIC for exact arithmetic - NO FLOATS!
-    val subtotalAmount = decimal("subtotal_amount", 12, 2)
-    val vatAmount = decimal("vat_amount", 12, 2)
-    val totalAmount = decimal("total_amount", 12, 2)
+    val subtotalAmount = decimal("subtotal_amount", 19, 4)
+    val vatAmount = decimal("vat_amount", 19, 4)
+    val totalAmount = decimal("total_amount", 19, 4)
     val currency = dbEnumeration<Currency>("currency").default(Currency.Eur)
 
     // Settlement tracking
@@ -70,6 +71,10 @@ object CreditNotesTable : UUIDTable("credit_notes") {
     // Content
     val reason = text("reason").nullable()
     val notes = text("notes").nullable()
+
+    // Audit: confirmation tracking
+    val confirmedAt = datetime("confirmed_at").nullable()
+    val confirmedBy = uuid("confirmed_by").references(UsersTable.id).nullable()
 
     // Timestamps
     val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)

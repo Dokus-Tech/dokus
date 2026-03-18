@@ -80,7 +80,7 @@ internal sealed interface DocumentListReferenceValue {
  */
 private object DocumentTableColumns {
     val Vendor = DokusTableColumnSpec(weight = 1f)
-    val Reference = DokusTableColumnSpec(width = 150.dp)
+    val Reference = DokusTableColumnSpec(weight = 1f)
     val Amount = DokusTableColumnSpec(width = 90.dp, horizontalAlignment = Alignment.End)
     val Date = DokusTableColumnSpec(width = 70.dp)
     val Source = DokusTableColumnSpec(width = 64.dp)
@@ -93,7 +93,7 @@ internal fun DocumentTableHeaderRow(
     DokusTableHeader(
         columns = listOf(
             DokusHeaderColumn(label = stringResource(Res.string.documents_table_counterparty), weight = 1f),
-            DokusHeaderColumn(label = stringResource(Res.string.documents_table_description), width = 150.dp),
+            DokusHeaderColumn(label = stringResource(Res.string.documents_table_description), weight = 1f),
             DokusHeaderColumn(label = stringResource(Res.string.document_table_amount), width = 90.dp, alignment = Alignment.End),
             DokusHeaderColumn(label = stringResource(Res.string.document_table_date), width = 70.dp),
             DokusHeaderColumn(label = "", width = 64.dp),

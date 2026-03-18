@@ -5,6 +5,7 @@ import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.greaterEq
+import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.lessEq
 import org.jetbrains.exposed.v1.jdbc.andWhere
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
@@ -14,6 +15,7 @@ import org.jetbrains.exposed.v1.jdbc.update
 import tech.dokus.database.tables.cashflow.CreditNotesTable
 import tech.dokus.domain.enums.CreditNoteStatus
 import tech.dokus.domain.enums.CreditNoteType
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.SettlementIntent
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.CreditNoteId
@@ -226,6 +228,26 @@ class CreditNoteRepository {
                 it[CreditNotesTable.settlementIntent] = settlementIntent
             }
             updatedRows > 0
+        }
+    }
+
+    /**
+     * Batch-fetch total amounts and currencies for confirmed credit notes by document IDs.
+     * CRITICAL: MUST filter by tenant_id
+     */
+    suspend fun batchGetAmountsByDocumentIds(
+        tenantId: TenantId,
+        documentIds: List<DocumentId>,
+    ): Map<DocumentId, Pair<Money, Currency>> = dbQuery {
+        if (documentIds.isEmpty()) return@dbQuery emptyMap()
+        CreditNotesTable.selectAll().where {
+            (CreditNotesTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                (CreditNotesTable.documentId inList documentIds.map { UUID.fromString(it.toString()) })
+        }.associate { row ->
+            val docId = DocumentId.parse(row[CreditNotesTable.documentId]!!.toString())
+            val amount = Money.fromDbDecimal(row[CreditNotesTable.totalAmount])
+            val currency = row[CreditNotesTable.currency]
+            docId to (amount to currency)
         }
     }
 

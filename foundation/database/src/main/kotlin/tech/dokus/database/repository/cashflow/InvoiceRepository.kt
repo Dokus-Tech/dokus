@@ -28,6 +28,7 @@ import tech.dokus.domain.Money
 import tech.dokus.domain.VatRate
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.InvoiceStatus
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.PaymentMethod
 import tech.dokus.domain.fromDbDecimal
 import tech.dokus.domain.ids.ContactId
@@ -546,6 +547,26 @@ class InvoiceRepository(
                 }
 
             mapInvoiceRow(row, items).copy(id = invoiceId)
+        }
+    }
+
+    /**
+     * Batch-fetch total amounts and currencies for confirmed invoices by document IDs.
+     * CRITICAL: MUST filter by tenant_id
+     */
+    suspend fun batchGetAmountsByDocumentIds(
+        tenantId: TenantId,
+        documentIds: List<DocumentId>,
+    ): Map<DocumentId, Pair<Money, Currency>> = dbQuery {
+        if (documentIds.isEmpty()) return@dbQuery emptyMap()
+        InvoicesTable.selectAll().where {
+            (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                (InvoicesTable.documentId inList documentIds.map { UUID.fromString(it.toString()) })
+        }.associate { row ->
+            val docId = DocumentId.parse(row[InvoicesTable.documentId]!!.toString())
+            val amount = Money.fromDbDecimal(row[InvoicesTable.totalAmount])
+            val currency = row[InvoicesTable.currency]
+            docId to (amount to currency)
         }
     }
 

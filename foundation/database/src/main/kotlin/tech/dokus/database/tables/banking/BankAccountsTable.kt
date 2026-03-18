@@ -28,7 +28,7 @@ object BankAccountsTable : UUIDTable("bank_accounts") {
     val accountType = dbEnumeration<BankAccountType>("account_type")
     val currency = dbEnumeration<Currency>("currency").default(Currency.Eur)
     val provider = dbEnumeration<BankAccountProvider>("provider").default(BankAccountProvider.Unknown)
-    val balance = decimal("balance", 12, 2).nullable()
+    val balance = decimal("balance", 19, 4).nullable()
     val balanceUpdatedAt = datetime("balance_updated_at").nullable()
     val status = dbEnumeration<BankAccountStatus>("status").default(BankAccountStatus.Confirmed)
     val isActive = bool("is_active").default(true)

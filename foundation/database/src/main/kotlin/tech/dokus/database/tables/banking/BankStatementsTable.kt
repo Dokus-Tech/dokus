@@ -38,8 +38,8 @@ object BankStatementsTable : UUIDTable("bank_statements") {
     val accountIban = varchar("account_iban", 34).nullable()
     val periodStart = date("period_start").nullable()
     val periodEnd = date("period_end").nullable()
-    val openingBalance = decimal("opening_balance", 12, 2).nullable()
-    val closingBalance = decimal("closing_balance", 12, 2).nullable()
+    val openingBalance = decimal("opening_balance", 19, 4).nullable()
+    val closingBalance = decimal("closing_balance", 19, 4).nullable()
     val transactionCount = integer("transaction_count").default(0)
 
     val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)

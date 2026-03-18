@@ -27,7 +27,7 @@ object PaymentsTable : UUIDTable("payments") {
         onDelete = ReferenceOption.CASCADE
     ).index()
 
-    val amount = decimal("amount", 12, 2)
+    val amount = decimal("amount", 19, 4)
     val paymentDate = date("payment_date").index()
 
     val paymentMethod = dbEnumeration<PaymentMethod>("payment_method")
