@@ -1,7 +1,6 @@
 package tech.dokus.database.repository.cashflow
 
 import kotlinx.datetime.LocalDate
-import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
@@ -13,16 +12,13 @@ import org.jetbrains.exposed.v1.jdbc.insertAndGetId
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
 import tech.dokus.database.tables.cashflow.ExpensesTable
-import tech.dokus.domain.Money
 import tech.dokus.domain.Percentage
-import tech.dokus.domain.VatRate
 import tech.dokus.domain.enums.ExpenseCategory
-import tech.dokus.domain.fromDbDecimal
-import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.ExpenseId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.database.entity.ExpenseEntity
+import tech.dokus.database.mapper.from
 import tech.dokus.domain.model.CreateExpenseRequest
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.toDbDecimal
@@ -71,7 +67,7 @@ class ExpenseRepository {
                 (ExpensesTable.id eq expenseId.value) and
                     (ExpensesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.single().let { row ->
-                mapRowToEntity(row)
+                ExpenseEntity.from(row)
             }
         }
     }
@@ -89,7 +85,7 @@ class ExpenseRepository {
                 (ExpensesTable.id eq UUID.fromString(expenseId.toString())) and
                     (ExpensesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.singleOrNull()?.let { row ->
-                mapRowToEntity(row)
+                ExpenseEntity.from(row)
             }
         }
     }
@@ -127,7 +123,7 @@ class ExpenseRepository {
             // Apply pagination and ordering
             val items = query.orderBy(ExpensesTable.date to SortOrder.DESC)
                 .limit(limit + offset)
-                .map { row -> mapRowToEntity(row) }
+                .map { row -> ExpenseEntity.from(row) }
                 .drop(offset)
 
             PaginatedResponse(
@@ -185,7 +181,7 @@ class ExpenseRepository {
                 (ExpensesTable.id eq UUID.fromString(expenseId.toString())) and
                     (ExpensesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.single().let { row ->
-                mapRowToEntity(row)
+                ExpenseEntity.from(row)
             }
         }
     }
@@ -255,30 +251,8 @@ class ExpenseRepository {
             (ExpensesTable.tenantId eq UUID.fromString(tenantId.toString())) and
                 (ExpensesTable.documentId eq UUID.fromString(documentId.toString()))
         }.singleOrNull()?.let { row ->
-            mapRowToEntity(row)
+            ExpenseEntity.from(row)
         }
     }
 
-    private fun mapRowToEntity(row: ResultRow): ExpenseEntity {
-        return ExpenseEntity(
-            id = ExpenseId.parse(row[ExpensesTable.id].value.toString()),
-            tenantId = TenantId.parse(row[ExpensesTable.tenantId].toString()),
-            date = row[ExpensesTable.date],
-            merchant = row[ExpensesTable.merchant],
-            amount = Money.fromDbDecimal(row[ExpensesTable.amount]),
-            vatAmount = row[ExpensesTable.vatAmount]?.let { Money.fromDbDecimal(it) },
-            vatRate = row[ExpensesTable.vatRate]?.let { VatRate.fromDbDecimal(it) },
-            category = row[ExpensesTable.category],
-            description = row[ExpensesTable.description],
-            documentId = row[ExpensesTable.documentId]?.let { DocumentId.parse(it.toString()) },
-            contactId = row[ExpensesTable.contactId]?.let { ContactId.parse(it.toString()) },
-            isDeductible = row[ExpensesTable.isDeductible],
-            deductiblePercentage = Percentage.fromDbDecimal(row[ExpensesTable.deductiblePercentage]),
-            paymentMethod = row[ExpensesTable.paymentMethod],
-            isRecurring = row[ExpensesTable.isRecurring],
-            notes = row[ExpensesTable.notes],
-            createdAt = row[ExpensesTable.createdAt],
-            updatedAt = row[ExpensesTable.updatedAt]
-        )
-    }
 }

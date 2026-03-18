@@ -1,7 +1,6 @@
 package tech.dokus.database.repository.cashflow
 
 import kotlinx.datetime.LocalDate
-import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
@@ -13,16 +12,15 @@ import org.jetbrains.exposed.v1.jdbc.insertAndGetId
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
 import tech.dokus.database.tables.cashflow.CreditNotesTable
-import tech.dokus.domain.Money
 import tech.dokus.domain.enums.CreditNoteStatus
 import tech.dokus.domain.enums.CreditNoteType
 import tech.dokus.domain.enums.SettlementIntent
-import tech.dokus.domain.fromDbDecimal
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.CreditNoteId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.database.entity.CreditNoteEntity
+import tech.dokus.database.mapper.from
 import tech.dokus.domain.model.CreateCreditNoteRequest
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.toDbDecimal
@@ -70,7 +68,7 @@ class CreditNoteRepository {
                 (CreditNotesTable.id eq creditNoteId.value) and
                     (CreditNotesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.single().let { row ->
-                mapRowToEntity(row)
+                CreditNoteEntity.from(row)
             }
         }
     }
@@ -88,7 +86,7 @@ class CreditNoteRepository {
                 (CreditNotesTable.id eq UUID.fromString(creditNoteId.toString())) and
                     (CreditNotesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.singleOrNull()?.let { row ->
-                mapRowToEntity(row)
+                CreditNoteEntity.from(row)
             }
         }
     }
@@ -135,7 +133,7 @@ class CreditNoteRepository {
 
             val items = query.orderBy(CreditNotesTable.issueDate to SortOrder.DESC)
                 .limit(limit + offset)
-                .map { row -> mapRowToEntity(row) }
+                .map { row -> CreditNoteEntity.from(row) }
                 .drop(offset)
 
             PaginatedResponse(
@@ -185,7 +183,7 @@ class CreditNoteRepository {
                 (CreditNotesTable.id eq UUID.fromString(creditNoteId.toString())) and
                     (CreditNotesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.single().let { row ->
-                mapRowToEntity(row)
+                CreditNoteEntity.from(row)
             }
         }
     }
@@ -242,7 +240,7 @@ class CreditNoteRepository {
             (CreditNotesTable.tenantId eq UUID.fromString(tenantId.toString())) and
                 (CreditNotesTable.documentId eq UUID.fromString(documentId.toString()))
         }.singleOrNull()?.let { row ->
-            mapRowToEntity(row)
+            CreditNoteEntity.from(row)
         }
     }
 
@@ -279,25 +277,4 @@ class CreditNoteRepository {
         }
     }
 
-    private fun mapRowToEntity(row: ResultRow): CreditNoteEntity {
-        return CreditNoteEntity(
-            id = CreditNoteId.parse(row[CreditNotesTable.id].value.toString()),
-            tenantId = TenantId.parse(row[CreditNotesTable.tenantId].toString()),
-            contactId = ContactId.parse(row[CreditNotesTable.contactId].toString()),
-            creditNoteType = row[CreditNotesTable.creditNoteType],
-            creditNoteNumber = row[CreditNotesTable.creditNoteNumber],
-            issueDate = row[CreditNotesTable.issueDate],
-            subtotalAmount = Money.fromDbDecimal(row[CreditNotesTable.subtotalAmount]),
-            vatAmount = Money.fromDbDecimal(row[CreditNotesTable.vatAmount]),
-            totalAmount = Money.fromDbDecimal(row[CreditNotesTable.totalAmount]),
-            status = row[CreditNotesTable.status],
-            settlementIntent = row[CreditNotesTable.settlementIntent],
-            documentId = row[CreditNotesTable.documentId]?.let { DocumentId.parse(it.toString()) },
-            reason = row[CreditNotesTable.reason],
-            currency = row[CreditNotesTable.currency],
-            notes = row[CreditNotesTable.notes],
-            createdAt = row[CreditNotesTable.createdAt],
-            updatedAt = row[CreditNotesTable.updatedAt]
-        )
-    }
 }

@@ -4,11 +4,12 @@ import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
+import tech.dokus.database.entity.BankStatementEntity
+import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.banking.BankStatementsTable
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.BankTransactionSource
 import tech.dokus.domain.enums.StatementTrust
-import tech.dokus.domain.fromDbDecimal
 import tech.dokus.domain.ids.BankAccountId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.Iban
@@ -18,24 +19,6 @@ import tech.dokus.foundation.backend.database.dbQuery
 import kotlinx.datetime.LocalDate
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid
-import kotlin.uuid.toKotlinUuid
-
-@OptIn(ExperimentalUuidApi::class)
-data class BankStatementRecord(
-    val id: kotlin.uuid.Uuid,
-    val tenantId: TenantId,
-    val bankAccountId: BankAccountId?,
-    val documentId: DocumentId?,
-    val source: BankTransactionSource,
-    val statementTrust: StatementTrust,
-    val fileHash: String?,
-    val accountIban: Iban?,
-    val periodStart: LocalDate?,
-    val periodEnd: LocalDate?,
-    val openingBalance: Money?,
-    val closingBalance: Money?,
-    val transactionCount: Int,
-)
 
 @OptIn(ExperimentalUuidApi::class)
 class BankStatementRepository {
@@ -43,11 +26,11 @@ class BankStatementRepository {
     /**
      * Find a statement by file hash (strong dedup).
      */
-    suspend fun findByFileHash(tenantId: TenantId, fileHash: String): BankStatementRecord? = dbQuery {
+    suspend fun findByFileHash(tenantId: TenantId, fileHash: String): BankStatementEntity? = dbQuery {
         BankStatementsTable.selectAll().where {
             (BankStatementsTable.tenantId eq tenantId.value.toJavaUuid()) and
                 (BankStatementsTable.fileHash eq fileHash)
-        }.firstOrNull()?.let(::toRecord)
+        }.firstOrNull()?.let { BankStatementEntity.from(it) }
     }
 
     /**
@@ -57,12 +40,12 @@ class BankStatementRepository {
         tenantId: TenantId,
         accountIban: Iban,
         periodEnd: LocalDate,
-    ): List<BankStatementRecord> = dbQuery {
+    ): List<BankStatementEntity> = dbQuery {
         BankStatementsTable.selectAll().where {
             (BankStatementsTable.tenantId eq tenantId.value.toJavaUuid()) and
                 (BankStatementsTable.accountIban eq accountIban.value) and
                 (BankStatementsTable.periodEnd eq periodEnd)
-        }.map(::toRecord)
+        }.map { BankStatementEntity.from(it) }
     }
 
     /**
@@ -98,21 +81,4 @@ class BankStatementRepository {
         }
     }
 
-    private fun toRecord(row: org.jetbrains.exposed.v1.core.ResultRow): BankStatementRecord {
-        return BankStatementRecord(
-            id = row[BankStatementsTable.id].value.toKotlinUuid(),
-            tenantId = TenantId(row[BankStatementsTable.tenantId].toKotlinUuid()),
-            bankAccountId = row[BankStatementsTable.bankAccountId]?.toKotlinUuid()?.let(::BankAccountId),
-            documentId = row[BankStatementsTable.documentId]?.toKotlinUuid()?.let(::DocumentId),
-            source = row[BankStatementsTable.statementSource],
-            statementTrust = row[BankStatementsTable.statementTrust],
-            fileHash = row[BankStatementsTable.fileHash],
-            accountIban = row[BankStatementsTable.accountIban]?.let(::Iban),
-            periodStart = row[BankStatementsTable.periodStart],
-            periodEnd = row[BankStatementsTable.periodEnd],
-            openingBalance = row[BankStatementsTable.openingBalance]?.let { Money.fromDbDecimal(it) },
-            closingBalance = row[BankStatementsTable.closingBalance]?.let { Money.fromDbDecimal(it) },
-            transactionCount = row[BankStatementsTable.transactionCount],
-        )
-    }
 }

@@ -63,7 +63,9 @@ data class InvoiceEntity(
     val paymentMethod: PaymentMethod? = null,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime,
-)
+) {
+    companion object
+}
 
 @Serializable
 data class InvoiceItemEntity(
@@ -76,7 +78,9 @@ data class InvoiceItemEntity(
     val lineTotal: Money,
     val vatAmount: Money,
     val sortOrder: Int = 0,
-)
+) {
+    companion object
+}
 
 @Serializable
 data class ExpenseEntity(
@@ -98,7 +102,9 @@ data class ExpenseEntity(
     val notes: String? = null,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime,
-)
+) {
+    companion object
+}
 
 @Serializable
 data class CreditNoteEntity(
@@ -119,4 +125,6 @@ data class CreditNoteEntity(
     val notes: String? = null,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime,
-)
+) {
+    companion object
+}
