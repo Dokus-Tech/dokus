@@ -5,7 +5,6 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.json.Json
-import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
@@ -19,6 +18,8 @@ import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.v1.jdbc.update
+import tech.dokus.database.entity.BankTransactionEntity
+import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.banking.BankTransactionsTable
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.BankTransactionSource
@@ -27,19 +28,11 @@ import tech.dokus.domain.enums.IgnoredReason
 import tech.dokus.domain.enums.MatchedBy
 import tech.dokus.domain.enums.ResolutionType
 import tech.dokus.domain.enums.StatementTrust
-import tech.dokus.domain.fromDbDecimal
 import tech.dokus.domain.ids.BankAccountId
 import tech.dokus.domain.ids.BankTransactionId
-import tech.dokus.domain.ids.Bic
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.BankTransactionDto
-import tech.dokus.domain.model.TransactionCommunication
-import tech.dokus.domain.model.TransactionIgnoreInfo
-import tech.dokus.domain.model.TransactionMatchInfo
-import tech.dokus.domain.model.contact.CounterpartySnapshot
 import tech.dokus.domain.toDbDecimal
 import java.util.UUID
 import kotlin.uuid.ExperimentalUuidApi
@@ -71,7 +64,7 @@ class BankTransactionRepository {
         tenantId: TenantId,
         documentId: DocumentId,
         rows: List<BankTransactionCreate>
-    ): List<BankTransactionDto> = newSuspendedTransaction {
+    ): List<BankTransactionEntity> = newSuspendedTransaction {
         val tenantUuid = tenantId.value.toJavaUuid()
         val documentUuid = documentId.value.toJavaUuid()
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
@@ -124,7 +117,7 @@ class BankTransactionRepository {
         BankTransactionsTable.selectAll().where {
             (BankTransactionsTable.tenantId eq tenantUuid) and
                     (BankTransactionsTable.documentId eq documentUuid)
-        }.orderBy(BankTransactionsTable.transactionDate, SortOrder.DESC).map { it.toDto() }
+        }.orderBy(BankTransactionsTable.transactionDate, SortOrder.DESC).map { BankTransactionEntity.from(it) }
     }
 
     suspend fun listSelectable(
@@ -133,43 +126,43 @@ class BankTransactionRepository {
             BankTransactionStatus.Unmatched,
             BankTransactionStatus.NeedsReview
         )
-    ): List<BankTransactionDto> = newSuspendedTransaction {
+    ): List<BankTransactionEntity> = newSuspendedTransaction {
         BankTransactionsTable.selectAll().where {
             (BankTransactionsTable.tenantId eq tenantId.value.toJavaUuid()) and
                     (BankTransactionsTable.status inList statuses)
         }.orderBy(
             BankTransactionsTable.transactionDate to SortOrder.DESC,
             BankTransactionsTable.createdAt to SortOrder.DESC
-        ).map { it.toDto() }
+        ).map { BankTransactionEntity.from(it) }
     }
 
     suspend fun listByDocument(
         tenantId: TenantId,
         documentId: DocumentId
-    ): List<BankTransactionDto> = newSuspendedTransaction {
+    ): List<BankTransactionEntity> = newSuspendedTransaction {
         BankTransactionsTable.selectAll().where {
             (BankTransactionsTable.tenantId eq tenantId.value.toJavaUuid()) and
                     (BankTransactionsTable.documentId eq documentId.value.toJavaUuid())
         }.orderBy(
             BankTransactionsTable.transactionDate to SortOrder.DESC,
             BankTransactionsTable.createdAt to SortOrder.DESC
-        ).map { it.toDto() }
+        ).map { BankTransactionEntity.from(it) }
     }
 
     suspend fun findById(
         tenantId: TenantId,
         transactionId: BankTransactionId
-    ): BankTransactionDto? = newSuspendedTransaction {
+    ): BankTransactionEntity? = newSuspendedTransaction {
         BankTransactionsTable.selectAll().where {
             (BankTransactionsTable.tenantId eq tenantId.value.toJavaUuid()) and
                     (BankTransactionsTable.id eq transactionId.value.toJavaUuid())
-        }.singleOrNull()?.toDto()
+        }.singleOrNull()?.let { BankTransactionEntity.from(it) }
     }
 
     suspend fun listCandidatesForEntry(
         tenantId: TenantId,
         cashflowEntryId: CashflowEntryId
-    ): List<BankTransactionDto> = newSuspendedTransaction {
+    ): List<BankTransactionEntity> = newSuspendedTransaction {
         BankTransactionsTable.selectAll().where {
             (BankTransactionsTable.tenantId eq tenantId.value.toJavaUuid()) and
                     (BankTransactionsTable.matchedCashflowId eq cashflowEntryId.value.toJavaUuid()) and
@@ -177,7 +170,7 @@ class BankTransactionRepository {
         }.orderBy(
             BankTransactionsTable.matchScore to SortOrder.DESC,
             BankTransactionsTable.transactionDate to SortOrder.DESC
-        ).map { it.toDto() }
+        ).map { BankTransactionEntity.from(it) }
     }
 
     suspend fun clearCandidatesForEntry(
@@ -269,7 +262,7 @@ class BankTransactionRepository {
     suspend fun listRecentCandidatePool(
         tenantId: TenantId,
         fromDate: LocalDate
-    ): List<BankTransactionDto> = newSuspendedTransaction {
+    ): List<BankTransactionEntity> = newSuspendedTransaction {
         BankTransactionsTable.selectAll().where {
             (BankTransactionsTable.tenantId eq tenantId.value.toJavaUuid()) and
                     (BankTransactionsTable.status inList listOf(
@@ -280,7 +273,7 @@ class BankTransactionRepository {
         }.orderBy(
             BankTransactionsTable.transactionDate to SortOrder.DESC,
             BankTransactionsTable.createdAt to SortOrder.DESC
-        ).map { it.toDto() }
+        ).map { BankTransactionEntity.from(it) }
     }
 
     suspend fun listAll(
@@ -291,7 +284,7 @@ class BankTransactionRepository {
         toDate: LocalDate? = null,
         limit: Int? = null,
         offset: Long? = null,
-    ): List<BankTransactionDto> = newSuspendedTransaction {
+    ): List<BankTransactionEntity> = newSuspendedTransaction {
         val condition = buildCondition(tenantId, status, source, fromDate, toDate)
         BankTransactionsTable.selectAll().where { condition }
             .orderBy(
@@ -301,7 +294,7 @@ class BankTransactionRepository {
             .let { query ->
                 if (limit != null) query.limit(limit).offset(offset ?: 0) else query
             }
-            .map { it.toDto() }
+            .map { BankTransactionEntity.from(it) }
     }
 
     suspend fun countAll(
@@ -456,7 +449,7 @@ class BankTransactionRepository {
         accountId: BankAccountId,
         startDate: LocalDate,
         endDate: LocalDate,
-    ): List<BankTransactionDto> = newSuspendedTransaction {
+    ): List<BankTransactionEntity> = newSuspendedTransaction {
         BankTransactionsTable.selectAll().where {
             (BankTransactionsTable.tenantId eq tenantId.value.toJavaUuid()) and
                     (BankTransactionsTable.bankAccountId eq accountId.value.toJavaUuid()) and
@@ -466,7 +459,7 @@ class BankTransactionRepository {
                         BankTransactionStatus.Unmatched,
                         BankTransactionStatus.NeedsReview,
                     ))
-        }.map { it.toDto() }
+        }.map { BankTransactionEntity.from(it) }
     }
 
     suspend fun clearMatch(
@@ -490,61 +483,4 @@ class BankTransactionRepository {
         } > 0
     }
 
-    private fun ResultRow.toDto(): BankTransactionDto {
-        val evidenceJson = this[BankTransactionsTable.matchEvidence]
-        val evidenceList = evidenceJson?.let {
-            json.decodeFromString<List<String>>(it)
-        }
-
-        return BankTransactionDto(
-            id = BankTransactionId.parse(this[BankTransactionsTable.id].value.toString()),
-            tenantId = TenantId.parse(this[BankTransactionsTable.tenantId].toString()),
-            documentId = this[BankTransactionsTable.documentId]?.let { DocumentId.parse(it.toString()) },
-            bankAccountId = this[BankTransactionsTable.bankAccountId]?.let {
-                BankAccountId(it.toKotlinUuid())
-            },
-            source = this[BankTransactionsTable.txSource],
-            transactionDate = this[BankTransactionsTable.transactionDate],
-            valueDate = this[BankTransactionsTable.valueDate],
-            signedAmount = Money.fromDbDecimal(this[BankTransactionsTable.signedAmount]),
-            currency = this[BankTransactionsTable.currency],
-            counterparty = CounterpartySnapshot(
-                name = this[BankTransactionsTable.counterpartyName],
-                iban = Iban.from(this[BankTransactionsTable.counterpartyIban]),
-                bic = this[BankTransactionsTable.counterpartyBic]?.let { Bic(it) },
-            ),
-            communication = TransactionCommunication.from(
-                structuredCommunicationRaw = this[BankTransactionsTable.structuredCommunicationRaw],
-                freeCommunication = this[BankTransactionsTable.freeCommunication],
-            ),
-            descriptionRaw = this[BankTransactionsTable.descriptionRaw],
-            status = this[BankTransactionsTable.status],
-            resolutionType = this[BankTransactionsTable.resolutionType],
-            matchInfo = this[BankTransactionsTable.matchedCashflowId]?.let { cashflowId ->
-                TransactionMatchInfo(
-                    cashflowEntryId = CashflowEntryId.parse(cashflowId.toString()),
-                    documentId = this[BankTransactionsTable.matchedDocumentId]
-                        ?.let { DocumentId.parse(it.toString()) },
-                    score = this[BankTransactionsTable.matchScore]?.toDouble() ?: 0.0,
-                    evidence = evidenceList ?: emptyList(),
-                    matchedBy = this[BankTransactionsTable.matchedBy] ?: MatchedBy.Auto,
-                    matchedAt = this[BankTransactionsTable.matchedAt]
-                        ?: this[BankTransactionsTable.updatedAt],
-                )
-            },
-            ignoreInfo = this[BankTransactionsTable.ignoredReason]?.let { reason ->
-                TransactionIgnoreInfo(
-                    reason = reason,
-                    ignoredAt = this[BankTransactionsTable.ignoredAt]
-                        ?: this[BankTransactionsTable.updatedAt],
-                    ignoredBy = this[BankTransactionsTable.ignoredBy],
-                )
-            },
-            statementTrust = this[BankTransactionsTable.statementTrust],
-            transferPairId = this[BankTransactionsTable.transferPairId]
-                ?.let { BankTransactionId(it.toKotlinUuid()) },
-            createdAt = this[BankTransactionsTable.createdAt],
-            updatedAt = this[BankTransactionsTable.updatedAt]
-        )
-    }
 }
