@@ -28,10 +28,8 @@ fun ChatMarkdownText(
         modifier = modifier,
         colors = markdownColor(
             text = MaterialTheme.colorScheme.onSurface,
-            codeText = MaterialTheme.colorScheme.onSurface,
             codeBackground = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
             dividerColor = MaterialTheme.colorScheme.outlineVariant,
-            linkText = MaterialTheme.colorScheme.primary,
         ),
         typography = markdownTypography(
             text = MaterialTheme.typography.bodyMedium,
