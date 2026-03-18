@@ -41,6 +41,7 @@ import tech.dokus.domain.toDbDecimal
 import tech.dokus.foundation.backend.database.dbQuery
 import java.math.BigDecimal
 import java.util.UUID
+import tech.dokus.foundation.backend.utils.runSuspendCatching
 
 /**
  * Repository for managing invoices
@@ -61,7 +62,7 @@ class InvoiceRepository(
     suspend fun createInvoice(
         tenantId: TenantId,
         request: CreateInvoiceRequest
-    ): Result<InvoiceEntity> = runCatching {
+    ): Result<InvoiceEntity> = runSuspendCatching {
         // Generate invoice number atomically BEFORE creating the invoice.
         // This ensures gap-less numbering as required by Belgian tax law.
         // The number is consumed even if invoice creation fails.
@@ -139,7 +140,7 @@ class InvoiceRepository(
     suspend fun getInvoice(
         invoiceId: InvoiceId,
         tenantId: TenantId
-    ): Result<InvoiceEntity?> = runCatching {
+    ): Result<InvoiceEntity?> = runSuspendCatching {
         dbQuery {
             val row = InvoicesTable.selectAll().where {
                 (InvoicesTable.id eq UUID.fromString(invoiceId.toString())) and
@@ -172,7 +173,7 @@ class InvoiceRepository(
         toDate: LocalDate? = null,
         limit: Int = 50,
         offset: Int = 0
-    ): Result<PaginatedResponse<InvoiceEntity>> = runCatching {
+    ): Result<PaginatedResponse<InvoiceEntity>> = runSuspendCatching {
         dbQuery {
             var query = InvoicesTable.selectAll().where {
                 InvoicesTable.tenantId eq UUID.fromString(tenantId.toString())
@@ -224,7 +225,7 @@ class InvoiceRepository(
         tenantId: TenantId,
         direction: DocumentDirection = DocumentDirection.Outbound
     ): Result<List<InvoiceEntity>> =
-        runCatching {
+        runSuspendCatching {
             dbQuery {
                 val today = Clock.System.now()
                     .toLocalDateTime(TimeZone.UTC).date
@@ -254,7 +255,7 @@ class InvoiceRepository(
         invoiceId: InvoiceId,
         tenantId: TenantId,
         status: InvoiceStatus
-    ): Result<Boolean> = runCatching {
+    ): Result<Boolean> = runSuspendCatching {
         dbQuery {
             val updatedRows = InvoicesTable.update({
                 (InvoicesTable.id eq UUID.fromString(invoiceId.toString())) and
@@ -286,7 +287,7 @@ class InvoiceRepository(
         amount: Money,
         paymentDate: LocalDate,
         paymentMethod: PaymentMethod
-    ): Result<InvoicePaymentUpdate> = runCatching {
+    ): Result<InvoicePaymentUpdate> = runSuspendCatching {
         require(amount.minor > 0) { "Payment amount must be positive" }
 
         dbQuery {
@@ -349,7 +350,7 @@ class InvoiceRepository(
         invoiceId: InvoiceId,
         tenantId: TenantId,
         request: CreateInvoiceRequest
-    ): Result<InvoiceEntity> = runCatching {
+    ): Result<InvoiceEntity> = runSuspendCatching {
         dbQuery {
             // Verify invoice exists and belongs to tenant
             val exists = InvoicesTable.selectAll().where {
@@ -438,17 +439,9 @@ class InvoiceRepository(
     suspend fun deleteInvoice(
         invoiceId: InvoiceId,
         tenantId: TenantId
-    ): Result<Boolean> = runCatching {
+    ): Result<Boolean> = runSuspendCatching {
         dbQuery {
-            // For now, we'll do a hard delete of items and invoice
-            // In production, consider soft delete with a deleted_at timestamp
-
-            // Delete items first (foreign key constraint)
-            InvoiceItemsTable.deleteWhere {
-                InvoiceItemsTable.invoiceId eq UUID.fromString(invoiceId.toString())
-            }
-
-            // Delete invoice
+            // Items are deleted automatically via CASCADE FK on InvoiceItemsTable.invoiceId
             val deletedRows = InvoicesTable.deleteWhere {
                 (InvoicesTable.id eq UUID.fromString(invoiceId.toString())) and
                     (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString()))
@@ -465,7 +458,7 @@ class InvoiceRepository(
     suspend fun exists(
         invoiceId: InvoiceId,
         tenantId: TenantId
-    ): Result<Boolean> = runCatching {
+    ): Result<Boolean> = runSuspendCatching {
         dbQuery {
             InvoicesTable.selectAll().where {
                 (InvoicesTable.id eq UUID.fromString(invoiceId.toString())) and
@@ -482,7 +475,7 @@ class InvoiceRepository(
         invoiceId: InvoiceId,
         tenantId: TenantId,
         documentId: DocumentId
-    ): Result<Boolean> = runCatching {
+    ): Result<Boolean> = runSuspendCatching {
         dbQuery {
             val updatedRows = InvoicesTable.update({
                 (InvoicesTable.id eq UUID.fromString(invoiceId.toString())) and
@@ -546,7 +539,7 @@ class InvoiceRepository(
     suspend fun getLatestInvoiceForContact(
         tenantId: TenantId,
         contactId: ContactId
-    ): Result<InvoiceEntity?> = runCatching {
+    ): Result<InvoiceEntity?> = runSuspendCatching {
         dbQuery {
             val row = InvoicesTable.selectAll().where {
                 (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString())) and
