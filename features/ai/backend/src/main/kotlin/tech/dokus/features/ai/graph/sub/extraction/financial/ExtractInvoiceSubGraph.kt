@@ -240,6 +240,7 @@ private val ExtractDocumentInput.prompt
     - Do NOT guess. If not visible, return null.
     - Amount fields must be numeric strings using '.' as decimal separator (e.g., "1234.56").
     - If multiple totals exist, prefer the "Total" / "Totaal" / "Total TTC" style final payable amount.
+    - ${ExtractionToolDescriptions.LocalDateToolOutputGuidance}
 
     ${ExtractionToolDescriptions.VatNumberFormatGuidance}
 
@@ -285,9 +286,10 @@ private val ExtractDocumentInput.prompt
     If only one date is present and it clearly is the invoice date, set issueDate and leave dueDate null.
 
     Date format disambiguation:
-    - If the seller country uses mm/dd/yyyy (US, Canada, Philippines), read dates in that format.
-    - European countries use dd/mm/yyyy.
-    - When ambiguous (e.g., 03/04/2025), use the seller's country to determine the format.
+    - ${ExtractionToolDescriptions.DocumentDateFormatClarification}
+    - If the seller country uses mm/dd/yyyy (US, Canada, Philippines), that is how the date may appear on the document.
+    - European countries often print dd/mm/yyyy on the document.
+    - When ambiguous (e.g., 03/04/2025), use the seller's country to determine how to read the document date.
     - Invoice dates should not be in the future relative to the current date. If a date reading would result in a future date but an alternative reading (swapping day/month) gives a past date, prefer the past date.
 
     ## PAYMENT FIELDS

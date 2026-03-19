@@ -1,6 +1,10 @@
 package tech.dokus.features.ai.models
 
 object ExtractionToolDescriptions {
+    private const val LocalDateOutputFormat =
+        " Return as ISO 8601 date format YYYY-MM-DD (e.g. 2026-01-20)."
+    private const val NullIfNotVisible = " Null if not visible."
+
     const val Confidence = "Confidence score 0.0-1.0 for the extraction quality."
     const val Reasoning = "Short reasoning: what you used to extract key fields."
 
@@ -17,13 +21,14 @@ object ExtractionToolDescriptions {
     const val PurchaseOrderNumber = "Purchase order number. Null if not visible."
     const val ReceiptNumber = "Receipt/ticket number for identification. Null if not visible."
 
-    const val IssueDate = "Issue date. Null if not visible."
-    const val DueDate = "Due date. Null if not visible."
-    const val ValidUntil = "Validity/expiration date. Null if not visible."
-    const val OrderDate = "Order date. Null if not visible."
-    const val ExpectedDeliveryDate = "Expected delivery date. Null if not visible."
-    const val ReceiptDate = "Transaction date. Null if not visible."
-    const val BankTransactionDate = "Transaction booking/value date for one bank statement row. Null if not visible."
+    const val IssueDate = "Issue date." + LocalDateOutputFormat + NullIfNotVisible
+    const val DueDate = "Due date." + LocalDateOutputFormat + NullIfNotVisible
+    const val ValidUntil = "Validity/expiration date." + LocalDateOutputFormat + NullIfNotVisible
+    const val OrderDate = "Order date." + LocalDateOutputFormat + NullIfNotVisible
+    const val ExpectedDeliveryDate = "Expected delivery date." + LocalDateOutputFormat + NullIfNotVisible
+    const val ReceiptDate = "Transaction date." + LocalDateOutputFormat + NullIfNotVisible
+    const val BankTransactionDate =
+        "Transaction booking/value date for one bank statement row." + LocalDateOutputFormat + NullIfNotVisible
 
     const val CustomerName = "Customer/billed-to name. Null if unclear."
     const val CustomerVat = "Customer VAT number if shown (e.g. BE0123456789). Null if not visible."
@@ -83,8 +88,8 @@ object ExtractionToolDescriptions {
     const val BankAccountIban = "IBAN of the account this statement belongs to if visible in the header/footer. Null if not visible."
     const val BankOpeningBalance = "Opening/previous balance as signed plain number string (e.g. '1234.56'). Null if not visible."
     const val BankClosingBalance = "Closing/new balance as signed plain number string (e.g. '1234.56'). Null if not visible."
-    const val BankPeriodStart = "Start date of the statement period. Null if not visible."
-    const val BankPeriodEnd = "End date of the statement period. Null if not visible."
+    const val BankPeriodStart = "Start date of the statement period." + LocalDateOutputFormat + NullIfNotVisible
+    const val BankPeriodEnd = "End date of the statement period." + LocalDateOutputFormat + NullIfNotVisible
     const val BankInstitutionName = "Legal or trading name of the bank/financial institution that issued this statement (e.g. 'Wise Europe SA', 'KBC Bank NV', 'ING Belgium'). Look in the header, logo, or footer. Null if not visible."
     const val BankInstitutionBic = "BIC/SWIFT code of the issuing bank if visible (e.g. 'TRWIBEB1XXX'). Null if not visible."
 
@@ -106,6 +111,12 @@ object ExtractionToolDescriptions {
     const val CreditNoteReason = "Reason for credit note if explicitly stated. Null if not visible."
 
     const val PaymentMethod = "Payment method if visible."
+
+    const val LocalDateToolOutputGuidance =
+        "When submitting any date field to the tool, always normalize it to ISO 8601 YYYY-MM-DD (e.g. 2026-01-20), even if the document prints it as 20/01/2026 or 01/20/2026."
+
+    const val DocumentDateFormatClarification =
+        "If dd/mm/yyyy or mm/dd/yyyy is mentioned below, that describes how the date may appear on the document. The tool output must still use ISO 8601 YYYY-MM-DD."
 
     const val VatNumberFormatGuidance = """
     ## VAT NUMBER FORMAT

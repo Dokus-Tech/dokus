@@ -130,12 +130,14 @@ private val ExtractDocumentInput.purchaseOrderPrompt: String
     ## HARD RULES
     - Do NOT guess. If not visible, return null.
     - Amount fields must be numeric strings using '.' as decimal separator (e.g., "1234.56").
+    - ${ExtractionToolDescriptions.LocalDateToolOutputGuidance}
 
     ## IDENTIFIERS
     Extract poNumber ("PO", "Bestelbon nr", "Bon de commande N°") if visible.
 
     ## DATES
     Identify order date ("Orderdatum", "Date de commande") and expected delivery date if stated.
+    Submit both date fields to the tool in ISO 8601 YYYY-MM-DD format.
 
     ## SUPPLIER
     Supplier/vendor is usually the recipient/supplier party.

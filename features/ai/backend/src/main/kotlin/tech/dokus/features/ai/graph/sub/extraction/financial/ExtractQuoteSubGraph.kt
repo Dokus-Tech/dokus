@@ -129,12 +129,14 @@ private val ExtractDocumentInput.quotePrompt: String
     ## HARD RULES
     - Do NOT guess. If not visible, return null.
     - Amount fields must be numeric strings using '.' as decimal separator (e.g., "1234.56").
+    - ${ExtractionToolDescriptions.LocalDateToolOutputGuidance}
 
     ## IDENTIFIERS
     Extract quoteNumber ("Offerte nr", "Devis N°", "Quotation #") if visible.
 
     ## DATE RULES
     Identify quote date and validity/expiration date ("Geldig tot", "Valable jusqu'au", "Valid until").
+    Submit both date fields to the tool in ISO 8601 YYYY-MM-DD format.
 
     ## CUSTOMER
     For outgoing quotes, issuer is the tenant; customer is billed-to/recipient party.

@@ -160,6 +160,7 @@ private val ExtractDocumentInput.receiptPrompt
     ## HARD RULES
     - Do NOT guess. If not visible, return null.
     - Amount fields must be numeric strings using '.' as decimal separator (e.g., "12.50").
+    - ${ExtractionToolDescriptions.LocalDateToolOutputGuidance}
 
     ${ExtractionToolDescriptions.VatNumberFormatGuidance}
 
@@ -191,8 +192,9 @@ private val ExtractDocumentInput.receiptPrompt
     Current date: $receiptCurrentDate
     - Extract transaction date if printed on receipt.
     - Often appears near top or bottom with a timestamp.
-    - If the merchant country uses mm/dd/yyyy (US, Canada), read dates in that format.
-    - European merchants use dd/mm/yyyy.
+    - ${ExtractionToolDescriptions.DocumentDateFormatClarification}
+    - If the merchant country uses mm/dd/yyyy (US, Canada), that is how the date may appear on the document.
+    - European merchants often print dd/mm/yyyy on the document.
     - Receipt dates should not be in the future.
 
     ## VAT
