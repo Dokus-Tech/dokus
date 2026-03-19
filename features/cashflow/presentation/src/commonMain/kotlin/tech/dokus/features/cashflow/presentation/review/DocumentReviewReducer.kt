@@ -15,6 +15,7 @@ import tech.dokus.domain.model.DocDto
 import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.isContactRequired
 import tech.dokus.features.cashflow.usecases.ConfirmDocumentUseCase
+import tech.dokus.features.cashflow.usecases.UnconfirmDocumentUseCase
 import tech.dokus.features.cashflow.usecases.GetAutoPaymentStatusUseCase
 import tech.dokus.features.cashflow.usecases.GetCashflowEntryUseCase
 import tech.dokus.features.cashflow.usecases.GetCashflowPaymentCandidatesUseCase
@@ -38,6 +39,7 @@ internal class DocumentReviewReducer(
     private val updateDocumentDraft: UpdateDocumentDraftUseCase,
     private val updateDocumentDraftContact: UpdateDocumentDraftContactUseCase,
     private val confirmDocument: ConfirmDocumentUseCase,
+    private val unconfirmDocument: UnconfirmDocumentUseCase,
     private val rejectDocument: RejectDocumentUseCase,
     private val reprocessDocument: ReprocessDocumentUseCase,
     private val resolveDocumentMatchReview: ResolveDocumentMatchReviewUseCase,
@@ -65,6 +67,7 @@ internal class DocumentReviewReducer(
         updateDocumentDraft,
         updateDocumentDraftContact,
         confirmDocument,
+        unconfirmDocument,
         rejectDocument,
         getDocumentRecord,
         logger
@@ -224,6 +227,9 @@ internal class DocumentReviewReducer(
 
     suspend fun DocumentReviewCtx.handleConfirm() =
         with(actions) { handleConfirm() }
+
+    suspend fun DocumentReviewCtx.handleUnconfirm() =
+        with(actions) { handleUnconfirm() }
 
     // Reject dialog handlers
     suspend fun DocumentReviewCtx.handleShowRejectDialog() =

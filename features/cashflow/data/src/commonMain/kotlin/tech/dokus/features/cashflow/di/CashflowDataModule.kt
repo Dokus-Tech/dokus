@@ -26,6 +26,8 @@ import tech.dokus.features.cashflow.gateway.PeppolTransmissionsGateway
 import tech.dokus.features.cashflow.gateway.PeppolTransmissionsGatewayImpl
 import tech.dokus.features.cashflow.usecase.CancelCashflowEntryUseCaseImpl
 import tech.dokus.features.cashflow.usecase.ConfirmDocumentUseCaseImpl
+import tech.dokus.features.cashflow.usecase.UnconfirmDocumentUseCaseImpl
+import tech.dokus.features.cashflow.usecases.UnconfirmDocumentUseCase
 import tech.dokus.features.cashflow.usecase.GetCashflowEntryUseCaseImpl
 import tech.dokus.features.cashflow.usecase.GetAutoPaymentStatusUseCaseImpl
 import tech.dokus.features.cashflow.usecase.GetCashflowPaymentCandidatesUseCaseImpl
@@ -185,6 +187,7 @@ val cashflowNetworkModule = module {
     singleOf(::UpdateDocumentDraftUseCaseImpl) bind UpdateDocumentDraftUseCase::class
     singleOf(::UpdateDocumentDraftContactUseCaseImpl) bind UpdateDocumentDraftContactUseCase::class
     singleOf(::ConfirmDocumentUseCaseImpl) bind ConfirmDocumentUseCase::class
+    singleOf(::UnconfirmDocumentUseCaseImpl) bind UnconfirmDocumentUseCase::class
     singleOf(::RejectDocumentUseCaseImpl) bind RejectDocumentUseCase::class
     singleOf(::GetDocumentPagesUseCaseImpl) bind GetDocumentPagesUseCase::class
     singleOf(::GetDocumentSourcePagesUseCaseImpl) bind GetDocumentSourcePagesUseCase::class

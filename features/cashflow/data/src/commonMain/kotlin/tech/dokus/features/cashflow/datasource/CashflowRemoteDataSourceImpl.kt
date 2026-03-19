@@ -765,6 +765,16 @@ internal class CashflowRemoteDataSourceImpl(
         }
     }
 
+    override suspend fun unconfirmDocument(
+        documentId: DocumentId
+    ): Result<DocumentDetailDto> {
+        return runCatching {
+            val docIdRoute = Documents.Id(id = documentId.toString())
+            httpClient.post(Documents.Id.Unconfirm(parent = docIdRoute)) {
+            }.body()
+        }
+    }
+
     override suspend fun rejectDocument(
         documentId: DocumentId,
         request: RejectDocumentRequest

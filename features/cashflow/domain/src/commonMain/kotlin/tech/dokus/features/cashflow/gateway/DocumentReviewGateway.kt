@@ -38,6 +38,10 @@ interface DocumentReviewGateway {
         documentId: DocumentId
     ): Result<DocumentDetailDto>
 
+    suspend fun unconfirmDocument(
+        documentId: DocumentId
+    ): Result<DocumentDetailDto>
+
     suspend fun rejectDocument(
         documentId: DocumentId,
         request: RejectDocumentRequest

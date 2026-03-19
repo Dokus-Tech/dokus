@@ -44,6 +44,10 @@ internal class DocumentReviewGatewayImpl(
         documentId: DocumentId
     ) = cashflowRemoteDataSource.confirmDocument(documentId)
 
+    override suspend fun unconfirmDocument(
+        documentId: DocumentId
+    ) = cashflowRemoteDataSource.unconfirmDocument(documentId)
+
     override suspend fun rejectDocument(
         documentId: DocumentId,
         request: RejectDocumentRequest

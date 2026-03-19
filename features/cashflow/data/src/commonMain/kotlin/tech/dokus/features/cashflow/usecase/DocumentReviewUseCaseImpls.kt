@@ -17,6 +17,7 @@ import tech.dokus.domain.model.ReprocessResponse
 import tech.dokus.domain.model.UpdateDraftResponse
 import tech.dokus.features.cashflow.gateway.DocumentReviewGateway
 import tech.dokus.features.cashflow.usecases.ConfirmDocumentUseCase
+import tech.dokus.features.cashflow.usecases.UnconfirmDocumentUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentPagesUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentRecordUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentSourceContentUseCase
@@ -78,6 +79,16 @@ internal class ConfirmDocumentUseCaseImpl(
         documentId: DocumentId
     ): Result<DocumentDetailDto> {
         return documentReviewGateway.confirmDocument(documentId)
+    }
+}
+
+internal class UnconfirmDocumentUseCaseImpl(
+    private val documentReviewGateway: DocumentReviewGateway
+) : UnconfirmDocumentUseCase {
+    override suspend fun invoke(
+        documentId: DocumentId
+    ): Result<DocumentDetailDto> {
+        return documentReviewGateway.unconfirmDocument(documentId)
     }
 }
 

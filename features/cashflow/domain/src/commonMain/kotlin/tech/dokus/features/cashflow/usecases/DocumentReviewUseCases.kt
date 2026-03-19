@@ -57,6 +57,12 @@ interface ConfirmDocumentUseCase {
     ): Result<DocumentDetailDto>
 }
 
+interface UnconfirmDocumentUseCase {
+    suspend operator fun invoke(
+        documentId: DocumentId
+    ): Result<DocumentDetailDto>
+}
+
 /**
  * Use case for rejecting a document.
  */

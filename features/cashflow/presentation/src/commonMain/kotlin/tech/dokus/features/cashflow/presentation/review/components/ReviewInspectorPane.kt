@@ -1,6 +1,7 @@
 package tech.dokus.features.cashflow.presentation.review.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -354,7 +355,7 @@ private fun InspectorHeader(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            CompressedStatusLine(state)
+            CompressedStatusLine(state, isAccountantReadOnly, onIntent)
         }
 
         val supportsManualConfirm = when (state.uiData) {
@@ -385,7 +386,11 @@ private fun InspectorHeader(
 }
 
 @Composable
-private fun CompressedStatusLine(state: DocumentReviewState) {
+private fun CompressedStatusLine(
+    state: DocumentReviewState,
+    isAccountantReadOnly: Boolean = false,
+    onIntent: (DocumentReviewIntent) -> Unit = {},
+) {
     val statusColor = state.financialStatus.financialStatusColorized
     val detailText = state.compressedStatusDetailLocalized
 
@@ -405,9 +410,16 @@ private fun CompressedStatusLine(state: DocumentReviewState) {
         return
     }
 
+    val canUnconfirm = !isAccountantReadOnly && state.isDocumentConfirmed && !state.isConfirming
+
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall),
+        modifier = if (canUnconfirm) {
+            Modifier.clickable { onIntent(DocumentReviewIntent.RequestUnconfirm) }
+        } else {
+            Modifier
+        },
     ) {
         LockIcon(modifier = Modifier, tint = MaterialTheme.colorScheme.textMuted)
         Text(
