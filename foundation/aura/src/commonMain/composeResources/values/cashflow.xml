@@ -721,6 +721,15 @@
     <string name="bank_statement_confirm_import">Confirm import · %1$d transactions</string>
     <string name="bank_statement_account">Account</string>
 
+    <!-- Source Comparison -->
+    <string name="comparison_title">Source comparison</string>
+    <string name="comparison_existing_label">Existing</string>
+    <string name="comparison_incoming_label">Incoming</string>
+    <string name="comparison_different_document">Different document</string>
+    <string name="comparison_same_document">Same document</string>
+    <string name="comparison_reason_material_conflict">Amount changed</string>
+    <string name="comparison_reason_fuzzy_candidate">Possible duplicate detected</string>
+
     <!-- Mobile Canonical -->
     <string name="mobile_unknown_vendor">Unknown vendor</string>
     <string name="mobile_label_issued">Issued</string>
