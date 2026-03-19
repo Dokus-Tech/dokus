@@ -361,7 +361,7 @@ private fun cashflowModule() = module {
         )
     }
     singleOf(::RAGIndexingService)
-    single { DocumentConfirmationDispatcher(get(), get(), get(), get(), get(), get(), get()) }
+    single { DocumentConfirmationDispatcher(get(), get(), get(), get(), get(), get(), get(), get()) }
     singleOf(::DocumentTruthService)
     singleOf(::ProcessingHealthService)
     singleOf(::DocumentCollectionEventHub)

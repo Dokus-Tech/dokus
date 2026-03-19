@@ -3,6 +3,8 @@ package tech.dokus.backend.services.documents.confirmation
 import tech.dokus.backend.services.banking.BankStatementProcessingService
 import tech.dokus.backend.services.cashflow.matching.MatchingEngine
 import tech.dokus.backend.services.documents.DocumentPurposeSimilarityService
+import tech.dokus.database.repository.cashflow.DocumentRepository
+import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
@@ -75,6 +77,7 @@ class DocumentConfirmationDispatcher(
     private val creditNoteService: CreditNoteConfirmationService,
     private val bankStatementProcessingService: BankStatementProcessingService,
     private val matchingEngine: MatchingEngine,
+    private val documentRepository: DocumentRepository,
     private val purposeSimilarityService: DocumentPurposeSimilarityService,
     private val ragIndexingService: RAGIndexingService,
 ) {
@@ -290,6 +293,8 @@ class DocumentConfirmationDispatcher(
             prepareResult = prepareResult,
         )
 
+        documentRepository.updateDocumentStatus(documentId, tenantId, DocumentStatus.Confirmed)
+
         // Run matching on the newly persisted transactions
         runSuspendCatching {
             matchingEngine.matchBankStatement(tenantId, documentId)
@@ -297,6 +302,7 @@ class DocumentConfirmationDispatcher(
             logger.warn("Matching failed after bank statement confirmation {}: {}", documentId, it.message)
         }
 
+        logger.info("Bank statement confirmed: {}", documentId)
         ConfirmationResult(
             entity = Unit,
             cashflowEntryId = null,

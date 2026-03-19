@@ -19,6 +19,9 @@ class DocumentConfirmationDispatcherTest {
     private val invoiceService = mockk<InvoiceConfirmationService>()
     private val receiptService = mockk<ReceiptConfirmationService>()
     private val creditNoteService = mockk<CreditNoteConfirmationService>()
+    private val bankStatementProcessingService = mockk<tech.dokus.backend.services.banking.BankStatementProcessingService>(relaxed = true)
+    private val matchingEngine = mockk<tech.dokus.backend.services.cashflow.matching.MatchingEngine>(relaxed = true)
+    private val documentRepository = mockk<tech.dokus.database.repository.cashflow.DocumentRepository>(relaxed = true)
     private val purposeSimilarityService = mockk<DocumentPurposeSimilarityService>(relaxed = true)
     private val ragIndexingService = mockk<RAGIndexingService>(relaxed = true)
 
@@ -26,6 +29,9 @@ class DocumentConfirmationDispatcherTest {
         invoiceService = invoiceService,
         receiptService = receiptService,
         creditNoteService = creditNoteService,
+        bankStatementProcessingService = bankStatementProcessingService,
+        matchingEngine = matchingEngine,
+        documentRepository = documentRepository,
         purposeSimilarityService = purposeSimilarityService,
         ragIndexingService = ragIndexingService,
     )
