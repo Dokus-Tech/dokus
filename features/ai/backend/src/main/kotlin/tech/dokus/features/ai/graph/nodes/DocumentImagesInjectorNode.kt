@@ -1,5 +1,6 @@
 package tech.dokus.features.ai.graph.nodes
 
+import ai.koog.agents.core.agent.entity.AIAgentStorageKey
 import ai.koog.agents.core.dsl.builder.AIAgentNodeDelegate
 import ai.koog.agents.core.dsl.builder.AIAgentSubgraphBuilderBase
 import ai.koog.prompt.message.AttachmentContent
@@ -16,8 +17,13 @@ interface InputWithDocumentId {
     val dpiOverride: Dpi? get() = null
 }
 
+/** Maximum number of CSV lines to inject into the prompt for classification + column mapping. */
+private const val CSV_PREVIEW_LINE_COUNT = 50
+
 internal inline fun <reified Input> AIAgentSubgraphBuilderBase<*, *>.documentImagesInjectorNode(
     fetcher: DocumentFetcher,
+    csvBytesKey: AIAgentStorageKey<ByteArray>? = null,
+    contentTypeKey: AIAgentStorageKey<String>? = null,
 ): AIAgentNodeDelegate<Input, Input> where Input : InputWithDocumentId, Input : InputWithTenantContext {
     return node<Input, Input>("inject-document-images") { args ->
         val document = fetcher(args.tenant.id, args.documentId).getOrElse {
@@ -27,23 +33,40 @@ internal inline fun <reified Input> AIAgentSubgraphBuilderBase<*, *>.documentIma
             return@node args
         }
 
-        val images = DocumentImageService.getDocumentImages(
-            documentBytes = document.bytes,
-            mimeType = document.mimeType,
-            pageCount = args.maxPagesOverride ?: DocumentImageService.DEFAULT_PAGE_COUNT,
-            dpi = args.dpiOverride ?: Dpi.default,
-        )
-        llm.writeSession {
-            appendPrompt {
-                user {
-                    images.images.forEach { image ->
-                        image(
-                            ContentPart.Image(
-                                content = AttachmentContent.Binary.Bytes(image.imageBytes),
-                                format = "png",
-                                mimeType = image.mimeType,
+        if (document.mimeType == "text/csv" && csvBytesKey != null && contentTypeKey != null) {
+            // CSV: store raw bytes for extraction, inject text preview for classification
+            storage.set(csvBytesKey, document.bytes)
+            storage.set(contentTypeKey, document.mimeType)
+
+            val csvText = String(document.bytes, Charsets.UTF_8)
+            val preview = csvText.lines().take(CSV_PREVIEW_LINE_COUNT).joinToString("\n")
+            llm.writeSession {
+                appendPrompt {
+                    user {
+                        text("CSV file content (first $CSV_PREVIEW_LINE_COUNT lines):\n```\n$preview\n```")
+                    }
+                }
+            }
+        } else {
+            // PDF/image: render pages and inject as images (unchanged)
+            val images = DocumentImageService.getDocumentImages(
+                documentBytes = document.bytes,
+                mimeType = document.mimeType,
+                pageCount = args.maxPagesOverride ?: DocumentImageService.DEFAULT_PAGE_COUNT,
+                dpi = args.dpiOverride ?: Dpi.default,
+            )
+            llm.writeSession {
+                appendPrompt {
+                    user {
+                        images.images.forEach { image ->
+                            image(
+                                ContentPart.Image(
+                                    content = AttachmentContent.Binary.Bytes(image.imageBytes),
+                                    format = "png",
+                                    mimeType = image.mimeType,
+                                )
                             )
-                        )
+                        }
                     }
                 }
             }

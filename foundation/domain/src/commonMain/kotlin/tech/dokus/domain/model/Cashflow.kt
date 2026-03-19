@@ -136,7 +136,9 @@ data class BankTransactionDto(
     val transferPairId: BankTransactionId? = null,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime,
-)
+) {
+    companion object
+}
 
 // ============================================================================
 // Grouped field types — replace scattered nullable fields

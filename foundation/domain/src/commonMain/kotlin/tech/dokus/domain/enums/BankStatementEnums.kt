@@ -34,7 +34,10 @@ enum class BankTransactionSource(override val dbValue: String) : DbEnum {
     Plaid("PLAID"),
 
     @SerialName("TINK")
-    Tink("TINK")
+    Tink("TINK"),
+
+    @SerialName("CSV_STATEMENT")
+    CsvStatement("CSV_STATEMENT")
 }
 
 @Serializable

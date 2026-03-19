@@ -29,6 +29,7 @@ actual val isDragDropSupported: Boolean = true
 private val allowedExtensions = setOf(
     "pdf",
     "png", "jpg", "jpeg", "webp", "gif",
+    "csv", "txt",
     "doc", "docx", "xls", "xlsx", "ppt", "pptx"
 )
 

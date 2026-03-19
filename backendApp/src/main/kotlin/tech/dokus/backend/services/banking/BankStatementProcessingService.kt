@@ -62,6 +62,7 @@ class BankStatementProcessingService(
         documentId: DocumentId,
         sourceId: DocumentSourceId?,
         draftData: BankStatementDraftData,
+        source: BankTransactionSource = BankTransactionSource.PdfStatement,
     ): BankStatementProcessingResult {
         // Resolve file hash from document source for dedup
         val fileHash = resolveFileHash(tenantId, documentId, sourceId)
@@ -152,7 +153,7 @@ class BankStatementProcessingService(
             tenantId = tenantId,
             bankAccountId = accountId,
             documentId = documentId,
-            source = BankTransactionSource.PdfStatement,
+            source = source,
             statementTrust = trustResult.trust,
             fileHash = fileHash,
             accountIban = draftData.accountIban,

@@ -1,5 +1,6 @@
 package tech.dokus.backend.services.documents.postextraction
 
+import tech.dokus.domain.enums.BankTransactionSource
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.DocumentId
@@ -23,4 +24,5 @@ data class PostExtractionContext(
     val directionSource: DirectionResolutionSource,
     val extraction: FinancialExtractionResult,
     val tenantVat: VatNumber?,
+    val bankTransactionSource: BankTransactionSource? = null,
 )

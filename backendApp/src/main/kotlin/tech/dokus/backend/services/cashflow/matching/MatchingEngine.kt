@@ -158,7 +158,7 @@ class MatchingEngine(
             val margin = MatchConflictResolver.computeMargin(scored)
 
             // Step 6: Classify
-            val decision = MatchClassifier.classify(best, margin, tx.statementTrust)
+            val decision = MatchClassifier.classify(best, margin)
 
             // Step 7: Apply decision
             when (decision) {
