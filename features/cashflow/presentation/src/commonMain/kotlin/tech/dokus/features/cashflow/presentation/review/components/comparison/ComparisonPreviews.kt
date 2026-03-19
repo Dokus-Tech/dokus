@@ -7,52 +7,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
-import tech.dokus.domain.Money
-import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.ReviewReason
-import tech.dokus.features.cashflow.presentation.review.models.DocumentUiData
-import tech.dokus.features.cashflow.presentation.review.models.LineItemUiData
+import tech.dokus.features.cashflow.presentation.review.DocumentPreviewState
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
 
 private val PreviewSize = Modifier.width(1200.dp).height(800.dp)
-
-private fun previewExistingInvoice() = DocumentUiData.Invoice(
-    direction = DocumentDirection.Inbound,
-    invoiceNumber = "INV-2026-0005",
-    issueDate = "2025-01-09",
-    dueDate = "2025-01-08",
-    subtotalAmount = Money(5700),
-    vatAmount = Money(1197),
-    totalAmount = Money(6898),
-    currencySign = "€",
-    lineItems = listOf(
-        LineItemUiData("HP 304XL Cartridge Black", "€37.99"),
-        LineItemUiData("Tefal Included KI5338", "€30.99"),
-    ),
-    notes = null,
-    iban = null,
-    primaryDescription = "Battery chargers, power adapters",
-)
-
-private fun previewIncomingInvoice() = DocumentUiData.Invoice(
-    direction = DocumentDirection.Inbound,
-    invoiceNumber = "INV-2026-0005",
-    issueDate = "2026-02-14",
-    dueDate = null,
-    subtotalAmount = Money(23884),
-    vatAmount = Money(5016),
-    totalAmount = Money(28900),
-    currencySign = "€",
-    lineItems = listOf(
-        LineItemUiData("Samsung ViewFinity S8 S80UD LS27D800AUXEN", "€238.84"),
-        LineItemUiData("Incl. Recupel: 2.2 Monitors", "€1.40"),
-    ),
-    notes = null,
-    iban = null,
-    primaryDescription = "Battery chargers, power adapters",
-)
 
 // ═══════════════════════════════════════════════════════════════════
 // FULL COMPARISON PANE
@@ -65,14 +26,13 @@ private fun ComparisonMaterialConflictPreview(
 ) {
     TestWrapper(parameters) {
         DocumentComparisonPane(
-            existingUiData = previewExistingInvoice(),
-            incomingUiData = previewIncomingInvoice(),
-            existingCounterpartyName = "Coolblue België NV",
-            incomingCounterpartyName = "COOLBLUE BELGIË",
+            existingPreviewState = DocumentPreviewState.NoPreview,
+            incomingPreviewState = DocumentPreviewState.NoPreview,
             reasonType = ReviewReason.MaterialConflict,
             onSameDocument = {},
             onDifferentDocument = {},
             isResolving = false,
+            onLoadMore = {},
             modifier = PreviewSize,
         )
     }
@@ -85,14 +45,13 @@ private fun ComparisonFuzzyMatchPreview(
 ) {
     TestWrapper(parameters) {
         DocumentComparisonPane(
-            existingUiData = previewExistingInvoice(),
-            incomingUiData = previewIncomingInvoice(),
-            existingCounterpartyName = "Coolblue België NV",
-            incomingCounterpartyName = "COOLBLUE BELGIË",
+            existingPreviewState = DocumentPreviewState.Loading,
+            incomingPreviewState = DocumentPreviewState.Loading,
             reasonType = ReviewReason.FuzzyCandidate,
             onSameDocument = {},
             onDifferentDocument = {},
             isResolving = false,
+            onLoadMore = {},
             modifier = PreviewSize,
         )
     }
@@ -105,14 +64,13 @@ private fun ComparisonResolvingPreview(
 ) {
     TestWrapper(parameters) {
         DocumentComparisonPane(
-            existingUiData = previewExistingInvoice(),
-            incomingUiData = previewIncomingInvoice(),
-            existingCounterpartyName = "Coolblue België NV",
-            incomingCounterpartyName = "COOLBLUE BELGIË",
+            existingPreviewState = DocumentPreviewState.NoPreview,
+            incomingPreviewState = DocumentPreviewState.NoPreview,
             reasonType = ReviewReason.MaterialConflict,
             onSameDocument = {},
             onDifferentDocument = {},
             isResolving = true,
+            onLoadMore = {},
             modifier = PreviewSize,
         )
     }
@@ -125,14 +83,13 @@ private fun ComparisonNoIncomingPreview(
 ) {
     TestWrapper(parameters) {
         DocumentComparisonPane(
-            existingUiData = previewExistingInvoice(),
-            incomingUiData = null,
-            existingCounterpartyName = "Coolblue België NV",
-            incomingCounterpartyName = "",
+            existingPreviewState = DocumentPreviewState.NoPreview,
+            incomingPreviewState = null,
             reasonType = ReviewReason.FuzzyCandidate,
             onSameDocument = {},
             onDifferentDocument = {},
             isResolving = false,
+            onLoadMore = {},
             modifier = PreviewSize,
         )
     }

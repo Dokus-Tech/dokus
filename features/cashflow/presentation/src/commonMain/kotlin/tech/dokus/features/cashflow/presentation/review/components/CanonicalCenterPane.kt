@@ -32,7 +32,6 @@ import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.features.cashflow.presentation.review.components.bankstatement.CanonicalBankStatementView
 import tech.dokus.features.cashflow.presentation.review.components.comparison.DocumentComparisonPane
 import tech.dokus.features.cashflow.presentation.review.models.DocumentUiData
-import tech.dokus.features.cashflow.presentation.review.models.extractedUiData
 import tech.dokus.features.cashflow.presentation.common.utils.formatShortDate
 import tech.dokus.features.cashflow.presentation.review.DocumentPreviewState
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
@@ -88,21 +87,17 @@ internal fun CanonicalCenterPane(
     val contactAddress = (contact as? ResolvedContact.Detected)?.address
     val uiData = state.uiData
 
-    // Side-by-side comparison when pending match review exists (invoices/credit notes)
+    // Side-by-side PDF comparison when pending match review exists
     val pendingReview = state.documentRecord?.pendingMatchReview
-    if (pendingReview != null && uiData is DocumentUiData.Invoice) {
-        val incomingSource = state.documentRecord?.sources
-            ?.firstOrNull { it.extractedSnapshotJson != null && it.id != state.documentRecord?.sources?.firstOrNull()?.id }
-        val incomingUiData = incomingSource?.extractedUiData()
+    if (pendingReview != null) {
         DocumentComparisonPane(
-            existingUiData = uiData,
-            incomingUiData = incomingUiData,
-            existingCounterpartyName = contactName ?: "",
-            incomingCounterpartyName = contactName ?: "",
+            existingPreviewState = state.previewState,
+            incomingPreviewState = state.incomingPreviewState,
             reasonType = pendingReview.reasonType,
             onSameDocument = { onIntent(DocumentReviewIntent.ResolvePossibleMatchSame) },
             onDifferentDocument = { onIntent(DocumentReviewIntent.ResolvePossibleMatchDifferent) },
             isResolving = state.isResolvingMatchReview,
+            onLoadMore = { maxPages -> onIntent(DocumentReviewIntent.LoadMorePages(maxPages)) },
             modifier = modifier,
         )
         return

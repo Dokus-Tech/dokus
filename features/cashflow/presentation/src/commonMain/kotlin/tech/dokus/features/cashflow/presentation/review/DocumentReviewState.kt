@@ -136,6 +136,7 @@ data class DocumentReviewState(
     val document: DokusState<ReviewDocumentData> = DokusState.idle(),
     val isAwaitingExtraction: Boolean = false,
     val previewState: DocumentPreviewState = DocumentPreviewState.Loading,
+    val incomingPreviewState: DocumentPreviewState? = null,
 
     // === UI flags ===
     val hasUnsavedChanges: Boolean = false,
@@ -361,11 +362,16 @@ data class DocumentReviewState(
         get() = draftData?.totalAmount
 
     /**
-     * Canonical rendering is available for invoice-like documents.
-     * If unavailable, UI should fallback to PDF preview.
+     * Canonical rendering is available for document types with structured views.
+     * Bank statements always use canonical (transaction table).
+     * Invoices/credit notes use canonical only when confirmed — show PDF while reviewing.
      */
     val canRenderCanonical: Boolean
-        get() = draftData is DocDto.Invoice || draftData is DocDto.CreditNote || draftData is DocDto.BankStatement
+        get() = when {
+            draftData is DocDto.BankStatement -> true
+            documentStatus == DocumentStatus.Confirmed -> draftData is DocDto.Invoice || draftData is DocDto.CreditNote
+            else -> false
+        }
 
     val shouldUsePdfFallback: Boolean
         get() = !canRenderCanonical || isProcessing || isFailed

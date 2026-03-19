@@ -45,16 +45,32 @@ import kotlin.test.assertTrue
 class DocumentReviewCanonicalStateTest {
 
     @Test
-    fun `invoice uses canonical center`() {
+    fun `unconfirmed invoice uses pdf fallback`() {
         val state = contentState(invoiceDraft())
+
+        assertFalse(state.canRenderCanonical)
+        assertTrue(state.shouldUsePdfFallback)
+    }
+
+    @Test
+    fun `confirmed invoice uses canonical center`() {
+        val state = contentState(invoiceDraft(), isDocumentConfirmed = true)
 
         assertTrue(state.canRenderCanonical)
         assertFalse(state.shouldUsePdfFallback)
     }
 
     @Test
-    fun `credit note uses canonical center`() {
+    fun `unconfirmed credit note uses pdf fallback`() {
         val state = contentState(creditNoteDraft())
+
+        assertFalse(state.canRenderCanonical)
+        assertTrue(state.shouldUsePdfFallback)
+    }
+
+    @Test
+    fun `confirmed credit note uses canonical center`() {
+        val state = contentState(creditNoteDraft(), isDocumentConfirmed = true)
 
         assertTrue(state.canRenderCanonical)
         assertFalse(state.shouldUsePdfFallback)

@@ -6,8 +6,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -20,19 +18,23 @@ import tech.dokus.aura.resources.comparison_existing_label
 import tech.dokus.aura.resources.comparison_incoming_label
 import tech.dokus.aura.resources.comparison_title
 import tech.dokus.domain.enums.ReviewReason
-import tech.dokus.features.cashflow.presentation.review.models.DocumentUiData
+import tech.dokus.features.cashflow.presentation.review.DocumentPreviewState
+import tech.dokus.features.cashflow.presentation.review.PdfPreviewPane
 import tech.dokus.foundation.aura.constrains.Constraints
 
+/**
+ * Side-by-side PDF comparison for document match review.
+ * Shows two PDF previews with EXISTING/INCOMING labels and action buttons.
+ */
 @Composable
 internal fun DocumentComparisonPane(
-    existingUiData: DocumentUiData,
-    incomingUiData: DocumentUiData?,
-    existingCounterpartyName: String,
-    incomingCounterpartyName: String,
+    existingPreviewState: DocumentPreviewState,
+    incomingPreviewState: DocumentPreviewState?,
     reasonType: ReviewReason,
     onSameDocument: () -> Unit,
     onDifferentDocument: () -> Unit,
     isResolving: Boolean,
+    onLoadMore: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
@@ -55,45 +57,52 @@ internal fun DocumentComparisonPane(
 
         HorizontalDivider()
 
-        // Side-by-side cards
+        // Side-by-side PDFs
         Row(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(Constraints.Spacing.large),
-            horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.large),
+                .padding(horizontal = Constraints.Spacing.small),
+            horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
         ) {
-            // Existing document
+            // Existing document PDF
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
+                verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xxSmall),
             ) {
-                ComparisonLabel(
+                SectionLabel(
                     text = stringResource(Res.string.comparison_existing_label),
-                    counterpartyName = existingCounterpartyName,
+                    modifier = Modifier.padding(
+                        horizontal = Constraints.Spacing.small,
+                        vertical = Constraints.Spacing.xxSmall,
+                    ),
                 )
-                ComparisonDocumentCard(
-                    uiData = existingUiData,
-                    counterpartyName = existingCounterpartyName,
+                PdfPreviewPane(
+                    state = existingPreviewState,
+                    selectedFieldPath = null,
+                    onLoadMore = onLoadMore,
+                    modifier = Modifier.weight(1f),
                 )
             }
 
-            // Incoming document
+            // Incoming document PDF
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
+                verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xxSmall),
             ) {
-                ComparisonLabel(
+                SectionLabel(
                     text = stringResource(Res.string.comparison_incoming_label),
-                    counterpartyName = incomingCounterpartyName,
+                    modifier = Modifier.padding(
+                        horizontal = Constraints.Spacing.small,
+                        vertical = Constraints.Spacing.xxSmall,
+                    ),
                 )
-                if (incomingUiData != null) {
-                    ComparisonDocumentCard(
-                        uiData = incomingUiData,
-                        counterpartyName = incomingCounterpartyName,
-                    )
-                }
+                PdfPreviewPane(
+                    state = incomingPreviewState ?: DocumentPreviewState.NoPreview,
+                    selectedFieldPath = null,
+                    onLoadMore = {},
+                    modifier = Modifier.weight(1f),
+                )
             }
         }
 
@@ -108,25 +117,14 @@ internal fun DocumentComparisonPane(
 }
 
 @Composable
-private fun ComparisonLabel(
+private fun SectionLabel(
     text: String,
-    counterpartyName: String,
     modifier: Modifier = Modifier,
 ) {
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = text.uppercase(),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.primary,
-        )
-        Text(
-            text = counterpartyName,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
+    Text(
+        text = text.uppercase(),
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = modifier,
+    )
 }

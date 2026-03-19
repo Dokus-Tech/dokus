@@ -1,9 +1,7 @@
 package tech.dokus.features.cashflow.presentation.review.models
 
-import kotlinx.serialization.json.Json
 import tech.dokus.domain.Money
 import tech.dokus.domain.model.BankStatementTransactionDraftRow
-import tech.dokus.domain.model.DocumentSourceDto
 import tech.dokus.domain.model.AnnualAccountsDraftData
 import tech.dokus.domain.model.BankFeeDraftData
 import tech.dokus.domain.model.BankStatementDraftData
@@ -315,22 +313,6 @@ internal fun DocDto.toUiData(): DocumentUiData = when (this) {
     is DocDto.DepreciationSchedule -> DocumentUiData.DepreciationSchedule()
     is DocDto.Inventory -> DocumentUiData.Inventory()
     is DocDto.Other -> DocumentUiData.Other()
-}
-
-private val lenientJson = Json { ignoreUnknownKeys = true; isLenient = true }
-
-/**
- * Deserializes the extracted snapshot JSON from a document source
- * and maps it to [DocumentUiData] for rendering in comparison views.
- */
-internal fun DocumentSourceDto.extractedUiData(): DocumentUiData? {
-    val json = extractedSnapshotJson ?: return null
-    return try {
-        val draftData = lenientJson.decodeFromString<DocumentDraftData>(json)
-        draftData.toUiData()
-    } catch (_: Exception) {
-        null
-    }
 }
 
 private fun BankStatementTransactionDraftRow.toUiRow(index: Int): BankStatementTransactionUiRow {
