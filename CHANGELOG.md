@@ -4,6 +4,15 @@ All notable changes to Dokus are documented in this file.
 
 The format follows Keep a Changelog principles with pragmatic release summaries.
 
+## [1.3.2] - 2026-03-19
+
+### Changed
+- Payment candidate suggestions now filter by cashflow direction, preventing wrong-direction transactions from appearing as matches.
+
+### Fixed
+- CSV bank statements now correctly tagged as `CSV_STATEMENT` source instead of `PDF_STATEMENT`.
+- `BankTransactionEntity` serialization error in payment candidates endpoint resolved by mapping to DTOs in service layer.
+
 ## [1.3.1] - 2026-03-19
 
 ### Added
