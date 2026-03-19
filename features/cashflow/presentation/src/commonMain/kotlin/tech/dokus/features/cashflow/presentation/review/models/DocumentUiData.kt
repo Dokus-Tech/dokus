@@ -60,10 +60,19 @@ sealed interface DocumentUiData {
     @Immutable
     data class BankStatement(
         val accountIban: String?,
+        val institutionName: String?,
         val periodStart: String?,
         val periodEnd: String?,
-        val transactionCount: Int,
-    ) : DocumentUiData
+        val openingBalance: String?,
+        val closingBalance: String?,
+        val movement: String?,
+        val transactions: List<BankStatementTransactionUiRow> = emptyList(),
+    ) : DocumentUiData {
+        val includedCount: Int get() = transactions.count { !it.isExcluded }
+        val excludedCount: Int get() = transactions.count { it.isExcluded }
+        val duplicateCount: Int get() = transactions.count { it.isDuplicate }
+        val hasDuplicates: Boolean get() = duplicateCount > 0
+    }
 
     // --- Classified-only document types ---
 

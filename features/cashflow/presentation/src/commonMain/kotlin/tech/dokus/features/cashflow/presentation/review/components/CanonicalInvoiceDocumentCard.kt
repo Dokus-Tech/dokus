@@ -22,7 +22,17 @@ import tech.dokus.features.cashflow.presentation.review.models.LineItemUiData
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.*
+import tech.dokus.aura.resources.invoice_amount
+import tech.dokus.aura.resources.invoice_description
+import tech.dokus.aura.resources.invoice_due
+import tech.dokus.aura.resources.invoice_issue
+import tech.dokus.aura.resources.invoice_label
+import tech.dokus.aura.resources.invoice_no_line_items
+import tech.dokus.aura.resources.invoice_notes
+import tech.dokus.aura.resources.invoice_subtotal
+import tech.dokus.aura.resources.invoice_title
+import tech.dokus.aura.resources.invoice_total
+import tech.dokus.aura.resources.invoice_vat
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.textMuted
 

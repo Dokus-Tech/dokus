@@ -252,7 +252,7 @@ internal fun DocumentDetailsCard(
             accountIban = data.accountIban,
             periodStart = data.periodStart,
             periodEnd = data.periodEnd,
-            transactionCount = data.transactionCount,
+            transactionCount = data.transactions.size,
         )
     }
 }

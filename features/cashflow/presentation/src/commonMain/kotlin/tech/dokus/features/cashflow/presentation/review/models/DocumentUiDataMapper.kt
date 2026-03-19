@@ -1,6 +1,7 @@
 package tech.dokus.features.cashflow.presentation.review.models
 
 import tech.dokus.domain.Money
+import tech.dokus.domain.model.BankStatementTransactionDraftRow
 import tech.dokus.domain.model.AnnualAccountsDraftData
 import tech.dokus.domain.model.BankFeeDraftData
 import tech.dokus.domain.model.BankStatementDraftData
@@ -56,6 +57,7 @@ import tech.dokus.domain.model.VapzDraftData
 import tech.dokus.domain.model.VatAssessmentDraftData
 import tech.dokus.domain.model.VatListingDraftData
 import tech.dokus.domain.model.VatReturnDraftData
+import tech.dokus.domain.model.TransactionCommunication
 import tech.dokus.domain.model.WithholdingTaxDraftData
 
 internal fun DocumentDraftData.toUiData(): DocumentUiData = when (this) {
@@ -109,9 +111,17 @@ internal fun DocumentDraftData.toUiData(): DocumentUiData = when (this) {
 
     is BankStatementDraftData -> DocumentUiData.BankStatement(
         accountIban = accountIban?.value,
+        institutionName = institution.name,
         periodStart = periodStart?.toString(),
         periodEnd = periodEnd?.toString(),
-        transactionCount = transactions.size,
+        openingBalance = openingBalance?.toDisplayString(),
+        closingBalance = closingBalance?.toDisplayString(),
+        movement = if (openingBalance != null && closingBalance != null) {
+            Money(closingBalance!!.minor - openingBalance!!.minor).toDisplayString()
+        } else null,
+        transactions = transactions.mapIndexed { index, row ->
+            row.toUiRow(index)
+        },
     )
 
     is ProFormaDraftData -> DocumentUiData.ProForma()
@@ -236,11 +246,22 @@ internal fun DocDto.toUiData(): DocumentUiData = when (this) {
 
     is DocDto.BankStatement -> DocumentUiData.BankStatement(
         accountIban = accountIban?.value,
+        institutionName = when (this) {
+            is DocDto.BankStatement.Draft -> institution.name
+            is DocDto.BankStatement.Confirmed -> null
+        },
         periodStart = periodStart?.toString(),
         periodEnd = periodEnd?.toString(),
-        transactionCount = when (this) {
-            is DocDto.BankStatement.Draft -> transactions.size
-            is DocDto.BankStatement.Confirmed -> transactionCount
+        openingBalance = openingBalance?.toDisplayString(),
+        closingBalance = closingBalance?.toDisplayString(),
+        movement = if (openingBalance != null && closingBalance != null) {
+            Money(closingBalance!!.minor - openingBalance!!.minor).toDisplayString()
+        } else null,
+        transactions = when (this) {
+            is DocDto.BankStatement.Draft -> transactions.mapIndexed { index, row ->
+                row.toUiRow(index)
+            }
+            is DocDto.BankStatement.Confirmed -> emptyList()
         },
     )
 
@@ -292,4 +313,25 @@ internal fun DocDto.toUiData(): DocumentUiData = when (this) {
     is DocDto.DepreciationSchedule -> DocumentUiData.DepreciationSchedule()
     is DocDto.Inventory -> DocumentUiData.Inventory()
     is DocDto.Other -> DocumentUiData.Other()
+}
+
+private fun BankStatementTransactionDraftRow.toUiRow(index: Int): BankStatementTransactionUiRow {
+    val amount = signedAmount
+    val comm = communication
+    val communicationText = when (comm) {
+        is TransactionCommunication.Structured -> comm.raw
+        is TransactionCommunication.FreeForm -> comm.text
+        null -> null
+    }
+    return BankStatementTransactionUiRow(
+        index = index,
+        date = transactionDate?.toString().orEmpty(),
+        description = descriptionRaw ?: counterparty.name.orEmpty(),
+        counterpartyName = counterparty.name,
+        communication = communicationText,
+        displayAmount = amount?.toDisplayString().orEmpty(),
+        isPositive = (amount?.minor ?: 0L) > 0,
+        isExcluded = excluded,
+        isDuplicate = potentialDuplicate,
+    )
 }
