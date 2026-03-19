@@ -3,9 +3,11 @@ package tech.dokus.backend.services.cashflow.matching
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import tech.dokus.database.repository.banking.BankTransactionRepository
+import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.domain.enums.AutoPaymentTriggerSource
 import tech.dokus.domain.enums.BankTransactionStatus
+import tech.dokus.domain.enums.CashflowDirection
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.enums.MatchedBy
@@ -41,21 +43,32 @@ class MatchingEngine(
     private val autoPaymentService: AutoPaymentService,
     private val bankingSsePublisher: BankingSsePublisher,
     private val transferDetector: TransferDetector,
+    private val cashflowEntriesRepository: CashflowEntriesRepository,
 ) {
     private val logger = loggerFor()
 
     /**
      * Returns candidate transactions for a cashflow entry.
-     * Combines NeedsReview suggestions with all selectable (unmatched) transactions.
+     * Combines NeedsReview suggestions with direction-filtered selectable transactions.
      */
     suspend fun getPaymentCandidates(
         tenantId: TenantId,
         cashflowEntryId: CashflowEntryId,
     ): List<BankTransactionDto> {
+        val entry = cashflowEntriesRepository.getEntry(cashflowEntryId, tenantId).getOrNull()
         val candidates = bankTransactionRepository.listCandidatesForEntry(tenantId, cashflowEntryId)
         val selectable = bankTransactionRepository.listSelectable(tenantId)
+
+        // Filter by direction: Cash-In entries expect positive transactions, Cash-Out expect negative
+        val directionFiltered = if (entry != null && entry.direction != CashflowDirection.Neutral) {
+            val expectPositive = entry.direction == CashflowDirection.In
+            selectable.filter { (it.signedAmount.minor > 0) == expectPositive }
+        } else {
+            selectable
+        }
+
         val candidateIds = candidates.map { it.id }.toSet()
-        return (candidates + selectable.filter { it.id !in candidateIds })
+        return (candidates + directionFiltered.filter { it.id !in candidateIds })
             .map { BankTransactionDto.from(it) }
     }
 

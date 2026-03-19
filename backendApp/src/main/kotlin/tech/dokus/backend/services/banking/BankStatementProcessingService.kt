@@ -10,6 +10,7 @@ import tech.dokus.database.repository.banking.BankStatementRepository
 import tech.dokus.database.repository.banking.BankTransactionCreate
 import tech.dokus.database.repository.banking.BankTransactionRepository
 import tech.dokus.database.repository.cashflow.DocumentSourceRepository
+import tech.dokus.database.repository.cashflow.DocumentSourceSummary
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.BankTransactionSource
 import tech.dokus.domain.enums.StatementTrust
@@ -64,8 +65,14 @@ class BankStatementProcessingService(
         draftData: BankStatementDraftData,
         source: BankTransactionSource = BankTransactionSource.PdfStatement,
     ): BankStatementProcessingResult {
-        // Resolve file hash from document source for dedup
-        val fileHash = resolveFileHash(tenantId, documentId, sourceId)
+        // Resolve source metadata (file hash + content type for source detection)
+        val resolvedSource = resolveSource(tenantId, documentId, sourceId)
+        val fileHash = resolvedSource?.inputHash
+        val effectiveSource = if (resolvedSource?.contentType == "text/csv") {
+            BankTransactionSource.CsvStatement
+        } else {
+            source
+        }
 
         // 1. Statement dedup
         val dedupOutcome = if (fileHash != null) {
@@ -153,7 +160,7 @@ class BankStatementProcessingService(
             tenantId = tenantId,
             bankAccountId = accountId,
             documentId = documentId,
-            source = source,
+            source = effectiveSource,
             statementTrust = trustResult.trust,
             fileHash = fileHash,
             accountIban = draftData.accountIban,
@@ -219,17 +226,16 @@ class BankStatementProcessingService(
         )
     }
 
-    private suspend fun resolveFileHash(
+    private suspend fun resolveSource(
         tenantId: TenantId,
         documentId: DocumentId,
         sourceId: DocumentSourceId?,
-    ): String? {
-        val source = if (sourceId != null) {
+    ): DocumentSourceSummary? {
+        return if (sourceId != null) {
             documentSourceRepository.getById(tenantId, sourceId)
         } else {
             documentSourceRepository.selectPreferredSource(tenantId, documentId)
         }
-        return source?.inputHash
     }
 
     companion object {
