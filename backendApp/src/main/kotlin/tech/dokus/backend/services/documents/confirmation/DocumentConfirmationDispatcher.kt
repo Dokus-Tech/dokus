@@ -1,5 +1,7 @@
 package tech.dokus.backend.services.documents.confirmation
 
+import tech.dokus.backend.services.banking.BankStatementProcessingService
+import tech.dokus.backend.services.cashflow.matching.MatchingEngine
 import tech.dokus.backend.services.documents.DocumentPurposeSimilarityService
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
@@ -71,6 +73,8 @@ class DocumentConfirmationDispatcher(
     private val invoiceService: InvoiceConfirmationService,
     private val receiptService: ReceiptConfirmationService,
     private val creditNoteService: CreditNoteConfirmationService,
+    private val bankStatementProcessingService: BankStatementProcessingService,
+    private val matchingEngine: MatchingEngine,
     private val purposeSimilarityService: DocumentPurposeSimilarityService,
     private val ragIndexingService: RAGIndexingService,
 ) {
@@ -86,9 +90,7 @@ class DocumentConfirmationDispatcher(
             is InvoiceDraftData -> invoiceService.confirm(tenantId, documentId, draftData, contactId)
             is ReceiptDraftData -> receiptService.confirm(tenantId, documentId, draftData, contactId)
             is CreditNoteDraftData -> creditNoteService.confirm(tenantId, documentId, draftData, contactId)
-            is BankStatementDraftData -> Result.failure(
-                DokusException.BadRequest("Bank statement documents cannot be manually confirmed")
-            )
+            is BankStatementDraftData -> confirmBankStatement(tenantId, documentId, draftData)
             is ProFormaDraftData -> Result.failure(
                 DokusException.BadRequest("Document type ${draftData.toDocumentType()} does not support confirmation")
             )
@@ -262,5 +264,43 @@ class DocumentConfirmationDispatcher(
         }
 
         return confirmation
+    }
+
+    private suspend fun confirmBankStatement(
+        tenantId: TenantId,
+        documentId: DocumentId,
+        draftData: BankStatementDraftData,
+    ): Result<ConfirmationResult> = runSuspendCatching {
+        val nonExcludedRows = draftData.transactions.filter { !it.excluded }
+        if (nonExcludedRows.isEmpty()) {
+            throw DokusException.BadRequest("No transactions to confirm — all rows excluded")
+        }
+
+        // Build a minimal prepare result for persistence (account already resolved during initial processing)
+        val prepareResult = bankStatementProcessingService.prepare(
+            tenantId = tenantId,
+            documentId = documentId,
+            sourceId = null,
+            draftData = draftData.copy(transactions = nonExcludedRows),
+        )
+
+        bankStatementProcessingService.persistTransactions(
+            tenantId = tenantId,
+            documentId = documentId,
+            prepareResult = prepareResult,
+        )
+
+        // Run matching on the newly persisted transactions
+        runSuspendCatching {
+            matchingEngine.matchBankStatement(tenantId, documentId)
+        }.onFailure {
+            logger.warn("Matching failed after bank statement confirmation {}: {}", documentId, it.message)
+        }
+
+        ConfirmationResult(
+            entity = Unit,
+            cashflowEntryId = null,
+            documentId = documentId,
+        )
     }
 }

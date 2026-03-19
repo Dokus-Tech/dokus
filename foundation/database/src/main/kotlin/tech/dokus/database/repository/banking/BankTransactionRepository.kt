@@ -22,6 +22,7 @@ import tech.dokus.database.entity.BankTransactionEntity
 import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.banking.BankTransactionsTable
 import tech.dokus.domain.Money
+import tech.dokus.domain.fromDbDecimal
 import tech.dokus.domain.enums.BankTransactionSource
 import tech.dokus.domain.enums.BankTransactionStatus
 import tech.dokus.domain.enums.IgnoredReason
@@ -41,6 +42,7 @@ import kotlin.uuid.toKotlinUuid
 
 data class BankTransactionCreate(
     val dedupHash: String,
+    val source: BankTransactionSource = BankTransactionSource.PdfStatement,
     val bankAccountId: BankAccountId? = null,
     val transactionDate: LocalDate,
     val valueDate: LocalDate? = null,
@@ -88,10 +90,10 @@ class BankTransactionRepository {
             .filterNot { it.dedupHash in existingDedupHashes }
 
         if (rowsToInsert.isNotEmpty()) {
-            BankTransactionsTable.batchInsert(rowsToInsert) { row ->
+            BankTransactionsTable.batchInsert(rowsToInsert, ignore = true) { row ->
                 this[BankTransactionsTable.id] = UUID.randomUUID()
                 this[BankTransactionsTable.tenantId] = tenantUuid
-                this[BankTransactionsTable.txSource] = BankTransactionSource.PdfStatement
+                this[BankTransactionsTable.txSource] = row.source
                 this[BankTransactionsTable.documentId] = documentUuid
                 this[BankTransactionsTable.bankAccountId] = row.bankAccountId?.value?.toJavaUuid()
                 this[BankTransactionsTable.dedupHash] = row.dedupHash
@@ -481,6 +483,37 @@ class BankTransactionRepository {
             it[status] = BankTransactionStatus.Unmatched
             it[updatedAt] = now
         } > 0
+    }
+
+    /**
+     * Check which (date, amount) pairs already exist in bank_transactions for a given account.
+     * Used for cross-document duplicate detection.
+     */
+    suspend fun findByDateAndAmount(
+        tenantId: TenantId,
+        bankAccountId: BankAccountId,
+        datesToCheck: List<Pair<LocalDate, Money>>,
+    ): Set<Pair<LocalDate, Money>> {
+        if (datesToCheck.isEmpty()) return emptySet()
+
+        return newSuspendedTransaction {
+            val tenantUuid = tenantId.value.toJavaUuid()
+            val accountUuid = bankAccountId.value.toJavaUuid()
+            val dates = datesToCheck.map { it.first }.distinct()
+
+            val existing = BankTransactionsTable
+                .selectAll()
+                .where {
+                    (BankTransactionsTable.tenantId eq tenantUuid) and
+                        (BankTransactionsTable.bankAccountId eq accountUuid) and
+                        (BankTransactionsTable.transactionDate inList dates)
+                }.map { row ->
+                    row[BankTransactionsTable.transactionDate] to
+                        Money.fromDbDecimal(row[BankTransactionsTable.signedAmount])
+                }.toSet()
+
+            datesToCheck.filter { it in existing }.toSet()
+        }
     }
 
 }

@@ -402,6 +402,8 @@ data class BankStatementTransactionDraftRow(
     val descriptionRaw: String? = null,
     val rowConfidence: Double = 0.0,
     val largeAmountFlag: Boolean = false,
+    val excluded: Boolean = false,
+    val potentialDuplicate: Boolean = false,
 )
 
 @Serializable

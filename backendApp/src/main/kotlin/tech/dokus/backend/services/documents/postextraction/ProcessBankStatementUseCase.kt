@@ -26,26 +26,40 @@ internal class ProcessBankStatementUseCase(
     suspend operator fun invoke(context: PostExtractionContext): PostExtractionOutcome? {
         val draftData = context.draftData as BankStatementDraftData
 
-        val bankProcessing = bankStatementProcessingService.process(
+        val prepareResult = bankStatementProcessingService.prepare(
             tenantId = context.tenantId,
             documentId = context.documentId,
             sourceId = context.sourceId,
             draftData = draftData,
             source = context.bankTransactionSource ?: BankTransactionSource.PdfStatement,
         )
-        if (bankProcessing.dedupOutcome is StatementDedupOutcome.Skip) {
+        if (prepareResult.dedupOutcome is StatementDedupOutcome.Skip) {
             logger.info("Bank statement {} skipped (duplicate)", context.documentId)
             return null
         }
 
+        // Store the annotated draft (with duplicate flags and validated rows)
         documentRepository.updateExtractedDataAndStatus(
             documentId = context.documentId,
             tenantId = context.tenantId,
-            extractedData = bankProcessing.sanitizedDraft,
+            extractedData = prepareResult.sanitizedDraft,
             status = DocumentStatus.NeedsReview,
         )
 
-        if (bankProcessing.validRows > 0) {
+        if (prepareResult.hasDuplicates) {
+            // Defer persistence — user must review duplicates and confirm
+            logger.info(
+                "Bank statement {} has potential duplicates, deferring to user review",
+                context.documentId,
+            )
+        } else if (prepareResult.validRows > 0) {
+            // No duplicates — persist immediately and run matching (happy path)
+            bankStatementProcessingService.persistTransactions(
+                tenantId = context.tenantId,
+                documentId = context.documentId,
+                prepareResult = prepareResult,
+            )
+
             runSuspendCatching {
                 matchingEngine.matchBankStatement(
                     tenantId = context.tenantId,
@@ -68,7 +82,7 @@ internal class ProcessBankStatementUseCase(
                 resolveContact(
                     tenantId = context.tenantId,
                     documentId = context.documentId,
-                    draftData = bankProcessing.sanitizedDraft,
+                    draftData = prepareResult.sanitizedDraft,
                     authoritativeSnapshot = authoritativeSnapshot,
                     tenantVat = context.tenantVat,
                 )
@@ -83,16 +97,19 @@ internal class ProcessBankStatementUseCase(
             }
         }
 
-        // Auto-confirm (same logic as standard documents)
-        autoConfirm(context, linkedContactId)
+        // Auto-confirm only when no duplicates detected
+        if (!prepareResult.hasDuplicates) {
+            autoConfirm(context, linkedContactId)
+        }
 
         logger.info(
-            "Processed bank statement {}: validRows={}, discardedRows={}, trust={}, dedup={}",
+            "Processed bank statement {}: validRows={}, discardedRows={}, trust={}, dedup={}, duplicates={}",
             context.documentId,
-            bankProcessing.validRows,
-            bankProcessing.discardedRows.size,
-            bankProcessing.statementTrust,
-            bankProcessing.dedupOutcome,
+            prepareResult.validRows,
+            prepareResult.discardedRows.size,
+            prepareResult.statementTrust,
+            prepareResult.dedupOutcome,
+            prepareResult.hasDuplicates,
         )
         return PostExtractionOutcome.BankStatementProcessed
     }
