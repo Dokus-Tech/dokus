@@ -2,18 +2,27 @@ package tech.dokus.backend.services.documents.postextraction
 
 import tech.dokus.backend.services.banking.BankStatementProcessingService
 import tech.dokus.backend.services.banking.StatementDedupService.StatementDedupOutcome
-import tech.dokus.backend.services.cashflow.matching.MatchingEngine
 import tech.dokus.database.repository.cashflow.DocumentRepository
-import tech.dokus.domain.enums.BankTransactionSource
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.model.BankStatementDraftData
 import tech.dokus.features.ai.models.toAuthoritativeCounterpartySnapshot
 import tech.dokus.foundation.backend.utils.loggerFor
 import tech.dokus.foundation.backend.utils.runSuspendCatching
 
+/**
+ * Processes a bank statement after AI extraction.
+ *
+ * Flow:
+ * 1. Validate rows, resolve account, calculate trust, detect duplicates
+ * 2. Store annotated draft (transactions with duplicate flags)
+ * 3. Resolve bank institution contact
+ * 4. Auto-confirm if policy passes (confirmation dispatcher persists transactions)
+ *
+ * Transaction persistence is always deferred to confirmation —
+ * same pattern as invoices/receipts/credit notes.
+ */
 internal class ProcessBankStatementUseCase(
     private val bankStatementProcessingService: BankStatementProcessingService,
-    private val matchingEngine: MatchingEngine,
     private val documentRepository: DocumentRepository,
     private val resolveContact: ResolveDocumentContactUseCase,
     private val autoConfirm: AutoConfirmDocumentUseCase,
@@ -31,48 +40,20 @@ internal class ProcessBankStatementUseCase(
             documentId = context.documentId,
             sourceId = context.sourceId,
             draftData = draftData,
-            source = context.bankTransactionSource ?: BankTransactionSource.PdfStatement,
         )
+
         if (prepareResult.dedupOutcome is StatementDedupOutcome.Skip) {
             logger.info("Bank statement {} skipped (duplicate)", context.documentId)
             return null
         }
 
-        // Store the annotated draft (with duplicate flags and validated rows)
+        // Store annotated draft with validated transactions and duplicate flags
         documentRepository.updateExtractedDataAndStatus(
             documentId = context.documentId,
             tenantId = context.tenantId,
             extractedData = prepareResult.sanitizedDraft,
             status = DocumentStatus.NeedsReview,
         )
-
-        if (prepareResult.hasDuplicates) {
-            // Defer persistence — user must review duplicates and confirm
-            logger.info(
-                "Bank statement {} has potential duplicates, deferring to user review",
-                context.documentId,
-            )
-        } else if (prepareResult.validRows > 0) {
-            // No duplicates — persist immediately and run matching (happy path)
-            bankStatementProcessingService.persistTransactions(
-                tenantId = context.tenantId,
-                documentId = context.documentId,
-                prepareResult = prepareResult,
-            )
-
-            runSuspendCatching {
-                matchingEngine.matchBankStatement(
-                    tenantId = context.tenantId,
-                    documentId = context.documentId,
-                )
-            }.onFailure {
-                logger.warn(
-                    "Bank statement matching failed for {}: {}",
-                    context.documentId,
-                    it.message,
-                )
-            }
-        }
 
         // Contact resolution for bank institution
         var linkedContactId: tech.dokus.domain.ids.ContactId? = null
@@ -97,7 +78,7 @@ internal class ProcessBankStatementUseCase(
             }
         }
 
-        // Auto-confirm only when no duplicates detected
+        // Auto-confirm (policy + confirmation dispatcher handle persistence + matching)
         if (!prepareResult.hasDuplicates) {
             autoConfirm(context, linkedContactId)
         }
