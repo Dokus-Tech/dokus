@@ -4,6 +4,7 @@ import tech.dokus.backend.services.banking.BankStatementProcessingService
 import tech.dokus.backend.services.banking.StatementDedupService.StatementDedupOutcome
 import tech.dokus.backend.services.cashflow.matching.MatchingEngine
 import tech.dokus.database.repository.cashflow.DocumentRepository
+import tech.dokus.domain.enums.BankTransactionSource
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.model.BankStatementDraftData
 import tech.dokus.features.ai.models.toAuthoritativeCounterpartySnapshot
