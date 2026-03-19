@@ -44,6 +44,7 @@ import tech.dokus.domain.model.DocumentSourceDto
 import tech.dokus.domain.model.DocumentMatchReviewSummaryDto
 import tech.dokus.domain.model.FinancialLineItem
 import tech.dokus.domain.model.BankStatementDraftData
+import tech.dokus.domain.model.BankStatementTransactionDraftRow
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.InvoiceDraftData
@@ -463,6 +464,10 @@ private fun previewDraftData(type: DocumentType): DocumentDraftData = when (type
         accountIban = Iban("BE68539007547034"),
         periodStart = previewIssueDate,
         periodEnd = previewDueDate,
+        openingBalance = Money(1452361),
+        closingBalance = Money(1231042),
+        institution = PartyDraft(name = "KBC Bank NV"),
+        transactions = previewBankStatementDraftRows(),
     )
     DocumentType.Unknown -> InvoiceDraftData(
         direction = DocumentDirection.Unknown,
@@ -470,6 +475,68 @@ private fun previewDraftData(type: DocumentType): DocumentDraftData = when (type
     )
     else -> type.toEmptyDraftData()
 }
+
+private fun previewBankStatementDraftRows(): List<BankStatementTransactionDraftRow> = listOf(
+    BankStatementTransactionDraftRow(
+        transactionDate = LocalDate(2026, 1, 5),
+        signedAmount = Money(-79860),
+        counterparty = CounterpartySnapshot(name = "SRL Accounting & Tax Solutions", iban = Iban("BE86363206145450")),
+        communication = TransactionCommunication.Structured("+++091/0044/28176+++", StructuredCommunication("091004428176")),
+        descriptionRaw = "SENDING MONEY TO BE86 3632 0614 5450",
+        rowConfidence = 1.0,
+    ),
+    BankStatementTransactionDraftRow(
+        transactionDate = LocalDate(2026, 1, 13),
+        signedAmount = Money(-28900),
+        counterparty = CounterpartySnapshot(name = "Coolblue België NV"),
+        descriptionRaw = "CREDIT TRANSFER",
+        rowConfidence = 1.0,
+        potentialDuplicate = true,
+        excluded = true,
+    ),
+    BankStatementTransactionDraftRow(
+        transactionDate = LocalDate(2026, 1, 14),
+        signedAmount = Money(-34697),
+        counterparty = CounterpartySnapshot(name = "Tesla Belgium BVBA", iban = Iban("NL65ADYB2006011162")),
+        descriptionRaw = "EUROPEAN DIRECT DEBIT",
+        rowConfidence = 1.0,
+        potentialDuplicate = true,
+        excluded = true,
+    ),
+    BankStatementTransactionDraftRow(
+        transactionDate = LocalDate(2026, 1, 17),
+        signedAmount = Money(1337050),
+        counterparty = CounterpartySnapshot(name = "MEDIAHUIS TECHNOLOGY PRODUCT STUDIO", iban = Iban("BE39001920126619")),
+        communication = TransactionCommunication.FreeForm("IV-051"),
+        descriptionRaw = "CREDIT TRANSFER FROM BE39 0019 2012 6619",
+        rowConfidence = 1.0,
+    ),
+    BankStatementTransactionDraftRow(
+        transactionDate = LocalDate(2026, 1, 30),
+        signedAmount = Money(-130612),
+        counterparty = CounterpartySnapshot(name = "Donckers Schoten NV", iban = Iban("BE85679200363806")),
+        descriptionRaw = "SENDING MONEY TO BE85 6792 0036 3806",
+        rowConfidence = 1.0,
+        potentialDuplicate = true,
+        excluded = true,
+    ),
+    BankStatementTransactionDraftRow(
+        transactionDate = LocalDate(2026, 2, 4),
+        signedAmount = Money(-96252),
+        counterparty = CounterpartySnapshot(name = "KBC Bank NV"),
+        communication = TransactionCommunication.FreeForm("Business loan - Feb"),
+        descriptionRaw = "PAYMENT LEASING 0001/0001/BE/2600057216",
+        rowConfidence = 1.0,
+    ),
+    BankStatementTransactionDraftRow(
+        transactionDate = LocalDate(2026, 2, 25),
+        signedAmount = Money(-48733),
+        counterparty = CounterpartySnapshot(name = "Donckers Schoten NV", iban = Iban("BE85679200363806")),
+        communication = TransactionCommunication.FreeForm("Fuel, Feb 2026"),
+        descriptionRaw = "SENDING MONEY TO BE85 6792 0036 3806",
+        rowConfidence = 1.0,
+    ),
+)
 
 internal fun previewImportedTransactions(): List<BankTransactionDto> = listOf(
     BankTransactionDto(
