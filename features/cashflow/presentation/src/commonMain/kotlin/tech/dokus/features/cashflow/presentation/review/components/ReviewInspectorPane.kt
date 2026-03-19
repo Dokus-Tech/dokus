@@ -178,6 +178,7 @@ private fun InspectorBody(
     onCorrectContact: () -> Unit,
     onCreateContact: () -> Unit,
 ) {
+    val isReadOnly = isAccountantReadOnly || state.isDocumentConfirmed || state.isDocumentRejected
     FinancialDocumentBody(
         state = state,
         isAccountantReadOnly = isAccountantReadOnly,
@@ -187,8 +188,9 @@ private fun InspectorBody(
     ) {
         DocumentDetailsCard(
             data = data,
-            isReadOnly = isAccountantReadOnly || state.isDocumentConfirmed || state.isDocumentRejected,
+            isReadOnly = isReadOnly,
             onDirectionSelected = { onIntent(DocumentReviewIntent.SelectDirection(it)) },
+            onIntent = onIntent,
         )
     }
     InspectorAmountSection(
@@ -196,7 +198,8 @@ private fun InspectorBody(
         subtotal = data.subtotalAmount,
         vat = data.vatAmount,
         currencySign = data.currencySign,
-        financialStatus = state.financialStatus,
+        isReadOnly = isReadOnly,
+        onIntent = onIntent,
     )
     InspectorPaymentSection(state = state, isAccountantReadOnly = isAccountantReadOnly, onIntent = onIntent)
 }
@@ -210,6 +213,7 @@ private fun InspectorBody(
     onCorrectContact: () -> Unit,
     onCreateContact: () -> Unit,
 ) {
+    val isReadOnly = isAccountantReadOnly || state.isDocumentConfirmed || state.isDocumentRejected
     FinancialDocumentBody(
         state = state,
         isAccountantReadOnly = isAccountantReadOnly,
@@ -219,8 +223,9 @@ private fun InspectorBody(
     ) {
         DocumentDetailsCard(
             data = data,
-            isReadOnly = isAccountantReadOnly || state.isDocumentConfirmed || state.isDocumentRejected,
+            isReadOnly = isReadOnly,
             onDirectionSelected = { onIntent(DocumentReviewIntent.SelectDirection(it)) },
+            onIntent = onIntent,
         )
     }
     InspectorAmountSection(
@@ -228,7 +233,8 @@ private fun InspectorBody(
         subtotal = data.subtotalAmount,
         vat = data.vatAmount,
         currencySign = data.currencySign,
-        financialStatus = state.financialStatus,
+        isReadOnly = isReadOnly,
+        onIntent = onIntent,
     )
     InspectorPaymentSection(state = state, isAccountantReadOnly = isAccountantReadOnly, onIntent = onIntent)
 }
@@ -242,6 +248,7 @@ private fun InspectorBody(
     onCorrectContact: () -> Unit,
     onCreateContact: () -> Unit,
 ) {
+    val isReadOnly = isAccountantReadOnly || state.isDocumentConfirmed || state.isDocumentRejected
     FinancialDocumentBody(
         state = state,
         isAccountantReadOnly = isAccountantReadOnly,
@@ -249,14 +256,15 @@ private fun InspectorBody(
         onCorrectContact = onCorrectContact,
         onCreateContact = onCreateContact,
     ) {
-        DocumentDetailsCard(data = data)
+        DocumentDetailsCard(data = data, isReadOnly = isReadOnly, onIntent = onIntent)
     }
     InspectorAmountSection(
         total = data.totalAmount,
         subtotal = null,
         vat = data.vatAmount,
         currencySign = data.currencySign,
-        financialStatus = state.financialStatus,
+        isReadOnly = isReadOnly,
+        onIntent = onIntent,
     )
     InspectorPaymentSection(state = state, isAccountantReadOnly = isAccountantReadOnly, onIntent = onIntent)
 }

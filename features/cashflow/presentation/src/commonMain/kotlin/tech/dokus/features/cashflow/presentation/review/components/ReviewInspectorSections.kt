@@ -60,7 +60,9 @@ import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.model.AutoPaymentStatus
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
+import tech.dokus.features.cashflow.presentation.review.EditableField
 import tech.dokus.features.cashflow.presentation.review.ReviewFinancialStatus
+import tech.dokus.features.cashflow.presentation.review.components.details.EditableAmountRow
 import tech.dokus.features.cashflow.presentation.review.dotType
 import tech.dokus.features.cashflow.presentation.review.hasCrossMatchedSources
 import tech.dokus.features.cashflow.presentation.review.localized
@@ -87,54 +89,33 @@ internal fun InspectorAmountSection(
     subtotal: Money?,
     vat: Money?,
     currencySign: String,
-    financialStatus: ReviewFinancialStatus,
+    isReadOnly: Boolean = true,
+    onIntent: (DocumentReviewIntent) -> Unit = {},
 ) {
-    val totalDisplay = total?.toDisplayString() ?: "\u2014"
-    val accentColor = when (financialStatus) {
-        ReviewFinancialStatus.Paid -> MaterialTheme.colorScheme.statusConfirmed
-        ReviewFinancialStatus.Overdue -> MaterialTheme.colorScheme.statusError
-        ReviewFinancialStatus.Unpaid,
-        ReviewFinancialStatus.Review -> MaterialTheme.colorScheme.statusWarning
-    }
+    val subtotalDisplay = subtotal?.let { "$currencySign${it.toDisplayString()}" }
+    val vatDisplay = vat?.let { "$currencySign${it.toDisplayString()}" }
+    val totalDisplay = total?.let { "$currencySign${it.toDisplayString()}" }
 
     InspectorSectionCard(title = stringResource(Res.string.inspector_section_amount)) {
-        DokusCardSurface(modifier = Modifier.fillMaxWidth()) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(Constraints.Spacing.medium),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium),
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(width = AmountAccentWidth, height = 46.dp)
-                        .background(
-                            color = accentColor,
-                            shape = MaterialTheme.shapes.small,
-                        )
-                )
-                Text(
-                    text = stringResource(Res.string.inspector_label_total),
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-                Text(
-                    text = "$currencySign$totalDisplay",
-                    style = MaterialTheme.typography.displayMedium.copy(fontSize = 24.sp),
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.weight(1f),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-        }
-
-        val subtotalDisplay = subtotal?.let { "$currencySign${it.toDisplayString()}" } ?: "\u2014"
-        val vatDisplay = vat?.let { "$currencySign${it.toDisplayString()}" } ?: "\u2014"
-        InspectorValueRow(stringResource(Res.string.inspector_label_subtotal), subtotalDisplay)
-        InspectorValueRow(stringResource(Res.string.inspector_label_vat), vatDisplay)
+        EditableAmountRow(
+            label = stringResource(Res.string.inspector_label_subtotal),
+            value = subtotalDisplay,
+            onValueChanged = { onIntent(DocumentReviewIntent.UpdateField(EditableField.SubtotalAmount, it)) },
+            isReadOnly = isReadOnly,
+        )
+        EditableAmountRow(
+            label = stringResource(Res.string.inspector_label_vat),
+            value = vatDisplay,
+            onValueChanged = { onIntent(DocumentReviewIntent.UpdateField(EditableField.VatAmount, it)) },
+            isReadOnly = isReadOnly,
+        )
+        EditableAmountRow(
+            label = stringResource(Res.string.inspector_label_total),
+            value = totalDisplay,
+            onValueChanged = { onIntent(DocumentReviewIntent.UpdateField(EditableField.TotalAmount, it)) },
+            isTotal = true,
+            isReadOnly = isReadOnly,
+        )
     }
 }
 
