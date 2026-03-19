@@ -129,7 +129,10 @@ private fun FinancialExtractionResult.toDraftData(direction: DocumentDirection):
 
 /**
  * Infer vatAmount = 0 when all evidence points to a zero-rated/exempt/reverse-charge invoice.
- * Returns Money.ZERO if all line items have vatRate == 0 or all vatBreakdown entries have amount == 0.
+ * Returns Money.ZERO when:
+ * - All vatBreakdown entries have amount == 0, OR
+ * - All line items have vatRate == 0, OR
+ * - No VAT data at all (empty breakdown + all line items have null vatRate) — non-EU seller case.
  * Returns null if we can't determine (let it stay unknown).
  */
 private fun inferZeroVat(
@@ -142,6 +145,10 @@ private fun inferZeroVat(
     }
     // If all line items have vatRate = 0
     if (lineItems.isNotEmpty() && lineItems.all { it.vatRate == 0 }) {
+        return Money.ZERO
+    }
+    // No VAT data at all: empty breakdown and all line items have null vatRate (e.g. non-EU seller)
+    if (vatBreakdown.isEmpty() && lineItems.isNotEmpty() && lineItems.all { it.vatRate == null }) {
         return Money.ZERO
     }
     return null

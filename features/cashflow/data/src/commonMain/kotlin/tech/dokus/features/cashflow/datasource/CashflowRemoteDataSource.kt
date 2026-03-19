@@ -559,6 +559,14 @@ interface CashflowRemoteDataSource {
     ): Result<DocumentDetailDto>
 
     /**
+     * Revert a confirmed document to draft for editing.
+     * POST /api/v1/documents/{id}/unconfirm
+     */
+    suspend fun unconfirmDocument(
+        documentId: DocumentId
+    ): Result<DocumentDetailDto>
+
+    /**
      * Reject a document draft with a reason.
      * POST /api/v1/documents/{id}/reject
      */

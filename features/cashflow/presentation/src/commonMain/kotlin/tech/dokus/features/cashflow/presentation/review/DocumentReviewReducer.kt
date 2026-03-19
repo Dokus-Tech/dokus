@@ -4,6 +4,8 @@ package tech.dokus.features.cashflow.presentation.review
 
 import pro.respawn.flowmvi.dsl.withState
 import tech.dokus.foundation.app.state.DokusState
+import kotlinx.datetime.LocalDate
+import tech.dokus.domain.Money
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.ContactId
@@ -13,6 +15,7 @@ import tech.dokus.domain.model.DocDto
 import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.isContactRequired
 import tech.dokus.features.cashflow.usecases.ConfirmDocumentUseCase
+import tech.dokus.features.cashflow.usecases.UnconfirmDocumentUseCase
 import tech.dokus.features.cashflow.usecases.GetAutoPaymentStatusUseCase
 import tech.dokus.features.cashflow.usecases.GetCashflowEntryUseCase
 import tech.dokus.features.cashflow.usecases.GetCashflowPaymentCandidatesUseCase
@@ -36,6 +39,7 @@ internal class DocumentReviewReducer(
     private val updateDocumentDraft: UpdateDocumentDraftUseCase,
     private val updateDocumentDraftContact: UpdateDocumentDraftContactUseCase,
     private val confirmDocument: ConfirmDocumentUseCase,
+    private val unconfirmDocument: UnconfirmDocumentUseCase,
     private val rejectDocument: RejectDocumentUseCase,
     private val reprocessDocument: ReprocessDocumentUseCase,
     private val resolveDocumentMatchReview: ResolveDocumentMatchReviewUseCase,
@@ -63,6 +67,7 @@ internal class DocumentReviewReducer(
         updateDocumentDraft,
         updateDocumentDraftContact,
         confirmDocument,
+        unconfirmDocument,
         rejectDocument,
         getDocumentRecord,
         logger
@@ -156,6 +161,27 @@ internal class DocumentReviewReducer(
         }
     }
 
+    suspend fun DocumentReviewCtx.handleUpdateField(field: EditableField, value: String) {
+        var shouldPersist = false
+        withState {
+            if (!hasContent) return@withState
+            val currentData = documentData ?: return@withState
+            val updatedContent = applyFieldUpdate(draftData, field, value) ?: return@withState
+
+            updateState {
+                copy(
+                    document = DokusState.success(currentData.copy(draftData = updatedContent)),
+                    hasUnsavedChanges = true,
+                )
+            }
+            shouldPersist = true
+        }
+
+        if (shouldPersist) {
+            with(actions) { syncDraftImmediately() }
+        }
+    }
+
     suspend fun DocumentReviewCtx.handleSelectContact(contactId: ContactId) =
         with(contactBinder) { handleSelectContact(contactId) }
 
@@ -201,6 +227,9 @@ internal class DocumentReviewReducer(
 
     suspend fun DocumentReviewCtx.handleConfirm() =
         with(actions) { handleConfirm() }
+
+    suspend fun DocumentReviewCtx.handleUnconfirm() =
+        with(actions) { handleUnconfirm() }
 
     // Reject dialog handlers
     suspend fun DocumentReviewCtx.handleShowRejectDialog() =
@@ -298,3 +327,37 @@ internal class DocumentReviewReducer(
     suspend fun DocumentReviewCtx.handleResolvePossibleMatchDifferent() =
         with(feedbackActions) { handleResolvePossibleMatchDifferent() }
 }
+
+private fun applyFieldUpdate(data: DocDto?, field: EditableField, value: String): DocDto? {
+    val trimmed = value.trim().ifBlank { null }
+    return when (data) {
+        is DocDto.Invoice.Draft -> when (field) {
+            EditableField.InvoiceNumber -> data.copy(invoiceNumber = trimmed)
+            EditableField.IssueDate -> data.copy(issueDate = trimmed?.let { parseDate(it) })
+            EditableField.DueDate -> data.copy(dueDate = trimmed?.let { parseDate(it) })
+            EditableField.SubtotalAmount -> data.copy(subtotalAmount = trimmed?.let { Money.from(it) })
+            EditableField.VatAmount -> data.copy(vatAmount = trimmed?.let { Money.from(it) })
+            EditableField.TotalAmount -> data.copy(totalAmount = trimmed?.let { Money.from(it) })
+            else -> null
+        }
+        is DocDto.CreditNote.Draft -> when (field) {
+            EditableField.CreditNoteNumber -> data.copy(creditNoteNumber = trimmed)
+            EditableField.IssueDate -> data.copy(issueDate = trimmed?.let { parseDate(it) })
+            EditableField.OriginalInvoiceNumber -> data.copy(originalInvoiceNumber = trimmed)
+            EditableField.SubtotalAmount -> data.copy(subtotalAmount = trimmed?.let { Money.from(it) })
+            EditableField.VatAmount -> data.copy(vatAmount = trimmed?.let { Money.from(it) })
+            EditableField.TotalAmount -> data.copy(totalAmount = trimmed?.let { Money.from(it) })
+            else -> null
+        }
+        is DocDto.Receipt.Draft -> when (field) {
+            EditableField.ReceiptNumber -> data.copy(receiptNumber = trimmed)
+            EditableField.ReceiptDate -> data.copy(date = trimmed?.let { parseDate(it) })
+            EditableField.VatAmount -> data.copy(vatAmount = trimmed?.let { Money.from(it) })
+            EditableField.TotalAmount -> data.copy(totalAmount = trimmed?.let { Money.from(it) })
+            else -> null
+        }
+        else -> null
+    }
+}
+
+private fun parseDate(text: String): LocalDate? = runCatching { LocalDate.parse(text) }.getOrNull()

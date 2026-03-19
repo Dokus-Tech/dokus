@@ -21,6 +21,7 @@ import org.jetbrains.exposed.v1.jdbc.andWhere
 import org.jetbrains.exposed.v1.jdbc.insertAndGetId
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.update
 import tech.dokus.database.tables.cashflow.CashflowEntriesTable
 import tech.dokus.database.tables.contacts.ContactsTable
@@ -487,5 +488,19 @@ class CashflowEntriesRepository {
             createdAt = row[CashflowEntriesTable.createdAt],
             updatedAt = row[CashflowEntriesTable.updatedAt]
         )
+    }
+
+    suspend fun deleteBySource(
+        tenantId: TenantId,
+        sourceType: CashflowSourceType,
+        sourceId: UUID,
+    ): Result<Boolean> = runSuspendCatching {
+        dbQuery {
+            CashflowEntriesTable.deleteWhere {
+                (CashflowEntriesTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                    (CashflowEntriesTable.sourceType eq sourceType) and
+                    (CashflowEntriesTable.sourceId eq sourceId)
+            } > 0
+        }
     }
 }

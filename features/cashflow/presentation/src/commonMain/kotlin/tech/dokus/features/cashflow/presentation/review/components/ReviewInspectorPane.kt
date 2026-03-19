@@ -1,6 +1,7 @@
 package tech.dokus.features.cashflow.presentation.review.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -177,6 +178,7 @@ private fun InspectorBody(
     onCorrectContact: () -> Unit,
     onCreateContact: () -> Unit,
 ) {
+    val isReadOnly = isAccountantReadOnly || state.isDocumentConfirmed || state.isDocumentRejected
     FinancialDocumentBody(
         state = state,
         isAccountantReadOnly = isAccountantReadOnly,
@@ -186,8 +188,9 @@ private fun InspectorBody(
     ) {
         DocumentDetailsCard(
             data = data,
-            isReadOnly = isAccountantReadOnly || state.isDocumentConfirmed || state.isDocumentRejected,
+            isReadOnly = isReadOnly,
             onDirectionSelected = { onIntent(DocumentReviewIntent.SelectDirection(it)) },
+            onIntent = onIntent,
         )
     }
     InspectorAmountSection(
@@ -195,7 +198,8 @@ private fun InspectorBody(
         subtotal = data.subtotalAmount,
         vat = data.vatAmount,
         currencySign = data.currencySign,
-        financialStatus = state.financialStatus,
+        isReadOnly = isReadOnly,
+        onIntent = onIntent,
     )
     InspectorPaymentSection(state = state, isAccountantReadOnly = isAccountantReadOnly, onIntent = onIntent)
 }
@@ -209,6 +213,7 @@ private fun InspectorBody(
     onCorrectContact: () -> Unit,
     onCreateContact: () -> Unit,
 ) {
+    val isReadOnly = isAccountantReadOnly || state.isDocumentConfirmed || state.isDocumentRejected
     FinancialDocumentBody(
         state = state,
         isAccountantReadOnly = isAccountantReadOnly,
@@ -218,8 +223,9 @@ private fun InspectorBody(
     ) {
         DocumentDetailsCard(
             data = data,
-            isReadOnly = isAccountantReadOnly || state.isDocumentConfirmed || state.isDocumentRejected,
+            isReadOnly = isReadOnly,
             onDirectionSelected = { onIntent(DocumentReviewIntent.SelectDirection(it)) },
+            onIntent = onIntent,
         )
     }
     InspectorAmountSection(
@@ -227,7 +233,8 @@ private fun InspectorBody(
         subtotal = data.subtotalAmount,
         vat = data.vatAmount,
         currencySign = data.currencySign,
-        financialStatus = state.financialStatus,
+        isReadOnly = isReadOnly,
+        onIntent = onIntent,
     )
     InspectorPaymentSection(state = state, isAccountantReadOnly = isAccountantReadOnly, onIntent = onIntent)
 }
@@ -241,6 +248,7 @@ private fun InspectorBody(
     onCorrectContact: () -> Unit,
     onCreateContact: () -> Unit,
 ) {
+    val isReadOnly = isAccountantReadOnly || state.isDocumentConfirmed || state.isDocumentRejected
     FinancialDocumentBody(
         state = state,
         isAccountantReadOnly = isAccountantReadOnly,
@@ -248,14 +256,15 @@ private fun InspectorBody(
         onCorrectContact = onCorrectContact,
         onCreateContact = onCreateContact,
     ) {
-        DocumentDetailsCard(data = data)
+        DocumentDetailsCard(data = data, isReadOnly = isReadOnly, onIntent = onIntent)
     }
     InspectorAmountSection(
         total = data.totalAmount,
         subtotal = null,
         vat = data.vatAmount,
         currencySign = data.currencySign,
-        financialStatus = state.financialStatus,
+        isReadOnly = isReadOnly,
+        onIntent = onIntent,
     )
     InspectorPaymentSection(state = state, isAccountantReadOnly = isAccountantReadOnly, onIntent = onIntent)
 }
@@ -354,7 +363,7 @@ private fun InspectorHeader(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            CompressedStatusLine(state)
+            CompressedStatusLine(state, isAccountantReadOnly, onIntent)
         }
 
         val supportsManualConfirm = when (state.uiData) {
@@ -385,7 +394,11 @@ private fun InspectorHeader(
 }
 
 @Composable
-private fun CompressedStatusLine(state: DocumentReviewState) {
+private fun CompressedStatusLine(
+    state: DocumentReviewState,
+    isAccountantReadOnly: Boolean = false,
+    onIntent: (DocumentReviewIntent) -> Unit = {},
+) {
     val statusColor = state.financialStatus.financialStatusColorized
     val detailText = state.compressedStatusDetailLocalized
 
@@ -405,9 +418,16 @@ private fun CompressedStatusLine(state: DocumentReviewState) {
         return
     }
 
+    val canUnconfirm = !isAccountantReadOnly && state.isDocumentConfirmed && !state.isConfirming
+
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall),
+        modifier = if (canUnconfirm) {
+            Modifier.clickable { onIntent(DocumentReviewIntent.RequestUnconfirm) }
+        } else {
+            Modifier
+        },
     ) {
         LockIcon(modifier = Modifier, tint = MaterialTheme.colorScheme.textMuted)
         Text(

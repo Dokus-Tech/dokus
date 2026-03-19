@@ -20,6 +20,7 @@ import tech.dokus.domain.model.toDraftData
 import tech.dokus.features.cashflow.usecases.ConfirmDocumentUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentRecordUseCase
 import tech.dokus.features.cashflow.usecases.RejectDocumentUseCase
+import tech.dokus.features.cashflow.usecases.UnconfirmDocumentUseCase
 import tech.dokus.features.cashflow.usecases.UpdateDocumentDraftContactUseCase
 import tech.dokus.features.cashflow.usecases.UpdateDocumentDraftUseCase
 import tech.dokus.foundation.app.state.DokusState
@@ -29,6 +30,7 @@ internal class DocumentReviewActions(
     private val updateDocumentDraft: UpdateDocumentDraftUseCase,
     private val updateDocumentDraftContact: UpdateDocumentDraftContactUseCase,
     private val confirmDocument: ConfirmDocumentUseCase,
+    private val unconfirmDocument: UnconfirmDocumentUseCase,
     private val rejectDocument: RejectDocumentUseCase,
     private val getDocumentRecord: GetDocumentRecordUseCase,
     private val logger: Logger,
@@ -241,6 +243,47 @@ internal class DocumentReviewActions(
                 )
             }
         }
+    }
+
+    // === Unconfirm Handler ===
+
+    suspend fun DocumentReviewCtx.handleUnconfirm() {
+        var activeDocumentId: DocumentId? = null
+        withState {
+            activeDocumentId = documentId
+            if (activeDocumentId == null || !isDocumentConfirmed) return@withState
+            updateState { copy(isConfirming = true) }
+        }
+        val docId = activeDocumentId ?: return
+
+        unconfirmDocument(docId).fold(
+            onSuccess = { record ->
+                val draft = record.draft
+                withState {
+                    val currentData = documentData ?: return@withState
+                    updateState {
+                        copy(
+                            document = DokusState.success(
+                                currentData.copy(documentRecord = record)
+                            ),
+                            hasUnsavedChanges = false,
+                            isConfirming = false,
+                            documentStatus = draft?.documentStatus,
+                            confirmedCashflowEntryId = null,
+                            cashflowEntryState = DokusState.idle(),
+                            autoPaymentStatus = DokusState.idle(),
+                        )
+                    }
+                }
+            },
+            onFailure = { error ->
+                logger.e(error) { "Failed to unconfirm document: $docId" }
+                withState {
+                    updateState { copy(isConfirming = false) }
+                }
+                action(DocumentReviewAction.ShowError(error.asDokusException))
+            }
+        )
     }
 
     // === Reject Dialog Handlers ===

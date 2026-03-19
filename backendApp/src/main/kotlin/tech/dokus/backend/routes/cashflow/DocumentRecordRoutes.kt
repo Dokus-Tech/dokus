@@ -28,6 +28,7 @@ import kotlinx.datetime.toLocalDateTime
 import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
 import tech.dokus.backend.routes.cashflow.documents.addDownloadUrl
+import tech.dokus.backend.routes.cashflow.documents.confirmedEntityToDocDto
 import tech.dokus.backend.routes.cashflow.documents.findConfirmedEntity
 import tech.dokus.backend.routes.cashflow.documents.toDto
 import tech.dokus.backend.routes.cashflow.documents.toSummaryDto
@@ -58,6 +59,7 @@ import tech.dokus.database.repository.cashflow.selectPreferredSource
 import tech.dokus.domain.Money
 import tech.dokus.domain.Name
 import tech.dokus.domain.enums.Currency
+import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentSourceStatus
 import tech.dokus.domain.enums.DocumentStatus
@@ -1039,6 +1041,82 @@ internal fun Route.documentRecordRoutes() {
                 if (existingEntityBeforeConfirm != null) HttpStatusCode.OK else HttpStatusCode.Created,
                 confirmedRecord
             )
+        }
+
+        /**
+         * POST /api/v1/documents/{id}/unconfirm
+         * Revert a confirmed document to draft for editing.
+         * Copies confirmed entity data back to draft, deletes entity + cashflow entry.
+         */
+        post<Documents.Id.Unconfirm> { route ->
+            val tenantId = requireTenantId()
+            val documentId = DocumentId.parse(route.parent.id)
+            logger.info("Unconfirming document: $documentId, tenant=$tenantId")
+
+            val draft = documentRepository.getDraftByDocumentId(documentId, tenantId)
+                ?: throw DokusException.NotFound("Draft not found for document")
+
+            if (draft.documentStatus != DocumentStatus.Confirmed) {
+                throw DokusException.BadRequest("Document is not confirmed")
+            }
+
+            val docType = draft.documentType ?: throw DokusException.BadRequest("Document type unknown")
+
+            // Find the confirmed entity
+            val confirmedEntity = findConfirmedEntity(
+                documentId, docType, tenantId,
+                invoiceRepository, expenseRepository, creditNoteRepository
+            ) ?: throw DokusException.NotFound("Confirmed entity not found")
+
+            // Resolve source type and entity ID string for cashflow entry lookup
+            val cashflowSource = when (confirmedEntity) {
+                is InvoiceEntity -> CashflowSourceType.Invoice to confirmedEntity.id.toString()
+                is tech.dokus.database.entity.ExpenseEntity -> CashflowSourceType.Expense to confirmedEntity.id.toString()
+                else -> null
+            }
+
+            // Guard: check cashflow entry has no payments
+            if (cashflowSource != null) {
+                val (sourceType, sourceIdStr) = cashflowSource
+                val entry = cashflowEntriesRepository.getBySource(
+                    tenantId, sourceType, java.util.UUID.fromString(sourceIdStr)
+                ).getOrNull()
+                if (entry != null && entry.paidAt != null) {
+                    throw DokusException.BadRequest("Cannot unconfirm: document has recorded payments")
+                }
+            }
+
+            // Convert confirmed entity → DocDto → DraftData
+            val docDto = confirmedEntityToDocDto(confirmedEntity)
+            val draftData = docDto.toDraftData()
+
+            // Save to draft table
+            draftRepository.saveDraftFromExtraction(tenantId, documentId, draftData)
+
+            // Delete cashflow entry (if exists)
+            if (cashflowSource != null) {
+                val (sourceType, sourceIdStr) = cashflowSource
+                cashflowEntriesRepository.deleteBySource(
+                    tenantId, sourceType, java.util.UUID.fromString(sourceIdStr)
+                )
+            }
+
+            // Delete confirmed entity
+            when (confirmedEntity) {
+                is InvoiceEntity -> invoiceRepository.deleteInvoice(confirmedEntity.id, tenantId)
+                is tech.dokus.database.entity.ExpenseEntity -> expenseRepository.deleteExpense(confirmedEntity.id, tenantId)
+                is tech.dokus.database.entity.CreditNoteEntity -> creditNoteRepository.deleteCreditNote(confirmedEntity.id, tenantId)
+                else -> throw DokusException.BadRequest("Unsupported entity type for unconfirm")
+            }
+
+            // Set status back to NeedsReview
+            documentRepository.updateDocumentStatus(documentId, tenantId, DocumentStatus.NeedsReview)
+
+            documentSsePublisher.publishDocumentChanged(tenantId, documentId)
+
+            val record = documentRecordLoader.load(tenantId, documentId)
+                ?: throw DokusException.NotFound("Document not found after unconfirm")
+            call.respond(HttpStatusCode.OK, record)
         }
 
         /**

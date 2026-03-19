@@ -12,6 +12,7 @@ import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsState
 import tech.dokus.features.cashflow.presentation.review.route.toDocQueueItem
 import tech.dokus.features.cashflow.presentation.review.route.toListFilter
 import tech.dokus.features.cashflow.usecases.ConfirmDocumentUseCase
+import tech.dokus.features.cashflow.usecases.UnconfirmDocumentUseCase
 import tech.dokus.features.cashflow.usecases.GetAutoPaymentStatusUseCase
 import tech.dokus.features.cashflow.usecases.GetCashflowEntryUseCase
 import tech.dokus.features.cashflow.usecases.GetCashflowPaymentCandidatesUseCase
@@ -57,6 +58,7 @@ internal class DocumentReviewContainer(
     private val updateDocumentDraft: UpdateDocumentDraftUseCase,
     private val updateDocumentDraftContact: UpdateDocumentDraftContactUseCase,
     private val confirmDocument: ConfirmDocumentUseCase,
+    private val unconfirmDocument: UnconfirmDocumentUseCase,
     private val rejectDocument: RejectDocumentUseCase,
     private val reprocessDocument: ReprocessDocumentUseCase,
     private val resolveDocumentMatchReview: ResolveDocumentMatchReviewUseCase,
@@ -80,6 +82,7 @@ internal class DocumentReviewContainer(
         updateDocumentDraft = updateDocumentDraft,
         updateDocumentDraftContact = updateDocumentDraftContact,
         confirmDocument = confirmDocument,
+        unconfirmDocument = unconfirmDocument,
         rejectDocument = rejectDocument,
         reprocessDocument = reprocessDocument,
         resolveDocumentMatchReview = resolveDocumentMatchReview,
@@ -211,6 +214,12 @@ internal class DocumentReviewContainer(
                 // === Manual Document Type Selection ===
                 is DocumentReviewIntent.SelectDocumentType -> handleSelectDocumentType(intent.type)
                 is DocumentReviewIntent.SelectDirection -> handleSelectDirection(intent.direction)
+
+                // === Inline Field Editing ===
+                is DocumentReviewIntent.UpdateField -> handleUpdateField(intent.field, intent.value)
+
+                // === Unconfirm ===
+                DocumentReviewIntent.RequestUnconfirm -> handleUnconfirm()
 
                 // handled before reducer
                 is DocumentReviewIntent.SelectQueueDocument,
