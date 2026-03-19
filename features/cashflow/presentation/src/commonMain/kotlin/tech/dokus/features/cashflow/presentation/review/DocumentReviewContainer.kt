@@ -212,6 +212,12 @@ internal class DocumentReviewContainer(
                 is DocumentReviewIntent.SelectDocumentType -> handleSelectDocumentType(intent.type)
                 is DocumentReviewIntent.SelectDirection -> handleSelectDirection(intent.direction)
 
+                // === Inline Field Editing ===
+                is DocumentReviewIntent.UpdateField -> handleUpdateField(intent.field, intent.value)
+
+                // === Unconfirm ===
+                DocumentReviewIntent.RequestUnconfirm -> Unit // TODO: wire to unconfirm use case
+
                 // handled before reducer
                 is DocumentReviewIntent.SelectQueueDocument,
                 DocumentReviewIntent.LoadMoreQueue,

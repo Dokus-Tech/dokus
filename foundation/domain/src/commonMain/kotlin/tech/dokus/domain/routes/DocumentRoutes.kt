@@ -244,6 +244,16 @@ class Documents {
         class Confirm(val parent: Id)
 
         /**
+         * POST /api/v1/documents/{id}/unconfirm
+         * Revert a confirmed document to draft for editing.
+         * Copies confirmed entity data back to draft tables, deletes entity + cashflow entry.
+         * Blocked if cashflow entry has recorded payments.
+         */
+        @Serializable
+        @Resource("unconfirm")
+        class Unconfirm(val parent: Id)
+
+        /**
          * POST /api/v1/documents/{id}/reject
          * Reject extraction with a reason (idempotent).
          */

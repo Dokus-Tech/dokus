@@ -1,8 +1,10 @@
 package tech.dokus.features.cashflow.presentation.review.components.details
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -20,6 +22,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import com.composables.icons.lucide.ChevronRight
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Pencil
@@ -27,11 +32,23 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -475,6 +492,285 @@ private fun contactInitials(name: String): String = name
     .take(2)
     .joinToString("") { it.take(1) }
     .ifBlank { "?" }
+
+/**
+ * Editable fact field — displays as read-only text, switches to inline input on click.
+ * Same visual layout as [FactField] in display mode for seamless transition.
+ */
+@Composable
+fun EditableFactField(
+    label: String,
+    value: String?,
+    onValueChanged: (String) -> Unit,
+    isReadOnly: Boolean = false,
+    keyboardType: KeyboardType = KeyboardType.Text,
+    modifier: Modifier = Modifier,
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isHovered by interactionSource.collectIsHoveredAsState()
+    val isLargeScreen = LocalScreenSize.current.isLarge
+    var isEditing by remember { mutableStateOf(false) }
+    var editText by remember(value) { mutableStateOf(value.orEmpty()) }
+    val focusRequester = remember { FocusRequester() }
+    val hasValue = !value.isNullOrBlank()
+
+    fun commit() {
+        isEditing = false
+        val trimmed = editText.trim()
+        if (trimmed != (value.orEmpty())) {
+            onValueChanged(trimmed)
+        }
+    }
+
+    fun cancel() {
+        isEditing = false
+        editText = value.orEmpty()
+    }
+
+    LaunchedEffect(isEditing) {
+        if (isEditing) focusRequester.requestFocus()
+    }
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(FactFieldCornerRadius))
+            .background(
+                if ((isHovered || isEditing) && !isReadOnly) {
+                    MaterialTheme.colorScheme.outline.copy(alpha = HoverBackgroundAlpha + 0.03f)
+                } else {
+                    MaterialTheme.colorScheme.surface.copy(alpha = 0f)
+                }
+            )
+            .then(if (!isReadOnly) Modifier.hoverable(interactionSource) else Modifier)
+            .then(
+                if (!isReadOnly && !isEditing) {
+                    Modifier.clickable { isEditing = true }
+                } else {
+                    Modifier
+                }
+            )
+            .padding(
+                horizontal = Constraints.Spacing.xSmall,
+                vertical = 2.dp,
+            ),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.textMuted,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(StatusDotSize)
+                    .background(
+                        color = if (hasValue) {
+                            MaterialTheme.colorScheme.statusConfirmed.copy(alpha = 0.86f)
+                        } else {
+                            MaterialTheme.colorScheme.outline.copy(alpha = 0.85f)
+                        },
+                        shape = CircleShape,
+                    )
+            )
+            AnimatedContent(
+                targetState = isEditing,
+                transitionSpec = { fadeIn() togetherWith fadeOut() },
+                modifier = Modifier.weight(1f),
+            ) { editing ->
+                if (editing) {
+                    BasicTextField(
+                        value = editText,
+                        onValueChange = { editText = it },
+                        singleLine = true,
+                        textStyle = MaterialTheme.typography.bodyLarge.copy(
+                            fontFeatureSettings = "tnum",
+                            color = MaterialTheme.colorScheme.onSurface,
+                        ),
+                        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = keyboardType,
+                            imeAction = ImeAction.Done,
+                        ),
+                        keyboardActions = KeyboardActions(onDone = { commit() }),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .focusRequester(focusRequester)
+                            .onFocusChanged { if (!it.isFocused && isEditing) commit() }
+                            .onKeyEvent {
+                                if (it.key == Key.Escape) {
+                                    cancel()
+                                    true
+                                } else {
+                                    false
+                                }
+                            },
+                    )
+                } else {
+                    Text(
+                        text = value ?: "\u2014",
+                        style = MaterialTheme.typography.bodyLarge.copy(fontFeatureSettings = "tnum"),
+                        color = if (value != null) {
+                            MaterialTheme.colorScheme.onSurface
+                        } else {
+                            MaterialTheme.colorScheme.textMuted
+                        },
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+            if (!isReadOnly && !isEditing && (!isLargeScreen || isHovered)) {
+                Spacer(Modifier.width(Constraints.Spacing.xSmall))
+                Icon(
+                    imageVector = Lucide.Pencil,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.textMuted,
+                    modifier = Modifier.size(14.dp)
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Editable amount row — displays as read-only, switches to inline numeric input on click.
+ * Same visual layout as [AmountRow] in display mode.
+ */
+@Composable
+fun EditableAmountRow(
+    label: String,
+    value: String?,
+    onValueChanged: (String) -> Unit,
+    isTotal: Boolean = false,
+    isReadOnly: Boolean = false,
+    modifier: Modifier = Modifier,
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isHovered by interactionSource.collectIsHoveredAsState()
+    var isEditing by remember { mutableStateOf(false) }
+    var editText by remember(value) { mutableStateOf(value.orEmpty()) }
+    val focusRequester = remember { FocusRequester() }
+
+    fun commit() {
+        isEditing = false
+        val trimmed = editText.trim()
+        if (trimmed != (value.orEmpty())) {
+            onValueChanged(trimmed)
+        }
+    }
+
+    fun cancel() {
+        isEditing = false
+        editText = value.orEmpty()
+    }
+
+    LaunchedEffect(isEditing) {
+        if (isEditing) focusRequester.requestFocus()
+    }
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(FactFieldCornerRadius))
+            .background(
+                if ((isHovered || isEditing) && !isReadOnly) {
+                    MaterialTheme.colorScheme.outline.copy(alpha = HoverBackgroundAlpha + 0.03f)
+                } else {
+                    MaterialTheme.colorScheme.surface.copy(alpha = 0f)
+                }
+            )
+            .then(if (!isReadOnly) Modifier.hoverable(interactionSource) else Modifier)
+            .then(
+                if (!isReadOnly && !isEditing) {
+                    Modifier.clickable { isEditing = true }
+                } else {
+                    Modifier
+                }
+            )
+            .padding(vertical = Constraints.Spacing.xSmall),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (isTotal) {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            } else {
+                MaterialTheme.colorScheme.textMuted
+            }
+        )
+        AnimatedContent(
+            targetState = isEditing,
+            transitionSpec = { fadeIn() togetherWith fadeOut() },
+        ) { editing ->
+            if (editing) {
+                BasicTextField(
+                    value = editText,
+                    onValueChange = { editText = it },
+                    singleLine = true,
+                    textStyle = if (isTotal) {
+                        MaterialTheme.typography.bodyLarge.copy(
+                            fontFeatureSettings = "tnum",
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                    } else {
+                        MaterialTheme.typography.bodyMedium.copy(
+                            fontFeatureSettings = "tnum",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    },
+                    cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Decimal,
+                        imeAction = ImeAction.Done,
+                    ),
+                    keyboardActions = KeyboardActions(onDone = { commit() }),
+                    modifier = Modifier
+                        .width(120.dp)
+                        .focusRequester(focusRequester)
+                        .onFocusChanged { if (!it.isFocused && isEditing) commit() }
+                        .onKeyEvent {
+                            if (it.key == Key.Escape) {
+                                cancel()
+                                true
+                            } else {
+                                false
+                            }
+                        },
+                )
+            } else {
+                Text(
+                    text = value ?: "\u2014",
+                    style = if (isTotal) {
+                        MaterialTheme.typography.bodyLarge.copy(
+                            fontFeatureSettings = "tnum",
+                            fontWeight = FontWeight.Medium
+                        )
+                    } else {
+                        MaterialTheme.typography.bodyMedium.copy(
+                            fontFeatureSettings = "tnum"
+                        )
+                    },
+                    color = when {
+                        isTotal && value != null -> MaterialTheme.colorScheme.onSurface
+                        value != null -> MaterialTheme.colorScheme.onSurfaceVariant
+                        else -> MaterialTheme.colorScheme.textMuted
+                    }
+                )
+            }
+        }
+    }
+}
 
 // =============================================================================
 // Previews

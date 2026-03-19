@@ -50,6 +50,7 @@ import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.domain.model.contact.ResolvedContact
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
+import tech.dokus.features.cashflow.presentation.review.EditableField
 import tech.dokus.features.cashflow.presentation.review.models.DocumentUiData
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.constrains.Constraints
@@ -124,8 +125,8 @@ internal fun DocumentDetailsCard(
     when (uiData) {
         is DocumentUiData.Invoice -> DocumentDetailsCard(uiData, isReadOnly, onDirectionSelected, modifier)
         is DocumentUiData.CreditNote -> DocumentDetailsCard(uiData, isReadOnly, onDirectionSelected, modifier)
-        is DocumentUiData.Receipt -> DocumentDetailsCard(uiData, modifier)
-        is DocumentUiData.BankStatement -> DocumentDetailsCard(uiData, modifier)
+        is DocumentUiData.Receipt -> DocumentDetailsCard(data = uiData, modifier = modifier)
+        is DocumentUiData.BankStatement -> DocumentDetailsCard(data = uiData, modifier = modifier)
         // --- Classified-only document types ---
         is DocumentUiData.ProForma -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
         is DocumentUiData.Quote -> ClassifiedOnlyDetailsCard(uiData.documentType, modifier)
@@ -183,6 +184,7 @@ internal fun DocumentDetailsCard(
     data: DocumentUiData.Invoice,
     isReadOnly: Boolean,
     onDirectionSelected: (DocumentDirection) -> Unit,
+    onIntent: (DocumentReviewIntent) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
@@ -191,6 +193,7 @@ internal fun DocumentDetailsCard(
             direction = data.direction,
             isReadOnly = isReadOnly,
             onDirectionSelected = onDirectionSelected,
+            onIntent = onIntent,
             invoiceNumber = data.invoiceNumber,
             issueDate = data.issueDate,
             dueDate = data.dueDate,
@@ -203,6 +206,7 @@ internal fun DocumentDetailsCard(
     data: DocumentUiData.CreditNote,
     isReadOnly: Boolean,
     onDirectionSelected: (DocumentDirection) -> Unit,
+    onIntent: (DocumentReviewIntent) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
@@ -211,6 +215,7 @@ internal fun DocumentDetailsCard(
             direction = data.direction,
             isReadOnly = isReadOnly,
             onDirectionSelected = onDirectionSelected,
+            onIntent = onIntent,
             creditNoteNumber = data.creditNoteNumber,
             issueDate = data.issueDate,
             originalInvoiceNumber = data.originalInvoiceNumber,
@@ -221,6 +226,8 @@ internal fun DocumentDetailsCard(
 @Composable
 internal fun DocumentDetailsCard(
     data: DocumentUiData.Receipt,
+    isReadOnly: Boolean = false,
+    onIntent: (DocumentReviewIntent) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
@@ -228,6 +235,8 @@ internal fun DocumentDetailsCard(
         ReceiptDetailsFactDisplay(
             receiptNumber = data.receiptNumber,
             date = data.date,
+            isReadOnly = isReadOnly,
+            onIntent = onIntent,
         )
     }
 }
@@ -324,6 +333,7 @@ private fun InvoiceDetailsFactDisplay(
     direction: DocumentDirection,
     isReadOnly: Boolean,
     onDirectionSelected: (DocumentDirection) -> Unit,
+    onIntent: (DocumentReviewIntent) -> Unit,
     invoiceNumber: String?,
     issueDate: String?,
     dueDate: String?,
@@ -338,17 +348,23 @@ private fun InvoiceDetailsFactDisplay(
             isReadOnly = isReadOnly,
             onDirectionSelected = onDirectionSelected
         )
-        FactField(
+        EditableFactField(
             label = stringResource(Res.string.cashflow_invoice_number),
-            value = invoiceNumber
+            value = invoiceNumber,
+            onValueChanged = { onIntent(DocumentReviewIntent.UpdateField(EditableField.InvoiceNumber, it)) },
+            isReadOnly = isReadOnly,
         )
-        FactField(
+        EditableFactField(
             label = stringResource(Res.string.invoice_issue_date),
-            value = issueDate
+            value = issueDate,
+            onValueChanged = { onIntent(DocumentReviewIntent.UpdateField(EditableField.IssueDate, it)) },
+            isReadOnly = isReadOnly,
         )
-        FactField(
+        EditableFactField(
             label = stringResource(Res.string.invoice_due_date),
-            value = dueDate
+            value = dueDate,
+            onValueChanged = { onIntent(DocumentReviewIntent.UpdateField(EditableField.DueDate, it)) },
+            isReadOnly = isReadOnly,
         )
     }
 }
@@ -357,19 +373,25 @@ private fun InvoiceDetailsFactDisplay(
 private fun ReceiptDetailsFactDisplay(
     receiptNumber: String?,
     date: String?,
+    isReadOnly: Boolean = false,
+    onIntent: (DocumentReviewIntent) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall),
     ) {
-        FactField(
+        EditableFactField(
             label = stringResource(Res.string.cashflow_receipt_number),
-            value = receiptNumber
+            value = receiptNumber,
+            onValueChanged = { onIntent(DocumentReviewIntent.UpdateField(EditableField.ReceiptNumber, it)) },
+            isReadOnly = isReadOnly,
         )
-        FactField(
+        EditableFactField(
             label = stringResource(Res.string.common_date),
-            value = date
+            value = date,
+            onValueChanged = { onIntent(DocumentReviewIntent.UpdateField(EditableField.ReceiptDate, it)) },
+            isReadOnly = isReadOnly,
         )
     }
 }
@@ -379,6 +401,7 @@ private fun CreditNoteDetailsFactDisplay(
     direction: DocumentDirection,
     isReadOnly: Boolean,
     onDirectionSelected: (DocumentDirection) -> Unit,
+    onIntent: (DocumentReviewIntent) -> Unit,
     creditNoteNumber: String?,
     issueDate: String?,
     originalInvoiceNumber: String?,
@@ -393,18 +416,24 @@ private fun CreditNoteDetailsFactDisplay(
             isReadOnly = isReadOnly,
             onDirectionSelected = onDirectionSelected
         )
-        FactField(
+        EditableFactField(
             label = stringResource(Res.string.cashflow_credit_note_number),
-            value = creditNoteNumber
+            value = creditNoteNumber,
+            onValueChanged = { onIntent(DocumentReviewIntent.UpdateField(EditableField.CreditNoteNumber, it)) },
+            isReadOnly = isReadOnly,
         )
-        FactField(
+        EditableFactField(
             label = stringResource(Res.string.invoice_issue_date),
-            value = issueDate
+            value = issueDate,
+            onValueChanged = { onIntent(DocumentReviewIntent.UpdateField(EditableField.IssueDate, it)) },
+            isReadOnly = isReadOnly,
         )
         if (!originalInvoiceNumber.isNullOrBlank()) {
-            FactField(
+            EditableFactField(
                 label = stringResource(Res.string.cashflow_invoice_number),
-                value = originalInvoiceNumber
+                value = originalInvoiceNumber,
+                onValueChanged = { onIntent(DocumentReviewIntent.UpdateField(EditableField.OriginalInvoiceNumber, it)) },
+                isReadOnly = isReadOnly,
             )
         }
     }

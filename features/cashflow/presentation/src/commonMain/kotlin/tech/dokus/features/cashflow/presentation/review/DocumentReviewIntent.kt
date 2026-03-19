@@ -86,4 +86,10 @@ sealed interface DocumentReviewIntent : MVIIntent {
     // Manual document type selection (when AI fails or type is unknown)
     data class SelectDocumentType(val type: DocumentType) : DocumentReviewIntent
     data class SelectDirection(val direction: DocumentDirection) : DocumentReviewIntent
+
+    // Inline field editing
+    data class UpdateField(val field: EditableField, val value: String) : DocumentReviewIntent
+
+    // Unconfirm — revert confirmed document to draft for editing
+    data object RequestUnconfirm : DocumentReviewIntent
 }
