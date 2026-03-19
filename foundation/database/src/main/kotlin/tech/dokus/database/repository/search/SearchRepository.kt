@@ -450,6 +450,7 @@ class SearchRepository(
             direction = direction,
             contactName = contactName,
             documentFilename = filename,
+            documentId = row.getOrNull(DocumentsTable.id)?.let { DocumentId.parse(it.value.toString()) },
         )
     }
 

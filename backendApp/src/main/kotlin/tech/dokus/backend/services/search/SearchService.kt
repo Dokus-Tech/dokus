@@ -8,6 +8,7 @@ import tech.dokus.domain.model.SearchPreset
 import tech.dokus.domain.model.SearchResultEntityType
 import tech.dokus.domain.model.SearchSignalEventRequest
 import tech.dokus.domain.model.SearchSignalEventType
+import tech.dokus.domain.model.SearchCounts
 import tech.dokus.domain.model.UnifiedSearchResponse
 import tech.dokus.domain.model.UnifiedSearchScope
 import tech.dokus.foundation.backend.utils.loggerFor
@@ -39,7 +40,9 @@ class SearchService(
             preset = preset,
             limit = limit,
             suggestionLimit = suggestionLimit,
-        ).onFailure { error ->
+        ).map { response ->
+            if (scope == UnifiedSearchScope.All) deduplicateDocuments(response) else response
+        }.onFailure { error ->
             logger.error("Unified search failed for tenant=$tenantId", error)
         }
     }
@@ -104,6 +107,26 @@ class SearchService(
         if (normalized.length !in 2..80) return false
         if (normalized in BLOCKED_SIGNAL_TERMS) return false
         return true
+    }
+
+    /**
+     * When showing ALL results, suppress documents that already appear as linked transactions
+     * to avoid showing the same business event twice.
+     */
+    private fun deduplicateDocuments(response: UnifiedSearchResponse): UnifiedSearchResponse {
+        val transactionDocIds = response.transactions.mapNotNull { it.documentId }.toSet()
+        if (transactionDocIds.isEmpty()) return response
+
+        val dedupedDocuments = response.documents.filter { it.documentId !in transactionDocIds }
+        val removed = response.documents.size - dedupedDocuments.size
+        if (removed == 0) return response
+
+        return response.copy(
+            documents = dedupedDocuments,
+            counts = response.counts.copy(
+                all = response.counts.all - removed,
+            ),
+        )
     }
 
     companion object {

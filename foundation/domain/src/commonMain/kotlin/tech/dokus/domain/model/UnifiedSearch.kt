@@ -78,6 +78,7 @@ data class SearchTransactionHit(
     val direction: CashflowDirection,
     val contactName: String? = null,
     val documentFilename: String? = null,
+    val documentId: DocumentId? = null,
 )
 
 @Serializable
