@@ -159,7 +159,8 @@ internal fun InspectorSourcesSection(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.textMuted,
             )
-            if (!isAccountantReadOnly) {
+            // Hide buttons when comparison pane is active (it has its own action bar)
+            if (!isAccountantReadOnly && !state.canRenderCanonical) {
                 Row(horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)) {
                     TextButton(
                         onClick = { onIntent(DocumentReviewIntent.ResolvePossibleMatchSame) },

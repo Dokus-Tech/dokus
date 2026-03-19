@@ -30,7 +30,9 @@ import tech.dokus.aura.resources.document_source_technical_details
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.features.cashflow.presentation.review.components.bankstatement.CanonicalBankStatementView
+import tech.dokus.features.cashflow.presentation.review.components.comparison.DocumentComparisonPane
 import tech.dokus.features.cashflow.presentation.review.models.DocumentUiData
+import tech.dokus.features.cashflow.presentation.review.models.extractedUiData
 import tech.dokus.features.cashflow.presentation.common.utils.formatShortDate
 import tech.dokus.features.cashflow.presentation.review.DocumentPreviewState
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
@@ -85,6 +87,26 @@ internal fun CanonicalCenterPane(
     }
     val contactAddress = (contact as? ResolvedContact.Detected)?.address
     val uiData = state.uiData
+
+    // Side-by-side comparison when pending match review exists (invoices/credit notes)
+    val pendingReview = state.documentRecord?.pendingMatchReview
+    if (pendingReview != null && uiData is DocumentUiData.Invoice) {
+        val incomingSource = state.documentRecord?.sources
+            ?.firstOrNull { it.extractedSnapshotJson != null && it.id != state.documentRecord?.sources?.firstOrNull()?.id }
+        val incomingUiData = incomingSource?.extractedUiData()
+        DocumentComparisonPane(
+            existingUiData = uiData,
+            incomingUiData = incomingUiData,
+            existingCounterpartyName = contactName ?: "",
+            incomingCounterpartyName = contactName ?: "",
+            reasonType = pendingReview.reasonType,
+            onSameDocument = { onIntent(DocumentReviewIntent.ResolvePossibleMatchSame) },
+            onDifferentDocument = { onIntent(DocumentReviewIntent.ResolvePossibleMatchDifferent) },
+            isResolving = state.isResolvingMatchReview,
+            modifier = modifier,
+        )
+        return
+    }
 
     if (uiData is DocumentUiData.Invoice) {
         Box(
