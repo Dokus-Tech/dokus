@@ -83,6 +83,9 @@ sealed interface DocumentReviewIntent : MVIIntent {
     data object ResolvePossibleMatchSame : DocumentReviewIntent
     data object ResolvePossibleMatchDifferent : DocumentReviewIntent
 
+    // Bank statement transaction toggle
+    data class ToggleBankStatementTransaction(val index: Int) : DocumentReviewIntent
+
     // Manual document type selection (when AI fails or type is unknown)
     data class SelectDocumentType(val type: DocumentType) : DocumentReviewIntent
     data class SelectDirection(val direction: DocumentDirection) : DocumentReviewIntent

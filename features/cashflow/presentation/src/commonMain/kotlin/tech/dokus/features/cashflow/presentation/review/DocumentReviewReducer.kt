@@ -326,6 +326,28 @@ internal class DocumentReviewReducer(
 
     suspend fun DocumentReviewCtx.handleResolvePossibleMatchDifferent() =
         with(feedbackActions) { handleResolvePossibleMatchDifferent() }
+
+    suspend fun DocumentReviewCtx.handleToggleBankStatementTransaction(index: Int) {
+        var shouldPersist = false
+        withState {
+            val currentData = documentData ?: return@withState
+            val draft = draftData as? DocDto.BankStatement.Draft ?: return@withState
+            val updatedTransactions = draft.transactions.mapIndexed { i, row ->
+                if (i == index) row.copy(excluded = !row.excluded) else row
+            }
+            val updatedDraft = draft.copy(transactions = updatedTransactions)
+            updateState {
+                copy(
+                    document = DokusState.success(currentData.copy(draftData = updatedDraft)),
+                    hasUnsavedChanges = true,
+                )
+            }
+            shouldPersist = true
+        }
+        if (shouldPersist) {
+            with(actions) { syncDraftImmediately() }
+        }
+    }
 }
 
 private fun applyFieldUpdate(data: DocDto?, field: EditableField, value: String): DocDto? {

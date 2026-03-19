@@ -10,6 +10,7 @@ data class BankStatementTransactionUiRow(
     val counterpartyName: String?,
     val communication: String?,
     val displayAmount: String,
+    val amountMinor: Long,
     val isPositive: Boolean,
     val isExcluded: Boolean,
     val isDuplicate: Boolean,

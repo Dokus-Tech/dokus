@@ -29,6 +29,7 @@ import tech.dokus.aura.resources.document_source_received_on
 import tech.dokus.aura.resources.document_source_technical_details
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.CashflowEntryStatus
+import tech.dokus.features.cashflow.presentation.review.components.bankstatement.CanonicalBankStatementView
 import tech.dokus.features.cashflow.presentation.review.models.DocumentUiData
 import tech.dokus.features.cashflow.presentation.common.utils.formatShortDate
 import tech.dokus.features.cashflow.presentation.review.DocumentPreviewState
@@ -99,6 +100,21 @@ internal fun CanonicalCenterPane(
                     .fillMaxHeight()
             )
         }
+        return
+    }
+
+    if (uiData is DocumentUiData.BankStatement) {
+        CanonicalBankStatementView(
+            data = uiData,
+            onToggleTransaction = { index ->
+                onIntent(DocumentReviewIntent.ToggleBankStatementTransaction(index))
+            },
+            onReject = { onIntent(DocumentReviewIntent.ShowRejectDialog) },
+            onConfirm = { onIntent(DocumentReviewIntent.Confirm) },
+            isConfirming = state.isConfirming,
+            isReadOnly = state.documentStatus == tech.dokus.domain.enums.DocumentStatus.Confirmed,
+            modifier = modifier,
+        )
         return
     }
 

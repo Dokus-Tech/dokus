@@ -330,6 +330,7 @@ private fun BankStatementTransactionDraftRow.toUiRow(index: Int): BankStatementT
         counterpartyName = counterparty.name,
         communication = communicationText,
         displayAmount = amount?.toDisplayString().orEmpty(),
+        amountMinor = amount?.minor ?: 0L,
         isPositive = (amount?.minor ?: 0L) > 0,
         isExcluded = excluded,
         isDuplicate = potentialDuplicate,

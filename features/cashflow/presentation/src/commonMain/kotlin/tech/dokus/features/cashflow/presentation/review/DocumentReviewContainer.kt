@@ -210,6 +210,7 @@ internal class DocumentReviewContainer(
                 is DocumentReviewIntent.DismissFailureBanner -> handleDismissFailureBanner()
                 is DocumentReviewIntent.ResolvePossibleMatchSame -> handleResolvePossibleMatchSame()
                 is DocumentReviewIntent.ResolvePossibleMatchDifferent -> handleResolvePossibleMatchDifferent()
+                is DocumentReviewIntent.ToggleBankStatementTransaction -> handleToggleBankStatementTransaction(intent.index)
 
                 // === Manual Document Type Selection ===
                 is DocumentReviewIntent.SelectDocumentType -> handleSelectDocumentType(intent.type)

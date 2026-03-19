@@ -702,6 +702,25 @@
     <string name="inspector_label_transactions">Transactions</string>
     <string name="cashflow_bank_statement_details_section">Bank Statement Details</string>
 
+    <!-- Bank Statement Canonical View -->
+    <string name="bank_statement_duplicate_banner_title">%1$d of %2$d transactions already imported</string>
+    <string name="bank_statement_duplicate_banner_subtitle">Duplicates are excluded by default. Review and confirm to import %1$d new transactions.</string>
+    <string name="bank_statement_to_import">%1$d to import</string>
+    <string name="bank_statement_excluded">%1$d excluded</string>
+    <string name="bank_statement_opening_balance">Opening balance</string>
+    <string name="bank_statement_closing_balance">Closing balance</string>
+    <string name="bank_statement_movement">Movement</string>
+    <string name="bank_statement_col_date">Date</string>
+    <string name="bank_statement_col_description">Description</string>
+    <string name="bank_statement_col_counterparty">Counterparty</string>
+    <string name="bank_statement_col_communication">Communication</string>
+    <string name="bank_statement_col_amount">Amount</string>
+    <string name="bank_statement_duplicate_badge">Duplicate</string>
+    <string name="bank_statement_importing_summary">Importing %1$d transactions</string>
+    <string name="bank_statement_reject">Reject statement</string>
+    <string name="bank_statement_confirm_import">Confirm import · %1$d transactions</string>
+    <string name="bank_statement_account">Account</string>
+
     <!-- Mobile Canonical -->
     <string name="mobile_unknown_vendor">Unknown vendor</string>
     <string name="mobile_label_issued">Issued</string>

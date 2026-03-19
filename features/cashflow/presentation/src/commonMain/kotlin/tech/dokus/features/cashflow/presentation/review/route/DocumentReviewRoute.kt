@@ -458,7 +458,8 @@ private fun DocumentReviewIntent.isBlockedForAccountantReadOnly(): Boolean = whe
     is DocumentReviewIntent.ResolvePossibleMatchSame,
     is DocumentReviewIntent.ResolvePossibleMatchDifferent,
     is DocumentReviewIntent.SelectDocumentType,
-    is DocumentReviewIntent.SelectDirection -> true
+    is DocumentReviewIntent.SelectDirection,
+    is DocumentReviewIntent.ToggleBankStatementTransaction -> true
     else -> false
 }
 

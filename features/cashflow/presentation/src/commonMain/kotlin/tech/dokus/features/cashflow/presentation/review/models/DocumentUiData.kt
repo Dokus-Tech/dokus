@@ -72,6 +72,10 @@ sealed interface DocumentUiData {
         val excludedCount: Int get() = transactions.count { it.isExcluded }
         val duplicateCount: Int get() = transactions.count { it.isDuplicate }
         val hasDuplicates: Boolean get() = duplicateCount > 0
+        val netAmountDisplay: String get() {
+            val netMinor = transactions.filter { !it.isExcluded }.sumOf { it.amountMinor }
+            return Money(netMinor).toDisplayString()
+        }
     }
 
     // --- Classified-only document types ---

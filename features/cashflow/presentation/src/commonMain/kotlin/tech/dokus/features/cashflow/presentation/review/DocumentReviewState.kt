@@ -365,7 +365,7 @@ data class DocumentReviewState(
      * If unavailable, UI should fallback to PDF preview.
      */
     val canRenderCanonical: Boolean
-        get() = draftData is DocDto.Invoice || draftData is DocDto.CreditNote
+        get() = draftData is DocDto.Invoice || draftData is DocDto.CreditNote || draftData is DocDto.BankStatement
 
     val shouldUsePdfFallback: Boolean
         get() = !canRenderCanonical || isProcessing || isFailed
