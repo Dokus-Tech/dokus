@@ -1,25 +1,19 @@
 package tech.dokus.features.cashflow.presentation.review.components.comparison
 
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
-import androidx.compose.ui.unit.dp
 import tech.dokus.domain.enums.ReviewReason
 import tech.dokus.features.cashflow.presentation.review.DocumentPreviewState
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
 
-private val PreviewSize = Modifier.width(1200.dp).height(800.dp)
-
 // ═══════════════════════════════════════════════════════════════════
 // FULL COMPARISON PANE
 // ═══════════════════════════════════════════════════════════════════
 
-@Preview
+@Preview(name = "Comparison - MaterialConflict", widthDp = 1440, heightDp = 900)
 @Composable
 private fun ComparisonMaterialConflictPreview(
     @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
@@ -33,12 +27,11 @@ private fun ComparisonMaterialConflictPreview(
             onDifferentDocument = {},
             isResolving = false,
             onLoadMore = {},
-            modifier = PreviewSize,
         )
     }
 }
 
-@Preview
+@Preview(name = "Comparison - FuzzyMatch", widthDp = 1440, heightDp = 900)
 @Composable
 private fun ComparisonFuzzyMatchPreview(
     @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
@@ -52,12 +45,11 @@ private fun ComparisonFuzzyMatchPreview(
             onDifferentDocument = {},
             isResolving = false,
             onLoadMore = {},
-            modifier = PreviewSize,
         )
     }
 }
 
-@Preview
+@Preview(name = "Comparison - Resolving", widthDp = 1440, heightDp = 900)
 @Composable
 private fun ComparisonResolvingPreview(
     @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
@@ -71,12 +63,11 @@ private fun ComparisonResolvingPreview(
             onDifferentDocument = {},
             isResolving = true,
             onLoadMore = {},
-            modifier = PreviewSize,
         )
     }
 }
 
-@Preview
+@Preview(name = "Comparison - NoIncoming", widthDp = 1440, heightDp = 900)
 @Composable
 private fun ComparisonNoIncomingPreview(
     @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
@@ -90,7 +81,6 @@ private fun ComparisonNoIncomingPreview(
             onDifferentDocument = {},
             isResolving = false,
             onLoadMore = {},
-            modifier = PreviewSize,
         )
     }
 }
