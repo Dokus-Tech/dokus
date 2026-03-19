@@ -115,6 +115,7 @@ private val ExtractDocumentInput.proFormaPrompt: String
     - Do NOT guess. If not visible, return null.
     - Amount fields must be numeric strings using '.' as decimal separator (e.g., "1234.56").
     - Pro forma is informational; still extract number/date/totals as shown.
+    - ${ExtractionToolDescriptions.LocalDateToolOutputGuidance}
 
     ## IDENTIFIERS
     Extract proFormaNumber if visible ("Pro forma nr", "Proforma #").

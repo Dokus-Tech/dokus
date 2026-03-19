@@ -171,6 +171,7 @@ private val ExtractDocumentInput.bankStatementPrompt
     - signedAmount MUST keep sign:
       - positive = money received
       - negative = money sent
+    - ${ExtractionToolDescriptions.LocalDateToolOutputGuidance}
     - rowConfidence must be in range 0.0..1.0.
     - openingBalance and closingBalance must include sign (positive or negative).
 

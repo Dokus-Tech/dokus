@@ -13,6 +13,7 @@ import tech.dokus.domain.model.Tenant
 import tech.dokus.foundation.backend.config.AIConfig
 import tech.dokus.foundation.backend.config.IntelligenceMode
 import tech.dokus.foundation.backend.config.LangfuseConfig
+import tech.dokus.foundation.backend.config.ServerInfoConfig
 import java.io.File
 
 object TestAiFixtures {
@@ -34,6 +35,14 @@ object TestAiFixtures {
         vatNumber = VatNumber(""),
         createdAt = LocalDateTime(2024, 1, 1, 10, 0),
         updatedAt = LocalDateTime(2024, 1, 1, 10, 0),
+    )
+
+    val serverInfo = ServerInfoConfig(
+        name = "test-server",
+        version = "test-version",
+        environment = "test",
+        bankingEnabled = true,
+        paymentsEnabled = true,
     )
 
     fun loadFixture(resourcePath: String): File {

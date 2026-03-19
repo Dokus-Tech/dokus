@@ -36,7 +36,11 @@ class DocumentProcessingAgentTest {
             Result.success(FetchedDocumentData(documentBytes, "application/pdf"))
         }
         val agent = DocumentProcessingAgent(
-            agentRunner = KoogAgentRunner(ThrowingPromptExecutor(), TestAiFixtures.aiConfig),
+            agentRunner = KoogAgentRunner(
+                ThrowingPromptExecutor(),
+                TestAiFixtures.aiConfig,
+                TestAiFixtures.serverInfo
+            ),
             aiConfig = TestAiFixtures.aiConfig,
             documentFetcher = documentFetcher
         )

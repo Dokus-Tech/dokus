@@ -180,6 +180,7 @@ private val ExtractDocumentInput.creditNotePrompt: String
     ## HARD RULES
     - Do NOT guess. If not visible, return null.
     - Amount fields must be numeric strings using '.' as decimal separator (e.g., "1234.56").
+    - ${ExtractionToolDescriptions.LocalDateToolOutputGuidance}
 
     ${ExtractionToolDescriptions.VatNumberFormatGuidance}
 
