@@ -12,7 +12,9 @@ import tech.dokus.domain.enums.MatchedBy
 import tech.dokus.domain.enums.ResolutionType
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.backend.mappers.from
 import tech.dokus.database.entity.BankTransactionEntity
+import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.backend.services.banking.sse.BankingSsePublisher
 import tech.dokus.backend.services.cashflow.AutoPaymentService
@@ -49,11 +51,12 @@ class MatchingEngine(
     suspend fun getPaymentCandidates(
         tenantId: TenantId,
         cashflowEntryId: CashflowEntryId,
-    ): List<BankTransactionEntity> {
+    ): List<BankTransactionDto> {
         val candidates = bankTransactionRepository.listCandidatesForEntry(tenantId, cashflowEntryId)
         val selectable = bankTransactionRepository.listSelectable(tenantId)
         val candidateIds = candidates.map { it.id }.toSet()
-        return candidates + selectable.filter { it.id !in candidateIds }
+        return (candidates + selectable.filter { it.id !in candidateIds })
+            .map { BankTransactionDto.from(it) }
     }
 
     /**

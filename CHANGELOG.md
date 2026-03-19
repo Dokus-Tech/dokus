@@ -4,6 +4,23 @@ All notable changes to Dokus are documented in this file.
 
 The format follows Keep a Changelog principles with pragmatic release summaries.
 
+## [1.3.1] - 2026-03-19
+
+### Added
+- CSV bank statement import with AI-driven column mapping, encoding detection, and deterministic parsing via Apache Commons CSV (#249).
+- Unconfirm document flow to revert confirmed documents back to draft for editing (#247).
+
+### Changed
+- Bank transaction auto-match classifier no longer requires HIGH statement trust, allowing PDF-imported transactions with strong signals (OGM, invoice ref) to auto-confirm (#249).
+- Banking service returns DTOs instead of raw entities, with mappers following `Dto.Companion.from(entity)` pattern (#249).
+- AI extraction date format guidance clarified to ISO strings with improved normalization (#248).
+- VAT amount defaults to zero when all line items have 0% rate or VAT data is missing (#247).
+
+### Fixed
+- Drag-and-drop file upload now accepts CSV and TXT files (#249).
+- Inline text field cursor position preserved when entering edit mode (#247).
+- Premature commit on focus loss in editable text fields (#247).
+
 ## [1.3.0] - 2026-03-19
 
 ### Added
