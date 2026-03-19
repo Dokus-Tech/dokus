@@ -30,6 +30,7 @@ internal class ProcessBankStatementUseCase(
             documentId = context.documentId,
             sourceId = context.sourceId,
             draftData = draftData,
+            source = context.bankTransactionSource ?: BankTransactionSource.PdfStatement,
         )
         if (bankProcessing.dedupOutcome is StatementDedupOutcome.Skip) {
             logger.info("Bank statement {} skipped (duplicate)", context.documentId)

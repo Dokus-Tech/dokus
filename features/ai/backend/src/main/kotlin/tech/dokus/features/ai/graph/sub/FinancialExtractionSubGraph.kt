@@ -7,6 +7,7 @@ import tech.dokus.domain.enums.DocumentType
 import tech.dokus.features.ai.graph.sub.extraction.financial.extractCreditNoteSubGraph
 import tech.dokus.features.ai.graph.sub.extraction.financial.extractInvoiceSubGraph
 import tech.dokus.features.ai.graph.sub.extraction.financial.extractBankStatementSubGraph
+import tech.dokus.features.ai.graph.sub.extraction.financial.extractCsvBankStatementSubGraph
 import tech.dokus.features.ai.graph.sub.extraction.financial.extractProFormaSubGraph
 import tech.dokus.features.ai.graph.sub.extraction.financial.extractPurchaseOrderSubGraph
 import tech.dokus.features.ai.graph.sub.extraction.financial.extractQuoteSubGraph
@@ -26,6 +27,7 @@ fun AIAgentSubgraphBuilderBase<*, *>.financialExtractionSubGraph(
         val extractPurchaseOrder by extractPurchaseOrderSubGraph(aiConfig)
         val extractReceipt by extractReceiptSubGraph(aiConfig)
         val extractBankStatement by extractBankStatementSubGraph(aiConfig)
+        val extractCsvBankStatement by extractCsvBankStatementSubGraph(aiConfig)
 
         val unsupported by node<ExtractDocumentInput, FinancialExtractionResult>("unsupported-doc-type") { input ->
             FinancialExtractionResult.Unsupported(
@@ -46,7 +48,12 @@ fun AIAgentSubgraphBuilderBase<*, *>.financialExtractionSubGraph(
         edge(nodeStart forwardTo extractProForma onCondition { it.documentType == DocumentType.ProForma })
         edge(nodeStart forwardTo extractPurchaseOrder onCondition { it.documentType == DocumentType.PurchaseOrder })
         edge(nodeStart forwardTo extractReceipt onCondition { it.documentType == DocumentType.Receipt })
-        edge(nodeStart forwardTo extractBankStatement onCondition { it.documentType == DocumentType.BankStatement })
+        edge(nodeStart forwardTo extractCsvBankStatement onCondition {
+            it.documentType == DocumentType.BankStatement && it.contentType == "text/csv"
+        })
+        edge(nodeStart forwardTo extractBankStatement onCondition {
+            it.documentType == DocumentType.BankStatement && it.contentType != "text/csv"
+        })
 
         edge(extractInvoice forwardTo nodeFinish)
         edge(extractCreditNote forwardTo nodeFinish)
@@ -55,5 +62,6 @@ fun AIAgentSubgraphBuilderBase<*, *>.financialExtractionSubGraph(
         edge(extractPurchaseOrder forwardTo nodeFinish)
         edge(extractReceipt forwardTo nodeFinish)
         edge(extractBankStatement forwardTo nodeFinish)
+        edge(extractCsvBankStatement forwardTo nodeFinish)
     }
 }

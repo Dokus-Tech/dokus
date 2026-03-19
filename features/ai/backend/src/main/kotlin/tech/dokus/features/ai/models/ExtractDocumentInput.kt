@@ -9,5 +9,6 @@ data class ExtractDocumentInput(
     @property:LLMDescription("The detected document type")
     val documentType: DocumentType,
     @property:LLMDescription("Detected language: nl, fr, en, or de")
-    val language: String
+    val language: String,
+    val contentType: String? = null,
 )

@@ -26,6 +26,9 @@ dependencies {
     // PDFBox for PDF to image conversion (vision processing)
     implementation(libs.pdfbox)
 
+    // CSV parsing for bank statement imports
+    implementation(libs.commons.csv)
+
     // Ktor HTTP Client (for Ollama/OpenAI embeddings API)
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.cio)

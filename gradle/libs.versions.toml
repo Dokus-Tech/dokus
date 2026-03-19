@@ -65,6 +65,8 @@ resendJava = "4.12.0"
 resilience4j = "2.3.0"
 minio = "8.6.0"
 koog = "0.6.4"
+dataframe = "0.15.0"
+commons-csv = "1.12.0"
 scrimage = "4.3.8"
 batik = "1.19"
 coil = "3.4.0"
@@ -167,6 +169,10 @@ exposed-kotlin-datetime = { module = "org.jetbrains.exposed:exposed-kotlin-datet
 
 resend = { module = "com.resend:resend-java", version.ref = "resendJava" }
 minio = { module = "io.minio:minio", version.ref = "minio" }
+
+# Data Processing (server-side)
+dataframe = { module = "org.jetbrains.kotlinx:dataframe", version.ref = "dataframe" }
+commons-csv = { module = "org.apache.commons:commons-csv", version.ref = "commons-csv" }
 
 # Image Processing (server-side)
 pdfbox = { module = "org.apache.pdfbox:pdfbox", version.ref = "pdfbox" }

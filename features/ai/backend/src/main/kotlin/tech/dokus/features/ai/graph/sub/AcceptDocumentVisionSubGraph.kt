@@ -11,6 +11,7 @@ import tech.dokus.domain.processing.DocumentProcessingConstants.AUTO_CONFIRM_CON
 import tech.dokus.domain.processing.DocumentProcessingConstants.RETRY_CONFIDENCE_THRESHOLD
 import tech.dokus.features.ai.graph.AcceptDocumentInput
 import tech.dokus.features.ai.graph.nodes.DirectionResolutionResolver
+import tech.dokus.features.ai.graph.nodes.CONTENT_TYPE_STORAGE_KEY
 import tech.dokus.features.ai.graph.nodes.documentImagesInjectorNode
 import tech.dokus.features.ai.graph.nodes.extractionTenantContextInjectorNode
 import tech.dokus.features.ai.graph.nodes.tenantContextInjectorNode
@@ -123,7 +124,9 @@ internal fun AIAgentSubgraphBuilderBase<*, *>.acceptDocumentOnVisionSubGraph(
                 tenantKey, associatedNamesKey
             )
             val prepareExtraction by node<ClassificationResult, ExtractDocumentInput>("prepare-extraction") { input ->
-                ExtractDocumentInput(input.documentType, input.language)
+                val contentTypeKey = createStorageKey<String>(CONTENT_TYPE_STORAGE_KEY)
+                val storedContentType = runCatching { storage.getValue(contentTypeKey) }.getOrNull()
+                ExtractDocumentInput(input.documentType, input.language, contentType = storedContentType)
             }
             val extract by financialExtractionSubGraph(aiConfig)
             val resolveDirection by node<FinancialExtractionResult, ResolvedExtraction>("resolve-direction") { extraction ->
