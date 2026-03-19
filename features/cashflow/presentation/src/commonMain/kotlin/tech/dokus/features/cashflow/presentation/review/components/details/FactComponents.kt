@@ -44,9 +44,11 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -511,14 +513,17 @@ fun EditableFactField(
     val isLargeScreen = LocalScreenSize.current.isLarge
     var isEditing by remember { mutableStateOf(false) }
     var hasFocused by remember { mutableStateOf(false) }
-    var editText by remember(value) { mutableStateOf(value.orEmpty()) }
+    var editFieldValue by remember(value) {
+        val text = value.orEmpty()
+        mutableStateOf(TextFieldValue(text, selection = TextRange(text.length)))
+    }
     val focusRequester = remember { FocusRequester() }
     val hasValue = !value.isNullOrBlank()
 
     fun commit() {
         isEditing = false
         hasFocused = false
-        val trimmed = editText.trim()
+        val trimmed = editFieldValue.text.trim()
         if (trimmed != (value.orEmpty())) {
             onValueChanged(trimmed)
         }
@@ -527,7 +532,8 @@ fun EditableFactField(
     fun cancel() {
         isEditing = false
         hasFocused = false
-        editText = value.orEmpty()
+        val text = value.orEmpty()
+        editFieldValue = TextFieldValue(text, selection = TextRange(text.length))
     }
 
     LaunchedEffect(isEditing) {
@@ -590,8 +596,8 @@ fun EditableFactField(
             ) { editing ->
                 if (editing) {
                     BasicTextField(
-                        value = editText,
-                        onValueChange = { editText = it },
+                        value = editFieldValue,
+                        onValueChange = { editFieldValue = it },
                         singleLine = true,
                         textStyle = MaterialTheme.typography.bodyLarge.copy(
                             fontFeatureSettings = "tnum",
@@ -666,13 +672,16 @@ fun EditableAmountRow(
     val isHovered by interactionSource.collectIsHoveredAsState()
     var isEditing by remember { mutableStateOf(false) }
     var hasFocused by remember { mutableStateOf(false) }
-    var editText by remember(value) { mutableStateOf(value.orEmpty()) }
+    var editFieldValue by remember(value) {
+        val text = value.orEmpty()
+        mutableStateOf(TextFieldValue(text, selection = TextRange(text.length)))
+    }
     val focusRequester = remember { FocusRequester() }
 
     fun commit() {
         isEditing = false
         hasFocused = false
-        val trimmed = editText.trim()
+        val trimmed = editFieldValue.text.trim()
         if (trimmed != (value.orEmpty())) {
             onValueChanged(trimmed)
         }
@@ -681,7 +690,8 @@ fun EditableAmountRow(
     fun cancel() {
         isEditing = false
         hasFocused = false
-        editText = value.orEmpty()
+        val text = value.orEmpty()
+        editFieldValue = TextFieldValue(text, selection = TextRange(text.length))
     }
 
     LaunchedEffect(isEditing) {
@@ -726,8 +736,8 @@ fun EditableAmountRow(
         ) { editing ->
             if (editing) {
                 BasicTextField(
-                    value = editText,
-                    onValueChange = { editText = it },
+                    value = editFieldValue,
+                    onValueChange = { editFieldValue = it },
                     singleLine = true,
                     textStyle = if (isTotal) {
                         MaterialTheme.typography.bodyLarge.copy(
