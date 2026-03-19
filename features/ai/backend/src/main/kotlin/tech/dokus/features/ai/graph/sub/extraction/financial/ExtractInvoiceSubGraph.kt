@@ -221,6 +221,13 @@ private class InvoiceExtractionFinishTool : Tool<InvoiceExtractionToolInput, Fin
     }
 }
 
+private val currentDate: String
+    get() {
+        val now = kotlin.time.Clock.System.now()
+        val localDate = kotlinx.datetime.LocalDate.fromEpochDays((now.epochSeconds / 86400).toInt())
+        return localDate.toString()
+    }
+
 private val ExtractDocumentInput.prompt
     get() = """
     You will receive invoice pages as images in context.
@@ -273,8 +280,15 @@ private val ExtractDocumentInput.prompt
     - If you provide `directionHint`, provide `directionHintConfidence` in range 0.0-1.0.
 
     ## DATE RULES
+    Current date: $currentDate
     Identify issue date ("Factuurdatum", "Date de facture", "Invoice date") and due date ("Vervaldatum", "Échéance", "Due date").
     If only one date is present and it clearly is the invoice date, set issueDate and leave dueDate null.
+
+    Date format disambiguation:
+    - If the seller country uses mm/dd/yyyy (US, Canada, Philippines), read dates in that format.
+    - European countries use dd/mm/yyyy.
+    - When ambiguous (e.g., 03/04/2025), use the seller's country to determine the format.
+    - Invoice dates should not be in the future relative to the current date. If a date reading would result in a future date but an alternative reading (swapping day/month) gives a past date, prefer the past date.
 
     ## PAYMENT FIELDS
     If IBAN or structured reference is present, extract it. Otherwise null.

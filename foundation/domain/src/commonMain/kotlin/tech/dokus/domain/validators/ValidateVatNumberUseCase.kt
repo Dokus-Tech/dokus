@@ -90,6 +90,8 @@ object ValidateVatNumberUseCase : Validator<VatNumber> {
         "SE" to Regex("^[0-9]{12}$"),
         // Northern Ireland (post-Brexit, uses XI prefix): same as UK format
         "XI" to Regex("^([0-9]{9}|[0-9]{12}|GD[0-9]{3}|HA[0-9]{3})$"),
+        // EU OSS (One-Stop Shop): EU + 9-12 digits, used for cross-border B2C services
+        "EU" to Regex("^[0-9]{9,12}$"),
     )
 
     /**

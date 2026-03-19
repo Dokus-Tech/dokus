@@ -118,6 +118,7 @@ object ExtractionToolDescriptions {
     - Luxembourg VAT: "LU" + exactly 8 digits (e.g., LU12345678).
     - Italian VAT: "IT" + exactly 11 digits (e.g., IT12345678901).
     - Spanish VAT: "ES" + 1 letter + 7 digits + 1 alphanumeric (e.g., ESX1234567X).
+    - EU OSS VAT: "EU" + 9 to 12 digits (e.g., EU372041333). Used for cross-border B2C services under the One-Stop Shop scheme. This is a valid format — do NOT flag it as malformed.
     - "UID", "UID-Nr.", "USt-IdNr.", "TVA", "BTW", "MwSt" are all labels for VAT numbers.
     - Remove dots/spaces from the VAT (e.g., "BE 0123.456.789" → "BE0123456789").
     - If you cannot isolate the exact VAT number, return null."""
