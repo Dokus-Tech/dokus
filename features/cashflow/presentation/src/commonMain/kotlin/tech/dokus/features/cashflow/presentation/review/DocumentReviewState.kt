@@ -12,7 +12,6 @@ import tech.dokus.aura.resources.cashflow_confirm_missing_fields
 import tech.dokus.aura.resources.cashflow_confirm_select_contact
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.CashflowEntryStatus
-import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentRejectReason
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentStatus
@@ -20,10 +19,9 @@ import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.CashflowEntryId
-import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentSourceId
-import tech.dokus.domain.model.AutoPaymentStatusDto
+import tech.dokus.domain.model.AutoPaymentStatus
 import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.model.DocDto
@@ -38,7 +36,6 @@ import tech.dokus.domain.model.hasRequiredSubtotalForConfirmation
 import tech.dokus.domain.model.hasRequiredTotalForConfirmation
 import tech.dokus.domain.model.hasRequiredVatForConfirmation
 import tech.dokus.domain.model.isContactRequired
-import tech.dokus.domain.model.sortDate
 import tech.dokus.domain.model.toDocumentType
 import tech.dokus.domain.model.totalAmount
 import tech.dokus.features.cashflow.presentation.review.models.DocumentUiData
@@ -154,9 +151,8 @@ data class DocumentReviewState(
     val documentStatus: DocumentStatus? = null,
     val confirmedCashflowEntryId: CashflowEntryId? = null,
     val cashflowEntryState: DokusState<CashflowEntry> = DokusState.idle(),
-    val autoPaymentStatus: DokusState<AutoPaymentStatusDto> = DokusState.idle(),
+    val autoPaymentStatus: DokusState<AutoPaymentStatus> = DokusState.idle(),
     val isUndoingAutoPayment: Boolean = false,
-    val isEditMode: Boolean = false,
     val sourceViewerState: SourceEvidenceViewerState? = null,
     val paymentSheetState: PaymentSheetState? = null,
     val rejectDialogState: RejectDialogState? = null,

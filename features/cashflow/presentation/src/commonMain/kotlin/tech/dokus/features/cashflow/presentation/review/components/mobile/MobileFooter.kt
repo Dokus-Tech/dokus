@@ -34,7 +34,7 @@ internal fun MobileFooter(
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
-        tonalElevation = 2.dp
+        tonalElevation = 0.dp
     ) {
         Row(
             modifier = Modifier

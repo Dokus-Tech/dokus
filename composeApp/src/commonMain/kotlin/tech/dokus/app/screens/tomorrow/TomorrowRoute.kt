@@ -8,7 +8,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import org.koin.compose.koinInject
 import tech.dokus.app.navigation.local.LocalHomeNavController
-import tech.dokus.app.screens.AiChatPlaceholder
 import tech.dokus.domain.enums.SubscriptionTier
 import tech.dokus.features.auth.usecases.GetCurrentTenantUseCase
 import tech.dokus.navigation.destinations.HomeDestination
@@ -42,7 +41,11 @@ internal fun TomorrowRoute(
         }
 
         else -> {
-            AiChatPlaceholder()
+            LaunchedEffect(Unit) {
+                homeNavController.navigateTo(HomeDestination.AiChat) {
+                    popUpTo(HomeDestination.Tomorrow::class) { inclusive = true }
+                }
+            }
         }
     }
 }

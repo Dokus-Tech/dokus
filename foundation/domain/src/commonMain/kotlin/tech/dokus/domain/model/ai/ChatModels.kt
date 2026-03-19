@@ -412,3 +412,35 @@ data class ChatConfiguration(
     /** Minimum documents required for cross-document chat */
     val minDocumentsForCrossDocChat: Int = 1
 )
+
+// =============================================================================
+// Chat File Upload
+// =============================================================================
+
+/**
+ * Response from uploading a file to chat (temporary, not imported to system).
+ */
+@Serializable
+data class ChatUploadResponse(
+    /** Temporary reference ID for the uploaded file */
+    val refId: String,
+    /** Original filename */
+    val filename: String,
+    /** File size in bytes */
+    val sizeBytes: Long,
+    /** Whether RAG chunks were created (file is queryable) */
+    val indexed: Boolean,
+)
+
+/**
+ * Client-side representation of a file attached to a chat conversation.
+ */
+@Serializable
+data class ChatAttachedFile(
+    /** Temporary reference ID from upload */
+    val refId: String,
+    /** Original filename */
+    val filename: String,
+    /** Whether the file is still uploading */
+    val isUploading: Boolean = false,
+)

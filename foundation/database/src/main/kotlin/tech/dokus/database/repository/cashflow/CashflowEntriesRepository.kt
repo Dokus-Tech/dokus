@@ -34,6 +34,7 @@ import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.CashflowContactRef
 import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.toDbDecimal
 import tech.dokus.foundation.backend.database.dbQuery
@@ -476,8 +477,12 @@ class CashflowEntriesRepository {
             currency = row[CashflowEntriesTable.currency],
             status = row[CashflowEntriesTable.status],
             paidAt = row[CashflowEntriesTable.paidAt],
-            contactId = row[CashflowEntriesTable.counterpartyId]?.let { ContactId.parse(it.toString()) },
-            contactName = contactName,
+            contact = row[CashflowEntriesTable.counterpartyId]?.let { counterpartyId ->
+                CashflowContactRef(
+                    id = ContactId.parse(counterpartyId.toString()),
+                    name = contactName,
+                )
+            },
             description = null, // Will be AI-generated in future
             createdAt = row[CashflowEntriesTable.createdAt],
             updatedAt = row[CashflowEntriesTable.updatedAt]

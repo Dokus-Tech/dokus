@@ -59,11 +59,13 @@ import tech.dokus.domain.enums.MatchedBy
 import tech.dokus.domain.enums.ResolutionType
 import tech.dokus.domain.enums.StatementTrust
 import tech.dokus.domain.ids.BankTransactionId
+import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.StructuredCommunication
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.domain.model.TransactionCommunication
+import tech.dokus.domain.model.TransactionMatchInfo
 import tech.dokus.domain.model.contact.CounterpartySnapshot
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.layout.DokusHeaderColumn
@@ -378,11 +380,14 @@ private val PreviewMatchedTx = BankTransactionDto(
     counterparty = CounterpartySnapshot(name = "DigitalOcean"),
     communication = TransactionCommunication.FreeForm(text = "DO Invoice #12345"),
     status = BankTransactionStatus.Matched,
-    matchedBy = MatchedBy.Auto,
     resolutionType = ResolutionType.Document,
-    matchScore = 1.0,
-    matchEvidence = listOf("exact_amount", "structured_comm_match"),
-    matchedAt = PreviewDateTime,
+    matchInfo = TransactionMatchInfo(
+        cashflowEntryId = CashflowEntryId.generate(),
+        matchedBy = MatchedBy.Auto,
+        score = 1.0,
+        evidence = listOf("exact_amount", "structured_comm_match"),
+        matchedAt = PreviewDateTime,
+    ),
     statementTrust = StatementTrust.High,
     currency = Currency.Eur,
     createdAt = PreviewDateTime,

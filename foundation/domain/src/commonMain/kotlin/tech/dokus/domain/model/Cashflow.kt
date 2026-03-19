@@ -91,8 +91,7 @@ data class CashflowEntry(
     val currency: Currency,
     val status: CashflowEntryStatus,
     val paidAt: LocalDateTime?, // UTC timestamp when entry became fully paid (null until PAID)
-    val contactId: ContactId?,
-    val contactName: String? = null,
+    val contact: CashflowContactRef? = null,
     val description: String? = null,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime
@@ -131,34 +130,77 @@ data class BankTransactionDto(
     val descriptionRaw: String? = null,
     val status: BankTransactionStatus,
     val resolutionType: ResolutionType? = null,
-    val matchedCashflowId: CashflowEntryId? = null,
-    val matchedDocumentId: DocumentId? = null,
-    val matchScore: Double? = null,
-    val matchEvidence: List<String>? = null,
-    val matchedBy: MatchedBy? = null,
-    val matchedAt: LocalDateTime? = null,
-    val ignoredReason: IgnoredReason? = null,
-    val ignoredAt: LocalDateTime? = null,
-    val ignoredBy: String? = null,
+    val matchInfo: TransactionMatchInfo? = null,
+    val ignoreInfo: TransactionIgnoreInfo? = null,
     val statementTrust: StatementTrust = StatementTrust.Low,
     val transferPairId: BankTransactionId? = null,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime,
 )
 
+// ============================================================================
+// Grouped field types — replace scattered nullable fields
+// ============================================================================
+
+/** Match info for a bank transaction — present when matched to a cashflow entry. */
 @Serializable
-data class AutoPaymentStatusDto(
-    val matchStatus: AutoMatchStatus? = null,
-    val paymentId: PaymentId? = null,
-    val bankTransactionId: BankTransactionId? = null,
-    val confidenceScore: Double? = null,
-    val scoreMargin: Double? = null,
-    val reasons: List<String> = emptyList(),
-    val matchSignals: List<String> = emptyList(),
-    val matchedAt: LocalDateTime? = null,
-    val autoPaidAt: LocalDateTime? = null,
-    val canUndo: Boolean = false
+data class TransactionMatchInfo(
+    val cashflowEntryId: CashflowEntryId,
+    val documentId: DocumentId? = null,
+    val score: Double,
+    val evidence: List<String> = emptyList(),
+    val matchedBy: MatchedBy,
+    val matchedAt: LocalDateTime,
 )
+
+/** Ignore info for a bank transaction — present when explicitly ignored. */
+@Serializable
+data class TransactionIgnoreInfo(
+    val reason: IgnoredReason,
+    val ignoredAt: LocalDateTime,
+    val ignoredBy: String? = null,
+)
+
+/** Contact reference on a cashflow entry. */
+@Serializable
+data class CashflowContactRef(
+    val id: ContactId,
+    val name: String? = null,
+)
+
+/** Auto-payment status — typed states instead of 10 nullable fields. */
+@Serializable
+sealed interface AutoPaymentStatus {
+    @Serializable
+    @kotlinx.serialization.SerialName("AutoPaymentStatus.None")
+    data object None : AutoPaymentStatus
+
+    @Serializable
+    @kotlinx.serialization.SerialName("AutoPaymentStatus.Matched")
+    data class Matched(
+        val bankTransactionId: BankTransactionId,
+        val confidenceScore: Double,
+        val scoreMargin: Double? = null,
+        val reasons: List<String>,
+        val matchSignals: List<String>,
+        val matchedAt: LocalDateTime,
+    ) : AutoPaymentStatus
+
+    @Serializable
+    @kotlinx.serialization.SerialName("AutoPaymentStatus.AutoPaid")
+    data class AutoPaid(
+        val paymentId: PaymentId,
+        val bankTransactionId: BankTransactionId,
+        val confidenceScore: Double,
+        val reasons: List<String>,
+        val autoPaidAt: LocalDateTime,
+        val canUndo: Boolean,
+    ) : AutoPaymentStatus
+
+    @Serializable
+    @kotlinx.serialization.SerialName("AutoPaymentStatus.Reversed")
+    data object Reversed : AutoPaymentStatus
+}
 
 @Serializable
 data class UndoAutoPaymentRequest(

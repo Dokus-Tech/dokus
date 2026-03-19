@@ -28,7 +28,9 @@ import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.ids.PaymentId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.AutoPaymentStatusDto
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.model.AutoPaymentStatus
+import tech.dokus.domain.model.CashflowContactRef
 import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.DocumentDto
@@ -78,7 +80,7 @@ internal fun previewReviewContentState(
     ),
     sourceViewerState: SourceEvidenceViewerState? = null,
     paymentSheetState: PaymentSheetState? = null,
-    autoPaymentStatus: DokusState<AutoPaymentStatusDto> = DokusState.idle(),
+    autoPaymentStatus: DokusState<AutoPaymentStatus> = DokusState.idle(),
     isUndoingAutoPayment: Boolean = false,
     hasCrossMatchedSource: Boolean = true,
     showPendingMatchReview: Boolean = false,
@@ -149,8 +151,7 @@ internal fun previewReviewContentState(
             } else {
                 null
             },
-            contactId = null,
-            contactName = "KBC Bank NV",
+            contact = CashflowContactRef(id = ContactId.parse("00000000-0000-0000-0000-000000000001"), name = "KBC Bank NV"),
             description = "Insurance premium - Q1 2026",
             createdAt = previewNow,
             updatedAt = previewNow,
@@ -236,14 +237,12 @@ internal fun previewReviewContentState(
 internal fun previewAutoPaymentStatus(
     canUndo: Boolean = true,
     confidenceScore: Double = 0.97,
-): DokusState<AutoPaymentStatusDto> = DokusState.success(
-    AutoPaymentStatusDto(
-        matchStatus = AutoMatchStatus.AutoPaid,
+): DokusState<AutoPaymentStatus> = DokusState.success(
+    AutoPaymentStatus.AutoPaid(
         paymentId = PaymentId.parse("6cc26605-d49d-480a-ad2e-93fca770de95"),
         bankTransactionId = BankTransactionId.parse("b038fd5b-c2b7-45b4-a0f2-f3a17d673aa3"),
         confidenceScore = confidenceScore,
         reasons = listOf("structured_reference_match", "exact_amount", "date_proximity"),
-        matchedAt = LocalDateTime(2026, 2, 15, 7, 32, 0),
         autoPaidAt = LocalDateTime(2026, 2, 15, 7, 33, 0),
         canUndo = canUndo,
     )
@@ -352,8 +351,7 @@ internal fun previewStateForDocumentType(
             currency = Currency.Eur,
             status = CashflowEntryStatus.Open,
             paidAt = null,
-            contactId = null,
-            contactName = "KBC Bank NV",
+            contact = CashflowContactRef(id = ContactId.parse("00000000-0000-0000-0000-000000000001"), name = "KBC Bank NV"),
             description = "Preview - ${resolvedType.name}",
             createdAt = previewNow,
             updatedAt = previewNow,
@@ -490,7 +488,6 @@ internal fun previewImportedTransactions(): List<BankTransactionDto> = listOf(
         ),
         descriptionRaw = "SEPA transfer premium Q1",
         status = BankTransactionStatus.NeedsReview,
-        matchScore = 0.93,
         createdAt = previewNow,
         updatedAt = previewNow,
     ),
@@ -503,7 +500,6 @@ internal fun previewImportedTransactions(): List<BankTransactionDto> = listOf(
         counterparty = CounterpartySnapshot(name = "KBC Bank NV"),
         descriptionRaw = "Transfer KBC",
         status = BankTransactionStatus.Unmatched,
-        matchScore = 0.74,
         createdAt = previewNow,
         updatedAt = previewNow,
     ),
@@ -516,7 +512,6 @@ internal fun previewImportedTransactions(): List<BankTransactionDto> = listOf(
         counterparty = CounterpartySnapshot(name = "AXA Belgium"),
         descriptionRaw = "AXA insurance transfer",
         status = BankTransactionStatus.Unmatched,
-        matchScore = 0.70,
         createdAt = previewNow,
         updatedAt = previewNow,
     ),

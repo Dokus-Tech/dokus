@@ -78,6 +78,14 @@ class Documents {
     class Upload(val parent: Documents = Documents())
 
     /**
+     * POST /api/v1/documents/download-zip
+     * Download multiple documents as a single ZIP archive.
+     */
+    @Serializable
+    @Resource("download-zip")
+    class DownloadZip(val parent: Documents = Documents())
+
+    /**
      * GET /api/v1/documents/events
      * Stream tenant-wide document invalidation events.
      */

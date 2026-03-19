@@ -84,7 +84,7 @@ class MatchingEngine(
         // Load contact cache (shared across all transaction scoring)
         val contactCache = mutableMapOf<String, tech.dokus.domain.model.contact.ContactDto?>()
         suspend fun resolveContact(entry: CashflowEntry): tech.dokus.domain.model.contact.ContactDto? {
-            val contactId = entry.contactId ?: return null
+            val contactId = entry.contact?.id ?: return null
             val key = contactId.toString()
             if (contactCache.containsKey(key)) return contactCache[key]
             val resolved = contactRepository.getContact(contactId, tenantId).getOrNull()
@@ -144,8 +144,8 @@ class MatchingEngine(
                 val candidate = MatchCandidate(
                     entry = entry,
                     contactIban = contact?.iban?.value,
-                    contactName = contact?.name?.value ?: entry.contactName,
-                    contactId = entry.contactId,
+                    contactName = contact?.name?.value ?: entry.contact?.name,
+                    contactId = entry.contact?.id,
                     invoiceReference = meta?.structuredReference,
                 )
 

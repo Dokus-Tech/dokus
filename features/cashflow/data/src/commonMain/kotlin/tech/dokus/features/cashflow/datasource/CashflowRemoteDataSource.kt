@@ -33,7 +33,7 @@ import tech.dokus.domain.ids.ExpenseId
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.AttachmentDto
-import tech.dokus.domain.model.AutoPaymentStatusDto
+import tech.dokus.domain.model.AutoPaymentStatus
 import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.domain.model.BulkReprocessRequest
 import tech.dokus.domain.model.BulkReprocessResponse
@@ -422,7 +422,7 @@ interface CashflowRemoteDataSource {
      */
     suspend fun getAutoPaymentStatus(
         entryId: CashflowEntryId
-    ): Result<AutoPaymentStatusDto>
+    ): Result<AutoPaymentStatus>
 
     /**
      * Record a payment against a cashflow entry.

@@ -27,7 +27,6 @@ internal class DocumentReviewLoader(
                 feedbackDialogState = null,
                 selectedFieldPath = null,
                 hasUnsavedChanges = false,
-                isEditMode = false,
                 failureBannerDismissed = false,
                 showContactSheet = false,
             )
@@ -175,7 +174,7 @@ internal class DocumentReviewLoader(
 
         // Read previous cashflow state for preservation
         var previousCashflowEntryState: DokusState<tech.dokus.domain.model.CashflowEntry> = DokusState.idle()
-        var previousAutoPaymentStatus: DokusState<tech.dokus.domain.model.AutoPaymentStatusDto> = DokusState.idle()
+        var previousAutoPaymentStatus: DokusState<tech.dokus.domain.model.AutoPaymentStatus> = DokusState.idle()
         var previousConfirmedCashflowEntryId: tech.dokus.domain.ids.CashflowEntryId? = null
         withState {
             if (hasContent) {

@@ -15,7 +15,7 @@ import java.security.MessageDigest
  * Handler for RAG (Retrieval-Augmented Generation) pipeline.
  * Chunks document text and generates embeddings for vector similarity search.
  */
-internal class RAGPipelineHandler(
+class RAGPipelineHandler(
     private val chunkingService: ChunkingService?,
     private val embeddingService: EmbeddingService?,
     private val chunkRepository: ChunkRepository?,

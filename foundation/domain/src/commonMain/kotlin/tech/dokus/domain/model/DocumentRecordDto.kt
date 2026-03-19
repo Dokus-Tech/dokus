@@ -218,3 +218,8 @@ data class DocumentFilters(
     val ingestionStatus: IngestionStatus? = null,
     val search: String? = null
 )
+
+@Serializable
+data class DownloadZipRequest(
+    val documentIds: List<String>,
+)

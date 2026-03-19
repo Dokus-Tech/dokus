@@ -17,6 +17,7 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.ai.ChatCitation
+import tech.dokus.domain.model.ai.ChatContentBlock
 import tech.dokus.domain.model.ai.ChatMessageDto
 import tech.dokus.domain.model.ai.ChatMessageId
 import tech.dokus.domain.model.ai.ChatScope
@@ -68,6 +69,11 @@ class ChatRepositoryImpl : ChatRepository {
                 json.encodeToString(ListSerializer(ChatCitation.serializer()), cites)
             }
 
+            // Serialize content blocks as JSON array
+            val contentBlocksJson = message.contentBlocks?.takeIf { it.isNotEmpty() }?.let { blocks ->
+                json.encodeToString(ListSerializer(ChatContentBlock.serializer()), blocks)
+            }
+
             ChatMessagesTable.insert {
                 it[id] = messageId
                 it[tenantId] = tenantUuid
@@ -80,6 +86,7 @@ class ChatRepositoryImpl : ChatRepository {
                     UUID.fromString(docId.toString())
                 }
                 it[citations] = citationsJson
+                it[contentBlocks] = contentBlocksJson
                 it[chunksRetrieved] = message.chunksRetrieved
                 it[aiModel] = message.aiModel
                 it[aiProvider] = message.aiProvider
@@ -232,6 +239,9 @@ class ChatRepositoryImpl : ChatRepository {
                 val firstMessage = messages.minByOrNull { it[ChatMessagesTable.sequenceNumber] }!!
                 val lastMessage = messages.maxByOrNull { it[ChatMessagesTable.sequenceNumber] }!!
 
+                val firstUserMessage = messages
+                    .firstOrNull { it[ChatMessagesTable.role] == MessageRole.User.dbValue }
+
                 ChatSessionSummary(
                     sessionId = ChatSessionId.parse(sessionUuid.toString()),
                     scope = ChatScope.fromDbValue(firstMessage[ChatMessagesTable.scope]),
@@ -239,6 +249,7 @@ class ChatRepositoryImpl : ChatRepository {
                         DocumentId.parse(it.toString())
                     },
                     documentName = null, // Would need join for this
+                    title = firstUserMessage?.get(ChatMessagesTable.content)?.take(50),
                     messageCount = messages.size,
                     lastMessagePreview = lastMessage[ChatMessagesTable.content].take(100),
                     createdAt = firstMessage[ChatMessagesTable.createdAt],
@@ -287,6 +298,9 @@ class ChatRepositoryImpl : ChatRepository {
             }
         }
 
+        val firstUserMessage = messages
+            .firstOrNull { it[ChatMessagesTable.role] == MessageRole.User.dbValue }
+
         ChatSessionSummary(
             sessionId = ChatSessionId.parse(sessionUuid.toString()),
             scope = ChatScope.fromDbValue(firstMessage[ChatMessagesTable.scope]),
@@ -294,6 +308,7 @@ class ChatRepositoryImpl : ChatRepository {
                 DocumentId.parse(it.toString())
             },
             documentName = documentName,
+            title = firstUserMessage?.get(ChatMessagesTable.content)?.take(50),
             messageCount = messages.size,
             lastMessagePreview = lastMessage[ChatMessagesTable.content].take(100),
             createdAt = firstMessage[ChatMessagesTable.createdAt],
@@ -368,6 +383,9 @@ class ChatRepositoryImpl : ChatRepository {
                 val lastMessage =
                     sessionMessages.maxByOrNull { it[ChatMessagesTable.sequenceNumber] }!!
 
+                val firstUserMsg = sessionMessages
+                    .firstOrNull { it[ChatMessagesTable.role] == MessageRole.User.dbValue }
+
                 ChatSessionSummary(
                     sessionId = ChatSessionId.parse(sessionUuid.toString()),
                     scope = ChatScope.fromDbValue(firstMessage[ChatMessagesTable.scope]),
@@ -375,6 +393,7 @@ class ChatRepositoryImpl : ChatRepository {
                         DocumentId.parse(it.toString())
                     },
                     documentName = null,
+                    title = firstUserMsg?.get(ChatMessagesTable.content)?.take(50),
                     messageCount = sessionMessages.size,
                     lastMessagePreview = lastMessage[ChatMessagesTable.content].take(100),
                     createdAt = firstMessage[ChatMessagesTable.createdAt],
@@ -398,6 +417,16 @@ class ChatRepositoryImpl : ChatRepository {
             }
         }
 
+        val contentBlocksJson = this[ChatMessagesTable.contentBlocks]
+        val contentBlocks = contentBlocksJson?.let {
+            try {
+                json.decodeFromString<List<ChatContentBlock>>(it)
+            } catch (e: Exception) {
+                logger.warn("Failed to parse content blocks JSON: ${e.message}")
+                null
+            }
+        }
+
         return ChatMessageDto(
             id = ChatMessageId.parse(this[ChatMessagesTable.id].value.toString()),
             tenantId = TenantId.parse(this[ChatMessagesTable.tenantId].toString()),
@@ -410,6 +439,7 @@ class ChatRepositoryImpl : ChatRepository {
                 DocumentId.parse(it.toString())
             },
             citations = citations,
+            contentBlocks = contentBlocks,
             chunksRetrieved = this[ChatMessagesTable.chunksRetrieved],
             aiModel = this[ChatMessagesTable.aiModel],
             aiProvider = this[ChatMessagesTable.aiProvider],

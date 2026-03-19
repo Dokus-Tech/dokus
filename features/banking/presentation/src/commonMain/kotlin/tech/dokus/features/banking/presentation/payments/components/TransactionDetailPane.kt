@@ -50,11 +50,13 @@ import tech.dokus.domain.enums.MatchedBy
 import tech.dokus.domain.enums.ResolutionType
 import tech.dokus.domain.enums.StatementTrust
 import tech.dokus.domain.ids.BankTransactionId
+import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.StructuredCommunication
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.domain.model.TransactionCommunication
+import tech.dokus.domain.model.TransactionMatchInfo
 import tech.dokus.domain.model.contact.CounterpartySnapshot
 import tech.dokus.foundation.aura.components.PButton
 import tech.dokus.foundation.aura.components.PButtonVariant
@@ -189,7 +191,7 @@ internal fun TransactionDetailPane(
 
         // Match metadata (when matched)
         if (transaction.status == BankTransactionStatus.Matched) {
-            transaction.matchedBy?.let {
+            transaction.matchInfo?.matchedBy?.let {
                 DetailRow(
                     label = stringResource(Res.string.banking_detail_matched_by),
                     value = it.localized,
@@ -201,7 +203,7 @@ internal fun TransactionDetailPane(
                     value = it.localized,
                 )
             }
-            transaction.matchEvidence?.takeIf { it.isNotEmpty() }?.let { evidence ->
+            transaction.matchInfo?.evidence?.takeIf { it.isNotEmpty() }?.let { evidence ->
                 DetailRow(
                     label = stringResource(Res.string.banking_detail_evidence),
                     value = evidence.joinToString(", "),
@@ -211,7 +213,7 @@ internal fun TransactionDetailPane(
 
         // Ignored reason (when ignored)
         if (transaction.status == BankTransactionStatus.Ignored) {
-            transaction.ignoredReason?.let {
+            transaction.ignoreInfo?.reason?.let {
                 DetailRow(
                     label = stringResource(Res.string.banking_detail_ignored_reason),
                     value = it.localized,
@@ -372,11 +374,14 @@ private val PreviewMatchedTx = BankTransactionDto(
     ),
     communication = TransactionCommunication.FreeForm(text = "DO Invoice #12345"),
     status = BankTransactionStatus.Matched,
-    matchedBy = MatchedBy.Auto,
     resolutionType = ResolutionType.Document,
-    matchScore = 1.0,
-    matchEvidence = listOf("exact_amount", "structured_comm_match"),
-    matchedAt = PreviewDateTime,
+    matchInfo = TransactionMatchInfo(
+        cashflowEntryId = CashflowEntryId.generate(),
+        matchedBy = MatchedBy.Auto,
+        score = 1.0,
+        evidence = listOf("exact_amount", "structured_comm_match"),
+        matchedAt = PreviewDateTime,
+    ),
     statementTrust = StatementTrust.High,
     currency = Currency.Eur,
     createdAt = PreviewDateTime,

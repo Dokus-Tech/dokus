@@ -122,7 +122,7 @@
     <string name="nav_section_console_tools">Tools</string>
 
     <!-- Chat -->
-    <string name="chat_title">AI Chat</string>
+    <string name="chat_title">Intelligence</string>
     <string name="chat_document_title_fallback">Document Chat</string>
     <string name="chat_title_all_documents">Chat with Documents</string>
     <string name="chat_scope_single_document">Single document</string>
@@ -167,4 +167,27 @@
     <string name="chat_sources_count">Sources (%1$d)</string>
     <string name="chat_expand_sources">Expand sources</string>
     <string name="chat_collapse_sources">Collapse sources</string>
+    <string name="chat_subtitle">Ask your financial data</string>
+    <string name="chat_sessions_label">Sessions</string>
+    <string name="chat_scope_all">All</string>
+    <string name="chat_scope_doc">Doc</string>
+    <string name="chat_input_placeholder_v2">Ask about documents, expenses, transactions\u2026</string>
+    <string name="chat_rag_footer">All confirmed documents \u00b7 RAG-powered</string>
+    <string name="chat_send_shortcut">\u2318 Enter</string>
+    <string name="chat_download_pdf">\u2193 PDF</string>
+    <string name="chat_download_all_zip">\u2193 Download all as ZIP</string>
+    <string name="chat_n_documents">%1$d documents</string>
+    <string name="chat_starter_biggest_expenses">What are my biggest expenses this month?</string>
+    <string name="chat_starter_overdue_invoices">Are there any overdue invoices?</string>
+    <string name="chat_starter_unmatched_payments">Show me unmatched bank payments</string>
+    <string name="chat_starter_q4_summary">Summarize my Q4 financial activity</string>
+    <string name="chat_ask_anything">Ask anything about your documents</string>
+    <string name="chat_upload_document">Upload document</string>
+    <string name="chat_send">Send</string>
+    <string name="chat_remove_file">Remove</string>
+    <string name="chat_session_fallback">Conversation</string>
+    <string name="chat_citation_document_fallback">Document</string>
+    <string name="chat_invoice_total">Total</string>
+    <string name="cashflow_review_status_processing">Processing\u2026</string>
+    <string name="cashflow_review_status_ready">Ready</string>
 </resources>

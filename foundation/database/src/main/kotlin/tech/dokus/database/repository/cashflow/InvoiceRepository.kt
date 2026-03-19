@@ -7,7 +7,6 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
-import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
@@ -25,7 +24,6 @@ import tech.dokus.database.services.InvoiceNumberGenerator
 import tech.dokus.database.tables.cashflow.InvoiceItemsTable
 import tech.dokus.database.tables.cashflow.InvoicesTable
 import tech.dokus.domain.Money
-import tech.dokus.domain.VatRate
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.enums.Currency
@@ -33,21 +31,18 @@ import tech.dokus.domain.enums.PaymentMethod
 import tech.dokus.domain.fromDbDecimal
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.InvoiceId
-import tech.dokus.domain.ids.InvoiceNumber
-import tech.dokus.domain.ids.Bic
-import tech.dokus.domain.ids.PeppolId
-import tech.dokus.domain.ids.StructuredCommunication
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.database.entity.InvoiceEntity
+import tech.dokus.database.entity.InvoiceItemEntity
+import tech.dokus.database.mapper.from
 import tech.dokus.domain.model.CreateInvoiceRequest
-import tech.dokus.domain.model.FinancialDocumentDto
-import tech.dokus.domain.model.InvoiceItemDto
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.toDbDecimal
 import tech.dokus.foundation.backend.database.dbQuery
 import java.math.BigDecimal
 import java.util.UUID
+import tech.dokus.foundation.backend.utils.runSuspendCatching
 
 /**
  * Repository for managing invoices
@@ -68,7 +63,7 @@ class InvoiceRepository(
     suspend fun createInvoice(
         tenantId: TenantId,
         request: CreateInvoiceRequest
-    ): Result<FinancialDocumentDto.InvoiceDto> = runCatching {
+    ): Result<InvoiceEntity> = runSuspendCatching {
         // Generate invoice number atomically BEFORE creating the invoice.
         // This ensures gap-less numbering as required by Belgian tax law.
         // The number is consumed even if invoice creation fails.
@@ -132,10 +127,10 @@ class InvoiceRepository(
                 InvoiceItemsTable.invoiceId eq invoiceId.value
             }.orderBy(InvoiceItemsTable.sortOrder)
                 .map { itemRow ->
-                    mapItemRow(itemRow, InvoiceId.parse(invoiceId.value.toString()))
+                    InvoiceItemEntity.from(itemRow, InvoiceId.parse(invoiceId.value.toString()))
                 }
 
-            mapInvoiceRow(row, items)
+            InvoiceEntity.from(row, items)
         }
     }
 
@@ -146,7 +141,7 @@ class InvoiceRepository(
     suspend fun getInvoice(
         invoiceId: InvoiceId,
         tenantId: TenantId
-    ): Result<FinancialDocumentDto.InvoiceDto?> = runCatching {
+    ): Result<InvoiceEntity?> = runSuspendCatching {
         dbQuery {
             val row = InvoicesTable.selectAll().where {
                 (InvoicesTable.id eq UUID.fromString(invoiceId.toString())) and
@@ -158,11 +153,11 @@ class InvoiceRepository(
                 InvoiceItemsTable.invoiceId eq UUID.fromString(invoiceId.toString())
             }.orderBy(InvoiceItemsTable.sortOrder)
                 .map { itemRow ->
-                    mapItemRow(itemRow, invoiceId)
+                    InvoiceItemEntity.from(itemRow, invoiceId)
                 }
 
             // Map to domain model
-            mapInvoiceRow(row, items)
+            InvoiceEntity.from(row, items)
         }
     }
 
@@ -179,7 +174,7 @@ class InvoiceRepository(
         toDate: LocalDate? = null,
         limit: Int = 50,
         offset: Int = 0
-    ): Result<PaginatedResponse<FinancialDocumentDto.InvoiceDto>> = runCatching {
+    ): Result<PaginatedResponse<InvoiceEntity>> = runSuspendCatching {
         dbQuery {
             var query = InvoicesTable.selectAll().where {
                 InvoicesTable.tenantId eq UUID.fromString(tenantId.toString())
@@ -210,7 +205,7 @@ class InvoiceRepository(
                 .map { row ->
                     // For list view, we don't fetch items to improve performance
                     // Items will be loaded when getting individual invoice
-                    mapInvoiceRow(row, items = emptyList())
+                    InvoiceEntity.from(row, items = emptyList())
                 }
                 .drop(offset)
 
@@ -230,8 +225,8 @@ class InvoiceRepository(
     suspend fun listOverdueInvoices(
         tenantId: TenantId,
         direction: DocumentDirection = DocumentDirection.Outbound
-    ): Result<List<FinancialDocumentDto.InvoiceDto>> =
-        runCatching {
+    ): Result<List<InvoiceEntity>> =
+        runSuspendCatching {
             dbQuery {
                 val today = Clock.System.now()
                     .toLocalDateTime(TimeZone.UTC).date
@@ -248,7 +243,7 @@ class InvoiceRepository(
                             )
                 }.orderBy(InvoicesTable.dueDate)
                     .map { row ->
-                        mapInvoiceRow(row, items = emptyList())
+                        InvoiceEntity.from(row, items = emptyList())
                     }
             }
         }
@@ -261,7 +256,7 @@ class InvoiceRepository(
         invoiceId: InvoiceId,
         tenantId: TenantId,
         status: InvoiceStatus
-    ): Result<Boolean> = runCatching {
+    ): Result<Boolean> = runSuspendCatching {
         dbQuery {
             val updatedRows = InvoicesTable.update({
                 (InvoicesTable.id eq UUID.fromString(invoiceId.toString())) and
@@ -293,7 +288,7 @@ class InvoiceRepository(
         amount: Money,
         paymentDate: LocalDate,
         paymentMethod: PaymentMethod
-    ): Result<InvoicePaymentUpdate> = runCatching {
+    ): Result<InvoicePaymentUpdate> = runSuspendCatching {
         require(amount.minor > 0) { "Payment amount must be positive" }
 
         dbQuery {
@@ -356,7 +351,7 @@ class InvoiceRepository(
         invoiceId: InvoiceId,
         tenantId: TenantId,
         request: CreateInvoiceRequest
-    ): Result<FinancialDocumentDto.InvoiceDto> = runCatching {
+    ): Result<InvoiceEntity> = runSuspendCatching {
         dbQuery {
             // Verify invoice exists and belongs to tenant
             val exists = InvoicesTable.selectAll().where {
@@ -431,10 +426,10 @@ class InvoiceRepository(
                 InvoiceItemsTable.invoiceId eq UUID.fromString(invoiceId.toString())
             }.orderBy(InvoiceItemsTable.sortOrder)
                 .map { itemRow ->
-                    mapItemRow(itemRow, invoiceId)
+                    InvoiceItemEntity.from(itemRow, invoiceId)
                 }
 
-            mapInvoiceRow(row, items)
+            InvoiceEntity.from(row, items)
         }
     }
 
@@ -445,17 +440,9 @@ class InvoiceRepository(
     suspend fun deleteInvoice(
         invoiceId: InvoiceId,
         tenantId: TenantId
-    ): Result<Boolean> = runCatching {
+    ): Result<Boolean> = runSuspendCatching {
         dbQuery {
-            // For now, we'll do a hard delete of items and invoice
-            // In production, consider soft delete with a deleted_at timestamp
-
-            // Delete items first (foreign key constraint)
-            InvoiceItemsTable.deleteWhere {
-                InvoiceItemsTable.invoiceId eq UUID.fromString(invoiceId.toString())
-            }
-
-            // Delete invoice
+            // Items are deleted automatically via CASCADE FK on InvoiceItemsTable.invoiceId
             val deletedRows = InvoicesTable.deleteWhere {
                 (InvoicesTable.id eq UUID.fromString(invoiceId.toString())) and
                     (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString()))
@@ -472,7 +459,7 @@ class InvoiceRepository(
     suspend fun exists(
         invoiceId: InvoiceId,
         tenantId: TenantId
-    ): Result<Boolean> = runCatching {
+    ): Result<Boolean> = runSuspendCatching {
         dbQuery {
             InvoicesTable.selectAll().where {
                 (InvoicesTable.id eq UUID.fromString(invoiceId.toString())) and
@@ -489,7 +476,7 @@ class InvoiceRepository(
         invoiceId: InvoiceId,
         tenantId: TenantId,
         documentId: DocumentId
-    ): Result<Boolean> = runCatching {
+    ): Result<Boolean> = runSuspendCatching {
         dbQuery {
             val updatedRows = InvoicesTable.update({
                 (InvoicesTable.id eq UUID.fromString(invoiceId.toString())) and
@@ -508,7 +495,7 @@ class InvoiceRepository(
     suspend fun findByDocumentId(
         tenantId: TenantId,
         documentId: DocumentId
-    ): FinancialDocumentDto.InvoiceDto? = dbQuery {
+    ): InvoiceEntity? = dbQuery {
         InvoicesTable.selectAll().where {
             (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString())) and
                 (InvoicesTable.documentId eq UUID.fromString(documentId.toString()))
@@ -519,10 +506,10 @@ class InvoiceRepository(
                 InvoiceItemsTable.invoiceId eq UUID.fromString(invoiceId.toString())
             }.orderBy(InvoiceItemsTable.sortOrder)
                 .map { itemRow ->
-                    mapItemRow(itemRow, invoiceId)
+                    InvoiceItemEntity.from(itemRow, invoiceId)
                 }
 
-            mapInvoiceRow(row, items).copy(id = invoiceId)
+            InvoiceEntity.from(row, items).copy(id = invoiceId)
         }
     }
 
@@ -533,7 +520,7 @@ class InvoiceRepository(
     suspend fun findByInvoiceNumber(
         tenantId: TenantId,
         invoiceNumber: String
-    ): FinancialDocumentDto.InvoiceDto? = dbQuery {
+    ): InvoiceEntity? = dbQuery {
         InvoicesTable.selectAll().where {
             (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString())) and
                 (InvoicesTable.invoiceNumber eq invoiceNumber)
@@ -543,10 +530,10 @@ class InvoiceRepository(
                 InvoiceItemsTable.invoiceId eq UUID.fromString(invoiceId.toString())
             }.orderBy(InvoiceItemsTable.sortOrder)
                 .map { itemRow ->
-                    mapItemRow(itemRow, invoiceId)
+                    InvoiceItemEntity.from(itemRow, invoiceId)
                 }
 
-            mapInvoiceRow(row, items).copy(id = invoiceId)
+            InvoiceEntity.from(row, items).copy(id = invoiceId)
         }
     }
 
@@ -573,7 +560,7 @@ class InvoiceRepository(
     suspend fun getLatestInvoiceForContact(
         tenantId: TenantId,
         contactId: ContactId
-    ): Result<FinancialDocumentDto.InvoiceDto?> = runCatching {
+    ): Result<InvoiceEntity?> = runSuspendCatching {
         dbQuery {
             val row = InvoicesTable.selectAll().where {
                 (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString())) and
@@ -588,66 +575,10 @@ class InvoiceRepository(
             val items = InvoiceItemsTable.selectAll().where {
                 InvoiceItemsTable.invoiceId eq UUID.fromString(invoiceId.toString())
             }.orderBy(InvoiceItemsTable.sortOrder)
-                .map { itemRow -> mapItemRow(itemRow, invoiceId) }
+                .map { itemRow -> InvoiceItemEntity.from(itemRow, invoiceId) }
 
-            mapInvoiceRow(row, items).copy(id = invoiceId)
+            InvoiceEntity.from(row, items).copy(id = invoiceId)
         }
     }
 
-    private fun mapItemRow(
-        itemRow: ResultRow,
-        invoiceId: InvoiceId
-    ): InvoiceItemDto {
-        return InvoiceItemDto(
-            id = itemRow[InvoiceItemsTable.id].value.toString(),
-            invoiceId = invoiceId,
-            description = itemRow[InvoiceItemsTable.description],
-            quantity = itemRow[InvoiceItemsTable.quantity].toDouble(),
-            unitPrice = Money.fromDbDecimal(itemRow[InvoiceItemsTable.unitPrice]),
-            vatRate = VatRate.fromDbDecimal(itemRow[InvoiceItemsTable.vatRate]),
-            lineTotal = Money.fromDbDecimal(itemRow[InvoiceItemsTable.lineTotal]),
-            vatAmount = Money.fromDbDecimal(itemRow[InvoiceItemsTable.vatAmount]),
-            sortOrder = itemRow[InvoiceItemsTable.sortOrder]
-        )
-    }
-
-    private fun mapInvoiceRow(
-        row: ResultRow,
-        items: List<InvoiceItemDto>
-    ): FinancialDocumentDto.InvoiceDto {
-        return FinancialDocumentDto.InvoiceDto(
-            id = InvoiceId.parse(row[InvoicesTable.id].value.toString()),
-            tenantId = TenantId.parse(row[InvoicesTable.tenantId].toString()),
-            direction = row[InvoicesTable.direction],
-            contactId = ContactId.parse(row[InvoicesTable.contactId].toString()),
-            invoiceNumber = InvoiceNumber(row[InvoicesTable.invoiceNumber]),
-            issueDate = row[InvoicesTable.issueDate],
-            dueDate = row[InvoicesTable.dueDate],
-            subtotalAmount = Money.fromDbDecimal(row[InvoicesTable.subtotalAmount]),
-            vatAmount = Money.fromDbDecimal(row[InvoicesTable.vatAmount]),
-            totalAmount = Money.fromDbDecimal(row[InvoicesTable.totalAmount]),
-            paidAmount = Money.fromDbDecimal(row[InvoicesTable.paidAmount]),
-            status = row[InvoicesTable.status],
-            currency = row[InvoicesTable.currency],
-            notes = row[InvoicesTable.notes],
-            paymentTermsDays = row[InvoicesTable.paymentTermsDays],
-            dueDateMode = row[InvoicesTable.dueDateMode],
-            structuredCommunication = row[InvoicesTable.structuredCommunication]?.let(::StructuredCommunication),
-            senderIban = row[InvoicesTable.senderIban]?.let(::Iban),
-            senderBic = row[InvoicesTable.senderBic]?.let(::Bic),
-            deliveryMethod = row[InvoicesTable.deliveryMethod],
-            termsAndConditions = row[InvoicesTable.termsAndConditions],
-            items = items,
-            peppolId = row[InvoicesTable.peppolId]?.let { PeppolId(it) },
-            peppolSentAt = row[InvoicesTable.peppolSentAt],
-            peppolStatus = row[InvoicesTable.peppolStatus],
-            paymentLink = row[InvoicesTable.paymentLink],
-            paymentLinkExpiresAt = row[InvoicesTable.paymentLinkExpiresAt],
-            paidAt = row[InvoicesTable.paidAt],
-            paymentMethod = row[InvoicesTable.paymentMethod],
-            documentId = row[InvoicesTable.documentId]?.let { DocumentId.parse(it.toString()) },
-            createdAt = row[InvoicesTable.createdAt],
-            updatedAt = row[InvoicesTable.updatedAt]
-        )
-    }
 }

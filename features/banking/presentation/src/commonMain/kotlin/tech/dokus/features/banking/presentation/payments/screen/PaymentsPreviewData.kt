@@ -19,6 +19,8 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.domain.model.BankTransactionSummary
 import tech.dokus.domain.model.TransactionCommunication
+import tech.dokus.domain.model.TransactionIgnoreInfo
+import tech.dokus.domain.model.TransactionMatchInfo
 import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.domain.model.contact.CounterpartySnapshot
 import tech.dokus.features.banking.presentation.payments.mvi.PaymentFilterTab
@@ -67,9 +69,13 @@ private val PreviewTransactions: List<BankTransactionDto> = listOf(
             normalized = StructuredCommunication("+++101/2345/67890+++"),
         ),
         status = BankTransactionStatus.NeedsReview,
-        matchedCashflowId = CashflowEntryId.generate(),
-        matchScore = 0.88,
-        matchEvidence = listOf("exact_amount", "counterparty_name_match", "within_due_window"),
+        matchInfo = TransactionMatchInfo(
+            cashflowEntryId = CashflowEntryId.generate(),
+            matchedBy = MatchedBy.Auto,
+            score = 0.88,
+            evidence = listOf("exact_amount", "counterparty_name_match", "within_due_window"),
+            matchedAt = PreviewDateTime,
+        ),
         statementTrust = StatementTrust.High,
         currency = Currency.Eur,
         createdAt = PreviewDateTime,
@@ -85,11 +91,14 @@ private val PreviewTransactions: List<BankTransactionDto> = listOf(
         counterparty = CounterpartySnapshot(name = "DigitalOcean"),
         communication = TransactionCommunication.FreeForm(text = "DO Invoice #12345"),
         status = BankTransactionStatus.Matched,
-        matchedBy = MatchedBy.Auto,
         resolutionType = ResolutionType.Document,
-        matchScore = 1.0,
-        matchEvidence = listOf("exact_amount", "structured_comm_match"),
-        matchedAt = PreviewDateTime,
+        matchInfo = TransactionMatchInfo(
+            cashflowEntryId = CashflowEntryId.generate(),
+            matchedBy = MatchedBy.Auto,
+            score = 1.0,
+            evidence = listOf("exact_amount", "structured_comm_match"),
+            matchedAt = PreviewDateTime,
+        ),
         statementTrust = StatementTrust.High,
         currency = Currency.Eur,
         createdAt = PreviewDateTime,
@@ -107,9 +116,11 @@ private val PreviewTransactions: List<BankTransactionDto> = listOf(
             iban = Iban("BE39539007547034"),
         ),
         status = BankTransactionStatus.Ignored,
-        ignoredReason = IgnoredReason.BankFee,
-        ignoredAt = PreviewDateTime,
-        ignoredBy = "user",
+        ignoreInfo = TransactionIgnoreInfo(
+            reason = IgnoredReason.BankFee,
+            ignoredAt = PreviewDateTime,
+            ignoredBy = "user",
+        ),
         currency = Currency.Eur,
         createdAt = PreviewDateTime,
         updatedAt = PreviewDateTime,

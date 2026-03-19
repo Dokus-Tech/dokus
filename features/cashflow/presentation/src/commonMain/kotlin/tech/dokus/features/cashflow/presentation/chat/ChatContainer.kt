@@ -19,6 +19,7 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
+import tech.dokus.domain.model.ai.ChatAttachedFile
 import tech.dokus.domain.model.ai.ChatConfiguration
 import tech.dokus.domain.model.ai.ChatMessageDto
 import tech.dokus.domain.model.ai.ChatMessageId
@@ -106,7 +107,14 @@ internal class ChatContainer(
                     is ChatIntent.ExpandAllCitations -> handleExpandAllCitations()
                     is ChatIntent.CollapseAllCitations -> handleCollapseAllCitations()
 
+                    // === File Attachments ===
+                    is ChatIntent.AttachFile -> handleAttachFile(intent.filename, intent.bytes)
+                    is ChatIntent.RemoveAttachedFile -> updateState {
+                        copy(attachedFiles = attachedFiles.filter { it.refId != intent.refId })
+                    }
+
                     // === Session Management ===
+                    is ChatIntent.ToggleSessionsPanel -> updateState { copy(isSessionsPanelOpen = !isSessionsPanelOpen) }
                     is ChatIntent.ShowSessionPicker -> handleShowSessionPicker()
                     is ChatIntent.HideSessionPicker -> handleHideSessionPicker()
                     is ChatIntent.StartNewConversation -> handleStartNewConversation()
@@ -147,21 +155,44 @@ internal class ChatContainer(
     }
 
     private suspend fun ChatCtx.handleInitCrossDocChat() {
+        // Don't reset if we already have a cross-doc session with messages
+        withState {
+            val existing = (session as? DokusState.Success<ChatSessionData>)?.data
+            if (existing != null && existing.scope == ChatScope.AllDocs && existing.sessionId != null) {
+                logger.d { "Cross-doc session already active: ${existing.sessionId}" }
+                // Refresh the session list
+                intent(ChatIntent.LoadRecentSessions)
+                return@withState
+            }
+        }
+
         logger.d { "Initializing cross-doc chat" }
         updateState { copy(session = DokusState.loading()) }
 
-        // Load configuration
         val config = loadConfiguration()
+
+        // Try to load the most recent cross-doc session
+        val recentSessions = listChatSessionsUseCase(
+            scope = ChatScope.AllDocs,
+            limit = 1,
+        ).getOrNull()
+        val lastSession = recentSessions?.items?.firstOrNull()
 
         updateState {
             copy(
                 session = DokusState.success(
                     ChatSessionData(
                         scope = ChatScope.AllDocs,
-                        configuration = config
+                        configuration = config,
+                        recentSessions = recentSessions?.items ?: emptyList(),
                     )
                 )
             )
+        }
+
+        // If there's a recent session, load its history
+        if (lastSession != null) {
+            intent(ChatIntent.LoadSession(lastSession.sessionId))
         }
     }
 
@@ -504,6 +535,27 @@ internal class ChatContainer(
         }
 
         action(ChatAction.NavigateToDocumentPreview(docId, pageNumber))
+    }
+
+    private suspend fun ChatCtx.handleAttachFile(filename: String, bytes: ByteArray) {
+        // Add file as "uploading" placeholder immediately
+        val tempRefId = "temp-${kotlin.time.Clock.System.now().toEpochMilliseconds()}"
+        val pendingFile = ChatAttachedFile(
+            refId = tempRefId,
+            filename = filename,
+            isUploading = true,
+        )
+        updateState { copy(attachedFiles = attachedFiles + pendingFile) }
+
+        // TODO: Call POST /api/v1/chat/upload to upload to temp storage + RAG index
+        // For now, mark as uploaded immediately (backend endpoint not yet implemented)
+        updateState {
+            copy(
+                attachedFiles = attachedFiles.map { file ->
+                    if (file.refId == tempRefId) file.copy(isUploading = false) else file
+                }
+            )
+        }
     }
 
     // =========================================================================

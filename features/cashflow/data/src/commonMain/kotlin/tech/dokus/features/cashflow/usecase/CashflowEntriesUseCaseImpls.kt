@@ -7,7 +7,7 @@ import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.enums.CashflowViewMode
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.model.CancelEntryRequest
-import tech.dokus.domain.model.AutoPaymentStatusDto
+import tech.dokus.domain.model.AutoPaymentStatus
 import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.model.CashflowOverview
 import tech.dokus.domain.model.CashflowPaymentRequest
@@ -90,7 +90,7 @@ internal class GetCashflowPaymentCandidatesUseCaseImpl(
 internal class GetAutoPaymentStatusUseCaseImpl(
     private val dataSource: CashflowRemoteDataSource
 ) : GetAutoPaymentStatusUseCase {
-    override suspend fun invoke(entryId: CashflowEntryId): Result<AutoPaymentStatusDto> {
+    override suspend fun invoke(entryId: CashflowEntryId): Result<AutoPaymentStatus> {
         return dataSource.getAutoPaymentStatus(entryId)
     }
 }

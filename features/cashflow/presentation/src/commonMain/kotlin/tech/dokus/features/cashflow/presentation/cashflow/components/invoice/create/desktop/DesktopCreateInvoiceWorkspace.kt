@@ -48,8 +48,10 @@ import tech.dokus.foundation.aura.style.textMuted
 private val PaneTitleBarHeight = Constraints.Height.button + Constraints.Spacing.medium
 private val AssistantPaneWidth = 380.dp
 
+private enum class AssistantRole { User, Assistant }
+
 private data class AssistantMessage(
-    val role: ChatMessageRole,
+    val role: AssistantRole,
     val text: String
 )
 
@@ -200,11 +202,11 @@ private fun AssistantPaneContent() {
     val messages = remember {
         mutableStateListOf(
             AssistantMessage(
-                role = ChatMessageRole.Assistant,
+                role = AssistantRole.Assistant,
                 text = "I can help draft or adjust this invoice while you edit the form."
             ),
             AssistantMessage(
-                role = ChatMessageRole.Assistant,
+                role = AssistantRole.Assistant,
                 text = "Try: \"Add a line item for consulting: 2h at EUR 95, VAT 21%.\""
             )
         )
@@ -223,11 +225,16 @@ private fun AssistantPaneContent() {
         ) {
             items(messages) { message ->
                 when (message.role) {
-                    ChatMessageRole.User -> {
-                        PUserMessageBubble(message = message.text)
+                    AssistantRole.User -> {
+                        ChatUserBubble(text = message.text)
                     }
-                    ChatMessageRole.Assistant -> {
-                        PAssistantMessageBubble(message = message.text)
+                    AssistantRole.Assistant -> {
+                        ChatAssistantMessage {
+                            Text(
+                                text = message.text,
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                        }
                     }
                 }
             }
@@ -250,9 +257,9 @@ private fun AssistantPaneContent() {
                 onSend = {
                     val prompt = input.trim()
                     if (prompt.isBlank()) return@PChatInputField
-                    messages += AssistantMessage(role = ChatMessageRole.User, text = prompt)
+                    messages += AssistantMessage(role = AssistantRole.User, text = prompt)
                     messages += AssistantMessage(
-                        role = ChatMessageRole.Assistant,
+                        role = AssistantRole.Assistant,
                         text = "Received. I will map this request to invoice changes."
                     )
                     input = ""

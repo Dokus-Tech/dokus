@@ -6,6 +6,7 @@ import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.model.ai.ChatAttachedFile
 import tech.dokus.domain.model.ai.ChatCitation
 import tech.dokus.domain.model.ai.ChatConfiguration
 import tech.dokus.domain.model.ai.ChatMessageDto
@@ -139,6 +140,8 @@ data class ChatState(
     val isSending: Boolean = false,
     val expandedCitationIds: Set<String> = emptySet(),
     val showSessionPicker: Boolean = false,
+    val isSessionsPanelOpen: Boolean = true,
+    val attachedFiles: List<ChatAttachedFile> = emptyList(),
 ) : MVIState {
 
     companion object {
@@ -204,6 +207,14 @@ sealed interface ChatIntent : MVIIntent {
     /** Send the current message */
     data object SendMessage : ChatIntent
 
+    // === File Attachments ===
+
+    @Suppress("ArrayInDataClass") // ByteArray has no structural equality — intent is fire-and-forget, never compared
+    data class AttachFile(val filename: String, val bytes: ByteArray) : ChatIntent
+
+    /** Remove an attached file */
+    data class RemoveAttachedFile(val refId: String) : ChatIntent
+
     // === Scope Selection ===
 
     /**
@@ -236,6 +247,9 @@ sealed interface ChatIntent : MVIIntent {
 
     /** Hide the session picker dialog */
     data object HideSessionPicker : ChatIntent
+
+    /** Toggle the sessions side panel open/closed */
+    data object ToggleSessionsPanel : ChatIntent
 
     /** Start a new conversation (clear current session) */
     data object StartNewConversation : ChatIntent
@@ -305,6 +319,18 @@ sealed interface ChatAction : MVIAction {
     data class ShowInfo(val message: String) : ChatAction
 
     // === UI Effects ===
+
+    /**
+     * Download a single document PDF.
+     * @param documentId Document to download
+     */
+    data class DownloadDocument(val documentId: String) : ChatAction
+
+    /**
+     * Download multiple documents as a ZIP archive.
+     * @param documentIds Document IDs to bundle
+     */
+    data class DownloadDocumentsZip(val documentIds: List<String>) : ChatAction
 
     /** Scroll to the bottom of the message list */
     data object ScrollToBottom : ChatAction

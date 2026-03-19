@@ -3,7 +3,9 @@ package tech.dokus.database.di
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import tech.dokus.domain.repository.DocumentStatusChecker
+import tech.dokus.domain.repository.IngestionStatusChecker
 import tech.dokus.database.repository.ai.ChatRepositoryImpl
+import tech.dokus.database.repository.ai.IngestionStatusCheckerImpl
 import tech.dokus.database.repository.ai.DocumentChunksRepository
 import tech.dokus.database.repository.ai.DocumentExamplesRepository
 import tech.dokus.database.repository.auth.AddressRepository
@@ -84,6 +86,7 @@ val repositoryModuleCashflow = module {
     single { TransactionMatchLinkRepository() }
     single { AutoPaymentAuditRepository() }
     single { DocumentRepository() } bind DocumentStatusChecker::class
+    single { IngestionStatusCheckerImpl(get()) } bind IngestionStatusChecker::class
     single { DocumentIngestionRunRepository() }
     single { InvoiceNumberRepository() }
     single { InvoiceNumberGenerator(get()) }

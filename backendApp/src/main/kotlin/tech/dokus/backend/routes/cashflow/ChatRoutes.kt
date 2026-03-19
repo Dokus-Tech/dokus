@@ -3,9 +3,9 @@ package tech.dokus.backend.routes.cashflow
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.resources.get
+import io.ktor.server.resources.post
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
-import io.ktor.server.routing.post
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -31,7 +31,10 @@ import tech.dokus.domain.model.ai.ChatSessionListResponse
 import tech.dokus.domain.model.ai.MessageRole
 import tech.dokus.domain.repository.ChatRepository
 import tech.dokus.domain.routes.Chat
+import tech.dokus.domain.routes.Documents
+import tech.dokus.domain.model.ai.ChatContentBlock
 import tech.dokus.features.ai.agents.ChatAgent
+import tech.dokus.features.ai.agents.ChatResponseParser
 import tech.dokus.features.ai.agents.ConversationMessage
 import tech.dokus.features.ai.config.ModelSet
 import tech.dokus.features.ai.queue.LlmQueue
@@ -80,7 +83,7 @@ internal fun Route.chatRoutes() {
          *
          * Response: ChatResponse with AI-generated answer and citations
          */
-        post("/api/v1/chat") {
+        post<Chat> {
             val tenantId = requireTenantId()
             val userId = dokusPrincipal.userId
             val request = call.receive<ChatRequest>()
@@ -127,17 +130,10 @@ internal fun Route.chatRoutes() {
          *
          * Response: ChatResponse with AI-generated answer and citations
          */
-        post("/api/v1/documents/{id}/chat") {
+        post<Documents.Id.Chat> { route ->
             val tenantId = requireTenantId()
             val userId = dokusPrincipal.userId
-            val documentIdParam = call.parameters["id"]
-                ?: throw DokusException.BadRequest("Document ID is required")
-
-            val documentId = try {
-                DocumentId.parse(documentIdParam)
-            } catch (e: Exception) {
-                throw DokusException.BadRequest("Invalid document ID format")
-            }
+            val documentId = DocumentId.parse(route.parent.id)
 
             val request = call.receive<ChatRequest>()
 
@@ -318,6 +314,7 @@ private suspend fun processChat(
     logger: org.slf4j.Logger
 ): ChatResponse {
     val chatModelId = models.chat.id
+    val chatProvider = chatModelId.substringBefore("/")
     val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
     // Determine session
@@ -427,6 +424,14 @@ private suspend fun processChat(
         null
     }
 
+    // Parse structured content blocks from LLM response
+    val contentBlocks = ChatResponseParser.parse(chatResult.answer)
+    // Use plain text content (without XML tags) for the content field
+    val plainContent = contentBlocks
+        .filterIsInstance<ChatContentBlock.Text>()
+        .joinToString("\n\n") { it.content }
+        .ifBlank { chatResult.answer }
+
     // Create and save assistant message
     val assistantMessageId = ChatMessageId.generate()
     val assistantSequence = userSequence + 1
@@ -436,13 +441,14 @@ private suspend fun processChat(
         userId = userId,
         sessionId = sessionId,
         role = MessageRole.Assistant,
-        content = chatResult.answer,
+        content = plainContent,
         scope = request.scope,
         documentId = documentId,
         citations = citations,
+        contentBlocks = contentBlocks,
         chunksRetrieved = chatResult.chunksRetrieved,
         aiModel = chatModelId,
-        aiProvider = "lm-studio",
+        aiProvider = chatProvider,
         generationTimeMs = generationTimeMs,
         promptTokens = null, // TODO: Track from LLM response
         completionTokens = null,
@@ -463,7 +469,7 @@ private suspend fun processChat(
         contextTokens = null,
         generationTimeMs = generationTimeMs,
         model = chatModelId,
-        provider = "ollama",
+        provider = chatProvider,
         promptTokens = null,
         completionTokens = null,
         totalTokens = null
