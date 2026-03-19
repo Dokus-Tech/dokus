@@ -4,6 +4,26 @@ All notable changes to Dokus are documented in this file.
 
 The format follows Keep a Changelog principles with pragmatic release summaries.
 
+## [1.3.0] - 2026-03-19
+
+### Added
+- AI assistant with structured content blocks, document rendering, markdown chat, file upload/download, RAG indexing, and cross-document session flow (#243).
+- Structured feedback UI with category chips and streamlined feedback flow (#242).
+- Auto-create contact from document counterparty snapshot when no match exists, then confirm (#242).
+- EU OSS VAT format recognition (`EU` + 9-12 digits) in validation and AI extraction prompts (#245).
+- Current date injection into AI extraction prompts for date format disambiguation (#245).
+
+### Changed
+- Search ALL tab now deduplicates documents that already appear as linked transactions (#246).
+- VAT amount inferred as zero when all line items have 0% VAT rate or breakdown shows zero amounts, fixing auto-confirm for reverse-charge invoices (#245).
+- Default image DPI set to medium for balanced density (#242).
+- Database entity mappers converted to `Entity.Companion.from(row)` extension pattern; repositories return entities instead of DTOs (#243).
+- `runCatching` replaced with `runSuspendCatching` across backend suspend functions (#243).
+
+### Fixed
+- Reprocess query now includes documents with null status, previously omitted from processing health counts (#241).
+- Local Docker Compose `POSTGRES_DB` env var aligned with development database name (#244).
+
 ## [1.2.2] - 2026-03-16
 
 ### Changed
