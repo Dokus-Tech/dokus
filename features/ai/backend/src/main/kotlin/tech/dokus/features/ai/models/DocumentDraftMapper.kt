@@ -9,6 +9,7 @@ import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.PartyDraft
 import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.domain.model.TransactionCommunication
+import tech.dokus.domain.Money
 import tech.dokus.domain.model.contact.CounterpartySnapshot
 import tech.dokus.domain.model.toEmptyDraftData
 
@@ -27,7 +28,7 @@ private fun FinancialExtractionResult.toDraftData(direction: DocumentDirection):
         dueDate = data.dueDate,
         currency = data.currency,
         subtotalAmount = data.subtotalAmount,
-        vatAmount = data.vatAmount,
+        vatAmount = data.vatAmount ?: inferZeroVat(data.lineItems, data.vatBreakdown),
         totalAmount = data.totalAmount,
         lineItems = data.lineItems,
         vatBreakdown = data.vatBreakdown,
@@ -60,7 +61,7 @@ private fun FinancialExtractionResult.toDraftData(direction: DocumentDirection):
         issueDate = data.issueDate,
         currency = data.currency,
         subtotalAmount = data.subtotalAmount,
-        vatAmount = data.vatAmount,
+        vatAmount = data.vatAmount ?: inferZeroVat(data.lineItems, data.vatBreakdown),
         totalAmount = data.totalAmount,
         lineItems = data.lineItems,
         vatBreakdown = data.vatBreakdown,
@@ -124,4 +125,24 @@ private fun FinancialExtractionResult.toDraftData(direction: DocumentDirection):
     is FinancialExtractionResult.ProForma,
     is FinancialExtractionResult.PurchaseOrder,
     is FinancialExtractionResult.Unsupported -> null
+}
+
+/**
+ * Infer vatAmount = 0 when all evidence points to a zero-rated/exempt/reverse-charge invoice.
+ * Returns Money.ZERO if all line items have vatRate == 0 or all vatBreakdown entries have amount == 0.
+ * Returns null if we can't determine (let it stay unknown).
+ */
+private fun inferZeroVat(
+    lineItems: List<tech.dokus.domain.model.FinancialLineItem>,
+    vatBreakdown: List<tech.dokus.domain.model.VatBreakdownEntry>,
+): Money? {
+    // If vatBreakdown explicitly says amount = 0 for all entries
+    if (vatBreakdown.isNotEmpty() && vatBreakdown.all { it.amount == 0L }) {
+        return Money.ZERO
+    }
+    // If all line items have vatRate = 0
+    if (lineItems.isNotEmpty() && lineItems.all { it.vatRate == 0 }) {
+        return Money.ZERO
+    }
+    return null
 }
