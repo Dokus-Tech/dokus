@@ -11,7 +11,6 @@ import tech.dokus.domain.processing.DocumentProcessingConstants.AUTO_CONFIRM_CON
 import tech.dokus.domain.processing.DocumentProcessingConstants.RETRY_CONFIDENCE_THRESHOLD
 import tech.dokus.features.ai.graph.AcceptDocumentInput
 import tech.dokus.features.ai.graph.nodes.DirectionResolutionResolver
-import tech.dokus.features.ai.graph.nodes.CONTENT_TYPE_STORAGE_KEY
 import tech.dokus.features.ai.graph.nodes.documentImagesInjectorNode
 import tech.dokus.features.ai.graph.nodes.extractionTenantContextInjectorNode
 import tech.dokus.features.ai.graph.nodes.tenantContextInjectorNode
@@ -41,6 +40,8 @@ internal fun AIAgentSubgraphBuilderBase<*, *>.acceptDocumentOnVisionSubGraph(
         val tenantKey = createStorageKey<Tenant>("tenant-context")
         val associatedNamesKey = createStorageKey<List<String>>("associated-person-names")
         val classificationKey = createStorageKey<ClassificationResult>("classification-result")
+        val csvBytesKey = createStorageKey<ByteArray>("csv-raw-bytes")
+        val contentTypeKey = createStorageKey<String>("document-content-type")
 
         // Captured before classification, used by cleanForExtraction to strip classification Q&A
         var preClassifyMessageCount = 0
@@ -53,7 +54,11 @@ internal fun AIAgentSubgraphBuilderBase<*, *>.acceptDocumentOnVisionSubGraph(
             input
         }
         val injectTenant by tenantContextInjectorNode<AcceptDocumentInput>()
-        val injectImages by documentImagesInjectorNode<AcceptDocumentInput>(documentFetcher)
+        val injectImages by documentImagesInjectorNode<AcceptDocumentInput>(
+            documentFetcher,
+            csvBytesKey = csvBytesKey,
+            contentTypeKey = contentTypeKey,
+        )
         val injectFeedback by userFeedbackInjectorNode<AcceptDocumentInput>()
         val prepareClassify by node<AcceptDocumentInput, ClassifyDocumentInput>("prepare-classify") { input ->
             llm.readSession { preClassifyMessageCount = prompt.messages.size }
@@ -124,11 +129,10 @@ internal fun AIAgentSubgraphBuilderBase<*, *>.acceptDocumentOnVisionSubGraph(
                 tenantKey, associatedNamesKey
             )
             val prepareExtraction by node<ClassificationResult, ExtractDocumentInput>("prepare-extraction") { input ->
-                val contentTypeKey = createStorageKey<String>(CONTENT_TYPE_STORAGE_KEY)
                 val storedContentType = runCatching { storage.getValue(contentTypeKey) }.getOrNull()
                 ExtractDocumentInput(input.documentType, input.language, contentType = storedContentType)
             }
-            val extract by financialExtractionSubGraph(aiConfig)
+            val extract by financialExtractionSubGraph(aiConfig, csvBytesKey = csvBytesKey)
             val resolveDirection by node<FinancialExtractionResult, ResolvedExtraction>("resolve-direction") { extraction ->
                 val tenant = storage.getValue(tenantKey)
                 val associatedNames = storage.getValue(associatedNamesKey)

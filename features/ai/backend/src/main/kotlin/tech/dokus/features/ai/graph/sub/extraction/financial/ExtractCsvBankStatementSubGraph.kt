@@ -1,5 +1,6 @@
 package tech.dokus.features.ai.graph.sub.extraction.financial
 
+import ai.koog.agents.core.agent.entity.AIAgentStorageKey
 import ai.koog.agents.core.agent.entity.createStorageKey
 import ai.koog.agents.core.dsl.builder.AIAgentSubgraphBuilderBase
 import ai.koog.agents.core.dsl.builder.AIAgentSubgraphDelegate
@@ -11,7 +12,6 @@ import kotlinx.serialization.Serializable
 import tech.dokus.features.ai.config.asVisionModel
 import tech.dokus.features.ai.config.finishToolOnly
 import tech.dokus.features.ai.config.finishToolVisionAssistantResponseRepeatMax
-import tech.dokus.features.ai.graph.nodes.CSV_BYTES_STORAGE_KEY
 import tech.dokus.features.ai.models.ExtractDocumentInput
 import tech.dokus.features.ai.models.FinancialExtractionResult
 import tech.dokus.features.ai.services.CsvBankStatementParser
@@ -81,6 +81,7 @@ private class CsvMappingFinishTool :
 
 fun AIAgentSubgraphBuilderBase<*, *>.extractCsvBankStatementSubGraph(
     aiConfig: AIConfig,
+    csvBytesKey: AIAgentStorageKey<ByteArray>,
 ): AIAgentSubgraphDelegate<ExtractDocumentInput, FinancialExtractionResult> {
     return subgraph(name = "csv-bank-statement-extraction") {
         val mappingKey = createStorageKey<CsvColumnMapping>("csv-column-mapping")
@@ -110,7 +111,6 @@ fun AIAgentSubgraphBuilderBase<*, *>.extractCsvBankStatementSubGraph(
                 )
             }
 
-            val csvBytesKey = createStorageKey<ByteArray>(CSV_BYTES_STORAGE_KEY)
             val csvBytes = storage.getValue(csvBytesKey)
 
             CsvBankStatementParser.parse(csvBytes, mapping)

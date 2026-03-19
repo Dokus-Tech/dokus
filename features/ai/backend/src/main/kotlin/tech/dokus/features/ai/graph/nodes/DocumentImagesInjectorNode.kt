@@ -1,6 +1,6 @@
 package tech.dokus.features.ai.graph.nodes
 
-import ai.koog.agents.core.agent.entity.createStorageKey
+import ai.koog.agents.core.agent.entity.AIAgentStorageKey
 import ai.koog.agents.core.dsl.builder.AIAgentNodeDelegate
 import ai.koog.agents.core.dsl.builder.AIAgentSubgraphBuilderBase
 import ai.koog.prompt.message.AttachmentContent
@@ -20,14 +20,10 @@ interface InputWithDocumentId {
 /** Maximum number of CSV lines to inject into the prompt for classification + column mapping. */
 private const val CSV_PREVIEW_LINE_COUNT = 50
 
-/** Graph storage key for raw CSV bytes (used by CSV extraction subgraph). */
-const val CSV_BYTES_STORAGE_KEY = "csv-raw-bytes"
-
-/** Graph storage key for document content type (used to route CSV extraction). */
-const val CONTENT_TYPE_STORAGE_KEY = "document-content-type"
-
 internal inline fun <reified Input> AIAgentSubgraphBuilderBase<*, *>.documentImagesInjectorNode(
     fetcher: DocumentFetcher,
+    csvBytesKey: AIAgentStorageKey<ByteArray>? = null,
+    contentTypeKey: AIAgentStorageKey<String>? = null,
 ): AIAgentNodeDelegate<Input, Input> where Input : InputWithDocumentId, Input : InputWithTenantContext {
     return node<Input, Input>("inject-document-images") { args ->
         val document = fetcher(args.tenant.id, args.documentId).getOrElse {
@@ -37,10 +33,8 @@ internal inline fun <reified Input> AIAgentSubgraphBuilderBase<*, *>.documentIma
             return@node args
         }
 
-        if (document.mimeType == "text/csv") {
+        if (document.mimeType == "text/csv" && csvBytesKey != null && contentTypeKey != null) {
             // CSV: store raw bytes for extraction, inject text preview for classification
-            val csvBytesKey = createStorageKey<ByteArray>(CSV_BYTES_STORAGE_KEY)
-            val contentTypeKey = createStorageKey<String>(CONTENT_TYPE_STORAGE_KEY)
             storage.set(csvBytesKey, document.bytes)
             storage.set(contentTypeKey, document.mimeType)
 
