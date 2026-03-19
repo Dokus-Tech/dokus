@@ -16,10 +16,11 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.backend.mappers.from
 import tech.dokus.domain.model.AccountBalanceSeries
-import tech.dokus.database.entity.BankAccountEntity
-import tech.dokus.database.entity.BankTransactionEntity
+import tech.dokus.domain.model.BankAccountDto
 import tech.dokus.domain.model.BankAccountSummary
+import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.domain.model.BankTransactionSummary
 import tech.dokus.domain.model.BalanceHistoryPoint
 import tech.dokus.domain.model.BalanceHistoryResponse
@@ -45,8 +46,8 @@ class BankingService(
 ) {
     private val logger = loggerFor()
 
-    suspend fun listAccounts(tenantId: TenantId): Result<List<BankAccountEntity>> = runSuspendCatching {
-        bankAccountRepository.listAccounts(tenantId)
+    suspend fun listAccounts(tenantId: TenantId): Result<List<BankAccountDto>> = runSuspendCatching {
+        bankAccountRepository.listAccounts(tenantId).map { BankAccountDto.from(it) }
     }
 
     suspend fun getAccountSummary(tenantId: TenantId): Result<BankAccountSummary> = runSuspendCatching {
@@ -68,7 +69,7 @@ class BankingService(
     }
 
     data class TransactionPage(
-        val items: List<BankTransactionEntity>,
+        val items: List<BankTransactionDto>,
         val total: Long,
     )
 
@@ -97,7 +98,7 @@ class BankingService(
             fromDate = fromDate,
             toDate = toDate,
         )
-        TransactionPage(items = items, total = total)
+        TransactionPage(items = items.map { BankTransactionDto.from(it) }, total = total)
     }
 
     suspend fun getTransactionSummary(tenantId: TenantId): Result<BankTransactionSummary> = runSuspendCatching {
@@ -117,16 +118,17 @@ class BankingService(
     suspend fun getTransaction(
         tenantId: TenantId,
         transactionId: BankTransactionId
-    ): Result<BankTransactionEntity> = runSuspendCatching {
-        bankTransactionRepository.findById(tenantId, transactionId)
+    ): Result<BankTransactionDto> = runSuspendCatching {
+        val entity = bankTransactionRepository.findById(tenantId, transactionId)
             ?: throw DokusException.NotFound("Bank transaction not found")
+        BankTransactionDto.from(entity)
     }
 
     suspend fun linkTransaction(
         tenantId: TenantId,
         transactionId: BankTransactionId,
         cashflowEntryId: CashflowEntryId
-    ): Result<BankTransactionEntity> = runSuspendCatching {
+    ): Result<BankTransactionDto> = runSuspendCatching {
         val result = updateAndRefetch(tenantId, transactionId, "Linked transaction {} to entry {} for tenant {}", transactionId, cashflowEntryId, tenantId) {
             bankTransactionRepository.markMatched(
                 tenantId = tenantId,
@@ -145,7 +147,7 @@ class BankingService(
         transactionId: BankTransactionId,
         reason: IgnoredReason,
         ignoredBy: String,
-    ): Result<BankTransactionEntity> = runSuspendCatching {
+    ): Result<BankTransactionDto> = runSuspendCatching {
         updateAndRefetch(tenantId, transactionId, "Ignored transaction {} (reason={}) for tenant {}", transactionId, reason, tenantId) {
             bankTransactionRepository.markIgnored(tenantId, transactionId, reason, ignoredBy)
         }
@@ -154,7 +156,7 @@ class BankingService(
     suspend fun confirmSuggestedMatch(
         tenantId: TenantId,
         transactionId: BankTransactionId
-    ): Result<BankTransactionEntity> = runSuspendCatching {
+    ): Result<BankTransactionDto> = runSuspendCatching {
         val transaction = bankTransactionRepository.findById(tenantId, transactionId)
             ?: throw DokusException.NotFound("Bank transaction not found")
 
@@ -188,7 +190,7 @@ class BankingService(
         tenantId: TenantId,
         transactionId: BankTransactionId,
         rejectedBy: java.util.UUID?,
-    ): Result<BankTransactionEntity> = runSuspendCatching {
+    ): Result<BankTransactionDto> = runSuspendCatching {
         val transaction = bankTransactionRepository.findById(tenantId, transactionId)
             ?: throw DokusException.NotFound("Bank transaction not found")
 
@@ -221,7 +223,7 @@ class BankingService(
     suspend fun undoMatch(
         tenantId: TenantId,
         transactionId: BankTransactionId,
-    ): Result<BankTransactionEntity> = runSuspendCatching {
+    ): Result<BankTransactionDto> = runSuspendCatching {
         val transaction = bankTransactionRepository.findById(tenantId, transactionId)
             ?: throw DokusException.NotFound("Bank transaction not found")
 
@@ -246,7 +248,7 @@ class BankingService(
         mode: tech.dokus.domain.model.MarkTransferMode,
         counterpartTransactionId: BankTransactionId?,
         destinationAccountId: tech.dokus.domain.ids.BankAccountId?,
-    ): Result<BankTransactionEntity> = runSuspendCatching {
+    ): Result<BankTransactionDto> = runSuspendCatching {
         val transaction = bankTransactionRepository.findById(tenantId, transactionId)
             ?: throw DokusException.NotFound("Bank transaction not found")
 
@@ -273,15 +275,16 @@ class BankingService(
         bankingSsePublisher.publishMatchUpdated(tenantId, transactionId)
         logger.info("Marked transfer: {} mode={} pairId={}", transactionId, mode, pairId)
 
-        bankTransactionRepository.findById(tenantId, transactionId)
+        val entity = bankTransactionRepository.findById(tenantId, transactionId)
             ?: throw DokusException.InternalError("Transaction disappeared after marking transfer")
+        BankTransactionDto.from(entity)
     }
 
     @OptIn(ExperimentalUuidApi::class)
     suspend fun undoTransfer(
         tenantId: TenantId,
         transactionId: BankTransactionId,
-    ): Result<BankTransactionEntity> = runSuspendCatching {
+    ): Result<BankTransactionDto> = runSuspendCatching {
         val transaction = bankTransactionRepository.findById(tenantId, transactionId)
             ?: throw DokusException.NotFound("Bank transaction not found")
 
@@ -294,15 +297,16 @@ class BankingService(
         bankingSsePublisher.publishMatchRemoved(tenantId, transactionId)
         logger.info("Undid transfer: {}", transactionId)
 
-        bankTransactionRepository.findById(tenantId, transactionId)
+        val entity = bankTransactionRepository.findById(tenantId, transactionId)
             ?: throw DokusException.InternalError("Transaction disappeared after undoing transfer")
+        BankTransactionDto.from(entity)
     }
 
     @OptIn(ExperimentalUuidApi::class)
     suspend fun createExpenseFromTransaction(
         tenantId: TenantId,
         transactionId: BankTransactionId,
-    ): Result<BankTransactionEntity> = runSuspendCatching {
+    ): Result<BankTransactionDto> = runSuspendCatching {
         val transaction = bankTransactionRepository.findById(tenantId, transactionId)
             ?: throw DokusException.NotFound("Bank transaction not found")
 
@@ -334,8 +338,9 @@ class BankingService(
         )
 
         logger.info("Created expense {} from transaction {} for tenant {}", expense.id, transactionId, tenantId)
-        bankTransactionRepository.findById(tenantId, transactionId)
+        val entity = bankTransactionRepository.findById(tenantId, transactionId)
             ?: throw DokusException.NotFound("Bank transaction not found after update")
+        BankTransactionDto.from(entity)
     }
 
     /**
@@ -402,12 +407,13 @@ class BankingService(
         logMessage: String,
         vararg logArgs: Any?,
         update: suspend () -> Boolean,
-    ): BankTransactionEntity {
+    ): BankTransactionDto {
         val updated = update()
         if (!updated) throw DokusException.NotFound("Bank transaction not found")
         logger.info(logMessage, *logArgs)
-        return bankTransactionRepository.findById(tenantId, transactionId)
+        val entity = bankTransactionRepository.findById(tenantId, transactionId)
             ?: throw DokusException.NotFound("Bank transaction not found after update")
+        return BankTransactionDto.from(entity)
     }
 
     private fun generateDateRange(start: LocalDate, end: LocalDate): List<LocalDate> {

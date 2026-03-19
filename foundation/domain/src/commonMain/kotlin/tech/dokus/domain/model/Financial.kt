@@ -285,7 +285,9 @@ data class BankAccountDto(
     val createdAt: LocalDateTime,
     val parentAccountId: BankAccountId? = null,
     val providerAccountId: String? = null,
-)
+) {
+    companion object
+}
 
 @Serializable
 data class BankAccountSummary(
