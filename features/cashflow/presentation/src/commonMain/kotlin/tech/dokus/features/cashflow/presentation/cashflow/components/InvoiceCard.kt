@@ -27,9 +27,8 @@ import tech.dokus.domain.Money
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.InvoiceId
-import tech.dokus.domain.ids.InvoiceNumber
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.DocDto
 import tech.dokus.foundation.aura.components.DokusCard
 import tech.dokus.foundation.aura.components.DokusCardPadding
 import tech.dokus.foundation.aura.tooling.PreviewParameters
@@ -38,7 +37,7 @@ import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Composable
 internal fun InvoiceCard(
-    invoice: FinancialDocumentDto.InvoiceDto,
+    invoice: DocDto.Invoice.Confirmed,
     modifier: Modifier = Modifier
 ) {
     DokusCard(
@@ -55,7 +54,7 @@ internal fun InvoiceCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = invoice.invoiceNumber.toString(),
+                    text = invoice.invoiceNumber.orEmpty(),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -68,7 +67,7 @@ internal fun InvoiceCard(
 
             // Amount
             Text(
-                text = invoice.totalAmount.toString(),
+                text = invoice.totalAmount?.toString().orEmpty(),
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.primary
             )
@@ -117,11 +116,11 @@ private fun InvoiceCardPreview(
     val now = LocalDateTime(2024, 12, 13, 12, 0)
     TestWrapper(parameters) {
         InvoiceCard(
-            invoice = FinancialDocumentDto.InvoiceDto(
+            invoice = DocDto.Invoice.Confirmed(
                 id = InvoiceId.generate(),
                 tenantId = TenantId.generate(),
                 contactId = ContactId.generate(),
-                invoiceNumber = InvoiceNumber("INV-001"),
+                invoiceNumber = "INV-001",
                 issueDate = kotlinx.datetime.LocalDate(2024, 12, 13),
                 dueDate = kotlinx.datetime.LocalDate(2025, 1, 13),
                 subtotalAmount = Money(340000),

@@ -45,7 +45,7 @@ import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.ReviewFinancialStatus
 import tech.dokus.features.cashflow.presentation.review.dotType
-import tech.dokus.features.cashflow.presentation.review.models.counterpartyInfo
+import tech.dokus.domain.model.contact.ResolvedContact
 import tech.dokus.features.cashflow.presentation.review.overdueInlineLocalized
 import tech.dokus.features.cashflow.presentation.review.paidHeadlineLocalized
 import tech.dokus.features.cashflow.presentation.review.paidMethodLocalized
@@ -71,13 +71,18 @@ private val HeroAccentWidth = 3.5.dp
 internal fun MobileCanonicalHeader(
     state: DocumentReviewState,
 ) {
-    val counterparty = counterpartyInfo(state)
+    val contactName = when (val c = state.effectiveContact) {
+        is ResolvedContact.Linked -> c.name
+        is ResolvedContact.Suggested -> c.name
+        is ResolvedContact.Detected -> c.name
+        is ResolvedContact.Unknown -> null
+    }
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall),
     ) {
         Text(
-            text = counterparty.name ?: stringResource(Res.string.mobile_unknown_vendor),
+            text = contactName ?: stringResource(Res.string.mobile_unknown_vendor),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
         )

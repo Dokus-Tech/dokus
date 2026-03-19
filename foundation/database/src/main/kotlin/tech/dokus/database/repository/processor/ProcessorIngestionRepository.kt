@@ -30,8 +30,6 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.DocumentFieldProvenance
 import tech.dokus.domain.model.Dpi
-import tech.dokus.domain.model.ProvenanceMergeResult
-import tech.dokus.domain.model.mergeWithProvenance
 import tech.dokus.domain.model.toDirection
 import tech.dokus.domain.model.toDocumentType
 import tech.dokus.domain.model.toSortDate
@@ -210,7 +208,6 @@ class ProcessorIngestionRepository {
             val runUuid = runId.value.toJavaUuid()
             val documentUuid = documentId.value.toJavaUuid()
             val tenantUuid = tenantId.value.toJavaUuid()
-            draftData?.let { json.encodeToString(it) }
             val keywordsJson = keywords.takeIf { it.isNotEmpty() }?.let { json.encodeToString(it) }
             val calculatedStatus = DocumentStatus.NeedsReview
 
@@ -246,25 +243,6 @@ class ProcessorIngestionRepository {
             // aiDraftSourceRunId: set ONLY if null (first successful run)
             val shouldSetAiDraftRun = currentAiDraftSourceRunId == null
 
-            // Provenance-based merge: determine what data to write
-            val existingData = existingDoc[DocumentsTable.canonicalData]
-                ?.let<String, DocumentDraftData> { json.decodeFromString(it) }
-            val existingProv = existingDoc[DocumentsTable.fieldProvenance]
-                ?.let<String, DocumentFieldProvenance> { json.decodeFromString(it) }
-
-            val mergeResult: ProvenanceMergeResult? = when {
-                force || draftData == null || existingData == null -> null // full overwrite
-                existingProv == null -> null // no existing provenance → full overwrite
-                fieldProvenance != null -> {
-                    mergeWithProvenance(existingData, draftData, existingProv, fieldProvenance)
-                }
-
-                else -> null // incoming has no provenance → full overwrite
-            }
-
-            val dataToWrite = mergeResult?.mergedData ?: draftData
-            val provToWrite = mergeResult?.mergedProvenance ?: fieldProvenance
-
             // SECURITY: Always filter by tenantId to prevent cross-tenant modification
             DocumentsTable.update({
                 (DocumentsTable.id eq documentUuid) and
@@ -278,18 +256,17 @@ class ProcessorIngestionRepository {
                     it[aiDraftSourceRunId] = runUuid
                 }
 
-                if (dataToWrite != null) {
-                    it[DocumentsTable.canonicalData] = json.encodeToString(dataToWrite)
-                    it[DocumentsTable.documentType] = dataToWrite.toDocumentType()
-                    it[DocumentsTable.direction] = dataToWrite.toDirection()
+                if (draftData != null) {
+                    it[DocumentsTable.documentType] = draftData.toDocumentType()
+                    it[DocumentsTable.direction] = draftData.toDirection()
                     it[documentStatus] = calculatedStatus
                     if (keywordsJson != null) {
                         it[DocumentsTable.aiKeywords] = keywordsJson
                     }
-                    if (provToWrite != null) {
-                        it[DocumentsTable.fieldProvenance] = json.encodeToString(provToWrite)
+                    if (fieldProvenance != null) {
+                        it[DocumentsTable.fieldProvenance] = json.encodeToString(fieldProvenance)
                     }
-                    val extractedSortDate = dataToWrite.toSortDate()
+                    val extractedSortDate = draftData.toSortDate()
                     if (extractedSortDate != null) {
                         it[DocumentsTable.sortDate] = extractedSortDate
                     }

@@ -23,10 +23,10 @@ import tech.dokus.domain.model.DepreciationScheduleDraftData
 import tech.dokus.domain.model.DimonaDraftData
 import tech.dokus.domain.model.DividendDraftData
 import tech.dokus.domain.model.DocumentDraftData
+import tech.dokus.domain.model.DocDto
 import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.EmploymentContractDraftData
 import tech.dokus.domain.model.ExpenseClaimDraftData
-import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.FineDraftData
 import tech.dokus.domain.model.HolidayPayDraftData
 import tech.dokus.domain.model.IcListingDraftData
@@ -101,8 +101,8 @@ internal class GetContactInvoiceSnapshotUseCaseImpl(
     private suspend fun fetchAllInvoices(
         contactId: ContactId,
         direction: DocumentDirection
-    ): List<FinancialDocumentDto.InvoiceDto> {
-        val invoices = mutableListOf<FinancialDocumentDto.InvoiceDto>()
+    ): List<DocDto.Invoice.Confirmed> {
+        val invoices = mutableListOf<DocDto.Invoice.Confirmed>()
         var offset = 0
 
         while (true) {
@@ -123,16 +123,16 @@ internal class GetContactInvoiceSnapshotUseCaseImpl(
         return invoices
     }
 
-    private suspend fun buildSnapshot(invoices: List<FinancialDocumentDto.InvoiceDto>): ContactInvoiceSnapshot = coroutineScope {
+    private suspend fun buildSnapshot(invoices: List<DocDto.Invoice.Confirmed>): ContactInvoiceSnapshot = coroutineScope {
         val totalVolume = invoices.fold(Money.ZERO) { sum, invoice ->
-            sum + invoice.totalAmount
+            sum + (invoice.totalAmount ?: Money.ZERO)
         }
         val outstanding = invoices.fold(Money.ZERO) { sum, invoice ->
             sum + invoiceOutstandingAmount(invoice)
         }
         val recentDocuments = invoices
             .sortedWith(
-                compareByDescending<FinancialDocumentDto.InvoiceDto> { it.issueDate }
+                compareByDescending<DocDto.Invoice.Confirmed> { it.issueDate }
                     .thenByDescending { it.updatedAt }
             )
             .take(RecentDocumentsLimit)
@@ -155,24 +155,25 @@ internal class GetContactInvoiceSnapshotUseCaseImpl(
 }
 
 private fun invoiceOutstandingAmount(
-    invoice: FinancialDocumentDto.InvoiceDto,
+    invoice: DocDto.Invoice.Confirmed,
 ): Money {
     if (invoice.status !in OutstandingStatuses) return Money.ZERO
-    val remainder = invoice.totalAmount - invoice.paidAmount
+    val total = invoice.totalAmount ?: return Money.ZERO
+    val remainder = total - invoice.paidAmount
     return if (remainder.isNegative) Money.ZERO else remainder
 }
 
-private fun FinancialDocumentDto.InvoiceDto.toRecentDocument(
+private fun DocDto.Invoice.Confirmed.toRecentDocument(
     documentRecord: DocumentDetailDto?
 ): ContactRecentInvoice {
     return ContactRecentInvoice(
         invoiceId = id,
         documentId = documentId,
-        issueDate = issueDate,
+        issueDate = requireNotNull(issueDate) { "Confirmed invoice must have issueDate" },
         updatedAt = updatedAt,
         direction = direction,
         status = status,
-        totalAmount = totalAmount,
+        totalAmount = totalAmount ?: Money.ZERO,
         outstandingAmount = invoiceOutstandingAmount(this),
         summary = resolveRecentDocumentSummary(this, documentRecord),
         reference = resolveRecentDocumentReference(this, documentRecord)
@@ -180,64 +181,22 @@ private fun FinancialDocumentDto.InvoiceDto.toRecentDocument(
 }
 
 internal fun resolveRecentDocumentSummary(
-    invoice: FinancialDocumentDto.InvoiceDto,
+    invoice: DocDto.Invoice.Confirmed,
     documentRecord: DocumentDetailDto?
 ): String? {
     return documentRecord?.draft?.purposeRendered.normalizeRecentDocumentText()
         ?: documentRecord?.draft?.purposeBase.normalizeRecentDocumentText()
-        ?: documentRecord?.confirmedEntity?.recentDocumentSummary()
+        ?: documentRecord?.draft?.content?.recentDocumentSummary()
         ?: invoice.notes.normalizeRecentDocumentText()
 }
 
 internal fun resolveRecentDocumentReference(
-    invoice: FinancialDocumentDto.InvoiceDto,
+    invoice: DocDto.Invoice.Confirmed,
     documentRecord: DocumentDetailDto?
 ): String? {
-    return documentRecord?.draft?.extractedData?.recentDocumentReference()
-        ?: documentRecord?.confirmedEntity?.recentDocumentReference()
+    return documentRecord?.draft?.content?.recentDocumentReference()
         ?: invoice.invoiceNumber.toString().normalizeRecentDocumentText()
         ?: documentRecord?.document?.filename.normalizeRecentDocumentText()
-}
-
-private fun FinancialDocumentDto.recentDocumentSummary(): String? {
-    return when (this) {
-        is FinancialDocumentDto.InvoiceDto -> {
-            items.firstOrNull()?.description.normalizeRecentDocumentText() ?: notes.normalizeRecentDocumentText()
-        }
-
-        is FinancialDocumentDto.CreditNoteDto -> {
-            reason.normalizeRecentDocumentText() ?: notes.normalizeRecentDocumentText()
-        }
-
-        is FinancialDocumentDto.ExpenseDto -> {
-            description.normalizeRecentDocumentText() ?:
-                merchant.normalizeRecentDocumentText() ?:
-                notes.normalizeRecentDocumentText()
-        }
-
-        is FinancialDocumentDto.QuoteDto -> {
-            items.firstOrNull().normalizeRecentDocumentText() ?: notes.normalizeRecentDocumentText()
-        }
-
-        is FinancialDocumentDto.ProFormaDto -> {
-            items.firstOrNull().normalizeRecentDocumentText() ?: notes.normalizeRecentDocumentText()
-        }
-
-        is FinancialDocumentDto.PurchaseOrderDto -> {
-            items.firstOrNull().normalizeRecentDocumentText() ?: notes.normalizeRecentDocumentText()
-        }
-    }
-}
-
-private fun FinancialDocumentDto.recentDocumentReference(): String? {
-    return when (this) {
-        is FinancialDocumentDto.InvoiceDto -> invoiceNumber.toString().normalizeRecentDocumentText()
-        is FinancialDocumentDto.CreditNoteDto -> creditNoteNumber.normalizeRecentDocumentText()
-        is FinancialDocumentDto.ExpenseDto -> null
-        is FinancialDocumentDto.QuoteDto -> quoteNumber.normalizeRecentDocumentText()
-        is FinancialDocumentDto.ProFormaDto -> proFormaNumber.normalizeRecentDocumentText()
-        is FinancialDocumentDto.PurchaseOrderDto -> poNumber.normalizeRecentDocumentText()
-    }
 }
 
 private fun DocumentDraftData.recentDocumentReference(): String? {
@@ -295,6 +254,25 @@ private fun DocumentDraftData.recentDocumentReference(): String? {
         is InventoryDraftData,
         is OtherDraftData -> null
     }
+}
+
+private fun DocDto.recentDocumentSummary(): String? = when (this) {
+    is DocDto.Invoice -> lineItems.firstOrNull()?.description.normalizeRecentDocumentText()
+        ?: notes.normalizeRecentDocumentText()
+    is DocDto.CreditNote -> reason.normalizeRecentDocumentText()
+        ?: notes.normalizeRecentDocumentText()
+    is DocDto.Receipt -> merchantName.normalizeRecentDocumentText()
+        ?: notes.normalizeRecentDocumentText()
+    is DocDto.BankStatement -> notes.normalizeRecentDocumentText()
+    is DocDto.ClassifiedDoc -> null
+}
+
+private fun DocDto.recentDocumentReference(): String? = when (this) {
+    is DocDto.Invoice -> invoiceNumber.normalizeRecentDocumentText()
+    is DocDto.CreditNote -> creditNoteNumber.normalizeRecentDocumentText()
+    is DocDto.Receipt -> receiptNumber.normalizeRecentDocumentText()
+    is DocDto.BankStatement,
+    is DocDto.ClassifiedDoc -> null
 }
 
 private fun String?.normalizeRecentDocumentText(): String? {

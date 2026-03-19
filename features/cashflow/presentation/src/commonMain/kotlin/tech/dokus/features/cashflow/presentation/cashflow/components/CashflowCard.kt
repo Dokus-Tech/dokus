@@ -48,7 +48,7 @@ import tech.dokus.aura.resources.pending_documents_need_confirmation
 import tech.dokus.aura.resources.pending_documents_next
 import tech.dokus.aura.resources.pending_documents_previous
 import tech.dokus.domain.enums.InvoiceStatus
-import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.DocDto
 import tech.dokus.foundation.aura.components.DokusCard
 import tech.dokus.foundation.aura.components.DokusCardPadding
 import tech.dokus.foundation.aura.tooling.PreviewParameters
@@ -65,7 +65,7 @@ import tech.dokus.foundation.aura.tooling.TestWrapper
  */
 @Composable
 fun CashflowCard(
-    documents: List<FinancialDocumentDto>,
+    documents: List<DocDto>,
     onPreviousClick: () -> Unit,
     onNextClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -153,19 +153,23 @@ fun CashflowCard(
 @OptIn(kotlin.uuid.ExperimentalUuidApi::class)
 @Composable
 private fun CashflowDocumentItem(
-    document: FinancialDocumentDto,
+    document: DocDto,
     modifier: Modifier = Modifier
 ) {
     val documentNumber = when (document) {
-        is FinancialDocumentDto.InvoiceDto -> document.invoiceNumber.toString()
-        is FinancialDocumentDto.ExpenseDto -> stringResource(
+        is DocDto.Invoice.Confirmed -> document.invoiceNumber.orEmpty()
+        is DocDto.Invoice.Draft -> document.invoiceNumber.orEmpty()
+        is DocDto.Receipt.Confirmed -> stringResource(
             Res.string.cashflow_document_number_expense,
             document.id.value
         )
-        is FinancialDocumentDto.CreditNoteDto -> document.creditNoteNumber
-        is FinancialDocumentDto.ProFormaDto -> document.proFormaNumber
-        is FinancialDocumentDto.QuoteDto -> document.quoteNumber
-        is FinancialDocumentDto.PurchaseOrderDto -> document.poNumber
+        is DocDto.Receipt.Draft -> document.receiptNumber.orEmpty()
+        is DocDto.CreditNote -> document.creditNoteNumber.orEmpty()
+        is DocDto.BankStatement -> ""
+        is DocDto.ProForma -> stringResource(Res.string.document_type_pro_forma)
+        is DocDto.Quote -> stringResource(Res.string.document_type_quote)
+        is DocDto.PurchaseOrder -> stringResource(Res.string.document_type_purchase_order)
+        is DocDto.ClassifiedDoc -> ""
     }
 
     Row(
@@ -208,31 +212,43 @@ private fun CashflowDocumentItem(
  */
 @Composable
 private fun DocumentStatusBadge(
-    document: FinancialDocumentDto,
+    document: DocDto,
     modifier: Modifier = Modifier
 ) {
     // Determine color and text based on document type and status
     val (statusColor, statusText) = when (document) {
-        is FinancialDocumentDto.InvoiceDto -> getInvoiceStatusStyle(document.status)
-        is FinancialDocumentDto.ExpenseDto -> Pair(
+        is DocDto.Invoice.Confirmed -> getInvoiceStatusStyle(document.status)
+        is DocDto.Invoice.Draft -> Pair(
+            MaterialTheme.colorScheme.onSurfaceVariant,
+            stringResource(Res.string.invoice_status_draft)
+        )
+        is DocDto.Receipt -> Pair(
             MaterialTheme.colorScheme.onSurfaceVariant,
             stringResource(Res.string.document_type_expense)
         )
-        is FinancialDocumentDto.CreditNoteDto -> Pair(
+        is DocDto.CreditNote -> Pair(
             MaterialTheme.colorScheme.tertiary,
             stringResource(Res.string.document_type_credit_note)
         )
-        is FinancialDocumentDto.ProFormaDto -> Pair(
+        is DocDto.BankStatement -> Pair(
+            MaterialTheme.colorScheme.onSurfaceVariant,
+            ""
+        )
+        is DocDto.ProForma -> Pair(
             MaterialTheme.colorScheme.onSurfaceVariant,
             stringResource(Res.string.document_type_pro_forma)
         )
-        is FinancialDocumentDto.QuoteDto -> Pair(
+        is DocDto.Quote -> Pair(
             MaterialTheme.colorScheme.onSurfaceVariant,
             stringResource(Res.string.document_type_quote)
         )
-        is FinancialDocumentDto.PurchaseOrderDto -> Pair(
+        is DocDto.PurchaseOrder -> Pair(
             MaterialTheme.colorScheme.onSurfaceVariant,
             stringResource(Res.string.document_type_purchase_order)
+        )
+        is DocDto.ClassifiedDoc -> Pair(
+            MaterialTheme.colorScheme.onSurfaceVariant,
+            ""
         )
     }
 
@@ -297,13 +313,15 @@ private fun getInvoiceStatusStyle(status: InvoiceStatus): Pair<Color, String> {
  * Extension function to get the document icon/emoji representation.
  */
 @Composable
-private fun FinancialDocumentDto.typeIcon(): String = when (this) {
-    is FinancialDocumentDto.InvoiceDto -> stringResource(Res.string.document_type_invoice)
-    is FinancialDocumentDto.ExpenseDto -> stringResource(Res.string.document_type_expense)
-    is FinancialDocumentDto.CreditNoteDto -> stringResource(Res.string.document_type_credit_note)
-    is FinancialDocumentDto.ProFormaDto -> stringResource(Res.string.document_type_pro_forma)
-    is FinancialDocumentDto.QuoteDto -> stringResource(Res.string.document_type_quote)
-    is FinancialDocumentDto.PurchaseOrderDto -> stringResource(Res.string.document_type_purchase_order)
+private fun DocDto.typeIcon(): String = when (this) {
+    is DocDto.Invoice -> stringResource(Res.string.document_type_invoice)
+    is DocDto.Receipt -> stringResource(Res.string.document_type_expense)
+    is DocDto.CreditNote -> stringResource(Res.string.document_type_credit_note)
+    is DocDto.BankStatement -> ""
+    is DocDto.ProForma -> stringResource(Res.string.document_type_pro_forma)
+    is DocDto.Quote -> stringResource(Res.string.document_type_quote)
+    is DocDto.PurchaseOrder -> stringResource(Res.string.document_type_purchase_order)
+    is DocDto.ClassifiedDoc -> ""
 }
 
 @Preview

@@ -10,8 +10,8 @@ import tech.dokus.domain.ids.BankAccountId
 import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.database.entity.BankTransactionEntity
 import tech.dokus.domain.enums.BankTransactionStatus
-import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.foundation.backend.utils.loggerFor
 
 /**
@@ -36,10 +36,10 @@ class TransferDetector(
 
     suspend fun detect(
         tenantId: TenantId,
-        transaction: BankTransactionDto,
+        transaction: BankTransactionEntity,
     ): TransferResult? {
         val sourceAccountId = transaction.bankAccountId ?: return null
-        val counterpartyIban = transaction.counterparty.iban?.value ?: return null
+        val counterpartyIban = transaction.counterpartyIban?.value ?: return null
 
         // Check if counterparty IBAN matches a known owned account
         val destinationAccount = bankAccountRepository.findByIban(tenantId, Iban(counterpartyIban))
@@ -87,8 +87,8 @@ class TransferDetector(
     private suspend fun findCounterpart(
         tenantId: TenantId,
         destinationAccountId: BankAccountId,
-        source: BankTransactionDto,
-    ): BankTransactionDto? {
+        source: BankTransactionEntity,
+    ): BankTransactionEntity? {
         val dateWindow = 2L // ±2 days
         val startDate = source.transactionDate.minus(dateWindow, DateTimeUnit.DAY)
         val endDate = source.transactionDate.plus(dateWindow, DateTimeUnit.DAY)

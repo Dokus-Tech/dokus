@@ -20,7 +20,9 @@ data class Firm(
     val isActive: Boolean = true,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime,
-)
+) {
+    companion object
+}
 
 @Serializable
 data class FirmMembership(
@@ -30,7 +32,9 @@ data class FirmMembership(
     val isActive: Boolean = true,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime,
-)
+) {
+    companion object
+}
 
 @Serializable
 data class FirmMember(
@@ -51,4 +55,6 @@ data class FirmAccess(
     val grantedByUserId: UserId,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime,
-)
+) {
+    companion object
+}

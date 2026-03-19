@@ -1,21 +1,16 @@
 package tech.dokus.features.cashflow.presentation.review
 
-import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.exceptions.asDokusException
-import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.DocumentDetailDto
-import tech.dokus.domain.model.contact.isLinked
-import tech.dokus.domain.model.contact.isUnresolved
+import tech.dokus.domain.model.isContactRequired
 import tech.dokus.features.cashflow.usecases.GetDocumentRecordUseCase
-import tech.dokus.features.contacts.usecases.GetContactUseCase
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.platform.Logger
 
 internal class DocumentReviewLoader(
     private val getDocumentRecord: GetDocumentRecordUseCase,
-    private val getContact: GetContactUseCase,
     private val logger: Logger,
 ) {
     suspend fun DocumentReviewCtx.handleLoadDocument(documentId: DocumentId) {
@@ -113,9 +108,9 @@ internal class DocumentReviewLoader(
             selectedQueueDocumentId = if (queueState != null) documentId else null
         }
         val draft = document.draft
-        val extractedData = draft?.extractedData
+        val content = draft?.content
 
-        if (extractedData == null) {
+        if (content == null) {
             val isFailed = document.latestIngestion?.status == IngestionStatus.Failed
             if (isFailed) {
                 // Failed extraction -> show as content with null draft data
@@ -135,7 +130,6 @@ internal class DocumentReviewLoader(
                         previewState = previewState,
                         // Preserve existing UI state where available
                         isContactRequired = false,
-                        isPendingCreation = draft?.counterparty.let { it.isUnresolved() && it.pendingCreation },
                         documentStatus = draft?.documentStatus,
                         confirmedCashflowEntryId = document.cashflowEntryId,
                         selectedQueueDocumentId = selectedQueueDocumentId ?: this@transitionToDocumentState.let {
@@ -176,26 +170,7 @@ internal class DocumentReviewLoader(
             return
         }
 
-        val counterparty = draft.counterparty
-        val suggestions = if (counterparty.isUnresolved()) counterparty.suggestions else emptyList()
-        val contactSuggestions = suggestions.map { suggestion ->
-            ContactSuggestion(
-                contactId = suggestion.contactId,
-                name = suggestion.name,
-                vatNumber = suggestion.vatNumber?.value
-            )
-        }
-        val isPendingCreation = counterparty.isUnresolved() && counterparty.pendingCreation
-        val (contactSelectionState, linkedContactId, selectedContactSnapshot) =
-            buildContactSelectionState(document, suggestions)
-
-        // Preserve contact snapshot if same contact
-        var preservedContactSnapshot: ContactSnapshot? = selectedContactSnapshot
-        withState {
-            if (linkedContactId != null && linkedContactId == this.selectedContactId) {
-                preservedContactSnapshot = this.selectedContactSnapshot
-            }
-        }
+        val contactSuggestions = draft.contactSuggestions
 
         // Read previous cashflow state for preservation
         var previousCashflowEntryState: DokusState<tech.dokus.domain.model.CashflowEntry> = DokusState.idle()
@@ -215,19 +190,15 @@ internal class DocumentReviewLoader(
                     ReviewDocumentData(
                         documentId = documentId,
                         documentRecord = document,
-                        draftData = extractedData,
-                        originalData = extractedData,
+                        draftData = content,
+                        originalData = content,
                         previewUrl = previewUrl,
                         contactSuggestions = contactSuggestions,
                     )
                 ),
                 isAwaitingExtraction = false,
                 previewState = previewState,
-                selectedContactId = linkedContactId,
-                selectedContactSnapshot = preservedContactSnapshot,
-                contactSelectionState = contactSelectionState,
-                isContactRequired = extractedData.isContactRequired,
-                isPendingCreation = isPendingCreation,
+                isContactRequired = content.isContactRequired,
                 documentStatus = draft.documentStatus,
                 confirmedCashflowEntryId = document.cashflowEntryId,
                 cashflowEntryState = previousCashflowEntryState,
@@ -246,55 +217,5 @@ internal class DocumentReviewLoader(
         if (document.cashflowEntryId != null && document.cashflowEntryId != previousConfirmedCashflowEntryId) {
             intent(DocumentReviewIntent.LoadCashflowEntry)
         }
-        if (linkedContactId != null && preservedContactSnapshot == null) {
-            fetchContactSnapshot(linkedContactId)
-        }
-    }
-
-    private fun buildContactSelectionState(
-        document: DocumentDetailDto,
-        suggestions: List<tech.dokus.domain.model.contact.SuggestedContact>
-    ): Triple<ContactSelectionState, ContactId?, ContactSnapshot?> {
-        val draft = document.draft ?: return Triple(ContactSelectionState.NoContact, null, null)
-        val counterparty = draft.counterparty
-        if (counterparty.isLinked()) {
-            return Triple(ContactSelectionState.Selected, counterparty.contactId, null)
-        }
-        val topSuggestion = suggestions.firstOrNull()
-        if (topSuggestion != null) {
-            return Triple(
-                ContactSelectionState.Suggested(
-                    contactId = topSuggestion.contactId,
-                    name = topSuggestion.name,
-                    vatNumber = topSuggestion.vatNumber?.value,
-                ),
-                null,
-                null
-            )
-        }
-        return Triple(ContactSelectionState.NoContact, null, null)
-    }
-
-    private suspend fun DocumentReviewCtx.fetchContactSnapshot(contactId: ContactId) {
-        getContact(contactId).fold(
-            onSuccess = { contact ->
-                withState {
-                    updateState {
-                        copy(
-                            selectedContactSnapshot = ContactSnapshot(
-                                id = contact.id,
-                                name = contact.name.value,
-                                vatNumber = contact.vatNumber?.value,
-                                email = contact.email?.value,
-                                avatarUrl = contact.avatar?.small,
-                            )
-                        )
-                    }
-                }
-            },
-            onFailure = { error ->
-                logger.w(error) { "Failed to fetch contact snapshot for $contactId" }
-            }
-        )
     }
 }

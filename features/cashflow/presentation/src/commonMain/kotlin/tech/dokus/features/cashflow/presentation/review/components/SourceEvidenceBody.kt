@@ -22,61 +22,9 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_no_preview
 import tech.dokus.aura.resources.document_source_technical_details
 import tech.dokus.aura.resources.upload_action_retry
-import tech.dokus.domain.Money
 import tech.dokus.domain.enums.DocumentSource
-import tech.dokus.domain.model.AnnualAccountsDraftData
-import tech.dokus.domain.model.BankFeeDraftData
-import tech.dokus.domain.model.BankStatementDraftData
-import tech.dokus.domain.model.BoardMinutesDraftData
-import tech.dokus.domain.model.C4DraftData
-import tech.dokus.domain.model.CompanyExtractDraftData
-import tech.dokus.domain.model.ContractDraftData
-import tech.dokus.domain.model.CorporateTaxAdvanceDraftData
-import tech.dokus.domain.model.CorporateTaxDraftData
-import tech.dokus.domain.model.CreditNoteDraftData
-import tech.dokus.domain.model.CustomsDeclarationDraftData
-import tech.dokus.domain.model.DeliveryNoteDraftData
-import tech.dokus.domain.model.DepreciationScheduleDraftData
-import tech.dokus.domain.model.DimonaDraftData
-import tech.dokus.domain.model.DividendDraftData
-import tech.dokus.domain.model.EmploymentContractDraftData
-import tech.dokus.domain.model.ExpenseClaimDraftData
-import tech.dokus.domain.model.FineDraftData
-import tech.dokus.domain.model.HolidayPayDraftData
-import tech.dokus.domain.model.IcListingDraftData
-import tech.dokus.domain.model.InsuranceDraftData
-import tech.dokus.domain.model.InterestStatementDraftData
-import tech.dokus.domain.model.IntrastatDraftData
-import tech.dokus.domain.model.InventoryDraftData
-import tech.dokus.domain.model.InvoiceDraftData
-import tech.dokus.domain.model.LeaseDraftData
-import tech.dokus.domain.model.LoanDraftData
-import tech.dokus.domain.model.OrderConfirmationDraftData
-import tech.dokus.domain.model.OssReturnDraftData
-import tech.dokus.domain.model.OtherDraftData
-import tech.dokus.domain.model.PaymentConfirmationDraftData
-import tech.dokus.domain.model.PayrollSummaryDraftData
-import tech.dokus.domain.model.PermitDraftData
-import tech.dokus.domain.model.PersonalTaxDraftData
-import tech.dokus.domain.model.ProFormaDraftData
-import tech.dokus.domain.model.PurchaseOrderDraftData
-import tech.dokus.domain.model.QuoteDraftData
-import tech.dokus.domain.model.ReceiptDraftData
-import tech.dokus.domain.model.ReminderDraftData
-import tech.dokus.domain.model.SalarySlipDraftData
-import tech.dokus.domain.model.SelfEmployedContributionDraftData
-import tech.dokus.domain.model.ShareholderRegisterDraftData
-import tech.dokus.domain.model.SocialContributionDraftData
-import tech.dokus.domain.model.SocialFundDraftData
-import tech.dokus.domain.model.StatementOfAccountDraftData
-import tech.dokus.domain.model.SubsidyDraftData
-import tech.dokus.domain.model.TaxAssessmentDraftData
-import tech.dokus.domain.model.VapzDraftData
-import tech.dokus.domain.model.VatAssessmentDraftData
-import tech.dokus.domain.model.VatListingDraftData
-import tech.dokus.domain.model.VatReturnDraftData
-import tech.dokus.domain.model.WithholdingTaxDraftData
-import tech.dokus.domain.model.resolvedCounterpartyName
+import tech.dokus.domain.model.DocDto
+import tech.dokus.domain.model.contact.ResolvedContact
 import tech.dokus.features.cashflow.presentation.common.utils.formatShortDate
 import tech.dokus.features.cashflow.presentation.review.DocumentPreviewState
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
@@ -190,9 +138,16 @@ private fun SourceStructuredEvidence(
             color = MaterialTheme.colorScheme.textMuted,
         )
 
+        val vendorName = when (val c = contentState.effectiveContact) {
+            is ResolvedContact.Linked -> c.name
+            is ResolvedContact.Suggested -> c.name
+            is ResolvedContact.Detected -> c.name
+            is ResolvedContact.Unknown -> null
+        }
+
         when (draft) {
-            is InvoiceDraftData -> {
-                StructuredValue("Vendor", contentState.documentRecord?.draft?.counterpartyDisplayName ?: "\u2014")
+            is DocDto.Invoice -> {
+                StructuredValue("Vendor", vendorName ?: "\u2014")
                 StructuredValue("Invoice", draft.invoiceNumber ?: "\u2014")
                 StructuredValue("Date", draft.issueDate?.let { formatShortDate(it) } ?: "\u2014")
                 StructuredValue("Due", draft.dueDate?.let { formatShortDate(it) } ?: "\u2014")
@@ -208,69 +163,22 @@ private fun SourceStructuredEvidence(
                     draft.lineItems.forEach { item ->
                         StructuredValue(
                             label = item.description.ifBlank { "\u2014" },
-                            value = item.netAmount?.let { Money(it).toDisplayString() } ?: "\u2014",
+                            value = item.netAmount?.toDisplayString() ?: "\u2014",
                         )
                     }
                 }
             }
 
-            is CreditNoteDraftData -> {
-                StructuredValue("Counterparty", draft.resolvedCounterpartyName ?: "\u2014")
+            is DocDto.CreditNote -> {
+                StructuredValue("Counterparty", vendorName ?: "\u2014")
                 StructuredValue("Credit note", draft.creditNoteNumber ?: "\u2014")
                 StructuredValue("Date", draft.issueDate?.let { formatShortDate(it) } ?: "\u2014")
                 StructuredValue("Total", draft.totalAmount?.toDisplayString() ?: "\u2014", emphasized = true)
             }
 
-            is ReceiptDraftData,
-            is BankStatementDraftData,
-            is ProFormaDraftData,
-            is QuoteDraftData,
-            is OrderConfirmationDraftData,
-            is DeliveryNoteDraftData,
-            is ReminderDraftData,
-            is StatementOfAccountDraftData,
-            is PurchaseOrderDraftData,
-            is ExpenseClaimDraftData,
-            is BankFeeDraftData,
-            is InterestStatementDraftData,
-            is PaymentConfirmationDraftData,
-            is VatReturnDraftData,
-            is VatListingDraftData,
-            is VatAssessmentDraftData,
-            is IcListingDraftData,
-            is OssReturnDraftData,
-            is CorporateTaxDraftData,
-            is CorporateTaxAdvanceDraftData,
-            is TaxAssessmentDraftData,
-            is PersonalTaxDraftData,
-            is WithholdingTaxDraftData,
-            is SocialContributionDraftData,
-            is SocialFundDraftData,
-            is SelfEmployedContributionDraftData,
-            is VapzDraftData,
-            is SalarySlipDraftData,
-            is PayrollSummaryDraftData,
-            is EmploymentContractDraftData,
-            is DimonaDraftData,
-            is C4DraftData,
-            is HolidayPayDraftData,
-            is ContractDraftData,
-            is LeaseDraftData,
-            is LoanDraftData,
-            is InsuranceDraftData,
-            is DividendDraftData,
-            is ShareholderRegisterDraftData,
-            is CompanyExtractDraftData,
-            is AnnualAccountsDraftData,
-            is BoardMinutesDraftData,
-            is SubsidyDraftData,
-            is FineDraftData,
-            is PermitDraftData,
-            is CustomsDeclarationDraftData,
-            is IntrastatDraftData,
-            is DepreciationScheduleDraftData,
-            is InventoryDraftData,
-            is OtherDraftData,
+            is DocDto.Receipt,
+            is DocDto.BankStatement,
+            is DocDto.ClassifiedDoc,
             null -> {
                 Text(
                     text = stringResource(Res.string.cashflow_no_preview),

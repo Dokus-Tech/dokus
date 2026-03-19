@@ -22,11 +22,10 @@ import tech.dokus.domain.enums.NotificationType
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.InvoiceId
-import tech.dokus.domain.ids.InvoiceNumber
 import tech.dokus.domain.ids.NotificationId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
-import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.DocDto
 import tech.dokus.domain.model.NotificationDto
 import tech.dokus.domain.model.NotificationPreferenceDto
 import tech.dokus.domain.model.NotificationPreferencesResponse
@@ -166,9 +165,9 @@ private class FakeWatchPendingDocumentsUseCase : WatchPendingDocumentsUseCase {
 }
 
 private class FakeInvoiceLookupDataSource(
-    private val invoicesById: Map<InvoiceId, FinancialDocumentDto.InvoiceDto> = emptyMap()
+    private val invoicesById: Map<InvoiceId, DocDto.Invoice.Confirmed> = emptyMap()
 ) : InvoiceLookupDataSource {
-    override suspend fun getInvoice(id: InvoiceId): Result<FinancialDocumentDto.InvoiceDto> {
+    override suspend fun getInvoice(id: InvoiceId): Result<DocDto.Invoice.Confirmed> {
         return invoicesById[id]?.let { Result.success(it) } ?: Result.failure(
             IllegalStateException("Invoice not found in fake datasource")
         )
@@ -257,14 +256,14 @@ private fun testInvoice(
     invoiceId: InvoiceId,
     tenantId: TenantId,
     documentId: DocumentId
-): FinancialDocumentDto.InvoiceDto {
+): DocDto.Invoice.Confirmed {
     val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-    return FinancialDocumentDto.InvoiceDto(
+    return DocDto.Invoice.Confirmed(
         id = invoiceId,
         tenantId = tenantId,
         direction = DocumentDirection.Outbound,
         contactId = ContactId.generate(),
-        invoiceNumber = InvoiceNumber("INV-2026-001"),
+        invoiceNumber = "INV-2026-001",
         issueDate = LocalDate(2026, 1, 1),
         dueDate = LocalDate(2026, 1, 31),
         subtotalAmount = Money(10_000),

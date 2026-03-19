@@ -14,7 +14,7 @@ import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.foundation.backend.database.dbEnumeration
 
 object TransactionMatchLinksTable : UUIDTable("transaction_match_links") {
-    val tenantId = uuid("tenant_id").references(TenantTable.id, onDelete = ReferenceOption.CASCADE)
+    val tenantId = uuid("tenant_id").references(TenantTable.id, onDelete = ReferenceOption.CASCADE).index()
     val documentId = uuid("document_id").references(
         tech.dokus.database.tables.documents.DocumentsTable.id,
         onDelete = ReferenceOption.CASCADE,
@@ -24,7 +24,7 @@ object TransactionMatchLinksTable : UUIDTable("transaction_match_links") {
         .references(tech.dokus.database.tables.banking.BankTransactionsTable.id, onDelete = ReferenceOption.CASCADE)
 
     val documentType = dbEnumeration<DocumentType>("document_type").nullable()
-    val allocatedAmount = decimal("allocated_amount", 12, 2).nullable()
+    val allocatedAmount = decimal("allocated_amount", 19, 4).nullable()
 
     val status = dbEnumeration<AutoMatchStatus>("status")
     val createdBy = dbEnumeration<PaymentCreatedBy>("created_by").default(PaymentCreatedBy.Auto)
@@ -41,10 +41,10 @@ object TransactionMatchLinksTable : UUIDTable("transaction_match_links") {
 
     // Snapshot columns for undo (invoice-specific for v1)
     val invoiceStatusBefore = dbEnumeration<InvoiceStatus>("invoice_status_before").nullable()
-    val invoicePaidAmountBefore = decimal("invoice_paid_amount_before", 12, 2).nullable()
+    val invoicePaidAmountBefore = decimal("invoice_paid_amount_before", 19, 4).nullable()
     val invoicePaidAtBefore = datetime("invoice_paid_at_before").nullable()
     val cashflowStatusBefore = dbEnumeration<CashflowEntryStatus>("cashflow_status_before").nullable()
-    val cashflowRemainingBefore = decimal("cashflow_remaining_before", 12, 2).nullable()
+    val cashflowRemainingBefore = decimal("cashflow_remaining_before", 19, 4).nullable()
     val cashflowPaidAtBefore = datetime("cashflow_paid_at_before").nullable()
 
     val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)

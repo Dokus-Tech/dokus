@@ -12,9 +12,7 @@ import org.jetbrains.exposed.v1.jdbc.insertAndGetId
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
-import tech.dokus.database.mapper.UserMappers.toTenantMembership
-import tech.dokus.database.mapper.UserMappers.toUser
-import tech.dokus.database.mapper.UserMappers.toUserInTenant
+import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.auth.TenantMembersTable
 import tech.dokus.database.tables.auth.UsersTable
 import tech.dokus.database.utils.toKotlinxInstant
@@ -71,11 +69,12 @@ class UserRepository(
 
         logger.info("Registered new user: $userId with email: $email (no tenant)")
 
-        UsersTable
-            .selectAll()
-            .where { UsersTable.id eq userId }
-            .single()
-            .toUser()
+        User.from(
+            UsersTable
+                .selectAll()
+                .where { UsersTable.id eq userId }
+                .single()
+        )
     }
 
     /**
@@ -121,11 +120,12 @@ class UserRepository(
 
         logger.info("Registered new user: $userId with email: $email for tenant: $tenantId")
 
-        UsersTable
-            .selectAll()
-            .where { UsersTable.id eq userId }
-            .single()
-            .toUser()
+        User.from(
+            UsersTable
+                .selectAll()
+                .where { UsersTable.id eq userId }
+                .single()
+        )
     }
 
     suspend fun findById(id: UserId): User? = dbQuery {
@@ -134,7 +134,7 @@ class UserRepository(
             .selectAll()
             .where { UsersTable.id eq javaUuid }
             .singleOrNull()
-            ?.toUser()
+            ?.let { User.from(it) }
     }
 
     suspend fun findByEmail(email: String): User? = dbQuery {
@@ -142,7 +142,7 @@ class UserRepository(
             .selectAll()
             .where { UsersTable.email eq email }
             .singleOrNull()
-            ?.toUser()
+            ?.let { User.from(it) }
     }
 
     /**
@@ -171,7 +171,7 @@ class UserRepository(
                     .where { TenantMembersTable.tenantId eq javaUuid }
             }
 
-            query.map { it.toUserInTenant() }
+            query.map { UserInTenant.from(it) }
         }
 
     /**
@@ -182,7 +182,7 @@ class UserRepository(
         TenantMembersTable
             .selectAll()
             .where { TenantMembersTable.userId eq javaUuid }
-            .map { it.toTenantMembership() }
+            .map { TenantMembership.from(it) }
     }
 
     /**
@@ -199,7 +199,7 @@ class UserRepository(
                     (TenantMembersTable.tenantId eq tenantId.value.toJavaUuid())
             }
             .singleOrNull()
-            ?.toTenantMembership()
+            ?.let { TenantMembership.from(it) }
     }
 
     /**
@@ -435,7 +435,7 @@ class UserRepository(
                 return@dbQuery null
             }
 
-            user.toUser()
+            User.from(user)
         }
 
     // Email verification methods

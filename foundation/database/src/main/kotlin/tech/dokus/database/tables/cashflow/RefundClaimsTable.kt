@@ -44,7 +44,7 @@ object RefundClaimsTable : UUIDTable("refund_claims") {
         .index()
 
     // Amount expected
-    val amount = decimal("amount", 12, 2)
+    val amount = decimal("amount", 19, 4)
     val currency = dbEnumeration<Currency>("currency").default(Currency.Eur)
 
     // Expected date (optional)

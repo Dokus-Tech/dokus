@@ -13,15 +13,14 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.ContactNoteId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.InvoiceId
-import tech.dokus.domain.ids.InvoiceNumber
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.contact.CounterpartyInfo
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentDetailDto
-import tech.dokus.domain.model.FinancialDocumentDto
-import tech.dokus.domain.model.InvoiceDraftData
-import tech.dokus.domain.model.InvoiceItemDto
+import tech.dokus.domain.model.DocDto
+import tech.dokus.domain.model.DocLineItem
+import tech.dokus.domain.model.contact.ResolvedContact
 import tech.dokus.domain.model.PeppolStatusResponse
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.model.contact.ContactActivitySummary
@@ -177,8 +176,8 @@ class ContactProfileUseCasesImplTest {
     }
 
     private class FakeContactRemoteDataSource : ContactRemoteDataSource {
-        var outboundInvoices: List<FinancialDocumentDto.InvoiceDto> = emptyList()
-        var inboundInvoices: List<FinancialDocumentDto.InvoiceDto> = emptyList()
+        var outboundInvoices: List<DocDto.Invoice.Confirmed> = emptyList()
+        var inboundInvoices: List<DocDto.Invoice.Confirmed> = emptyList()
         val documentRecords = mutableMapOf<DocumentId, DocumentDetailDto>()
         val requestedDocumentIds = mutableListOf<DocumentId>()
 
@@ -228,7 +227,7 @@ class ContactProfileUseCasesImplTest {
             direction: DocumentDirection?,
             limit: Int,
             offset: Int
-        ): Result<PaginatedResponse<FinancialDocumentDto.InvoiceDto>> {
+        ): Result<PaginatedResponse<DocDto.Invoice.Confirmed>> {
             val source = when (direction) {
                 DocumentDirection.Outbound -> outboundInvoices
                 DocumentDirection.Inbound -> inboundInvoices
@@ -297,13 +296,13 @@ private fun invoice(
     documentId: DocumentId?,
     notes: String? = null,
     issueDate: LocalDate = LocalDate(2026, 2, 1),
-): FinancialDocumentDto.InvoiceDto {
-    return FinancialDocumentDto.InvoiceDto(
+): DocDto.Invoice.Confirmed {
+    return DocDto.Invoice.Confirmed(
         id = InvoiceId.parse(invoiceId),
         tenantId = tenantId,
         direction = DocumentDirection.Inbound,
         contactId = contactId,
-        invoiceNumber = InvoiceNumber(invoiceNumber),
+        invoiceNumber = invoiceNumber,
         issueDate = issueDate,
         dueDate = issueDate,
         subtotalAmount = Money(10000),
@@ -323,13 +322,13 @@ private fun confirmedInvoice(
     invoiceNumber: String,
     itemDescription: String? = null,
     notes: String? = null,
-): FinancialDocumentDto.InvoiceDto {
-    return FinancialDocumentDto.InvoiceDto(
+): DocDto.Invoice.Confirmed {
+    return DocDto.Invoice.Confirmed(
         id = InvoiceId.parse(invoiceId),
         tenantId = tenantId,
         direction = DocumentDirection.Inbound,
         contactId = contactId,
-        invoiceNumber = InvoiceNumber(invoiceNumber),
+        invoiceNumber = invoiceNumber,
         issueDate = LocalDate(2026, 2, 1),
         dueDate = LocalDate(2026, 2, 1),
         subtotalAmount = Money(10000),
@@ -338,14 +337,14 @@ private fun confirmedInvoice(
         paidAmount = Money.ZERO,
         status = InvoiceStatus.Draft,
         notes = notes,
-        items = itemDescription?.let {
+        lineItems = itemDescription?.let {
             listOf(
-                InvoiceItemDto(
+                DocLineItem(
                     description = it,
-                    quantity = 1.0,
+                    quantity = tech.dokus.domain.Quantity(1.0),
                     unitPrice = Money(10000),
                     vatRate = tech.dokus.domain.VatRate.STANDARD_BE,
-                    lineTotal = Money(10000),
+                    netAmount = Money(10000),
                     vatAmount = Money(2100)
                 )
             )
@@ -360,37 +359,44 @@ private fun documentRecord(
     filename: String,
     purposeRendered: String? = null,
     purposeBase: String? = null,
-    confirmedEntity: FinancialDocumentDto? = null,
+    confirmedEntity: DocDto? = null,
 ): DocumentDetailDto {
+    val content = confirmedEntity
+        ?: DocDto.Invoice.Draft(invoiceNumber = null)
+
     return DocumentDetailDto(
         document = DocumentDto(
             id = documentId,
             tenantId = tenantId,
             filename = filename,
-            uploadedAt = now
+            uploadedAt = now,
+            sortDate = now.date,
         ),
         draft = DocumentDraftDto(
             documentId = documentId,
             tenantId = tenantId,
             documentStatus = DocumentStatus.Confirmed,
             documentType = DocumentType.Invoice,
-            extractedData = InvoiceDraftData(invoiceNumber = confirmedEntityReference(confirmedEntity)),
+            content = content,
             purposeBase = purposeBase,
             purposeRendered = purposeRendered,
+            resolvedContact = if (contactId != null) {
+                ResolvedContact.Linked(contactId = contactId, name = "", vatNumber = null, email = null, avatarPath = null)
+            } else {
+                ResolvedContact.Unknown
+            },
             aiDraftSourceRunId = null,
             draftVersion = 0,
             draftEditedAt = null,
             draftEditedBy = null,
-            counterparty = if (contactId != null) CounterpartyInfo.Linked(contactId = contactId, source = ContactLinkSource.AI) else null,
             lastSuccessfulRunId = null,
             createdAt = now,
             updatedAt = now
         ),
         latestIngestion = null,
-        confirmedEntity = confirmedEntity
     )
 }
 
-private fun confirmedEntityReference(confirmedEntity: FinancialDocumentDto?): String? {
-    return (confirmedEntity as? FinancialDocumentDto.InvoiceDto)?.invoiceNumber?.toString()
+private fun confirmedEntityReference(confirmedEntity: DocDto?): String? {
+    return (confirmedEntity as? DocDto.Invoice.Confirmed)?.invoiceNumber
 }

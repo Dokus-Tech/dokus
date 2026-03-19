@@ -34,12 +34,14 @@ class DocumentPurposeServiceTest {
     private val templateRepository = mockk<DocumentPurposeTemplateRepository>(relaxed = true)
     private val similarityService = mockk<DocumentPurposeSimilarityService>(relaxed = true)
     private val processingAgent = mockk<DocumentProcessingAgent>(relaxed = true)
+    private val draftRepository = mockk<tech.dokus.database.repository.drafts.DraftRepository>(relaxed = true)
 
     private val service = DocumentPurposeService(
         documentRepository = documentRepository,
         templateRepository = templateRepository,
         similarityService = similarityService,
-        processingAgent = processingAgent
+        processingAgent = processingAgent,
+        draftRepository = draftRepository
     )
 
     private val tenantId = TenantId.parse("11111111-1111-1111-1111-111111111111")
@@ -213,7 +215,7 @@ class DocumentPurposeServiceTest {
             draft = draftSummary(
                 documentStatus = DocumentStatus.Confirmed,
                 counterpartyKey = "contact:$contactId"
-            ).copy(extractedData = invoiceDraft()),
+            ),
             purpose = "Model Y leasing",
             purposePeriodMode = PurposePeriodMode.ServicePeriod
         )
@@ -262,7 +264,6 @@ class DocumentPurposeServiceTest {
             tenantId = tenantId,
             documentStatus = documentStatus,
             documentType = DocumentType.Invoice,
-            extractedData = invoiceDraft(),
             purposeBase = purposeBase,
             purposeLocked = purposeLocked,
             counterpartyKey = counterpartyKey,

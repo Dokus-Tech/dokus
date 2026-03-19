@@ -27,6 +27,7 @@ import tech.dokus.domain.model.RefundClaimDto
 import tech.dokus.domain.toDbDecimal
 import tech.dokus.foundation.backend.database.dbQuery
 import java.util.UUID
+import tech.dokus.foundation.backend.utils.runSuspendCatching
 
 /**
  * Repository for managing refund claims.
@@ -52,7 +53,7 @@ class RefundClaimRepository {
         amount: Money,
         currency: Currency = Currency.Eur,
         expectedDate: LocalDate? = null
-    ): Result<RefundClaimDto> = runCatching {
+    ): Result<RefundClaimDto> = runSuspendCatching {
         dbQuery {
             val claimId = RefundClaimsTable.insertAndGetId {
                 it[RefundClaimsTable.tenantId] = UUID.fromString(tenantId.toString())
@@ -81,7 +82,7 @@ class RefundClaimRepository {
     suspend fun getRefundClaim(
         claimId: RefundClaimId,
         tenantId: TenantId
-    ): Result<RefundClaimDto?> = runCatching {
+    ): Result<RefundClaimDto?> = runSuspendCatching {
         dbQuery {
             RefundClaimsTable.selectAll().where {
                 (RefundClaimsTable.id eq UUID.fromString(claimId.toString())) and
@@ -119,7 +120,7 @@ class RefundClaimRepository {
         counterpartyId: ContactId? = null,
         limit: Int = 50,
         offset: Int = 0
-    ): Result<List<RefundClaimDto>> = runCatching {
+    ): Result<List<RefundClaimDto>> = runSuspendCatching {
         dbQuery {
             var query = RefundClaimsTable.selectAll().where {
                 RefundClaimsTable.tenantId eq UUID.fromString(tenantId.toString())
@@ -162,7 +163,7 @@ class RefundClaimRepository {
         claimId: RefundClaimId,
         tenantId: TenantId,
         cashflowEntryId: CashflowEntryId
-    ): Result<Boolean> = runCatching {
+    ): Result<Boolean> = runSuspendCatching {
         dbQuery {
             val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
             val updatedRows = RefundClaimsTable.update({
@@ -184,7 +185,7 @@ class RefundClaimRepository {
     suspend fun cancelRefundClaim(
         claimId: RefundClaimId,
         tenantId: TenantId
-    ): Result<Boolean> = runCatching {
+    ): Result<Boolean> = runSuspendCatching {
         dbQuery {
             val updatedRows = RefundClaimsTable.update({
                 (RefundClaimsTable.id eq UUID.fromString(claimId.toString())) and
@@ -203,7 +204,7 @@ class RefundClaimRepository {
     suspend fun deleteRefundClaim(
         claimId: RefundClaimId,
         tenantId: TenantId
-    ): Result<Boolean> = runCatching {
+    ): Result<Boolean> = runSuspendCatching {
         dbQuery {
             val deletedRows = RefundClaimsTable.deleteWhere {
                 (RefundClaimsTable.id eq UUID.fromString(claimId.toString())) and

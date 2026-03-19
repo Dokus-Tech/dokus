@@ -71,7 +71,7 @@ class CashflowEntriesRepository {
         amountGross: Money,
         amountVat: Money,
         contactId: ContactId?
-    ): Result<CashflowEntry> = runCatching {
+    ): Result<CashflowEntry> = runSuspendCatching {
         dbQuery {
             val entryId = CashflowEntriesTable.insertAndGetId {
                 it[CashflowEntriesTable.tenantId] = UUID.fromString(tenantId.toString())
@@ -103,7 +103,7 @@ class CashflowEntriesRepository {
     suspend fun getEntry(
         entryId: CashflowEntryId,
         tenantId: TenantId
-    ): Result<CashflowEntry?> = runCatching {
+    ): Result<CashflowEntry?> = runSuspendCatching {
         dbQuery {
             CashflowEntriesTable.selectAll().where {
                 (CashflowEntriesTable.id eq UUID.fromString(entryId.toString())) and
@@ -120,7 +120,7 @@ class CashflowEntriesRepository {
         tenantId: TenantId,
         sourceType: CashflowSourceType,
         sourceId: UUID
-    ): Result<CashflowEntry?> = runCatching {
+    ): Result<CashflowEntry?> = runSuspendCatching {
         dbQuery {
             CashflowEntriesTable.selectAll().where {
                 (CashflowEntriesTable.tenantId eq UUID.fromString(tenantId.toString())) and
@@ -200,7 +200,7 @@ class CashflowEntriesRepository {
         amountGross: Money,
         amountVat: Money,
         contactId: ContactId?
-    ): Result<Boolean> = runCatching {
+    ): Result<Boolean> = runSuspendCatching {
         dbQuery {
             val updated = CashflowEntriesTable.update({
                 (CashflowEntriesTable.tenantId eq UUID.fromString(tenantId.toString())) and
@@ -230,7 +230,7 @@ class CashflowEntriesRepository {
     suspend fun getByDocumentId(
         tenantId: TenantId,
         documentId: DocumentId
-    ): Result<CashflowEntry?> = runCatching {
+    ): Result<CashflowEntry?> = runSuspendCatching {
         dbQuery {
             CashflowEntriesTable.selectAll().where {
                 (CashflowEntriesTable.tenantId eq UUID.fromString(tenantId.toString())) and
@@ -246,8 +246,8 @@ class CashflowEntriesRepository {
     suspend fun getIdsByDocumentIds(
         tenantId: TenantId,
         documentIds: List<DocumentId>
-    ): Result<Map<DocumentId, CashflowEntryId>> = runCatching {
-        if (documentIds.isEmpty()) return@runCatching emptyMap()
+    ): Result<Map<DocumentId, CashflowEntryId>> = runSuspendCatching {
+        if (documentIds.isEmpty()) return@runSuspendCatching emptyMap()
 
         val tenantUuid = UUID.fromString(tenantId.toString())
         val documentUuids = documentIds.map { id -> UUID.fromString(id.toString()) }
@@ -287,7 +287,7 @@ class CashflowEntriesRepository {
         toDate: LocalDate? = null,
         direction: CashflowDirection? = null,
         statuses: List<CashflowEntryStatus>? = null
-    ): Result<List<CashflowEntry>> = runCatching {
+    ): Result<List<CashflowEntry>> = runSuspendCatching {
         dbQuery {
             val effectiveStatuses = if (!statuses.isNullOrEmpty()) {
                 statuses
@@ -389,7 +389,7 @@ class CashflowEntriesRepository {
         entryId: CashflowEntryId,
         tenantId: TenantId,
         newRemainingAmount: Money
-    ): Result<Boolean> = runCatching {
+    ): Result<Boolean> = runSuspendCatching {
         dbQuery {
             val updated = CashflowEntriesTable.update({
                 (CashflowEntriesTable.id eq UUID.fromString(entryId.toString())) and
@@ -411,7 +411,7 @@ class CashflowEntriesRepository {
         tenantId: TenantId,
         newStatus: CashflowEntryStatus,
         paidAt: LocalDateTime? = null
-    ): Result<Boolean> = runCatching {
+    ): Result<Boolean> = runSuspendCatching {
         dbQuery {
             val updated = CashflowEntriesTable.update({
                 (CashflowEntriesTable.id eq UUID.fromString(entryId.toString())) and
@@ -443,7 +443,7 @@ class CashflowEntriesRepository {
         newRemainingAmount: Money,
         newStatus: CashflowEntryStatus,
         paidAt: LocalDateTime? = null
-    ): Result<Boolean> = runCatching {
+    ): Result<Boolean> = runSuspendCatching {
         dbQuery {
             val updated = CashflowEntriesTable.update({
                 (CashflowEntriesTable.id eq UUID.fromString(entryId.toString())) and

@@ -146,16 +146,6 @@ internal fun ReviewInspectorPane(
             )
         }
 
-        if (!isAccountantReadOnly) {
-            PButton(
-                text = "Request amendment",
-                variant = PButtonVariant.OutlineMuted,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(Constraints.Spacing.medium),
-                onClick = { onIntent(DocumentReviewIntent.RequestAmendment) },
-            )
-        }
     }
 }
 

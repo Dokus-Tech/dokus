@@ -20,6 +20,9 @@ import tech.dokus.backend.services.banking.BankStatementProcessingService
 import tech.dokus.backend.services.banking.BankingService
 import tech.dokus.backend.services.banking.StatementDedupService
 import tech.dokus.backend.services.banking.StatementTrustCalculator
+import tech.dokus.backend.services.admin.ConsoleService
+import tech.dokus.backend.services.admin.FirmService
+import tech.dokus.backend.services.admin.TenantManagementService
 import tech.dokus.backend.services.auth.AuthService
 import tech.dokus.backend.services.auth.EmailService
 import tech.dokus.backend.services.auth.EmailTemplateRenderer
@@ -69,8 +72,10 @@ import tech.dokus.backend.services.documents.resolution.NameSuggestionResolver
 import tech.dokus.backend.services.documents.resolution.VatAutoCreateResolver
 import tech.dokus.backend.services.documents.resolution.VatMatchResolver
 import tech.dokus.backend.services.documents.DocumentPurposeService
+import tech.dokus.backend.services.documents.RAGIndexingService
 import tech.dokus.backend.services.documents.DocumentPurposeSimilarityService
 import tech.dokus.backend.services.documents.DocumentRecordLoader
+import tech.dokus.database.repository.drafts.DraftRepository
 import tech.dokus.backend.services.documents.DocumentTruthService
 import tech.dokus.backend.services.documents.ProcessingHealthService
 import tech.dokus.backend.services.documents.StorageDocumentFetcher
@@ -254,6 +259,11 @@ private val bankingModule = module {
 private fun authModule() = module {
     singleOf(::FirmInviteTokenService)
 
+    // Admin services (route-facing wrappers for repositories)
+    singleOf(::ConsoleService)
+    singleOf(::FirmService)
+    singleOf(::TenantManagementService)
+
     single<EmailService> {
         ResendEmailService(get())
     }
@@ -358,6 +368,7 @@ private fun cashflowModule() = module {
     singleOf(::DocumentSnapshotEventHub)
     singleOf(::DocumentSsePublisher)
     singleOf(::DocumentRecordLoader)
+    singleOf(::DraftRepository)
     singleOf(::CashflowProjectionReconciliationWorker)
 
     // PDF

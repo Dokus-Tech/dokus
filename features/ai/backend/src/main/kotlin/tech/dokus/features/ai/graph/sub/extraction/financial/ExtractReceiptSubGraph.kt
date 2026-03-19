@@ -143,6 +143,13 @@ private class ReceiptExtractionFinishTool : Tool<ReceiptExtractionToolInput, Fin
     }
 }
 
+private val receiptCurrentDate: String
+    get() {
+        val now = kotlin.time.Clock.System.now()
+        val localDate = kotlinx.datetime.LocalDate.fromEpochDays((now.epochSeconds / 86400).toInt())
+        return localDate.toString()
+    }
+
 private val ExtractDocumentInput.receiptPrompt
     get() = """
     You will receive receipt/ticket images in context.
@@ -181,8 +188,12 @@ private val ExtractDocumentInput.receiptPrompt
       - counterparty = "Albert Heijn", role = MERCHANT. Never use "Visa" as counterparty.
 
     ## DATE
+    Current date: $receiptCurrentDate
     - Extract transaction date if printed on receipt.
     - Often appears near top or bottom with a timestamp.
+    - If the merchant country uses mm/dd/yyyy (US, Canada), read dates in that format.
+    - European merchants use dd/mm/yyyy.
+    - Receipt dates should not be in the future.
 
     ## VAT
     - If VAT breakdown is shown, extract vatBreakdown rows (rate, base, amount).

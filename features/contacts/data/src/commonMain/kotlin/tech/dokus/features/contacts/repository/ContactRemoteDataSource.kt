@@ -8,7 +8,7 @@ import tech.dokus.domain.ids.ContactNoteId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.model.DocumentDetailDto
-import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.DocDto
 import tech.dokus.domain.model.PeppolStatusResponse
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.model.contact.ContactActivitySummary
@@ -76,7 +76,7 @@ interface ContactRemoteDataSource {
         direction: DocumentDirection? = null,
         limit: Int = 50,
         offset: Int = 0
-    ): Result<PaginatedResponse<FinancialDocumentDto.InvoiceDto>>
+    ): Result<PaginatedResponse<DocDto.Invoice.Confirmed>>
 
     suspend fun getDocumentRecord(documentId: DocumentId): Result<DocumentDetailDto>
 

@@ -97,9 +97,7 @@ class ProcessorIngestionInvariantTest {
     fun `markAsSucceeded never confirms draft even when HighConfidence`() = runBlocking {
         val documentId = documentRepository.create(
             tenantId = tenantId,
-            payload = tech.dokus.database.repository.cashflow.DocumentCreatePayload(
-                canonicalContentHash = null,
-            )
+            payload = tech.dokus.database.repository.cashflow.DocumentCreatePayload()
         )
 
         val runId = ingestionRunRepository.createRun(documentId, tenantId)

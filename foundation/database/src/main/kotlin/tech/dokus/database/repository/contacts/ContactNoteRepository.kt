@@ -18,6 +18,7 @@ import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.model.contact.ContactNoteDto
 import tech.dokus.foundation.backend.database.dbQuery
 import java.util.UUID
+import tech.dokus.foundation.backend.utils.runSuspendCatching
 
 /**
  * Repository for managing contact notes
@@ -39,7 +40,7 @@ class ContactNoteRepository {
         content: String,
         authorId: UserId? = null,
         authorName: String? = null
-    ): Result<ContactNoteDto> = runCatching {
+    ): Result<ContactNoteDto> = runSuspendCatching {
         dbQuery {
             // Verify contact exists and belongs to tenant
             val contactExists = ContactsTable.selectAll().where {
@@ -76,7 +77,7 @@ class ContactNoteRepository {
     suspend fun getNote(
         noteId: ContactNoteId,
         tenantId: TenantId
-    ): Result<ContactNoteDto?> = runCatching {
+    ): Result<ContactNoteDto?> = runSuspendCatching {
         dbQuery {
             ContactNotesTable.selectAll().where {
                 (ContactNotesTable.id eq UUID.fromString(noteId.toString())) and
@@ -96,7 +97,7 @@ class ContactNoteRepository {
         tenantId: TenantId,
         limit: Int = 50,
         offset: Int = 0
-    ): Result<PaginatedResponse<ContactNoteDto>> = runCatching {
+    ): Result<PaginatedResponse<ContactNoteDto>> = runSuspendCatching {
         dbQuery {
             val query = ContactNotesTable.selectAll().where {
                 (ContactNotesTable.contactId eq UUID.fromString(contactId.toString())) and
@@ -127,7 +128,7 @@ class ContactNoteRepository {
     suspend fun countNotes(
         contactId: ContactId,
         tenantId: TenantId
-    ): Result<Long> = runCatching {
+    ): Result<Long> = runSuspendCatching {
         dbQuery {
             ContactNotesTable.selectAll().where {
                 (ContactNotesTable.contactId eq UUID.fromString(contactId.toString())) and
@@ -144,7 +145,7 @@ class ContactNoteRepository {
         noteId: ContactNoteId,
         tenantId: TenantId,
         content: String
-    ): Result<ContactNoteDto> = runCatching {
+    ): Result<ContactNoteDto> = runSuspendCatching {
         dbQuery {
             // Verify note exists and belongs to tenant
             val exists = ContactNotesTable.selectAll().where {
@@ -180,7 +181,7 @@ class ContactNoteRepository {
     suspend fun deleteNote(
         noteId: ContactNoteId,
         tenantId: TenantId
-    ): Result<Boolean> = runCatching {
+    ): Result<Boolean> = runSuspendCatching {
         dbQuery {
             val deletedRows = ContactNotesTable.deleteWhere {
                 (ContactNotesTable.id eq UUID.fromString(noteId.toString())) and
@@ -198,7 +199,7 @@ class ContactNoteRepository {
     suspend fun deleteAllNotesForContact(
         contactId: ContactId,
         tenantId: TenantId
-    ): Result<Int> = runCatching {
+    ): Result<Int> = runSuspendCatching {
         dbQuery {
             ContactNotesTable.deleteWhere {
                 (ContactNotesTable.contactId eq UUID.fromString(contactId.toString())) and

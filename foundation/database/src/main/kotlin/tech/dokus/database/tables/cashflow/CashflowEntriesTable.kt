@@ -49,9 +49,9 @@ object CashflowEntriesTable : UUIDTable("cashflow_entries") {
     val eventDate = date("event_date").index()
 
     // Amounts (NUMERIC for exact decimal arithmetic - NEVER Float!)
-    val amountGross = decimal("amount_gross", 12, 2)
-    val amountVat = decimal("amount_vat", 12, 2)
-    val remainingAmount = decimal("remaining_amount", 12, 2)
+    val amountGross = decimal("amount_gross", 19, 4)
+    val amountVat = decimal("amount_vat", 19, 4)
+    val remainingAmount = decimal("remaining_amount", 19, 4)
 
     // Currency
     val currency = dbEnumeration<Currency>("currency").default(Currency.Eur)

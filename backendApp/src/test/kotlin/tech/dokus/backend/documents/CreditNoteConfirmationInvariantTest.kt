@@ -231,9 +231,7 @@ class CreditNoteConfirmationInvariantTest {
     private suspend fun seedInvoiceDocument(): Triple<DocumentId, UUID, String> {
         val documentId = documentRepository.create(
             tenantId = tenantId,
-            payload = DocumentCreatePayload(
-                canonicalContentHash = null,
-            )
+            payload = DocumentCreatePayload()
         )
         val invoiceId = UUID.randomUUID()
         val invoiceNumber = "INV-REF-100"
@@ -262,9 +260,7 @@ class CreditNoteConfirmationInvariantTest {
     private suspend fun seedCreditNoteDraft(draftData: CreditNoteDraftData): DocumentId {
         val documentId = documentRepository.create(
             tenantId = tenantId,
-            payload = DocumentCreatePayload(
-                canonicalContentHash = null,
-            )
+            payload = DocumentCreatePayload()
         )
 
         val runId = ingestionRunRepository.createRun(documentId, tenantId)

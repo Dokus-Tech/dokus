@@ -22,6 +22,7 @@ import java.security.MessageDigest
 import java.util.UUID
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid
+import tech.dokus.foundation.backend.utils.runSuspendCatching
 
 /**
  * Information about a password reset token
@@ -64,7 +65,7 @@ class PasswordResetTokenRepository {
         userId: UserId,
         token: String,
         expiresAt: Instant
-    ): Result<Unit> = runCatching {
+    ): Result<Unit> = runSuspendCatching {
         dbQuery {
             val userUuid = userId.uuid.toJavaUuid()
             val tokenHash = tokenHash(token)
@@ -115,7 +116,7 @@ class PasswordResetTokenRepository {
      * @param tokenId The ID of the token to mark as used
      * @return Result indicating success or failure
      */
-    suspend fun markAsUsed(tokenId: UUID): Result<Unit> = runCatching {
+    suspend fun markAsUsed(tokenId: UUID): Result<Unit> = runSuspendCatching {
         dbQuery {
             val updated =
                 PasswordResetTokensTable.update({ PasswordResetTokensTable.id eq tokenId }) {
@@ -139,7 +140,7 @@ class PasswordResetTokenRepository {
      *
      * @return Result containing count of deleted tokens
      */
-    suspend fun cleanupExpiredTokens(): Result<Int> = runCatching {
+    suspend fun cleanupExpiredTokens(): Result<Int> = runSuspendCatching {
         dbQuery {
             val currentTime = now().toLocalDateTime(TimeZone.UTC)
             val deleted = PasswordResetTokensTable.deleteWhere {

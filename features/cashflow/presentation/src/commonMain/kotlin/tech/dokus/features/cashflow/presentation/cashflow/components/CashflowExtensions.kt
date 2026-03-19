@@ -13,61 +13,62 @@ import tech.dokus.aura.resources.invoice_status_refunded
 import tech.dokus.aura.resources.invoice_status_sent
 import tech.dokus.aura.resources.invoice_status_viewed
 import tech.dokus.domain.enums.InvoiceStatus
-import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.DocDto
+import tech.dokus.domain.model.sortDate
 
 /**
- * Extension functions for working with FinancialDocumentDto types in the cashflow presentation layer.
+ * Extension functions for working with DocDto types in the cashflow presentation layer.
  */
 
 /**
- * Filters financial documents that need confirmation or approval.
+ * Filters documents that need confirmation or approval.
  * For invoices: Sent or Overdue status
- * For expenses: Currently none (could be extended for approval workflows)
+ * For other types: Currently none (could be extended for approval workflows)
  *
  * @return List of documents requiring user attention
  */
-fun List<FinancialDocumentDto>.needingConfirmation(): List<FinancialDocumentDto> {
+fun List<DocDto>.needingConfirmation(): List<DocDto> {
     return this.filter { doc ->
         when (doc) {
-            is FinancialDocumentDto.InvoiceDto ->
+            is DocDto.Invoice.Confirmed ->
                 doc.status == InvoiceStatus.Sent || doc.status == InvoiceStatus.Overdue
-            is FinancialDocumentDto.ExpenseDto -> false
-            is FinancialDocumentDto.CreditNoteDto -> false
-            is FinancialDocumentDto.ProFormaDto -> false
-            is FinancialDocumentDto.QuoteDto -> false
-            is FinancialDocumentDto.PurchaseOrderDto -> false
+            is DocDto.Invoice.Draft -> false
+            is DocDto.Receipt -> false
+            is DocDto.CreditNote -> false
+            is DocDto.BankStatement -> false
+            is DocDto.ClassifiedDoc -> false
         }
     }
 }
 
 /**
- * Filters invoices that need confirmation.
+ * Filters confirmed invoices that need confirmation.
  *
  * @return List of invoices with Sent or Overdue status
  */
-fun List<FinancialDocumentDto.InvoiceDto>.invoicesNeedingConfirmation(): List<FinancialDocumentDto.InvoiceDto> {
+fun List<DocDto.Invoice.Confirmed>.invoicesNeedingConfirmation(): List<DocDto.Invoice.Confirmed> {
     return this.filter { it.status == InvoiceStatus.Sent || it.status == InvoiceStatus.Overdue }
 }
 
 /**
- * Combines invoices and expenses into a unified FinancialDocumentDto list, sorted by date.
+ * Combines invoices and receipts into a unified DocDto list, sorted by date.
  *
  * @param invoices List of invoices to include
- * @param expenses List of expenses to include
+ * @param receipts List of receipts to include
  * @param limit Maximum number of items to return
- * @return Combined and sorted list of FinancialDocumentDto
+ * @return Combined and sorted list of DocDto
  */
 fun combineFinancialDocuments(
-    invoices: List<FinancialDocumentDto.InvoiceDto>,
-    expenses: List<FinancialDocumentDto.ExpenseDto>,
+    invoices: List<DocDto.Invoice.Confirmed>,
+    receipts: List<DocDto.Receipt.Confirmed>,
     limit: Int = 4
-): List<FinancialDocumentDto> {
-    val allDocs = mutableListOf<FinancialDocumentDto>()
+): List<DocDto> {
+    val allDocs = mutableListOf<DocDto>()
     allDocs.addAll(invoices)
-    allDocs.addAll(expenses)
+    allDocs.addAll(receipts)
 
     return allDocs
-        .sortedByDescending { it.date }
+        .sortedByDescending { it.sortDate }
         .take(limit)
 }
 
@@ -97,7 +98,7 @@ fun InvoiceStatus.toDisplayText(): String = stringResource(labelRes())
  *
  * @return True if the invoice needs attention
  */
-fun FinancialDocumentDto.InvoiceDto.needsAttention(): Boolean {
+fun DocDto.Invoice.Confirmed.needsAttention(): Boolean {
     return status == InvoiceStatus.Sent || status == InvoiceStatus.Overdue
 }
 
@@ -106,7 +107,7 @@ fun FinancialDocumentDto.InvoiceDto.needsAttention(): Boolean {
  *
  * @return True if the invoice is completed
  */
-fun FinancialDocumentDto.InvoiceDto.isCompleted(): Boolean {
+fun DocDto.Invoice.Confirmed.isCompleted(): Boolean {
     return status == InvoiceStatus.Paid || status == InvoiceStatus.Refunded
 }
 
@@ -115,6 +116,6 @@ fun FinancialDocumentDto.InvoiceDto.isCompleted(): Boolean {
  *
  * @return True if the invoice can be edited
  */
-fun FinancialDocumentDto.InvoiceDto.canEdit(): Boolean {
+fun DocDto.Invoice.Confirmed.canEdit(): Boolean {
     return status == InvoiceStatus.Draft
 }

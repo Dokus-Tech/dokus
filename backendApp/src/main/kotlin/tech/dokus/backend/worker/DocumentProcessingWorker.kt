@@ -31,6 +31,7 @@ import tech.dokus.database.entity.IngestionItemEntity
 import tech.dokus.database.entity.isPeppol
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.auth.UserRepository
+import tech.dokus.database.repository.drafts.DraftRepository
 import tech.dokus.database.repository.processor.ProcessorIngestionRepository
 import tech.dokus.domain.Name
 import tech.dokus.domain.enums.SourceTrust
@@ -79,6 +80,7 @@ internal class DocumentProcessingWorker(
     private val userRepository: UserRepository,
     private val llmQueue: LlmQueue,
     private val postExtractionOrchestrator: PostExtractionOrchestrator,
+    private val draftRepository: DraftRepository,
 ) {
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
@@ -517,6 +519,15 @@ internal class DocumentProcessingWorker(
                 force = false,
                 fieldProvenance = finalProvenance
             )
+
+            // Write extracted data to the per-type draft table
+            if (draftData != null) {
+                draftRepository.saveDraftFromExtraction(
+                    tenantId = parsedTenantId,
+                    documentId = documentId,
+                    extractedData = draftData,
+                )
+            }
 
             val postExtractionContext = PostExtractionContext(
                 tenantId = parsedTenantId,

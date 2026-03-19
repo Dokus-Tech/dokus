@@ -1,4 +1,4 @@
-package tech.dokus.database.repository.cashflow
+package tech.dokus.database.mapper
 
 import org.jetbrains.exposed.v1.core.ResultRow
 import tech.dokus.database.tables.documents.DocumentsTable
@@ -19,4 +19,3 @@ internal fun ResultRow.toDocumentDto(): DocumentDto {
         downloadUrl = null // Generated on-demand by the service layer
     )
 }
-

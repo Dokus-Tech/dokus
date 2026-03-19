@@ -13,7 +13,7 @@ import tech.dokus.database.tables.documents.DocumentsTable
  * and the RejectedGuard signal applies a strong negative penalty.
  */
 object RejectedMatchPairsTable : UUIDTable("rejected_match_pairs") {
-    val tenantId = uuid("tenant_id").references(TenantTable.id, onDelete = ReferenceOption.CASCADE)
+    val tenantId = uuid("tenant_id").references(TenantTable.id, onDelete = ReferenceOption.CASCADE).index()
     val transactionId = uuid("transaction_id").references(
         BankTransactionsTable.id,
         onDelete = ReferenceOption.CASCADE,

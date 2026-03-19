@@ -32,10 +32,9 @@ import androidx.compose.ui.unit.dp
 import tech.dokus.features.cashflow.mvi.CreateInvoiceIntent
 import tech.dokus.features.cashflow.mvi.CreateInvoiceState
 import tech.dokus.foundation.aura.components.background.AmbientBackground
-import tech.dokus.foundation.aura.components.chat.ChatMessageRole
-import tech.dokus.foundation.aura.components.chat.PAssistantMessageBubble
+import tech.dokus.foundation.aura.components.chat.ChatAssistantMessage
+import tech.dokus.foundation.aura.components.chat.ChatUserBubble
 import tech.dokus.foundation.aura.components.chat.PChatInputField
-import tech.dokus.foundation.aura.components.chat.PUserMessageBubble
 import tech.dokus.foundation.aura.components.common.PLeftPaneHeader
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.dokusEffects

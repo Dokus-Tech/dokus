@@ -55,7 +55,10 @@ import tech.dokus.aura.resources.document_table_view_details
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.DocDto
+import tech.dokus.domain.model.currency
+import tech.dokus.domain.model.sortDate
+import tech.dokus.domain.model.totalAmount
 import tech.dokus.foundation.aura.components.CashflowType
 import tech.dokus.foundation.aura.components.CashflowTypeBadge
 import tech.dokus.foundation.aura.components.DokusCardSurface
@@ -64,7 +67,7 @@ import tech.dokus.foundation.aura.style.dokusSpacing
 
 /**
  * Data class representing a financial document table row.
- * This maps from FinancialDocumentDto domain model to UI-specific structure.
+ * This maps from DocDto domain model to UI-specific structure.
  */
 data class FinancialDocumentRow(
     val id: DocumentId?,
@@ -78,84 +81,111 @@ data class FinancialDocumentRow(
 )
 
 /**
- * Converts a FinancialDocumentDto to a FinancialDocumentRow for display.
+ * Converts a DocDto to a FinancialDocumentRow for display.
  */
 @OptIn(kotlin.uuid.ExperimentalUuidApi::class)
 @Composable
-fun FinancialDocumentDto.toTableRow(): FinancialDocumentRow {
+fun DocDto.toTableRow(): FinancialDocumentRow {
     val cashflowType = when (this) {
-        is FinancialDocumentDto.InvoiceDto -> {
+        is DocDto.Invoice -> {
             if (this.direction == DocumentDirection.Inbound) CashflowType.CashOut else CashflowType.CashIn
         }
-        is FinancialDocumentDto.ExpenseDto -> CashflowType.CashOut
-        is FinancialDocumentDto.CreditNoteDto -> CashflowType.CashOut
-        is FinancialDocumentDto.ProFormaDto -> CashflowType.CashIn
-        is FinancialDocumentDto.QuoteDto -> CashflowType.CashIn
-        is FinancialDocumentDto.PurchaseOrderDto -> CashflowType.CashOut
+        is DocDto.Receipt -> CashflowType.CashOut
+        is DocDto.CreditNote -> CashflowType.CashOut
+        is DocDto.BankStatement -> CashflowType.CashOut
+        is DocDto.ProForma -> CashflowType.CashIn
+        is DocDto.Quote -> CashflowType.CashIn
+        is DocDto.PurchaseOrder -> CashflowType.CashOut
+        is DocDto.ClassifiedDoc -> CashflowType.CashOut
     }
 
     val contactName = when (this) {
-        is FinancialDocumentDto.InvoiceDto -> ""
-        is FinancialDocumentDto.ExpenseDto -> this.merchant
-        is FinancialDocumentDto.CreditNoteDto -> ""
-        is FinancialDocumentDto.ProFormaDto -> ""
-        is FinancialDocumentDto.QuoteDto -> ""
-        is FinancialDocumentDto.PurchaseOrderDto -> ""
+        is DocDto.Receipt -> this.merchantName.orEmpty()
+        is DocDto.Invoice,
+        is DocDto.CreditNote,
+        is DocDto.BankStatement,
+        is DocDto.ClassifiedDoc -> ""
     }
 
-    val contactEmail = when (this) {
-        is FinancialDocumentDto.InvoiceDto -> ""
-        is FinancialDocumentDto.ExpenseDto -> ""
-        is FinancialDocumentDto.CreditNoteDto -> ""
-        is FinancialDocumentDto.ProFormaDto -> ""
-        is FinancialDocumentDto.QuoteDto -> ""
-        is FinancialDocumentDto.PurchaseOrderDto -> ""
-    }
+    val contactEmail = ""
 
     val documentNumber = when (this) {
-        is FinancialDocumentDto.InvoiceDto -> invoiceNumber.toString()
-        is FinancialDocumentDto.ExpenseDto -> stringResource(
+        is DocDto.Invoice.Confirmed -> invoiceNumber.orEmpty()
+        is DocDto.Invoice.Draft -> invoiceNumber.orEmpty()
+        is DocDto.Receipt.Confirmed -> stringResource(
             Res.string.cashflow_document_number_expense,
             id.value
         )
-        is FinancialDocumentDto.CreditNoteDto -> creditNoteNumber
-        is FinancialDocumentDto.ProFormaDto -> proFormaNumber
-        is FinancialDocumentDto.QuoteDto -> quoteNumber
-        is FinancialDocumentDto.PurchaseOrderDto -> poNumber
+        is DocDto.Receipt.Draft -> receiptNumber.orEmpty()
+        is DocDto.CreditNote -> creditNoteNumber.orEmpty()
+        is DocDto.BankStatement -> ""
+        is DocDto.ProForma -> ""
+        is DocDto.Quote -> ""
+        is DocDto.PurchaseOrder -> ""
+        is DocDto.ClassifiedDoc -> ""
     }
 
     val hasAlert = when (this) {
-        is FinancialDocumentDto.InvoiceDto -> status == InvoiceStatus.Sent || status == InvoiceStatus.Overdue
-        is FinancialDocumentDto.ExpenseDto -> false
-        is FinancialDocumentDto.CreditNoteDto -> false
-        is FinancialDocumentDto.ProFormaDto -> false
-        is FinancialDocumentDto.QuoteDto -> false
-        is FinancialDocumentDto.PurchaseOrderDto -> false
+        is DocDto.Invoice.Confirmed -> status == InvoiceStatus.Sent || status == InvoiceStatus.Overdue
+        is DocDto.Invoice.Draft -> false
+        is DocDto.Receipt -> false
+        is DocDto.CreditNote -> false
+        is DocDto.BankStatement -> false
+        is DocDto.ClassifiedDoc -> false
     }
 
+    val docCurrency = this.currency
+    val docAmount = this.totalAmount
+
     // Format amount with comma separator (fallback to display string on parse failure)
-    val formattedNumber = runCatching {
-        val amountValue = amount.toDouble()
-        val intAmount = amountValue.toInt()
-        intAmount.toString().replace(Regex("(\\d)(?=(\\d{3})+$)"), "$1,")
-    }.getOrNull()
+    val formattedNumber = docAmount?.let { amount ->
+        runCatching {
+            val amountValue = amount.toDouble()
+            val intAmount = amountValue.toInt()
+            intAmount.toString().replace(Regex("(\\d)(?=(\\d{3})+$)"), "$1,")
+        }.getOrNull()
+    }
 
     val formattedAmount = stringResource(
         Res.string.cashflow_amount_with_currency,
-        currency.displaySign,
-        formattedNumber ?: amount.toDisplayString()
+        docCurrency.displaySign,
+        formattedNumber ?: docAmount?.toDisplayString().orEmpty()
     )
 
+    val docId = when (this) {
+        is DocDto.Invoice.Confirmed -> documentId
+        is DocDto.Receipt.Confirmed -> documentId
+        is DocDto.CreditNote.Confirmed -> documentId
+        else -> null
+    }
+
+    val docSortDate = this.sortDate
+
     return FinancialDocumentRow(
-        id = documentId,
+        id = docId,
         invoiceNumber = documentNumber,
         contactName = contactName,
         contactEmail = contactEmail,
         amount = formattedAmount,
-        date = formatDate(date),
+        date = docSortDate?.let { formatDate(it) }.orEmpty(),
         cashflowType = cashflowType,
         hasAlert = hasAlert
     )
+}
+
+/**
+ * Returns a stable key for a DocDto, used for Compose `key` blocks.
+ */
+private fun DocDto.stableKey(): Any = when (this) {
+    is DocDto.Invoice.Confirmed -> id
+    is DocDto.Receipt.Confirmed -> id
+    is DocDto.CreditNote.Confirmed -> id
+    is DocDto.BankStatement.Confirmed -> accountIban ?: this
+    is DocDto.Invoice.Draft -> this
+    is DocDto.Receipt.Draft -> this
+    is DocDto.CreditNote.Draft -> this
+    is DocDto.BankStatement.Draft -> this
+    is DocDto.ClassifiedDoc -> this
 }
 
 /**
@@ -196,9 +226,9 @@ private fun formatDate(date: LocalDate): String {
  */
 @Composable
 fun FinancialDocumentTable(
-    documents: List<FinancialDocumentDto>,
-    onDocumentClick: (FinancialDocumentDto) -> Unit,
-    onMoreClick: (FinancialDocumentDto) -> Unit,
+    documents: List<DocDto>,
+    onDocumentClick: (DocDto) -> Unit,
+    onMoreClick: (DocDto) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val sizing = MaterialTheme.dokusSizing
@@ -211,7 +241,7 @@ fun FinancialDocumentTable(
 
             // Document Rows
             documents.forEachIndexed { index, document ->
-                key(document.documentId) {
+                key(document.stableKey()) {
                     FinancialDocumentTableRow(
                         row = document.toTableRow(),
                         onClick = { onDocumentClick(document) },
@@ -447,8 +477,8 @@ private fun FinancialDocumentTableRow(
  */
 @Composable
 fun FinancialDocumentList(
-    documents: List<FinancialDocumentDto>,
-    onDocumentClick: (FinancialDocumentDto) -> Unit,
+    documents: List<DocDto>,
+    onDocumentClick: (DocDto) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val sizing = MaterialTheme.dokusSizing
@@ -457,7 +487,7 @@ fun FinancialDocumentList(
             modifier = Modifier.fillMaxWidth()
         ) {
             documents.forEachIndexed { index, document ->
-                key(document.documentId) {
+                key(document.stableKey()) {
                     FinancialDocumentListItem(
                         row = document.toTableRow(),
                         onClick = { onDocumentClick(document) }

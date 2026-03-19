@@ -4,6 +4,8 @@ import kotlinx.datetime.LocalDate
 import tech.dokus.database.repository.cashflow.DocumentPurposeTemplateRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.DraftSummary
+import tech.dokus.database.repository.drafts.DraftRepository
+import tech.dokus.domain.model.toDraftData
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentPurposeSource
 import tech.dokus.domain.enums.DocumentStatus
@@ -82,7 +84,8 @@ class DocumentPurposeService(
     private val documentRepository: DocumentRepository,
     private val templateRepository: DocumentPurposeTemplateRepository,
     private val similarityService: DocumentPurposeSimilarityService,
-    private val processingAgent: DocumentProcessingAgent
+    private val processingAgent: DocumentProcessingAgent,
+    private val draftRepository: DraftRepository,
 ) {
     private val logger = loggerFor()
 
@@ -211,7 +214,8 @@ class DocumentPurposeService(
         purpose: String,
         purposePeriodMode: PurposePeriodMode?
     ) {
-        val draftData = draft.extractedData ?: return
+        val docDto = draftRepository.getDraftAsDocDto(tenantId, documentId, draft.documentType)
+        val draftData = docDto?.toDraftData() ?: return
         val base = purpose.trim().replace(Regex("\\s+"), " ").take(PurposeBaseMaxLength)
         if (base.isBlank()) return
 

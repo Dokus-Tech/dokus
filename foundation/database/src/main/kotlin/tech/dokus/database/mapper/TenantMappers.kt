@@ -20,57 +20,56 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toKotlinUuid
 
 @OptIn(ExperimentalUuidApi::class)
-object TenantMappers {
+fun Tenant.Companion.from(row: ResultRow): Tenant = Tenant(
+    id = TenantId(row[TenantTable.id].value.toKotlinUuid()),
+    type = row[TenantTable.type],
+    legalName = LegalName(row[TenantTable.legalName]),
+    displayName = DisplayName(row[TenantTable.displayName]),
+    subscription = row[TenantTable.plan],
+    status = row[TenantTable.status],
+    language = row[TenantTable.language],
+    vatNumber = VatNumber(row[TenantTable.vatNumber]),
+    trialEndsAt = row[TenantTable.trialEndsAt],
+    subscriptionStartedAt = row[TenantTable.subscriptionStartedAt],
+    createdAt = row[TenantTable.createdAt],
+    updatedAt = row[TenantTable.updatedAt],
+    websiteUrl = row[TenantTable.websiteUrl]
+)
 
-    fun ResultRow.toTenant(): Tenant = Tenant(
-        id = TenantId(this[TenantTable.id].value.toKotlinUuid()),
-        type = this[TenantTable.type],
-        legalName = LegalName(this[TenantTable.legalName]),
-        displayName = DisplayName(this[TenantTable.displayName]),
-        subscription = this[TenantTable.plan],
-        status = this[TenantTable.status],
-        language = this[TenantTable.language],
-        vatNumber = VatNumber(this[TenantTable.vatNumber]),
-        trialEndsAt = this[TenantTable.trialEndsAt],
-        subscriptionStartedAt = this[TenantTable.subscriptionStartedAt],
-        createdAt = this[TenantTable.createdAt],
-        updatedAt = this[TenantTable.updatedAt],
-        websiteUrl = this[TenantTable.websiteUrl]
-    )
+@OptIn(ExperimentalUuidApi::class)
+fun TenantSettings.Companion.from(row: ResultRow): TenantSettings = TenantSettings(
+    tenantId = TenantId(row[TenantSettingsTable.tenantId].value.toKotlinUuid()),
+    invoicePrefix = row[TenantSettingsTable.invoicePrefix],
+    nextInvoiceNumber = row[TenantSettingsTable.nextInvoiceNumber],
+    defaultPaymentTerms = row[TenantSettingsTable.defaultPaymentTerms],
+    defaultVatRate = VatRate.fromDbDecimal(row[TenantSettingsTable.defaultVatRate]),
+    invoiceYearlyReset = row[TenantSettingsTable.invoiceYearlyReset],
+    invoicePadding = row[TenantSettingsTable.invoicePadding],
+    invoiceIncludeYear = row[TenantSettingsTable.invoiceIncludeYear],
+    invoiceTimezone = row[TenantSettingsTable.invoiceTimezone],
+    companyName = row[TenantSettingsTable.companyName],
+    companyIban = row[TenantSettingsTable.companyIban]?.let { Iban(it) },
+    companyBic = row[TenantSettingsTable.companyBic]?.let { Bic(it) },
+    companyLogoUrl = row[TenantSettingsTable.companyLogoUrl],
+    emailInvoiceReminders = row[TenantSettingsTable.emailInvoiceReminders],
+    emailPaymentConfirmations = row[TenantSettingsTable.emailPaymentConfirmations],
+    emailWeeklyReports = row[TenantSettingsTable.emailWeeklyReports],
+    enableBankSync = row[TenantSettingsTable.enableBankSync],
+    enablePeppol = row[TenantSettingsTable.enablePeppol],
+    paymentTermsText = row[TenantSettingsTable.paymentTermsText],
+    createdAt = row[TenantSettingsTable.createdAt],
+    updatedAt = row[TenantSettingsTable.updatedAt]
+)
 
-    fun ResultRow.toTenantSettings(): TenantSettings = TenantSettings(
-        tenantId = TenantId(this[TenantSettingsTable.tenantId].value.toKotlinUuid()),
-        invoicePrefix = this[TenantSettingsTable.invoicePrefix],
-        nextInvoiceNumber = this[TenantSettingsTable.nextInvoiceNumber],
-        defaultPaymentTerms = this[TenantSettingsTable.defaultPaymentTerms],
-        defaultVatRate = VatRate.fromDbDecimal(this[TenantSettingsTable.defaultVatRate]),
-        invoiceYearlyReset = this[TenantSettingsTable.invoiceYearlyReset],
-        invoicePadding = this[TenantSettingsTable.invoicePadding],
-        invoiceIncludeYear = this[TenantSettingsTable.invoiceIncludeYear],
-        invoiceTimezone = this[TenantSettingsTable.invoiceTimezone],
-        companyName = this[TenantSettingsTable.companyName],
-        companyIban = this[TenantSettingsTable.companyIban]?.let { Iban(it) },
-        companyBic = this[TenantSettingsTable.companyBic]?.let { Bic(it) },
-        companyLogoUrl = this[TenantSettingsTable.companyLogoUrl],
-        emailInvoiceReminders = this[TenantSettingsTable.emailInvoiceReminders],
-        emailPaymentConfirmations = this[TenantSettingsTable.emailPaymentConfirmations],
-        emailWeeklyReports = this[TenantSettingsTable.emailWeeklyReports],
-        enableBankSync = this[TenantSettingsTable.enableBankSync],
-        enablePeppol = this[TenantSettingsTable.enablePeppol],
-        paymentTermsText = this[TenantSettingsTable.paymentTermsText],
-        createdAt = this[TenantSettingsTable.createdAt],
-        updatedAt = this[TenantSettingsTable.updatedAt]
-    )
-
-    fun ResultRow.toAddress(): Address = Address(
-        id = AddressId(this[AddressTable.id].value.toKotlinUuid()),
-        tenantId = TenantId(this[AddressTable.tenantId].value.toKotlinUuid()),
-        streetLine1 = this[AddressTable.streetLine1],
-        streetLine2 = this[AddressTable.streetLine2],
-        city = this[AddressTable.city],
-        postalCode = this[AddressTable.postalCode],
-        country = this[AddressTable.country], // Now stored as ISO 3166-1 alpha-2 string
-        createdAt = this[AddressTable.createdAt],
-        updatedAt = this[AddressTable.updatedAt]
-    )
-}
+@OptIn(ExperimentalUuidApi::class)
+fun Address.Companion.from(row: ResultRow): Address = Address(
+    id = AddressId(row[AddressTable.id].value.toKotlinUuid()),
+    tenantId = TenantId(row[AddressTable.tenantId].value.toKotlinUuid()),
+    streetLine1 = row[AddressTable.streetLine1],
+    streetLine2 = row[AddressTable.streetLine2],
+    city = row[AddressTable.city],
+    postalCode = row[AddressTable.postalCode],
+    country = row[AddressTable.country], // Now stored as ISO 3166-1 alpha-2 string
+    createdAt = row[AddressTable.createdAt],
+    updatedAt = row[AddressTable.updatedAt]
+)

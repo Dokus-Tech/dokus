@@ -31,6 +31,7 @@ import tech.dokus.aura.resources.cashflow_contact_label
 import tech.dokus.aura.resources.cashflow_saving_contact
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.model.contact.ResolvedContact
 import tech.dokus.features.cashflow.presentation.review.components.details.ContactBlock
 import tech.dokus.features.cashflow.presentation.review.components.details.MicroLabel
 import tech.dokus.foundation.aura.components.common.DokusLoader
@@ -46,44 +47,26 @@ private val ErrorSurfaceCornerRadius = 8.dp
 
 /**
  * Contact selection section for the Document Review screen.
- * Simplified fact-validation UI: shows contact as truth, click to edit.
+ * Shows contact as truth via [ResolvedContact], click to edit.
  *
- * - When contact exists: fact display with hover-to-edit
- * - When no contact: subtle amber border prompt
- * - Loading: spinner when binding contact
- *
- * @param documentType The document type (used for label context)
- * @param selectionState Current selection state
- * @param selectedContactSnapshot Contact details when selected
+ * @param resolvedContact The effective contact state
  * @param isBindingContact Whether binding operation is in progress
  * @param isReadOnly Whether the document is confirmed (read-only mode)
  * @param validationError Error message for contact binding failures
- * @param onAcceptSuggestion Callback when user accepts suggested contact
- * @param onChooseDifferent Callback when user wants to choose a different contact
  * @param onSelectContact Callback to open contact picker/sheet
- * @param onClearContact Callback to clear selected contact
- * @param onCreateNewContact Callback to open contact creation sheet
  */
 @Composable
 fun ContactSelectionSection(
-    documentType: DocumentType,
-    selectionState: ContactSelectionState,
-    selectedContactSnapshot: ContactSnapshot?,
+    resolvedContact: ResolvedContact,
     isBindingContact: Boolean,
     isReadOnly: Boolean,
     validationError: DokusException?,
-    onAcceptSuggestion: () -> Unit,
-    onChooseDifferent: () -> Unit,
     onSelectContact: () -> Unit,
-    onClearContact: () -> Unit,
-    onCreateNewContact: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        // Subtle micro-label
         MicroLabel(text = stringResource(Res.string.cashflow_contact_label))
 
-        // Validation error (if any)
         if (validationError != null) {
             Surface(
                 color = MaterialTheme.colorScheme.errorContainer,
@@ -101,21 +84,18 @@ fun ContactSelectionSection(
             }
         }
 
-        // Content based on state
         AnimatedContent(
             targetState = isBindingContact,
             transitionSpec = { fadeIn() togetherWith fadeOut() },
             label = "ContactContent",
         ) { binding ->
             if (binding) {
-                // Loading state
                 ContactLoadingState()
             } else {
-                // Use the unified ContactBlock component
                 ContactBlock(
-                    contact = selectedContactSnapshot,
+                    displayState = resolvedContact,
                     onEditClick = onSelectContact,
-                    isReadOnly = isReadOnly
+                    isReadOnly = isReadOnly,
                 )
             }
         }
@@ -129,17 +109,11 @@ private fun ContactSelectionSectionPreview(
 ) {
     TestWrapper(parameters) {
         ContactSelectionSection(
-            documentType = DocumentType.Invoice,
-            selectionState = ContactSelectionState.NoContact,
-            selectedContactSnapshot = null,
+            resolvedContact = ResolvedContact.Unknown,
             isBindingContact = false,
             isReadOnly = false,
             validationError = null,
-            onAcceptSuggestion = {},
-            onChooseDifferent = {},
             onSelectContact = {},
-            onClearContact = {},
-            onCreateNewContact = {},
         )
     }
 }

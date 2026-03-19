@@ -24,6 +24,7 @@ import java.util.UUID
 import kotlin.time.Duration.Companion.seconds
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid
+import tech.dokus.foundation.backend.utils.runSuspendCatching
 
 /**
  * Repository for Peppol settings.
@@ -35,7 +36,7 @@ class PeppolSettingsRepository {
     /**
      * Get Peppol settings for a tenant.
      */
-    suspend fun getSettings(tenantId: TenantId): Result<PeppolSettingsDto?> = runCatching {
+    suspend fun getSettings(tenantId: TenantId): Result<PeppolSettingsDto?> = runSuspendCatching {
         dbQuery {
             PeppolSettingsTable.selectAll()
                 .where { PeppolSettingsTable.tenantId eq tenantId.value.toJavaUuid() }
@@ -53,7 +54,7 @@ class PeppolSettingsRepository {
         peppolId: String,
         isEnabled: Boolean = true,
         testMode: Boolean = false
-    ): Result<PeppolSettingsDto> = runCatching {
+    ): Result<PeppolSettingsDto> = runSuspendCatching {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         val tenantUuid = tenantId.value.toJavaUuid()
 
@@ -108,7 +109,7 @@ class PeppolSettingsRepository {
     /**
      * Delete Peppol settings for a tenant.
      */
-    suspend fun deleteSettings(tenantId: TenantId): Result<Boolean> = runCatching {
+    suspend fun deleteSettings(tenantId: TenantId): Result<Boolean> = runSuspendCatching {
         dbQuery {
             val deleted = PeppolSettingsTable.deleteWhere {
                 PeppolSettingsTable.tenantId eq tenantId.value.toJavaUuid()
@@ -121,7 +122,7 @@ class PeppolSettingsRepository {
      * Find tenant ID by webhook token.
      * Used by webhook endpoint to resolve tenant from token.
      */
-    suspend fun getTenantIdByWebhookToken(token: String): Result<TenantId?> = runCatching {
+    suspend fun getTenantIdByWebhookToken(token: String): Result<TenantId?> = runSuspendCatching {
         dbQuery {
             PeppolSettingsTable.selectAll()
                 .where {
@@ -133,7 +134,7 @@ class PeppolSettingsRepository {
         }
     }
 
-    suspend fun getEnabledSettingsByCompanyId(companyId: String): Result<PeppolSettingsDto?> = runCatching {
+    suspend fun getEnabledSettingsByCompanyId(companyId: String): Result<PeppolSettingsDto?> = runSuspendCatching {
         dbQuery {
             PeppolSettingsTable.selectAll()
                 .where {
@@ -154,7 +155,7 @@ class PeppolSettingsRepository {
         tenantId: TenantId,
         now: LocalDateTime,
         debounceSeconds: Long
-    ): Result<Boolean> = runCatching {
+    ): Result<Boolean> = runSuspendCatching {
         val threshold = now.toInstant(TimeZone.UTC)
             .minus(debounceSeconds.seconds)
             .toLocalDateTime(TimeZone.UTC)
@@ -177,7 +178,7 @@ class PeppolSettingsRepository {
     /**
      * Get all enabled Peppol settings (for polling worker).
      */
-    suspend fun getAllEnabled(): Result<List<PeppolSettingsDto>> = runCatching {
+    suspend fun getAllEnabled(): Result<List<PeppolSettingsDto>> = runSuspendCatching {
         dbQuery {
             PeppolSettingsTable.selectAll()
                 .where { PeppolSettingsTable.isEnabled eq true }
@@ -188,7 +189,7 @@ class PeppolSettingsRepository {
     /**
      * Update the lastFullSyncAt timestamp after a full sync.
      */
-    suspend fun updateLastFullSyncAt(tenantId: TenantId): Result<Unit> = runCatching {
+    suspend fun updateLastFullSyncAt(tenantId: TenantId): Result<Unit> = runSuspendCatching {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         dbQuery {
             PeppolSettingsTable.update({

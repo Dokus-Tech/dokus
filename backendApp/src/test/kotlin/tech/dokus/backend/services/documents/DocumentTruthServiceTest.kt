@@ -17,6 +17,8 @@ import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.DocumentSourceRepository
 import tech.dokus.database.repository.cashflow.DocumentSourceSummary
 import tech.dokus.database.repository.cashflow.DraftSummary
+import tech.dokus.database.repository.drafts.DraftRepository
+import tech.dokus.domain.model.toDocDto
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.ReviewReason
@@ -51,6 +53,7 @@ class DocumentTruthServiceTest {
     private val blobRepository = mockk<DocumentBlobRepository>(relaxed = true)
     private val sourceRepository = mockk<DocumentSourceRepository>(relaxed = true)
     private val matchReviewRepository = mockk<DocumentMatchReviewRepository>(relaxed = true)
+    private val draftRepository = mockk<DraftRepository>(relaxed = true)
 
     private lateinit var service: DocumentTruthService
 
@@ -72,7 +75,8 @@ class DocumentTruthServiceTest {
             ingestionRepository = ingestionRepository,
             blobRepository = blobRepository,
             sourceRepository = sourceRepository,
-            matchReviewRepository = matchReviewRepository
+            matchReviewRepository = matchReviewRepository,
+            draftRepository = draftRepository
         )
     }
 
@@ -199,7 +203,10 @@ class DocumentTruthServiceTest {
         } returns docId2
         coEvery {
             documentRepository.getDraftByDocumentId(docId2, tenantId)
-        } returns draftSummary(extractedData = existingDraft)
+        } returns draftSummary()
+        coEvery {
+            draftRepository.getDraftAsDocDto(tenantId, docId2, DocumentType.Invoice)
+        } returns existingDraft.toDocDto()
         coEvery {
             matchReviewRepository.createPending(tenantId, docId2, sourceId1, any(), any(), any())
         } returns reviewId1
@@ -232,7 +239,10 @@ class DocumentTruthServiceTest {
         } returns docId2
         coEvery {
             documentRepository.getDraftByDocumentId(docId2, tenantId)
-        } returns draftSummary(extractedData = sharedDraft)
+        } returns draftSummary()
+        coEvery {
+            draftRepository.getDraftAsDocDto(tenantId, docId2, DocumentType.Invoice)
+        } returns sharedDraft.toDocDto()
         coEvery { sourceRepository.countLinkedSources(tenantId, docId2) } returns 2
         coEvery { sourceRepository.countSources(tenantId, docId1, includeDetached = true) } returns 0
 
@@ -302,9 +312,10 @@ class DocumentTruthServiceTest {
                 distance = 1
             )
         )
-        coEvery { documentRepository.getDraftByDocumentId(docId2, tenantId) } returns draftSummary(
-            extractedData = simpleInvoiceDraft(invoiceNumber = "INV-2026-002")
-        )
+        coEvery { documentRepository.getDraftByDocumentId(docId2, tenantId) } returns draftSummary()
+        coEvery {
+            draftRepository.getDraftAsDocDto(tenantId, docId2, DocumentType.Invoice)
+        } returns simpleInvoiceDraft(invoiceNumber = "INV-2026-002").toDocDto()
         coEvery {
             matchReviewRepository.createPending(tenantId, docId2, sourceId1, any(), any(), any())
         } returns reviewId1
@@ -417,14 +428,12 @@ class DocumentTruthServiceTest {
     )
 
     private fun draftSummary(
-        extractedData: InvoiceDraftData? = null,
         documentStatus: DocumentStatus = DocumentStatus.NeedsReview
     ) = DraftSummary(
         documentId = docId2,
         tenantId = tenantId,
         documentStatus = documentStatus,
         documentType = DocumentType.Invoice,
-        extractedData = extractedData,
         aiKeywords = emptyList(),
         aiDraftSourceRunId = null,
         draftVersion = 1,

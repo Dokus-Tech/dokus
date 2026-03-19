@@ -3,7 +3,7 @@ package tech.dokus.peppol.validator
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.model.Address
-import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.database.entity.InvoiceEntity
 import tech.dokus.domain.model.PeppolSettingsDto
 import tech.dokus.domain.model.PeppolValidationError
 import tech.dokus.domain.model.PeppolValidationResult
@@ -28,7 +28,7 @@ class PeppolValidator {
      * NOTE: recipientPeppolId should be resolved via PeppolRecipientResolver before calling this.
      */
     fun validateForSending(
-        invoice: FinancialDocumentDto.InvoiceDto,
+        invoice: InvoiceEntity,
         contact: ContactDto,
         tenant: Tenant,
         companyAddress: Address?,
@@ -161,7 +161,7 @@ class PeppolValidator {
     }
 
     private fun validateInvoiceDirection(
-        invoice: FinancialDocumentDto.InvoiceDto,
+        invoice: InvoiceEntity,
         errors: MutableList<PeppolValidationError>
     ) {
         if (invoice.direction != DocumentDirection.Outbound) {
@@ -176,7 +176,7 @@ class PeppolValidator {
     }
 
     private fun validateNonZeroTotals(
-        invoice: FinancialDocumentDto.InvoiceDto,
+        invoice: InvoiceEntity,
         errors: MutableList<PeppolValidationError>
     ) {
         if (!invoice.totalAmount.isPositive) {
@@ -200,7 +200,7 @@ class PeppolValidator {
     }
 
     private fun validateVatMath(
-        invoice: FinancialDocumentDto.InvoiceDto,
+        invoice: InvoiceEntity,
         errors: MutableList<PeppolValidationError>
     ) {
         val computedSubtotal = Money(invoice.items.sumOf { it.lineTotal.minor })

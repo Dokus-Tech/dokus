@@ -22,6 +22,7 @@ import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.Query
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
+import tech.dokus.database.mapper.toDocumentDto
 import tech.dokus.database.tables.cashflow.CreditNotesTable
 import tech.dokus.database.tables.cashflow.ExpensesTable
 import tech.dokus.database.tables.cashflow.InvoicesTable
@@ -39,7 +40,6 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
-import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.contact.isUnresolved
 import tech.dokus.domain.utils.json
@@ -477,7 +477,6 @@ private fun ResultRow.toDraftSummary(contactName: String? = null): DraftSummary 
         documentStatus = this[DocumentsTable.documentStatus] ?: DocumentStatus.NeedsReview,
         documentType = this[DocumentsTable.documentType],
         direction = this[DocumentsTable.direction] ?: DocumentDirection.Unknown,
-        extractedData = this[DocumentsTable.canonicalData]?.let { json.decodeFromString<DocumentDraftData>(it) },
         aiKeywords = this[DocumentsTable.aiKeywords]?.let { json.decodeFromString(it) } ?: emptyList(),
         purposeBase = this[DocumentsTable.purposeBase],
         purposePeriodYear = this[DocumentsTable.purposePeriodYear],

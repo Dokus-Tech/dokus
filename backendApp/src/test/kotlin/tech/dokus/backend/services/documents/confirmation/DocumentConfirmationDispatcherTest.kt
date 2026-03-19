@@ -6,10 +6,11 @@ import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
 import tech.dokus.backend.services.documents.DocumentPurposeSimilarityService
+import tech.dokus.backend.services.documents.RAGIndexingService
+import tech.dokus.database.entity.InvoiceEntity
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.InvoiceDraftData
 import kotlin.test.assertTrue
 
@@ -19,12 +20,14 @@ class DocumentConfirmationDispatcherTest {
     private val receiptService = mockk<ReceiptConfirmationService>()
     private val creditNoteService = mockk<CreditNoteConfirmationService>()
     private val purposeSimilarityService = mockk<DocumentPurposeSimilarityService>(relaxed = true)
+    private val ragIndexingService = mockk<RAGIndexingService>(relaxed = true)
 
     private val dispatcher = DocumentConfirmationDispatcher(
         invoiceService = invoiceService,
         receiptService = receiptService,
         creditNoteService = creditNoteService,
-        purposeSimilarityService = purposeSimilarityService
+        purposeSimilarityService = purposeSimilarityService,
+        ragIndexingService = ragIndexingService,
     )
 
     private val tenantId = TenantId.parse("11111111-1111-1111-1111-111111111111")
@@ -33,7 +36,7 @@ class DocumentConfirmationDispatcherTest {
     @Test
     fun `confirm success triggers purpose index`() = runTest {
         val result = ConfirmationResult(
-            entity = mockk<FinancialDocumentDto>(),
+            entity = mockk<InvoiceEntity>(),
             cashflowEntryId = null,
             documentId = documentId
         )

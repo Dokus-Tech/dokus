@@ -12,11 +12,11 @@ import tech.dokus.database.repository.cashflow.CreditNoteRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
+import tech.dokus.database.entity.InvoiceEntity
 import tech.dokus.domain.enums.DocumentListFilter
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.foundation.backend.utils.loggerFor
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -104,7 +104,7 @@ class CashflowProjectionReconciliationWorker(
                                 documentType = documentWithInfo.draft?.documentType
                             ) ?: return@runCatching
 
-                            if (entity is FinancialDocumentDto.InvoiceDto &&
+                            if (entity is InvoiceEntity &&
                                 entity.paidAmount.minor >= entity.totalAmount.minor &&
                                 entity.paidAt == null
                             ) {
@@ -163,7 +163,7 @@ class CashflowProjectionReconciliationWorker(
         tenantId: TenantId,
         documentId: DocumentId,
         documentType: DocumentType?
-    ): FinancialDocumentDto? {
+    ): Any? {
         return when (documentType) {
             DocumentType.Invoice -> invoiceRepository.findByDocumentId(tenantId, documentId)
             DocumentType.Receipt -> expenseRepository.findByDocumentId(tenantId, documentId)

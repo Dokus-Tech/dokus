@@ -10,7 +10,6 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.ids.BankTransactionId
-import tech.dokus.domain.model.FinancialLineItem
 import tech.dokus.domain.model.DocumentDetailDto
 
 @Immutable
@@ -56,10 +55,6 @@ sealed interface DocumentReviewIntent : MVIIntent {
     data object CloseContactSheet : DocumentReviewIntent
     data class UpdateContactSheetSearch(val query: String) : DocumentReviewIntent
 
-    data object AddLineItem : DocumentReviewIntent
-    data class UpdateLineItem(val index: Int, val item: FinancialLineItem) : DocumentReviewIntent
-    data class RemoveLineItem(val index: Int) : DocumentReviewIntent
-
     data class SelectFieldForProvenance(val fieldPath: String?) : DocumentReviewIntent
 
     data object Confirm : DocumentReviewIntent
@@ -76,6 +71,7 @@ sealed interface DocumentReviewIntent : MVIIntent {
     // Feedback dialog intents (correction-first "Something's wrong" flow)
     data object ShowFeedbackDialog : DocumentReviewIntent
     data object DismissFeedbackDialog : DocumentReviewIntent
+    data class SelectFeedbackCategory(val category: FeedbackCategory) : DocumentReviewIntent
     data class UpdateFeedbackText(val text: String) : DocumentReviewIntent
     data object SubmitFeedback : DocumentReviewIntent
     data object RequestAmendment : DocumentReviewIntent

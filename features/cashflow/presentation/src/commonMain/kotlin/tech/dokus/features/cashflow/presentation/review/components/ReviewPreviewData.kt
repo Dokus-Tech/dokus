@@ -49,11 +49,11 @@ import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.PartyDraft
 import tech.dokus.domain.model.ReceiptDraftData
+import tech.dokus.domain.model.toDocDto
 import tech.dokus.domain.model.toDocumentType
 import tech.dokus.domain.model.toEmptyDraftData
-import tech.dokus.domain.model.contact.CounterpartyInfo
 import tech.dokus.domain.model.contact.CounterpartySnapshot
-import tech.dokus.domain.model.contact.PostalAddress
+import tech.dokus.domain.model.contact.ResolvedContact
 import tech.dokus.features.cashflow.presentation.review.DocumentPreviewState
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.PaymentSheetState
@@ -112,22 +112,17 @@ internal fun previewReviewContentState(
         documentStatus = documentStatus,
         documentType = DocumentType.Invoice,
         direction = DocumentDirection.Inbound,
-        extractedData = draftData,
+        content = draftData.toDocDto(),
         aiDraftSourceRunId = null,
         draftVersion = 1,
         draftEditedAt = null,
         draftEditedBy = null,
-        counterparty = CounterpartyInfo.Unresolved(
-            snapshot = CounterpartySnapshot(
-                name = "KBC Bank NV",
-                address = PostalAddress(
-                    streetLine1 = "Havenlaan 2",
-                    postalCode = "1080",
-                    city = "Brussels",
-                ),
-            ),
+        resolvedContact = ResolvedContact.Detected(
+            name = "KBC Bank NV",
+            vatNumber = null,
+            iban = null,
+            address = "Havenlaan 2, 1080 Brussels",
         ),
-        counterpartyDisplayName = "KBC Bank NV",
         lastSuccessfulRunId = null,
         createdAt = previewNow,
         updatedAt = previewNow,
@@ -173,7 +168,6 @@ internal fun previewReviewContentState(
         ),
         draft = draft,
         latestIngestion = null,
-        confirmedEntity = null,
         cashflowEntryId = cashflowEntry?.id,
         pendingMatchReview = if (showPendingMatchReview) {
             DocumentMatchReviewSummaryDto(
@@ -215,13 +209,14 @@ internal fun previewReviewContentState(
         ),
     )
 
+    val docDtoContent = draftData.toDocDto()
     return DocumentReviewState(
         document = DokusState.success(
             ReviewDocumentData(
                 documentId = documentId,
                 documentRecord = record,
-                draftData = draftData,
-                originalData = draftData,
+                draftData = docDtoContent,
+                originalData = docDtoContent,
                 previewUrl = null,
                 contactSuggestions = emptyList(),
             )
@@ -235,7 +230,6 @@ internal fun previewReviewContentState(
         isUndoingAutoPayment = isUndoingAutoPayment,
         sourceViewerState = sourceViewerState,
         paymentSheetState = paymentSheetState,
-        isPendingCreation = false,
         today = LocalDate(2026, 3, 1),
     )
 }
@@ -319,27 +313,24 @@ internal fun previewStateForDocumentType(
         resolvedType == DocumentType.CreditNote ||
         resolvedType == DocumentType.Receipt
 
+    val docDtoContent = draftData.toDocDto()
     val draft = DocumentDraftDto(
         documentId = documentId,
         tenantId = tenantId,
         documentStatus = if (resolvedType.supported) DocumentStatus.Confirmed else DocumentStatus.Confirmed,
         documentType = resolvedType,
-        direction = when (draftData) {
-            is InvoiceDraftData -> draftData.direction
-            is CreditNoteDraftData -> draftData.direction
-            is ReceiptDraftData -> draftData.direction
-            is BankStatementDraftData -> draftData.direction
-            else -> DocumentDirection.Unknown
-        },
-        extractedData = draftData,
+        direction = docDtoContent.direction,
+        content = docDtoContent,
         aiDraftSourceRunId = null,
         draftVersion = 1,
         draftEditedAt = null,
         draftEditedBy = null,
-        counterparty = CounterpartyInfo.Unresolved(
-            snapshot = CounterpartySnapshot(name = "KBC Bank NV"),
+        resolvedContact = ResolvedContact.Detected(
+            name = "KBC Bank NV",
+            vatNumber = null,
+            iban = null,
+            address = null,
         ),
-        counterpartyDisplayName = "KBC Bank NV",
         lastSuccessfulRunId = null,
         createdAt = previewNow,
         updatedAt = previewNow,
@@ -379,7 +370,6 @@ internal fun previewStateForDocumentType(
         ),
         draft = draft,
         latestIngestion = null,
-        confirmedEntity = null,
         cashflowEntryId = cashflowEntry?.id,
         pendingMatchReview = null,
         sources = listOf(
@@ -404,8 +394,8 @@ internal fun previewStateForDocumentType(
             ReviewDocumentData(
                 documentId = documentId,
                 documentRecord = record,
-                draftData = draftData,
-                originalData = draftData,
+                draftData = docDtoContent,
+                originalData = docDtoContent,
                 previewUrl = null,
                 contactSuggestions = emptyList(),
             )
@@ -425,7 +415,6 @@ internal fun previewStateForDocumentType(
         isUndoingAutoPayment = false,
         sourceViewerState = null,
         paymentSheetState = null,
-        isPendingCreation = false,
         today = LocalDate(2026, 3, 1),
     )
 }

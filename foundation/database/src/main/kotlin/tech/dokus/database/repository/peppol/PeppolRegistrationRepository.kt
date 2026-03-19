@@ -15,6 +15,7 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.PeppolRegistrationDto
 import tech.dokus.foundation.backend.database.dbQuery
 import java.util.UUID
+import tech.dokus.foundation.backend.utils.runSuspendCatching
 
 /**
  * Repository for PEPPOL registration state management.
@@ -24,7 +25,7 @@ class PeppolRegistrationRepository {
     /**
      * Get PEPPOL registration for a tenant.
      */
-    suspend fun getRegistration(tenantId: TenantId): Result<PeppolRegistrationDto?> = runCatching {
+    suspend fun getRegistration(tenantId: TenantId): Result<PeppolRegistrationDto?> = runSuspendCatching {
         dbQuery {
             PeppolRegistrationTable.selectAll()
                 .where { PeppolRegistrationTable.tenantId eq UUID.fromString(tenantId.toString()) }
@@ -41,7 +42,7 @@ class PeppolRegistrationRepository {
         peppolId: String,
         status: PeppolRegistrationStatus = PeppolRegistrationStatus.NotConfigured,
         testMode: Boolean = false
-    ): Result<PeppolRegistrationDto> = runCatching {
+    ): Result<PeppolRegistrationDto> = runSuspendCatching {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         val tenantUuid = UUID.fromString(tenantId.toString())
         val newId = UUID.randomUUID()
@@ -71,7 +72,7 @@ class PeppolRegistrationRepository {
         tenantId: TenantId,
         status: PeppolRegistrationStatus,
         errorMessage: String? = null
-    ): Result<Unit> = runCatching {
+    ): Result<Unit> = runSuspendCatching {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         dbQuery {
             PeppolRegistrationTable.update({
@@ -91,7 +92,7 @@ class PeppolRegistrationRepository {
         tenantId: TenantId,
         canReceive: Boolean,
         canSend: Boolean
-    ): Result<Unit> = runCatching {
+    ): Result<Unit> = runSuspendCatching {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         dbQuery {
             PeppolRegistrationTable.update({
@@ -107,7 +108,7 @@ class PeppolRegistrationRepository {
     /**
      * Set registration to WAITING_TRANSFER status.
      */
-    suspend fun setWaitingForTransfer(tenantId: TenantId): Result<Unit> = runCatching {
+    suspend fun setWaitingForTransfer(tenantId: TenantId): Result<Unit> = runSuspendCatching {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         dbQuery {
             PeppolRegistrationTable.update({
@@ -124,7 +125,7 @@ class PeppolRegistrationRepository {
     /**
      * Record that we polled for transfer status.
      */
-    suspend fun recordPoll(tenantId: TenantId): Result<Unit> = runCatching {
+    suspend fun recordPoll(tenantId: TenantId): Result<Unit> = runSuspendCatching {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         dbQuery {
             PeppolRegistrationTable.update({
@@ -142,7 +143,7 @@ class PeppolRegistrationRepository {
     suspend fun updateRecommandCompanyId(
         tenantId: TenantId,
         companyId: String
-    ): Result<Unit> = runCatching {
+    ): Result<Unit> = runSuspendCatching {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         dbQuery {
             PeppolRegistrationTable.update({
@@ -157,7 +158,7 @@ class PeppolRegistrationRepository {
     /**
      * List all registrations in WAITING_TRANSFER status (for polling service).
      */
-    suspend fun listPendingTransfers(): Result<List<PeppolRegistrationDto>> = runCatching {
+    suspend fun listPendingTransfers(): Result<List<PeppolRegistrationDto>> = runSuspendCatching {
         dbQuery {
             PeppolRegistrationTable.selectAll()
                 .where { PeppolRegistrationTable.status eq PeppolRegistrationStatus.WaitingTransfer }

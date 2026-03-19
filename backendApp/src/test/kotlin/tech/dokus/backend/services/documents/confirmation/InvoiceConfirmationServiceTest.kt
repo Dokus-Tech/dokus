@@ -65,7 +65,6 @@ class InvoiceConfirmationServiceTest {
             tenantId = tenantId,
             documentStatus = DocumentStatus.NeedsReview,
             documentType = DocumentType.Invoice,
-            extractedData = null,
             aiDraftSourceRunId = null,
             draftVersion = 0,
             draftEditedAt = null,

@@ -34,7 +34,7 @@ object BankTransactionsTable : UUIDTable("bank_transactions") {
     val tenantId = uuid("tenant_id").references(
         TenantTable.id,
         onDelete = ReferenceOption.CASCADE
-    )
+    ).index()
 
     // --- Source identification ---
     val txSource = dbEnumeration<BankTransactionSource>("source").default(BankTransactionSource.PdfStatement)
@@ -55,7 +55,7 @@ object BankTransactionsTable : UUIDTable("bank_transactions") {
     // --- Core transaction data ---
     val transactionDate = date("transaction_date")
     val valueDate = date("value_date").nullable()
-    val signedAmount = decimal("signed_amount", 12, 2)
+    val signedAmount = decimal("signed_amount", 19, 4)
     val currency = dbEnumeration<Currency>("currency").default(Currency.Eur)
 
     // --- Counterparty ---

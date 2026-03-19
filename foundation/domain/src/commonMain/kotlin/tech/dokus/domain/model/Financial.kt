@@ -71,7 +71,9 @@ data class Tenant(
     val businessActivities: List<String> = emptyList(),
     val businessProfileVerified: Boolean = false,
     val avatar: Thumbnail? = null,
-)
+) {
+    companion object
+}
 
 /**
  * Shared address model used for both tenant company addresses and contact addresses.
@@ -90,7 +92,9 @@ data class Address(
     val country: String? = null,  // ISO 3166-1 alpha-2
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime
-)
+) {
+    companion object
+}
 
 @Serializable
 data class TenantSettings(
@@ -115,7 +119,9 @@ data class TenantSettings(
     val paymentTermsText: String? = null,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime
-)
+) {
+    companion object
+}
 
 /**
  * User identity - does not include tenant info.
@@ -133,7 +139,9 @@ data class User(
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime,
     val avatar: Thumbnail? = null,
-)
+) {
+    companion object
+}
 
 /**
  * Represents a user's membership in a tenant with their role.
@@ -146,7 +154,9 @@ data class TenantMembership(
     val isActive: Boolean = true,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime
-)
+) {
+    companion object
+}
 
 /**
  * User with specific tenant context - used when working within a tenant.
@@ -157,7 +167,9 @@ data class UserInTenant(
     val tenantId: TenantId,
     val role: UserRole,
     val membershipActive: Boolean = true
-)
+) {
+    companion object
+}
 
 // ============================================================================
 // TEAM MANAGEMENT
@@ -226,8 +238,8 @@ data class TransferOwnershipRequest(
 // NOTE: ClientDto has been replaced by ContactDto in Contact.kt
 // Use ContactDto from Contact.kt for all customer/vendor operations
 
-// NOTE: Invoice and Expense classes have been consolidated into FinancialDocumentDto
-// Use InvoiceDto and ExpenseDto from FinancialDocument.kt
+// NOTE: Invoice/Expense entities are in database module (InvoiceEntity, ExpenseEntity).
+// API layer uses DocDto sealed hierarchy (DocDto.Invoice.Confirmed, DocDto.Receipt.Confirmed).
 
 // ============================================================================
 // PAYMENTS

@@ -36,7 +36,7 @@ import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.PdfPreviewPane
 import tech.dokus.features.cashflow.presentation.review.SourceEvidenceViewerState
-import tech.dokus.features.cashflow.presentation.review.models.counterpartyInfo
+import tech.dokus.domain.model.contact.ResolvedContact
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.extensions.sourceViewerSubtitleLocalized
@@ -75,7 +75,14 @@ internal fun CanonicalCenterPane(
         return
     }
 
-    val counterparty = counterpartyInfo(state)
+    val contact = state.effectiveContact
+    val contactName = when (contact) {
+        is ResolvedContact.Linked -> contact.name
+        is ResolvedContact.Suggested -> contact.name
+        is ResolvedContact.Detected -> contact.name
+        is ResolvedContact.Unknown -> null
+    }
+    val contactAddress = (contact as? ResolvedContact.Detected)?.address
     val uiData = state.uiData
 
     if (uiData is DocumentUiData.Invoice) {
@@ -85,8 +92,8 @@ internal fun CanonicalCenterPane(
         ) {
             CanonicalInvoiceDocumentCard(
                 data = uiData,
-                counterpartyName = counterparty.name ?: state.documentRecord?.document?.filename ?: "",
-                counterpartyAddress = counterparty.address?.formatted,
+                counterpartyName = contactName ?: state.documentRecord?.document?.filename ?: "",
+                counterpartyAddress = contactAddress,
                 modifier = Modifier
                     .width(CanonicalPreviewWidth)
                     .fillMaxHeight()
@@ -132,14 +139,14 @@ internal fun CanonicalCenterPane(
                         verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall),
                     ) {
                         Text(
-                            text = counterparty.name ?: state.documentRecord?.document?.filename ?: "",
+                            text = contactName ?: state.documentRecord?.document?.filename ?: "",
                             style = MaterialTheme.typography.displaySmall.copy(fontSize = 20.sp),
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface,
                             maxLines = 2,
                             overflow = TextOverflow.Ellipsis,
                         )
-                        counterparty.address?.formatted?.let { address ->
+                        contactAddress?.let { address ->
                             Text(
                                 text = address,
                                 style = MaterialTheme.typography.bodySmall,
