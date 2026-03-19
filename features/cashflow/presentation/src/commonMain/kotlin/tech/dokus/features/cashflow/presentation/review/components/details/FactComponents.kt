@@ -25,9 +25,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import com.composables.icons.lucide.ChevronRight
-import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.Pencil
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -47,13 +44,16 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import com.composables.icons.lucide.ChevronRight
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Pencil
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_contact_detected_label
@@ -510,12 +510,14 @@ fun EditableFactField(
     val isHovered by interactionSource.collectIsHoveredAsState()
     val isLargeScreen = LocalScreenSize.current.isLarge
     var isEditing by remember { mutableStateOf(false) }
+    var hasFocused by remember { mutableStateOf(false) }
     var editText by remember(value) { mutableStateOf(value.orEmpty()) }
     val focusRequester = remember { FocusRequester() }
     val hasValue = !value.isNullOrBlank()
 
     fun commit() {
         isEditing = false
+        hasFocused = false
         val trimmed = editText.trim()
         if (trimmed != (value.orEmpty())) {
             onValueChanged(trimmed)
@@ -524,6 +526,7 @@ fun EditableFactField(
 
     fun cancel() {
         isEditing = false
+        hasFocused = false
         editText = value.orEmpty()
     }
 
@@ -603,7 +606,13 @@ fun EditableFactField(
                         modifier = Modifier
                             .fillMaxWidth()
                             .focusRequester(focusRequester)
-                            .onFocusChanged { if (!it.isFocused && isEditing) commit() }
+                            .onFocusChanged {
+                                if (it.isFocused) {
+                                    hasFocused = true
+                                } else if (hasFocused && isEditing) {
+                                    commit()
+                                }
+                            }
                             .onKeyEvent {
                                 if (it.key == Key.Escape) {
                                     cancel()
@@ -656,11 +665,13 @@ fun EditableAmountRow(
     val interactionSource = remember { MutableInteractionSource() }
     val isHovered by interactionSource.collectIsHoveredAsState()
     var isEditing by remember { mutableStateOf(false) }
+    var hasFocused by remember { mutableStateOf(false) }
     var editText by remember(value) { mutableStateOf(value.orEmpty()) }
     val focusRequester = remember { FocusRequester() }
 
     fun commit() {
         isEditing = false
+        hasFocused = false
         val trimmed = editText.trim()
         if (trimmed != (value.orEmpty())) {
             onValueChanged(trimmed)
@@ -669,6 +680,7 @@ fun EditableAmountRow(
 
     fun cancel() {
         isEditing = false
+        hasFocused = false
         editText = value.orEmpty()
     }
 
@@ -738,7 +750,13 @@ fun EditableAmountRow(
                     modifier = Modifier
                         .width(120.dp)
                         .focusRequester(focusRequester)
-                        .onFocusChanged { if (!it.isFocused && isEditing) commit() }
+                        .onFocusChanged {
+                            if (it.isFocused) {
+                                hasFocused = true
+                            } else if (hasFocused && isEditing) {
+                                commit()
+                            }
+                        }
                         .onKeyEvent {
                             if (it.key == Key.Escape) {
                                 cancel()
