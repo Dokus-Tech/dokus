@@ -24,7 +24,7 @@ object DocumentSourcesTable : UUIDTable("document_sources") {
     val tenantId = uuid("tenant_id").references(
         TenantTable.id,
         onDelete = ReferenceOption.CASCADE
-    )
+    ).index()
 
     val documentId = uuid("document_id").references(
         DocumentsTable.id,

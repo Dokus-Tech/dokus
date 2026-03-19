@@ -311,7 +311,6 @@ class DocumentListingFiltersTest {
             DocumentsTable.insert {
                 it[id] = docUuid
                 it[tenantId] = tenantUuid
-                it[canonicalContentHash] = null
             }
         }
         return docUuid
@@ -345,7 +344,6 @@ class DocumentListingFiltersTest {
                 it[documentStatus] = status
                 it[documentType] = type
                 it[aiDraftSourceRunId] = null
-                it[canonicalData] = null
                 it[lastSuccessfulRunId] = null
                 it[updatedAt] = now
             }

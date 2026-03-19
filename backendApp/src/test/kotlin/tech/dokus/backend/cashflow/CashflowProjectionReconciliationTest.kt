@@ -52,7 +52,7 @@ import tech.dokus.domain.enums.TenantType
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.database.entity.InvoiceEntity
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.toDbDecimal
 import java.math.BigDecimal
@@ -232,12 +232,10 @@ class CashflowProjectionReconciliationTest {
         totalAmount: Money,
         paidAmount: Money,
         paidAt: LocalDateTime?
-    ): Pair<DocumentId, FinancialDocumentDto.InvoiceDto> {
+    ): Pair<DocumentId, InvoiceEntity> {
         val documentId = documentRepository.create(
             tenantId = tenantId,
-            payload = DocumentCreatePayload(
-                canonicalContentHash = null,
-            )
+            payload = DocumentCreatePayload()
         )
 
         val runId = ingestionRepository.createRun(documentId, tenantId)

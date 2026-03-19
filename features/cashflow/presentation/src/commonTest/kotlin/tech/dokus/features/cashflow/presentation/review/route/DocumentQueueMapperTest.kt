@@ -8,18 +8,20 @@ import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.enums.InvoiceStatus
+import tech.dokus.domain.enums.PaymentMethod
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.InvoiceId
-import tech.dokus.domain.ids.InvoiceNumber
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.DocDto
 import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentIngestionDto
 import tech.dokus.domain.model.DocumentDetailDto
-import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.InvoicePaymentInfo
 import tech.dokus.domain.model.InvoiceDraftData
+import tech.dokus.domain.model.toDocDto
 import tech.dokus.foundation.app.shell.DocQueueStatus
 import tech.dokus.foundation.app.shell.DocQueueStatusDetail
 import kotlin.test.Test
@@ -135,7 +137,7 @@ class DocumentQueueMapperTest {
             tenantId = tenantId,
             documentStatus = draftStatus,
             documentType = DocumentType.Invoice,
-            extractedData = draftData,
+            content = draftData.toDocDto(),
             aiDraftSourceRunId = null,
             draftVersion = 1,
             draftEditedAt = null,
@@ -158,13 +160,13 @@ class DocumentQueueMapperTest {
             confidence = 0.92,
         )
 
-        val confirmedEntity = if (includeConfirmedEntity) {
-            FinancialDocumentDto.InvoiceDto(
+        val confirmedContent: DocDto? = if (includeConfirmedEntity) {
+            DocDto.Invoice.Confirmed(
                 id = InvoiceId.generate(),
                 tenantId = tenantId,
                 direction = DocumentDirection.Outbound,
                 contactId = ContactId.generate(),
-                invoiceNumber = InvoiceNumber("INV-2026-001"),
+                invoiceNumber = "INV-2026-001",
                 issueDate = LocalDate(2026, 1, 1),
                 dueDate = dueDate,
                 subtotalAmount = Money.from("100.00")!!,
@@ -177,12 +179,21 @@ class DocumentQueueMapperTest {
                     else -> InvoiceStatus.Sent
                 },
                 documentId = documentId,
-                paidAt = if (paid) LocalDateTime(2026, 1, 2, 0, 0, 0) else null,
+                paymentInfo = if (paid) InvoicePaymentInfo(
+                    paidAt = LocalDateTime(2026, 1, 2, 0, 0, 0),
+                    paymentMethod = PaymentMethod.BankTransfer,
+                ) else null,
                 createdAt = now,
                 updatedAt = now,
             )
         } else {
             null
+        }
+
+        val finalDraft = if (confirmedContent != null) {
+            draft.copy(content = confirmedContent)
+        } else {
+            draft
         }
 
         return DocumentDetailDto(
@@ -193,9 +204,8 @@ class DocumentQueueMapperTest {
                 uploadedAt = now,
                 sortDate = LocalDate(2026, 1, 1),
             ),
-            draft = draft,
+            draft = finalDraft,
             latestIngestion = ingestion,
-            confirmedEntity = confirmedEntity,
         )
     }
 }

@@ -14,7 +14,7 @@ private const val IbanLength = 34
  * Used by the HistoricalPattern signal in the Bayesian scoring engine.
  */
 object MatchPatternsTable : UUIDTable("match_patterns") {
-    val tenantId = uuid("tenant_id").references(TenantTable.id, onDelete = ReferenceOption.CASCADE)
+    val tenantId = uuid("tenant_id").references(TenantTable.id, onDelete = ReferenceOption.CASCADE).index()
     val counterpartyIban = varchar("counterparty_iban", IbanLength)
     val contactId = uuid("contact_id").references(ContactsTable.id, onDelete = ReferenceOption.CASCADE)
     val matchCount = integer("match_count").default(1)

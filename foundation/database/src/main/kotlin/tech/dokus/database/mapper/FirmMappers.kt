@@ -16,32 +16,31 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toKotlinUuid
 
 @OptIn(ExperimentalUuidApi::class)
-object FirmMappers {
+fun Firm.Companion.from(row: ResultRow): Firm = Firm(
+    id = FirmId(row[FirmsTable.id].value.toKotlinUuid()),
+    name = DisplayName(row[FirmsTable.name]),
+    vatNumber = VatNumber(row[FirmsTable.vatNumber]),
+    isActive = row[FirmsTable.isActive],
+    createdAt = row[FirmsTable.createdAt],
+    updatedAt = row[FirmsTable.updatedAt],
+)
 
-    fun ResultRow.toFirm(): Firm = Firm(
-        id = FirmId(this[FirmsTable.id].value.toKotlinUuid()),
-        name = DisplayName(this[FirmsTable.name]),
-        vatNumber = VatNumber(this[FirmsTable.vatNumber]),
-        isActive = this[FirmsTable.isActive],
-        createdAt = this[FirmsTable.createdAt],
-        updatedAt = this[FirmsTable.updatedAt],
-    )
+@OptIn(ExperimentalUuidApi::class)
+fun FirmMembership.Companion.from(row: ResultRow): FirmMembership = FirmMembership(
+    userId = UserId(row[FirmMembersTable.userId].value.toKotlinUuid()),
+    firmId = FirmId(row[FirmMembersTable.firmId].value.toKotlinUuid()),
+    role = row[FirmMembersTable.role],
+    isActive = row[FirmMembersTable.isActive],
+    createdAt = row[FirmMembersTable.createdAt],
+    updatedAt = row[FirmMembersTable.updatedAt],
+)
 
-    fun ResultRow.toFirmMembership(): FirmMembership = FirmMembership(
-        userId = UserId(this[FirmMembersTable.userId].value.toKotlinUuid()),
-        firmId = FirmId(this[FirmMembersTable.firmId].value.toKotlinUuid()),
-        role = this[FirmMembersTable.role],
-        isActive = this[FirmMembersTable.isActive],
-        createdAt = this[FirmMembersTable.createdAt],
-        updatedAt = this[FirmMembersTable.updatedAt],
-    )
-
-    fun ResultRow.toFirmAccess(): FirmAccess = FirmAccess(
-        firmId = FirmId(this[FirmAccessTable.firmId].value.toKotlinUuid()),
-        tenantId = TenantId(this[FirmAccessTable.tenantId].value.toKotlinUuid()),
-        status = this[FirmAccessTable.status],
-        grantedByUserId = UserId(this[FirmAccessTable.grantedByUserId].value.toKotlinUuid()),
-        createdAt = this[FirmAccessTable.createdAt],
-        updatedAt = this[FirmAccessTable.updatedAt],
-    )
-}
+@OptIn(ExperimentalUuidApi::class)
+fun FirmAccess.Companion.from(row: ResultRow): FirmAccess = FirmAccess(
+    firmId = FirmId(row[FirmAccessTable.firmId].value.toKotlinUuid()),
+    tenantId = TenantId(row[FirmAccessTable.tenantId].value.toKotlinUuid()),
+    status = row[FirmAccessTable.status],
+    grantedByUserId = UserId(row[FirmAccessTable.grantedByUserId].value.toKotlinUuid()),
+    createdAt = row[FirmAccessTable.createdAt],
+    updatedAt = row[FirmAccessTable.updatedAt],
+)

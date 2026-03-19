@@ -23,6 +23,7 @@ import tech.dokus.domain.model.ai.ChatScope
 import tech.dokus.domain.model.ai.ChatSessionId
 import tech.dokus.domain.model.ai.ChatSessionSummary
 import tech.dokus.domain.model.ai.MessageRole
+import tech.dokus.domain.repository.ChatPage
 import tech.dokus.domain.repository.ChatRepository
 import tech.dokus.domain.utils.json
 import tech.dokus.foundation.backend.utils.loggerFor
@@ -116,7 +117,7 @@ class ChatRepositoryImpl : ChatRepository {
         limit: Int,
         offset: Int,
         descending: Boolean
-    ): Pair<List<ChatMessageDto>, Long> = newSuspendedTransaction {
+    ): ChatPage<ChatMessageDto> = newSuspendedTransaction {
         val tenantUuid = UUID.fromString(tenantId.toString())
         val sessionUuid = UUID.fromString(sessionId.toString())
 
@@ -136,7 +137,7 @@ class ChatRepositoryImpl : ChatRepository {
             .offset(offset.toLong())
             .map { it.toMessageDto() }
 
-        messages to total
+        ChatPage(messages, total)
     }
 
     override suspend fun getMessagesForDocument(
@@ -144,7 +145,7 @@ class ChatRepositoryImpl : ChatRepository {
         documentId: DocumentId,
         limit: Int,
         offset: Int
-    ): Pair<List<ChatMessageDto>, Long> = newSuspendedTransaction {
+    ): ChatPage<ChatMessageDto> = newSuspendedTransaction {
         val tenantUuid = UUID.fromString(tenantId.toString())
         val documentUuid = UUID.fromString(documentId.toString())
 
@@ -163,7 +164,7 @@ class ChatRepositoryImpl : ChatRepository {
             .offset(offset.toLong())
             .map { it.toMessageDto() }
 
-        messages to total
+        ChatPage(messages, total)
     }
 
     override suspend fun getNextSequenceNumber(
@@ -195,7 +196,7 @@ class ChatRepositoryImpl : ChatRepository {
         documentId: DocumentId?,
         limit: Int,
         offset: Int
-    ): Pair<List<ChatSessionSummary>, Long> = newSuspendedTransaction {
+    ): ChatPage<ChatSessionSummary> = newSuspendedTransaction {
         val tenantUuid = UUID.fromString(tenantId.toString())
 
         // Build query with optional filters
@@ -245,7 +246,7 @@ class ChatRepositoryImpl : ChatRepository {
                 )
             }
 
-        sessions to total
+        ChatPage(sessions, total)
     }
 
     override suspend fun getSessionSummary(

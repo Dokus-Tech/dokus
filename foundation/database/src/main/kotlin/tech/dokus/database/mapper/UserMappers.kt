@@ -14,42 +14,32 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toKotlinUuid
 
 @OptIn(ExperimentalUuidApi::class)
-object UserMappers {
+fun User.Companion.from(row: ResultRow): User = User(
+    id = UserId(row[UsersTable.id].value.toString()),
+    email = Email(row[UsersTable.email]),
+    firstName = Name(row[UsersTable.firstName]),
+    lastName = Name(row[UsersTable.lastName]),
+    emailVerified = row[UsersTable.emailVerified],
+    isActive = row[UsersTable.isActive],
+    lastLoginAt = row[UsersTable.lastLoginAt],
+    createdAt = row[UsersTable.createdAt],
+    updatedAt = row[UsersTable.updatedAt]
+)
 
-    /**
-     * Maps a ResultRow from UsersTable to User.
-     */
-    fun ResultRow.toUser(): User = User(
-        id = UserId(this[UsersTable.id].value.toString()),
-        email = Email(this[UsersTable.email]),
-        firstName = Name(this[UsersTable.firstName]),
-        lastName = Name(this[UsersTable.lastName]),
-        emailVerified = this[UsersTable.emailVerified],
-        isActive = this[UsersTable.isActive],
-        lastLoginAt = this[UsersTable.lastLoginAt],
-        createdAt = this[UsersTable.createdAt],
-        updatedAt = this[UsersTable.updatedAt]
-    )
+@OptIn(ExperimentalUuidApi::class)
+fun TenantMembership.Companion.from(row: ResultRow): TenantMembership = TenantMembership(
+    userId = UserId(row[TenantMembersTable.userId].value.toString()),
+    tenantId = TenantId(row[TenantMembersTable.tenantId].value.toKotlinUuid()),
+    role = row[TenantMembersTable.role],
+    isActive = row[TenantMembersTable.isActive],
+    createdAt = row[TenantMembersTable.createdAt],
+    updatedAt = row[TenantMembersTable.updatedAt]
+)
 
-    /**
-     * Maps a ResultRow from TenantMembersTable to TenantMembership.
-     */
-    fun ResultRow.toTenantMembership(): TenantMembership = TenantMembership(
-        userId = UserId(this[TenantMembersTable.userId].value.toString()),
-        tenantId = TenantId(this[TenantMembersTable.tenantId].value.toKotlinUuid()),
-        role = this[TenantMembersTable.role],
-        isActive = this[TenantMembersTable.isActive],
-        createdAt = this[TenantMembersTable.createdAt],
-        updatedAt = this[TenantMembersTable.updatedAt]
-    )
-
-    /**
-     * Maps joined UsersTable + TenantMembersTable to UserInTenant.
-     */
-    fun ResultRow.toUserInTenant(): UserInTenant = UserInTenant(
-        user = this.toUser(),
-        tenantId = TenantId(this[TenantMembersTable.tenantId].value.toKotlinUuid()),
-        role = this[TenantMembersTable.role],
-        membershipActive = this[TenantMembersTable.isActive]
-    )
-}
+@OptIn(ExperimentalUuidApi::class)
+fun UserInTenant.Companion.from(row: ResultRow): UserInTenant = UserInTenant(
+    user = User.from(row),
+    tenantId = TenantId(row[TenantMembersTable.tenantId].value.toKotlinUuid()),
+    role = row[TenantMembersTable.role],
+    membershipActive = row[TenantMembersTable.isActive]
+)

@@ -46,6 +46,7 @@ import tech.dokus.domain.utils.json
 import kotlinx.serialization.json.Json
 import tech.dokus.foundation.backend.database.dbQuery
 import java.util.UUID
+import tech.dokus.foundation.backend.utils.runSuspendCatching
 
 class SearchRepository(
     private val searchSuggestionRepository: SearchSuggestionRepository,
@@ -59,7 +60,7 @@ class SearchRepository(
         preset: SearchPreset?,
         limit: Int,
         suggestionLimit: Int
-    ): Result<UnifiedSearchResponse> = runCatching {
+    ): Result<UnifiedSearchResponse> = runSuspendCatching {
         val normalizedQuery = query.trim()
         val effectiveLimit = limit.coerceIn(1, 100)
         val effectiveSuggestionLimit = suggestionLimit.coerceIn(1, 50)
@@ -70,7 +71,7 @@ class SearchRepository(
                 preset = preset,
                 limit = effectiveLimit,
             )
-            return@runCatching UnifiedSearchResponse(
+            return@runSuspendCatching UnifiedSearchResponse(
                 query = normalizedQuery,
                 scope = UnifiedSearchScope.Transactions,
                 counts = SearchCounts(
@@ -91,7 +92,7 @@ class SearchRepository(
                 userId = userId,
                 limit = effectiveSuggestionLimit,
             )
-            return@runCatching UnifiedSearchResponse(
+            return@runSuspendCatching UnifiedSearchResponse(
                 query = "",
                 scope = scope,
                 suggestions = suggestions,

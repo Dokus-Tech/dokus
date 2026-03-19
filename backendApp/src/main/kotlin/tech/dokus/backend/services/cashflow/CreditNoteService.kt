@@ -1,6 +1,7 @@
 package tech.dokus.backend.services.cashflow
 
 import kotlinx.datetime.LocalDate
+import tech.dokus.database.entity.CreditNoteEntity
 import tech.dokus.database.repository.cashflow.CreditNoteRepository
 import tech.dokus.database.repository.cashflow.RefundClaimRepository
 import tech.dokus.domain.Money
@@ -13,7 +14,6 @@ import tech.dokus.domain.ids.CreditNoteId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.CreateCreditNoteRequest
-import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.RecordRefundRequest
 import tech.dokus.domain.model.RefundClaimDto
 import tech.dokus.domain.model.common.PaginatedResponse
@@ -45,7 +45,7 @@ class CreditNoteService(
     suspend fun createCreditNote(
         tenantId: TenantId,
         request: CreateCreditNoteRequest
-    ): Result<FinancialDocumentDto.CreditNoteDto> {
+    ): Result<CreditNoteEntity> {
         logger.info("Creating credit note: type=${request.creditNoteType}, tenant=$tenantId")
         return creditNoteRepository.createCreditNote(tenantId, request)
             .onSuccess { logger.info("Credit note created: ${it.id}") }
@@ -58,7 +58,7 @@ class CreditNoteService(
     suspend fun getCreditNote(
         creditNoteId: CreditNoteId,
         tenantId: TenantId
-    ): Result<FinancialDocumentDto.CreditNoteDto?> {
+    ): Result<CreditNoteEntity?> {
         return creditNoteRepository.getCreditNote(creditNoteId, tenantId)
     }
 
@@ -71,7 +71,7 @@ class CreditNoteService(
         creditNoteId: CreditNoteId,
         tenantId: TenantId,
         request: CreateCreditNoteRequest
-    ): Result<FinancialDocumentDto.CreditNoteDto> {
+    ): Result<CreditNoteEntity> {
         logger.info("Updating credit note: $creditNoteId, tenant=$tenantId")
         return creditNoteRepository.updateCreditNote(creditNoteId, tenantId, request)
             .onSuccess { logger.info("Credit note updated: $creditNoteId") }
@@ -91,7 +91,7 @@ class CreditNoteService(
         toDate: LocalDate? = null,
         limit: Int = 50,
         offset: Int = 0,
-    ): Result<PaginatedResponse<FinancialDocumentDto.CreditNoteDto>> {
+    ): Result<PaginatedResponse<CreditNoteEntity>> {
         return creditNoteRepository.listCreditNotes(
             tenantId = tenantId,
             status = status,
@@ -113,7 +113,7 @@ class CreditNoteService(
     suspend fun confirmCreditNote(
         creditNoteId: CreditNoteId,
         tenantId: TenantId
-    ): Result<FinancialDocumentDto.CreditNoteDto> = runCatching {
+    ): Result<CreditNoteEntity> = runCatching {
         logger.info("Confirming credit note: $creditNoteId, tenant=$tenantId")
 
         // Get the credit note
@@ -159,7 +159,7 @@ class CreditNoteService(
         creditNoteId: CreditNoteId,
         tenantId: TenantId,
         request: RecordRefundRequest
-    ): Result<FinancialDocumentDto.CreditNoteDto> = runCatching {
+    ): Result<CreditNoteEntity> = runCatching {
         logger.info("Recording refund for credit note: $creditNoteId, amount=${request.amount}")
 
         // Get the credit note
@@ -255,7 +255,7 @@ class CreditNoteService(
     suspend fun findByDocumentId(
         tenantId: TenantId,
         documentId: DocumentId
-    ): FinancialDocumentDto.CreditNoteDto? {
+    ): CreditNoteEntity? {
         return creditNoteRepository.findByDocumentId(tenantId, documentId)
     }
 }

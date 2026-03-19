@@ -76,6 +76,7 @@ class DocumentProcessingWorkerTimeoutTest {
             userRepository = userRepository,
             llmQueue = llmQueue,
             postExtractionOrchestrator = postExtractionOrchestrator,
+            draftRepository = mockk(relaxed = true),
         )
 
         try {

@@ -20,7 +20,8 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
-import tech.dokus.domain.model.contact.CounterpartyInfo
+import tech.dokus.domain.model.contact.ContactSuggestionDto
+import tech.dokus.domain.model.contact.ResolvedContact
 import kotlin.time.Instant
 
 /**
@@ -70,7 +71,7 @@ data class DocumentDraftDto(
     val documentStatus: DocumentStatus,
     val documentType: DocumentType?,
     val direction: DocumentDirection = DocumentDirection.Unknown,
-    val extractedData: DocumentDraftData?,
+    val content: DocDto? = null,
     val aiKeywords: List<String> = emptyList(),
     val purposeBase: String? = null,
     val purposePeriodYear: Int? = null,
@@ -83,8 +84,8 @@ data class DocumentDraftDto(
     val draftVersion: Int,
     val draftEditedAt: LocalDateTime?,
     val draftEditedBy: UserId?,
-    val counterparty: CounterpartyInfo? = null,
-    val counterpartyDisplayName: String? = null,
+    val resolvedContact: ResolvedContact = ResolvedContact.Unknown,
+    val contactSuggestions: List<ContactSuggestionDto> = emptyList(),
     val rejectReason: DocumentRejectReason? = null,
     val lastSuccessfulRunId: IngestionRunId?,
     val createdAt: LocalDateTime,
@@ -123,10 +124,9 @@ data class DocumentListItemDto(
  * Used for single-document detail/review endpoints.
  *
  * - document: Canonical document metadata (always present)
- * - draft: Editable extraction state (present if document has been processed)
+ * - draft: Workflow metadata (resolvedContact, purpose, status, version)
+ * - draft.content: The document data as [DocDto] (Draft or Confirmed variant)
  * - latestIngestion: Current/last ingestion run (present if any runs exist)
- *   - Selection priority: Processing > latest Succeeded/Failed > latest Queued
- * - confirmedEntity: The created Invoice/Expense (present if confirmed)
  * - cashflowEntryId: The created cashflow entry ID (present if confirmed)
  */
 @Serializable
@@ -134,7 +134,6 @@ data class DocumentDetailDto(
     val document: DocumentDto,
     val draft: DocumentDraftDto?,
     val latestIngestion: DocumentIngestionDto?,
-    val confirmedEntity: FinancialDocumentDto?,
     val cashflowEntryId: CashflowEntryId? = null,
     val pendingMatchReview: DocumentMatchReviewSummaryDto? = null,
     val sources: List<DocumentSourceDto> = emptyList()

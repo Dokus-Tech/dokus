@@ -42,7 +42,7 @@ object DocumentIngestionRunsTable : UUIDTable("document_ingestion_runs") {
     val tenantId = uuid("tenant_id").references(
         TenantTable.id,
         onDelete = ReferenceOption.CASCADE
-    )
+    ).index()
 
     // Run lifecycle status
     val status = dbEnumeration<IngestionStatus>("status")

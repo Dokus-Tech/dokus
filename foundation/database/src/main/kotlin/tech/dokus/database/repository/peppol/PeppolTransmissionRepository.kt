@@ -31,6 +31,7 @@ import org.jetbrains.exposed.v1.exceptions.ExposedSQLException
 import java.util.UUID
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid
+import tech.dokus.foundation.backend.utils.runSuspendCatching
 
 /**
  * Internal transmission projection used by workers/reconciliation.
@@ -84,7 +85,7 @@ class PeppolTransmissionRepository {
         senderPeppolId: PeppolId? = null,
         idempotencyKey: String? = null,
         rawUblXmlKey: String? = null
-    ): Result<PeppolTransmissionDto> = runCatching {
+    ): Result<PeppolTransmissionDto> = runSuspendCatching {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         val newId = UUID.randomUUID()
         val tenantUuid = tenantId.value.toJavaUuid()
@@ -125,7 +126,7 @@ class PeppolTransmissionRepository {
         idempotencyKey: String,
         rawRequest: String,
         rawUblXmlKey: String? = null
-    ): Result<PeppolTransmissionInternal> = runCatching {
+    ): Result<PeppolTransmissionInternal> = runSuspendCatching {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         val tenantUuid = tenantId.value.toJavaUuid()
         val invoiceUuid = UUID.fromString(invoiceId.toString())
@@ -194,7 +195,7 @@ class PeppolTransmissionRepository {
     suspend fun claimDueOutbound(
         now: LocalDateTime,
         limit: Int
-    ): Result<List<PeppolTransmissionInternal>> = runCatching {
+    ): Result<List<PeppolTransmissionInternal>> = runSuspendCatching {
         dbQuery {
             val candidates = PeppolTransmissionsTable.selectAll()
                 .where {
@@ -248,7 +249,7 @@ class PeppolTransmissionRepository {
     suspend fun recoverStaleOutboundSending(
         staleBefore: LocalDateTime,
         retryAt: LocalDateTime
-    ): Result<Int> = runCatching {
+    ): Result<Int> = runSuspendCatching {
         dbQuery {
             PeppolTransmissionsTable.update({
                 (PeppolTransmissionsTable.direction eq PeppolTransmissionDirection.Outbound) and
@@ -271,7 +272,7 @@ class PeppolTransmissionRepository {
         externalDocumentId: String?,
         rawResponse: String?,
         transmittedAt: LocalDateTime
-    ): Result<Boolean> = runCatching {
+    ): Result<Boolean> = runSuspendCatching {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         dbQuery {
@@ -301,7 +302,7 @@ class PeppolTransmissionRepository {
         providerErrorMessage: String,
         retryAt: LocalDateTime,
         rawResponse: String? = null
-    ): Result<Boolean> = runCatching {
+    ): Result<Boolean> = runSuspendCatching {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         dbQuery {
@@ -330,7 +331,7 @@ class PeppolTransmissionRepository {
         providerErrorCode: String,
         providerErrorMessage: String,
         rawResponse: String? = null
-    ): Result<Boolean> = runCatching {
+    ): Result<Boolean> = runSuspendCatching {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         dbQuery {
@@ -356,7 +357,7 @@ class PeppolTransmissionRepository {
     suspend fun listOutboundForReconciliation(
         olderThan: LocalDateTime,
         limit: Int
-    ): Result<List<PeppolTransmissionInternal>> = runCatching {
+    ): Result<List<PeppolTransmissionInternal>> = runSuspendCatching {
         val reconcilable = listOf(
             PeppolStatus.Pending,
             PeppolStatus.Queued,
@@ -382,7 +383,7 @@ class PeppolTransmissionRepository {
     suspend fun getOutboundByExternalDocumentIdInternal(
         tenantId: TenantId,
         externalDocumentId: String
-    ): Result<PeppolTransmissionInternal?> = runCatching {
+    ): Result<PeppolTransmissionInternal?> = runSuspendCatching {
         dbQuery {
             PeppolTransmissionsTable.selectAll()
                 .where {
@@ -404,7 +405,7 @@ class PeppolTransmissionRepository {
         providerErrorCode: String? = null,
         providerErrorMessage: String? = null,
         transmittedAt: LocalDateTime? = null
-    ): Result<Boolean> = runCatching {
+    ): Result<Boolean> = runSuspendCatching {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         dbQuery {
@@ -451,7 +452,7 @@ class PeppolTransmissionRepository {
     suspend fun existsByExternalDocumentId(
         tenantId: TenantId,
         externalDocumentId: String
-    ): Result<Boolean> = runCatching {
+    ): Result<Boolean> = runSuspendCatching {
         dbQuery {
             PeppolTransmissionsTable.selectAll()
                 .where {
@@ -470,7 +471,7 @@ class PeppolTransmissionRepository {
     suspend fun getByExternalDocumentId(
         tenantId: TenantId,
         externalDocumentId: String
-    ): Result<PeppolTransmissionDto?> = runCatching {
+    ): Result<PeppolTransmissionDto?> = runSuspendCatching {
         dbQuery {
             PeppolTransmissionsTable.selectAll()
                 .where {
@@ -488,7 +489,7 @@ class PeppolTransmissionRepository {
     suspend fun getTransmission(
         transmissionId: PeppolTransmissionId,
         tenantId: TenantId
-    ): Result<PeppolTransmissionDto?> = runCatching {
+    ): Result<PeppolTransmissionDto?> = runSuspendCatching {
         dbQuery {
             PeppolTransmissionsTable.selectAll()
                 .where {
@@ -503,7 +504,7 @@ class PeppolTransmissionRepository {
     suspend fun getTransmissionInternal(
         transmissionId: PeppolTransmissionId,
         tenantId: TenantId
-    ): Result<PeppolTransmissionInternal?> = runCatching {
+    ): Result<PeppolTransmissionInternal?> = runSuspendCatching {
         dbQuery {
             PeppolTransmissionsTable.selectAll()
                 .where {
@@ -521,7 +522,7 @@ class PeppolTransmissionRepository {
     suspend fun getTransmissionByInvoiceId(
         invoiceId: InvoiceId,
         tenantId: TenantId
-    ): Result<PeppolTransmissionDto?> = runCatching {
+    ): Result<PeppolTransmissionDto?> = runSuspendCatching {
         dbQuery {
             PeppolTransmissionsTable.selectAll()
                 .where {
@@ -543,7 +544,7 @@ class PeppolTransmissionRepository {
         status: PeppolStatus? = null,
         limit: Int = 50,
         offset: Int = 0
-    ): Result<List<PeppolTransmissionDto>> = runCatching {
+    ): Result<List<PeppolTransmissionDto>> = runSuspendCatching {
         dbQuery {
             var query = PeppolTransmissionsTable.selectAll()
                 .where { PeppolTransmissionsTable.tenantId eq tenantId.value.toJavaUuid() }
@@ -582,7 +583,7 @@ class PeppolTransmissionRepository {
         nextRetryAt: LocalDateTime? = null,
         lastAttemptAt: LocalDateTime? = null,
         clearFailureDetails: Boolean = false
-    ): Result<PeppolTransmissionDto> = runCatching {
+    ): Result<PeppolTransmissionDto> = runSuspendCatching {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         dbQuery {

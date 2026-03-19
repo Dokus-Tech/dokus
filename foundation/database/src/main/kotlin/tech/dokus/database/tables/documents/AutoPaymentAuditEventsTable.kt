@@ -12,7 +12,7 @@ import tech.dokus.domain.enums.AutoPaymentTriggerSource
 import tech.dokus.foundation.backend.database.dbEnumeration
 
 object AutoPaymentAuditEventsTable : UUIDTable("auto_payment_audit_events") {
-    val tenantId = uuid("tenant_id").references(TenantTable.id, onDelete = ReferenceOption.CASCADE)
+    val tenantId = uuid("tenant_id").references(TenantTable.id, onDelete = ReferenceOption.CASCADE).index()
     val invoiceId = uuid("invoice_id").references(InvoicesTable.id, onDelete = ReferenceOption.SET_NULL).nullable()
     val cashflowEntryId = uuid("cashflow_entry_id").references(CashflowEntriesTable.id, onDelete = ReferenceOption.SET_NULL).nullable()
     val importedBankTransactionId = uuid("imported_bank_transaction_id")

@@ -54,7 +54,7 @@ import tech.dokus.domain.model.DocumentPagesResponse
 import tech.dokus.domain.model.DocumentRecordStreamEvent
 import tech.dokus.domain.model.DocumentSourceDto
 import tech.dokus.domain.model.Dpi
-import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.domain.model.DocDto
 import tech.dokus.domain.model.PeppolConnectRequest
 import tech.dokus.domain.model.PeppolConnectResponse
 import tech.dokus.domain.model.PeppolIdVerificationResult
@@ -92,13 +92,13 @@ interface CashflowRemoteDataSource {
      * Create a new invoice with optional document attachments
      * POST /api/v1/invoices
      */
-    suspend fun createInvoice(request: CreateInvoiceRequest): Result<FinancialDocumentDto.InvoiceDto>
+    suspend fun createInvoice(request: CreateInvoiceRequest): Result<DocDto.Invoice.Confirmed>
 
     /**
      * Get a single invoice by ID with all related documents
      * GET /api/v1/invoices/{id}
      */
-    suspend fun getInvoice(id: InvoiceId): Result<FinancialDocumentDto.InvoiceDto>
+    suspend fun getInvoice(id: InvoiceId): Result<DocDto.Invoice.Confirmed>
 
     /**
      * List invoices with optional filtering
@@ -116,13 +116,13 @@ interface CashflowRemoteDataSource {
         toDate: LocalDate? = null,
         limit: Int = 50,
         offset: Int = 0
-    ): Result<PaginatedResponse<FinancialDocumentDto.InvoiceDto>>
+    ): Result<PaginatedResponse<DocDto.Invoice.Confirmed>>
 
     /**
      * List all overdue invoices for a tenant
      * GET /api/v1/invoices/overdue
      */
-    suspend fun listOverdueInvoices(): Result<List<FinancialDocumentDto.InvoiceDto>>
+    suspend fun listOverdueInvoices(): Result<List<DocDto.Invoice.Confirmed>>
 
     /**
      * Update invoice status
@@ -137,7 +137,7 @@ interface CashflowRemoteDataSource {
     suspend fun updateInvoice(
         invoiceId: InvoiceId,
         request: CreateInvoiceRequest
-    ): Result<FinancialDocumentDto.InvoiceDto>
+    ): Result<DocDto.Invoice.Confirmed>
 
     /**
      * Delete an invoice (soft delete)
@@ -174,7 +174,7 @@ interface CashflowRemoteDataSource {
      * Get a single expense by ID
      * GET /api/v1/expenses/{id}
      */
-    suspend fun getExpense(id: ExpenseId): Result<FinancialDocumentDto.ExpenseDto>
+    suspend fun getExpense(id: ExpenseId): Result<DocDto.Receipt.Confirmed>
 
     /**
      * List expenses with optional filtering
@@ -186,7 +186,7 @@ interface CashflowRemoteDataSource {
         toDate: LocalDate? = null,
         limit: Int = 50,
         offset: Int = 0
-    ): Result<PaginatedResponse<FinancialDocumentDto.ExpenseDto>>
+    ): Result<PaginatedResponse<DocDto.Receipt.Confirmed>>
 
     /**
      * Update an existing expense
@@ -195,7 +195,7 @@ interface CashflowRemoteDataSource {
     suspend fun updateExpense(
         expenseId: ExpenseId,
         request: CreateExpenseRequest
-    ): Result<FinancialDocumentDto.ExpenseDto>
+    ): Result<DocDto.Receipt.Confirmed>
 
     /**
      * Delete an expense

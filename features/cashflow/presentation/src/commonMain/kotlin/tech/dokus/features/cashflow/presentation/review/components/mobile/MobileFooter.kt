@@ -2,11 +2,8 @@ package tech.dokus.features.cashflow.presentation.review.components.mobile
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -17,14 +14,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
-import com.composables.icons.lucide.Check
-import com.composables.icons.lucide.Lucide
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.action_confirm
 import tech.dokus.aura.resources.cashflow_somethings_wrong
-import tech.dokus.foundation.aura.components.PButton
-import tech.dokus.foundation.aura.components.PIcon
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.textMuted
 import tech.dokus.foundation.aura.tooling.PreviewParameters
@@ -33,24 +25,13 @@ import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Simplified mobile footer for document review.
- *
- * Philosophy: Confirm is the action. Save is implementation detail.
- * - NO "Save" button on mobile (edits auto-apply to draft state)
- * - Only shows: "Something's wrong" link + "Confirm" button
- *
- * Must be used with imePadding() + navigationBarsPadding() for keyboard/safe-area handling.
+ * Only shows "Something's wrong?" escape hatch. Confirm lives in the inspector header.
  */
 @Composable
 internal fun MobileFooter(
-    canConfirm: Boolean,
-    isConfirming: Boolean,
-    isBindingContact: Boolean,
-    onConfirm: () -> Unit,
     onSomethingsWrong: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val isLoading = isConfirming || isBindingContact
-
     Surface(
         modifier = modifier.fillMaxWidth(),
         tonalElevation = 2.dp
@@ -59,29 +40,16 @@ internal fun MobileFooter(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(Constraints.Spacing.medium),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.Start,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // "Something's wrong" text link (left side)
-            TextButton(
-                onClick = onSomethingsWrong,
-                enabled = !isLoading
-            ) {
+            TextButton(onClick = onSomethingsWrong) {
                 Text(
                     text = stringResource(Res.string.cashflow_somethings_wrong),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.textMuted
                 )
             }
-
-            // Confirm button only (right side) - NO Save button on mobile
-            PButton(
-                text = stringResource(Res.string.action_confirm),
-                icon = Lucide.Check,
-                isLoading = isLoading,
-                isEnabled = canConfirm && !isLoading,
-                onClick = onConfirm,
-            )
         }
     }
 }
@@ -97,10 +65,6 @@ private fun MobileFooterPreview(
 ) {
     TestWrapper(parameters) {
         MobileFooter(
-            canConfirm = true,
-            isConfirming = false,
-            isBindingContact = false,
-            onConfirm = {},
             onSomethingsWrong = {}
         )
     }

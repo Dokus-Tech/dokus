@@ -1,6 +1,6 @@
 package tech.dokus.backend.services.cashflow.matching
 
-import tech.dokus.domain.model.BankTransactionDto
+import tech.dokus.database.entity.BankTransactionEntity
 
 /**
  * Pre-classifies bank transactions to skip matching for known non-matchable categories.
@@ -38,7 +38,7 @@ object TransactionPreClassifier {
      * Determine if a transaction should be skipped for matching.
      * Returns `shouldSkip = true` for known non-matchable categories.
      */
-    fun classify(tx: BankTransactionDto): PreClassification {
+    fun classify(tx: BankTransactionEntity): PreClassification {
         // Already matched or ignored — skip
         if (tx.status != tech.dokus.domain.enums.BankTransactionStatus.Unmatched) {
             return PreClassification(shouldSkip = true, reason = "already_resolved")
@@ -50,7 +50,7 @@ object TransactionPreClassifier {
         if (matchedKeyword != null) {
             // Only skip if it's a strong keyword match AND no structured communication
             // (structured communication implies a specific payment reference — don't skip)
-            if (tx.communication !is tech.dokus.domain.model.TransactionCommunication.Structured) {
+            if (tx.normalizedStructuredCommunication == null) {
                 // Don't auto-skip — just flag. The matching engine may still want to attempt matching.
                 // For v1, we let these through and rely on scoring to handle them.
             }

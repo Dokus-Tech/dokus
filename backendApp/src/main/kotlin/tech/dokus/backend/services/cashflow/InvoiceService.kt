@@ -8,11 +8,11 @@ import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.InvoiceStatus
+import tech.dokus.database.entity.InvoiceEntity
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.CreateInvoiceRequest
-import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.RecordPaymentRequest
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.foundation.backend.utils.loggerFor
@@ -37,7 +37,7 @@ class InvoiceService(
     suspend fun createInvoice(
         tenantId: TenantId,
         request: CreateInvoiceRequest
-    ): Result<FinancialDocumentDto.InvoiceDto> {
+    ): Result<InvoiceEntity> {
         logger.info("Creating invoice for tenant: $tenantId, contact: ${request.contactId}")
         return invoiceRepository.createInvoice(tenantId, request)
             .onSuccess { logger.info("Invoice created: ${it.id}") }
@@ -50,7 +50,7 @@ class InvoiceService(
     suspend fun getInvoice(
         invoiceId: InvoiceId,
         tenantId: TenantId
-    ): Result<FinancialDocumentDto.InvoiceDto?> {
+    ): Result<InvoiceEntity?> {
         logger.debug("Fetching invoice: {} for tenant: {}", invoiceId, tenantId)
         return invoiceRepository.getInvoice(invoiceId, tenantId)
             .onFailure { logger.error("Failed to fetch invoice: $invoiceId", it) }
@@ -68,7 +68,7 @@ class InvoiceService(
         toDate: LocalDate? = null,
         limit: Int = 50,
         offset: Int = 0
-    ): Result<PaginatedResponse<FinancialDocumentDto.InvoiceDto>> {
+    ): Result<PaginatedResponse<InvoiceEntity>> {
         logger.debug(
             "Listing invoices for tenant: {} (status={}, limit={}, offset={})",
             tenantId,
@@ -93,7 +93,7 @@ class InvoiceService(
     suspend fun getLatestInvoiceForContact(
         tenantId: TenantId,
         contactId: ContactId
-    ): Result<FinancialDocumentDto.InvoiceDto?> {
+    ): Result<InvoiceEntity?> {
         return invoiceRepository.getLatestInvoiceForContact(tenantId, contactId)
             .onFailure { logger.error("Failed to get latest invoice for contact: $contactId", it) }
     }
@@ -104,7 +104,7 @@ class InvoiceService(
     suspend fun listOverdueInvoices(
         tenantId: TenantId,
         direction: DocumentDirection = DocumentDirection.Outbound
-    ): Result<List<FinancialDocumentDto.InvoiceDto>> {
+    ): Result<List<InvoiceEntity>> {
         logger.debug("Listing overdue invoices for tenant: {}", tenantId)
         return invoiceRepository.listOverdueInvoices(tenantId, direction)
             .onSuccess { logger.debug("Retrieved ${it.size} overdue invoices") }
@@ -118,7 +118,7 @@ class InvoiceService(
         invoiceId: InvoiceId,
         tenantId: TenantId,
         request: CreateInvoiceRequest
-    ): Result<FinancialDocumentDto.InvoiceDto> {
+    ): Result<InvoiceEntity> {
         logger.info("Updating invoice: $invoiceId for tenant: $tenantId")
         return invoiceRepository.updateInvoice(invoiceId, tenantId, request)
             .onSuccess { logger.info("Invoice updated: $invoiceId") }

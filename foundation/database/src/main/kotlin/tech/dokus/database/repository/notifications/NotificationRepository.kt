@@ -25,6 +25,7 @@ import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.foundation.backend.database.dbQuery
 import java.util.UUID
 import kotlin.time.Duration.Companion.hours
+import tech.dokus.foundation.backend.utils.runSuspendCatching
 
 class NotificationRepository {
 
@@ -37,7 +38,7 @@ class NotificationRepository {
         referenceId: String,
         isRead: Boolean = false,
         emailSent: Boolean = false,
-    ): Result<NotificationDto> = runCatching {
+    ): Result<NotificationDto> = runSuspendCatching {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         val newId = UUID.randomUUID()
 
@@ -70,7 +71,7 @@ class NotificationRepository {
         isRead: Boolean? = null,
         limit: Int = 20,
         offset: Int = 0,
-    ): Result<PaginatedResponse<NotificationDto>> = runCatching {
+    ): Result<PaginatedResponse<NotificationDto>> = runSuspendCatching {
         dbQuery {
             var query = NotificationsTable.selectAll().where {
                 (NotificationsTable.tenantId eq UUID.fromString(tenantId.toString())) and
@@ -107,7 +108,7 @@ class NotificationRepository {
     suspend fun unreadCount(
         tenantId: TenantId,
         userId: UserId
-    ): Result<Int> = runCatching {
+    ): Result<Int> = runSuspendCatching {
         dbQuery {
             NotificationsTable.selectAll()
                 .where {
@@ -124,7 +125,7 @@ class NotificationRepository {
         tenantId: TenantId,
         userId: UserId,
         notificationId: NotificationId
-    ): Result<Boolean> = runCatching {
+    ): Result<Boolean> = runSuspendCatching {
         dbQuery {
             val updated = NotificationsTable.update({
                 (NotificationsTable.id eq UUID.fromString(notificationId.toString())) and
@@ -140,7 +141,7 @@ class NotificationRepository {
     suspend fun markAllRead(
         tenantId: TenantId,
         userId: UserId
-    ): Result<Int> = runCatching {
+    ): Result<Int> = runSuspendCatching {
         dbQuery {
             NotificationsTable.update({
                 (NotificationsTable.tenantId eq UUID.fromString(tenantId.toString())) and
@@ -156,7 +157,7 @@ class NotificationRepository {
         tenantId: TenantId,
         userId: UserId,
         notificationId: NotificationId
-    ): Result<Boolean> = runCatching {
+    ): Result<Boolean> = runSuspendCatching {
         dbQuery {
             val updated = NotificationsTable.update({
                 (NotificationsTable.id eq UUID.fromString(notificationId.toString())) and
@@ -174,7 +175,7 @@ class NotificationRepository {
         userId: UserId,
         type: NotificationType,
         referenceId: String
-    ): Result<Boolean> = runCatching {
+    ): Result<Boolean> = runSuspendCatching {
         val threshold = Clock.System.now()
             .minus(1.hours)
             .toLocalDateTime(TimeZone.UTC)

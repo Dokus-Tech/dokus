@@ -5,6 +5,7 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.model.contact.ResolvedContact
 import tech.dokus.features.cashflow.usecases.UpdateDocumentDraftContactUseCase
 import tech.dokus.features.contacts.usecases.GetContactUseCase
 import tech.dokus.foundation.app.state.DokusState
@@ -58,7 +59,7 @@ internal class DocumentReviewContactBinder(
     suspend fun DocumentReviewCtx.handleAcceptSuggestedContact() {
         withState {
             val activeDocumentId = documentId ?: return@withState
-            val suggested = contactSelectionState as? ContactSelectionState.Suggested
+            val suggested = effectiveContact as? ResolvedContact.Suggested
                 ?: return@withState
             bindContact(activeDocumentId, suggested.contactId)
         }
@@ -76,10 +77,7 @@ internal class DocumentReviewContactBinder(
                     onSuccess = {
                         updateState {
                             copy(
-                                selectedContactId = null,
-                                selectedContactSnapshot = null,
-                                contactSelectionState = ContactSelectionState.NoContact,
-                                isPendingCreation = false,
+                                selectedContactOverride = null,
                                 isBindingContact = false,
                                 contactValidationError = null,
                             )
@@ -119,10 +117,7 @@ internal class DocumentReviewContactBinder(
                     onSuccess = {
                         updateState {
                             copy(
-                                isPendingCreation = true,
-                                selectedContactId = null,
-                                selectedContactSnapshot = null,
-                                contactSelectionState = ContactSelectionState.NoContact,
+                                selectedContactOverride = null,
                                 isBindingContact = false,
                                 contactValidationError = null,
                             )
@@ -156,16 +151,13 @@ internal class DocumentReviewContactBinder(
                             withState {
                                 updateState {
                                     copy(
-                                        selectedContactId = contactId,
-                                        selectedContactSnapshot = ContactSnapshot(
-                                            id = contact.id,
+                                        selectedContactOverride = ResolvedContact.Linked(
+                                            contactId = contactId,
                                             name = contact.name.value,
                                             vatNumber = contact.vatNumber?.value,
                                             email = contact.email?.value,
-                                            avatarUrl = contact.avatar?.small,
+                                            avatarPath = contact.avatar?.small,
                                         ),
-                                        contactSelectionState = ContactSelectionState.Selected,
-                                        isPendingCreation = false,
                                         isBindingContact = false,
                                     )
                                 }
@@ -176,10 +168,13 @@ internal class DocumentReviewContactBinder(
                             withState {
                                 updateState {
                                     copy(
-                                        selectedContactId = contactId,
-                                        selectedContactSnapshot = null,
-                                        contactSelectionState = ContactSelectionState.Selected,
-                                        isPendingCreation = false,
+                                        selectedContactOverride = ResolvedContact.Linked(
+                                            contactId = contactId,
+                                            name = "",
+                                            vatNumber = null,
+                                            email = null,
+                                            avatarPath = null,
+                                        ),
                                         isBindingContact = false,
                                     )
                                 }

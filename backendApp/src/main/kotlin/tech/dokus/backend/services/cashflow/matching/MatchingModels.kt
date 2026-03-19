@@ -9,7 +9,7 @@ import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.BankTransactionDto
+import tech.dokus.database.entity.BankTransactionEntity
 import tech.dokus.domain.model.CashflowEntry
 
 /**
@@ -39,7 +39,7 @@ data class MatchCandidate(
  */
 data class ScoredCandidate(
     val candidate: MatchCandidate,
-    val transaction: BankTransactionDto,
+    val transaction: BankTransactionEntity,
     val score: Double,
     val signals: List<SignalResult>,
     val hasHardSignal: Boolean,

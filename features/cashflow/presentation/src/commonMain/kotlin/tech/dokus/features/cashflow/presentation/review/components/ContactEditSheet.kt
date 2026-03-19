@@ -70,7 +70,7 @@ import tech.dokus.aura.resources.contacts_selected
 import tech.dokus.aura.resources.error_failed_to_load_clients
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.model.contact.ContactDto
-import tech.dokus.features.cashflow.presentation.review.ContactSuggestion
+import tech.dokus.domain.model.contact.ContactSuggestionDto
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.app.state.DokusStateSimple
 import tech.dokus.foundation.aura.components.DokusCardSurface
@@ -133,7 +133,7 @@ private const val SuggestionBgAlpha = 0.08f
 fun ContactEditSheet(
     isVisible: Boolean,
     onDismiss: () -> Unit,
-    suggestions: List<ContactSuggestion>,
+    suggestions: List<ContactSuggestionDto>,
     contactsState: DokusState<List<ContactDto>>,
     selectedContactId: ContactId?,
     searchQuery: String,
@@ -180,7 +180,7 @@ fun ContactEditSheet(
 private fun ContactEditSideSheet(
     isVisible: Boolean,
     onDismiss: () -> Unit,
-    suggestions: List<ContactSuggestion>,
+    suggestions: List<ContactSuggestionDto>,
     contactsState: DokusState<List<ContactDto>>,
     selectedContactId: ContactId?,
     searchQuery: String,
@@ -258,7 +258,7 @@ private fun ContactEditSideSheet(
 private fun ContactEditBottomSheet(
     isVisible: Boolean,
     onDismiss: () -> Unit,
-    suggestions: List<ContactSuggestion>,
+    suggestions: List<ContactSuggestionDto>,
     contactsState: DokusState<List<ContactDto>>,
     selectedContactId: ContactId?,
     searchQuery: String,
@@ -326,7 +326,7 @@ private fun BottomSheetDragHandle(
 @Composable
 private fun ContactSheetContent(
     onDismiss: () -> Unit,
-    suggestions: List<ContactSuggestion>,
+    suggestions: List<ContactSuggestionDto>,
     contactsState: DokusState<List<ContactDto>>,
     selectedContactId: ContactId?,
     searchQuery: String,
@@ -431,7 +431,7 @@ private fun ContactSheetHeader(
  */
 @Composable
 private fun SuggestionsSection(
-    suggestions: List<ContactSuggestion>,
+    suggestions: List<ContactSuggestionDto>,
     selectedContactId: ContactId?,
     onSelectContact: (ContactId) -> Unit,
     modifier: Modifier = Modifier
@@ -458,7 +458,7 @@ private fun SuggestionsSection(
 
 @Composable
 private fun SuggestionChip(
-    suggestion: ContactSuggestion,
+    suggestion: ContactSuggestionDto,
     isSelected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier

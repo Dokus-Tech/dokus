@@ -19,7 +19,7 @@ import tech.dokus.domain.ids.PeppolTransmissionId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.Address
 import tech.dokus.domain.model.DocumentDraftData
-import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.database.entity.InvoiceEntity
 import tech.dokus.domain.model.PeppolInboxPollResponse
 import tech.dokus.domain.model.PeppolSettingsDto
 import tech.dokus.domain.model.PeppolTransmissionDto
@@ -102,7 +102,7 @@ class PeppolService(
      * NOTE: recipientPeppolId should be resolved via PeppolRecipientResolver before calling this.
      */
     suspend fun validateInvoice(
-        invoice: FinancialDocumentDto.InvoiceDto,
+        invoice: InvoiceEntity,
         contact: ContactDto,
         tenant: Tenant,
         companyAddress: Address?,
@@ -152,7 +152,7 @@ class PeppolService(
      * NOTE: recipientPeppolId should be resolved via PeppolRecipientResolver before calling this.
      */
     suspend fun enqueueInvoiceTransmission(
-        invoice: FinancialDocumentDto.InvoiceDto,
+        invoice: InvoiceEntity,
         contact: ContactDto,
         tenant: Tenant,
         companyAddress: Address?,

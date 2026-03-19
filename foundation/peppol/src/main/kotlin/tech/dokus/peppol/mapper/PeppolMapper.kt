@@ -10,10 +10,10 @@ import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.Address
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentDraftData
-import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.database.entity.InvoiceEntity
+import tech.dokus.database.entity.InvoiceItemEntity
 import tech.dokus.domain.model.FinancialLineItem
 import tech.dokus.domain.model.InvoiceDraftData
-import tech.dokus.domain.model.InvoiceItemDto
 import tech.dokus.domain.model.PartyDraft
 import tech.dokus.domain.model.PeppolSettingsDto
 import tech.dokus.domain.model.Tenant
@@ -43,7 +43,7 @@ class PeppolMapper {
      * NOTE: recipientPeppolId should be resolved via PeppolRecipientResolver before calling this.
      */
     fun toSendRequest(
-        invoice: FinancialDocumentDto.InvoiceDto,
+        invoice: InvoiceEntity,
         contact: ContactDto,
         tenant: Tenant,
         tenantSettings: TenantSettings,
@@ -107,7 +107,7 @@ class PeppolMapper {
     /**
      * Convert invoice item to Peppol line item.
      */
-    private fun toLineItem(item: InvoiceItemDto, lineNumber: Int): PeppolLineItem {
+    private fun toLineItem(item: InvoiceItemEntity, lineNumber: Int): PeppolLineItem {
         val vatCategory = mapVatRateToCategory(item.vatRate)
         val vatPercent = item.vatRate.toPercentDouble()
 

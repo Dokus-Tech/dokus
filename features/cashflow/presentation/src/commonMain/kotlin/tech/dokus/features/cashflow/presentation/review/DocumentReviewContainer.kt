@@ -177,11 +177,6 @@ internal class DocumentReviewContainer(
                 is DocumentReviewIntent.ContactCreated -> handleContactCreated(intent.contactId)
                 is DocumentReviewIntent.SetPendingCreation -> handleSetPendingCreation()
 
-                // === Line Items ===
-                is DocumentReviewIntent.AddLineItem -> handleAddLineItem()
-                is DocumentReviewIntent.UpdateLineItem -> handleUpdateLineItem(intent.index, intent.item)
-                is DocumentReviewIntent.RemoveLineItem -> handleRemoveLineItem(intent.index)
-
                 // === Provenance ===
                 is DocumentReviewIntent.SelectFieldForProvenance -> handleSelectFieldForProvenance(
                     intent.fieldPath
@@ -189,7 +184,6 @@ internal class DocumentReviewContainer(
 
                 // === Actions ===
                 is DocumentReviewIntent.Confirm -> handleConfirm()
-                is DocumentReviewIntent.OpenChat -> handleOpenChat()
                 is DocumentReviewIntent.ViewCashflowEntry -> handleViewCashflowEntry()
                 is DocumentReviewIntent.ViewEntity -> handleViewEntity()
 
@@ -203,6 +197,7 @@ internal class DocumentReviewContainer(
                 // === Feedback Dialog ===
                 is DocumentReviewIntent.ShowFeedbackDialog -> handleShowFeedbackDialog()
                 is DocumentReviewIntent.DismissFeedbackDialog -> handleDismissFeedbackDialog()
+                is DocumentReviewIntent.SelectFeedbackCategory -> handleSelectFeedbackCategory(intent.category)
                 is DocumentReviewIntent.UpdateFeedbackText -> handleUpdateFeedbackText(intent.text)
                 is DocumentReviewIntent.SubmitFeedback -> handleSubmitFeedback()
                 DocumentReviewIntent.RequestAmendment -> handleRequestAmendment()

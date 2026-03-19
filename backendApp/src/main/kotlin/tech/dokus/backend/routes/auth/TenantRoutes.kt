@@ -9,11 +9,9 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
 import tech.dokus.backend.security.requireTenantId
+import tech.dokus.backend.services.admin.TenantManagementService
 import tech.dokus.backend.services.business.BusinessProfileService
 import tech.dokus.backend.services.business.EnrichmentTrigger
-import tech.dokus.database.repository.auth.AddressRepository
-import tech.dokus.database.repository.auth.TenantRepository
-import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.database.services.InvoiceNumberGenerator
 import tech.dokus.domain.enums.UserRole
 import tech.dokus.domain.exceptions.DokusException
@@ -42,9 +40,7 @@ private val logger = loggerFor("TenantRoutes")
 
 @OptIn(ExperimentalUuidApi::class)
 internal fun Route.tenantRoutes() {
-    val tenantRepository by inject<TenantRepository>()
-    val addressRepository by inject<AddressRepository>()
-    val userRepository by inject<UserRepository>()
+    val tenantManagementService by inject<TenantManagementService>()
     val invoiceNumberGenerator by inject<InvoiceNumberGenerator>()
     val businessProfileService by inject<BusinessProfileService>()
 
@@ -58,9 +54,9 @@ internal fun Route.tenantRoutes() {
             val principal = dokusPrincipal
 
             val tenants = buildList {
-                for (membership in userRepository.getUserTenants(principal.userId)) {
+                for (membership in tenantManagementService.getUserTenants(principal.userId)) {
                     if (!membership.isActive) continue
-                    val rawTenant = tenantRepository.findById(membership.tenantId) ?: continue
+                    val rawTenant = tenantManagementService.findTenantById(membership.tenantId) ?: continue
                     val tenant = runCatching { businessProfileService.projectTenant(rawTenant) }
                         .getOrElse { error ->
                             logger.warn("Failed to project tenant business profile for {}", rawTenant.id, error)
@@ -69,7 +65,7 @@ internal fun Route.tenantRoutes() {
 
                     // Try to get avatar for this tenant
                     val avatar = try {
-                        val storageKey = tenantRepository.getAvatarStorageKey(tenant.id)
+                        val storageKey = tenantManagementService.getTenantAvatarStorageKey(tenant.id)
                         if (storageKey != null) {
                             businessProfileService.buildTenantAvatarThumbnail(tenant.id)
                         } else {
@@ -95,7 +91,7 @@ internal fun Route.tenantRoutes() {
             val principal = dokusPrincipal
             val request = call.receive<CreateTenantRequest>()
 
-            val tenantId = tenantRepository.create(
+            val tenantId = tenantManagementService.createTenant(
                 type = request.type,
                 legalName = request.legalName,
                 displayName = request.displayName,
@@ -105,13 +101,13 @@ internal fun Route.tenantRoutes() {
                 address = request.address,
             )
 
-            userRepository.addToTenant(
+            tenantManagementService.addUserToTenant(
                 userId = principal.userId,
                 tenantId = tenantId,
                 role = UserRole.Owner,
             )
 
-            val rawTenant = tenantRepository.findById(tenantId)
+            val rawTenant = tenantManagementService.findTenantById(tenantId)
                 ?: throw DokusException.InternalError("Failed to load created tenant")
             val tenant = runCatching { businessProfileService.projectTenant(rawTenant) }
                 .getOrElse { rawTenant }
@@ -135,7 +131,7 @@ internal fun Route.tenantRoutes() {
          */
         get<Tenants.Settings> {
             val tenantId = requireTenantId()
-            val settings = tenantRepository.getSettings(tenantId)
+            val settings = tenantManagementService.getSettings(tenantId)
             call.respond(HttpStatusCode.OK, settings)
         }
 
@@ -157,7 +153,7 @@ internal fun Route.tenantRoutes() {
          */
         get<Tenants.Address> {
             val tenantId = requireTenantId()
-            val address = addressRepository.getCompanyAddress(tenantId)
+            val address = tenantManagementService.getCompanyAddress(tenantId)
             if (address == null) {
                 call.respond(
                     HttpStatusCode.NotFound,
@@ -175,7 +171,7 @@ internal fun Route.tenantRoutes() {
         put<Tenants.Address> {
             val tenantId = requireTenantId()
             val request = call.receive<UpsertTenantAddressRequest>()
-            val address = addressRepository.upsertCompanyAddress(tenantId, request)
+            val address = tenantManagementService.upsertCompanyAddress(tenantId, request)
             businessProfileService.enqueueTenant(
                 tenantId = tenantId,
                 trigger = EnrichmentTrigger.TenantAddressUpdated
@@ -201,7 +197,7 @@ internal fun Route.tenantRoutes() {
                 throw DokusException.NotAuthorized("Cannot update settings for another tenant")
             }
 
-            tenantRepository.updateSettings(settings.copy(tenantId = tenantId))
+            tenantManagementService.updateSettings(settings.copy(tenantId = tenantId))
             call.respond(HttpStatusCode.NoContent)
         }
 
@@ -218,12 +214,12 @@ internal fun Route.tenantRoutes() {
                 throw DokusException.BadRequest("Invalid tenant id")
             }
 
-            val membership = userRepository.getMembership(principal.userId, tenantId)
+            val membership = tenantManagementService.getMembership(principal.userId, tenantId)
             if (membership == null || !membership.isActive) {
                 throw DokusException.NotFound("Tenant not found")
             }
 
-            val tenant = tenantRepository.findById(tenantId)
+            val tenant = tenantManagementService.findTenantById(tenantId)
                 ?: throw DokusException.NotFound("Tenant not found")
             val projectedTenant = runCatching { businessProfileService.projectTenant(tenant) }
                 .getOrElse { error ->
@@ -233,7 +229,7 @@ internal fun Route.tenantRoutes() {
 
             // Include avatar if available
             val avatar = try {
-                val storageKey = tenantRepository.getAvatarStorageKey(tenantId)
+                val storageKey = tenantManagementService.getTenantAvatarStorageKey(tenantId)
                 if (storageKey != null) {
                     businessProfileService.buildTenantAvatarThumbnail(tenantId)
                 } else {

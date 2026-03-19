@@ -10,7 +10,7 @@ import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
-import tech.dokus.database.mapper.TenantMappers.toAddress
+import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.auth.AddressTable
 import tech.dokus.domain.ids.AddressId
 import tech.dokus.domain.ids.TenantId
@@ -40,7 +40,7 @@ class AddressRepository {
             .selectAll()
             .where { (AddressTable.tenantId eq tenantUuid) and (AddressTable.id eq tenantUuid) }
             .singleOrNull()
-            ?.toAddress()
+            ?.let { Address.from(it) }
     }
 
     /**
@@ -85,11 +85,12 @@ class AddressRepository {
             }
         }
 
-        AddressTable
-            .selectAll()
-            .where { (AddressTable.tenantId eq tenantUuid) and (AddressTable.id eq tenantUuid) }
-            .single()
-            .toAddress()
+        Address.from(
+            AddressTable
+                .selectAll()
+                .where { (AddressTable.tenantId eq tenantUuid) and (AddressTable.id eq tenantUuid) }
+                .single()
+        )
     }
 
     // ============================================================================
@@ -145,7 +146,7 @@ class AddressRepository {
             .selectAll()
             .where { (AddressTable.id eq addressUuid) and (AddressTable.tenantId eq tenantUuid) }
             .singleOrNull()
-            ?.toAddress()
+            ?.let { Address.from(it) }
     }
 
     /**
@@ -173,11 +174,12 @@ class AddressRepository {
         }
 
         if (updated > 0) {
-            AddressTable
-                .selectAll()
-                .where { (AddressTable.id eq addressUuid) and (AddressTable.tenantId eq tenantUuid) }
-                .single()
-                .toAddress()
+            Address.from(
+                AddressTable
+                    .selectAll()
+                    .where { (AddressTable.id eq addressUuid) and (AddressTable.tenantId eq tenantUuid) }
+                    .single()
+            )
         } else {
             null
         }

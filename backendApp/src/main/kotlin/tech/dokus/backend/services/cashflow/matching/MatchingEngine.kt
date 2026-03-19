@@ -12,7 +12,7 @@ import tech.dokus.domain.enums.MatchedBy
 import tech.dokus.domain.enums.ResolutionType
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.BankTransactionDto
+import tech.dokus.database.entity.BankTransactionEntity
 import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.backend.services.banking.sse.BankingSsePublisher
 import tech.dokus.backend.services.cashflow.AutoPaymentService
@@ -49,7 +49,7 @@ class MatchingEngine(
     suspend fun getPaymentCandidates(
         tenantId: TenantId,
         cashflowEntryId: CashflowEntryId,
-    ): List<BankTransactionDto> {
+    ): List<BankTransactionEntity> {
         val candidates = bankTransactionRepository.listCandidatesForEntry(tenantId, cashflowEntryId)
         val selectable = bankTransactionRepository.listSelectable(tenantId)
         val candidateIds = candidates.map { it.id }.toSet()
@@ -76,7 +76,7 @@ class MatchingEngine(
      */
     suspend fun matchTransactions(
         tenantId: TenantId,
-        transactions: List<BankTransactionDto>,
+        transactions: List<BankTransactionEntity>,
         triggerSource: AutoPaymentTriggerSource,
     ) {
         if (transactions.isEmpty()) return
@@ -191,7 +191,7 @@ class MatchingEngine(
         runSuspendCatching {
             matchFeedbackStore.recordConfirmedMatch(
                 tenantId = tenantId,
-                counterpartyIban = best.transaction.counterparty.iban?.value,
+                counterpartyIban = best.transaction.counterpartyIban?.value,
                 contactId = best.candidate.contactId,
             )
         }
@@ -249,7 +249,7 @@ class MatchingEngine(
     @OptIn(kotlin.uuid.ExperimentalUuidApi::class)
     private suspend fun applyAutoTransfer(
         tenantId: TenantId,
-        tx: BankTransactionDto,
+        tx: BankTransactionEntity,
         result: TransferResult.ClearPair,
     ) {
         val pairId = kotlin.uuid.Uuid.random()
@@ -279,7 +279,7 @@ class MatchingEngine(
 
     private suspend fun applySuggestTransfer(
         tenantId: TenantId,
-        tx: BankTransactionDto,
+        tx: BankTransactionEntity,
         result: TransferResult.LikelyTransfer,
     ) {
         // Set to NEEDS_REVIEW — do NOT auto-match one-sided transfers.

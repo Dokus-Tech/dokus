@@ -2,7 +2,6 @@ package tech.dokus.features.cashflow.presentation.model
 
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
-import tech.dokus.domain.enums.ContactLinkSource
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.IngestionStatus
@@ -10,7 +9,7 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.contact.CounterpartyInfo
+import tech.dokus.domain.model.contact.ResolvedContact
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.DocumentIngestionDto
@@ -170,7 +169,6 @@ class DocumentUiStatusMapperTest {
             document = createDocument(),
             draft = draft,
             latestIngestion = latestIngestion,
-            confirmedEntity = null
         )
     }
 
@@ -205,14 +203,14 @@ class DocumentUiStatusMapperTest {
             tenantId = TenantId.generate(),
             documentStatus = documentStatus,
             documentType = documentType,
-            extractedData = null,
+            content = null,
             aiDraftSourceRunId = null,
             draftVersion = 1,
             draftEditedAt = null,
             draftEditedBy = null,
-            counterparty = contactId?.let {
-                CounterpartyInfo.Linked(contactId = it, source = ContactLinkSource.AI)
-            },
+            resolvedContact = contactId?.let {
+                ResolvedContact.Linked(contactId = it, name = "Test", vatNumber = null, email = null, avatarPath = null)
+            } ?: ResolvedContact.Unknown,
             rejectReason = null,
             lastSuccessfulRunId = null,
             createdAt = now,

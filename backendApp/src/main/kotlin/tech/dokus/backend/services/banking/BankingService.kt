@@ -17,9 +17,9 @@ import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.AccountBalanceSeries
-import tech.dokus.domain.model.BankAccountDto
+import tech.dokus.database.entity.BankAccountEntity
+import tech.dokus.database.entity.BankTransactionEntity
 import tech.dokus.domain.model.BankAccountSummary
-import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.domain.model.BankTransactionSummary
 import tech.dokus.domain.model.BalanceHistoryPoint
 import tech.dokus.domain.model.BalanceHistoryResponse
@@ -45,7 +45,7 @@ class BankingService(
 ) {
     private val logger = loggerFor()
 
-    suspend fun listAccounts(tenantId: TenantId): Result<List<BankAccountDto>> = runSuspendCatching {
+    suspend fun listAccounts(tenantId: TenantId): Result<List<BankAccountEntity>> = runSuspendCatching {
         bankAccountRepository.listAccounts(tenantId)
     }
 
@@ -68,7 +68,7 @@ class BankingService(
     }
 
     data class TransactionPage(
-        val items: List<BankTransactionDto>,
+        val items: List<BankTransactionEntity>,
         val total: Long,
     )
 
@@ -117,7 +117,7 @@ class BankingService(
     suspend fun getTransaction(
         tenantId: TenantId,
         transactionId: BankTransactionId
-    ): Result<BankTransactionDto> = runSuspendCatching {
+    ): Result<BankTransactionEntity> = runSuspendCatching {
         bankTransactionRepository.findById(tenantId, transactionId)
             ?: throw DokusException.NotFound("Bank transaction not found")
     }
@@ -126,7 +126,7 @@ class BankingService(
         tenantId: TenantId,
         transactionId: BankTransactionId,
         cashflowEntryId: CashflowEntryId
-    ): Result<BankTransactionDto> = runSuspendCatching {
+    ): Result<BankTransactionEntity> = runSuspendCatching {
         val result = updateAndRefetch(tenantId, transactionId, "Linked transaction {} to entry {} for tenant {}", transactionId, cashflowEntryId, tenantId) {
             bankTransactionRepository.markMatched(
                 tenantId = tenantId,
@@ -145,7 +145,7 @@ class BankingService(
         transactionId: BankTransactionId,
         reason: IgnoredReason,
         ignoredBy: String,
-    ): Result<BankTransactionDto> = runSuspendCatching {
+    ): Result<BankTransactionEntity> = runSuspendCatching {
         updateAndRefetch(tenantId, transactionId, "Ignored transaction {} (reason={}) for tenant {}", transactionId, reason, tenantId) {
             bankTransactionRepository.markIgnored(tenantId, transactionId, reason, ignoredBy)
         }
@@ -154,7 +154,7 @@ class BankingService(
     suspend fun confirmSuggestedMatch(
         tenantId: TenantId,
         transactionId: BankTransactionId
-    ): Result<BankTransactionDto> = runSuspendCatching {
+    ): Result<BankTransactionEntity> = runSuspendCatching {
         val transaction = bankTransactionRepository.findById(tenantId, transactionId)
             ?: throw DokusException.NotFound("Bank transaction not found")
 
@@ -175,7 +175,7 @@ class BankingService(
         runSuspendCatching {
             matchFeedbackStore.recordConfirmedMatch(
                 tenantId = tenantId,
-                counterpartyIban = transaction.counterparty.iban?.value,
+                counterpartyIban = transaction.counterpartyIban?.value,
                 contactId = null, // Contact resolved at matching time, not available here
             )
         }
@@ -188,7 +188,7 @@ class BankingService(
         tenantId: TenantId,
         transactionId: BankTransactionId,
         rejectedBy: java.util.UUID?,
-    ): Result<BankTransactionDto> = runSuspendCatching {
+    ): Result<BankTransactionEntity> = runSuspendCatching {
         val transaction = bankTransactionRepository.findById(tenantId, transactionId)
             ?: throw DokusException.NotFound("Bank transaction not found")
 
@@ -221,7 +221,7 @@ class BankingService(
     suspend fun undoMatch(
         tenantId: TenantId,
         transactionId: BankTransactionId,
-    ): Result<BankTransactionDto> = runSuspendCatching {
+    ): Result<BankTransactionEntity> = runSuspendCatching {
         val transaction = bankTransactionRepository.findById(tenantId, transactionId)
             ?: throw DokusException.NotFound("Bank transaction not found")
 
@@ -246,7 +246,7 @@ class BankingService(
         mode: tech.dokus.domain.model.MarkTransferMode,
         counterpartTransactionId: BankTransactionId?,
         destinationAccountId: tech.dokus.domain.ids.BankAccountId?,
-    ): Result<BankTransactionDto> = runSuspendCatching {
+    ): Result<BankTransactionEntity> = runSuspendCatching {
         val transaction = bankTransactionRepository.findById(tenantId, transactionId)
             ?: throw DokusException.NotFound("Bank transaction not found")
 
@@ -281,7 +281,7 @@ class BankingService(
     suspend fun undoTransfer(
         tenantId: TenantId,
         transactionId: BankTransactionId,
-    ): Result<BankTransactionDto> = runSuspendCatching {
+    ): Result<BankTransactionEntity> = runSuspendCatching {
         val transaction = bankTransactionRepository.findById(tenantId, transactionId)
             ?: throw DokusException.NotFound("Bank transaction not found")
 
@@ -302,7 +302,7 @@ class BankingService(
     suspend fun createExpenseFromTransaction(
         tenantId: TenantId,
         transactionId: BankTransactionId,
-    ): Result<BankTransactionDto> = runSuspendCatching {
+    ): Result<BankTransactionEntity> = runSuspendCatching {
         val transaction = bankTransactionRepository.findById(tenantId, transactionId)
             ?: throw DokusException.NotFound("Bank transaction not found")
 
@@ -316,7 +316,7 @@ class BankingService(
             tenantId = tenantId,
             request = CreateExpenseRequest(
                 date = transaction.transactionDate,
-                merchant = transaction.counterparty.name ?: "Unknown",
+                merchant = transaction.counterpartyName ?: "Unknown",
                 amount = Money(abs(transaction.signedAmount.minor)),
                 category = ExpenseCategory.Other,
                 description = transaction.descriptionRaw,
@@ -402,7 +402,7 @@ class BankingService(
         logMessage: String,
         vararg logArgs: Any?,
         update: suspend () -> Boolean,
-    ): BankTransactionDto {
+    ): BankTransactionEntity {
         val updated = update()
         if (!updated) throw DokusException.NotFound("Bank transaction not found")
         logger.info(logMessage, *logArgs)

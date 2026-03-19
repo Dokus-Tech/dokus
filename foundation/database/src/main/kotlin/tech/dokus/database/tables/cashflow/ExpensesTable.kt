@@ -10,6 +10,7 @@ import tech.dokus.database.tables.contacts.ContactsTable
 import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.domain.enums.ExpenseCategory
 import tech.dokus.domain.enums.PaymentMethod
+import tech.dokus.database.tables.auth.UsersTable
 import tech.dokus.foundation.backend.database.dbEnumeration
 import java.math.BigDecimal
 
@@ -29,8 +30,8 @@ object ExpensesTable : UUIDTable("expenses") {
     // Expense details
     val date = date("date").index()
     val merchant = varchar("merchant", 255).index()
-    val amount = decimal("amount", 12, 2)
-    val vatAmount = decimal("vat_amount", 12, 2).nullable()
+    val amount = decimal("amount", 19, 4)
+    val vatAmount = decimal("vat_amount", 19, 4).nullable()
     val vatRate = decimal("vat_rate", 5, 4).nullable() // e.g., 0.2100 for 21%
 
     // Categorization
@@ -38,7 +39,7 @@ object ExpensesTable : UUIDTable("expenses") {
     val description = text("description").nullable()
 
     // Document attachment (references DocumentsTable)
-    val documentId = uuid("document_id").references(DocumentsTable.id).nullable()
+    val documentId = uuid("document_id").references(DocumentsTable.id, onDelete = ReferenceOption.SET_NULL).nullable()
 
     // Contact (vendor) reference - RESTRICT prevents deleting contacts with linked expenses
     val contactId = uuid("contact_id")
@@ -58,6 +59,10 @@ object ExpensesTable : UUIDTable("expenses") {
 
     // Notes
     val notes = text("notes").nullable()
+
+    // Audit: confirmation tracking
+    val confirmedAt = datetime("confirmed_at").nullable()
+    val confirmedBy = uuid("confirmed_by").references(UsersTable.id).nullable()
 
     // Timestamps
     val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)

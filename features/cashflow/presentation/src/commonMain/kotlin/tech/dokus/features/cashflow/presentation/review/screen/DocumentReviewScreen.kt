@@ -19,7 +19,7 @@ import tech.dokus.features.cashflow.presentation.review.components.ReviewContent
 import tech.dokus.features.cashflow.presentation.review.components.ReviewTopBar
 import tech.dokus.features.cashflow.presentation.review.components.previewReviewContentState
 import tech.dokus.features.cashflow.presentation.review.components.previewSourceEvidenceViewerState
-import tech.dokus.features.cashflow.presentation.review.models.CounterpartyInfo
+import tech.dokus.domain.model.contact.ResolvedContact
 import tech.dokus.foundation.app.shell.LocalIsInDocDetailMode
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
@@ -32,10 +32,9 @@ internal fun DocumentReviewScreen(
     isAccountantReadOnly: Boolean,
     onIntent: (DocumentReviewIntent) -> Unit,
     onBackClick: () -> Unit,
-    onOpenChat: () -> Unit,
     onOpenSource: (DocumentSourceId) -> Unit,
-    onCorrectContact: (CounterpartyInfo) -> Unit,
-    onCreateContact: (CounterpartyInfo) -> Unit,
+    onCorrectContact: (ResolvedContact) -> Unit,
+    onCreateContact: (ResolvedContact) -> Unit,
     snackbarHostState: SnackbarHostState,
 ) {
     val isInDetailMode = LocalIsInDocDetailMode.current
@@ -46,12 +45,8 @@ internal fun DocumentReviewScreen(
             if (isLargeScreen && !isInDetailMode) {
                 ReviewTopBar(
                     state = state,
-                    isLargeScreen = isLargeScreen,
-                    isAccountantReadOnly = isAccountantReadOnly,
                     onBackClick = onBackClick,
                     onChatClick = onOpenChat,
-                    onConfirmClick = { onIntent(DocumentReviewIntent.Confirm) },
-                    onRejectClick = { onIntent(DocumentReviewIntent.ShowFeedbackDialog) },
                 )
             }
         },
@@ -90,7 +85,7 @@ private fun DocumentReviewScreenLoadingPreview(
             isAccountantReadOnly = false,
             onIntent = {},
             onBackClick = {},
-            onOpenChat = {},
+
             onOpenSource = {},
             onCorrectContact = {},
             onCreateContact = {},
@@ -111,7 +106,7 @@ private fun DocumentReviewScreenDesktopOpenPreview(
             isAccountantReadOnly = false,
             onIntent = {},
             onBackClick = {},
-            onOpenChat = {},
+
             onOpenSource = {},
             onCorrectContact = {},
             onCreateContact = {},
@@ -141,7 +136,7 @@ private fun DocumentReviewScreenDesktopSourcePreview(
             isAccountantReadOnly = false,
             onIntent = {},
             onBackClick = {},
-            onOpenChat = {},
+
             onOpenSource = {},
             onCorrectContact = {},
             onCreateContact = {},
@@ -162,7 +157,7 @@ private fun DocumentReviewScreenDesktopPaidPreview(
             isAccountantReadOnly = false,
             onIntent = {},
             onBackClick = {},
-            onOpenChat = {},
+
             onOpenSource = {},
             onCorrectContact = {},
             onCreateContact = {},

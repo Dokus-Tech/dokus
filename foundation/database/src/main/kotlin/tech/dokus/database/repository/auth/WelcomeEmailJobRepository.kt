@@ -21,6 +21,7 @@ import tech.dokus.foundation.backend.database.dbQuery
 import java.util.UUID
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toKotlinUuid
+import tech.dokus.foundation.backend.utils.runSuspendCatching
 
 data class WelcomeEmailJob(
     val id: UUID,
@@ -44,7 +45,7 @@ class WelcomeEmailJobRepository {
         userId: UserId,
         tenantId: TenantId,
         scheduledAt: LocalDateTime
-    ): Result<Unit> = runCatching {
+    ): Result<Unit> = runSuspendCatching {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         val userUuid = UUID.fromString(userId.toString())
         val tenantUuid = UUID.fromString(tenantId.toString())
@@ -70,7 +71,7 @@ class WelcomeEmailJobRepository {
         }
     }
 
-    suspend fun findByUserId(userId: UserId): Result<WelcomeEmailJob?> = runCatching {
+    suspend fun findByUserId(userId: UserId): Result<WelcomeEmailJob?> = runSuspendCatching {
         val userUuid = UUID.fromString(userId.toString())
         dbQuery {
             WelcomeEmailJobsTable.selectAll()
@@ -83,7 +84,7 @@ class WelcomeEmailJobRepository {
     suspend fun claimDue(
         now: LocalDateTime,
         limit: Int
-    ): Result<List<WelcomeEmailJob>> = runCatching {
+    ): Result<List<WelcomeEmailJob>> = runSuspendCatching {
         dbQuery {
             val candidates = WelcomeEmailJobsTable.selectAll()
                 .where {
@@ -119,7 +120,7 @@ class WelcomeEmailJobRepository {
     suspend fun markSent(
         jobId: UUID,
         sentAt: LocalDateTime
-    ): Result<Boolean> = runCatching {
+    ): Result<Boolean> = runSuspendCatching {
         dbQuery {
             val updated = WelcomeEmailJobsTable.update({
                 (WelcomeEmailJobsTable.id eq jobId) and
@@ -139,7 +140,7 @@ class WelcomeEmailJobRepository {
         attemptCount: Int,
         nextAttemptAt: LocalDateTime,
         errorMessage: String
-    ): Result<Boolean> = runCatching {
+    ): Result<Boolean> = runSuspendCatching {
         dbQuery {
             val updated = WelcomeEmailJobsTable.update({
                 (WelcomeEmailJobsTable.id eq jobId) and
@@ -158,7 +159,7 @@ class WelcomeEmailJobRepository {
     suspend fun recoverStaleProcessing(
         staleBefore: LocalDateTime,
         retryAt: LocalDateTime
-    ): Result<Int> = runCatching {
+    ): Result<Int> = runSuspendCatching {
         dbQuery {
             WelcomeEmailJobsTable.update({
                 (WelcomeEmailJobsTable.status eq JobStatus.Processing) and

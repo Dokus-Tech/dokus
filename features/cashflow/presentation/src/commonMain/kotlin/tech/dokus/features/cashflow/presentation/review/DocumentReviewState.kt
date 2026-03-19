@@ -23,66 +23,24 @@ import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentSourceId
-import tech.dokus.domain.model.AnnualAccountsDraftData
 import tech.dokus.domain.model.AutoPaymentStatusDto
-import tech.dokus.domain.model.BankFeeDraftData
-import tech.dokus.domain.model.BankStatementDraftData
 import tech.dokus.domain.model.BankTransactionDto
-import tech.dokus.domain.model.BoardMinutesDraftData
-import tech.dokus.domain.model.C4DraftData
 import tech.dokus.domain.model.CashflowEntry
-import tech.dokus.domain.model.CompanyExtractDraftData
-import tech.dokus.domain.model.ContractDraftData
-import tech.dokus.domain.model.CorporateTaxAdvanceDraftData
-import tech.dokus.domain.model.CorporateTaxDraftData
-import tech.dokus.domain.model.CreditNoteDraftData
-import tech.dokus.domain.model.CustomsDeclarationDraftData
-import tech.dokus.domain.model.DeliveryNoteDraftData
-import tech.dokus.domain.model.DepreciationScheduleDraftData
-import tech.dokus.domain.model.DimonaDraftData
-import tech.dokus.domain.model.DividendDraftData
+import tech.dokus.domain.model.DocDto
 import tech.dokus.domain.model.DocumentDetailDto
-import tech.dokus.domain.model.DocumentDraftData
-import tech.dokus.domain.model.EmploymentContractDraftData
-import tech.dokus.domain.model.ExpenseClaimDraftData
-import tech.dokus.domain.model.FinancialDocumentDto
-import tech.dokus.domain.model.FineDraftData
-import tech.dokus.domain.model.HolidayPayDraftData
-import tech.dokus.domain.model.IcListingDraftData
-import tech.dokus.domain.model.InsuranceDraftData
-import tech.dokus.domain.model.InterestStatementDraftData
-import tech.dokus.domain.model.IntrastatDraftData
-import tech.dokus.domain.model.InventoryDraftData
-import tech.dokus.domain.model.InvoiceDraftData
-import tech.dokus.domain.model.LeaseDraftData
-import tech.dokus.domain.model.LoanDraftData
-import tech.dokus.domain.model.OrderConfirmationDraftData
-import tech.dokus.domain.model.OssReturnDraftData
-import tech.dokus.domain.model.OtherDraftData
-import tech.dokus.domain.model.PaymentConfirmationDraftData
-import tech.dokus.domain.model.PayrollSummaryDraftData
-import tech.dokus.domain.model.PermitDraftData
-import tech.dokus.domain.model.PersonalTaxDraftData
-import tech.dokus.domain.model.ProFormaDraftData
-import tech.dokus.domain.model.PurchaseOrderDraftData
-import tech.dokus.domain.model.QuoteDraftData
-import tech.dokus.domain.model.ReceiptDraftData
-import tech.dokus.domain.model.ReminderDraftData
-import tech.dokus.domain.model.SalarySlipDraftData
-import tech.dokus.domain.model.SelfEmployedContributionDraftData
-import tech.dokus.domain.model.ShareholderRegisterDraftData
-import tech.dokus.domain.model.SocialContributionDraftData
-import tech.dokus.domain.model.SocialFundDraftData
-import tech.dokus.domain.model.StatementOfAccountDraftData
-import tech.dokus.domain.model.SubsidyDraftData
-import tech.dokus.domain.model.TaxAssessmentDraftData
-import tech.dokus.domain.model.VapzDraftData
-import tech.dokus.domain.model.VatAssessmentDraftData
-import tech.dokus.domain.model.VatListingDraftData
-import tech.dokus.domain.model.VatReturnDraftData
-import tech.dokus.domain.model.WithholdingTaxDraftData
 import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.domain.model.contact.ContactSuggestionDto
+import tech.dokus.domain.model.contact.ResolvedContact
+import tech.dokus.domain.model.hasKnownDirectionForConfirmation
+import tech.dokus.domain.model.hasRequiredDates
+import tech.dokus.domain.model.hasRequiredIdentityForConfirmation
+import tech.dokus.domain.model.hasRequiredSubtotalForConfirmation
+import tech.dokus.domain.model.hasRequiredTotalForConfirmation
+import tech.dokus.domain.model.hasRequiredVatForConfirmation
+import tech.dokus.domain.model.isContactRequired
+import tech.dokus.domain.model.sortDate
 import tech.dokus.domain.model.toDocumentType
+import tech.dokus.domain.model.totalAmount
 import tech.dokus.features.cashflow.presentation.review.models.DocumentUiData
 import tech.dokus.features.cashflow.presentation.review.models.toUiData
 import tech.dokus.foundation.app.state.DokusState
@@ -101,11 +59,25 @@ data class RejectDialogState(
 )
 
 /**
+ * Structured correction categories for the feedback dialog.
+ * Sent as a prefix in the feedback text to the reprocess pipeline.
+ */
+enum class FeedbackCategory {
+    WrongContact,
+    WrongAmount,
+    WrongDate,
+    WrongType,
+    MissingInfo,
+    Other,
+}
+
+/**
  * State for the "What needs correction?" feedback dialog.
  * Shown when user clicks "Something's wrong" -- correction-first approach.
  */
 @Immutable
 data class FeedbackDialogState(
+    val selectedCategory: FeedbackCategory? = null,
     val feedbackText: String = "",
     val isSubmitting: Boolean = false,
 )
@@ -155,10 +127,10 @@ enum class ReviewFinancialStatus {
 data class ReviewDocumentData(
     val documentId: DocumentId,
     val documentRecord: DocumentDetailDto,
-    val draftData: DocumentDraftData?,
-    val originalData: DocumentDraftData?,
+    val draftData: DocDto?,
+    val originalData: DocDto?,
     val previewUrl: String?,
-    val contactSuggestions: List<ContactSuggestion>,
+    val contactSuggestions: List<ContactSuggestionDto>,
 )
 
 @Immutable
@@ -173,11 +145,8 @@ data class DocumentReviewState(
     val isSaving: Boolean = false,
     val isConfirming: Boolean = false,
     val selectedFieldPath: String? = null,
-    val selectedContactId: ContactId? = null,
-    val selectedContactSnapshot: ContactSnapshot? = null,
-    val contactSelectionState: ContactSelectionState = ContactSelectionState.NoContact,
+    val selectedContactOverride: ResolvedContact.Linked? = null,
     val isContactRequired: Boolean = false,
-    val isPendingCreation: Boolean = false,
     val contactValidationError: DokusException? = null,
     val isBindingContact: Boolean = false,
     val isRejecting: Boolean = false,
@@ -220,7 +189,7 @@ data class DocumentReviewState(
         get() = documentData?.documentRecord
 
     /** The current draft data (store-internal — composables should use [uiData] instead). */
-    val draftData: DocumentDraftData?
+    val draftData: DocDto?
         get() = documentData?.draftData
 
     /** Presentation-layer document data for UI rendering. Composables should use this. */
@@ -228,7 +197,7 @@ data class DocumentReviewState(
         get() = draftData?.toUiData()
 
     /** The original AI draft data. */
-    val originalData: DocumentDraftData?
+    val originalData: DocDto?
         get() = documentData?.originalData
 
     /** The preview URL. */
@@ -236,7 +205,7 @@ data class DocumentReviewState(
         get() = documentData?.previewUrl
 
     /** Contact suggestions from extraction. */
-    val contactSuggestions: List<ContactSuggestion>
+    val contactSuggestions: List<ContactSuggestionDto>
         get() = documentData?.contactSuggestions.orEmpty()
 
     /** The underlying data, if loaded. */
@@ -282,20 +251,37 @@ data class DocumentReviewState(
     val hasUnsyncedLocalChanges: Boolean
         get() = hasUnsavedChanges || isSaving
 
+    /**
+     * The effective contact for display and confirm logic.
+     * User override (from contact sheet) takes priority over backend resolution.
+     */
+    val effectiveContact: ResolvedContact
+        get() = selectedContactOverride
+            ?: documentRecord?.draft?.resolvedContact
+            ?: ResolvedContact.Unknown
+
+    /**
+     * True when contact is required but no contact data is available.
+     * Linked, Suggested, and Detected all provide enough data — only Unknown blocks.
+     */
+    val hasUnresolvedContact: Boolean
+        get() {
+            if (draftData?.isContactRequired != true) return false
+            return effectiveContact is ResolvedContact.Unknown
+        }
+
     val confirmBlockedReason: StringResource?
         get() {
             if (isDocumentConfirmed || isDocumentRejected || isDocumentUnsupported) return null
-            val draft = draftData ?: return Res.string.cashflow_confirm_missing_fields
+            val content = draftData ?: return Res.string.cashflow_confirm_missing_fields
             return when {
-                isPendingCreation -> Res.string.cashflow_confirm_select_contact
-                draft.isContactRequired && selectedContactId == null -> Res.string.cashflow_confirm_select_contact
-                !draft.hasKnownDirectionForConfirmation -> Res.string.cashflow_confirm_missing_fields
-                !draft.hasRequiredIdentityForConfirmation -> Res.string.cashflow_confirm_missing_fields
-                !draft.hasRequiredDates -> Res.string.cashflow_confirm_missing_fields
-                !draft.hasRequiredSubtotalForConfirmation -> Res.string.cashflow_confirm_missing_fields
-                !draft.hasRequiredTotalForConfirmation -> Res.string.cashflow_confirm_missing_fields
-                !draft.hasRequiredVatForConfirmation -> Res.string.cashflow_confirm_missing_fields
-                !draft.hasCoherentAmountsForConfirmation -> Res.string.cashflow_confirm_missing_fields
+                hasUnresolvedContact -> Res.string.cashflow_confirm_select_contact
+                !content.hasKnownDirectionForConfirmation -> Res.string.cashflow_confirm_missing_fields
+                !content.hasRequiredIdentityForConfirmation -> Res.string.cashflow_confirm_missing_fields
+                !content.hasRequiredDates -> Res.string.cashflow_confirm_missing_fields
+                !content.hasRequiredSubtotalForConfirmation -> Res.string.cashflow_confirm_missing_fields
+                !content.hasRequiredTotalForConfirmation -> Res.string.cashflow_confirm_missing_fields
+                !content.hasRequiredVatForConfirmation -> Res.string.cashflow_confirm_missing_fields
                 else -> null
             }
         }
@@ -313,15 +299,12 @@ data class DocumentReviewState(
      */
     val contactMatchStatus: ContactMatchStatus
         get() = when {
-            // User explicitly selected
-            contactSelectionState is ContactSelectionState.Selected -> ContactMatchStatus.Matched
-            // Suggested contact exists for required types, but needs user confirmation
-            contactSelectionState is ContactSelectionState.Suggested &&
-                draftData.isContactRequired ->
+            effectiveContact is ResolvedContact.Linked -> ContactMatchStatus.Matched
+            effectiveContact is ResolvedContact.Suggested && draftData.isContactRequired ->
                 ContactMatchStatus.Uncertain
-            // No contact, but required for this document type (Invoice/CreditNote)
+            effectiveContact is ResolvedContact.Detected && draftData.isContactRequired ->
+                ContactMatchStatus.Uncertain
             draftData.isContactRequired -> ContactMatchStatus.MissingButRequired
-            // No contact, but acceptable (Receipt)
             else -> ContactMatchStatus.NotRequired
         }
 
@@ -347,9 +330,9 @@ data class DocumentReviewState(
             }
 
             // Due date missing for invoices (only when not confirmed)
-            val needsDueDate = (draftData is InvoiceDraftData) &&
+            val needsDueDate = (draftData is DocDto.Invoice) &&
                 !isDocumentConfirmed
-            return needsDueDate && (draftData as? InvoiceDraftData)?.dueDate == null
+            return needsDueDate && (draftData as? DocDto.Invoice)?.dueDate == null
         }
 
     /**
@@ -358,14 +341,18 @@ data class DocumentReviewState(
      */
     val description: String
         get() {
-            val counterparty = documentRecord?.draft?.counterpartyDisplayName?.takeIf { it.isNotBlank() }
-                ?: selectedContactSnapshot?.name?.takeIf { it.isNotBlank() }
+            val contactName = when (val c = effectiveContact) {
+                is ResolvedContact.Linked -> c.name
+                is ResolvedContact.Suggested -> c.name
+                is ResolvedContact.Detected -> c.name
+                is ResolvedContact.Unknown -> null
+            }?.takeIf { it.isNotBlank() }
             val context = draftData.displayContextDescription
 
             return when {
-                counterparty != null && context != null -> "$counterparty — $context"
+                contactName != null && context != null -> "$contactName — $context"
                 context != null -> context
-                counterparty != null -> counterparty
+                contactName != null -> contactName
                 isProcessing -> "Processing document..."
                 else -> documentRecord?.document?.filename ?: ""
             }
@@ -375,77 +362,20 @@ data class DocumentReviewState(
      * Total amount for the understanding line (currency-formatted).
      */
     val totalAmount: Money?
-        get() = when (val draft = draftData) {
-            is InvoiceDraftData -> draft.totalAmount
-            is ReceiptDraftData -> draft.totalAmount
-            is CreditNoteDraftData -> draft.totalAmount
-            is BankStatementDraftData,
-            is ProFormaDraftData,
-            is QuoteDraftData,
-            is OrderConfirmationDraftData,
-            is DeliveryNoteDraftData,
-            is ReminderDraftData,
-            is StatementOfAccountDraftData,
-            is PurchaseOrderDraftData,
-            is ExpenseClaimDraftData,
-            is BankFeeDraftData,
-            is InterestStatementDraftData,
-            is PaymentConfirmationDraftData,
-            is VatReturnDraftData,
-            is VatListingDraftData,
-            is VatAssessmentDraftData,
-            is IcListingDraftData,
-            is OssReturnDraftData,
-            is CorporateTaxDraftData,
-            is CorporateTaxAdvanceDraftData,
-            is TaxAssessmentDraftData,
-            is PersonalTaxDraftData,
-            is WithholdingTaxDraftData,
-            is SocialContributionDraftData,
-            is SocialFundDraftData,
-            is SelfEmployedContributionDraftData,
-            is VapzDraftData,
-            is SalarySlipDraftData,
-            is PayrollSummaryDraftData,
-            is EmploymentContractDraftData,
-            is DimonaDraftData,
-            is C4DraftData,
-            is HolidayPayDraftData,
-            is ContractDraftData,
-            is LeaseDraftData,
-            is LoanDraftData,
-            is InsuranceDraftData,
-            is DividendDraftData,
-            is ShareholderRegisterDraftData,
-            is CompanyExtractDraftData,
-            is AnnualAccountsDraftData,
-            is BoardMinutesDraftData,
-            is SubsidyDraftData,
-            is FineDraftData,
-            is PermitDraftData,
-            is CustomsDeclarationDraftData,
-            is IntrastatDraftData,
-            is DepreciationScheduleDraftData,
-            is InventoryDraftData,
-            is OtherDraftData,
-            null -> null
-        }
+        get() = draftData?.totalAmount
 
     /**
      * Canonical rendering is available for invoice-like documents.
      * If unavailable, UI should fallback to PDF preview.
      */
     val canRenderCanonical: Boolean
-        get() = draftData is InvoiceDraftData || draftData is CreditNoteDraftData
+        get() = draftData is DocDto.Invoice || draftData is DocDto.CreditNote
 
     val shouldUsePdfFallback: Boolean
         get() = !canRenderCanonical || isProcessing || isFailed
 
     val resolvedDueDate: LocalDate?
-        get() = when (val data = draftData) {
-            is InvoiceDraftData -> data.dueDate
-            else -> (documentRecord?.confirmedEntity as? FinancialDocumentDto.InvoiceDto)?.dueDate
-        }
+        get() = (draftData as? DocDto.Invoice)?.dueDate
 
     val financialStatus: ReviewFinancialStatus
         get() {
@@ -482,490 +412,24 @@ data class DocumentReviewState(
 }
 
 // =========================================================================
-// DocumentDraftData extension properties for review state
+// DocDto extension properties for review state
 // =========================================================================
-
-/** Whether the draft has the minimum required dates for its type. */
-private val DocumentDraftData.hasRequiredDates: Boolean
-    get() = when (this) {
-        is InvoiceDraftData -> issueDate != null
-        is ReceiptDraftData -> date != null
-        is CreditNoteDraftData -> issueDate != null
-        is BankStatementDraftData -> transactions.all { it.transactionDate != null }
-        is ProFormaDraftData,
-        is QuoteDraftData,
-        is OrderConfirmationDraftData,
-        is DeliveryNoteDraftData,
-        is ReminderDraftData,
-        is StatementOfAccountDraftData,
-        is PurchaseOrderDraftData,
-        is ExpenseClaimDraftData,
-        is BankFeeDraftData,
-        is InterestStatementDraftData,
-        is PaymentConfirmationDraftData,
-        is VatReturnDraftData,
-        is VatListingDraftData,
-        is VatAssessmentDraftData,
-        is IcListingDraftData,
-        is OssReturnDraftData,
-        is CorporateTaxDraftData,
-        is CorporateTaxAdvanceDraftData,
-        is TaxAssessmentDraftData,
-        is PersonalTaxDraftData,
-        is WithholdingTaxDraftData,
-        is SocialContributionDraftData,
-        is SocialFundDraftData,
-        is SelfEmployedContributionDraftData,
-        is VapzDraftData,
-        is SalarySlipDraftData,
-        is PayrollSummaryDraftData,
-        is EmploymentContractDraftData,
-        is DimonaDraftData,
-        is C4DraftData,
-        is HolidayPayDraftData,
-        is ContractDraftData,
-        is LeaseDraftData,
-        is LoanDraftData,
-        is InsuranceDraftData,
-        is DividendDraftData,
-        is ShareholderRegisterDraftData,
-        is CompanyExtractDraftData,
-        is AnnualAccountsDraftData,
-        is BoardMinutesDraftData,
-        is SubsidyDraftData,
-        is FineDraftData,
-        is PermitDraftData,
-        is CustomsDeclarationDraftData,
-        is IntrastatDraftData,
-        is DepreciationScheduleDraftData,
-        is InventoryDraftData,
-        is OtherDraftData -> true
-    }
-
-/** Direction must be known for document types that map to invoice/credit-note entities. */
-private val DocumentDraftData.hasKnownDirectionForConfirmation: Boolean
-    get() = when (this) {
-        is InvoiceDraftData -> direction != DocumentDirection.Unknown
-        is CreditNoteDraftData -> direction != DocumentDirection.Unknown
-        is ReceiptDraftData -> true
-        is BankStatementDraftData -> direction == DocumentDirection.Neutral
-        is ProFormaDraftData,
-        is QuoteDraftData,
-        is OrderConfirmationDraftData,
-        is DeliveryNoteDraftData,
-        is ReminderDraftData,
-        is StatementOfAccountDraftData,
-        is PurchaseOrderDraftData,
-        is ExpenseClaimDraftData,
-        is BankFeeDraftData,
-        is InterestStatementDraftData,
-        is PaymentConfirmationDraftData,
-        is VatReturnDraftData,
-        is VatListingDraftData,
-        is VatAssessmentDraftData,
-        is IcListingDraftData,
-        is OssReturnDraftData,
-        is CorporateTaxDraftData,
-        is CorporateTaxAdvanceDraftData,
-        is TaxAssessmentDraftData,
-        is PersonalTaxDraftData,
-        is WithholdingTaxDraftData,
-        is SocialContributionDraftData,
-        is SocialFundDraftData,
-        is SelfEmployedContributionDraftData,
-        is VapzDraftData,
-        is SalarySlipDraftData,
-        is PayrollSummaryDraftData,
-        is EmploymentContractDraftData,
-        is DimonaDraftData,
-        is C4DraftData,
-        is HolidayPayDraftData,
-        is ContractDraftData,
-        is LeaseDraftData,
-        is LoanDraftData,
-        is InsuranceDraftData,
-        is DividendDraftData,
-        is ShareholderRegisterDraftData,
-        is CompanyExtractDraftData,
-        is AnnualAccountsDraftData,
-        is BoardMinutesDraftData,
-        is SubsidyDraftData,
-        is FineDraftData,
-        is PermitDraftData,
-        is CustomsDeclarationDraftData,
-        is IntrastatDraftData,
-        is DepreciationScheduleDraftData,
-        is InventoryDraftData,
-        is OtherDraftData -> true
-    }
-
-/** Identity fields required by backend confirmation services. */
-private val DocumentDraftData.hasRequiredIdentityForConfirmation: Boolean
-    get() = when (this) {
-        is InvoiceDraftData -> true
-        is ReceiptDraftData -> !merchantName.isNullOrBlank()
-        is CreditNoteDraftData -> !creditNoteNumber.isNullOrBlank()
-        is BankStatementDraftData,
-        is ProFormaDraftData,
-        is QuoteDraftData,
-        is OrderConfirmationDraftData,
-        is DeliveryNoteDraftData,
-        is ReminderDraftData,
-        is StatementOfAccountDraftData,
-        is PurchaseOrderDraftData,
-        is ExpenseClaimDraftData,
-        is BankFeeDraftData,
-        is InterestStatementDraftData,
-        is PaymentConfirmationDraftData,
-        is VatReturnDraftData,
-        is VatListingDraftData,
-        is VatAssessmentDraftData,
-        is IcListingDraftData,
-        is OssReturnDraftData,
-        is CorporateTaxDraftData,
-        is CorporateTaxAdvanceDraftData,
-        is TaxAssessmentDraftData,
-        is PersonalTaxDraftData,
-        is WithholdingTaxDraftData,
-        is SocialContributionDraftData,
-        is SocialFundDraftData,
-        is SelfEmployedContributionDraftData,
-        is VapzDraftData,
-        is SalarySlipDraftData,
-        is PayrollSummaryDraftData,
-        is EmploymentContractDraftData,
-        is DimonaDraftData,
-        is C4DraftData,
-        is HolidayPayDraftData,
-        is ContractDraftData,
-        is LeaseDraftData,
-        is LoanDraftData,
-        is InsuranceDraftData,
-        is DividendDraftData,
-        is ShareholderRegisterDraftData,
-        is CompanyExtractDraftData,
-        is AnnualAccountsDraftData,
-        is BoardMinutesDraftData,
-        is SubsidyDraftData,
-        is FineDraftData,
-        is PermitDraftData,
-        is CustomsDeclarationDraftData,
-        is IntrastatDraftData,
-        is DepreciationScheduleDraftData,
-        is InventoryDraftData,
-        is OtherDraftData -> true
-    }
-
-/** Subtotal requirement enforced by backend (credit notes only). */
-private val DocumentDraftData.hasRequiredSubtotalForConfirmation: Boolean
-    get() = when (this) {
-        is InvoiceDraftData -> true
-        is ReceiptDraftData -> true
-        is CreditNoteDraftData -> subtotalAmount != null
-        is BankStatementDraftData,
-        is ProFormaDraftData,
-        is QuoteDraftData,
-        is OrderConfirmationDraftData,
-        is DeliveryNoteDraftData,
-        is ReminderDraftData,
-        is StatementOfAccountDraftData,
-        is PurchaseOrderDraftData,
-        is ExpenseClaimDraftData,
-        is BankFeeDraftData,
-        is InterestStatementDraftData,
-        is PaymentConfirmationDraftData,
-        is VatReturnDraftData,
-        is VatListingDraftData,
-        is VatAssessmentDraftData,
-        is IcListingDraftData,
-        is OssReturnDraftData,
-        is CorporateTaxDraftData,
-        is CorporateTaxAdvanceDraftData,
-        is TaxAssessmentDraftData,
-        is PersonalTaxDraftData,
-        is WithholdingTaxDraftData,
-        is SocialContributionDraftData,
-        is SocialFundDraftData,
-        is SelfEmployedContributionDraftData,
-        is VapzDraftData,
-        is SalarySlipDraftData,
-        is PayrollSummaryDraftData,
-        is EmploymentContractDraftData,
-        is DimonaDraftData,
-        is C4DraftData,
-        is HolidayPayDraftData,
-        is ContractDraftData,
-        is LeaseDraftData,
-        is LoanDraftData,
-        is InsuranceDraftData,
-        is DividendDraftData,
-        is ShareholderRegisterDraftData,
-        is CompanyExtractDraftData,
-        is AnnualAccountsDraftData,
-        is BoardMinutesDraftData,
-        is SubsidyDraftData,
-        is FineDraftData,
-        is PermitDraftData,
-        is CustomsDeclarationDraftData,
-        is IntrastatDraftData,
-        is DepreciationScheduleDraftData,
-        is InventoryDraftData,
-        is OtherDraftData -> true
-    }
-
-/** Whether totals required for confirmation are present. */
-private val DocumentDraftData.hasRequiredTotalForConfirmation: Boolean
-    get() = when (this) {
-        is InvoiceDraftData -> totalAmount != null
-        is ReceiptDraftData -> totalAmount != null
-        is CreditNoteDraftData -> totalAmount != null
-        is BankStatementDraftData,
-        is ProFormaDraftData,
-        is QuoteDraftData,
-        is OrderConfirmationDraftData,
-        is DeliveryNoteDraftData,
-        is ReminderDraftData,
-        is StatementOfAccountDraftData,
-        is PurchaseOrderDraftData,
-        is ExpenseClaimDraftData,
-        is BankFeeDraftData,
-        is InterestStatementDraftData,
-        is PaymentConfirmationDraftData,
-        is VatReturnDraftData,
-        is VatListingDraftData,
-        is VatAssessmentDraftData,
-        is IcListingDraftData,
-        is OssReturnDraftData,
-        is CorporateTaxDraftData,
-        is CorporateTaxAdvanceDraftData,
-        is TaxAssessmentDraftData,
-        is PersonalTaxDraftData,
-        is WithholdingTaxDraftData,
-        is SocialContributionDraftData,
-        is SocialFundDraftData,
-        is SelfEmployedContributionDraftData,
-        is VapzDraftData,
-        is SalarySlipDraftData,
-        is PayrollSummaryDraftData,
-        is EmploymentContractDraftData,
-        is DimonaDraftData,
-        is C4DraftData,
-        is HolidayPayDraftData,
-        is ContractDraftData,
-        is LeaseDraftData,
-        is LoanDraftData,
-        is InsuranceDraftData,
-        is DividendDraftData,
-        is ShareholderRegisterDraftData,
-        is CompanyExtractDraftData,
-        is AnnualAccountsDraftData,
-        is BoardMinutesDraftData,
-        is SubsidyDraftData,
-        is FineDraftData,
-        is PermitDraftData,
-        is CustomsDeclarationDraftData,
-        is IntrastatDraftData,
-        is DepreciationScheduleDraftData,
-        is InventoryDraftData,
-        is OtherDraftData -> true
-    }
-
-/** Whether VAT required for confirmation is present (0-value VAT is valid). */
-private val DocumentDraftData.hasRequiredVatForConfirmation: Boolean
-    get() = when (this) {
-        is InvoiceDraftData -> vatAmount != null
-        is CreditNoteDraftData -> vatAmount != null
-        is ReceiptDraftData,
-        is BankStatementDraftData,
-        is ProFormaDraftData,
-        is QuoteDraftData,
-        is OrderConfirmationDraftData,
-        is DeliveryNoteDraftData,
-        is ReminderDraftData,
-        is StatementOfAccountDraftData,
-        is PurchaseOrderDraftData,
-        is ExpenseClaimDraftData,
-        is BankFeeDraftData,
-        is InterestStatementDraftData,
-        is PaymentConfirmationDraftData,
-        is VatReturnDraftData,
-        is VatListingDraftData,
-        is VatAssessmentDraftData,
-        is IcListingDraftData,
-        is OssReturnDraftData,
-        is CorporateTaxDraftData,
-        is CorporateTaxAdvanceDraftData,
-        is TaxAssessmentDraftData,
-        is PersonalTaxDraftData,
-        is WithholdingTaxDraftData,
-        is SocialContributionDraftData,
-        is SocialFundDraftData,
-        is SelfEmployedContributionDraftData,
-        is VapzDraftData,
-        is SalarySlipDraftData,
-        is PayrollSummaryDraftData,
-        is EmploymentContractDraftData,
-        is DimonaDraftData,
-        is C4DraftData,
-        is HolidayPayDraftData,
-        is ContractDraftData,
-        is LeaseDraftData,
-        is LoanDraftData,
-        is InsuranceDraftData,
-        is DividendDraftData,
-        is ShareholderRegisterDraftData,
-        is CompanyExtractDraftData,
-        is AnnualAccountsDraftData,
-        is BoardMinutesDraftData,
-        is SubsidyDraftData,
-        is FineDraftData,
-        is PermitDraftData,
-        is CustomsDeclarationDraftData,
-        is IntrastatDraftData,
-        is DepreciationScheduleDraftData,
-        is InventoryDraftData,
-        is OtherDraftData -> true
-    }
-
-/** Whether amount math is coherent when all required values are present. */
-private val DocumentDraftData.hasCoherentAmountsForConfirmation: Boolean
-    get() {
-        return when (this) {
-            is InvoiceDraftData -> {
-                val subtotal = subtotalAmount
-                val vat = vatAmount
-                val total = totalAmount
-                if (subtotal == null || vat == null || total == null) return true
-                val expected = subtotal + vat
-                kotlin.math.abs(expected.minor - total.minor) <= 1L
-            }
-            is ReceiptDraftData -> true
-            is CreditNoteDraftData -> {
-                val subtotal = subtotalAmount
-                val vat = vatAmount
-                val total = totalAmount
-                if (subtotal == null || vat == null || total == null) return true
-                val expected = subtotal + vat
-                kotlin.math.abs(expected.minor - total.minor) <= 1L
-            }
-            is BankStatementDraftData -> transactions.all { row ->
-                val amount = row.signedAmount
-                amount != null && !amount.isZero
-            }
-            is ProFormaDraftData,
-            is QuoteDraftData,
-            is OrderConfirmationDraftData,
-            is DeliveryNoteDraftData,
-            is ReminderDraftData,
-            is StatementOfAccountDraftData,
-            is PurchaseOrderDraftData,
-            is ExpenseClaimDraftData,
-            is BankFeeDraftData,
-            is InterestStatementDraftData,
-            is PaymentConfirmationDraftData,
-            is VatReturnDraftData,
-            is VatListingDraftData,
-            is VatAssessmentDraftData,
-            is IcListingDraftData,
-            is OssReturnDraftData,
-            is CorporateTaxDraftData,
-            is CorporateTaxAdvanceDraftData,
-            is TaxAssessmentDraftData,
-            is PersonalTaxDraftData,
-            is WithholdingTaxDraftData,
-            is SocialContributionDraftData,
-            is SocialFundDraftData,
-            is SelfEmployedContributionDraftData,
-            is VapzDraftData,
-            is SalarySlipDraftData,
-            is PayrollSummaryDraftData,
-            is EmploymentContractDraftData,
-            is DimonaDraftData,
-            is C4DraftData,
-            is HolidayPayDraftData,
-            is ContractDraftData,
-            is LeaseDraftData,
-            is LoanDraftData,
-            is InsuranceDraftData,
-            is DividendDraftData,
-            is ShareholderRegisterDraftData,
-            is CompanyExtractDraftData,
-            is AnnualAccountsDraftData,
-            is BoardMinutesDraftData,
-            is SubsidyDraftData,
-            is FineDraftData,
-            is PermitDraftData,
-            is CustomsDeclarationDraftData,
-            is IntrastatDraftData,
-            is DepreciationScheduleDraftData,
-            is InventoryDraftData,
-            is OtherDraftData -> true
-        }
-    }
-
-/** Whether a contact is required for this document type. */
-internal val DocumentDraftData?.isContactRequired: Boolean
-    get() = this is InvoiceDraftData || this is CreditNoteDraftData
+// hasRequiredDates, hasKnownDirectionForConfirmation, hasRequiredIdentityForConfirmation,
+// hasRequiredSubtotalForConfirmation, hasRequiredTotalForConfirmation, hasRequiredVatForConfirmation,
+// isContactRequired, totalAmount — all imported from DocDtoConversions.kt
 
 /** Derive DocumentType from sealed subtype. */
-internal val DocumentDraftData?.documentType: DocumentType
+internal val DocDto?.documentType: DocumentType
     get() = this?.toDocumentType() ?: DocumentType.Unknown
 
 /** Context/description text for understanding line. */
-private val DocumentDraftData?.displayContextDescription: String?
+private val DocDto?.displayContextDescription: String?
     get() = when (this) {
-        is InvoiceDraftData -> notes?.takeIf { it.isNotBlank() }
-        is ReceiptDraftData -> notes?.takeIf { it.isNotBlank() }
-        is CreditNoteDraftData -> reason?.takeIf { it.isNotBlank() }
-        is BankStatementDraftData -> notes?.takeIf { it.isNotBlank() }
-        is ProFormaDraftData,
-        is QuoteDraftData,
-        is OrderConfirmationDraftData,
-        is DeliveryNoteDraftData,
-        is ReminderDraftData,
-        is StatementOfAccountDraftData,
-        is PurchaseOrderDraftData,
-        is ExpenseClaimDraftData,
-        is BankFeeDraftData,
-        is InterestStatementDraftData,
-        is PaymentConfirmationDraftData,
-        is VatReturnDraftData,
-        is VatListingDraftData,
-        is VatAssessmentDraftData,
-        is IcListingDraftData,
-        is OssReturnDraftData,
-        is CorporateTaxDraftData,
-        is CorporateTaxAdvanceDraftData,
-        is TaxAssessmentDraftData,
-        is PersonalTaxDraftData,
-        is WithholdingTaxDraftData,
-        is SocialContributionDraftData,
-        is SocialFundDraftData,
-        is SelfEmployedContributionDraftData,
-        is VapzDraftData,
-        is SalarySlipDraftData,
-        is PayrollSummaryDraftData,
-        is EmploymentContractDraftData,
-        is DimonaDraftData,
-        is C4DraftData,
-        is HolidayPayDraftData,
-        is ContractDraftData,
-        is LeaseDraftData,
-        is LoanDraftData,
-        is InsuranceDraftData,
-        is DividendDraftData,
-        is ShareholderRegisterDraftData,
-        is CompanyExtractDraftData,
-        is AnnualAccountsDraftData,
-        is BoardMinutesDraftData,
-        is SubsidyDraftData,
-        is FineDraftData,
-        is PermitDraftData,
-        is CustomsDeclarationDraftData,
-        is IntrastatDraftData,
-        is DepreciationScheduleDraftData,
-        is InventoryDraftData,
-        is OtherDraftData,
+        is DocDto.Invoice -> notes?.takeIf { it.isNotBlank() }
+        is DocDto.Receipt -> notes?.takeIf { it.isNotBlank() }
+        is DocDto.CreditNote -> reason?.takeIf { it.isNotBlank() }
+        is DocDto.BankStatement -> notes?.takeIf { it.isNotBlank() }
+        is DocDto.ClassifiedDoc,
         null -> null
     }
 

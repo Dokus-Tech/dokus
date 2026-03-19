@@ -17,6 +17,8 @@ import tech.dokus.database.repository.cashflow.DocumentMatchReviewSummary
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.DocumentSourceRepository
 import tech.dokus.database.repository.cashflow.DocumentSourceSummary
+import tech.dokus.database.repository.drafts.DraftRepository
+import tech.dokus.domain.model.toDraftData
 import tech.dokus.database.tables.documents.DocumentBlobsTable
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
 import tech.dokus.database.tables.documents.DocumentSourcesTable
@@ -194,7 +196,8 @@ class DocumentTruthService(
     private val ingestionRepository: DocumentIngestionRunRepository,
     private val blobRepository: DocumentBlobRepository,
     private val sourceRepository: DocumentSourceRepository,
-    private val matchReviewRepository: DocumentMatchReviewRepository
+    private val matchReviewRepository: DocumentMatchReviewRepository,
+    private val draftRepository: DraftRepository,
 ) {
     private val logger = loggerFor()
 
@@ -293,7 +296,6 @@ class DocumentTruthService(
                 DocumentsTable.insert {
                     it[DocumentsTable.id] = UUID.fromString(documentId.toString())
                     it[DocumentsTable.tenantId] = tenantUuid
-                    it[DocumentsTable.canonicalContentHash] = null
                 }
 
                 val sourceId = DocumentSourceId.generate()
@@ -397,8 +399,6 @@ class DocumentTruthService(
             extractedSnapshotJson = extractedSnapshotJson,
             matchType = null
         )
-        documentRepository.updateCanonicalContentHash(tenantId, documentId, extractedContentHash)
-
         val contentMatchDocumentId = sourceRepository.findLinkedDocumentByContentHash(
             tenantId = tenantId,
             contentHash = extractedContentHash,
@@ -423,8 +423,11 @@ class DocumentTruthService(
                 excludeDocumentId = documentId
             )
             if (identityMatchDocumentId != null) {
-                val existingDraft = documentRepository.getDraftByDocumentId(identityMatchDocumentId, tenantId)?.extractedData
-                val hasMaterialConflict = existingDraft?.let { hasMaterialConflict(draftData, it) } ?: false
+                val existingDraftSummary = documentRepository.getDraftByDocumentId(identityMatchDocumentId, tenantId)
+                val existingDraftData = existingDraftSummary?.let {
+                    draftRepository.getDraftAsDocDto(tenantId, identityMatchDocumentId, it.documentType)?.toDraftData()
+                }
+                val hasMaterialConflict = existingDraftData?.let { hasMaterialConflict(draftData, it) } ?: false
                 return if (hasMaterialConflict) {
                     val result = createPendingReview(
                         tenantId = tenantId,
@@ -462,10 +465,13 @@ class DocumentTruthService(
                 )
                 val bestFuzzy = fuzzyCandidates.firstOrNull()
                 if (bestFuzzy != null) {
-                    val existingDraft = documentRepository.getDraftByDocumentId(bestFuzzy.documentId, tenantId)?.extractedData
+                    val fuzzyDraftSummary = documentRepository.getDraftByDocumentId(bestFuzzy.documentId, tenantId)
+                    val existingDraftData = fuzzyDraftSummary?.let {
+                        draftRepository.getDraftAsDocDto(tenantId, bestFuzzy.documentId, it.documentType)?.toDraftData()
+                    }
                     val fuzzyAssessment = buildFuzzyAssessment(
                         incoming = draftData,
-                        existing = existingDraft
+                        existing = existingDraftData
                     )
                     val result = createPendingReview(
                         tenantId = tenantId,
@@ -574,7 +580,6 @@ class DocumentTruthService(
                 val newDocumentId = documentRepository.create(
                     tenantId = tenantId,
                     payload = DocumentCreatePayload(
-                        canonicalContentHash = source.contentHash,
                         canonicalIdentityKey = source.identityKeyHash,
                     )
                 )
@@ -606,6 +611,11 @@ class DocumentTruthService(
                             extractedData = draftData,
                             documentType = draftData.toDocumentType(),
                             force = true
+                        )
+                        draftRepository.saveDraftFromExtraction(
+                            tenantId = tenantId,
+                            documentId = newDocumentId,
+                            extractedData = draftData,
                         )
                     }.onFailure { error ->
                         logger.warn(

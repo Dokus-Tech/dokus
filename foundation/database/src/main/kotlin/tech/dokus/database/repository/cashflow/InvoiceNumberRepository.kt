@@ -12,6 +12,7 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.foundation.backend.database.dbQuery
 import java.sql.SQLException
 import java.util.UUID
+import tech.dokus.foundation.backend.utils.runSuspendCatching
 
 /**
  * Repository for managing invoice number sequences with atomic increment.
@@ -61,7 +62,7 @@ class InvoiceNumberRepository {
     private suspend fun getAndIncrementSequenceInternal(
         tenantId: TenantId,
         year: Int
-    ): Result<Int> = runCatching {
+    ): Result<Int> = runSuspendCatching {
         dbQuery {
             val tenantUuid = UUID.fromString(tenantId.toString())
 
@@ -115,7 +116,7 @@ class InvoiceNumberRepository {
     suspend fun getCurrentSequence(
         tenantId: TenantId,
         year: Int
-    ): Result<Int> = runCatching {
+    ): Result<Int> = runSuspendCatching {
         dbQuery {
             val tenantUuid = UUID.fromString(tenantId.toString())
 
@@ -147,7 +148,7 @@ class InvoiceNumberRepository {
         tenantId: TenantId,
         year: Int,
         startingNumber: Int = 0
-    ): Result<Unit> = runCatching {
+    ): Result<Unit> = runSuspendCatching {
         dbQuery {
             val tenantUuid = UUID.fromString(tenantId.toString())
 

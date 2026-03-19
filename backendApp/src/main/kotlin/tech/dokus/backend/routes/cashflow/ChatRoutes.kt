@@ -201,7 +201,7 @@ internal fun Route.chatRoutes() {
                 route.page
             )
 
-            val (sessions, total) = chatRepository.listSessions(
+            val sessionsPage = chatRepository.listSessions(
                 tenantId = tenantId,
                 scope = route.scope,
                 documentId = route.documentId,
@@ -212,11 +212,11 @@ internal fun Route.chatRoutes() {
             call.respond(
                 HttpStatusCode.OK,
                 ChatSessionListResponse(
-                    items = sessions,
-                    total = total,
+                    items = sessionsPage.items,
+                    total = sessionsPage.totalCount,
                     page = route.page,
                     limit = limit,
-                    hasMore = (route.page + 1) * limit < total
+                    hasMore = (route.page + 1) * limit < sessionsPage.totalCount
                 )
             )
         }
@@ -246,7 +246,7 @@ internal fun Route.chatRoutes() {
                 ?: throw DokusException.NotFound("Chat session not found")
 
             // Get messages
-            val (messages, total) = chatRepository.getSessionMessages(
+            val messagesPage = chatRepository.getSessionMessages(
                 tenantId = tenantId,
                 sessionId = route.sessionId,
                 limit = limit,
@@ -259,11 +259,11 @@ internal fun Route.chatRoutes() {
                 ChatHistoryResponse(
                     sessionId = route.sessionId,
                     session = sessionSummary,
-                    messages = messages,
-                    total = total,
+                    messages = messagesPage.items,
+                    total = messagesPage.totalCount,
                     page = route.page,
                     limit = limit,
-                    hasMore = (route.page + 1) * limit < total
+                    hasMore = (route.page + 1) * limit < messagesPage.totalCount
                 )
             )
         }
@@ -334,14 +334,14 @@ private suspend fun processChat(
 
     // Get conversation history for context
     val conversationHistory = if (!isNewSession) {
-        val (messages, _) = chatRepository.getSessionMessages(
+        val historyPage = chatRepository.getSessionMessages(
             tenantId = tenantId,
             sessionId = sessionId,
             limit = 10,
             offset = 0,
             descending = false
         )
-        messages.map { msg ->
+        historyPage.items.map { msg ->
             ConversationMessage(
                 role = when (msg.role) {
                     MessageRole.User -> AgentMessageRole.USER

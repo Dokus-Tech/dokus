@@ -12,21 +12,23 @@ import org.jetbrains.exposed.v1.jdbc.insertAndGetId
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
 import tech.dokus.database.tables.cashflow.ExpensesTable
+import org.jetbrains.exposed.v1.core.inList
 import tech.dokus.domain.Money
 import tech.dokus.domain.Percentage
-import tech.dokus.domain.VatRate
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.ExpenseCategory
 import tech.dokus.domain.fromDbDecimal
-import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.ExpenseId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.database.entity.ExpenseEntity
+import tech.dokus.database.mapper.from
 import tech.dokus.domain.model.CreateExpenseRequest
-import tech.dokus.domain.model.FinancialDocumentDto
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.toDbDecimal
 import tech.dokus.foundation.backend.database.dbQuery
 import java.util.UUID
+import tech.dokus.foundation.backend.utils.runSuspendCatching
 
 /**
  * Repository for managing expenses
@@ -45,7 +47,7 @@ class ExpenseRepository {
     suspend fun createExpense(
         tenantId: TenantId,
         request: CreateExpenseRequest
-    ): Result<FinancialDocumentDto.ExpenseDto> = runCatching {
+    ): Result<ExpenseEntity> = runSuspendCatching {
         dbQuery {
             val expenseId = ExpensesTable.insertAndGetId {
                 it[ExpensesTable.tenantId] = UUID.fromString(tenantId.toString())
@@ -70,26 +72,7 @@ class ExpenseRepository {
                 (ExpensesTable.id eq expenseId.value) and
                     (ExpensesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.single().let { row ->
-                FinancialDocumentDto.ExpenseDto(
-                    id = ExpenseId.parse(row[ExpensesTable.id].value.toString()),
-                    tenantId = TenantId.parse(row[ExpensesTable.tenantId].toString()),
-                    date = row[ExpensesTable.date],
-                    merchant = row[ExpensesTable.merchant],
-                    amount = Money.fromDbDecimal(row[ExpensesTable.amount]),
-                    vatAmount = row[ExpensesTable.vatAmount]?.let { Money.fromDbDecimal(it) },
-                    vatRate = row[ExpensesTable.vatRate]?.let { VatRate.fromDbDecimal(it) },
-                    category = row[ExpensesTable.category],
-                    description = row[ExpensesTable.description],
-                    documentId = row[ExpensesTable.documentId]?.let { DocumentId.parse(it.toString()) },
-                    contactId = row[ExpensesTable.contactId]?.let { ContactId.parse(it.toString()) },
-                    isDeductible = row[ExpensesTable.isDeductible],
-                    deductiblePercentage = Percentage.fromDbDecimal(row[ExpensesTable.deductiblePercentage]),
-                    paymentMethod = row[ExpensesTable.paymentMethod],
-                    isRecurring = row[ExpensesTable.isRecurring],
-                    notes = row[ExpensesTable.notes],
-                    createdAt = row[ExpensesTable.createdAt],
-                    updatedAt = row[ExpensesTable.updatedAt]
-                )
+                ExpenseEntity.from(row)
             }
         }
     }
@@ -101,32 +84,13 @@ class ExpenseRepository {
     suspend fun getExpense(
         expenseId: ExpenseId,
         tenantId: TenantId
-    ): Result<FinancialDocumentDto.ExpenseDto?> = runCatching {
+    ): Result<ExpenseEntity?> = runSuspendCatching {
         dbQuery {
             ExpensesTable.selectAll().where {
                 (ExpensesTable.id eq UUID.fromString(expenseId.toString())) and
                     (ExpensesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.singleOrNull()?.let { row ->
-                FinancialDocumentDto.ExpenseDto(
-                    id = ExpenseId.parse(row[ExpensesTable.id].value.toString()),
-                    tenantId = TenantId.parse(row[ExpensesTable.tenantId].toString()),
-                    date = row[ExpensesTable.date],
-                    merchant = row[ExpensesTable.merchant],
-                    amount = Money.fromDbDecimal(row[ExpensesTable.amount]),
-                    vatAmount = row[ExpensesTable.vatAmount]?.let { Money.fromDbDecimal(it) },
-                    vatRate = row[ExpensesTable.vatRate]?.let { VatRate.fromDbDecimal(it) },
-                    category = row[ExpensesTable.category],
-                    description = row[ExpensesTable.description],
-                    documentId = row[ExpensesTable.documentId]?.let { DocumentId.parse(it.toString()) },
-                    contactId = row[ExpensesTable.contactId]?.let { ContactId.parse(it.toString()) },
-                    isDeductible = row[ExpensesTable.isDeductible],
-                    deductiblePercentage = Percentage.fromDbDecimal(row[ExpensesTable.deductiblePercentage]),
-                    paymentMethod = row[ExpensesTable.paymentMethod],
-                    isRecurring = row[ExpensesTable.isRecurring],
-                    notes = row[ExpensesTable.notes],
-                    createdAt = row[ExpensesTable.createdAt],
-                    updatedAt = row[ExpensesTable.updatedAt]
-                )
+                ExpenseEntity.from(row)
             }
         }
     }
@@ -142,7 +106,7 @@ class ExpenseRepository {
         toDate: LocalDate? = null,
         limit: Int = 50,
         offset: Int = 0
-    ): Result<PaginatedResponse<FinancialDocumentDto.ExpenseDto>> = runCatching {
+    ): Result<PaginatedResponse<ExpenseEntity>> = runSuspendCatching {
         dbQuery {
             var query = ExpensesTable.selectAll().where {
                 ExpensesTable.tenantId eq UUID.fromString(tenantId.toString())
@@ -164,28 +128,7 @@ class ExpenseRepository {
             // Apply pagination and ordering
             val items = query.orderBy(ExpensesTable.date to SortOrder.DESC)
                 .limit(limit + offset)
-                .map { row ->
-                    FinancialDocumentDto.ExpenseDto(
-                        id = ExpenseId.parse(row[ExpensesTable.id].value.toString()),
-                        tenantId = TenantId.parse(row[ExpensesTable.tenantId].toString()),
-                        date = row[ExpensesTable.date],
-                        merchant = row[ExpensesTable.merchant],
-                        amount = Money.fromDbDecimal(row[ExpensesTable.amount]),
-                        vatAmount = row[ExpensesTable.vatAmount]?.let { Money.fromDbDecimal(it) },
-                        vatRate = row[ExpensesTable.vatRate]?.let { VatRate.fromDbDecimal(it) },
-                        category = row[ExpensesTable.category],
-                        description = row[ExpensesTable.description],
-                        documentId = row[ExpensesTable.documentId]?.let { DocumentId.parse(it.toString()) },
-                        contactId = row[ExpensesTable.contactId]?.let { ContactId.parse(it.toString()) },
-                        isDeductible = row[ExpensesTable.isDeductible],
-                        deductiblePercentage = Percentage.fromDbDecimal(row[ExpensesTable.deductiblePercentage]),
-                        paymentMethod = row[ExpensesTable.paymentMethod],
-                        isRecurring = row[ExpensesTable.isRecurring],
-                        notes = row[ExpensesTable.notes],
-                        createdAt = row[ExpensesTable.createdAt],
-                        updatedAt = row[ExpensesTable.updatedAt]
-                    )
-                }
+                .map { row -> ExpenseEntity.from(row) }
                 .drop(offset)
 
             PaginatedResponse(
@@ -205,7 +148,7 @@ class ExpenseRepository {
         expenseId: ExpenseId,
         tenantId: TenantId,
         request: CreateExpenseRequest
-    ): Result<FinancialDocumentDto.ExpenseDto> = runCatching {
+    ): Result<ExpenseEntity> = runSuspendCatching {
         dbQuery {
             // Verify expense exists and belongs to tenant
             val exists = ExpensesTable.selectAll().where {
@@ -243,26 +186,7 @@ class ExpenseRepository {
                 (ExpensesTable.id eq UUID.fromString(expenseId.toString())) and
                     (ExpensesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.single().let { row ->
-                FinancialDocumentDto.ExpenseDto(
-                    id = ExpenseId.parse(row[ExpensesTable.id].value.toString()),
-                    tenantId = TenantId.parse(row[ExpensesTable.tenantId].toString()),
-                    date = row[ExpensesTable.date],
-                    merchant = row[ExpensesTable.merchant],
-                    amount = Money.fromDbDecimal(row[ExpensesTable.amount]),
-                    vatAmount = row[ExpensesTable.vatAmount]?.let { Money.fromDbDecimal(it) },
-                    vatRate = row[ExpensesTable.vatRate]?.let { VatRate.fromDbDecimal(it) },
-                    category = row[ExpensesTable.category],
-                    description = row[ExpensesTable.description],
-                    documentId = row[ExpensesTable.documentId]?.let { DocumentId.parse(it.toString()) },
-                    contactId = row[ExpensesTable.contactId]?.let { ContactId.parse(it.toString()) },
-                    isDeductible = row[ExpensesTable.isDeductible],
-                    deductiblePercentage = Percentage.fromDbDecimal(row[ExpensesTable.deductiblePercentage]),
-                    paymentMethod = row[ExpensesTable.paymentMethod],
-                    isRecurring = row[ExpensesTable.isRecurring],
-                    notes = row[ExpensesTable.notes],
-                    createdAt = row[ExpensesTable.createdAt],
-                    updatedAt = row[ExpensesTable.updatedAt]
-                )
+                ExpenseEntity.from(row)
             }
         }
     }
@@ -274,7 +198,7 @@ class ExpenseRepository {
     suspend fun deleteExpense(
         expenseId: ExpenseId,
         tenantId: TenantId
-    ): Result<Boolean> = runCatching {
+    ): Result<Boolean> = runSuspendCatching {
         dbQuery {
             val deletedRows = ExpensesTable.deleteWhere {
                 (ExpensesTable.id eq UUID.fromString(expenseId.toString())) and
@@ -291,12 +215,32 @@ class ExpenseRepository {
     suspend fun exists(
         expenseId: ExpenseId,
         tenantId: TenantId
-    ): Result<Boolean> = runCatching {
+    ): Result<Boolean> = runSuspendCatching {
         dbQuery {
             ExpensesTable.selectAll().where {
                 (ExpensesTable.id eq UUID.fromString(expenseId.toString())) and
                     (ExpensesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.count() > 0
+        }
+    }
+
+    /**
+     * Batch-fetch amounts for confirmed expenses by document IDs.
+     * ExpensesTable has no currency column; defaults to EUR.
+     * CRITICAL: MUST filter by tenant_id
+     */
+    suspend fun batchGetAmountsByDocumentIds(
+        tenantId: TenantId,
+        documentIds: List<DocumentId>,
+    ): Map<DocumentId, Pair<Money, Currency>> = dbQuery {
+        if (documentIds.isEmpty()) return@dbQuery emptyMap()
+        ExpensesTable.selectAll().where {
+            (ExpensesTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                (ExpensesTable.documentId inList documentIds.map { UUID.fromString(it.toString()) })
+        }.associate { row ->
+            val docId = DocumentId.parse(row[ExpensesTable.documentId]!!.toString())
+            val amount = Money.fromDbDecimal(row[ExpensesTable.amount])
+            docId to (amount to Currency.Eur)
         }
     }
 
@@ -308,7 +252,7 @@ class ExpenseRepository {
         expenseId: ExpenseId,
         tenantId: TenantId,
         documentId: DocumentId
-    ): Result<Boolean> = runCatching {
+    ): Result<Boolean> = runSuspendCatching {
         dbQuery {
             val updatedRows = ExpensesTable.update({
                 (ExpensesTable.id eq UUID.fromString(expenseId.toString())) and
@@ -327,31 +271,13 @@ class ExpenseRepository {
     suspend fun findByDocumentId(
         tenantId: TenantId,
         documentId: DocumentId
-    ): FinancialDocumentDto.ExpenseDto? = dbQuery {
+    ): ExpenseEntity? = dbQuery {
         ExpensesTable.selectAll().where {
             (ExpensesTable.tenantId eq UUID.fromString(tenantId.toString())) and
                 (ExpensesTable.documentId eq UUID.fromString(documentId.toString()))
         }.singleOrNull()?.let { row ->
-            FinancialDocumentDto.ExpenseDto(
-                id = ExpenseId.parse(row[ExpensesTable.id].value.toString()),
-                tenantId = TenantId.parse(row[ExpensesTable.tenantId].toString()),
-                date = row[ExpensesTable.date],
-                merchant = row[ExpensesTable.merchant],
-                amount = Money.fromDbDecimal(row[ExpensesTable.amount]),
-                vatAmount = row[ExpensesTable.vatAmount]?.let { Money.fromDbDecimal(it) },
-                vatRate = row[ExpensesTable.vatRate]?.let { VatRate.fromDbDecimal(it) },
-                category = row[ExpensesTable.category],
-                description = row[ExpensesTable.description],
-                documentId = row[ExpensesTable.documentId]?.let { DocumentId.parse(it.toString()) },
-                contactId = row[ExpensesTable.contactId]?.let { ContactId.parse(it.toString()) },
-                isDeductible = row[ExpensesTable.isDeductible],
-                deductiblePercentage = Percentage.fromDbDecimal(row[ExpensesTable.deductiblePercentage]),
-                paymentMethod = row[ExpensesTable.paymentMethod],
-                isRecurring = row[ExpensesTable.isRecurring],
-                notes = row[ExpensesTable.notes],
-                createdAt = row[ExpensesTable.createdAt],
-                updatedAt = row[ExpensesTable.updatedAt]
-            )
+            ExpenseEntity.from(row)
         }
     }
+
 }

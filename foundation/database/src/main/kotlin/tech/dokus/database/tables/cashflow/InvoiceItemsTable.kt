@@ -19,13 +19,13 @@ object InvoiceItemsTable : UUIDTable("invoice_items") {
 
     // Item details
     val description = text("description")
-    val quantity = decimal("quantity", 10, 2)
-    val unitPrice = decimal("unit_price", 12, 2)
+    val quantity = decimal("quantity", 10, 4)
+    val unitPrice = decimal("unit_price", 19, 4)
     val vatRate = decimal("vat_rate", 5, 4) // e.g., 0.2100 for 21%
 
     // Calculated amounts (stored for audit trail)
-    val lineTotal = decimal("line_total", 12, 2)
-    val vatAmount = decimal("vat_amount", 12, 2)
+    val lineTotal = decimal("line_total", 19, 4)
+    val vatAmount = decimal("vat_amount", 19, 4)
 
     // Ordering
     val sortOrder = integer("sort_order").default(0)

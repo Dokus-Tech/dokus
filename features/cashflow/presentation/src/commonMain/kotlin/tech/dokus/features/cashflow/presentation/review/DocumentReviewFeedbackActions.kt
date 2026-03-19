@@ -2,9 +2,6 @@ package tech.dokus.features.cashflow.presentation.review
 
 import kotlinx.coroutines.launch
 import pro.respawn.flowmvi.dsl.withState
-import tech.dokus.domain.enums.DocumentStatus
-import tech.dokus.domain.model.contact.CounterpartyInfo
-import tech.dokus.domain.model.contact.isUnresolved
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.Dpi
@@ -33,6 +30,16 @@ internal class DocumentReviewFeedbackActions(
         updateState { copy(feedbackDialogState = null) }
     }
 
+    suspend fun DocumentReviewCtx.handleSelectFeedbackCategory(category: FeedbackCategory) {
+        withState {
+            feedbackDialogState?.let { dialogState ->
+                updateState {
+                    copy(feedbackDialogState = dialogState.copy(selectedCategory = category))
+                }
+            }
+        }
+    }
+
     suspend fun DocumentReviewCtx.handleUpdateFeedbackText(text: String) {
         withState {
             feedbackDialogState?.let { dialogState ->
@@ -55,10 +62,16 @@ internal class DocumentReviewFeedbackActions(
                 logger.w { "SubmitFeedback: feedbackDialogState is null, aborting" }
                 return@withState
             }
-            val feedback = dialogState.feedbackText.trim()
-            if (feedback.isBlank()) {
-                logger.w { "SubmitFeedback: feedback text is blank, aborting" }
+            val category = dialogState.selectedCategory
+            val feedbackText = dialogState.feedbackText.trim()
+            if (category == null && feedbackText.isBlank()) {
+                logger.w { "SubmitFeedback: no category and blank text, aborting" }
                 return@withState
+            }
+
+            val fullFeedback = when (category) {
+                null -> feedbackText
+                else -> if (feedbackText.isNotBlank()) "[${category.name}] $feedbackText" else "[${category.name}]"
             }
 
             logger.d { "SubmitFeedback: proceeding with feedback for $activeDocumentId" }
@@ -73,7 +86,7 @@ internal class DocumentReviewFeedbackActions(
                     ReprocessRequest(
                         force = true,
                         dpi = Dpi.create(220),
-                        userFeedback = feedback
+                        userFeedback = fullFeedback
                     )
                 ).fold(
                     onSuccess = { response ->
@@ -146,13 +159,12 @@ internal class DocumentReviewFeedbackActions(
                                     document = DokusState.success(
                                         currentData.copy(
                                             documentRecord = record,
-                                            draftData = draft?.extractedData,
-                                            originalData = draft?.extractedData,
+                                            draftData = draft?.content,
+                                            originalData = draft?.content,
                                         )
                                     ),
                                     hasUnsavedChanges = false,
                                     isResolvingMatchReview = false,
-                                    isPendingCreation = draft?.counterparty.let { it.isUnresolved() && it.pendingCreation },
                                     documentStatus = draft?.documentStatus,
                                 )
                             }

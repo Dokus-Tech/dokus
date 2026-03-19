@@ -13,10 +13,11 @@ import tech.dokus.domain.enums.NotificationType
 import tech.dokus.domain.ids.UserId
 import tech.dokus.foundation.backend.database.dbQuery
 import java.util.UUID
+import tech.dokus.foundation.backend.utils.runSuspendCatching
 
 class NotificationPreferencesRepository {
 
-    suspend fun listOverrides(userId: UserId): Result<Map<NotificationType, Boolean>> = runCatching {
+    suspend fun listOverrides(userId: UserId): Result<Map<NotificationType, Boolean>> = runSuspendCatching {
         dbQuery {
             NotificationPreferencesTable.selectAll()
                 .where { NotificationPreferencesTable.userId eq UUID.fromString(userId.toString()) }
@@ -30,7 +31,7 @@ class NotificationPreferencesRepository {
         userId: UserId,
         type: NotificationType,
         emailEnabled: Boolean
-    ): Result<Unit> = runCatching {
+    ): Result<Unit> = runSuspendCatching {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         val userUuid = UUID.fromString(userId.toString())
 
@@ -55,7 +56,7 @@ class NotificationPreferencesRepository {
     suspend fun removeOverride(
         userId: UserId,
         type: NotificationType
-    ): Result<Boolean> = runCatching {
+    ): Result<Boolean> = runSuspendCatching {
         dbQuery {
             val deleted = NotificationPreferencesTable.deleteWhere {
                 (NotificationPreferencesTable.userId eq UUID.fromString(userId.toString())) and

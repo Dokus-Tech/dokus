@@ -40,7 +40,7 @@ import tech.dokus.domain.enums.TenantType
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
-import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.database.entity.ExpenseEntity
 import tech.dokus.domain.model.ReceiptDraftData
 import java.math.BigDecimal
 import java.util.UUID
@@ -122,8 +122,8 @@ class ReceiptConfirmationIdempotencyTest {
         val first = confirmationService.confirm(tenantId, documentId, draftData, contactId = null).getOrThrow()
         val second = confirmationService.confirm(tenantId, documentId, draftData, contactId = null).getOrThrow()
 
-        val firstExpenseId = (first.entity as FinancialDocumentDto.ExpenseDto).id
-        val secondExpenseId = (second.entity as FinancialDocumentDto.ExpenseDto).id
+        val firstExpenseId = (first.entity as ExpenseEntity).id
+        val secondExpenseId = (second.entity as ExpenseEntity).id
         assertEquals(firstExpenseId, secondExpenseId)
         assertNotNull(first.cashflowEntryId)
         assertEquals(first.cashflowEntryId, second.cashflowEntryId)
@@ -160,8 +160,8 @@ class ReceiptConfirmationIdempotencyTest {
         )
 
         val reconfirmed = confirmationService.confirm(tenantId, documentId, updatedDraft, contactId = null).getOrThrow()
-        val confirmedExpenseId = (confirmed.entity as FinancialDocumentDto.ExpenseDto).id
-        val reconfirmedExpenseId = (reconfirmed.entity as FinancialDocumentDto.ExpenseDto).id
+        val confirmedExpenseId = (confirmed.entity as ExpenseEntity).id
+        val reconfirmedExpenseId = (reconfirmed.entity as ExpenseEntity).id
         assertEquals(confirmedExpenseId, reconfirmedExpenseId)
         assertEquals(originalEntryId, reconfirmed.cashflowEntryId)
 
@@ -183,9 +183,7 @@ class ReceiptConfirmationIdempotencyTest {
     private suspend fun createReceiptDocument(draftAmount: Money): Pair<DocumentId, ReceiptDraftData> {
         val documentId = documentRepository.create(
             tenantId = tenantId,
-            payload = tech.dokus.database.repository.cashflow.DocumentCreatePayload(
-                canonicalContentHash = null,
-            )
+            payload = tech.dokus.database.repository.cashflow.DocumentCreatePayload()
         )
 
         val runId = ingestionRepository.createRun(documentId, tenantId)

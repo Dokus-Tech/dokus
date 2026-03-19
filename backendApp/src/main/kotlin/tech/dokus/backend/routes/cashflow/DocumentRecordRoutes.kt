@@ -40,6 +40,7 @@ import tech.dokus.backend.services.documents.DocumentPurposeService
 import tech.dokus.backend.services.documents.DocumentRecordLoader
 import tech.dokus.backend.services.documents.DocumentTruthService
 import tech.dokus.backend.services.documents.ProcessingHealthService
+import tech.dokus.backend.services.contacts.ContactService
 import tech.dokus.backend.services.documents.confirmation.DocumentConfirmationDispatcher
 import tech.dokus.backend.services.documents.sse.DocumentCollectionEventHub
 import tech.dokus.backend.services.documents.sse.DocumentSnapshotEventHub
@@ -54,6 +55,9 @@ import tech.dokus.database.repository.cashflow.DocumentSourceSummary
 import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
 import tech.dokus.database.repository.cashflow.selectPreferredSource
+import tech.dokus.domain.Money
+import tech.dokus.domain.Name
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentSourceStatus
 import tech.dokus.domain.enums.DocumentStatus
@@ -64,15 +68,15 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentMatchReviewId
 import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.toCurrency
-import tech.dokus.domain.model.toTotalAmount
+import tech.dokus.domain.model.toDraftData
+import tech.dokus.domain.model.toDocumentType
 import tech.dokus.domain.model.DocumentCollectionChangedEventDto
 import tech.dokus.domain.model.DocumentCountsResponse
 import tech.dokus.domain.model.DocumentDeletedEventDto
 import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.DocumentListItemDto
 import tech.dokus.domain.model.DocumentStreamEventNames
-import tech.dokus.domain.model.FinancialDocumentDto
+import tech.dokus.database.entity.InvoiceEntity
 import tech.dokus.domain.model.RejectDocumentRequest
 import tech.dokus.domain.model.BulkReprocessRequest
 import tech.dokus.domain.model.ReprocessRequest
@@ -81,6 +85,11 @@ import tech.dokus.domain.model.ResolveDocumentMatchReviewRequest
 import tech.dokus.domain.model.UpdateDraftRequest
 import tech.dokus.domain.model.UpdateDraftResponse
 import tech.dokus.domain.model.common.PaginatedResponse
+import tech.dokus.domain.enums.ContactLinkSource
+import tech.dokus.domain.enums.ContactSource
+import tech.dokus.domain.model.contact.ContactAddressInput
+import tech.dokus.domain.model.contact.CounterpartyInfo
+import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.model.contact.isLinked
 import tech.dokus.domain.model.contact.isUnresolved
 import tech.dokus.domain.routes.Documents
@@ -119,7 +128,9 @@ internal fun Route.documentRecordRoutes() {
     val projectionReconciliationService by inject<CashflowProjectionReconciliationService>()
     val invoiceBankAutomationService by inject<InvoiceBankAutomationService>()
     val minioStorage by inject<MinioDocumentStorageService>()
+    val draftRepository by inject<tech.dokus.database.repository.drafts.DraftRepository>()
     val confirmationDispatcher by inject<DocumentConfirmationDispatcher>()
+    val contactService by inject<ContactService>()
     val truthService by inject<DocumentTruthService>()
     val purposeService by inject<DocumentPurposeService>()
     val documentRecordLoader by inject<DocumentRecordLoader>()
@@ -195,10 +206,29 @@ internal fun Route.documentRecordRoutes() {
                 }.awaitAll().toMap()
             }
 
+            // Batch-fetch amounts: confirmed entities first, draft tables as fallback
+            val confirmedAmounts = mutableMapOf<DocumentId, Pair<Money?, Currency?>>()
+
+            if (confirmedDocumentIds.isNotEmpty()) {
+                confirmedAmounts += invoiceRepository.batchGetAmountsByDocumentIds(tenantId, confirmedDocumentIds)
+                confirmedAmounts += expenseRepository.batchGetAmountsByDocumentIds(tenantId, confirmedDocumentIds)
+                confirmedAmounts += creditNoteRepository.batchGetAmountsByDocumentIds(tenantId, confirmedDocumentIds)
+            }
+
+            // For unconfirmed documents, fall back to draft tables
+            val unconfirmedDocs = documentsWithInfo
+                .filter { it.document.id !in confirmedAmounts }
+                .map { it.document.id to it.draft?.documentType }
+            val draftAmounts = draftRepository.batchGetAmounts(tenantId, unconfirmedDocs)
+
+            // Merge: confirmed takes priority
+            val allAmounts = draftAmounts + confirmedAmounts
+
             // Build flat list items
             val items = documentsWithInfo.map { docInfo ->
                 val draft = docInfo.draft
                 val preferredSource = sourceEnrichment[docInfo.document.id]
+                val (amount, currency) = allAmounts[docInfo.document.id] ?: (null to null)
                 DocumentListItemDto(
                     documentId = docInfo.document.id,
                     tenantId = docInfo.document.tenantId,
@@ -212,8 +242,8 @@ internal fun Route.documentRecordRoutes() {
                     sortDate = docInfo.document.sortDate,
                     counterpartyDisplayName = draft?.counterpartyDisplayName,
                     purposeRendered = draft?.purposeRendered,
-                    totalAmount = draft?.extractedData?.toTotalAmount(),
-                    currency = draft?.extractedData?.toCurrency(),
+                    totalAmount = amount,
+                    currency = currency,
                     downloadUrl = downloadUrlsByDocumentId[docInfo.document.id],
                     hasPendingMatchReview = pendingReviewsByDocumentId.containsKey(docInfo.document.id),
                     cashflowEntryId = cashflowEntryIdsByDocumentId[docInfo.document.id],
@@ -633,6 +663,17 @@ internal fun Route.documentRecordRoutes() {
 
                 logger.info("Draft updated: document=$documentId, version=$newVersion")
 
+                // Update per-type draft table
+                if (requestData != null) {
+                    // If document type changed, delete old type's draft
+                    val oldType = draft.documentType
+                    val newType = requestData.toDocumentType()
+                    if (oldType != null && oldType != newType) {
+                        draftRepository.deleteDraft(tenantId, documentId, oldType)
+                    }
+                    draftRepository.saveDraftFromExtraction(tenantId, documentId, requestData)
+                }
+
                 if (hasContactUpdate) {
                     updateDraftCounterparty(documentRepository, documentId, tenantId, request)
                 }
@@ -793,7 +834,7 @@ internal fun Route.documentRecordRoutes() {
                 )
 
                 if (confirmedEntity != null) {
-                    if (confirmedEntity is FinancialDocumentDto.InvoiceDto &&
+                    if (confirmedEntity is InvoiceEntity &&
                         confirmedEntity.paidAmount.minor >= confirmedEntity.totalAmount.minor &&
                         confirmedEntity.paidAt == null
                     ) {
@@ -844,7 +885,8 @@ internal fun Route.documentRecordRoutes() {
                 throw DokusException.BadRequest("Document type must be resolved before confirmation")
             }
 
-            val draftData = draft.extractedData
+            val docDto = draftRepository.getDraftAsDocDto(tenantId, documentId, draftType)
+            val draftData = docDto?.toDraftData()
                 ?: throw DokusException.BadRequest("No draft data available for confirmation")
 
             // Determine if an entity already exists (re-confirm path)
@@ -857,18 +899,63 @@ internal fun Route.documentRecordRoutes() {
                 creditNoteRepository
             )
 
+            // Resolve contact: linked > auto-create from snapshot > null
+            val linkedContactId = when {
+                counterparty.isLinked() -> counterparty.contactId
+                counterparty.isUnresolved() && counterparty.snapshot?.name != null -> {
+                    val snapshot = counterparty.snapshot!!
+                    val created = contactService.createContact(
+                        tenantId,
+                        CreateContactRequest(
+                            name = Name(snapshot.name!!),
+                            vatNumber = snapshot.vatNumber,
+                            iban = snapshot.iban,
+                            addresses = snapshot.address?.let { addr ->
+                                listOf(
+                                    ContactAddressInput(
+                                        streetLine1 = addr.streetLine1,
+                                        streetLine2 = addr.streetLine2,
+                                        city = addr.city,
+                                        postalCode = addr.postalCode,
+                                        country = addr.country?.dbValue,
+                                    )
+                                )
+                            } ?: emptyList(),
+                            source = ContactSource.AI,
+                        )
+                    ).getOrThrow()
+                    documentRepository.updateCounterparty(
+                        documentId = documentId,
+                        tenantId = tenantId,
+                        counterparty = CounterpartyInfo.Linked(
+                            contactId = created.id,
+                            source = ContactLinkSource.AI,
+                        ),
+                    )
+                    logger.info("Auto-created contact {} for document {} during confirm", created.id, documentId)
+                    created.id
+                }
+                else -> null
+            }
+
             // Confirm document: creates entity + cashflow entry + marks draft confirmed
             val confirmationResult = confirmationDispatcher.confirm(
                 tenantId,
                 documentId,
                 draftData,
-                if (counterparty.isLinked()) counterparty.contactId else null
+                linkedContactId
             ).getOrThrow()
 
             val entryId = confirmationResult.cashflowEntryId
             logger.info("Document confirmed: $documentId -> $draftType, cashflowEntryId=$entryId")
 
-            if (confirmationResult.entity is FinancialDocumentDto.InvoiceDto && entryId != null) {
+            // Clean up draft table row after successful confirmation
+            val docType = draft.documentType
+            if (docType != null) {
+                draftRepository.deleteDraft(tenantId, documentId, docType)
+            }
+
+            if (confirmationResult.entity is InvoiceEntity && entryId != null) {
                 runCatching {
                     invoiceBankAutomationService.onInvoiceConfirmed(
                         tenantId = tenantId,

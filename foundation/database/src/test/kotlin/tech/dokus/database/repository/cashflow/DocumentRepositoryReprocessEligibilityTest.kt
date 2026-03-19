@@ -88,7 +88,7 @@ class DocumentRepositoryReprocessEligibilityTest {
     fun `findDocumentsEligibleForReprocess includes null-status documents counted by processing health`() = runBlocking {
         val documentId = repository.create(
             tenantId = tenantId,
-            payload = DocumentCreatePayload(canonicalContentHash = null)
+            payload = DocumentCreatePayload()
         )
 
         val stats = repository.getProcessingHealthStats(
@@ -110,15 +110,15 @@ class DocumentRepositoryReprocessEligibilityTest {
     fun `findDocumentsEligibleForReprocess excludes confirmed documents and documents with active runs`() = runBlocking {
         val eligibleDocumentId = repository.create(
             tenantId = tenantId,
-            payload = DocumentCreatePayload(canonicalContentHash = null)
+            payload = DocumentCreatePayload()
         )
         val confirmedDocumentId = repository.create(
             tenantId = tenantId,
-            payload = DocumentCreatePayload(canonicalContentHash = null)
+            payload = DocumentCreatePayload()
         )
         val activeDocumentId = repository.create(
             tenantId = tenantId,
-            payload = DocumentCreatePayload(canonicalContentHash = null)
+            payload = DocumentCreatePayload()
         )
 
         transaction(database) {
