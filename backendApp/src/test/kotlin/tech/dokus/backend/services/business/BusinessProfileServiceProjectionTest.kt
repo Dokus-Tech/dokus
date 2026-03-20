@@ -9,7 +9,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.business.BusinessProfileEnrichmentJobRepository
-import tech.dokus.database.repository.business.BusinessProfileEntity
+import tech.dokus.database.entity.BusinessProfileEntity
 import tech.dokus.database.repository.business.BusinessProfileRepository
 import tech.dokus.domain.DisplayName
 import tech.dokus.domain.LegalName

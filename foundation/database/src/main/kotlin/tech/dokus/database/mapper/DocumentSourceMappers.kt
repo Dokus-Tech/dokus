@@ -1,7 +1,7 @@
 package tech.dokus.database.mapper
 
 import org.jetbrains.exposed.v1.core.ResultRow
-import tech.dokus.database.repository.cashflow.DocumentSourceEntity
+import tech.dokus.database.entity.DocumentSourceEntity
 import tech.dokus.database.tables.documents.DocumentBlobsTable
 import tech.dokus.database.tables.documents.DocumentSourcesTable
 import tech.dokus.domain.ids.DocumentBlobId

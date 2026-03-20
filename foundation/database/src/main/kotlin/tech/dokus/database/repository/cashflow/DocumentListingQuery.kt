@@ -22,6 +22,8 @@ import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.Query
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
+import tech.dokus.database.entity.DraftSummaryEntity
+import tech.dokus.database.entity.IngestionRunSummaryEntity
 import tech.dokus.database.mapper.toDocumentDto
 import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.cashflow.CreditNotesTable

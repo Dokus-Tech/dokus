@@ -12,6 +12,7 @@ import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.upsert
+import tech.dokus.database.entity.BusinessProfileEntity
 import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.business.BusinessProfilesTable
 import tech.dokus.domain.enums.BusinessProfileSubjectType
@@ -23,30 +24,6 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 import kotlin.uuid.toJavaUuid
 import kotlin.uuid.toKotlinUuid
-
-data class BusinessProfileEntity(
-    val tenantId: TenantId,
-    val subjectType: BusinessProfileSubjectType,
-    val subjectId: Uuid,
-    val websiteUrl: String? = null,
-    val businessSummary: String? = null,
-    val businessActivitiesJson: String? = null,
-    val verificationState: BusinessProfileVerificationState = BusinessProfileVerificationState.Unset,
-    val evidenceScore: Int = 0,
-    val evidenceChecksJson: String? = null,
-    val logoStorageKey: String? = null,
-    val websitePinned: Boolean = false,
-    val summaryPinned: Boolean = false,
-    val activitiesPinned: Boolean = false,
-    val logoPinned: Boolean = false,
-    val lastRunAt: LocalDateTime? = null,
-    val lastErrorCode: String? = null,
-    val lastErrorMessage: String? = null,
-    val createdAt: LocalDateTime? = null,
-    val updatedAt: LocalDateTime? = null,
-) {
-    companion object
-}
 
 class BusinessProfileRepository {
 

@@ -8,7 +8,7 @@ import kotlinx.datetime.LocalDateTime
 import org.junit.jupiter.api.Test
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.DocumentPurposeSimilarityRepository
-import tech.dokus.database.repository.cashflow.DraftSummaryEntity
+import tech.dokus.database.entity.DraftSummaryEntity
 import tech.dokus.domain.enums.DocumentPurposeSource
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType

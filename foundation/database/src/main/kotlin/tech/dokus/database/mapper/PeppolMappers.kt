@@ -4,7 +4,7 @@ import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.v1.core.ResultRow
 import tech.dokus.database.entity.PeppolRegistrationEntity
 import tech.dokus.database.entity.PeppolSettingsEntity
-import tech.dokus.database.repository.peppol.PeppolTransmissionEntity
+import tech.dokus.database.entity.PeppolTransmissionEntity
 import tech.dokus.database.tables.peppol.PeppolDirectoryCacheTable
 import tech.dokus.database.tables.peppol.PeppolRegistrationTable
 import tech.dokus.database.tables.peppol.PeppolSettingsTable

@@ -1,10 +1,10 @@
 package tech.dokus.database.mapper
 
 import org.jetbrains.exposed.v1.core.ResultRow
-import tech.dokus.database.repository.cashflow.DocumentBlobEntity
+import tech.dokus.database.entity.DocumentBlobEntity
+import tech.dokus.database.entity.DraftSummaryEntity
+import tech.dokus.database.entity.IngestionRunSummaryEntity
 import tech.dokus.database.repository.cashflow.DocumentRepository
-import tech.dokus.database.repository.cashflow.DraftSummaryEntity
-import tech.dokus.database.repository.cashflow.IngestionRunSummaryEntity
 import tech.dokus.database.tables.documents.DocumentBlobsTable
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
 import tech.dokus.database.tables.documents.DocumentsTable

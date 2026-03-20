@@ -14,6 +14,7 @@ import org.jetbrains.exposed.v1.core.lessEq
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
 import org.jetbrains.exposed.v1.jdbc.upsert
+import tech.dokus.database.entity.BusinessProfileEnrichmentJobEntity
 import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.business.BusinessProfileEnrichmentJobsTable
 import tech.dokus.domain.enums.BusinessProfileEnrichmentJobStatus
@@ -26,24 +27,6 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 import kotlin.uuid.toJavaUuid
 import kotlin.uuid.toKotlinUuid
-
-data class BusinessProfileEnrichmentJobEntity(
-    val id: Uuid,
-    val tenantId: TenantId,
-    val subjectType: BusinessProfileSubjectType,
-    val subjectId: Uuid,
-    val status: BusinessProfileEnrichmentJobStatus,
-    val triggerReason: String,
-    val scheduledAt: LocalDateTime,
-    val nextAttemptAt: LocalDateTime,
-    val attemptCount: Int,
-    val lastError: String?,
-    val processingStartedAt: LocalDateTime?,
-    val createdAt: LocalDateTime,
-    val updatedAt: LocalDateTime,
-) {
-    companion object
-}
 
 class BusinessProfileEnrichmentJobRepository {
     private val claimableStatuses = listOf(

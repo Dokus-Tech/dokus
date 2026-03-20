@@ -22,6 +22,8 @@ import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.v1.jdbc.update
+import tech.dokus.database.entity.DraftSummaryEntity
+import tech.dokus.database.entity.IngestionRunSummaryEntity
 import tech.dokus.database.mapper.toDocumentDto
 import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.contacts.ContactsTable
@@ -85,39 +87,6 @@ data class DocumentOperationalCounts(
 data class DocumentCreatePayload(
     val canonicalIdentityKey: String? = null,
 )
-
-/**
- * Data class for draft summary.
- */
-data class DraftSummaryEntity(
-    val documentId: DocumentId,
-    val tenantId: TenantId,
-    val documentStatus: DocumentStatus,
-    val documentType: DocumentType?,
-    val direction: DocumentDirection = DocumentDirection.Unknown,
-    val aiKeywords: List<String> = emptyList(),
-    val purposeBase: String? = null,
-    val purposePeriodYear: Int? = null,
-    val purposePeriodMonth: Int? = null,
-    val purposeRendered: String? = null,
-    val purposeSource: DocumentPurposeSource? = null,
-    val purposeLocked: Boolean = false,
-    val purposePeriodMode: PurposePeriodMode = PurposePeriodMode.IssueMonth,
-    val counterpartyKey: String? = null,
-    val merchantToken: String? = null,
-    val aiDraftSourceRunId: IngestionRunId?,
-    val draftVersion: Int,
-    val draftEditedAt: LocalDateTime?,
-    val draftEditedBy: UserId?,
-    val counterparty: CounterpartyInfo? = null,
-    val counterpartyDisplayName: String? = null,
-    val rejectReason: DocumentRejectReason?,
-    val lastSuccessfulRunId: IngestionRunId?,
-    val createdAt: LocalDateTime,
-    val updatedAt: LocalDateTime
-) {
-    companion object
-}
 
 /**
  * Unified repository for document CRUD and draft operations.

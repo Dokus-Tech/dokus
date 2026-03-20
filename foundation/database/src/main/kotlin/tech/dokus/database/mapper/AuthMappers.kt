@@ -1,10 +1,10 @@
 package tech.dokus.database.mapper
 
 import org.jetbrains.exposed.v1.core.ResultRow
+import tech.dokus.database.entity.ActiveTokenEntity
 import tech.dokus.database.entity.TenantInvitationEntity
-import tech.dokus.database.repository.auth.ActiveTokenEntity
+import tech.dokus.database.entity.WelcomeEmailJobEntity
 import tech.dokus.database.repository.auth.RefreshTokenInfo
-import tech.dokus.database.repository.auth.WelcomeEmailJobEntity
 import tech.dokus.database.tables.auth.RefreshTokensTable
 import tech.dokus.database.tables.auth.TenantInvitationsTable
 import tech.dokus.database.tables.auth.UsersTable

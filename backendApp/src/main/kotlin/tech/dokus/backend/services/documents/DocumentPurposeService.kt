@@ -3,7 +3,7 @@ package tech.dokus.backend.services.documents
 import kotlinx.datetime.LocalDate
 import tech.dokus.database.repository.cashflow.DocumentPurposeTemplateRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
-import tech.dokus.database.repository.cashflow.DraftSummaryEntity
+import tech.dokus.database.entity.DraftSummaryEntity
 import tech.dokus.database.repository.drafts.DraftRepository
 import tech.dokus.domain.model.toDraftData
 import tech.dokus.domain.enums.DocumentDirection

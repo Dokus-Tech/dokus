@@ -1,7 +1,7 @@
 package tech.dokus.database.mapper
 
 import org.jetbrains.exposed.v1.core.ResultRow
-import tech.dokus.database.repository.cashflow.DocumentPurposeTemplateEntity
+import tech.dokus.database.entity.DocumentPurposeTemplateEntity
 import tech.dokus.database.tables.documents.DocumentPurposeTemplatesTable
 import tech.dokus.domain.ids.TenantId
 

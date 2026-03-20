@@ -9,8 +9,8 @@ import kotlinx.datetime.LocalDateTime
 import org.junit.jupiter.api.Test
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.DocumentPurposeTemplateRepository
-import tech.dokus.database.repository.cashflow.DocumentPurposeTemplateEntity
-import tech.dokus.database.repository.cashflow.DraftSummaryEntity
+import tech.dokus.database.entity.DocumentPurposeTemplateEntity
+import tech.dokus.database.entity.DraftSummaryEntity
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.ContactLinkSource
 import tech.dokus.domain.enums.DocumentDirection

@@ -16,7 +16,7 @@ import tech.dokus.backend.security.requireTenantId
 import tech.dokus.backend.services.documents.DocumentTruthService
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.DocumentSourceRepository
-import tech.dokus.database.repository.cashflow.DocumentSourceEntity
+import tech.dokus.database.entity.DocumentSourceEntity
 import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
 import tech.dokus.domain.enums.DocumentSource

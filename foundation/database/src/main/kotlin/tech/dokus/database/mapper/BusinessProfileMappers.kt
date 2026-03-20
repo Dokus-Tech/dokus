@@ -1,8 +1,8 @@
 package tech.dokus.database.mapper
 
 import org.jetbrains.exposed.v1.core.ResultRow
-import tech.dokus.database.repository.business.BusinessProfileEnrichmentJobEntity
-import tech.dokus.database.repository.business.BusinessProfileEntity
+import tech.dokus.database.entity.BusinessProfileEnrichmentJobEntity
+import tech.dokus.database.entity.BusinessProfileEntity
 import tech.dokus.database.tables.business.BusinessProfileEnrichmentJobsTable
 import tech.dokus.database.tables.business.BusinessProfilesTable
 import tech.dokus.domain.ids.TenantId

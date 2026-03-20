@@ -4,12 +4,12 @@ import kotlinx.serialization.json.JsonElement
 import tech.dokus.database.entity.BankStatementEntity
 import tech.dokus.database.entity.BankTransactionEntity
 import tech.dokus.database.repository.cashflow.CreditNoteRepository
-import tech.dokus.database.repository.cashflow.DocumentMatchReviewEntity
+import tech.dokus.database.entity.DocumentMatchReviewEntity
 import tech.dokus.database.repository.cashflow.DocumentRepository
-import tech.dokus.database.repository.cashflow.DocumentSourceEntity
-import tech.dokus.database.repository.cashflow.DraftSummaryEntity
+import tech.dokus.database.entity.DocumentSourceEntity
+import tech.dokus.database.entity.DraftSummaryEntity
 import tech.dokus.database.repository.cashflow.ExpenseRepository
-import tech.dokus.database.repository.cashflow.IngestionRunSummaryEntity
+import tech.dokus.database.entity.IngestionRunSummaryEntity
 import tech.dokus.database.repository.cashflow.InvoiceRepository
 import tech.dokus.database.repository.banking.BankStatementRepository
 import tech.dokus.database.repository.banking.BankTransactionRepository

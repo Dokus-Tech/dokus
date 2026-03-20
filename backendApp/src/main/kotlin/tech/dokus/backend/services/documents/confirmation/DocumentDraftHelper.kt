@@ -1,7 +1,7 @@
 package tech.dokus.backend.services.documents.confirmation
 
 import tech.dokus.database.repository.cashflow.DocumentRepository
-import tech.dokus.database.repository.cashflow.DraftSummaryEntity
+import tech.dokus.database.entity.DraftSummaryEntity
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId

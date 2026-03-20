@@ -24,9 +24,9 @@ import tech.dokus.backend.services.business.WebsiteRankingResult
 import tech.dokus.backend.services.business.WebsiteSearchResult
 import tech.dokus.database.repository.auth.AddressRepository
 import tech.dokus.database.repository.auth.TenantRepository
-import tech.dokus.database.repository.business.BusinessProfileEnrichmentJobEntity
+import tech.dokus.database.entity.BusinessProfileEnrichmentJobEntity
 import tech.dokus.database.repository.business.BusinessProfileEnrichmentJobRepository
-import tech.dokus.database.repository.business.BusinessProfileEntity
+import tech.dokus.database.entity.BusinessProfileEntity
 import tech.dokus.database.repository.business.BusinessProfileRepository
 import tech.dokus.database.repository.contacts.ContactAddressRepository
 import tech.dokus.database.repository.contacts.ContactRepository

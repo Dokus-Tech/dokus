@@ -1,6 +1,7 @@
 package tech.dokus.database.mapper
 
 import org.jetbrains.exposed.v1.core.ResultRow
+import tech.dokus.database.entity.CashflowContactRefEntity
 import tech.dokus.database.entity.CashflowEntryEntity
 import tech.dokus.database.tables.cashflow.CashflowEntriesTable
 import tech.dokus.domain.Money
@@ -31,7 +32,7 @@ internal fun CashflowEntryEntity.Companion.from(
         status = row[CashflowEntriesTable.status],
         paidAt = row[CashflowEntriesTable.paidAt],
         contact = row[CashflowEntriesTable.counterpartyId]?.let { counterpartyId ->
-            CashflowContactRefDto(
+            CashflowContactRefEntity(
                 id = ContactId.parse(counterpartyId.toString()),
                 name = contactName,
             )
@@ -41,6 +42,11 @@ internal fun CashflowEntryEntity.Companion.from(
         updatedAt = row[CashflowEntriesTable.updatedAt]
     )
 }
+
+fun CashflowContactRefDto.Companion.from(entity: CashflowContactRefEntity): CashflowContactRefDto = CashflowContactRefDto(
+    id = entity.id,
+    name = entity.name,
+)
 
 fun CashflowEntryDto.Companion.from(entity: CashflowEntryEntity): CashflowEntryDto = CashflowEntryDto(
     id = entity.id,
@@ -56,7 +62,7 @@ fun CashflowEntryDto.Companion.from(entity: CashflowEntryEntity): CashflowEntryD
     currency = entity.currency,
     status = entity.status,
     paidAt = entity.paidAt,
-    contact = entity.contact,
+    contact = entity.contact?.let { CashflowContactRefDto.from(it) },
     description = entity.description,
     createdAt = entity.createdAt,
     updatedAt = entity.updatedAt,

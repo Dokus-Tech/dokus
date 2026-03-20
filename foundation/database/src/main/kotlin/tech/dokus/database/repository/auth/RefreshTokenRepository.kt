@@ -18,6 +18,7 @@ import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
+import tech.dokus.database.entity.ActiveTokenEntity
 import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.auth.RefreshTokensTable
 import tech.dokus.database.utils.toKotlinxInstant
@@ -78,13 +79,6 @@ data class RevokedSessionInfo(
 sealed class SessionRevocationResult {
     data class Revoked(val sessions: List<RevokedSessionInfo>) : SessionRevocationResult()
     data object NotFound : SessionRevocationResult()
-}
-
-internal data class ActiveTokenEntity(
-    val rowId: JavaUuid,
-    val token: RefreshTokenInfo,
-) {
-    companion object
 }
 
 /**

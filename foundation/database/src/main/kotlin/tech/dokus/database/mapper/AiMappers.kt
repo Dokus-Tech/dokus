@@ -1,6 +1,7 @@
 package tech.dokus.database.mapper
 
 import org.jetbrains.exposed.v1.core.ResultRow
+import tech.dokus.database.entity.ChatCitationEntity
 import tech.dokus.database.entity.ChatMessageEntity
 import tech.dokus.database.entity.DocumentChunkEntity
 import tech.dokus.database.tables.ai.ChatMessagesTable
@@ -27,7 +28,16 @@ fun ChatMessageEntity.Companion.from(row: ResultRow): ChatMessageEntity {
     val citationsJson = row[ChatMessagesTable.citations]
     val citations = citationsJson?.let {
         try {
-            json.decodeFromString<List<ChatCitationDto>>(it)
+            json.decodeFromString<List<ChatCitationDto>>(it).map { dto ->
+                ChatCitationEntity(
+                    chunkId = dto.chunkId,
+                    documentId = dto.documentId,
+                    documentName = dto.documentName,
+                    pageNumber = dto.pageNumber,
+                    excerpt = dto.excerpt,
+                    relevanceScore = dto.relevanceScore,
+                )
+            }
         } catch (e: Exception) {
             logger.warn("Failed to parse citations JSON: ${e.message}")
             null
@@ -68,6 +78,15 @@ fun ChatMessageEntity.Companion.from(row: ResultRow): ChatMessageEntity {
     )
 }
 
+fun ChatCitationDto.Companion.from(entity: ChatCitationEntity): ChatCitationDto = ChatCitationDto(
+    chunkId = entity.chunkId,
+    documentId = entity.documentId,
+    documentName = entity.documentName,
+    pageNumber = entity.pageNumber,
+    excerpt = entity.excerpt,
+    relevanceScore = entity.relevanceScore,
+)
+
 fun ChatMessageDto.Companion.from(entity: ChatMessageEntity) = ChatMessageDto(
     id = entity.id,
     tenantId = entity.tenantId,
@@ -77,7 +96,7 @@ fun ChatMessageDto.Companion.from(entity: ChatMessageEntity) = ChatMessageDto(
     content = entity.content,
     scope = entity.scope,
     documentId = entity.documentId,
-    citations = entity.citations,
+    citations = entity.citations?.map { ChatCitationDto.from(it) },
     contentBlocks = entity.contentBlocks,
     chunksRetrieved = entity.chunksRetrieved,
     aiModel = entity.aiModel,

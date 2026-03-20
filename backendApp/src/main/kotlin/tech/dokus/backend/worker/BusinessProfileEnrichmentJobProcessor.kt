@@ -10,7 +10,7 @@ import tech.dokus.backend.services.business.WebsiteCandidateInput
 import tech.dokus.backend.services.business.WebsiteRankingContext
 import tech.dokus.backend.services.business.WebsiteRankingDecision
 import tech.dokus.backend.services.business.isAggregatorOrSocialHost
-import tech.dokus.database.repository.business.BusinessProfileEnrichmentJobEntity
+import tech.dokus.database.entity.BusinessProfileEnrichmentJobEntity
 import tech.dokus.database.repository.business.BusinessProfileEnrichmentJobRepository
 import tech.dokus.domain.enums.BusinessProfileVerificationState
 import tech.dokus.domain.utils.json

@@ -2,7 +2,7 @@ package tech.dokus.database.mapper
 
 import tech.dokus.database.entity.PeppolRegistrationEntity
 import tech.dokus.database.entity.PeppolSettingsEntity
-import tech.dokus.database.repository.peppol.PeppolTransmissionEntity
+import tech.dokus.database.entity.PeppolTransmissionEntity
 import tech.dokus.domain.model.PeppolRegistrationDto
 import tech.dokus.domain.model.PeppolSettingsDto
 import tech.dokus.domain.model.PeppolTransmissionDto

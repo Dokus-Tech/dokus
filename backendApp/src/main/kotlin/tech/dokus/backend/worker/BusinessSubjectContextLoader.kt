@@ -4,7 +4,7 @@ package tech.dokus.backend.worker
 
 import tech.dokus.database.repository.auth.AddressRepository
 import tech.dokus.database.repository.auth.TenantRepository
-import tech.dokus.database.repository.business.BusinessProfileEnrichmentJobEntity
+import tech.dokus.database.entity.BusinessProfileEnrichmentJobEntity
 import tech.dokus.database.repository.contacts.ContactAddressRepository
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.domain.enums.BusinessProfileSubjectType

@@ -1,13 +1,18 @@
 package tech.dokus.database.entity
 
 import kotlinx.datetime.LocalDateTime
+import tech.dokus.domain.enums.PeppolDocumentType
 import tech.dokus.domain.enums.PeppolLookupSource
 import tech.dokus.domain.enums.PeppolLookupStatus
 import tech.dokus.domain.enums.PeppolRegistrationStatus
+import tech.dokus.domain.enums.PeppolStatus
+import tech.dokus.domain.enums.PeppolTransmissionDirection
 import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.PeppolId
 import tech.dokus.domain.ids.PeppolRegistrationId
 import tech.dokus.domain.ids.PeppolSettingsId
+import tech.dokus.domain.ids.PeppolTransmissionId
 import tech.dokus.domain.ids.TenantId
 
 data class PeppolRegistrationEntity(
@@ -58,6 +63,37 @@ data class PeppolSettingsEntity(
     val lastFullSyncAt: LocalDateTime? = null,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime,
+) {
+    companion object
+}
+
+/**
+ * Internal transmission projection used by workers/reconciliation.
+ * Includes fields that are intentionally hidden from public DTOs.
+ */
+data class PeppolTransmissionEntity(
+    val id: PeppolTransmissionId,
+    val tenantId: TenantId,
+    val direction: PeppolTransmissionDirection,
+    val documentType: PeppolDocumentType,
+    val status: PeppolStatus,
+    val invoiceId: InvoiceId? = null,
+    val externalDocumentId: String? = null,
+    val idempotencyKey: String,
+    val recipientPeppolId: PeppolId? = null,
+    val senderPeppolId: PeppolId? = null,
+    val errorMessage: String? = null,
+    val providerErrorCode: String? = null,
+    val providerErrorMessage: String? = null,
+    val attemptCount: Int = 0,
+    val nextRetryAt: LocalDateTime? = null,
+    val lastAttemptAt: LocalDateTime? = null,
+    val rawRequest: String? = null,
+    val rawResponse: String? = null,
+    val rawUblXmlKey: String? = null,
+    val transmittedAt: LocalDateTime? = null,
+    val createdAt: LocalDateTime,
+    val updatedAt: LocalDateTime
 ) {
     companion object
 }

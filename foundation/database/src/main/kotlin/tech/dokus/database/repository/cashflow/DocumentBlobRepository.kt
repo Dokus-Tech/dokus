@@ -5,6 +5,7 @@ import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
+import tech.dokus.database.entity.DocumentBlobEntity
 import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.documents.DocumentBlobsTable
 import tech.dokus.domain.ids.DocumentBlobId
@@ -16,17 +17,6 @@ import kotlin.uuid.toKotlinUuid
 
 /** PostgreSQL SQL state for unique_violation. */
 private const val UNIQUE_VIOLATION_STATE = "23505"
-
-data class DocumentBlobEntity(
-    val id: DocumentBlobId,
-    val tenantId: TenantId,
-    val inputHash: String,
-    val storageKey: String,
-    val contentType: String,
-    val sizeBytes: Long
-) {
-    companion object
-}
 
 data class DocumentBlobCreatePayload(
     val inputHash: String,

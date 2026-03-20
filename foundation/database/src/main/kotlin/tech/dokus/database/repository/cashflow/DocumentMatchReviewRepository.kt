@@ -11,6 +11,7 @@ import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.v1.jdbc.update
+import tech.dokus.database.entity.DocumentMatchReviewEntity
 import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.documents.DocumentMatchReviewsTable
 import tech.dokus.domain.enums.ReviewReason
@@ -23,23 +24,6 @@ import tech.dokus.domain.ids.UserId
 import java.util.UUID
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toKotlinUuid
-
-data class DocumentMatchReviewEntity(
-    val id: DocumentMatchReviewId,
-    val tenantId: TenantId,
-    val documentId: DocumentId,
-    val incomingSourceId: DocumentSourceId,
-    val reasonType: ReviewReason,
-    val aiSummary: String?,
-    val aiConfidence: Double?,
-    val status: DocumentMatchReviewStatus,
-    val resolvedBy: UserId?,
-    val resolvedAt: LocalDateTime?,
-    val createdAt: LocalDateTime,
-    val updatedAt: LocalDateTime
-) {
-    companion object
-}
 
 @OptIn(ExperimentalUuidApi::class)
 class DocumentMatchReviewRepository {

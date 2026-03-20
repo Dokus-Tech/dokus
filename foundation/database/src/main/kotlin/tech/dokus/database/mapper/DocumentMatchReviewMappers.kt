@@ -1,7 +1,7 @@
 package tech.dokus.database.mapper
 
 import org.jetbrains.exposed.v1.core.ResultRow
-import tech.dokus.database.repository.cashflow.DocumentMatchReviewEntity
+import tech.dokus.database.entity.DocumentMatchReviewEntity
 import tech.dokus.database.tables.documents.DocumentMatchReviewsTable
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentMatchReviewId

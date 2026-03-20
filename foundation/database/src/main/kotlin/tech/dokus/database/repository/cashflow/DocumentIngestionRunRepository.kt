@@ -15,6 +15,7 @@ import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.v1.jdbc.update
+import tech.dokus.database.entity.IngestionRunSummaryEntity
 import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
 import tech.dokus.domain.enums.IngestionStatus
@@ -29,27 +30,6 @@ import java.util.UUID
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid
 import kotlin.uuid.toKotlinUuid
-
-/**
- * Data class for ingestion run summary.
- */
-data class IngestionRunSummaryEntity(
-    val id: IngestionRunId,
-    val documentId: DocumentId,
-    val tenantId: TenantId,
-    val status: IngestionStatus,
-    val provider: String?,
-    val queuedAt: LocalDateTime,
-    val startedAt: LocalDateTime?,
-    val finishedAt: LocalDateTime?,
-    val errorMessage: String?,
-    val confidence: Double?,
-    val processingOutcome: ProcessingOutcome?,
-    val rawExtractionJson: String? = null,
-    val processingTrace: String? = null
-) {
-    companion object
-}
 
 /**
  * Repository for document ingestion run operations.

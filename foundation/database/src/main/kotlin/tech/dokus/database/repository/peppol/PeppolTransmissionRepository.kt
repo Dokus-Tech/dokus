@@ -15,6 +15,7 @@ import org.jetbrains.exposed.v1.jdbc.andWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
+import tech.dokus.database.entity.PeppolTransmissionEntity
 import tech.dokus.database.mapper.toPeppolTransmissionDto
 import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.peppol.PeppolTransmissionsTable
@@ -33,37 +34,6 @@ import java.util.UUID
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid
 import tech.dokus.foundation.backend.utils.runSuspendCatching
-
-/**
- * Internal transmission projection used by workers/reconciliation.
- * Includes fields that are intentionally hidden from public DTOs.
- */
-data class PeppolTransmissionEntity(
-    val id: PeppolTransmissionId,
-    val tenantId: TenantId,
-    val direction: PeppolTransmissionDirection,
-    val documentType: PeppolDocumentType,
-    val status: PeppolStatus,
-    val invoiceId: InvoiceId? = null,
-    val externalDocumentId: String? = null,
-    val idempotencyKey: String,
-    val recipientPeppolId: PeppolId? = null,
-    val senderPeppolId: PeppolId? = null,
-    val errorMessage: String? = null,
-    val providerErrorCode: String? = null,
-    val providerErrorMessage: String? = null,
-    val attemptCount: Int = 0,
-    val nextRetryAt: LocalDateTime? = null,
-    val lastAttemptAt: LocalDateTime? = null,
-    val rawRequest: String? = null,
-    val rawResponse: String? = null,
-    val rawUblXmlKey: String? = null,
-    val transmittedAt: LocalDateTime? = null,
-    val createdAt: LocalDateTime,
-    val updatedAt: LocalDateTime
-) {
-    companion object
-}
 
 /**
  * Repository for Peppol transmissions.

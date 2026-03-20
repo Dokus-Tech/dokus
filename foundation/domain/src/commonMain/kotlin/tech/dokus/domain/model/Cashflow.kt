@@ -170,7 +170,9 @@ data class TransactionIgnoreInfoDto(
 data class CashflowContactRefDto(
     val id: ContactId,
     val name: String? = null,
-)
+) {
+    companion object
+}
 
 /** Auto-payment status — typed states instead of 10 nullable fields. */
 @Serializable

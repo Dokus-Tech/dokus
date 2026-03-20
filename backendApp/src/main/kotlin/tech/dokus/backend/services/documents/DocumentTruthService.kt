@@ -13,10 +13,10 @@ import tech.dokus.database.repository.cashflow.DocumentCreatePayload
 import tech.dokus.database.repository.cashflow.DocumentBlobRepository
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentMatchReviewRepository
-import tech.dokus.database.repository.cashflow.DocumentMatchReviewEntity
+import tech.dokus.database.entity.DocumentMatchReviewEntity
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.DocumentSourceRepository
-import tech.dokus.database.repository.cashflow.DocumentSourceEntity
+import tech.dokus.database.entity.DocumentSourceEntity
 import tech.dokus.database.repository.drafts.DraftRepository
 import tech.dokus.domain.model.toDraftData
 import tech.dokus.database.tables.documents.DocumentBlobsTable

@@ -1,7 +1,7 @@
 package tech.dokus.database.mapper
 
 import org.jetbrains.exposed.v1.core.ResultRow
-import tech.dokus.database.repository.cashflow.TransactionMatchLinkEntity
+import tech.dokus.database.entity.TransactionMatchLinkEntity
 import tech.dokus.database.tables.documents.TransactionMatchLinksTable
 import tech.dokus.domain.Money
 import tech.dokus.domain.fromDbDecimal

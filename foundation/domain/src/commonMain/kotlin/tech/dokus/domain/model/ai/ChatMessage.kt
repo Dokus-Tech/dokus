@@ -121,7 +121,9 @@ data class ChatCitationDto(
 
     /** Confidence/relevance score for this citation (0.0 - 1.0) */
     val relevanceScore: Float? = null
-)
+) {
+    companion object
+}
 
 // =============================================================================
 // Chat message DTOs

@@ -12,7 +12,7 @@ import tech.dokus.backend.security.requireTenantId
 import tech.dokus.backend.services.pdf.PdfPreviewService
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.DocumentSourceRepository
-import tech.dokus.database.repository.cashflow.DocumentSourceEntity
+import tech.dokus.database.entity.DocumentSourceEntity
 import tech.dokus.database.repository.cashflow.selectPreferredSource
 import tech.dokus.domain.enums.DocumentSourceStatus
 import tech.dokus.domain.exceptions.DokusException

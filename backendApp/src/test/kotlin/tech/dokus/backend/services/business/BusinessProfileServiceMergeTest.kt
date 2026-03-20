@@ -12,7 +12,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.business.BusinessProfileEnrichmentJobRepository
-import tech.dokus.database.repository.business.BusinessProfileEntity
+import tech.dokus.database.entity.BusinessProfileEntity
 import tech.dokus.database.repository.business.BusinessProfileRepository
 import tech.dokus.domain.enums.BusinessProfileSubjectType
 import tech.dokus.domain.enums.BusinessProfileVerificationState

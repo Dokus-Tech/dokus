@@ -8,7 +8,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import tech.dokus.database.mapper.from
 import tech.dokus.database.repository.peppol.PeppolSettingsRepository
-import tech.dokus.database.repository.peppol.PeppolTransmissionEntity
+import tech.dokus.database.entity.PeppolTransmissionEntity
 import tech.dokus.database.repository.peppol.PeppolTransmissionRepository
 import tech.dokus.domain.enums.PeppolDocumentType
 import tech.dokus.domain.enums.PeppolStatus

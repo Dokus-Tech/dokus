@@ -12,6 +12,7 @@ import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.v1.jdbc.update
+import tech.dokus.database.entity.DocumentSourceEntity
 import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.documents.DocumentBlobsTable
 import tech.dokus.database.tables.documents.DocumentSourcesTable
@@ -28,36 +29,6 @@ import java.util.UUID
 import kotlin.math.min
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toKotlinUuid
-
-data class DocumentSourceEntity(
-    val id: DocumentSourceId,
-    val tenantId: TenantId,
-    val documentId: DocumentId,
-    val blobId: DocumentBlobId,
-    val peppolRawUblBlobId: DocumentBlobId? = null,
-    val sourceChannel: DocumentSource,
-    val arrivalAt: LocalDateTime,
-    val contentHash: String?,
-    val identityKeyHash: String?,
-    val status: DocumentSourceStatus,
-    val matchType: SourceMatchKind?,
-    val isCorrective: Boolean,
-    val extractedSnapshotJson: String?,
-    val peppolStructuredSnapshotJson: String? = null,
-    val peppolSnapshotVersion: Int? = null,
-    val detachedAt: LocalDateTime?,
-    val normalizedSupplierVat: String?,
-    val normalizedDocumentNumber: String?,
-    val documentType: DocumentType?,
-    val direction: DocumentDirection?,
-    val filename: String?,
-    val inputHash: String,
-    val storageKey: String,
-    val contentType: String,
-    val sizeBytes: Long
-) {
-    companion object
-}
 
 data class DocumentSourceCreatePayload(
     val documentId: DocumentId,

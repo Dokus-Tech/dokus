@@ -11,6 +11,7 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.upsert
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.v1.jdbc.update
+import tech.dokus.database.entity.TransactionMatchLinkEntity
 import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.documents.TransactionMatchLinksTable
 import tech.dokus.domain.Money
@@ -37,29 +38,6 @@ data class TransactionMatchSnapshot(
     val cashflowRemainingBefore: Money,
     val cashflowPaidAtBefore: LocalDateTime?,
 )
-
-data class TransactionMatchLinkEntity(
-    val id: UUID,
-    val tenantId: TenantId,
-    val documentId: DocumentId,
-    val cashflowEntryId: CashflowEntryId,
-    val importedBankTransactionId: BankTransactionId,
-    val documentType: DocumentType?,
-    val allocatedAmount: Money?,
-    val status: AutoMatchStatus,
-    val createdBy: PaymentCreatedBy,
-    val confidenceScore: Double?,
-    val scoreMargin: Double?,
-    val reasonsJson: String?,
-    val rulesJson: String?,
-    val matchedAt: LocalDateTime,
-    val autoPaidAt: LocalDateTime?,
-    val reversedAt: LocalDateTime?,
-    val reversedByUserId: UUID?,
-    val reversalReason: String?,
-) {
-    companion object
-}
 
 @OptIn(ExperimentalUuidApi::class)
 class TransactionMatchLinkRepository {

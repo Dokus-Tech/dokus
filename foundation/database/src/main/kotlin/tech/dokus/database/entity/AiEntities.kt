@@ -6,12 +6,25 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.ChunkMetadata
 import tech.dokus.domain.model.DocumentChunkId
-import tech.dokus.domain.model.ai.ChatCitationDto
 import tech.dokus.domain.model.ai.ChatContentBlock
 import tech.dokus.domain.model.ai.ChatMessageId
 import tech.dokus.domain.model.ai.ChatScope
 import tech.dokus.domain.model.ai.ChatSessionId
 import tech.dokus.domain.model.ai.MessageRole
+
+/**
+ * Database entity for a chat citation reference.
+ */
+data class ChatCitationEntity(
+    val chunkId: String,
+    val documentId: String,
+    val documentName: String? = null,
+    val pageNumber: Int? = null,
+    val excerpt: String,
+    val relevanceScore: Float? = null,
+) {
+    companion object
+}
 
 data class ChatMessageEntity(
     val id: ChatMessageId,
@@ -22,7 +35,7 @@ data class ChatMessageEntity(
     val content: String,
     val scope: ChatScope,
     val documentId: DocumentId? = null,
-    val citations: List<ChatCitationDto>? = null,
+    val citations: List<ChatCitationEntity>? = null,
     val contentBlocks: List<ChatContentBlock>? = null,
     val chunksRetrieved: Int? = null,
     val aiModel: String? = null,

@@ -12,6 +12,7 @@ import org.jetbrains.exposed.v1.core.lessEq
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
 import org.jetbrains.exposed.v1.jdbc.upsert
+import tech.dokus.database.entity.WelcomeEmailJobEntity
 import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.auth.WelcomeEmailJobsTable
 import tech.dokus.database.tables.auth.WelcomeEmailJobsTable.JobStatus
@@ -22,22 +23,6 @@ import java.util.UUID
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toKotlinUuid
 import tech.dokus.foundation.backend.utils.runSuspendCatching
-
-data class WelcomeEmailJobEntity(
-    val id: UUID,
-    val userId: UserId,
-    val tenantId: TenantId,
-    val status: JobStatus,
-    val scheduledAt: LocalDateTime,
-    val nextAttemptAt: LocalDateTime,
-    val attemptCount: Int,
-    val lastError: String?,
-    val sentAt: LocalDateTime?,
-    val createdAt: LocalDateTime,
-    val updatedAt: LocalDateTime
-) {
-    companion object
-}
 
 @OptIn(ExperimentalUuidApi::class)
 class WelcomeEmailJobRepository {

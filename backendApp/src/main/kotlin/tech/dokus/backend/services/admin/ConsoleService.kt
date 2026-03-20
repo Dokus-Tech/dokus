@@ -6,8 +6,8 @@ import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentListPage
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.DocumentWithDraftAndIngestion
-import tech.dokus.database.repository.cashflow.DraftSummaryEntity
-import tech.dokus.database.repository.cashflow.IngestionRunSummaryEntity
+import tech.dokus.database.entity.DraftSummaryEntity
+import tech.dokus.database.entity.IngestionRunSummaryEntity
 import tech.dokus.domain.enums.DocumentListFilter
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
