@@ -8,8 +8,6 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
-import org.jetbrains.exposed.v1.core.isNotNull
-import org.jetbrains.exposed.v1.core.less
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
@@ -183,21 +181,6 @@ class PeppolDirectoryCacheRepository {
         val companyChanged = resolution.companyNumberSnapshot != currentCompanyNumber
 
         return expired || vatChanged || companyChanged
-    }
-
-    /**
-     * Delete all expired entries for a tenant.
-     * Returns number of deleted rows.
-     */
-    suspend fun deleteExpired(tenantId: TenantId): Result<Int> = runSuspendCatching {
-        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-        dbQuery {
-            PeppolDirectoryCacheTable.deleteWhere {
-                (PeppolDirectoryCacheTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                    (PeppolDirectoryCacheTable.expiresAt.isNotNull()) and
-                    (PeppolDirectoryCacheTable.expiresAt less now)
-            }
-        }
     }
 
     private fun LocalDateTime.plusDuration(duration: Duration): LocalDateTime {

@@ -191,21 +191,4 @@ class ContactNoteRepository {
         }
     }
 
-    /**
-     * Delete all notes for a contact
-     * CRITICAL: MUST filter by tenant_id
-     * Note: This is typically called by cascade delete, but provided for explicit use
-     */
-    suspend fun deleteAllNotesForContact(
-        contactId: ContactId,
-        tenantId: TenantId
-    ): Result<Int> = runSuspendCatching {
-        dbQuery {
-            ContactNotesTable.deleteWhere {
-                (ContactNotesTable.contactId eq UUID.fromString(contactId.toString())) and
-                    (ContactNotesTable.tenantId eq UUID.fromString(tenantId.toString()))
-            }
-        }
-    }
-
 }

@@ -27,7 +27,8 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.fromDbDecimal
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.database.entity.CashflowEntryEntity
+import tech.dokus.database.mapper.from
+import tech.dokus.domain.model.CashflowEntryDto
 import tech.dokus.domain.model.CashflowPaymentRequest
 import tech.dokus.domain.toDbDecimal
 import tech.dokus.foundation.backend.utils.runSuspendCatching
@@ -43,7 +44,7 @@ class CashflowPaymentService(
         tenantId: TenantId,
         entryId: CashflowEntryId,
         request: CashflowPaymentRequest
-    ): Result<CashflowEntryEntity> = runSuspendCatching {
+    ): Result<CashflowEntryDto> = runSuspendCatching {
         if (request.amount.minor <= 0) {
             throw DokusException.BadRequest("Payment amount must be positive")
         }
@@ -178,7 +179,8 @@ class CashflowPaymentService(
             }
         }
 
-        cashflowEntriesRepository.getEntry(entryId, tenantId).getOrNull()
+        val entity = cashflowEntriesRepository.getEntry(entryId, tenantId).getOrNull()
             ?: throw DokusException.NotFound("Cashflow entry not found after payment")
+        CashflowEntryDto.from(entity)
     }
 }

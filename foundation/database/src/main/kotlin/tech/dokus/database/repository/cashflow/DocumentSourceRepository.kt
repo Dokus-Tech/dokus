@@ -165,27 +165,6 @@ class DocumentSourceRepository {
             .toInt()
     }
 
-    suspend fun findLinkedDocumentByInputHash(
-        tenantId: TenantId,
-        inputHash: String
-    ): DocumentId? = newSuspendedTransaction {
-        DocumentSourcesTable.join(
-            DocumentBlobsTable,
-            JoinType.INNER,
-            DocumentSourcesTable.blobId,
-            DocumentBlobsTable.id
-        )
-            .selectAll()
-            .where {
-                (DocumentSourcesTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                        (DocumentBlobsTable.inputHash eq inputHash) and
-                        (DocumentSourcesTable.status eq DocumentSourceStatus.Linked)
-            }
-            .orderBy(DocumentSourcesTable.arrivalAt, SortOrder.DESC)
-            .firstOrNull()
-            ?.let { DocumentId.parse(it[DocumentSourcesTable.documentId].toString()) }
-    }
-
     suspend fun findLinkedDocumentByContentHash(
         tenantId: TenantId,
         contentHash: String,

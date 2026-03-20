@@ -43,6 +43,8 @@ import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.AutoPaymentStatus
 import tech.dokus.database.entity.CashflowEntryEntity
 import tech.dokus.database.entity.BankTransactionEntity
+import tech.dokus.database.mapper.from
+import tech.dokus.domain.model.CashflowEntryDto
 import tech.dokus.domain.toDbDecimal
 import tech.dokus.foundation.backend.utils.runSuspendCatching
 import java.util.UUID
@@ -150,7 +152,7 @@ class AutoPaymentService(
         entryId: CashflowEntryId,
         actorUserId: UserId?,
         reason: String?
-    ): Result<CashflowEntryEntity> = runSuspendCatching {
+    ): Result<CashflowEntryDto> = runSuspendCatching {
         val tenantUuid = tenantId.value.toJavaUuid()
         val entryUuid = entryId.value.toJavaUuid()
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
@@ -272,8 +274,9 @@ class AutoPaymentService(
             )
         }
 
-        cashflowEntriesRepository.getEntry(entryId, tenantId).getOrNull()
+        val entity = cashflowEntriesRepository.getEntry(entryId, tenantId).getOrNull()
             ?: throw DokusException.NotFound("Cashflow entry not found after undo")
+        CashflowEntryDto.from(entity)
     }
 
     private suspend fun applyAutoPaymentInTransaction(

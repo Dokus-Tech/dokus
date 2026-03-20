@@ -134,21 +134,6 @@ class DocumentRepository : DocumentStatusChecker {
                 .singleOrNull()
         }
 
-    /**
-     * Get a document by identity key hash.
-     * CRITICAL: Must filter by tenantId.
-     */
-    suspend fun getByIdentityKeyHash(tenantId: TenantId, identityKeyHash: String): DocumentDto? =
-        newSuspendedTransaction {
-            DocumentsTable.selectAll()
-                .where {
-                    (DocumentsTable.canonicalIdentityKey eq identityKeyHash) and
-                        (DocumentsTable.tenantId eq UUID.fromString(tenantId.toString()))
-                }
-                .map { it.toDocumentDto() }
-                .singleOrNull()
-        }
-
     suspend fun updateCanonicalIdentityKey(
         tenantId: TenantId,
         documentId: DocumentId,
@@ -683,42 +668,6 @@ class DocumentRepository : DocumentStatusChecker {
             it[rejectReason] = reason
             it[updatedAt] = now
         } > 0
-    }
-
-    /**
-     * List drafts by status with optional document type filter.
-     * CRITICAL: Must filter by tenantId.
-     *
-     */
-    suspend fun listByStatus(
-        tenantId: TenantId,
-        statuses: List<DocumentStatus>,
-        documentType: DocumentType? = null,
-        page: Int = 0,
-        limit: Int = 20
-    ): DocumentListPage<DraftSummaryEntity> = newSuspendedTransaction {
-        val tenantIdUuid = UUID.fromString(tenantId.toString())
-
-        val baseQuery = DocumentsTable.selectAll()
-            .where {
-                val conditions = (DocumentsTable.tenantId eq tenantIdUuid) and
-                    (DocumentsTable.documentStatus inList statuses)
-                if (documentType != null) {
-                    conditions and (DocumentsTable.documentType eq documentType)
-                } else {
-                    conditions
-                }
-            }
-
-        val total = baseQuery.count()
-
-        val drafts = baseQuery
-            .orderBy(DocumentsTable.updatedAt, SortOrder.DESC)
-            .limit(limit)
-            .offset((page * limit).toLong())
-            .map { DraftSummaryEntity.from(it) }
-
-        DocumentListPage(drafts, total)
     }
 
     // =========================================================================

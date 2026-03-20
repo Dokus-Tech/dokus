@@ -9,15 +9,12 @@ import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.lessEq
 import org.jetbrains.exposed.v1.core.or
-import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
 import tech.dokus.database.entity.PeppolSettingsEntity
 import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.peppol.PeppolSettingsTable
-import tech.dokus.domain.ids.PeppolId
-import tech.dokus.domain.ids.PeppolSettingsId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.foundation.backend.database.dbQuery
 import java.util.UUID
@@ -103,34 +100,6 @@ class PeppolSettingsRepository {
                     .map { PeppolSettingsEntity.from(it) }
                     .single()
             }
-        }
-    }
-
-    /**
-     * Delete Peppol settings for a tenant.
-     */
-    suspend fun deleteSettings(tenantId: TenantId): Result<Boolean> = runSuspendCatching {
-        dbQuery {
-            val deleted = PeppolSettingsTable.deleteWhere {
-                PeppolSettingsTable.tenantId eq tenantId.value.toJavaUuid()
-            }
-            deleted > 0
-        }
-    }
-
-    /**
-     * Find tenant ID by webhook token.
-     * Used by webhook endpoint to resolve tenant from token.
-     */
-    suspend fun getTenantIdByWebhookToken(token: String): Result<TenantId?> = runSuspendCatching {
-        dbQuery {
-            PeppolSettingsTable.selectAll()
-                .where {
-                    (PeppolSettingsTable.webhookToken eq token) and
-                        (PeppolSettingsTable.isEnabled eq true)
-                }
-                .map { TenantId.parse(it[PeppolSettingsTable.tenantId].toString()) }
-                .singleOrNull()
         }
     }
 

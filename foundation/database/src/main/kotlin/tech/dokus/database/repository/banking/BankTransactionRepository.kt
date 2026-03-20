@@ -185,23 +185,6 @@ class BankTransactionRepository {
         ).map { BankTransactionEntity.from(it) }
     }
 
-    suspend fun clearCandidatesForEntry(
-        tenantId: TenantId,
-        cashflowEntryId: CashflowEntryId
-    ): Int = newSuspendedTransaction {
-        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-        BankTransactionsTable.update({
-            (BankTransactionsTable.tenantId eq tenantId.value.toJavaUuid()) and
-                    (BankTransactionsTable.matchedCashflowId eq cashflowEntryId.value.toJavaUuid()) and
-                    (BankTransactionsTable.status neq BankTransactionStatus.Matched)
-        }) {
-            it[matchedCashflowId] = null
-            it[matchScore] = null
-            it[status] = BankTransactionStatus.Unmatched
-            it[updatedAt] = now
-        }
-    }
-
     suspend fun setMatchCandidate(
         tenantId: TenantId,
         transactionId: BankTransactionId,

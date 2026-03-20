@@ -7,12 +7,10 @@ import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
-import org.jetbrains.exposed.v1.jdbc.batchInsert
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
-import org.jetbrains.exposed.v1.jdbc.update
 import tech.dokus.database.tables.documents.DocumentLineItemsTable
 import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.ids.DocumentId
@@ -102,41 +100,6 @@ class DocumentLineItemRepository {
     }
 
     /**
-     * Batch create line items for a document.
-     * CRITICAL: Must filter by tenantId.
-     */
-    suspend fun batchCreate(
-        tenantId: TenantId,
-        documentId: DocumentId,
-        items: List<CreateLineItemPayload>
-    ): List<DocumentLineItemId> = newSuspendedTransaction {
-        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-        val tenantIdUuid = UUID.fromString(tenantId.toString())
-        val documentIdUuid = UUID.fromString(documentId.toString())
-
-        val ids = items.map { DocumentLineItemId.generate() }
-
-        DocumentLineItemsTable.batchInsert(items.zip(ids)) { (payload, id) ->
-            this[DocumentLineItemsTable.id] = UUID.fromString(id.toString())
-            this[DocumentLineItemsTable.tenantId] = tenantIdUuid
-            this[DocumentLineItemsTable.documentId] = documentIdUuid
-            this[DocumentLineItemsTable.position] = payload.position
-            this[DocumentLineItemsTable.description] = payload.description
-            this[DocumentLineItemsTable.quantity] = payload.quantity
-            this[DocumentLineItemsTable.unitPrice] = payload.unitPrice
-            this[DocumentLineItemsTable.netAmount] = payload.netAmount
-            this[DocumentLineItemsTable.vatRate] = payload.vatRate
-            this[DocumentLineItemsTable.vatAmount] = payload.vatAmount
-            this[DocumentLineItemsTable.grossAmount] = payload.grossAmount
-            this[DocumentLineItemsTable.currency] = payload.currency
-            this[DocumentLineItemsTable.isSynthetic] = payload.isSynthetic
-            this[DocumentLineItemsTable.createdAt] = now
-            this[DocumentLineItemsTable.updatedAt] = now
-        }
-        ids
-    }
-
-    /**
      * Get all line items for a document, ordered by position.
      * CRITICAL: Must filter by tenantId.
      */
@@ -197,42 +160,6 @@ class DocumentLineItemRepository {
         DocumentLineItemsTable.deleteWhere {
             (DocumentLineItemsTable.tenantId eq UUID.fromString(tenantId.toString())) and
                 (DocumentLineItemsTable.id eq UUID.fromString(lineItemId.toString()))
-        } > 0
-    }
-
-    /**
-     * Count line items for a document.
-     * CRITICAL: Must filter by tenantId.
-     */
-    suspend fun countByDocumentId(
-        tenantId: TenantId,
-        documentId: DocumentId
-    ): Long = newSuspendedTransaction {
-        DocumentLineItemsTable.selectAll()
-            .where {
-                (DocumentLineItemsTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                    (DocumentLineItemsTable.documentId eq UUID.fromString(documentId.toString()))
-            }
-            .count()
-    }
-
-    /**
-     * Update the position of a line item (for reordering).
-     * CRITICAL: Must filter by tenantId.
-     */
-    suspend fun updatePosition(
-        tenantId: TenantId,
-        lineItemId: DocumentLineItemId,
-        newPosition: Int
-    ): Boolean = newSuspendedTransaction {
-        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-
-        DocumentLineItemsTable.update({
-            (DocumentLineItemsTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                (DocumentLineItemsTable.id eq UUID.fromString(lineItemId.toString()))
-        }) {
-            it[position] = newPosition
-            it[updatedAt] = now
         } > 0
     }
 

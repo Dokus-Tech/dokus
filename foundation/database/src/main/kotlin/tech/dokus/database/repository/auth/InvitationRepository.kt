@@ -1,13 +1,11 @@
 package tech.dokus.database.repository.auth
 
-import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
-import org.jetbrains.exposed.v1.core.less
 import org.jetbrains.exposed.v1.jdbc.insertAndGetId
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
@@ -118,22 +116,6 @@ class InvitationRepository {
     }
 
     /**
-     * Find pending invitation by email.
-     * Used to auto-join users when they register with an invited email.
-     */
-    suspend fun findPendingByEmail(email: Email): TenantInvitationEntity? = dbQuery {
-        TenantInvitationsTable
-            .join(UsersTable, JoinType.INNER, TenantInvitationsTable.invitedBy, UsersTable.id)
-            .selectAll()
-            .where {
-                (TenantInvitationsTable.email eq email.value) and
-                    (TenantInvitationsTable.status eq InvitationStatus.Pending)
-            }
-            .singleOrNull()
-            ?.let { TenantInvitationEntity.from(it) }
-    }
-
-    /**
      * List all invitations for a tenant with optional status filter.
      */
     suspend fun listByTenant(
@@ -156,29 +138,6 @@ class InvitationRepository {
     }
 
     /**
-     * Mark an invitation as accepted.
-     */
-    suspend fun markAccepted(
-        id: InvitationId,
-        acceptedBy: UserId,
-        acceptedAt: Instant
-    ): Unit = dbQuery {
-        val updated = TenantInvitationsTable.update({
-            TenantInvitationsTable.id eq id.value.toJavaUuid()
-        }) {
-            it[status] = InvitationStatus.Accepted
-            it[TenantInvitationsTable.acceptedBy] = acceptedBy.value.toJavaUuid()
-            it[TenantInvitationsTable.acceptedAt] = acceptedAt.toLocalDateTime(TimeZone.UTC)
-        }
-
-        if (updated == 0) {
-            throw IllegalArgumentException("Invitation not found: $id")
-        }
-
-        logger.info("Invitation $id accepted by user $acceptedBy")
-    }
-
-    /**
      * Cancel an invitation.
      * CRITICAL: Always verify tenantId for security.
      */
@@ -195,27 +154,6 @@ class InvitationRepository {
         }
 
         logger.info("Cancelled invitation $id for tenant $tenantId")
-    }
-
-    /**
-     * Mark expired invitations.
-     * Should be called periodically by a scheduled job.
-     */
-    suspend fun markExpired(): Int = dbQuery {
-        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-
-        val updated = TenantInvitationsTable.update({
-            (TenantInvitationsTable.status eq InvitationStatus.Pending) and
-                (TenantInvitationsTable.expiresAt less now)
-        }) {
-            it[status] = InvitationStatus.Expired
-        }
-
-        if (updated > 0) {
-            logger.info("Marked $updated invitations as expired")
-        }
-
-        updated
     }
 
     /**

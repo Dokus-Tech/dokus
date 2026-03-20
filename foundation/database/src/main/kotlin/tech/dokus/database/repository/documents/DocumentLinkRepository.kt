@@ -174,38 +174,6 @@ class DocumentLinkRepository {
     }
 
     /**
-     * Get all links from a source document.
-     * CRITICAL: Must filter by tenantId.
-     */
-    suspend fun getBySourceDocumentId(
-        tenantId: TenantId,
-        sourceDocumentId: DocumentId
-    ): List<DocumentLinkDto> = newSuspendedTransaction {
-        DocumentLinksTable.selectAll()
-            .where {
-                (DocumentLinksTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                    (DocumentLinksTable.sourceDocumentId eq UUID.fromString(sourceDocumentId.toString()))
-            }
-            .map { it.toDto() }
-    }
-
-    /**
-     * Get all links to a target document.
-     * CRITICAL: Must filter by tenantId.
-     */
-    suspend fun getByTargetDocumentId(
-        tenantId: TenantId,
-        targetDocumentId: DocumentId
-    ): List<DocumentLinkDto> = newSuspendedTransaction {
-        DocumentLinksTable.selectAll()
-            .where {
-                (DocumentLinksTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                    (DocumentLinksTable.targetDocumentId eq UUID.fromString(targetDocumentId.toString()))
-            }
-            .map { it.toDto() }
-    }
-
-    /**
      * Get links by type from a source document.
      * CRITICAL: Must filter by tenantId.
      */
@@ -224,24 +192,6 @@ class DocumentLinkRepository {
     }
 
     /**
-     * Check if a ConvertedTo link exists from a document.
-     * Use this to check if a ProForma has already been converted to an Invoice.
-     * CRITICAL: Must filter by tenantId.
-     */
-    suspend fun hasConversionLink(
-        tenantId: TenantId,
-        sourceDocumentId: DocumentId
-    ): Boolean = newSuspendedTransaction {
-        DocumentLinksTable.selectAll()
-            .where {
-                (DocumentLinksTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                    (DocumentLinksTable.sourceDocumentId eq UUID.fromString(sourceDocumentId.toString())) and
-                    (DocumentLinksTable.linkType eq DocumentLinkType.ConvertedTo)
-            }
-            .count() > 0
-    }
-
-    /**
      * Delete a link.
      * CRITICAL: Must filter by tenantId.
      */
@@ -253,22 +203,6 @@ class DocumentLinkRepository {
             (DocumentLinksTable.tenantId eq UUID.fromString(tenantId.toString())) and
                 (DocumentLinksTable.id eq UUID.fromString(linkId.toString()))
         } > 0
-    }
-
-    /**
-     * Delete all links from a source document.
-     * CRITICAL: Must filter by tenantId.
-     *
-     * @return Number of deleted links
-     */
-    suspend fun deleteBySourceDocumentId(
-        tenantId: TenantId,
-        sourceDocumentId: DocumentId
-    ): Int = newSuspendedTransaction {
-        DocumentLinksTable.deleteWhere {
-            (DocumentLinksTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                (DocumentLinksTable.sourceDocumentId eq UUID.fromString(sourceDocumentId.toString()))
-        }
     }
 
     private fun ResultRow.toDto(): DocumentLinkDto {

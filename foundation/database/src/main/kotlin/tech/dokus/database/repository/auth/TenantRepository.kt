@@ -2,7 +2,6 @@ package tech.dokus.database.repository.auth
 
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.inList
-import org.jetbrains.exposed.v1.core.plus
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.insertAndGetId
 import org.jetbrains.exposed.v1.jdbc.selectAll
@@ -17,7 +16,6 @@ import tech.dokus.domain.enums.Language
 import tech.dokus.domain.enums.SubscriptionTier
 import tech.dokus.domain.enums.TenantStatus
 import tech.dokus.domain.enums.TenantType
-import tech.dokus.domain.ids.InvoiceNumber
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.Tenant
@@ -29,21 +27,6 @@ import tech.dokus.foundation.backend.utils.loggerFor
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid
 import kotlin.uuid.toKotlinUuid
-import tech.dokus.foundation.backend.utils.runSuspendCatching
-
-/**
- * Configuration for invoice number generation.
- *
- * This data class holds all tenant-specific settings for generating
- * invoice numbers in the required format for Belgian tax compliance.
- */
-data class TenantInvoiceConfig(
-    val prefix: String,
-    val yearlyReset: Boolean,
-    val padding: Int,
-    val includeYear: Boolean,
-    val timezone: String
-)
 
 @OptIn(ExperimentalUuidApi::class)
 class TenantRepository {
@@ -148,24 +131,6 @@ class TenantRepository {
         }
     }
 
-    suspend fun getNextInvoiceNumber(tenantId: TenantId): InvoiceNumber = dbQuery {
-        val javaUuid = tenantId.value.toJavaUuid()
-        val settings = TenantSettingsTable
-            .selectAll()
-            .where { TenantSettingsTable.tenantId eq javaUuid }
-            .single()
-
-        val prefix = settings[TenantSettingsTable.invoicePrefix]
-        val number = settings[TenantSettingsTable.nextInvoiceNumber]
-
-        // Increment the counter
-        TenantSettingsTable.update({ TenantSettingsTable.tenantId eq javaUuid }) {
-            it[nextInvoiceNumber] = nextInvoiceNumber + 1
-        }
-
-        InvoiceNumber("$prefix-${number.toString().padStart(4, '0')}")
-    }
-
     suspend fun listActiveTenants(): List<Tenant> = dbQuery {
         TenantTable
             .selectAll()
@@ -207,32 +172,4 @@ class TenantRepository {
         }
     }
 
-    /**
-     * Fetch invoice numbering configuration for a tenant.
-     *
-     * This method retrieves all the settings needed for generating
-     * invoice numbers according to Belgian tax compliance requirements.
-     *
-     * @param tenantId The tenant to fetch configuration for
-     * @return Result containing the invoice config, or failure if not found
-     */
-    suspend fun getInvoiceConfig(tenantId: TenantId): Result<TenantInvoiceConfig> = runSuspendCatching {
-        dbQuery {
-            val javaUuid = tenantId.value.toJavaUuid()
-
-            val row = TenantSettingsTable
-                .selectAll()
-                .where { TenantSettingsTable.tenantId eq javaUuid }
-                .singleOrNull()
-                ?: throw IllegalArgumentException("No settings found for tenant: $tenantId")
-
-            TenantInvoiceConfig(
-                prefix = row[TenantSettingsTable.invoicePrefix],
-                yearlyReset = row[TenantSettingsTable.invoiceYearlyReset],
-                padding = row[TenantSettingsTable.invoicePadding],
-                includeYear = row[TenantSettingsTable.invoiceIncludeYear],
-                timezone = row[TenantSettingsTable.invoiceTimezone]
-            )
-        }
-    }
 }

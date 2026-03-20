@@ -8,11 +8,13 @@ import io.ktor.server.resources.put
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
+import tech.dokus.backend.routes.cashflow.documents.toDocDto
 import tech.dokus.backend.security.requireTenantId
 import tech.dokus.backend.services.cashflow.ExpenseService
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ExpenseId
 import tech.dokus.domain.model.CreateExpenseRequest
+import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.routes.Expenses
 import tech.dokus.foundation.backend.security.authenticateJwt
 import kotlin.uuid.ExperimentalUuidApi
@@ -49,7 +51,15 @@ internal fun Route.expenseRoutes() {
                 offset = route.offset
             ).getOrElse { throw DokusException.InternalError("Failed to list expenses: ${it.message}") }
 
-            call.respond(HttpStatusCode.OK, expenses)
+            call.respond(
+                HttpStatusCode.OK,
+                PaginatedResponse(
+                    items = expenses.items.map { it.toDocDto() },
+                    total = expenses.total,
+                    limit = expenses.limit,
+                    offset = expenses.offset
+                )
+            )
         }
 
         // GET /api/v1/expenses/{id} - Get expense by ID
@@ -61,7 +71,7 @@ internal fun Route.expenseRoutes() {
                 .getOrElse { throw DokusException.InternalError("Failed to fetch expense: ${it.message}") }
                 ?: throw DokusException.NotFound("Expense not found")
 
-            call.respond(HttpStatusCode.OK, expense)
+            call.respond(HttpStatusCode.OK, expense.toDocDto())
         }
 
         // PUT /api/v1/expenses/{id} - Update expense
@@ -73,7 +83,7 @@ internal fun Route.expenseRoutes() {
             val expense = expenseService.updateExpense(expenseId, tenantId, request)
                 .getOrElse { throw DokusException.InternalError("Failed to update expense: ${it.message}") }
 
-            call.respond(HttpStatusCode.OK, expense)
+            call.respond(HttpStatusCode.OK, expense.toDocDto())
         }
 
         // DELETE /api/v1/expenses/{id} - Delete expense

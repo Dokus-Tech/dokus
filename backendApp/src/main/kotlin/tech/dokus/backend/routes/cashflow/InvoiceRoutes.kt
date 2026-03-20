@@ -15,6 +15,7 @@ import tech.dokus.backend.security.requireTenantId
 import tech.dokus.backend.services.cashflow.InvoiceService
 import tech.dokus.backend.services.pdf.InvoicePdfService
 import tech.dokus.database.repository.contacts.ContactRepository
+import tech.dokus.backend.routes.cashflow.documents.toDocDto
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
@@ -23,6 +24,7 @@ import tech.dokus.domain.model.CreateInvoiceRequest
 import tech.dokus.domain.model.InvoicePdfResponse
 import tech.dokus.domain.model.InvoiceStatusRequest
 import tech.dokus.domain.model.RecordPaymentRequest
+import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.routes.Invoices
 import tech.dokus.foundation.backend.security.authenticateJwt
 import kotlin.uuid.ExperimentalUuidApi
@@ -68,7 +70,15 @@ internal fun Route.invoiceRoutes() {
                 throw DokusException.InternalError("Failed to list invoices: ${it.message}")
             }
 
-            call.respond(HttpStatusCode.OK, invoices)
+            call.respond(
+                HttpStatusCode.OK,
+                PaginatedResponse(
+                    items = invoices.items.map { it.toDocDto() },
+                    total = invoices.total,
+                    limit = invoices.limit,
+                    offset = invoices.offset
+                )
+            )
         }
 
         // POST /api/v1/invoices - Create invoice
@@ -79,7 +89,7 @@ internal fun Route.invoiceRoutes() {
             val invoice = invoiceService.createInvoice(tenantId, request)
                 .getOrElse { throw DokusException.InternalError("Failed to create invoice: ${it.message}") }
 
-            call.respond(HttpStatusCode.Created, invoice)
+            call.respond(HttpStatusCode.Created, invoice.toDocDto())
         }
 
         // GET /api/v1/invoices/overdue - List overdue invoices
@@ -92,7 +102,7 @@ internal fun Route.invoiceRoutes() {
             )
                 .getOrElse { throw DokusException.InternalError("Failed to list overdue invoices: ${it.message}") }
 
-            call.respond(HttpStatusCode.OK, invoices)
+            call.respond(HttpStatusCode.OK, invoices.map { it.toDocDto() })
         }
 
         // GET /api/v1/invoices/{id} - Get invoice by ID
@@ -104,7 +114,7 @@ internal fun Route.invoiceRoutes() {
                 .getOrElse { throw DokusException.InternalError("Failed to fetch invoice: ${it.message}") }
                 ?: throw DokusException.NotFound("Invoice not found")
 
-            call.respond(HttpStatusCode.OK, invoice)
+            call.respond(HttpStatusCode.OK, invoice.toDocDto())
         }
 
         // PUT /api/v1/invoices/{id} - Update invoice
@@ -116,7 +126,7 @@ internal fun Route.invoiceRoutes() {
             val invoice = invoiceService.updateInvoice(invoiceId, tenantId, request)
                 .getOrElse { throw DokusException.InternalError("Failed to update invoice: ${it.message}") }
 
-            call.respond(HttpStatusCode.OK, invoice)
+            call.respond(HttpStatusCode.OK, invoice.toDocDto())
         }
 
         // DELETE /api/v1/invoices/{id} - Delete invoice

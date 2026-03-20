@@ -129,29 +129,6 @@ class CashflowEntriesRepository {
     }
 
     @OptIn(ExperimentalUuidApi::class)
-    suspend fun listOpenInvoiceEntries(
-        tenantId: TenantId
-    ): Result<List<CashflowEntryEntity>> = runSuspendCatching {
-        dbQuery {
-            CashflowEntriesTable
-                .join(
-                    ContactsTable,
-                    JoinType.LEFT,
-                    onColumn = CashflowEntriesTable.counterpartyId,
-                    otherColumn = ContactsTable.id
-                )
-                .selectAll()
-                .where {
-                    (CashflowEntriesTable.tenantId eq tenantId.value.toJavaUuid()) and
-                        (CashflowEntriesTable.sourceType eq CashflowSourceType.Invoice) and
-                        (CashflowEntriesTable.status inList listOf(CashflowEntryStatus.Open, CashflowEntryStatus.Overdue)) and
-                        (CashflowEntriesTable.remainingAmount neq BigDecimal.ZERO)
-                }
-                .map { row -> CashflowEntryEntity.from(row, row.getOrNull(ContactsTable.name)) }
-        }
-    }
-
-    @OptIn(ExperimentalUuidApi::class)
     suspend fun listOpenInvoiceEntriesByContact(
         tenantId: TenantId,
         contactId: ContactId
@@ -375,26 +352,6 @@ class CashflowEntriesRepository {
                         contactName = row.getOrNull(ContactsTable.name)
                     )
                 }
-        }
-    }
-
-    /**
-     * Update remaining amount after payment.
-     * CRITICAL: MUST filter by tenant_id.
-     */
-    suspend fun updateRemainingAmount(
-        entryId: CashflowEntryId,
-        tenantId: TenantId,
-        newRemainingAmount: Money
-    ): Result<Boolean> = runSuspendCatching {
-        dbQuery {
-            val updated = CashflowEntriesTable.update({
-                (CashflowEntriesTable.id eq UUID.fromString(entryId.toString())) and
-                    (CashflowEntriesTable.tenantId eq UUID.fromString(tenantId.toString()))
-            }) {
-                it[remainingAmount] = newRemainingAmount.toDbDecimal()
-            }
-            updated > 0
         }
     }
 

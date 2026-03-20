@@ -419,25 +419,6 @@ class PeppolTransmissionRepository {
     }
 
     /**
-     * Check if a transmission exists for a given external provider document ID.
-     * Useful for deduping inbound inbox polling (e.g. weekly full sync).
-     */
-    suspend fun existsByExternalDocumentId(
-        tenantId: TenantId,
-        externalDocumentId: String
-    ): Result<Boolean> = runSuspendCatching {
-        dbQuery {
-            PeppolTransmissionsTable.selectAll()
-                .where {
-                    (PeppolTransmissionsTable.tenantId eq tenantId.value.toJavaUuid()) and
-                        (PeppolTransmissionsTable.externalDocumentId eq externalDocumentId)
-                }
-                .limit(1)
-                .any()
-        }
-    }
-
-    /**
      * Get a transmission by external provider document ID.
      * Useful for inbound dedupe and safe retry logic.
      */
@@ -452,39 +433,6 @@ class PeppolTransmissionRepository {
                         (PeppolTransmissionsTable.externalDocumentId eq externalDocumentId)
                 }
                 .map { it.toPeppolTransmissionDto() }
-                .singleOrNull()
-        }
-    }
-
-    /**
-     * Get a transmission by ID.
-     */
-    suspend fun getTransmission(
-        transmissionId: PeppolTransmissionId,
-        tenantId: TenantId
-    ): Result<PeppolTransmissionDto?> = runSuspendCatching {
-        dbQuery {
-            PeppolTransmissionsTable.selectAll()
-                .where {
-                    (PeppolTransmissionsTable.id eq UUID.fromString(transmissionId.toString())) and
-                        (PeppolTransmissionsTable.tenantId eq tenantId.value.toJavaUuid())
-                }
-                .map { it.toPeppolTransmissionDto() }
-                .singleOrNull()
-        }
-    }
-
-    suspend fun getTransmissionInternal(
-        transmissionId: PeppolTransmissionId,
-        tenantId: TenantId
-    ): Result<PeppolTransmissionEntity?> = runSuspendCatching {
-        dbQuery {
-            PeppolTransmissionsTable.selectAll()
-                .where {
-                    (PeppolTransmissionsTable.id eq UUID.fromString(transmissionId.toString())) and
-                        (PeppolTransmissionsTable.tenantId eq tenantId.value.toJavaUuid())
-                }
-                .map { PeppolTransmissionEntity.from(it) }
                 .singleOrNull()
         }
     }

@@ -414,25 +414,6 @@ class ContactRepository {
     // NOTE: findByPeppolId() removed - PEPPOL participant ID is now in PeppolDirectoryCacheTable
 
     /**
-     * Find a contact by company number (exact match)
-     * Returns the first active match.
-     */
-    suspend fun findByCompanyNumber(
-        tenantId: TenantId,
-        companyNumber: String
-    ): Result<ContactEntity?> = runSuspendCatching {
-        dbQuery {
-            ContactsTable.selectAll().where {
-                (ContactsTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                    (ContactsTable.companyNumber eq companyNumber) and
-                    (ContactsTable.isActive eq true)
-            }.singleOrNull()?.let { row ->
-                ContactEntity.from(row)
-            }
-        }
-    }
-
-    /**
      * Find contacts by IBAN (exact match, normalized).
      * Returns active matches.
      */
@@ -476,38 +457,6 @@ class ContactRepository {
                 }
                 .take(limit)
                 .map { ContactEntity.from(it) }
-        }
-    }
-
-    /**
-     * Get or create the "Unknown Contact" system placeholder for a tenant.
-     * This contact is used when no match is found and user assigns to unknown.
-     */
-    suspend fun getOrCreateUnknownContact(tenantId: TenantId): Result<ContactEntity> = runSuspendCatching {
-        dbQuery {
-            // Check if system contact already exists
-            val existing = ContactsTable.selectAll().where {
-                (ContactsTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                    (ContactsTable.isSystemContact eq true)
-            }.singleOrNull()
-
-            if (existing != null) {
-                ContactEntity.from(existing)
-            } else {
-                // Create the Unknown Contact placeholder
-                val contactId = ContactsTable.insertAndGetId {
-                    it[ContactsTable.tenantId] = UUID.fromString(tenantId.toString())
-                    it[ContactsTable.name] = "Unknown / Unassigned"
-                    it[ContactsTable.isSystemContact] = true
-                    it[ContactsTable.isActive] = true
-                }
-
-                ContactsTable.selectAll().where {
-                    ContactsTable.id eq contactId.value
-                }.single().let { row ->
-                    ContactEntity.from(row)
-                }
-            }
         }
     }
 

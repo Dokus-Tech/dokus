@@ -7,8 +7,6 @@ import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
-import org.jetbrains.exposed.v1.jdbc.andWhere
-import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insertAndGetId
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
@@ -18,7 +16,6 @@ import tech.dokus.database.tables.cashflow.RefundClaimsTable
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.RefundClaimStatus
-import tech.dokus.domain.fromDbDecimal
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.CreditNoteId
@@ -76,24 +73,6 @@ class RefundClaimRepository {
     }
 
     /**
-     * Get a single refund claim by ID.
-     * CRITICAL: MUST filter by tenant_id
-     */
-    suspend fun getRefundClaim(
-        claimId: RefundClaimId,
-        tenantId: TenantId
-    ): Result<RefundClaimEntity?> = runSuspendCatching {
-        dbQuery {
-            RefundClaimsTable.selectAll().where {
-                (RefundClaimsTable.id eq UUID.fromString(claimId.toString())) and
-                    (RefundClaimsTable.tenantId eq UUID.fromString(tenantId.toString()))
-            }.singleOrNull()?.let { row ->
-                RefundClaimEntity.from(row)
-            }
-        }
-    }
-
-    /**
      * Get the open refund claim for a credit note (if any).
      * CRITICAL: MUST filter by tenant_id
      */
@@ -107,38 +86,6 @@ class RefundClaimRepository {
                 (RefundClaimsTable.status eq RefundClaimStatus.Open)
         }.singleOrNull()?.let { row ->
             RefundClaimEntity.from(row)
-        }
-    }
-
-    /**
-     * List all refund claims for a tenant.
-     * CRITICAL: MUST filter by tenant_id
-     */
-    suspend fun listRefundClaims(
-        tenantId: TenantId,
-        status: RefundClaimStatus? = null,
-        counterpartyId: ContactId? = null,
-        limit: Int = 50,
-        offset: Int = 0
-    ): Result<List<RefundClaimEntity>> = runSuspendCatching {
-        dbQuery {
-            var query = RefundClaimsTable.selectAll().where {
-                RefundClaimsTable.tenantId eq UUID.fromString(tenantId.toString())
-            }
-
-            if (status != null) {
-                query = query.andWhere { RefundClaimsTable.status eq status }
-            }
-            if (counterpartyId != null) {
-                query = query.andWhere {
-                    RefundClaimsTable.counterpartyId eq UUID.fromString(counterpartyId.toString())
-                }
-            }
-
-            query.orderBy(RefundClaimsTable.createdAt to SortOrder.DESC)
-                .limit(limit + offset)
-                .map { RefundClaimEntity.from(it) }
-                .drop(offset)
         }
     }
 
@@ -194,23 +141,6 @@ class RefundClaimRepository {
                 it[status] = RefundClaimStatus.Cancelled
             }
             updatedRows > 0
-        }
-    }
-
-    /**
-     * Delete a refund claim.
-     * CRITICAL: MUST filter by tenant_id
-     */
-    suspend fun deleteRefundClaim(
-        claimId: RefundClaimId,
-        tenantId: TenantId
-    ): Result<Boolean> = runSuspendCatching {
-        dbQuery {
-            val deletedRows = RefundClaimsTable.deleteWhere {
-                (RefundClaimsTable.id eq UUID.fromString(claimId.toString())) and
-                    (RefundClaimsTable.tenantId eq UUID.fromString(tenantId.toString()))
-            }
-            deletedRows > 0
         }
     }
 
