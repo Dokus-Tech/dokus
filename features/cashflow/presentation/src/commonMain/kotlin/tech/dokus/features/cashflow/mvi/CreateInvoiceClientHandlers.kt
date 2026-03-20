@@ -7,11 +7,15 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import tech.dokus.domain.LegalName
 import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.model.DocDto
 import tech.dokus.domain.model.entity.EntityLookup
 import tech.dokus.domain.usecases.SearchCompanyUseCase
 import tech.dokus.features.cashflow.mvi.model.ClientSuggestion
+import tech.dokus.features.cashflow.mvi.model.CreateInvoiceFormState
 import tech.dokus.features.cashflow.mvi.model.ExternalClientCandidate
 import tech.dokus.features.cashflow.mvi.model.InvoiceSection
+import tech.dokus.features.cashflow.mvi.model.LatestInvoiceSuggestion
+import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.ValidateInvoiceUseCase
 import tech.dokus.features.cashflow.usecases.GetContactPeppolStatusUseCase
 import tech.dokus.features.cashflow.usecases.GetLatestInvoiceForContactUseCase
 import tech.dokus.features.contacts.usecases.ListContactsUseCase
@@ -24,12 +28,10 @@ internal class CreateInvoiceClientHandlers(
     private val searchCompanyUseCase: SearchCompanyUseCase,
     private val getContactPeppolStatus: GetContactPeppolStatusUseCase,
     private val getLatestInvoiceForContact: GetLatestInvoiceForContactUseCase,
-    private val updateInvoice: suspend CreateInvoiceCtx.(
-        transform: (CreateInvoiceState) -> CreateInvoiceState
-    ) -> Unit,
+    private val updateInvoice: suspend CreateInvoiceCtx.(transform: (CreateInvoiceState) -> CreateInvoiceState) -> Unit,
     private val snapshotState: suspend CreateInvoiceCtx.() -> CreateInvoiceState,
-    private val synchronizeDueDate: (tech.dokus.features.cashflow.mvi.model.CreateInvoiceFormState) -> tech.dokus.features.cashflow.mvi.model.CreateInvoiceFormState,
-    private val toSuggestion: tech.dokus.domain.model.DocDto.Invoice.Confirmed.() -> tech.dokus.features.cashflow.mvi.model.LatestInvoiceSuggestion?,
+    private val synchronizeDueDate: (CreateInvoiceFormState) -> CreateInvoiceFormState,
+    private val toSuggestion: DocDto.Invoice.Confirmed.() -> LatestInvoiceSuggestion?,
 ) {
 
     private val logger = Logger.forClass<CreateInvoiceClientHandlers>()
@@ -104,7 +106,9 @@ internal class CreateInvoiceClientHandlers(
                     clientLookupState = state.uiState.clientLookupState.copy(
                         isExpanded = expanded,
                         isLocalLoading = expanded,
-                        isExternalLoading = expanded && query.isNotBlank() && shouldLookupExternalClient(query)
+                        isExternalLoading = expanded && query.isNotBlank() && shouldLookupExternalClient(
+                            query
+                        )
                     )
                 )
             )
@@ -130,7 +134,7 @@ internal class CreateInvoiceClientHandlers(
                     selectedClient = client,
                     peppolStatus = null,
                     peppolStatusLoading = false,
-                    errors = state.formState.errors - tech.dokus.features.cashflow.presentation.cashflow.model.usecase.ValidateInvoiceUseCase.FIELD_CLIENT
+                    errors = state.formState.errors - ValidateInvoiceUseCase.FIELD_CLIENT
                 ),
                 uiState = state.uiState.copy(
                     suggestedSection = InvoiceSection.LineItems,
@@ -156,7 +160,8 @@ internal class CreateInvoiceClientHandlers(
                 if (state.formState.selectedClient?.id != client.id) return@updateInvoice state
                 val formState = synchronizeDueDate(
                     state.formState.copy(
-                        senderIban = latest.iban?.value.orEmpty().ifBlank { state.formState.senderIban }
+                        senderIban = latest.iban?.value.orEmpty()
+                            .ifBlank { state.formState.senderIban }
                     )
                 )
                 state.copy(
@@ -184,8 +189,8 @@ internal class CreateInvoiceClientHandlers(
         } else {
             localResults.filter { contact ->
                 contact.name.value.lowercase().contains(normalizedQuery) ||
-                    (contact.vatNumber?.normalized?.contains(normalizedQuery) == true) ||
-                    (contact.email?.value?.lowercase()?.contains(normalizedQuery) == true)
+                        (contact.vatNumber?.normalized?.contains(normalizedQuery) == true) ||
+                        (contact.email?.value?.lowercase()?.contains(normalizedQuery) == true)
             }
         }
 
@@ -275,7 +280,8 @@ internal class CreateInvoiceClientHandlers(
             Triple(local, external, hint)
         }
 
-        val merged = mergeClientLookupSuggestions(query, normalizedVat, localResults, externalResults)
+        val merged =
+            mergeClientLookupSuggestions(query, normalizedVat, localResults, externalResults)
 
         updateInvoice { state ->
             if (state.uiState.clientLookupState.query != query) {
