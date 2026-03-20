@@ -27,7 +27,7 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.fromDbDecimal
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.CashflowEntryEntity
+import tech.dokus.database.entity.CashflowEntryEntity
 import tech.dokus.domain.model.CashflowPaymentRequest
 import tech.dokus.domain.toDbDecimal
 import tech.dokus.foundation.backend.utils.runSuspendCatching

@@ -6,7 +6,7 @@ import tech.dokus.domain.ids.InvitationId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.CreateInvitationRequest
 import tech.dokus.domain.model.TeamMember
-import tech.dokus.domain.model.TenantInvitationEntity
+import tech.dokus.domain.model.TenantInvitation
 import tech.dokus.domain.model.auth.BookkeeperFirmSearchItem
 import tech.dokus.domain.model.auth.GrantBookkeeperAccessResponse
 import tech.dokus.domain.model.auth.TenantBookkeeperAccessItem
@@ -28,13 +28,13 @@ interface TeamRemoteDataSource {
      * @param request Invitation details (email, role)
      * @return Result containing the created invitation
      */
-    suspend fun createInvitation(request: CreateInvitationRequest): Result<TenantInvitationEntity>
+    suspend fun createInvitation(request: CreateInvitationRequest): Result<TenantInvitation>
 
     /**
      * List pending invitations for the current tenant.
      * @return Result containing list of pending invitations
      */
-    suspend fun listPendingInvitations(): Result<List<TenantInvitationEntity>>
+    suspend fun listPendingInvitations(): Result<List<TenantInvitation>>
 
     /**
      * Cancel a pending invitation.

@@ -10,7 +10,7 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.database.entity.BankTransactionEntity
-import tech.dokus.domain.model.CashflowEntryEntity
+import tech.dokus.database.entity.CashflowEntryEntity
 
 /**
  * Result of a single signal evaluation during scoring.

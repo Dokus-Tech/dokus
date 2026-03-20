@@ -23,7 +23,7 @@ import tech.dokus.domain.ids.DocumentMatchReviewId
 import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.CashflowEntryEntity
+import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.DocumentDto
@@ -200,7 +200,7 @@ class DocumentReviewCanonicalStateTest {
         draftData: tech.dokus.domain.model.DocumentDraftData,
         ingestionStatus: IngestionStatus? = null,
         isDocumentConfirmed: Boolean = false,
-        cashflowEntryState: DokusState<CashflowEntryEntity> = DokusState.idle(),
+        cashflowEntryState: DokusState<CashflowEntry> = DokusState.idle(),
         sources: List<DocumentSourceDto> = emptyList(),
         pendingMatchReview: DocumentMatchReviewSummaryDto? = null,
     ): DocumentReviewState {
@@ -303,7 +303,7 @@ class DocumentReviewCanonicalStateTest {
         vatAmount = Money.from("3.64"),
     )
 
-    private fun cashflowEntry(status: CashflowEntryStatus) = CashflowEntryEntity(
+    private fun cashflowEntry(status: CashflowEntryStatus) = CashflowEntry(
         id = CashflowEntryId.generate(),
         tenantId = TenantId.generate(),
         sourceType = CashflowSourceType.Invoice,

@@ -20,7 +20,7 @@ import tech.dokus.domain.enums.UserRole
 import tech.dokus.domain.ids.InvitationId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
-import tech.dokus.domain.model.TenantInvitationEntity
+import tech.dokus.database.entity.TenantInvitationEntity
 import tech.dokus.foundation.backend.database.dbQuery
 import tech.dokus.foundation.backend.utils.loggerFor
 import java.security.SecureRandom

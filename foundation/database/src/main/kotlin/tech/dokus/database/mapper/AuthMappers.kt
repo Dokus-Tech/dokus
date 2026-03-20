@@ -1,6 +1,7 @@
 package tech.dokus.database.mapper
 
 import org.jetbrains.exposed.v1.core.ResultRow
+import tech.dokus.database.entity.TenantInvitationEntity
 import tech.dokus.database.repository.auth.ActiveTokenEntity
 import tech.dokus.database.repository.auth.RefreshTokenInfo
 import tech.dokus.database.repository.auth.WelcomeEmailJobEntity
@@ -14,7 +15,7 @@ import tech.dokus.domain.ids.InvitationId
 import tech.dokus.domain.ids.SessionId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
-import tech.dokus.domain.model.TenantInvitationEntity
+import tech.dokus.domain.model.TenantInvitation
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toKotlinUuid
 
@@ -38,6 +39,17 @@ internal fun TenantInvitationEntity.Companion.from(row: ResultRow): TenantInvita
         createdAt = row[TenantInvitationsTable.createdAt]
     )
 }
+
+fun TenantInvitation.Companion.from(entity: TenantInvitationEntity): TenantInvitation = TenantInvitation(
+    id = entity.id,
+    tenantId = entity.tenantId,
+    email = entity.email,
+    role = entity.role,
+    invitedByName = entity.invitedByName,
+    status = entity.status,
+    expiresAt = entity.expiresAt,
+    createdAt = entity.createdAt,
+)
 
 internal fun ActiveTokenEntity.Companion.from(row: ResultRow): ActiveTokenEntity {
     val rowId = row[RefreshTokensTable.id].value

@@ -8,7 +8,7 @@ import tech.dokus.domain.enums.CashflowViewMode
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.model.CancelEntryRequest
 import tech.dokus.domain.model.AutoPaymentStatus
-import tech.dokus.domain.model.CashflowEntryEntity
+import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.model.CashflowOverview
 import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.domain.model.CashflowPaymentRequest
@@ -52,14 +52,14 @@ interface LoadCashflowEntriesUseCase {
         statuses: List<CashflowEntryStatus>? = null,
         sourceType: CashflowSourceType? = null,
         entryId: CashflowEntryId? = null
-    ): Result<PaginatedResponse<CashflowEntryEntity>>
+    ): Result<PaginatedResponse<CashflowEntry>>
 }
 
 /**
  * Use case for getting a single cashflow entry by ID.
  */
 interface GetCashflowEntryUseCase {
-    suspend operator fun invoke(entryId: CashflowEntryId): Result<CashflowEntryEntity>
+    suspend operator fun invoke(entryId: CashflowEntryId): Result<CashflowEntry>
 }
 
 interface GetCashflowPaymentCandidatesUseCase {
@@ -77,7 +77,7 @@ interface RecordCashflowPaymentUseCase {
     suspend operator fun invoke(
         entryId: CashflowEntryId,
         request: CashflowPaymentRequest
-    ): Result<CashflowEntryEntity>
+    ): Result<CashflowEntry>
 }
 
 /**
@@ -87,12 +87,12 @@ interface CancelCashflowEntryUseCase {
     suspend operator fun invoke(
         entryId: CashflowEntryId,
         request: CancelEntryRequest? = null
-    ): Result<CashflowEntryEntity>
+    ): Result<CashflowEntry>
 }
 
 interface UndoAutoPaymentUseCase {
     suspend operator fun invoke(
         entryId: CashflowEntryId,
         request: UndoAutoPaymentRequest = UndoAutoPaymentRequest()
-    ): Result<CashflowEntryEntity>
+    ): Result<CashflowEntry>
 }

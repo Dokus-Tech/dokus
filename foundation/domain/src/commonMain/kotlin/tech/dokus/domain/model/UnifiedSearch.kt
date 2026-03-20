@@ -48,7 +48,7 @@ data class SearchCounts(
 )
 
 @Serializable
-data class SearchDocumentHitEntity(
+data class SearchDocumentHit(
     val documentId: DocumentId,
     val filename: String,
     val documentType: DocumentType? = null,
@@ -61,7 +61,7 @@ data class SearchDocumentHitEntity(
 }
 
 @Serializable
-data class SearchContactHitEntity(
+data class SearchContactHit(
     val contactId: ContactId,
     val name: String,
     val email: String? = null,
@@ -73,7 +73,7 @@ data class SearchContactHitEntity(
 }
 
 @Serializable
-data class SearchTransactionHitEntity(
+data class SearchTransactionHit(
     val entryId: CashflowEntryId,
     val displayText: String,
     val status: CashflowEntryStatus,
@@ -108,9 +108,9 @@ data class UnifiedSearchResponse(
     val query: String,
     val scope: UnifiedSearchScope,
     val counts: SearchCounts = SearchCounts(),
-    val documents: List<SearchDocumentHitEntity> = emptyList(),
-    val contacts: List<SearchContactHitEntity> = emptyList(),
-    val transactions: List<SearchTransactionHitEntity> = emptyList(),
+    val documents: List<SearchDocumentHit> = emptyList(),
+    val contacts: List<SearchContactHit> = emptyList(),
+    val transactions: List<SearchTransactionHit> = emptyList(),
     val suggestions: List<SearchSuggestion> = emptyList(),
     val aggregates: SearchAggregates = SearchAggregates(),
 )

@@ -1,10 +1,10 @@
 package tech.dokus.database.repository.search
 
 import java.math.BigDecimal
-import tech.dokus.domain.model.SearchContactHitEntity
+import tech.dokus.database.entity.SearchContactHitEntity
 import tech.dokus.database.mapper.from
-import tech.dokus.domain.model.SearchDocumentHitEntity
-import tech.dokus.domain.model.SearchTransactionHitEntity
+import tech.dokus.database.entity.SearchDocumentHitEntity
+import tech.dokus.database.entity.SearchTransactionHitEntity
 import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.LowerCase
 import org.jetbrains.exposed.v1.core.ResultRow
@@ -38,8 +38,11 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.SearchAggregates
+import tech.dokus.domain.model.SearchContactHit
 import tech.dokus.domain.model.SearchCounts
+import tech.dokus.domain.model.SearchDocumentHit
 import tech.dokus.domain.model.SearchPreset
+import tech.dokus.domain.model.SearchTransactionHit
 import tech.dokus.domain.model.UnifiedSearchResponse
 import tech.dokus.domain.model.UnifiedSearchScope
 import tech.dokus.domain.model.contact.CounterpartySnapshot
@@ -176,22 +179,22 @@ class SearchRepository(
         pattern: String,
         amountDecimal: BigDecimal?,
         limit: Int,
-    ): List<SearchDocumentHitEntity> = dbQuery {
+    ): List<SearchDocumentHit> = dbQuery {
         documentQuery(tenantId, pattern, amountDecimal)
             .orderBy(DocumentsTable.uploadedAt to SortOrder.DESC)
             .limit(limit)
-            .map { SearchDocumentHitEntity.from(it) }
+            .map { SearchDocumentHit.from(SearchDocumentHitEntity.from(it)) }
     }
 
     private suspend fun searchContacts(
         tenantId: TenantId,
         pattern: String,
         limit: Int
-    ): List<SearchContactHitEntity> = dbQuery {
+    ): List<SearchContactHit> = dbQuery {
         contactQuery(tenantId, pattern)
             .orderBy(ContactsTable.name to SortOrder.ASC)
             .limit(limit)
-            .map { SearchContactHitEntity.from(it) }
+            .map { SearchContactHit.from(SearchContactHitEntity.from(it)) }
     }
 
     private suspend fun searchTransactions(
@@ -199,11 +202,11 @@ class SearchRepository(
         pattern: String,
         amountDecimal: BigDecimal?,
         limit: Int,
-    ): List<SearchTransactionHitEntity> = dbQuery {
+    ): List<SearchTransactionHit> = dbQuery {
         transactionQuery(tenantId, pattern, amountDecimal)
             .orderBy(CashflowEntriesTable.eventDate to SortOrder.DESC)
             .limit(limit)
-            .map { SearchTransactionHitEntity.from(it) }
+            .map { SearchTransactionHit.from(SearchTransactionHitEntity.from(it)) }
     }
 
     private suspend fun transactionAggregates(

@@ -199,7 +199,7 @@ data class TeamMember(
  * Invitation to join a tenant workspace.
  */
 @Serializable
-data class TenantInvitationEntity(
+data class TenantInvitation(
     val id: InvitationId,
     val tenantId: TenantId,
     val email: Email,
@@ -376,6 +376,16 @@ data class AttachmentDto(
 )
 
 // ============================================================================
+// ATTACHMENT REQUEST/RESPONSE MODELS
+// ============================================================================
+
+@Serializable
+data class UploadAttachmentResponse(val attachmentId: AttachmentId)
+
+@Serializable
+data class DownloadUrlResponse(val downloadUrl: String)
+
+// ============================================================================
 // REQUEST/RESPONSE MODELS
 // ============================================================================
 
@@ -420,6 +430,12 @@ data class UpdateInvoiceStatusRequest(
     val status: InvoiceStatus
 )
 
+/**
+ * Request body for PATCH /invoices/{id}/status endpoint.
+ */
+@Serializable
+data class InvoiceStatusRequest(val status: InvoiceStatus)
+
 @Serializable
 data class RecordPaymentRequest(
     val invoiceId: InvoiceId,
@@ -452,6 +468,17 @@ data class CreateExpenseRequest(
     val isRecurring: Boolean? = null,
     val paymentMethod: PaymentMethod? = null,
     val notes: String? = null
+)
+
+@Serializable
+data class CategorizeExpenseRequest(
+    val merchant: String,
+    val description: String? = null
+)
+
+@Serializable
+data class CategorizeExpenseResponse(
+    val category: ExpenseCategory
 )
 
 @Serializable

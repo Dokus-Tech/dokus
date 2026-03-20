@@ -16,7 +16,7 @@ import tech.dokus.domain.ids.InvitationId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.CreateInvitationRequest
 import tech.dokus.domain.model.TeamMember
-import tech.dokus.domain.model.TenantInvitationEntity
+import tech.dokus.domain.model.TenantInvitation
 import tech.dokus.domain.model.TransferOwnershipRequest
 import tech.dokus.domain.model.UpdateMemberRoleRequest
 import tech.dokus.domain.model.auth.BookkeeperFirmSearchItem
@@ -41,7 +41,7 @@ internal class TeamRemoteDataSourceImpl(
         }
     }
 
-    override suspend fun createInvitation(request: CreateInvitationRequest): Result<TenantInvitationEntity> {
+    override suspend fun createInvitation(request: CreateInvitationRequest): Result<TenantInvitation> {
         return runCatching {
             httpClient.post(Team.Invitations()) {
                 contentType(ContentType.Application.Json)
@@ -50,7 +50,7 @@ internal class TeamRemoteDataSourceImpl(
         }
     }
 
-    override suspend fun listPendingInvitations(): Result<List<TenantInvitationEntity>> {
+    override suspend fun listPendingInvitations(): Result<List<TenantInvitation>> {
         return runCatching {
             httpClient.get(Team.Invitations(status = InvitationStatus.Pending)).body()
         }

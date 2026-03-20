@@ -11,7 +11,6 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.v1.jdbc.update
 import org.jetbrains.exposed.v1.jdbc.upsert
-import tech.dokus.database.tables.banking.BankTransactionsTable
 import tech.dokus.database.tables.banking.MatchPatternsTable
 import tech.dokus.database.tables.banking.RejectedMatchPairsTable
 import tech.dokus.database.tables.cashflow.CashflowEntriesTable
@@ -19,8 +18,6 @@ import tech.dokus.database.tables.cashflow.InvoicesTable
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.CashflowDirection
 import tech.dokus.domain.enums.CashflowEntryStatus
-import tech.dokus.domain.enums.CashflowSourceType
-import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.fromDbDecimal
 import tech.dokus.domain.ids.BankTransactionId
@@ -28,7 +25,7 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.CashflowContactRef
-import tech.dokus.domain.model.CashflowEntryEntity
+import tech.dokus.database.entity.CashflowEntryEntity
 import java.util.UUID
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid

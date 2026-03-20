@@ -16,6 +16,7 @@ import tech.dokus.domain.ids.PeppolId
 import tech.dokus.domain.ids.PeppolSettingsId
 import tech.dokus.domain.ids.PeppolTransmissionId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.VatNumber
 
 // ============================================================================
 // PEPPOL PROVIDERS
@@ -263,7 +264,7 @@ data class ProcessedPeppolDocument(
  * Timestamps are non-null since they're always set on insert/update.
  */
 @Serializable
-data class PeppolResolutionEntity(
+data class PeppolResolution(
     val contactId: ContactId,
     val status: PeppolLookupStatus,
     val participantId: String? = null,
@@ -306,3 +307,28 @@ data class PeppolStatusResponse(
         const val STATUS_UNKNOWN = "unknown"
     }
 }
+
+// ============================================================================
+// ROUTE REQUEST/RESPONSE MODELS
+// ============================================================================
+
+@Serializable
+data class ProvidersResponse(val providers: List<String>)
+
+@Serializable
+data class VerifyRecipientRequest(val peppolId: String)
+
+@Serializable
+data class VerifyPeppolIdRequest(val vatNumber: VatNumber)
+
+@Serializable
+data class TestConnectionResponse(val success: Boolean)
+
+@Serializable
+data class SendInvoiceResponse(
+    val success: Boolean,
+    val transmissionId: String,
+    val status: String,
+    val externalDocumentId: String? = null,
+    val errorMessage: String? = null
+)

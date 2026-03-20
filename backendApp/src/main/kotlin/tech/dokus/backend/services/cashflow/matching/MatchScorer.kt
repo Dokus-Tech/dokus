@@ -6,7 +6,7 @@ import tech.dokus.domain.enums.MatchSignalType
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.database.entity.BankTransactionEntity
-import tech.dokus.domain.model.CashflowEntryEntity
+import tech.dokus.database.entity.CashflowEntryEntity
 import tech.dokus.domain.model.TransactionCommunication
 import tech.dokus.domain.util.JaroWinkler
 import kotlin.math.abs

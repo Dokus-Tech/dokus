@@ -1,7 +1,10 @@
 package tech.dokus.database.entity
 
 import kotlinx.datetime.LocalDateTime
+import tech.dokus.domain.enums.PeppolLookupSource
+import tech.dokus.domain.enums.PeppolLookupStatus
 import tech.dokus.domain.enums.PeppolRegistrationStatus
+import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.PeppolId
 import tech.dokus.domain.ids.PeppolRegistrationId
 import tech.dokus.domain.ids.PeppolSettingsId
@@ -21,6 +24,25 @@ data class PeppolRegistrationEntity(
     val errorMessage: String?,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime,
+) {
+    companion object
+}
+
+/**
+ * Database entity for PEPPOL directory cache resolution.
+ */
+data class PeppolResolutionEntity(
+    val contactId: ContactId,
+    val status: PeppolLookupStatus,
+    val participantId: String? = null,
+    val scheme: String? = null,
+    val supportedDocTypes: List<String> = emptyList(),
+    val source: PeppolLookupSource,
+    val vatNumberSnapshot: String? = null,
+    val companyNumberSnapshot: String? = null,
+    val lastCheckedAt: LocalDateTime,
+    val expiresAt: LocalDateTime? = null,
+    val errorMessage: String? = null,
 ) {
     companion object
 }

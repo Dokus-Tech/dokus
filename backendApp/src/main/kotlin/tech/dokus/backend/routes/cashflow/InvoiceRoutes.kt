@@ -1,7 +1,6 @@
 package tech.dokus.backend.routes.cashflow
 
 import io.ktor.http.HttpStatusCode
-import kotlinx.serialization.Serializable
 import io.ktor.server.request.receive
 import io.ktor.server.request.receiveNullable
 import io.ktor.server.resources.delete
@@ -17,12 +16,12 @@ import tech.dokus.backend.services.cashflow.InvoiceService
 import tech.dokus.backend.services.pdf.InvoicePdfService
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.domain.enums.DocumentDirection
-import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.model.CreateInvoiceRequest
 import tech.dokus.domain.model.InvoicePdfResponse
+import tech.dokus.domain.model.InvoiceStatusRequest
 import tech.dokus.domain.model.RecordPaymentRequest
 import tech.dokus.domain.routes.Invoices
 import tech.dokus.foundation.backend.security.authenticateJwt
@@ -192,7 +191,3 @@ internal fun Route.invoiceRoutes() {
         }
     }
 }
-
-// Request DTOs
-@Serializable
-private data class InvoiceStatusRequest(val status: InvoiceStatus)

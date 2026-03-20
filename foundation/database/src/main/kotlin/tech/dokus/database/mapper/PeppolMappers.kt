@@ -16,7 +16,8 @@ import tech.dokus.domain.ids.PeppolRegistrationId
 import tech.dokus.domain.ids.PeppolSettingsId
 import tech.dokus.domain.ids.PeppolTransmissionId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.PeppolResolutionEntity
+import tech.dokus.database.entity.PeppolResolutionEntity
+import tech.dokus.domain.model.PeppolResolution
 import tech.dokus.domain.model.PeppolTransmissionDto
 
 internal fun ResultRow.toPeppolTransmissionDto(): PeppolTransmissionDto = PeppolTransmissionDto(
@@ -116,3 +117,17 @@ internal fun PeppolResolutionEntity.Companion.from(row: ResultRow): PeppolResolu
         errorMessage = row[PeppolDirectoryCacheTable.errorMessage]
     )
 }
+
+fun PeppolResolution.Companion.from(entity: PeppolResolutionEntity): PeppolResolution = PeppolResolution(
+    contactId = entity.contactId,
+    status = entity.status,
+    participantId = entity.participantId,
+    scheme = entity.scheme,
+    supportedDocTypes = entity.supportedDocTypes,
+    source = entity.source,
+    vatNumberSnapshot = entity.vatNumberSnapshot,
+    companyNumberSnapshot = entity.companyNumberSnapshot,
+    lastCheckedAt = entity.lastCheckedAt,
+    expiresAt = entity.expiresAt,
+    errorMessage = entity.errorMessage,
+)

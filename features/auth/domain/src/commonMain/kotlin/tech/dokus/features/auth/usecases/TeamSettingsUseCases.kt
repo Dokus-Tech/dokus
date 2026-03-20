@@ -6,7 +6,7 @@ import tech.dokus.domain.ids.InvitationId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.CreateInvitationRequest
 import tech.dokus.domain.model.TeamMember
-import tech.dokus.domain.model.TenantInvitationEntity
+import tech.dokus.domain.model.TenantInvitation
 import tech.dokus.domain.model.auth.BookkeeperFirmSearchItem
 import tech.dokus.domain.model.auth.GrantBookkeeperAccessResponse
 import tech.dokus.domain.model.auth.TenantBookkeeperAccessItem
@@ -22,14 +22,14 @@ interface ListTeamMembersUseCase {
  * Use case for listing pending invitations.
  */
 interface ListPendingInvitationsUseCase {
-    suspend operator fun invoke(): Result<List<TenantInvitationEntity>>
+    suspend operator fun invoke(): Result<List<TenantInvitation>>
 }
 
 /**
  * Use case for creating a team invitation.
  */
 interface CreateInvitationUseCase {
-    suspend operator fun invoke(request: CreateInvitationRequest): Result<TenantInvitationEntity>
+    suspend operator fun invoke(request: CreateInvitationRequest): Result<TenantInvitation>
 }
 
 /**

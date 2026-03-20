@@ -1,6 +1,7 @@
 package tech.dokus.database.mapper
 
 import org.jetbrains.exposed.v1.core.ResultRow
+import tech.dokus.database.entity.CashflowEntryEntity
 import tech.dokus.database.tables.cashflow.CashflowEntriesTable
 import tech.dokus.domain.Money
 import tech.dokus.domain.fromDbDecimal
@@ -9,7 +10,7 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.CashflowContactRef
-import tech.dokus.domain.model.CashflowEntryEntity
+import tech.dokus.domain.model.CashflowEntry
 
 internal fun CashflowEntryEntity.Companion.from(
     row: ResultRow,
@@ -40,3 +41,23 @@ internal fun CashflowEntryEntity.Companion.from(
         updatedAt = row[CashflowEntriesTable.updatedAt]
     )
 }
+
+fun CashflowEntry.Companion.from(entity: CashflowEntryEntity): CashflowEntry = CashflowEntry(
+    id = entity.id,
+    tenantId = entity.tenantId,
+    sourceType = entity.sourceType,
+    sourceId = entity.sourceId,
+    documentId = entity.documentId,
+    direction = entity.direction,
+    eventDate = entity.eventDate,
+    amountGross = entity.amountGross,
+    amountVat = entity.amountVat,
+    remainingAmount = entity.remainingAmount,
+    currency = entity.currency,
+    status = entity.status,
+    paidAt = entity.paidAt,
+    contact = entity.contact,
+    description = entity.description,
+    createdAt = entity.createdAt,
+    updatedAt = entity.updatedAt,
+)

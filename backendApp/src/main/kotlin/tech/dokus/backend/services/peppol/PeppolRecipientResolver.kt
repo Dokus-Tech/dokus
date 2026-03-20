@@ -6,7 +6,7 @@ import tech.dokus.domain.enums.PeppolLookupSource
 import tech.dokus.domain.enums.PeppolLookupStatus
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.PeppolResolutionEntity
+import tech.dokus.database.entity.PeppolResolutionEntity
 import tech.dokus.domain.model.PeppolStatusResponse
 import tech.dokus.foundation.backend.utils.loggerFor
 import tech.dokus.peppol.provider.client.RecommandProvider

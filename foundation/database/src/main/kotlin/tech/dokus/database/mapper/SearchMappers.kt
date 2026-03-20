@@ -1,6 +1,9 @@
 package tech.dokus.database.mapper
 
 import org.jetbrains.exposed.v1.core.ResultRow
+import tech.dokus.database.entity.SearchContactHitEntity
+import tech.dokus.database.entity.SearchDocumentHitEntity
+import tech.dokus.database.entity.SearchTransactionHitEntity
 import tech.dokus.database.tables.cashflow.CashflowEntriesTable
 import tech.dokus.database.tables.cashflow.ExpensesTable
 import tech.dokus.database.tables.cashflow.InvoicesTable
@@ -12,9 +15,9 @@ import tech.dokus.domain.fromDbDecimal
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.model.SearchContactHitEntity
-import tech.dokus.domain.model.SearchDocumentHitEntity
-import tech.dokus.domain.model.SearchTransactionHitEntity
+import tech.dokus.domain.model.SearchContactHit
+import tech.dokus.domain.model.SearchDocumentHit
+import tech.dokus.domain.model.SearchTransactionHit
 import tech.dokus.domain.model.contact.CounterpartySnapshot
 import tech.dokus.domain.utils.json
 
@@ -73,3 +76,36 @@ internal fun SearchTransactionHitEntity.Companion.from(row: ResultRow): SearchTr
         documentId = row.getOrNull(DocumentsTable.id)?.let { DocumentId.parse(it.value.toString()) },
     )
 }
+
+// ── Entity → DTO mappers ────────────────────────────────────────────────
+
+fun SearchDocumentHit.Companion.from(entity: SearchDocumentHitEntity): SearchDocumentHit = SearchDocumentHit(
+    documentId = entity.documentId,
+    filename = entity.filename,
+    documentType = entity.documentType,
+    status = entity.status,
+    counterpartyName = entity.counterpartyName,
+    counterpartyVat = entity.counterpartyVat,
+    amount = entity.amount,
+)
+
+fun SearchContactHit.Companion.from(entity: SearchContactHitEntity): SearchContactHit = SearchContactHit(
+    contactId = entity.contactId,
+    name = entity.name,
+    email = entity.email,
+    vatNumber = entity.vatNumber,
+    companyNumber = entity.companyNumber,
+    isActive = entity.isActive,
+)
+
+fun SearchTransactionHit.Companion.from(entity: SearchTransactionHitEntity): SearchTransactionHit = SearchTransactionHit(
+    entryId = entity.entryId,
+    displayText = entity.displayText,
+    status = entity.status,
+    date = entity.date,
+    amount = entity.amount,
+    direction = entity.direction,
+    contactName = entity.contactName,
+    documentFilename = entity.documentFilename,
+    documentId = entity.documentId,
+)

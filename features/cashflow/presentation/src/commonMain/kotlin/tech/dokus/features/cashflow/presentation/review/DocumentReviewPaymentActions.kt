@@ -9,7 +9,7 @@ import tech.dokus.domain.Money
 import tech.dokus.domain.enums.BankTransactionStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
-import tech.dokus.domain.model.CashflowEntryEntity
+import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.model.CashflowPaymentRequest
 import tech.dokus.domain.model.UndoAutoPaymentRequest
 import tech.dokus.features.cashflow.usecases.GetCashflowEntryUseCase
@@ -65,7 +65,7 @@ internal class DocumentReviewPaymentActions(
 
     suspend fun DocumentReviewCtx.handleLoadAutoPaymentStatus() {
         withState {
-            val entry = (cashflowEntryState as? DokusState.Success<*>)?.data as? CashflowEntryEntity ?: run {
+            val entry = (cashflowEntryState as? DokusState.Success<*>)?.data as? CashflowEntry ?: run {
                 updateState { copy(autoPaymentStatus = DokusState.idle()) }
                 return@withState
             }
@@ -97,7 +97,7 @@ internal class DocumentReviewPaymentActions(
 
     suspend fun DocumentReviewCtx.handleOpenPaymentSheet() {
         withState {
-            val entry = (cashflowEntryState as? DokusState.Success<*>)?.data as? CashflowEntryEntity ?: run {
+            val entry = (cashflowEntryState as? DokusState.Success<*>)?.data as? CashflowEntry ?: run {
                 intent(DocumentReviewIntent.LoadCashflowEntry)
                 return@withState
             }
@@ -122,7 +122,7 @@ internal class DocumentReviewPaymentActions(
 
     suspend fun DocumentReviewCtx.handleLoadPaymentCandidates() {
         withState {
-            val entry = (cashflowEntryState as? DokusState.Success<*>)?.data as? CashflowEntryEntity ?: return@withState
+            val entry = (cashflowEntryState as? DokusState.Success<*>)?.data as? CashflowEntry ?: return@withState
             val sheet = paymentSheetState ?: return@withState
             updateState {
                 copy(
@@ -274,7 +274,7 @@ internal class DocumentReviewPaymentActions(
 
     suspend fun DocumentReviewCtx.handleSubmitPayment() {
         withState {
-            val entry = (cashflowEntryState as? DokusState.Success<*>)?.data as? CashflowEntryEntity
+            val entry = (cashflowEntryState as? DokusState.Success<*>)?.data as? CashflowEntry
                 ?: return@withState
             val sheet = paymentSheetState ?: return@withState
 
@@ -346,7 +346,7 @@ internal class DocumentReviewPaymentActions(
     suspend fun DocumentReviewCtx.handleUndoAutoPayment(reason: String?) {
         withState {
             if (isUndoingAutoPayment) return@withState
-            val entry = (cashflowEntryState as? DokusState.Success<*>)?.data as? CashflowEntryEntity ?: return@withState
+            val entry = (cashflowEntryState as? DokusState.Success<*>)?.data as? CashflowEntry ?: return@withState
             updateState { copy(isUndoingAutoPayment = true) }
             launch {
                 undoAutoPayment(

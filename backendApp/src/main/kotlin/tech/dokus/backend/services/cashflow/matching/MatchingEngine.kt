@@ -1,6 +1,5 @@
 package tech.dokus.backend.services.cashflow.matching
 
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import tech.dokus.database.repository.banking.BankTransactionRepository
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
@@ -18,7 +17,7 @@ import tech.dokus.backend.mappers.from
 import tech.dokus.database.mapper.from
 import tech.dokus.database.entity.BankTransactionEntity
 import tech.dokus.domain.model.BankTransactionDto
-import tech.dokus.domain.model.CashflowEntryEntity
+import tech.dokus.database.entity.CashflowEntryEntity
 import tech.dokus.backend.services.banking.sse.BankingSsePublisher
 import tech.dokus.backend.services.cashflow.AutoPaymentService
 import tech.dokus.foundation.backend.utils.loggerFor

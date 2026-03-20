@@ -6,7 +6,6 @@ import io.ktor.server.resources.get
 import io.ktor.server.resources.post
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
-import kotlinx.serialization.Serializable
 import org.koin.ktor.ext.inject
 import tech.dokus.backend.security.requirePermission
 import tech.dokus.backend.security.requireTenantId
@@ -21,10 +20,14 @@ import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.model.PeppolInboxPollResponse
+import tech.dokus.domain.model.ProvidersResponse
+import tech.dokus.domain.model.SendInvoiceResponse
+import tech.dokus.domain.model.TestConnectionResponse
+import tech.dokus.domain.model.VerifyPeppolIdRequest
+import tech.dokus.domain.model.VerifyRecipientRequest
 import tech.dokus.domain.enums.Permission
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.InvoiceId
-import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.PeppolConnectStatus
 import tech.dokus.domain.routes.Peppol
 import tech.dokus.foundation.backend.security.authenticateJwt
@@ -484,26 +487,3 @@ internal fun Route.peppolRoutes() {
         }
     }
 }
-
-// Request/Response DTOs
-
-@Serializable
-private data class ProvidersResponse(val providers: List<String>)
-
-@Serializable
-private data class VerifyRecipientRequest(val peppolId: String)
-
-@Serializable
-private data class VerifyPeppolIdRequest(val vatNumber: VatNumber)
-
-@Serializable
-private data class TestConnectionResponse(val success: Boolean)
-
-@Serializable
-private data class SendInvoiceResponse(
-    val success: Boolean,
-    val transmissionId: String,
-    val status: String,
-    val externalDocumentId: String? = null,
-    val errorMessage: String? = null
-)

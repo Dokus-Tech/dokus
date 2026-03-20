@@ -2,7 +2,7 @@ package tech.dokus.backend.services.cashflow.matching
 
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.CashflowDirection
-import tech.dokus.domain.model.CashflowEntryEntity
+import tech.dokus.database.entity.CashflowEntryEntity
 import kotlin.math.abs
 import kotlin.math.max
 

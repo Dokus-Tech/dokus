@@ -10,7 +10,6 @@ import io.ktor.server.resources.post
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.RoutingContext
-import kotlinx.serialization.Serializable
 import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
 import tech.dokus.backend.security.requireTenantId
@@ -29,6 +28,8 @@ import tech.dokus.domain.ids.ExpenseId
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.model.AttachmentDto
 import tech.dokus.domain.model.DocumentDto
+import tech.dokus.domain.model.DownloadUrlResponse
+import tech.dokus.domain.model.UploadAttachmentResponse
 import tech.dokus.domain.routes.Attachments
 import tech.dokus.domain.routes.Expenses
 import tech.dokus.domain.routes.Invoices
@@ -338,9 +339,3 @@ private suspend fun RoutingContext.handleMultipartUpload(maxFileSizeBytes: Long)
     return Triple(fileBytes!!, filename!!, contentType ?: "application/octet-stream")
 }
 
-// Response DTOs
-@Serializable
-private data class UploadAttachmentResponse(val attachmentId: AttachmentId)
-
-@Serializable
-private data class DownloadUrlResponse(val downloadUrl: String)

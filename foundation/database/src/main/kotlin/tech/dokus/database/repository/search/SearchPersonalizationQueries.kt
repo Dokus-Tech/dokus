@@ -21,7 +21,8 @@ import org.jetbrains.exposed.v1.jdbc.Query
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import tech.dokus.database.mapper.from
-import tech.dokus.domain.model.SearchTransactionHitEntity
+import tech.dokus.database.entity.SearchTransactionHitEntity
+import tech.dokus.domain.model.SearchTransactionHit
 import tech.dokus.database.tables.cashflow.CashflowEntriesTable
 import tech.dokus.database.tables.cashflow.ExpensesTable
 import tech.dokus.database.tables.cashflow.InvoicesTable
@@ -50,7 +51,7 @@ private val PresetStatuses = listOf(
 )
 
 data class PresetSearchResult(
-    val transactions: List<SearchTransactionHitEntity>,
+    val transactions: List<SearchTransactionHit>,
     val count: Long,
     val aggregates: SearchAggregates,
 )
@@ -95,11 +96,11 @@ class SearchPersonalizationQueries {
         tenantId: TenantId,
         preset: SearchPreset,
         limit: Int,
-    ): List<SearchTransactionHitEntity> = dbQuery {
+    ): List<SearchTransactionHit> = dbQuery {
         presetTransactionQuery(tenantId, preset)
             .orderBy(CashflowEntriesTable.eventDate to SortOrder.DESC)
             .limit(limit)
-            .map { SearchTransactionHitEntity.from(it) }
+            .map { SearchTransactionHit.from(SearchTransactionHitEntity.from(it)) }
     }
 
     private suspend fun presetAggregates(

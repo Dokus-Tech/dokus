@@ -70,11 +70,11 @@ import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.SearchAggregates
-import tech.dokus.domain.model.SearchContactHitEntity
+import tech.dokus.domain.model.SearchContactHit
 import tech.dokus.domain.model.SearchCounts
-import tech.dokus.domain.model.SearchDocumentHitEntity
+import tech.dokus.domain.model.SearchDocumentHit
 import tech.dokus.domain.model.SearchSuggestion
-import tech.dokus.domain.model.SearchTransactionHitEntity
+import tech.dokus.domain.model.SearchTransactionHit
 import tech.dokus.domain.model.UnifiedSearchResponse
 import tech.dokus.domain.model.UnifiedSearchScope
 import tech.dokus.foundation.aura.components.common.DokusLoader
@@ -607,7 +607,7 @@ private data class SearchScopeTab(
 
 private fun previewResponse(query: String, scope: UnifiedSearchScope): UnifiedSearchResponse {
     val docs = listOf(
-        SearchDocumentHitEntity(
+        SearchDocumentHit(
             documentId = DocumentId.parse("00000000-0000-0000-0000-000000000111"),
             filename = "KBC Bank - February.pdf",
             documentType = DocumentType.Receipt,
@@ -615,7 +615,7 @@ private fun previewResponse(query: String, scope: UnifiedSearchScope): UnifiedSe
             counterpartyName = "KBC Bank NV",
             counterpartyVat = "BE0462920226",
         ),
-        SearchDocumentHitEntity(
+        SearchDocumentHit(
             documentId = DocumentId.parse("00000000-0000-0000-0000-000000000112"),
             filename = "Tesla Belgium - January.pdf",
             documentType = DocumentType.Receipt,
@@ -625,7 +625,7 @@ private fun previewResponse(query: String, scope: UnifiedSearchScope): UnifiedSe
         )
     )
     val contacts = listOf(
-        SearchContactHitEntity(
+        SearchContactHit(
             contactId = ContactId.parse("00000000-0000-0000-0000-000000000211"),
             name = "KBC Bank NV",
             email = "help@kbc.be",
@@ -635,7 +635,7 @@ private fun previewResponse(query: String, scope: UnifiedSearchScope): UnifiedSe
         )
     )
     val transactions = listOf(
-        SearchTransactionHitEntity(
+        SearchTransactionHit(
             entryId = CashflowEntryId.parse("00000000-0000-0000-0000-000000000311"),
             displayText = "KBC Bank NV",
             status = CashflowEntryStatus.Paid,
@@ -645,7 +645,7 @@ private fun previewResponse(query: String, scope: UnifiedSearchScope): UnifiedSe
             contactName = "KBC Bank NV",
             documentFilename = "KBC Bank - February.pdf",
         ),
-        SearchTransactionHitEntity(
+        SearchTransactionHit(
             entryId = CashflowEntryId.parse("00000000-0000-0000-0000-000000000312"),
             displayText = "KBC Bank NV",
             status = CashflowEntryStatus.Open,
