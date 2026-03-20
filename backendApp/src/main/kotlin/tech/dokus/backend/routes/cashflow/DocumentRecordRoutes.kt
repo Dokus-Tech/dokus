@@ -28,6 +28,7 @@ import kotlinx.datetime.toLocalDateTime
 import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
 import tech.dokus.backend.routes.cashflow.documents.addDownloadUrl
+import tech.dokus.backend.routes.cashflow.documents.ConfirmedBankStatement
 import tech.dokus.backend.routes.cashflow.documents.confirmedEntityToDocDto
 import tech.dokus.backend.routes.cashflow.documents.findConfirmedEntity
 import tech.dokus.backend.routes.cashflow.documents.toDto
@@ -47,6 +48,8 @@ import tech.dokus.backend.services.documents.sse.DocumentCollectionEventHub
 import tech.dokus.backend.services.documents.sse.DocumentSnapshotEventHub
 import tech.dokus.backend.services.documents.sse.DocumentSnapshotSignal
 import tech.dokus.backend.services.documents.sse.DocumentSsePublisher
+import tech.dokus.database.repository.banking.BankStatementRepository
+import tech.dokus.database.repository.banking.BankTransactionRepository
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.database.repository.cashflow.CreditNoteRepository
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
@@ -126,6 +129,8 @@ internal fun Route.documentRecordRoutes() {
     val invoiceRepository by inject<InvoiceRepository>()
     val expenseRepository by inject<ExpenseRepository>()
     val creditNoteRepository by inject<CreditNoteRepository>()
+    val bankStatementRepository by inject<BankStatementRepository>()
+    val bankTransactionRepository by inject<BankTransactionRepository>()
     val cashflowEntriesRepository by inject<CashflowEntriesRepository>()
     val documentSourceRepository by inject<DocumentSourceRepository>()
     val projectionReconciliationService by inject<CashflowProjectionReconciliationService>()
@@ -892,7 +897,9 @@ internal fun Route.documentRecordRoutes() {
                     tenantId,
                     invoiceRepository,
                     expenseRepository,
-                    creditNoteRepository
+                    creditNoteRepository,
+                    bankStatementRepository,
+                    bankTransactionRepository,
                 )
 
                 if (confirmedEntity != null) {
@@ -958,7 +965,9 @@ internal fun Route.documentRecordRoutes() {
                 tenantId,
                 invoiceRepository,
                 expenseRepository,
-                creditNoteRepository
+                creditNoteRepository,
+                bankStatementRepository,
+                bankTransactionRepository,
             )
 
             // Resolve contact: linked > auto-create from snapshot > null
@@ -1065,7 +1074,8 @@ internal fun Route.documentRecordRoutes() {
             // Find the confirmed entity
             val confirmedEntity = findConfirmedEntity(
                 documentId, docType, tenantId,
-                invoiceRepository, expenseRepository, creditNoteRepository
+                invoiceRepository, expenseRepository, creditNoteRepository,
+                bankStatementRepository, bankTransactionRepository
             ) ?: throw DokusException.NotFound("Confirmed entity not found")
 
             // Resolve source type and entity ID string for cashflow entry lookup
@@ -1106,6 +1116,10 @@ internal fun Route.documentRecordRoutes() {
                 is InvoiceEntity -> invoiceRepository.deleteInvoice(confirmedEntity.id, tenantId)
                 is tech.dokus.database.entity.ExpenseEntity -> expenseRepository.deleteExpense(confirmedEntity.id, tenantId)
                 is tech.dokus.database.entity.CreditNoteEntity -> creditNoteRepository.deleteCreditNote(confirmedEntity.id, tenantId)
+                is ConfirmedBankStatement -> {
+                    bankTransactionRepository.deleteByDocument(tenantId, documentId)
+                    bankStatementRepository.deleteByDocumentId(tenantId, documentId)
+                }
                 else -> throw DokusException.BadRequest("Unsupported entity type for unconfirm")
             }
 

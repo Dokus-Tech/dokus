@@ -20,6 +20,7 @@ internal class DocumentReviewLoader(
                 document = document.asLoading,
                 isAwaitingExtraction = false,
                 selectedQueueDocumentId = if (queueState != null) documentId else selectedQueueDocumentId,
+                incomingPreviewState = null,
                 // Reset document-specific UI state to prevent stale data from previous document
                 sourceViewerState = null,
                 paymentSheetState = null,
@@ -92,9 +93,13 @@ internal class DocumentReviewLoader(
         val previewUrl = document.document.downloadUrl
         var previousPreviewUrl: String? = null
         var previousPreviewState: DocumentPreviewState = DocumentPreviewState.Loading
+        var previousIncomingSourceId: tech.dokus.domain.ids.DocumentSourceId? = null
+        var previousIncomingPreviewState: DocumentPreviewState? = null
         withState {
             previousPreviewUrl = this.previewUrl
             previousPreviewState = this.previewState
+            previousIncomingSourceId = documentRecord?.pendingMatchReview?.incomingSourceId
+            previousIncomingPreviewState = incomingPreviewState
         }
         val shouldReloadPreview = previousPreviewUrl != previewUrl ||
             previousPreviewState is DocumentPreviewState.Loading
@@ -102,6 +107,19 @@ internal class DocumentReviewLoader(
             previousPreviewState
         } else {
             DocumentPreviewState.Loading
+        }
+        val incomingSourceId = document.pendingMatchReview?.incomingSourceId
+        val shouldReloadIncomingPreview = when {
+            incomingSourceId == null -> false
+            previousIncomingSourceId != incomingSourceId -> true
+            previousIncomingPreviewState == null -> true
+            previousIncomingPreviewState is DocumentPreviewState.Loading -> true
+            else -> false
+        }
+        val incomingPreviewState = when {
+            incomingSourceId == null -> null
+            previousIncomingSourceId == incomingSourceId && previousIncomingPreviewState != null -> previousIncomingPreviewState
+            else -> DocumentPreviewState.Loading
         }
         var selectedQueueDocumentId: DocumentId? = null
         withState {
@@ -128,6 +146,7 @@ internal class DocumentReviewLoader(
                         ),
                         isAwaitingExtraction = false,
                         previewState = previewState,
+                        incomingPreviewState = incomingPreviewState,
                         // Preserve existing UI state where available
                         isContactRequired = false,
                         documentStatus = draft?.documentStatus,
@@ -155,6 +174,7 @@ internal class DocumentReviewLoader(
                         ),
                         isAwaitingExtraction = true,
                         previewState = previewState,
+                        incomingPreviewState = incomingPreviewState,
                         selectedQueueDocumentId = selectedQueueDocumentId ?: this@transitionToDocumentState.let {
                             var id: DocumentId? = null
                             withState { id = this.selectedQueueDocumentId }
@@ -198,6 +218,7 @@ internal class DocumentReviewLoader(
                 ),
                 isAwaitingExtraction = false,
                 previewState = previewState,
+                incomingPreviewState = incomingPreviewState,
                 isContactRequired = content.isContactRequired,
                 documentStatus = draft.documentStatus,
                 confirmedCashflowEntryId = document.cashflowEntryId,
@@ -211,7 +232,7 @@ internal class DocumentReviewLoader(
             )
         }
 
-        if (shouldReloadPreview) {
+        if (shouldReloadPreview || shouldReloadIncomingPreview) {
             intent(DocumentReviewIntent.LoadPreviewPages)
         }
         if (document.cashflowEntryId != null && document.cashflowEntryId != previousConfirmedCashflowEntryId) {

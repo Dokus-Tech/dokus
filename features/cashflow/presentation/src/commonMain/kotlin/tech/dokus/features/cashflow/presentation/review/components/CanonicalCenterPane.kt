@@ -89,7 +89,7 @@ internal fun CanonicalCenterPane(
 
     // Side-by-side PDF comparison when pending match review exists
     val pendingReview = state.documentRecord?.pendingMatchReview
-    if (pendingReview != null) {
+    if (state.shouldShowPendingMatchComparison && pendingReview != null) {
         DocumentComparisonPane(
             existingPreviewState = state.previewState,
             incomingPreviewState = state.incomingPreviewState,

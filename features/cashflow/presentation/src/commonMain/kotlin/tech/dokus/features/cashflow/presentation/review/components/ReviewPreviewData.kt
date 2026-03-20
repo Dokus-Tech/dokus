@@ -159,6 +159,9 @@ internal fun previewReviewContentState(
         )
     }
 
+    val uploadSourceId = DocumentSourceId.generate()
+    val peppolSourceId = DocumentSourceId.generate()
+
     val record = DocumentDetailDto(
         document = DocumentDto(
             id = documentId,
@@ -173,6 +176,7 @@ internal fun previewReviewContentState(
         pendingMatchReview = if (showPendingMatchReview) {
             DocumentMatchReviewSummaryDto(
                 reviewId = DocumentMatchReviewId.generate(),
+                incomingSourceId = uploadSourceId,
                 reasonType = ReviewReason.MaterialConflict,
                 status = DocumentMatchReviewStatus.Pending,
                 createdAt = previewNow,
@@ -182,7 +186,7 @@ internal fun previewReviewContentState(
         },
         sources = listOf(
             DocumentSourceDto(
-                id = DocumentSourceId.generate(),
+                id = uploadSourceId,
                 tenantId = tenantId,
                 documentId = documentId,
                 blobId = DocumentBlobId.generate(),
@@ -195,7 +199,7 @@ internal fun previewReviewContentState(
                 matchType = if (hasCrossMatchedSource) SourceMatchKind.SameContent else null,
             ),
             DocumentSourceDto(
-                id = DocumentSourceId.generate(),
+                id = peppolSourceId,
                 tenantId = tenantId,
                 documentId = documentId,
                 blobId = DocumentBlobId.generate(),

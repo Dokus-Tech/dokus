@@ -47,7 +47,7 @@ class DocumentProcessingWorkerTimeoutTest {
             tenantId = TenantId.generate(),
         )
 
-        coEvery { ingestionRepository.recoverStaleRunsDetailed() } returns emptyList()
+        coEvery { ingestionRepository.recoverStaleRunsDetailed(any()) } returns emptyList()
         coEvery { ingestionRepository.findPendingForProcessing(2) } returns listOf(firstRun, secondRun)
         coEvery { ingestionRepository.markAsProcessing(any(), "koog-graph") } returns true
         coEvery { ingestionRepository.markAsFailed(any(), any()) } returns true

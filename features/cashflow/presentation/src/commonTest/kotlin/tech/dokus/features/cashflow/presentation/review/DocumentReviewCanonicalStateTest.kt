@@ -77,6 +77,35 @@ class DocumentReviewCanonicalStateTest {
     }
 
     @Test
+    fun `pending match review bypasses pdf fallback for unconfirmed invoice`() {
+        val state = contentState(
+            draftData = invoiceDraft(),
+            pendingMatchReview = pendingReview(),
+        )
+
+        assertFalse(state.canRenderCanonical)
+        assertFalse(state.shouldUsePdfFallback)
+        assertTrue(state.shouldShowPendingMatchComparison)
+    }
+
+    @Test
+    fun `source viewer hides comparison-active state while pending review remains`() {
+        val state = contentState(
+            draftData = invoiceDraft(),
+            pendingMatchReview = pendingReview(),
+        ).copy(
+            sourceViewerState = SourceEvidenceViewerState(
+                sourceId = DocumentSourceId.generate(),
+                sourceName = "incoming.pdf",
+                sourceType = DocumentSource.Upload,
+            )
+        )
+
+        assertFalse(state.shouldUsePdfFallback)
+        assertFalse(state.shouldShowPendingMatchComparison)
+    }
+
+    @Test
     fun `receipt uses pdf fallback`() {
         val state = contentState(receiptDraft())
 
@@ -310,6 +339,7 @@ class DocumentReviewCanonicalStateTest {
 
     private fun pendingReview() = DocumentMatchReviewSummaryDto(
         reviewId = DocumentMatchReviewId.generate(),
+        incomingSourceId = DocumentSourceId.generate(),
         reasonType = ReviewReason.MaterialConflict,
         status = DocumentMatchReviewStatus.Pending,
         createdAt = LocalDateTime(2026, 2, 10, 0, 0, 0),

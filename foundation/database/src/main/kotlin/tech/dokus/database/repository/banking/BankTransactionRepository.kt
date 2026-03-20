@@ -151,6 +151,16 @@ class BankTransactionRepository {
         ).map { BankTransactionEntity.from(it) }
     }
 
+    suspend fun deleteByDocument(
+        tenantId: TenantId,
+        documentId: DocumentId,
+    ): Int = newSuspendedTransaction {
+        BankTransactionsTable.deleteWhere {
+            (BankTransactionsTable.tenantId eq tenantId.value.toJavaUuid()) and
+                (BankTransactionsTable.documentId eq documentId.value.toJavaUuid())
+        }
+    }
+
     suspend fun findById(
         tenantId: TenantId,
         transactionId: BankTransactionId

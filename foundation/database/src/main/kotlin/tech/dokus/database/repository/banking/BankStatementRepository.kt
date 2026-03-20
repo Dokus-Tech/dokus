@@ -2,6 +2,7 @@ package tech.dokus.database.repository.banking
 
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import tech.dokus.database.entity.BankStatementEntity
@@ -22,6 +23,16 @@ import kotlin.uuid.toJavaUuid
 
 @OptIn(ExperimentalUuidApi::class)
 class BankStatementRepository {
+
+    suspend fun findByDocumentId(
+        tenantId: TenantId,
+        documentId: DocumentId,
+    ): BankStatementEntity? = dbQuery {
+        BankStatementsTable.selectAll().where {
+            (BankStatementsTable.tenantId eq tenantId.value.toJavaUuid()) and
+                (BankStatementsTable.documentId eq documentId.value.toJavaUuid())
+        }.firstOrNull()?.let { BankStatementEntity.from(it) }
+    }
 
     /**
      * Find a statement by file hash (strong dedup).
@@ -78,6 +89,16 @@ class BankStatementRepository {
             it[BankStatementsTable.openingBalance] = openingBalance?.toDbDecimal()
             it[BankStatementsTable.closingBalance] = closingBalance?.toDbDecimal()
             it[BankStatementsTable.transactionCount] = transactionCount
+        }
+    }
+
+    suspend fun deleteByDocumentId(
+        tenantId: TenantId,
+        documentId: DocumentId,
+    ): Int = dbQuery {
+        BankStatementsTable.deleteWhere {
+            (BankStatementsTable.tenantId eq tenantId.value.toJavaUuid()) and
+                (BankStatementsTable.documentId eq documentId.value.toJavaUuid())
         }
     }
 

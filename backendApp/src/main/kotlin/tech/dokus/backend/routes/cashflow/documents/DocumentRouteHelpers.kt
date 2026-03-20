@@ -1,6 +1,8 @@
 package tech.dokus.backend.routes.cashflow.documents
 
 import kotlinx.serialization.json.JsonElement
+import tech.dokus.database.entity.BankStatementEntity
+import tech.dokus.database.entity.BankTransactionEntity
 import tech.dokus.database.repository.cashflow.CreditNoteRepository
 import tech.dokus.database.repository.cashflow.DocumentMatchReviewSummary
 import tech.dokus.database.repository.cashflow.DocumentRepository
@@ -9,7 +11,10 @@ import tech.dokus.database.repository.cashflow.DraftSummary
 import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.database.repository.cashflow.IngestionRunSummary
 import tech.dokus.database.repository.cashflow.InvoiceRepository
+import tech.dokus.database.repository.banking.BankStatementRepository
+import tech.dokus.database.repository.banking.BankTransactionRepository
 import tech.dokus.domain.enums.ContactLinkSource
+import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
@@ -20,7 +25,6 @@ import tech.dokus.database.entity.ExpenseEntity
 import tech.dokus.database.entity.InvoiceEntity
 import tech.dokus.domain.Quantity
 import tech.dokus.domain.enums.CreditNoteType
-import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.model.DocDto
 import tech.dokus.domain.model.DocLineItem
 import tech.dokus.domain.model.DocumentDraftDto
@@ -32,8 +36,11 @@ import tech.dokus.domain.model.DocumentSourceDto
 import tech.dokus.domain.model.InvoicePeppolInfo
 import tech.dokus.domain.model.PaymentLinkInfo
 import tech.dokus.domain.model.InvoicePaymentInfo
+import tech.dokus.domain.model.PartyDraft
+import tech.dokus.domain.model.TransactionCommunication
 import tech.dokus.domain.model.UpdateDraftRequest
 import tech.dokus.domain.model.contact.ContactSuggestionDto
+import tech.dokus.domain.model.contact.CounterpartySnapshot
 import tech.dokus.domain.model.contact.CounterpartyInfo
 import tech.dokus.domain.model.contact.ResolvedContact
 import tech.dokus.domain.utils.parseSafe
@@ -62,7 +69,7 @@ internal suspend fun addDownloadUrl(
 
 /**
  * Find a confirmed financial entity by document ID.
- * Returns the raw entity (InvoiceEntity, ExpenseEntity, or CreditNoteEntity).
+ * Returns the raw entity or aggregate record required to rebuild confirmed content.
  */
 @Suppress("LongParameterList")
 internal suspend fun findConfirmedEntity(
@@ -71,28 +78,62 @@ internal suspend fun findConfirmedEntity(
     tenantId: TenantId,
     invoiceRepository: InvoiceRepository,
     expenseRepository: ExpenseRepository,
-    creditNoteRepository: CreditNoteRepository
+    creditNoteRepository: CreditNoteRepository,
+    bankStatementRepository: BankStatementRepository,
+    bankTransactionRepository: BankTransactionRepository,
 ): Any? {
     return when (documentType) {
         DocumentType.Invoice -> invoiceRepository.findByDocumentId(tenantId, documentId)
         DocumentType.CreditNote -> creditNoteRepository.findByDocumentId(tenantId, documentId)
+        DocumentType.BankStatement -> findConfirmedBankStatement(
+            tenantId = tenantId,
+            documentId = documentId,
+            bankStatementRepository = bankStatementRepository,
+            bankTransactionRepository = bankTransactionRepository,
+        )
         else -> {
             // Try all types
             invoiceRepository.findByDocumentId(tenantId, documentId)
                 ?: expenseRepository.findByDocumentId(tenantId, documentId)
                 ?: creditNoteRepository.findByDocumentId(tenantId, documentId)
+                ?: findConfirmedBankStatement(
+                    tenantId = tenantId,
+                    documentId = documentId,
+                    bankStatementRepository = bankStatementRepository,
+                    bankTransactionRepository = bankTransactionRepository,
+                )
         }
     }
 }
 
 /**
- * Convert a confirmed entity (InvoiceEntity, ExpenseEntity, CreditNoteEntity) to [DocDto].
+ * Convert a confirmed entity aggregate to [DocDto].
  */
 internal fun confirmedEntityToDocDto(entity: Any): DocDto = when (entity) {
     is InvoiceEntity -> entity.toDocDto()
     is ExpenseEntity -> entity.toDocDto()
     is CreditNoteEntity -> entity.toDocDto()
+    is ConfirmedBankStatement -> entity.toDocDto()
     else -> error("Unsupported entity type for DocDto conversion: ${entity::class.simpleName}")
+}
+
+internal data class ConfirmedBankStatement(
+    val statement: BankStatementEntity,
+    val transactions: List<BankTransactionEntity>,
+)
+
+@Suppress("LongParameterList")
+private suspend fun findConfirmedBankStatement(
+    tenantId: TenantId,
+    documentId: DocumentId,
+    bankStatementRepository: BankStatementRepository,
+    bankTransactionRepository: BankTransactionRepository,
+): ConfirmedBankStatement? {
+    val statement = bankStatementRepository.findByDocumentId(tenantId, documentId) ?: return null
+    return ConfirmedBankStatement(
+        statement = statement,
+        transactions = bankTransactionRepository.listByDocument(tenantId, documentId),
+    )
 }
 
 // =============================================================================
@@ -200,6 +241,37 @@ internal fun CreditNoteEntity.toDocDto(): DocDto.CreditNote.Confirmed = DocDto.C
     updatedAt = updatedAt,
 )
 
+internal fun ConfirmedBankStatement.toDocDto(): DocDto.BankStatement.Draft = DocDto.BankStatement.Draft(
+    direction = DocumentDirection.Neutral,
+    accountIban = statement.accountIban,
+    openingBalance = statement.openingBalance,
+    closingBalance = statement.closingBalance,
+    periodStart = statement.periodStart,
+    periodEnd = statement.periodEnd,
+    notes = null,
+    institution = PartyDraft(),
+    transactions = transactions.map { it.toDraftRow() },
+)
+
+private fun BankTransactionEntity.toDraftRow() = tech.dokus.domain.model.BankStatementTransactionDraftRow(
+    transactionDate = transactionDate,
+    signedAmount = signedAmount,
+    counterparty = CounterpartySnapshot(
+        name = counterpartyName,
+        iban = counterpartyIban,
+        bic = counterpartyBic,
+    ),
+    communication = TransactionCommunication.from(
+        structuredCommunicationRaw = structuredCommunicationRaw,
+        freeCommunication = freeCommunication,
+    ),
+    descriptionRaw = descriptionRaw,
+    rowConfidence = 1.0,
+    largeAmountFlag = false,
+    excluded = false,
+    potentialDuplicate = false,
+)
+
 /**
  * Convert DraftSummary to DocumentDraftDto.
  */
@@ -295,6 +367,7 @@ internal fun DocumentSourceSummary.toDto(): DocumentSourceDto = DocumentSourceDt
 internal fun DocumentMatchReviewSummary.toSummaryDto(): DocumentMatchReviewSummaryDto =
     DocumentMatchReviewSummaryDto(
         reviewId = id,
+        incomingSourceId = incomingSourceId,
         reasonType = reasonType,
         status = status,
         createdAt = createdAt

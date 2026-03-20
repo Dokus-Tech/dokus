@@ -57,6 +57,7 @@ data class DocumentMatchReviewDto(
 @Serializable
 data class DocumentMatchReviewSummaryDto(
     val reviewId: DocumentMatchReviewId,
+    val incomingSourceId: DocumentSourceId,
     val reasonType: ReviewReason,
     val status: DocumentMatchReviewStatus,
     val createdAt: LocalDateTime

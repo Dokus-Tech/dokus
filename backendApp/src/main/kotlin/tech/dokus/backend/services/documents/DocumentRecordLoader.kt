@@ -3,6 +3,8 @@ package tech.dokus.backend.services.documents
 import tech.dokus.backend.routes.cashflow.documents.addDownloadUrl
 import tech.dokus.backend.routes.cashflow.documents.confirmedEntityToDocDto
 import tech.dokus.backend.routes.cashflow.documents.findConfirmedEntity
+import tech.dokus.database.repository.banking.BankStatementRepository
+import tech.dokus.database.repository.banking.BankTransactionRepository
 import tech.dokus.backend.routes.cashflow.documents.toDto
 import tech.dokus.backend.routes.cashflow.documents.toSummaryDto
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
@@ -33,6 +35,8 @@ internal class DocumentRecordLoader(
     private val invoiceRepository: InvoiceRepository,
     private val expenseRepository: ExpenseRepository,
     private val creditNoteRepository: CreditNoteRepository,
+    private val bankStatementRepository: BankStatementRepository,
+    private val bankTransactionRepository: BankTransactionRepository,
     private val cashflowEntriesRepository: CashflowEntriesRepository,
     private val contactRepository: ContactRepository,
     private val draftRepository: DraftRepository,
@@ -72,6 +76,8 @@ internal class DocumentRecordLoader(
                 invoiceRepository = invoiceRepository,
                 expenseRepository = expenseRepository,
                 creditNoteRepository = creditNoteRepository,
+                bankStatementRepository = bankStatementRepository,
+                bankTransactionRepository = bankTransactionRepository,
             )
         } else {
             null

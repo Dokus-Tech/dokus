@@ -373,8 +373,17 @@ data class DocumentReviewState(
             else -> false
         }
 
+    val hasPendingMatchReview: Boolean
+        get() = documentRecord?.pendingMatchReview != null
+
+    val shouldShowPendingMatchComparison: Boolean
+        get() = hasPendingMatchReview && !isProcessing && !isFailed && sourceViewerState == null
+
     val shouldUsePdfFallback: Boolean
-        get() = !canRenderCanonical || isProcessing || isFailed
+        get() = when {
+            hasPendingMatchReview && !isProcessing && !isFailed -> false
+            else -> !canRenderCanonical || isProcessing || isFailed
+        }
 
     val resolvedDueDate: LocalDate?
         get() = (draftData as? DocDto.Invoice)?.dueDate
