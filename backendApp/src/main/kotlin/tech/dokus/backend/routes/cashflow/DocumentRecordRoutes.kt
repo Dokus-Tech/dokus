@@ -37,7 +37,7 @@ import tech.dokus.backend.services.documents.sse.DocumentCollectionEventHub
 import tech.dokus.backend.services.documents.sse.DocumentSnapshotEventHub
 import tech.dokus.backend.services.documents.sse.DocumentSnapshotSignal
 import tech.dokus.backend.services.documents.sse.DocumentSsePublisher
-import tech.dokus.database.repository.cashflow.selectPreferredSource
+import tech.dokus.database.repository.cashflow.selectPreferredSourceDto
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
@@ -161,7 +161,7 @@ internal fun Route.documentRecordRoutes() {
             // Resolve preferred source for each document
             val resolvedSources = documentIds.mapNotNull { docId ->
                 val docSources = truthService.listSources(tenantId, docId)
-                val preferred = selectPreferredSource(docSources) ?: return@mapNotNull null
+                val preferred = selectPreferredSourceDto(docSources) ?: return@mapNotNull null
                 docId to preferred
             }
 
@@ -184,7 +184,8 @@ internal fun Route.documentRecordRoutes() {
                 val zipOut = java.util.zip.ZipOutputStream(this)
                 for ((docId, source) in resolvedSources) {
                     try {
-                        val stream = minioStorage.openDocumentStream(source.storageKey)
+                        val storageKey = source.storageKey ?: continue
+                        val stream = minioStorage.openDocumentStream(storageKey)
                         val filename = source.filename ?: "$docId.pdf"
                         zipOut.putNextEntry(java.util.zip.ZipEntry(filename))
                         stream.use { it.copyTo(this) }
@@ -364,7 +365,7 @@ internal fun Route.documentRecordRoutes() {
             }
 
             val sources = truthService.listSources(tenantId, documentId)
-            call.respond(HttpStatusCode.OK, sources.map { DocumentSourceDto.from(it) })
+            call.respond(HttpStatusCode.OK, sources)
         }
 
         /**

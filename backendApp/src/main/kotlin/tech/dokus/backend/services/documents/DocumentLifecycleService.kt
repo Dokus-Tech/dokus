@@ -418,10 +418,11 @@ internal class DocumentLifecycleService(
         documentRepository.delete(tenantId, documentId)
 
         for (source in sources) {
+            val key = source.storageKey ?: continue
             try {
-                storageService.deleteDocument(source.storageKey)
+                storageService.deleteDocument(key)
             } catch (e: Exception) {
-                logger.warn("Failed to delete source blob from storage: ${source.storageKey}", e)
+                logger.warn("Failed to delete source blob from storage: $key", e)
             }
         }
 
@@ -573,13 +574,14 @@ internal class DocumentLifecycleService(
         val document = truthService.getDocument(tenantId, documentId)
             ?: throw DokusException.NotFound("Document not found")
         val sources = truthService.listSources(tenantId, documentId)
-        val source = tech.dokus.database.repository.cashflow.selectPreferredSource(sources)
+        val source = tech.dokus.database.repository.cashflow.selectPreferredSourceDto(sources)
             ?: throw DokusException.NotFound("No source available for document")
 
         return ContentDownloadInfo(
-            storageKey = source.storageKey,
+            storageKey = source.storageKey
+                ?: throw DokusException.NotFound("Source has no storage key"),
             filename = source.filename ?: document.filename,
-            contentType = source.contentType,
+            contentType = source.contentType ?: "application/octet-stream",
         )
     }
 

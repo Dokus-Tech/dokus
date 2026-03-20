@@ -13,7 +13,7 @@ import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.entity.DraftSummaryEntity
 import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
-import tech.dokus.database.repository.cashflow.selectPreferredSource
+import tech.dokus.database.repository.cashflow.selectPreferredSourceDto
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.database.repository.drafts.DraftRepository
 import tech.dokus.domain.enums.DocumentStatus
@@ -54,7 +54,7 @@ internal class DocumentRecordLoader(
     ): DocumentDetailDto? {
         val document = documentRepository.getById(tenantId, documentId) ?: return null
         val sources = truthService.listSources(tenantId, documentId)
-        val preferredSource = selectPreferredSource(sources)
+        val preferredSource = selectPreferredSourceDto(sources)
         val effectiveDocument = if (preferredSource != null) {
             document.copy(
                 filename = preferredSource.filename ?: document.filename,
@@ -109,7 +109,7 @@ internal class DocumentRecordLoader(
             },
             cashflowEntryId = cashflowEntryId,
             pendingMatchReview = pendingReview?.let { DocumentMatchReviewSummaryDto.from(it) },
-            sources = sources.map { DocumentSourceDto.from(it) },
+            sources = sources,
         )
     }
 

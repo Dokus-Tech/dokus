@@ -12,12 +12,10 @@ import tech.dokus.backend.services.cashflow.AutoPaymentService
 import tech.dokus.backend.services.cashflow.matching.MatchingEngine
 import tech.dokus.backend.services.cashflow.CashflowEntriesService
 import tech.dokus.backend.services.cashflow.CashflowPaymentService
-import tech.dokus.database.mapper.from
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.model.CancelEntryRequest
-import tech.dokus.domain.model.CashflowEntryDto
 import tech.dokus.domain.model.CashflowPaymentRequest
 import tech.dokus.domain.model.UndoAutoPaymentRequest
 import tech.dokus.domain.model.common.PaginatedResponse
@@ -69,7 +67,7 @@ internal fun Route.cashflowEntriesRoutes() {
                 call.respond(
                     HttpStatusCode.OK,
                     PaginatedResponse(
-                        items = listOf(CashflowEntryDto.from(entry)),
+                        items = listOf(entry),
                         total = 1L,
                         limit = 1,
                         offset = 0
@@ -103,7 +101,7 @@ internal fun Route.cashflowEntriesRoutes() {
             call.respond(
                 HttpStatusCode.OK,
                 PaginatedResponse(
-                    items = paginatedEntries.map { CashflowEntryDto.from(it) },
+                    items = paginatedEntries,
                     total = filteredEntries.size.toLong(),
                     limit = route.limit,
                     offset = route.offset
@@ -124,7 +122,7 @@ internal fun Route.cashflowEntriesRoutes() {
                 .getOrElse { throw DokusException.InternalError("Failed to get entry: ${it.message}") }
                 ?: throw DokusException.NotFound("Cashflow entry not found: ${route.id}")
 
-            call.respond(HttpStatusCode.OK, CashflowEntryDto.from(entry))
+            call.respond(HttpStatusCode.OK, entry)
         }
 
         // POST /api/v1/cashflow/entries/{id}/payments - Record payment
@@ -258,7 +256,7 @@ internal fun Route.cashflowEntriesRoutes() {
                 .getOrElse { throw DokusException.InternalError("Failed to get updated entry: ${it.message}") }
                 ?: throw DokusException.NotFound("Cashflow entry not found after update")
 
-            call.respond(HttpStatusCode.OK, CashflowEntryDto.from(updatedEntry))
+            call.respond(HttpStatusCode.OK, updatedEntry)
         }
     }
 }

@@ -13,6 +13,7 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.v1.jdbc.update
 import tech.dokus.database.entity.DocumentSourceEntity
+import tech.dokus.domain.model.DocumentSourceDto
 import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.documents.DocumentBlobsTable
 import tech.dokus.database.tables.documents.DocumentSourcesTable
@@ -420,6 +421,15 @@ fun selectPreferredSource(sources: List<DocumentSourceEntity>): DocumentSourceEn
         .filter { it.status == DocumentSourceStatus.Linked }
         .maxWithOrNull(
             compareBy<DocumentSourceEntity> { it.sourceChannel.trustPriority }
+                .thenBy { it.arrivalAt }
+        )
+}
+
+fun selectPreferredSourceDto(sources: List<DocumentSourceDto>): DocumentSourceDto? {
+    return sources
+        .filter { it.status == DocumentSourceStatus.Linked }
+        .maxWithOrNull(
+            compareBy<DocumentSourceDto> { it.sourceChannel.trustPriority }
                 .thenBy { it.arrivalAt }
         )
 }

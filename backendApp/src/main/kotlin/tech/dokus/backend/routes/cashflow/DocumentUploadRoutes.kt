@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory
 import tech.dokus.backend.routes.cashflow.documents.addDownloadUrl
 import tech.dokus.backend.security.requireTenantId
 import tech.dokus.backend.services.documents.DocumentTruthService
-import tech.dokus.database.repository.cashflow.selectPreferredSource
+import tech.dokus.database.repository.cashflow.selectPreferredSourceDto
 import tech.dokus.backend.services.documents.sse.DocumentSsePublisher
 import tech.dokus.backend.services.documents.IntakeResolution
 import tech.dokus.domain.enums.DocumentSource
@@ -62,7 +62,7 @@ internal fun Route.documentUploadRoutes() {
                 ?: throw DokusException.InternalError("Failed to retrieve intake document")
 
             val sources = truthService.listSources(tenantId, intake.documentId)
-            val preferredSource = selectPreferredSource(sources)
+            val preferredSource = selectPreferredSourceDto(sources)
             val enrichedDocument = if (preferredSource != null) {
                 document.copy(
                     filename = preferredSource.filename ?: document.filename,

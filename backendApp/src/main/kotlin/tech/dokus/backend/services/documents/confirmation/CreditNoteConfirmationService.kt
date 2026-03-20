@@ -1,5 +1,6 @@
 package tech.dokus.backend.services.documents.confirmation
 
+import tech.dokus.backend.mappers.from
 import tech.dokus.backend.services.cashflow.CreditNoteService
 import tech.dokus.backend.util.isUniqueViolation
 import tech.dokus.database.repository.cashflow.DocumentRepository
@@ -14,6 +15,7 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.DocDto
 import tech.dokus.domain.model.contact.CounterpartyInfo
 import tech.dokus.domain.model.contact.isLinked
 import tech.dokus.domain.model.CreateCreditNoteRequest
@@ -85,14 +87,15 @@ class CreditNoteConfirmationService(
             documentId = documentId
         )
 
-        val updatedOrCreated = when {
+        val updatedOrCreated: DocDto.CreditNote.Confirmed = when {
             existingCreditNote == null -> {
                 creditNoteService.createCreditNote(
                     tenantId = tenantId,
                     request = requestBase
                 ).getOrElse { t ->
                     if (!t.isUniqueViolation()) throw t
-                    creditNoteService.findByDocumentId(tenantId, documentId) ?: throw t
+                    val fallback = creditNoteService.findByDocumentId(tenantId, documentId) ?: throw t
+                    DocDto.CreditNote.Confirmed.from(fallback)
                 }
             }
 
@@ -107,11 +110,12 @@ class CreditNoteConfirmationService(
                 creditNoteService.updateCreditNote(existingCreditNote.id, tenantId, request).getOrThrow()
             }
 
-            else -> existingCreditNote
+            else -> DocDto.CreditNote.Confirmed.from(existingCreditNote)
         }
 
-        val confirmed = if (updatedOrCreated.status == CreditNoteStatus.Draft) {
-            creditNoteService.confirmCreditNote(updatedOrCreated.id, tenantId).getOrThrow()
+        val confirmed: DocDto.CreditNote.Confirmed = if (updatedOrCreated.status == CreditNoteStatus.Draft) {
+            val entity = creditNoteService.confirmCreditNote(updatedOrCreated.id, tenantId).getOrThrow()
+            DocDto.CreditNote.Confirmed.from(entity)
         } else {
             updatedOrCreated
         }

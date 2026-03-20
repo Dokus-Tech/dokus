@@ -263,6 +263,7 @@ fun DocumentSourceDto.Companion.from(entity: DocumentSourceEntity): DocumentSour
     filename = entity.filename,
     contentType = entity.contentType,
     sizeBytes = entity.sizeBytes,
+    storageKey = entity.storageKey,
     matchType = entity.matchType
 )
 

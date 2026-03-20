@@ -34,6 +34,7 @@ data class DocumentSourceDto(
     val filename: String? = null,
     val contentType: String? = null,
     val sizeBytes: Long? = null,
+    val storageKey: String? = null,
     val matchType: SourceMatchKind? = null,
 ) {
     companion object

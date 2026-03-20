@@ -19,6 +19,7 @@ import tech.dokus.database.repository.cashflow.DocumentSourceRepository
 import tech.dokus.database.repository.cashflow.selectPreferredSource
 import tech.dokus.database.entity.DocumentSourceEntity
 import tech.dokus.database.repository.drafts.DraftRepository
+import tech.dokus.backend.mappers.from
 import tech.dokus.domain.model.from
 import tech.dokus.database.tables.documents.DocumentBlobsTable
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
@@ -100,6 +101,7 @@ import tech.dokus.domain.model.VatListingDraftData
 import tech.dokus.domain.model.VatReturnDraftData
 import tech.dokus.domain.model.WithholdingTaxDraftData
 import tech.dokus.domain.model.DocumentDto
+import tech.dokus.domain.model.DocumentSourceDto
 import tech.dokus.domain.model.toDocumentType
 import tech.dokus.domain.utils.json
 import tech.dokus.foundation.backend.storage.DocumentStorageService
@@ -712,8 +714,9 @@ class DocumentTruthService(
         )
     }
 
-    suspend fun listSources(tenantId: TenantId, documentId: DocumentId): List<DocumentSourceEntity> {
+    suspend fun listSources(tenantId: TenantId, documentId: DocumentId): List<DocumentSourceDto> {
         return sourceRepository.listByDocument(tenantId, documentId)
+            .map { DocumentSourceDto.from(it) }
     }
 
     suspend fun getPendingReviewByDocument(

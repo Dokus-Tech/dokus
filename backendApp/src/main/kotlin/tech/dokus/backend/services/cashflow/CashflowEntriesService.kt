@@ -274,9 +274,10 @@ class CashflowEntriesService(
     suspend fun getEntry(
         entryId: CashflowEntryId,
         tenantId: TenantId
-    ): Result<CashflowEntryEntity?> {
+    ): Result<CashflowEntryDto?> {
         logger.debug("Fetching cashflow entry: {} for tenant: {}", entryId, tenantId)
         return cashflowEntriesRepository.getEntry(entryId, tenantId)
+            .map { it?.let { entity -> CashflowEntryDto.from(entity) } }
             .onFailure { logger.error("Failed to fetch cashflow entry: $entryId", it) }
     }
 
@@ -308,7 +309,7 @@ class CashflowEntriesService(
         toDate: LocalDate? = null,
         direction: CashflowDirection? = null,
         statuses: List<CashflowEntryStatus>? = null
-    ): Result<List<CashflowEntryEntity>> {
+    ): Result<List<CashflowEntryDto>> {
         logger.debug(
             "Listing cashflow entries for tenant: {} (viewMode={}, from={}, to={}, direction={}, statuses={})",
             tenantId,
@@ -319,6 +320,7 @@ class CashflowEntriesService(
             statuses
         )
         return cashflowEntriesRepository.listEntries(tenantId, viewMode, fromDate, toDate, direction, statuses)
+            .map { entries -> entries.map { CashflowEntryDto.from(it) } }
             .onSuccess { logger.debug("Retrieved ${it.size} cashflow entries") }
             .onFailure { logger.error("Failed to list cashflow entries for tenant: $tenantId", it) }
     }
