@@ -14,7 +14,7 @@ import org.koin.ktor.ext.inject
 import tech.dokus.backend.security.requireTenantId
 import tech.dokus.backend.services.cashflow.InvoiceService
 import tech.dokus.backend.services.pdf.InvoicePdfService
-import tech.dokus.database.repository.contacts.ContactRepository
+import tech.dokus.backend.services.contacts.ContactService
 import tech.dokus.backend.routes.cashflow.documents.toDocDto
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.exceptions.DokusException
@@ -40,7 +40,7 @@ import kotlin.uuid.Uuid
 internal fun Route.invoiceRoutes() {
     val invoiceService by inject<InvoiceService>()
     val invoicePdfService by inject<InvoicePdfService>()
-    val contactRepository by inject<ContactRepository>()
+    val contactService by inject<ContactService>()
 
     authenticateJwt {
         // GET /api/v1/invoices - List invoices with query params
@@ -178,7 +178,7 @@ internal fun Route.invoiceRoutes() {
                 .getOrElse { throw DokusException.InternalError("Failed to fetch invoice") }
                 ?: throw DokusException.NotFound("Invoice not found")
 
-            val contactName = contactRepository.getContact(invoice.contactId, tenantId)
+            val contactName = contactService.getContact(invoice.contactId, tenantId)
                 .getOrElse { throw DokusException.InternalError("Failed to load client details for PDF generation") }
                 ?.name
                 ?.value

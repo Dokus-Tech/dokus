@@ -16,7 +16,6 @@ import tech.dokus.backend.security.requireTenantId
 import tech.dokus.backend.services.documents.DocumentTruthService
 import tech.dokus.database.repository.cashflow.selectPreferredSource
 import tech.dokus.backend.services.documents.sse.DocumentSsePublisher
-import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.backend.services.documents.IntakeResolution
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.exceptions.DokusException
@@ -36,7 +35,6 @@ private val ALLOWED_PREFIXES = setOf("documents", "invoices", "expenses", "recei
  */
 internal fun Route.documentUploadRoutes() {
     val minioStorage by inject<MinioDocumentStorageService>()
-    val documentRepository by inject<DocumentRepository>()
     val truthService by inject<DocumentTruthService>()
     val documentSsePublisher by inject<DocumentSsePublisher>()
     val uploadValidator by inject<DocumentUploadValidator>()
@@ -60,7 +58,7 @@ internal fun Route.documentUploadRoutes() {
             )
             documentSsePublisher.publishDocumentChanged(tenantId, intake.documentId)
 
-            val document = documentRepository.getById(tenantId, intake.documentId)
+            val document = truthService.getDocument(tenantId, intake.documentId)
                 ?: throw DokusException.InternalError("Failed to retrieve intake document")
 
             val sources = truthService.listSources(tenantId, intake.documentId)

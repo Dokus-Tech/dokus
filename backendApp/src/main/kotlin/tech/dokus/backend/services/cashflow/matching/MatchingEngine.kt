@@ -1,5 +1,6 @@
 package tech.dokus.backend.services.cashflow.matching
 
+import tech.dokus.database.repository.cashflow.matching.MatchingRepository
 import kotlinx.serialization.json.Json
 import tech.dokus.database.repository.banking.BankTransactionRepository
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository

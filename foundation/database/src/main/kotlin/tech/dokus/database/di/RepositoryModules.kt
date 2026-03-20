@@ -34,7 +34,9 @@ import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.database.repository.banking.BankTransactionRepository
 import tech.dokus.database.repository.cashflow.AutoPaymentAuditRepository
 import tech.dokus.database.repository.cashflow.AutoPaymentRepository
+import tech.dokus.database.repository.cashflow.CashflowPaymentRepository
 import tech.dokus.database.repository.cashflow.InvoiceNumberRepository
+import tech.dokus.database.repository.cashflow.matching.MatchingRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
 import tech.dokus.database.repository.cashflow.RefundClaimRepository
 import tech.dokus.database.repository.contacts.ContactAddressRepository
@@ -85,7 +87,8 @@ val repositoryModuleCashflow = module {
     single { BankTransactionRepository() }
     single { AutoPaymentAuditRepository() }
     single { AutoPaymentRepository() }
-    single { DocumentRepository() } bind DocumentStatusChecker::class
+    single { CashflowPaymentRepository() }
+    single { DocumentRepository(get()) } bind DocumentStatusChecker::class
     single { IngestionStatusCheckerImpl(get()) } bind IngestionStatusChecker::class
     single { DocumentIngestionRunRepository() }
     single { InvoiceNumberRepository() }
@@ -96,6 +99,7 @@ val repositoryModuleCashflow = module {
     single { RefundClaimRepository() }
     single { CashflowEntriesRepository() }
     single { CashflowRepository(get(), get()) }
+    single { MatchingRepository() }
     single { DocumentLinkRepository() }
     single { SearchPersonalizationQueries() }
     single { SearchSignalRepository() }

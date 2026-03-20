@@ -376,5 +376,15 @@ class ContactService(
         return businessProfileService.projectContacts(tenantId, withAddresses)
     }
 
-    // NOTE: listPeppolEnabledContacts() removed - PEPPOL status is now in PeppolDirectoryCacheTable
+    suspend fun getContactActivitySummary(
+        contactId: ContactId,
+        tenantId: TenantId
+    ) = contactRepository.getContactActivitySummary(contactId, tenantId)
+
+    suspend fun mergeContacts(
+        sourceContactId: ContactId,
+        targetContactId: ContactId,
+        tenantId: TenantId,
+        mergedByEmail: String
+    ) = contactRepository.mergeContacts(sourceContactId, targetContactId, tenantId, mergedByEmail)
 }

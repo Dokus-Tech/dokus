@@ -6,6 +6,7 @@ import com.auth0.jwt.JWT
 import kotlinx.datetime.Instant
 import tech.dokus.backend.services.avatar.projectUserAvatar
 import tech.dokus.database.repository.auth.FirmRepository
+import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.auth.RefreshTokenRepository
 import tech.dokus.database.repository.auth.RevokedSessionInfo
 import tech.dokus.database.repository.auth.SessionRevocationResult
@@ -19,6 +20,9 @@ import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.FirmMembership
 import tech.dokus.domain.model.TenantMembership
 import tech.dokus.domain.model.User
+import tech.dokus.backend.services.avatar.buildVersionedAvatarThumbnail
+import tech.dokus.domain.model.auth.AccountMeResponse
+import tech.dokus.domain.model.auth.FirmWorkspaceSummary
 import tech.dokus.domain.model.auth.JwtClaims
 import tech.dokus.domain.model.auth.JwtFirmMembershipClaim
 import tech.dokus.domain.model.auth.JwtTenantMembershipClaim
@@ -28,6 +32,7 @@ import tech.dokus.domain.model.auth.LogoutRequest
 import tech.dokus.domain.model.auth.RefreshTokenRequest
 import tech.dokus.domain.model.auth.RegisterRequest
 import tech.dokus.domain.model.auth.SessionDto
+import tech.dokus.domain.model.auth.TenantWorkspaceSummary
 import tech.dokus.domain.model.auth.UpdateProfileRequest
 import tech.dokus.foundation.backend.database.now
 import tech.dokus.foundation.backend.security.JwtGenerator
@@ -47,6 +52,7 @@ data class SessionContext(
 class AuthService(
     private val userRepository: UserRepository,
     private val firmRepository: FirmRepository,
+    private val tenantRepository: TenantRepository,
     private val jwtGenerator: JwtGenerator,
     private val refreshTokenRepository: RefreshTokenRepository,
     private val rateLimitService: RateLimitServiceInterface,
@@ -61,6 +67,68 @@ class AuthService(
     companion object {
         /** Default maximum concurrent sessions per user */
         const val DEFAULT_MAX_CONCURRENT_SESSIONS = 5
+    }
+
+    suspend fun getAccountMe(userId: tech.dokus.domain.ids.UserId): AccountMeResponse {
+        val user = userRepository.findById(userId)
+            ?: throw DokusException.NotAuthenticated("User not found")
+        val projectedUser = userRepository.projectUserAvatar(user)
+        val tenantMemberships = userRepository.getUserTenants(userId)
+            .filter { it.isActive }
+        val firmsMemberships = firmRepository.listUserMemberships(userId)
+            .filter { it.isActive }
+        val surface = SurfaceResolver.resolve(
+            tenantMemberships = tenantMemberships,
+            firmMemberships = firmsMemberships
+        )
+
+        val tenantsById = tenantRepository.findByIds(tenantMemberships.map { it.tenantId })
+            .associateBy { it.id }
+        val tenantSummaries = buildList {
+            for (membership in tenantMemberships) {
+                val tenant = tenantsById[membership.tenantId] ?: continue
+                add(
+                    TenantWorkspaceSummary(
+                        id = tenant.id,
+                        name = tenant.displayName,
+                        vatNumber = tenant.vatNumber,
+                        role = membership.role,
+                        type = tenant.type,
+                        avatar = tenantRepository.getAvatarStorageKey(tenant.id)
+                            ?.takeIf { it.isNotBlank() }
+                            ?.let { storageKey ->
+                                buildVersionedAvatarThumbnail(
+                                    basePath = "/api/v1/tenants/${ tenant.id }/avatar",
+                                    storageKey = storageKey
+                                )
+                            }
+                    )
+                )
+            }
+        }
+
+        val firmsById = firmRepository.listFirmsByIds(firmsMemberships.map { it.firmId })
+            .associateBy { it.id }
+        val clientCountByFirmId = firmRepository.countActiveClientsByFirmIds(
+            firmsMemberships.map { it.firmId }
+        )
+        val firmSummaries = firmsMemberships.mapNotNull { membership ->
+            val firm = firmsById[membership.firmId] ?: return@mapNotNull null
+            FirmWorkspaceSummary(
+                id = firm.id,
+                name = firm.name,
+                vatNumber = firm.vatNumber,
+                role = membership.role,
+                clientCount = clientCountByFirmId[membership.firmId] ?: 0
+            )
+        }
+
+        return AccountMeResponse(
+            user = projectedUser,
+            surface = surface,
+            tenants = tenantSummaries,
+            firms = firmSummaries
+        )
     }
 
     suspend fun login(

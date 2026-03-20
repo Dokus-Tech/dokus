@@ -1,5 +1,7 @@
 package tech.dokus.backend.services.cashflow.matching
 
+import tech.dokus.database.repository.cashflow.matching.InvoiceMatchMeta
+import tech.dokus.database.repository.cashflow.matching.MatchingRepository
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.enums.MatchSignalType

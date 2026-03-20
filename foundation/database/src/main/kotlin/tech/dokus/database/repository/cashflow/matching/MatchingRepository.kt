@@ -1,4 +1,4 @@
-package tech.dokus.backend.services.cashflow.matching
+package tech.dokus.database.repository.cashflow.matching
 
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone

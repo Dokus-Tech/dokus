@@ -1,44 +1,25 @@
 package tech.dokus.backend.services.cashflow
 
-import org.jetbrains.exposed.v1.core.and
-import org.jetbrains.exposed.v1.core.eq
-import org.jetbrains.exposed.v1.core.neq
-import org.jetbrains.exposed.v1.jdbc.deleteWhere
-import org.jetbrains.exposed.v1.jdbc.insertAndGetId
-import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
-import org.jetbrains.exposed.v1.jdbc.update
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
-import tech.dokus.database.tables.cashflow.CashflowEntriesTable
-import tech.dokus.database.tables.cashflow.InvoicesTable
-import tech.dokus.database.tables.documents.AutoPaymentAuditEventsTable
-import tech.dokus.database.tables.banking.BankTransactionsTable
-import tech.dokus.database.tables.payment.PaymentsTable
+import tech.dokus.database.repository.cashflow.CashflowPaymentRepository
 import tech.dokus.domain.Money
-import tech.dokus.domain.enums.AutoPaymentDecision
-import tech.dokus.domain.enums.AutoPaymentTriggerSource
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.CashflowSourceType
-import tech.dokus.domain.enums.BankTransactionStatus
-import tech.dokus.domain.enums.InvoiceStatus
-import tech.dokus.domain.enums.PaymentCreatedBy
-import tech.dokus.domain.enums.PaymentSource
 import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.domain.fromDbDecimal
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.database.mapper.from
 import tech.dokus.domain.model.CashflowEntryDto
 import tech.dokus.domain.model.CashflowPaymentRequest
-import tech.dokus.domain.toDbDecimal
 import tech.dokus.foundation.backend.utils.runSuspendCatching
-import java.util.UUID
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid
 
 @OptIn(ExperimentalUuidApi::class)
 class CashflowPaymentService(
     private val cashflowEntriesRepository: CashflowEntriesRepository,
+    private val cashflowPaymentRepository: CashflowPaymentRepository,
 ) {
     suspend fun recordPayment(
         tenantId: TenantId,
@@ -53,130 +34,57 @@ class CashflowPaymentService(
             val tenantUuid = tenantId.value.toJavaUuid()
             val entryUuid = entryId.value.toJavaUuid()
 
-            val entry = CashflowEntriesTable.selectAll().where {
-                (CashflowEntriesTable.id eq entryUuid) and
-                    (CashflowEntriesTable.tenantId eq tenantUuid)
-            }.singleOrNull() ?: throw DokusException.NotFound("Cashflow entry not found")
+            val snapshot = cashflowPaymentRepository.findEntryForPayment(tenantUuid, entryUuid)
 
-            val remaining = Money.fromDbDecimal(entry[CashflowEntriesTable.remainingAmount])
-            if (request.amount > remaining) {
+            if (request.amount > snapshot.remaining) {
                 throw DokusException.BadRequest("Payment amount exceeds remaining amount")
             }
 
-            val newRemainingRaw = remaining - request.amount
+            val newRemainingRaw = snapshot.remaining - request.amount
             val newRemaining = if (newRemainingRaw.isNegative) Money.ZERO else newRemainingRaw
             val fullyPaid = newRemaining.isZero
-            val newStatus = if (fullyPaid) CashflowEntryStatus.Paid else entry[CashflowEntriesTable.status]
-            val newPaidAt = if (fullyPaid) request.paidAt else entry[CashflowEntriesTable.paidAt]
+            val newStatus = if (fullyPaid) CashflowEntryStatus.Paid else snapshot.currentStatus
+            val newPaidAt = if (fullyPaid) request.paidAt else snapshot.currentPaidAt
 
-            CashflowEntriesTable.update({
-                (CashflowEntriesTable.id eq entryUuid) and
-                    (CashflowEntriesTable.tenantId eq tenantUuid)
-            }) {
-                it[remainingAmount] = newRemaining.toDbDecimal()
-                it[status] = newStatus
-                it[paidAt] = newPaidAt
-            }
+            cashflowPaymentRepository.updateEntryAfterPayment(tenantUuid, entryUuid, newRemaining, newStatus, newPaidAt)
 
-            if (entry[CashflowEntriesTable.sourceType] == CashflowSourceType.Invoice) {
-                val invoiceId = entry[CashflowEntriesTable.sourceId]
-                val invoice = InvoicesTable.selectAll().where {
-                    (InvoicesTable.id eq invoiceId) and
-                        (InvoicesTable.tenantId eq tenantUuid)
-                }.singleOrNull() ?: throw DokusException.NotFound("Invoice not found for cashflow entry")
+            if (snapshot.sourceType == CashflowSourceType.Invoice) {
+                cashflowPaymentRepository.applyPaymentToInvoice(
+                    tenantUuid = tenantUuid,
+                    invoiceId = snapshot.sourceId,
+                    paymentAmount = request.amount,
+                    paymentMethod = request.paymentMethod,
+                    paidAt = request.paidAt,
+                )
 
-                val invoiceTotal = Money.fromDbDecimal(invoice[InvoicesTable.totalAmount])
-                val currentPaid = Money.fromDbDecimal(invoice[InvoicesTable.paidAmount])
-                val updatedPaidRaw = currentPaid + request.amount
-                if (updatedPaidRaw > invoiceTotal) {
-                    throw DokusException.BadRequest("Accumulated paid amount would exceed invoice total")
-                }
-                val updatedPaid = updatedPaidRaw
-                val invoicePaid = updatedPaid.minor >= invoiceTotal.minor
-                val invoiceStatus = if (invoicePaid) InvoiceStatus.Paid else InvoiceStatus.PartiallyPaid
-                val invoicePaidAt = if (invoicePaid) request.paidAt else invoice[InvoicesTable.paidAt]
+                cashflowPaymentRepository.insertPaymentRecord(
+                    tenantUuid = tenantUuid,
+                    invoiceId = snapshot.sourceId,
+                    amount = request.amount,
+                    paymentDate = request.paidAt.date,
+                    paymentMethod = request.paymentMethod,
+                    bankTransactionId = request.bankTransactionId?.value?.toJavaUuid(),
+                    note = request.note,
+                )
 
-                InvoicesTable.update({
-                    (InvoicesTable.id eq invoiceId) and
-                        (InvoicesTable.tenantId eq tenantUuid)
-                }) {
-                    it[paidAmount] = updatedPaid.toDbDecimal()
-                    it[status] = invoiceStatus
-                    it[paidAt] = invoicePaidAt
-                    it[paymentMethod] = request.paymentMethod
-                }
-
-                PaymentsTable.insertAndGetId {
-                    it[PaymentsTable.tenantId] = tenantUuid
-                    it[PaymentsTable.invoiceId] = invoiceId
-                    it[amount] = request.amount.toDbDecimal()
-                    it[paymentDate] = request.paidAt.date
-                    it[paymentMethod] = request.paymentMethod
-                    it[transactionId] = request.bankTransactionId?.toString()
-                    it[bankTransactionId] = request.bankTransactionId?.value?.toJavaUuid()
-                    it[paymentSource] = PaymentSource.Manual
-                    it[createdBy] = PaymentCreatedBy.User
-                    it[notes] = request.note
-                }
-
-                AutoPaymentAuditEventsTable.insertAndGetId {
-                    it[id] = UUID.randomUUID()
-                    it[AutoPaymentAuditEventsTable.tenantId] = tenantUuid
-                    it[triggerSource] = AutoPaymentTriggerSource.ManualPayment
-                    it[decision] = AutoPaymentDecision.ManualPaid
-                    it[AutoPaymentAuditEventsTable.invoiceId] = invoiceId
-                    it[cashflowEntryId] = entryUuid
-                    it[importedBankTransactionId] = request.bankTransactionId?.value?.toJavaUuid()
-                }
+                cashflowPaymentRepository.insertManualPaymentAudit(
+                    tenantUuid = tenantUuid,
+                    invoiceId = snapshot.sourceId,
+                    entryUuid = entryUuid,
+                    bankTransactionId = request.bankTransactionId?.value?.toJavaUuid(),
+                )
             }
 
             val bankTxId = request.bankTransactionId
             if (bankTxId != null) {
-                val txUuid = bankTxId.value.toJavaUuid()
-                val tx = BankTransactionsTable.selectAll().where {
-                    (BankTransactionsTable.id eq txUuid) and
-                        (BankTransactionsTable.tenantId eq tenantUuid)
-                }.singleOrNull() ?: throw DokusException.NotFound("Imported bank transaction not found")
-
-                if (tx[BankTransactionsTable.matchedCashflowId] != null &&
-                    tx[BankTransactionsTable.matchedCashflowId] != entryUuid
-                ) {
-                    throw DokusException.BadRequest("Imported transaction is already matched")
-                }
-
-                BankTransactionsTable.update({
-                    (BankTransactionsTable.id eq txUuid) and
-                        (BankTransactionsTable.tenantId eq tenantUuid)
-                }) {
-                    it[status] = BankTransactionStatus.Matched
-                    it[matchedCashflowId] = entryUuid
-                    it[matchedBy] = tech.dokus.domain.enums.MatchedBy.Manual
-                    it[resolutionType] = tech.dokus.domain.enums.ResolutionType.Document
-                }
+                cashflowPaymentRepository.matchBankTransaction(tenantUuid, bankTxId.value.toJavaUuid(), entryUuid)
             }
 
             if (request.dismissSuggestedMatch) {
-                BankTransactionsTable.update({
-                    (BankTransactionsTable.tenantId eq tenantUuid) and
-                        (BankTransactionsTable.matchedCashflowId eq entryUuid) and
-                        (BankTransactionsTable.status eq BankTransactionStatus.NeedsReview)
-                }) {
-                    it[matchedCashflowId] = null
-                    it[matchScore] = null
-                    it[status] = BankTransactionStatus.Ignored
-                }
+                cashflowPaymentRepository.dismissSuggestedMatches(tenantUuid, entryUuid)
             }
 
-            BankTransactionsTable.update({
-                (BankTransactionsTable.tenantId eq tenantUuid) and
-                    (BankTransactionsTable.matchedCashflowId eq entryUuid) and
-                    (BankTransactionsTable.status neq BankTransactionStatus.Matched) and
-                    (BankTransactionsTable.status neq BankTransactionStatus.Ignored)
-            }) {
-                it[matchedCashflowId] = null
-                it[matchScore] = null
-                it[status] = BankTransactionStatus.Unmatched
-            }
+            cashflowPaymentRepository.clearStaleMatches(tenantUuid, entryUuid)
         }
 
         val entity = cashflowEntriesRepository.getEntry(entryId, tenantId).getOrNull()

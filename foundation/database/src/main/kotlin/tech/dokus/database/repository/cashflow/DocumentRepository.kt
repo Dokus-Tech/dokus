@@ -95,7 +95,9 @@ data class DocumentCreatePayload(
  * Implements DocumentStatusChecker for chat confirmation checks.
  */
 @OptIn(ExperimentalUuidApi::class)
-class DocumentRepository : DocumentStatusChecker {
+class DocumentRepository(
+    private val ingestionRunRepository: DocumentIngestionRunRepository,
+) : DocumentStatusChecker {
 
     // =========================================================================
     // Document CRUD
@@ -188,7 +190,7 @@ class DocumentRepository : DocumentStatusChecker {
         page: Int = 0,
         limit: Int = 20
     ): DocumentListPage<DocumentWithDraftAndIngestion> {
-        DocumentIngestionRunRepository().recoverStaleProcessingRunsForTenant(tenantId)
+        ingestionRunRepository.recoverStaleProcessingRunsForTenant(tenantId)
         return DocumentListingQuery.listWithDraftsAndIngestion(
             tenantId = tenantId,
             filter = filter,
@@ -204,7 +206,7 @@ class DocumentRepository : DocumentStatusChecker {
     suspend fun getOperationalCounts(
         tenantId: TenantId
     ): DocumentOperationalCounts {
-        DocumentIngestionRunRepository().recoverStaleProcessingRunsForTenant(tenantId)
+        ingestionRunRepository.recoverStaleProcessingRunsForTenant(tenantId)
         return DocumentOperationalCounts(
             total = DocumentListingQuery.countWithDraftsAndIngestion(
                 tenantId = tenantId,

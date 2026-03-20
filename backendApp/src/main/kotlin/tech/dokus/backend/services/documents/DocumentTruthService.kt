@@ -16,6 +16,7 @@ import tech.dokus.database.repository.cashflow.DocumentMatchReviewRepository
 import tech.dokus.database.entity.DocumentMatchReviewEntity
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.DocumentSourceRepository
+import tech.dokus.database.repository.cashflow.selectPreferredSource
 import tech.dokus.database.entity.DocumentSourceEntity
 import tech.dokus.database.repository.drafts.DraftRepository
 import tech.dokus.domain.model.toDraftData
@@ -31,6 +32,7 @@ import tech.dokus.domain.enums.DocumentMatchReviewStatus
 import tech.dokus.domain.enums.SourceMatchKind
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentSourceStatus
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.IngestionStatus
@@ -97,6 +99,7 @@ import tech.dokus.domain.model.VatBreakdownEntryDto
 import tech.dokus.domain.model.VatListingDraftData
 import tech.dokus.domain.model.VatReturnDraftData
 import tech.dokus.domain.model.WithholdingTaxDraftData
+import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.toDocumentType
 import tech.dokus.domain.utils.json
 import tech.dokus.foundation.backend.storage.DocumentStorageService
@@ -655,6 +658,58 @@ class DocumentTruthService(
                 }
             }
         }
+    }
+
+    suspend fun documentExists(tenantId: TenantId, documentId: DocumentId): Boolean =
+        documentRepository.exists(tenantId, documentId)
+
+    suspend fun isDocumentConfirmed(tenantId: TenantId, documentId: DocumentId): Boolean =
+        documentRepository.isConfirmed(tenantId, documentId)
+
+    suspend fun getDocument(tenantId: TenantId, documentId: DocumentId): DocumentDto? =
+        documentRepository.getById(tenantId, documentId)
+
+    data class PreviewSourceSelection(
+        val storageKey: String,
+        val contentType: String,
+        val cacheScope: String,
+    )
+
+    suspend fun resolvePreviewSource(
+        tenantId: TenantId,
+        documentId: DocumentId,
+    ): PreviewSourceSelection {
+        if (!documentRepository.exists(tenantId, documentId)) {
+            throw DokusException.NotFound("Document not found: $documentId")
+        }
+        val sources = sourceRepository.listByDocument(tenantId, documentId)
+        val preferred = selectPreferredSource(sources)
+            ?: throw DokusException.NotFound("No source available for document: $documentId")
+        return PreviewSourceSelection(
+            storageKey = preferred.storageKey,
+            contentType = preferred.contentType,
+            cacheScope = "source-${preferred.id}"
+        )
+    }
+
+    suspend fun resolvePreviewSource(
+        tenantId: TenantId,
+        documentId: DocumentId,
+        sourceId: DocumentSourceId,
+    ): PreviewSourceSelection {
+        if (!documentRepository.exists(tenantId, documentId)) {
+            throw DokusException.NotFound("Document not found: $documentId")
+        }
+        val source = sourceRepository.getById(tenantId, sourceId)
+            ?: throw DokusException.NotFound("Source not found: $sourceId")
+        if (source.documentId != documentId || source.status != DocumentSourceStatus.Linked) {
+            throw DokusException.NotFound("Source not found: $sourceId")
+        }
+        return PreviewSourceSelection(
+            storageKey = source.storageKey,
+            contentType = source.contentType,
+            cacheScope = "source-${source.id}"
+        )
     }
 
     suspend fun listSources(tenantId: TenantId, documentId: DocumentId): List<DocumentSourceEntity> {

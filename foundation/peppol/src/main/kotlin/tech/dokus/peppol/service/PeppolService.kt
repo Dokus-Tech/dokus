@@ -719,4 +719,17 @@ class PeppolService(
         val resolvedCredentials = credentialResolver.resolve(tenantId)
         return providerFactory.createProvider(resolvedCredentials)
     }
+
+    // ========================================================================
+    // WEBHOOK SUPPORT
+    // ========================================================================
+
+    suspend fun getEnabledSettingsByCompanyId(companyId: String) =
+        settingsRepository.getEnabledSettingsByCompanyId(companyId)
+
+    suspend fun tryAcquireWebhookPollSlot(
+        tenantId: TenantId,
+        now: kotlinx.datetime.LocalDateTime,
+        debounceSeconds: Long
+    ) = settingsRepository.tryAcquireWebhookPollSlot(tenantId, now, debounceSeconds)
 }

@@ -50,7 +50,6 @@ import tech.dokus.backend.services.cashflow.InvoiceBankAutomationService
 import tech.dokus.backend.services.cashflow.matching.MatchFeedbackStore
 import tech.dokus.backend.services.cashflow.matching.MatchScorer
 import tech.dokus.backend.services.cashflow.matching.MatchingEngine
-import tech.dokus.backend.services.cashflow.matching.MatchingRepository
 import tech.dokus.backend.services.cashflow.matching.TransferDetector
 import tech.dokus.backend.services.cashflow.InvoiceService
 import tech.dokus.backend.services.contacts.ContactNoteService
@@ -312,6 +311,7 @@ private fun authModule() = module {
         AuthService(
             userRepository = get(),
             firmRepository = get(),
+            tenantRepository = get(),
             jwtGenerator = get(),
             refreshTokenRepository = get(),
             rateLimitService = get(),
@@ -340,8 +340,7 @@ private fun cashflowModule() = module {
     singleOf(::CashflowPaymentService)
     singleOf(::AutoPaymentService)
 
-    // Matching engine
-    singleOf(::MatchingRepository)
+    // Matching engine (MatchingRepository is in RepositoryModules)
     singleOf(::MatchScorer)
     singleOf(::MatchFeedbackStore)
     singleOf(::TransferDetector)
