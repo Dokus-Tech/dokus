@@ -57,7 +57,7 @@ internal fun BankStatementTransactionRow(
         Text(
             text = row.date,
             style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.width(DateColumnWidth),
+            modifier = Modifier.width(BankStatementColumnWidths.Date),
             textDecoration = textDecoration,
         )
 
@@ -87,7 +87,7 @@ internal fun BankStatementTransactionRow(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.width(CommunicationColumnWidth),
+            modifier = Modifier.width(BankStatementColumnWidths.Communication),
             textDecoration = textDecoration,
         )
 
@@ -95,14 +95,17 @@ internal fun BankStatementTransactionRow(
         Text(
             text = row.displayAmount,
             style = MaterialTheme.typography.bodySmall,
-            color = if (row.isPositive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.width(AmountColumnWidth),
+            color = if (row.amountMinor > 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.width(BankStatementColumnWidths.Amount),
             textDecoration = textDecoration,
             textAlign = androidx.compose.ui.text.style.TextAlign.End,
         )
     }
 }
 
-private val DateColumnWidth = 64.dp
-private val CommunicationColumnWidth = 160.dp
-private val AmountColumnWidth = 100.dp
+internal object BankStatementColumnWidths {
+    val Date = 64.dp
+    val Communication = 160.dp
+    val Amount = 100.dp
+    val Checkbox = 48.dp
+}

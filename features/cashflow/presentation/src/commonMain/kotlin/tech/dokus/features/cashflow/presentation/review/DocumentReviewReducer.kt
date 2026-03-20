@@ -332,8 +332,8 @@ internal class DocumentReviewReducer(
         withState {
             val currentData = documentData ?: return@withState
             val draft = draftData as? DocDto.BankStatement.Draft ?: return@withState
-            val updatedTransactions = draft.transactions.mapIndexed { i, row ->
-                if (i == index) row.copy(excluded = !row.excluded) else row
+            val updatedTransactions = draft.transactions.toMutableList().also {
+                it[index] = it[index].copy(excluded = !it[index].excluded)
             }
             val updatedDraft = draft.copy(transactions = updatedTransactions)
             updateState {

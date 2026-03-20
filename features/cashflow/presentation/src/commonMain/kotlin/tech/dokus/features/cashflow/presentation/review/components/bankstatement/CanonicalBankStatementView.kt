@@ -81,7 +81,7 @@ internal fun CanonicalBankStatementView(
                 openingBalance = data.openingBalance,
                 closingBalance = data.closingBalance,
                 movement = data.movement,
-                currencyPrefix = "€",
+                currencyPrefix = data.currencySign,
                 modifier = Modifier.padding(
                     horizontal = Constraints.Spacing.large,
                     vertical = Constraints.Spacing.medium,
@@ -104,7 +104,7 @@ internal fun CanonicalBankStatementView(
             HorizontalDivider()
             BankStatementActionBar(
                 includedCount = data.includedCount,
-                netAmount = "€${data.netAmountDisplay}",
+                netAmount = "${data.currencySign}${data.netAmountDisplay}",
                 onReject = onReject,
                 onConfirm = onConfirm,
                 isConfirming = isConfirming,

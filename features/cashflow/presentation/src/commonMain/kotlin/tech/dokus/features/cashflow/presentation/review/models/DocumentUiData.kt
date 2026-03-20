@@ -66,15 +66,26 @@ sealed interface DocumentUiData {
         val openingBalance: String?,
         val closingBalance: String?,
         val movement: String?,
+        val currencySign: String = "€",
         val transactions: List<BankStatementTransactionUiRow> = emptyList(),
     ) : DocumentUiData {
-        val includedCount: Int get() = transactions.count { !it.isExcluded }
-        val excludedCount: Int get() = transactions.count { it.isExcluded }
-        val duplicateCount: Int get() = transactions.count { it.isDuplicate }
-        val hasDuplicates: Boolean get() = duplicateCount > 0
-        val netAmountDisplay: String get() {
-            val netMinor = transactions.filter { !it.isExcluded }.sumOf { it.amountMinor }
-            return Money(netMinor).toDisplayString()
+        val includedCount: Int
+        val excludedCount: Int
+        val duplicateCount: Int
+        val hasDuplicates: Boolean
+        val netAmountDisplay: String
+
+        init {
+            var included = 0; var excluded = 0; var duplicates = 0; var netMinor = 0L
+            for (t in transactions) {
+                if (t.isExcluded) excluded++ else { included++; netMinor += t.amountMinor }
+                if (t.isDuplicate) duplicates++
+            }
+            includedCount = included
+            excludedCount = excluded
+            duplicateCount = duplicates
+            hasDuplicates = duplicates > 0
+            netAmountDisplay = Money(netMinor).toDisplayString()
         }
     }
 

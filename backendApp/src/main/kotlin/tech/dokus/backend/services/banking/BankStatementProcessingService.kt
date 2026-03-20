@@ -178,13 +178,13 @@ class BankStatementProcessingService(
                 datesToCheck = validRows.mapNotNull { row ->
                     val date = row.transactionDate ?: return@mapNotNull null
                     val amount = row.signedAmount ?: return@mapNotNull null
-                    date to amount
+                    BankTransactionRepository.DateAmountKey(date, amount)
                 },
             )
 
             annotatedRows = validRows.map { row ->
                 val isDuplicate = row.transactionDate != null && row.signedAmount != null &&
-                    existingTransactions.any { it.first == row.transactionDate && it.second == row.signedAmount }
+                    BankTransactionRepository.DateAmountKey(row.transactionDate!!, row.signedAmount!!) in existingTransactions
                 if (isDuplicate) hasDuplicates = true
                 row.copy(potentialDuplicate = isDuplicate)
             }

@@ -485,21 +485,23 @@ class BankTransactionRepository {
         } > 0
     }
 
+    data class DateAmountKey(val date: LocalDate, val amount: Money)
+
     /**
-     * Check which (date, amount) pairs already exist in bank_transactions for a given account.
+     * Check which (date, amount) keys already exist in bank_transactions for a given account.
      * Used for cross-document duplicate detection.
      */
     suspend fun findByDateAndAmount(
         tenantId: TenantId,
         bankAccountId: BankAccountId,
-        datesToCheck: List<Pair<LocalDate, Money>>,
-    ): Set<Pair<LocalDate, Money>> {
+        datesToCheck: List<DateAmountKey>,
+    ): Set<DateAmountKey> {
         if (datesToCheck.isEmpty()) return emptySet()
 
         return newSuspendedTransaction {
             val tenantUuid = tenantId.value.toJavaUuid()
             val accountUuid = bankAccountId.value.toJavaUuid()
-            val dates = datesToCheck.map { it.first }.distinct()
+            val dates = datesToCheck.map { it.date }.distinct()
 
             val existing = BankTransactionsTable
                 .selectAll()
@@ -508,8 +510,10 @@ class BankTransactionRepository {
                         (BankTransactionsTable.bankAccountId eq accountUuid) and
                         (BankTransactionsTable.transactionDate inList dates)
                 }.map { row ->
-                    row[BankTransactionsTable.transactionDate] to
-                        Money.fromDbDecimal(row[BankTransactionsTable.signedAmount])
+                    DateAmountKey(
+                        row[BankTransactionsTable.transactionDate],
+                        Money.fromDbDecimal(row[BankTransactionsTable.signedAmount]),
+                    )
                 }.toSet()
 
             datesToCheck.filter { it in existing }.toSet()

@@ -11,7 +11,6 @@ data class BankStatementTransactionUiRow(
     val communication: String?,
     val displayAmount: String,
     val amountMinor: Long,
-    val isPositive: Boolean,
     val isExcluded: Boolean,
     val isDuplicate: Boolean,
 )

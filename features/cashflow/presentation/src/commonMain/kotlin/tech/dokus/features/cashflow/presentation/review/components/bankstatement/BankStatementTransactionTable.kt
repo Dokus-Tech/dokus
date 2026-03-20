@@ -12,7 +12,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.bank_statement_col_amount
 import tech.dokus.aura.resources.bank_statement_col_communication
@@ -63,15 +62,14 @@ private fun TransactionTableHeader(
         horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
     ) {
         if (!isReadOnly) {
-            // Checkbox column spacer
-            androidx.compose.foundation.layout.Spacer(modifier = Modifier.width(48.dp))
+            androidx.compose.foundation.layout.Spacer(modifier = Modifier.width(BankStatementColumnWidths.Checkbox))
         }
-        HeaderCell(stringResource(Res.string.bank_statement_col_date), Modifier.width(64.dp))
+        HeaderCell(stringResource(Res.string.bank_statement_col_date), Modifier.width(BankStatementColumnWidths.Date))
         HeaderCell(stringResource(Res.string.bank_statement_col_description), Modifier.weight(1f))
-        HeaderCell(stringResource(Res.string.bank_statement_col_communication), Modifier.width(160.dp))
+        HeaderCell(stringResource(Res.string.bank_statement_col_communication), Modifier.width(BankStatementColumnWidths.Communication))
         HeaderCell(
             stringResource(Res.string.bank_statement_col_amount),
-            Modifier.width(100.dp),
+            Modifier.width(BankStatementColumnWidths.Amount),
             textAlign = androidx.compose.ui.text.style.TextAlign.End,
         )
     }

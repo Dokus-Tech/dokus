@@ -39,7 +39,7 @@ internal fun BankStatementActionBar(
         horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium),
     ) {
         Text(
-            text = stringResource(Res.string.bank_statement_importing_summary, includedCount) + " · net $netAmount",
+            text = stringResource(Res.string.bank_statement_importing_summary, includedCount, netAmount),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

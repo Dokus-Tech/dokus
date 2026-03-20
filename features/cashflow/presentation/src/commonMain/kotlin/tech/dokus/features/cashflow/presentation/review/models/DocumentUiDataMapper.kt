@@ -116,9 +116,7 @@ internal fun DocumentDraftData.toUiData(): DocumentUiData = when (this) {
         periodEnd = periodEnd?.toString(),
         openingBalance = openingBalance?.toDisplayString(),
         closingBalance = closingBalance?.toDisplayString(),
-        movement = if (openingBalance != null && closingBalance != null) {
-            Money(closingBalance!!.minor - openingBalance!!.minor).toDisplayString()
-        } else null,
+        movement = movementDisplay(openingBalance, closingBalance),
         transactions = transactions.mapIndexed { index, row ->
             row.toUiRow(index)
         },
@@ -254,9 +252,7 @@ internal fun DocDto.toUiData(): DocumentUiData = when (this) {
         periodEnd = periodEnd?.toString(),
         openingBalance = openingBalance?.toDisplayString(),
         closingBalance = closingBalance?.toDisplayString(),
-        movement = if (openingBalance != null && closingBalance != null) {
-            Money(closingBalance!!.minor - openingBalance!!.minor).toDisplayString()
-        } else null,
+        movement = movementDisplay(openingBalance, closingBalance),
         transactions = when (this) {
             is DocDto.BankStatement.Draft -> transactions.mapIndexed { index, row ->
                 row.toUiRow(index)
@@ -315,6 +311,9 @@ internal fun DocDto.toUiData(): DocumentUiData = when (this) {
     is DocDto.Other -> DocumentUiData.Other()
 }
 
+private fun movementDisplay(opening: Money?, closing: Money?): String? =
+    if (opening != null && closing != null) Money(closing.minor - opening.minor).toDisplayString() else null
+
 private fun BankStatementTransactionDraftRow.toUiRow(index: Int): BankStatementTransactionUiRow {
     val amount = signedAmount
     val comm = communication
@@ -331,7 +330,6 @@ private fun BankStatementTransactionDraftRow.toUiRow(index: Int): BankStatementT
         communication = communicationText,
         displayAmount = amount?.toDisplayString().orEmpty(),
         amountMinor = amount?.minor ?: 0L,
-        isPositive = (amount?.minor ?: 0L) > 0,
         isExcluded = excluded,
         isDuplicate = potentialDuplicate,
     )

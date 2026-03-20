@@ -165,6 +165,7 @@ internal class DocumentReviewFeedbackActions(
                                     ),
                                     hasUnsavedChanges = false,
                                     isResolvingMatchReview = false,
+                                    incomingPreviewState = null,
                                     documentStatus = draft?.documentStatus,
                                 )
                             }
