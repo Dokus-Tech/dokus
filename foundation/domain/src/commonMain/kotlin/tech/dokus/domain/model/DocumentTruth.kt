@@ -2,18 +2,17 @@ package tech.dokus.domain.model
 
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
-import tech.dokus.domain.enums.IntakeOutcome
-import tech.dokus.domain.enums.ReviewReason
 import tech.dokus.domain.enums.DocumentMatchReviewStatus
-import tech.dokus.domain.enums.SourceMatchKind
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentSourceStatus
+import tech.dokus.domain.enums.IntakeOutcome
+import tech.dokus.domain.enums.ReviewReason
+import tech.dokus.domain.enums.SourceMatchKind
 import tech.dokus.domain.ids.DocumentBlobId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentMatchReviewId
 import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.ids.UserId
 
 @Serializable
 data class DocumentSourceDto(
@@ -36,22 +35,6 @@ data class DocumentSourceDto(
     val contentType: String? = null,
     val sizeBytes: Long? = null,
     val matchType: SourceMatchKind? = null,
-)
-
-@Serializable
-data class DocumentMatchReviewDto(
-    val id: DocumentMatchReviewId,
-    val tenantId: TenantId,
-    val documentId: DocumentId,
-    val incomingSourceId: DocumentSourceId,
-    val reasonType: ReviewReason,
-    val aiSummary: String? = null,
-    val aiConfidence: Double? = null,
-    val status: DocumentMatchReviewStatus,
-    val resolvedBy: UserId? = null,
-    val resolvedAt: LocalDateTime? = null,
-    val createdAt: LocalDateTime,
-    val updatedAt: LocalDateTime
 )
 
 @Serializable
