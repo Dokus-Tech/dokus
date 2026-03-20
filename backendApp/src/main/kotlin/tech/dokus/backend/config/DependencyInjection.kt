@@ -57,6 +57,9 @@ import tech.dokus.backend.services.contacts.ContactService
 import tech.dokus.backend.services.contacts.sse.ContactEventHub
 import tech.dokus.backend.services.contacts.sse.ContactSsePublisher
 import tech.dokus.backend.services.documents.AutoConfirmPolicy
+import tech.dokus.backend.services.documents.AttachmentService
+import tech.dokus.backend.services.documents.DocumentLifecycleService
+import tech.dokus.backend.services.documents.DocumentListingService
 import tech.dokus.backend.services.documents.postextraction.AutoConfirmDocumentUseCase
 import tech.dokus.backend.services.documents.postextraction.EnrichDocumentPurposeUseCase
 import tech.dokus.backend.services.documents.postextraction.PostExtractionOrchestrator
@@ -362,6 +365,9 @@ private fun cashflowModule() = module {
     singleOf(::RAGIndexingService)
     single { DocumentConfirmationDispatcher(get(), get(), get(), get(), get(), get(), get(), get()) }
     singleOf(::DocumentTruthService)
+    singleOf(::AttachmentService)
+    singleOf(::DocumentListingService)
+    singleOf(::DocumentLifecycleService)
     singleOf(::ProcessingHealthService)
     singleOf(::DocumentCollectionEventHub)
     singleOf(::DocumentSnapshotEventHub)
