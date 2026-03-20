@@ -22,7 +22,7 @@ import tech.dokus.aura.resources.cashflow_no_documents
 import tech.dokus.domain.model.DocDto
 import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.foundation.app.state.DokusState
-import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.aura.components.common.DokusErrorBanner
 import tech.dokus.foundation.aura.components.common.ShimmerLine
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.tooling.PreviewParameters
@@ -31,8 +31,6 @@ import tech.dokus.foundation.aura.tooling.TestWrapper
 
 // Section layout dimensions
 private val SectionItemSpacing = Constraints.Spacing.large
-private val DesktopErrorVerticalPadding = Constraints.Spacing.xxxLarge
-private val MobileErrorVerticalPadding = Constraints.Spacing.xxLarge
 
 // Table skeleton dimensions
 private val SkeletonRowSpacing = Constraints.Spacing.small
@@ -97,17 +95,10 @@ fun CashflowDocumentsTableSection(
             }
 
             is DokusState.Error -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = DesktopErrorVerticalPadding),
-                    contentAlignment = Alignment.Center
-                ) {
-                    DokusErrorContent(
-                        exception = state.exception,
-                        retryHandler = state.retryHandler
-                    )
-                }
+                DokusErrorBanner(
+                    exception = state.exception,
+                    retryHandler = state.retryHandler,
+                )
             }
         }
     }
@@ -150,17 +141,10 @@ fun CashflowMobileDocumentsSection(
             }
 
             is DokusState.Error -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = MobileErrorVerticalPadding),
-                    contentAlignment = Alignment.Center
-                ) {
-                    DokusErrorContent(
-                        exception = state.exception,
-                        retryHandler = state.retryHandler
-                    )
-                }
+                DokusErrorBanner(
+                    exception = state.exception,
+                    retryHandler = state.retryHandler,
+                )
             }
         }
     }

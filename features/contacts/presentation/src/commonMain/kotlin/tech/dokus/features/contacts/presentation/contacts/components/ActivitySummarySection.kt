@@ -1,7 +1,6 @@
 package tech.dokus.features.contacts.presentation.contacts.components
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -38,7 +37,7 @@ import tech.dokus.foundation.aura.components.DokusCard
 import tech.dokus.foundation.aura.components.DokusCardPadding
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.DokusCardVariant
-import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.aura.components.common.DokusErrorBanner
 import tech.dokus.foundation.aura.components.common.ShimmerLine
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.tooling.PreviewParameters
@@ -62,7 +61,6 @@ private val SkeletonLabelWidth =
 private val SkeletonLabelHeight = Constraints.Spacing.medium
 private val SkeletonTotalWidth = Constraints.IconSize.xxLarge - Constraints.Spacing.xSmall
 private val SkeletonTotalHeight = Constraints.Spacing.medium
-private val ErrorPaddingVertical = Constraints.Spacing.xxLarge
 private const val SkeletonRepeatCount = 3
 
 @Composable
@@ -91,17 +89,10 @@ internal fun ActivitySummarySection(
                     ActivitySummaryContent(activity = state.data)
                 }
                 is DokusState.Error -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = ErrorPaddingVertical),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        DokusErrorContent(
-                            exception = state.exception,
-                            retryHandler = state.retryHandler
-                        )
-                    }
+                    DokusErrorBanner(
+                        exception = state.exception,
+                        retryHandler = state.retryHandler,
+                    )
                 }
             }
         }

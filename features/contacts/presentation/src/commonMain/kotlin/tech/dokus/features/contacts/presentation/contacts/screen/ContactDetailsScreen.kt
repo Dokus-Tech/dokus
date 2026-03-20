@@ -84,26 +84,13 @@ private fun ContactDetailsScreenContent(
         showEditNoteDialog = uiState.showEditNoteDialog
     )
 
-    fun openNotesSurface() {
-        if (isDesktop) {
-            onIntent(ContactDetailsIntent.ShowNotesSidePanel)
-        } else {
-            onIntent(ContactDetailsIntent.ShowNotesBottomSheet)
-        }
-    }
-
-    fun dismissComposer() {
-        when {
-            uiState.showEditNoteDialog -> onIntent(ContactDetailsIntent.HideEditNoteDialog)
-            uiState.showAddNoteDialog -> onIntent(ContactDetailsIntent.HideAddNoteDialog)
-        }
-    }
-
-    fun saveNote() {
-        if (uiState.showEditNoteDialog) {
-            onIntent(ContactDetailsIntent.UpdateNote)
-        } else {
-            onIntent(ContactDetailsIntent.AddNote)
+    val openNotesSurface = remember(isDesktop) {
+        {
+            if (isDesktop) {
+                onIntent(ContactDetailsIntent.ShowNotesSidePanel)
+            } else {
+                onIntent(ContactDetailsIntent.ShowNotesBottomSheet)
+            }
         }
     }
 
@@ -176,10 +163,18 @@ private fun ContactDetailsScreenContent(
             editingNote = uiState.editingNote,
             showComposer = showNoteComposer,
             onShowAddNote = { onIntent(ContactDetailsIntent.ShowAddNoteDialog) },
-            onSaveNote = ::saveNote,
+            onSaveNote = {
+                if (uiState.showEditNoteDialog) onIntent(ContactDetailsIntent.UpdateNote)
+                else onIntent(ContactDetailsIntent.AddNote)
+            },
             onEditNoteClick = { onIntent(ContactDetailsIntent.ShowEditNoteDialog(it)) },
             onDeleteNoteClick = { onIntent(ContactDetailsIntent.ShowDeleteNoteConfirmation(it)) },
-            onDismissComposer = ::dismissComposer,
+            onDismissComposer = {
+                when {
+                    uiState.showEditNoteDialog -> onIntent(ContactDetailsIntent.HideEditNoteDialog)
+                    uiState.showAddNoteDialog -> onIntent(ContactDetailsIntent.HideAddNoteDialog)
+                }
+            },
             onDismiss = { onIntent(ContactDetailsIntent.HideNotesSidePanel) }
         )
     } else {
@@ -193,10 +188,18 @@ private fun ContactDetailsScreenContent(
             editingNote = uiState.editingNote,
             showComposer = showNoteComposer,
             onShowAddNote = { onIntent(ContactDetailsIntent.ShowAddNoteDialog) },
-            onSaveNote = ::saveNote,
+            onSaveNote = {
+                if (uiState.showEditNoteDialog) onIntent(ContactDetailsIntent.UpdateNote)
+                else onIntent(ContactDetailsIntent.AddNote)
+            },
             onEditNoteClick = { onIntent(ContactDetailsIntent.ShowEditNoteDialog(it)) },
             onDeleteNoteClick = { onIntent(ContactDetailsIntent.ShowDeleteNoteConfirmation(it)) },
-            onDismissComposer = ::dismissComposer
+            onDismissComposer = {
+                when {
+                    uiState.showEditNoteDialog -> onIntent(ContactDetailsIntent.HideEditNoteDialog)
+                    uiState.showAddNoteDialog -> onIntent(ContactDetailsIntent.HideAddNoteDialog)
+                }
+            }
         )
     }
 

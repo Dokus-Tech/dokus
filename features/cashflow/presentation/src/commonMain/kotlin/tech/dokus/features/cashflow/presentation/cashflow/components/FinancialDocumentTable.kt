@@ -65,6 +65,8 @@ import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.style.dokusSizing
 import tech.dokus.foundation.aura.style.dokusSpacing
 
+private val AmountGroupingRegex = Regex("(\\d)(?=(\\d{3})+$)")
+
 /**
  * Data class representing a financial document table row.
  * This maps from DocDto domain model to UI-specific structure.
@@ -142,7 +144,7 @@ fun DocDto.toTableRow(): FinancialDocumentRow {
         runCatching {
             val amountValue = amount.toDouble()
             val intAmount = amountValue.toInt()
-            intAmount.toString().replace(Regex("(\\d)(?=(\\d{3})+$)"), "$1,")
+            intAmount.toString().replace(AmountGroupingRegex, "$1,")
         }.getOrNull()
     }
 

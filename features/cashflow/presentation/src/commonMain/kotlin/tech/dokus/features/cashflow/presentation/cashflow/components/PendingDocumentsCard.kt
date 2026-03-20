@@ -39,7 +39,7 @@ import tech.dokus.features.cashflow.presentation.model.toUiStatus
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.DocumentStatusBadge
 import tech.dokus.foundation.aura.components.DokusCardSurface
-import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.aura.components.common.DokusErrorBanner
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import tech.dokus.foundation.aura.components.common.ShimmerBox
@@ -227,15 +227,11 @@ private fun PendingDocumentsErrorContent(
     state: DokusState.Error<*>,
     modifier: Modifier = Modifier
 ) {
-    Box(
-        modifier = modifier.fillMaxWidth(),
-        contentAlignment = Alignment.Center
-    ) {
-        DokusErrorContent(
-            exception = state.exception,
-            retryHandler = state.retryHandler
-        )
-    }
+    DokusErrorBanner(
+        exception = state.exception,
+        retryHandler = state.retryHandler,
+        modifier = modifier,
+    )
 }
 
 /**

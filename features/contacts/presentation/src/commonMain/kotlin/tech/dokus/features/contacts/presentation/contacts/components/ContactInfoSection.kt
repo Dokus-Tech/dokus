@@ -3,11 +3,9 @@ package tech.dokus.features.contacts.presentation.contacts.components
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -18,7 +16,7 @@ import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.DokusCard
 import tech.dokus.foundation.aura.components.DokusCardPadding
-import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.aura.components.common.DokusErrorBanner
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
@@ -55,17 +53,10 @@ internal fun ContactInfoSection(
                     contact = state.data
                 )
                 is DokusState.Error -> {
-                    androidx.compose.foundation.layout.Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 32.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        DokusErrorContent(
-                            exception = state.exception,
-                            retryHandler = state.retryHandler
-                        )
-                    }
+                    DokusErrorBanner(
+                        exception = state.exception,
+                        retryHandler = state.retryHandler,
+                    )
                 }
             }
         }

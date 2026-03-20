@@ -29,6 +29,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -64,7 +66,7 @@ internal fun MySessionsLoadedContent(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
-    val sections = sessions.toSessionSections()
+    val sections = remember(sessions) { sessions.toSessionSections() }
 
     LazyColumn(
         modifier = modifier
@@ -234,16 +236,18 @@ private fun OtherSessionsGroup(
         ) {
             Column(modifier = Modifier.animateContentSize()) {
                 visibleSessions.forEachIndexed { index, session ->
-                    SessionRow(
-                        title = session.userFacingPrimaryLabel(),
-                        secondary = session.userFacingClientLabel(),
-                        context = session.userFacingContextLabel(nowEpochSeconds = nowEpochSeconds),
-                        deviceType = session.deviceType,
-                        badgeLabel = null,
-                        onAction = { onRevokeSession(session.id) },
-                    )
-                    if (index < visibleSessions.lastIndex) {
-                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    key(session.id) {
+                        SessionRow(
+                            title = session.userFacingPrimaryLabel(),
+                            secondary = session.userFacingClientLabel(),
+                            context = session.userFacingContextLabel(nowEpochSeconds = nowEpochSeconds),
+                            deviceType = session.deviceType,
+                            badgeLabel = null,
+                            onAction = { onRevokeSession(session.id) },
+                        )
+                        if (index < visibleSessions.lastIndex) {
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                        }
                     }
                 }
             }
