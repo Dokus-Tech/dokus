@@ -1,12 +1,11 @@
 package tech.dokus.backend.services.documents
 
-import tech.dokus.database.entity.DocumentSourceEntity
+import tech.dokus.backend.mappers.from
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.DocumentSourceRepository
 import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
 import tech.dokus.domain.enums.DocumentSource
-import tech.dokus.domain.enums.EntityType
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.AttachmentId
 import tech.dokus.domain.ids.DocumentId
@@ -164,21 +163,6 @@ class AttachmentService(
         if (documentId == null) return emptyList()
         val document = documentRepository.getById(tenantId, documentId) ?: return emptyList()
         val source = sourceRepository.selectPreferredSource(tenantId, documentId) ?: return emptyList()
-        return listOf(document.toAttachmentDto(source))
+        return listOf(AttachmentDto.from(document, source))
     }
-}
-
-private fun DocumentDto.toAttachmentDto(source: DocumentSourceEntity): AttachmentDto {
-    return AttachmentDto(
-        id = AttachmentId.parse(id.toString()),
-        tenantId = tenantId,
-        entityType = EntityType.Attachment,
-        entityId = "",
-        filename = source.filename ?: filename,
-        mimeType = source.contentType,
-        sizeBytes = source.sizeBytes,
-        s3Key = source.storageKey,
-        s3Bucket = "minio",
-        uploadedAt = uploadedAt
-    )
 }

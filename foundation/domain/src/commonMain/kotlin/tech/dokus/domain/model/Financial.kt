@@ -373,7 +373,9 @@ data class AttachmentDto(
     val s3Key: String,
     val s3Bucket: String,
     val uploadedAt: LocalDateTime
-)
+) {
+    companion object
+}
 
 // ============================================================================
 // ATTACHMENT REQUEST/RESPONSE MODELS
