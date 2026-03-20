@@ -2,7 +2,7 @@ package tech.dokus.features.ai.validation
 
 import kotlinx.datetime.LocalDate
 import tech.dokus.domain.Money
-import tech.dokus.domain.model.VatBreakdownEntry
+import tech.dokus.domain.model.VatBreakdownEntryDto
 import kotlin.math.abs
 
 object VatBreakdownValidator {
@@ -11,7 +11,7 @@ object VatBreakdownValidator {
     private const val RATE_TOLERANCE_BP = 50
 
     fun verify(
-        vatBreakdown: List<VatBreakdownEntry>,
+        vatBreakdown: List<VatBreakdownEntryDto>,
         subtotal: Money?,
         vatAmount: Money?,
         documentDate: LocalDate?,
@@ -83,7 +83,7 @@ object VatBreakdownValidator {
         }
     }
 
-    private fun verifyRateMatch(entry: VatBreakdownEntry, index: Int): AuditCheck {
+    private fun verifyRateMatch(entry: VatBreakdownEntryDto, index: Int): AuditCheck {
         if (entry.base == 0L) {
             return AuditCheck.incomplete(
                 type = CheckType.VAT_BREAKDOWN,

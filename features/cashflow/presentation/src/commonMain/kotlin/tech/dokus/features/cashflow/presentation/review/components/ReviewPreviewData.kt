@@ -30,30 +30,30 @@ import tech.dokus.domain.ids.PaymentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.model.AutoPaymentStatus
-import tech.dokus.domain.model.CashflowContactRef
-import tech.dokus.domain.model.CashflowEntry
+import tech.dokus.domain.model.CashflowContactRefDto
+import tech.dokus.domain.model.CashflowEntryDto
 import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.BankTransactionDto
-import tech.dokus.domain.model.TransactionCommunication
+import tech.dokus.domain.model.TransactionCommunicationDto
 import tech.dokus.domain.ids.StructuredCommunication
 import tech.dokus.domain.model.Dpi
 import tech.dokus.domain.model.DocumentPagePreviewDto
 import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.DocumentSourceDto
 import tech.dokus.domain.model.DocumentMatchReviewSummaryDto
-import tech.dokus.domain.model.FinancialLineItem
+import tech.dokus.domain.model.FinancialLineItemDto
 import tech.dokus.domain.model.BankStatementDraftData
-import tech.dokus.domain.model.BankStatementTransactionDraftRow
+import tech.dokus.domain.model.BankStatementTransactionDraftRowDto
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.InvoiceDraftData
-import tech.dokus.domain.model.PartyDraft
+import tech.dokus.domain.model.PartyDraftDto
 import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.domain.model.toDocDto
 import tech.dokus.domain.model.toDocumentType
 import tech.dokus.domain.model.toEmptyDraftData
-import tech.dokus.domain.model.contact.CounterpartySnapshot
+import tech.dokus.domain.model.contact.CounterpartySnapshotDto
 import tech.dokus.domain.model.contact.ResolvedContact
 import tech.dokus.features.cashflow.presentation.review.DocumentPreviewState
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
@@ -98,14 +98,14 @@ internal fun previewReviewContentState(
         vatAmount = Money.from("49.33"),
         totalAmount = Money.from("289.00"),
         lineItems = listOf(
-            FinancialLineItem(
+            FinancialLineItemDto(
                 description = "Insurance premium - Q1 2026",
                 quantity = 1,
                 netAmount = 28900,
             )
         ),
         notes = "Insurance premium - Q1 2026",
-        seller = PartyDraft(name = "KBC Bank NV"),
+        seller = PartyDraftDto(name = "KBC Bank NV"),
     )
     val draft = DocumentDraftDto(
         documentId = documentId,
@@ -130,7 +130,7 @@ internal fun previewReviewContentState(
     )
 
     val cashflowEntry = entryStatus?.let { status ->
-        CashflowEntry(
+        CashflowEntryDto(
             id = CashflowEntryId.generate(),
             tenantId = tenantId,
             sourceType = CashflowSourceType.Invoice,
@@ -152,7 +152,7 @@ internal fun previewReviewContentState(
             } else {
                 null
             },
-            contact = CashflowContactRef(id = ContactId.parse("00000000-0000-0000-0000-000000000001"), name = "KBC Bank NV"),
+            contact = CashflowContactRefDto(id = ContactId.parse("00000000-0000-0000-0000-000000000001"), name = "KBC Bank NV"),
             description = "Insurance premium - Q1 2026",
             createdAt = previewNow,
             updatedAt = previewNow,
@@ -342,7 +342,7 @@ internal fun previewStateForDocumentType(
     )
 
     val cashflowEntry = if (hasFinancialEntry) {
-        CashflowEntry(
+        CashflowEntryDto(
             id = CashflowEntryId.generate(),
             tenantId = tenantId,
             sourceType = CashflowSourceType.Invoice,
@@ -356,7 +356,7 @@ internal fun previewStateForDocumentType(
             currency = Currency.Eur,
             status = CashflowEntryStatus.Open,
             paidAt = null,
-            contact = CashflowContactRef(id = ContactId.parse("00000000-0000-0000-0000-000000000001"), name = "KBC Bank NV"),
+            contact = CashflowContactRefDto(id = ContactId.parse("00000000-0000-0000-0000-000000000001"), name = "KBC Bank NV"),
             description = "Preview - ${resolvedType.name}",
             createdAt = previewNow,
             updatedAt = previewNow,
@@ -436,10 +436,10 @@ private fun previewDraftData(type: DocumentType): DocumentDraftData = when (type
         vatAmount = Money.from("49.33"),
         totalAmount = Money.from("289.00"),
         lineItems = listOf(
-            FinancialLineItem(description = "Insurance premium - Q1 2026", quantity = 1, netAmount = 28900),
+            FinancialLineItemDto(description = "Insurance premium - Q1 2026", quantity = 1, netAmount = 28900),
         ),
         notes = "Insurance premium - Q1 2026",
-        seller = PartyDraft(name = "KBC Bank NV"),
+        seller = PartyDraftDto(name = "KBC Bank NV"),
     )
     DocumentType.CreditNote -> CreditNoteDraftData(
         direction = DocumentDirection.Inbound,
@@ -451,10 +451,10 @@ private fun previewDraftData(type: DocumentType): DocumentDraftData = when (type
         vatAmount = Money.from("17.36"),
         totalAmount = Money.from("100.00"),
         lineItems = listOf(
-            FinancialLineItem(description = "Pricing correction", quantity = 1, netAmount = 10000),
+            FinancialLineItemDto(description = "Pricing correction", quantity = 1, netAmount = 10000),
         ),
         reason = "Pricing correction",
-        seller = PartyDraft(name = "KBC Bank NV"),
+        seller = PartyDraftDto(name = "KBC Bank NV"),
     )
     DocumentType.Receipt -> ReceiptDraftData(
         receiptNumber = "R-2026-0199",
@@ -470,7 +470,7 @@ private fun previewDraftData(type: DocumentType): DocumentDraftData = when (type
         periodEnd = previewDueDate,
         openingBalance = Money(1452361),
         closingBalance = Money(1231042),
-        institution = PartyDraft(name = "KBC Bank NV"),
+        institution = PartyDraftDto(name = "KBC Bank NV"),
         transactions = previewBankStatementDraftRows(),
     )
     DocumentType.Unknown -> InvoiceDraftData(
@@ -480,63 +480,63 @@ private fun previewDraftData(type: DocumentType): DocumentDraftData = when (type
     else -> type.toEmptyDraftData()
 }
 
-private fun previewBankStatementDraftRows(): List<BankStatementTransactionDraftRow> = listOf(
-    BankStatementTransactionDraftRow(
+private fun previewBankStatementDraftRows(): List<BankStatementTransactionDraftRowDto> = listOf(
+    BankStatementTransactionDraftRowDto(
         transactionDate = LocalDate(2026, 1, 5),
         signedAmount = Money(-79860),
-        counterparty = CounterpartySnapshot(name = "SRL Accounting & Tax Solutions", iban = Iban("BE86363206145450")),
-        communication = TransactionCommunication.Structured("+++091/0044/28176+++", StructuredCommunication("091004428176")),
+        counterparty = CounterpartySnapshotDto(name = "SRL Accounting & Tax Solutions", iban = Iban("BE86363206145450")),
+        communication = TransactionCommunicationDto.Structured("+++091/0044/28176+++", StructuredCommunication("091004428176")),
         descriptionRaw = "SENDING MONEY TO BE86 3632 0614 5450",
         rowConfidence = 1.0,
     ),
-    BankStatementTransactionDraftRow(
+    BankStatementTransactionDraftRowDto(
         transactionDate = LocalDate(2026, 1, 13),
         signedAmount = Money(-28900),
-        counterparty = CounterpartySnapshot(name = "Coolblue België NV"),
+        counterparty = CounterpartySnapshotDto(name = "Coolblue België NV"),
         descriptionRaw = "CREDIT TRANSFER",
         rowConfidence = 1.0,
         potentialDuplicate = true,
         excluded = true,
     ),
-    BankStatementTransactionDraftRow(
+    BankStatementTransactionDraftRowDto(
         transactionDate = LocalDate(2026, 1, 14),
         signedAmount = Money(-34697),
-        counterparty = CounterpartySnapshot(name = "Tesla Belgium BVBA", iban = Iban("NL65ADYB2006011162")),
+        counterparty = CounterpartySnapshotDto(name = "Tesla Belgium BVBA", iban = Iban("NL65ADYB2006011162")),
         descriptionRaw = "EUROPEAN DIRECT DEBIT",
         rowConfidence = 1.0,
         potentialDuplicate = true,
         excluded = true,
     ),
-    BankStatementTransactionDraftRow(
+    BankStatementTransactionDraftRowDto(
         transactionDate = LocalDate(2026, 1, 17),
         signedAmount = Money(1337050),
-        counterparty = CounterpartySnapshot(name = "MEDIAHUIS TECHNOLOGY PRODUCT STUDIO", iban = Iban("BE39001920126619")),
-        communication = TransactionCommunication.FreeForm("IV-051"),
+        counterparty = CounterpartySnapshotDto(name = "MEDIAHUIS TECHNOLOGY PRODUCT STUDIO", iban = Iban("BE39001920126619")),
+        communication = TransactionCommunicationDto.FreeForm("IV-051"),
         descriptionRaw = "CREDIT TRANSFER FROM BE39 0019 2012 6619",
         rowConfidence = 1.0,
     ),
-    BankStatementTransactionDraftRow(
+    BankStatementTransactionDraftRowDto(
         transactionDate = LocalDate(2026, 1, 30),
         signedAmount = Money(-130612),
-        counterparty = CounterpartySnapshot(name = "Donckers Schoten NV", iban = Iban("BE85679200363806")),
+        counterparty = CounterpartySnapshotDto(name = "Donckers Schoten NV", iban = Iban("BE85679200363806")),
         descriptionRaw = "SENDING MONEY TO BE85 6792 0036 3806",
         rowConfidence = 1.0,
         potentialDuplicate = true,
         excluded = true,
     ),
-    BankStatementTransactionDraftRow(
+    BankStatementTransactionDraftRowDto(
         transactionDate = LocalDate(2026, 2, 4),
         signedAmount = Money(-96252),
-        counterparty = CounterpartySnapshot(name = "KBC Bank NV"),
-        communication = TransactionCommunication.FreeForm("Business loan - Feb"),
+        counterparty = CounterpartySnapshotDto(name = "KBC Bank NV"),
+        communication = TransactionCommunicationDto.FreeForm("Business loan - Feb"),
         descriptionRaw = "PAYMENT LEASING 0001/0001/BE/2600057216",
         rowConfidence = 1.0,
     ),
-    BankStatementTransactionDraftRow(
+    BankStatementTransactionDraftRowDto(
         transactionDate = LocalDate(2026, 2, 25),
         signedAmount = Money(-48733),
-        counterparty = CounterpartySnapshot(name = "Donckers Schoten NV", iban = Iban("BE85679200363806")),
-        communication = TransactionCommunication.FreeForm("Fuel, Feb 2026"),
+        counterparty = CounterpartySnapshotDto(name = "Donckers Schoten NV", iban = Iban("BE85679200363806")),
+        communication = TransactionCommunicationDto.FreeForm("Fuel, Feb 2026"),
         descriptionRaw = "SENDING MONEY TO BE85 6792 0036 3806",
         rowConfidence = 1.0,
     ),
@@ -549,11 +549,11 @@ internal fun previewImportedTransactions(): List<BankTransactionDto> = listOf(
         documentId = previewDocumentId,
         transactionDate = LocalDate(2026, 2, 15),
         signedAmount = Money.from("-289.00")!!,
-        counterparty = CounterpartySnapshot(
+        counterparty = CounterpartySnapshotDto(
             name = "KBC Bank NV",
             iban = Iban("BE68539007547034"),
         ),
-        communication = TransactionCommunication.Structured(
+        communication = TransactionCommunicationDto.Structured(
             raw = "+++123/4567/89123+++",
             normalized = StructuredCommunication("+++123/4567/89123+++"),
         ),
@@ -568,7 +568,7 @@ internal fun previewImportedTransactions(): List<BankTransactionDto> = listOf(
         documentId = previewDocumentId,
         transactionDate = LocalDate(2026, 2, 12),
         signedAmount = Money.from("-289.00")!!,
-        counterparty = CounterpartySnapshot(name = "KBC Bank NV"),
+        counterparty = CounterpartySnapshotDto(name = "KBC Bank NV"),
         descriptionRaw = "Transfer KBC",
         status = BankTransactionStatus.Unmatched,
         createdAt = previewNow,
@@ -580,7 +580,7 @@ internal fun previewImportedTransactions(): List<BankTransactionDto> = listOf(
         documentId = previewDocumentId,
         transactionDate = LocalDate(2026, 2, 10),
         signedAmount = Money.from("-300.00")!!,
-        counterparty = CounterpartySnapshot(name = "AXA Belgium"),
+        counterparty = CounterpartySnapshotDto(name = "AXA Belgium"),
         descriptionRaw = "AXA insurance transfer",
         status = BankTransactionStatus.Unmatched,
         createdAt = previewNow,

@@ -232,7 +232,7 @@ data class ChatStreamEvent(
     val sessionId: ChatSessionId? = null,
 
     /** Citation data (for CITATION events) */
-    val citation: ChatCitation? = null,
+    val citation: ChatCitationDto? = null,
 
     /** Metadata (for DONE events) */
     val metadata: ChatResponseMetadata? = null,

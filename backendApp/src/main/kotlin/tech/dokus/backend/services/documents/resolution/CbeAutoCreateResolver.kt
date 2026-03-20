@@ -1,9 +1,9 @@
 package tech.dokus.backend.services.documents.resolution
 
 import tech.dokus.domain.model.contact.ContactResolution
-import tech.dokus.domain.model.contact.CounterpartySnapshot
-import tech.dokus.domain.model.contact.MatchEvidence
-import tech.dokus.domain.model.contact.PostalAddress
+import tech.dokus.domain.model.contact.CounterpartySnapshotDto
+import tech.dokus.domain.model.contact.MatchEvidenceDto
+import tech.dokus.domain.model.contact.PostalAddressDto
 import tech.dokus.domain.model.entity.EntityLookup
 import tech.dokus.domain.model.entity.EntityStatus
 import tech.dokus.foundation.backend.lookup.CbeApiClient
@@ -24,7 +24,7 @@ class CbeAutoCreateResolver(
                 ContactResolution.AutoCreate(
                     contactData = snapshot,
                     cbeVerified = null,
-                    evidence = MatchEvidence(
+                    evidence = MatchEvidenceDto(
                         vatMatch = false,
                         ibanMatch = false,
                         nameSimilarity = null,
@@ -40,7 +40,7 @@ class CbeAutoCreateResolver(
                 ContactResolution.AutoCreate(
                     contactData = snapshotFromCbe(cbeLookup, snapshot),
                     cbeVerified = cbeLookup,
-                    evidence = MatchEvidence(
+                    evidence = MatchEvidenceDto(
                         vatMatch = false,
                         ibanMatch = false,
                         nameSimilarity = null,
@@ -58,16 +58,16 @@ class CbeAutoCreateResolver(
 
     private fun snapshotFromCbe(
         lookup: EntityLookup,
-        fallback: CounterpartySnapshot
-    ): CounterpartySnapshot {
+        fallback: CounterpartySnapshotDto
+    ): CounterpartySnapshotDto {
         val cbeAddress = lookup.address
-        return CounterpartySnapshot(
+        return CounterpartySnapshotDto(
             name = lookup.name.value,
             vatNumber = lookup.vatNumber,
             iban = fallback.iban,
             email = fallback.email,
             companyNumber = lookup.enterpriseNumber,
-            address = PostalAddress(
+            address = PostalAddressDto(
                 streetLine1 = cbeAddress?.streetLine1,
                 streetLine2 = cbeAddress?.streetLine2,
                 postalCode = cbeAddress?.postalCode,

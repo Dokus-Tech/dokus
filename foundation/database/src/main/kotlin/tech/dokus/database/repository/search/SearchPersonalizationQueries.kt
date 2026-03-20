@@ -22,7 +22,7 @@ import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import tech.dokus.database.mapper.from
 import tech.dokus.database.entity.SearchTransactionHitEntity
-import tech.dokus.domain.model.SearchTransactionHit
+import tech.dokus.domain.model.SearchTransactionHitDto
 import tech.dokus.database.tables.cashflow.CashflowEntriesTable
 import tech.dokus.database.tables.cashflow.ExpensesTable
 import tech.dokus.database.tables.cashflow.InvoicesTable
@@ -35,7 +35,7 @@ import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.fromDbDecimal
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.SearchAggregates
+import tech.dokus.domain.model.SearchAggregatesDto
 import tech.dokus.domain.model.SearchPreset
 import tech.dokus.foundation.backend.database.dbQuery
 import java.util.UUID
@@ -51,9 +51,9 @@ private val PresetStatuses = listOf(
 )
 
 data class PresetSearchResult(
-    val transactions: List<SearchTransactionHit>,
+    val transactions: List<SearchTransactionHitDto>,
     val count: Long,
-    val aggregates: SearchAggregates,
+    val aggregates: SearchAggregatesDto,
 )
 
 data class TenantEntitySample(
@@ -96,17 +96,17 @@ class SearchPersonalizationQueries {
         tenantId: TenantId,
         preset: SearchPreset,
         limit: Int,
-    ): List<SearchTransactionHit> = dbQuery {
+    ): List<SearchTransactionHitDto> = dbQuery {
         presetTransactionQuery(tenantId, preset)
             .orderBy(CashflowEntriesTable.eventDate to SortOrder.DESC)
             .limit(limit)
-            .map { SearchTransactionHit.from(SearchTransactionHitEntity.from(it)) }
+            .map { SearchTransactionHitDto.from(SearchTransactionHitEntity.from(it)) }
     }
 
     private suspend fun presetAggregates(
         tenantId: TenantId,
         preset: SearchPreset,
-    ): SearchAggregates = dbQuery {
+    ): SearchAggregatesDto = dbQuery {
         val amountSum = CashflowEntriesTable.amountGross.sum()
 
         fun sumForDirection(direction: CashflowDirection?): Money {
@@ -124,7 +124,7 @@ class SearchPersonalizationQueries {
         val incoming = sumForDirection(CashflowDirection.In)
         val outgoing = sumForDirection(CashflowDirection.Out)
 
-        SearchAggregates(
+        SearchAggregatesDto(
             transactionTotal = total,
             incomingTotal = incoming,
             outgoingTotal = outgoing,

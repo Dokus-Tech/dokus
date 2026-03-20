@@ -7,10 +7,10 @@ import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentType
 
 // =============================================================================
-// FinancialLineItem → DocLineItem
+// FinancialLineItemDto → DocLineItem
 // =============================================================================
 
-fun FinancialLineItem.toDocLineItem(): DocLineItem = DocLineItem(
+fun FinancialLineItemDto.toDocLineItem(): DocLineItem = DocLineItem(
     description = description,
     quantity = quantity?.let { Quantity(it.toDouble()) },
     unitPrice = unitPrice?.let { Money(it) },
@@ -40,9 +40,9 @@ fun InvoiceItemDto.toDocLineItem(): DocLineItem = DocLineItem(
  */
 private fun resolveCounterparty(
     direction: DocumentDirection,
-    seller: PartyDraft,
-    buyer: PartyDraft,
-): PartyDraft = when (direction) {
+    seller: PartyDraftDto,
+    buyer: PartyDraftDto,
+): PartyDraftDto = when (direction) {
     DocumentDirection.Inbound -> seller
     DocumentDirection.Outbound -> buyer
     DocumentDirection.Unknown, DocumentDirection.Neutral -> {
@@ -56,11 +56,11 @@ private fun resolveCounterparty(
  */
 private fun splitCounterparty(
     direction: DocumentDirection,
-    counterparty: PartyDraft,
-): kotlin.Pair<PartyDraft, PartyDraft> = when (direction) {
-    DocumentDirection.Inbound -> counterparty to PartyDraft()
-    DocumentDirection.Outbound -> PartyDraft() to counterparty
-    DocumentDirection.Unknown, DocumentDirection.Neutral -> counterparty to PartyDraft()
+    counterparty: PartyDraftDto,
+): kotlin.Pair<PartyDraftDto, PartyDraftDto> = when (direction) {
+    DocumentDirection.Inbound -> counterparty to PartyDraftDto()
+    DocumentDirection.Outbound -> PartyDraftDto() to counterparty
+    DocumentDirection.Unknown, DocumentDirection.Neutral -> counterparty to PartyDraftDto()
 }
 
 // =============================================================================
@@ -346,10 +346,10 @@ val DocDto?.displayContextDescription: String?
     }
 
 // =============================================================================
-// DocLineItem → FinancialLineItem (reverse)
+// DocLineItem → FinancialLineItemDto (reverse)
 // =============================================================================
 
-fun DocLineItem.toFinancialLineItem(): FinancialLineItem = FinancialLineItem(
+fun DocLineItem.toFinancialLineItem(): FinancialLineItemDto = FinancialLineItemDto(
     description = description,
     quantity = quantity?.value?.toLong(),
     unitPrice = unitPrice?.minor,

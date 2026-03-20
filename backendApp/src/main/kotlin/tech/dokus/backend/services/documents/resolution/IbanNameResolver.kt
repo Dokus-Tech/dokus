@@ -5,7 +5,7 @@ import tech.dokus.backend.services.documents.resolution.ContactMatchingUtils.Com
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.ContactResolution
-import tech.dokus.domain.model.contact.MatchEvidence
+import tech.dokus.domain.model.contact.MatchEvidenceDto
 
 class IbanNameResolver(
     private val contactRepository: ContactRepository,
@@ -26,7 +26,7 @@ class IbanNameResolver(
 
         if (strongMatches.size == 1 && (!input.strictAutoLink || strongMatches.first().second >= StrongNameThreshold)) {
             val (contact, score) = strongMatches.first()
-            val evidence = MatchEvidence(
+            val evidence = MatchEvidenceDto(
                 vatMatch = false,
                 ibanMatch = true,
                 nameSimilarity = score,

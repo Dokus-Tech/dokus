@@ -17,7 +17,7 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
-import tech.dokus.domain.model.ai.ChatCitation
+import tech.dokus.domain.model.ai.ChatCitationDto
 import tech.dokus.domain.model.ai.ChatConfiguration
 import tech.dokus.domain.model.ai.ChatHistoryResponse
 import tech.dokus.domain.model.ai.ChatMessageDto
@@ -411,7 +411,7 @@ private suspend fun processChat(
     // Map citations to domain model
     val citations = if (request.includeCitations && chatResult.citations.isNotEmpty()) {
         chatResult.citations.map { citation ->
-            ChatCitation(
+            ChatCitationDto(
                 chunkId = citation.chunkId,
                 documentId = citation.documentId,
                 documentName = citation.documentName,

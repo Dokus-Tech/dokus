@@ -36,11 +36,11 @@ import tech.dokus.domain.model.DocumentSourceDto
 import tech.dokus.domain.model.InvoicePeppolInfo
 import tech.dokus.domain.model.PaymentLinkInfo
 import tech.dokus.domain.model.InvoicePaymentInfo
-import tech.dokus.domain.model.PartyDraft
-import tech.dokus.domain.model.TransactionCommunication
+import tech.dokus.domain.model.PartyDraftDto
+import tech.dokus.domain.model.TransactionCommunicationDto
 import tech.dokus.domain.model.UpdateDraftRequest
 import tech.dokus.domain.model.contact.ContactSuggestionDto
-import tech.dokus.domain.model.contact.CounterpartySnapshot
+import tech.dokus.domain.model.contact.CounterpartySnapshotDto
 import tech.dokus.domain.model.contact.CounterpartyInfo
 import tech.dokus.domain.model.contact.ResolvedContact
 import tech.dokus.domain.utils.parseSafe
@@ -249,19 +249,19 @@ internal fun ConfirmedBankStatement.toDocDto(): DocDto.BankStatement.Draft = Doc
     periodStart = statement.periodStart,
     periodEnd = statement.periodEnd,
     notes = null,
-    institution = PartyDraft(),
+    institution = PartyDraftDto(),
     transactions = transactions.map { it.toDraftRow() },
 )
 
-private fun BankTransactionEntity.toDraftRow() = tech.dokus.domain.model.BankStatementTransactionDraftRow(
+private fun BankTransactionEntity.toDraftRow() = tech.dokus.domain.model.BankStatementTransactionDraftRowDto(
     transactionDate = transactionDate,
     signedAmount = signedAmount,
-    counterparty = CounterpartySnapshot(
+    counterparty = CounterpartySnapshotDto(
         name = counterpartyName,
         iban = counterpartyIban,
         bic = counterpartyBic,
     ),
-    communication = TransactionCommunication.from(
+    communication = TransactionCommunicationDto.from(
         structuredCommunicationRaw = structuredCommunicationRaw,
         freeCommunication = freeCommunication,
     ),

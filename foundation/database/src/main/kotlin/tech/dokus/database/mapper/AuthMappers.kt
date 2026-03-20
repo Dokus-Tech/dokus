@@ -15,7 +15,7 @@ import tech.dokus.domain.ids.InvitationId
 import tech.dokus.domain.ids.SessionId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
-import tech.dokus.domain.model.TenantInvitation
+import tech.dokus.domain.model.TenantInvitationDto
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toKotlinUuid
 
@@ -40,7 +40,7 @@ internal fun TenantInvitationEntity.Companion.from(row: ResultRow): TenantInvita
     )
 }
 
-fun TenantInvitation.Companion.from(entity: TenantInvitationEntity): TenantInvitation = TenantInvitation(
+fun TenantInvitationDto.Companion.from(entity: TenantInvitationEntity): TenantInvitationDto = TenantInvitationDto(
     id = entity.id,
     tenantId = entity.tenantId,
     email = entity.email,

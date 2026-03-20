@@ -2,7 +2,7 @@ package tech.dokus.features.ai.validation
 
 import kotlinx.datetime.LocalDate
 import tech.dokus.domain.Money
-import tech.dokus.domain.model.VatBreakdownEntry
+import tech.dokus.domain.model.VatBreakdownEntryDto
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
@@ -26,7 +26,7 @@ class VatBreakdownValidatorTest {
     @Test
     fun `valid breakdown passes sum checks`() {
         val breakdown = listOf(
-            VatBreakdownEntry(rate = 2100, base = 10000, amount = 2100)
+            VatBreakdownEntryDto(rate = 2100, base = 10000, amount = 2100)
         )
         val checks = VatBreakdownValidator.verify(
             vatBreakdown = breakdown,

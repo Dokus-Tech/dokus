@@ -199,7 +199,7 @@ data class TeamMember(
  * Invitation to join a tenant workspace.
  */
 @Serializable
-data class TenantInvitation(
+data class TenantInvitationDto(
     val id: InvitationId,
     val tenantId: TenantId,
     val email: Email,
@@ -294,7 +294,7 @@ data class BankAccountDto(
 }
 
 @Serializable
-data class BankAccountSummary(
+data class BankAccountSummaryDto(
     val totalBalance: Money,
     val accountCount: Int,
     val unmatchedCount: Int,
@@ -304,7 +304,7 @@ data class BankAccountSummary(
 )
 
 @Serializable
-data class BankTransactionSummary(
+data class BankTransactionSummaryDto(
     val unmatchedCount: Int,
     val needsReviewCount: Int,
     val matchedCount: Int,
@@ -340,19 +340,19 @@ data class MarkTransferRequest(
 
 @Serializable
 data class BalanceHistoryResponse(
-    val series: List<AccountBalanceSeries>,
-    val totalSeries: List<BalanceHistoryPoint>,
+    val series: List<AccountBalanceSeriesDto>,
+    val totalSeries: List<BalanceHistoryPointDto>,
 )
 
 @Serializable
-data class AccountBalanceSeries(
+data class AccountBalanceSeriesDto(
     val accountId: BankAccountId,
     val accountName: String,
-    val points: List<BalanceHistoryPoint>,
+    val points: List<BalanceHistoryPointDto>,
 )
 
 @Serializable
-data class BalanceHistoryPoint(
+data class BalanceHistoryPointDto(
     val date: LocalDate,
     val balance: Money,
 )

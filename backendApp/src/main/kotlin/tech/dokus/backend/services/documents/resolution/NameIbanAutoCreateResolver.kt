@@ -1,7 +1,7 @@
 package tech.dokus.backend.services.documents.resolution
 
 import tech.dokus.domain.model.contact.ContactResolution
-import tech.dokus.domain.model.contact.MatchEvidence
+import tech.dokus.domain.model.contact.MatchEvidenceDto
 
 class NameIbanAutoCreateResolver {
     suspend operator fun invoke(input: ResolverInput): ResolverOutcome {
@@ -18,7 +18,7 @@ class NameIbanAutoCreateResolver {
     }
 }
 
-private val noMatchEvidence = MatchEvidence(
+private val noMatchEvidence = MatchEvidenceDto(
     vatMatch = false,
     ibanMatch = false,
     nameSimilarity = null,

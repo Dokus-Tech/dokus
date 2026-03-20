@@ -7,7 +7,7 @@ import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.ai.ChatAttachedFile
-import tech.dokus.domain.model.ai.ChatCitation
+import tech.dokus.domain.model.ai.ChatCitationDto
 import tech.dokus.domain.model.ai.ChatConfiguration
 import tech.dokus.domain.model.ai.ChatMessageDto
 import tech.dokus.domain.model.ai.ChatScope
@@ -110,7 +110,7 @@ data class ChatSessionData(
     /**
      * All citations from assistant messages.
      */
-    val allCitations: List<ChatCitation>
+    val allCitations: List<ChatCitationDto>
         get() = messages
             .filter { it.role == MessageRole.Assistant }
             .flatMap { it.citations ?: emptyList() }

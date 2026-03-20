@@ -9,8 +9,8 @@ import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.CashflowContactRef
-import tech.dokus.domain.model.CashflowEntry
+import tech.dokus.domain.model.CashflowContactRefDto
+import tech.dokus.domain.model.CashflowEntryDto
 
 internal fun CashflowEntryEntity.Companion.from(
     row: ResultRow,
@@ -31,7 +31,7 @@ internal fun CashflowEntryEntity.Companion.from(
         status = row[CashflowEntriesTable.status],
         paidAt = row[CashflowEntriesTable.paidAt],
         contact = row[CashflowEntriesTable.counterpartyId]?.let { counterpartyId ->
-            CashflowContactRef(
+            CashflowContactRefDto(
                 id = ContactId.parse(counterpartyId.toString()),
                 name = contactName,
             )
@@ -42,7 +42,7 @@ internal fun CashflowEntryEntity.Companion.from(
     )
 }
 
-fun CashflowEntry.Companion.from(entity: CashflowEntryEntity): CashflowEntry = CashflowEntry(
+fun CashflowEntryDto.Companion.from(entity: CashflowEntryEntity): CashflowEntryDto = CashflowEntryDto(
     id = entity.id,
     tenantId = entity.tenantId,
     sourceType = entity.sourceType,

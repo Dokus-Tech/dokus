@@ -3,14 +3,14 @@ package tech.dokus.features.ai.models
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.BankStatementDraftData
-import tech.dokus.domain.model.BankStatementTransactionDraftRow
+import tech.dokus.domain.model.BankStatementTransactionDraftRowDto
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.InvoiceDraftData
-import tech.dokus.domain.model.PartyDraft
+import tech.dokus.domain.model.PartyDraftDto
 import tech.dokus.domain.model.ReceiptDraftData
-import tech.dokus.domain.model.TransactionCommunication
+import tech.dokus.domain.model.TransactionCommunicationDto
 import tech.dokus.domain.Money
-import tech.dokus.domain.model.contact.CounterpartySnapshot
+import tech.dokus.domain.model.contact.CounterpartySnapshotDto
 import tech.dokus.domain.model.toEmptyDraftData
 
 fun DocumentAiProcessingResult.toDraftData(): DocumentDraftData? {
@@ -35,7 +35,7 @@ private fun FinancialExtractionResult.toDraftData(direction: DocumentDirection):
         iban = data.iban,
         payment = data.payment,
         notes = null,
-        seller = PartyDraft(
+        seller = PartyDraftDto(
             name = data.sellerName,
             vat = data.sellerVat,
             email = data.sellerEmail,
@@ -44,7 +44,7 @@ private fun FinancialExtractionResult.toDraftData(direction: DocumentDirection):
             city = data.sellerCity,
             country = data.sellerCountry,
         ),
-        buyer = PartyDraft(
+        buyer = PartyDraftDto(
             name = data.buyerName,
             vat = data.buyerVat,
             email = data.buyerEmail,
@@ -68,11 +68,11 @@ private fun FinancialExtractionResult.toDraftData(direction: DocumentDirection):
         originalInvoiceNumber = data.originalInvoiceNumber,
         reason = data.reason,
         notes = null,
-        seller = PartyDraft(
+        seller = PartyDraftDto(
             name = data.sellerName,
             vat = data.sellerVat,
         ),
-        buyer = PartyDraft(
+        buyer = PartyDraftDto(
             name = data.buyerName,
             vat = data.buyerVat,
         ),
@@ -96,14 +96,14 @@ private fun FinancialExtractionResult.toDraftData(direction: DocumentDirection):
     is FinancialExtractionResult.BankStatement -> BankStatementDraftData(
         direction = DocumentDirection.Neutral,
         transactions = data.rows.map { row ->
-            BankStatementTransactionDraftRow(
+            BankStatementTransactionDraftRowDto(
                 transactionDate = row.transactionDate,
                 signedAmount = row.signedAmount,
-                counterparty = CounterpartySnapshot(
+                counterparty = CounterpartySnapshotDto(
                     name = row.counterpartyName,
                     iban = row.counterpartyIban,
                 ),
-                communication = TransactionCommunication.from(
+                communication = TransactionCommunicationDto.from(
                     structuredCommunicationRaw = row.structuredCommunicationRaw,
                     freeCommunication = row.freeCommunication,
                 ),
@@ -117,7 +117,7 @@ private fun FinancialExtractionResult.toDraftData(direction: DocumentDirection):
         closingBalance = data.closingBalance,
         periodStart = data.periodStart,
         periodEnd = data.periodEnd,
-        institution = PartyDraft(name = data.institutionName),
+        institution = PartyDraftDto(name = data.institutionName),
         notes = null
     )
 
@@ -136,8 +136,8 @@ private fun FinancialExtractionResult.toDraftData(direction: DocumentDirection):
  * Returns null if we can't determine (let it stay unknown).
  */
 private fun inferZeroVat(
-    lineItems: List<tech.dokus.domain.model.FinancialLineItem>,
-    vatBreakdown: List<tech.dokus.domain.model.VatBreakdownEntry>,
+    lineItems: List<tech.dokus.domain.model.FinancialLineItemDto>,
+    vatBreakdown: List<tech.dokus.domain.model.VatBreakdownEntryDto>,
 ): Money? {
     // If vatBreakdown explicitly says amount = 0 for all entries
     if (vatBreakdown.isNotEmpty() && vatBreakdown.all { it.amount == 0L }) {

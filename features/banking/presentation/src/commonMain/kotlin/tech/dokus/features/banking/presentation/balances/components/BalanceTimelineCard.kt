@@ -28,10 +28,10 @@ import tech.dokus.aura.resources.banking_balances_timeline_subtitle
 import tech.dokus.aura.resources.banking_balances_timeline_title
 import tech.dokus.domain.Money
 import tech.dokus.domain.ids.BankAccountId
-import tech.dokus.domain.model.AccountBalanceSeries
-import tech.dokus.domain.model.BalanceHistoryPoint
+import tech.dokus.domain.model.AccountBalanceSeriesDto
+import tech.dokus.domain.model.BalanceHistoryPointDto
 import tech.dokus.domain.model.BalanceHistoryResponse
-import tech.dokus.domain.model.BankAccountSummary
+import tech.dokus.domain.model.BankAccountSummaryDto
 import tech.dokus.features.banking.presentation.balances.mvi.BalanceTimeRange
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.app.state.isError
@@ -65,7 +65,7 @@ private val AccountColors = listOf(
 
 @Composable
 internal fun BalanceTimelineCard(
-    summary: DokusState<BankAccountSummary>,
+    summary: DokusState<BankAccountSummaryDto>,
     balanceHistory: DokusState<BalanceHistoryResponse>,
     timeRange: BalanceTimeRange,
     onTimeRangeChange: (BalanceTimeRange) -> Unit,
@@ -309,7 +309,7 @@ private fun buildChartSeries(response: BalanceHistoryResponse): List<LineChartSe
 // Previews
 // =============================================================================
 
-private val PreviewSummary = BankAccountSummary(
+private val PreviewSummary = BankAccountSummaryDto(
     totalBalance = Money(1778042),
     accountCount = 2,
     unmatchedCount = 3,
@@ -320,24 +320,24 @@ private val PreviewSummary = BankAccountSummary(
 
 private val PreviewBalanceHistory = BalanceHistoryResponse(
     series = listOf(
-        AccountBalanceSeries(
+        AccountBalanceSeriesDto(
             accountId = BankAccountId.generate(),
             accountName = "KBC Business",
             points = listOf(
-                BalanceHistoryPoint(LocalDate(2026, 2, 7), Money(1200000)),
-                BalanceHistoryPoint(LocalDate(2026, 2, 15), Money(1180000)),
-                BalanceHistoryPoint(LocalDate(2026, 2, 23), Money(1320000)),
-                BalanceHistoryPoint(LocalDate(2026, 3, 3), Money(1350000)),
-                BalanceHistoryPoint(LocalDate(2026, 3, 7), Money(1438042)),
+                BalanceHistoryPointDto(LocalDate(2026, 2, 7), Money(1200000)),
+                BalanceHistoryPointDto(LocalDate(2026, 2, 15), Money(1180000)),
+                BalanceHistoryPointDto(LocalDate(2026, 2, 23), Money(1320000)),
+                BalanceHistoryPointDto(LocalDate(2026, 3, 3), Money(1350000)),
+                BalanceHistoryPointDto(LocalDate(2026, 3, 7), Money(1438042)),
             ),
         ),
     ),
     totalSeries = listOf(
-        BalanceHistoryPoint(LocalDate(2026, 2, 7), Money(1540000)),
-        BalanceHistoryPoint(LocalDate(2026, 2, 15), Money(1520000)),
-        BalanceHistoryPoint(LocalDate(2026, 2, 23), Money(1660000)),
-        BalanceHistoryPoint(LocalDate(2026, 3, 3), Money(1690000)),
-        BalanceHistoryPoint(LocalDate(2026, 3, 7), Money(1778042)),
+        BalanceHistoryPointDto(LocalDate(2026, 2, 7), Money(1540000)),
+        BalanceHistoryPointDto(LocalDate(2026, 2, 15), Money(1520000)),
+        BalanceHistoryPointDto(LocalDate(2026, 2, 23), Money(1660000)),
+        BalanceHistoryPointDto(LocalDate(2026, 3, 3), Money(1690000)),
+        BalanceHistoryPointDto(LocalDate(2026, 3, 7), Money(1778042)),
     ),
 )
 

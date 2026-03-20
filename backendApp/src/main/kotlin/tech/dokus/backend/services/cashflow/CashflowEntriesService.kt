@@ -19,7 +19,7 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.database.entity.CashflowEntryEntity
 import tech.dokus.database.mapper.from
-import tech.dokus.domain.model.CashflowEntry
+import tech.dokus.domain.model.CashflowEntryDto
 import tech.dokus.foundation.backend.utils.loggerFor
 import java.util.UUID
 

@@ -8,7 +8,7 @@ import tech.dokus.domain.enums.CashflowViewMode
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.model.CancelEntryRequest
 import tech.dokus.domain.model.AutoPaymentStatus
-import tech.dokus.domain.model.CashflowEntry
+import tech.dokus.domain.model.CashflowEntryDto
 import tech.dokus.domain.model.CashflowOverview
 import tech.dokus.domain.model.CashflowPaymentRequest
 import tech.dokus.domain.model.UndoAutoPaymentRequest
@@ -58,7 +58,7 @@ internal class LoadCashflowEntriesUseCaseImpl(
         statuses: List<CashflowEntryStatus>?,
         sourceType: CashflowSourceType?,
         entryId: CashflowEntryId?
-    ): Result<PaginatedResponse<CashflowEntry>> {
+    ): Result<PaginatedResponse<CashflowEntryDto>> {
         return dataSource.listCashflowEntries(
             viewMode = viewMode,
             fromDate = fromDate,
@@ -76,7 +76,7 @@ internal class LoadCashflowEntriesUseCaseImpl(
 internal class GetCashflowEntryUseCaseImpl(
     private val dataSource: CashflowRemoteDataSource
 ) : GetCashflowEntryUseCase {
-    override suspend fun invoke(entryId: CashflowEntryId): Result<CashflowEntry> {
+    override suspend fun invoke(entryId: CashflowEntryId): Result<CashflowEntryDto> {
         return dataSource.getCashflowEntry(entryId)
     }
 }
@@ -101,7 +101,7 @@ internal class RecordCashflowPaymentUseCaseImpl(
     override suspend fun invoke(
         entryId: CashflowEntryId,
         request: CashflowPaymentRequest
-    ): Result<CashflowEntry> {
+    ): Result<CashflowEntryDto> {
         return dataSource.recordCashflowPayment(entryId, request)
     }
 }
@@ -112,7 +112,7 @@ internal class CancelCashflowEntryUseCaseImpl(
     override suspend fun invoke(
         entryId: CashflowEntryId,
         request: CancelEntryRequest?
-    ): Result<CashflowEntry> {
+    ): Result<CashflowEntryDto> {
         return dataSource.cancelCashflowEntry(entryId, request)
     }
 }
@@ -123,7 +123,7 @@ internal class UndoAutoPaymentUseCaseImpl(
     override suspend fun invoke(
         entryId: CashflowEntryId,
         request: UndoAutoPaymentRequest
-    ): Result<CashflowEntry> {
+    ): Result<CashflowEntryDto> {
         return dataSource.undoAutoPayment(entryId, request)
     }
 }

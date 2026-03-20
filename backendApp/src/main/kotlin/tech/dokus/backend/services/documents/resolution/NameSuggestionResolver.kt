@@ -5,7 +5,7 @@ import tech.dokus.backend.services.documents.resolution.ContactMatchingUtils.Com
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.ContactResolution
-import tech.dokus.domain.model.contact.MatchEvidence
+import tech.dokus.domain.model.contact.MatchEvidenceDto
 
 class NameSuggestionResolver(
     private val contactRepository: ContactRepository,
@@ -31,7 +31,7 @@ class NameSuggestionResolver(
             return ResolverOutcome.Resolved(
                 ContactResolution.Matched(
                     contactId = healedContact.id,
-                    evidence = MatchEvidence(
+                    evidence = MatchEvidenceDto(
                         vatMatch = false,
                         ibanMatch = false,
                         nameSimilarity = score,

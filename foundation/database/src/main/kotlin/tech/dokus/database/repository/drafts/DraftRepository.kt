@@ -519,7 +519,7 @@ private fun InvoiceDraftEntity.toDocDto(): DocDto.Invoice.Draft = DocDto.Invoice
     lineItems = items.map { it.toDocLineItem() },
     iban = senderIban,
     notes = notes,
-    counterparty = tech.dokus.domain.model.PartyDraft(), // counterparty resolved separately via ResolvedContact
+    counterparty = tech.dokus.domain.model.PartyDraftDto(), // counterparty resolved separately via ResolvedContact
 )
 
 private fun InvoiceDraftItemEntity.toDocLineItem(): tech.dokus.domain.model.DocLineItem =
@@ -545,7 +545,7 @@ private fun CreditNoteDraftEntity.toDocDto(): DocDto.CreditNote.Draft = DocDto.C
     reason = reason,
     notes = notes,
     originalInvoiceNumber = originalInvoiceNumber,
-    counterparty = tech.dokus.domain.model.PartyDraft(),
+    counterparty = tech.dokus.domain.model.PartyDraftDto(),
 )
 
 private fun CreditNoteDraftItemEntity.toDocLineItem(): tech.dokus.domain.model.DocLineItem =

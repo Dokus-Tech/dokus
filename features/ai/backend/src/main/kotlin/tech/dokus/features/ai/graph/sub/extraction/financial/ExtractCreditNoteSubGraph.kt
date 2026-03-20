@@ -13,8 +13,8 @@ import tech.dokus.domain.Money
 import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.ids.VatNumber
-import tech.dokus.domain.model.FinancialLineItem
-import tech.dokus.domain.model.VatBreakdownEntry
+import tech.dokus.domain.model.FinancialLineItemDto
+import tech.dokus.domain.model.VatBreakdownEntryDto
 import tech.dokus.features.ai.config.asVisionModel
 import tech.dokus.features.ai.config.finishToolOnly
 import tech.dokus.features.ai.config.finishToolVisionAssistantResponseRepeatMax
@@ -55,8 +55,8 @@ data class CreditNoteExtractionResult(
     val vatAmount: Money?,
     val totalAmount: Money?,
 
-    val lineItems: List<FinancialLineItem> = emptyList(),
-    val vatBreakdown: List<VatBreakdownEntry> = emptyList(),
+    val lineItems: List<FinancialLineItemDto> = emptyList(),
+    val vatBreakdown: List<VatBreakdownEntryDto> = emptyList(),
 
     // Neutral parties (facts only)
     val sellerName: String?,

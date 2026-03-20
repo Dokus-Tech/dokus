@@ -11,7 +11,7 @@ import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.PaymentMethod
 import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.VatNumber
-import tech.dokus.domain.model.contact.CounterpartySnapshot
+import tech.dokus.domain.model.contact.CounterpartySnapshotDto
 
 /**
  * Canonical, normalized draft data shown to users and used for confirmation.
@@ -307,7 +307,7 @@ fun DocumentDraftData.toSortDate(): LocalDate? = when (this) {
 }
 
 @Serializable
-data class PartyDraft(
+data class PartyDraftDto(
     val name: String? = null,
     val vat: VatNumber? = null,
     val email: Email? = null,
@@ -330,14 +330,14 @@ data class InvoiceDraftData(
     val subtotalAmount: Money? = null,
     val vatAmount: Money? = null,
     val totalAmount: Money? = null,
-    val lineItems: List<FinancialLineItem> = emptyList(),
-    val vatBreakdown: List<VatBreakdownEntry> = emptyList(),
+    val lineItems: List<FinancialLineItemDto> = emptyList(),
+    val vatBreakdown: List<VatBreakdownEntryDto> = emptyList(),
     val iban: Iban? = null,
-    val payment: CanonicalPayment? = null,
+    val payment: CanonicalPaymentDto? = null,
     val notes: String? = null,
     // Neutral party model used for deterministic direction and counterparty resolution.
-    val seller: PartyDraft = PartyDraft(),
-    val buyer: PartyDraft = PartyDraft(),
+    val seller: PartyDraftDto = PartyDraftDto(),
+    val buyer: PartyDraftDto = PartyDraftDto(),
 ) : DocumentDraftData {
 }
 
@@ -351,14 +351,14 @@ data class CreditNoteDraftData(
     val subtotalAmount: Money? = null,
     val vatAmount: Money? = null,
     val totalAmount: Money? = null,
-    val lineItems: List<FinancialLineItem> = emptyList(),
-    val vatBreakdown: List<VatBreakdownEntry> = emptyList(),
+    val lineItems: List<FinancialLineItemDto> = emptyList(),
+    val vatBreakdown: List<VatBreakdownEntryDto> = emptyList(),
     val originalInvoiceNumber: String? = null,
     val reason: String? = null,
     val notes: String? = null,
     // Neutral party model used for deterministic direction and counterparty resolution.
-    val seller: PartyDraft = PartyDraft(),
-    val buyer: PartyDraft = PartyDraft(),
+    val seller: PartyDraftDto = PartyDraftDto(),
+    val buyer: PartyDraftDto = PartyDraftDto(),
 ) : DocumentDraftData
 
 val CreditNoteDraftData.resolvedCounterpartyName: String?
@@ -385,8 +385,8 @@ data class ReceiptDraftData(
     val currency: Currency = Currency.default,
     val totalAmount: Money? = null,
     val vatAmount: Money? = null,
-    val lineItems: List<FinancialLineItem> = emptyList(),
-    val vatBreakdown: List<VatBreakdownEntry> = emptyList(),
+    val lineItems: List<FinancialLineItemDto> = emptyList(),
+    val vatBreakdown: List<VatBreakdownEntryDto> = emptyList(),
     val receiptNumber: String? = null,
     val paymentMethod: PaymentMethod? = null,
     val notes: String? = null
@@ -394,11 +394,11 @@ data class ReceiptDraftData(
 }
 
 @Serializable
-data class BankStatementTransactionDraftRow(
+data class BankStatementTransactionDraftRowDto(
     val transactionDate: LocalDate? = null,
     val signedAmount: Money? = null,
-    val counterparty: CounterpartySnapshot = CounterpartySnapshot(),
-    val communication: TransactionCommunication? = null,
+    val counterparty: CounterpartySnapshotDto = CounterpartySnapshotDto(),
+    val communication: TransactionCommunicationDto? = null,
     val descriptionRaw: String? = null,
     val rowConfidence: Double = 0.0,
     val largeAmountFlag: Boolean = false,
@@ -410,13 +410,13 @@ data class BankStatementTransactionDraftRow(
 @SerialName("bank_statement_draft")
 data class BankStatementDraftData(
     val direction: DocumentDirection = DocumentDirection.Neutral,
-    val transactions: List<BankStatementTransactionDraftRow> = emptyList(),
+    val transactions: List<BankStatementTransactionDraftRowDto> = emptyList(),
     val accountIban: Iban? = null,
     val openingBalance: Money? = null,
     val closingBalance: Money? = null,
     val periodStart: LocalDate? = null,
     val periodEnd: LocalDate? = null,
-    val institution: PartyDraft = PartyDraft(),
+    val institution: PartyDraftDto = PartyDraftDto(),
     val notes: String? = null,
 ) : DocumentDraftData
 

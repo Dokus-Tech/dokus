@@ -10,7 +10,7 @@ import tech.dokus.domain.ids.StructuredCommunication
  * - reference: Free-text payment reference (trimmed, no validation)
  */
 @Serializable
-data class CanonicalPayment(
+data class CanonicalPaymentDto(
     val structuredComm: StructuredCommunication? = null,
     val reference: String? = null
 ) {
@@ -23,18 +23,18 @@ data class CanonicalPayment(
          * - Otherwise store the trimmed raw value as reference.
          * - Do not null out non-null input, even if malformed after cleanup.
          */
-        fun from(raw: String?): CanonicalPayment? {
+        fun from(raw: String?): CanonicalPaymentDto? {
             if (raw == null) return null
             val trimmed = raw.trim()
             if (trimmed.isEmpty()) {
-                return CanonicalPayment(reference = trimmed)
+                return CanonicalPaymentDto(reference = trimmed)
             }
 
             val structured = StructuredCommunication.from(trimmed)
             return if (structured != null) {
-                CanonicalPayment(structuredComm = structured)
+                CanonicalPaymentDto(structuredComm = structured)
             } else {
-                CanonicalPayment(reference = trimmed)
+                CanonicalPaymentDto(reference = trimmed)
             }
         }
     }

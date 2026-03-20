@@ -6,7 +6,7 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.ChunkMetadata
 import tech.dokus.domain.model.DocumentChunkId
-import tech.dokus.domain.model.ai.ChatCitation
+import tech.dokus.domain.model.ai.ChatCitationDto
 import tech.dokus.domain.model.ai.ChatContentBlock
 import tech.dokus.domain.model.ai.ChatMessageId
 import tech.dokus.domain.model.ai.ChatScope
@@ -22,7 +22,7 @@ data class ChatMessageEntity(
     val content: String,
     val scope: ChatScope,
     val documentId: DocumentId? = null,
-    val citations: List<ChatCitation>? = null,
+    val citations: List<ChatCitationDto>? = null,
     val contentBlocks: List<ChatContentBlock>? = null,
     val chunksRetrieved: Int? = null,
     val aiModel: String? = null,

@@ -17,7 +17,7 @@ import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
-import tech.dokus.domain.model.ai.ChatCitation
+import tech.dokus.domain.model.ai.ChatCitationDto
 import tech.dokus.domain.model.ai.ChatContentBlock
 import tech.dokus.domain.model.ai.ChatMessageDto
 import tech.dokus.domain.model.ai.ChatMessageId
@@ -67,7 +67,7 @@ class ChatRepositoryImpl : ChatRepository {
 
             // Serialize citations as JSON array
             val citationsJson = message.citations?.takeIf { it.isNotEmpty() }?.let { cites ->
-                json.encodeToString(ListSerializer(ChatCitation.serializer()), cites)
+                json.encodeToString(ListSerializer(ChatCitationDto.serializer()), cites)
             }
 
             // Serialize content blocks as JSON array

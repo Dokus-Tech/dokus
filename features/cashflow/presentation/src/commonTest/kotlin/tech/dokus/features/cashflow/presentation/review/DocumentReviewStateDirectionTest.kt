@@ -13,7 +13,7 @@ import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.InvoiceDraftData
-import tech.dokus.domain.model.PartyDraft
+import tech.dokus.domain.model.PartyDraftDto
 import tech.dokus.domain.model.contact.ResolvedContact
 import tech.dokus.domain.model.toDocDto
 import tech.dokus.foundation.app.state.DokusState
@@ -79,7 +79,7 @@ class DocumentReviewStateDirectionTest {
             subtotalAmount = Money.from("100.00"),
             vatAmount = Money.from("21.00"),
             totalAmount = Money.from("121.00"),
-            seller = PartyDraft(name = sellerName)
+            seller = PartyDraftDto(name = sellerName)
         )
 
         val resolvedContact = when {

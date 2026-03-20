@@ -28,7 +28,7 @@ import tech.dokus.domain.ids.StructuredCommunication
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.ids.VatNumber
-import tech.dokus.domain.model.contact.CounterpartySnapshot
+import tech.dokus.domain.model.contact.CounterpartySnapshotDto
 
 /**
  * Unified document content model.
@@ -74,9 +74,9 @@ sealed interface DocDto {
             override val lineItems: List<DocLineItem> = emptyList(),
             override val iban: Iban? = null,
             override val notes: String? = null,
-            val vatBreakdown: List<VatBreakdownEntry> = emptyList(),
-            val payment: CanonicalPayment? = null,
-            val counterparty: PartyDraft = PartyDraft(),
+            val vatBreakdown: List<VatBreakdownEntryDto> = emptyList(),
+            val payment: CanonicalPaymentDto? = null,
+            val counterparty: PartyDraftDto = PartyDraftDto(),
         ) : Invoice
 
         @Serializable
@@ -139,9 +139,9 @@ sealed interface DocDto {
             override val lineItems: List<DocLineItem> = emptyList(),
             override val reason: String? = null,
             override val notes: String? = null,
-            val vatBreakdown: List<VatBreakdownEntry> = emptyList(),
+            val vatBreakdown: List<VatBreakdownEntryDto> = emptyList(),
             val originalInvoiceNumber: String? = null,
-            val counterparty: PartyDraft = PartyDraft(),
+            val counterparty: PartyDraftDto = PartyDraftDto(),
         ) : CreditNote
 
         @Serializable
@@ -199,7 +199,7 @@ sealed interface DocDto {
             override val lineItems: List<DocLineItem> = emptyList(),
             override val receiptNumber: String? = null,
             override val notes: String? = null,
-            val vatBreakdown: List<VatBreakdownEntry> = emptyList(),
+            val vatBreakdown: List<VatBreakdownEntryDto> = emptyList(),
             val paymentMethod: PaymentMethod? = null,
         ) : Receipt
 
@@ -254,8 +254,8 @@ sealed interface DocDto {
             override val periodStart: LocalDate? = null,
             override val periodEnd: LocalDate? = null,
             override val notes: String? = null,
-            val transactions: List<BankStatementTransactionDraftRow> = emptyList(),
-            val institution: PartyDraft = PartyDraft(),
+            val transactions: List<BankStatementTransactionDraftRowDto> = emptyList(),
+            val institution: PartyDraftDto = PartyDraftDto(),
         ) : BankStatement
 
         @Serializable

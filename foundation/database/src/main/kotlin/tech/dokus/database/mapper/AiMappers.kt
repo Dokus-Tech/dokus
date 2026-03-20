@@ -11,7 +11,7 @@ import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.ChunkMetadata
 import tech.dokus.domain.model.DocumentChunkDto
 import tech.dokus.domain.model.DocumentChunkId
-import tech.dokus.domain.model.ai.ChatCitation
+import tech.dokus.domain.model.ai.ChatCitationDto
 import tech.dokus.domain.model.ai.ChatContentBlock
 import tech.dokus.domain.model.ai.ChatMessageDto
 import tech.dokus.domain.model.ai.ChatMessageId
@@ -27,7 +27,7 @@ fun ChatMessageEntity.Companion.from(row: ResultRow): ChatMessageEntity {
     val citationsJson = row[ChatMessagesTable.citations]
     val citations = citationsJson?.let {
         try {
-            json.decodeFromString<List<ChatCitation>>(it)
+            json.decodeFromString<List<ChatCitationDto>>(it)
         } catch (e: Exception) {
             logger.warn("Failed to parse citations JSON: ${e.message}")
             null

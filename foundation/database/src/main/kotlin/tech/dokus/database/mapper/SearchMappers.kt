@@ -15,10 +15,10 @@ import tech.dokus.domain.fromDbDecimal
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.model.SearchContactHit
-import tech.dokus.domain.model.SearchDocumentHit
-import tech.dokus.domain.model.SearchTransactionHit
-import tech.dokus.domain.model.contact.CounterpartySnapshot
+import tech.dokus.domain.model.SearchContactHitDto
+import tech.dokus.domain.model.SearchDocumentHitDto
+import tech.dokus.domain.model.SearchTransactionHitDto
+import tech.dokus.domain.model.contact.CounterpartySnapshotDto
 import tech.dokus.domain.utils.json
 
 internal fun SearchDocumentHitEntity.Companion.from(row: ResultRow): SearchDocumentHitEntity {
@@ -26,7 +26,7 @@ internal fun SearchDocumentHitEntity.Companion.from(row: ResultRow): SearchDocum
     val contactVat = row.getOrNull(ContactsTable.vatNumber)
     val snapshot = if (contactName == null || contactVat == null) {
         row.getOrNull(DocumentsTable.counterpartySnapshot)
-            ?.let { runCatching { json.decodeFromString<CounterpartySnapshot>(it) }.getOrNull() }
+            ?.let { runCatching { json.decodeFromString<CounterpartySnapshotDto>(it) }.getOrNull() }
     } else null
 
     return SearchDocumentHitEntity(
@@ -79,7 +79,7 @@ internal fun SearchTransactionHitEntity.Companion.from(row: ResultRow): SearchTr
 
 // ── Entity → DTO mappers ────────────────────────────────────────────────
 
-fun SearchDocumentHit.Companion.from(entity: SearchDocumentHitEntity): SearchDocumentHit = SearchDocumentHit(
+fun SearchDocumentHitDto.Companion.from(entity: SearchDocumentHitEntity): SearchDocumentHitDto = SearchDocumentHitDto(
     documentId = entity.documentId,
     filename = entity.filename,
     documentType = entity.documentType,
@@ -89,7 +89,7 @@ fun SearchDocumentHit.Companion.from(entity: SearchDocumentHitEntity): SearchDoc
     amount = entity.amount,
 )
 
-fun SearchContactHit.Companion.from(entity: SearchContactHitEntity): SearchContactHit = SearchContactHit(
+fun SearchContactHitDto.Companion.from(entity: SearchContactHitEntity): SearchContactHitDto = SearchContactHitDto(
     contactId = entity.contactId,
     name = entity.name,
     email = entity.email,
@@ -98,7 +98,7 @@ fun SearchContactHit.Companion.from(entity: SearchContactHitEntity): SearchConta
     isActive = entity.isActive,
 )
 
-fun SearchTransactionHit.Companion.from(entity: SearchTransactionHitEntity): SearchTransactionHit = SearchTransactionHit(
+fun SearchTransactionHitDto.Companion.from(entity: SearchTransactionHitEntity): SearchTransactionHitDto = SearchTransactionHitDto(
     entryId = entity.entryId,
     displayText = entity.displayText,
     status = entity.status,

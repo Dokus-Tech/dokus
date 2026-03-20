@@ -10,12 +10,12 @@ import pro.respawn.flowmvi.test.subscribeAndTest
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.model.SearchCounts
+import tech.dokus.domain.model.SearchCountsDto
 import tech.dokus.domain.model.SearchPreset
 import tech.dokus.domain.model.SearchResultEntityType
 import tech.dokus.domain.model.SearchSignalEventRequest
 import tech.dokus.domain.model.SearchSignalEventType
-import tech.dokus.domain.model.SearchSuggestion
+import tech.dokus.domain.model.SearchSuggestionDto
 import tech.dokus.domain.model.UnifiedSearchResponse
 import tech.dokus.domain.model.UnifiedSearchScope
 import kotlin.test.Test
@@ -80,7 +80,7 @@ class SearchContainerTest {
             advanceUntilIdle() // init
             emit(
                 SearchIntent.SuggestionSelected(
-                    SearchSuggestion(
+                    SearchSuggestionDto(
                         label = "Overdue invoices",
                         countHint = 2,
                         actionQuery = "Overdue invoices",
@@ -160,7 +160,7 @@ class SearchContainerTest {
             advanceUntilIdle()
             emit(
                 SearchIntent.SuggestionSelected(
-                    SearchSuggestion(
+                    SearchSuggestionDto(
                         label = "Upcoming payments",
                         actionScope = UnifiedSearchScope.Transactions,
                         actionPreset = SearchPreset.UpcomingPayments,
@@ -238,7 +238,7 @@ class SearchContainerTest {
                     UnifiedSearchResponse(
                         query = "second",
                         scope = UnifiedSearchScope.All,
-                        counts = SearchCounts(all = 1),
+                        counts = SearchCountsDto(all = 1),
                         suggestions = emptyList(),
                     )
                 )
@@ -281,15 +281,15 @@ private class FakeSearchRemoteDataSource : SearchRemoteDataSource {
                     query = "",
                     scope = scope,
                     suggestions = listOf(
-                        SearchSuggestion(label = "KBC Bank", countHint = 4),
-                        SearchSuggestion(label = "January", countHint = 5),
+                        SearchSuggestionDto(label = "KBC Bank", countHint = 4),
+                        SearchSuggestionDto(label = "January", countHint = 5),
                     ),
                 )
             } else {
                 UnifiedSearchResponse(
                     query = query,
                     scope = scope,
-                    counts = SearchCounts(
+                    counts = SearchCountsDto(
                         all = 1,
                         documents = if (scope != UnifiedSearchScope.Transactions) 1 else 0,
                         contacts = if (scope == UnifiedSearchScope.Contacts) 1 else 0,

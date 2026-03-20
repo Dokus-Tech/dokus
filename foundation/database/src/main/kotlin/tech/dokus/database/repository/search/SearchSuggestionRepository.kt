@@ -10,7 +10,7 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.SearchPreset
 import tech.dokus.domain.model.SearchSignalEventType
-import tech.dokus.domain.model.SearchSuggestion
+import tech.dokus.domain.model.SearchSuggestionDto
 import tech.dokus.domain.model.UnifiedSearchScope
 
 private const val UserSignalTypeQueryCommittedWeight = 40L
@@ -29,7 +29,7 @@ class SearchSuggestionRepository(
         tenantId: TenantId,
         userId: UserId,
         limit: Int,
-    ): List<SearchSuggestion> {
+    ): List<SearchSuggestionDto> {
         val safeLimit = limit.coerceIn(1, 50)
         val now = Clock.System.now()
 
@@ -172,7 +172,7 @@ class SearchSuggestionRepository(
     private fun mergeAndRankSuggestions(
         candidates: List<SuggestionCandidate>,
         limit: Int,
-    ): List<SearchSuggestion> {
+    ): List<SearchSuggestionDto> {
         if (candidates.isEmpty()) return emptyList()
 
         val merged = linkedMapOf<String, SuggestionCandidate>()
@@ -193,7 +193,7 @@ class SearchSuggestionRepository(
             )
             .take(limit)
             .map { candidate ->
-                SearchSuggestion(
+                SearchSuggestionDto(
                     label = candidate.label,
                     countHint = candidate.countHint,
                     actionQuery = candidate.actionQuery,

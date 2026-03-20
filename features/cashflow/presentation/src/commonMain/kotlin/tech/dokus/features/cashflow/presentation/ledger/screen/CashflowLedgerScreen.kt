@@ -52,7 +52,7 @@ import tech.dokus.aura.resources.cashflow_empty_upcoming
 import tech.dokus.aura.resources.cashflow_empty_upcoming_hint
 import tech.dokus.aura.resources.cashflow_empty_upcoming_in
 import tech.dokus.aura.resources.cashflow_empty_upcoming_out
-import tech.dokus.domain.model.CashflowEntry
+import tech.dokus.domain.model.CashflowEntryDto
 import tech.dokus.features.cashflow.presentation.common.components.pagination.rememberLoadMoreTrigger
 import tech.dokus.features.cashflow.presentation.common.components.table.DokusTableDivider
 import tech.dokus.features.cashflow.presentation.common.components.table.DokusTableSurface
@@ -78,7 +78,7 @@ import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
 
 private sealed interface CashflowDisplayRow {
-    data class EntryRow(val entry: CashflowEntry) : CashflowDisplayRow
+    data class EntryRow(val entry: CashflowEntryDto) : CashflowDisplayRow
     data class MonthHeader(val year: Int, val month: Int) : CashflowDisplayRow
 }
 

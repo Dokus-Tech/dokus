@@ -24,7 +24,7 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.contact.CounterpartyInfo
-import tech.dokus.domain.model.PartyDraft
+import tech.dokus.domain.model.PartyDraftDto
 import tech.dokus.features.ai.agents.DocumentProcessingAgent
 import tech.dokus.features.ai.models.PurposeEnrichmentResult
 
@@ -244,8 +244,8 @@ class DocumentPurposeServiceTest {
         return InvoiceDraftData(
             direction = DocumentDirection.Inbound,
             issueDate = LocalDate(2026, 2, 15),
-            seller = PartyDraft(name = supplierName, vat = supplierVat),
-            buyer = PartyDraft(name = "Dokus"),
+            seller = PartyDraftDto(name = supplierName, vat = supplierVat),
+            buyer = PartyDraftDto(name = "Dokus"),
             totalAmount = Money.from("100.00"),
             notes = notes
         )

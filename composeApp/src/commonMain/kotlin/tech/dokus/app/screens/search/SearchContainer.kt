@@ -13,7 +13,7 @@ import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.domain.model.SearchResultEntityType
 import tech.dokus.domain.model.SearchSignalEventRequest
 import tech.dokus.domain.model.SearchSignalEventType
-import tech.dokus.domain.model.SearchSuggestion
+import tech.dokus.domain.model.SearchSuggestionDto
 import tech.dokus.domain.model.SearchPreset
 import tech.dokus.domain.model.UnifiedSearchScope
 import tech.dokus.foundation.platform.Logger
@@ -90,7 +90,7 @@ internal class SearchContainer(
         }
     }
 
-    private suspend fun SearchCtx.handleSuggestionSelected(suggestion: SearchSuggestion) {
+    private suspend fun SearchCtx.handleSuggestionSelected(suggestion: SearchSuggestionDto) {
         val nextQuery = suggestion.actionQuery?.takeIf { it.isNotBlank() } ?: suggestion.label
         var currentScope: UnifiedSearchScope = UnifiedSearchScope.All
         withState { currentScope = scope }

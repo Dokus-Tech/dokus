@@ -23,7 +23,7 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.PaymentId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.contact.CounterpartySnapshot
+import tech.dokus.domain.model.contact.CounterpartySnapshotDto
 
 /**
  * Cashflow overview data with Cash-In / Cash-Out structure.
@@ -77,7 +77,7 @@ data class CashOutSummary(
  * Created when financial facts are confirmed from documents.
  */
 @Serializable
-data class CashflowEntry(
+data class CashflowEntryDto(
     val id: CashflowEntryId,
     val tenantId: TenantId,
     val sourceType: CashflowSourceType,
@@ -91,7 +91,7 @@ data class CashflowEntry(
     val currency: Currency,
     val status: CashflowEntryStatus,
     val paidAt: LocalDateTime?, // UTC timestamp when entry became fully paid (null until PAID)
-    val contact: CashflowContactRef? = null,
+    val contact: CashflowContactRefDto? = null,
     val description: String? = null,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime
@@ -127,13 +127,13 @@ data class BankTransactionDto(
     val valueDate: LocalDate? = null,
     val signedAmount: Money,
     val currency: Currency = Currency.Eur,
-    val counterparty: CounterpartySnapshot = CounterpartySnapshot(),
-    val communication: TransactionCommunication? = null,
+    val counterparty: CounterpartySnapshotDto = CounterpartySnapshotDto(),
+    val communication: TransactionCommunicationDto? = null,
     val descriptionRaw: String? = null,
     val status: BankTransactionStatus,
     val resolutionType: ResolutionType? = null,
-    val matchInfo: TransactionMatchInfo? = null,
-    val ignoreInfo: TransactionIgnoreInfo? = null,
+    val matchInfo: TransactionMatchInfoDto? = null,
+    val ignoreInfo: TransactionIgnoreInfoDto? = null,
     val statementTrust: StatementTrust = StatementTrust.Low,
     val transferPairId: BankTransactionId? = null,
     val createdAt: LocalDateTime,
@@ -148,7 +148,7 @@ data class BankTransactionDto(
 
 /** Match info for a bank transaction — present when matched to a cashflow entry. */
 @Serializable
-data class TransactionMatchInfo(
+data class TransactionMatchInfoDto(
     val cashflowEntryId: CashflowEntryId,
     val documentId: DocumentId? = null,
     val score: Double,
@@ -159,7 +159,7 @@ data class TransactionMatchInfo(
 
 /** Ignore info for a bank transaction — present when explicitly ignored. */
 @Serializable
-data class TransactionIgnoreInfo(
+data class TransactionIgnoreInfoDto(
     val reason: IgnoredReason,
     val ignoredAt: LocalDateTime,
     val ignoredBy: String? = null,
@@ -167,7 +167,7 @@ data class TransactionIgnoreInfo(
 
 /** Contact reference on a cashflow entry. */
 @Serializable
-data class CashflowContactRef(
+data class CashflowContactRefDto(
     val id: ContactId,
     val name: String? = null,
 )

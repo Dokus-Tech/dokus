@@ -69,12 +69,12 @@ import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.model.SearchAggregates
-import tech.dokus.domain.model.SearchContactHit
-import tech.dokus.domain.model.SearchCounts
-import tech.dokus.domain.model.SearchDocumentHit
-import tech.dokus.domain.model.SearchSuggestion
-import tech.dokus.domain.model.SearchTransactionHit
+import tech.dokus.domain.model.SearchAggregatesDto
+import tech.dokus.domain.model.SearchContactHitDto
+import tech.dokus.domain.model.SearchCountsDto
+import tech.dokus.domain.model.SearchDocumentHitDto
+import tech.dokus.domain.model.SearchSuggestionDto
+import tech.dokus.domain.model.SearchTransactionHitDto
 import tech.dokus.domain.model.UnifiedSearchResponse
 import tech.dokus.domain.model.UnifiedSearchScope
 import tech.dokus.foundation.aura.components.common.DokusLoader
@@ -97,7 +97,7 @@ internal fun SearchScreen(
     snackbarHostState: SnackbarHostState,
     onQueryChange: (String) -> Unit,
     onScopeSelected: (UnifiedSearchScope) -> Unit,
-    onSuggestionClick: (SearchSuggestion) -> Unit,
+    onSuggestionClick: (SearchSuggestionDto) -> Unit,
     onDocumentClick: (DocumentId) -> Unit,
     onContactClick: (ContactId) -> Unit,
     onTransactionClick: (CashflowEntryId) -> Unit,
@@ -179,7 +179,7 @@ internal fun SearchScreen(
             } else {
                 SearchScopeTabs(
                     selectedScope = state.scope,
-                    counts = state.counts ?: SearchCounts(),
+                    counts = state.counts ?: SearchCountsDto(),
                     onScopeSelected = onScopeSelected
                 )
 
@@ -285,7 +285,7 @@ private fun SearchInputField(
 @Composable
 private fun SearchScopeTabs(
     selectedScope: UnifiedSearchScope,
-    counts: SearchCounts,
+    counts: SearchCountsDto,
     onScopeSelected: (UnifiedSearchScope) -> Unit,
 ) {
     val tabs = listOf(
@@ -325,10 +325,10 @@ private fun SearchScopeTabs(
 
 @Composable
 private fun SuggestionsSection(
-    suggestions: List<SearchSuggestion>,
+    suggestions: List<SearchSuggestionDto>,
     isLoading: Boolean,
     isLargeScreen: Boolean,
-    onSuggestionClick: (SearchSuggestion) -> Unit,
+    onSuggestionClick: (SearchSuggestionDto) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
@@ -607,7 +607,7 @@ private data class SearchScopeTab(
 
 private fun previewResponse(query: String, scope: UnifiedSearchScope): UnifiedSearchResponse {
     val docs = listOf(
-        SearchDocumentHit(
+        SearchDocumentHitDto(
             documentId = DocumentId.parse("00000000-0000-0000-0000-000000000111"),
             filename = "KBC Bank - February.pdf",
             documentType = DocumentType.Receipt,
@@ -615,7 +615,7 @@ private fun previewResponse(query: String, scope: UnifiedSearchScope): UnifiedSe
             counterpartyName = "KBC Bank NV",
             counterpartyVat = "BE0462920226",
         ),
-        SearchDocumentHit(
+        SearchDocumentHitDto(
             documentId = DocumentId.parse("00000000-0000-0000-0000-000000000112"),
             filename = "Tesla Belgium - January.pdf",
             documentType = DocumentType.Receipt,
@@ -625,7 +625,7 @@ private fun previewResponse(query: String, scope: UnifiedSearchScope): UnifiedSe
         )
     )
     val contacts = listOf(
-        SearchContactHit(
+        SearchContactHitDto(
             contactId = ContactId.parse("00000000-0000-0000-0000-000000000211"),
             name = "KBC Bank NV",
             email = "help@kbc.be",
@@ -635,7 +635,7 @@ private fun previewResponse(query: String, scope: UnifiedSearchScope): UnifiedSe
         )
     )
     val transactions = listOf(
-        SearchTransactionHit(
+        SearchTransactionHitDto(
             entryId = CashflowEntryId.parse("00000000-0000-0000-0000-000000000311"),
             displayText = "KBC Bank NV",
             status = CashflowEntryStatus.Paid,
@@ -645,7 +645,7 @@ private fun previewResponse(query: String, scope: UnifiedSearchScope): UnifiedSe
             contactName = "KBC Bank NV",
             documentFilename = "KBC Bank - February.pdf",
         ),
-        SearchTransactionHit(
+        SearchTransactionHitDto(
             entryId = CashflowEntryId.parse("00000000-0000-0000-0000-000000000312"),
             displayText = "KBC Bank NV",
             status = CashflowEntryStatus.Open,
@@ -664,7 +664,7 @@ private fun previewResponse(query: String, scope: UnifiedSearchScope): UnifiedSe
     return UnifiedSearchResponse(
         query = query,
         scope = scope,
-        counts = SearchCounts(
+        counts = SearchCountsDto(
             all = docs.size.toLong() + contacts.size + transactions.size,
             documents = docs.size.toLong(),
             contacts = contacts.size.toLong(),
@@ -674,12 +674,12 @@ private fun previewResponse(query: String, scope: UnifiedSearchScope): UnifiedSe
         contacts = scopedContacts,
         transactions = scopedTx,
         suggestions = listOf(
-            SearchSuggestion(label = "KBC Bank", countHint = 4),
-            SearchSuggestion(label = "Tesla Belgium", countHint = 3),
-            SearchSuggestion(label = "January", countHint = 5),
-            SearchSuggestion(label = "documents", countHint = 0),
+            SearchSuggestionDto(label = "KBC Bank", countHint = 4),
+            SearchSuggestionDto(label = "Tesla Belgium", countHint = 3),
+            SearchSuggestionDto(label = "January", countHint = 5),
+            SearchSuggestionDto(label = "documents", countHint = 0),
         ),
-        aggregates = SearchAggregates(
+        aggregates = SearchAggregatesDto(
             transactionTotal = Money.fromDouble(1296.52),
             incomingTotal = Money.fromDouble(1585.52),
             outgoingTotal = Money.fromDouble(289.00),
@@ -849,7 +849,7 @@ private fun SearchScreenDesktopNoResultsPreview(
                 response = UnifiedSearchResponse(
                     query = "does-not-exist",
                     scope = UnifiedSearchScope.All,
-                    counts = SearchCounts(),
+                    counts = SearchCountsDto(),
                 ),
                 hasInitialized = true,
             ),
@@ -878,7 +878,7 @@ private fun SearchScreenMobileNoResultsPreview(
                 response = UnifiedSearchResponse(
                     query = "missing",
                     scope = UnifiedSearchScope.All,
-                    counts = SearchCounts(),
+                    counts = SearchCountsDto(),
                 ),
                 hasInitialized = true,
             ),

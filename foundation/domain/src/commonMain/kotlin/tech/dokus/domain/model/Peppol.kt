@@ -264,7 +264,7 @@ data class ProcessedPeppolDocument(
  * Timestamps are non-null since they're always set on insert/update.
  */
 @Serializable
-data class PeppolResolution(
+data class PeppolResolutionDto(
     val contactId: ContactId,
     val status: PeppolLookupStatus,
     val participantId: String? = null,

@@ -70,14 +70,14 @@ import tech.dokus.domain.model.VatReturnDraftData
 import tech.dokus.domain.model.WithholdingTaxDraftData
 import tech.dokus.domain.model.contact.ContactAddressInput
 import tech.dokus.domain.model.contact.ContactResolution
-import tech.dokus.domain.model.contact.CounterpartySnapshot
+import tech.dokus.domain.model.contact.CounterpartySnapshotDto
 import tech.dokus.domain.model.contact.CreateContactRequest
-import tech.dokus.domain.model.contact.PostalAddress
-import tech.dokus.domain.model.contact.SuggestedContact
+import tech.dokus.domain.model.contact.PostalAddressDto
+import tech.dokus.domain.model.contact.SuggestedContactDto
 import tech.dokus.foundation.backend.utils.loggerFor
 
 data class ContactResolutionResult(
-    val snapshot: CounterpartySnapshot,
+    val snapshot: CounterpartySnapshotDto,
     val resolution: ContactResolution
 )
 
@@ -95,7 +95,7 @@ class ContactResolutionService(
     suspend fun resolve(
         tenantId: TenantId,
         draftData: DocumentDraftData,
-        authoritativeSnapshot: CounterpartySnapshot,
+        authoritativeSnapshot: CounterpartySnapshotDto,
         tenantVat: VatNumber? = null
     ): ContactResolutionResult {
         val rawSnapshot = authoritativeSnapshot.normalized()
@@ -170,7 +170,7 @@ class ContactResolutionService(
         }
 
         val input = ResolverInput(tenantId, snapshot, strictAutoLink)
-        val suggestions = mutableListOf<SuggestedContact>()
+        val suggestions = mutableListOf<SuggestedContactDto>()
 
         for (resolver in listOf(
             vatMatchResolver::invoke,
@@ -236,7 +236,7 @@ class ContactResolutionService(
         return this.normalized == other.normalized
     }
 
-    private fun CounterpartySnapshot.normalized(): CounterpartySnapshot = CounterpartySnapshot(
+    private fun CounterpartySnapshotDto.normalized(): CounterpartySnapshotDto = CounterpartySnapshotDto(
         name = name?.trim()?.takeIf { it.isNotEmpty() },
         vatNumber = vatNumber,
         iban = iban,
@@ -245,7 +245,7 @@ class ContactResolutionService(
         address = address.normalized()
     )
 
-    private fun PostalAddress.normalized(): PostalAddress = PostalAddress(
+    private fun PostalAddressDto.normalized(): PostalAddressDto = PostalAddressDto(
         streetLine1 = streetLine1?.trim()?.takeIf { it.isNotEmpty() },
         streetLine2 = streetLine2?.trim()?.takeIf { it.isNotEmpty() },
         postalCode = postalCode?.trim()?.takeIf { it.isNotEmpty() },
@@ -253,11 +253,11 @@ class ContactResolutionService(
         country = country
     )
 
-    private fun CounterpartySnapshot.isEmptyForResolution(): Boolean {
+    private fun CounterpartySnapshotDto.isEmptyForResolution(): Boolean {
         return name == null && vatNumber == null && iban == null
     }
 
-    private fun CounterpartySnapshot.toAddressInputs(): List<ContactAddressInput> {
+    private fun CounterpartySnapshotDto.toAddressInputs(): List<ContactAddressInput> {
         val addr = address
         if (addr.streetLine1 == null && addr.city == null && addr.postalCode == null && addr.country == null) {
             return emptyList()

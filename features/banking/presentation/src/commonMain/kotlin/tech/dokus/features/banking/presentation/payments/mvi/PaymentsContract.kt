@@ -11,7 +11,7 @@ import tech.dokus.domain.ids.BankAccountId
 import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.model.BankAccountDto
 import tech.dokus.domain.model.BankTransactionDto
-import tech.dokus.domain.model.BankTransactionSummary
+import tech.dokus.domain.model.BankTransactionSummaryDto
 import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.foundation.app.state.DokusState
 
@@ -54,7 +54,7 @@ data class TransferDialogState(
 @Immutable
 data class PaymentsState(
     val transactions: DokusState<PaginationState<BankTransactionDto>>,
-    val summary: DokusState<BankTransactionSummary>,
+    val summary: DokusState<BankTransactionSummaryDto>,
     val accountNames: Map<BankAccountId, String> = emptyMap(),
     val filterTab: PaymentFilterTab = PaymentFilterTab.All,
     val selectedAccountId: BankAccountId? = null,

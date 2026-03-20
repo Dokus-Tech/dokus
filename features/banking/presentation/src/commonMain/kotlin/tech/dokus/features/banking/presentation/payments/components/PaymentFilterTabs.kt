@@ -12,7 +12,7 @@ import tech.dokus.aura.resources.banking_filter_matched
 import tech.dokus.aura.resources.banking_filter_needs_review
 import tech.dokus.aura.resources.banking_filter_unmatched
 import tech.dokus.domain.Money
-import tech.dokus.domain.model.BankTransactionSummary
+import tech.dokus.domain.model.BankTransactionSummaryDto
 import tech.dokus.features.banking.presentation.payments.mvi.PaymentFilterTab
 import tech.dokus.foundation.aura.components.tabs.DokusTab
 import tech.dokus.foundation.aura.components.tabs.DokusTabs
@@ -24,7 +24,7 @@ import tech.dokus.foundation.aura.tooling.TestWrapper
 @Composable
 internal fun PaymentFilterTabs(
     selectedTab: PaymentFilterTab,
-    summary: BankTransactionSummary?,
+    summary: BankTransactionSummaryDto?,
     onTabSelected: (PaymentFilterTab) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -79,7 +79,7 @@ private fun PaymentFilterTabsPreview(
     TestWrapper(parameters) {
         PaymentFilterTabs(
             selectedTab = PaymentFilterTab.All,
-            summary = BankTransactionSummary(
+            summary = BankTransactionSummaryDto(
                 unmatchedCount = 12,
                 needsReviewCount = 3,
                 matchedCount = 45,

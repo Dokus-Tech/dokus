@@ -7,7 +7,7 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.database.entity.BankTransactionEntity
 import tech.dokus.database.entity.CashflowEntryEntity
-import tech.dokus.domain.model.TransactionCommunication
+import tech.dokus.domain.model.TransactionCommunicationDto
 import tech.dokus.domain.util.JaroWinkler
 import kotlin.math.abs
 import kotlin.math.exp
@@ -37,7 +37,7 @@ class MatchScorer(
         var hasHardSignal = false
 
         // Reconstruct communication from flat entity fields
-        val txCommunication = TransactionCommunication.from(tx.structuredCommunicationRaw, tx.freeCommunication)
+        val txCommunication = TransactionCommunicationDto.from(tx.structuredCommunicationRaw, tx.freeCommunication)
 
         // ── Signal 1: OGM match ────────────────────────────────────────
         val ogmMatch = OgmValidator.matches(txCommunication, invoiceMeta?.structuredReference)

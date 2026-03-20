@@ -1,7 +1,7 @@
 package tech.dokus.features.cashflow.presentation.review.models
 
 import tech.dokus.domain.Money
-import tech.dokus.domain.model.BankStatementTransactionDraftRow
+import tech.dokus.domain.model.BankStatementTransactionDraftRowDto
 import tech.dokus.domain.model.AnnualAccountsDraftData
 import tech.dokus.domain.model.BankFeeDraftData
 import tech.dokus.domain.model.BankStatementDraftData
@@ -22,7 +22,7 @@ import tech.dokus.domain.model.DocLineItem
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.EmploymentContractDraftData
 import tech.dokus.domain.model.ExpenseClaimDraftData
-import tech.dokus.domain.model.FinancialLineItem
+import tech.dokus.domain.model.FinancialLineItemDto
 import tech.dokus.domain.model.FineDraftData
 import tech.dokus.domain.model.HolidayPayDraftData
 import tech.dokus.domain.model.IcListingDraftData
@@ -57,7 +57,7 @@ import tech.dokus.domain.model.VapzDraftData
 import tech.dokus.domain.model.VatAssessmentDraftData
 import tech.dokus.domain.model.VatListingDraftData
 import tech.dokus.domain.model.VatReturnDraftData
-import tech.dokus.domain.model.TransactionCommunication
+import tech.dokus.domain.model.TransactionCommunicationDto
 import tech.dokus.domain.model.WithholdingTaxDraftData
 
 internal fun DocumentDraftData.toUiData(): DocumentUiData = when (this) {
@@ -172,7 +172,7 @@ internal fun DocumentDraftData.toUiData(): DocumentUiData = when (this) {
     is OtherDraftData -> DocumentUiData.Other()
 }
 
-private fun FinancialLineItem.toLineItemUiData(currencySign: String): LineItemUiData {
+private fun FinancialLineItemDto.toLineItemUiData(currencySign: String): LineItemUiData {
     val net = netAmount ?: unitPrice?.let { unit -> (quantity ?: 1L) * unit }
     val displayAmount = net?.let { "$currencySign${Money(it).toDisplayString()}" } ?: "\u2014"
     return LineItemUiData(
@@ -314,12 +314,12 @@ internal fun DocDto.toUiData(): DocumentUiData = when (this) {
 private fun movementDisplay(opening: Money?, closing: Money?): String? =
     if (opening != null && closing != null) Money(closing.minor - opening.minor).toDisplayString() else null
 
-private fun BankStatementTransactionDraftRow.toUiRow(index: Int): BankStatementTransactionUiRow {
+private fun BankStatementTransactionDraftRowDto.toUiRow(index: Int): BankStatementTransactionUiRow {
     val amount = signedAmount
     val comm = communication
     val communicationText = when (comm) {
-        is TransactionCommunication.Structured -> comm.raw
-        is TransactionCommunication.FreeForm -> comm.text
+        is TransactionCommunicationDto.Structured -> comm.raw
+        is TransactionCommunicationDto.FreeForm -> comm.text
         null -> null
     }
     return BankStatementTransactionUiRow(

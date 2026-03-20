@@ -19,8 +19,8 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.BankStatementDraftData
-import tech.dokus.domain.model.BankStatementTransactionDraftRow
-import tech.dokus.domain.model.TransactionCommunication
+import tech.dokus.domain.model.BankStatementTransactionDraftRowDto
+import tech.dokus.domain.model.TransactionCommunicationDto
 import tech.dokus.foundation.backend.utils.loggerFor
 
 private const val RowConfidenceThreshold = 0.90
@@ -115,7 +115,7 @@ class BankStatementProcessingService(
         // 2. Validate rows
         val today = Clock.System.now().toLocalDateTime(TimeZone.UTC).date
         val discarded = mutableListOf<DiscardedBankStatementRow>()
-        val validRows = mutableListOf<BankStatementTransactionDraftRow>()
+        val validRows = mutableListOf<BankStatementTransactionDraftRowDto>()
 
         draftData.transactions.forEachIndexed { index, row ->
             val date = row.transactionDate
@@ -168,7 +168,7 @@ class BankStatementProcessingService(
         )
 
         // 5. Duplicate detection — check (date, amount) against existing transactions for same account
-        val annotatedRows: List<BankStatementTransactionDraftRow>
+        val annotatedRows: List<BankStatementTransactionDraftRowDto>
         var hasDuplicates = false
 
         if (accountId != null) {
@@ -246,10 +246,10 @@ class BankStatementProcessingService(
         val inserts = rows.mapNotNull { row ->
             val date = row.transactionDate ?: return@mapNotNull null
             val amount = row.signedAmount ?: return@mapNotNull null
-            val structured = row.communication as? TransactionCommunication.Structured
+            val structured = row.communication as? TransactionCommunicationDto.Structured
             val structuredRaw = structured?.raw
             val normalizedComm = structured?.normalized?.value
-            val freeComm = (row.communication as? TransactionCommunication.FreeForm)?.text
+            val freeComm = (row.communication as? TransactionCommunicationDto.FreeForm)?.text
             BankTransactionCreate(
                 dedupHash = hashRow(
                     date = date,

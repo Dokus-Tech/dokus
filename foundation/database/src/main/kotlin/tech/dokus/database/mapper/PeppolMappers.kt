@@ -17,7 +17,7 @@ import tech.dokus.domain.ids.PeppolSettingsId
 import tech.dokus.domain.ids.PeppolTransmissionId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.database.entity.PeppolResolutionEntity
-import tech.dokus.domain.model.PeppolResolution
+import tech.dokus.domain.model.PeppolResolutionDto
 import tech.dokus.domain.model.PeppolTransmissionDto
 
 internal fun ResultRow.toPeppolTransmissionDto(): PeppolTransmissionDto = PeppolTransmissionDto(
@@ -118,7 +118,7 @@ internal fun PeppolResolutionEntity.Companion.from(row: ResultRow): PeppolResolu
     )
 }
 
-fun PeppolResolution.Companion.from(entity: PeppolResolutionEntity): PeppolResolution = PeppolResolution(
+fun PeppolResolutionDto.Companion.from(entity: PeppolResolutionEntity): PeppolResolutionDto = PeppolResolutionDto(
     contactId = entity.contactId,
     status = entity.status,
     participantId = entity.participantId,

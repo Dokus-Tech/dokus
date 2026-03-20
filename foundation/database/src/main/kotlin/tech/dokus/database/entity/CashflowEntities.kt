@@ -11,7 +11,7 @@ import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.CashflowContactRef
+import tech.dokus.domain.model.CashflowContactRefDto
 
 /**
  * Database entity for cashflow entries.
@@ -31,7 +31,7 @@ data class CashflowEntryEntity(
     val currency: Currency,
     val status: CashflowEntryStatus,
     val paidAt: LocalDateTime?,
-    val contact: CashflowContactRef? = null,
+    val contact: CashflowContactRefDto? = null,
     val description: String? = null,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime,

@@ -14,7 +14,7 @@ import tech.dokus.domain.Money
 import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.VatNumber
-import tech.dokus.domain.model.CanonicalPayment
+import tech.dokus.domain.model.CanonicalPaymentDto
 import tech.dokus.features.ai.config.asVisionModel
 import tech.dokus.features.ai.config.finishToolOnly
 import tech.dokus.features.ai.config.finishToolVisionAssistantResponseRepeatMax
@@ -53,7 +53,7 @@ data class PurchaseOrderExtractionResult(
     val totalAmount: Money?,
 
     val iban: Iban?,
-    val payment: CanonicalPayment?,
+    val payment: CanonicalPaymentDto?,
 
     val confidence: Double,
     val reasoning: String?,
@@ -112,7 +112,7 @@ private class PurchaseOrderExtractionFinishTool :
                 vatAmount = Money.from(args.vatAmount),
                 totalAmount = Money.from(args.totalAmount),
                 iban = Iban.from(args.iban),
-                payment = CanonicalPayment.from(args.paymentReference),
+                payment = CanonicalPaymentDto.from(args.paymentReference),
                 confidence = args.confidence,
                 reasoning = args.reasoning,
             )

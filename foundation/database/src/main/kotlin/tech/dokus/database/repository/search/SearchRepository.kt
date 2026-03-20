@@ -37,15 +37,15 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
-import tech.dokus.domain.model.SearchAggregates
-import tech.dokus.domain.model.SearchContactHit
-import tech.dokus.domain.model.SearchCounts
-import tech.dokus.domain.model.SearchDocumentHit
+import tech.dokus.domain.model.SearchAggregatesDto
+import tech.dokus.domain.model.SearchContactHitDto
+import tech.dokus.domain.model.SearchCountsDto
+import tech.dokus.domain.model.SearchDocumentHitDto
 import tech.dokus.domain.model.SearchPreset
-import tech.dokus.domain.model.SearchTransactionHit
+import tech.dokus.domain.model.SearchTransactionHitDto
 import tech.dokus.domain.model.UnifiedSearchResponse
 import tech.dokus.domain.model.UnifiedSearchScope
-import tech.dokus.domain.model.contact.CounterpartySnapshot
+import tech.dokus.domain.model.contact.CounterpartySnapshotDto
 import tech.dokus.domain.utils.json
 import kotlinx.serialization.json.Json
 import tech.dokus.foundation.backend.database.dbQuery
@@ -78,7 +78,7 @@ class SearchRepository(
             return@runSuspendCatching UnifiedSearchResponse(
                 query = normalizedQuery,
                 scope = UnifiedSearchScope.Transactions,
-                counts = SearchCounts(
+                counts = SearchCountsDto(
                     all = presetResult.count,
                     documents = 0,
                     contacts = 0,
@@ -138,7 +138,7 @@ class SearchRepository(
         UnifiedSearchResponse(
             query = normalizedQuery,
             scope = scope,
-            counts = SearchCounts(
+            counts = SearchCountsDto(
                 all = documentCount + contactCount + transactionCount,
                 documents = documentCount,
                 contacts = contactCount,
@@ -179,22 +179,22 @@ class SearchRepository(
         pattern: String,
         amountDecimal: BigDecimal?,
         limit: Int,
-    ): List<SearchDocumentHit> = dbQuery {
+    ): List<SearchDocumentHitDto> = dbQuery {
         documentQuery(tenantId, pattern, amountDecimal)
             .orderBy(DocumentsTable.uploadedAt to SortOrder.DESC)
             .limit(limit)
-            .map { SearchDocumentHit.from(SearchDocumentHitEntity.from(it)) }
+            .map { SearchDocumentHitDto.from(SearchDocumentHitEntity.from(it)) }
     }
 
     private suspend fun searchContacts(
         tenantId: TenantId,
         pattern: String,
         limit: Int
-    ): List<SearchContactHit> = dbQuery {
+    ): List<SearchContactHitDto> = dbQuery {
         contactQuery(tenantId, pattern)
             .orderBy(ContactsTable.name to SortOrder.ASC)
             .limit(limit)
-            .map { SearchContactHit.from(SearchContactHitEntity.from(it)) }
+            .map { SearchContactHitDto.from(SearchContactHitEntity.from(it)) }
     }
 
     private suspend fun searchTransactions(
@@ -202,22 +202,22 @@ class SearchRepository(
         pattern: String,
         amountDecimal: BigDecimal?,
         limit: Int,
-    ): List<SearchTransactionHit> = dbQuery {
+    ): List<SearchTransactionHitDto> = dbQuery {
         transactionQuery(tenantId, pattern, amountDecimal)
             .orderBy(CashflowEntriesTable.eventDate to SortOrder.DESC)
             .limit(limit)
-            .map { SearchTransactionHit.from(SearchTransactionHitEntity.from(it)) }
+            .map { SearchTransactionHitDto.from(SearchTransactionHitEntity.from(it)) }
     }
 
     private suspend fun transactionAggregates(
         tenantId: TenantId,
         pattern: String,
         amountDecimal: BigDecimal?,
-    ): SearchAggregates = dbQuery {
+    ): SearchAggregatesDto = dbQuery {
         val total = sumTransactionAmount(tenantId, pattern, amountDecimal, direction = null)
         val incoming = sumTransactionAmount(tenantId, pattern, amountDecimal, direction = CashflowDirection.In)
         val outgoing = sumTransactionAmount(tenantId, pattern, amountDecimal, direction = CashflowDirection.Out)
-        SearchAggregates(
+        SearchAggregatesDto(
             transactionTotal = total,
             incomingTotal = incoming,
             outgoingTotal = outgoing,

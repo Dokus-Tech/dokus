@@ -45,9 +45,9 @@ import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentFieldProvenance
 import tech.dokus.domain.model.contact.CounterpartyInfo
-import tech.dokus.domain.model.contact.CounterpartySnapshot
-import tech.dokus.domain.model.contact.MatchEvidence
-import tech.dokus.domain.model.contact.SuggestedContact
+import tech.dokus.domain.model.contact.CounterpartySnapshotDto
+import tech.dokus.domain.model.contact.MatchEvidenceDto
+import tech.dokus.domain.model.contact.SuggestedContactDto
 import tech.dokus.domain.model.contact.isUnresolved
 import tech.dokus.domain.model.toDirection
 import tech.dokus.domain.model.toDocumentType
@@ -763,7 +763,7 @@ class DocumentRepository : DocumentStatusChecker {
     suspend fun updateContactResolution(
         documentId: DocumentId,
         tenantId: TenantId,
-        counterpartySnapshot: CounterpartySnapshot? = null,
+        counterpartySnapshot: CounterpartySnapshotDto? = null,
         counterparty: CounterpartyInfo
     ): Boolean = newSuspendedTransaction {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
@@ -913,7 +913,7 @@ class DocumentRepository : DocumentStatusChecker {
                 ?.let { ContactId(it.toKotlinUuid()) }
             val linkedContactSource = row[DocumentsTable.linkedContactSource]
             val matchEvidence = row[DocumentsTable.matchEvidence]
-                ?.let { json.decodeFromString<MatchEvidence>(it) }
+                ?.let { json.decodeFromString<MatchEvidenceDto>(it) }
 
             if (linkedContactId != null && linkedContactSource != null) {
                 return CounterpartyInfo.Linked(
@@ -924,9 +924,9 @@ class DocumentRepository : DocumentStatusChecker {
             }
 
             val snapshot = row[DocumentsTable.counterpartySnapshot]
-                ?.let { json.decodeFromString<CounterpartySnapshot>(it) }
+                ?.let { json.decodeFromString<CounterpartySnapshotDto>(it) }
             val suggestions = row[DocumentsTable.contactSuggestions]
-                ?.let { json.decodeFromString<List<SuggestedContact>>(it) }
+                ?.let { json.decodeFromString<List<SuggestedContactDto>>(it) }
                 ?: emptyList()
             val pendingCreation = row[DocumentsTable.pendingCreation]
 

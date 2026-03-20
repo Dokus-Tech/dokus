@@ -13,8 +13,8 @@ import tech.dokus.aura.resources.banking_balances_tab_90d
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.BalanceHistoryResponse
 import tech.dokus.domain.model.BankAccountDto
-import tech.dokus.domain.model.BankAccountSummary
-import tech.dokus.domain.model.BankTransactionSummary
+import tech.dokus.domain.model.BankAccountSummaryDto
+import tech.dokus.domain.model.BankTransactionSummaryDto
 import tech.dokus.foundation.app.state.DokusState
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
@@ -30,8 +30,8 @@ enum class BalanceTimeRange(val id: String, val timeframe: Duration, val labelRe
 @Immutable
 data class BalancesState(
     val accounts: DokusState<List<BankAccountDto>>,
-    val summary: DokusState<BankAccountSummary>,
-    val transactionSummary: DokusState<BankTransactionSummary>,
+    val summary: DokusState<BankAccountSummaryDto>,
+    val transactionSummary: DokusState<BankTransactionSummaryDto>,
     val balanceHistory: DokusState<BalanceHistoryResponse>,
     val timeRange: BalanceTimeRange = BalanceTimeRange.ThirtyDays,
 ) : MVIState {

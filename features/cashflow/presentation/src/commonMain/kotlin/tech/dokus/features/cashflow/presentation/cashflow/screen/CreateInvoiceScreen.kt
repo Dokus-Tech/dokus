@@ -31,9 +31,9 @@ import tech.dokus.domain.Money
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.InvoiceDeliveryMethod
 import tech.dokus.domain.enums.InvoiceDueDateMode
-import tech.dokus.domain.model.FinancialLineItem
+import tech.dokus.domain.model.FinancialLineItemDto
 import tech.dokus.domain.model.InvoiceDraftData
-import tech.dokus.domain.model.PartyDraft
+import tech.dokus.domain.model.PartyDraftDto
 import tech.dokus.domain.model.PeppolStatusResponse
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.ids.VatNumber
@@ -638,7 +638,7 @@ private fun CreateInvoiceState.toInvoicePreviewDraft(): InvoiceDraftData {
     val lines = formState.items
         .filterNot { it.isEmpty }
         .map { line ->
-            FinancialLineItem(
+            FinancialLineItemDto(
                 description = line.description,
                 quantity = line.quantity.toLong().takeIf { it > 0L },
                 unitPrice = line.unitPriceMoney.minor.takeIf { it > 0L },
@@ -663,16 +663,16 @@ private fun CreateInvoiceState.toInvoicePreviewDraft(): InvoiceDraftData {
         lineItems = lines,
         iban = Iban.from(formState.senderIban),
         notes = formState.notes.takeIf { it.isNotBlank() },
-        seller = PartyDraft(
+        seller = PartyDraftDto(
             name = uiState.senderCompanyName.takeIf { it.isNotBlank() },
             vat = sellerVat
         ),
-        buyer = selectedClient?.toPartyDraft() ?: PartyDraft()
+        buyer = selectedClient?.toPartyDraft() ?: PartyDraftDto()
     )
 }
 
-private fun ContactDto.toPartyDraft(): PartyDraft {
-    return PartyDraft(
+private fun ContactDto.toPartyDraft(): PartyDraftDto {
+    return PartyDraftDto(
         name = name.value,
         vat = vatNumber,
         email = email,

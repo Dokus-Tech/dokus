@@ -18,7 +18,7 @@ import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.CashInSummary
 import tech.dokus.domain.model.CashOutSummary
-import tech.dokus.domain.model.CashflowEntry
+import tech.dokus.domain.model.CashflowEntryDto
 import tech.dokus.domain.model.CashflowOverview
 import tech.dokus.domain.model.CashflowPeriod
 import tech.dokus.domain.model.CashflowPaymentRequest
@@ -56,7 +56,7 @@ class CashflowLedgerContainerRefreshTest {
         val paymentUseCase = FakeRecordCashflowPaymentUseCase()
 
         val deferredOverview = CompletableDeferred<Result<CashflowOverview>>()
-        val deferredEntries = CompletableDeferred<Result<PaginatedResponse<CashflowEntry>>>()
+        val deferredEntries = CompletableDeferred<Result<PaginatedResponse<CashflowEntryDto>>>()
         overviewUseCase.enqueueDeferred(deferredOverview)
         entriesUseCase.enqueueDeferred(deferredEntries)
 
@@ -122,7 +122,7 @@ class CashflowLedgerContainerRefreshTest {
         }
 
         val deferredOverview = CompletableDeferred<Result<CashflowOverview>>()
-        val deferredEntries = CompletableDeferred<Result<PaginatedResponse<CashflowEntry>>>()
+        val deferredEntries = CompletableDeferred<Result<PaginatedResponse<CashflowEntryDto>>>()
         overviewUseCase.enqueueDeferred(deferredOverview)
         entriesUseCase.enqueueDeferred(deferredEntries)
 
@@ -171,7 +171,7 @@ class CashflowLedgerContainerRefreshTest {
 
         // Enqueue failing results for the Overdue switch
         val deferredOverview = CompletableDeferred<Result<CashflowOverview>>()
-        val deferredEntries = CompletableDeferred<Result<PaginatedResponse<CashflowEntry>>>()
+        val deferredEntries = CompletableDeferred<Result<PaginatedResponse<CashflowEntryDto>>>()
         overviewUseCase.enqueueDeferred(deferredOverview)
         entriesUseCase.enqueueDeferred(deferredEntries)
 
@@ -234,15 +234,15 @@ private class FakeGetCashflowOverviewUseCase : GetCashflowOverviewUseCase {
 }
 
 private class FakeLoadCashflowEntriesUseCase : LoadCashflowEntriesUseCase {
-    private val results = ArrayDeque<CompletableDeferred<Result<PaginatedResponse<CashflowEntry>>>>()
+    private val results = ArrayDeque<CompletableDeferred<Result<PaginatedResponse<CashflowEntryDto>>>>()
 
-    fun enqueueResult(result: Result<PaginatedResponse<CashflowEntry>>) {
+    fun enqueueResult(result: Result<PaginatedResponse<CashflowEntryDto>>) {
         enqueueDeferred(
-            CompletableDeferred<Result<PaginatedResponse<CashflowEntry>>>().apply { complete(result) }
+            CompletableDeferred<Result<PaginatedResponse<CashflowEntryDto>>>().apply { complete(result) }
         )
     }
 
-    fun enqueueDeferred(deferred: CompletableDeferred<Result<PaginatedResponse<CashflowEntry>>>) {
+    fun enqueueDeferred(deferred: CompletableDeferred<Result<PaginatedResponse<CashflowEntryDto>>>) {
         results.addLast(deferred)
     }
 
@@ -256,7 +256,7 @@ private class FakeLoadCashflowEntriesUseCase : LoadCashflowEntriesUseCase {
         statuses: List<CashflowEntryStatus>?,
         sourceType: CashflowSourceType?,
         entryId: CashflowEntryId?,
-    ): Result<PaginatedResponse<CashflowEntry>> {
+    ): Result<PaginatedResponse<CashflowEntryDto>> {
         return requireNotNull(results.removeFirstOrNull()) {
             "No entries result queued"
         }.await()
@@ -267,12 +267,12 @@ private class FakeRecordCashflowPaymentUseCase : RecordCashflowPaymentUseCase {
     override suspend fun invoke(
         entryId: CashflowEntryId,
         request: CashflowPaymentRequest,
-    ): Result<CashflowEntry> {
+    ): Result<CashflowEntryDto> {
         return Result.failure(IllegalStateException("Not used in refresh tests"))
     }
 }
 
-private fun pageResponse(items: List<CashflowEntry>): PaginatedResponse<CashflowEntry> {
+private fun pageResponse(items: List<CashflowEntryDto>): PaginatedResponse<CashflowEntryDto> {
     return PaginatedResponse(
         items = items,
         total = items.size.toLong(),
@@ -311,9 +311,9 @@ private fun cashflowEntry(
     id: String,
     direction: CashflowDirection,
     amountMinor: Long,
-): CashflowEntry {
+): CashflowEntryDto {
     val amount = Money(amountMinor)
-    return CashflowEntry(
+    return CashflowEntryDto(
         id = CashflowEntryId.parse(id),
         tenantId = TenantId.parse("00000000-0000-0000-0000-000000000001"),
         sourceType = CashflowSourceType.Invoice,

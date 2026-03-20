@@ -10,7 +10,7 @@ import tech.dokus.domain.ids.FirmId
 import tech.dokus.domain.ids.InvitationId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.TeamMember
-import tech.dokus.domain.model.TenantInvitation
+import tech.dokus.domain.model.TenantInvitationDto
 import tech.dokus.domain.model.auth.BookkeeperFirmSearchItem
 import tech.dokus.domain.model.auth.TenantBookkeeperAccessItem
 import tech.dokus.foundation.app.state.DokusState
@@ -34,7 +34,7 @@ import tech.dokus.foundation.app.state.DokusState
 @Immutable
 data class TeamData(
     val members: List<TeamMember> = emptyList(),
-    val invitations: List<TenantInvitation> = emptyList(),
+    val invitations: List<TenantInvitationDto> = emptyList(),
     val bookkeeperAccess: List<TenantBookkeeperAccessItem> = emptyList(),
     val isCurrentUserOwner: Boolean = false,
     val currentUserId: UserId? = null,

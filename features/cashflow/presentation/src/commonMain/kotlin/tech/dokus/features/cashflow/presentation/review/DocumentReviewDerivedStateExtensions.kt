@@ -4,11 +4,11 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.daysUntil
 import tech.dokus.domain.enums.SourceMatchKind
 import tech.dokus.domain.enums.DocumentSourceStatus
-import tech.dokus.domain.model.CashflowEntry
+import tech.dokus.domain.model.CashflowEntryDto
 import tech.dokus.foundation.app.state.DokusState
 
 val DocumentReviewState.paidAtDate: LocalDate?
-    get() = (cashflowEntryState as? DokusState.Success<CashflowEntry>)?.data?.paidAt?.date
+    get() = (cashflowEntryState as? DokusState.Success<CashflowEntryDto>)?.data?.paidAt?.date
 
 val DocumentReviewState.overdueDays: Int?
     get() {

@@ -64,9 +64,9 @@ import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.StructuredCommunication
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.BankTransactionDto
-import tech.dokus.domain.model.TransactionCommunication
-import tech.dokus.domain.model.TransactionMatchInfo
-import tech.dokus.domain.model.contact.CounterpartySnapshot
+import tech.dokus.domain.model.TransactionCommunicationDto
+import tech.dokus.domain.model.TransactionMatchInfoDto
+import tech.dokus.domain.model.contact.CounterpartySnapshotDto
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.layout.DokusHeaderColumn
 import tech.dokus.foundation.aura.components.layout.DokusTableCell
@@ -357,11 +357,11 @@ private val PreviewUnmatchedTx = BankTransactionDto(
     source = BankTransactionSource.PdfStatement,
     transactionDate = LocalDate(2026, 2, 14),
     signedAmount = Money.parseOrThrow("-1250.00"),
-    counterparty = CounterpartySnapshot(
+    counterparty = CounterpartySnapshotDto(
         name = "Coolblue Belgi\u00EB NV",
         iban = Iban("BE68539007547034"),
     ),
-    communication = TransactionCommunication.Structured(
+    communication = TransactionCommunicationDto.Structured(
         raw = "+++090/9337/55493+++",
         normalized = StructuredCommunication("+++090/9337/55493+++"),
     ),
@@ -377,11 +377,11 @@ private val PreviewMatchedTx = BankTransactionDto(
     source = BankTransactionSource.PdfStatement,
     transactionDate = LocalDate(2026, 2, 12),
     signedAmount = Money.parseOrThrow("-89.99"),
-    counterparty = CounterpartySnapshot(name = "DigitalOcean"),
-    communication = TransactionCommunication.FreeForm(text = "DO Invoice #12345"),
+    counterparty = CounterpartySnapshotDto(name = "DigitalOcean"),
+    communication = TransactionCommunicationDto.FreeForm(text = "DO Invoice #12345"),
     status = BankTransactionStatus.Matched,
     resolutionType = ResolutionType.Document,
-    matchInfo = TransactionMatchInfo(
+    matchInfo = TransactionMatchInfoDto(
         cashflowEntryId = CashflowEntryId.generate(),
         matchedBy = MatchedBy.Auto,
         score = 1.0,
@@ -400,7 +400,7 @@ private val PreviewLowTrustTx = BankTransactionDto(
     source = BankTransactionSource.PdfStatement,
     transactionDate = LocalDate(2026, 2, 13),
     signedAmount = Money.parseOrThrow("3500.00"),
-    counterparty = CounterpartySnapshot(name = "Acme Corp"),
+    counterparty = CounterpartySnapshotDto(name = "Acme Corp"),
     status = BankTransactionStatus.NeedsReview,
     statementTrust = StatementTrust.Medium,
     currency = Currency.Eur,

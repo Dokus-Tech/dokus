@@ -93,7 +93,7 @@ import tech.dokus.domain.model.SubsidyDraftData
 import tech.dokus.domain.model.TaxAssessmentDraftData
 import tech.dokus.domain.model.VapzDraftData
 import tech.dokus.domain.model.VatAssessmentDraftData
-import tech.dokus.domain.model.VatBreakdownEntry
+import tech.dokus.domain.model.VatBreakdownEntryDto
 import tech.dokus.domain.model.VatListingDraftData
 import tech.dokus.domain.model.VatReturnDraftData
 import tech.dokus.domain.model.WithholdingTaxDraftData
@@ -983,7 +983,7 @@ class DocumentTruthService(
         return left.minor != right.minor
     }
 
-    private fun vatSummary(entries: List<VatBreakdownEntry>): List<String> {
+    private fun vatSummary(entries: List<VatBreakdownEntryDto>): List<String> {
         return entries
             .map { "${it.rate}:${it.base}:${it.amount}" }
             .sorted()

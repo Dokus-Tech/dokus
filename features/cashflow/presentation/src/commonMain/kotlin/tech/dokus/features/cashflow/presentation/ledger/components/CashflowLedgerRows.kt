@@ -57,7 +57,7 @@ import tech.dokus.aura.resources.cashflow_ledger_contact
 import tech.dokus.aura.resources.cashflow_ledger_description
 import tech.dokus.aura.resources.cashflow_ledger_due_date
 import tech.dokus.aura.resources.cashflow_ledger_status
-import tech.dokus.domain.model.CashflowEntry
+import tech.dokus.domain.model.CashflowEntryDto
 import tech.dokus.features.cashflow.presentation.common.utils.formatShortDate
 import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowViewMode
 import tech.dokus.foundation.aura.components.layout.DokusHeaderColumn
@@ -117,7 +117,7 @@ internal fun CashflowLedgerHeaderRow(
  */
 @Composable
 internal fun CashflowLedgerTableRow(
-    entry: CashflowEntry,
+    entry: CashflowEntryDto,
     viewMode: CashflowViewMode,
     isHighlighted: Boolean,
     showActionsMenu: Boolean,
@@ -258,7 +258,7 @@ internal fun CashflowLedgerTableRow(
  */
 @Composable
 internal fun CashflowLedgerMobileRow(
-    entry: CashflowEntry,
+    entry: CashflowEntryDto,
     viewMode: CashflowViewMode,
     onClick: () -> Unit,
     onShowActions: () -> Unit,

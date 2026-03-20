@@ -24,7 +24,7 @@ import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.CashflowContactRef
+import tech.dokus.domain.model.CashflowContactRefDto
 import tech.dokus.database.entity.CashflowEntryEntity
 import java.util.UUID
 import kotlin.uuid.ExperimentalUuidApi
@@ -84,7 +84,7 @@ class MatchingRepository {
                 status = row[CashflowEntriesTable.status],
                 paidAt = row[CashflowEntriesTable.paidAt],
                 contact = row[CashflowEntriesTable.counterpartyId]?.let {
-                    CashflowContactRef(id = ContactId.parse(it.toString()))
+                    CashflowContactRefDto(id = ContactId.parse(it.toString()))
                 },
                 createdAt = row[CashflowEntriesTable.createdAt],
                 updatedAt = row[CashflowEntriesTable.updatedAt],

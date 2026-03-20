@@ -49,7 +49,7 @@ import tech.dokus.aura.resources.payment_use_manual_entry
 import tech.dokus.aura.resources.state_saving
 import tech.dokus.aura.resources.payment_amount_label
 import tech.dokus.domain.ids.BankTransactionId
-import tech.dokus.domain.model.TransactionCommunication
+import tech.dokus.domain.model.TransactionCommunicationDto
 import tech.dokus.features.cashflow.presentation.review.PaymentSheetState
 import tech.dokus.foundation.aura.components.PButton
 import tech.dokus.foundation.aura.components.PButtonVariant
@@ -315,8 +315,8 @@ private fun PaymentTransactionSection(
                 Text(stringResource(Res.string.payment_counterparty, it), style = MaterialTheme.typography.bodySmall)
             }
             val referenceText = when (val comm = selected.communication) {
-                is TransactionCommunication.Structured -> comm.raw
-                is TransactionCommunication.FreeForm -> comm.text
+                is TransactionCommunicationDto.Structured -> comm.raw
+                is TransactionCommunicationDto.FreeForm -> comm.text
                 null -> null
             }
             referenceText?.let {

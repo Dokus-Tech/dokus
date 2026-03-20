@@ -37,7 +37,7 @@ import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.DocumentMatchResolutionDecision
 import tech.dokus.domain.model.InvoiceDraftData
-import tech.dokus.domain.model.PartyDraft
+import tech.dokus.domain.model.PartyDraftDto
 import tech.dokus.foundation.backend.storage.DocumentStorageService
 import tech.dokus.domain.enums.SourceMatchKind
 import kotlin.test.assertEquals
@@ -453,11 +453,11 @@ class DocumentTruthServiceTest {
         direction = DocumentDirection.Inbound,
         invoiceNumber = invoiceNumber,
         totalAmount = Money(totalMinor),
-        seller = PartyDraft(
+        seller = PartyDraftDto(
             name = "Supplier Inc",
             vat = VatNumber.from("BE0777887045")
         ),
-        buyer = PartyDraft(
+        buyer = PartyDraftDto(
             name = "Buyer Corp",
             vat = VatNumber.from("IE9700053D")
         )

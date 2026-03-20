@@ -11,7 +11,7 @@ import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.domain.model.contact.ContactResolution
 import tech.dokus.domain.model.contact.CounterpartyInfo
-import tech.dokus.domain.model.contact.CounterpartySnapshot
+import tech.dokus.domain.model.contact.CounterpartySnapshotDto
 import tech.dokus.foundation.backend.utils.loggerFor
 
 internal class ResolveDocumentContactUseCase(
@@ -24,7 +24,7 @@ internal class ResolveDocumentContactUseCase(
         tenantId: TenantId,
         documentId: DocumentId,
         draftData: DocumentDraftData,
-        authoritativeSnapshot: CounterpartySnapshot,
+        authoritativeSnapshot: CounterpartySnapshotDto,
         tenantVat: VatNumber?,
     ): ContactId? {
         val resolution = contactResolutionService.resolve(

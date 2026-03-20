@@ -11,7 +11,7 @@ import tech.dokus.domain.model.entity.EntityLookup
 import tech.dokus.domain.model.entity.EntityStatus
 
 @Serializable
-data class PostalAddress(
+data class PostalAddressDto(
     val streetLine1: String? = null,
     val streetLine2: String? = null,
     val postalCode: String? = null,
@@ -20,18 +20,18 @@ data class PostalAddress(
 )
 
 @Serializable
-data class CounterpartySnapshot(
+data class CounterpartySnapshotDto(
     val name: String? = null,
     val vatNumber: VatNumber? = null,
     val iban: Iban? = null,
     val bic: Bic? = null,
     val email: Email? = null,
     val companyNumber: String? = null,
-    val address: PostalAddress = PostalAddress(),
+    val address: PostalAddressDto = PostalAddressDto(),
 )
 
 @Serializable
-data class ContactMatchScore(
+data class ContactMatchScoreDto(
     val vatMatch: Boolean,
     val ibanMatch: Boolean,
     val nameSimilarity: Double,
@@ -40,17 +40,17 @@ data class ContactMatchScore(
 )
 
 @Serializable
-data class SuggestedContact(
+data class SuggestedContactDto(
     val contactId: ContactId,
     val name: String,
     val vatNumber: VatNumber? = null,
     val iban: Iban? = null,
-    val matchScore: ContactMatchScore,
+    val matchScore: ContactMatchScoreDto,
     val reason: String
 )
 
 @Serializable
-data class MatchEvidence(
+data class MatchEvidenceDto(
     val vatMatch: Boolean,
     val ibanMatch: Boolean,
     val nameSimilarity: Double? = null,
@@ -63,25 +63,25 @@ sealed class ContactResolution {
     @Serializable
     data class Matched(
         val contactId: ContactId,
-        val evidence: MatchEvidence,
+        val evidence: MatchEvidenceDto,
     ) : ContactResolution()
 
     @Serializable
     data class AutoCreate(
-        val contactData: CounterpartySnapshot,
+        val contactData: CounterpartySnapshotDto,
         val cbeVerified: EntityLookup?,
-        val evidence: MatchEvidence,
+        val evidence: MatchEvidenceDto,
     ) : ContactResolution()
 
     @Serializable
     data class Suggested(
-        val candidates: List<SuggestedContact>,
-        val suggestedNew: CounterpartySnapshot?,
+        val candidates: List<SuggestedContactDto>,
+        val suggestedNew: CounterpartySnapshotDto?,
         val reason: String,
     ) : ContactResolution()
 
     @Serializable
     data class PendingReview(
-        val extractedData: CounterpartySnapshot,
+        val extractedData: CounterpartySnapshotDto,
     ) : ContactResolution()
 }

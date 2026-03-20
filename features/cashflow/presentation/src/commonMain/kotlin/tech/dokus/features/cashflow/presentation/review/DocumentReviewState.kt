@@ -23,7 +23,7 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.model.AutoPaymentStatus
 import tech.dokus.domain.model.BankTransactionDto
-import tech.dokus.domain.model.CashflowEntry
+import tech.dokus.domain.model.CashflowEntryDto
 import tech.dokus.domain.model.DocDto
 import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.contact.ContactDto
@@ -151,7 +151,7 @@ data class DocumentReviewState(
     val isResolvingMatchReview: Boolean = false,
     val documentStatus: DocumentStatus? = null,
     val confirmedCashflowEntryId: CashflowEntryId? = null,
-    val cashflowEntryState: DokusState<CashflowEntry> = DokusState.idle(),
+    val cashflowEntryState: DokusState<CashflowEntryDto> = DokusState.idle(),
     val autoPaymentStatus: DokusState<AutoPaymentStatus> = DokusState.idle(),
     val isUndoingAutoPayment: Boolean = false,
     val sourceViewerState: SourceEvidenceViewerState? = null,
@@ -391,7 +391,7 @@ data class DocumentReviewState(
     val financialStatus: ReviewFinancialStatus
         get() {
             if (isProcessing || hasAttention) return ReviewFinancialStatus.Review
-            val entry = (cashflowEntryState as? DokusState.Success<CashflowEntry>)?.data
+            val entry = (cashflowEntryState as? DokusState.Success<CashflowEntryDto>)?.data
             val isOverdueByDueDate = isDocumentConfirmed &&
                 (resolvedDueDate?.let { it < today } == true)
             return when (entry?.status) {
@@ -417,7 +417,7 @@ data class DocumentReviewState(
 
     val canRecordPayment: Boolean
         get() {
-            val entry = (cashflowEntryState as? DokusState.Success<CashflowEntry>)?.data ?: return false
+            val entry = (cashflowEntryState as? DokusState.Success<CashflowEntryDto>)?.data ?: return false
             return entry.status != CashflowEntryStatus.Paid && !entry.remainingAmount.isZero
         }
 }

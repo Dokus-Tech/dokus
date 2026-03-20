@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.chat_download_pdf
-import tech.dokus.domain.model.ai.DocumentReference
+import tech.dokus.domain.model.ai.DocumentReferenceDto
 import tech.dokus.domain.model.ai.DocumentReferenceType
 import tech.dokus.foundation.aura.components.PButton
 import tech.dokus.foundation.aura.components.PButtonVariant
@@ -47,7 +47,7 @@ private val TypeDotSize = 5.dp
  */
 @Composable
 fun ChatDocumentCard(
-    doc: DocumentReference,
+    doc: DocumentReferenceDto,
     onDownload: () -> Unit,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -128,7 +128,7 @@ private fun ChatDocumentCardPreview(
 ) {
     TestWrapper(parameters) {
         ChatDocumentCard(
-            doc = DocumentReference(
+            doc = DocumentReferenceDto(
                 name = "SRL Accounting & Tax",
                 ref = "20260050",
                 type = DocumentReferenceType.Invoice,

@@ -23,7 +23,7 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.contact.ContactSuggestionDto
 import tech.dokus.domain.model.contact.CounterpartyInfo
-import tech.dokus.domain.model.contact.CounterpartySnapshot
+import tech.dokus.domain.model.contact.CounterpartySnapshotDto
 import tech.dokus.domain.model.contact.ResolvedContact
 import tech.dokus.foundation.backend.storage.DocumentStorageService
 import tech.dokus.foundation.backend.utils.loggerFor
@@ -161,7 +161,7 @@ internal class DocumentRecordLoader(
         }
     }
 
-    private fun formatAddress(snapshot: CounterpartySnapshot): String? {
+    private fun formatAddress(snapshot: CounterpartySnapshotDto): String? {
         val addr = snapshot.address
         val parts = listOfNotNull(
             addr.streetLine1?.trim()?.takeIf { it.isNotEmpty() },

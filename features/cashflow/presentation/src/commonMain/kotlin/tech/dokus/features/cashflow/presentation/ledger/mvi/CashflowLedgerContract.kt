@@ -9,7 +9,7 @@ import tech.dokus.domain.Money
 import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.CashflowEntryId
-import tech.dokus.domain.model.CashflowEntry
+import tech.dokus.domain.model.CashflowEntryDto
 import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.foundation.app.state.DokusState
 
@@ -83,7 +83,7 @@ data class CashflowSummary(
  */
 @Immutable
 data class CashflowLedgerState(
-    val entries: DokusState<PaginationState<CashflowEntry>>,
+    val entries: DokusState<PaginationState<CashflowEntryDto>>,
     val filters: CashflowFilters = CashflowFilters(),
     val summary: CashflowSummary = CashflowSummary.EMPTY,
     val balance: BalanceState? = null,
@@ -110,7 +110,7 @@ sealed interface CashflowLedgerIntent : MVIIntent {
     data class SetDirectionFilter(val direction: DirectionFilter) : CashflowLedgerIntent
 
     data class HighlightEntry(val entryId: CashflowEntryId?) : CashflowLedgerIntent
-    data class OpenEntry(val entry: CashflowEntry) : CashflowLedgerIntent
+    data class OpenEntry(val entry: CashflowEntryDto) : CashflowLedgerIntent
 
     // Row actions menu intents
     data class ShowRowActions(val entryId: CashflowEntryId) : CashflowLedgerIntent
@@ -119,7 +119,7 @@ sealed interface CashflowLedgerIntent : MVIIntent {
     // Actions from the row actions menu
     data class RecordPaymentFor(val entryId: CashflowEntryId) : CashflowLedgerIntent
     data class MarkAsPaidQuick(val entryId: CashflowEntryId) : CashflowLedgerIntent
-    data class ViewDocumentFor(val entry: CashflowEntry) : CashflowLedgerIntent
+    data class ViewDocumentFor(val entry: CashflowEntryDto) : CashflowLedgerIntent
 }
 
 /**
@@ -130,6 +130,6 @@ sealed interface CashflowLedgerAction : MVIAction {
     data class NavigateToDocumentReview(val documentId: String) : CashflowLedgerAction
     data class NavigateToEntity(val sourceType: CashflowSourceType, val sourceId: String) : CashflowLedgerAction
     data class ShowError(val error: DokusException) : CashflowLedgerAction
-    data class ShowPaymentSuccess(val entry: CashflowEntry) : CashflowLedgerAction
+    data class ShowPaymentSuccess(val entry: CashflowEntryDto) : CashflowLedgerAction
     data class ShowPaymentError(val error: DokusException) : CashflowLedgerAction
 }
