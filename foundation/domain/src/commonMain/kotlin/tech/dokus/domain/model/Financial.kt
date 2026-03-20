@@ -199,7 +199,7 @@ data class TeamMember(
  * Invitation to join a tenant workspace.
  */
 @Serializable
-data class TenantInvitation(
+data class TenantInvitationEntity(
     val id: InvitationId,
     val tenantId: TenantId,
     val email: Email,
@@ -208,7 +208,9 @@ data class TenantInvitation(
     val status: InvitationStatus,
     val expiresAt: LocalDateTime,
     val createdAt: LocalDateTime
-)
+) {
+    companion object
+}
 
 /**
  * Request DTO for creating a team invitation.
@@ -262,7 +264,9 @@ data class PaymentDto(
     val reversedByUserId: UserId? = null,
     val reversalReason: String? = null,
     val createdAt: LocalDateTime
-)
+) {
+    companion object
+}
 
 // ============================================================================
 // BANKING

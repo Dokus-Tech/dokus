@@ -1,5 +1,6 @@
 package tech.dokus.backend.services.contacts
 
+import tech.dokus.database.mapper.from
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.domain.Email
 import tech.dokus.domain.PhoneNumber
@@ -76,6 +77,7 @@ class ContactEnrichmentService(
         enrichmentData: EnrichmentData
     ): Result<EnrichmentResult> = runCatching {
         val contact = contactRepository.getContact(contactId, tenantId).getOrThrow()
+            ?.let { ContactDto.from(it) }
             ?: throw IllegalArgumentException("Contact not found: $contactId")
 
         val (toEnrich, toSkip) = calculateEnrichmentFields(contact, enrichmentData)
@@ -107,6 +109,7 @@ class ContactEnrichmentService(
         sourceDocumentId: DocumentId? = null
     ): Result<EnrichmentResult> = runCatching {
         val contact = contactRepository.getContact(contactId, tenantId).getOrThrow()
+            ?.let { ContactDto.from(it) }
             ?: throw IllegalArgumentException("Contact not found: $contactId")
 
         val (toEnrich, toSkip) = calculateEnrichmentFields(contact, enrichmentData)
@@ -130,6 +133,7 @@ class ContactEnrichmentService(
         )
 
         val updatedContact = contactRepository.updateContact(contactId, tenantId, updateRequest)
+            .map { ContactDto.from(it) }
             .getOrThrow()
 
         EnrichmentResult(

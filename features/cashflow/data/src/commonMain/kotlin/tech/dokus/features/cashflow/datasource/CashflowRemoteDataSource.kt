@@ -38,7 +38,7 @@ import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.domain.model.BulkReprocessRequest
 import tech.dokus.domain.model.BulkReprocessResponse
 import tech.dokus.domain.model.CancelEntryRequest
-import tech.dokus.domain.model.CashflowEntry
+import tech.dokus.domain.model.CashflowEntryEntity
 import tech.dokus.domain.model.CashflowOverview
 import tech.dokus.domain.model.CashflowPaymentRequest
 import tech.dokus.domain.model.CreateExpenseRequest
@@ -400,13 +400,13 @@ interface CashflowRemoteDataSource {
         entryId: CashflowEntryId? = null,
         limit: Int = 50,
         offset: Int = 0
-    ): Result<PaginatedResponse<CashflowEntry>>
+    ): Result<PaginatedResponse<CashflowEntryEntity>>
 
     /**
      * Get a single cashflow entry by ID.
      * GET /api/v1/cashflow/entries/{id}
      */
-    suspend fun getCashflowEntry(entryId: CashflowEntryId): Result<CashflowEntry>
+    suspend fun getCashflowEntry(entryId: CashflowEntryId): Result<CashflowEntryEntity>
 
     /**
      * Get imported transaction candidates for recording payment.
@@ -431,7 +431,7 @@ interface CashflowRemoteDataSource {
     suspend fun recordCashflowPayment(
         entryId: CashflowEntryId,
         request: CashflowPaymentRequest
-    ): Result<CashflowEntry>
+    ): Result<CashflowEntryEntity>
 
     /**
      * Cancel a cashflow entry.
@@ -440,7 +440,7 @@ interface CashflowRemoteDataSource {
     suspend fun cancelCashflowEntry(
         entryId: CashflowEntryId,
         request: CancelEntryRequest? = null
-    ): Result<CashflowEntry>
+    ): Result<CashflowEntryEntity>
 
     /**
      * Undo active auto payment for an entry.
@@ -449,7 +449,7 @@ interface CashflowRemoteDataSource {
     suspend fun undoAutoPayment(
         entryId: CashflowEntryId,
         request: UndoAutoPaymentRequest = UndoAutoPaymentRequest()
-    ): Result<CashflowEntry>
+    ): Result<CashflowEntryEntity>
 
     // ============================================================================
     // DOCUMENT MANAGEMENT (AI Extraction Pipeline)

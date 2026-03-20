@@ -10,7 +10,7 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.database.entity.BankTransactionEntity
-import tech.dokus.domain.model.CashflowEntry
+import tech.dokus.domain.model.CashflowEntryEntity
 
 /**
  * Result of a single signal evaluation during scoring.
@@ -27,7 +27,7 @@ data class SignalResult(
  * before scoring.
  */
 data class MatchCandidate(
-    val entry: CashflowEntry,
+    val entry: CashflowEntryEntity,
     val contactIban: String?,
     val contactName: String?,
     val contactId: ContactId?,

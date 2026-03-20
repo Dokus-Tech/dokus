@@ -71,4 +71,6 @@ data class RefundClaimDto(
     val cashflowEntryId: CashflowEntryId? = null,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime,
-)
+) {
+    companion object
+}

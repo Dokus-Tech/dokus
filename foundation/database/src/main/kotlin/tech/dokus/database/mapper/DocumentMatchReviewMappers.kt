@@ -1,7 +1,7 @@
 package tech.dokus.database.mapper
 
 import org.jetbrains.exposed.v1.core.ResultRow
-import tech.dokus.database.repository.cashflow.DocumentMatchReviewSummary
+import tech.dokus.database.repository.cashflow.DocumentMatchReviewEntity
 import tech.dokus.database.tables.documents.DocumentMatchReviewsTable
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentMatchReviewId
@@ -12,19 +12,19 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toKotlinUuid
 
 @OptIn(ExperimentalUuidApi::class)
-internal fun ResultRow.toDocumentMatchReviewSummary(): DocumentMatchReviewSummary {
-    return DocumentMatchReviewSummary(
-        id = DocumentMatchReviewId(this[DocumentMatchReviewsTable.id].value.toKotlinUuid()),
-        tenantId = TenantId(this[DocumentMatchReviewsTable.tenantId].toKotlinUuid()),
-        documentId = DocumentId.parse(this[DocumentMatchReviewsTable.documentId].toString()),
-        incomingSourceId = DocumentSourceId(this[DocumentMatchReviewsTable.incomingSourceId].toKotlinUuid()),
-        reasonType = this[DocumentMatchReviewsTable.reasonType],
-        aiSummary = this[DocumentMatchReviewsTable.aiSummary],
-        aiConfidence = this[DocumentMatchReviewsTable.aiConfidence]?.toDouble(),
-        status = this[DocumentMatchReviewsTable.status],
-        resolvedBy = this[DocumentMatchReviewsTable.resolvedBy]?.toKotlinUuid()?.let { UserId(it) },
-        resolvedAt = this[DocumentMatchReviewsTable.resolvedAt],
-        createdAt = this[DocumentMatchReviewsTable.createdAt],
-        updatedAt = this[DocumentMatchReviewsTable.updatedAt]
+internal fun DocumentMatchReviewEntity.Companion.from(row: ResultRow): DocumentMatchReviewEntity {
+    return DocumentMatchReviewEntity(
+        id = DocumentMatchReviewId(row[DocumentMatchReviewsTable.id].value.toKotlinUuid()),
+        tenantId = TenantId(row[DocumentMatchReviewsTable.tenantId].toKotlinUuid()),
+        documentId = DocumentId.parse(row[DocumentMatchReviewsTable.documentId].toString()),
+        incomingSourceId = DocumentSourceId(row[DocumentMatchReviewsTable.incomingSourceId].toKotlinUuid()),
+        reasonType = row[DocumentMatchReviewsTable.reasonType],
+        aiSummary = row[DocumentMatchReviewsTable.aiSummary],
+        aiConfidence = row[DocumentMatchReviewsTable.aiConfidence]?.toDouble(),
+        status = row[DocumentMatchReviewsTable.status],
+        resolvedBy = row[DocumentMatchReviewsTable.resolvedBy]?.toKotlinUuid()?.let { UserId(it) },
+        resolvedAt = row[DocumentMatchReviewsTable.resolvedAt],
+        createdAt = row[DocumentMatchReviewsTable.createdAt],
+        updatedAt = row[DocumentMatchReviewsTable.updatedAt]
     )
 }

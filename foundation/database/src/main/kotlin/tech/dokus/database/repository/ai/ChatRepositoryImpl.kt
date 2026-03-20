@@ -10,7 +10,8 @@ import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
-import tech.dokus.database.mapper.toChatMessageDto
+import tech.dokus.database.entity.ChatMessageEntity
+import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.ai.ChatMessagesTable
 import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.domain.ids.DocumentId
@@ -115,7 +116,7 @@ class ChatRepositoryImpl : ChatRepository {
                     (ChatMessagesTable.tenantId eq tenantUuid)
             }
             .singleOrNull()
-            ?.toChatMessageDto()
+            ?.let { ChatMessageDto.from(ChatMessageEntity.from(it)) }
     }
 
     override suspend fun getSessionMessages(
@@ -142,7 +143,7 @@ class ChatRepositoryImpl : ChatRepository {
             .orderBy(ChatMessagesTable.sequenceNumber to sortOrder)
             .limit(limit)
             .offset(offset.toLong())
-            .map { it.toChatMessageDto() }
+            .map { ChatMessageDto.from(ChatMessageEntity.from(it)) }
 
         ChatPage(messages, total)
     }
@@ -169,7 +170,7 @@ class ChatRepositoryImpl : ChatRepository {
             .orderBy(ChatMessagesTable.createdAt to SortOrder.DESC)
             .limit(limit)
             .offset(offset.toLong())
-            .map { it.toChatMessageDto() }
+            .map { ChatMessageDto.from(ChatMessageEntity.from(it)) }
 
         ChatPage(messages, total)
     }

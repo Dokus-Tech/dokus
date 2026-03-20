@@ -27,7 +27,7 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.fromDbDecimal
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.CashflowEntry
+import tech.dokus.domain.model.CashflowEntryEntity
 import tech.dokus.domain.model.CashflowPaymentRequest
 import tech.dokus.domain.toDbDecimal
 import tech.dokus.foundation.backend.utils.runSuspendCatching
@@ -43,7 +43,7 @@ class CashflowPaymentService(
         tenantId: TenantId,
         entryId: CashflowEntryId,
         request: CashflowPaymentRequest
-    ): Result<CashflowEntry> = runSuspendCatching {
+    ): Result<CashflowEntryEntity> = runSuspendCatching {
         if (request.amount.minor <= 0) {
             throw DokusException.BadRequest("Payment amount must be positive")
         }

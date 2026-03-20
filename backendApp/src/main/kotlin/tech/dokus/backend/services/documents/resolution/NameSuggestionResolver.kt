@@ -1,7 +1,9 @@
 package tech.dokus.backend.services.documents.resolution
 
+import tech.dokus.database.mapper.from
 import tech.dokus.backend.services.documents.resolution.ContactMatchingUtils.Companion.SuggestionThreshold
 import tech.dokus.database.repository.contacts.ContactRepository
+import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.ContactResolution
 import tech.dokus.domain.model.contact.MatchEvidence
 
@@ -13,6 +15,7 @@ class NameSuggestionResolver(
         val name = input.snapshot.name ?: return ResolverOutcome.Partial()
 
         val candidates = contactRepository.findByName(input.tenantId, name, limit = 10).getOrNull().orEmpty()
+            .map { ContactDto.from(it) }
         val scored = candidates.map { contact ->
             contact to matchingUtils.similarity(name, contact.name.value)
         }.filter { it.second >= SuggestionThreshold }

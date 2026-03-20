@@ -15,9 +15,10 @@ import tech.dokus.domain.enums.ResolutionType
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.backend.mappers.from
+import tech.dokus.database.mapper.from
 import tech.dokus.database.entity.BankTransactionEntity
 import tech.dokus.domain.model.BankTransactionDto
-import tech.dokus.domain.model.CashflowEntry
+import tech.dokus.domain.model.CashflowEntryEntity
 import tech.dokus.backend.services.banking.sse.BankingSsePublisher
 import tech.dokus.backend.services.cashflow.AutoPaymentService
 import tech.dokus.foundation.backend.utils.loggerFor
@@ -99,11 +100,12 @@ class MatchingEngine(
 
         // Load contact cache (shared across all transaction scoring)
         val contactCache = mutableMapOf<String, tech.dokus.domain.model.contact.ContactDto?>()
-        suspend fun resolveContact(entry: CashflowEntry): tech.dokus.domain.model.contact.ContactDto? {
+        suspend fun resolveContact(entry: CashflowEntryEntity): tech.dokus.domain.model.contact.ContactDto? {
             val contactId = entry.contact?.id ?: return null
             val key = contactId.toString()
             if (contactCache.containsKey(key)) return contactCache[key]
             val resolved = contactRepository.getContact(contactId, tenantId).getOrNull()
+                ?.let { tech.dokus.domain.model.contact.ContactDto.from(it) }
             contactCache[key] = resolved
             return resolved
         }

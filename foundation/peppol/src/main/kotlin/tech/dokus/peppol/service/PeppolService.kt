@@ -6,8 +6,9 @@ import tech.dokus.domain.Money
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import tech.dokus.database.mapper.from
 import tech.dokus.database.repository.peppol.PeppolSettingsRepository
-import tech.dokus.database.repository.peppol.PeppolTransmissionInternal
+import tech.dokus.database.repository.peppol.PeppolTransmissionEntity
 import tech.dokus.database.repository.peppol.PeppolTransmissionRepository
 import tech.dokus.domain.enums.PeppolDocumentType
 import tech.dokus.domain.enums.PeppolStatus
@@ -80,6 +81,7 @@ class PeppolService(
     suspend fun getSettings(tenantId: TenantId): Result<PeppolSettingsDto?> {
         logger.debug("Getting Peppol settings for tenant: {}", tenantId)
         return settingsRepository.getSettings(tenantId)
+            .map { it?.let { entity -> PeppolSettingsDto.from(entity) } }
     }
 
     /**
@@ -114,6 +116,7 @@ class PeppolService(
 
         return runSuspendCatching {
             val peppolSettings = settingsRepository.getSettings(tenantId).getOrThrow()
+                ?.let { PeppolSettingsDto.from(it) }
                 ?: throw IllegalStateException("Peppol settings not configured for tenant: $tenantId")
 
             validator.validateForSending(
@@ -164,6 +167,7 @@ class PeppolService(
 
         return runSuspendCatching {
             val peppolSettings = settingsRepository.getSettings(tenantId).getOrThrow()
+                ?.let { PeppolSettingsDto.from(it) }
                 ?: throw IllegalStateException("Peppol settings not configured for tenant: $tenantId")
 
             val validationResult = validator.validateForSending(
@@ -220,7 +224,7 @@ class PeppolService(
      * Process one outbound transmission already claimed by the worker.
      * The transmission must be in SENDING state.
      */
-    suspend fun processOutboundTransmission(transmission: PeppolTransmissionInternal): Result<PeppolStatus> {
+    suspend fun processOutboundTransmission(transmission: PeppolTransmissionEntity): Result<PeppolStatus> {
         return runSuspendCatching {
             if (transmission.direction != PeppolTransmissionDirection.Outbound) {
                 throw IllegalArgumentException("Transmission ${transmission.id} is not outbound")
@@ -330,6 +334,7 @@ class PeppolService(
         return runSuspendCatching {
             val provider = createProviderForTenant(tenantId)
             val settings = settingsRepository.getSettings(tenantId).getOrThrow()
+                ?.let { PeppolSettingsDto.from(it) }
                 ?: throw IllegalStateException("Peppol settings not configured for tenant: $tenantId")
 
             // Check if full sync needed (first time or > 7 days since last)
@@ -524,7 +529,7 @@ class PeppolService(
     }
 
     private suspend fun persistOutboundFailure(
-        transmission: PeppolTransmissionInternal,
+        transmission: PeppolTransmissionEntity,
         failure: OutboundFailureClassification,
         rawResponse: String?
     ): PeppolStatus {
@@ -557,7 +562,7 @@ class PeppolService(
         }
     }
 
-    private suspend fun reconcileOutboundTransmission(transmission: PeppolTransmissionInternal): Boolean {
+    private suspend fun reconcileOutboundTransmission(transmission: PeppolTransmissionEntity): Boolean {
         if (transmission.direction != PeppolTransmissionDirection.Outbound) {
             return false
         }

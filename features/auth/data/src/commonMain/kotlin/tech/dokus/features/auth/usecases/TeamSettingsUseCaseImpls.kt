@@ -6,7 +6,7 @@ import tech.dokus.domain.ids.InvitationId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.CreateInvitationRequest
 import tech.dokus.domain.model.TeamMember
-import tech.dokus.domain.model.TenantInvitation
+import tech.dokus.domain.model.TenantInvitationEntity
 import tech.dokus.domain.model.auth.BookkeeperFirmSearchItem
 import tech.dokus.domain.model.auth.GrantBookkeeperAccessResponse
 import tech.dokus.domain.model.auth.TenantBookkeeperAccessItem
@@ -26,7 +26,7 @@ internal class ListTeamMembersUseCaseImpl(
 internal class ListPendingInvitationsUseCaseImpl(
     private val teamInvitationsGateway: TeamInvitationsGateway
 ) : ListPendingInvitationsUseCase {
-    override suspend fun invoke(): Result<List<TenantInvitation>> {
+    override suspend fun invoke(): Result<List<TenantInvitationEntity>> {
         return teamInvitationsGateway.listPendingInvitations()
     }
 }
@@ -34,7 +34,7 @@ internal class ListPendingInvitationsUseCaseImpl(
 internal class CreateInvitationUseCaseImpl(
     private val teamInvitationsGateway: TeamInvitationsGateway
 ) : CreateInvitationUseCase {
-    override suspend fun invoke(request: CreateInvitationRequest): Result<TenantInvitation> {
+    override suspend fun invoke(request: CreateInvitationRequest): Result<TenantInvitationEntity> {
         return teamInvitationsGateway.createInvitation(request)
     }
 }

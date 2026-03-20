@@ -12,64 +12,64 @@ import tech.dokus.domain.fromDbDecimal
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.model.SearchContactHit
-import tech.dokus.domain.model.SearchDocumentHit
-import tech.dokus.domain.model.SearchTransactionHit
+import tech.dokus.domain.model.SearchContactHitEntity
+import tech.dokus.domain.model.SearchDocumentHitEntity
+import tech.dokus.domain.model.SearchTransactionHitEntity
 import tech.dokus.domain.model.contact.CounterpartySnapshot
 import tech.dokus.domain.utils.json
 
-internal fun ResultRow.toSearchDocumentHit(): SearchDocumentHit {
-    val contactName = this.getOrNull(ContactsTable.name)
-    val contactVat = this.getOrNull(ContactsTable.vatNumber)
+internal fun SearchDocumentHitEntity.Companion.from(row: ResultRow): SearchDocumentHitEntity {
+    val contactName = row.getOrNull(ContactsTable.name)
+    val contactVat = row.getOrNull(ContactsTable.vatNumber)
     val snapshot = if (contactName == null || contactVat == null) {
-        this.getOrNull(DocumentsTable.counterpartySnapshot)
+        row.getOrNull(DocumentsTable.counterpartySnapshot)
             ?.let { runCatching { json.decodeFromString<CounterpartySnapshot>(it) }.getOrNull() }
     } else null
 
-    return SearchDocumentHit(
-        documentId = DocumentId.parse(this[DocumentsTable.id].value.toString()),
-        filename = this[DocumentsTable.purposeRendered] ?: "",
-        documentType = this[DocumentsTable.documentType],
-        status = this[DocumentsTable.documentStatus],
+    return SearchDocumentHitEntity(
+        documentId = DocumentId.parse(row[DocumentsTable.id].value.toString()),
+        filename = row[DocumentsTable.purposeRendered] ?: "",
+        documentType = row[DocumentsTable.documentType],
+        status = row[DocumentsTable.documentStatus],
         counterpartyName = contactName ?: snapshot?.name,
         counterpartyVat = contactVat ?: snapshot?.vatNumber?.value,
     )
 }
 
-internal fun ResultRow.toSearchContactHit(): SearchContactHit = SearchContactHit(
-    contactId = ContactId.parse(this[ContactsTable.id].value.toString()),
-    name = this[ContactsTable.name],
-    email = this[ContactsTable.email],
-    vatNumber = this[ContactsTable.vatNumber],
-    companyNumber = this[ContactsTable.companyNumber],
-    isActive = this[ContactsTable.isActive],
+internal fun SearchContactHitEntity.Companion.from(row: ResultRow): SearchContactHitEntity = SearchContactHitEntity(
+    contactId = ContactId.parse(row[ContactsTable.id].value.toString()),
+    name = row[ContactsTable.name],
+    email = row[ContactsTable.email],
+    vatNumber = row[ContactsTable.vatNumber],
+    companyNumber = row[ContactsTable.companyNumber],
+    isActive = row[ContactsTable.isActive],
 )
 
-internal fun ResultRow.toSearchTransactionHit(): SearchTransactionHit {
-    val direction = this[CashflowEntriesTable.direction]
-    val absoluteAmount = Money.fromDbDecimal(this[CashflowEntriesTable.amountGross])
+internal fun SearchTransactionHitEntity.Companion.from(row: ResultRow): SearchTransactionHitEntity {
+    val direction = row[CashflowEntriesTable.direction]
+    val absoluteAmount = Money.fromDbDecimal(row[CashflowEntriesTable.amountGross])
     val signedAmount = if (direction == CashflowDirection.Out) -absoluteAmount else absoluteAmount
-    val contactName = this.getOrNull(ContactsTable.name)
-    val filename = this.getOrNull(DocumentsTable.purposeRendered)
-    val expenseDescription = this.getOrNull(ExpensesTable.description)
-    val invoiceNumber = this.getOrNull(InvoicesTable.invoiceNumber)
+    val contactName = row.getOrNull(ContactsTable.name)
+    val filename = row.getOrNull(DocumentsTable.purposeRendered)
+    val expenseDescription = row.getOrNull(ExpensesTable.description)
+    val invoiceNumber = row.getOrNull(InvoicesTable.invoiceNumber)
     val displayText = when {
         !filename.isNullOrBlank() -> filename
         !expenseDescription.isNullOrBlank() -> expenseDescription
         !invoiceNumber.isNullOrBlank() -> invoiceNumber
         !contactName.isNullOrBlank() -> contactName
-        else -> this[CashflowEntriesTable.sourceType].name
+        else -> row[CashflowEntriesTable.sourceType].name
     }
 
-    return SearchTransactionHit(
-        entryId = CashflowEntryId.parse(this[CashflowEntriesTable.id].value.toString()),
+    return SearchTransactionHitEntity(
+        entryId = CashflowEntryId.parse(row[CashflowEntriesTable.id].value.toString()),
         displayText = displayText,
-        status = this[CashflowEntriesTable.status],
-        date = this[CashflowEntriesTable.eventDate],
+        status = row[CashflowEntriesTable.status],
+        date = row[CashflowEntriesTable.eventDate],
         amount = signedAmount,
         direction = direction,
         contactName = contactName,
         documentFilename = filename,
-        documentId = this.getOrNull(DocumentsTable.id)?.let { DocumentId.parse(it.value.toString()) },
+        documentId = row.getOrNull(DocumentsTable.id)?.let { DocumentId.parse(it.value.toString()) },
     )
 }

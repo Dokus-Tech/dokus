@@ -41,7 +41,7 @@ import tech.dokus.domain.ids.PaymentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.AutoPaymentStatus
-import tech.dokus.domain.model.CashflowEntry
+import tech.dokus.domain.model.CashflowEntryEntity
 import tech.dokus.database.entity.BankTransactionEntity
 import tech.dokus.domain.toDbDecimal
 import tech.dokus.foundation.backend.utils.runSuspendCatching
@@ -60,7 +60,7 @@ class AutoPaymentService(
 ) {
     suspend fun applyAutoPayment(
         tenantId: TenantId,
-        entry: CashflowEntry,
+        entry: CashflowEntryEntity,
         transaction: BankTransactionEntity,
         confidenceScore: Double,
         scoreMargin: Double,
@@ -150,7 +150,7 @@ class AutoPaymentService(
         entryId: CashflowEntryId,
         actorUserId: UserId?,
         reason: String?
-    ): Result<CashflowEntry> = runSuspendCatching {
+    ): Result<CashflowEntryEntity> = runSuspendCatching {
         val tenantUuid = tenantId.value.toJavaUuid()
         val entryUuid = entryId.value.toJavaUuid()
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
@@ -278,7 +278,7 @@ class AutoPaymentService(
 
     private suspend fun applyAutoPaymentInTransaction(
         tenantId: TenantId,
-        entry: CashflowEntry,
+        entry: CashflowEntryEntity,
         transaction: BankTransactionEntity,
         confidenceScore: Double,
         scoreMargin: Double,

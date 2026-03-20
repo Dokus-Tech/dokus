@@ -9,8 +9,8 @@ import kotlinx.datetime.LocalDateTime
 import org.junit.jupiter.api.Test
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.DocumentPurposeTemplateRepository
-import tech.dokus.database.repository.cashflow.DocumentPurposeTemplateSummary
-import tech.dokus.database.repository.cashflow.DraftSummary
+import tech.dokus.database.repository.cashflow.DocumentPurposeTemplateEntity
+import tech.dokus.database.repository.cashflow.DraftSummaryEntity
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.ContactLinkSource
 import tech.dokus.domain.enums.DocumentDirection
@@ -77,7 +77,7 @@ class DocumentPurposeServiceTest {
                 counterpartyKey = "contact:$contactId",
                 documentType = DocumentType.Invoice
             )
-        } returns DocumentPurposeTemplateSummary(
+        } returns DocumentPurposeTemplateEntity(
             tenantId = tenantId,
             counterpartyKey = "contact:$contactId",
             documentType = DocumentType.Invoice,
@@ -257,9 +257,9 @@ class DocumentPurposeServiceTest {
         purposeBase: String? = null,
         counterpartyKey: String? = null,
         merchantToken: String? = "kbc"
-    ): DraftSummary {
+    ): DraftSummaryEntity {
         val now = LocalDateTime(2026, 2, 1, 0, 0, 0)
-        return DraftSummary(
+        return DraftSummaryEntity(
             documentId = documentId,
             tenantId = tenantId,
             documentStatus = documentStatus,

@@ -23,8 +23,7 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.Query
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import tech.dokus.database.mapper.toDocumentDto
-import tech.dokus.database.mapper.toDraftSummary
-import tech.dokus.database.mapper.toIngestionRunSummary
+import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.cashflow.CreditNotesTable
 import tech.dokus.database.tables.cashflow.ExpensesTable
 import tech.dokus.database.tables.cashflow.InvoicesTable
@@ -408,7 +407,7 @@ internal object DocumentListingQuery {
         val tenantIdUuid = baseQuery.tenantIdUuid
 
         // Documents and drafts are on the same table — single query with contact join
-        data class DocumentAndDraft(val document: DocumentDto, val draft: DraftSummary?)
+        data class DocumentAndDraft(val document: DocumentDto, val draft: DraftSummaryEntity?)
         val documentsById = DocumentsTable
             .join(ContactsTable, JoinType.LEFT, DocumentsTable.linkedContactId, ContactsTable.id) {
                 ContactsTable.tenantId eq DocumentsTable.tenantId
@@ -423,7 +422,7 @@ internal object DocumentListingQuery {
                 val hasDraft = row[DocumentsTable.documentStatus] != null
                 docId to DocumentAndDraft(
                     document = row.toDocumentDto(),
-                    draft = if (hasDraft) row.toDraftSummary(contactName = row.getOrNull(ContactsTable.name)) else null,
+                    draft = if (hasDraft) DraftSummaryEntity.from(row, contactName = row.getOrNull(ContactsTable.name)) else null,
                 )
             }
 
@@ -436,7 +435,7 @@ internal object DocumentListingQuery {
                         (DocumentIngestionRunsTable.id inList latestRunIds)
                 }
                 .associate { row ->
-                    IngestionRunId.parse(row[DocumentIngestionRunsTable.id].toString()) to row.toIngestionRunSummary()
+                    IngestionRunId.parse(row[DocumentIngestionRunsTable.id].toString()) to IngestionRunSummaryEntity.from(row)
                 }
         }
 

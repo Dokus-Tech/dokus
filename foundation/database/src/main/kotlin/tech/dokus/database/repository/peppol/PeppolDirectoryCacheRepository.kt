@@ -14,13 +14,13 @@ import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
-import tech.dokus.database.mapper.toPeppolResolution
+import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.peppol.PeppolDirectoryCacheTable
 import tech.dokus.domain.enums.PeppolLookupSource
 import tech.dokus.domain.enums.PeppolLookupStatus
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.PeppolResolution
+import tech.dokus.domain.model.PeppolResolutionEntity
 import tech.dokus.foundation.backend.database.dbQuery
 import tech.dokus.foundation.backend.utils.loggerFor
 import java.util.UUID
@@ -54,14 +54,14 @@ class PeppolDirectoryCacheRepository {
      * Get cache entry for a contact.
      * Returns null if no entry exists.
      */
-    suspend fun getByContactId(tenantId: TenantId, contactId: ContactId): Result<PeppolResolution?> = runSuspendCatching {
+    suspend fun getByContactId(tenantId: TenantId, contactId: ContactId): Result<PeppolResolutionEntity?> = runSuspendCatching {
         dbQuery {
             PeppolDirectoryCacheTable.selectAll()
                 .where {
                     (PeppolDirectoryCacheTable.tenantId eq UUID.fromString(tenantId.toString())) and
                         (PeppolDirectoryCacheTable.contactId eq UUID.fromString(contactId.toString()))
                 }
-                .map { it.toPeppolResolution() }
+                .map { PeppolResolutionEntity.from(it) }
                 .singleOrNull()
         }
     }
@@ -80,7 +80,7 @@ class PeppolDirectoryCacheRepository {
         vatNumberSnapshot: String?,
         companyNumberSnapshot: String?,
         errorMessage: String?
-    ): Result<PeppolResolution> = runSuspendCatching {
+    ): Result<PeppolResolutionEntity> = runSuspendCatching {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         val tenantUuid = UUID.fromString(tenantId.toString())
         val contactUuid = UUID.fromString(contactId.toString())
@@ -147,7 +147,7 @@ class PeppolDirectoryCacheRepository {
                     (PeppolDirectoryCacheTable.tenantId eq tenantUuid) and
                         (PeppolDirectoryCacheTable.contactId eq contactUuid)
                 }
-                .map { it.toPeppolResolution() }
+                .map { PeppolResolutionEntity.from(it) }
                 .single()
         }
     }
@@ -169,7 +169,7 @@ class PeppolDirectoryCacheRepository {
      * Check if cache entry is stale (expired or identifiers changed).
      */
     fun isStale(
-        resolution: PeppolResolution,
+        resolution: PeppolResolutionEntity,
         currentVatNumber: String?,
         currentCompanyNumber: String?
     ): Boolean {

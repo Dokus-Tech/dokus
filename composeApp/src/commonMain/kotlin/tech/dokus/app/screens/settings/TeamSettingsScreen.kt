@@ -92,7 +92,7 @@ import tech.dokus.domain.ids.FirmId
 import tech.dokus.domain.ids.InvitationId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.TeamMember
-import tech.dokus.domain.model.TenantInvitation
+import tech.dokus.domain.model.TenantInvitationEntity
 import tech.dokus.domain.model.auth.BookkeeperFirmSearchItem
 import tech.dokus.domain.model.auth.TenantBookkeeperAccessItem
 import tech.dokus.foundation.app.network.rememberAuthenticatedImageLoader
@@ -505,7 +505,7 @@ private fun MemberRow(
 
 @Composable
 private fun InvitationRow(
-    invitation: TenantInvitation,
+    invitation: TenantInvitationEntity,
     showDivider: Boolean,
     onCancel: () -> Unit,
 ) {

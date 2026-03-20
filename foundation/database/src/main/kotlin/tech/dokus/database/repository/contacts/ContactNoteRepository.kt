@@ -7,7 +7,8 @@ import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insertAndGetId
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
-import tech.dokus.database.mapper.toContactNoteDto
+import tech.dokus.database.entity.ContactNoteEntity
+import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.contacts.ContactNotesTable
 import tech.dokus.database.tables.contacts.ContactsTable
 import tech.dokus.domain.ids.ContactId
@@ -15,7 +16,6 @@ import tech.dokus.domain.ids.ContactNoteId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.common.PaginatedResponse
-import tech.dokus.domain.model.contact.ContactNoteDto
 import tech.dokus.foundation.backend.database.dbQuery
 import java.util.UUID
 import tech.dokus.foundation.backend.utils.runSuspendCatching
@@ -40,7 +40,7 @@ class ContactNoteRepository {
         content: String,
         authorId: UserId? = null,
         authorName: String? = null
-    ): Result<ContactNoteDto> = runSuspendCatching {
+    ): Result<ContactNoteEntity> = runSuspendCatching {
         dbQuery {
             // Verify contact exists and belongs to tenant
             val contactExists = ContactsTable.selectAll().where {
@@ -65,7 +65,7 @@ class ContactNoteRepository {
                 (ContactNotesTable.id eq noteId.value) and
                     (ContactNotesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.single().let { row ->
-                row.toContactNoteDto()
+                ContactNoteEntity.from(row)
             }
         }
     }
@@ -77,13 +77,13 @@ class ContactNoteRepository {
     suspend fun getNote(
         noteId: ContactNoteId,
         tenantId: TenantId
-    ): Result<ContactNoteDto?> = runSuspendCatching {
+    ): Result<ContactNoteEntity?> = runSuspendCatching {
         dbQuery {
             ContactNotesTable.selectAll().where {
                 (ContactNotesTable.id eq UUID.fromString(noteId.toString())) and
                     (ContactNotesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.singleOrNull()?.let { row ->
-                row.toContactNoteDto()
+                ContactNoteEntity.from(row)
             }
         }
     }
@@ -97,7 +97,7 @@ class ContactNoteRepository {
         tenantId: TenantId,
         limit: Int = 50,
         offset: Int = 0
-    ): Result<PaginatedResponse<ContactNoteDto>> = runSuspendCatching {
+    ): Result<PaginatedResponse<ContactNoteEntity>> = runSuspendCatching {
         dbQuery {
             val query = ContactNotesTable.selectAll().where {
                 (ContactNotesTable.contactId eq UUID.fromString(contactId.toString())) and
@@ -109,7 +109,7 @@ class ContactNoteRepository {
             // Order by most recent first
             val items = query.orderBy(ContactNotesTable.createdAt to SortOrder.DESC)
                 .limit(limit + offset)
-                .map { it.toContactNoteDto() }
+                .map { ContactNoteEntity.from(it) }
                 .drop(offset)
 
             PaginatedResponse(
@@ -145,7 +145,7 @@ class ContactNoteRepository {
         noteId: ContactNoteId,
         tenantId: TenantId,
         content: String
-    ): Result<ContactNoteDto> = runSuspendCatching {
+    ): Result<ContactNoteEntity> = runSuspendCatching {
         dbQuery {
             // Verify note exists and belongs to tenant
             val exists = ContactNotesTable.selectAll().where {
@@ -169,7 +169,7 @@ class ContactNoteRepository {
                 (ContactNotesTable.id eq UUID.fromString(noteId.toString())) and
                     (ContactNotesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.single().let { row ->
-                row.toContactNoteDto()
+                ContactNoteEntity.from(row)
             }
         }
     }

@@ -1,7 +1,9 @@
 package tech.dokus.backend.services.documents.resolution
 
+import tech.dokus.database.mapper.from
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.ContactResolution
 import tech.dokus.domain.model.contact.MatchEvidence
 import tech.dokus.domain.model.entity.EntityStatus
@@ -17,6 +19,7 @@ class VatMatchResolver(
         val name = input.snapshot.name
 
         val vatMatch = contactRepository.findByVatNumber(input.tenantId, vat.value).getOrNull()
+            ?.let { ContactDto.from(it) }
             ?: return ResolverOutcome.Partial()
 
         val cbeStatus = resolveCbeStatus(vat)

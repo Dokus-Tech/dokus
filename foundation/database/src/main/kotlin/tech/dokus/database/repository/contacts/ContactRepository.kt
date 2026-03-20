@@ -27,13 +27,13 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.model.contact.ContactActivitySummary
-import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.database.entity.ContactEntity
+import tech.dokus.database.mapper.from
 import tech.dokus.domain.model.contact.ContactMergeResult
 import tech.dokus.domain.model.contact.ContactStats
 import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.model.contact.UpdateContactRequest
 import tech.dokus.domain.enums.DocumentDirection
-import tech.dokus.database.mapper.toContactDto
 import tech.dokus.foundation.backend.database.dbQuery
 import java.math.BigDecimal
 import java.util.UUID
@@ -57,7 +57,7 @@ class ContactRepository {
     suspend fun createContact(
         tenantId: TenantId,
         request: CreateContactRequest
-    ): Result<ContactDto> = runSuspendCatching {
+    ): Result<ContactEntity> = runSuspendCatching {
         dbQuery {
             val contactId = ContactsTable.insertAndGetId {
                 it[ContactsTable.tenantId] = UUID.fromString(tenantId.toString())
@@ -82,7 +82,7 @@ class ContactRepository {
                 (ContactsTable.id eq contactId.value) and
                     (ContactsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.single().let { row ->
-                row.toContactDto()
+                ContactEntity.from(row)
             }
         }
     }
@@ -94,13 +94,13 @@ class ContactRepository {
     suspend fun getContact(
         contactId: ContactId,
         tenantId: TenantId
-    ): Result<ContactDto?> = runSuspendCatching {
+    ): Result<ContactEntity?> = runSuspendCatching {
         dbQuery {
             ContactsTable.selectAll().where {
                 (ContactsTable.id eq UUID.fromString(contactId.toString())) and
                     (ContactsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.singleOrNull()?.let { row ->
-                row.toContactDto()
+                ContactEntity.from(row)
             }
         }
     }
@@ -115,7 +115,7 @@ class ContactRepository {
         isActive: Boolean? = null,
         limit: Int = 50,
         offset: Int = 0
-    ): Result<PaginatedResponse<ContactDto>> = runSuspendCatching {
+    ): Result<PaginatedResponse<ContactEntity>> = runSuspendCatching {
         dbQuery {
             var query = ContactsTable.selectAll().where {
                 ContactsTable.tenantId eq UUID.fromString(tenantId.toString())
@@ -130,7 +130,7 @@ class ContactRepository {
 
             val items = query.orderBy(ContactsTable.name to SortOrder.ASC)
                 .limit(limit + offset)
-                .map { it.toContactDto() }
+                .map { ContactEntity.from(it) }
                 .drop(offset)
 
             PaginatedResponse(
@@ -148,7 +148,7 @@ class ContactRepository {
         isActive: Boolean? = null,
         limit: Int = 50,
         offset: Int = 0
-    ): Result<PaginatedResponse<ContactDto>> = runSuspendCatching {
+    ): Result<PaginatedResponse<ContactEntity>> = runSuspendCatching {
         val normalizedQuery = query.trim().lowercase()
             .replace("\\", "\\\\")
             .replace("%", "\\%")
@@ -178,7 +178,7 @@ class ContactRepository {
                 .orderBy(ContactsTable.name to SortOrder.ASC)
                 .limit(limit)
                 .offset(offset.toLong())
-                .map { it.toContactDto() }
+                .map { ContactEntity.from(it) }
 
             PaginatedResponse(
                 items = items,
@@ -200,7 +200,7 @@ class ContactRepository {
         isActive: Boolean? = true,
         limit: Int = 50,
         offset: Int = 0
-    ): Result<PaginatedResponse<ContactDto>> = runSuspendCatching {
+    ): Result<PaginatedResponse<ContactEntity>> = runSuspendCatching {
         // TODO: Proper implementation requires JOIN with InvoicesTable to find contacts with invoices
         // For now, delegate to listContacts
         listContacts(tenantId, isActive, limit, offset).getOrThrow()
@@ -217,7 +217,7 @@ class ContactRepository {
         isActive: Boolean? = true,
         limit: Int = 50,
         offset: Int = 0
-    ): Result<PaginatedResponse<ContactDto>> = runSuspendCatching {
+    ): Result<PaginatedResponse<ContactEntity>> = runSuspendCatching {
         // TODO: Proper implementation requires JOIN with InvoicesTable/ExpensesTable
         // For now, delegate to listContacts
         listContacts(tenantId, isActive, limit, offset).getOrThrow()
@@ -232,7 +232,7 @@ class ContactRepository {
         contactId: ContactId,
         tenantId: TenantId,
         request: UpdateContactRequest
-    ): Result<ContactDto> = runSuspendCatching {
+    ): Result<ContactEntity> = runSuspendCatching {
         dbQuery {
             // Verify contact exists and belongs to tenant
             val exists = ContactsTable.selectAll().where {
@@ -271,7 +271,7 @@ class ContactRepository {
                 (ContactsTable.id eq UUID.fromString(contactId.toString())) and
                     (ContactsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.single().let { row ->
-                row.toContactDto()
+                ContactEntity.from(row)
             }
         }
     }
@@ -394,7 +394,7 @@ class ContactRepository {
     suspend fun findByVatNumber(
         tenantId: TenantId,
         vatNumber: String
-    ): Result<ContactDto?> = runSuspendCatching {
+    ): Result<ContactEntity?> = runSuspendCatching {
         dbQuery {
             val normalized = VatNumber.normalize(vatNumber)
             // Search for both normalized and original format
@@ -406,7 +406,7 @@ class ContactRepository {
                 val storedVat = row[ContactsTable.vatNumber]?.let { VatNumber.normalize(it) }
                 storedVat == normalized
             }.firstOrNull()?.let { row ->
-                row.toContactDto()
+                ContactEntity.from(row)
             }
         }
     }
@@ -420,14 +420,14 @@ class ContactRepository {
     suspend fun findByCompanyNumber(
         tenantId: TenantId,
         companyNumber: String
-    ): Result<ContactDto?> = runSuspendCatching {
+    ): Result<ContactEntity?> = runSuspendCatching {
         dbQuery {
             ContactsTable.selectAll().where {
                 (ContactsTable.tenantId eq UUID.fromString(tenantId.toString())) and
                     (ContactsTable.companyNumber eq companyNumber) and
                     (ContactsTable.isActive eq true)
             }.singleOrNull()?.let { row ->
-                row.toContactDto()
+                ContactEntity.from(row)
             }
         }
     }
@@ -439,14 +439,14 @@ class ContactRepository {
     suspend fun findByIban(
         tenantId: TenantId,
         iban: Iban
-    ): Result<List<ContactDto>> = runSuspendCatching {
+    ): Result<List<ContactEntity>> = runSuspendCatching {
         dbQuery {
             val normalized = Iban.from(iban.value)?.value ?: return@dbQuery emptyList()
             ContactsTable.selectAll().where {
                 (ContactsTable.tenantId eq UUID.fromString(tenantId.toString())) and
                     (ContactsTable.isActive eq true) and
                     (ContactsTable.iban eq normalized)
-            }.map { it.toContactDto() }
+            }.map { ContactEntity.from(it) }
         }
     }
 
@@ -461,7 +461,7 @@ class ContactRepository {
         tenantId: TenantId,
         name: String,
         limit: Int = 5
-    ): Result<List<ContactDto>> = runSuspendCatching {
+    ): Result<List<ContactEntity>> = runSuspendCatching {
         dbQuery {
             val searchTerm = name.lowercase()
             val query = ContactsTable.selectAll().where {
@@ -475,7 +475,7 @@ class ContactRepository {
                     row[ContactsTable.name].lowercase().contains(searchTerm)
                 }
                 .take(limit)
-                .map { it.toContactDto() }
+                .map { ContactEntity.from(it) }
         }
     }
 
@@ -483,7 +483,7 @@ class ContactRepository {
      * Get or create the "Unknown Contact" system placeholder for a tenant.
      * This contact is used when no match is found and user assigns to unknown.
      */
-    suspend fun getOrCreateUnknownContact(tenantId: TenantId): Result<ContactDto> = runSuspendCatching {
+    suspend fun getOrCreateUnknownContact(tenantId: TenantId): Result<ContactEntity> = runSuspendCatching {
         dbQuery {
             // Check if system contact already exists
             val existing = ContactsTable.selectAll().where {
@@ -492,7 +492,7 @@ class ContactRepository {
             }.singleOrNull()
 
             if (existing != null) {
-                existing.toContactDto()
+                ContactEntity.from(existing)
             } else {
                 // Create the Unknown Contact placeholder
                 val contactId = ContactsTable.insertAndGetId {
@@ -505,7 +505,7 @@ class ContactRepository {
                 ContactsTable.selectAll().where {
                     ContactsTable.id eq contactId.value
                 }.single().let { row ->
-                    row.toContactDto()
+                    ContactEntity.from(row)
                 }
             }
         }

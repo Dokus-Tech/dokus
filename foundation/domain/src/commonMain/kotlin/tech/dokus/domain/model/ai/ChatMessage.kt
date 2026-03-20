@@ -190,7 +190,9 @@ data class ChatMessageDto(
 
     /** When the message was created */
     val createdAt: LocalDateTime
-)
+) {
+    companion object
+}
 
 /**
  * Summary view for chat message lists.

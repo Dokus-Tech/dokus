@@ -22,7 +22,8 @@ import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.update
-import tech.dokus.database.mapper.toCashflowEntry
+import tech.dokus.database.mapper.from
+import tech.dokus.domain.model.CashflowEntryEntity
 import tech.dokus.database.tables.cashflow.CashflowEntriesTable
 import tech.dokus.database.tables.contacts.ContactsTable
 import tech.dokus.domain.Money
@@ -36,7 +37,6 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.CashflowContactRef
-import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.toDbDecimal
 import tech.dokus.foundation.backend.database.dbQuery
 import tech.dokus.foundation.backend.utils.runSuspendCatching
@@ -72,7 +72,7 @@ class CashflowEntriesRepository {
         amountGross: Money,
         amountVat: Money,
         contactId: ContactId?
-    ): Result<CashflowEntry> = runSuspendCatching {
+    ): Result<CashflowEntryEntity> = runSuspendCatching {
         dbQuery {
             val entryId = CashflowEntriesTable.insertAndGetId {
                 it[CashflowEntriesTable.tenantId] = UUID.fromString(tenantId.toString())
@@ -91,7 +91,7 @@ class CashflowEntriesRepository {
             CashflowEntriesTable.selectAll().where {
                     (CashflowEntriesTable.id eq entryId.value) and
                         (CashflowEntriesTable.tenantId eq UUID.fromString(tenantId.toString()))
-                }.single().toCashflowEntry()
+                }.single().let { CashflowEntryEntity.from(it) }
         }
     }
 
@@ -102,12 +102,12 @@ class CashflowEntriesRepository {
     suspend fun getEntry(
         entryId: CashflowEntryId,
         tenantId: TenantId
-    ): Result<CashflowEntry?> = runSuspendCatching {
+    ): Result<CashflowEntryEntity?> = runSuspendCatching {
         dbQuery {
             CashflowEntriesTable.selectAll().where {
                 (CashflowEntriesTable.id eq UUID.fromString(entryId.toString())) and
                     (CashflowEntriesTable.tenantId eq UUID.fromString(tenantId.toString()))
-            }.singleOrNull()?.let { it.toCashflowEntry() }
+            }.singleOrNull()?.let { it.let { CashflowEntryEntity.from(it) } }
         }
     }
 
@@ -119,20 +119,20 @@ class CashflowEntriesRepository {
         tenantId: TenantId,
         sourceType: CashflowSourceType,
         sourceId: UUID
-    ): Result<CashflowEntry?> = runSuspendCatching {
+    ): Result<CashflowEntryEntity?> = runSuspendCatching {
         dbQuery {
             CashflowEntriesTable.selectAll().where {
                 (CashflowEntriesTable.tenantId eq UUID.fromString(tenantId.toString())) and
                     (CashflowEntriesTable.sourceType eq sourceType) and
                     (CashflowEntriesTable.sourceId eq sourceId)
-            }.singleOrNull()?.let { it.toCashflowEntry() }
+            }.singleOrNull()?.let { it.let { CashflowEntryEntity.from(it) } }
         }
     }
 
     @OptIn(ExperimentalUuidApi::class)
     suspend fun listOpenInvoiceEntries(
         tenantId: TenantId
-    ): Result<List<CashflowEntry>> = runSuspendCatching {
+    ): Result<List<CashflowEntryEntity>> = runSuspendCatching {
         dbQuery {
             CashflowEntriesTable
                 .join(
@@ -148,7 +148,7 @@ class CashflowEntriesRepository {
                         (CashflowEntriesTable.status inList listOf(CashflowEntryStatus.Open, CashflowEntryStatus.Overdue)) and
                         (CashflowEntriesTable.remainingAmount neq BigDecimal.ZERO)
                 }
-                .map { row -> row.toCashflowEntry(row.getOrNull(ContactsTable.name)) }
+                .map { row -> CashflowEntryEntity.from(row, row.getOrNull(ContactsTable.name)) }
         }
     }
 
@@ -156,7 +156,7 @@ class CashflowEntriesRepository {
     suspend fun listOpenInvoiceEntriesByContact(
         tenantId: TenantId,
         contactId: ContactId
-    ): Result<List<CashflowEntry>> = runSuspendCatching {
+    ): Result<List<CashflowEntryEntity>> = runSuspendCatching {
         dbQuery {
             CashflowEntriesTable
                 .join(
@@ -173,7 +173,7 @@ class CashflowEntriesRepository {
                         (CashflowEntriesTable.status inList listOf(CashflowEntryStatus.Open, CashflowEntryStatus.Overdue)) and
                         (CashflowEntriesTable.remainingAmount neq BigDecimal.ZERO)
                 }
-                .map { row -> row.toCashflowEntry(row.getOrNull(ContactsTable.name)) }
+                .map { row -> CashflowEntryEntity.from(row, row.getOrNull(ContactsTable.name)) }
         }
     }
 
@@ -229,12 +229,12 @@ class CashflowEntriesRepository {
     suspend fun getByDocumentId(
         tenantId: TenantId,
         documentId: DocumentId
-    ): Result<CashflowEntry?> = runSuspendCatching {
+    ): Result<CashflowEntryEntity?> = runSuspendCatching {
         dbQuery {
             CashflowEntriesTable.selectAll().where {
                 (CashflowEntriesTable.tenantId eq UUID.fromString(tenantId.toString())) and
                     (CashflowEntriesTable.documentId eq UUID.fromString(documentId.toString()))
-            }.singleOrNull()?.let { it.toCashflowEntry() }
+            }.singleOrNull()?.let { it.let { CashflowEntryEntity.from(it) } }
         }
     }
 
@@ -286,7 +286,7 @@ class CashflowEntriesRepository {
         toDate: LocalDate? = null,
         direction: CashflowDirection? = null,
         statuses: List<CashflowEntryStatus>? = null
-    ): Result<List<CashflowEntry>> = runSuspendCatching {
+    ): Result<List<CashflowEntryEntity>> = runSuspendCatching {
         dbQuery {
             val effectiveStatuses = if (!statuses.isNullOrEmpty()) {
                 statuses
@@ -372,7 +372,7 @@ class CashflowEntriesRepository {
 
             query.orderBy(sortOrder)
                 .map { row ->
-                    row.toCashflowEntry(
+                    CashflowEntryEntity.from(row, 
                         contactName = row.getOrNull(ContactsTable.name)
                     )
                 }

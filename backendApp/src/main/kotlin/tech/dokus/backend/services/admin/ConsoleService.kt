@@ -6,8 +6,8 @@ import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentListPage
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.DocumentWithDraftAndIngestion
-import tech.dokus.database.repository.cashflow.DraftSummary
-import tech.dokus.database.repository.cashflow.IngestionRunSummary
+import tech.dokus.database.repository.cashflow.DraftSummaryEntity
+import tech.dokus.database.repository.cashflow.IngestionRunSummaryEntity
 import tech.dokus.domain.enums.DocumentListFilter
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
@@ -76,10 +76,10 @@ class ConsoleService(
     suspend fun getDocument(tenantId: TenantId, documentId: DocumentId): DocumentDto? =
         documentRepository.getById(tenantId, documentId)
 
-    suspend fun getDraft(documentId: DocumentId, tenantId: TenantId): DraftSummary? =
+    suspend fun getDraft(documentId: DocumentId, tenantId: TenantId): DraftSummaryEntity? =
         documentRepository.getDraftByDocumentId(documentId, tenantId)
 
-    suspend fun getLatestIngestion(documentId: DocumentId, tenantId: TenantId): IngestionRunSummary? =
+    suspend fun getLatestIngestion(documentId: DocumentId, tenantId: TenantId): IngestionRunSummaryEntity? =
         ingestionRepository.getLatestForDocument(documentId, tenantId)
 
     suspend fun findFirmById(firmId: FirmId): Firm? = firmRepository.findById(firmId)

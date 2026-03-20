@@ -31,6 +31,7 @@ import tech.dokus.peppol.provider.client.RecommandCompaniesClient
 import tech.dokus.peppol.provider.client.recommand.model.RecommandCompany
 import tech.dokus.peppol.service.PeppolConnectionService
 import tech.dokus.peppol.service.PeppolWebhookSyncService
+import tech.dokus.database.entity.PeppolSettingsEntity
 import tech.dokus.database.repository.peppol.PeppolSettingsRepository
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -84,12 +85,12 @@ class PeppolConnectionServiceWebhookSyncTest {
                 testMode = false
             )
         } returns Result.success(savedSettings)
-        coEvery { webhookSyncService.ensureSingleWebhookForSettings(savedSettings) } returns Result.success(mockk())
+        coEvery { webhookSyncService.ensureSingleWebhookForSettings(any()) } returns Result.success(mockk())
 
         val result = service.connect(tenant, address).getOrThrow()
 
         assertEquals(PeppolConnectStatus.Connected, result.status)
-        coVerify(exactly = 1) { webhookSyncService.ensureSingleWebhookForSettings(savedSettings) }
+        coVerify(exactly = 1) { webhookSyncService.ensureSingleWebhookForSettings(any()) }
     }
 
     @Test
@@ -116,7 +117,7 @@ class PeppolConnectionServiceWebhookSyncTest {
             settingsRepository.saveSettings(any(), any(), any(), any(), any())
         } returns Result.success(savedSettings)
         coEvery {
-            webhookSyncService.ensureSingleWebhookForSettings(savedSettings)
+            webhookSyncService.ensureSingleWebhookForSettings(any())
         } returns Result.failure(IllegalStateException("webhook sync failed"))
 
         val result = service.connect(tenant, address)
@@ -153,9 +154,9 @@ class PeppolConnectionServiceWebhookSyncTest {
         )
     }
 
-    private fun testSettings(tenantId: TenantId, companyId: String): PeppolSettingsDto {
+    private fun testSettings(tenantId: TenantId, companyId: String): PeppolSettingsEntity {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-        return PeppolSettingsDto(
+        return PeppolSettingsEntity(
             id = PeppolSettingsId.generate(),
             tenantId = tenantId,
             companyId = companyId,

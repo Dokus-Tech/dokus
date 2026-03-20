@@ -1,5 +1,6 @@
 package tech.dokus.backend.services.documents.resolution
 
+import tech.dokus.database.mapper.from
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.domain.Name
 import tech.dokus.domain.enums.ContactSource
@@ -70,7 +71,7 @@ class ContactMatchingUtils(
             contactId = matchedContact.id,
             tenantId = tenantId,
             request = UpdateContactRequest(name = candidateName)
-        )
+        ).map { ContactDto.from(it) }
         return result.getOrElse { e ->
             logger.warn("Failed to heal payment alias for contact {}: {}", matchedContact.id, e.message)
             matchedContact

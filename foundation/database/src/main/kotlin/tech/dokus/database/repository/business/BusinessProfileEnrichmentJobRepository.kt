@@ -14,7 +14,7 @@ import org.jetbrains.exposed.v1.core.lessEq
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
 import org.jetbrains.exposed.v1.jdbc.upsert
-import tech.dokus.database.mapper.toBusinessProfileEnrichmentJob
+import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.business.BusinessProfileEnrichmentJobsTable
 import tech.dokus.domain.enums.BusinessProfileEnrichmentJobStatus
 import tech.dokus.domain.enums.BusinessProfileSubjectType
@@ -27,7 +27,7 @@ import kotlin.uuid.Uuid
 import kotlin.uuid.toJavaUuid
 import kotlin.uuid.toKotlinUuid
 
-data class BusinessProfileEnrichmentJob(
+data class BusinessProfileEnrichmentJobEntity(
     val id: Uuid,
     val tenantId: TenantId,
     val subjectType: BusinessProfileSubjectType,
@@ -41,7 +41,9 @@ data class BusinessProfileEnrichmentJob(
     val processingStartedAt: LocalDateTime?,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime,
-)
+) {
+    companion object
+}
 
 class BusinessProfileEnrichmentJobRepository {
     private val claimableStatuses = listOf(
@@ -89,7 +91,7 @@ class BusinessProfileEnrichmentJobRepository {
         }
     }
 
-    suspend fun claimDue(now: LocalDateTime, limit: Int): Result<List<BusinessProfileEnrichmentJob>> = runSuspendCatching {
+    suspend fun claimDue(now: LocalDateTime, limit: Int): Result<List<BusinessProfileEnrichmentJobEntity>> = runSuspendCatching {
         dbQuery {
             val candidates = BusinessProfileEnrichmentJobsTable
                 .selectAll()
@@ -99,9 +101,9 @@ class BusinessProfileEnrichmentJobRepository {
                 }
                 .orderBy(BusinessProfileEnrichmentJobsTable.nextAttemptAt to SortOrder.ASC)
                 .limit(limit)
-                .map { it.toBusinessProfileEnrichmentJob() }
+                .map { BusinessProfileEnrichmentJobEntity.from(it) }
 
-            val claimed = mutableListOf<BusinessProfileEnrichmentJob>()
+            val claimed = mutableListOf<BusinessProfileEnrichmentJobEntity>()
             for (candidate in candidates) {
                 val updated = BusinessProfileEnrichmentJobsTable.update({
                     (BusinessProfileEnrichmentJobsTable.id eq candidate.id.toJavaUuid()) and

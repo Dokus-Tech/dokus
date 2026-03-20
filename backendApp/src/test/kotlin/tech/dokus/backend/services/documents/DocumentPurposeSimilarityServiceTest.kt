@@ -8,7 +8,7 @@ import kotlinx.datetime.LocalDateTime
 import org.junit.jupiter.api.Test
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.DocumentPurposeSimilarityRepository
-import tech.dokus.database.repository.cashflow.DraftSummary
+import tech.dokus.database.repository.cashflow.DraftSummaryEntity
 import tech.dokus.domain.enums.DocumentPurposeSource
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
@@ -103,9 +103,9 @@ class DocumentPurposeSimilarityServiceTest {
         }
     }
 
-    private fun confirmedDraft(): DraftSummary {
+    private fun confirmedDraft(): DraftSummaryEntity {
         val now = LocalDateTime(2026, 2, 1, 0, 0, 0)
-        return DraftSummary(
+        return DraftSummaryEntity(
             documentId = documentId,
             tenantId = tenantId,
             documentStatus = DocumentStatus.Confirmed,

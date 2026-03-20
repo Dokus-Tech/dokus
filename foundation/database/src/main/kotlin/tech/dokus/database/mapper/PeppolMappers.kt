@@ -2,7 +2,9 @@ package tech.dokus.database.mapper
 
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.v1.core.ResultRow
-import tech.dokus.database.repository.peppol.PeppolTransmissionInternal
+import tech.dokus.database.entity.PeppolRegistrationEntity
+import tech.dokus.database.entity.PeppolSettingsEntity
+import tech.dokus.database.repository.peppol.PeppolTransmissionEntity
 import tech.dokus.database.tables.peppol.PeppolDirectoryCacheTable
 import tech.dokus.database.tables.peppol.PeppolRegistrationTable
 import tech.dokus.database.tables.peppol.PeppolSettingsTable
@@ -14,9 +16,7 @@ import tech.dokus.domain.ids.PeppolRegistrationId
 import tech.dokus.domain.ids.PeppolSettingsId
 import tech.dokus.domain.ids.PeppolTransmissionId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.PeppolRegistrationDto
-import tech.dokus.domain.model.PeppolResolution
-import tech.dokus.domain.model.PeppolSettingsDto
+import tech.dokus.domain.model.PeppolResolutionEntity
 import tech.dokus.domain.model.PeppolTransmissionDto
 
 internal fun ResultRow.toPeppolTransmissionDto(): PeppolTransmissionDto = PeppolTransmissionDto(
@@ -40,79 +40,79 @@ internal fun ResultRow.toPeppolTransmissionDto(): PeppolTransmissionDto = Peppol
     updatedAt = this[PeppolTransmissionsTable.updatedAt]
 )
 
-internal fun ResultRow.toPeppolTransmissionInternal(): PeppolTransmissionInternal = PeppolTransmissionInternal(
-    id = PeppolTransmissionId.parse(this[PeppolTransmissionsTable.id].value.toString()),
-    tenantId = TenantId.parse(this[PeppolTransmissionsTable.tenantId].toString()),
-    direction = this[PeppolTransmissionsTable.direction],
-    documentType = this[PeppolTransmissionsTable.documentType],
-    status = this[PeppolTransmissionsTable.status],
-    invoiceId = this[PeppolTransmissionsTable.invoiceId]?.let { InvoiceId.parse(it.toString()) },
-    externalDocumentId = this[PeppolTransmissionsTable.externalDocumentId],
-    idempotencyKey = this[PeppolTransmissionsTable.idempotencyKey],
-    recipientPeppolId = this[PeppolTransmissionsTable.recipientPeppolId]?.let { PeppolId(it) },
-    senderPeppolId = this[PeppolTransmissionsTable.senderPeppolId]?.let { PeppolId(it) },
-    errorMessage = this[PeppolTransmissionsTable.errorMessage],
-    providerErrorCode = this[PeppolTransmissionsTable.providerErrorCode],
-    providerErrorMessage = this[PeppolTransmissionsTable.providerErrorMessage],
-    attemptCount = this[PeppolTransmissionsTable.attemptCount],
-    nextRetryAt = this[PeppolTransmissionsTable.nextRetryAt],
-    lastAttemptAt = this[PeppolTransmissionsTable.lastAttemptAt],
-    rawRequest = this[PeppolTransmissionsTable.rawRequest],
-    rawResponse = this[PeppolTransmissionsTable.rawResponse],
-    rawUblXmlKey = this[PeppolTransmissionsTable.rawUblXmlKey],
-    transmittedAt = this[PeppolTransmissionsTable.transmittedAt],
-    createdAt = this[PeppolTransmissionsTable.createdAt],
-    updatedAt = this[PeppolTransmissionsTable.updatedAt]
+internal fun PeppolTransmissionEntity.Companion.from(row: ResultRow): PeppolTransmissionEntity = PeppolTransmissionEntity(
+    id = PeppolTransmissionId.parse(row[PeppolTransmissionsTable.id].value.toString()),
+    tenantId = TenantId.parse(row[PeppolTransmissionsTable.tenantId].toString()),
+    direction = row[PeppolTransmissionsTable.direction],
+    documentType = row[PeppolTransmissionsTable.documentType],
+    status = row[PeppolTransmissionsTable.status],
+    invoiceId = row[PeppolTransmissionsTable.invoiceId]?.let { InvoiceId.parse(it.toString()) },
+    externalDocumentId = row[PeppolTransmissionsTable.externalDocumentId],
+    idempotencyKey = row[PeppolTransmissionsTable.idempotencyKey],
+    recipientPeppolId = row[PeppolTransmissionsTable.recipientPeppolId]?.let { PeppolId(it) },
+    senderPeppolId = row[PeppolTransmissionsTable.senderPeppolId]?.let { PeppolId(it) },
+    errorMessage = row[PeppolTransmissionsTable.errorMessage],
+    providerErrorCode = row[PeppolTransmissionsTable.providerErrorCode],
+    providerErrorMessage = row[PeppolTransmissionsTable.providerErrorMessage],
+    attemptCount = row[PeppolTransmissionsTable.attemptCount],
+    nextRetryAt = row[PeppolTransmissionsTable.nextRetryAt],
+    lastAttemptAt = row[PeppolTransmissionsTable.lastAttemptAt],
+    rawRequest = row[PeppolTransmissionsTable.rawRequest],
+    rawResponse = row[PeppolTransmissionsTable.rawResponse],
+    rawUblXmlKey = row[PeppolTransmissionsTable.rawUblXmlKey],
+    transmittedAt = row[PeppolTransmissionsTable.transmittedAt],
+    createdAt = row[PeppolTransmissionsTable.createdAt],
+    updatedAt = row[PeppolTransmissionsTable.updatedAt]
 )
 
-internal fun ResultRow.toPeppolRegistrationDto(): PeppolRegistrationDto = PeppolRegistrationDto(
-    id = PeppolRegistrationId.parse(this[PeppolRegistrationTable.id].value.toString()),
-    tenantId = TenantId.parse(this[PeppolRegistrationTable.tenantId].toString()),
-    peppolId = this[PeppolRegistrationTable.peppolId],
-    recommandCompanyId = this[PeppolRegistrationTable.recommandCompanyId],
-    status = this[PeppolRegistrationTable.status],
-    canReceive = this[PeppolRegistrationTable.canReceive],
-    canSend = this[PeppolRegistrationTable.canSend],
-    testMode = this[PeppolRegistrationTable.testMode],
-    waitingSince = this[PeppolRegistrationTable.waitingSince],
-    lastPolledAt = this[PeppolRegistrationTable.lastPolledAt],
-    errorMessage = this[PeppolRegistrationTable.errorMessage],
-    createdAt = this[PeppolRegistrationTable.createdAt],
-    updatedAt = this[PeppolRegistrationTable.updatedAt]
+fun PeppolRegistrationEntity.Companion.from(row: ResultRow): PeppolRegistrationEntity = PeppolRegistrationEntity(
+    id = PeppolRegistrationId.parse(row[PeppolRegistrationTable.id].value.toString()),
+    tenantId = TenantId.parse(row[PeppolRegistrationTable.tenantId].toString()),
+    peppolId = row[PeppolRegistrationTable.peppolId],
+    recommandCompanyId = row[PeppolRegistrationTable.recommandCompanyId],
+    status = row[PeppolRegistrationTable.status],
+    canReceive = row[PeppolRegistrationTable.canReceive],
+    canSend = row[PeppolRegistrationTable.canSend],
+    testMode = row[PeppolRegistrationTable.testMode],
+    waitingSince = row[PeppolRegistrationTable.waitingSince],
+    lastPolledAt = row[PeppolRegistrationTable.lastPolledAt],
+    errorMessage = row[PeppolRegistrationTable.errorMessage],
+    createdAt = row[PeppolRegistrationTable.createdAt],
+    updatedAt = row[PeppolRegistrationTable.updatedAt],
 )
 
-internal fun ResultRow.toPeppolSettingsDto(): PeppolSettingsDto = PeppolSettingsDto(
-    id = PeppolSettingsId.parse(this[PeppolSettingsTable.id].value.toString()),
-    tenantId = TenantId.parse(this[PeppolSettingsTable.tenantId].toString()),
-    companyId = this[PeppolSettingsTable.companyId],
-    peppolId = PeppolId(this[PeppolSettingsTable.peppolId]),
-    isEnabled = this[PeppolSettingsTable.isEnabled],
-    testMode = this[PeppolSettingsTable.testMode],
-    webhookToken = this[PeppolSettingsTable.webhookToken],
-    lastFullSyncAt = this[PeppolSettingsTable.lastFullSyncAt],
-    createdAt = this[PeppolSettingsTable.createdAt],
-    updatedAt = this[PeppolSettingsTable.updatedAt]
+fun PeppolSettingsEntity.Companion.from(row: ResultRow): PeppolSettingsEntity = PeppolSettingsEntity(
+    id = PeppolSettingsId.parse(row[PeppolSettingsTable.id].value.toString()),
+    tenantId = TenantId.parse(row[PeppolSettingsTable.tenantId].toString()),
+    companyId = row[PeppolSettingsTable.companyId],
+    peppolId = PeppolId(row[PeppolSettingsTable.peppolId]),
+    isEnabled = row[PeppolSettingsTable.isEnabled],
+    testMode = row[PeppolSettingsTable.testMode],
+    webhookToken = row[PeppolSettingsTable.webhookToken],
+    lastFullSyncAt = row[PeppolSettingsTable.lastFullSyncAt],
+    createdAt = row[PeppolSettingsTable.createdAt],
+    updatedAt = row[PeppolSettingsTable.updatedAt],
 )
 
-internal fun ResultRow.toPeppolResolution(): PeppolResolution {
-    val docTypesJson = this[PeppolDirectoryCacheTable.supportedDocTypes]
+internal fun PeppolResolutionEntity.Companion.from(row: ResultRow): PeppolResolutionEntity {
+    val docTypesJson = row[PeppolDirectoryCacheTable.supportedDocTypes]
     val supportedDocTypes = if (docTypesJson.isNullOrBlank()) {
         emptyList()
     } else {
         runCatching { Json.decodeFromString<List<String>>(docTypesJson) }.getOrElse { emptyList() }
     }
 
-    return PeppolResolution(
-        contactId = ContactId.parse(this[PeppolDirectoryCacheTable.contactId].toString()),
-        status = this[PeppolDirectoryCacheTable.status],
-        participantId = this[PeppolDirectoryCacheTable.participantId],
-        scheme = this[PeppolDirectoryCacheTable.scheme],
+    return PeppolResolutionEntity(
+        contactId = ContactId.parse(row[PeppolDirectoryCacheTable.contactId].toString()),
+        status = row[PeppolDirectoryCacheTable.status],
+        participantId = row[PeppolDirectoryCacheTable.participantId],
+        scheme = row[PeppolDirectoryCacheTable.scheme],
         supportedDocTypes = supportedDocTypes,
-        source = this[PeppolDirectoryCacheTable.lookupSource],
-        vatNumberSnapshot = this[PeppolDirectoryCacheTable.vatNumberSnapshot],
-        companyNumberSnapshot = this[PeppolDirectoryCacheTable.companyNumberSnapshot],
-        lastCheckedAt = this[PeppolDirectoryCacheTable.lastCheckedAt],
-        expiresAt = this[PeppolDirectoryCacheTable.expiresAt],
-        errorMessage = this[PeppolDirectoryCacheTable.errorMessage]
+        source = row[PeppolDirectoryCacheTable.lookupSource],
+        vatNumberSnapshot = row[PeppolDirectoryCacheTable.vatNumberSnapshot],
+        companyNumberSnapshot = row[PeppolDirectoryCacheTable.companyNumberSnapshot],
+        lastCheckedAt = row[PeppolDirectoryCacheTable.lastCheckedAt],
+        expiresAt = row[PeppolDirectoryCacheTable.expiresAt],
+        errorMessage = row[PeppolDirectoryCacheTable.errorMessage]
     )
 }

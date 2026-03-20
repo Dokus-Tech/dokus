@@ -2,7 +2,7 @@ package tech.dokus.backend.services.cashflow.matching
 
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.CashflowDirection
-import tech.dokus.domain.model.CashflowEntry
+import tech.dokus.domain.model.CashflowEntryEntity
 import kotlin.math.abs
 import kotlin.math.max
 
@@ -31,11 +31,11 @@ object MatchCandidateBlocker {
      * Uses both relative (%) and absolute (floor) tolerance.
      */
     fun filterByAmountRange(
-        entries: List<CashflowEntry>,
+        entries: List<CashflowEntryEntity>,
         absoluteTransactionAmount: Money,
         tolerancePct: Double = MatchingConstants.AMOUNT_TOLERANCE_PCT,
         toleranceFloor: Long = MatchingConstants.AMOUNT_TOLERANCE_MINOR,
-    ): List<CashflowEntry> {
+    ): List<CashflowEntryEntity> {
         val txMinor = abs(absoluteTransactionAmount.minor)
         val relativeTolerance = (txMinor * tolerancePct).toLong()
         val tolerance = max(relativeTolerance, toleranceFloor)

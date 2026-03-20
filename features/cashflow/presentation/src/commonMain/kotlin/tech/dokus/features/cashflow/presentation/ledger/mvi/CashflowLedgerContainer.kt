@@ -122,7 +122,7 @@ internal class CashflowLedgerContainer(
         updateState { copy(highlightedEntryId = entryId) }
     }
 
-    private suspend fun CashflowLedgerCtx.handleOpenEntry(entry: tech.dokus.domain.model.CashflowEntry) {
+    private suspend fun CashflowLedgerCtx.handleOpenEntry(entry: tech.dokus.domain.model.CashflowEntryEntity) {
         if (entry.documentId != null) {
             action(CashflowLedgerAction.NavigateToDocumentReview(entry.documentId.toString()))
         } else {
@@ -182,7 +182,7 @@ internal class CashflowLedgerContainer(
         }
     }
 
-    private suspend fun CashflowLedgerCtx.handleViewDocumentFor(entry: tech.dokus.domain.model.CashflowEntry) {
+    private suspend fun CashflowLedgerCtx.handleViewDocumentFor(entry: tech.dokus.domain.model.CashflowEntryEntity) {
         updateState { copy(actionsEntryId = null) }
 
         if (entry.documentId != null) {

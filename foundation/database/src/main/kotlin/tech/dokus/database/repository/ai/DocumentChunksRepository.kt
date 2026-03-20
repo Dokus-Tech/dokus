@@ -11,7 +11,8 @@ import org.jetbrains.exposed.v1.jdbc.batchInsert
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
-import tech.dokus.database.mapper.toDocumentChunkDto
+import tech.dokus.database.entity.DocumentChunkEntity
+import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.ai.DocumentChunksTable
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
@@ -248,7 +249,7 @@ class DocumentChunksRepository : ChunkRepository {
                     (DocumentChunksTable.documentId eq documentUuid)
             }
             .orderBy(DocumentChunksTable.chunkIndex to SortOrder.ASC)
-            .map { it.toDocumentChunkDto() }
+            .map { DocumentChunkDto.from(DocumentChunkEntity.from(it)) }
     }
 
     /**
@@ -268,7 +269,7 @@ class DocumentChunksRepository : ChunkRepository {
                     (DocumentChunksTable.tenantId eq tenantUuid)
             }
             .singleOrNull()
-            ?.toDocumentChunkDto()
+            ?.let { DocumentChunkDto.from(DocumentChunkEntity.from(it)) }
     }
 
     /**

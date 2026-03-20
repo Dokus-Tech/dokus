@@ -16,7 +16,7 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.CreateInvitationRequest
 import tech.dokus.domain.model.TeamMember
-import tech.dokus.domain.model.TenantInvitation
+import tech.dokus.domain.model.TenantInvitationEntity
 import tech.dokus.domain.model.auth.BookkeeperFirmSearchItem
 import tech.dokus.domain.model.auth.TenantBookkeeperAccessItem
 import tech.dokus.foundation.backend.utils.loggerFor
@@ -82,7 +82,7 @@ class TeamService(
         tenantId: TenantId,
         invitedBy: UserId,
         request: CreateInvitationRequest
-    ): Result<TenantInvitation> = runCatching {
+    ): Result<TenantInvitationEntity> = runCatching {
         logger.debug("Creating invitation for {} to tenant {}", request.email, tenantId)
 
         // Validate role - cannot invite as Owner
@@ -111,7 +111,7 @@ class TeamService(
             logger.info("Added existing user ${existingUser.id} to tenant $tenantId with role ${request.role}")
 
             // Return a pseudo-invitation marked as accepted
-            return@runCatching TenantInvitation(
+            return@runCatching TenantInvitationEntity(
                 id = InvitationId.generate(),
                 tenantId = tenantId,
                 email = request.email,
@@ -143,7 +143,7 @@ class TeamService(
     /**
      * List pending invitations for a tenant.
      */
-    suspend fun listPendingInvitations(tenantId: TenantId): List<TenantInvitation> {
+    suspend fun listPendingInvitations(tenantId: TenantId): List<TenantInvitationEntity> {
         return invitationRepository.listByTenant(tenantId, InvitationStatus.Pending)
     }
 

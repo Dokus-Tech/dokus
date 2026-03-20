@@ -1,5 +1,6 @@
 package tech.dokus.backend.services.contacts
 
+import tech.dokus.database.mapper.from
 import tech.dokus.database.repository.contacts.ContactNoteRepository
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.ContactNoteId
@@ -31,6 +32,7 @@ class ContactNoteService(
     ): Result<ContactNoteDto> {
         logger.info("Creating note for contact: $contactId by author: $authorName")
         return contactNoteRepository.createNote(tenantId, contactId, content, authorId, authorName)
+            .map { ContactNoteDto.from(it) }
             .onSuccess { logger.info("Note created: ${it.id} for contact: $contactId") }
             .onFailure { logger.error("Failed to create note for contact: $contactId", it) }
     }
@@ -44,6 +46,7 @@ class ContactNoteService(
     ): Result<ContactNoteDto?> {
         logger.debug("Fetching note: {}", noteId)
         return contactNoteRepository.getNote(noteId, tenantId)
+            .map { it?.let { entity -> ContactNoteDto.from(entity) } }
             .onFailure { logger.error("Failed to fetch note: $noteId", it) }
     }
 
@@ -63,6 +66,14 @@ class ContactNoteService(
             offset
         )
         return contactNoteRepository.listNotes(contactId, tenantId, limit, offset)
+            .map { page ->
+                PaginatedResponse(
+                    items = page.items.map { ContactNoteDto.from(it) },
+                    total = page.total,
+                    limit = page.limit,
+                    offset = page.offset
+                )
+            }
             .onSuccess { logger.debug("Retrieved ${it.items.size} notes (total=${it.total})") }
             .onFailure { logger.error("Failed to list notes for contact: $contactId", it) }
     }
@@ -87,6 +98,7 @@ class ContactNoteService(
     ): Result<ContactNoteDto> {
         logger.info("Updating note: $noteId")
         return contactNoteRepository.updateNote(noteId, tenantId, content)
+            .map { ContactNoteDto.from(it) }
             .onSuccess { logger.info("Note updated: $noteId") }
             .onFailure { logger.error("Failed to update note: $noteId", it) }
     }

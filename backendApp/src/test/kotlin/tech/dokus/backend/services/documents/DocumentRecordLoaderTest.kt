@@ -15,7 +15,7 @@ import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.database.repository.cashflow.CreditNoteRepository
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
-import tech.dokus.database.repository.cashflow.DraftSummary
+import tech.dokus.database.repository.cashflow.DraftSummaryEntity
 import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
 import tech.dokus.database.repository.contacts.ContactRepository
@@ -81,7 +81,7 @@ class DocumentRecordLoaderTest {
             uploadedAt = now,
             sortDate = LocalDate(2026, 3, 20),
         )
-        val draft = DraftSummary(
+        val draft = DraftSummaryEntity(
             documentId = documentId,
             tenantId = tenantId,
             documentStatus = DocumentStatus.Confirmed,

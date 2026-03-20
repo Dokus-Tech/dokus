@@ -13,10 +13,10 @@ import tech.dokus.database.repository.cashflow.DocumentCreatePayload
 import tech.dokus.database.repository.cashflow.DocumentBlobRepository
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentMatchReviewRepository
-import tech.dokus.database.repository.cashflow.DocumentMatchReviewSummary
+import tech.dokus.database.repository.cashflow.DocumentMatchReviewEntity
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.DocumentSourceRepository
-import tech.dokus.database.repository.cashflow.DocumentSourceSummary
+import tech.dokus.database.repository.cashflow.DocumentSourceEntity
 import tech.dokus.database.repository.drafts.DraftRepository
 import tech.dokus.domain.model.toDraftData
 import tech.dokus.database.tables.documents.DocumentBlobsTable
@@ -657,21 +657,21 @@ class DocumentTruthService(
         }
     }
 
-    suspend fun listSources(tenantId: TenantId, documentId: DocumentId): List<DocumentSourceSummary> {
+    suspend fun listSources(tenantId: TenantId, documentId: DocumentId): List<DocumentSourceEntity> {
         return sourceRepository.listByDocument(tenantId, documentId)
     }
 
     suspend fun getPendingReviewByDocument(
         tenantId: TenantId,
         documentId: DocumentId
-    ): DocumentMatchReviewSummary? {
+    ): DocumentMatchReviewEntity? {
         return matchReviewRepository.listPendingByDocumentIds(tenantId, listOf(documentId))[documentId]
     }
 
     suspend fun getPendingReviewsByDocuments(
         tenantId: TenantId,
         documentIds: List<DocumentId>
-    ): Map<DocumentId, DocumentMatchReviewSummary> {
+    ): Map<DocumentId, DocumentMatchReviewEntity> {
         return matchReviewRepository.listPendingByDocumentIds(tenantId, documentIds)
     }
 
@@ -722,7 +722,7 @@ class DocumentTruthService(
         tenantId: TenantId,
         documentId: DocumentId,
         sourceId: DocumentSourceId?
-    ): DocumentSourceSummary? {
+    ): DocumentSourceEntity? {
         if (sourceId != null) {
             return sourceRepository.getById(tenantId, sourceId)
         }

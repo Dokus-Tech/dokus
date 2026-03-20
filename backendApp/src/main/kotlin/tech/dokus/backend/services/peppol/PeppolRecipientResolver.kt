@@ -6,7 +6,7 @@ import tech.dokus.domain.enums.PeppolLookupSource
 import tech.dokus.domain.enums.PeppolLookupStatus
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.PeppolResolution
+import tech.dokus.domain.model.PeppolResolutionEntity
 import tech.dokus.domain.model.PeppolStatusResponse
 import tech.dokus.foundation.backend.utils.loggerFor
 import tech.dokus.peppol.provider.client.RecommandProvider
@@ -48,7 +48,7 @@ class PeppolRecipientResolver(
         tenantId: TenantId,
         contactId: ContactId,
         forceRefresh: Boolean = false
-    ): Result<Pair<PeppolResolution?, Boolean>> = runCatching {
+    ): Result<Pair<PeppolResolutionEntity?, Boolean>> = runCatching {
         logger.debug("Resolving PEPPOL recipient for contact $contactId (forceRefresh=$forceRefresh)")
 
         // Get contact to check current identifiers
@@ -78,7 +78,7 @@ class PeppolRecipientResolver(
 
     private fun needsRefresh(
         forceRefresh: Boolean,
-        cached: PeppolResolution?,
+        cached: PeppolResolutionEntity?,
         currentVat: String?,
         currentCompanyNumber: String?
     ): Boolean = when {
@@ -93,7 +93,7 @@ class PeppolRecipientResolver(
         contactId: ContactId,
         currentVat: String?,
         currentCompanyNumber: String?
-    ): PeppolResolution {
+    ): PeppolResolutionEntity {
         // Get query identifier (prefer VAT, fallback to company number)
         val query = currentVat ?: currentCompanyNumber
         if (query.isNullOrBlank()) {
@@ -118,7 +118,7 @@ class PeppolRecipientResolver(
         contactId: ContactId,
         currentVat: String?,
         currentCompanyNumber: String?
-    ): PeppolResolution {
+    ): PeppolResolutionEntity {
         logger.debug("Contact $contactId has no VAT or company number for PEPPOL lookup")
         return cacheRepository.upsert(
             tenantId = tenantId,
@@ -139,7 +139,7 @@ class PeppolRecipientResolver(
         contactId: ContactId,
         currentVat: String?,
         currentCompanyNumber: String?
-    ): PeppolResolution {
+    ): PeppolResolutionEntity {
         logger.warn("No PEPPOL settings configured for tenant $tenantId")
         return cacheRepository.upsert(
             tenantId = tenantId,
@@ -161,7 +161,7 @@ class PeppolRecipientResolver(
         query: String,
         currentVat: String?,
         currentCompanyNumber: String?
-    ): PeppolResolution {
+    ): PeppolResolutionEntity {
         val searchResult = recommandProvider.searchDirectory(query)
 
         return if (searchResult.isSuccess) {
@@ -177,7 +177,7 @@ class PeppolRecipientResolver(
         results: List<tech.dokus.peppol.provider.client.PeppolDirectorySearchResult>,
         currentVat: String?,
         currentCompanyNumber: String?
-    ): PeppolResolution {
+    ): PeppolResolutionEntity {
         return if (results.isNotEmpty()) {
             val match = results.first()
             val scheme = match.peppolAddress.substringBefore(":", "")
@@ -219,7 +219,7 @@ class PeppolRecipientResolver(
         error: Throwable?,
         currentVat: String?,
         currentCompanyNumber: String?
-    ): PeppolResolution {
+    ): PeppolResolutionEntity {
         logger.error("PEPPOL directory search failed for contact $contactId", error)
 
         return cacheRepository.upsert(
@@ -239,7 +239,7 @@ class PeppolRecipientResolver(
     /**
      * Build API response from resolution.
      */
-    fun toStatusResponse(resolution: PeppolResolution?, refreshed: Boolean): PeppolStatusResponse {
+    fun toStatusResponse(resolution: PeppolResolutionEntity?, refreshed: Boolean): PeppolStatusResponse {
         return if (resolution == null) {
             PeppolStatusResponse(
                 status = PeppolStatusResponse.STATUS_UNKNOWN,

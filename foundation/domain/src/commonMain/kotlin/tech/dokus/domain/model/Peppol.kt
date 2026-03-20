@@ -61,7 +61,9 @@ data class PeppolSettingsDto(
     val lastFullSyncAt: LocalDateTime? = null,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime
-)
+) {
+    companion object
+}
 
 // ============================================================================
 // PEPPOL CONNECTION
@@ -157,7 +159,9 @@ data class PeppolTransmissionDto(
     val transmittedAt: LocalDateTime? = null,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime
-)
+) {
+    companion object
+}
 
 // ============================================================================
 // VERIFICATION MODELS
@@ -259,7 +263,7 @@ data class ProcessedPeppolDocument(
  * Timestamps are non-null since they're always set on insert/update.
  */
 @Serializable
-data class PeppolResolution(
+data class PeppolResolutionEntity(
     val contactId: ContactId,
     val status: PeppolLookupStatus,
     val participantId: String? = null,
@@ -271,7 +275,9 @@ data class PeppolResolution(
     val lastCheckedAt: LocalDateTime,
     val expiresAt: LocalDateTime? = null,
     val errorMessage: String? = null
-)
+) {
+    companion object
+}
 
 /**
  * API response for PEPPOL status endpoint.

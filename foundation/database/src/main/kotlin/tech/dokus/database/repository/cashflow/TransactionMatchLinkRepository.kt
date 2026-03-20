@@ -11,7 +11,7 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.upsert
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.v1.jdbc.update
-import tech.dokus.database.mapper.toTransactionMatchLinkRecord
+import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.documents.TransactionMatchLinksTable
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.AutoMatchStatus
@@ -38,7 +38,7 @@ data class TransactionMatchSnapshot(
     val cashflowPaidAtBefore: LocalDateTime?,
 )
 
-data class TransactionMatchLinkRecord(
+data class TransactionMatchLinkEntity(
     val id: UUID,
     val tenantId: TenantId,
     val documentId: DocumentId,
@@ -57,7 +57,9 @@ data class TransactionMatchLinkRecord(
     val reversedAt: LocalDateTime?,
     val reversedByUserId: UUID?,
     val reversalReason: String?,
-)
+) {
+    companion object
+}
 
 @OptIn(ExperimentalUuidApi::class)
 class TransactionMatchLinkRepository {
@@ -155,23 +157,23 @@ class TransactionMatchLinkRepository {
     suspend fun findActiveByEntry(
         tenantId: TenantId,
         entryId: CashflowEntryId,
-    ): TransactionMatchLinkRecord? = newSuspendedTransaction {
+    ): TransactionMatchLinkEntity? = newSuspendedTransaction {
         TransactionMatchLinksTable.selectAll().where {
             (TransactionMatchLinksTable.tenantId eq tenantId.value.toJavaUuid()) and
                 (TransactionMatchLinksTable.cashflowEntryId eq entryId.value.toJavaUuid()) and
                 (TransactionMatchLinksTable.reversedAt.isNull())
-        }.orderBy(TransactionMatchLinksTable.createdAt).limit(1).singleOrNull()?.toTransactionMatchLinkRecord()
+        }.orderBy(TransactionMatchLinksTable.createdAt).limit(1).singleOrNull()?.let { TransactionMatchLinkEntity.from(it) }
     }
 
     suspend fun findActiveByTransaction(
         tenantId: TenantId,
         transactionId: BankTransactionId,
-    ): TransactionMatchLinkRecord? = newSuspendedTransaction {
+    ): TransactionMatchLinkEntity? = newSuspendedTransaction {
         TransactionMatchLinksTable.selectAll().where {
             (TransactionMatchLinksTable.tenantId eq tenantId.value.toJavaUuid()) and
                 (TransactionMatchLinksTable.importedBankTransactionId eq transactionId.value.toJavaUuid()) and
                 (TransactionMatchLinksTable.reversedAt.isNull())
-        }.orderBy(TransactionMatchLinksTable.createdAt).limit(1).singleOrNull()?.toTransactionMatchLinkRecord()
+        }.orderBy(TransactionMatchLinksTable.createdAt).limit(1).singleOrNull()?.let { TransactionMatchLinkEntity.from(it) }
     }
 
     suspend fun markReversed(

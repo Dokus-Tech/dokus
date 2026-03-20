@@ -24,7 +24,7 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.contact.AddressDto
 import tech.dokus.domain.model.contact.ContactAddressDto
 import tech.dokus.domain.model.contact.ContactAddressInput
-import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.database.entity.ContactEntity
 import tech.dokus.domain.model.contact.CreateContactRequest
 import kotlin.test.assertEquals
 import kotlin.uuid.ExperimentalUuidApi
@@ -134,8 +134,8 @@ class ContactServiceEnrichmentTriggerTest {
         }
     }
 
-    private fun sampleContact(tenantId: TenantId): ContactDto {
-        return ContactDto(
+    private fun sampleContact(tenantId: TenantId): ContactEntity {
+        return ContactEntity(
             id = ContactId.generate(),
             tenantId = tenantId,
             name = Name("Acme Logistics"),

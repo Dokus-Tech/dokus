@@ -1,5 +1,6 @@
 package tech.dokus.peppol.service
 
+import tech.dokus.database.mapper.from
 import tech.dokus.database.repository.auth.AddressRepository
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.peppol.PeppolRegistrationRepository
@@ -9,6 +10,7 @@ import tech.dokus.domain.ids.PeppolId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.PeppolNextAction
+import tech.dokus.domain.model.PeppolRegistrationDto
 import tech.dokus.domain.model.PeppolRegistrationResponse
 import tech.dokus.foundation.backend.utils.loggerFor
 import tech.dokus.foundation.backend.utils.runSuspendCatching
@@ -122,7 +124,7 @@ class PeppolRegistrationService(
         val peppolId = ctx.peppolId.value
 
         // Check existing registration
-        val existing = registrationRepository.getRegistration(tenantId).getOrNull()
+        val existing = registrationRepository.getRegistration(tenantId).map { it?.let { e -> PeppolRegistrationDto.from(e) } }.getOrNull()
         if (existing != null && existing.status == PeppolRegistrationStatus.Active) {
             logger.info("Tenant $tenantId already has active PEPPOL registration")
             return@runSuspendCatching PeppolRegistrationResponse(
@@ -155,7 +157,7 @@ class PeppolRegistrationService(
                 "PEPPOL ID is already registered with another service"
             ).getOrThrow()
 
-            val updatedReg = registrationRepository.getRegistration(tenantId).getOrThrow()!!
+            val updatedReg = registrationRepository.getRegistration(tenantId).map { it?.let { e -> PeppolRegistrationDto.from(e) } }.getOrThrow()!!
             return@runSuspendCatching PeppolRegistrationResponse(
                 registration = updatedReg,
                 nextAction = PeppolNextAction.WAIT_FOR_TRANSFER
@@ -222,7 +224,7 @@ class PeppolRegistrationService(
                 testMode = moduleConfig.globalTestMode
             ).getOrThrow()
 
-            val finalReg = registrationRepository.getRegistration(tenantId).getOrThrow()!!
+            val finalReg = registrationRepository.getRegistration(tenantId).map { it?.let { e -> PeppolRegistrationDto.from(e) } }.getOrThrow()!!
             logger.info("PEPPOL registration successful for tenant $tenantId")
 
             PeppolRegistrationResponse(
@@ -237,7 +239,7 @@ class PeppolRegistrationService(
                 e.message ?: "Registration failed"
             ).getOrThrow()
 
-            val failedReg = registrationRepository.getRegistration(tenantId).getOrThrow()!!
+            val failedReg = registrationRepository.getRegistration(tenantId).map { it?.let { e -> PeppolRegistrationDto.from(e) } }.getOrThrow()!!
             PeppolRegistrationResponse(
                 registration = failedReg,
                 nextAction = PeppolNextAction.RETRY
@@ -257,7 +259,7 @@ class PeppolRegistrationService(
         logger.info("Enabling PEPPOL sending-only for tenant $tenantId")
 
         // Ensure a registration row exists
-        val existing = registrationRepository.getRegistration(tenantId).getOrNull()
+        val existing = registrationRepository.getRegistration(tenantId).map { it?.let { e -> PeppolRegistrationDto.from(e) } }.getOrNull()
         if (existing == null) {
             registrationRepository.createRegistration(
                 tenantId = tenantId,
@@ -314,7 +316,7 @@ class PeppolRegistrationService(
         registrationRepository.updateStatus(tenantId, PeppolRegistrationStatus.SendingOnly).getOrThrow()
         registrationRepository.updateCapabilities(tenantId, canReceive = false, canSend = true).getOrThrow()
 
-        val registration = registrationRepository.getRegistration(tenantId).getOrThrow()!!
+        val registration = registrationRepository.getRegistration(tenantId).map { it?.let { e -> PeppolRegistrationDto.from(e) } }.getOrThrow()!!
         PeppolRegistrationResponse(
             registration = registration,
             nextAction = PeppolNextAction.NONE
@@ -332,7 +334,7 @@ class PeppolRegistrationService(
         // Also enable sending capability while waiting
         registrationRepository.updateCapabilities(tenantId, canReceive = false, canSend = true).getOrThrow()
 
-        val registration = registrationRepository.getRegistration(tenantId).getOrThrow()!!
+        val registration = registrationRepository.getRegistration(tenantId).map { it?.let { e -> PeppolRegistrationDto.from(e) } }.getOrThrow()!!
         PeppolRegistrationResponse(
             registration = registration,
             nextAction = PeppolNextAction.NONE
@@ -357,7 +359,7 @@ class PeppolRegistrationService(
     ): Result<PeppolRegistrationResponse> = runSuspendCatching {
         logger.info("Retrying PEPPOL registration for tenant $tenantId")
 
-        val existing = registrationRepository.getRegistration(tenantId).getOrNull()
+        val existing = registrationRepository.getRegistration(tenantId).map { it?.let { e -> PeppolRegistrationDto.from(e) } }.getOrNull()
             ?: throw IllegalStateException("No existing registration found for tenant $tenantId")
 
         if (existing.status != PeppolRegistrationStatus.Failed) {
@@ -377,7 +379,7 @@ class PeppolRegistrationService(
     suspend fun pollTransferStatus(tenantId: TenantId): Result<PeppolRegistrationResponse> = runSuspendCatching {
         logger.info("Polling transfer status for tenant $tenantId")
 
-        val existing = registrationRepository.getRegistration(tenantId).getOrNull()
+        val existing = registrationRepository.getRegistration(tenantId).map { it?.let { e -> PeppolRegistrationDto.from(e) } }.getOrNull()
             ?: throw IllegalStateException("No existing registration found for tenant $tenantId")
 
         if (existing.status != PeppolRegistrationStatus.WaitingTransfer &&
@@ -405,7 +407,7 @@ class PeppolRegistrationService(
         }
 
         // Still blocked
-        val updatedReg = registrationRepository.getRegistration(tenantId).getOrThrow()!!
+        val updatedReg = registrationRepository.getRegistration(tenantId).map { it?.let { e -> PeppolRegistrationDto.from(e) } }.getOrThrow()!!
         PeppolRegistrationResponse(
             registration = updatedReg,
             nextAction = PeppolNextAction.WAIT_FOR_TRANSFER
@@ -416,7 +418,7 @@ class PeppolRegistrationService(
      * Get current registration status.
      */
     suspend fun getRegistration(tenantId: TenantId): Result<PeppolRegistrationResponse?> = runSuspendCatching {
-        val registration = registrationRepository.getRegistration(tenantId).getOrNull()
+        val registration = registrationRepository.getRegistration(tenantId).map { it?.let { e -> PeppolRegistrationDto.from(e) } }.getOrNull()
             ?: return@runSuspendCatching null
 
         val nextAction = when (registration.status) {

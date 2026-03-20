@@ -4,12 +4,12 @@ import kotlinx.serialization.json.JsonElement
 import tech.dokus.database.entity.BankStatementEntity
 import tech.dokus.database.entity.BankTransactionEntity
 import tech.dokus.database.repository.cashflow.CreditNoteRepository
-import tech.dokus.database.repository.cashflow.DocumentMatchReviewSummary
+import tech.dokus.database.repository.cashflow.DocumentMatchReviewEntity
 import tech.dokus.database.repository.cashflow.DocumentRepository
-import tech.dokus.database.repository.cashflow.DocumentSourceSummary
-import tech.dokus.database.repository.cashflow.DraftSummary
+import tech.dokus.database.repository.cashflow.DocumentSourceEntity
+import tech.dokus.database.repository.cashflow.DraftSummaryEntity
 import tech.dokus.database.repository.cashflow.ExpenseRepository
-import tech.dokus.database.repository.cashflow.IngestionRunSummary
+import tech.dokus.database.repository.cashflow.IngestionRunSummaryEntity
 import tech.dokus.database.repository.cashflow.InvoiceRepository
 import tech.dokus.database.repository.banking.BankStatementRepository
 import tech.dokus.database.repository.banking.BankTransactionRepository
@@ -273,9 +273,9 @@ private fun BankTransactionEntity.toDraftRow() = tech.dokus.domain.model.BankSta
 )
 
 /**
- * Convert DraftSummary to DocumentDraftDto.
+ * Convert DraftSummaryEntity to DocumentDraftDto.
  */
-internal fun DraftSummary.toDto(
+internal fun DraftSummaryEntity.toDto(
     resolvedContact: ResolvedContact = ResolvedContact.Unknown,
     contactSuggestions: List<ContactSuggestionDto> = emptyList(),
     content: DocDto? = null,
@@ -307,9 +307,9 @@ internal fun DraftSummary.toDto(
 )
 
 /**
- * Convert IngestionRunSummary to DocumentIngestionDto.
+ * Convert IngestionRunSummaryEntity to DocumentIngestionDto.
  */
-internal fun IngestionRunSummary.toDto(
+internal fun IngestionRunSummaryEntity.toDto(
     includeRawExtraction: Boolean = false,
     includeTrace: Boolean = false
 ): DocumentIngestionDto {
@@ -342,7 +342,7 @@ internal fun IngestionRunSummary.toDto(
     )
 }
 
-internal fun DocumentSourceSummary.toDto(): DocumentSourceDto = DocumentSourceDto(
+internal fun DocumentSourceEntity.toDto(): DocumentSourceDto = DocumentSourceDto(
     id = id,
     tenantId = tenantId,
     documentId = documentId,
@@ -364,7 +364,7 @@ internal fun DocumentSourceSummary.toDto(): DocumentSourceDto = DocumentSourceDt
     matchType = matchType
 )
 
-internal fun DocumentMatchReviewSummary.toSummaryDto(): DocumentMatchReviewSummaryDto =
+internal fun DocumentMatchReviewEntity.toSummaryDto(): DocumentMatchReviewSummaryDto =
     DocumentMatchReviewSummaryDto(
         reviewId = id,
         incomingSourceId = incomingSourceId,

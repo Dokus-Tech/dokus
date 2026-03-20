@@ -10,7 +10,7 @@ import tech.dokus.database.repository.banking.BankStatementRepository
 import tech.dokus.database.repository.banking.BankTransactionCreate
 import tech.dokus.database.repository.banking.BankTransactionRepository
 import tech.dokus.database.repository.cashflow.DocumentSourceRepository
-import tech.dokus.database.repository.cashflow.DocumentSourceSummary
+import tech.dokus.database.repository.cashflow.DocumentSourceEntity
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.BankTransactionSource
 import tech.dokus.domain.enums.StatementTrust
@@ -284,7 +284,7 @@ class BankStatementProcessingService(
         tenantId: TenantId,
         documentId: DocumentId,
         sourceId: DocumentSourceId?,
-    ): DocumentSourceSummary? {
+    ): DocumentSourceEntity? {
         return if (sourceId != null) {
             documentSourceRepository.getById(tenantId, sourceId)
         } else {

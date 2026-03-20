@@ -16,7 +16,9 @@ import tech.dokus.backend.worker.PeppolPollingWorker
 import tech.dokus.database.repository.auth.AddressRepository
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
+import tech.dokus.database.mapper.from
 import tech.dokus.database.repository.contacts.ContactRepository
+import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.model.PeppolInboxPollResponse
 import tech.dokus.domain.enums.Permission
@@ -188,6 +190,7 @@ internal fun Route.peppolRoutes() {
 
             // Get contact (customer)
             val contact = contactRepository.getContact(invoice.contactId, tenantId)
+                .map { it?.let { entity -> ContactDto.from(entity) } }
                 .getOrElse { throw DokusException.InternalError("Failed to fetch contact: ${it.message}") }
                 ?: throw DokusException.NotFound("Contact not found for invoice")
 
@@ -272,6 +275,7 @@ internal fun Route.peppolRoutes() {
 
             // Get contact (customer)
             val contact = contactRepository.getContact(invoice.contactId, tenantId)
+                .map { it?.let { entity -> ContactDto.from(entity) } }
                 .getOrElse { throw DokusException.InternalError("Failed to fetch contact: ${it.message}") }
                 ?: throw DokusException.NotFound("Contact not found for invoice")
 

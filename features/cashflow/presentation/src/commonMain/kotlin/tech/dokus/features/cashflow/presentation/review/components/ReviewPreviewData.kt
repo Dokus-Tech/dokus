@@ -31,7 +31,7 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.model.AutoPaymentStatus
 import tech.dokus.domain.model.CashflowContactRef
-import tech.dokus.domain.model.CashflowEntry
+import tech.dokus.domain.model.CashflowEntryEntity
 import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.BankTransactionDto
@@ -130,7 +130,7 @@ internal fun previewReviewContentState(
     )
 
     val cashflowEntry = entryStatus?.let { status ->
-        CashflowEntry(
+        CashflowEntryEntity(
             id = CashflowEntryId.generate(),
             tenantId = tenantId,
             sourceType = CashflowSourceType.Invoice,
@@ -342,7 +342,7 @@ internal fun previewStateForDocumentType(
     )
 
     val cashflowEntry = if (hasFinancialEntry) {
-        CashflowEntry(
+        CashflowEntryEntity(
             id = CashflowEntryId.generate(),
             tenantId = tenantId,
             sourceType = CashflowSourceType.Invoice,

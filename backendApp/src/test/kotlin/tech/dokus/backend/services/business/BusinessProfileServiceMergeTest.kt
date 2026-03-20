@@ -12,7 +12,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.business.BusinessProfileEnrichmentJobRepository
-import tech.dokus.database.repository.business.BusinessProfileRecord
+import tech.dokus.database.repository.business.BusinessProfileEntity
 import tech.dokus.database.repository.business.BusinessProfileRepository
 import tech.dokus.domain.enums.BusinessProfileSubjectType
 import tech.dokus.domain.enums.BusinessProfileVerificationState
@@ -34,14 +34,14 @@ class BusinessProfileServiceMergeTest {
     fun `pinned website is not overwritten by enrichment`() = kotlinx.coroutines.runBlocking {
         val tenantId = TenantId.generate()
         val subjectId = Uuid.random()
-        val existing = BusinessProfileRecord(
+        val existing = BusinessProfileEntity(
             tenantId = tenantId,
             subjectType = BusinessProfileSubjectType.Contact,
             subjectId = subjectId,
             websiteUrl = "https://locked.example",
             websitePinned = true
         )
-        val captured = slot<BusinessProfileRecord>()
+        val captured = slot<BusinessProfileEntity>()
 
         coEvery {
             profileRepository.getBySubject(tenantId, BusinessProfileSubjectType.Contact, subjectId)
@@ -70,13 +70,13 @@ class BusinessProfileServiceMergeTest {
     fun `suggested state applies logo when no existing logo and not pinned`() = kotlinx.coroutines.runBlocking {
         val tenantId = TenantId.generate()
         val subjectId = Uuid.random()
-        val existing = BusinessProfileRecord(
+        val existing = BusinessProfileEntity(
             tenantId = tenantId,
             subjectType = BusinessProfileSubjectType.Contact,
             subjectId = subjectId,
             logoStorageKey = null
         )
-        val captured = slot<BusinessProfileRecord>()
+        val captured = slot<BusinessProfileEntity>()
 
         coEvery {
             profileRepository.getBySubject(tenantId, BusinessProfileSubjectType.Contact, subjectId)
@@ -105,14 +105,14 @@ class BusinessProfileServiceMergeTest {
     fun `pinned logo is preserved during suggested enrichment`() = kotlinx.coroutines.runBlocking {
         val tenantId = TenantId.generate()
         val subjectId = Uuid.random()
-        val existing = BusinessProfileRecord(
+        val existing = BusinessProfileEntity(
             tenantId = tenantId,
             subjectType = BusinessProfileSubjectType.Contact,
             subjectId = subjectId,
             logoStorageKey = "existing-logo",
             logoPinned = true
         )
-        val captured = slot<BusinessProfileRecord>()
+        val captured = slot<BusinessProfileEntity>()
 
         coEvery {
             profileRepository.getBySubject(tenantId, BusinessProfileSubjectType.Contact, subjectId)
@@ -141,7 +141,7 @@ class BusinessProfileServiceMergeTest {
     fun `low confidence keeps fields but stores latest ranking evidence`() = kotlinx.coroutines.runBlocking {
         val tenantId = TenantId.generate()
         val subjectId = Uuid.random()
-        val existing = BusinessProfileRecord(
+        val existing = BusinessProfileEntity(
             tenantId = tenantId,
             subjectType = BusinessProfileSubjectType.Contact,
             subjectId = subjectId,
@@ -152,7 +152,7 @@ class BusinessProfileServiceMergeTest {
             evidenceScore = 88,
             evidenceChecksJson = "{\"old\":true}"
         )
-        val captured = slot<BusinessProfileRecord>()
+        val captured = slot<BusinessProfileEntity>()
 
         coEvery {
             profileRepository.getBySubject(tenantId, BusinessProfileSubjectType.Contact, subjectId)
@@ -185,7 +185,7 @@ class BusinessProfileServiceMergeTest {
     fun `null enrichment text does not erase existing unpinned summary and activities`() = kotlinx.coroutines.runBlocking {
         val tenantId = TenantId.generate()
         val subjectId = Uuid.random()
-        val existing = BusinessProfileRecord(
+        val existing = BusinessProfileEntity(
             tenantId = tenantId,
             subjectType = BusinessProfileSubjectType.Contact,
             subjectId = subjectId,
@@ -196,7 +196,7 @@ class BusinessProfileServiceMergeTest {
             summaryPinned = false,
             activitiesPinned = false
         )
-        val captured = slot<BusinessProfileRecord>()
+        val captured = slot<BusinessProfileEntity>()
 
         coEvery {
             profileRepository.getBySubject(tenantId, BusinessProfileSubjectType.Contact, subjectId)

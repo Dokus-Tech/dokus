@@ -28,7 +28,7 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.CashflowContactRef
-import tech.dokus.domain.model.CashflowEntry
+import tech.dokus.domain.model.CashflowEntryEntity
 import java.util.UUID
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid
@@ -65,14 +65,14 @@ class MatchingRepository {
     suspend fun loadCandidateEntries(
         tenantId: TenantId,
         direction: CashflowDirection,
-    ): List<CashflowEntry> = newSuspendedTransaction {
+    ): List<CashflowEntryEntity> = newSuspendedTransaction {
         val tenantUuid = tenantId.value.toJavaUuid()
         CashflowEntriesTable.selectAll().where {
             (CashflowEntriesTable.tenantId eq tenantUuid) and
                 (CashflowEntriesTable.status inList listOf(CashflowEntryStatus.Open, CashflowEntryStatus.Overdue)) and
                 (CashflowEntriesTable.direction eq direction)
         }.map { row ->
-            CashflowEntry(
+            CashflowEntryEntity(
                 id = tech.dokus.domain.ids.CashflowEntryId.parse(row[CashflowEntriesTable.id].value.toString()),
                 tenantId = tenantId,
                 sourceType = row[CashflowEntriesTable.sourceType],

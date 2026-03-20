@@ -12,7 +12,8 @@ import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insertAndGetId
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
-import tech.dokus.database.mapper.toRefundClaimDto
+import tech.dokus.database.entity.RefundClaimEntity
+import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.cashflow.RefundClaimsTable
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.Currency
@@ -23,7 +24,6 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.CreditNoteId
 import tech.dokus.domain.ids.RefundClaimId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.RefundClaimDto
 import tech.dokus.domain.toDbDecimal
 import tech.dokus.foundation.backend.database.dbQuery
 import java.util.UUID
@@ -53,7 +53,7 @@ class RefundClaimRepository {
         amount: Money,
         currency: Currency = Currency.Eur,
         expectedDate: LocalDate? = null
-    ): Result<RefundClaimDto> = runSuspendCatching {
+    ): Result<RefundClaimEntity> = runSuspendCatching {
         dbQuery {
             val claimId = RefundClaimsTable.insertAndGetId {
                 it[RefundClaimsTable.tenantId] = UUID.fromString(tenantId.toString())
@@ -70,7 +70,7 @@ class RefundClaimRepository {
                 (RefundClaimsTable.id eq claimId.value) and
                     (RefundClaimsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.single().let { row ->
-                row.toRefundClaimDto()
+                RefundClaimEntity.from(row)
             }
         }
     }
@@ -82,13 +82,13 @@ class RefundClaimRepository {
     suspend fun getRefundClaim(
         claimId: RefundClaimId,
         tenantId: TenantId
-    ): Result<RefundClaimDto?> = runSuspendCatching {
+    ): Result<RefundClaimEntity?> = runSuspendCatching {
         dbQuery {
             RefundClaimsTable.selectAll().where {
                 (RefundClaimsTable.id eq UUID.fromString(claimId.toString())) and
                     (RefundClaimsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.singleOrNull()?.let { row ->
-                row.toRefundClaimDto()
+                RefundClaimEntity.from(row)
             }
         }
     }
@@ -100,13 +100,13 @@ class RefundClaimRepository {
     suspend fun getOpenClaimForCreditNote(
         tenantId: TenantId,
         creditNoteId: CreditNoteId
-    ): RefundClaimDto? = dbQuery {
+    ): RefundClaimEntity? = dbQuery {
         RefundClaimsTable.selectAll().where {
             (RefundClaimsTable.tenantId eq UUID.fromString(tenantId.toString())) and
                 (RefundClaimsTable.creditNoteId eq UUID.fromString(creditNoteId.toString())) and
                 (RefundClaimsTable.status eq RefundClaimStatus.Open)
         }.singleOrNull()?.let { row ->
-            row.toRefundClaimDto()
+            RefundClaimEntity.from(row)
         }
     }
 
@@ -120,7 +120,7 @@ class RefundClaimRepository {
         counterpartyId: ContactId? = null,
         limit: Int = 50,
         offset: Int = 0
-    ): Result<List<RefundClaimDto>> = runSuspendCatching {
+    ): Result<List<RefundClaimEntity>> = runSuspendCatching {
         dbQuery {
             var query = RefundClaimsTable.selectAll().where {
                 RefundClaimsTable.tenantId eq UUID.fromString(tenantId.toString())
@@ -137,7 +137,7 @@ class RefundClaimRepository {
 
             query.orderBy(RefundClaimsTable.createdAt to SortOrder.DESC)
                 .limit(limit + offset)
-                .map { it.toRefundClaimDto() }
+                .map { RefundClaimEntity.from(it) }
                 .drop(offset)
         }
     }
@@ -146,12 +146,12 @@ class RefundClaimRepository {
      * List all open refund claims for a tenant (for dashboard).
      * CRITICAL: MUST filter by tenant_id
      */
-    suspend fun listOpenClaims(tenantId: TenantId): List<RefundClaimDto> = dbQuery {
+    suspend fun listOpenClaims(tenantId: TenantId): List<RefundClaimEntity> = dbQuery {
         RefundClaimsTable.selectAll().where {
             (RefundClaimsTable.tenantId eq UUID.fromString(tenantId.toString())) and
                 (RefundClaimsTable.status eq RefundClaimStatus.Open)
         }.orderBy(RefundClaimsTable.expectedDate to SortOrder.ASC)
-            .map { it.toRefundClaimDto() }
+            .map { RefundClaimEntity.from(it) }
     }
 
     /**

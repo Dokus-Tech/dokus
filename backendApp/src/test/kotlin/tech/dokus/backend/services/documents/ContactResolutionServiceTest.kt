@@ -15,6 +15,7 @@ import tech.dokus.backend.services.documents.resolution.ContactMatchingUtils
 import tech.dokus.backend.services.documents.resolution.IbanNameResolver
 import tech.dokus.backend.services.documents.resolution.NameSuggestionResolver
 import tech.dokus.backend.services.documents.resolution.VatMatchResolver
+import tech.dokus.database.entity.ContactEntity
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.domain.Name
 import tech.dokus.domain.enums.ClientType
@@ -277,8 +278,8 @@ class ContactResolutionServiceTest {
         name: String,
         vat: String,
         source: ContactSource
-    ): ContactDto {
-        return ContactDto(
+    ): ContactEntity {
+        return ContactEntity(
             id = ContactId.parse(id),
             tenantId = tenantId,
             name = Name(name),

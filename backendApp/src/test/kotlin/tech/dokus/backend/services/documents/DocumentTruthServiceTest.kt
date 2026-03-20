@@ -12,11 +12,11 @@ import tech.dokus.database.repository.cashflow.DocumentBlobRepository
 import tech.dokus.database.repository.cashflow.FuzzySourceCandidate
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentMatchReviewRepository
-import tech.dokus.database.repository.cashflow.DocumentMatchReviewSummary
+import tech.dokus.database.repository.cashflow.DocumentMatchReviewEntity
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.DocumentSourceRepository
-import tech.dokus.database.repository.cashflow.DocumentSourceSummary
-import tech.dokus.database.repository.cashflow.DraftSummary
+import tech.dokus.database.repository.cashflow.DocumentSourceEntity
+import tech.dokus.database.repository.cashflow.DraftSummaryEntity
 import tech.dokus.database.repository.drafts.DraftRepository
 import tech.dokus.domain.model.toDocDto
 import tech.dokus.domain.Money
@@ -384,7 +384,7 @@ class DocumentTruthServiceTest {
         extractedSnapshotJson: String? = null,
         identityKeyHash: String? = null,
         contentHash: String? = null
-    ) = DocumentSourceSummary(
+    ) = DocumentSourceEntity(
         id = id,
         tenantId = tenantId,
         documentId = documentId,
@@ -412,7 +412,7 @@ class DocumentTruthServiceTest {
     private fun reviewSummary(
         documentId: DocumentId = docId2,
         incomingSourceId: DocumentSourceId = sourceId1
-    ) = DocumentMatchReviewSummary(
+    ) = DocumentMatchReviewEntity(
         id = reviewId1,
         tenantId = tenantId,
         documentId = documentId,
@@ -429,7 +429,7 @@ class DocumentTruthServiceTest {
 
     private fun draftSummary(
         documentStatus: DocumentStatus = DocumentStatus.NeedsReview
-    ) = DraftSummary(
+    ) = DraftSummaryEntity(
         documentId = docId2,
         tenantId = tenantId,
         documentStatus = documentStatus,

@@ -1,7 +1,9 @@
 package tech.dokus.backend.services.documents.resolution
 
+import tech.dokus.database.mapper.from
 import tech.dokus.backend.services.documents.resolution.ContactMatchingUtils.Companion.StrongNameThreshold
 import tech.dokus.database.repository.contacts.ContactRepository
+import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.ContactResolution
 import tech.dokus.domain.model.contact.MatchEvidence
 
@@ -14,6 +16,7 @@ class IbanNameResolver(
         val name = input.snapshot.name ?: return ResolverOutcome.Partial()
 
         val ibanMatches = contactRepository.findByIban(input.tenantId, iban).getOrNull().orEmpty()
+            .map { ContactDto.from(it) }
         if (ibanMatches.isEmpty()) return ResolverOutcome.Partial()
 
         val scored = ibanMatches.map { contact ->

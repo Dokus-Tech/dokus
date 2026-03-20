@@ -12,7 +12,7 @@ import org.jetbrains.exposed.v1.core.lessEq
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
 import org.jetbrains.exposed.v1.jdbc.upsert
-import tech.dokus.database.mapper.toWelcomeEmailJob
+import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.auth.WelcomeEmailJobsTable
 import tech.dokus.database.tables.auth.WelcomeEmailJobsTable.JobStatus
 import tech.dokus.domain.ids.TenantId
@@ -23,7 +23,7 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toKotlinUuid
 import tech.dokus.foundation.backend.utils.runSuspendCatching
 
-data class WelcomeEmailJob(
+data class WelcomeEmailJobEntity(
     val id: UUID,
     val userId: UserId,
     val tenantId: TenantId,
@@ -35,7 +35,9 @@ data class WelcomeEmailJob(
     val sentAt: LocalDateTime?,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime
-)
+) {
+    companion object
+}
 
 @OptIn(ExperimentalUuidApi::class)
 class WelcomeEmailJobRepository {
@@ -71,20 +73,20 @@ class WelcomeEmailJobRepository {
         }
     }
 
-    suspend fun findByUserId(userId: UserId): Result<WelcomeEmailJob?> = runSuspendCatching {
+    suspend fun findByUserId(userId: UserId): Result<WelcomeEmailJobEntity?> = runSuspendCatching {
         val userUuid = UUID.fromString(userId.toString())
         dbQuery {
             WelcomeEmailJobsTable.selectAll()
                 .where { WelcomeEmailJobsTable.userId eq userUuid }
                 .singleOrNull()
-                ?.toWelcomeEmailJob()
+                ?.let { WelcomeEmailJobEntity.from(it) }
         }
     }
 
     suspend fun claimDue(
         now: LocalDateTime,
         limit: Int
-    ): Result<List<WelcomeEmailJob>> = runSuspendCatching {
+    ): Result<List<WelcomeEmailJobEntity>> = runSuspendCatching {
         dbQuery {
             val candidates = WelcomeEmailJobsTable.selectAll()
                 .where {
@@ -93,9 +95,9 @@ class WelcomeEmailJobRepository {
                 }
                 .orderBy(WelcomeEmailJobsTable.nextAttemptAt to SortOrder.ASC)
                 .limit(limit)
-                .map { it.toWelcomeEmailJob() }
+                .map { WelcomeEmailJobEntity.from(it) }
 
-            val claimed = mutableListOf<WelcomeEmailJob>()
+            val claimed = mutableListOf<WelcomeEmailJobEntity>()
             for (candidate in candidates) {
                 val updated = WelcomeEmailJobsTable.update({
                     (WelcomeEmailJobsTable.id eq candidate.id) and

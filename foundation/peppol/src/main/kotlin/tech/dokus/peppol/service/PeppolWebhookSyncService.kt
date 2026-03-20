@@ -1,5 +1,6 @@
 package tech.dokus.peppol.service
 
+import tech.dokus.database.mapper.from
 import tech.dokus.database.repository.peppol.PeppolSettingsRepository
 import tech.dokus.domain.model.PeppolSettingsDto
 import tech.dokus.foundation.backend.utils.loggerFor
@@ -38,7 +39,9 @@ class PeppolWebhookSyncService(
     }
 
     suspend fun syncAllEnabledTenants(): Result<PeppolWebhookSyncSummary> = runSuspendCatching {
-        val enabledSettings = settingsRepository.getAllEnabled().getOrThrow()
+        val enabledSettings = settingsRepository.getAllEnabled()
+            .map { entities -> entities.map { PeppolSettingsDto.from(it) } }
+            .getOrThrow()
 
         var created = 0
         var updated = 0

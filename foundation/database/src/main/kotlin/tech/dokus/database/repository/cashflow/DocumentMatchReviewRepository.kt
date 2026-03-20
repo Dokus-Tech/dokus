@@ -11,7 +11,7 @@ import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.v1.jdbc.update
-import tech.dokus.database.mapper.toDocumentMatchReviewSummary
+import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.documents.DocumentMatchReviewsTable
 import tech.dokus.domain.enums.ReviewReason
 import tech.dokus.domain.enums.DocumentMatchReviewStatus
@@ -24,7 +24,7 @@ import java.util.UUID
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toKotlinUuid
 
-data class DocumentMatchReviewSummary(
+data class DocumentMatchReviewEntity(
     val id: DocumentMatchReviewId,
     val tenantId: TenantId,
     val documentId: DocumentId,
@@ -37,7 +37,9 @@ data class DocumentMatchReviewSummary(
     val resolvedAt: LocalDateTime?,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime
-)
+) {
+    companion object
+}
 
 @OptIn(ExperimentalUuidApi::class)
 class DocumentMatchReviewRepository {
@@ -67,21 +69,21 @@ class DocumentMatchReviewRepository {
         id
     }
 
-    suspend fun getById(tenantId: TenantId, reviewId: DocumentMatchReviewId): DocumentMatchReviewSummary? =
+    suspend fun getById(tenantId: TenantId, reviewId: DocumentMatchReviewId): DocumentMatchReviewEntity? =
         newSuspendedTransaction {
             DocumentMatchReviewsTable.selectAll()
                 .where {
                     (DocumentMatchReviewsTable.id eq UUID.fromString(reviewId.toString())) and
                         (DocumentMatchReviewsTable.tenantId eq UUID.fromString(tenantId.toString()))
                 }
-                .map { it.toDocumentMatchReviewSummary() }
+                .map { DocumentMatchReviewEntity.from(it) }
                 .singleOrNull()
         }
 
     suspend fun listPendingByDocumentIds(
         tenantId: TenantId,
         documentIds: List<DocumentId>
-    ): Map<DocumentId, DocumentMatchReviewSummary> = newSuspendedTransaction {
+    ): Map<DocumentId, DocumentMatchReviewEntity> = newSuspendedTransaction {
         if (documentIds.isEmpty()) return@newSuspendedTransaction emptyMap()
         val ids = documentIds.map { UUID.fromString(it.toString()) }
         DocumentMatchReviewsTable.selectAll()
@@ -90,7 +92,7 @@ class DocumentMatchReviewRepository {
                     (DocumentMatchReviewsTable.documentId inList ids) and
                     (DocumentMatchReviewsTable.status eq DocumentMatchReviewStatus.Pending)
             }
-            .map { it.toDocumentMatchReviewSummary() }
+            .map { DocumentMatchReviewEntity.from(it) }
             .groupBy { it.documentId }
             .mapValues { (_, reviews) -> reviews.minBy { it.createdAt } }
     }

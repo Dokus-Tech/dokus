@@ -2,6 +2,7 @@ package tech.dokus.backend.services.cashflow
 
 import kotlinx.datetime.LocalDate
 import tech.dokus.database.entity.CreditNoteEntity
+import tech.dokus.database.mapper.from
 import tech.dokus.database.repository.cashflow.CreditNoteRepository
 import tech.dokus.database.repository.cashflow.RefundClaimRepository
 import tech.dokus.domain.Money
@@ -234,7 +235,7 @@ class CreditNoteService(
      * Get open refund claims for a tenant.
      */
     suspend fun getOpenRefundClaims(tenantId: TenantId): List<RefundClaimDto> {
-        return refundClaimRepository.listOpenClaims(tenantId)
+        return refundClaimRepository.listOpenClaims(tenantId).map { RefundClaimDto.from(it) }
     }
 
     /**

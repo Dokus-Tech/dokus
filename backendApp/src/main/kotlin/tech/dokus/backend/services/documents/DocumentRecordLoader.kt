@@ -11,7 +11,7 @@ import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.database.repository.cashflow.CreditNoteRepository
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
-import tech.dokus.database.repository.cashflow.DraftSummary
+import tech.dokus.database.repository.cashflow.DraftSummaryEntity
 import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
 import tech.dokus.database.repository.cashflow.selectPreferredSource
@@ -109,7 +109,7 @@ internal class DocumentRecordLoader(
 
     @Suppress("TooGenericExceptionCaught")
     private suspend fun resolveContact(
-        draft: DraftSummary?,
+        draft: DraftSummaryEntity?,
         tenantId: TenantId,
     ): ResolvedContact {
         val counterparty = draft?.counterparty ?: return ResolvedContact.Unknown
@@ -128,7 +128,7 @@ internal class DocumentRecordLoader(
                         name = contact.name.value,
                         vatNumber = contact.vatNumber?.value,
                         email = contact.email?.value,
-                        avatarPath = contact.avatar?.small,
+                        avatarPath = null, // avatar is projected at service layer, not in entity
                     )
                 } else {
                     ResolvedContact.Unknown
@@ -175,7 +175,7 @@ internal class DocumentRecordLoader(
         return parts.joinToString(", ").takeIf { it.isNotEmpty() }
     }
 
-    private fun buildContactSuggestions(draft: DraftSummary?): List<ContactSuggestionDto> {
+    private fun buildContactSuggestions(draft: DraftSummaryEntity?): List<ContactSuggestionDto> {
         val counterparty = draft?.counterparty as? CounterpartyInfo.Unresolved ?: return emptyList()
         return counterparty.suggestions.take(3).map { suggestion ->
             ContactSuggestionDto(

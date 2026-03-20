@@ -1,10 +1,10 @@
 package tech.dokus.database.mapper
 
 import org.jetbrains.exposed.v1.core.ResultRow
-import tech.dokus.database.repository.cashflow.DocumentBlobSummary
+import tech.dokus.database.repository.cashflow.DocumentBlobEntity
 import tech.dokus.database.repository.cashflow.DocumentRepository
-import tech.dokus.database.repository.cashflow.DraftSummary
-import tech.dokus.database.repository.cashflow.IngestionRunSummary
+import tech.dokus.database.repository.cashflow.DraftSummaryEntity
+import tech.dokus.database.repository.cashflow.IngestionRunSummaryEntity
 import tech.dokus.database.tables.documents.DocumentBlobsTable
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
 import tech.dokus.database.tables.documents.DocumentsTable
@@ -21,67 +21,67 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toKotlinUuid
 
 @OptIn(ExperimentalUuidApi::class)
-internal fun ResultRow.toDraftSummary(contactName: String? = null): DraftSummary {
-    val counterpartyInfo = DocumentRepository.buildCounterpartyInfo(this)
-    return DraftSummary(
-        documentId = DocumentId.parse(this[DocumentsTable.id].toString()),
-        tenantId = TenantId(this[DocumentsTable.tenantId].toKotlinUuid()),
-        documentStatus = this[DocumentsTable.documentStatus] ?: DocumentStatus.NeedsReview,
-        documentType = this[DocumentsTable.documentType],
-        direction = this[DocumentsTable.direction] ?: DocumentDirection.Unknown,
-        aiKeywords = this[DocumentsTable.aiKeywords]?.let { json.decodeFromString(it) } ?: emptyList(),
-        purposeBase = this[DocumentsTable.purposeBase],
-        purposePeriodYear = this[DocumentsTable.purposePeriodYear],
-        purposePeriodMonth = this[DocumentsTable.purposePeriodMonth],
-        purposeRendered = this[DocumentsTable.purposeRendered],
-        purposeSource = this[DocumentsTable.purposeSource],
-        purposeLocked = this[DocumentsTable.purposeLocked],
-        purposePeriodMode = this[DocumentsTable.purposePeriodMode],
-        counterpartyKey = this[DocumentsTable.counterpartyKey],
-        merchantToken = this[DocumentsTable.merchantToken],
-        aiDraftSourceRunId = this[DocumentsTable.aiDraftSourceRunId]
+internal fun DraftSummaryEntity.Companion.from(row: ResultRow, contactName: String? = null): DraftSummaryEntity {
+    val counterpartyInfo = DocumentRepository.buildCounterpartyInfo(row)
+    return DraftSummaryEntity(
+        documentId = DocumentId.parse(row[DocumentsTable.id].toString()),
+        tenantId = TenantId(row[DocumentsTable.tenantId].toKotlinUuid()),
+        documentStatus = row[DocumentsTable.documentStatus] ?: DocumentStatus.NeedsReview,
+        documentType = row[DocumentsTable.documentType],
+        direction = row[DocumentsTable.direction] ?: DocumentDirection.Unknown,
+        aiKeywords = row[DocumentsTable.aiKeywords]?.let { json.decodeFromString(it) } ?: emptyList(),
+        purposeBase = row[DocumentsTable.purposeBase],
+        purposePeriodYear = row[DocumentsTable.purposePeriodYear],
+        purposePeriodMonth = row[DocumentsTable.purposePeriodMonth],
+        purposeRendered = row[DocumentsTable.purposeRendered],
+        purposeSource = row[DocumentsTable.purposeSource],
+        purposeLocked = row[DocumentsTable.purposeLocked],
+        purposePeriodMode = row[DocumentsTable.purposePeriodMode],
+        counterpartyKey = row[DocumentsTable.counterpartyKey],
+        merchantToken = row[DocumentsTable.merchantToken],
+        aiDraftSourceRunId = row[DocumentsTable.aiDraftSourceRunId]
             ?.let { IngestionRunId.parse(it.toString()) },
-        draftVersion = this[DocumentsTable.draftVersion],
-        draftEditedAt = this[DocumentsTable.draftEditedAt],
-        draftEditedBy = this[DocumentsTable.draftEditedBy]?.let { UserId(it.toKotlinUuid()) },
+        draftVersion = row[DocumentsTable.draftVersion],
+        draftEditedAt = row[DocumentsTable.draftEditedAt],
+        draftEditedBy = row[DocumentsTable.draftEditedBy]?.let { UserId(it.toKotlinUuid()) },
         counterparty = counterpartyInfo,
         counterpartyDisplayName = contactName
             ?: if (counterpartyInfo.isUnresolved()) counterpartyInfo.snapshot?.name else null,
-        rejectReason = this[DocumentsTable.rejectReason],
-        lastSuccessfulRunId = this[DocumentsTable.lastSuccessfulRunId]
+        rejectReason = row[DocumentsTable.rejectReason],
+        lastSuccessfulRunId = row[DocumentsTable.lastSuccessfulRunId]
             ?.let { IngestionRunId.parse(it.toString()) },
-        createdAt = this[DocumentsTable.uploadedAt],
-        updatedAt = this[DocumentsTable.updatedAt]
+        createdAt = row[DocumentsTable.uploadedAt],
+        updatedAt = row[DocumentsTable.updatedAt]
     )
 }
 
 @OptIn(ExperimentalUuidApi::class)
-internal fun ResultRow.toIngestionRunSummary(): IngestionRunSummary {
-    return IngestionRunSummary(
-        id = IngestionRunId.parse(this[DocumentIngestionRunsTable.id].toString()),
-        documentId = DocumentId.parse(this[DocumentIngestionRunsTable.documentId].toString()),
-        tenantId = TenantId(this[DocumentIngestionRunsTable.tenantId].toKotlinUuid()),
-        status = this[DocumentIngestionRunsTable.status],
-        provider = this[DocumentIngestionRunsTable.provider],
-        queuedAt = this[DocumentIngestionRunsTable.queuedAt],
-        startedAt = this[DocumentIngestionRunsTable.startedAt],
-        finishedAt = this[DocumentIngestionRunsTable.finishedAt],
-        errorMessage = this[DocumentIngestionRunsTable.errorMessage],
-        confidence = this[DocumentIngestionRunsTable.confidence]?.toDouble(),
-        processingOutcome = this[DocumentIngestionRunsTable.processingOutcome],
-        rawExtractionJson = this[DocumentIngestionRunsTable.rawExtractionJson],
-        processingTrace = this[DocumentIngestionRunsTable.processingTrace]
+internal fun IngestionRunSummaryEntity.Companion.from(row: ResultRow): IngestionRunSummaryEntity {
+    return IngestionRunSummaryEntity(
+        id = IngestionRunId.parse(row[DocumentIngestionRunsTable.id].toString()),
+        documentId = DocumentId.parse(row[DocumentIngestionRunsTable.documentId].toString()),
+        tenantId = TenantId(row[DocumentIngestionRunsTable.tenantId].toKotlinUuid()),
+        status = row[DocumentIngestionRunsTable.status],
+        provider = row[DocumentIngestionRunsTable.provider],
+        queuedAt = row[DocumentIngestionRunsTable.queuedAt],
+        startedAt = row[DocumentIngestionRunsTable.startedAt],
+        finishedAt = row[DocumentIngestionRunsTable.finishedAt],
+        errorMessage = row[DocumentIngestionRunsTable.errorMessage],
+        confidence = row[DocumentIngestionRunsTable.confidence]?.toDouble(),
+        processingOutcome = row[DocumentIngestionRunsTable.processingOutcome],
+        rawExtractionJson = row[DocumentIngestionRunsTable.rawExtractionJson],
+        processingTrace = row[DocumentIngestionRunsTable.processingTrace]
     )
 }
 
 @OptIn(ExperimentalUuidApi::class)
-internal fun ResultRow.toBlobSummary(): DocumentBlobSummary {
-    return DocumentBlobSummary(
-        id = DocumentBlobId(this[DocumentBlobsTable.id].value.toKotlinUuid()),
-        tenantId = TenantId(this[DocumentBlobsTable.tenantId].toKotlinUuid()),
-        inputHash = this[DocumentBlobsTable.inputHash],
-        storageKey = this[DocumentBlobsTable.storageKey],
-        contentType = this[DocumentBlobsTable.contentType],
-        sizeBytes = this[DocumentBlobsTable.sizeBytes]
+internal fun DocumentBlobEntity.Companion.from(row: ResultRow): DocumentBlobEntity {
+    return DocumentBlobEntity(
+        id = DocumentBlobId(row[DocumentBlobsTable.id].value.toKotlinUuid()),
+        tenantId = TenantId(row[DocumentBlobsTable.tenantId].toKotlinUuid()),
+        inputHash = row[DocumentBlobsTable.inputHash],
+        storageKey = row[DocumentBlobsTable.storageKey],
+        contentType = row[DocumentBlobsTable.contentType],
+        sizeBytes = row[DocumentBlobsTable.sizeBytes]
     )
 }

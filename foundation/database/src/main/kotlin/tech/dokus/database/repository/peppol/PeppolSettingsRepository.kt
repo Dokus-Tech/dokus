@@ -13,12 +13,12 @@ import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
-import tech.dokus.database.mapper.toPeppolSettingsDto
+import tech.dokus.database.entity.PeppolSettingsEntity
+import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.peppol.PeppolSettingsTable
 import tech.dokus.domain.ids.PeppolId
 import tech.dokus.domain.ids.PeppolSettingsId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.PeppolSettingsDto
 import tech.dokus.foundation.backend.database.dbQuery
 import java.util.UUID
 import kotlin.time.Duration.Companion.seconds
@@ -36,11 +36,11 @@ class PeppolSettingsRepository {
     /**
      * Get Peppol settings for a tenant.
      */
-    suspend fun getSettings(tenantId: TenantId): Result<PeppolSettingsDto?> = runSuspendCatching {
+    suspend fun getSettings(tenantId: TenantId): Result<PeppolSettingsEntity?> = runSuspendCatching {
         dbQuery {
             PeppolSettingsTable.selectAll()
                 .where { PeppolSettingsTable.tenantId eq tenantId.value.toJavaUuid() }
-                .map { it.toPeppolSettingsDto() }
+                .map { PeppolSettingsEntity.from(it) }
                 .singleOrNull()
         }
     }
@@ -54,7 +54,7 @@ class PeppolSettingsRepository {
         peppolId: String,
         isEnabled: Boolean = true,
         testMode: Boolean = false
-    ): Result<PeppolSettingsDto> = runSuspendCatching {
+    ): Result<PeppolSettingsEntity> = runSuspendCatching {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         val tenantUuid = tenantId.value.toJavaUuid()
 
@@ -80,7 +80,7 @@ class PeppolSettingsRepository {
 
                 PeppolSettingsTable.selectAll()
                     .where { PeppolSettingsTable.tenantId eq tenantUuid }
-                    .map { it.toPeppolSettingsDto() }
+                    .map { PeppolSettingsEntity.from(it) }
                     .single()
             } else {
                 // Create new with generated webhook token
@@ -100,7 +100,7 @@ class PeppolSettingsRepository {
 
                 PeppolSettingsTable.selectAll()
                     .where { PeppolSettingsTable.id eq newId }
-                    .map { it.toPeppolSettingsDto() }
+                    .map { PeppolSettingsEntity.from(it) }
                     .single()
             }
         }
@@ -134,14 +134,14 @@ class PeppolSettingsRepository {
         }
     }
 
-    suspend fun getEnabledSettingsByCompanyId(companyId: String): Result<PeppolSettingsDto?> = runSuspendCatching {
+    suspend fun getEnabledSettingsByCompanyId(companyId: String): Result<PeppolSettingsEntity?> = runSuspendCatching {
         dbQuery {
             PeppolSettingsTable.selectAll()
                 .where {
                     (PeppolSettingsTable.companyId eq companyId) and
                         (PeppolSettingsTable.isEnabled eq true)
                 }
-                .map { it.toPeppolSettingsDto() }
+                .map { PeppolSettingsEntity.from(it) }
                 .singleOrNull()
         }
     }
@@ -178,11 +178,11 @@ class PeppolSettingsRepository {
     /**
      * Get all enabled Peppol settings (for polling worker).
      */
-    suspend fun getAllEnabled(): Result<List<PeppolSettingsDto>> = runSuspendCatching {
+    suspend fun getAllEnabled(): Result<List<PeppolSettingsEntity>> = runSuspendCatching {
         dbQuery {
             PeppolSettingsTable.selectAll()
                 .where { PeppolSettingsTable.isEnabled eq true }
-                .map { it.toPeppolSettingsDto() }
+                .map { PeppolSettingsEntity.from(it) }
         }
     }
 

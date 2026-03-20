@@ -77,7 +77,7 @@ data class CashOutSummary(
  * Created when financial facts are confirmed from documents.
  */
 @Serializable
-data class CashflowEntry(
+data class CashflowEntryEntity(
     val id: CashflowEntryId,
     val tenantId: TenantId,
     val sourceType: CashflowSourceType,
@@ -95,7 +95,9 @@ data class CashflowEntry(
     val description: String? = null,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime
-)
+) {
+    companion object
+}
 
 // ============================================================================
 // CASHFLOW ENTRY API REQUEST/RESPONSE MODELS

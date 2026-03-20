@@ -10,7 +10,7 @@ import tech.dokus.backend.services.business.WebsiteCandidateInput
 import tech.dokus.backend.services.business.WebsiteRankingContext
 import tech.dokus.backend.services.business.WebsiteRankingDecision
 import tech.dokus.backend.services.business.isAggregatorOrSocialHost
-import tech.dokus.database.repository.business.BusinessProfileEnrichmentJob
+import tech.dokus.database.repository.business.BusinessProfileEnrichmentJobEntity
 import tech.dokus.database.repository.business.BusinessProfileEnrichmentJobRepository
 import tech.dokus.domain.enums.BusinessProfileVerificationState
 import tech.dokus.domain.utils.json
@@ -43,7 +43,7 @@ internal class BusinessProfileEnrichmentJobProcessor(
 ) {
     private val logger = loggerFor()
 
-    suspend fun process(job: BusinessProfileEnrichmentJob) {
+    suspend fun process(job: BusinessProfileEnrichmentJobEntity) {
         val context = subjectContextLoader.load(job) ?: run {
             jobRepository.markCompletedWithError(job.id, "Subject not found")
             return
@@ -247,7 +247,7 @@ internal class BusinessProfileEnrichmentJobProcessor(
         jobRepository.markCompleted(job.id)
     }
 
-    private suspend fun processWebsiteChanged(job: BusinessProfileEnrichmentJob, context: BusinessSubjectContext) {
+    private suspend fun processWebsiteChanged(job: BusinessProfileEnrichmentJobEntity, context: BusinessSubjectContext) {
         val profile = businessProfileService.getProfileRecord(job.tenantId, job.subjectType, job.subjectId)
         val websiteUrl = profile?.websiteUrl
         if (websiteUrl.isNullOrBlank()) {

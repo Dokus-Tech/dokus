@@ -4,6 +4,7 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.toStdlibInstant
+import tech.dokus.database.mapper.from
 import tech.dokus.database.repository.peppol.PeppolRegistrationRepository
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.PeppolRegistrationDto
@@ -38,10 +39,12 @@ class PeppolTransferPollingService(
     suspend fun pollPendingTransfers(): Int {
         logger.info("Starting PEPPOL transfer polling")
 
-        val pending = registrationRepository.listPendingTransfers().getOrElse {
-            logger.error("Failed to list pending transfers", it)
-            return 0
-        }
+        val pending = registrationRepository.listPendingTransfers()
+            .map { entities -> entities.map { PeppolRegistrationDto.from(it) } }
+            .getOrElse {
+                logger.error("Failed to list pending transfers", it)
+                return 0
+            }
 
         if (pending.isEmpty()) {
             logger.debug("No pending PEPPOL transfers to poll")

@@ -12,7 +12,7 @@ import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.v1.jdbc.update
-import tech.dokus.database.mapper.toSourceSummary
+import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.documents.DocumentBlobsTable
 import tech.dokus.database.tables.documents.DocumentSourcesTable
 import tech.dokus.domain.enums.DocumentDirection
@@ -29,7 +29,7 @@ import kotlin.math.min
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toKotlinUuid
 
-data class DocumentSourceSummary(
+data class DocumentSourceEntity(
     val id: DocumentSourceId,
     val tenantId: TenantId,
     val documentId: DocumentId,
@@ -55,7 +55,9 @@ data class DocumentSourceSummary(
     val storageKey: String,
     val contentType: String,
     val sizeBytes: Long
-)
+) {
+    companion object
+}
 
 data class DocumentSourceCreatePayload(
     val documentId: DocumentId,
@@ -117,7 +119,7 @@ class DocumentSourceRepository {
         sourceId
     }
 
-    suspend fun getById(tenantId: TenantId, sourceId: DocumentSourceId): DocumentSourceSummary? =
+    suspend fun getById(tenantId: TenantId, sourceId: DocumentSourceId): DocumentSourceEntity? =
         newSuspendedTransaction {
             DocumentSourcesTable.join(
                 DocumentBlobsTable,
@@ -130,7 +132,7 @@ class DocumentSourceRepository {
                     (DocumentSourcesTable.id eq UUID.fromString(sourceId.toString())) and
                             (DocumentSourcesTable.tenantId eq UUID.fromString(tenantId.toString()))
                 }
-                .map { it.toSourceSummary() }
+                .map { DocumentSourceEntity.from(it) }
                 .singleOrNull()
         }
 
@@ -138,7 +140,7 @@ class DocumentSourceRepository {
         tenantId: TenantId,
         documentId: DocumentId,
         includeDetached: Boolean = false
-    ): List<DocumentSourceSummary> = newSuspendedTransaction {
+    ): List<DocumentSourceEntity> = newSuspendedTransaction {
         val tenantUuid = UUID.fromString(tenantId.toString())
         val docUuid = UUID.fromString(documentId.toString())
         val rows = DocumentSourcesTable.join(
@@ -153,7 +155,7 @@ class DocumentSourceRepository {
                         (DocumentSourcesTable.documentId eq docUuid)
             }
             .orderBy(DocumentSourcesTable.arrivalAt, SortOrder.DESC)
-            .map { it.toSourceSummary() }
+            .map { DocumentSourceEntity.from(it) }
 
         if (includeDetached) rows else rows.filter { it.status != DocumentSourceStatus.Detached }
     }
@@ -397,7 +399,7 @@ class DocumentSourceRepository {
     suspend fun selectPreferredSource(
         tenantId: TenantId,
         documentId: DocumentId
-    ): DocumentSourceSummary? {
+    ): DocumentSourceEntity? {
         val sources = listByDocument(tenantId, documentId, includeDetached = false)
         return selectPreferredSource(sources)
     }
@@ -409,7 +411,7 @@ class DocumentSourceRepository {
     suspend fun selectPreferredSourcesByDocumentIds(
         tenantId: TenantId,
         documentIds: List<DocumentId>
-    ): Map<DocumentId, DocumentSourceSummary> {
+    ): Map<DocumentId, DocumentSourceEntity> {
         if (documentIds.isEmpty()) return emptyMap()
         return newSuspendedTransaction {
             val tenantUuid = UUID.fromString(tenantId.toString())
@@ -427,7 +429,7 @@ class DocumentSourceRepository {
                             (DocumentSourcesTable.documentId inList docUuids) and
                             (DocumentSourcesTable.status eq DocumentSourceStatus.Linked)
                 }
-                .map { it.toSourceSummary() }
+                .map { DocumentSourceEntity.from(it) }
 
             allSources.groupBy { it.documentId }
                 .mapNotNull { (docId, sources) ->
@@ -463,11 +465,11 @@ class DocumentSourceRepository {
     }
 }
 
-fun selectPreferredSource(sources: List<DocumentSourceSummary>): DocumentSourceSummary? {
+fun selectPreferredSource(sources: List<DocumentSourceEntity>): DocumentSourceEntity? {
     return sources
         .filter { it.status == DocumentSourceStatus.Linked }
         .maxWithOrNull(
-            compareBy<DocumentSourceSummary> { it.sourceChannel.trustPriority }
+            compareBy<DocumentSourceEntity> { it.sourceChannel.trustPriority }
                 .thenBy { it.arrivalAt }
         )
 }

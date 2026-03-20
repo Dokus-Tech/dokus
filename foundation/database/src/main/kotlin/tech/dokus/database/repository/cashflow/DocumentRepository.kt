@@ -23,7 +23,7 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.v1.jdbc.update
 import tech.dokus.database.mapper.toDocumentDto
-import tech.dokus.database.mapper.toDraftSummary
+import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.contacts.ContactsTable
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
 import tech.dokus.database.tables.documents.DocumentsTable
@@ -64,8 +64,8 @@ import kotlin.uuid.toKotlinUuid
  */
 data class DocumentWithDraftAndIngestion(
     val document: DocumentDto,
-    val draft: DraftSummary?,
-    val latestIngestion: IngestionRunSummary?
+    val draft: DraftSummaryEntity?,
+    val latestIngestion: IngestionRunSummaryEntity?
 )
 
 /**
@@ -89,7 +89,7 @@ data class DocumentCreatePayload(
 /**
  * Data class for draft summary.
  */
-data class DraftSummary(
+data class DraftSummaryEntity(
     val documentId: DocumentId,
     val tenantId: TenantId,
     val documentStatus: DocumentStatus,
@@ -115,7 +115,9 @@ data class DraftSummary(
     val lastSuccessfulRunId: IngestionRunId?,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime
-)
+) {
+    companion object
+}
 
 /**
  * Unified repository for document CRUD and draft operations.
@@ -533,7 +535,7 @@ class DocumentRepository : DocumentStatusChecker {
     suspend fun getDraftByDocumentId(
         documentId: DocumentId,
         tenantId: TenantId
-    ): DraftSummary? = newSuspendedTransaction {
+    ): DraftSummaryEntity? = newSuspendedTransaction {
         DocumentsTable
             .join(ContactsTable, JoinType.LEFT, DocumentsTable.linkedContactId, ContactsTable.id) {
                 ContactsTable.tenantId eq DocumentsTable.tenantId
@@ -543,7 +545,7 @@ class DocumentRepository : DocumentStatusChecker {
                 (DocumentsTable.id eq UUID.fromString(documentId.toString())) and
                     (DocumentsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }
-            .map { it.toDraftSummary(contactName = it.getOrNull(ContactsTable.name)) }
+            .map { DraftSummaryEntity.from(it, contactName = it.getOrNull(ContactsTable.name)) }
             .singleOrNull()
     }
 
@@ -725,7 +727,7 @@ class DocumentRepository : DocumentStatusChecker {
         documentType: DocumentType? = null,
         page: Int = 0,
         limit: Int = 20
-    ): DocumentListPage<DraftSummary> = newSuspendedTransaction {
+    ): DocumentListPage<DraftSummaryEntity> = newSuspendedTransaction {
         val tenantIdUuid = UUID.fromString(tenantId.toString())
 
         val baseQuery = DocumentsTable.selectAll()
@@ -745,7 +747,7 @@ class DocumentRepository : DocumentStatusChecker {
             .orderBy(DocumentsTable.updatedAt, SortOrder.DESC)
             .limit(limit)
             .offset((page * limit).toLong())
-            .map { it.toDraftSummary() }
+            .map { DraftSummaryEntity.from(it) }
 
         DocumentListPage(drafts, total)
     }

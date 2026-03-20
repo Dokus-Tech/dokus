@@ -12,7 +12,7 @@ import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.upsert
-import tech.dokus.database.mapper.toBusinessProfileRecord
+import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.business.BusinessProfilesTable
 import tech.dokus.domain.enums.BusinessProfileSubjectType
 import tech.dokus.domain.enums.BusinessProfileVerificationState
@@ -24,7 +24,7 @@ import kotlin.uuid.Uuid
 import kotlin.uuid.toJavaUuid
 import kotlin.uuid.toKotlinUuid
 
-data class BusinessProfileRecord(
+data class BusinessProfileEntity(
     val tenantId: TenantId,
     val subjectType: BusinessProfileSubjectType,
     val subjectId: Uuid,
@@ -44,7 +44,9 @@ data class BusinessProfileRecord(
     val lastErrorMessage: String? = null,
     val createdAt: LocalDateTime? = null,
     val updatedAt: LocalDateTime? = null,
-)
+) {
+    companion object
+}
 
 class BusinessProfileRepository {
 
@@ -52,7 +54,7 @@ class BusinessProfileRepository {
         tenantId: TenantId,
         subjectType: BusinessProfileSubjectType,
         subjectId: Uuid,
-    ): BusinessProfileRecord? = dbQuery {
+    ): BusinessProfileEntity? = dbQuery {
         BusinessProfilesTable
             .selectAll()
             .where {
@@ -61,14 +63,14 @@ class BusinessProfileRepository {
                     (BusinessProfilesTable.subjectId eq subjectId.toJavaUuid())
             }
             .singleOrNull()
-            ?.toBusinessProfileRecord(tenantId)
+            ?.let { BusinessProfileEntity.from(it, tenantId) }
     }
 
     suspend fun getBySubjects(
         tenantId: TenantId,
         subjectType: BusinessProfileSubjectType,
         subjectIds: List<Uuid>,
-    ): Map<Uuid, BusinessProfileRecord> = dbQuery {
+    ): Map<Uuid, BusinessProfileEntity> = dbQuery {
         if (subjectIds.isEmpty()) return@dbQuery emptyMap()
         val subjectJavaIds = subjectIds.map { it.toJavaUuid() }
         BusinessProfilesTable
@@ -79,7 +81,7 @@ class BusinessProfileRepository {
                     (BusinessProfilesTable.subjectId inList subjectJavaIds)
             }
             .associate { row ->
-                row[BusinessProfilesTable.subjectId].toKotlinUuid() to row.toBusinessProfileRecord(tenantId)
+                row[BusinessProfilesTable.subjectId].toKotlinUuid() to BusinessProfileEntity.from(row, tenantId)
             }
     }
 
@@ -97,7 +99,7 @@ class BusinessProfileRepository {
             ?.get(BusinessProfilesTable.logoStorageKey)
     }
 
-    suspend fun upsert(record: BusinessProfileRecord): Unit = dbQuery {
+    suspend fun upsert(record: BusinessProfileEntity): Unit = dbQuery {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         val tenantUuid = record.tenantId.value.toJavaUuid()
         val subjectUuid = record.subjectId.toJavaUuid()
