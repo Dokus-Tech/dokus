@@ -1,7 +1,6 @@
 package tech.dokus.database.repository.cashflow
 
 import kotlinx.datetime.Clock
-import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.toStdlibInstant
@@ -28,7 +27,6 @@ import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.contacts.ContactsTable
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
 import tech.dokus.database.tables.documents.DocumentsTable
-import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentListFilter
 import tech.dokus.domain.enums.DocumentPurposeSource
 import tech.dokus.domain.enums.DocumentRejectReason
@@ -49,7 +47,6 @@ import tech.dokus.domain.model.contact.CounterpartyInfo
 import tech.dokus.domain.model.contact.CounterpartySnapshotDto
 import tech.dokus.domain.model.contact.MatchEvidenceDto
 import tech.dokus.domain.model.contact.SuggestedContactDto
-import tech.dokus.domain.model.contact.isUnresolved
 import tech.dokus.domain.model.toDirection
 import tech.dokus.domain.model.toDocumentType
 import tech.dokus.domain.model.toSortDate
