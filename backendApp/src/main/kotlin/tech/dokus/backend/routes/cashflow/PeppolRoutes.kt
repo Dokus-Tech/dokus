@@ -174,7 +174,7 @@ internal fun Route.peppolRoutes() {
             val invoiceId = InvoiceId(Uuid.parse(invoiceIdStr))
 
             // Fetch invoice
-            val invoice = invoiceService.getInvoice(invoiceId, tenantId)
+            val invoice = invoiceService.getInvoiceEntity(invoiceId, tenantId)
                 .getOrElse { throw DokusException.InternalError("Failed to fetch invoice: ${it.message}") }
                 ?: throw DokusException.NotFound("Invoice not found")
 
@@ -253,7 +253,7 @@ internal fun Route.peppolRoutes() {
             val invoiceId = InvoiceId(Uuid.parse(invoiceIdStr))
 
             // Fetch invoice
-            val invoice = invoiceService.getInvoice(invoiceId, tenantId)
+            val invoice = invoiceService.getInvoiceEntity(invoiceId, tenantId)
                 .getOrElse { throw DokusException.InternalError("Failed to fetch invoice: ${it.message}") }
                 ?: throw DokusException.NotFound("Invoice not found")
 

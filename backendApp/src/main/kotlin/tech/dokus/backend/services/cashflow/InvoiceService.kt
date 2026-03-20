@@ -2,17 +2,19 @@ package tech.dokus.backend.services.cashflow
 
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
+import tech.dokus.backend.mappers.from
+import tech.dokus.database.entity.InvoiceEntity
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.InvoiceStatus
-import tech.dokus.database.entity.InvoiceEntity
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.CreateInvoiceRequest
+import tech.dokus.domain.model.DocDto
 import tech.dokus.domain.model.RecordPaymentRequest
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.foundation.backend.utils.loggerFor
@@ -31,34 +33,27 @@ class InvoiceService(
 ) {
     private val logger = loggerFor()
 
-    /**
-     * Create a new invoice for a tenant.
-     */
     suspend fun createInvoice(
         tenantId: TenantId,
         request: CreateInvoiceRequest
-    ): Result<InvoiceEntity> {
+    ): Result<DocDto.Invoice.Confirmed> {
         logger.info("Creating invoice for tenant: $tenantId, contact: ${request.contactId}")
         return invoiceRepository.createInvoice(tenantId, request)
+            .map { DocDto.Invoice.Confirmed.from(it) }
             .onSuccess { logger.info("Invoice created: ${it.id}") }
             .onFailure { logger.error("Failed to create invoice for tenant: $tenantId", it) }
     }
 
-    /**
-     * Get an invoice by ID.
-     */
     suspend fun getInvoice(
         invoiceId: InvoiceId,
         tenantId: TenantId
-    ): Result<InvoiceEntity?> {
+    ): Result<DocDto.Invoice.Confirmed?> {
         logger.debug("Fetching invoice: {} for tenant: {}", invoiceId, tenantId)
         return invoiceRepository.getInvoice(invoiceId, tenantId)
+            .map { it?.let { entity -> DocDto.Invoice.Confirmed.from(entity) } }
             .onFailure { logger.error("Failed to fetch invoice: $invoiceId", it) }
     }
 
-    /**
-     * List invoices with optional filters.
-     */
     suspend fun listInvoices(
         tenantId: TenantId,
         status: InvoiceStatus? = null,
@@ -68,13 +63,10 @@ class InvoiceService(
         toDate: LocalDate? = null,
         limit: Int = 50,
         offset: Int = 0
-    ): Result<PaginatedResponse<InvoiceEntity>> {
+    ): Result<PaginatedResponse<DocDto.Invoice.Confirmed>> {
         logger.debug(
             "Listing invoices for tenant: {} (status={}, limit={}, offset={})",
-            tenantId,
-            status,
-            limit,
-            offset
+            tenantId, status, limit, offset
         )
         return invoiceRepository.listInvoices(
             tenantId = tenantId,
@@ -86,6 +78,14 @@ class InvoiceService(
             limit = limit,
             offset = offset
         )
+            .map { page ->
+                PaginatedResponse(
+                    items = page.items.map { DocDto.Invoice.Confirmed.from(it) },
+                    total = page.total,
+                    limit = page.limit,
+                    offset = page.offset
+                )
+            }
             .onSuccess { logger.debug("Retrieved ${it.items.size} invoices (total=${it.total})") }
             .onFailure { logger.error("Failed to list invoices for tenant: $tenantId", it) }
     }
@@ -93,41 +93,46 @@ class InvoiceService(
     suspend fun getLatestInvoiceForContact(
         tenantId: TenantId,
         contactId: ContactId
-    ): Result<InvoiceEntity?> {
+    ): Result<DocDto.Invoice.Confirmed?> {
         return invoiceRepository.getLatestInvoiceForContact(tenantId, contactId)
+            .map { it?.let { entity -> DocDto.Invoice.Confirmed.from(entity) } }
             .onFailure { logger.error("Failed to get latest invoice for contact: $contactId", it) }
     }
 
-    /**
-     * List overdue invoices for a tenant.
-     */
     suspend fun listOverdueInvoices(
         tenantId: TenantId,
         direction: DocumentDirection = DocumentDirection.Outbound
-    ): Result<List<InvoiceEntity>> {
+    ): Result<List<DocDto.Invoice.Confirmed>> {
         logger.debug("Listing overdue invoices for tenant: {}", tenantId)
         return invoiceRepository.listOverdueInvoices(tenantId, direction)
+            .map { list -> list.map { DocDto.Invoice.Confirmed.from(it) } }
             .onSuccess { logger.debug("Retrieved ${it.size} overdue invoices") }
             .onFailure { logger.error("Failed to list overdue invoices for tenant: $tenantId", it) }
     }
 
-    /**
-     * Update invoice details.
-     */
     suspend fun updateInvoice(
         invoiceId: InvoiceId,
         tenantId: TenantId,
         request: CreateInvoiceRequest
-    ): Result<InvoiceEntity> {
+    ): Result<DocDto.Invoice.Confirmed> {
         logger.info("Updating invoice: $invoiceId for tenant: $tenantId")
         return invoiceRepository.updateInvoice(invoiceId, tenantId, request)
+            .map { DocDto.Invoice.Confirmed.from(it) }
             .onSuccess { logger.info("Invoice updated: $invoiceId") }
             .onFailure { logger.error("Failed to update invoice: $invoiceId", it) }
     }
 
     /**
-     * Update invoice status.
+     * Get raw invoice entity — for internal use by services that need entity fields
+     * (e.g., PeppolService for UBL generation).
      */
+    internal suspend fun getInvoiceEntity(
+        invoiceId: InvoiceId,
+        tenantId: TenantId
+    ): Result<InvoiceEntity?> {
+        return invoiceRepository.getInvoice(invoiceId, tenantId)
+    }
+
     suspend fun updateInvoiceStatus(
         invoiceId: InvoiceId,
         tenantId: TenantId,
@@ -139,9 +144,6 @@ class InvoiceService(
             .onFailure { logger.error("Failed to update invoice status: $invoiceId", it) }
     }
 
-    /**
-     * Delete an invoice.
-     */
     suspend fun deleteInvoice(
         invoiceId: InvoiceId,
         tenantId: TenantId
@@ -152,9 +154,6 @@ class InvoiceService(
             .onFailure { logger.error("Failed to delete invoice: $invoiceId", it) }
     }
 
-    /**
-     * Check if an invoice exists.
-     */
     suspend fun exists(
         invoiceId: InvoiceId,
         tenantId: TenantId
@@ -162,9 +161,6 @@ class InvoiceService(
         return invoiceRepository.exists(invoiceId, tenantId)
     }
 
-    /**
-     * Record a payment for an invoice and synchronize its cashflow entry (if present).
-     */
     suspend fun recordPayment(
         invoiceId: InvoiceId,
         tenantId: TenantId,
@@ -193,9 +189,7 @@ class InvoiceService(
                 request.paymentDate.year,
                 request.paymentDate.monthNumber,
                 request.paymentDate.dayOfMonth,
-                12,
-                0,
-                0
+                12, 0, 0
             )
         } else {
             entry.paidAt

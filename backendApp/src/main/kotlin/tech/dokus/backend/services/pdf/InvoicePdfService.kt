@@ -6,7 +6,7 @@ import org.apache.pdfbox.pdmodel.PDPageContentStream
 import org.apache.pdfbox.pdmodel.common.PDRectangle
 import org.apache.pdfbox.pdmodel.font.PDType1Font
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts
-import tech.dokus.database.entity.InvoiceEntity
+import tech.dokus.domain.model.DocDto
 import tech.dokus.foundation.backend.storage.DocumentStorageService
 import tech.dokus.foundation.backend.storage.UploadResult
 import tech.dokus.foundation.backend.utils.loggerFor
@@ -26,7 +26,7 @@ class InvoicePdfService(
     private val logger = loggerFor()
 
     suspend fun generateAndUploadPdf(
-        invoice: InvoiceEntity,
+        invoice: DocDto.Invoice.Confirmed,
         contactDisplayName: String
     ): Result<UploadResult> = runCatching {
         val bytes = renderPdf(invoice, contactDisplayName)
@@ -42,7 +42,7 @@ class InvoicePdfService(
     }
 
     private fun renderPdf(
-        invoice: InvoiceEntity,
+        invoice: DocDto.Invoice.Confirmed,
         contactDisplayName: String
     ): ByteArray {
         PDDocument().use { document ->
@@ -56,11 +56,8 @@ class InvoicePdfService(
             writer.writeLine(bodyFont, PdfBodySize, "Due date: ${invoice.dueDate}")
             writer.writeLine(bodyFont, PdfBodySize, "Bill to: $contactDisplayName")
 
-            invoice.senderIban?.let {
-                writer.writeLine(bodyFont, PdfBodySize, "Sender IBAN: ${it.value}")
-            }
-            invoice.senderBic?.let {
-                writer.writeLine(bodyFont, PdfBodySize, "Sender BIC: ${it.value}")
+            invoice.iban?.let {
+                writer.writeLine(bodyFont, PdfBodySize, "IBAN: ${it.value}")
             }
             invoice.structuredCommunication?.let {
                 writer.writeLine(bodyFont, PdfBodySize, "Structured ref: ${it.value}")
@@ -69,18 +66,18 @@ class InvoicePdfService(
             writer.addSpacing()
             writer.writeLine(headingFont, 12f, "Line items")
 
-            if (invoice.items.isEmpty()) {
+            if (invoice.lineItems.isEmpty()) {
                 writer.writeLine(bodyFont, PdfBodySize, "No line items")
             } else {
-                invoice.items.forEach { item ->
+                invoice.lineItems.forEach { item ->
                     val row = buildString {
-                        append(item.description.take(42))
+                        append(item.description?.take(42) ?: "-")
                         append(" | qty ")
-                        append(item.quantity)
+                        append(item.quantity ?: "-")
                         append(" | unit ")
-                        append(item.unitPrice)
+                        append(item.unitPrice ?: "-")
                         append(" | total ")
-                        append(item.lineTotal)
+                        append(item.netAmount ?: "-")
                     }
                     writer.writeLine(bodyFont, PdfBodySize, row)
                 }

@@ -1,6 +1,7 @@
 package tech.dokus.backend.services.cashflow
 
 import kotlinx.datetime.LocalDate
+import tech.dokus.backend.mappers.from
 import tech.dokus.database.entity.CreditNoteEntity
 import tech.dokus.database.mapper.from
 import tech.dokus.database.repository.cashflow.CreditNoteRepository
@@ -15,6 +16,7 @@ import tech.dokus.domain.ids.CreditNoteId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.CreateCreditNoteRequest
+import tech.dokus.domain.model.DocDto
 import tech.dokus.domain.model.RecordRefundRequest
 import tech.dokus.domain.model.RefundClaimDto
 import tech.dokus.domain.model.common.PaginatedResponse
@@ -46,9 +48,10 @@ class CreditNoteService(
     suspend fun createCreditNote(
         tenantId: TenantId,
         request: CreateCreditNoteRequest
-    ): Result<CreditNoteEntity> {
+    ): Result<DocDto.CreditNote.Confirmed> {
         logger.info("Creating credit note: type=${request.creditNoteType}, tenant=$tenantId")
         return creditNoteRepository.createCreditNote(tenantId, request)
+            .map { DocDto.CreditNote.Confirmed.from(it) }
             .onSuccess { logger.info("Credit note created: ${it.id}") }
             .onFailure { logger.error("Failed to create credit note", it) }
     }
@@ -59,8 +62,9 @@ class CreditNoteService(
     suspend fun getCreditNote(
         creditNoteId: CreditNoteId,
         tenantId: TenantId
-    ): Result<CreditNoteEntity?> {
+    ): Result<DocDto.CreditNote.Confirmed?> {
         return creditNoteRepository.getCreditNote(creditNoteId, tenantId)
+            .map { it?.let { entity -> DocDto.CreditNote.Confirmed.from(entity) } }
     }
 
     /**
@@ -72,9 +76,10 @@ class CreditNoteService(
         creditNoteId: CreditNoteId,
         tenantId: TenantId,
         request: CreateCreditNoteRequest
-    ): Result<CreditNoteEntity> {
+    ): Result<DocDto.CreditNote.Confirmed> {
         logger.info("Updating credit note: $creditNoteId, tenant=$tenantId")
         return creditNoteRepository.updateCreditNote(creditNoteId, tenantId, request)
+            .map { DocDto.CreditNote.Confirmed.from(it) }
             .onSuccess { logger.info("Credit note updated: $creditNoteId") }
             .onFailure { logger.error("Failed to update credit note: $creditNoteId", it) }
     }
@@ -92,7 +97,7 @@ class CreditNoteService(
         toDate: LocalDate? = null,
         limit: Int = 50,
         offset: Int = 0,
-    ): Result<PaginatedResponse<CreditNoteEntity>> {
+    ): Result<PaginatedResponse<DocDto.CreditNote.Confirmed>> {
         return creditNoteRepository.listCreditNotes(
             tenantId = tenantId,
             status = status,
@@ -102,7 +107,14 @@ class CreditNoteService(
             toDate = toDate,
             limit = limit,
             offset = offset,
-        )
+        ).map { paginated ->
+            PaginatedResponse(
+                items = paginated.items.map { DocDto.CreditNote.Confirmed.from(it) },
+                total = paginated.total,
+                limit = paginated.limit,
+                offset = paginated.offset
+            )
+        }
     }
 
     /**
