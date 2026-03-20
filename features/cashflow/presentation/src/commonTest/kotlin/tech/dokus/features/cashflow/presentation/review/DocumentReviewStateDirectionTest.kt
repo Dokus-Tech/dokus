@@ -15,7 +15,8 @@ import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.PartyDraftDto
 import tech.dokus.domain.model.contact.ResolvedContact
-import tech.dokus.domain.model.toDocDto
+import tech.dokus.domain.model.DocDto
+import tech.dokus.domain.model.from
 import tech.dokus.foundation.app.state.DokusState
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -104,7 +105,7 @@ class DocumentReviewStateDirectionTest {
             tenantId = tenantId,
             documentStatus = DocumentStatus.NeedsReview,
             documentType = DocumentType.Invoice,
-            content = draftData.toDocDto(),
+            content = DocDto.from(draftData),
             aiDraftSourceRunId = null,
             draftVersion = 0,
             draftEditedAt = null,
@@ -132,8 +133,8 @@ class DocumentReviewStateDirectionTest {
                 ReviewDocumentData(
                     documentId = documentId,
                     documentRecord = record,
-                    draftData = draftData.toDocDto(),
-                    originalData = draftData.toDocDto(),
+                    draftData = DocDto.from(draftData),
+                    originalData = DocDto.from(draftData),
                     previewUrl = null,
                     contactSuggestions = emptyList(),
                 )

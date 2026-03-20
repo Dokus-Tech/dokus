@@ -9,13 +9,13 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toKotlinUuid
 
 @OptIn(ExperimentalUuidApi::class)
-internal fun ResultRow.toDocumentDto(): DocumentDto {
+internal fun DocumentDto.Companion.from(row: ResultRow): DocumentDto {
     return DocumentDto(
-        id = DocumentId.parse(this[DocumentsTable.id].toString()),
-        tenantId = TenantId(this[DocumentsTable.tenantId].toKotlinUuid()),
+        id = DocumentId.parse(row[DocumentsTable.id].toString()),
+        tenantId = TenantId(row[DocumentsTable.tenantId].toKotlinUuid()),
         filename = "", // Resolved from preferred source by service layer
-        uploadedAt = this[DocumentsTable.uploadedAt],
-        sortDate = this[DocumentsTable.sortDate] ?: this[DocumentsTable.uploadedAt].date,
+        uploadedAt = row[DocumentsTable.uploadedAt],
+        sortDate = row[DocumentsTable.sortDate] ?: row[DocumentsTable.uploadedAt].date,
         downloadUrl = null // Generated on-demand by the service layer
     )
 }

@@ -11,12 +11,12 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.DocDto
+import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.RejectDocumentRequest
 import tech.dokus.domain.model.UpdateDraftRequest
 import tech.dokus.domain.model.isContactRequired
-import tech.dokus.domain.model.toDocDto
-import tech.dokus.domain.model.toDraftData
+import tech.dokus.domain.model.from
 import tech.dokus.features.cashflow.usecases.ConfirmDocumentUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentRecordUseCase
 import tech.dokus.features.cashflow.usecases.RejectDocumentUseCase
@@ -71,14 +71,14 @@ internal class DocumentReviewActions(
         inlineDraftSyncJob = launch {
             val result = updateDocumentDraft(
                 syncPayload.documentId,
-                UpdateDraftRequest(extractedData = syncPayload.draftData.toDraftData())
+                UpdateDraftRequest(extractedData = DocumentDraftData.from(syncPayload.draftData))
             )
 
             result.fold(
                 onSuccess = { response ->
                     if (syncPayload.token != inlineDraftSyncToken) return@fold
                     inlineDraftSyncJob = null
-                    val responseContent = response.extractedData.toDocDto()
+                    val responseContent = DocDto.from(response.extractedData)
                     withState {
                         val currentData = documentData ?: return@withState
                         updateState {
@@ -179,7 +179,7 @@ internal class DocumentReviewActions(
                 if (hasUnsavedChanges) {
                     val updateResult = updateDocumentDraft(
                         activeDocumentId,
-                        UpdateDraftRequest(extractedData = updatedData.toDraftData())
+                        UpdateDraftRequest(extractedData = DocumentDraftData.from(updatedData))
                     )
                     val updateFailure = updateResult.exceptionOrNull()
                     if (updateFailure != null) {
@@ -190,7 +190,7 @@ internal class DocumentReviewActions(
                         action(DocumentReviewAction.ShowError(updateFailure.asDokusException))
                         return@launch
                     }
-                    val savedContent = updateResult.getOrThrow().extractedData.toDocDto()
+                    val savedContent = DocDto.from(updateResult.getOrThrow().extractedData)
                     withState {
                         val currentData = documentData ?: return@withState
                         updateState {

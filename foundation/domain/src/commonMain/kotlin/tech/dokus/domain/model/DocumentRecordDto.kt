@@ -58,7 +58,9 @@ data class DocumentIngestionDto(
     val processingOutcome: ProcessingOutcome? = null,
     val rawExtraction: JsonElement? = null,
     val processingTrace: List<DocumentProcessingStepDto>? = null
-)
+) {
+    companion object
+}
 
 /**
  * Document draft DTO - represents the editable extraction state.
@@ -90,7 +92,9 @@ data class DocumentDraftDto(
     val lastSuccessfulRunId: IngestionRunId?,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime
-)
+) {
+    companion object
+}
 
 /**
  * Flattened DTO for document list endpoints.

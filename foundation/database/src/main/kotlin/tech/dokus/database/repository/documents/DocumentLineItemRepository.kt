@@ -38,7 +38,9 @@ data class DocumentLineItemDto(
     val grossAmount: BigDecimal,
     val currency: Currency,
     val isSynthetic: Boolean
-)
+) {
+    companion object
+}
 
 /**
  * Payload for creating a document line item.
@@ -113,7 +115,7 @@ class DocumentLineItemRepository {
                     (DocumentLineItemsTable.documentId eq UUID.fromString(documentId.toString()))
             }
             .orderBy(DocumentLineItemsTable.position, SortOrder.ASC)
-            .map { it.toDto() }
+            .map { DocumentLineItemDto.from(it) }
     }
 
     /**
@@ -129,7 +131,7 @@ class DocumentLineItemRepository {
                 (DocumentLineItemsTable.tenantId eq UUID.fromString(tenantId.toString())) and
                     (DocumentLineItemsTable.id eq UUID.fromString(lineItemId.toString()))
             }
-            .map { it.toDto() }
+            .map { DocumentLineItemDto.from(it) }
             .singleOrNull()
     }
 
@@ -163,21 +165,21 @@ class DocumentLineItemRepository {
         } > 0
     }
 
-    private fun ResultRow.toDto(): DocumentLineItemDto {
+    private fun DocumentLineItemDto.Companion.from(row: ResultRow): DocumentLineItemDto {
         return DocumentLineItemDto(
-            id = DocumentLineItemId.parse(this[DocumentLineItemsTable.id].toString()),
-            tenantId = TenantId(this[DocumentLineItemsTable.tenantId].toKotlinUuid()),
-            documentId = DocumentId.parse(this[DocumentLineItemsTable.documentId].toString()),
-            position = this[DocumentLineItemsTable.position],
-            description = this[DocumentLineItemsTable.description],
-            quantity = this[DocumentLineItemsTable.quantity],
-            unitPrice = this[DocumentLineItemsTable.unitPrice],
-            netAmount = this[DocumentLineItemsTable.netAmount],
-            vatRate = this[DocumentLineItemsTable.vatRate],
-            vatAmount = this[DocumentLineItemsTable.vatAmount],
-            grossAmount = this[DocumentLineItemsTable.grossAmount],
-            currency = this[DocumentLineItemsTable.currency],
-            isSynthetic = this[DocumentLineItemsTable.isSynthetic]
+            id = DocumentLineItemId.parse(row[DocumentLineItemsTable.id].toString()),
+            tenantId = TenantId(row[DocumentLineItemsTable.tenantId].toKotlinUuid()),
+            documentId = DocumentId.parse(row[DocumentLineItemsTable.documentId].toString()),
+            position = row[DocumentLineItemsTable.position],
+            description = row[DocumentLineItemsTable.description],
+            quantity = row[DocumentLineItemsTable.quantity],
+            unitPrice = row[DocumentLineItemsTable.unitPrice],
+            netAmount = row[DocumentLineItemsTable.netAmount],
+            vatRate = row[DocumentLineItemsTable.vatRate],
+            vatAmount = row[DocumentLineItemsTable.vatAmount],
+            grossAmount = row[DocumentLineItemsTable.grossAmount],
+            currency = row[DocumentLineItemsTable.currency],
+            isSynthetic = row[DocumentLineItemsTable.isSynthetic]
         )
     }
 }

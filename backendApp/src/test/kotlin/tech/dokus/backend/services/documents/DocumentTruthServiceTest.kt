@@ -18,7 +18,8 @@ import tech.dokus.database.repository.cashflow.DocumentSourceRepository
 import tech.dokus.database.entity.DocumentSourceEntity
 import tech.dokus.database.entity.DraftSummaryEntity
 import tech.dokus.database.repository.drafts.DraftRepository
-import tech.dokus.domain.model.toDocDto
+import tech.dokus.domain.model.DocDto
+import tech.dokus.domain.model.from
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.ReviewReason
@@ -206,7 +207,7 @@ class DocumentTruthServiceTest {
         } returns draftSummary()
         coEvery {
             draftRepository.getDraftAsDocDto(tenantId, docId2, DocumentType.Invoice)
-        } returns existingDraft.toDocDto()
+        } returns existingDraft.let { DocDto.from(it) }
         coEvery {
             matchReviewRepository.createPending(tenantId, docId2, sourceId1, any(), any(), any())
         } returns reviewId1
@@ -242,7 +243,7 @@ class DocumentTruthServiceTest {
         } returns draftSummary()
         coEvery {
             draftRepository.getDraftAsDocDto(tenantId, docId2, DocumentType.Invoice)
-        } returns sharedDraft.toDocDto()
+        } returns sharedDraft.let { DocDto.from(it) }
         coEvery { sourceRepository.countLinkedSources(tenantId, docId2) } returns 2
         coEvery { sourceRepository.countSources(tenantId, docId1, includeDetached = true) } returns 0
 
@@ -315,7 +316,7 @@ class DocumentTruthServiceTest {
         coEvery { documentRepository.getDraftByDocumentId(docId2, tenantId) } returns draftSummary()
         coEvery {
             draftRepository.getDraftAsDocDto(tenantId, docId2, DocumentType.Invoice)
-        } returns simpleInvoiceDraft(invoiceNumber = "INV-2026-002").toDocDto()
+        } returns simpleInvoiceDraft(invoiceNumber = "INV-2026-002").let { DocDto.from(it) }
         coEvery {
             matchReviewRepository.createPending(tenantId, docId2, sourceId1, any(), any(), any())
         } returns reviewId1

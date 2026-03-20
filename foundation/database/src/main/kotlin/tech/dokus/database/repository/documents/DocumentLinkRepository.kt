@@ -31,7 +31,9 @@ data class DocumentLinkDto(
     val externalReference: String?,
     val linkType: DocumentLinkType,
     val createdAt: LocalDateTime
-)
+) {
+    companion object
+}
 
 /**
  * Payload for creating a document link.
@@ -169,7 +171,7 @@ class DocumentLinkRepository {
                 (DocumentLinksTable.tenantId eq UUID.fromString(tenantId.toString())) and
                     (DocumentLinksTable.id eq UUID.fromString(linkId.toString()))
             }
-            .map { it.toDto() }
+            .map { DocumentLinkDto.from(it) }
             .singleOrNull()
     }
 
@@ -188,7 +190,7 @@ class DocumentLinkRepository {
                     (DocumentLinksTable.sourceDocumentId eq UUID.fromString(sourceDocumentId.toString())) and
                     (DocumentLinksTable.linkType eq linkType)
             }
-            .map { it.toDto() }
+            .map { DocumentLinkDto.from(it) }
     }
 
     /**
@@ -205,17 +207,17 @@ class DocumentLinkRepository {
         } > 0
     }
 
-    private fun ResultRow.toDto(): DocumentLinkDto {
+    private fun DocumentLinkDto.Companion.from(row: ResultRow): DocumentLinkDto {
         return DocumentLinkDto(
-            id = DocumentLinkId.parse(this[DocumentLinksTable.id].toString()),
-            tenantId = TenantId(this[DocumentLinksTable.tenantId].toKotlinUuid()),
-            sourceDocumentId = DocumentId.parse(this[DocumentLinksTable.sourceDocumentId].toString()),
-            targetDocumentId = this[DocumentLinksTable.targetDocumentId]?.let {
+            id = DocumentLinkId.parse(row[DocumentLinksTable.id].toString()),
+            tenantId = TenantId(row[DocumentLinksTable.tenantId].toKotlinUuid()),
+            sourceDocumentId = DocumentId.parse(row[DocumentLinksTable.sourceDocumentId].toString()),
+            targetDocumentId = row[DocumentLinksTable.targetDocumentId]?.let {
                 DocumentId.parse(it.toString())
             },
-            externalReference = this[DocumentLinksTable.externalReference],
-            linkType = this[DocumentLinksTable.linkType],
-            createdAt = this[DocumentLinksTable.createdAt]
+            externalReference = row[DocumentLinksTable.externalReference],
+            linkType = row[DocumentLinksTable.linkType],
+            createdAt = row[DocumentLinksTable.createdAt]
         )
     }
 }

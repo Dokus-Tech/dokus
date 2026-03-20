@@ -2,8 +2,6 @@ package tech.dokus.backend.services.documents
 
 import tech.dokus.backend.routes.cashflow.documents.ConfirmedBankStatement
 import tech.dokus.backend.routes.cashflow.documents.confirmedEntityToDocDto
-import tech.dokus.backend.routes.cashflow.documents.toDto
-import tech.dokus.backend.routes.cashflow.documents.toSummaryDto
 import tech.dokus.backend.routes.cashflow.documents.updateDraftCounterparty
 import tech.dokus.backend.services.cashflow.CashflowProjectionReconciliationService
 import tech.dokus.backend.services.cashflow.InvoiceBankAutomationService
@@ -45,7 +43,8 @@ import tech.dokus.domain.model.contact.CounterpartyInfo
 import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.model.contact.isLinked
 import tech.dokus.domain.model.contact.isUnresolved
-import tech.dokus.domain.model.toDraftData
+import tech.dokus.domain.model.DocumentDraftData
+import tech.dokus.domain.model.from
 import tech.dokus.domain.model.toDocumentType
 import tech.dokus.foundation.backend.storage.DocumentStorageService
 import tech.dokus.foundation.backend.utils.loggerFor
@@ -232,7 +231,7 @@ internal class DocumentLifecycleService(
         }
 
         val docDto = draftRepository.getDraftAsDocDto(tenantId, documentId, draftType)
-        val draftData = docDto?.toDraftData()
+        val draftData = docDto?.let { DocumentDraftData.from(it) }
             ?: throw DokusException.BadRequest("No draft data available for confirmation")
 
         // Check if entity already exists (re-confirm path)
@@ -347,7 +346,7 @@ internal class DocumentLifecycleService(
 
         // Convert confirmed entity -> DocDto -> DraftData
         val docDto = confirmedEntityToDocDto(confirmedEntity)
-        val draftData = docDto.toDraftData()
+        val draftData = DocumentDraftData.from(docDto)
 
         // Save to draft table
         draftRepository.saveDraftFromExtraction(tenantId, documentId, draftData)

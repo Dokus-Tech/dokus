@@ -1,12 +1,11 @@
 package tech.dokus.backend.services.documents
 
+import tech.dokus.backend.mappers.from
 import tech.dokus.backend.routes.cashflow.documents.addDownloadUrl
 import tech.dokus.backend.routes.cashflow.documents.confirmedEntityToDocDto
 import tech.dokus.backend.routes.cashflow.documents.findConfirmedEntity
 import tech.dokus.database.repository.banking.BankStatementRepository
 import tech.dokus.database.repository.banking.BankTransactionRepository
-import tech.dokus.backend.routes.cashflow.documents.toDto
-import tech.dokus.backend.routes.cashflow.documents.toSummaryDto
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.database.repository.cashflow.CreditNoteRepository
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
@@ -20,7 +19,11 @@ import tech.dokus.database.repository.drafts.DraftRepository
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.DocumentDetailDto
+import tech.dokus.domain.model.DocumentIngestionDto
+import tech.dokus.domain.model.DocumentMatchReviewSummaryDto
+import tech.dokus.domain.model.DocumentSourceDto
 import tech.dokus.domain.model.contact.ContactSuggestionDto
 import tech.dokus.domain.model.contact.CounterpartyInfo
 import tech.dokus.domain.model.contact.CounterpartySnapshotDto
@@ -96,14 +99,17 @@ internal class DocumentRecordLoader(
 
         return DocumentDetailDto(
             document = documentWithUrl,
-            draft = draft?.toDto(resolvedContact, contactSuggestions, content),
-            latestIngestion = latestIngestion?.toDto(
-                includeRawExtraction = true,
-                includeTrace = true,
-            ),
+            draft = draft?.let { DocumentDraftDto.from(it, resolvedContact, contactSuggestions, content) },
+            latestIngestion = latestIngestion?.let {
+                DocumentIngestionDto.from(
+                    it,
+                    includeRawExtraction = true,
+                    includeTrace = true,
+                )
+            },
             cashflowEntryId = cashflowEntryId,
-            pendingMatchReview = pendingReview?.toSummaryDto(),
-            sources = sources.map { it.toDto() },
+            pendingMatchReview = pendingReview?.let { DocumentMatchReviewSummaryDto.from(it) },
+            sources = sources.map { DocumentSourceDto.from(it) },
         )
     }
 

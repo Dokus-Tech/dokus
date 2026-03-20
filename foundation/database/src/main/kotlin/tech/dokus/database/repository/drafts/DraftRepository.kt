@@ -122,7 +122,7 @@ class DraftRepository {
 
         val items = itemRows.map { InvoiceDraftItemEntity.from(it) }
         val entity = InvoiceDraftEntity.from(row, items)
-        entity.toDocDto()
+        DocDto.Invoice.Draft.from(entity)
     }
 
     private suspend fun loadCreditNoteDraft(
@@ -141,7 +141,7 @@ class DraftRepository {
 
         val items = itemRows.map { CreditNoteDraftItemEntity.from(it) }
         val entity = CreditNoteDraftEntity.from(row, items)
-        entity.toDocDto()
+        DocDto.CreditNote.Draft.from(entity)
     }
 
     private suspend fun loadReceiptDraft(
@@ -154,7 +154,7 @@ class DraftRepository {
         }.singleOrNull() ?: return@dbQuery null
 
         val entity = ReceiptDraftEntity.from(row)
-        entity.toDocDto()
+        DocDto.Receipt.Draft.from(entity)
     }
 
     private suspend fun loadBankStatementDraft(
@@ -167,7 +167,7 @@ class DraftRepository {
         }.singleOrNull() ?: return@dbQuery null
 
         val entity = BankStatementDraftEntity.from(row)
-        entity.toDocDto()
+        DocDto.BankStatement.Draft.from(entity)
     }
 
     // ==========================================================================
@@ -507,79 +507,79 @@ class DraftRepository {
 // Entity -> DocDto conversions
 // =============================================================================
 
-private fun InvoiceDraftEntity.toDocDto(): DocDto.Invoice.Draft = DocDto.Invoice.Draft(
-    direction = direction,
-    invoiceNumber = invoiceNumber,
-    issueDate = issueDate,
-    dueDate = dueDate,
-    currency = currency,
-    subtotalAmount = subtotalAmount,
-    vatAmount = vatAmount,
-    totalAmount = totalAmount,
-    lineItems = items.map { it.toDocLineItem() },
-    iban = senderIban,
-    notes = notes,
+private fun DocDto.Invoice.Draft.Companion.from(entity: InvoiceDraftEntity): DocDto.Invoice.Draft = DocDto.Invoice.Draft(
+    direction = entity.direction,
+    invoiceNumber = entity.invoiceNumber,
+    issueDate = entity.issueDate,
+    dueDate = entity.dueDate,
+    currency = entity.currency,
+    subtotalAmount = entity.subtotalAmount,
+    vatAmount = entity.vatAmount,
+    totalAmount = entity.totalAmount,
+    lineItems = entity.items.map { DocLineItem.from(it) },
+    iban = entity.senderIban,
+    notes = entity.notes,
     counterparty = tech.dokus.domain.model.PartyDraftDto(), // counterparty resolved separately via ResolvedContact
 )
 
-private fun InvoiceDraftItemEntity.toDocLineItem(): tech.dokus.domain.model.DocLineItem =
-    tech.dokus.domain.model.DocLineItem(
-        description = description,
-        quantity = quantity?.let { tech.dokus.domain.Quantity(it) },
-        unitPrice = unitPrice,
-        vatRate = vatRate,
-        netAmount = lineTotal,
-        vatAmount = vatAmount,
-        sortOrder = sortOrder,
+private fun DocLineItem.Companion.from(entity: InvoiceDraftItemEntity): DocLineItem =
+    DocLineItem(
+        description = entity.description,
+        quantity = entity.quantity?.let { tech.dokus.domain.Quantity(it) },
+        unitPrice = entity.unitPrice,
+        vatRate = entity.vatRate,
+        netAmount = entity.lineTotal,
+        vatAmount = entity.vatAmount,
+        sortOrder = entity.sortOrder,
     )
 
-private fun CreditNoteDraftEntity.toDocDto(): DocDto.CreditNote.Draft = DocDto.CreditNote.Draft(
-    direction = direction,
-    creditNoteNumber = creditNoteNumber,
-    issueDate = issueDate,
-    currency = currency,
-    subtotalAmount = subtotalAmount,
-    vatAmount = vatAmount,
-    totalAmount = totalAmount,
-    lineItems = items.map { it.toDocLineItem() },
-    reason = reason,
-    notes = notes,
-    originalInvoiceNumber = originalInvoiceNumber,
+private fun DocDto.CreditNote.Draft.Companion.from(entity: CreditNoteDraftEntity): DocDto.CreditNote.Draft = DocDto.CreditNote.Draft(
+    direction = entity.direction,
+    creditNoteNumber = entity.creditNoteNumber,
+    issueDate = entity.issueDate,
+    currency = entity.currency,
+    subtotalAmount = entity.subtotalAmount,
+    vatAmount = entity.vatAmount,
+    totalAmount = entity.totalAmount,
+    lineItems = entity.items.map { DocLineItem.from(it) },
+    reason = entity.reason,
+    notes = entity.notes,
+    originalInvoiceNumber = entity.originalInvoiceNumber,
     counterparty = tech.dokus.domain.model.PartyDraftDto(),
 )
 
-private fun CreditNoteDraftItemEntity.toDocLineItem(): tech.dokus.domain.model.DocLineItem =
-    tech.dokus.domain.model.DocLineItem(
-        description = description,
-        quantity = quantity?.let { tech.dokus.domain.Quantity(it) },
-        unitPrice = unitPrice,
-        vatRate = vatRate,
-        netAmount = lineTotal,
-        vatAmount = vatAmount,
-        sortOrder = sortOrder,
+private fun DocLineItem.Companion.from(entity: CreditNoteDraftItemEntity): DocLineItem =
+    DocLineItem(
+        description = entity.description,
+        quantity = entity.quantity?.let { tech.dokus.domain.Quantity(it) },
+        unitPrice = entity.unitPrice,
+        vatRate = entity.vatRate,
+        netAmount = entity.lineTotal,
+        vatAmount = entity.vatAmount,
+        sortOrder = entity.sortOrder,
     )
 
-private fun ReceiptDraftEntity.toDocDto(): DocDto.Receipt.Draft = DocDto.Receipt.Draft(
-    direction = direction,
-    merchantName = merchantName,
-    merchantVat = merchantVat,
-    date = date,
-    currency = currency,
-    totalAmount = totalAmount,
-    vatAmount = vatAmount,
-    receiptNumber = receiptNumber,
-    paymentMethod = paymentMethod,
-    notes = notes,
+private fun DocDto.Receipt.Draft.Companion.from(entity: ReceiptDraftEntity): DocDto.Receipt.Draft = DocDto.Receipt.Draft(
+    direction = entity.direction,
+    merchantName = entity.merchantName,
+    merchantVat = entity.merchantVat,
+    date = entity.date,
+    currency = entity.currency,
+    totalAmount = entity.totalAmount,
+    vatAmount = entity.vatAmount,
+    receiptNumber = entity.receiptNumber,
+    paymentMethod = entity.paymentMethod,
+    notes = entity.notes,
 )
 
-private fun BankStatementDraftEntity.toDocDto(): DocDto.BankStatement.Draft = DocDto.BankStatement.Draft(
-    direction = direction,
-    accountIban = accountIban,
-    openingBalance = openingBalance,
-    closingBalance = closingBalance,
-    periodStart = periodStart,
-    periodEnd = periodEnd,
-    notes = notes,
+private fun DocDto.BankStatement.Draft.Companion.from(entity: BankStatementDraftEntity): DocDto.BankStatement.Draft = DocDto.BankStatement.Draft(
+    direction = entity.direction,
+    accountIban = entity.accountIban,
+    openingBalance = entity.openingBalance,
+    closingBalance = entity.closingBalance,
+    periodStart = entity.periodStart,
+    periodEnd = entity.periodEnd,
+    notes = entity.notes,
 )
 
 // =============================================================================

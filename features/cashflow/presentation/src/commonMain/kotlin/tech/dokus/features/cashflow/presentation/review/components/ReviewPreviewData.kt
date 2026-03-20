@@ -5,56 +5,56 @@ package tech.dokus.features.cashflow.presentation.review.components
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import tech.dokus.domain.Money
+import tech.dokus.domain.enums.BankTransactionStatus
 import tech.dokus.domain.enums.CashflowDirection
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.enums.Currency
-import tech.dokus.domain.enums.AutoMatchStatus
 import tech.dokus.domain.enums.DocumentDirection
-import tech.dokus.domain.enums.ReviewReason
 import tech.dokus.domain.enums.DocumentMatchReviewStatus
-import tech.dokus.domain.enums.SourceMatchKind
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentSourceStatus
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
-import tech.dokus.domain.enums.BankTransactionStatus
+import tech.dokus.domain.enums.ReviewReason
+import tech.dokus.domain.enums.SourceMatchKind
+import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.ids.CashflowEntryId
-import tech.dokus.domain.ids.Iban
+import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentBlobId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentMatchReviewId
 import tech.dokus.domain.ids.DocumentSourceId
-import tech.dokus.domain.ids.BankTransactionId
+import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.PaymentId
-import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.ids.ContactId
-import tech.dokus.domain.model.AutoPaymentStatus
-import tech.dokus.domain.model.CashflowContactRefDto
-import tech.dokus.domain.model.CashflowEntryDto
-import tech.dokus.domain.model.DocumentDraftDto
-import tech.dokus.domain.model.DocumentDto
-import tech.dokus.domain.model.BankTransactionDto
-import tech.dokus.domain.model.TransactionCommunicationDto
 import tech.dokus.domain.ids.StructuredCommunication
-import tech.dokus.domain.model.Dpi
-import tech.dokus.domain.model.DocumentPagePreviewDto
-import tech.dokus.domain.model.DocumentDetailDto
-import tech.dokus.domain.model.DocumentSourceDto
-import tech.dokus.domain.model.DocumentMatchReviewSummaryDto
-import tech.dokus.domain.model.FinancialLineItemDto
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.AutoPaymentStatus
 import tech.dokus.domain.model.BankStatementDraftData
 import tech.dokus.domain.model.BankStatementTransactionDraftRowDto
+import tech.dokus.domain.model.BankTransactionDto
+import tech.dokus.domain.model.CashflowContactRefDto
+import tech.dokus.domain.model.CashflowEntryDto
 import tech.dokus.domain.model.CreditNoteDraftData
+import tech.dokus.domain.model.DocDto
+import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.DocumentDraftData
+import tech.dokus.domain.model.DocumentDraftDto
+import tech.dokus.domain.model.DocumentDto
+import tech.dokus.domain.model.DocumentMatchReviewSummaryDto
+import tech.dokus.domain.model.DocumentPagePreviewDto
+import tech.dokus.domain.model.DocumentSourceDto
+import tech.dokus.domain.model.Dpi
+import tech.dokus.domain.model.FinancialLineItemDto
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.PartyDraftDto
 import tech.dokus.domain.model.ReceiptDraftData
-import tech.dokus.domain.model.toDocDto
-import tech.dokus.domain.model.toDocumentType
-import tech.dokus.domain.model.toEmptyDraftData
+import tech.dokus.domain.model.TransactionCommunicationDto
 import tech.dokus.domain.model.contact.CounterpartySnapshotDto
 import tech.dokus.domain.model.contact.ResolvedContact
+import tech.dokus.domain.model.from
+import tech.dokus.domain.model.toDocumentType
+import tech.dokus.domain.model.toEmptyDraftData
 import tech.dokus.features.cashflow.presentation.review.DocumentPreviewState
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.PaymentSheetState
@@ -113,7 +113,7 @@ internal fun previewReviewContentState(
         documentStatus = documentStatus,
         documentType = DocumentType.Invoice,
         direction = DocumentDirection.Inbound,
-        content = draftData.toDocDto(),
+        content = DocDto.from(draftData),
         aiDraftSourceRunId = null,
         draftVersion = 1,
         draftEditedAt = null,
@@ -214,7 +214,7 @@ internal fun previewReviewContentState(
         ),
     )
 
-    val docDtoContent = draftData.toDocDto()
+    val docDtoContent = DocDto.from(draftData)
     return DocumentReviewState(
         document = DokusState.success(
             ReviewDocumentData(
@@ -318,7 +318,7 @@ internal fun previewStateForDocumentType(
         resolvedType == DocumentType.CreditNote ||
         resolvedType == DocumentType.Receipt
 
-    val docDtoContent = draftData.toDocDto()
+    val docDtoContent = DocDto.from(draftData)
     val draft = DocumentDraftDto(
         documentId = documentId,
         tenantId = tenantId,

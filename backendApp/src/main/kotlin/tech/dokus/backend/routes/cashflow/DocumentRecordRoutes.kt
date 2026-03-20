@@ -22,8 +22,10 @@ import kotlinx.coroutines.flow.onSubscription
 import kotlinx.coroutines.launch
 import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
-import tech.dokus.backend.routes.cashflow.documents.toDto
-import tech.dokus.backend.routes.cashflow.documents.toSummaryDto
+import tech.dokus.backend.mappers.from
+import tech.dokus.domain.model.DocumentDraftDto
+import tech.dokus.domain.model.DocumentIngestionDto
+import tech.dokus.domain.model.DocumentSourceDto
 import tech.dokus.backend.security.requireTenantId
 import tech.dokus.backend.services.documents.DocumentIntakeServiceResult
 import tech.dokus.backend.services.documents.DocumentLifecycleService
@@ -362,7 +364,7 @@ internal fun Route.documentRecordRoutes() {
             }
 
             val sources = truthService.listSources(tenantId, documentId)
-            call.respond(HttpStatusCode.OK, sources.map { it.toDto() })
+            call.respond(HttpStatusCode.OK, sources.map { DocumentSourceDto.from(it) })
         }
 
         /**
@@ -418,7 +420,7 @@ internal fun Route.documentRecordRoutes() {
             val draft = lifecycleService.getDraft(tenantId, documentId)
                 ?: throw DokusException.NotFound("Draft not found for document")
 
-            call.respond(HttpStatusCode.OK, draft.toDto())
+            call.respond(HttpStatusCode.OK, DocumentDraftDto.from(draft))
         }
 
         /**
@@ -446,7 +448,7 @@ internal fun Route.documentRecordRoutes() {
             val tenantId = requireTenantId()
             val documentId = DocumentId.parse(route.parent.id)
             val runs = lifecycleService.getIngestionHistory(tenantId, documentId)
-            call.respond(HttpStatusCode.OK, runs.map { it.toDto(includeRawExtraction = true, includeTrace = true) })
+            call.respond(HttpStatusCode.OK, runs.map { DocumentIngestionDto.from(it, includeRawExtraction = true, includeTrace = true) })
         }
 
         /**

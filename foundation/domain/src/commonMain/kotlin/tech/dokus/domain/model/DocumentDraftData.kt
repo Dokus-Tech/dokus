@@ -18,7 +18,9 @@ import tech.dokus.domain.model.contact.CounterpartySnapshotDto
  * This is deliberately AI-agnostic: no prompt/tool metadata, no token usage.
  */
 @Serializable
-sealed interface DocumentDraftData
+sealed interface DocumentDraftData {
+    companion object
+}
 
 fun DocumentDraftData.toDirection(): DocumentDirection = when (this) {
     is InvoiceDraftData -> direction
@@ -404,7 +406,9 @@ data class BankStatementTransactionDraftRowDto(
     val largeAmountFlag: Boolean = false,
     val excluded: Boolean = false,
     val potentialDuplicate: Boolean = false,
-)
+) {
+    companion object
+}
 
 @Serializable
 @SerialName("bank_statement_draft")

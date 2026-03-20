@@ -4,7 +4,6 @@ package tech.dokus.database.repository.cashflow
 
 import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.Expression
-import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.alias
 import org.jetbrains.exposed.v1.core.and
@@ -24,7 +23,6 @@ import org.jetbrains.exposed.v1.jdbc.Query
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import tech.dokus.database.entity.DraftSummaryEntity
 import tech.dokus.database.entity.IngestionRunSummaryEntity
-import tech.dokus.database.mapper.toDocumentDto
 import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.cashflow.CreditNotesTable
 import tech.dokus.database.tables.cashflow.ExpensesTable
@@ -33,7 +31,6 @@ import tech.dokus.database.tables.contacts.ContactsTable
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
 import tech.dokus.database.tables.documents.DocumentMatchReviewsTable
 import tech.dokus.database.tables.documents.DocumentsTable
-import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentListFilter
 import tech.dokus.domain.enums.DocumentMatchReviewStatus
 import tech.dokus.domain.enums.DocumentStatus
@@ -42,12 +39,8 @@ import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.DocumentDto
-import tech.dokus.domain.model.contact.isUnresolved
-import tech.dokus.domain.utils.json
 import java.util.UUID
-import kotlin.uuid.toKotlinUuid
 
 internal object DocumentListingQuery {
 
@@ -423,7 +416,7 @@ internal object DocumentListingQuery {
                 val docId = DocumentId.parse(row[DocumentsTable.id].toString())
                 val hasDraft = row[DocumentsTable.documentStatus] != null
                 docId to DocumentAndDraft(
-                    document = row.toDocumentDto(),
+                    document = DocumentDto.from(row),
                     draft = if (hasDraft) DraftSummaryEntity.from(row, contactName = row.getOrNull(ContactsTable.name)) else null,
                 )
             }

@@ -35,7 +35,9 @@ data class DocumentSourceDto(
     val contentType: String? = null,
     val sizeBytes: Long? = null,
     val matchType: SourceMatchKind? = null,
-)
+) {
+    companion object
+}
 
 @Serializable
 data class DocumentMatchReviewSummaryDto(
@@ -44,7 +46,9 @@ data class DocumentMatchReviewSummaryDto(
     val reasonType: ReviewReason,
     val status: DocumentMatchReviewStatus,
     val createdAt: LocalDateTime
-)
+) {
+    companion object
+}
 
 @Serializable
 data class DocumentIntakeOutcomeDto(

@@ -24,7 +24,6 @@ import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTrans
 import org.jetbrains.exposed.v1.jdbc.update
 import tech.dokus.database.entity.DraftSummaryEntity
 import tech.dokus.database.entity.IngestionRunSummaryEntity
-import tech.dokus.database.mapper.toDocumentDto
 import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.contacts.ContactsTable
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
@@ -132,7 +131,7 @@ class DocumentRepository(
                     (DocumentsTable.id eq UUID.fromString(documentId.toString())) and
                         (DocumentsTable.tenantId eq UUID.fromString(tenantId.toString()))
                 }
-                .map { it.toDocumentDto() }
+                .map { DocumentDto.from(it) }
                 .singleOrNull()
         }
 
@@ -169,7 +168,7 @@ class DocumentRepository(
             .orderBy(DocumentsTable.uploadedAt, SortOrder.DESC)
             .limit(limit)
             .offset((page * limit).toLong())
-            .map { it.toDocumentDto() }
+            .map { DocumentDto.from(it) }
 
         DocumentListPage(documents, total)
     }

@@ -58,7 +58,7 @@ class NotificationRepository {
 
             NotificationsTable.selectAll()
                 .where { NotificationsTable.id eq newId }
-                .map { it.toDto() }
+                .map { NotificationDto.from(it) }
                 .single()
         }
     }
@@ -93,7 +93,7 @@ class NotificationRepository {
             val items = query
                 .orderBy(NotificationsTable.createdAt to SortOrder.DESC)
                 .limit(limit + offset)
-                .map { it.toDto() }
+                .map { NotificationDto.from(it) }
                 .drop(offset)
 
             PaginatedResponse(
@@ -195,16 +195,16 @@ class NotificationRepository {
         }
     }
 
-    private fun ResultRow.toDto(): NotificationDto = NotificationDto(
-        id = NotificationId.parse(this[NotificationsTable.id].value.toString()),
-        tenantId = TenantId.parse(this[NotificationsTable.tenantId].value.toString()),
-        userId = UserId.parse(this[NotificationsTable.userId].value.toString()),
-        type = this[NotificationsTable.type],
-        title = this[NotificationsTable.title],
-        referenceType = this[NotificationsTable.referenceType],
-        referenceId = this[NotificationsTable.referenceId],
-        isRead = this[NotificationsTable.isRead],
-        createdAt = this[NotificationsTable.createdAt],
-        emailSent = this[NotificationsTable.emailSent]
+    private fun NotificationDto.Companion.from(row: ResultRow): NotificationDto = NotificationDto(
+        id = NotificationId.parse(row[NotificationsTable.id].value.toString()),
+        tenantId = TenantId.parse(row[NotificationsTable.tenantId].value.toString()),
+        userId = UserId.parse(row[NotificationsTable.userId].value.toString()),
+        type = row[NotificationsTable.type],
+        title = row[NotificationsTable.title],
+        referenceType = row[NotificationsTable.referenceType],
+        referenceId = row[NotificationsTable.referenceId],
+        isRead = row[NotificationsTable.isRead],
+        createdAt = row[NotificationsTable.createdAt],
+        emailSent = row[NotificationsTable.emailSent]
     )
 }

@@ -22,7 +22,9 @@ data class NotificationDto(
     val isRead: Boolean,
     val createdAt: LocalDateTime,
     val emailSent: Boolean
-)
+) {
+    companion object
+}
 
 @Serializable
 data class UnreadCountResponse(

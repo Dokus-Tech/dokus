@@ -19,25 +19,25 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.database.entity.PeppolResolutionEntity
 import tech.dokus.domain.model.PeppolTransmissionDto
 
-internal fun ResultRow.toPeppolTransmissionDto(): PeppolTransmissionDto = PeppolTransmissionDto(
-    id = PeppolTransmissionId.parse(this[PeppolTransmissionsTable.id].value.toString()),
-    tenantId = TenantId.parse(this[PeppolTransmissionsTable.tenantId].toString()),
-    direction = this[PeppolTransmissionsTable.direction],
-    documentType = this[PeppolTransmissionsTable.documentType],
-    status = this[PeppolTransmissionsTable.status],
-    invoiceId = this[PeppolTransmissionsTable.invoiceId]?.let { InvoiceId.parse(it.toString()) },
-    externalDocumentId = this[PeppolTransmissionsTable.externalDocumentId],
-    recipientPeppolId = this[PeppolTransmissionsTable.recipientPeppolId]?.let { PeppolId(it) },
-    senderPeppolId = this[PeppolTransmissionsTable.senderPeppolId]?.let { PeppolId(it) },
-    errorMessage = this[PeppolTransmissionsTable.errorMessage],
-    attemptCount = this[PeppolTransmissionsTable.attemptCount],
-    nextRetryAt = this[PeppolTransmissionsTable.nextRetryAt],
-    lastAttemptAt = this[PeppolTransmissionsTable.lastAttemptAt],
-    providerErrorCode = this[PeppolTransmissionsTable.providerErrorCode],
-    providerErrorMessage = this[PeppolTransmissionsTable.providerErrorMessage],
-    transmittedAt = this[PeppolTransmissionsTable.transmittedAt],
-    createdAt = this[PeppolTransmissionsTable.createdAt],
-    updatedAt = this[PeppolTransmissionsTable.updatedAt]
+internal fun PeppolTransmissionDto.Companion.from(row: ResultRow): PeppolTransmissionDto = PeppolTransmissionDto(
+    id = PeppolTransmissionId.parse(row[PeppolTransmissionsTable.id].value.toString()),
+    tenantId = TenantId.parse(row[PeppolTransmissionsTable.tenantId].toString()),
+    direction = row[PeppolTransmissionsTable.direction],
+    documentType = row[PeppolTransmissionsTable.documentType],
+    status = row[PeppolTransmissionsTable.status],
+    invoiceId = row[PeppolTransmissionsTable.invoiceId]?.let { InvoiceId.parse(it.toString()) },
+    externalDocumentId = row[PeppolTransmissionsTable.externalDocumentId],
+    recipientPeppolId = row[PeppolTransmissionsTable.recipientPeppolId]?.let { PeppolId(it) },
+    senderPeppolId = row[PeppolTransmissionsTable.senderPeppolId]?.let { PeppolId(it) },
+    errorMessage = row[PeppolTransmissionsTable.errorMessage],
+    attemptCount = row[PeppolTransmissionsTable.attemptCount],
+    nextRetryAt = row[PeppolTransmissionsTable.nextRetryAt],
+    lastAttemptAt = row[PeppolTransmissionsTable.lastAttemptAt],
+    providerErrorCode = row[PeppolTransmissionsTable.providerErrorCode],
+    providerErrorMessage = row[PeppolTransmissionsTable.providerErrorMessage],
+    transmittedAt = row[PeppolTransmissionsTable.transmittedAt],
+    createdAt = row[PeppolTransmissionsTable.createdAt],
+    updatedAt = row[PeppolTransmissionsTable.updatedAt]
 )
 
 internal fun PeppolTransmissionEntity.Companion.from(row: ResultRow): PeppolTransmissionEntity = PeppolTransmissionEntity(

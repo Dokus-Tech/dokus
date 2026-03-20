@@ -34,7 +34,8 @@ import tech.dokus.domain.model.DocumentSourceDto
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.domain.model.contact.ResolvedContact
-import tech.dokus.domain.model.toDocDto
+import tech.dokus.domain.model.DocDto
+import tech.dokus.domain.model.from
 import tech.dokus.domain.model.toDocumentType
 import tech.dokus.foundation.app.state.DokusState
 import kotlin.test.Test
@@ -213,7 +214,7 @@ class DocumentReviewCanonicalStateTest {
             tenantId = tenantId,
             documentStatus = if (isDocumentConfirmed) DocumentStatus.Confirmed else DocumentStatus.NeedsReview,
             documentType = draftData.toDocumentType(),
-            content = draftData.toDocDto(),
+            content = DocDto.from(draftData),
             aiDraftSourceRunId = null,
             draftVersion = 1,
             draftEditedAt = null,
@@ -257,8 +258,8 @@ class DocumentReviewCanonicalStateTest {
                 ReviewDocumentData(
                     documentId = documentId,
                     documentRecord = record,
-                    draftData = draftData.toDocDto(),
-                    originalData = draftData.toDocDto(),
+                    draftData = DocDto.from(draftData),
+                    originalData = DocDto.from(draftData),
                     previewUrl = null,
                     contactSuggestions = emptyList(),
                 )

@@ -16,7 +16,6 @@ import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
 import tech.dokus.database.entity.PeppolTransmissionEntity
-import tech.dokus.database.mapper.toPeppolTransmissionDto
 import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.peppol.PeppolTransmissionsTable
 import tech.dokus.domain.enums.PeppolDocumentType
@@ -82,7 +81,7 @@ class PeppolTransmissionRepository {
 
             PeppolTransmissionsTable.selectAll()
                 .where { PeppolTransmissionsTable.id eq newId }
-                .map { it.toPeppolTransmissionDto() }
+                .map { PeppolTransmissionDto.from(it) }
                 .single()
         }
     }
@@ -432,7 +431,7 @@ class PeppolTransmissionRepository {
                     (PeppolTransmissionsTable.tenantId eq tenantId.value.toJavaUuid()) and
                         (PeppolTransmissionsTable.externalDocumentId eq externalDocumentId)
                 }
-                .map { it.toPeppolTransmissionDto() }
+                .map { PeppolTransmissionDto.from(it) }
                 .singleOrNull()
         }
     }
@@ -451,7 +450,7 @@ class PeppolTransmissionRepository {
                         (PeppolTransmissionsTable.tenantId eq tenantId.value.toJavaUuid())
                 }
                 .orderBy(PeppolTransmissionsTable.createdAt to SortOrder.DESC)
-                .map { it.toPeppolTransmissionDto() }
+                .map { PeppolTransmissionDto.from(it) }
                 .firstOrNull()
         }
     }
@@ -482,7 +481,7 @@ class PeppolTransmissionRepository {
                 .orderBy(PeppolTransmissionsTable.createdAt to SortOrder.DESC)
                 .limit(limit)
                 .offset(offset.toLong())
-                .map { it.toPeppolTransmissionDto() }
+                .map { PeppolTransmissionDto.from(it) }
         }
     }
 
@@ -555,7 +554,7 @@ class PeppolTransmissionRepository {
                     (PeppolTransmissionsTable.id eq UUID.fromString(transmissionId.toString())) and
                         (PeppolTransmissionsTable.tenantId eq UUID.fromString(tenantId.toString()))
                 }
-                .map { it.toPeppolTransmissionDto() }
+                .map { PeppolTransmissionDto.from(it) }
                 .single()
         }
     }

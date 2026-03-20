@@ -9,7 +9,9 @@ data class FinancialLineItemDto(
     val unitPrice: Long? = null,
     val vatRate: Int? = null,
     val netAmount: Long? = null
-)
+) {
+    companion object
+}
 
 @Serializable
 data class VatBreakdownEntryDto(

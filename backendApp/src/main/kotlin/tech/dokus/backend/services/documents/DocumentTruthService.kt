@@ -19,7 +19,7 @@ import tech.dokus.database.repository.cashflow.DocumentSourceRepository
 import tech.dokus.database.repository.cashflow.selectPreferredSource
 import tech.dokus.database.entity.DocumentSourceEntity
 import tech.dokus.database.repository.drafts.DraftRepository
-import tech.dokus.domain.model.toDraftData
+import tech.dokus.domain.model.from
 import tech.dokus.database.tables.documents.DocumentBlobsTable
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
 import tech.dokus.database.tables.documents.DocumentSourcesTable
@@ -428,7 +428,7 @@ class DocumentTruthService(
             if (identityMatchDocumentId != null) {
                 val existingDraftSummary = documentRepository.getDraftByDocumentId(identityMatchDocumentId, tenantId)
                 val existingDraftData = existingDraftSummary?.let {
-                    draftRepository.getDraftAsDocDto(tenantId, identityMatchDocumentId, it.documentType)?.toDraftData()
+                    draftRepository.getDraftAsDocDto(tenantId, identityMatchDocumentId, it.documentType)?.let { docDto -> DocumentDraftData.from(docDto) }
                 }
                 val hasMaterialConflict = existingDraftData?.let { hasMaterialConflict(draftData, it) } ?: false
                 return if (hasMaterialConflict) {
@@ -470,7 +470,7 @@ class DocumentTruthService(
                 if (bestFuzzy != null) {
                     val fuzzyDraftSummary = documentRepository.getDraftByDocumentId(bestFuzzy.documentId, tenantId)
                     val existingDraftData = fuzzyDraftSummary?.let {
-                        draftRepository.getDraftAsDocDto(tenantId, bestFuzzy.documentId, it.documentType)?.toDraftData()
+                        draftRepository.getDraftAsDocDto(tenantId, bestFuzzy.documentId, it.documentType)?.let { docDto -> DocumentDraftData.from(docDto) }
                     }
                     val fuzzyAssessment = buildFuzzyAssessment(
                         incoming = draftData,

@@ -21,4 +21,6 @@ data class DocLineItem(
     val netAmount: Money? = null,
     val vatAmount: Money? = null,
     val sortOrder: Int = 0,
-)
+) {
+    companion object
+}

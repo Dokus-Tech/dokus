@@ -5,7 +5,7 @@ import tech.dokus.database.repository.cashflow.DocumentPurposeTemplateRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.entity.DraftSummaryEntity
 import tech.dokus.database.repository.drafts.DraftRepository
-import tech.dokus.domain.model.toDraftData
+import tech.dokus.domain.model.from
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentPurposeSource
 import tech.dokus.domain.enums.DocumentStatus
@@ -215,7 +215,7 @@ class DocumentPurposeService(
         purposePeriodMode: PurposePeriodMode?
     ) {
         val docDto = draftRepository.getDraftAsDocDto(tenantId, documentId, draft.documentType)
-        val draftData = docDto?.toDraftData() ?: return
+        val draftData = docDto?.let { DocumentDraftData.from(it) } ?: return
         val base = purpose.trim().replace(Regex("\\s+"), " ").take(PurposeBaseMaxLength)
         if (base.isBlank()) return
 

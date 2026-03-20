@@ -77,7 +77,9 @@ sealed interface DocDto {
             val vatBreakdown: List<VatBreakdownEntryDto> = emptyList(),
             val payment: CanonicalPaymentDto? = null,
             val counterparty: PartyDraftDto = PartyDraftDto(),
-        ) : Invoice
+        ) : Invoice {
+            companion object
+        }
 
         @Serializable
         @SerialName("DocDto.Invoice.Confirmed")
@@ -108,7 +110,9 @@ sealed interface DocDto {
             val confirmedBy: UserId? = null,
             val createdAt: LocalDateTime,
             val updatedAt: LocalDateTime,
-        ) : Invoice
+        ) : Invoice {
+            companion object
+        }
     }
 
     // =========================================================================
@@ -142,7 +146,9 @@ sealed interface DocDto {
             val vatBreakdown: List<VatBreakdownEntryDto> = emptyList(),
             val originalInvoiceNumber: String? = null,
             val counterparty: PartyDraftDto = PartyDraftDto(),
-        ) : CreditNote
+        ) : CreditNote {
+            companion object
+        }
 
         @Serializable
         @SerialName("DocDto.CreditNote.Confirmed")
@@ -168,7 +174,9 @@ sealed interface DocDto {
             val confirmedBy: UserId? = null,
             val createdAt: LocalDateTime,
             val updatedAt: LocalDateTime,
-        ) : CreditNote
+        ) : CreditNote {
+            companion object
+        }
     }
 
     // =========================================================================
@@ -201,7 +209,9 @@ sealed interface DocDto {
             override val notes: String? = null,
             val vatBreakdown: List<VatBreakdownEntryDto> = emptyList(),
             val paymentMethod: PaymentMethod? = null,
-        ) : Receipt
+        ) : Receipt {
+            companion object
+        }
 
         @Serializable
         @SerialName("DocDto.Receipt.Confirmed")
@@ -229,7 +239,9 @@ sealed interface DocDto {
             val confirmedBy: UserId? = null,
             val createdAt: LocalDateTime,
             val updatedAt: LocalDateTime,
-        ) : Receipt
+        ) : Receipt {
+            companion object
+        }
     }
 
     // =========================================================================
@@ -256,7 +268,9 @@ sealed interface DocDto {
             override val notes: String? = null,
             val transactions: List<BankStatementTransactionDraftRowDto> = emptyList(),
             val institution: PartyDraftDto = PartyDraftDto(),
-        ) : BankStatement
+        ) : BankStatement {
+            companion object
+        }
 
         @Serializable
         @SerialName("DocDto.BankStatement.Confirmed")
@@ -269,7 +283,9 @@ sealed interface DocDto {
             override val periodEnd: LocalDate? = null,
             override val notes: String? = null,
             val transactionCount: Int = 0,
-        ) : BankStatement
+        ) : BankStatement {
+            companion object
+        }
     }
 
     // =========================================================================

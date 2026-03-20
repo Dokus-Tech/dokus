@@ -5,7 +5,8 @@ import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.drafts.DraftRepository
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.toDraftData
+import tech.dokus.domain.model.DocumentDraftData
+import tech.dokus.domain.model.from
 import tech.dokus.features.ai.services.DraftDataTextRenderer
 import tech.dokus.foundation.backend.utils.loggerFor
 
@@ -45,7 +46,7 @@ class RAGIndexingService(
         }
 
         val docDto = draftRepository.getDraftAsDocDto(tenantId, documentId, draft.documentType)
-        val draftData = docDto?.toDraftData()
+        val draftData = docDto?.let { DocumentDraftData.from(it) }
         if (draftData == null) {
             logger.debug("No extracted data for document {}, skipping RAG indexing", documentId)
             return

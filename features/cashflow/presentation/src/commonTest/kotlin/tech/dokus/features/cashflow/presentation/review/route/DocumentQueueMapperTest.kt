@@ -21,7 +21,7 @@ import tech.dokus.domain.model.DocumentIngestionDto
 import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.InvoicePaymentInfo
 import tech.dokus.domain.model.InvoiceDraftData
-import tech.dokus.domain.model.toDocDto
+import tech.dokus.domain.model.from
 import tech.dokus.foundation.app.shell.DocQueueStatus
 import tech.dokus.foundation.app.shell.DocQueueStatusDetail
 import kotlin.test.Test
@@ -137,7 +137,7 @@ class DocumentQueueMapperTest {
             tenantId = tenantId,
             documentStatus = draftStatus,
             documentType = DocumentType.Invoice,
-            content = draftData.toDocDto(),
+            content = DocDto.from(draftData),
             aiDraftSourceRunId = null,
             draftVersion = 1,
             draftEditedAt = null,
