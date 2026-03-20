@@ -23,6 +23,8 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.Query
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import tech.dokus.database.mapper.toDocumentDto
+import tech.dokus.database.mapper.toDraftSummary
+import tech.dokus.database.mapper.toIngestionRunSummary
 import tech.dokus.database.tables.cashflow.CreditNotesTable
 import tech.dokus.database.tables.cashflow.ExpensesTable
 import tech.dokus.database.tables.cashflow.InvoicesTable
@@ -449,54 +451,4 @@ internal object DocumentListingQuery {
 
         DocumentListPage(results, total)
     }
-}
-
-private fun ResultRow.toIngestionRunSummary(): IngestionRunSummary {
-    return IngestionRunSummary(
-        id = IngestionRunId.parse(this[DocumentIngestionRunsTable.id].toString()),
-        documentId = DocumentId.parse(this[DocumentIngestionRunsTable.documentId].toString()),
-        tenantId = TenantId(this[DocumentIngestionRunsTable.tenantId].toKotlinUuid()),
-        status = this[DocumentIngestionRunsTable.status],
-        provider = this[DocumentIngestionRunsTable.provider],
-        queuedAt = this[DocumentIngestionRunsTable.queuedAt],
-        startedAt = this[DocumentIngestionRunsTable.startedAt],
-        finishedAt = this[DocumentIngestionRunsTable.finishedAt],
-        errorMessage = this[DocumentIngestionRunsTable.errorMessage],
-        confidence = this[DocumentIngestionRunsTable.confidence]?.toDouble(),
-        processingOutcome = this[DocumentIngestionRunsTable.processingOutcome],
-        rawExtractionJson = this[DocumentIngestionRunsTable.rawExtractionJson],
-        processingTrace = this[DocumentIngestionRunsTable.processingTrace]
-    )
-}
-
-private fun ResultRow.toDraftSummary(contactName: String? = null): DraftSummary {
-    val counterparty = DocumentRepository.buildCounterpartyInfo(this)
-    return DraftSummary(
-        documentId = DocumentId.parse(this[DocumentsTable.id].toString()),
-        tenantId = TenantId(this[DocumentsTable.tenantId].toKotlinUuid()),
-        documentStatus = this[DocumentsTable.documentStatus] ?: DocumentStatus.NeedsReview,
-        documentType = this[DocumentsTable.documentType],
-        direction = this[DocumentsTable.direction] ?: DocumentDirection.Unknown,
-        aiKeywords = this[DocumentsTable.aiKeywords]?.let { json.decodeFromString(it) } ?: emptyList(),
-        purposeBase = this[DocumentsTable.purposeBase],
-        purposePeriodYear = this[DocumentsTable.purposePeriodYear],
-        purposePeriodMonth = this[DocumentsTable.purposePeriodMonth],
-        purposeRendered = this[DocumentsTable.purposeRendered],
-        purposeSource = this[DocumentsTable.purposeSource],
-        purposeLocked = this[DocumentsTable.purposeLocked],
-        purposePeriodMode = this[DocumentsTable.purposePeriodMode],
-        counterpartyKey = this[DocumentsTable.counterpartyKey],
-        merchantToken = this[DocumentsTable.merchantToken],
-        aiDraftSourceRunId = this[DocumentsTable.aiDraftSourceRunId]?.let { IngestionRunId.parse(it.toString()) },
-        draftVersion = this[DocumentsTable.draftVersion],
-        draftEditedAt = this[DocumentsTable.draftEditedAt],
-        draftEditedBy = this[DocumentsTable.draftEditedBy]?.let { UserId(it.toKotlinUuid()) },
-        counterparty = counterparty,
-        counterpartyDisplayName = contactName
-            ?: if (counterparty.isUnresolved()) counterparty.snapshot?.name else null,
-        rejectReason = this[DocumentsTable.rejectReason],
-        lastSuccessfulRunId = this[DocumentsTable.lastSuccessfulRunId]?.let { IngestionRunId.parse(it.toString()) },
-        createdAt = this[DocumentsTable.uploadedAt],
-        updatedAt = this[DocumentsTable.updatedAt]
-    )
 }

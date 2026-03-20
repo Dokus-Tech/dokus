@@ -2,7 +2,6 @@ package tech.dokus.database.repository.cashflow
 
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.v1.core.JoinType
-import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
@@ -13,6 +12,7 @@ import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.v1.jdbc.update
+import tech.dokus.database.mapper.toSourceSummary
 import tech.dokus.database.tables.documents.DocumentBlobsTable
 import tech.dokus.database.tables.documents.DocumentSourcesTable
 import tech.dokus.domain.enums.DocumentDirection
@@ -435,40 +435,6 @@ class DocumentSourceRepository {
                 }
                 .toMap()
         }
-    }
-
-    private fun ResultRow.toSourceSummary(): DocumentSourceSummary {
-        return DocumentSourceSummary(
-            id = DocumentSourceId(this[DocumentSourcesTable.id].value.toKotlinUuid()),
-            tenantId = TenantId(this[DocumentSourcesTable.tenantId].toKotlinUuid()),
-            documentId = DocumentId.parse(this[DocumentSourcesTable.documentId].toString()),
-            blobId = DocumentBlobId(this[DocumentSourcesTable.blobId].toKotlinUuid()),
-            peppolRawUblBlobId = this[DocumentSourcesTable.peppolRawUblBlobId]?.let {
-                DocumentBlobId(
-                    it.toKotlinUuid()
-                )
-            },
-            sourceChannel = this[DocumentSourcesTable.sourceChannel],
-            arrivalAt = this[DocumentSourcesTable.arrivalAt],
-            contentHash = this[DocumentSourcesTable.contentHash],
-            identityKeyHash = this[DocumentSourcesTable.identityKeyHash],
-            status = this[DocumentSourcesTable.status],
-            matchType = this[DocumentSourcesTable.matchType],
-            isCorrective = this[DocumentSourcesTable.isCorrective],
-            extractedSnapshotJson = this[DocumentSourcesTable.extractedSnapshotJson],
-            peppolStructuredSnapshotJson = this[DocumentSourcesTable.peppolStructuredSnapshotJson],
-            peppolSnapshotVersion = this[DocumentSourcesTable.peppolSnapshotVersion],
-            detachedAt = this[DocumentSourcesTable.detachedAt],
-            normalizedSupplierVat = this[DocumentSourcesTable.normalizedSupplierVat],
-            normalizedDocumentNumber = this[DocumentSourcesTable.normalizedDocumentNumber],
-            documentType = this[DocumentSourcesTable.documentType],
-            direction = this[DocumentSourcesTable.direction],
-            filename = this[DocumentSourcesTable.filename],
-            inputHash = this[DocumentBlobsTable.inputHash],
-            storageKey = this[DocumentBlobsTable.storageKey],
-            contentType = this[DocumentBlobsTable.contentType],
-            sizeBytes = this[DocumentBlobsTable.sizeBytes]
-        )
     }
 
     private fun levenshtein(left: String, right: String): Int {

@@ -4,7 +4,6 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
@@ -16,6 +15,7 @@ import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.v1.jdbc.update
+import tech.dokus.database.mapper.toIngestionRunSummary
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.enums.ProcessingOutcome
@@ -245,24 +245,6 @@ class DocumentIngestionRunRepository {
 
     suspend fun recoverStaleProcessingRunsForTenant(tenantId: TenantId): Int = newSuspendedTransaction {
         recoverStaleProcessingRunsInternal(UUID.fromString(tenantId.toString()))
-    }
-
-    private fun ResultRow.toIngestionRunSummary(): IngestionRunSummary {
-        return IngestionRunSummary(
-            id = IngestionRunId.parse(this[DocumentIngestionRunsTable.id].toString()),
-            documentId = DocumentId.parse(this[DocumentIngestionRunsTable.documentId].toString()),
-            tenantId = TenantId(this[DocumentIngestionRunsTable.tenantId].toKotlinUuid()),
-            status = this[DocumentIngestionRunsTable.status],
-            provider = this[DocumentIngestionRunsTable.provider],
-            queuedAt = this[DocumentIngestionRunsTable.queuedAt],
-            startedAt = this[DocumentIngestionRunsTable.startedAt],
-            finishedAt = this[DocumentIngestionRunsTable.finishedAt],
-            errorMessage = this[DocumentIngestionRunsTable.errorMessage],
-            confidence = this[DocumentIngestionRunsTable.confidence]?.toDouble(),
-            processingOutcome = this[DocumentIngestionRunsTable.processingOutcome],
-            rawExtractionJson = this[DocumentIngestionRunsTable.rawExtractionJson],
-            processingTrace = this[DocumentIngestionRunsTable.processingTrace]
-        )
     }
 
     private fun recoverStaleProcessingRunsInternal(tenantId: UUID?): Int {

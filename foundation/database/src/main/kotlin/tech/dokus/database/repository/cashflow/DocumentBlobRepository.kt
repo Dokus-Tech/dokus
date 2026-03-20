@@ -1,11 +1,11 @@
 package tech.dokus.database.repository.cashflow
 
-import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
+import tech.dokus.database.mapper.toBlobSummary
 import tech.dokus.database.tables.documents.DocumentBlobsTable
 import tech.dokus.domain.ids.DocumentBlobId
 import tech.dokus.domain.ids.TenantId
@@ -97,14 +97,4 @@ class DocumentBlobRepository {
         )
     }
 
-    private fun ResultRow.toBlobSummary(): DocumentBlobSummary {
-        return DocumentBlobSummary(
-            id = DocumentBlobId(this[DocumentBlobsTable.id].value.toKotlinUuid()),
-            tenantId = TenantId(this[DocumentBlobsTable.tenantId].toKotlinUuid()),
-            inputHash = this[DocumentBlobsTable.inputHash],
-            storageKey = this[DocumentBlobsTable.storageKey],
-            contentType = this[DocumentBlobsTable.contentType],
-            sizeBytes = this[DocumentBlobsTable.sizeBytes]
-        )
-    }
 }

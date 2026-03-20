@@ -8,7 +8,6 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.v1.core.JoinType
-import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
@@ -23,6 +22,7 @@ import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.update
+import tech.dokus.database.mapper.toCashflowEntry
 import tech.dokus.database.tables.cashflow.CashflowEntriesTable
 import tech.dokus.database.tables.contacts.ContactsTable
 import tech.dokus.domain.Money
@@ -88,12 +88,10 @@ class CashflowEntriesRepository {
                 it[CashflowEntriesTable.counterpartyId] = contactId?.let { id -> UUID.fromString(id.toString()) }
             }
 
-            mapRowToEntry(
-                CashflowEntriesTable.selectAll().where {
+            CashflowEntriesTable.selectAll().where {
                     (CashflowEntriesTable.id eq entryId.value) and
                         (CashflowEntriesTable.tenantId eq UUID.fromString(tenantId.toString()))
-                }.single()
-            )
+                }.single().toCashflowEntry()
         }
     }
 
@@ -109,7 +107,7 @@ class CashflowEntriesRepository {
             CashflowEntriesTable.selectAll().where {
                 (CashflowEntriesTable.id eq UUID.fromString(entryId.toString())) and
                     (CashflowEntriesTable.tenantId eq UUID.fromString(tenantId.toString()))
-            }.singleOrNull()?.let { mapRowToEntry(it) }
+            }.singleOrNull()?.let { it.toCashflowEntry() }
         }
     }
 
@@ -127,7 +125,7 @@ class CashflowEntriesRepository {
                 (CashflowEntriesTable.tenantId eq UUID.fromString(tenantId.toString())) and
                     (CashflowEntriesTable.sourceType eq sourceType) and
                     (CashflowEntriesTable.sourceId eq sourceId)
-            }.singleOrNull()?.let { mapRowToEntry(it) }
+            }.singleOrNull()?.let { it.toCashflowEntry() }
         }
     }
 
@@ -150,7 +148,7 @@ class CashflowEntriesRepository {
                         (CashflowEntriesTable.status inList listOf(CashflowEntryStatus.Open, CashflowEntryStatus.Overdue)) and
                         (CashflowEntriesTable.remainingAmount neq BigDecimal.ZERO)
                 }
-                .map { row -> mapRowToEntry(row, row.getOrNull(ContactsTable.name)) }
+                .map { row -> row.toCashflowEntry(row.getOrNull(ContactsTable.name)) }
         }
     }
 
@@ -175,7 +173,7 @@ class CashflowEntriesRepository {
                         (CashflowEntriesTable.status inList listOf(CashflowEntryStatus.Open, CashflowEntryStatus.Overdue)) and
                         (CashflowEntriesTable.remainingAmount neq BigDecimal.ZERO)
                 }
-                .map { row -> mapRowToEntry(row, row.getOrNull(ContactsTable.name)) }
+                .map { row -> row.toCashflowEntry(row.getOrNull(ContactsTable.name)) }
         }
     }
 
@@ -236,7 +234,7 @@ class CashflowEntriesRepository {
             CashflowEntriesTable.selectAll().where {
                 (CashflowEntriesTable.tenantId eq UUID.fromString(tenantId.toString())) and
                     (CashflowEntriesTable.documentId eq UUID.fromString(documentId.toString()))
-            }.singleOrNull()?.let { mapRowToEntry(it) }
+            }.singleOrNull()?.let { it.toCashflowEntry() }
         }
     }
 
@@ -374,8 +372,7 @@ class CashflowEntriesRepository {
 
             query.orderBy(sortOrder)
                 .map { row ->
-                    mapRowToEntry(
-                        row = row,
+                    row.toCashflowEntry(
                         contactName = row.getOrNull(ContactsTable.name)
                     )
                 }
@@ -458,36 +455,6 @@ class CashflowEntriesRepository {
             }
             updated > 0
         }
-    }
-
-    private fun mapRowToEntry(
-        row: ResultRow,
-        contactName: String? = null
-    ): CashflowEntry {
-        return CashflowEntry(
-            id = CashflowEntryId.parse(row[CashflowEntriesTable.id].value.toString()),
-            tenantId = TenantId.parse(row[CashflowEntriesTable.tenantId].toString()),
-            sourceType = row[CashflowEntriesTable.sourceType],
-            sourceId = row[CashflowEntriesTable.sourceId].toString(),
-            documentId = row[CashflowEntriesTable.documentId]?.let { DocumentId.parse(it.toString()) },
-            direction = row[CashflowEntriesTable.direction],
-            eventDate = row[CashflowEntriesTable.eventDate],
-            amountGross = Money.fromDbDecimal(row[CashflowEntriesTable.amountGross]),
-            amountVat = Money.fromDbDecimal(row[CashflowEntriesTable.amountVat]),
-            remainingAmount = Money.fromDbDecimal(row[CashflowEntriesTable.remainingAmount]),
-            currency = row[CashflowEntriesTable.currency],
-            status = row[CashflowEntriesTable.status],
-            paidAt = row[CashflowEntriesTable.paidAt],
-            contact = row[CashflowEntriesTable.counterpartyId]?.let { counterpartyId ->
-                CashflowContactRef(
-                    id = ContactId.parse(counterpartyId.toString()),
-                    name = contactName,
-                )
-            },
-            description = null, // Will be AI-generated in future
-            createdAt = row[CashflowEntriesTable.createdAt],
-            updatedAt = row[CashflowEntriesTable.updatedAt]
-        )
     }
 
     suspend fun deleteBySource(

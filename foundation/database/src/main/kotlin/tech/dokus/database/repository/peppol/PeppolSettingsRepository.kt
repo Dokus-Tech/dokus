@@ -5,7 +5,6 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
-import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.lessEq
@@ -14,6 +13,7 @@ import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
+import tech.dokus.database.mapper.toPeppolSettingsDto
 import tech.dokus.database.tables.peppol.PeppolSettingsTable
 import tech.dokus.domain.ids.PeppolId
 import tech.dokus.domain.ids.PeppolSettingsId
@@ -40,7 +40,7 @@ class PeppolSettingsRepository {
         dbQuery {
             PeppolSettingsTable.selectAll()
                 .where { PeppolSettingsTable.tenantId eq tenantId.value.toJavaUuid() }
-                .map { it.toDto() }
+                .map { it.toPeppolSettingsDto() }
                 .singleOrNull()
         }
     }
@@ -80,7 +80,7 @@ class PeppolSettingsRepository {
 
                 PeppolSettingsTable.selectAll()
                     .where { PeppolSettingsTable.tenantId eq tenantUuid }
-                    .map { it.toDto() }
+                    .map { it.toPeppolSettingsDto() }
                     .single()
             } else {
                 // Create new with generated webhook token
@@ -100,7 +100,7 @@ class PeppolSettingsRepository {
 
                 PeppolSettingsTable.selectAll()
                     .where { PeppolSettingsTable.id eq newId }
-                    .map { it.toDto() }
+                    .map { it.toPeppolSettingsDto() }
                     .single()
             }
         }
@@ -141,7 +141,7 @@ class PeppolSettingsRepository {
                     (PeppolSettingsTable.companyId eq companyId) and
                         (PeppolSettingsTable.isEnabled eq true)
                 }
-                .map { it.toDto() }
+                .map { it.toPeppolSettingsDto() }
                 .singleOrNull()
         }
     }
@@ -182,7 +182,7 @@ class PeppolSettingsRepository {
         dbQuery {
             PeppolSettingsTable.selectAll()
                 .where { PeppolSettingsTable.isEnabled eq true }
-                .map { it.toDto() }
+                .map { it.toPeppolSettingsDto() }
         }
     }
 
@@ -201,16 +201,4 @@ class PeppolSettingsRepository {
         }
     }
 
-    private fun ResultRow.toDto(): PeppolSettingsDto = PeppolSettingsDto(
-        id = PeppolSettingsId.parse(this[PeppolSettingsTable.id].value.toString()),
-        tenantId = TenantId.parse(this[PeppolSettingsTable.tenantId].toString()),
-        companyId = this[PeppolSettingsTable.companyId],
-        peppolId = PeppolId(this[PeppolSettingsTable.peppolId]),
-        isEnabled = this[PeppolSettingsTable.isEnabled],
-        testMode = this[PeppolSettingsTable.testMode],
-        webhookToken = this[PeppolSettingsTable.webhookToken],
-        lastFullSyncAt = this[PeppolSettingsTable.lastFullSyncAt],
-        createdAt = this[PeppolSettingsTable.createdAt],
-        updatedAt = this[PeppolSettingsTable.updatedAt]
-    )
 }

@@ -6,7 +6,6 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.isNotNull
@@ -15,6 +14,7 @@ import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
+import tech.dokus.database.mapper.toPeppolResolution
 import tech.dokus.database.tables.peppol.PeppolDirectoryCacheTable
 import tech.dokus.domain.enums.PeppolLookupSource
 import tech.dokus.domain.enums.PeppolLookupStatus
@@ -61,7 +61,7 @@ class PeppolDirectoryCacheRepository {
                     (PeppolDirectoryCacheTable.tenantId eq UUID.fromString(tenantId.toString())) and
                         (PeppolDirectoryCacheTable.contactId eq UUID.fromString(contactId.toString()))
                 }
-                .map { it.toResolution() }
+                .map { it.toPeppolResolution() }
                 .singleOrNull()
         }
     }
@@ -147,7 +147,7 @@ class PeppolDirectoryCacheRepository {
                     (PeppolDirectoryCacheTable.tenantId eq tenantUuid) and
                         (PeppolDirectoryCacheTable.contactId eq contactUuid)
                 }
-                .map { it.toResolution() }
+                .map { it.toPeppolResolution() }
                 .single()
         }
     }
@@ -198,29 +198,6 @@ class PeppolDirectoryCacheRepository {
                     (PeppolDirectoryCacheTable.expiresAt less now)
             }
         }
-    }
-
-    private fun ResultRow.toResolution(): PeppolResolution {
-        val docTypesJson = this[PeppolDirectoryCacheTable.supportedDocTypes]
-        val supportedDocTypes = if (docTypesJson.isNullOrBlank()) {
-            emptyList()
-        } else {
-            runCatching { Json.decodeFromString<List<String>>(docTypesJson) }.getOrElse { emptyList() }
-        }
-
-        return PeppolResolution(
-            contactId = ContactId.parse(this[PeppolDirectoryCacheTable.contactId].toString()),
-            status = this[PeppolDirectoryCacheTable.status],
-            participantId = this[PeppolDirectoryCacheTable.participantId],
-            scheme = this[PeppolDirectoryCacheTable.scheme],
-            supportedDocTypes = supportedDocTypes,
-            source = this[PeppolDirectoryCacheTable.lookupSource],
-            vatNumberSnapshot = this[PeppolDirectoryCacheTable.vatNumberSnapshot],
-            companyNumberSnapshot = this[PeppolDirectoryCacheTable.companyNumberSnapshot],
-            lastCheckedAt = this[PeppolDirectoryCacheTable.lastCheckedAt],
-            expiresAt = this[PeppolDirectoryCacheTable.expiresAt],
-            errorMessage = this[PeppolDirectoryCacheTable.errorMessage]
-        )
     }
 
     private fun LocalDateTime.plusDuration(duration: Duration): LocalDateTime {

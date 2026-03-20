@@ -1,7 +1,6 @@
 package tech.dokus.database.repository.payment
 
 import kotlinx.datetime.LocalDate
-import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
@@ -12,6 +11,7 @@ import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
+import tech.dokus.database.mapper.toPaymentDto
 import tech.dokus.database.tables.payment.PaymentsTable
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.PaymentCreatedBy
@@ -188,23 +188,4 @@ class PaymentRepository {
         }
     }
 
-    private fun ResultRow.toPaymentDto(): PaymentDto {
-        return PaymentDto(
-            id = PaymentId.parse(this[PaymentsTable.id].value.toString()),
-            tenantId = TenantId.parse(this[PaymentsTable.tenantId].toString()),
-            invoiceId = InvoiceId.parse(this[PaymentsTable.invoiceId].toString()),
-            amount = Money.fromDbDecimal(this[PaymentsTable.amount]),
-            paymentDate = this[PaymentsTable.paymentDate],
-            paymentMethod = this[PaymentsTable.paymentMethod],
-            transactionId = this[PaymentsTable.transactionId]?.let { TransactionId(it) },
-            bankTransactionId = this[PaymentsTable.bankTransactionId]?.let { BankTransactionId.parse(it.toString()) },
-            source = this[PaymentsTable.paymentSource],
-            createdBy = this[PaymentsTable.createdBy],
-            notes = this[PaymentsTable.notes],
-            reversedAt = this[PaymentsTable.reversedAt],
-            reversedByUserId = this[PaymentsTable.reversedByUserId]?.let { tech.dokus.domain.ids.UserId(it.toString()) },
-            reversalReason = this[PaymentsTable.reversalReason],
-            createdAt = this[PaymentsTable.createdAt]
-        )
-    }
 }

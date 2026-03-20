@@ -6,13 +6,13 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.upsert
+import tech.dokus.database.mapper.toBusinessProfileRecord
 import tech.dokus.database.tables.business.BusinessProfilesTable
 import tech.dokus.domain.enums.BusinessProfileSubjectType
 import tech.dokus.domain.enums.BusinessProfileVerificationState
@@ -61,7 +61,7 @@ class BusinessProfileRepository {
                     (BusinessProfilesTable.subjectId eq subjectId.toJavaUuid())
             }
             .singleOrNull()
-            ?.toRecord(tenantId)
+            ?.toBusinessProfileRecord(tenantId)
     }
 
     suspend fun getBySubjects(
@@ -79,7 +79,7 @@ class BusinessProfileRepository {
                     (BusinessProfilesTable.subjectId inList subjectJavaIds)
             }
             .associate { row ->
-                row[BusinessProfilesTable.subjectId].toKotlinUuid() to row.toRecord(tenantId)
+                row[BusinessProfilesTable.subjectId].toKotlinUuid() to row.toBusinessProfileRecord(tenantId)
             }
     }
 
@@ -146,25 +146,4 @@ class BusinessProfileRepository {
         }
     }
 
-    private fun ResultRow.toRecord(tenantId: TenantId): BusinessProfileRecord = BusinessProfileRecord(
-        tenantId = tenantId,
-        subjectType = this[BusinessProfilesTable.subjectType],
-        subjectId = this[BusinessProfilesTable.subjectId].toKotlinUuid(),
-        websiteUrl = this[BusinessProfilesTable.websiteUrl],
-        businessSummary = this[BusinessProfilesTable.businessSummary],
-        businessActivitiesJson = this[BusinessProfilesTable.businessActivitiesJson],
-        verificationState = this[BusinessProfilesTable.verificationState],
-        evidenceScore = this[BusinessProfilesTable.evidenceScore],
-        evidenceChecksJson = this[BusinessProfilesTable.evidenceChecksJson],
-        logoStorageKey = this[BusinessProfilesTable.logoStorageKey],
-        websitePinned = this[BusinessProfilesTable.websitePinned],
-        summaryPinned = this[BusinessProfilesTable.summaryPinned],
-        activitiesPinned = this[BusinessProfilesTable.activitiesPinned],
-        logoPinned = this[BusinessProfilesTable.logoPinned],
-        lastRunAt = this[BusinessProfilesTable.lastRunAt],
-        lastErrorCode = this[BusinessProfilesTable.lastErrorCode],
-        lastErrorMessage = this[BusinessProfilesTable.lastErrorMessage],
-        createdAt = this[BusinessProfilesTable.createdAt],
-        updatedAt = this[BusinessProfilesTable.updatedAt],
-    )
 }

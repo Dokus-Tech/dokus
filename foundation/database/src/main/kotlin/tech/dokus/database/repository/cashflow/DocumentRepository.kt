@@ -23,6 +23,7 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.v1.jdbc.update
 import tech.dokus.database.mapper.toDocumentDto
+import tech.dokus.database.mapper.toDraftSummary
 import tech.dokus.database.tables.contacts.ContactsTable
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
 import tech.dokus.database.tables.documents.DocumentsTable
@@ -902,44 +903,6 @@ class DocumentRepository : DocumentStatusChecker {
             .singleOrNull()
 
         draft?.get(DocumentsTable.documentStatus) == DocumentStatus.Confirmed
-    }
-
-    // =========================================================================
-    // Mappers
-    // =========================================================================
-
-    private fun ResultRow.toDraftSummary(contactName: String? = null): DraftSummary {
-        val counterpartyInfo = buildCounterpartyInfo(this)
-        return DraftSummary(
-            documentId = DocumentId.parse(this[DocumentsTable.id].toString()),
-            tenantId = TenantId(this[DocumentsTable.tenantId].toKotlinUuid()),
-            documentStatus = this[DocumentsTable.documentStatus] ?: DocumentStatus.NeedsReview,
-            documentType = this[DocumentsTable.documentType],
-            direction = this[DocumentsTable.direction] ?: DocumentDirection.Unknown,
-            aiKeywords = this[DocumentsTable.aiKeywords]?.let { json.decodeFromString(it) } ?: emptyList(),
-            purposeBase = this[DocumentsTable.purposeBase],
-            purposePeriodYear = this[DocumentsTable.purposePeriodYear],
-            purposePeriodMonth = this[DocumentsTable.purposePeriodMonth],
-            purposeRendered = this[DocumentsTable.purposeRendered],
-            purposeSource = this[DocumentsTable.purposeSource],
-            purposeLocked = this[DocumentsTable.purposeLocked],
-            purposePeriodMode = this[DocumentsTable.purposePeriodMode],
-            counterpartyKey = this[DocumentsTable.counterpartyKey],
-            merchantToken = this[DocumentsTable.merchantToken],
-            aiDraftSourceRunId = this[DocumentsTable.aiDraftSourceRunId]
-                ?.let { IngestionRunId.parse(it.toString()) },
-            draftVersion = this[DocumentsTable.draftVersion],
-            draftEditedAt = this[DocumentsTable.draftEditedAt],
-            draftEditedBy = this[DocumentsTable.draftEditedBy]?.let { UserId(it.toKotlinUuid()) },
-            counterparty = counterpartyInfo,
-            counterpartyDisplayName = contactName
-                ?: if (counterpartyInfo.isUnresolved()) counterpartyInfo.snapshot?.name else null,
-            rejectReason = this[DocumentsTable.rejectReason],
-            lastSuccessfulRunId = this[DocumentsTable.lastSuccessfulRunId]
-                ?.let { IngestionRunId.parse(it.toString()) },
-            createdAt = this[DocumentsTable.uploadedAt],
-            updatedAt = this[DocumentsTable.updatedAt]
-        )
     }
 
     companion object {

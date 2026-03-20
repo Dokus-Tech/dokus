@@ -4,7 +4,6 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
@@ -16,6 +15,8 @@ import org.jetbrains.exposed.v1.jdbc.andWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
+import tech.dokus.database.mapper.toPeppolTransmissionDto
+import tech.dokus.database.mapper.toPeppolTransmissionInternal
 import tech.dokus.database.tables.peppol.PeppolTransmissionsTable
 import tech.dokus.domain.enums.PeppolDocumentType
 import tech.dokus.domain.enums.PeppolStatus
@@ -109,7 +110,7 @@ class PeppolTransmissionRepository {
 
             PeppolTransmissionsTable.selectAll()
                 .where { PeppolTransmissionsTable.id eq newId }
-                .map { it.toDto() }
+                .map { it.toPeppolTransmissionDto() }
                 .single()
         }
     }
@@ -138,7 +139,7 @@ class PeppolTransmissionRepository {
                         (PeppolTransmissionsTable.idempotencyKey eq idempotencyKey)
                 }
                 .singleOrNull()
-                ?.toInternal()
+                ?.toPeppolTransmissionInternal()
             if (existing != null) {
                 return@dbQuery existing
             }
@@ -183,7 +184,7 @@ class PeppolTransmissionRepository {
                     (PeppolTransmissionsTable.tenantId eq tenantUuid) and
                         (PeppolTransmissionsTable.idempotencyKey eq idempotencyKey)
                 }
-                .map { it.toInternal() }
+                .map { it.toPeppolTransmissionInternal() }
                 .single()
         }
     }
@@ -208,7 +209,7 @@ class PeppolTransmissionRepository {
                 }
                 .orderBy(PeppolTransmissionsTable.createdAt to SortOrder.ASC)
                 .limit(limit)
-                .map { it.toInternal() }
+                .map { it.toPeppolTransmissionInternal() }
 
             val claimed = mutableListOf<PeppolTransmissionInternal>()
             for (candidate in candidates) {
@@ -376,7 +377,7 @@ class PeppolTransmissionRepository {
                 }
                 .orderBy(PeppolTransmissionsTable.updatedAt to SortOrder.ASC)
                 .limit(limit)
-                .map { it.toInternal() }
+                .map { it.toPeppolTransmissionInternal() }
         }
     }
 
@@ -391,7 +392,7 @@ class PeppolTransmissionRepository {
                         (PeppolTransmissionsTable.direction eq PeppolTransmissionDirection.Outbound) and
                         (PeppolTransmissionsTable.externalDocumentId eq externalDocumentId)
                 }
-                .map { it.toInternal() }
+                .map { it.toPeppolTransmissionInternal() }
                 .singleOrNull()
         }
     }
@@ -414,7 +415,7 @@ class PeppolTransmissionRepository {
                     (PeppolTransmissionsTable.id eq UUID.fromString(transmissionId.toString())) and
                         (PeppolTransmissionsTable.tenantId eq tenantId.value.toJavaUuid())
                 }
-                .map { it.toInternal() }
+                .map { it.toPeppolTransmissionInternal() }
                 .singleOrNull()
                 ?: return@dbQuery false
 
@@ -478,7 +479,7 @@ class PeppolTransmissionRepository {
                     (PeppolTransmissionsTable.tenantId eq tenantId.value.toJavaUuid()) and
                         (PeppolTransmissionsTable.externalDocumentId eq externalDocumentId)
                 }
-                .map { it.toDto() }
+                .map { it.toPeppolTransmissionDto() }
                 .singleOrNull()
         }
     }
@@ -496,7 +497,7 @@ class PeppolTransmissionRepository {
                     (PeppolTransmissionsTable.id eq UUID.fromString(transmissionId.toString())) and
                         (PeppolTransmissionsTable.tenantId eq tenantId.value.toJavaUuid())
                 }
-                .map { it.toDto() }
+                .map { it.toPeppolTransmissionDto() }
                 .singleOrNull()
         }
     }
@@ -511,7 +512,7 @@ class PeppolTransmissionRepository {
                     (PeppolTransmissionsTable.id eq UUID.fromString(transmissionId.toString())) and
                         (PeppolTransmissionsTable.tenantId eq tenantId.value.toJavaUuid())
                 }
-                .map { it.toInternal() }
+                .map { it.toPeppolTransmissionInternal() }
                 .singleOrNull()
         }
     }
@@ -530,7 +531,7 @@ class PeppolTransmissionRepository {
                         (PeppolTransmissionsTable.tenantId eq tenantId.value.toJavaUuid())
                 }
                 .orderBy(PeppolTransmissionsTable.createdAt to SortOrder.DESC)
-                .map { it.toDto() }
+                .map { it.toPeppolTransmissionDto() }
                 .firstOrNull()
         }
     }
@@ -561,7 +562,7 @@ class PeppolTransmissionRepository {
                 .orderBy(PeppolTransmissionsTable.createdAt to SortOrder.DESC)
                 .limit(limit)
                 .offset(offset.toLong())
-                .map { it.toDto() }
+                .map { it.toPeppolTransmissionDto() }
         }
     }
 
@@ -634,54 +635,9 @@ class PeppolTransmissionRepository {
                     (PeppolTransmissionsTable.id eq UUID.fromString(transmissionId.toString())) and
                         (PeppolTransmissionsTable.tenantId eq UUID.fromString(tenantId.toString()))
                 }
-                .map { it.toDto() }
+                .map { it.toPeppolTransmissionDto() }
                 .single()
         }
     }
 
-    private fun ResultRow.toDto(): PeppolTransmissionDto = PeppolTransmissionDto(
-        id = PeppolTransmissionId.parse(this[PeppolTransmissionsTable.id].value.toString()),
-        tenantId = TenantId.parse(this[PeppolTransmissionsTable.tenantId].toString()),
-        direction = this[PeppolTransmissionsTable.direction],
-        documentType = this[PeppolTransmissionsTable.documentType],
-        status = this[PeppolTransmissionsTable.status],
-        invoiceId = this[PeppolTransmissionsTable.invoiceId]?.let { InvoiceId.parse(it.toString()) },
-        externalDocumentId = this[PeppolTransmissionsTable.externalDocumentId],
-        recipientPeppolId = this[PeppolTransmissionsTable.recipientPeppolId]?.let { PeppolId(it) },
-        senderPeppolId = this[PeppolTransmissionsTable.senderPeppolId]?.let { PeppolId(it) },
-        errorMessage = this[PeppolTransmissionsTable.errorMessage],
-        attemptCount = this[PeppolTransmissionsTable.attemptCount],
-        nextRetryAt = this[PeppolTransmissionsTable.nextRetryAt],
-        lastAttemptAt = this[PeppolTransmissionsTable.lastAttemptAt],
-        providerErrorCode = this[PeppolTransmissionsTable.providerErrorCode],
-        providerErrorMessage = this[PeppolTransmissionsTable.providerErrorMessage],
-        transmittedAt = this[PeppolTransmissionsTable.transmittedAt],
-        createdAt = this[PeppolTransmissionsTable.createdAt],
-        updatedAt = this[PeppolTransmissionsTable.updatedAt]
-    )
-
-    private fun ResultRow.toInternal(): PeppolTransmissionInternal = PeppolTransmissionInternal(
-        id = PeppolTransmissionId.parse(this[PeppolTransmissionsTable.id].value.toString()),
-        tenantId = TenantId.parse(this[PeppolTransmissionsTable.tenantId].toString()),
-        direction = this[PeppolTransmissionsTable.direction],
-        documentType = this[PeppolTransmissionsTable.documentType],
-        status = this[PeppolTransmissionsTable.status],
-        invoiceId = this[PeppolTransmissionsTable.invoiceId]?.let { InvoiceId.parse(it.toString()) },
-        externalDocumentId = this[PeppolTransmissionsTable.externalDocumentId],
-        idempotencyKey = this[PeppolTransmissionsTable.idempotencyKey],
-        recipientPeppolId = this[PeppolTransmissionsTable.recipientPeppolId]?.let { PeppolId(it) },
-        senderPeppolId = this[PeppolTransmissionsTable.senderPeppolId]?.let { PeppolId(it) },
-        errorMessage = this[PeppolTransmissionsTable.errorMessage],
-        providerErrorCode = this[PeppolTransmissionsTable.providerErrorCode],
-        providerErrorMessage = this[PeppolTransmissionsTable.providerErrorMessage],
-        attemptCount = this[PeppolTransmissionsTable.attemptCount],
-        nextRetryAt = this[PeppolTransmissionsTable.nextRetryAt],
-        lastAttemptAt = this[PeppolTransmissionsTable.lastAttemptAt],
-        rawRequest = this[PeppolTransmissionsTable.rawRequest],
-        rawResponse = this[PeppolTransmissionsTable.rawResponse],
-        rawUblXmlKey = this[PeppolTransmissionsTable.rawUblXmlKey],
-        transmittedAt = this[PeppolTransmissionsTable.transmittedAt],
-        createdAt = this[PeppolTransmissionsTable.createdAt],
-        updatedAt = this[PeppolTransmissionsTable.updatedAt]
-    )
 }

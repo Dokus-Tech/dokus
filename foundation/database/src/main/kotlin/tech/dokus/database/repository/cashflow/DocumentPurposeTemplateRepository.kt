@@ -3,13 +3,13 @@ package tech.dokus.database.repository.cashflow
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.v1.jdbc.update
+import tech.dokus.database.mapper.toTemplateSummary
 import tech.dokus.database.tables.documents.DocumentPurposeTemplatesTable
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.PurposePeriodMode
@@ -87,15 +87,4 @@ class DocumentPurposeTemplateRepository {
         }
     }
 
-    private fun ResultRow.toTemplateSummary(): DocumentPurposeTemplateSummary {
-        return DocumentPurposeTemplateSummary(
-            tenantId = TenantId.parse(this[DocumentPurposeTemplatesTable.tenantId].toString()),
-            counterpartyKey = this[DocumentPurposeTemplatesTable.counterpartyKey],
-            documentType = this[DocumentPurposeTemplatesTable.documentType],
-            purposeBase = this[DocumentPurposeTemplatesTable.purposeBase],
-            periodMode = this[DocumentPurposeTemplatesTable.periodMode],
-            confidence = this[DocumentPurposeTemplatesTable.confidence].toDouble(),
-            usageCount = this[DocumentPurposeTemplatesTable.usageCount]
-        )
-    }
 }

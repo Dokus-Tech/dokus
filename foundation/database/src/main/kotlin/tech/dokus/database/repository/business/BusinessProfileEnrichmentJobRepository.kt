@@ -6,7 +6,6 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
@@ -15,6 +14,7 @@ import org.jetbrains.exposed.v1.core.lessEq
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
 import org.jetbrains.exposed.v1.jdbc.upsert
+import tech.dokus.database.mapper.toBusinessProfileEnrichmentJob
 import tech.dokus.database.tables.business.BusinessProfileEnrichmentJobsTable
 import tech.dokus.domain.enums.BusinessProfileEnrichmentJobStatus
 import tech.dokus.domain.enums.BusinessProfileSubjectType
@@ -99,7 +99,7 @@ class BusinessProfileEnrichmentJobRepository {
                 }
                 .orderBy(BusinessProfileEnrichmentJobsTable.nextAttemptAt to SortOrder.ASC)
                 .limit(limit)
-                .map { it.toModel() }
+                .map { it.toBusinessProfileEnrichmentJob() }
 
             val claimed = mutableListOf<BusinessProfileEnrichmentJob>()
             for (candidate in candidates) {
@@ -193,19 +193,4 @@ class BusinessProfileEnrichmentJobRepository {
         }
     }
 
-    private fun ResultRow.toModel(): BusinessProfileEnrichmentJob = BusinessProfileEnrichmentJob(
-        id = this[BusinessProfileEnrichmentJobsTable.id].value.toKotlinUuid(),
-        tenantId = TenantId(this[BusinessProfileEnrichmentJobsTable.tenantId].toKotlinUuid()),
-        subjectType = this[BusinessProfileEnrichmentJobsTable.subjectType],
-        subjectId = this[BusinessProfileEnrichmentJobsTable.subjectId].toKotlinUuid(),
-        status = this[BusinessProfileEnrichmentJobsTable.status],
-        triggerReason = this[BusinessProfileEnrichmentJobsTable.triggerReason],
-        scheduledAt = this[BusinessProfileEnrichmentJobsTable.scheduledAt],
-        nextAttemptAt = this[BusinessProfileEnrichmentJobsTable.nextAttemptAt],
-        attemptCount = this[BusinessProfileEnrichmentJobsTable.attemptCount],
-        lastError = this[BusinessProfileEnrichmentJobsTable.lastError],
-        processingStartedAt = this[BusinessProfileEnrichmentJobsTable.processingStartedAt],
-        createdAt = this[BusinessProfileEnrichmentJobsTable.createdAt],
-        updatedAt = this[BusinessProfileEnrichmentJobsTable.updatedAt],
-    )
 }

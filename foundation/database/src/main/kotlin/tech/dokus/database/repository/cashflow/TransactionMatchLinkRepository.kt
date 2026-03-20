@@ -4,7 +4,6 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.isNull
@@ -12,6 +11,7 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.upsert
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.v1.jdbc.update
+import tech.dokus.database.mapper.toTransactionMatchLinkRecord
 import tech.dokus.database.tables.documents.TransactionMatchLinksTable
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.AutoMatchStatus
@@ -160,7 +160,7 @@ class TransactionMatchLinkRepository {
             (TransactionMatchLinksTable.tenantId eq tenantId.value.toJavaUuid()) and
                 (TransactionMatchLinksTable.cashflowEntryId eq entryId.value.toJavaUuid()) and
                 (TransactionMatchLinksTable.reversedAt.isNull())
-        }.orderBy(TransactionMatchLinksTable.createdAt).limit(1).singleOrNull()?.toRecord()
+        }.orderBy(TransactionMatchLinksTable.createdAt).limit(1).singleOrNull()?.toTransactionMatchLinkRecord()
     }
 
     suspend fun findActiveByTransaction(
@@ -171,7 +171,7 @@ class TransactionMatchLinkRepository {
             (TransactionMatchLinksTable.tenantId eq tenantId.value.toJavaUuid()) and
                 (TransactionMatchLinksTable.importedBankTransactionId eq transactionId.value.toJavaUuid()) and
                 (TransactionMatchLinksTable.reversedAt.isNull())
-        }.orderBy(TransactionMatchLinksTable.createdAt).limit(1).singleOrNull()?.toRecord()
+        }.orderBy(TransactionMatchLinksTable.createdAt).limit(1).singleOrNull()?.toTransactionMatchLinkRecord()
     }
 
     suspend fun markReversed(
@@ -193,26 +193,4 @@ class TransactionMatchLinkRepository {
         } > 0
     }
 
-    private fun ResultRow.toRecord(): TransactionMatchLinkRecord {
-        return TransactionMatchLinkRecord(
-            id = this[TransactionMatchLinksTable.id].value,
-            tenantId = TenantId.parse(this[TransactionMatchLinksTable.tenantId].toString()),
-            documentId = DocumentId.parse(this[TransactionMatchLinksTable.documentId].toString()),
-            cashflowEntryId = CashflowEntryId.parse(this[TransactionMatchLinksTable.cashflowEntryId].toString()),
-            importedBankTransactionId = BankTransactionId.parse(this[TransactionMatchLinksTable.importedBankTransactionId].toString()),
-            documentType = this[TransactionMatchLinksTable.documentType],
-            allocatedAmount = this[TransactionMatchLinksTable.allocatedAmount]?.let { Money.fromDbDecimal(it) },
-            status = this[TransactionMatchLinksTable.status],
-            createdBy = this[TransactionMatchLinksTable.createdBy],
-            confidenceScore = this[TransactionMatchLinksTable.confidenceScore]?.toDouble(),
-            scoreMargin = this[TransactionMatchLinksTable.scoreMargin]?.toDouble(),
-            reasonsJson = this[TransactionMatchLinksTable.reasonsJson],
-            rulesJson = this[TransactionMatchLinksTable.rulesJson],
-            matchedAt = this[TransactionMatchLinksTable.matchedAt],
-            autoPaidAt = this[TransactionMatchLinksTable.autoPaidAt],
-            reversedAt = this[TransactionMatchLinksTable.reversedAt],
-            reversedByUserId = this[TransactionMatchLinksTable.reversedByUserId],
-            reversalReason = this[TransactionMatchLinksTable.reversalReason],
-        )
-    }
 }

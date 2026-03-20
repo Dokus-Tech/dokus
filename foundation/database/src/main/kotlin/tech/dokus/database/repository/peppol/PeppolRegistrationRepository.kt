@@ -3,11 +3,11 @@ package tech.dokus.database.repository.peppol
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
+import tech.dokus.database.mapper.toPeppolRegistrationDto
 import tech.dokus.database.tables.peppol.PeppolRegistrationTable
 import tech.dokus.domain.enums.PeppolRegistrationStatus
 import tech.dokus.domain.ids.PeppolRegistrationId
@@ -29,7 +29,7 @@ class PeppolRegistrationRepository {
         dbQuery {
             PeppolRegistrationTable.selectAll()
                 .where { PeppolRegistrationTable.tenantId eq UUID.fromString(tenantId.toString()) }
-                .map { it.toDto() }
+                .map { it.toPeppolRegistrationDto() }
                 .singleOrNull()
         }
     }
@@ -60,7 +60,7 @@ class PeppolRegistrationRepository {
 
             PeppolRegistrationTable.selectAll()
                 .where { PeppolRegistrationTable.id eq newId }
-                .map { it.toDto() }
+                .map { it.toPeppolRegistrationDto() }
                 .single()
         }
     }
@@ -162,23 +162,8 @@ class PeppolRegistrationRepository {
         dbQuery {
             PeppolRegistrationTable.selectAll()
                 .where { PeppolRegistrationTable.status eq PeppolRegistrationStatus.WaitingTransfer }
-                .map { it.toDto() }
+                .map { it.toPeppolRegistrationDto() }
         }
     }
 
-    private fun ResultRow.toDto(): PeppolRegistrationDto = PeppolRegistrationDto(
-        id = PeppolRegistrationId.parse(this[PeppolRegistrationTable.id].value.toString()),
-        tenantId = TenantId.parse(this[PeppolRegistrationTable.tenantId].toString()),
-        peppolId = this[PeppolRegistrationTable.peppolId],
-        recommandCompanyId = this[PeppolRegistrationTable.recommandCompanyId],
-        status = this[PeppolRegistrationTable.status],
-        canReceive = this[PeppolRegistrationTable.canReceive],
-        canSend = this[PeppolRegistrationTable.canSend],
-        testMode = this[PeppolRegistrationTable.testMode],
-        waitingSince = this[PeppolRegistrationTable.waitingSince],
-        lastPolledAt = this[PeppolRegistrationTable.lastPolledAt],
-        errorMessage = this[PeppolRegistrationTable.errorMessage],
-        createdAt = this[PeppolRegistrationTable.createdAt],
-        updatedAt = this[PeppolRegistrationTable.updatedAt]
-    )
 }

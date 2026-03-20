@@ -1,6 +1,5 @@
 package tech.dokus.database.repository.contacts
 
-import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
@@ -8,6 +7,7 @@ import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insertAndGetId
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
+import tech.dokus.database.mapper.toContactNoteDto
 import tech.dokus.database.tables.contacts.ContactNotesTable
 import tech.dokus.database.tables.contacts.ContactsTable
 import tech.dokus.domain.ids.ContactId
@@ -65,7 +65,7 @@ class ContactNoteRepository {
                 (ContactNotesTable.id eq noteId.value) and
                     (ContactNotesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.single().let { row ->
-                mapRowToContactNoteDto(row)
+                row.toContactNoteDto()
             }
         }
     }
@@ -83,7 +83,7 @@ class ContactNoteRepository {
                 (ContactNotesTable.id eq UUID.fromString(noteId.toString())) and
                     (ContactNotesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.singleOrNull()?.let { row ->
-                mapRowToContactNoteDto(row)
+                row.toContactNoteDto()
             }
         }
     }
@@ -109,7 +109,7 @@ class ContactNoteRepository {
             // Order by most recent first
             val items = query.orderBy(ContactNotesTable.createdAt to SortOrder.DESC)
                 .limit(limit + offset)
-                .map { row -> mapRowToContactNoteDto(row) }
+                .map { it.toContactNoteDto() }
                 .drop(offset)
 
             PaginatedResponse(
@@ -169,7 +169,7 @@ class ContactNoteRepository {
                 (ContactNotesTable.id eq UUID.fromString(noteId.toString())) and
                     (ContactNotesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.single().let { row ->
-                mapRowToContactNoteDto(row)
+                row.toContactNoteDto()
             }
         }
     }
@@ -208,19 +208,4 @@ class ContactNoteRepository {
         }
     }
 
-    /**
-     * Map a database row to ContactNoteDto
-     */
-    private fun mapRowToContactNoteDto(row: ResultRow): ContactNoteDto {
-        return ContactNoteDto(
-            id = ContactNoteId.parse(row[ContactNotesTable.id].value.toString()),
-            contactId = ContactId.parse(row[ContactNotesTable.contactId].toString()),
-            tenantId = TenantId.parse(row[ContactNotesTable.tenantId].toString()),
-            content = row[ContactNotesTable.content],
-            authorId = row[ContactNotesTable.authorId]?.let { UserId(it.toString()) },
-            authorName = row[ContactNotesTable.authorName],
-            createdAt = row[ContactNotesTable.createdAt],
-            updatedAt = row[ContactNotesTable.updatedAt]
-        )
-    }
 }

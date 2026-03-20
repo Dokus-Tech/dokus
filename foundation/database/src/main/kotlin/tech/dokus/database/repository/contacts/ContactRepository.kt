@@ -5,7 +5,6 @@ package tech.dokus.database.repository.contacts
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.LowerCase
 import org.jetbrains.exposed.v1.core.and
@@ -22,13 +21,7 @@ import tech.dokus.database.tables.cashflow.ExpensesTable
 import tech.dokus.database.tables.cashflow.InvoicesTable
 import tech.dokus.database.tables.contacts.ContactNotesTable
 import tech.dokus.database.tables.contacts.ContactsTable
-import tech.dokus.domain.Email
-import tech.dokus.domain.Name
-import tech.dokus.domain.PhoneNumber
-import tech.dokus.domain.VatRate
-import tech.dokus.domain.fromDbDecimal
 import tech.dokus.domain.ids.ContactId
-import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
@@ -40,6 +33,7 @@ import tech.dokus.domain.model.contact.ContactStats
 import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.model.contact.UpdateContactRequest
 import tech.dokus.domain.enums.DocumentDirection
+import tech.dokus.database.mapper.toContactDto
 import tech.dokus.foundation.backend.database.dbQuery
 import java.math.BigDecimal
 import java.util.UUID
@@ -88,7 +82,7 @@ class ContactRepository {
                 (ContactsTable.id eq contactId.value) and
                     (ContactsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.single().let { row ->
-                mapRowToContactDto(row)
+                row.toContactDto()
             }
         }
     }
@@ -106,7 +100,7 @@ class ContactRepository {
                 (ContactsTable.id eq UUID.fromString(contactId.toString())) and
                     (ContactsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.singleOrNull()?.let { row ->
-                mapRowToContactDto(row)
+                row.toContactDto()
             }
         }
     }
@@ -136,7 +130,7 @@ class ContactRepository {
 
             val items = query.orderBy(ContactsTable.name to SortOrder.ASC)
                 .limit(limit + offset)
-                .map { row -> mapRowToContactDto(row) }
+                .map { it.toContactDto() }
                 .drop(offset)
 
             PaginatedResponse(
@@ -184,7 +178,7 @@ class ContactRepository {
                 .orderBy(ContactsTable.name to SortOrder.ASC)
                 .limit(limit)
                 .offset(offset.toLong())
-                .map { row -> mapRowToContactDto(row) }
+                .map { it.toContactDto() }
 
             PaginatedResponse(
                 items = items,
@@ -277,7 +271,7 @@ class ContactRepository {
                 (ContactsTable.id eq UUID.fromString(contactId.toString())) and
                     (ContactsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.single().let { row ->
-                mapRowToContactDto(row)
+                row.toContactDto()
             }
         }
     }
@@ -412,7 +406,7 @@ class ContactRepository {
                 val storedVat = row[ContactsTable.vatNumber]?.let { VatNumber.normalize(it) }
                 storedVat == normalized
             }.firstOrNull()?.let { row ->
-                mapRowToContactDto(row)
+                row.toContactDto()
             }
         }
     }
@@ -433,7 +427,7 @@ class ContactRepository {
                     (ContactsTable.companyNumber eq companyNumber) and
                     (ContactsTable.isActive eq true)
             }.singleOrNull()?.let { row ->
-                mapRowToContactDto(row)
+                row.toContactDto()
             }
         }
     }
@@ -452,7 +446,7 @@ class ContactRepository {
                 (ContactsTable.tenantId eq UUID.fromString(tenantId.toString())) and
                     (ContactsTable.isActive eq true) and
                     (ContactsTable.iban eq normalized)
-            }.map { row -> mapRowToContactDto(row) }
+            }.map { it.toContactDto() }
         }
     }
 
@@ -481,7 +475,7 @@ class ContactRepository {
                     row[ContactsTable.name].lowercase().contains(searchTerm)
                 }
                 .take(limit)
-                .map { row -> mapRowToContactDto(row) }
+                .map { it.toContactDto() }
         }
     }
 
@@ -498,7 +492,7 @@ class ContactRepository {
             }.singleOrNull()
 
             if (existing != null) {
-                mapRowToContactDto(existing)
+                existing.toContactDto()
             } else {
                 // Create the Unknown Contact placeholder
                 val contactId = ContactsTable.insertAndGetId {
@@ -511,7 +505,7 @@ class ContactRepository {
                 ContactsTable.selectAll().where {
                     ContactsTable.id eq contactId.value
                 }.single().let { row ->
-                    mapRowToContactDto(row)
+                    row.toContactDto()
                 }
             }
         }
@@ -722,41 +716,4 @@ class ContactRepository {
         }
     }
 
-    // =========================================================================
-    // MAPPING
-    // =========================================================================
-
-    /**
-     * Map a database row to ContactDto.
-     * Note: addresses list is empty - caller should populate via ContactAddressRepository.
-     */
-    private fun mapRowToContactDto(row: ResultRow): ContactDto {
-        return ContactDto(
-            id = ContactId.parse(row[ContactsTable.id].value.toString()),
-            tenantId = TenantId.parse(row[ContactsTable.tenantId].toString()),
-            name = Name(row[ContactsTable.name]),
-            email = row[ContactsTable.email]?.let { Email(it) },
-            iban = row[ContactsTable.iban]?.let { Iban(it) },
-            vatNumber = row[ContactsTable.vatNumber]?.let { VatNumber(it) },
-            businessType = row[ContactsTable.businessType],
-            // Addresses are now in ContactAddressesTable, populated by caller
-            contactPerson = row[ContactsTable.contactPerson],
-            phone = row[ContactsTable.phone]?.let { PhoneNumber(it) },
-            companyNumber = row[ContactsTable.companyNumber],
-            defaultPaymentTerms = row[ContactsTable.defaultPaymentTerms],
-            defaultVatRate = row[ContactsTable.defaultVatRate]?.let { VatRate.fromDbDecimal(it) },
-            // NOTE: peppolId/peppolEnabled removed - PEPPOL status is now in PeppolDirectoryCacheTable
-            tags = row[ContactsTable.tags],
-            isActive = row[ContactsTable.isActive],
-            createdAt = row[ContactsTable.createdAt],
-            updatedAt = row[ContactsTable.updatedAt],
-            // UI Contract fields
-            isSystemContact = row[ContactsTable.isSystemContact],
-            createdFromDocumentId = row[ContactsTable.createdFromDocumentId]?.let {
-                DocumentId.parse(it.toString())
-            },
-            source = row[ContactsTable.contactSource]
-            // addresses, derivedRoles and activitySummary are populated by service layer on demand
-        )
-    }
 }

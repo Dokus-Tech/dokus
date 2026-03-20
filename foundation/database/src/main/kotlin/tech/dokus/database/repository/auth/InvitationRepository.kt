@@ -5,13 +5,13 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.v1.core.JoinType
-import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.less
 import org.jetbrains.exposed.v1.jdbc.insertAndGetId
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
+import tech.dokus.database.mapper.toTenantInvitation
 import tech.dokus.database.tables.auth.TenantInvitationsTable
 import tech.dokus.database.tables.auth.UsersTable
 import tech.dokus.domain.Email
@@ -228,26 +228,4 @@ class InvitationRepository {
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes)
     }
 
-    /**
-     * Extension function to map ResultRow to TenantInvitation.
-     */
-    private fun ResultRow.toTenantInvitation(): TenantInvitation {
-        val inviterFirstName = this[UsersTable.firstName]
-        val inviterLastName = this[UsersTable.lastName]
-        val inviterEmail = this[UsersTable.email]
-        val inviterName = listOfNotNull(inviterFirstName, inviterLastName)
-            .joinToString(" ")
-            .ifEmpty { inviterEmail }
-
-        return TenantInvitation(
-            id = InvitationId(this[TenantInvitationsTable.id].value.toKotlinUuid()),
-            tenantId = TenantId(this[TenantInvitationsTable.tenantId].value.toKotlinUuid()),
-            email = Email(this[TenantInvitationsTable.email]),
-            role = this[TenantInvitationsTable.role],
-            invitedByName = inviterName,
-            status = this[TenantInvitationsTable.status],
-            expiresAt = this[TenantInvitationsTable.expiresAt],
-            createdAt = this[TenantInvitationsTable.createdAt]
-        )
-    }
 }

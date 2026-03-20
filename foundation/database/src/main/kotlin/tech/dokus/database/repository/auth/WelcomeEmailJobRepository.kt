@@ -4,7 +4,6 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
@@ -13,6 +12,7 @@ import org.jetbrains.exposed.v1.core.lessEq
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
 import org.jetbrains.exposed.v1.jdbc.upsert
+import tech.dokus.database.mapper.toWelcomeEmailJob
 import tech.dokus.database.tables.auth.WelcomeEmailJobsTable
 import tech.dokus.database.tables.auth.WelcomeEmailJobsTable.JobStatus
 import tech.dokus.domain.ids.TenantId
@@ -77,7 +77,7 @@ class WelcomeEmailJobRepository {
             WelcomeEmailJobsTable.selectAll()
                 .where { WelcomeEmailJobsTable.userId eq userUuid }
                 .singleOrNull()
-                ?.toModel()
+                ?.toWelcomeEmailJob()
         }
     }
 
@@ -93,7 +93,7 @@ class WelcomeEmailJobRepository {
                 }
                 .orderBy(WelcomeEmailJobsTable.nextAttemptAt to SortOrder.ASC)
                 .limit(limit)
-                .map { it.toModel() }
+                .map { it.toWelcomeEmailJob() }
 
             val claimed = mutableListOf<WelcomeEmailJob>()
             for (candidate in candidates) {
@@ -173,17 +173,4 @@ class WelcomeEmailJobRepository {
         }
     }
 
-    private fun ResultRow.toModel(): WelcomeEmailJob = WelcomeEmailJob(
-        id = this[WelcomeEmailJobsTable.id].value,
-        userId = UserId(this[WelcomeEmailJobsTable.userId].toKotlinUuid()),
-        tenantId = TenantId(this[WelcomeEmailJobsTable.tenantId].toKotlinUuid()),
-        status = this[WelcomeEmailJobsTable.status],
-        scheduledAt = this[WelcomeEmailJobsTable.scheduledAt],
-        nextAttemptAt = this[WelcomeEmailJobsTable.nextAttemptAt],
-        attemptCount = this[WelcomeEmailJobsTable.attemptCount],
-        lastError = this[WelcomeEmailJobsTable.lastError],
-        sentAt = this[WelcomeEmailJobsTable.sentAt],
-        createdAt = this[WelcomeEmailJobsTable.createdAt],
-        updatedAt = this[WelcomeEmailJobsTable.updatedAt]
-    )
 }

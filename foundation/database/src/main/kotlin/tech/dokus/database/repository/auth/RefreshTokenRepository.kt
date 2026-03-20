@@ -18,6 +18,7 @@ import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
+import tech.dokus.database.mapper.toActiveTokenRow
 import tech.dokus.database.tables.auth.RefreshTokensTable
 import tech.dokus.database.utils.toKotlinxInstant
 import tech.dokus.domain.DeviceType
@@ -79,7 +80,7 @@ sealed class SessionRevocationResult {
     data object NotFound : SessionRevocationResult()
 }
 
-private data class ActiveTokenRow(
+internal data class ActiveTokenRow(
     val rowId: JavaUuid,
     val token: RefreshTokenInfo,
 )
@@ -485,7 +486,7 @@ class RefreshTokenRepository {
             .selectAll()
             .where { activeRowsFilter(userUuid, currentTimeLocal) }
             .orderBy(RefreshTokensTable.createdAt, SortOrder.DESC)
-            .map(::toActiveTokenRow)
+            .map { it.toActiveTokenRow() }
     }
 
     private fun revokeRows(rows: List<ActiveTokenRow>): List<RevokedSessionInfo> {
@@ -495,30 +496,6 @@ class RefreshTokenRepository {
             it[RefreshTokensTable.isRevoked] = true
         }
         return rows.map { it.token.toRevokedSessionInfo() }
-    }
-
-    private fun toActiveTokenRow(row: ResultRow): ActiveTokenRow {
-        val rowId = row[RefreshTokensTable.id].value
-        val tokenId = rowId.toString()
-        val storedSessionId = SessionId(row[RefreshTokensTable.sessionId].toString())
-        val accessTokenJti = row[RefreshTokensTable.accessTokenJti]
-
-        return ActiveTokenRow(
-            rowId = rowId,
-            token = RefreshTokenInfo(
-                tokenId = tokenId,
-                storedSessionId = storedSessionId,
-                sessionId = storedSessionId,
-                createdAt = row[RefreshTokensTable.createdAt].toKotlinxInstant(),
-                expiresAt = row[RefreshTokensTable.expiresAt].toKotlinxInstant(),
-                isRevoked = row[RefreshTokensTable.isRevoked],
-                accessTokenJti = accessTokenJti,
-                accessTokenExpiresAt = row[RefreshTokensTable.accessTokenExpiresAt]?.toKotlinxInstant(),
-                deviceType = row[RefreshTokensTable.deviceType],
-                ipAddress = row[RefreshTokensTable.ipAddress],
-                userAgent = row[RefreshTokensTable.userAgent],
-            )
-        )
     }
 
     private fun activeRowsFilter(userUuid: JavaUuid, currentTimeLocal: LocalDateTime) =

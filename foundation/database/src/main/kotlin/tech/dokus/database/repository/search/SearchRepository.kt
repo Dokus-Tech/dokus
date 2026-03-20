@@ -1,6 +1,9 @@
 package tech.dokus.database.repository.search
 
 import java.math.BigDecimal
+import tech.dokus.database.mapper.toSearchContactHit
+import tech.dokus.database.mapper.toSearchDocumentHit
+import tech.dokus.database.mapper.toSearchTransactionHit
 import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.LowerCase
 import org.jetbrains.exposed.v1.core.ResultRow
@@ -179,7 +182,7 @@ class SearchRepository(
         documentQuery(tenantId, pattern, amountDecimal)
             .orderBy(DocumentsTable.uploadedAt to SortOrder.DESC)
             .limit(limit)
-            .map(::mapDocumentHit)
+            .map { it.toSearchDocumentHit() }
     }
 
     private suspend fun searchContacts(
@@ -190,7 +193,7 @@ class SearchRepository(
         contactQuery(tenantId, pattern)
             .orderBy(ContactsTable.name to SortOrder.ASC)
             .limit(limit)
-            .map(::mapContactHit)
+            .map { it.toSearchContactHit() }
     }
 
     private suspend fun searchTransactions(
@@ -202,7 +205,7 @@ class SearchRepository(
         transactionQuery(tenantId, pattern, amountDecimal)
             .orderBy(CashflowEntriesTable.eventDate to SortOrder.DESC)
             .limit(limit)
-            .map(::mapTransactionHit)
+            .map { it.toSearchTransactionHit() }
     }
 
     private suspend fun transactionAggregates(
@@ -398,62 +401,6 @@ class SearchRepository(
         return query
     }
 
-    private fun mapDocumentHit(row: ResultRow): SearchDocumentHit {
-        val contactName = row.getOrNull(ContactsTable.name)
-        val contactVat = row.getOrNull(ContactsTable.vatNumber)
-        val snapshot = if (contactName == null || contactVat == null) {
-            row.getOrNull(DocumentsTable.counterpartySnapshot)
-                ?.let { json.decodeFromStringOrNull<CounterpartySnapshot>(it) }
-        } else null
-
-        return SearchDocumentHit(
-            documentId = DocumentId.parse(row[DocumentsTable.id].value.toString()),
-            filename = row[DocumentsTable.purposeRendered] ?: "",
-            documentType = row[DocumentsTable.documentType],
-            status = row[DocumentsTable.documentStatus],
-            counterpartyName = contactName ?: snapshot?.name,
-            counterpartyVat = contactVat ?: snapshot?.vatNumber?.value,
-        )
-    }
-
-    private fun mapContactHit(row: ResultRow): SearchContactHit = SearchContactHit(
-        contactId = ContactId.parse(row[ContactsTable.id].value.toString()),
-        name = row[ContactsTable.name],
-        email = row[ContactsTable.email],
-        vatNumber = row[ContactsTable.vatNumber],
-        companyNumber = row[ContactsTable.companyNumber],
-        isActive = row[ContactsTable.isActive],
-    )
-
-    private fun mapTransactionHit(row: ResultRow): SearchTransactionHit {
-        val direction = row[CashflowEntriesTable.direction]
-        val absoluteAmount = Money.fromDbDecimal(row[CashflowEntriesTable.amountGross])
-        val signedAmount = if (direction == CashflowDirection.Out) -absoluteAmount else absoluteAmount
-        val contactName = row.getOrNull(ContactsTable.name)
-        val filename = row.getOrNull(DocumentsTable.purposeRendered)
-        val expenseDescription = row.getOrNull(ExpensesTable.description)
-        val invoiceNumber = row.getOrNull(InvoicesTable.invoiceNumber)
-        val displayText = when {
-            !filename.isNullOrBlank() -> filename
-            !expenseDescription.isNullOrBlank() -> expenseDescription
-            !invoiceNumber.isNullOrBlank() -> invoiceNumber
-            !contactName.isNullOrBlank() -> contactName
-            else -> row[CashflowEntriesTable.sourceType].name
-        }
-
-        return SearchTransactionHit(
-            entryId = CashflowEntryId.parse(row[CashflowEntriesTable.id].value.toString()),
-            displayText = displayText,
-            status = row[CashflowEntriesTable.status],
-            date = row[CashflowEntriesTable.eventDate],
-            amount = signedAmount,
-            direction = direction,
-            contactName = contactName,
-            documentFilename = filename,
-            documentId = row.getOrNull(DocumentsTable.id)?.let { DocumentId.parse(it.value.toString()) },
-        )
-    }
-
     /**
      * Escapes LIKE wildcards using backslash as the escape character.
      * Note: Relies on PostgreSQL's default `standard_conforming_strings = on` behavior
@@ -489,6 +436,3 @@ private val SearchStatuses = listOf(
     CashflowEntryStatus.Overdue,
     CashflowEntryStatus.Paid,
 )
-
-private inline fun <reified T> Json.decodeFromStringOrNull(value: String): T? =
-    runCatching { decodeFromString<T>(value) }.getOrNull()

@@ -4,7 +4,6 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
@@ -13,6 +12,7 @@ import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insertAndGetId
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
+import tech.dokus.database.mapper.toRefundClaimDto
 import tech.dokus.database.tables.cashflow.RefundClaimsTable
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.Currency
@@ -70,7 +70,7 @@ class RefundClaimRepository {
                 (RefundClaimsTable.id eq claimId.value) and
                     (RefundClaimsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.single().let { row ->
-                mapRowToDto(row)
+                row.toRefundClaimDto()
             }
         }
     }
@@ -88,7 +88,7 @@ class RefundClaimRepository {
                 (RefundClaimsTable.id eq UUID.fromString(claimId.toString())) and
                     (RefundClaimsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.singleOrNull()?.let { row ->
-                mapRowToDto(row)
+                row.toRefundClaimDto()
             }
         }
     }
@@ -106,7 +106,7 @@ class RefundClaimRepository {
                 (RefundClaimsTable.creditNoteId eq UUID.fromString(creditNoteId.toString())) and
                 (RefundClaimsTable.status eq RefundClaimStatus.Open)
         }.singleOrNull()?.let { row ->
-            mapRowToDto(row)
+            row.toRefundClaimDto()
         }
     }
 
@@ -137,7 +137,7 @@ class RefundClaimRepository {
 
             query.orderBy(RefundClaimsTable.createdAt to SortOrder.DESC)
                 .limit(limit + offset)
-                .map { row -> mapRowToDto(row) }
+                .map { it.toRefundClaimDto() }
                 .drop(offset)
         }
     }
@@ -151,7 +151,7 @@ class RefundClaimRepository {
             (RefundClaimsTable.tenantId eq UUID.fromString(tenantId.toString())) and
                 (RefundClaimsTable.status eq RefundClaimStatus.Open)
         }.orderBy(RefundClaimsTable.expectedDate to SortOrder.ASC)
-            .map { row -> mapRowToDto(row) }
+            .map { it.toRefundClaimDto() }
     }
 
     /**
@@ -214,22 +214,4 @@ class RefundClaimRepository {
         }
     }
 
-    private fun mapRowToDto(row: ResultRow): RefundClaimDto {
-        return RefundClaimDto(
-            id = RefundClaimId.parse(row[RefundClaimsTable.id].value.toString()),
-            tenantId = TenantId.parse(row[RefundClaimsTable.tenantId].toString()),
-            creditNoteId = CreditNoteId.parse(row[RefundClaimsTable.creditNoteId].toString()),
-            counterpartyId = ContactId.parse(row[RefundClaimsTable.counterpartyId].toString()),
-            amount = Money.fromDbDecimal(row[RefundClaimsTable.amount]),
-            currency = row[RefundClaimsTable.currency],
-            expectedDate = row[RefundClaimsTable.expectedDate],
-            status = row[RefundClaimsTable.status],
-            settledAt = row[RefundClaimsTable.settledAt],
-            cashflowEntryId = row[RefundClaimsTable.cashflowEntryId]?.let {
-                CashflowEntryId.parse(it.toString())
-            },
-            createdAt = row[RefundClaimsTable.createdAt],
-            updatedAt = row[RefundClaimsTable.updatedAt]
-        )
-    }
 }
