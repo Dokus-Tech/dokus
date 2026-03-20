@@ -2,8 +2,11 @@ package tech.dokus.features.cashflow.mvi
 
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.domain.utils.currentTimeMillis
+import tech.dokus.domain.validators.ValidateOgmUseCase
 import tech.dokus.features.cashflow.mvi.model.ClientSuggestion
 import tech.dokus.features.cashflow.mvi.model.ExternalClientCandidate
+import kotlin.math.absoluteValue
 
 internal const val CLIENT_LOOKUP_DEBOUNCE_MS = 300L
 internal const val CLIENT_LOOKUP_LOCAL_MIN_QUERY_LENGTH = 2
@@ -66,4 +69,9 @@ internal fun mergeClientLookupSuggestions(
 
     suggestions += ClientSuggestion.CreateManual(query)
     return suggestions
+}
+
+internal fun generateStructuredCommunication(): String {
+    val base = currentTimeMillis.absoluteValue % 10_000_000_000L
+    return ValidateOgmUseCase.generate(base)
 }

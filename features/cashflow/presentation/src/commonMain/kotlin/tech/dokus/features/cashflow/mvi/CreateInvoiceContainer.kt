@@ -1,5 +1,3 @@
-@file:Suppress("TooManyFunctions")
-
 package tech.dokus.features.cashflow.mvi
 
 import kotlinx.datetime.DateTimeUnit
@@ -7,47 +5,32 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
 import kotlinx.datetime.todayIn
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.plugins.reduce
-import tech.dokus.domain.LegalName
 import tech.dokus.domain.enums.InvoiceDeliveryMethod
 import tech.dokus.domain.enums.InvoiceDueDateMode
 import tech.dokus.domain.ids.VatNumber
-import tech.dokus.domain.model.entity.EntityLookup
-import tech.dokus.domain.validators.ValidateOgmUseCase
 import tech.dokus.domain.usecases.SearchCompanyUseCase
-import tech.dokus.domain.utils.currentTimeMillis
 import tech.dokus.features.auth.usecases.GetCurrentTenantUseCase
 import tech.dokus.features.auth.usecases.GetInvoiceNumberPreviewUseCase
 import tech.dokus.features.auth.usecases.GetTenantSettingsUseCase
-import tech.dokus.features.cashflow.mvi.model.ClientSuggestion
 import tech.dokus.features.cashflow.mvi.model.CreateInvoiceFormState
 import tech.dokus.features.cashflow.mvi.model.CreateInvoiceUiState
 import tech.dokus.features.cashflow.mvi.model.DatePickerTarget
 import tech.dokus.features.cashflow.mvi.model.DeliveryResolution
-import tech.dokus.features.cashflow.mvi.model.ExternalClientCandidate
 import tech.dokus.features.cashflow.mvi.model.InvoiceLineItem
 import tech.dokus.features.cashflow.mvi.model.InvoiceResolvedAction
 import tech.dokus.features.cashflow.mvi.model.InvoiceSection
 import tech.dokus.features.cashflow.mvi.model.LatestInvoiceSuggestion
-import tech.dokus.features.cashflow.presentation.cashflow.model.mapper.toCreateInvoiceRequest
 import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.ValidateInvoiceUseCase
 import tech.dokus.features.cashflow.usecases.GetContactPeppolStatusUseCase
 import tech.dokus.features.cashflow.usecases.GetLatestInvoiceForContactUseCase
-import tech.dokus.features.cashflow.usecases.SubmitInvoiceWithDeliveryResult
 import tech.dokus.features.cashflow.usecases.SubmitInvoiceWithDeliveryUseCase
 import tech.dokus.features.contacts.usecases.ListContactsUseCase
 import tech.dokus.features.contacts.usecases.LookupContactsUseCase
-import tech.dokus.foundation.platform.Logger
-import kotlin.math.absoluteValue
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -68,16 +51,39 @@ internal class CreateInvoiceContainer(
     private val searchCompanyUseCase: SearchCompanyUseCase,
 ) : Container<CreateInvoiceState, CreateInvoiceIntent, CreateInvoiceAction> {
 
-    private val logger = Logger.forClass<CreateInvoiceContainer>()
-    private var clientLookupJob: Job? = null
+    private val clientHandlers = CreateInvoiceClientHandlers(
+        listContacts = listContacts,
+        lookupContacts = lookupContacts,
+        searchCompanyUseCase = searchCompanyUseCase,
+        getContactPeppolStatus = getContactPeppolStatus,
+        getLatestInvoiceForContact = getLatestInvoiceForContact,
+        updateInvoice = { transform -> updateInvoice(transform) },
+        snapshotState = { snapshotState() },
+        synchronizeDueDate = ::synchronizeDueDate,
+        toSuggestion = { toSuggestion() },
+    )
+
+    private val submitHandlers = CreateInvoiceSubmitHandlers(
+        getInvoiceNumberPreview = getInvoiceNumberPreview,
+        getTenantSettings = getTenantSettings,
+        getCurrentTenant = getCurrentTenant,
+        validateInvoice = validateInvoice,
+        submitInvoiceWithDelivery = submitInvoiceWithDelivery,
+        updateInvoice = { transform -> updateInvoice(transform) },
+        snapshotState = { snapshotState() },
+        synchronizeDueDate = ::synchronizeDueDate,
+    )
 
     override val store: Store<CreateInvoiceState, CreateInvoiceIntent, CreateInvoiceAction> =
         store(createInitialState()) {
             reduce { intent ->
                 when (intent) {
-                    is CreateInvoiceIntent.UpdateClientLookupQuery -> handleUpdateClientLookupQuery(intent.query)
-                    is CreateInvoiceIntent.SetClientLookupExpanded -> handleSetClientLookupExpanded(intent.expanded)
-                    is CreateInvoiceIntent.SelectClient -> handleSelectClient(intent.client)
+                    is CreateInvoiceIntent.UpdateClientLookupQuery ->
+                        with(clientHandlers) { handleUpdateClientLookupQuery(intent.query) }
+                    is CreateInvoiceIntent.SetClientLookupExpanded ->
+                        with(clientHandlers) { handleSetClientLookupExpanded(intent.expanded) }
+                    is CreateInvoiceIntent.SelectClient ->
+                        with(clientHandlers) { handleSelectClient(intent.client) }
                     is CreateInvoiceIntent.SelectExternalClientCandidate -> action(
                         CreateInvoiceAction.NavigateToCreateContact(
                             prefillCompanyName = intent.candidate.name,
@@ -266,14 +272,15 @@ internal class CreateInvoiceContainer(
                         state.copy(uiState = state.uiState.copy(isPreviewVisible = visible))
                     }
 
-                    is CreateInvoiceIntent.SaveAsDraft -> submitInvoice(deliveryMethod = null)
+                    is CreateInvoiceIntent.SaveAsDraft ->
+                        with(submitHandlers) { submitInvoice(deliveryMethod = null) }
                     is CreateInvoiceIntent.SubmitWithResolvedDelivery -> {
                         val current = snapshotState()
                         val deliveryMethod = when (current.uiState.resolvedDeliveryAction.action) {
                             InvoiceResolvedAction.Peppol -> InvoiceDeliveryMethod.Peppol
                             InvoiceResolvedAction.PdfExport -> InvoiceDeliveryMethod.PdfExport
                         }
-                        submitInvoice(deliveryMethod = deliveryMethod)
+                        with(submitHandlers) { submitInvoice(deliveryMethod = deliveryMethod) }
                     }
 
                     is CreateInvoiceIntent.BackClicked -> action(CreateInvoiceAction.NavigateBack)
@@ -297,293 +304,14 @@ internal class CreateInvoiceContainer(
                             )
                         )
                     }
-                    is CreateInvoiceIntent.LoadDefaults -> loadDefaults()
+                    is CreateInvoiceIntent.LoadDefaults ->
+                        with(submitHandlers) { loadDefaults() }
                 }
             }
         }
 
     init {
         store.intent(CreateInvoiceIntent.LoadDefaults)
-    }
-
-    private suspend fun CreateInvoiceCtx.handleUpdateClientLookupQuery(query: String) {
-        val trimmed = query.trim()
-        clientLookupJob?.cancel()
-        val wasExpanded = snapshotState().uiState.clientLookupState.isExpanded
-
-        if (trimmed.isBlank()) {
-            updateInvoice { state ->
-                state.copy(
-                    uiState = state.uiState.copy(
-                        clientLookupState = state.uiState.clientLookupState.copy(
-                            query = "",
-                            isExpanded = wasExpanded,
-                            localResults = emptyList(),
-                            externalResults = emptyList(),
-                            mergedSuggestions = emptyList(),
-                            isLocalLoading = wasExpanded,
-                            isExternalLoading = false,
-                            errorHint = null
-                        )
-                    )
-                )
-            }
-            if (wasExpanded) {
-                clientLookupJob = launch {
-                    delay(CLIENT_LOOKUP_DEBOUNCE_MS)
-                    loadInitialLocalSuggestions(query = "")
-                }
-            }
-            return
-        }
-
-        val lookupLocal = shouldLookupLocalClient(trimmed)
-        val lookupExternal = shouldLookupExternalClient(trimmed)
-        val shouldLoadInitialLocal = !lookupLocal
-
-        updateInvoice { state ->
-            state.copy(
-                uiState = state.uiState.copy(
-                    clientLookupState = state.uiState.clientLookupState.copy(
-                        query = trimmed,
-                        isExpanded = true,
-                        isLocalLoading = shouldLoadInitialLocal || lookupLocal,
-                        isExternalLoading = lookupExternal,
-                        errorHint = null
-                    )
-                )
-            )
-        }
-
-        clientLookupJob = launch {
-            delay(CLIENT_LOOKUP_DEBOUNCE_MS)
-            if (shouldLoadInitialLocal) {
-                loadInitialLocalSuggestions(query = trimmed)
-            } else {
-                loadClientLookupSuggestions(trimmed)
-            }
-        }
-    }
-
-    private suspend fun CreateInvoiceCtx.handleSetClientLookupExpanded(expanded: Boolean) {
-        clientLookupJob?.cancel()
-        val query = snapshotState().uiState.clientLookupState.query
-
-        updateInvoice { state ->
-            state.copy(
-                uiState = state.uiState.copy(
-                    clientLookupState = state.uiState.clientLookupState.copy(
-                        isExpanded = expanded,
-                        isLocalLoading = expanded,
-                        isExternalLoading = expanded && query.isNotBlank() && shouldLookupExternalClient(query)
-                    )
-                )
-            )
-        }
-
-        if (!expanded) return
-
-        clientLookupJob = launch {
-            delay(CLIENT_LOOKUP_DEBOUNCE_MS)
-            if (query.isBlank() || !shouldLookupLocalClient(query)) {
-                loadInitialLocalSuggestions(query = query)
-            } else {
-                loadClientLookupSuggestions(query = query)
-            }
-        }
-    }
-
-    private suspend fun CreateInvoiceCtx.loadInitialLocalSuggestions(query: String) {
-        val normalizedQuery = query.trim().lowercase()
-        val localResults = listContacts(
-            isActive = null,
-            limit = CLIENT_LOOKUP_LOCAL_LIMIT,
-            offset = 0
-        ).getOrElse { emptyList() }
-
-        val filteredLocalResults = if (normalizedQuery.isBlank()) {
-            localResults
-        } else {
-            localResults.filter { contact ->
-                contact.name.value.lowercase().contains(normalizedQuery) ||
-                    (contact.vatNumber?.normalized?.contains(normalizedQuery) == true) ||
-                    (contact.email?.value?.lowercase()?.contains(normalizedQuery) == true)
-            }
-        }
-
-        val suggestions = buildList {
-            filteredLocalResults.forEach { contact ->
-                add(ClientSuggestion.LocalContact(contact))
-            }
-            if (query.isNotBlank()) {
-                add(ClientSuggestion.CreateManual(query))
-            }
-        }
-
-        updateInvoice { state ->
-            if (state.uiState.clientLookupState.query != query || !state.uiState.clientLookupState.isExpanded) {
-                return@updateInvoice state
-            }
-            state.copy(
-                uiState = state.uiState.copy(
-                    clientLookupState = state.uiState.clientLookupState.copy(
-                        localResults = filteredLocalResults,
-                        externalResults = emptyList(),
-                        mergedSuggestions = suggestions,
-                        isExpanded = true,
-                        isLocalLoading = false,
-                        isExternalLoading = false,
-                        errorHint = null
-                    )
-                )
-            )
-        }
-    }
-
-    private suspend fun CreateInvoiceCtx.loadClientLookupSuggestions(query: String) {
-        val vat = VatNumber.from(query)
-        val normalizedVat = vat?.takeIf { it.isValid }
-        val localEnabled = shouldLookupLocalClient(query)
-        val externalEnabled = shouldLookupExternalClient(query)
-
-        val (localResults, externalResults, errorHint) = coroutineScope {
-            val localDeferred = if (localEnabled) {
-                async {
-                    lookupContacts(
-                        query = query,
-                        isActive = null,
-                        limit = CLIENT_LOOKUP_LOCAL_LIMIT,
-                        offset = 0
-                    )
-                }
-            } else {
-                null
-            }
-
-            val externalDeferred = if (externalEnabled) {
-                async {
-                    val companyName = if (normalizedVat != null) null else LegalName(query)
-                    searchCompanyUseCase(
-                        name = companyName,
-                        number = normalizedVat
-                    )
-                }
-            } else {
-                null
-            }
-
-            val local = localDeferred?.await()?.getOrElse { emptyList() } ?: emptyList()
-            val externalResult = externalDeferred?.await()
-
-            val external = externalResult?.fold(
-                onSuccess = { response ->
-                    response.results
-                        .map(::toExternalCandidate)
-                        .distinctBy { candidate ->
-                            candidate.vatNumber?.normalized
-                                ?: candidate.enterpriseNumber
-                        }
-                        .take(CLIENT_LOOKUP_EXTERNAL_LIMIT)
-                },
-                onFailure = { emptyList() }
-            ) ?: emptyList()
-
-            val hint = if (externalResult?.isFailure == true) {
-                "External company lookup unavailable. Showing local results."
-            } else {
-                null
-            }
-
-            Triple(local, external, hint)
-        }
-
-        val merged = mergeClientLookupSuggestions(query, normalizedVat, localResults, externalResults)
-
-        updateInvoice { state ->
-            if (state.uiState.clientLookupState.query != query) {
-                return@updateInvoice state
-            }
-            state.copy(
-                uiState = state.uiState.copy(
-                    clientLookupState = state.uiState.clientLookupState.copy(
-                        localResults = localResults,
-                        externalResults = externalResults,
-                        mergedSuggestions = merged,
-                        isExpanded = true,
-                        isLocalLoading = false,
-                        isExternalLoading = false,
-                        errorHint = errorHint
-                    )
-                )
-            )
-        }
-    }
-
-    private fun toExternalCandidate(lookup: EntityLookup): ExternalClientCandidate {
-        return ExternalClientCandidate(
-            name = lookup.name.value,
-            vatNumber = lookup.vatNumber,
-            enterpriseNumber = lookup.enterpriseNumber,
-            prefillAddress = lookup.address?.let { address ->
-                listOfNotNull(
-                    address.streetLine1,
-                    address.streetLine2,
-                    listOfNotNull(address.postalCode, address.city)
-                        .takeIf { it.isNotEmpty() }
-                        ?.joinToString(" "),
-                    address.country.dbValue
-                ).joinToString(", ")
-            }
-        )
-    }
-
-    private suspend fun CreateInvoiceCtx.handleSelectClient(client: tech.dokus.domain.model.contact.ContactDto) {
-        clientLookupJob?.cancel()
-        updateInvoice { state ->
-            state.copy(
-                formState = state.formState.copy(
-                    selectedClient = client,
-                    peppolStatus = null,
-                    peppolStatusLoading = false,
-                    errors = state.formState.errors - ValidateInvoiceUseCase.FIELD_CLIENT
-                ),
-                uiState = state.uiState.copy(
-                    suggestedSection = InvoiceSection.LineItems,
-                    latestInvoiceSuggestion = null,
-                    clientLookupState = state.uiState.clientLookupState.copy(
-                        query = "",
-                        isExpanded = false,
-                        localResults = emptyList(),
-                        externalResults = emptyList(),
-                        mergedSuggestions = emptyList(),
-                        isLocalLoading = false,
-                        isExternalLoading = false,
-                        errorHint = null
-                    )
-                )
-            )
-        }
-
-        getLatestInvoiceForContact(client.id).onSuccess { latest ->
-            if (latest == null) return@onSuccess
-            updateInvoice { state ->
-                // Guard: ignore stale result if user already switched to a different client
-                if (state.formState.selectedClient?.id != client.id) return@updateInvoice state
-                val formState = synchronizeDueDate(
-                    state.formState.copy(
-                        senderIban = latest.iban?.value.orEmpty().ifBlank { state.formState.senderIban }
-                    )
-                )
-                state.copy(
-                    formState = formState,
-                    uiState = state.uiState.copy(
-                        latestInvoiceSuggestion = latest.toSuggestion()
-                    )
-                )
-            }
-        }.onFailure { logger.w { "Failed to load latest invoice defaults: ${it.message}" } }
-
-        intent(CreateInvoiceIntent.RefreshPeppolStatus(contactId = client.id))
     }
 
     private suspend fun CreateInvoiceCtx.handleSelectDate(date: LocalDate) {
@@ -616,126 +344,6 @@ internal class CreateInvoiceContainer(
         }
     }
 
-    private suspend fun CreateInvoiceCtx.loadDefaults() {
-        if (snapshotState().uiState.defaultsLoaded) return
-
-        getInvoiceNumberPreview()
-            .onSuccess { preview ->
-                updateInvoice { it.copy(invoiceNumberPreview = preview) }
-            }
-            .onFailure { logger.w { "Could not load invoice number preview: ${it.message}" } }
-
-        val tenantSettingsResult = getTenantSettings()
-        val currentTenantResult = getCurrentTenant()
-
-        tenantSettingsResult.onFailure { logger.w { "Could not load tenant defaults: ${it.message}" } }
-        currentTenantResult.onFailure { logger.w { "Could not load current tenant: ${it.message}" } }
-
-        val settings = tenantSettingsResult.getOrNull()
-        val currentTenant = requireNotNull(currentTenantResult.getOrNull()) {
-            "Current tenant must be available on Create Invoice screen."
-        }
-
-        updateInvoice { state ->
-            val withDefaults = settings?.let { tenantSettings ->
-                synchronizeDueDate(
-                    state.formState.copy(
-                        paymentTermsDays = tenantSettings.defaultPaymentTerms,
-                        senderIban = tenantSettings.companyIban?.value.orEmpty(),
-                        senderBic = tenantSettings.companyBic?.value.orEmpty(),
-                        notes = state.formState.notes.ifBlank { tenantSettings.paymentTermsText.orEmpty() }
-                    )
-                )
-            } ?: state.formState
-
-            state.copy(
-                formState = withDefaults,
-                uiState = state.uiState.copy(
-                    senderCompanyName = currentTenant.legalName.value,
-                    senderCompanyVat = currentTenant.vatNumber.formatted
-                )
-            )
-        }
-
-        updateInvoice { state ->
-            val updated = if (state.formState.structuredCommunication.isNotBlank()) {
-                state
-            } else {
-                state.copy(
-                    formState = state.formState.copy(
-                        structuredCommunication = generateStructuredCommunication()
-                    )
-                )
-            }
-            updated.copy(uiState = updated.uiState.copy(defaultsLoaded = true))
-        }
-    }
-
-    private suspend fun CreateInvoiceCtx.submitInvoice(deliveryMethod: InvoiceDeliveryMethod?) {
-        val current = snapshotState()
-        if (current.formState.isSaving) return
-
-        val validation = validateInvoice(current.formState)
-        if (!validation.isValid) {
-            val firstError = validation.errors.entries.firstOrNull()
-            val firstInvalidSection = sectionForError(firstError?.key)
-            updateInvoice { state ->
-                state.copy(
-                    formState = state.formState.copy(errors = validation.errors),
-                    uiState = state.uiState.copy(
-                        expandedSections = state.uiState.expandedSections + firstInvalidSection,
-                        suggestedSection = firstInvalidSection
-                    )
-                )
-            }
-            action(
-                CreateInvoiceAction.ShowValidationError(
-                    firstError?.value?.message ?: "Invoice is missing required fields."
-                )
-            )
-            return
-        }
-
-        updateInvoice {
-            it.copy(formState = it.formState.copy(isSaving = true, errors = emptyMap()))
-        }
-
-        // Persist the user's delivery preference for UX recall, but the actual
-        // delivery action is determined by `deliveryMethod` (null = draft, no delivery).
-        val persistedPreference = current.uiState.selectedDeliveryPreference
-        val request = current.formState.toCreateInvoiceRequest(persistedPreference)
-        submitInvoiceWithDelivery(request, deliveryMethod).fold(
-            onSuccess = { result ->
-                updateInvoice { it.copy(formState = it.formState.copy(isSaving = false)) }
-                when (result) {
-                    is SubmitInvoiceWithDeliveryResult.DraftSaved -> {
-                        action(CreateInvoiceAction.ShowSuccess("Draft saved."))
-                        action(CreateInvoiceAction.NavigateBack)
-                    }
-                    is SubmitInvoiceWithDeliveryResult.PeppolQueued -> {
-                        action(CreateInvoiceAction.ShowSuccess("Invoice queued for PEPPOL."))
-                        action(CreateInvoiceAction.NavigateBack)
-                    }
-                    is SubmitInvoiceWithDeliveryResult.PdfReady -> {
-                        action(CreateInvoiceAction.OpenExternalUrl(result.downloadUrl))
-                        action(CreateInvoiceAction.ShowSuccess("Invoice PDF is ready."))
-                        action(CreateInvoiceAction.NavigateBack)
-                    }
-                    is SubmitInvoiceWithDeliveryResult.DeliveryFailed -> {
-                        action(CreateInvoiceAction.ShowError("Invoice saved but delivery failed: ${result.error}"))
-                        action(CreateInvoiceAction.NavigateBack)
-                    }
-                }
-            },
-            onFailure = { error ->
-                updateInvoice {
-                    it.copy(formState = it.formState.copy(isSaving = false))
-                }
-                action(CreateInvoiceAction.ShowError(error.message ?: "Failed to submit invoice."))
-            }
-        )
-    }
-
     private suspend fun CreateInvoiceCtx.updateInvoice(
         transform: (CreateInvoiceState) -> CreateInvoiceState
     ) {
@@ -753,15 +361,6 @@ internal class CreateInvoiceContainer(
         var snapshot: CreateInvoiceState? = null
         withState { snapshot = this }
         return requireNotNull(snapshot)
-    }
-
-    private fun sectionForError(field: String?): InvoiceSection {
-        return when (field) {
-            ValidateInvoiceUseCase.FIELD_CLIENT -> InvoiceSection.Client
-            ValidateInvoiceUseCase.FIELD_ITEMS -> InvoiceSection.LineItems
-            ValidateInvoiceUseCase.FIELD_DUE_DATE -> InvoiceSection.DatesTerms
-            else -> InvoiceSection.PaymentDelivery
-        }
     }
 
     private fun resolveDelivery(
@@ -804,11 +403,6 @@ internal class CreateInvoiceContainer(
         val issueDate = formState.issueDate ?: Clock.System.todayIn(TimeZone.currentSystemDefault())
         val dueDate = issueDate.plus(formState.paymentTermsDays, DateTimeUnit.DAY)
         return formState.copy(issueDate = issueDate, dueDate = dueDate)
-    }
-
-    private fun generateStructuredCommunication(): String {
-        val base = currentTimeMillis.absoluteValue % 10_000_000_000L
-        return ValidateOgmUseCase.generate(base)
     }
 
     private fun tech.dokus.domain.model.DocDto.Invoice.Confirmed.toSuggestion(): LatestInvoiceSuggestion? {
