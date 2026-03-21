@@ -34,11 +34,13 @@ import tech.dokus.aura.resources.contacts_note_by
 import tech.dokus.aura.resources.contacts_notes
 import tech.dokus.domain.model.contact.ContactNoteDto
 import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.app.state.isError
+import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.aura.components.DokusCard
 import tech.dokus.foundation.aura.components.DokusCardPadding
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.DokusCardVariant
-import tech.dokus.foundation.aura.components.common.DokusErrorBanner
+import tech.dokus.foundation.aura.components.common.ErrorOverlay
 import tech.dokus.foundation.aura.components.common.ShimmerLine
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
@@ -106,26 +108,24 @@ internal fun NotesSection(
                 }
             }
 
-            when (state) {
-                is DokusState.Loading, is DokusState.Idle -> {
-                    NotesSkeleton()
-                }
-                is DokusState.Success -> {
-                    if (state.data.isEmpty()) {
-                        NotesEmptyState()
-                    } else {
-                        NotesContent(
-                            notes = state.data,
-                            onEditNote = onEditNote,
-                            onDeleteNote = onDeleteNote
-                        )
+            ErrorOverlay(
+                exception = if (state is DokusState.Error) state.exception else null,
+                retryHandler = if (state is DokusState.Error) state.retryHandler else null,
+            ) {
+                when (state) {
+                    is DokusState.Loading, is DokusState.Idle -> NotesSkeleton()
+                    is DokusState.Success -> {
+                        if (state.data.isEmpty()) {
+                            NotesEmptyState()
+                        } else {
+                            NotesContent(
+                                notes = state.data,
+                                onEditNote = onEditNote,
+                                onDeleteNote = onDeleteNote,
+                            )
+                        }
                     }
-                }
-                is DokusState.Error -> {
-                    DokusErrorBanner(
-                        exception = state.exception,
-                        retryHandler = state.retryHandler,
-                    )
+                    is DokusState.Error -> NotesEmptyState()
                 }
             }
         }

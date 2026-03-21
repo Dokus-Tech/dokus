@@ -37,9 +37,11 @@ import tech.dokus.domain.model.DocumentListItemDto
 import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.features.cashflow.presentation.model.toUiStatus
 import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.app.state.isError
+import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.aura.components.DocumentStatusBadge
 import tech.dokus.foundation.aura.components.DokusCardSurface
-import tech.dokus.foundation.aura.components.common.DokusErrorBanner
+import tech.dokus.foundation.aura.components.common.ErrorOverlay
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import tech.dokus.foundation.aura.components.common.ShimmerBox
@@ -104,36 +106,29 @@ fun PendingDocumentsCard(
 
             Spacer(modifier = Modifier.height(CardPadding))
 
-            when (state) {
-                is DokusState.Loading, is DokusState.Idle -> {
-                    PendingDocumentsLoadingContent(
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-
-                is DokusState.Error -> {
-                    PendingDocumentsErrorContent(
-                        state = state,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-
-                is DokusState.Success -> {
-                    val paginationState = state.data
-                    if (paginationState.data.isEmpty()) {
-                        PendingDocumentsEmptyContent(
-                            modifier = Modifier.weight(1f)
-                        )
-                    } else {
-                        PendingDocumentsLazyList(
-                            documents = paginationState.data,
-                            hasMorePages = paginationState.hasMorePages,
-                            isLoadingMore = false,
-                            onDocumentClick = onDocumentClick,
-                            onLoadMore = onLoadMore,
-                            modifier = Modifier.weight(1f)
-                        )
+            ErrorOverlay(
+                exception = if (state is DokusState.Error) state.exception else null,
+                retryHandler = if (state is DokusState.Error) state.retryHandler else null,
+                modifier = Modifier.weight(1f),
+            ) {
+                when (state) {
+                    is DokusState.Loading, is DokusState.Idle -> {
+                        PendingDocumentsLoadingContent()
                     }
+                    is DokusState.Success -> {
+                        if (state.data.data.isEmpty()) {
+                            PendingDocumentsEmptyContent()
+                        } else {
+                            PendingDocumentsLazyList(
+                                documents = state.data.data,
+                                hasMorePages = state.data.hasMorePages,
+                                isLoadingMore = false,
+                                onDocumentClick = onDocumentClick,
+                                onLoadMore = onLoadMore,
+                            )
+                        }
+                    }
+                    is DokusState.Error -> PendingDocumentsEmptyContent()
                 }
             }
         }
@@ -217,21 +212,6 @@ private fun PendingDocumentsEmptyContent(
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
-}
-
-/**
- * Error state content with error message and retry button.
- */
-@Composable
-private fun PendingDocumentsErrorContent(
-    state: DokusState.Error<*>,
-    modifier: Modifier = Modifier
-) {
-    DokusErrorBanner(
-        exception = state.exception,
-        retryHandler = state.retryHandler,
-        modifier = modifier,
-    )
 }
 
 /**

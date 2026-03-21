@@ -104,7 +104,7 @@ import tech.dokus.foundation.aura.components.MonogramAvatar
 import tech.dokus.foundation.aura.components.UserAvatarImage
 import tech.dokus.foundation.aura.components.badges.TierBadge
 import tech.dokus.foundation.aura.components.common.DokusErrorBanner
-import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.aura.components.common.ErrorOverlay
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.common.DokusSelectableRowGroup
@@ -279,15 +279,10 @@ fun TeamSettingsContent(
         )
     }
 
-    if (state.teamData.isError()) {
-        DokusErrorContent(
-            exception = state.teamData.exception,
-            retryHandler = state.teamData.retryHandler,
-            modifier = Modifier.fillMaxSize(),
-        )
-        return
-    }
-
+    ErrorOverlay(
+        exception = if (state.teamData is DokusState.Error) state.teamData.exception else null,
+        retryHandler = if (state.teamData is DokusState.Error) state.teamData.retryHandler else null,
+    ) {
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -302,10 +297,6 @@ fun TeamSettingsContent(
             verticalArrangement = Arrangement.spacedBy(SectionSpacing),
         ) {
             when {
-                state.teamData.isLoading() -> {
-                    SettingsSkeleton(sectionCount = 2)
-                }
-
                 state.teamData.isSuccess() -> {
                     val teamData = state.teamData.data
                     val members = teamData.members
@@ -383,10 +374,13 @@ fun TeamSettingsContent(
                         color = MaterialTheme.colorScheme.textFaint,
                     )
                 }
+
+                else -> SettingsSkeleton(sectionCount = 2)
             }
 
             Spacer(Modifier.height(8.dp))
         }
+    }
     }
 }
 

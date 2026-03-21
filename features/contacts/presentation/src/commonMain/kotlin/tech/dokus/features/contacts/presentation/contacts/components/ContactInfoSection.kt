@@ -14,9 +14,11 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.contacts_contact_info
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.app.state.isError
+import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.aura.components.DokusCard
 import tech.dokus.foundation.aura.components.DokusCardPadding
-import tech.dokus.foundation.aura.components.common.DokusErrorBanner
+import tech.dokus.foundation.aura.components.common.ErrorOverlay
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
@@ -47,16 +49,14 @@ internal fun ContactInfoSection(
                 fontWeight = FontWeight.SemiBold
             )
 
-            when (state) {
-                is DokusState.Loading, is DokusState.Idle -> ContactInfoSkeleton()
-                is DokusState.Success -> ContactInfoContent(
-                    contact = state.data
-                )
-                is DokusState.Error -> {
-                    DokusErrorBanner(
-                        exception = state.exception,
-                        retryHandler = state.retryHandler,
-                    )
+            ErrorOverlay(
+                exception = if (state is DokusState.Error) state.exception else null,
+                retryHandler = if (state is DokusState.Error) state.retryHandler else null,
+            ) {
+                when (state) {
+                    is DokusState.Loading, is DokusState.Idle -> ContactInfoSkeleton()
+                    is DokusState.Success -> ContactInfoContent(contact = state.data)
+                    is DokusState.Error -> ContactInfoSkeleton()
                 }
             }
         }

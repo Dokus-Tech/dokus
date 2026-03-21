@@ -33,11 +33,13 @@ import tech.dokus.aura.resources.contacts_pending_approval_plural
 import tech.dokus.aura.resources.contacts_pending_approval_single
 import tech.dokus.domain.model.contact.ContactActivitySummary
 import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.app.state.isError
+import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.aura.components.DokusCard
 import tech.dokus.foundation.aura.components.DokusCardPadding
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.DokusCardVariant
-import tech.dokus.foundation.aura.components.common.DokusErrorBanner
+import tech.dokus.foundation.aura.components.common.ErrorOverlay
 import tech.dokus.foundation.aura.components.common.ShimmerLine
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.tooling.PreviewParameters
@@ -81,17 +83,15 @@ internal fun ActivitySummarySection(
                 style = MaterialTheme.typography.headlineMedium,
             )
 
-            when (state) {
-                is DokusState.Loading, is DokusState.Idle -> {
-                    ActivitySummarySkeleton()
-                }
-                is DokusState.Success -> {
-                    ActivitySummaryContent(activity = state.data)
-                }
-                is DokusState.Error -> {
-                    DokusErrorBanner(
-                        exception = state.exception,
-                        retryHandler = state.retryHandler,
+            ErrorOverlay(
+                exception = if (state is DokusState.Error) state.exception else null,
+                retryHandler = if (state is DokusState.Error) state.retryHandler else null,
+            ) {
+                when (state) {
+                    is DokusState.Loading, is DokusState.Idle -> ActivitySummarySkeleton()
+                    is DokusState.Success -> ActivitySummaryContent(activity = state.data)
+                    is DokusState.Error -> ActivitySummaryContent(
+                        activity = ContactActivitySummary(contactId = ContactId.generate()),
                     )
                 }
             }

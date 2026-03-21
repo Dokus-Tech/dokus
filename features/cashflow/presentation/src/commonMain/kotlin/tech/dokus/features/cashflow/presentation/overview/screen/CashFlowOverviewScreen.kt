@@ -66,6 +66,7 @@ import tech.dokus.foundation.app.state.isError
 import tech.dokus.foundation.app.state.isLoading
 import tech.dokus.foundation.aura.components.common.DokusEmptyState
 import tech.dokus.foundation.aura.components.common.DokusErrorBanner
+import tech.dokus.foundation.aura.components.common.ErrorOverlay
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import tech.dokus.foundation.aura.components.common.MonthSeparatorRow
@@ -190,118 +191,118 @@ private fun CashFlowOverviewContent(
                     .fillMaxWidth()
                     .padding(bottom = 16.dp)
             ) {
-                // Table surface (data only)
-                DokusTableSurface(
-                    modifier = Modifier.fillMaxSize(),
-                    header = if (isLargeScreen) {
-                        { CashFlowOverviewHeaderRow() }
-                    } else {
-                        null
-                    }
+                ErrorOverlay(
+                    exception = if (entriesData.isEmpty() && state.entries.isError()) state.entries.exception else null,
+                    retryHandler = if (entriesData.isEmpty() && state.entries.isError()) state.entries.retryHandler else null,
                 ) {
-                    // Table body OR loading/error/empty state
-                    if (entriesData.isEmpty() && state.entries.isError()) {
-                        val error = state.entries
-                        DokusErrorBanner(
-                            exception = error.exception,
-                            retryHandler = error.retryHandler,
-                            modifier = Modifier.padding(16.dp),
-                        )
-                    } else if (entriesData.isEmpty() && isRefreshing) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f)
-                                .padding(32.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            DokusLoader(size = DokusLoaderSize.Small)
-                        }
-                    } else if (entriesData.isEmpty() && !isRefreshing) {
-                        // Context-aware empty state based on current filters
-                        val emptyStateTitle = getEmptyStateTitle(
-                            viewMode = state.filters.viewMode,
-                            direction = state.filters.direction
-                        )
-                        // Hint only shown for Upcoming + All
-                        val emptyStateHint = if (
-                            state.filters.viewMode == CashflowViewMode.Upcoming &&
-                            state.filters.direction == DirectionFilter.All
-                        ) {
-                            stringResource(Res.string.cashflow_empty_upcoming_hint)
+                    // Table surface (data only)
+                    DokusTableSurface(
+                        modifier = Modifier.fillMaxSize(),
+                        header = if (isLargeScreen) {
+                            { CashFlowOverviewHeaderRow() }
                         } else {
                             null
                         }
-
-                        DokusEmptyState(
-                            title = emptyStateTitle,
-                            subtitle = emptyStateHint,
-                            modifier = Modifier
-                                .weight(1f)
-                                .padding(32.dp)
-                        )
-                    } else {
-                        LazyColumn(
-                            state = listState,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            itemsIndexed(
-                                items = displayRows,
-                                key = { _, row ->
-                                    when (row) {
-                                        is CashflowDisplayRow.EntryRow -> row.entry.id.toString()
-                                        is CashflowDisplayRow.MonthHeader -> "month-${row.year}-${row.month}"
-                                    }
-                                }
-                            ) { index, row ->
-                                when (row) {
-                                    is CashflowDisplayRow.MonthHeader -> {
-                                        MonthSeparatorRow(year = row.year, month = row.month)
-                                    }
-                                    is CashflowDisplayRow.EntryRow -> {
-                                        val entry = row.entry
-                                        if (isLargeScreen) {
-                                            CashFlowOverviewTableRow(
-                                                entry = entry,
-                                                viewMode = state.filters.viewMode,
-                                                isHighlighted = entry.id == state.highlightedEntryId,
-                                                showActionsMenu = state.actionsEntryId == entry.id,
-                                                onClick = { onIntent(CashFlowOverviewIntent.OpenEntry(entry)) },
-                                                onShowActions = { onIntent(CashFlowOverviewIntent.ShowRowActions(entry.id)) },
-                                                onHideActions = { onIntent(CashFlowOverviewIntent.HideRowActions) },
-                                                onRecordPayment = { onIntent(CashFlowOverviewIntent.RecordPaymentFor(entry.id)) },
-                                                onMarkAsPaid = { onIntent(CashFlowOverviewIntent.MarkAsPaidQuick(entry.id)) },
-                                                onViewDocument = { onIntent(CashFlowOverviewIntent.ViewDocumentFor(entry)) }
-                                            )
-                                        } else {
-                                            CashFlowOverviewMobileRow(
-                                                entry = entry,
-                                                viewMode = state.filters.viewMode,
-                                                onClick = { onIntent(CashFlowOverviewIntent.OpenEntry(entry)) },
-                                                onShowActions = { onIntent(CashFlowOverviewIntent.ShowRowActions(entry.id)) }
-                                            )
+                    ) {
+                        when {
+                            entriesData.isNotEmpty() -> {
+                                LazyColumn(
+                                    state = listState,
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    itemsIndexed(
+                                        items = displayRows,
+                                        key = { _, row ->
+                                            when (row) {
+                                                is CashflowDisplayRow.EntryRow -> row.entry.id.toString()
+                                                is CashflowDisplayRow.MonthHeader -> "month-${row.year}-${row.month}"
+                                            }
                                         }
+                                    ) { index, row ->
+                                        when (row) {
+                                            is CashflowDisplayRow.MonthHeader -> {
+                                                MonthSeparatorRow(year = row.year, month = row.month)
+                                            }
+                                            is CashflowDisplayRow.EntryRow -> {
+                                                val entry = row.entry
+                                                if (isLargeScreen) {
+                                                    CashFlowOverviewTableRow(
+                                                        entry = entry,
+                                                        viewMode = state.filters.viewMode,
+                                                        isHighlighted = entry.id == state.highlightedEntryId,
+                                                        showActionsMenu = state.actionsEntryId == entry.id,
+                                                        onClick = { onIntent(CashFlowOverviewIntent.OpenEntry(entry)) },
+                                                        onShowActions = { onIntent(CashFlowOverviewIntent.ShowRowActions(entry.id)) },
+                                                        onHideActions = { onIntent(CashFlowOverviewIntent.HideRowActions) },
+                                                        onRecordPayment = { onIntent(CashFlowOverviewIntent.RecordPaymentFor(entry.id)) },
+                                                        onMarkAsPaid = { onIntent(CashFlowOverviewIntent.MarkAsPaidQuick(entry.id)) },
+                                                        onViewDocument = { onIntent(CashFlowOverviewIntent.ViewDocumentFor(entry)) }
+                                                    )
+                                                } else {
+                                                    CashFlowOverviewMobileRow(
+                                                        entry = entry,
+                                                        viewMode = state.filters.viewMode,
+                                                        onClick = { onIntent(CashFlowOverviewIntent.OpenEntry(entry)) },
+                                                        onShowActions = { onIntent(CashFlowOverviewIntent.ShowRowActions(entry.id)) }
+                                                    )
+                                                }
 
-                                        // Dividers only between entry rows
-                                        val nextRow = displayRows.getOrNull(index + 1)
-                                        if (nextRow is CashflowDisplayRow.EntryRow) {
-                                            DokusTableDivider()
+                                                // Dividers only between entry rows
+                                                val nextRow = displayRows.getOrNull(index + 1)
+                                                if (nextRow is CashflowDisplayRow.EntryRow) {
+                                                    DokusTableDivider()
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    if (isRefreshing) {
+                                        item {
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(16.dp),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                DokusLoader(size = DokusLoaderSize.Small)
+                                            }
                                         }
                                     }
                                 }
                             }
-
-                            if (isRefreshing) {
-                                item {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(16.dp),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        DokusLoader(size = DokusLoaderSize.Small)
-                                    }
+                            isRefreshing -> {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .weight(1f)
+                                        .padding(32.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    DokusLoader(size = DokusLoaderSize.Small)
                                 }
+                            }
+                            else -> {
+                                // Empty or error — show empty state behind blur
+                                val emptyStateTitle = getEmptyStateTitle(
+                                    viewMode = state.filters.viewMode,
+                                    direction = state.filters.direction
+                                )
+                                val emptyStateHint = if (
+                                    state.filters.viewMode == CashflowViewMode.Upcoming &&
+                                    state.filters.direction == DirectionFilter.All
+                                ) {
+                                    stringResource(Res.string.cashflow_empty_upcoming_hint)
+                                } else {
+                                    null
+                                }
+
+                                DokusEmptyState(
+                                    title = emptyStateTitle,
+                                    subtitle = emptyStateHint,
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .padding(32.dp)
+                                )
                             }
                         }
                     }

@@ -40,7 +40,7 @@ import tech.dokus.foundation.app.state.isError
 import tech.dokus.foundation.app.state.isLoading
 import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.aura.components.common.DokusErrorBanner
-import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.aura.components.common.ErrorOverlay
 import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.extensions.localized
@@ -105,31 +105,27 @@ fun WorkspaceSettingsContent(
 
     val workspaceData = state.workspaceData
 
-    when {
-        workspaceData.isLoading() -> {
-            SettingsSkeleton(
-                sectionCount = 5,
-                modifier = modifier,
-            )
-        }
-
-        workspaceData.isError() -> {
-            DokusErrorContent(
-                exception = workspaceData.exception,
-                retryHandler = workspaceData.retryHandler,
-                modifier = Modifier.fillMaxSize(),
-            )
-        }
-
-        workspaceData.isSuccess() -> {
-            WorkspaceSettingsContentScreen(
-                state = state,
-                data = workspaceData.data,
-                onIntent = onIntent,
-                onNavigateToPeppol = onNavigateToPeppol,
-                avatarPicker = avatarPicker,
-                modifier = modifier,
-            )
+    ErrorOverlay(
+        exception = if (workspaceData is DokusState.Error) workspaceData.exception else null,
+        retryHandler = if (workspaceData is DokusState.Error) workspaceData.retryHandler else null,
+    ) {
+        when {
+            workspaceData.isSuccess() -> {
+                WorkspaceSettingsContentScreen(
+                    state = state,
+                    data = workspaceData.data,
+                    onIntent = onIntent,
+                    onNavigateToPeppol = onNavigateToPeppol,
+                    avatarPicker = avatarPicker,
+                    modifier = modifier,
+                )
+            }
+            else -> {
+                SettingsSkeleton(
+                    sectionCount = 5,
+                    modifier = modifier,
+                )
+            }
         }
     }
 }

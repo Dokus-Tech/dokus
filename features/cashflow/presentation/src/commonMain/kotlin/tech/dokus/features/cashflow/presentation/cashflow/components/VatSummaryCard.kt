@@ -30,7 +30,9 @@ import tech.dokus.aura.resources.vat_summary_title
 import tech.dokus.domain.Money
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.DokusCardSurface
-import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.app.state.isError
+import tech.dokus.foundation.app.state.isSuccess
+import tech.dokus.foundation.aura.components.common.ErrorOverlay
 import tech.dokus.foundation.aura.components.common.ShimmerLine
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
@@ -75,17 +77,14 @@ fun VatSummaryCard(
                 .fillMaxWidth()
                 .padding(CardPadding)
         ) {
-            when (state) {
-                is DokusState.Loading, is DokusState.Idle -> {
-                    VatSummaryCardSkeleton()
-                }
-
-                is DokusState.Success -> {
-                    VatSummaryCardContent(data = state.data)
-                }
-
-                is DokusState.Error -> {
-                    VatSummaryCardError(state = state)
+            ErrorOverlay(
+                exception = if (state is DokusState.Error) state.exception else null,
+                retryHandler = if (state is DokusState.Error) state.retryHandler else null,
+            ) {
+                when (state) {
+                    is DokusState.Loading, is DokusState.Idle -> VatSummaryCardSkeleton()
+                    is DokusState.Success -> VatSummaryCardContent(data = state.data)
+                    is DokusState.Error -> VatSummaryCardContent(data = VatSummaryData.empty)
                 }
             }
         }
@@ -161,26 +160,6 @@ private fun VatSummaryCardSkeleton(
             ShimmerLine(modifier = Modifier.width(PredictedSkeletonLabelWidth), height = SkeletonLabelHeight)
             ShimmerLine(modifier = Modifier.width(NetSkeletonAmountWidth), height = SkeletonAmountHeight)
         }
-    }
-}
-
-/**
- * Error state with inline retry.
- */
-@Composable
-private fun VatSummaryCardError(
-    state: DokusState.Error<*>,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier.fillMaxWidth(),
-        contentAlignment = Alignment.Center
-    ) {
-        DokusErrorContent(
-            exception = state.exception,
-            retryHandler = state.retryHandler,
-            compact = true
-        )
     }
 }
 

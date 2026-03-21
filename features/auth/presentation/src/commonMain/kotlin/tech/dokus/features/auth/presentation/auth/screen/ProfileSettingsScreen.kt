@@ -42,7 +42,7 @@ import tech.dokus.foundation.app.state.isError
 import tech.dokus.foundation.app.state.isLoading
 import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.aura.components.common.DokusErrorBanner
-import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.aura.components.common.ErrorOverlay
 import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.local.LocalScreenSize
@@ -204,19 +204,11 @@ fun ProfileSettingsContent(
             }
 
             // User data section: loading / error / editing / saving / viewing
+            ErrorOverlay(
+                exception = if (state.user is DokusState.Error) state.user.exception else null,
+                retryHandler = if (state.user is DokusState.Error) state.user.retryHandler else null,
+            ) {
             when {
-                state.user.isLoading() -> {
-                    ProfileSettingsSkeleton()
-                }
-
-                state.user.isError() -> {
-                    DokusErrorContent(
-                        exception = state.user.exception,
-                        retryHandler = state.user.retryHandler,
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                }
-
                 state.isSaving && state.user.isSuccess() -> {
                     ProfileSavingSection(
                         email = state.user.data.email.value,
@@ -253,6 +245,9 @@ fun ProfileSettingsContent(
                         onEditClick = { onIntent(ProfileSettingsIntent.StartEditing) },
                     )
                 }
+
+                else -> ProfileSettingsSkeleton()
+            }
             }
 
             // Independent sections -- always visible regardless of state

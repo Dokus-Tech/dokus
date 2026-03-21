@@ -57,7 +57,7 @@ import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.common.DokusEmptyState
 import tech.dokus.foundation.aura.components.common.DokusErrorBanner
-import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.aura.components.common.ErrorOverlay
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import tech.dokus.foundation.aura.components.common.MonthSeparatorRow
@@ -222,49 +222,45 @@ private fun PaymentsContent(
                     .weight(1f)
                     .fillMaxHeight(),
             ) {
-                when {
-                    txData.isEmpty() && isRefreshing -> {
-                        PaymentsSkeleton()
-                    }
-                    state.transactions.isError() -> {
-                        DokusErrorContent(
-                            exception = state.transactions.exception,
-                            retryHandler = state.transactions.retryHandler,
-                            modifier = Modifier.fillMaxSize(),
-                        )
-                    }
-                    txData.isEmpty() && state.transactions.isSuccess() -> {
-                        DokusEmptyState(
-                            title = stringResource(Res.string.banking_empty_title),
-                            subtitle = stringResource(Res.string.banking_empty_subtitle),
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(Constraints.Spacing.xxLarge),
-                        )
-                    }
-                    else -> {
-                        if (isLargeScreen) {
-                            DesktopTransactionTable(
-                                displayRows = displayRows,
-                                selectedTransactionId = state.selectedTransactionId,
-                                accountNames = state.accountNames,
-                                isRefreshing = isRefreshing,
-                                listState = listState,
-                                onSelectTransaction = { id ->
-                                    onIntent(PaymentsIntent.SelectTransaction(id))
-                                },
-                            )
-                        } else {
-                            MobileTransactionList(
-                                displayRows = displayRows,
-                                selectedTransactionId = state.selectedTransactionId,
-                                isRefreshing = isRefreshing,
-                                listState = listState,
-                                onSelectTransaction = { id ->
-                                    onIntent(PaymentsIntent.SelectTransaction(id))
-                                },
+                ErrorOverlay(
+                    exception = if (state.transactions is DokusState.Error) state.transactions.exception else null,
+                    retryHandler = if (state.transactions is DokusState.Error) state.transactions.retryHandler else null,
+                ) {
+                    when {
+                        state.transactions.isSuccess() && txData.isEmpty() -> {
+                            DokusEmptyState(
+                                title = stringResource(Res.string.banking_empty_title),
+                                subtitle = stringResource(Res.string.banking_empty_subtitle),
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(Constraints.Spacing.xxLarge),
                             )
                         }
+                        txData.isNotEmpty() -> {
+                            if (isLargeScreen) {
+                                DesktopTransactionTable(
+                                    displayRows = displayRows,
+                                    selectedTransactionId = state.selectedTransactionId,
+                                    accountNames = state.accountNames,
+                                    isRefreshing = isRefreshing,
+                                    listState = listState,
+                                    onSelectTransaction = { id ->
+                                        onIntent(PaymentsIntent.SelectTransaction(id))
+                                    },
+                                )
+                            } else {
+                                MobileTransactionList(
+                                    displayRows = displayRows,
+                                    selectedTransactionId = state.selectedTransactionId,
+                                    isRefreshing = isRefreshing,
+                                    listState = listState,
+                                    onSelectTransaction = { id ->
+                                        onIntent(PaymentsIntent.SelectTransaction(id))
+                                    },
+                                )
+                            }
+                        }
+                        else -> PaymentsSkeleton()
                     }
                 }
             }

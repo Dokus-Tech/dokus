@@ -47,7 +47,7 @@ import tech.dokus.foundation.aura.components.PButton
 import tech.dokus.foundation.aura.components.PButtonVariant
 import tech.dokus.foundation.aura.components.PIconPosition
 import tech.dokus.foundation.aura.components.common.DokusEmptyState
-import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.aura.components.common.ErrorOverlay
 import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.local.LocalScreenSize
@@ -172,37 +172,39 @@ private fun BalancesContent(
         // Accounts content
         item {
             DokusCardSurface(modifier = Modifier.fillMaxWidth()) {
-                val accountData = state.accounts.lastData
-                val isLoading = state.accounts.isLoading()
-
-                when {
-                    accountData == null && isLoading -> {
-                        BalancesSkeleton()
-                    }
-                    state.accounts.isError() -> {
-                        DokusErrorContent(
-                            exception = state.accounts.exception,
-                            retryHandler = state.accounts.retryHandler,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(200.dp),
-                        )
-                    }
-                    accountData != null && accountData.isEmpty() -> {
-                        DokusEmptyState(
-                            title = stringResource(Res.string.banking_balances_empty_title),
-                            subtitle = stringResource(Res.string.banking_balances_empty_subtitle),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(Constraints.Spacing.xxLarge),
-                        )
-                    }
-                    accountData != null -> {
-                        if (isLargeScreen) {
-                            DesktopAccountsTable(accounts = accountData)
-                        } else {
-                            MobileAccountsList(accounts = accountData)
+                ErrorOverlay(
+                    exception = if (state.accounts is DokusState.Error) state.accounts.exception else null,
+                    retryHandler = if (state.accounts is DokusState.Error) state.accounts.retryHandler else null,
+                ) {
+                    when {
+                        state.accounts.isSuccess() -> {
+                            val accountData = state.accounts.data
+                            if (accountData.isEmpty()) {
+                                DokusEmptyState(
+                                    title = stringResource(Res.string.banking_balances_empty_title),
+                                    subtitle = stringResource(Res.string.banking_balances_empty_subtitle),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(Constraints.Spacing.xxLarge),
+                                )
+                            } else {
+                                if (isLargeScreen) {
+                                    DesktopAccountsTable(accounts = accountData)
+                                } else {
+                                    MobileAccountsList(accounts = accountData)
+                                }
+                            }
                         }
+                        state.accounts is DokusState.Error -> {
+                            DokusEmptyState(
+                                title = stringResource(Res.string.banking_balances_empty_title),
+                                subtitle = stringResource(Res.string.banking_balances_empty_subtitle),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(Constraints.Spacing.xxLarge),
+                            )
+                        }
+                        else -> BalancesSkeleton()
                     }
                 }
             }

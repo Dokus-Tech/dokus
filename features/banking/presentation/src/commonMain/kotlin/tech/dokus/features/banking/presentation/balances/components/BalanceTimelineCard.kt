@@ -40,7 +40,7 @@ import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.charts.DokusLineChart
 import tech.dokus.foundation.aura.components.charts.LineChartSeries
-import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.aura.components.common.ErrorOverlay
 import tech.dokus.foundation.aura.components.common.ShimmerBox
 import tech.dokus.foundation.aura.components.tabs.DokusTab
 import tech.dokus.foundation.aura.components.tabs.DokusTabs
@@ -146,46 +146,45 @@ internal fun BalanceTimelineCard(
             }
 
             // Chart area
-            when {
-                balanceHistory.isLoading() -> {
-                    ShimmerBox(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(ChartHeight),
-                    )
-                }
-
-                balanceHistory.isError() -> {
-                    DokusErrorContent(
-                        exception = balanceHistory.exception,
-                        retryHandler = balanceHistory.retryHandler,
-                        compact = true,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(ChartHeight),
-                    )
-                }
-
-                balanceHistory.isSuccess() -> {
-                    val chartData = buildChartSeries(balanceHistory.data)
-
-                    if (chartData.isEmpty()) {
+            ErrorOverlay(
+                exception = if (balanceHistory is DokusState.Error) balanceHistory.exception else null,
+                retryHandler = if (balanceHistory is DokusState.Error) balanceHistory.retryHandler else null,
+            ) {
+                when {
+                    balanceHistory.isSuccess() -> {
+                        val chartData = buildChartSeries(balanceHistory.data)
+                        if (chartData.isEmpty()) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(ChartHeight),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text(
+                                    text = stringResource(Res.string.banking_balances_no_chart_data),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.textMuted,
+                                )
+                            }
+                        } else {
+                            DokusLineChart(
+                                series = chartData,
+                                xLabels = buildXLabels(balanceHistory.data),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(ChartHeight),
+                            )
+                        }
+                    }
+                    balanceHistory is DokusState.Error -> {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(ChartHeight),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Text(
-                                text = stringResource(Res.string.banking_balances_no_chart_data),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.textMuted,
-                            )
-                        }
-                    } else {
-                        DokusLineChart(
-                            series = chartData,
-                            xLabels = buildXLabels(balanceHistory.data),
+                        )
+                    }
+                    else -> {
+                        ShimmerBox(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(ChartHeight),
