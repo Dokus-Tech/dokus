@@ -6,6 +6,8 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.isContactRequired
 import tech.dokus.features.cashflow.usecases.GetDocumentRecordUseCase
+import tech.dokus.features.cashflow.presentation.review.mvi.payment.DocumentPaymentIntent
+import tech.dokus.features.cashflow.presentation.review.mvi.preview.DocumentPreviewIntent
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.platform.Logger
 
@@ -20,9 +22,7 @@ internal class DocumentReviewLoader(
                 document = document.asLoading,
                 isAwaitingExtraction = false,
                 selectedQueueDocumentId = if (queueState != null) documentId else selectedQueueDocumentId,
-                incomingPreviewState = null,
                 // Reset document-specific UI state to prevent stale data from previous document
-                sourceViewerState = null,
                 paymentSheetState = null,
                 rejectDialogState = null,
                 feedbackDialogState = null,
@@ -32,6 +32,16 @@ internal class DocumentReviewLoader(
                 showContactSheet = false,
             )
         }
+        // Reset preview child state for the new document
+        intent(DocumentReviewIntent.Preview(DocumentPreviewIntent.SetDocumentContext(
+            documentId = documentId,
+            documentRecord = null,
+            hasContent = false,
+            hasPendingMatchReview = false,
+            previewState = DocumentPreviewState.Loading,
+            incomingPreviewState = null,
+            resetSourceViewer = true,
+        )))
 
         fetchDocumentProcessing(documentId)
     }
@@ -145,8 +155,6 @@ internal class DocumentReviewLoader(
                             )
                         ),
                         isAwaitingExtraction = false,
-                        previewState = previewState,
-                        incomingPreviewState = incomingPreviewState,
                         // Preserve existing UI state where available
                         isContactRequired = false,
                         documentStatus = draft?.documentStatus,
@@ -173,8 +181,6 @@ internal class DocumentReviewLoader(
                             )
                         ),
                         isAwaitingExtraction = true,
-                        previewState = previewState,
-                        incomingPreviewState = incomingPreviewState,
                         selectedQueueDocumentId = selectedQueueDocumentId ?: this@transitionToDocumentState.let {
                             var id: DocumentId? = null
                             withState { id = this.selectedQueueDocumentId }
@@ -184,8 +190,17 @@ internal class DocumentReviewLoader(
                 }
             }
 
+            // Push context and preview state to child
+            intent(DocumentReviewIntent.Preview(DocumentPreviewIntent.SetDocumentContext(
+                documentId = documentId,
+                documentRecord = document,
+                hasContent = isFailed,
+                hasPendingMatchReview = document.pendingMatchReview != null,
+                previewState = previewState,
+                incomingPreviewState = incomingPreviewState,
+            )))
             if (shouldReloadPreview) {
-                intent(DocumentReviewIntent.LoadPreviewPages)
+                intent(DocumentReviewIntent.Preview(DocumentPreviewIntent.LoadPages))
             }
             return
         }
@@ -217,8 +232,6 @@ internal class DocumentReviewLoader(
                     )
                 ),
                 isAwaitingExtraction = false,
-                previewState = previewState,
-                incomingPreviewState = incomingPreviewState,
                 isContactRequired = content.isContactRequired,
                 documentStatus = draft.documentStatus,
                 confirmedCashflowEntryId = document.cashflowEntryId,
@@ -232,11 +245,20 @@ internal class DocumentReviewLoader(
             )
         }
 
+        // Push context and preview state to child
+        intent(DocumentReviewIntent.Preview(DocumentPreviewIntent.SetDocumentContext(
+            documentId = documentId,
+            documentRecord = document,
+            hasContent = true,
+            hasPendingMatchReview = document.pendingMatchReview != null,
+            previewState = previewState,
+            incomingPreviewState = incomingPreviewState,
+        )))
         if (shouldReloadPreview || shouldReloadIncomingPreview) {
-            intent(DocumentReviewIntent.LoadPreviewPages)
+            intent(DocumentReviewIntent.Preview(DocumentPreviewIntent.LoadPages))
         }
         if (document.cashflowEntryId != null && document.cashflowEntryId != previousConfirmedCashflowEntryId) {
-            intent(DocumentReviewIntent.LoadCashflowEntry)
+            intent(DocumentReviewIntent.Payment(DocumentPaymentIntent.LoadCashflowEntry))
         }
     }
 }

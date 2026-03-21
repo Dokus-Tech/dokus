@@ -23,6 +23,7 @@ import tech.dokus.features.cashflow.usecases.RejectDocumentUseCase
 import tech.dokus.features.cashflow.usecases.UnconfirmDocumentUseCase
 import tech.dokus.features.cashflow.usecases.UpdateDocumentDraftContactUseCase
 import tech.dokus.features.cashflow.usecases.UpdateDocumentDraftUseCase
+import tech.dokus.features.cashflow.presentation.review.mvi.payment.DocumentPaymentIntent
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.platform.Logger
 
@@ -229,7 +230,7 @@ internal class DocumentReviewActions(
                             }
                         }
                         if (cashflowEntryId != null) {
-                            intent(DocumentReviewIntent.LoadCashflowEntry)
+                            intent(DocumentReviewIntent.Payment(DocumentPaymentIntent.LoadCashflowEntry))
                         }
                         action(DocumentReviewAction.ShowSuccess(DocumentReviewSuccess.DocumentConfirmed))
                     },
@@ -417,7 +418,7 @@ internal class DocumentReviewActions(
                     }
                 }
                 if (record.cashflowEntryId != null) {
-                    intent(DocumentReviewIntent.LoadCashflowEntry)
+                    intent(DocumentReviewIntent.Payment(DocumentPaymentIntent.LoadCashflowEntry))
                 }
             },
             onFailure = { error ->

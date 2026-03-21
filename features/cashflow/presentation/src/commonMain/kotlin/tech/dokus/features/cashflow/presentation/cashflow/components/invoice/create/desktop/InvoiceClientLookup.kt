@@ -33,6 +33,7 @@ import androidx.compose.ui.window.PopupProperties
 import tech.dokus.domain.model.PeppolStatusResponse
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.features.cashflow.mvi.CreateInvoiceIntent
+import tech.dokus.features.cashflow.mvi.clientlookup.ClientLookupIntent
 import tech.dokus.features.cashflow.mvi.model.ClientLookupState
 import tech.dokus.features.cashflow.mvi.model.ClientSuggestion
 import tech.dokus.features.cashflow.mvi.model.ExternalClientCandidate
@@ -97,20 +98,20 @@ internal fun InvoiceClientLookup(
                     client = selectedClient,
                     peppolStatus = peppolStatus,
                     peppolStatusLoading = peppolStatusLoading,
-                    onChange = { onIntent(CreateInvoiceIntent.SetClientLookupExpanded(true)) }
+                    onChange = { onIntent(CreateInvoiceIntent.ClientLookup(ClientLookupIntent.SetExpanded(true))) }
                 )
             } else {
                 PLookupField(
                     value = lookupState.query,
-                    onValueChange = { onIntent(CreateInvoiceIntent.UpdateClientLookupQuery(it)) },
+                    onValueChange = { onIntent(CreateInvoiceIntent.ClientLookup(ClientLookupIntent.UpdateQuery(it))) },
                     placeholder = stringResource(Res.string.invoice_client_lookup_hint),
                     outline = if (lookupState.query.isBlank()) PLookupFieldOutline.Dashed else PLookupFieldOutline.Solid,
                     isSelected = lookupState.query.isNotBlank(),
                     onFocusChanged = { focused ->
                         if (focused) {
-                            onIntent(CreateInvoiceIntent.SetClientLookupExpanded(true))
+                            onIntent(CreateInvoiceIntent.ClientLookup(ClientLookupIntent.SetExpanded(true)))
                         } else if (selectedClient == null && lookupState.query.isBlank()) {
-                            onIntent(CreateInvoiceIntent.SetClientLookupExpanded(false))
+                            onIntent(CreateInvoiceIntent.ClientLookup(ClientLookupIntent.SetExpanded(false)))
                         }
                     }
                 )
@@ -125,7 +126,7 @@ internal fun InvoiceClientLookup(
                     alignment = Alignment.TopStart,
                     offset = IntOffset(0, dropdownOffsetPx),
                     onDismissRequest = {
-                        onIntent(CreateInvoiceIntent.SetClientLookupExpanded(false))
+                        onIntent(CreateInvoiceIntent.ClientLookup(ClientLookupIntent.SetExpanded(false)))
                     },
                     properties = PopupProperties(focusable = false)
                 ) {
@@ -164,8 +165,8 @@ internal fun InvoiceClientLookup(
                                             cbeBadge = false,
                                             peppolEnabled = true,
                                             onClick = {
-                                                onIntent(CreateInvoiceIntent.SelectClient(suggestion.contact))
-                                                onIntent(CreateInvoiceIntent.SetClientLookupExpanded(false))
+                                                onIntent(CreateInvoiceIntent.ClientLookup(ClientLookupIntent.SelectClient(suggestion.contact)))
+                                                onIntent(CreateInvoiceIntent.ClientLookup(ClientLookupIntent.SetExpanded(false)))
                                             }
                                         )
                                     }
@@ -178,8 +179,8 @@ internal fun InvoiceClientLookup(
                                             cbeBadge = true,
                                             peppolEnabled = suggestion.candidate.vatNumber != null,
                                             onClick = {
-                                                onIntent(CreateInvoiceIntent.SelectExternalClientCandidate(suggestion.candidate))
-                                                onIntent(CreateInvoiceIntent.SetClientLookupExpanded(false))
+                                                onIntent(CreateInvoiceIntent.ClientLookup(ClientLookupIntent.SelectExternal(suggestion.candidate)))
+                                                onIntent(CreateInvoiceIntent.ClientLookup(ClientLookupIntent.SetExpanded(false)))
                                             }
                                         )
                                     }
@@ -192,8 +193,8 @@ internal fun InvoiceClientLookup(
                                             cbeBadge = false,
                                             peppolEnabled = false,
                                             onClick = {
-                                                onIntent(CreateInvoiceIntent.CreateClientManuallyFromQuery(suggestion.query))
-                                                onIntent(CreateInvoiceIntent.SetClientLookupExpanded(false))
+                                                onIntent(CreateInvoiceIntent.ClientLookup(ClientLookupIntent.CreateManually(suggestion.query)))
+                                                onIntent(CreateInvoiceIntent.ClientLookup(ClientLookupIntent.SetExpanded(false)))
                                             }
                                         )
                                     }

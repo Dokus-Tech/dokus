@@ -22,6 +22,7 @@ import tech.dokus.features.cashflow.presentation.review.DocumentReviewAction
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewContainer
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
+import tech.dokus.features.cashflow.presentation.review.mvi.preview.DocumentPreviewIntent
 import tech.dokus.features.cashflow.presentation.review.components.mobile.MobileSourceViewerScreen
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.app.state.isError
@@ -71,7 +72,7 @@ internal fun DocumentSourceViewerRoute(
             return@LaunchedEffect
         }
         hasOpenedSource = true
-        container.store.intent(DocumentReviewIntent.OpenSourceModal(sourceId))
+        container.store.intent(DocumentReviewIntent.Preview(DocumentPreviewIntent.OpenSourceModal(sourceId)))
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -91,10 +92,10 @@ internal fun DocumentSourceViewerRoute(
                         viewerState = viewerState,
                         onBack = { navController.popBackStack() },
                         onToggleTechnicalDetails = {
-                            container.store.intent(DocumentReviewIntent.ToggleSourceTechnicalDetails)
+                            container.store.intent(DocumentReviewIntent.Preview(DocumentPreviewIntent.ToggleSourceTechnicalDetails))
                         },
                         onRetry = {
-                            container.store.intent(DocumentReviewIntent.OpenSourceModal(viewerState.sourceId))
+                            container.store.intent(DocumentReviewIntent.Preview(DocumentPreviewIntent.OpenSourceModal(viewerState.sourceId)))
                         },
                         modifier = Modifier.fillMaxSize(),
                     )

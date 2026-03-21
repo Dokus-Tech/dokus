@@ -33,6 +33,9 @@ import tech.dokus.features.cashflow.presentation.review.DocumentReviewContainer
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewRouteContext
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
+import tech.dokus.features.cashflow.mvi.clientlookup.ClientLookupContainer
+import tech.dokus.features.cashflow.presentation.review.mvi.payment.DocumentPaymentContainer
+import tech.dokus.features.cashflow.presentation.review.mvi.preview.DocumentPreviewContainer
 import tech.dokus.foundation.app.mvi.container
 
 val cashflowViewModelModule = module {
@@ -56,11 +59,13 @@ val cashflowViewModelModule = module {
             getCurrentTenant = get(),
             validateInvoice = get(),
             submitInvoiceWithDelivery = get(),
-            getContactPeppolStatus = get(),
-            getLatestInvoiceForContact = get(),
-            listContacts = get(),
-            lookupContacts = get(),
-            searchCompanyUseCase = get()
+            clientLookupContainer = ClientLookupContainer(
+                listContacts = get(),
+                lookupContacts = get(),
+                searchCompanyUseCase = get(),
+                getContactPeppolStatus = get(),
+                getLatestInvoiceForContact = get(),
+            ),
         )
     }
     container<DocumentReviewContainer, DocumentReviewState, DocumentReviewIntent, DocumentReviewAction> { (initialDocumentId: DocumentId, routeContext: DocumentReviewRouteContext?) ->
@@ -73,16 +78,20 @@ val cashflowViewModelModule = module {
             rejectDocument = get(),
             reprocessDocument = get(),
             resolveDocumentMatchReview = get(),
-            getDocumentPages = get(),
-            getDocumentSourcePages = get(),
-            getDocumentSourceContent = get(),
-            getCashflowEntry = get(),
-            getCashflowPaymentCandidates = get(),
-            getAutoPaymentStatus = get(),
-            recordCashflowPayment = get(),
-            undoAutoPayment = get(),
             getContact = get(),
             loadDocumentRecords = get(),
+            paymentContainer = DocumentPaymentContainer(
+                getCashflowEntry = get(),
+                getCashflowPaymentCandidates = get(),
+                getAutoPaymentStatus = get(),
+                recordCashflowPayment = get(),
+                undoAutoPayment = get(),
+            ),
+            previewContainer = DocumentPreviewContainer(
+                getDocumentPages = get(),
+                getDocumentSourcePages = get(),
+                getDocumentSourceContent = get(),
+            ),
             initialDocumentId = initialDocumentId,
             routeContext = routeContext,
         )

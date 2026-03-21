@@ -32,6 +32,7 @@ import tech.dokus.features.cashflow.presentation.documents.route.DOCUMENTS_REFRE
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewAction
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewContainer
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
+import tech.dokus.features.cashflow.presentation.review.mvi.payment.DocumentPaymentIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewQueueState
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewRouteContext
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
@@ -402,38 +403,34 @@ internal fun DocumentReviewRoute(
             sheetState = paymentState,
             currencySign = currencySign,
             onPaidAtChange = { paidAt ->
-                container.store.intent(DocumentReviewIntent.UpdatePaymentPaidAt(paidAt))
+                container.store.intent(DocumentReviewIntent.Payment(DocumentPaymentIntent.UpdatePaymentPaidAt(paidAt)))
             },
             onAmountChange = { amount ->
-                dispatchIntent(DocumentReviewIntent.UpdatePaymentAmountText(amount))
+                dispatchIntent(DocumentReviewIntent.Payment(DocumentPaymentIntent.UpdatePaymentAmountText(amount)))
             },
             onNoteChange = { note ->
-                dispatchIntent(DocumentReviewIntent.UpdatePaymentNote(note))
+                dispatchIntent(DocumentReviewIntent.Payment(DocumentPaymentIntent.UpdatePaymentNote(note)))
             },
             onOpenTransactionPicker = {
-                dispatchIntent(DocumentReviewIntent.OpenPaymentTransactionPicker)
+                dispatchIntent(DocumentReviewIntent.Payment(DocumentPaymentIntent.OpenPaymentTransactionPicker))
             },
             onCloseTransactionPicker = {
-                dispatchIntent(DocumentReviewIntent.ClosePaymentTransactionPicker)
+                dispatchIntent(DocumentReviewIntent.Payment(DocumentPaymentIntent.ClosePaymentTransactionPicker))
             },
             onSelectTransaction = { transactionId ->
-                dispatchIntent(DocumentReviewIntent.SelectPaymentTransaction(transactionId))
+                dispatchIntent(DocumentReviewIntent.Payment(DocumentPaymentIntent.SelectPaymentTransaction(transactionId)))
             },
             onClearSelectedTransaction = {
-                dispatchIntent(DocumentReviewIntent.ClearPaymentTransactionSelection)
+                dispatchIntent(DocumentReviewIntent.Payment(DocumentPaymentIntent.ClearPaymentTransactionSelection))
             },
-            onSubmit = { dispatchIntent(DocumentReviewIntent.SubmitPayment) },
-            onDismiss = { dispatchIntent(DocumentReviewIntent.ClosePaymentSheet) },
+            onSubmit = { dispatchIntent(DocumentReviewIntent.Payment(DocumentPaymentIntent.SubmitPayment)) },
+            onDismiss = { dispatchIntent(DocumentReviewIntent.Payment(DocumentPaymentIntent.ClosePaymentSheet)) },
         )
     }
 }
 
 private fun DocumentReviewIntent.isBlockedForAccountantReadOnly(): Boolean = when (this) {
-    is DocumentReviewIntent.OpenPaymentSheet,
-    is DocumentReviewIntent.UpdatePaymentAmountText,
-    is DocumentReviewIntent.UpdatePaymentPaidAt,
-    is DocumentReviewIntent.UpdatePaymentNote,
-    is DocumentReviewIntent.SubmitPayment,
+    is DocumentReviewIntent.Payment,
     is DocumentReviewIntent.SelectContact,
     is DocumentReviewIntent.AcceptSuggestedContact,
     is DocumentReviewIntent.ClearSelectedContact,

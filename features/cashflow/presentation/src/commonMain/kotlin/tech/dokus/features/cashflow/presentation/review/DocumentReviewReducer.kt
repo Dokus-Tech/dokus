@@ -10,24 +10,15 @@ import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.model.DocDto
 import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.isContactRequired
 import tech.dokus.features.cashflow.usecases.ConfirmDocumentUseCase
 import tech.dokus.features.cashflow.usecases.UnconfirmDocumentUseCase
-import tech.dokus.features.cashflow.usecases.GetAutoPaymentStatusUseCase
-import tech.dokus.features.cashflow.usecases.GetCashflowEntryUseCase
-import tech.dokus.features.cashflow.usecases.GetCashflowPaymentCandidatesUseCase
-import tech.dokus.features.cashflow.usecases.GetDocumentPagesUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentRecordUseCase
-import tech.dokus.features.cashflow.usecases.GetDocumentSourceContentUseCase
-import tech.dokus.features.cashflow.usecases.GetDocumentSourcePagesUseCase
-import tech.dokus.features.cashflow.usecases.RecordCashflowPaymentUseCase
 import tech.dokus.features.cashflow.usecases.RejectDocumentUseCase
 import tech.dokus.features.cashflow.usecases.ReprocessDocumentUseCase
 import tech.dokus.features.cashflow.usecases.ResolveDocumentMatchReviewUseCase
-import tech.dokus.features.cashflow.usecases.UndoAutoPaymentUseCase
 import tech.dokus.features.cashflow.usecases.UpdateDocumentDraftContactUseCase
 import tech.dokus.features.cashflow.usecases.UpdateDocumentDraftUseCase
 import tech.dokus.features.contacts.usecases.GetContactUseCase
@@ -43,25 +34,11 @@ internal class DocumentReviewReducer(
     private val rejectDocument: RejectDocumentUseCase,
     private val reprocessDocument: ReprocessDocumentUseCase,
     private val resolveDocumentMatchReview: ResolveDocumentMatchReviewUseCase,
-    private val getDocumentPages: GetDocumentPagesUseCase,
-    private val getDocumentSourcePages: GetDocumentSourcePagesUseCase,
-    private val getDocumentSourceContent: GetDocumentSourceContentUseCase,
-    private val getCashflowEntry: GetCashflowEntryUseCase,
-    private val getCashflowPaymentCandidates: GetCashflowPaymentCandidatesUseCase,
-    private val getAutoPaymentStatus: GetAutoPaymentStatusUseCase,
-    private val recordCashflowPayment: RecordCashflowPaymentUseCase,
-    private val undoAutoPayment: UndoAutoPaymentUseCase,
     private val getContact: GetContactUseCase,
     private val logger: Logger,
 ) {
     private val loader = DocumentReviewLoader(getDocumentRecord, logger)
     private val contactBinder = DocumentReviewContactBinder(updateDocumentDraftContact, getContact, logger)
-    private val preview = DocumentReviewPreview(
-        getDocumentPages = getDocumentPages,
-        getDocumentSourcePages = getDocumentSourcePages,
-        getDocumentSourceContent = getDocumentSourceContent,
-        logger = logger
-    )
     private val provenance = DocumentReviewProvenance()
     private val actions = DocumentReviewActions(
         updateDocumentDraft,
@@ -71,14 +48,6 @@ internal class DocumentReviewReducer(
         rejectDocument,
         getDocumentRecord,
         logger
-    )
-    private val paymentActions = DocumentReviewPaymentActions(
-        getCashflowEntry = getCashflowEntry,
-        getCashflowPaymentCandidates = getCashflowPaymentCandidates,
-        getAutoPaymentStatus = getAutoPaymentStatus,
-        recordCashflowPayment = recordCashflowPayment,
-        undoAutoPayment = undoAutoPayment,
-        logger = logger,
     )
     private val feedbackActions = DocumentReviewFeedbackActions(
         reprocessDocument = reprocessDocument,
@@ -207,21 +176,6 @@ internal class DocumentReviewReducer(
     suspend fun DocumentReviewCtx.handleUpdateContactSheetSearch(query: String) =
         with(contactBinder) { handleUpdateContactSheetSearch(query) }
 
-    suspend fun DocumentReviewCtx.handleLoadPreviewPages() =
-        with(preview) { handleLoadPreviewPages() }
-
-    suspend fun DocumentReviewCtx.handleLoadMorePages(maxPages: Int) =
-        with(preview) { handleLoadMorePages(maxPages) }
-
-    suspend fun DocumentReviewCtx.handleOpenSourceModal(sourceId: DocumentSourceId) =
-        with(preview) { handleOpenSourceModal(sourceId) }
-
-    suspend fun DocumentReviewCtx.handleCloseSourceModal() =
-        with(preview) { handleCloseSourceModal() }
-
-    suspend fun DocumentReviewCtx.handleToggleSourceTechnicalDetails() =
-        with(preview) { handleToggleSourceTechnicalDetails() }
-
     suspend fun DocumentReviewCtx.handleSelectFieldForProvenance(fieldPath: String?) =
         with(provenance) { handleSelectFieldForProvenance(fieldPath) }
 
@@ -252,48 +206,6 @@ internal class DocumentReviewReducer(
 
     suspend fun DocumentReviewCtx.handleViewEntity() =
         with(actions) { handleViewEntity() }
-
-    suspend fun DocumentReviewCtx.handleLoadCashflowEntry() =
-        with(paymentActions) { handleLoadCashflowEntry() }
-
-    suspend fun DocumentReviewCtx.handleLoadAutoPaymentStatus() =
-        with(paymentActions) { handleLoadAutoPaymentStatus() }
-
-    suspend fun DocumentReviewCtx.handleOpenPaymentSheet() =
-        with(paymentActions) { handleOpenPaymentSheet() }
-
-    suspend fun DocumentReviewCtx.handleClosePaymentSheet() =
-        with(paymentActions) { handleClosePaymentSheet() }
-
-    suspend fun DocumentReviewCtx.handleLoadPaymentCandidates() =
-        with(paymentActions) { handleLoadPaymentCandidates() }
-
-    suspend fun DocumentReviewCtx.handleOpenPaymentTransactionPicker() =
-        with(paymentActions) { handleOpenPaymentTransactionPicker() }
-
-    suspend fun DocumentReviewCtx.handleClosePaymentTransactionPicker() =
-        with(paymentActions) { handleClosePaymentTransactionPicker() }
-
-    suspend fun DocumentReviewCtx.handleSelectPaymentTransaction(transactionId: tech.dokus.domain.ids.BankTransactionId) =
-        with(paymentActions) { handleSelectPaymentTransaction(transactionId) }
-
-    suspend fun DocumentReviewCtx.handleClearPaymentTransactionSelection() =
-        with(paymentActions) { handleClearPaymentTransactionSelection() }
-
-    suspend fun DocumentReviewCtx.handleUpdatePaymentAmountText(text: String) =
-        with(paymentActions) { handleUpdatePaymentAmountText(text) }
-
-    suspend fun DocumentReviewCtx.handleUpdatePaymentPaidAt(date: kotlinx.datetime.LocalDate) =
-        with(paymentActions) { handleUpdatePaymentPaidAt(date) }
-
-    suspend fun DocumentReviewCtx.handleUpdatePaymentNote(note: String) =
-        with(paymentActions) { handleUpdatePaymentNote(note) }
-
-    suspend fun DocumentReviewCtx.handleSubmitPayment() =
-        with(paymentActions) { handleSubmitPayment() }
-
-    suspend fun DocumentReviewCtx.handleUndoAutoPayment(reason: String?) =
-        with(paymentActions) { handleUndoAutoPayment(reason) }
 
     // Feedback dialog handlers
     suspend fun DocumentReviewCtx.handleShowFeedbackDialog() =

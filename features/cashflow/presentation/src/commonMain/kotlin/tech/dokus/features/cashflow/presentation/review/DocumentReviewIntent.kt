@@ -1,16 +1,15 @@
 package tech.dokus.features.cashflow.presentation.review
 
 import androidx.compose.runtime.Immutable
-import kotlinx.datetime.LocalDate
 import pro.respawn.flowmvi.api.MVIIntent
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentRejectReason
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.ids.DocumentSourceId
-import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.model.DocumentDetailDto
+import tech.dokus.features.cashflow.presentation.review.mvi.payment.DocumentPaymentIntent
+import tech.dokus.features.cashflow.presentation.review.mvi.preview.DocumentPreviewIntent
 
 @Immutable
 sealed interface DocumentReviewIntent : MVIIntent {
@@ -23,26 +22,10 @@ sealed interface DocumentReviewIntent : MVIIntent {
     data object LoadMoreQueue : DocumentReviewIntent
     data object RefreshQueue : DocumentReviewIntent
 
-    data object LoadPreviewPages : DocumentReviewIntent
-    data class LoadMorePages(val maxPages: Int) : DocumentReviewIntent
-    data object RetryLoadPreview : DocumentReviewIntent
-    data class OpenSourceModal(val sourceId: DocumentSourceId) : DocumentReviewIntent
-    data object CloseSourceModal : DocumentReviewIntent
-    data object ToggleSourceTechnicalDetails : DocumentReviewIntent
-    data object LoadCashflowEntry : DocumentReviewIntent
-    data object LoadAutoPaymentStatus : DocumentReviewIntent
-    data object OpenPaymentSheet : DocumentReviewIntent
-    data object ClosePaymentSheet : DocumentReviewIntent
-    data object LoadPaymentCandidates : DocumentReviewIntent
-    data object OpenPaymentTransactionPicker : DocumentReviewIntent
-    data object ClosePaymentTransactionPicker : DocumentReviewIntent
-    data class SelectPaymentTransaction(val transactionId: BankTransactionId) : DocumentReviewIntent
-    data object ClearPaymentTransactionSelection : DocumentReviewIntent
-    data class UpdatePaymentAmountText(val text: String) : DocumentReviewIntent
-    data class UpdatePaymentPaidAt(val date: LocalDate) : DocumentReviewIntent
-    data class UpdatePaymentNote(val note: String) : DocumentReviewIntent
-    data object SubmitPayment : DocumentReviewIntent
-    data class UndoAutoPayment(val reason: String? = null) : DocumentReviewIntent
+    // Preview intents — delegated to child store
+    data class Preview(val intent: DocumentPreviewIntent) : DocumentReviewIntent
+    // Payment intents — delegated to child store
+    data class Payment(val intent: DocumentPaymentIntent) : DocumentReviewIntent
 
     data class SelectContact(val contactId: ContactId) : DocumentReviewIntent
     data object AcceptSuggestedContact : DocumentReviewIntent

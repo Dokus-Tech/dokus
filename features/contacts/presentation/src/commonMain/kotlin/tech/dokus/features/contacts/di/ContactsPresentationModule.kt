@@ -21,6 +21,7 @@ import tech.dokus.features.contacts.mvi.CreateContactAction
 import tech.dokus.features.contacts.mvi.CreateContactContainer
 import tech.dokus.features.contacts.mvi.CreateContactIntent
 import tech.dokus.features.contacts.mvi.CreateContactState
+import tech.dokus.features.contacts.mvi.notes.ContactNotesContainer
 import tech.dokus.foundation.app.mvi.container
 
 val contactsPresentationModule = module {
@@ -43,15 +44,18 @@ val contactsPresentationModule = module {
             getContactActivity = get(),
             getContactInvoiceSnapshot = get(),
             getContactPeppolStatus = get(),
-            listContactNotes = get(),
-            createContactNote = get(),
-            updateContactNote = get(),
-            deleteContactNote = get(),
             getCachedContacts = get(),
             cacheContacts = get(),
             getCurrentTenantId = get(),
             observeContactChanges = get(),
-            updateContact = get()
+            updateContact = get(),
+            notesContainer = ContactNotesContainer(
+                contactId = params.contactId,
+                listContactNotes = get(),
+                createContactNote = get(),
+                updateContactNote = get(),
+                deleteContactNote = get(),
+            ),
         )
     }
     container<ContactFormContainer, ContactFormState, ContactFormIntent, ContactFormAction> {

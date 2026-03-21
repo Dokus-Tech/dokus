@@ -39,6 +39,7 @@ import tech.dokus.aura.resources.cashflow_loading_document
 import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.model.DocumentSourceDto
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
+import tech.dokus.features.cashflow.presentation.review.mvi.preview.DocumentPreviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.components.mobile.MobileCanonicalContent
 import tech.dokus.features.cashflow.presentation.review.components.mobile.MobileCanonicalHeader
@@ -262,9 +263,9 @@ private fun DesktopDocumentPane(
             onTabSelected = { selectedTabId ->
                 if (selectedTabId == activeTabId) return@SourceTabsPanel
                 if (selectedTabId == SummaryTabId) {
-                    onIntent(DocumentReviewIntent.CloseSourceModal)
+                    onIntent(DocumentReviewIntent.Preview(DocumentPreviewIntent.CloseSourceModal))
                 } else {
-                    onIntent(DocumentReviewIntent.OpenSourceModal(DocumentSourceId.parse(selectedTabId)))
+                    onIntent(DocumentReviewIntent.Preview(DocumentPreviewIntent.OpenSourceModal(DocumentSourceId.parse(selectedTabId))))
                 }
             },
         )

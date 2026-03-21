@@ -1,31 +1,32 @@
 package tech.dokus.features.cashflow.presentation.review
 
+import pro.respawn.flowmvi.annotation.ExperimentalFlowMVIAPI
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.dsl.withState
+import pro.respawn.flowmvi.plugins.delegate.delegate
 import pro.respawn.flowmvi.plugins.init
 import pro.respawn.flowmvi.plugins.reduce
+import pro.respawn.flowmvi.plugins.whileSubscribed
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsState
+import tech.dokus.features.cashflow.presentation.review.mvi.payment.DocumentPaymentAction
+import tech.dokus.features.cashflow.presentation.review.mvi.payment.DocumentPaymentContainer
+import tech.dokus.features.cashflow.presentation.review.mvi.payment.DocumentPaymentIntent
+import tech.dokus.features.cashflow.presentation.review.mvi.preview.DocumentPreviewAction
+import tech.dokus.features.cashflow.presentation.review.mvi.preview.DocumentPreviewContainer
+import tech.dokus.features.cashflow.presentation.review.mvi.preview.DocumentPreviewIntent
 import tech.dokus.features.cashflow.presentation.review.route.toDocQueueItem
 import tech.dokus.features.cashflow.presentation.review.route.toListFilter
 import tech.dokus.features.cashflow.usecases.ConfirmDocumentUseCase
-import tech.dokus.features.cashflow.usecases.UnconfirmDocumentUseCase
-import tech.dokus.features.cashflow.usecases.GetAutoPaymentStatusUseCase
-import tech.dokus.features.cashflow.usecases.GetCashflowEntryUseCase
-import tech.dokus.features.cashflow.usecases.GetCashflowPaymentCandidatesUseCase
-import tech.dokus.features.cashflow.usecases.GetDocumentPagesUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentRecordUseCase
-import tech.dokus.features.cashflow.usecases.GetDocumentSourceContentUseCase
-import tech.dokus.features.cashflow.usecases.GetDocumentSourcePagesUseCase
 import tech.dokus.features.cashflow.usecases.LoadDocumentRecordsUseCase
-import tech.dokus.features.cashflow.usecases.RecordCashflowPaymentUseCase
 import tech.dokus.features.cashflow.usecases.RejectDocumentUseCase
 import tech.dokus.features.cashflow.usecases.ReprocessDocumentUseCase
 import tech.dokus.features.cashflow.usecases.ResolveDocumentMatchReviewUseCase
-import tech.dokus.features.cashflow.usecases.UndoAutoPaymentUseCase
+import tech.dokus.features.cashflow.usecases.UnconfirmDocumentUseCase
 import tech.dokus.features.cashflow.usecases.UpdateDocumentDraftContactUseCase
 import tech.dokus.features.cashflow.usecases.UpdateDocumentDraftUseCase
 import tech.dokus.features.contacts.usecases.GetContactUseCase
@@ -62,21 +63,16 @@ internal class DocumentReviewContainer(
     private val rejectDocument: RejectDocumentUseCase,
     private val reprocessDocument: ReprocessDocumentUseCase,
     private val resolveDocumentMatchReview: ResolveDocumentMatchReviewUseCase,
-    private val getDocumentPages: GetDocumentPagesUseCase,
-    private val getDocumentSourcePages: GetDocumentSourcePagesUseCase,
-    private val getDocumentSourceContent: GetDocumentSourceContentUseCase,
-    private val getCashflowEntry: GetCashflowEntryUseCase,
-    private val getCashflowPaymentCandidates: GetCashflowPaymentCandidatesUseCase,
-    private val getAutoPaymentStatus: GetAutoPaymentStatusUseCase,
-    private val recordCashflowPayment: RecordCashflowPaymentUseCase,
-    private val undoAutoPayment: UndoAutoPaymentUseCase,
     private val getContact: GetContactUseCase,
     private val loadDocumentRecords: LoadDocumentRecordsUseCase,
+    private val paymentContainer: DocumentPaymentContainer,
+    private val previewContainer: DocumentPreviewContainer,
     private val initialDocumentId: DocumentId,
     private val routeContext: DocumentReviewRouteContext?,
 ) : Container<DocumentReviewState, DocumentReviewIntent, DocumentReviewAction> {
 
     private val logger = Logger.forClass<DocumentReviewContainer>()
+
     private val reducer = DocumentReviewReducer(
         getDocumentRecord = getDocumentRecord,
         updateDocumentDraft = updateDocumentDraft,
@@ -86,18 +82,11 @@ internal class DocumentReviewContainer(
         rejectDocument = rejectDocument,
         reprocessDocument = reprocessDocument,
         resolveDocumentMatchReview = resolveDocumentMatchReview,
-        getDocumentPages = getDocumentPages,
-        getDocumentSourcePages = getDocumentSourcePages,
-        getDocumentSourceContent = getDocumentSourceContent,
-        getCashflowEntry = getCashflowEntry,
-        getCashflowPaymentCandidates = getCashflowPaymentCandidates,
-        getAutoPaymentStatus = getAutoPaymentStatus,
-        recordCashflowPayment = recordCashflowPayment,
-        undoAutoPayment = undoAutoPayment,
         getContact = getContact,
         logger = logger,
     )
 
+    @OptIn(ExperimentalFlowMVIAPI::class)
     override val store: Store<DocumentReviewState, DocumentReviewIntent, DocumentReviewAction> =
         store(
             DocumentReviewState(
@@ -105,6 +94,50 @@ internal class DocumentReviewContainer(
                 selectedQueueDocumentId = routeContext?.let { initialDocumentId },
             )
         ) {
+            val paymentState by delegate(paymentContainer.store) { paymentAction ->
+                when (paymentAction) {
+                    is DocumentPaymentAction.PaymentRecorded -> intent(DocumentReviewIntent.Refresh)
+                    is DocumentPaymentAction.AutoPaymentUndone -> intent(DocumentReviewIntent.Refresh)
+                    is DocumentPaymentAction.ShowError ->
+                        action(DocumentReviewAction.ShowError(paymentAction.error))
+                    is DocumentPaymentAction.NavigateToCashflowEntry ->
+                        action(DocumentReviewAction.NavigateToCashflowEntry(paymentAction.entryId))
+                }
+            }
+
+            val previewState by delegate(previewContainer.store) { previewAction ->
+                when (previewAction) {
+                    is DocumentPreviewAction.ShowError ->
+                        action(DocumentReviewAction.ShowError(previewAction.error))
+                }
+            }
+
+            whileSubscribed {
+                paymentState.collect { childState ->
+                    updateState {
+                        copy(
+                            paymentSheetState = childState.paymentSheetState,
+                            cashflowEntryState = childState.cashflowEntryState,
+                            autoPaymentStatus = childState.autoPaymentStatus,
+                            isUndoingAutoPayment = childState.isUndoingAutoPayment,
+                            confirmedCashflowEntryId = childState.confirmedCashflowEntryId,
+                        )
+                    }
+                }
+            }
+
+            whileSubscribed {
+                previewState.collect { childState ->
+                    updateState {
+                        copy(
+                            previewState = childState.previewState,
+                            incomingPreviewState = childState.incomingPreviewState,
+                            sourceViewerState = childState.sourceViewerState,
+                        )
+                    }
+                }
+            }
+
             init {
                 with(reducer) {
                     handleLoadDocument(initialDocumentId)
@@ -137,96 +170,90 @@ internal class DocumentReviewContainer(
         }
 
     private suspend fun DocumentReviewCtx.dispatchToReducer(intent: DocumentReviewIntent) {
-        with(reducer) {
-            when (intent) {
-                // === Data Loading ===
-                is DocumentReviewIntent.LoadDocument -> handleLoadDocument(intent.documentId)
-                is DocumentReviewIntent.Refresh -> handleRefresh()
-                is DocumentReviewIntent.ApplyRemoteSnapshot -> handleApplyRemoteSnapshot(intent.record)
+        when (intent) {
+            // === Preview (delegated to child store) ===
+            is DocumentReviewIntent.Preview -> {
+                previewContainer.store.intent(intent.intent)
+            }
 
-                // === Preview ===
-                is DocumentReviewIntent.LoadPreviewPages -> handleLoadPreviewPages()
-                is DocumentReviewIntent.LoadMorePages -> handleLoadMorePages(intent.maxPages)
-                is DocumentReviewIntent.RetryLoadPreview -> handleLoadPreviewPages()
-                is DocumentReviewIntent.OpenSourceModal -> handleOpenSourceModal(intent.sourceId)
-                is DocumentReviewIntent.CloseSourceModal -> handleCloseSourceModal()
-                is DocumentReviewIntent.ToggleSourceTechnicalDetails -> handleToggleSourceTechnicalDetails()
-                is DocumentReviewIntent.LoadCashflowEntry -> handleLoadCashflowEntry()
-                is DocumentReviewIntent.LoadAutoPaymentStatus -> handleLoadAutoPaymentStatus()
-                is DocumentReviewIntent.OpenPaymentSheet -> handleOpenPaymentSheet()
-                is DocumentReviewIntent.ClosePaymentSheet -> handleClosePaymentSheet()
-                is DocumentReviewIntent.LoadPaymentCandidates -> handleLoadPaymentCandidates()
-                is DocumentReviewIntent.OpenPaymentTransactionPicker -> handleOpenPaymentTransactionPicker()
-                is DocumentReviewIntent.ClosePaymentTransactionPicker -> handleClosePaymentTransactionPicker()
-                is DocumentReviewIntent.SelectPaymentTransaction -> handleSelectPaymentTransaction(intent.transactionId)
-                is DocumentReviewIntent.ClearPaymentTransactionSelection -> handleClearPaymentTransactionSelection()
-                is DocumentReviewIntent.UpdatePaymentAmountText ->
-                    handleUpdatePaymentAmountText(intent.text)
-                is DocumentReviewIntent.UpdatePaymentPaidAt ->
-                    handleUpdatePaymentPaidAt(intent.date)
-                is DocumentReviewIntent.UpdatePaymentNote -> handleUpdatePaymentNote(intent.note)
-                is DocumentReviewIntent.SubmitPayment -> handleSubmitPayment()
-                is DocumentReviewIntent.UndoAutoPayment -> handleUndoAutoPayment(intent.reason)
+            // === Payment (delegated to child store) ===
+            is DocumentReviewIntent.Payment -> {
+                paymentContainer.store.intent(intent.intent)
+            }
 
-                // === Contact Sheet ===
-                is DocumentReviewIntent.OpenContactSheet -> handleOpenContactSheet()
-                is DocumentReviewIntent.CloseContactSheet -> handleCloseContactSheet()
-                is DocumentReviewIntent.UpdateContactSheetSearch -> handleUpdateContactSheetSearch(intent.query)
+            // === All other intents go to reducer ===
+            else -> with(reducer) {
+                when (intent) {
+                    // === Data Loading ===
+                    is DocumentReviewIntent.LoadDocument -> handleLoadDocument(intent.documentId)
+                    is DocumentReviewIntent.Refresh -> handleRefresh()
+                    is DocumentReviewIntent.ApplyRemoteSnapshot -> handleApplyRemoteSnapshot(intent.record)
 
-                // === Contact Selection (with backend persist) ===
-                is DocumentReviewIntent.SelectContact -> handleSelectContact(intent.contactId)
-                is DocumentReviewIntent.AcceptSuggestedContact -> handleAcceptSuggestedContact()
-                is DocumentReviewIntent.ClearSelectedContact -> handleClearSelectedContact()
-                is DocumentReviewIntent.ContactCreated -> handleContactCreated(intent.contactId)
-                is DocumentReviewIntent.SetPendingCreation -> handleSetPendingCreation()
+                    // === Contact Sheet ===
+                    is DocumentReviewIntent.OpenContactSheet -> handleOpenContactSheet()
+                    is DocumentReviewIntent.CloseContactSheet -> handleCloseContactSheet()
+                    is DocumentReviewIntent.UpdateContactSheetSearch ->
+                        handleUpdateContactSheetSearch(intent.query)
 
-                // === Provenance ===
-                is DocumentReviewIntent.SelectFieldForProvenance -> handleSelectFieldForProvenance(
-                    intent.fieldPath
-                )
+                    // === Contact Selection (with backend persist) ===
+                    is DocumentReviewIntent.SelectContact -> handleSelectContact(intent.contactId)
+                    is DocumentReviewIntent.AcceptSuggestedContact -> handleAcceptSuggestedContact()
+                    is DocumentReviewIntent.ClearSelectedContact -> handleClearSelectedContact()
+                    is DocumentReviewIntent.ContactCreated -> handleContactCreated(intent.contactId)
+                    is DocumentReviewIntent.SetPendingCreation -> handleSetPendingCreation()
 
-                // === Actions ===
-                is DocumentReviewIntent.Confirm -> handleConfirm()
-                is DocumentReviewIntent.ViewCashflowEntry -> handleViewCashflowEntry()
-                is DocumentReviewIntent.ViewEntity -> handleViewEntity()
+                    // === Provenance ===
+                    is DocumentReviewIntent.SelectFieldForProvenance ->
+                        handleSelectFieldForProvenance(intent.fieldPath)
 
-                // === Reject Dialog ===
-                is DocumentReviewIntent.ShowRejectDialog -> handleShowRejectDialog()
-                is DocumentReviewIntent.DismissRejectDialog -> handleDismissRejectDialog()
-                is DocumentReviewIntent.SelectRejectReason -> handleSelectRejectReason(intent.reason)
-                is DocumentReviewIntent.UpdateRejectNote -> handleUpdateRejectNote(intent.note)
-                is DocumentReviewIntent.ConfirmReject -> handleConfirmReject()
+                    // === Actions ===
+                    is DocumentReviewIntent.Confirm -> handleConfirm()
+                    is DocumentReviewIntent.ViewCashflowEntry -> handleViewCashflowEntry()
+                    is DocumentReviewIntent.ViewEntity -> handleViewEntity()
 
-                // === Feedback Dialog ===
-                is DocumentReviewIntent.ShowFeedbackDialog -> handleShowFeedbackDialog()
-                is DocumentReviewIntent.DismissFeedbackDialog -> handleDismissFeedbackDialog()
-                is DocumentReviewIntent.SelectFeedbackCategory -> handleSelectFeedbackCategory(intent.category)
-                is DocumentReviewIntent.UpdateFeedbackText -> handleUpdateFeedbackText(intent.text)
-                is DocumentReviewIntent.SubmitFeedback -> handleSubmitFeedback()
-                DocumentReviewIntent.RequestAmendment -> handleRequestAmendment()
+                    // === Reject Dialog ===
+                    is DocumentReviewIntent.ShowRejectDialog -> handleShowRejectDialog()
+                    is DocumentReviewIntent.DismissRejectDialog -> handleDismissRejectDialog()
+                    is DocumentReviewIntent.SelectRejectReason -> handleSelectRejectReason(intent.reason)
+                    is DocumentReviewIntent.UpdateRejectNote -> handleUpdateRejectNote(intent.note)
+                    is DocumentReviewIntent.ConfirmReject -> handleConfirmReject()
 
-                // === Failed Analysis ===
-                is DocumentReviewIntent.RetryAnalysis -> handleRetryAnalysis()
-                is DocumentReviewIntent.DismissFailureBanner -> handleDismissFailureBanner()
-                is DocumentReviewIntent.ResolvePossibleMatchSame -> handleResolvePossibleMatchSame()
-                is DocumentReviewIntent.ResolvePossibleMatchDifferent -> handleResolvePossibleMatchDifferent()
-                is DocumentReviewIntent.ToggleBankStatementTransaction -> handleToggleBankStatementTransaction(intent.index)
+                    // === Feedback Dialog ===
+                    is DocumentReviewIntent.ShowFeedbackDialog -> handleShowFeedbackDialog()
+                    is DocumentReviewIntent.DismissFeedbackDialog -> handleDismissFeedbackDialog()
+                    is DocumentReviewIntent.SelectFeedbackCategory ->
+                        handleSelectFeedbackCategory(intent.category)
+                    is DocumentReviewIntent.UpdateFeedbackText -> handleUpdateFeedbackText(intent.text)
+                    is DocumentReviewIntent.SubmitFeedback -> handleSubmitFeedback()
+                    DocumentReviewIntent.RequestAmendment -> handleRequestAmendment()
 
-                // === Manual Document Type Selection ===
-                is DocumentReviewIntent.SelectDocumentType -> handleSelectDocumentType(intent.type)
-                is DocumentReviewIntent.SelectDirection -> handleSelectDirection(intent.direction)
+                    // === Failed Analysis ===
+                    is DocumentReviewIntent.RetryAnalysis -> handleRetryAnalysis()
+                    is DocumentReviewIntent.DismissFailureBanner -> handleDismissFailureBanner()
+                    is DocumentReviewIntent.ResolvePossibleMatchSame -> handleResolvePossibleMatchSame()
+                    is DocumentReviewIntent.ResolvePossibleMatchDifferent ->
+                        handleResolvePossibleMatchDifferent()
+                    is DocumentReviewIntent.ToggleBankStatementTransaction ->
+                        handleToggleBankStatementTransaction(intent.index)
 
-                // === Inline Field Editing ===
-                is DocumentReviewIntent.UpdateField -> handleUpdateField(intent.field, intent.value)
+                    // === Manual Document Type Selection ===
+                    is DocumentReviewIntent.SelectDocumentType -> handleSelectDocumentType(intent.type)
+                    is DocumentReviewIntent.SelectDirection -> handleSelectDirection(intent.direction)
 
-                // === Unconfirm ===
-                DocumentReviewIntent.RequestUnconfirm -> handleUnconfirm()
+                    // === Inline Field Editing ===
+                    is DocumentReviewIntent.UpdateField -> handleUpdateField(intent.field, intent.value)
 
-                // handled before reducer
-                is DocumentReviewIntent.SelectQueueDocument,
-                DocumentReviewIntent.LoadMoreQueue,
-                DocumentReviewIntent.RefreshQueue,
-                DocumentReviewIntent.HandleRemoteDeletion -> Unit
+                    // === Unconfirm ===
+                    DocumentReviewIntent.RequestUnconfirm -> handleUnconfirm()
+
+                    // handled before reducer or forwarded to child
+                    is DocumentReviewIntent.Preview,
+                    is DocumentReviewIntent.Payment,
+                    is DocumentReviewIntent.SelectQueueDocument,
+                    DocumentReviewIntent.LoadMoreQueue,
+                    DocumentReviewIntent.RefreshQueue,
+                    DocumentReviewIntent.HandleRemoteDeletion -> Unit
+                }
             }
         }
     }

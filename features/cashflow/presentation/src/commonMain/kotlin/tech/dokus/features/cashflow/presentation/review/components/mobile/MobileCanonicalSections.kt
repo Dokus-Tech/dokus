@@ -43,6 +43,7 @@ import tech.dokus.domain.model.AutoPaymentStatus
 import tech.dokus.features.cashflow.presentation.review.models.DocumentUiData
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
+import tech.dokus.features.cashflow.presentation.review.mvi.payment.DocumentPaymentIntent
 import tech.dokus.features.cashflow.presentation.review.ReviewFinancialStatus
 import tech.dokus.features.cashflow.presentation.review.dotType
 import tech.dokus.domain.model.contact.ResolvedContact
@@ -328,7 +329,7 @@ internal fun MobilePaymentStateCard(
                             text = stringResource(Res.string.payment_record_title),
                             variant = PButtonVariant.Outline,
                             modifier = Modifier.fillMaxWidth(),
-                            onClick = { onIntent(DocumentReviewIntent.OpenPaymentSheet) },
+                            onClick = { onIntent(DocumentReviewIntent.Payment(DocumentPaymentIntent.OpenPaymentSheet)) },
                         )
                     }
                 }
@@ -375,7 +376,7 @@ internal fun MobilePaymentStateCard(
                                     variant = PButtonVariant.OutlineMuted,
                                     isEnabled = !state.isUndoingAutoPayment,
                                     modifier = Modifier.fillMaxWidth(),
-                                    onClick = { onIntent(DocumentReviewIntent.UndoAutoPayment()) },
+                                    onClick = { onIntent(DocumentReviewIntent.Payment(DocumentPaymentIntent.UndoAutoPayment())) },
                                 )
                             }
                         }

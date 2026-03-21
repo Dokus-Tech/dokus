@@ -20,6 +20,7 @@ import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.features.contacts.mvi.ContactDetailsIntent
 import tech.dokus.features.contacts.mvi.ContactDetailsState
 import tech.dokus.features.contacts.mvi.EnrichmentSuggestion
+import tech.dokus.features.contacts.mvi.notes.ContactNotesIntent
 import tech.dokus.features.contacts.presentation.contacts.components.ContactDetailsContent
 import tech.dokus.features.contacts.presentation.contacts.components.ContactDetailsTopBar
 import tech.dokus.features.contacts.presentation.contacts.components.ContactNoteDeleteDialog
@@ -59,6 +60,10 @@ internal fun ContactDetailsScreen(
     }
 }
 
+/** Shorthand to wrap a [ContactNotesIntent] as a parent [ContactDetailsIntent.Notes]. */
+private fun noteIntent(intent: ContactNotesIntent): ContactDetailsIntent =
+    ContactDetailsIntent.Notes(intent)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ContactDetailsScreenContent(
@@ -87,9 +92,9 @@ private fun ContactDetailsScreenContent(
     val openNotesSurface = remember(isDesktop) {
         {
             if (isDesktop) {
-                onIntent(ContactDetailsIntent.ShowNotesSidePanel)
+                onIntent(noteIntent(ContactNotesIntent.ShowNotesSidePanel))
             } else {
-                onIntent(ContactDetailsIntent.ShowNotesBottomSheet)
+                onIntent(noteIntent(ContactNotesIntent.ShowNotesBottomSheet))
             }
         }
     }
@@ -143,13 +148,15 @@ private fun ContactDetailsScreenContent(
             onDocumentClick = onDocumentClick,
             onAddNote = {
                 openNotesSurface()
-                onIntent(ContactDetailsIntent.ShowAddNoteDialog)
+                onIntent(noteIntent(ContactNotesIntent.ShowAddNoteDialog))
             },
             onEditNote = { note ->
                 openNotesSurface()
-                onIntent(ContactDetailsIntent.ShowEditNoteDialog(note))
+                onIntent(noteIntent(ContactNotesIntent.ShowEditNoteDialog(note)))
             },
-            onDeleteNote = { note -> onIntent(ContactDetailsIntent.ShowDeleteNoteConfirmation(note)) }
+            onDeleteNote = { note ->
+                onIntent(noteIntent(ContactNotesIntent.ShowDeleteNoteConfirmation(note)))
+            }
         )
     }
 
@@ -158,46 +165,58 @@ private fun ContactDetailsScreenContent(
             isVisible = uiState.showNotesSidePanel,
             notesState = notesState,
             noteContent = uiState.noteContent,
-            onNoteContentChange = { onIntent(ContactDetailsIntent.UpdateNoteContent(it)) },
+            onNoteContentChange = {
+                onIntent(noteIntent(ContactNotesIntent.UpdateNoteContent(it)))
+            },
             isSavingNote = state.isSavingNote,
             editingNote = uiState.editingNote,
             showComposer = showNoteComposer,
-            onShowAddNote = { onIntent(ContactDetailsIntent.ShowAddNoteDialog) },
+            onShowAddNote = { onIntent(noteIntent(ContactNotesIntent.ShowAddNoteDialog)) },
             onSaveNote = {
-                if (uiState.showEditNoteDialog) onIntent(ContactDetailsIntent.UpdateNote)
-                else onIntent(ContactDetailsIntent.AddNote)
+                if (uiState.showEditNoteDialog) onIntent(noteIntent(ContactNotesIntent.UpdateNote))
+                else onIntent(noteIntent(ContactNotesIntent.AddNote))
             },
-            onEditNoteClick = { onIntent(ContactDetailsIntent.ShowEditNoteDialog(it)) },
-            onDeleteNoteClick = { onIntent(ContactDetailsIntent.ShowDeleteNoteConfirmation(it)) },
+            onEditNoteClick = { onIntent(noteIntent(ContactNotesIntent.ShowEditNoteDialog(it))) },
+            onDeleteNoteClick = {
+                onIntent(noteIntent(ContactNotesIntent.ShowDeleteNoteConfirmation(it)))
+            },
             onDismissComposer = {
                 when {
-                    uiState.showEditNoteDialog -> onIntent(ContactDetailsIntent.HideEditNoteDialog)
-                    uiState.showAddNoteDialog -> onIntent(ContactDetailsIntent.HideAddNoteDialog)
+                    uiState.showEditNoteDialog ->
+                        onIntent(noteIntent(ContactNotesIntent.HideEditNoteDialog))
+                    uiState.showAddNoteDialog ->
+                        onIntent(noteIntent(ContactNotesIntent.HideAddNoteDialog))
                 }
             },
-            onDismiss = { onIntent(ContactDetailsIntent.HideNotesSidePanel) }
+            onDismiss = { onIntent(noteIntent(ContactNotesIntent.HideNotesSidePanel)) }
         )
     } else {
         NotesBottomSheet(
             isVisible = uiState.showNotesBottomSheet,
-            onDismiss = { onIntent(ContactDetailsIntent.HideNotesBottomSheet) },
+            onDismiss = { onIntent(noteIntent(ContactNotesIntent.HideNotesBottomSheet)) },
             notesState = notesState,
             noteContent = uiState.noteContent,
-            onNoteContentChange = { onIntent(ContactDetailsIntent.UpdateNoteContent(it)) },
+            onNoteContentChange = {
+                onIntent(noteIntent(ContactNotesIntent.UpdateNoteContent(it)))
+            },
             isSavingNote = state.isSavingNote,
             editingNote = uiState.editingNote,
             showComposer = showNoteComposer,
-            onShowAddNote = { onIntent(ContactDetailsIntent.ShowAddNoteDialog) },
+            onShowAddNote = { onIntent(noteIntent(ContactNotesIntent.ShowAddNoteDialog)) },
             onSaveNote = {
-                if (uiState.showEditNoteDialog) onIntent(ContactDetailsIntent.UpdateNote)
-                else onIntent(ContactDetailsIntent.AddNote)
+                if (uiState.showEditNoteDialog) onIntent(noteIntent(ContactNotesIntent.UpdateNote))
+                else onIntent(noteIntent(ContactNotesIntent.AddNote))
             },
-            onEditNoteClick = { onIntent(ContactDetailsIntent.ShowEditNoteDialog(it)) },
-            onDeleteNoteClick = { onIntent(ContactDetailsIntent.ShowDeleteNoteConfirmation(it)) },
+            onEditNoteClick = { onIntent(noteIntent(ContactNotesIntent.ShowEditNoteDialog(it))) },
+            onDeleteNoteClick = {
+                onIntent(noteIntent(ContactNotesIntent.ShowDeleteNoteConfirmation(it)))
+            },
             onDismissComposer = {
                 when {
-                    uiState.showEditNoteDialog -> onIntent(ContactDetailsIntent.HideEditNoteDialog)
-                    uiState.showAddNoteDialog -> onIntent(ContactDetailsIntent.HideAddNoteDialog)
+                    uiState.showEditNoteDialog ->
+                        onIntent(noteIntent(ContactNotesIntent.HideEditNoteDialog))
+                    uiState.showAddNoteDialog ->
+                        onIntent(noteIntent(ContactNotesIntent.HideAddNoteDialog))
                 }
             }
         )
@@ -207,8 +226,8 @@ private fun ContactDetailsScreenContent(
         ContactNoteDeleteDialog(
             note = uiState.deletingNote,
             isDeleting = state.isDeletingNote,
-            onConfirm = { onIntent(ContactDetailsIntent.DeleteNote) },
-            onDismiss = { onIntent(ContactDetailsIntent.HideDeleteNoteConfirmation) }
+            onConfirm = { onIntent(noteIntent(ContactNotesIntent.DeleteNote)) },
+            onDismiss = { onIntent(noteIntent(ContactNotesIntent.HideDeleteNoteConfirmation)) }
         )
     }
 

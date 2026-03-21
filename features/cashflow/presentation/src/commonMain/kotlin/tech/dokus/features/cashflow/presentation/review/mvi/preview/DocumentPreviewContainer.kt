@@ -1,6 +1,14 @@
-package tech.dokus.features.cashflow.presentation.review
+@file:Suppress("TooManyFunctions")
+
+package tech.dokus.features.cashflow.presentation.review.mvi.preview
 
 import kotlinx.coroutines.launch
+import pro.respawn.flowmvi.api.Container
+import pro.respawn.flowmvi.api.PipelineContext
+import pro.respawn.flowmvi.api.Store
+import pro.respawn.flowmvi.dsl.store
+import pro.respawn.flowmvi.dsl.withState
+import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
@@ -8,34 +16,74 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.model.DEFAULT_MAX_PAGES
 import tech.dokus.domain.model.Dpi
+import tech.dokus.features.cashflow.presentation.review.DocumentPreviewState
+import tech.dokus.features.cashflow.presentation.review.SourceEvidenceViewerState
 import tech.dokus.features.cashflow.usecases.GetDocumentPagesUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentSourceContentUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentSourcePagesUseCase
 import tech.dokus.foundation.platform.Logger
 
-internal class DocumentReviewPreview(
+private typealias PreviewCtx = PipelineContext<DocumentPreviewChildState, DocumentPreviewIntent, DocumentPreviewAction>
+
+internal class DocumentPreviewContainer(
     private val getDocumentPages: GetDocumentPagesUseCase,
     private val getDocumentSourcePages: GetDocumentSourcePagesUseCase,
     private val getDocumentSourceContent: GetDocumentSourceContentUseCase,
-    private val logger: Logger,
-) {
-    suspend fun DocumentReviewCtx.handleLoadPreviewPages() {
+) : Container<DocumentPreviewChildState, DocumentPreviewIntent, DocumentPreviewAction> {
+
+    private val logger = Logger.forClass<DocumentPreviewContainer>()
+
+    override val store: Store<DocumentPreviewChildState, DocumentPreviewIntent, DocumentPreviewAction> =
+        store(DocumentPreviewChildState()) {
+            reduce { intent ->
+                when (intent) {
+                    is DocumentPreviewIntent.SetDocumentContext -> handleSetDocumentContext(intent)
+                    is DocumentPreviewIntent.LoadPages -> handleLoadPreviewPages()
+                    is DocumentPreviewIntent.LoadMorePages -> handleLoadMorePages(intent.maxPages)
+                    is DocumentPreviewIntent.RetryLoad -> handleLoadPreviewPages()
+                    is DocumentPreviewIntent.OpenSourceModal -> handleOpenSourceModal(intent.sourceId)
+                    is DocumentPreviewIntent.CloseSourceModal -> handleCloseSourceModal()
+                    is DocumentPreviewIntent.ToggleSourceTechnicalDetails -> handleToggleSourceTechnicalDetails()
+                }
+            }
+        }
+
+    private suspend fun PreviewCtx.handleSetDocumentContext(
+        intent: DocumentPreviewIntent.SetDocumentContext,
+    ) {
+        updateState {
+            copy(
+                documentId = intent.documentId,
+                documentRecord = intent.documentRecord,
+                hasContent = intent.hasContent,
+                hasPendingMatchReview = intent.hasPendingMatchReview,
+                previewState = intent.previewState ?: previewState,
+                incomingPreviewState = intent.incomingPreviewState ?: incomingPreviewState,
+                sourceViewerState = if (intent.resetSourceViewer) null else sourceViewerState,
+            )
+        }
+    }
+
+    private suspend fun PreviewCtx.handleLoadPreviewPages() {
         var activeDocumentId: DocumentId? = null
         var contentType: String? = null
         var incomingSourceId: DocumentSourceId? = null
         var incomingSourceType: DocumentSource? = null
         var incomingContentType: String? = null
+        var hasPendingMatch = false
 
         withState {
             activeDocumentId = documentId
             contentType = documentRecord?.sources?.firstOrNull()?.contentType
-            val incomingSource = documentRecord
+            val record = documentRecord
+            val incomingSource = record
                 ?.pendingMatchReview
                 ?.incomingSourceId
-                ?.let { sourceId -> documentRecord?.sources?.firstOrNull { it.id == sourceId } }
+                ?.let { sourceId -> record.sources.firstOrNull { it.id == sourceId } }
             incomingSourceId = incomingSource?.id
             incomingSourceType = incomingSource?.sourceChannel
             incomingContentType = incomingSource?.contentType
+            hasPendingMatch = hasPendingMatchReview
         }
 
         val documentId = activeDocumentId ?: return
@@ -44,7 +92,7 @@ internal class DocumentReviewPreview(
                 documentId = documentId,
                 contentType = requireNotNull(contentType),
                 dpi = Dpi.default,
-                maxPages = DEFAULT_MAX_PAGES
+                maxPages = DEFAULT_MAX_PAGES,
             )
         }
 
@@ -61,7 +109,7 @@ internal class DocumentReviewPreview(
             withState {
                 updateState {
                     copy(
-                        incomingPreviewState = if (hasPendingMatchReview) {
+                        incomingPreviewState = if (hasPendingMatch) {
                             DocumentPreviewState.NoPreview
                         } else {
                             null
@@ -72,15 +120,7 @@ internal class DocumentReviewPreview(
         }
     }
 
-    private fun previewUnavailableState(sourceType: DocumentSource): DocumentPreviewState {
-        return if (sourceType == DocumentSource.Peppol) {
-            DocumentPreviewState.NoPreview
-        } else {
-            DocumentPreviewState.NotPdf
-        }
-    }
-
-    suspend fun DocumentReviewCtx.handleLoadMorePages(maxPages: Int) {
+    private suspend fun PreviewCtx.handleLoadMorePages(maxPages: Int) {
         withState {
             if (!hasContent) return@withState
             val activeDocumentId = documentId ?: return@withState
@@ -89,12 +129,12 @@ internal class DocumentReviewPreview(
                 documentId = activeDocumentId,
                 contentType = contentType,
                 dpi = Dpi.default,
-                maxPages = maxPages
+                maxPages = maxPages,
             )
         }
     }
 
-    suspend fun DocumentReviewCtx.handleOpenSourceModal(sourceId: DocumentSourceId) {
+    private suspend fun PreviewCtx.handleOpenSourceModal(sourceId: DocumentSourceId) {
         withState {
             if (!hasContent) return@withState
             val activeDocumentId = documentId ?: return@withState
@@ -123,11 +163,11 @@ internal class DocumentReviewPreview(
         }
     }
 
-    suspend fun DocumentReviewCtx.handleCloseSourceModal() {
+    private suspend fun PreviewCtx.handleCloseSourceModal() {
         updateState { copy(sourceViewerState = null) }
     }
 
-    suspend fun DocumentReviewCtx.handleToggleSourceTechnicalDetails() {
+    private suspend fun PreviewCtx.handleToggleSourceTechnicalDetails() {
         withState {
             val activeDocumentId = documentId ?: return@withState
             val viewer = sourceViewerState ?: return@withState
@@ -148,13 +188,129 @@ internal class DocumentReviewPreview(
         }
     }
 
-    private suspend fun DocumentReviewCtx.loadSelectedSourcePreview(
+    // === Private loading helpers ===
+
+    private fun previewUnavailableState(sourceType: DocumentSource): DocumentPreviewState {
+        return if (sourceType == DocumentSource.Peppol) {
+            DocumentPreviewState.NoPreview
+        } else {
+            DocumentPreviewState.NotPdf
+        }
+    }
+
+    private suspend fun PreviewCtx.loadPreviewPages(
+        documentId: DocumentId,
+        contentType: String,
+        dpi: Dpi,
+        maxPages: Int,
+    ) {
+        if (!contentType.contains("pdf", ignoreCase = true)) {
+            updateState { copy(previewState = DocumentPreviewState.NotPdf) }
+            return
+        }
+
+        updateState { copy(previewState = DocumentPreviewState.Loading) }
+
+        getDocumentPages(documentId, dpi, maxPages)
+            .fold(
+                onSuccess = { response ->
+                    if (response.pages.isEmpty()) {
+                        updateState { copy(previewState = DocumentPreviewState.NoPreview) }
+                    } else {
+                        updateState {
+                            copy(
+                                previewState = DocumentPreviewState.Ready(
+                                    pages = response.pages,
+                                    totalPages = response.totalPages,
+                                    renderedPages = response.renderedPages,
+                                    dpi = response.dpi,
+                                    hasMore = response.totalPages > response.renderedPages
+                                )
+                            )
+                        }
+                    }
+                },
+                onFailure = { error ->
+                    logger.e(error) { "Failed to load preview pages for document: $documentId" }
+                    val exception = error.asDokusException
+                    val displayException = if (exception is DokusException.Unknown) {
+                        DokusException.DocumentPreviewLoadFailed
+                    } else {
+                        exception
+                    }
+                    updateState {
+                        copy(
+                            previewState = DocumentPreviewState.Error(
+                                exception = displayException,
+                                retry = { intent(DocumentPreviewIntent.RetryLoad) }
+                            ),
+                        )
+                    }
+                }
+            )
+    }
+
+    private suspend fun PreviewCtx.loadIncomingPreviewPages(
         documentId: DocumentId,
         sourceId: DocumentSourceId,
         sourceType: DocumentSource,
         contentType: String,
         dpi: Dpi,
-        maxPages: Int
+        maxPages: Int,
+    ) {
+        if (!contentType.contains("pdf", ignoreCase = true)) {
+            updateState { copy(incomingPreviewState = previewUnavailableState(sourceType)) }
+            return
+        }
+
+        updateState { copy(incomingPreviewState = DocumentPreviewState.Loading) }
+
+        getDocumentSourcePages(documentId, sourceId, dpi, maxPages)
+            .fold(
+                onSuccess = { response ->
+                    updateState {
+                        copy(
+                            incomingPreviewState = if (response.pages.isEmpty()) {
+                                DocumentPreviewState.NoPreview
+                            } else {
+                                DocumentPreviewState.Ready(
+                                    pages = response.pages,
+                                    totalPages = response.totalPages,
+                                    renderedPages = response.renderedPages,
+                                    dpi = response.dpi,
+                                    hasMore = response.totalPages > response.renderedPages
+                                )
+                            }
+                        )
+                    }
+                },
+                onFailure = { error ->
+                    logger.e(error) { "Failed to load incoming preview pages for source=$sourceId" }
+                    val exception = error.asDokusException
+                    val displayException = if (exception is DokusException.Unknown) {
+                        DokusException.DocumentPreviewLoadFailed
+                    } else {
+                        exception
+                    }
+                    updateState {
+                        copy(
+                            incomingPreviewState = DocumentPreviewState.Error(
+                                exception = displayException,
+                                retry = { intent(DocumentPreviewIntent.RetryLoad) }
+                            ),
+                        )
+                    }
+                }
+            )
+    }
+
+    private suspend fun PreviewCtx.loadSelectedSourcePreview(
+        documentId: DocumentId,
+        sourceId: DocumentSourceId,
+        sourceType: DocumentSource,
+        contentType: String,
+        dpi: Dpi,
+        maxPages: Int,
     ) {
         val isPdf = contentType.contains("pdf", ignoreCase = true)
         if (!isPdf) {
@@ -209,7 +365,7 @@ internal class DocumentReviewPreview(
                                         } else {
                                             exception
                                         },
-                                        retry = { intent(DocumentReviewIntent.OpenSourceModal(sourceId)) }
+                                        retry = { intent(DocumentPreviewIntent.OpenSourceModal(sourceId)) }
                                     )
                                 )
                             )
@@ -219,9 +375,9 @@ internal class DocumentReviewPreview(
             )
     }
 
-    private suspend fun DocumentReviewCtx.loadSourceRawContent(
+    private suspend fun PreviewCtx.loadSourceRawContent(
         documentId: DocumentId,
-        sourceId: DocumentSourceId
+        sourceId: DocumentSourceId,
     ) {
         withState {
             val viewer = sourceViewerState ?: return@withState
@@ -266,111 +422,5 @@ internal class DocumentReviewPreview(
                 }
             }
         )
-    }
-
-    private suspend fun DocumentReviewCtx.loadIncomingPreviewPages(
-        documentId: DocumentId,
-        sourceId: DocumentSourceId,
-        sourceType: DocumentSource,
-        contentType: String,
-        dpi: Dpi,
-        maxPages: Int,
-    ) {
-        if (!contentType.contains("pdf", ignoreCase = true)) {
-            updateState { copy(incomingPreviewState = previewUnavailableState(sourceType)) }
-            return
-        }
-
-        updateState { copy(incomingPreviewState = DocumentPreviewState.Loading) }
-
-        getDocumentSourcePages(documentId, sourceId, dpi, maxPages)
-            .fold(
-                onSuccess = { response ->
-                    updateState {
-                        copy(
-                            incomingPreviewState = if (response.pages.isEmpty()) {
-                                DocumentPreviewState.NoPreview
-                            } else {
-                                DocumentPreviewState.Ready(
-                                    pages = response.pages,
-                                    totalPages = response.totalPages,
-                                    renderedPages = response.renderedPages,
-                                    dpi = response.dpi,
-                                    hasMore = response.totalPages > response.renderedPages
-                                )
-                            }
-                        )
-                    }
-                },
-                onFailure = { error ->
-                    logger.e(error) { "Failed to load incoming preview pages for source=$sourceId" }
-                    val exception = error.asDokusException
-                    val displayException = if (exception is DokusException.Unknown) {
-                        DokusException.DocumentPreviewLoadFailed
-                    } else {
-                        exception
-                    }
-                    updateState {
-                        copy(
-                            incomingPreviewState = DocumentPreviewState.Error(
-                                exception = displayException,
-                                retry = { intent(DocumentReviewIntent.RetryLoadPreview) }
-                            ),
-                        )
-                    }
-                }
-            )
-    }
-
-    private suspend fun DocumentReviewCtx.loadPreviewPages(
-        documentId: DocumentId,
-        contentType: String,
-        dpi: Dpi,
-        maxPages: Int
-    ) {
-        if (!contentType.contains("pdf", ignoreCase = true)) {
-            updateState { copy(previewState = DocumentPreviewState.NotPdf) }
-            return
-        }
-
-        updateState { copy(previewState = DocumentPreviewState.Loading) }
-
-        getDocumentPages(documentId, dpi, maxPages)
-            .fold(
-                onSuccess = { response ->
-                    if (response.pages.isEmpty()) {
-                        updateState { copy(previewState = DocumentPreviewState.NoPreview) }
-                    } else {
-                        updateState {
-                            copy(
-                                previewState = DocumentPreviewState.Ready(
-                                    pages = response.pages,
-                                    totalPages = response.totalPages,
-                                    renderedPages = response.renderedPages,
-                                    dpi = response.dpi,
-                                    hasMore = response.totalPages > response.renderedPages
-                                )
-                            )
-                        }
-                    }
-                },
-                onFailure = { error ->
-                    logger.e(error) { "Failed to load preview pages for document: $documentId" }
-                    val exception = error.asDokusException
-                    val displayException = if (exception is DokusException.Unknown) {
-                        DokusException.DocumentPreviewLoadFailed
-                    } else {
-                        exception
-                    }
-                    updateState {
-                        copy(
-                            previewState = DocumentPreviewState.Error(
-                                exception = displayException,
-                                retry = { intent(DocumentReviewIntent.RetryLoadPreview) }
-                            ),
-                        )
-                    }
-                }
-            )
     }
 }

@@ -7,11 +7,9 @@ import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.domain.enums.InvoiceDeliveryMethod
 import tech.dokus.domain.enums.InvoiceDueDateMode
-import tech.dokus.domain.ids.ContactId
-import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.features.cashflow.mvi.clientlookup.ClientLookupIntent
 import tech.dokus.features.cashflow.mvi.model.CreateInvoiceFormState
 import tech.dokus.features.cashflow.mvi.model.CreateInvoiceUiState
-import tech.dokus.features.cashflow.mvi.model.ExternalClientCandidate
 import tech.dokus.features.cashflow.mvi.model.InvoiceSection
 
 @Immutable
@@ -23,14 +21,8 @@ data class CreateInvoiceState(
 
 @Immutable
 sealed interface CreateInvoiceIntent : MVIIntent {
-    // Client
-    data class UpdateClientLookupQuery(val query: String) : CreateInvoiceIntent
-    data class SetClientLookupExpanded(val expanded: Boolean) : CreateInvoiceIntent
-    data class SelectClient(val client: ContactDto) : CreateInvoiceIntent
-    data class SelectExternalClientCandidate(val candidate: ExternalClientCandidate) : CreateInvoiceIntent
-    data class CreateClientManuallyFromQuery(val query: String) : CreateInvoiceIntent
-    data object ClearClient : CreateInvoiceIntent
-    data class RefreshPeppolStatus(val contactId: ContactId, val force: Boolean = false) : CreateInvoiceIntent
+    // Client (delegated to child store)
+    data class ClientLookup(val intent: ClientLookupIntent) : CreateInvoiceIntent
 
     // Dates & terms
     data object OpenIssueDatePicker : CreateInvoiceIntent

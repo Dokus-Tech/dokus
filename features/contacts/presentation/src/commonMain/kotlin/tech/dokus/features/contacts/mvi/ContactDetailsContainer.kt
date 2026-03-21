@@ -7,29 +7,35 @@ package tech.dokus.features.contacts.mvi
 
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import pro.respawn.flowmvi.annotation.ExperimentalFlowMVIAPI
 import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
+import pro.respawn.flowmvi.plugins.delegate.delegate
 import pro.respawn.flowmvi.plugins.init
 import pro.respawn.flowmvi.plugins.reduce
+import pro.respawn.flowmvi.plugins.whileSubscribed
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.features.auth.usecases.GetCurrentTenantIdUseCase
+import tech.dokus.features.contacts.mvi.extensions.toFormData
+import tech.dokus.features.contacts.mvi.extensions.toUpdateRequest
+import tech.dokus.features.contacts.mvi.notes.ContactNotesAction
+import tech.dokus.features.contacts.mvi.notes.ContactNotesContainer
+import tech.dokus.features.contacts.mvi.notes.ContactNotesIntent
 import tech.dokus.features.contacts.usecases.CacheContactsUseCase
-import tech.dokus.features.contacts.usecases.CreateContactNoteUseCase
-import tech.dokus.features.contacts.usecases.DeleteContactNoteUseCase
 import tech.dokus.features.contacts.usecases.GetCachedContactsUseCase
 import tech.dokus.features.contacts.usecases.GetContactActivityUseCase
 import tech.dokus.features.contacts.usecases.GetContactInvoiceSnapshotUseCase
 import tech.dokus.features.contacts.usecases.GetContactPeppolStatusUseCase
 import tech.dokus.features.contacts.usecases.GetContactUseCase
-import tech.dokus.features.contacts.usecases.ListContactNotesUseCase
 import tech.dokus.features.contacts.usecases.ObserveContactChangesUseCase
-import tech.dokus.features.contacts.usecases.UpdateContactNoteUseCase
 import tech.dokus.features.contacts.usecases.UpdateContactUseCase
 import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.platform.Logger
 
 internal typealias ContactDetailsCtx = PipelineContext<ContactDetailsState, ContactDetailsIntent, ContactDetailsAction>
@@ -43,7 +49,7 @@ internal typealias ContactDetailsCtx = PipelineContext<ContactDetailsState, Cont
  * Features:
  * - Contact information display
  * - Activity summary (invoices, inbound invoices, expenses)
- * - Notes management (add, edit, delete)
+ * - Notes management (delegated to [ContactNotesContainer])
  * - Enrichment suggestions
  * - Contact merge functionality
  *
@@ -55,15 +61,12 @@ internal class ContactDetailsContainer(
     private val getContactActivity: GetContactActivityUseCase,
     private val getContactInvoiceSnapshot: GetContactInvoiceSnapshotUseCase,
     private val getContactPeppolStatus: GetContactPeppolStatusUseCase,
-    private val listContactNotes: ListContactNotesUseCase,
-    createContactNote: CreateContactNoteUseCase,
-    updateContactNote: UpdateContactNoteUseCase,
-    deleteContactNote: DeleteContactNoteUseCase,
     private val getCachedContacts: GetCachedContactsUseCase,
-    cacheContacts: CacheContactsUseCase,
+    private val cacheContacts: CacheContactsUseCase,
     private val getCurrentTenantId: GetCurrentTenantIdUseCase,
     private val observeContactChanges: ObserveContactChangesUseCase,
-    updateContact: UpdateContactUseCase,
+    private val updateContact: UpdateContactUseCase,
+    val notesContainer: ContactNotesContainer,
 ) : Container<ContactDetailsState, ContactDetailsIntent, ContactDetailsAction> {
 
     companion object {
@@ -74,23 +77,44 @@ internal class ContactDetailsContainer(
 
     private val logger = Logger.forClass<ContactDetailsContainer>()
 
-    private val noteHandlers = ContactDetailsNoteHandlers(
-        listContactNotes = listContactNotes,
-        createContactNote = createContactNote,
-        updateContactNote = updateContactNote,
-        deleteContactNote = deleteContactNote,
-    )
-
-    private val editHandlers = ContactDetailsEditHandlers(
-        updateContact = updateContact,
-        getCurrentTenantId = getCurrentTenantId,
-        cacheContacts = cacheContacts,
-    )
-
-    private val mergeEnrichmentHandlers = ContactDetailsMergeEnrichmentHandlers()
-
+    @OptIn(ExperimentalFlowMVIAPI::class)
     override val store: Store<ContactDetailsState, ContactDetailsIntent, ContactDetailsAction> =
         store(ContactDetailsState(contactId = contactId)) {
+            val notesState by delegate(notesContainer.store) { notesAction ->
+                when (notesAction) {
+                    is ContactNotesAction.NoteAdded ->
+                        action(ContactDetailsAction.ShowSuccess(ContactDetailsSuccess.NoteAdded))
+                    is ContactNotesAction.NoteUpdated ->
+                        action(ContactDetailsAction.ShowSuccess(ContactDetailsSuccess.NoteUpdated))
+                    is ContactNotesAction.NoteDeleted ->
+                        action(ContactDetailsAction.ShowSuccess(ContactDetailsSuccess.NoteDeleted))
+                    is ContactNotesAction.ShowError ->
+                        action(ContactDetailsAction.ShowError(notesAction.error))
+                }
+            }
+
+            whileSubscribed {
+                notesState.collect { childState ->
+                    updateState {
+                        copy(
+                            notesState = childState.notes,
+                            isSavingNote = childState.isSavingNote,
+                            isDeletingNote = childState.isDeletingNote,
+                            uiState = uiState.copy(
+                                showAddNoteDialog = childState.showAddNoteDialog,
+                                showEditNoteDialog = childState.showEditNoteDialog,
+                                editingNote = childState.editingNote,
+                                noteContent = childState.noteContent,
+                                showDeleteNoteConfirmation = childState.showDeleteNoteConfirmation,
+                                deletingNote = childState.deletingNote,
+                                showNotesSidePanel = childState.showNotesSidePanel,
+                                showNotesBottomSheet = childState.showNotesBottomSheet,
+                            ),
+                        )
+                    }
+                }
+            }
+
             init {
                 launch {
                     observeContactChanges(contactId).collect {
@@ -99,71 +123,33 @@ internal class ContactDetailsContainer(
                     }
                 }
             }
+
             reduce { intent ->
                 when (intent) {
                     // Loading
                     is ContactDetailsIntent.LoadContact -> handleLoadContact(intent.contactId)
                     is ContactDetailsIntent.Refresh -> handleRefresh()
 
-                    // Notes Dialog Management
-                    is ContactDetailsIntent.ShowAddNoteDialog ->
-                        with(noteHandlers) { handleShowAddNoteDialog() }
-                    is ContactDetailsIntent.HideAddNoteDialog ->
-                        with(noteHandlers) { handleHideAddNoteDialog() }
-                    is ContactDetailsIntent.ShowEditNoteDialog ->
-                        with(noteHandlers) { handleShowEditNoteDialog(intent.note) }
-                    is ContactDetailsIntent.HideEditNoteDialog ->
-                        with(noteHandlers) { handleHideEditNoteDialog() }
-                    is ContactDetailsIntent.UpdateNoteContent ->
-                        with(noteHandlers) { handleUpdateNoteContent(intent.content) }
-                    is ContactDetailsIntent.ShowDeleteNoteConfirmation ->
-                        with(noteHandlers) { handleShowDeleteNoteConfirmation(intent.note) }
-                    is ContactDetailsIntent.HideDeleteNoteConfirmation ->
-                        with(noteHandlers) { handleHideDeleteNoteConfirmation() }
-
-                    // Notes Panel/Sheet Visibility
-                    is ContactDetailsIntent.ShowNotesSidePanel ->
-                        with(noteHandlers) { handleShowNotesSidePanel() }
-                    is ContactDetailsIntent.HideNotesSidePanel ->
-                        with(noteHandlers) { handleHideNotesSidePanel() }
-                    is ContactDetailsIntent.ShowNotesBottomSheet ->
-                        with(noteHandlers) { handleShowNotesBottomSheet() }
-                    is ContactDetailsIntent.HideNotesBottomSheet ->
-                        with(noteHandlers) { handleHideNotesBottomSheet() }
-
-                    // Notes Operations
-                    is ContactDetailsIntent.AddNote ->
-                        with(noteHandlers) { handleAddNote() }
-                    is ContactDetailsIntent.UpdateNote ->
-                        with(noteHandlers) { handleUpdateNote() }
-                    is ContactDetailsIntent.DeleteNote ->
-                        with(noteHandlers) { handleDeleteNote() }
+                    // Notes (delegated to child store)
+                    is ContactDetailsIntent.Notes ->
+                        notesContainer.store.intent(intent.intent)
 
                     // Merge
-                    is ContactDetailsIntent.ShowMergeDialog ->
-                        with(mergeEnrichmentHandlers) { handleShowMergeDialog() }
-                    is ContactDetailsIntent.HideMergeDialog ->
-                        with(mergeEnrichmentHandlers) { handleHideMergeDialog() }
+                    is ContactDetailsIntent.ShowMergeDialog -> handleShowMergeDialog()
+                    is ContactDetailsIntent.HideMergeDialog -> handleHideMergeDialog()
 
                     // Enrichment
-                    is ContactDetailsIntent.ShowEnrichmentPanel ->
-                        with(mergeEnrichmentHandlers) { handleShowEnrichmentPanel() }
-                    is ContactDetailsIntent.HideEnrichmentPanel ->
-                        with(mergeEnrichmentHandlers) { handleHideEnrichmentPanel() }
+                    is ContactDetailsIntent.ShowEnrichmentPanel -> handleShowEnrichmentPanel()
+                    is ContactDetailsIntent.HideEnrichmentPanel -> handleHideEnrichmentPanel()
                     is ContactDetailsIntent.ApplyEnrichmentSuggestions ->
-                        with(mergeEnrichmentHandlers) {
-                            handleApplyEnrichmentSuggestions(intent.suggestions)
-                        }
+                        handleApplyEnrichmentSuggestions(intent.suggestions)
 
                     // Inline Edit
-                    is ContactDetailsIntent.StartEditing ->
-                        with(editHandlers) { handleStartEditing() }
-                    is ContactDetailsIntent.CancelEditing ->
-                        with(editHandlers) { handleCancelEditing() }
-                    is ContactDetailsIntent.SaveEdit ->
-                        with(editHandlers) { handleSaveEdit() }
+                    is ContactDetailsIntent.StartEditing -> handleStartEditing()
+                    is ContactDetailsIntent.CancelEditing -> handleCancelEditing()
+                    is ContactDetailsIntent.SaveEdit -> handleSaveEdit()
                     is ContactDetailsIntent.UpdateEditFormData ->
-                        with(editHandlers) { handleUpdateEditFormData(intent.formData) }
+                        handleUpdateEditFormData(intent.formData)
                 }
             }
         }
@@ -182,9 +168,9 @@ internal class ContactDetailsContainer(
                 activityState = DokusState.loading(),
                 invoiceSnapshotState = DokusState.loading(),
                 peppolStatusState = DokusState.loading(),
-                notesState = DokusState.loading()
             )
         }
+        notesContainer.store.intent(ContactNotesIntent.LoadNotes)
 
         val contact = loadContactData(contactId)
         if (contact == null) return
@@ -201,9 +187,9 @@ internal class ContactDetailsContainer(
                 activityState = DokusState.loading(),
                 invoiceSnapshotState = DokusState.loading(),
                 peppolStatusState = DokusState.loading(),
-                notesState = DokusState.loading()
             )
         }
+        notesContainer.store.intent(ContactNotesIntent.LoadNotes)
 
         val currentContactId = capturedContactId ?: return
         logger.d { "Refreshing contact details: $currentContactId" }
@@ -211,7 +197,7 @@ internal class ContactDetailsContainer(
         getContact(currentContactId).fold(
             onSuccess = { contact ->
                 updateState { copy(contact = DokusState.success(contact)) }
-                editHandlers.cacheContact(contact)
+                cacheContact(contact)
             },
             onFailure = { error ->
                 logger.e(error) { "Failed to refresh contact: $currentContactId" }
@@ -240,7 +226,7 @@ internal class ContactDetailsContainer(
                 logger.i { "Loaded contact from network: ${contact.name}" }
                 updateState { copy(contact = DokusState.success(contact)) }
                 // Update cache with fresh data
-                editHandlers.cacheContact(contact)
+                cacheContact(contact)
                 resolvedContact = contact
             },
             onFailure = { error ->
@@ -280,12 +266,10 @@ internal class ContactDetailsContainer(
         val activityDeferred = async { getContactActivity(contactId) }
         val invoiceSnapshotDeferred = async { getContactInvoiceSnapshot(contactId) }
         val peppolStatusDeferred = async { getContactPeppolStatus(contactId) }
-        val notesDeferred = async { listContactNotes(contactId) }
 
         applyActivityResult(activityDeferred.await())
         applyInvoiceSnapshotResult(invoiceSnapshotDeferred.await())
         applyPeppolStatusResult(peppolStatusDeferred.await())
-        with(noteHandlers) { applyNotesResult(notesDeferred.await()) }
     }
 
     private suspend fun ContactDetailsCtx.applyActivityResult(
@@ -352,5 +336,135 @@ internal class ContactDetailsContainer(
                 }
             }
         )
+    }
+
+    // ========================================================================
+    // MERGE / ENRICHMENT (inlined from ContactDetailsMergeEnrichmentHandlers)
+    // ========================================================================
+
+    private suspend fun ContactDetailsCtx.handleShowMergeDialog() {
+        updateState { copy(uiState = uiState.copy(showMergeDialog = true)) }
+    }
+
+    private suspend fun ContactDetailsCtx.handleHideMergeDialog() {
+        updateState { copy(uiState = uiState.copy(showMergeDialog = false)) }
+    }
+
+    private suspend fun ContactDetailsCtx.handleShowEnrichmentPanel() {
+        updateState { copy(uiState = uiState.copy(showEnrichmentPanel = true)) }
+    }
+
+    private suspend fun ContactDetailsCtx.handleHideEnrichmentPanel() {
+        updateState { copy(uiState = uiState.copy(showEnrichmentPanel = false)) }
+    }
+
+    private suspend fun ContactDetailsCtx.handleApplyEnrichmentSuggestions(
+        suggestions: List<EnrichmentSuggestion>,
+    ) {
+        if (suggestions.isEmpty()) {
+            logger.w { "No enrichment suggestions selected" }
+            return
+        }
+
+        // Future implementation: Build UpdateContactRequest from selected suggestions
+        // and call contactRepository.updateContact
+        logger.d { "Applying ${suggestions.size} enrichment suggestions" }
+
+        updateState {
+            val remainingSuggestions = enrichmentSuggestions.filterNot { it in suggestions }
+            copy(
+                enrichmentSuggestions = remainingSuggestions,
+                uiState = uiState.copy(showEnrichmentPanel = false)
+            )
+        }
+
+        action(
+            ContactDetailsAction.ShowSuccess(
+                ContactDetailsSuccess.EnrichmentApplied(suggestions.size)
+            )
+        )
+    }
+
+    // ========================================================================
+    // INLINE EDIT (inlined from ContactDetailsEditHandlers)
+    // ========================================================================
+
+    private suspend fun ContactDetailsCtx.handleStartEditing() {
+        withState {
+            if (!contact.isSuccess()) return@withState
+            val formData = contact.data.toFormData()
+            updateState { copy(editFormData = formData) }
+        }
+    }
+
+    private suspend fun ContactDetailsCtx.handleCancelEditing() {
+        updateState { copy(editFormData = null) }
+    }
+
+    private suspend fun ContactDetailsCtx.handleUpdateEditFormData(formData: ContactFormData) {
+        updateState { copy(editFormData = formData) }
+    }
+
+    private suspend fun ContactDetailsCtx.handleSaveEdit() {
+        var capturedContactId: ContactId? = null
+        var capturedFormData: ContactFormData? = null
+
+        withState {
+            capturedContactId = contactId
+            capturedFormData = editFormData
+        }
+
+        val editContactId = capturedContactId ?: return
+        val form = capturedFormData ?: return
+
+        if (form.name.value.isBlank()) {
+            updateState {
+                copy(
+                    editFormData = form.copy(
+                        errors = mapOf("name" to DokusException.Validation.ContactNameRequired)
+                    )
+                )
+            }
+            return
+        }
+
+        updateState { copy(isSavingEdit = true) }
+        logger.d { "Saving inline edit for contact $editContactId" }
+
+        val request = form.toUpdateRequest()
+        updateContact(editContactId, request).fold(
+            onSuccess = { updatedContact ->
+                logger.i { "Contact updated: ${updatedContact.id}" }
+                updateState {
+                    copy(
+                        contact = DokusState.success(updatedContact),
+                        editFormData = null,
+                        isSavingEdit = false,
+                    )
+                }
+                cacheContact(updatedContact)
+                action(ContactDetailsAction.ShowSuccess(ContactDetailsSuccess.ContactUpdated))
+            },
+            onFailure = { error ->
+                logger.e(error) { "Failed to update contact: $editContactId" }
+                updateState { copy(isSavingEdit = false) }
+                action(ContactDetailsAction.ShowError(error.asDokusException))
+            }
+        )
+    }
+
+    // ========================================================================
+    // CACHE HELPER
+    // ========================================================================
+
+    @Suppress("TooGenericExceptionCaught")
+    private suspend fun cacheContact(contact: ContactDto) {
+        val tenantId = getCurrentTenantId() ?: return
+        try {
+            cacheContacts(tenantId, listOf(contact))
+            logger.d { "Cached contact: ${contact.name}" }
+        } catch (e: Exception) {
+            logger.w(e) { "Failed to cache contact" }
+        }
     }
 }

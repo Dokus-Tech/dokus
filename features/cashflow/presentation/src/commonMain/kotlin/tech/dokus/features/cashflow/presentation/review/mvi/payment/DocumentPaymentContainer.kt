@@ -1,10 +1,16 @@
-package tech.dokus.features.cashflow.presentation.review
+@file:Suppress("TooManyFunctions")
+
+package tech.dokus.features.cashflow.presentation.review.mvi.payment
 
 import kotlinx.coroutines.launch
-import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
+import pro.respawn.flowmvi.api.Container
+import pro.respawn.flowmvi.api.PipelineContext
+import pro.respawn.flowmvi.api.Store
+import pro.respawn.flowmvi.dsl.store
 import pro.respawn.flowmvi.dsl.withState
+import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.BankTransactionStatus
 import tech.dokus.domain.exceptions.DokusException
@@ -12,25 +18,63 @@ import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.model.CashflowEntryDto
 import tech.dokus.domain.model.CashflowPaymentRequest
 import tech.dokus.domain.model.UndoAutoPaymentRequest
-import tech.dokus.features.cashflow.usecases.GetCashflowEntryUseCase
+import tech.dokus.features.cashflow.presentation.review.PaymentSheetState
 import tech.dokus.features.cashflow.usecases.GetAutoPaymentStatusUseCase
+import tech.dokus.features.cashflow.usecases.GetCashflowEntryUseCase
 import tech.dokus.features.cashflow.usecases.GetCashflowPaymentCandidatesUseCase
 import tech.dokus.features.cashflow.usecases.RecordCashflowPaymentUseCase
 import tech.dokus.features.cashflow.usecases.UndoAutoPaymentUseCase
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.platform.Logger
 
-internal class DocumentReviewPaymentActions(
+private typealias PaymentCtx = PipelineContext<DocumentPaymentState, DocumentPaymentIntent, DocumentPaymentAction>
+
+internal class DocumentPaymentContainer(
     private val getCashflowEntry: GetCashflowEntryUseCase,
     private val getCashflowPaymentCandidates: GetCashflowPaymentCandidatesUseCase,
     private val getAutoPaymentStatus: GetAutoPaymentStatusUseCase,
     private val recordCashflowPayment: RecordCashflowPaymentUseCase,
     private val undoAutoPayment: UndoAutoPaymentUseCase,
-    private val logger: Logger,
-) {
-    suspend fun DocumentReviewCtx.handleLoadCashflowEntry() {
+) : Container<DocumentPaymentState, DocumentPaymentIntent, DocumentPaymentAction> {
+
+    private val logger = Logger.forClass<DocumentPaymentContainer>()
+
+    override val store: Store<DocumentPaymentState, DocumentPaymentIntent, DocumentPaymentAction> =
+        store(DocumentPaymentState()) {
+            reduce { intent ->
+                when (intent) {
+                    is DocumentPaymentIntent.SetCashflowEntryId -> handleSetCashflowEntryId(intent.id)
+                    is DocumentPaymentIntent.LoadCashflowEntry -> handleLoadCashflowEntry()
+                    is DocumentPaymentIntent.LoadAutoPaymentStatus -> handleLoadAutoPaymentStatus()
+                    is DocumentPaymentIntent.OpenPaymentSheet -> handleOpenPaymentSheet()
+                    is DocumentPaymentIntent.ClosePaymentSheet -> handleClosePaymentSheet()
+                    is DocumentPaymentIntent.LoadPaymentCandidates -> handleLoadPaymentCandidates()
+                    is DocumentPaymentIntent.OpenPaymentTransactionPicker -> handleOpenPaymentTransactionPicker()
+                    is DocumentPaymentIntent.ClosePaymentTransactionPicker -> handleClosePaymentTransactionPicker()
+                    is DocumentPaymentIntent.SelectPaymentTransaction ->
+                        handleSelectPaymentTransaction(intent.transactionId)
+                    is DocumentPaymentIntent.ClearPaymentTransactionSelection ->
+                        handleClearPaymentTransactionSelection()
+                    is DocumentPaymentIntent.UpdatePaymentAmountText ->
+                        handleUpdatePaymentAmountText(intent.text)
+                    is DocumentPaymentIntent.UpdatePaymentPaidAt ->
+                        handleUpdatePaymentPaidAt(intent.date)
+                    is DocumentPaymentIntent.UpdatePaymentNote -> handleUpdatePaymentNote(intent.note)
+                    is DocumentPaymentIntent.SubmitPayment -> handleSubmitPayment()
+                    is DocumentPaymentIntent.UndoAutoPayment -> handleUndoAutoPayment(intent.reason)
+                }
+            }
+        }
+
+    private suspend fun PaymentCtx.handleSetCashflowEntryId(
+        id: tech.dokus.domain.ids.CashflowEntryId,
+    ) {
+        updateState { copy(confirmedCashflowEntryId = id) }
+    }
+
+    private suspend fun PaymentCtx.handleLoadCashflowEntry() {
         withState {
-            val entryId = confirmedCashflowEntryId ?: documentRecord?.cashflowEntryId ?: return@withState
+            val entryId = confirmedCashflowEntryId ?: return@withState
             updateState { copy(cashflowEntryState = DokusState.loading()) }
             launch {
                 getCashflowEntry(entryId).fold(
@@ -42,7 +86,7 @@ internal class DocumentReviewPaymentActions(
                                     confirmedCashflowEntryId = entry.id,
                                 )
                             }
-                            intent(DocumentReviewIntent.LoadAutoPaymentStatus)
+                            intent(DocumentPaymentIntent.LoadAutoPaymentStatus)
                         }
                     },
                     onFailure = { error ->
@@ -52,7 +96,7 @@ internal class DocumentReviewPaymentActions(
                                 copy(
                                     cashflowEntryState = DokusState.error(
                                         exception = error.asDokusException,
-                                        retryHandler = { intent(DocumentReviewIntent.LoadCashflowEntry) }
+                                        retryHandler = { intent(DocumentPaymentIntent.LoadCashflowEntry) }
                                     )
                                 )
                             }
@@ -63,7 +107,7 @@ internal class DocumentReviewPaymentActions(
         }
     }
 
-    suspend fun DocumentReviewCtx.handleLoadAutoPaymentStatus() {
+    private suspend fun PaymentCtx.handleLoadAutoPaymentStatus() {
         withState {
             val entry = (cashflowEntryState as? DokusState.Success<*>)?.data as? CashflowEntryDto ?: run {
                 updateState { copy(autoPaymentStatus = DokusState.idle()) }
@@ -84,7 +128,7 @@ internal class DocumentReviewPaymentActions(
                                 copy(
                                     autoPaymentStatus = DokusState.error(
                                         exception = error.asDokusException,
-                                        retryHandler = { intent(DocumentReviewIntent.LoadAutoPaymentStatus) }
+                                        retryHandler = { intent(DocumentPaymentIntent.LoadAutoPaymentStatus) }
                                     )
                                 )
                             }
@@ -95,10 +139,10 @@ internal class DocumentReviewPaymentActions(
         }
     }
 
-    suspend fun DocumentReviewCtx.handleOpenPaymentSheet() {
+    private suspend fun PaymentCtx.handleOpenPaymentSheet() {
         withState {
             val entry = (cashflowEntryState as? DokusState.Success<*>)?.data as? CashflowEntryDto ?: run {
-                intent(DocumentReviewIntent.LoadCashflowEntry)
+                intent(DocumentPaymentIntent.LoadCashflowEntry)
                 return@withState
             }
             updateState {
@@ -110,17 +154,17 @@ internal class DocumentReviewPaymentActions(
                     )
                 )
             }
-            intent(DocumentReviewIntent.LoadPaymentCandidates)
+            intent(DocumentPaymentIntent.LoadPaymentCandidates)
         }
     }
 
-    suspend fun DocumentReviewCtx.handleClosePaymentSheet() {
+    private suspend fun PaymentCtx.handleClosePaymentSheet() {
         withState {
             updateState { copy(paymentSheetState = null) }
         }
     }
 
-    suspend fun DocumentReviewCtx.handleLoadPaymentCandidates() {
+    private suspend fun PaymentCtx.handleLoadPaymentCandidates() {
         withState {
             val entry = (cashflowEntryState as? DokusState.Success<*>)?.data as? CashflowEntryDto ?: return@withState
             val sheet = paymentSheetState ?: return@withState
@@ -180,33 +224,27 @@ internal class DocumentReviewPaymentActions(
         }
     }
 
-    suspend fun DocumentReviewCtx.handleOpenPaymentTransactionPicker() {
+    private suspend fun PaymentCtx.handleOpenPaymentTransactionPicker() {
         withState {
             val sheet = paymentSheetState ?: return@withState
             updateState {
-                copy(
-                    paymentSheetState = sheet.copy(
-                        showTransactionPicker = true
-                    )
-                )
+                copy(paymentSheetState = sheet.copy(showTransactionPicker = true))
             }
         }
     }
 
-    suspend fun DocumentReviewCtx.handleClosePaymentTransactionPicker() {
+    private suspend fun PaymentCtx.handleClosePaymentTransactionPicker() {
         withState {
             val sheet = paymentSheetState ?: return@withState
             updateState {
-                copy(
-                    paymentSheetState = sheet.copy(
-                        showTransactionPicker = false
-                    )
-                )
+                copy(paymentSheetState = sheet.copy(showTransactionPicker = false))
             }
         }
     }
 
-    suspend fun DocumentReviewCtx.handleSelectPaymentTransaction(transactionId: tech.dokus.domain.ids.BankTransactionId) {
+    private suspend fun PaymentCtx.handleSelectPaymentTransaction(
+        transactionId: tech.dokus.domain.ids.BankTransactionId,
+    ) {
         withState {
             val sheet = paymentSheetState ?: return@withState
             val selected = (
@@ -229,7 +267,7 @@ internal class DocumentReviewPaymentActions(
         }
     }
 
-    suspend fun DocumentReviewCtx.handleClearPaymentTransactionSelection() {
+    private suspend fun PaymentCtx.handleClearPaymentTransactionSelection() {
         withState {
             val sheet = paymentSheetState ?: return@withState
             updateState {
@@ -243,7 +281,7 @@ internal class DocumentReviewPaymentActions(
         }
     }
 
-    suspend fun DocumentReviewCtx.handleUpdatePaymentAmountText(text: String) {
+    private suspend fun PaymentCtx.handleUpdatePaymentAmountText(text: String) {
         withState {
             val sheet = paymentSheetState ?: return@withState
             updateState {
@@ -258,21 +296,22 @@ internal class DocumentReviewPaymentActions(
         }
     }
 
-    suspend fun DocumentReviewCtx.handleUpdatePaymentPaidAt(date: LocalDate) {
+    private suspend fun PaymentCtx.handleUpdatePaymentPaidAt(date: kotlinx.datetime.LocalDate) {
         withState {
             val sheet = paymentSheetState ?: return@withState
             updateState { copy(paymentSheetState = sheet.copy(paidAt = date)) }
         }
     }
 
-    suspend fun DocumentReviewCtx.handleUpdatePaymentNote(note: String) {
+    private suspend fun PaymentCtx.handleUpdatePaymentNote(note: String) {
         withState {
             val sheet = paymentSheetState ?: return@withState
             updateState { copy(paymentSheetState = sheet.copy(note = note)) }
         }
     }
 
-    suspend fun DocumentReviewCtx.handleSubmitPayment() {
+    @Suppress("CyclomaticComplexMethod")
+    private suspend fun PaymentCtx.handleSubmitPayment() {
         withState {
             val entry = (cashflowEntryState as? DokusState.Success<*>)?.data as? CashflowEntryDto
                 ?: return@withState
@@ -321,8 +360,9 @@ internal class DocumentReviewPaymentActions(
                                     paymentSheetState = null,
                                 )
                             }
-                            intent(DocumentReviewIntent.LoadAutoPaymentStatus)
+                            intent(DocumentPaymentIntent.LoadAutoPaymentStatus)
                         }
+                        action(DocumentPaymentAction.PaymentRecorded)
                     },
                     onFailure = { error ->
                         logger.e(error) { "Failed to record payment: ${entry.id}" }
@@ -330,20 +370,18 @@ internal class DocumentReviewPaymentActions(
                             val currentSheet = paymentSheetState
                             if (currentSheet != null) {
                                 updateState {
-                                    copy(
-                                        paymentSheetState = currentSheet.copy(isSubmitting = false),
-                                    )
+                                    copy(paymentSheetState = currentSheet.copy(isSubmitting = false))
                                 }
                             }
                         }
-                        action(DocumentReviewAction.ShowError(error.asDokusException))
+                        action(DocumentPaymentAction.ShowError(error.asDokusException))
                     }
                 )
             }
         }
     }
 
-    suspend fun DocumentReviewCtx.handleUndoAutoPayment(reason: String?) {
+    private suspend fun PaymentCtx.handleUndoAutoPayment(reason: String?) {
         withState {
             if (isUndoingAutoPayment) return@withState
             val entry = (cashflowEntryState as? DokusState.Success<*>)?.data as? CashflowEntryDto ?: return@withState
@@ -361,15 +399,16 @@ internal class DocumentReviewPaymentActions(
                                     cashflowEntryState = DokusState.success(updatedEntry),
                                 )
                             }
-                            intent(DocumentReviewIntent.LoadAutoPaymentStatus)
+                            intent(DocumentPaymentIntent.LoadAutoPaymentStatus)
                         }
+                        action(DocumentPaymentAction.AutoPaymentUndone)
                     },
                     onFailure = { error ->
                         logger.e(error) { "Failed to undo auto payment: ${entry.id}" }
                         withState {
                             updateState { copy(isUndoingAutoPayment = false) }
                         }
-                        action(DocumentReviewAction.ShowError(error.asDokusException))
+                        action(DocumentPaymentAction.ShowError(error.asDokusException))
                     }
                 )
             }

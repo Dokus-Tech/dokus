@@ -11,6 +11,7 @@ import tech.dokus.domain.model.PeppolStatusResponse
 import tech.dokus.domain.model.contact.ContactActivitySummary
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.ContactNoteDto
+import tech.dokus.features.contacts.mvi.notes.ContactNotesIntent
 import tech.dokus.features.contacts.usecases.ContactInvoiceSnapshot
 import tech.dokus.foundation.app.state.DokusState
 
@@ -38,11 +39,11 @@ import tech.dokus.foundation.app.state.DokusState
  * @property activityState Activity summary (independent loading)
  * @property invoiceSnapshotState Invoice snapshot (count/totals/recent docs)
  * @property peppolStatusState PEPPOL lookup status
- * @property notesState Notes list (independent loading)
+ * @property notesState Notes list (projected from child store)
  * @property enrichmentSuggestions Available enrichment suggestions
  * @property uiState UI state for dialogs and panels
- * @property isSavingNote Whether note save is in progress
- * @property isDeletingNote Whether note deletion is in progress
+ * @property isSavingNote Whether note save is in progress (projected from child)
+ * @property isDeletingNote Whether note deletion is in progress (projected from child)
  */
 @Immutable
 data class ContactDetailsState(
@@ -76,53 +77,8 @@ sealed interface ContactDetailsIntent : MVIIntent {
     /** Refresh all contact data */
     data object Refresh : ContactDetailsIntent
 
-    // === Notes Dialog Management ===
-
-    /** Show dialog to add a new note */
-    data object ShowAddNoteDialog : ContactDetailsIntent
-
-    /** Hide the add note dialog */
-    data object HideAddNoteDialog : ContactDetailsIntent
-
-    /** Show dialog to edit an existing note */
-    data class ShowEditNoteDialog(val note: ContactNoteDto) : ContactDetailsIntent
-
-    /** Hide the edit note dialog */
-    data object HideEditNoteDialog : ContactDetailsIntent
-
-    /** Update note content in dialogs */
-    data class UpdateNoteContent(val content: String) : ContactDetailsIntent
-
-    /** Show confirmation dialog for deleting a note */
-    data class ShowDeleteNoteConfirmation(val note: ContactNoteDto) : ContactDetailsIntent
-
-    /** Hide the delete note confirmation dialog */
-    data object HideDeleteNoteConfirmation : ContactDetailsIntent
-
-    // === Notes Panel/Sheet Visibility ===
-
-    /** Show the notes side panel (desktop) */
-    data object ShowNotesSidePanel : ContactDetailsIntent
-
-    /** Hide the notes side panel (desktop) */
-    data object HideNotesSidePanel : ContactDetailsIntent
-
-    /** Show the notes bottom sheet (mobile) */
-    data object ShowNotesBottomSheet : ContactDetailsIntent
-
-    /** Hide the notes bottom sheet (mobile) */
-    data object HideNotesBottomSheet : ContactDetailsIntent
-
-    // === Notes Operations ===
-
-    /** Add a new note with current content */
-    data object AddNote : ContactDetailsIntent
-
-    /** Update the currently editing note */
-    data object UpdateNote : ContactDetailsIntent
-
-    /** Delete the note pending deletion */
-    data object DeleteNote : ContactDetailsIntent
+    // === Notes (delegated to child store) ===
+    data class Notes(val intent: ContactNotesIntent) : ContactDetailsIntent
 
     // === Merge ===
 

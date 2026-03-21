@@ -35,6 +35,7 @@ import tech.dokus.features.cashflow.presentation.review.models.DocumentUiData
 import tech.dokus.features.cashflow.presentation.common.utils.formatShortDate
 import tech.dokus.features.cashflow.presentation.review.DocumentPreviewState
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
+import tech.dokus.features.cashflow.presentation.review.mvi.preview.DocumentPreviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.PdfPreviewPane
 import tech.dokus.features.cashflow.presentation.review.SourceEvidenceViewerState
@@ -60,7 +61,7 @@ internal fun CanonicalCenterPane(
             previewState = state.previewState,
             selectedFieldPath = state.selectedFieldPath,
             isProcessing = state.isProcessing,
-            onLoadMore = { maxPages -> onIntent(DocumentReviewIntent.LoadMorePages(maxPages)) },
+            onLoadMore = { maxPages -> onIntent(DocumentReviewIntent.Preview(DocumentPreviewIntent.LoadMorePages(maxPages))) },
             modifier = modifier,
         )
         return
@@ -70,8 +71,8 @@ internal fun CanonicalCenterPane(
         SourceViewerCenter(
             contentState = state,
             viewerState = viewerState,
-            onToggleTechnicalDetails = { onIntent(DocumentReviewIntent.ToggleSourceTechnicalDetails) },
-            onRetry = { onIntent(DocumentReviewIntent.OpenSourceModal(viewerState.sourceId)) },
+            onToggleTechnicalDetails = { onIntent(DocumentReviewIntent.Preview(DocumentPreviewIntent.ToggleSourceTechnicalDetails)) },
+            onRetry = { onIntent(DocumentReviewIntent.Preview(DocumentPreviewIntent.OpenSourceModal(viewerState.sourceId))) },
             modifier = modifier,
         )
         return
@@ -97,7 +98,7 @@ internal fun CanonicalCenterPane(
             onSameDocument = { onIntent(DocumentReviewIntent.ResolvePossibleMatchSame) },
             onDifferentDocument = { onIntent(DocumentReviewIntent.ResolvePossibleMatchDifferent) },
             isResolving = state.isResolvingMatchReview,
-            onLoadMore = { maxPages -> onIntent(DocumentReviewIntent.LoadMorePages(maxPages)) },
+            onLoadMore = { maxPages -> onIntent(DocumentReviewIntent.Preview(DocumentPreviewIntent.LoadMorePages(maxPages))) },
             modifier = modifier,
         )
         return

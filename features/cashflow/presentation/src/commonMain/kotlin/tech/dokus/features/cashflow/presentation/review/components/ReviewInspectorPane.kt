@@ -26,6 +26,7 @@ import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
+import tech.dokus.features.cashflow.presentation.review.mvi.payment.DocumentPaymentIntent
 import tech.dokus.features.cashflow.presentation.review.ReviewFinancialStatus
 import tech.dokus.features.cashflow.presentation.review.compressedStatusDetailLocalized
 import tech.dokus.features.cashflow.presentation.review.dotType
@@ -387,7 +388,7 @@ private fun InspectorHeader(
                 text = "Record payment",
                 variant = PButtonVariant.Outline,
                 modifier = Modifier.fillMaxWidth(),
-                onClick = { onIntent(DocumentReviewIntent.OpenPaymentSheet) },
+                onClick = { onIntent(DocumentReviewIntent.Payment(DocumentPaymentIntent.OpenPaymentSheet)) },
             )
         }
     }

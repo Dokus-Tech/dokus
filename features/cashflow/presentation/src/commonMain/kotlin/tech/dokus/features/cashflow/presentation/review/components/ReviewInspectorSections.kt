@@ -56,7 +56,9 @@ import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.ReviewReason
 import tech.dokus.domain.model.AutoPaymentStatus
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
+import tech.dokus.features.cashflow.presentation.review.mvi.preview.DocumentPreviewIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
+import tech.dokus.features.cashflow.presentation.review.mvi.payment.DocumentPaymentIntent
 import tech.dokus.features.cashflow.presentation.review.EditableField
 import tech.dokus.features.cashflow.presentation.review.components.details.EditableAmountRow
 import tech.dokus.features.cashflow.presentation.review.dotType
@@ -135,7 +137,7 @@ internal fun InspectorSourcesSection(
                     SourceRow(
                         type = source.sourceChannel,
                         title = source.filename ?: source.sourceChannel.name,
-                        onClick = { onIntent(DocumentReviewIntent.OpenSourceModal(source.id)) },
+                        onClick = { onIntent(DocumentReviewIntent.Preview(DocumentPreviewIntent.OpenSourceModal(source.id))) },
                     )
                 }
             }
@@ -302,7 +304,7 @@ internal fun InspectorPaymentSection(
                                 }
                                 if (autoPaymentStatus.canUndo) {
                                     OutlinedButton(
-                                        onClick = { onIntent(DocumentReviewIntent.UndoAutoPayment()) },
+                                        onClick = { onIntent(DocumentReviewIntent.Payment(DocumentPaymentIntent.UndoAutoPayment())) },
                                         enabled = !state.isUndoingAutoPayment,
                                         modifier = Modifier.fillMaxWidth(),
                                     ) {
@@ -316,7 +318,7 @@ internal fun InspectorPaymentSection(
                     InspectorValueRow(stringResource(Res.string.document_section_payment), stringResource(Res.string.payment_no_payment_recorded))
                     if (!isAccountantReadOnly && state.canRecordPayment) {
                         OutlinedButton(
-                            onClick = { onIntent(DocumentReviewIntent.OpenPaymentSheet) },
+                            onClick = { onIntent(DocumentReviewIntent.Payment(DocumentPaymentIntent.OpenPaymentSheet)) },
                             modifier = Modifier.fillMaxWidth(),
                         ) {
                             Text(stringResource(Res.string.payment_record_title))
@@ -333,7 +335,7 @@ internal fun InspectorPaymentSection(
                 InspectorValueRow(stringResource(Res.string.document_section_payment), stringResource(Res.string.payment_unable_to_load))
                 if (!isAccountantReadOnly && state.canRecordPayment) {
                     OutlinedButton(
-                        onClick = { onIntent(DocumentReviewIntent.OpenPaymentSheet) },
+                        onClick = { onIntent(DocumentReviewIntent.Payment(DocumentPaymentIntent.OpenPaymentSheet)) },
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         Text(stringResource(Res.string.payment_record_title))
@@ -345,7 +347,7 @@ internal fun InspectorPaymentSection(
                 InspectorValueRow(stringResource(Res.string.document_section_payment), stringResource(Res.string.payment_no_payment_recorded))
                 if (!isAccountantReadOnly && state.canRecordPayment) {
                     OutlinedButton(
-                        onClick = { onIntent(DocumentReviewIntent.OpenPaymentSheet) },
+                        onClick = { onIntent(DocumentReviewIntent.Payment(DocumentPaymentIntent.OpenPaymentSheet)) },
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         Text(stringResource(Res.string.payment_record_title))
