@@ -50,6 +50,7 @@ import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
 import tech.dokus.domain.Email
+import tech.dokus.features.auth.mvi.AvatarState
 import tech.dokus.domain.Name
 import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.ids.UserId
@@ -246,7 +247,27 @@ fun ProfileSettingsContent(
                     )
                 }
 
-                else -> ProfileSettingsSkeleton()
+                else -> {
+                    val now = LocalDateTime(2026, 1, 1, 0, 0)
+                    val emptyUser = User(
+                        id = UserId.generate(),
+                        email = Email(""),
+                        createdAt = now,
+                        updatedAt = now,
+                    )
+                    ProfileHero(
+                        user = emptyUser,
+                        avatarState = AvatarState.Idle,
+                        onUploadAvatar = {},
+                        onResetAvatarState = {},
+                    )
+                    AccountCard(
+                        user = emptyUser,
+                        isResendingVerification = false,
+                        onResendVerification = {},
+                        onEditClick = {},
+                    )
+                }
             }
             }
 
