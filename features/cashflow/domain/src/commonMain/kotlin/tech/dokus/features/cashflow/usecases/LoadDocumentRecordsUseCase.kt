@@ -1,8 +1,9 @@
 package tech.dokus.features.cashflow.usecases
 
-import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentListFilter
+import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.IngestionStatus
+import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.model.DocumentListItemDto
 import tech.dokus.domain.model.common.PaginatedResponse
 
@@ -17,6 +18,6 @@ interface LoadDocumentRecordsUseCase {
         documentStatus: DocumentStatus? = null,
         ingestionStatus: IngestionStatus? = null,
         sortBy: String? = null,
-        contactId: String? = null,
+        contactId: ContactId? = null,
     ): Result<PaginatedResponse<DocumentListItemDto>>
 }

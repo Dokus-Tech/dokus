@@ -10,6 +10,7 @@ import tech.dokus.features.cashflow.mvi.CreateInvoiceAction
 import tech.dokus.features.cashflow.mvi.CreateInvoiceContainer
 import tech.dokus.features.cashflow.mvi.CreateInvoiceIntent
 import tech.dokus.features.cashflow.mvi.CreateInvoiceState
+import tech.dokus.features.cashflow.mvi.clientlookup.ClientLookupContainer
 import tech.dokus.features.cashflow.presentation.cashflow.model.manager.DocumentUploadManager
 import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.ValidateInvoiceUseCase
 import tech.dokus.features.cashflow.presentation.chat.ChatAction
@@ -31,12 +32,11 @@ import tech.dokus.features.cashflow.presentation.peppol.mvi.PeppolRegistrationSt
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewAction
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewContainer
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
-import tech.dokus.features.cashflow.presentation.review.DocumentReviewQueueContext
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
-import tech.dokus.features.cashflow.mvi.clientlookup.ClientLookupContainer
 import tech.dokus.features.cashflow.presentation.review.mvi.payment.DocumentPaymentContainer
 import tech.dokus.features.cashflow.presentation.review.mvi.preview.DocumentPreviewContainer
 import tech.dokus.foundation.app.mvi.container
+import tech.dokus.navigation.destinations.CashFlowDestination
 
 val cashflowViewModelModule = module {
     single {
@@ -67,7 +67,7 @@ val cashflowViewModelModule = module {
             clientLookupContainer = get(),
         )
     }
-    container<DocumentReviewContainer, DocumentReviewState, DocumentReviewIntent, DocumentReviewAction> { (initialDocumentId: DocumentId, queueContext: DocumentReviewQueueContext) ->
+    container<DocumentReviewContainer, DocumentReviewState, DocumentReviewIntent, DocumentReviewAction> { (initialDocumentId: DocumentId, queueContext: CashFlowDestination.DocumentReviewQueueContext) ->
         DocumentReviewContainer(
             getDocumentRecord = get(),
             updateDocumentDraft = get(),

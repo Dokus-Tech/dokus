@@ -117,7 +117,7 @@ sealed interface DocumentsAction : MVIAction {
     /** Navigate to document review screen */
     data class NavigateToDocumentReview(
         val documentId: DocumentId,
-        val queueSource: CashFlowDestination.DocumentReviewQueueSource,
+        val queueSource: CashFlowDestination.DocumentReviewQueueContext,
     ) : DocumentsAction
 
     /** Show error message */

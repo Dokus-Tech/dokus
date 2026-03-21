@@ -5,20 +5,16 @@ import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
-import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.delegate.delegate
 import pro.respawn.flowmvi.plugins.init
 import pro.respawn.flowmvi.plugins.reduce
 import pro.respawn.flowmvi.plugins.whileSubscribed
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsState
-import tech.dokus.navigation.destinations.CashFlowDestination
 import tech.dokus.features.cashflow.presentation.review.mvi.payment.DocumentPaymentAction
 import tech.dokus.features.cashflow.presentation.review.mvi.payment.DocumentPaymentContainer
-import tech.dokus.features.cashflow.presentation.review.mvi.payment.DocumentPaymentIntent
 import tech.dokus.features.cashflow.presentation.review.mvi.preview.DocumentPreviewAction
 import tech.dokus.features.cashflow.presentation.review.mvi.preview.DocumentPreviewContainer
-import tech.dokus.features.cashflow.presentation.review.mvi.preview.DocumentPreviewIntent
 import tech.dokus.features.cashflow.presentation.review.route.toDocQueueItem
 import tech.dokus.features.cashflow.usecases.ConfirmDocumentUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentRecordUseCase
@@ -32,6 +28,7 @@ import tech.dokus.features.cashflow.usecases.UpdateDocumentDraftUseCase
 import tech.dokus.features.contacts.usecases.GetContactUseCase
 import tech.dokus.foundation.app.shell.DocQueueItem
 import tech.dokus.foundation.platform.Logger
+import tech.dokus.navigation.destinations.CashFlowDestination
 
 internal typealias DocumentReviewCtx = PipelineContext<DocumentReviewState, DocumentReviewIntent, DocumentReviewAction>
 
@@ -68,7 +65,7 @@ internal class DocumentReviewContainer(
     private val paymentContainer: DocumentPaymentContainer,
     private val previewContainer: DocumentPreviewContainer,
     private val initialDocumentId: DocumentId,
-    private val queueContext: DocumentReviewQueueContext,
+    private val queueContext: CashFlowDestination.DocumentReviewQueueContext,
 ) : Container<DocumentReviewState, DocumentReviewIntent, DocumentReviewAction> {
 
     private val logger = Logger.forClass<DocumentReviewContainer>()
@@ -100,6 +97,7 @@ internal class DocumentReviewContainer(
                     is DocumentPaymentAction.AutoPaymentUndone -> intent(DocumentReviewIntent.Refresh)
                     is DocumentPaymentAction.ShowError ->
                         action(DocumentReviewAction.ShowError(paymentAction.error))
+
                     is DocumentPaymentAction.NavigateToCashflowEntry ->
                         action(DocumentReviewAction.NavigateToCashflowEntry(paymentAction.entryId))
                 }
@@ -153,15 +151,19 @@ internal class DocumentReviewContainer(
                             handleLoadDocument(intent.documentId)
                         }
                     }
+
                     is DocumentReviewIntent.LoadMoreQueue -> {
                         loadQueuePage(reset = false)
                     }
+
                     DocumentReviewIntent.RefreshQueue -> {
                         loadQueuePage(reset = true)
                     }
+
                     DocumentReviewIntent.HandleRemoteDeletion -> {
                         action(DocumentReviewAction.NavigateBack)
                     }
+
                     else -> {
                         dispatchToReducer(intent)
                     }
@@ -223,6 +225,7 @@ internal class DocumentReviewContainer(
                     is DocumentReviewIntent.DismissFeedbackDialog -> handleDismissFeedbackDialog()
                     is DocumentReviewIntent.SelectFeedbackCategory ->
                         handleSelectFeedbackCategory(intent.category)
+
                     is DocumentReviewIntent.UpdateFeedbackText -> handleUpdateFeedbackText(intent.text)
                     is DocumentReviewIntent.SubmitFeedback -> handleSubmitFeedback()
                     DocumentReviewIntent.RequestAmendment -> handleRequestAmendment()
@@ -233,6 +236,7 @@ internal class DocumentReviewContainer(
                     is DocumentReviewIntent.ResolvePossibleMatchSame -> handleResolvePossibleMatchSame()
                     is DocumentReviewIntent.ResolvePossibleMatchDifferent ->
                         handleResolvePossibleMatchDifferent()
+
                     is DocumentReviewIntent.ToggleBankStatementTransaction ->
                         handleToggleBankStatementTransaction(intent.index)
 
@@ -241,7 +245,10 @@ internal class DocumentReviewContainer(
                     is DocumentReviewIntent.SelectDirection -> handleSelectDirection(intent.direction)
 
                     // === Inline Field Editing ===
-                    is DocumentReviewIntent.UpdateField -> handleUpdateField(intent.field, intent.value)
+                    is DocumentReviewIntent.UpdateField -> handleUpdateField(
+                        intent.field,
+                        intent.value
+                    )
 
                     // === Unconfirm ===
                     DocumentReviewIntent.RequestUnconfirm -> handleUnconfirm()
@@ -307,7 +314,7 @@ internal class DocumentReviewContainer(
         existingItems = items
 
         loadDocumentRecordsBySource(
-            source = queueContext.source,
+            source = queueContext,
             page = nextPage,
             pageSize = DocumentsState.PAGE_SIZE,
         ).fold(
@@ -328,7 +335,8 @@ internal class DocumentReviewContainer(
                 }
                 updateState {
                     copy(
-                        queueState = (queueState ?: DocumentReviewQueueState(context = queueContext)).copy(
+                        queueState = (queueState
+                            ?: DocumentReviewQueueState(context = queueContext)).copy(
                             items = mergedItems,
                             currentPage = nextPage,
                             hasMore = response.hasMore,
@@ -348,7 +356,8 @@ internal class DocumentReviewContainer(
                 logger.w(error) { "Failed to load document review queue page=$nextPage" }
                 updateState {
                     copy(
-                        queueState = (queueState ?: DocumentReviewQueueState(context = queueContext)).copy(
+                        queueState = (queueState
+                            ?: DocumentReviewQueueState(context = queueContext)).copy(
                             isLoading = false,
                             isLoadingMore = false,
                         ),
@@ -359,21 +368,31 @@ internal class DocumentReviewContainer(
     }
 
     private suspend fun loadDocumentRecordsBySource(
-        source: CashFlowDestination.DocumentReviewQueueSource,
+        source: CashFlowDestination.DocumentReviewQueueContext,
         page: Int,
         pageSize: Int,
     ) = when (source) {
-        is CashFlowDestination.DocumentReviewQueueSource.DocumentList ->
-            loadDocumentRecords(page = page, pageSize = pageSize, filter = source.filter)
+        is CashFlowDestination.DocumentReviewQueueContext.DocumentList -> loadDocumentRecords(
+            page = page,
+            pageSize = pageSize,
+            filter = source.filter
+        )
 
-        is CashFlowDestination.DocumentReviewQueueSource.Contact ->
-            loadDocumentRecords(page = page, pageSize = pageSize, contactId = source.contactId)
+        is CashFlowDestination.DocumentReviewQueueContext.Contact -> loadDocumentRecords(
+            page = page,
+            pageSize = pageSize,
+            contactId = source.contactId
+        )
 
-        is CashFlowDestination.DocumentReviewQueueSource.Search ->
-            loadDocumentRecords(page = page, pageSize = pageSize)
+        is CashFlowDestination.DocumentReviewQueueContext.Search -> loadDocumentRecords(
+            page = page,
+            pageSize = pageSize
+        )
 
-        is CashFlowDestination.DocumentReviewQueueSource.Recent ->
-            loadDocumentRecords(page = page, pageSize = pageSize)
+        is CashFlowDestination.DocumentReviewQueueContext.Recent -> loadDocumentRecords(
+            page = page,
+            pageSize = pageSize
+        )
     }
 
     private fun mergeQueueItems(
@@ -392,7 +411,8 @@ internal class DocumentReviewContainer(
         selectedDocumentId: DocumentId,
     ): List<DocQueueItem> {
         if (incomingItems.any { it.id == selectedDocumentId }) return incomingItems
-        val selectedExisting = existingItems.firstOrNull { it.id == selectedDocumentId } ?: return incomingItems
+        val selectedExisting =
+            existingItems.firstOrNull { it.id == selectedDocumentId } ?: return incomingItems
         return listOf(selectedExisting) + incomingItems
     }
 }

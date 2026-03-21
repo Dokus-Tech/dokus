@@ -43,6 +43,7 @@ import tech.dokus.domain.model.CashflowOverview
 import tech.dokus.domain.model.CashflowPaymentRequest
 import tech.dokus.domain.model.CreateExpenseRequest
 import tech.dokus.domain.model.CreateInvoiceRequest
+import tech.dokus.domain.model.DocDto
 import tech.dokus.domain.model.DocumentCountsResponse
 import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.DocumentDraftDto
@@ -54,7 +55,6 @@ import tech.dokus.domain.model.DocumentPagesResponse
 import tech.dokus.domain.model.DocumentRecordStreamEvent
 import tech.dokus.domain.model.DocumentSourceDto
 import tech.dokus.domain.model.Dpi
-import tech.dokus.domain.model.DocDto
 import tech.dokus.domain.model.PeppolConnectRequest
 import tech.dokus.domain.model.PeppolConnectResponse
 import tech.dokus.domain.model.PeppolIdVerificationResult
@@ -473,7 +473,7 @@ interface CashflowRemoteDataSource {
         documentType: DocumentType? = null,
         ingestionStatus: IngestionStatus? = null,
         sortBy: String? = null,
-        contactId: String? = null,
+        contactId: ContactId? = null,
         page: Int = 0,
         limit: Int = 20
     ): Result<PaginatedResponse<DocumentListItemDto>>

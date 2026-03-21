@@ -5,13 +5,8 @@ import tech.dokus.foundation.app.shell.DocQueueItem
 import tech.dokus.navigation.destinations.CashFlowDestination
 
 @Immutable
-data class DocumentReviewQueueContext(
-    val source: CashFlowDestination.DocumentReviewQueueSource,
-)
-
-@Immutable
 data class DocumentReviewQueueState(
-    val context: DocumentReviewQueueContext,
+    val context: CashFlowDestination.DocumentReviewQueueContext,
     val items: List<DocQueueItem> = emptyList(),
     val currentPage: Int = -1,
     val hasMore: Boolean = true,

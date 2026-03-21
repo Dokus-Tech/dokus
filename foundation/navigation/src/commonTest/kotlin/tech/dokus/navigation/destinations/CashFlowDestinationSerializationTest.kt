@@ -14,7 +14,7 @@ class CashFlowDestinationSerializationTest {
     fun `document review destination serializes queue source`() {
         val destination = CashFlowDestination.DocumentReview(
             documentId = "doc-101",
-            queueSource = CashFlowDestination.DocumentReviewQueueSource.DocumentList(
+            queueSource = CashFlowDestination.DocumentReviewQueueContext.DocumentList(
                 filter = DocumentListFilter.NeedsAttention,
             ),
         )
@@ -35,14 +35,14 @@ class CashFlowDestinationSerializationTest {
     fun `document review destination defaults to Recent queue source`() {
         val destination = CashFlowDestination.DocumentReview(documentId = "doc-102")
 
-        assertIs<CashFlowDestination.DocumentReviewQueueSource.Recent>(destination.queueSource)
+        assertIs<CashFlowDestination.DocumentReviewQueueContext.Recent>(destination.queueSource)
     }
 
     @Test
     fun `document review destination with contact source serializes`() {
         val destination = CashFlowDestination.DocumentReview(
             documentId = "doc-103",
-            queueSource = CashFlowDestination.DocumentReviewQueueSource.Contact(
+            queueSource = CashFlowDestination.DocumentReviewQueueContext.Contact(
                 contactId = "contact-1",
                 contactName = "Acme Corp",
             ),

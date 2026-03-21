@@ -13,21 +13,21 @@ class DocumentReviewRouteMappingsTest {
         val route = CashFlowDestination.DocumentReview(documentId = "doc-1")
         val context = route.toQueueContext()
 
-        assertIs<CashFlowDestination.DocumentReviewQueueSource.Recent>(context.source)
+        assertIs<CashFlowDestination.DocumentReviewQueueContext.Recent>(context.source)
     }
 
     @Test
     fun `route with document list source preserves filter`() {
         val route = CashFlowDestination.DocumentReview(
             documentId = "doc-1",
-            queueSource = CashFlowDestination.DocumentReviewQueueSource.DocumentList(
+            queueSource = CashFlowDestination.DocumentReviewQueueContext.DocumentList(
                 filter = DocumentListFilter.NeedsAttention,
             ),
         )
 
         val context = route.toQueueContext()
 
-        val source = assertIs<CashFlowDestination.DocumentReviewQueueSource.DocumentList>(context.source)
+        val source = assertIs<CashFlowDestination.DocumentReviewQueueContext.DocumentList>(context.source)
         assertEquals(DocumentListFilter.NeedsAttention, source.filter)
     }
 
@@ -35,7 +35,7 @@ class DocumentReviewRouteMappingsTest {
     fun `route with contact source preserves contact info`() {
         val route = CashFlowDestination.DocumentReview(
             documentId = "doc-1",
-            queueSource = CashFlowDestination.DocumentReviewQueueSource.Contact(
+            queueSource = CashFlowDestination.DocumentReviewQueueContext.Contact(
                 contactId = "contact-42",
                 contactName = "Acme Corp",
             ),
@@ -43,7 +43,7 @@ class DocumentReviewRouteMappingsTest {
 
         val context = route.toQueueContext()
 
-        val source = assertIs<CashFlowDestination.DocumentReviewQueueSource.Contact>(context.source)
+        val source = assertIs<CashFlowDestination.DocumentReviewQueueContext.Contact>(context.source)
         assertEquals("contact-42", source.contactId)
         assertEquals("Acme Corp", source.contactName)
     }

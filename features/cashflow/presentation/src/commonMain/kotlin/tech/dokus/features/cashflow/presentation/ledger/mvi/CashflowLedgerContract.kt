@@ -9,6 +9,7 @@ import tech.dokus.domain.Money
 import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.CashflowEntryId
+import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.CashflowEntryDto
 import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.foundation.app.state.DokusState
@@ -127,7 +128,7 @@ sealed interface CashflowLedgerIntent : MVIIntent {
  */
 @Immutable
 sealed interface CashflowLedgerAction : MVIAction {
-    data class NavigateToDocumentReview(val documentId: String) : CashflowLedgerAction
+    data class NavigateToDocumentReview(val documentId: DocumentId) : CashflowLedgerAction
     data class NavigateToEntity(val sourceType: CashflowSourceType, val sourceId: String) : CashflowLedgerAction
     data class ShowError(val error: DokusException) : CashflowLedgerAction
     data class ShowPaymentSuccess(val entry: CashflowEntryDto) : CashflowLedgerAction

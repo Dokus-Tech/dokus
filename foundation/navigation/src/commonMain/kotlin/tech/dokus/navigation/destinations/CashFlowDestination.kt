@@ -3,6 +3,9 @@ package tech.dokus.navigation.destinations
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import tech.dokus.domain.enums.DocumentListFilter
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.DocumentId
+import kotlin.uuid.ExperimentalUuidApi
 
 sealed interface CashFlowDestination : NavigationDestination {
 
@@ -10,31 +13,26 @@ sealed interface CashFlowDestination : NavigationDestination {
      * Describes which documents to show in the review screen's contextual queue panel.
      */
     @Serializable
-    sealed interface DocumentReviewQueueSource {
+    sealed interface DocumentReviewQueueContext {
         /** Documents matching a list filter (from documents overview or cashflow ledger). */
         @Serializable
-        @SerialName("list")
         data class DocumentList(
             val filter: DocumentListFilter = DocumentListFilter.All,
-        ) : DocumentReviewQueueSource
+        ) : DocumentReviewQueueContext
 
         /** Documents belonging to a specific contact. */
         @Serializable
-        @SerialName("contact")
         data class Contact(
-            val contactId: String,
-            val contactName: String,
-        ) : DocumentReviewQueueSource
+            val contactId: ContactId,
+        ) : DocumentReviewQueueContext
 
         /** Documents matching a search query. */
         @Serializable
-        @SerialName("search")
-        data class Search(val query: String) : DocumentReviewQueueSource
+        data class Search(val query: String) : DocumentReviewQueueContext
 
         /** Most recent documents (fallback when no context available). */
         @Serializable
-        @SerialName("recent")
-        data object Recent : DocumentReviewQueueSource
+        data object Recent : DocumentReviewQueueContext
     }
 
     @Serializable
@@ -54,8 +52,49 @@ sealed interface CashFlowDestination : NavigationDestination {
     @SerialName("cashflow/document_review")
     data class DocumentReview(
         val documentId: String,
-        val queueSource: DocumentReviewQueueSource = DocumentReviewQueueSource.Recent,
-    ) : CashFlowDestination
+        val filter: String? = null,
+        val contactId: String? = null,
+        val query: String? = null,
+    ) : CashFlowDestination {
+        companion object {
+            @OptIn(ExperimentalUuidApi::class)
+            fun from(documentId: DocumentId, context: DocumentReviewQueueContext): DocumentReview {
+                return when (context) {
+                    is DocumentReviewQueueContext.DocumentList -> DocumentReview(
+                        documentId = documentId.value.toString(),
+                        filter = context.filter.name
+                    )
+
+                    is DocumentReviewQueueContext.Contact -> DocumentReview(
+                        documentId = documentId.value.toString(),
+                        contactId = context.contactId.value.toString()
+                    )
+
+                    is DocumentReviewQueueContext.Search -> DocumentReview(
+                        documentId = documentId.value.toString(),
+                        query = context.query
+                    )
+
+                    is DocumentReviewQueueContext.Recent -> DocumentReview(
+                        documentId = documentId.value.toString()
+                    )
+                }
+            }
+        }
+
+        val queueSource: DocumentReviewQueueContext
+            get() = when {
+                filter != null -> DocumentReviewQueueContext.DocumentList(
+                    DocumentListFilter.valueOf(
+                        filter
+                    )
+                )
+
+                contactId != null -> DocumentReviewQueueContext.Contact(ContactId.parse(contactId))
+                !query.isNullOrBlank() -> DocumentReviewQueueContext.Search(query)
+                else -> DocumentReviewQueueContext.Recent
+            }
+    }
 
     /**
      * Source evidence viewer screen for a specific document source.

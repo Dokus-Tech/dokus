@@ -1,8 +1,9 @@
 package tech.dokus.features.cashflow.usecase
 
-import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentListFilter
+import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.IngestionStatus
+import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.model.DocumentListItemDto
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.features.cashflow.datasource.CashflowRemoteDataSource
@@ -22,7 +23,7 @@ internal class LoadDocumentRecordsUseCaseImpl(
         documentStatus: DocumentStatus?,
         ingestionStatus: IngestionStatus?,
         sortBy: String?,
-        contactId: String?,
+        contactId: ContactId?,
     ): Result<PaginatedResponse<DocumentListItemDto>> {
         require(page >= 0) { "Page must be non-negative" }
         require(pageSize > 0) { "Page size must be positive" }

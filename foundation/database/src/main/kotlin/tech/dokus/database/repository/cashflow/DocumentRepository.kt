@@ -179,7 +179,7 @@ class DocumentRepository(
     suspend fun listWithDraftsAndIngestion(
         tenantId: TenantId,
         filter: DocumentListFilter? = null,
-        contactId: String? = null,
+        contactId: ContactId? = null,
         documentStatus: DocumentStatus? = null,
         documentType: DocumentType? = null,
         ingestionStatus: IngestionStatus? = null,

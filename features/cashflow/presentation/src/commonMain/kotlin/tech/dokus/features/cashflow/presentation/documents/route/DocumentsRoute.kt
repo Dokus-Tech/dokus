@@ -13,7 +13,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.currentBackStackEntryAsState
-import kotlinx.coroutines.flow.collect
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
@@ -33,7 +32,6 @@ import tech.dokus.features.cashflow.presentation.documents.model.buildDocumentsL
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsAction
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsContainer
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsIntent
-import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsState
 import tech.dokus.features.cashflow.presentation.documents.screen.DocumentsScreen
 import tech.dokus.features.cashflow.usecases.GetDocumentRecordUseCase
 import tech.dokus.features.cashflow.usecases.ObserveDocumentCollectionChangesUseCase
@@ -87,7 +85,12 @@ internal fun DocumentsRoute(
     val state by documentsContainer.store.subscribe(DefaultLifecycle) { action ->
         when (action) {
             is DocumentsAction.NavigateToDocumentReview -> {
-                navController.navigateTo(toDocumentReviewDestination(action))
+                navController.navigateTo(
+                    CashFlowDestination.DocumentReview.from(
+                        action.documentId,
+                        action.queueSource
+                    )
+                )
             }
 
             is DocumentsAction.ShowError -> {
@@ -193,7 +196,9 @@ internal fun DocumentsRoute(
         handleSavedStateDocumentsRefresh(
             refreshRequired = refreshRequired,
             clearRefreshResult = {
-                backStackEntry?.savedStateHandle?.remove<Boolean>(DOCUMENTS_REFRESH_REQUIRED_RESULT_KEY)
+                backStackEntry?.savedStateHandle?.remove<Boolean>(
+                    DOCUMENTS_REFRESH_REQUIRED_RESULT_KEY
+                )
             },
             onRefreshRequested = onDocumentsChanged,
         )
@@ -234,7 +239,10 @@ internal fun DocumentsRoute(
                 dispatchRetryLocalUpload(taskId = taskId, retryUpload = uploadManager::retryUpload)
             },
             onDismissLocalUpload = { taskId ->
-                dispatchDismissLocalUpload(taskId = taskId, cancelUpload = uploadManager::cancelUpload)
+                dispatchDismissLocalUpload(
+                    taskId = taskId,
+                    cancelUpload = uploadManager::cancelUpload
+                )
             }
         )
 
@@ -271,13 +279,4 @@ internal fun dispatchDismissLocalUpload(
     cancelUpload: (String) -> Unit,
 ) {
     cancelUpload(taskId)
-}
-
-internal fun toDocumentReviewDestination(
-    action: DocumentsAction.NavigateToDocumentReview,
-): CashFlowDestination.DocumentReview {
-    return CashFlowDestination.DocumentReview(
-        documentId = action.documentId.toString(),
-        queueSource = action.queueSource,
-    )
 }

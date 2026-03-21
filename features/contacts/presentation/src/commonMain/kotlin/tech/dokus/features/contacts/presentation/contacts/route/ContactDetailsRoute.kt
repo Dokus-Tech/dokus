@@ -23,7 +23,6 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.features.contacts.mvi.ContactDetailsAction
 import tech.dokus.features.contacts.mvi.ContactDetailsContainer
 import tech.dokus.features.contacts.mvi.ContactDetailsIntent
-import tech.dokus.features.contacts.mvi.ContactDetailsState
 import tech.dokus.features.contacts.mvi.ContactDetailsSuccess
 import tech.dokus.features.contacts.presentation.contacts.components.merge.ContactMergeDialogRoute
 import tech.dokus.features.contacts.presentation.contacts.screen.ContactDetailsScreen
@@ -113,14 +112,10 @@ internal fun ContactDetailsRoute(
         onIntent = { container.store.intent(it) },
         onBackClick = { navController.popBackStack() },
         onDocumentClick = { documentId ->
-            val contactName = (state.contact as? DokusState.Success)?.data?.name?.value.orEmpty()
             navController.navigateTo(
                 CashFlowDestination.DocumentReview(
                     documentId = documentId.toString(),
-                    queueSource = CashFlowDestination.DocumentReviewQueueSource.Contact(
-                        contactId = contactId,
-                        contactName = contactName,
-                    ),
+                    contactId = contactId,
                 )
             )
         },

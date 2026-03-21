@@ -12,7 +12,7 @@ class DocumentsRouteNavigationMappingTest {
 
     @Test
     fun `documents action maps to document review route with queue source`() {
-        val queueSource = CashFlowDestination.DocumentReviewQueueSource.DocumentList(
+        val queueSource = CashFlowDestination.DocumentReviewQueueContext.DocumentList(
             filter = DocumentListFilter.NeedsAttention,
         )
         val action = DocumentsAction.NavigateToDocumentReview(
@@ -23,7 +23,7 @@ class DocumentsRouteNavigationMappingTest {
         val destination = toDocumentReviewDestination(action)
 
         assertEquals(action.documentId.toString(), destination.documentId)
-        val source = assertIs<CashFlowDestination.DocumentReviewQueueSource.DocumentList>(destination.queueSource)
+        val source = assertIs<CashFlowDestination.DocumentReviewQueueContext.DocumentList>(destination.queueSource)
         assertEquals(DocumentListFilter.NeedsAttention, source.filter)
     }
 }

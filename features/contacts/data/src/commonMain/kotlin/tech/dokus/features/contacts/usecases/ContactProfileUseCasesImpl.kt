@@ -24,9 +24,9 @@ import tech.dokus.domain.model.DeliveryNoteDraftData
 import tech.dokus.domain.model.DepreciationScheduleDraftData
 import tech.dokus.domain.model.DimonaDraftData
 import tech.dokus.domain.model.DividendDraftData
-import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.DocDto
 import tech.dokus.domain.model.DocumentDetailDto
+import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.DocumentListItemDto
 import tech.dokus.domain.model.EmploymentContractDraftData
 import tech.dokus.domain.model.ExpenseClaimDraftData
@@ -100,7 +100,7 @@ internal class GetContactInvoiceSnapshotUseCaseImpl(
             val page = loadDocumentRecords(
                 page = 0,
                 pageSize = DocumentPageSize,
-                contactId = contactId.toString(),
+                contactId = contactId,
             ).getOrElse { throw it }
 
             buildSnapshot(page.items)

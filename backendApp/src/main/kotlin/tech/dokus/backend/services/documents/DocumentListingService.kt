@@ -12,15 +12,16 @@ import tech.dokus.database.repository.cashflow.InvoiceRepository
 import tech.dokus.database.repository.drafts.DraftRepository
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.Currency
+import tech.dokus.domain.enums.DocumentListFilter
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentStatus
+import tech.dokus.domain.enums.DocumentType
+import tech.dokus.domain.enums.IngestionStatus
+import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.DocumentCountsResponse
-import tech.dokus.domain.enums.DocumentListFilter
 import tech.dokus.domain.model.DocumentListItemDto
-import tech.dokus.domain.enums.DocumentType
-import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.foundation.backend.storage.DocumentStorageService
 import tech.dokus.foundation.backend.utils.loggerFor
@@ -45,7 +46,7 @@ class DocumentListingService(
     suspend fun listDocuments(
         tenantId: TenantId,
         filter: DocumentListFilter?,
-        contactId: String? = null,
+        contactId: ContactId? = null,
         documentStatus: DocumentStatus?,
         documentType: DocumentType?,
         ingestionStatus: IngestionStatus?,

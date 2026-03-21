@@ -2,8 +2,8 @@
 
 package tech.dokus.database.repository.cashflow
 
-import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.Expression
+import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.alias
 import org.jetbrains.exposed.v1.core.and
@@ -14,12 +14,12 @@ import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.isNotNull
 import org.jetbrains.exposed.v1.core.isNull
 import org.jetbrains.exposed.v1.core.max
-import org.jetbrains.exposed.v1.core.not
 import org.jetbrains.exposed.v1.core.neq
+import org.jetbrains.exposed.v1.core.not
 import org.jetbrains.exposed.v1.core.or
+import org.jetbrains.exposed.v1.jdbc.Query
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
-import org.jetbrains.exposed.v1.jdbc.Query
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import tech.dokus.database.entity.DraftSummaryEntity
 import tech.dokus.database.entity.IngestionRunSummaryEntity
@@ -36,11 +36,13 @@ import tech.dokus.domain.enums.DocumentMatchReviewStatus
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.IngestionStatus
+import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.DocumentDto
 import java.util.UUID
+import kotlin.uuid.toJavaUuid
 
 internal object DocumentListingQuery {
 
@@ -56,7 +58,7 @@ internal object DocumentListingQuery {
     private fun buildBaseQuery(
         tenantId: TenantId,
         filter: DocumentListFilter?,
-        contactId: String? = null,
+        contactId: ContactId? = null,
         documentStatus: DocumentStatus?,
         documentType: DocumentType?,
         ingestionStatus: IngestionStatus?
@@ -269,7 +271,7 @@ internal object DocumentListingQuery {
         var whereOp = DocumentsTable.tenantId eq tenantIdUuid
 
         if (contactId != null) {
-            whereOp = whereOp and (DocumentsTable.linkedContactId eq UUID.fromString(contactId))
+            whereOp = whereOp and (DocumentsTable.linkedContactId eq contactId.value.toJavaUuid())
         }
 
         val requiresDraft = effectiveDocumentStatus != null || documentType != null
@@ -361,7 +363,7 @@ internal object DocumentListingQuery {
     suspend fun listWithDraftsAndIngestion(
         tenantId: TenantId,
         filter: DocumentListFilter?,
-        contactId: String? = null,
+        contactId: ContactId? = null,
         documentStatus: DocumentStatus?,
         documentType: DocumentType?,
         ingestionStatus: IngestionStatus?,

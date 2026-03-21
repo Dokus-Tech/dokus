@@ -13,7 +13,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.currentBackStackEntryAsState
 import org.jetbrains.compose.resources.stringResource
-import tech.dokus.domain.model.DocumentRecordStreamEvent
+import org.koin.compose.koinInject
 import org.koin.core.parameter.parametersOf
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
@@ -26,15 +26,14 @@ import tech.dokus.aura.resources.cashflow_document_confirmed
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.model.DocumentRecordStreamEvent
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.ResolvedContact
 import tech.dokus.features.cashflow.presentation.documents.route.DOCUMENTS_REFRESH_REQUIRED_RESULT_KEY
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewAction
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewContainer
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
-import tech.dokus.features.cashflow.presentation.review.mvi.payment.DocumentPaymentIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewQueueState
-import tech.dokus.features.cashflow.presentation.review.DocumentReviewQueueContext
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewSuccess
 import tech.dokus.features.cashflow.presentation.review.components.ContactEditSheet
@@ -42,10 +41,11 @@ import tech.dokus.features.cashflow.presentation.review.components.DocumentRevie
 import tech.dokus.features.cashflow.presentation.review.components.FeedbackDialog
 import tech.dokus.features.cashflow.presentation.review.components.RecordPaymentDialog
 import tech.dokus.features.cashflow.presentation.review.components.RejectDocumentDialog
+import tech.dokus.features.cashflow.presentation.review.mvi.payment.DocumentPaymentIntent
 import tech.dokus.features.cashflow.presentation.review.screen.DocumentReviewScreen
-import tech.dokus.features.contacts.usecases.ListContactsUseCase
 import tech.dokus.features.cashflow.usecases.ObserveDocumentCollectionChangesUseCase
 import tech.dokus.features.cashflow.usecases.ObserveDocumentRecordEventsUseCase
+import tech.dokus.features.contacts.usecases.ListContactsUseCase
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.app.shell.LocalUserAccessContext
 import tech.dokus.foundation.app.state.DokusState
@@ -65,16 +65,15 @@ private const val CONTACT_RESULT_KEY = "documentReview_contactId"
 @Composable
 internal fun DocumentReviewRoute(
     route: CashFlowDestination.DocumentReview,
-    queueContext: DocumentReviewQueueContext = route.toQueueContext(),
     container: DocumentReviewContainer = container {
         parametersOf(
             DocumentId.parse(route.documentId),
-            queueContext,
+            route.queueSource,
         )
     },
-    listContacts: ListContactsUseCase = org.koin.compose.koinInject(),
-    observeDocumentRecordEvents: ObserveDocumentRecordEventsUseCase = org.koin.compose.koinInject(),
-    observeDocumentCollectionChanges: ObserveDocumentCollectionChangesUseCase = org.koin.compose.koinInject(),
+    listContacts: ListContactsUseCase = koinInject(),
+    observeDocumentRecordEvents: ObserveDocumentRecordEventsUseCase = koinInject(),
+    observeDocumentCollectionChanges: ObserveDocumentCollectionChangesUseCase = koinInject(),
 ) {
     val accessContext = LocalUserAccessContext.current
     val isAccountantReadOnly = accessContext.isBookkeeperConsoleDrillDown
@@ -171,7 +170,7 @@ internal fun DocumentReviewRoute(
         }
     }
 
-    LaunchedEffect(queueContext) {
+    LaunchedEffect(route.queueSource) {
         observeDocumentCollectionChanges().collect {
             dispatchIntent(DocumentReviewIntent.RefreshQueue)
         }
@@ -200,7 +199,7 @@ internal fun DocumentReviewRoute(
                 },
                 onFailure = { error ->
                     contactsState = DokusState.error(
-                        exception = tech.dokus.domain.exceptions.DokusException.Unknown(error),
+                        exception = DokusException.Unknown(error),
                         retryHandler = { /* no retry */ },
                     )
                 },

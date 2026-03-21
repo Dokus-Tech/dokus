@@ -615,7 +615,7 @@ internal class CashflowRemoteDataSourceImpl(
         documentType: DocumentType?,
         ingestionStatus: IngestionStatus?,
         sortBy: String?,
-        contactId: String?,
+        contactId: ContactId?,
         page: Int,
         limit: Int
     ): Result<PaginatedResponse<DocumentListItemDto>> {

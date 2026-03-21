@@ -14,7 +14,6 @@ import pro.respawn.flowmvi.api.Container
 import pro.respawn.flowmvi.api.PipelineContext
 import pro.respawn.flowmvi.api.Store
 import pro.respawn.flowmvi.dsl.store
-import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.init
 import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.domain.config.BuildKonfig
@@ -22,6 +21,7 @@ import tech.dokus.domain.enums.CashflowDirection
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.CashflowEntryId
+import tech.dokus.domain.model.CashflowEntryDto
 import tech.dokus.domain.model.CashflowPaymentRequest
 import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.features.cashflow.usecases.GetCashflowOverviewUseCase
@@ -122,9 +122,9 @@ internal class CashflowLedgerContainer(
         updateState { copy(highlightedEntryId = entryId) }
     }
 
-    private suspend fun CashflowLedgerCtx.handleOpenEntry(entry: tech.dokus.domain.model.CashflowEntryDto) {
+    private suspend fun CashflowLedgerCtx.handleOpenEntry(entry: CashflowEntryDto) {
         if (entry.documentId != null) {
-            action(CashflowLedgerAction.NavigateToDocumentReview(entry.documentId.toString()))
+            action(CashflowLedgerAction.NavigateToDocumentReview(entry.documentId!!))
         } else {
             action(CashflowLedgerAction.NavigateToEntity(entry.sourceType, entry.sourceId))
         }
@@ -143,7 +143,7 @@ internal class CashflowLedgerContainer(
             val entry = entries.lastData?.data?.find { it.id == entryId } ?: return@withState
             updateState { copy(actionsEntryId = null) }
             if (entry.documentId != null) {
-                action(CashflowLedgerAction.NavigateToDocumentReview(entry.documentId.toString()))
+                action(CashflowLedgerAction.NavigateToDocumentReview(entry.documentId!!))
             } else {
                 action(CashflowLedgerAction.NavigateToEntity(entry.sourceType, entry.sourceId))
             }
@@ -182,11 +182,11 @@ internal class CashflowLedgerContainer(
         }
     }
 
-    private suspend fun CashflowLedgerCtx.handleViewDocumentFor(entry: tech.dokus.domain.model.CashflowEntryDto) {
+    private suspend fun CashflowLedgerCtx.handleViewDocumentFor(entry: CashflowEntryDto) {
         updateState { copy(actionsEntryId = null) }
 
         if (entry.documentId != null) {
-            action(CashflowLedgerAction.NavigateToDocumentReview(entry.documentId.toString()))
+            action(CashflowLedgerAction.NavigateToDocumentReview(entry.documentId!!))
         } else {
             action(CashflowLedgerAction.NavigateToEntity(entry.sourceType, entry.sourceId))
         }

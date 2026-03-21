@@ -27,6 +27,7 @@ import tech.dokus.foundation.app.shell.HomeShellTopBarMode
 import tech.dokus.foundation.app.shell.RegisterHomeShellTopBar
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.navigation.destinations.CashFlowDestination
+import tech.dokus.navigation.destinations.CashFlowDestination.DocumentReviewQueueContext
 import tech.dokus.navigation.local.LocalNavController
 import tech.dokus.navigation.navigateTo
 
@@ -67,22 +68,26 @@ internal fun CashflowLedgerRoute(
         when (action) {
             is CashflowLedgerAction.NavigateToDocumentReview -> {
                 navController.navigateTo(
-                    CashFlowDestination.DocumentReview(
+                    CashFlowDestination.DocumentReview.from(
                         documentId = action.documentId,
-                        queueSource = CashFlowDestination.DocumentReviewQueueSource.DocumentList(),
+                        context = DocumentReviewQueueContext.DocumentList(),
                     )
                 )
             }
+
             is CashflowLedgerAction.NavigateToEntity -> {
                 // TODO: Navigate to entity detail screen when available
                 // For now, no-op or show toast
             }
+
             is CashflowLedgerAction.ShowError -> {
                 pendingError = action.error
             }
+
             is CashflowLedgerAction.ShowPaymentSuccess -> {
                 pendingSuccessMessage = "Payment recorded"
             }
+
             is CashflowLedgerAction.ShowPaymentError -> {
                 pendingError = action.error
             }

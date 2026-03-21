@@ -6,6 +6,7 @@ import tech.dokus.domain.enums.DocumentListFilter
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.IngestionStatus
+import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.model.Dpi
 
 /**
@@ -56,7 +57,7 @@ class Documents {
         val documentType: DocumentType? = null,
         val ingestionStatus: IngestionStatus? = null,
         val sortBy: String? = null,
-        val contactId: String? = null,
+        val contactId: ContactId? = null,
         val page: Int = 0,
         val limit: Int = 20
     )
