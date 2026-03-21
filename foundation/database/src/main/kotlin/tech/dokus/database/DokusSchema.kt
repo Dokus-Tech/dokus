@@ -133,6 +133,7 @@ object DokusSchema {
                 CreditNoteDraftItemsTable,
                 ReceiptDraftsTable,
                 BankStatementDraftsTable,
+                BankStatementDraftTransactionsTable,
                 // Commercial drafts + confirmed
                 ProFormaDraftsTable, ProFormaConfirmedTable,
                 QuoteDraftsTable, QuoteConfirmedTable,
