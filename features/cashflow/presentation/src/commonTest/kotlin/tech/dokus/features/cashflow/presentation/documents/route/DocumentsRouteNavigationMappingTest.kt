@@ -7,11 +7,13 @@ import tech.dokus.navigation.destinations.CashFlowDestination
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.uuid.ExperimentalUuidApi
 
+@OptIn(ExperimentalUuidApi::class)
 class DocumentsRouteNavigationMappingTest {
 
     @Test
-    fun `documents action maps to document review route with queue source`() {
+    fun `documents action maps to document review route with filter`() {
         val queueSource = CashFlowDestination.DocumentReviewQueueContext.DocumentList(
             filter = DocumentListFilter.NeedsAttention,
         )
@@ -20,9 +22,13 @@ class DocumentsRouteNavigationMappingTest {
             queueSource = queueSource,
         )
 
-        val destination = toDocumentReviewDestination(action)
+        val destination = CashFlowDestination.DocumentReview.from(
+            action.documentId,
+            action.queueSource,
+        )
 
         assertEquals(action.documentId.toString(), destination.documentId)
+        assertEquals(DocumentListFilter.NeedsAttention.name, destination.filter)
         val source = assertIs<CashFlowDestination.DocumentReviewQueueContext.DocumentList>(destination.queueSource)
         assertEquals(DocumentListFilter.NeedsAttention, source.filter)
     }
