@@ -253,12 +253,10 @@
     <string name="share_import_workspace_switch_hint">Switch workspace in the app and try again.</string>
 
     <!-- Upload Item Actions -->
-    <string name="upload_action_cancel">Cancel</string>
     <string name="upload_action_retry">Retry</string>
     <string name="upload_action_remove">Remove</string>
     <string name="upload_action_delete">Delete</string>
     <string name="upload_action_undo">Undo delete</string>
-    <string name="upload_action_close">Close</string>
     <string name="upload_status_failed">Failed</string>
     <string name="upload_status_uploaded">Uploaded</string>
     <string name="upload_status_linked_to">Linked to %1$s</string>
@@ -770,4 +768,12 @@
     <string name="review_source_corrective_suffix"> \u00B7 corrective</string>
     <string name="review_possible_match">Possible match</string>
     <string name="review_bank_statement_amounts_info">Amounts are available per transaction in bank statements.</string>
+
+    <!-- Document Review (moved from strings.xml) -->
+    <string name="cashflow_review_status_processing">Processing\u2026</string>
+    <string name="cashflow_review_status_ready">Ready</string>
+    <string name="cashflow_review_back_to_documents">Back to documents</string>
+    <string name="cashflow_review_back_to_contact">Back to contact</string>
+    <string name="cashflow_review_back_to_search">Back to search</string>
+    <string name="cashflow_review_back">Back</string>
 </resources>

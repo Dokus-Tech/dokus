@@ -22,7 +22,7 @@ import androidx.navigation.NavController
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.back
+import tech.dokus.aura.resources.action_back
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
@@ -52,7 +52,7 @@ fun PTopAppBar(
                 ) {
                     Icon(
                         imageVector = Lucide.ArrowLeft,
-                        contentDescription = stringResource(Res.string.back)
+                        contentDescription = stringResource(Res.string.action_back)
                     )
                 }
             },

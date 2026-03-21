@@ -41,7 +41,7 @@ import org.jetbrains.compose.resources.stringResource
 import tech.dokus.app.screens.accountant.components.ConsoleClientsSkeleton
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_close
-import tech.dokus.aura.resources.cancel
+import tech.dokus.aura.resources.action_cancel
 import tech.dokus.aura.resources.console_back_to_clients
 import tech.dokus.aura.resources.console_client_detail_access_granted
 import tech.dokus.aura.resources.console_client_detail_completeness
@@ -435,7 +435,7 @@ private fun ClientsListContent(
                 onClick = { showAddClientDialog = false },
             ),
             secondaryAction = DokusDialogAction(
-                text = stringResource(Res.string.cancel),
+                text = stringResource(Res.string.action_cancel),
                 onClick = { showAddClientDialog = false },
             ),
         )

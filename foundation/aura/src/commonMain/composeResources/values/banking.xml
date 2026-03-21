@@ -47,7 +47,6 @@
     <string name="banking_ignore_dialog_title">Ignore transaction</string>
     <string name="banking_ignore_dialog_prompt">Why are you ignoring this transaction?</string>
     <string name="banking_ignore_dialog_confirm">Ignore</string>
-    <string name="banking_ignore_dialog_cancel">Cancel</string>
 
     <!-- Ignore reasons -->
     <string name="banking_ignore_reason_bank_fee">Bank fee</string>
@@ -65,7 +64,6 @@
     <string name="banking_trust_high">High</string>
     <string name="banking_trust_medium">Medium</string>
     <string name="banking_trust_low">Low</string>
-    <string name="banking_trust_label">Trust</string>
 
     <!-- Resolution type -->
     <string name="banking_resolution_document">Document</string>
@@ -76,7 +74,6 @@
     <string name="banking_match_by_review">Review</string>
     <string name="banking_match_by_manual">Manual</string>
     <string name="banking_detail_matched_by">Matched by</string>
-    <string name="banking_detail_matched_at">Matched at</string>
     <string name="banking_detail_evidence">Evidence</string>
     <string name="banking_detail_resolution">Resolution</string>
     <string name="banking_detail_trust">Trust</string>
@@ -105,10 +102,8 @@
     <string name="banking_balances_col_account">Account</string>
     <string name="banking_balances_col_type">Type</string>
     <string name="banking_balances_col_balance">Balance</string>
-    <string name="banking_balances_col_provider">Provider</string>
     <string name="banking_balances_col_last_sync">Last sync</string>
     <string name="banking_balances_col_status">Status</string>
-    <string name="banking_balances_status_synced">Synced</string>
     <string name="banking_balances_status_inactive">Inactive</string>
     <string name="banking_balances_empty_title">No accounts connected</string>
     <string name="banking_balances_empty_subtitle">Connect a bank or upload a statement to get started</string>

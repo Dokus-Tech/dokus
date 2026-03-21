@@ -54,7 +54,7 @@ import tech.dokus.app.viewmodel.TeamSettingsState
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_confirm
 import tech.dokus.aura.resources.action_save
-import tech.dokus.aura.resources.cancel
+import tech.dokus.aura.resources.action_cancel
 import tech.dokus.aura.resources.state_sending
 import tech.dokus.aura.resources.team_bookkeeper_access_connected_label
 import tech.dokus.aura.resources.team_bookkeeper_access_dialog_title
@@ -803,7 +803,7 @@ private fun GrantBookkeeperAccessDialog(
             enabled = selectedFirmId != null && !loading,
         ),
         secondaryAction = DokusDialogAction(
-            text = stringResource(Res.string.cancel),
+            text = stringResource(Res.string.action_cancel),
             onClick = onDismiss,
             enabled = !loading,
         ),
@@ -864,7 +864,7 @@ private fun InviteDialog(
             enabled = !isInviting && email.isNotBlank()
         ),
         secondaryAction = DokusDialogAction(
-            text = stringResource(Res.string.cancel),
+            text = stringResource(Res.string.action_cancel),
             onClick = onDismiss,
             enabled = !isInviting
         ),
@@ -898,7 +898,7 @@ private fun ChangeRoleDialog(
             enabled = selectedRole != currentRole
         ),
         secondaryAction = DokusDialogAction(
-            text = stringResource(Res.string.cancel),
+            text = stringResource(Res.string.action_cancel),
             onClick = onDismiss
         )
     )
@@ -927,7 +927,7 @@ private fun ConfirmationDialog(
             isDestructive = true
         ),
         secondaryAction = DokusDialogAction(
-            text = stringResource(Res.string.cancel),
+            text = stringResource(Res.string.action_cancel),
             onClick = onDismiss
         )
     )

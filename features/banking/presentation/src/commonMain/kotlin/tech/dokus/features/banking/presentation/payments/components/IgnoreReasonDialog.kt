@@ -17,7 +17,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.banking_ignore_dialog_cancel
+import tech.dokus.aura.resources.action_cancel
 import tech.dokus.aura.resources.banking_ignore_dialog_confirm
 import tech.dokus.aura.resources.banking_ignore_dialog_prompt
 import tech.dokus.aura.resources.banking_ignore_dialog_title
@@ -75,7 +75,7 @@ internal fun IgnoreReasonDialog(
             enabled = selectedReason != null,
         ),
         secondaryAction = DokusDialogAction(
-            text = stringResource(Res.string.banking_ignore_dialog_cancel),
+            text = stringResource(Res.string.action_cancel),
             onClick = onDismiss,
         ),
     )

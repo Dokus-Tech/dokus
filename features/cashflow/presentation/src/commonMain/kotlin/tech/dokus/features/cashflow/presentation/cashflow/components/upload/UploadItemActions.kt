@@ -15,7 +15,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.upload_action_cancel
+import tech.dokus.aura.resources.action_cancel
 import tech.dokus.aura.resources.upload_action_delete
 import tech.dokus.aura.resources.upload_action_retry
 import tech.dokus.aura.resources.upload_action_undo
@@ -42,7 +42,7 @@ fun CancelUploadAction(
     ) {
         Icon(
             imageVector = Lucide.X,
-            contentDescription = stringResource(Res.string.upload_action_cancel),
+            contentDescription = stringResource(Res.string.action_cancel),
             tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }

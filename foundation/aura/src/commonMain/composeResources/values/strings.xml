@@ -188,10 +188,4 @@
     <string name="chat_session_fallback">Conversation</string>
     <string name="chat_citation_document_fallback">Document</string>
     <string name="chat_invoice_total">Total</string>
-    <string name="cashflow_review_status_processing">Processing\u2026</string>
-    <string name="cashflow_review_status_ready">Ready</string>
-    <string name="cashflow_review_back_to_documents">Back to documents</string>
-    <string name="cashflow_review_back_to_contact">Back to contact</string>
-    <string name="cashflow_review_back_to_search">Back to search</string>
-    <string name="cashflow_review_back">Back</string>
 </resources>
