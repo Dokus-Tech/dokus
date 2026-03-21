@@ -15,8 +15,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -58,6 +56,7 @@ import tech.dokus.features.cashflow.presentation.cashflow.components.invoice.cre
 import tech.dokus.features.cashflow.presentation.detail.components.CanonicalInvoiceDocumentCard
 import tech.dokus.features.cashflow.presentation.detail.models.DocumentUiData
 import tech.dokus.features.cashflow.presentation.detail.models.toUiData
+import tech.dokus.foundation.aura.components.common.DokusErrorBanner
 import tech.dokus.foundation.aura.components.DokusCard
 import tech.dokus.foundation.aura.components.DokusCardPadding
 import tech.dokus.foundation.aura.components.DokusCardSurface
@@ -80,14 +79,12 @@ private const val A4WidthToHeightRatio = 210f / 297f
 @Composable
 internal fun CreateInvoiceScreen(
     state: CreateInvoiceState,
-    snackbarHostState: SnackbarHostState,
     onIntent: (CreateInvoiceIntent) -> Unit
 ) {
     val isLargeScreen = LocalScreenSize.current.isLarge
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
             if (!isLargeScreen) {
                 MobileCommandFooter(
@@ -99,7 +96,17 @@ internal fun CreateInvoiceScreen(
             }
         }
     ) { contentPadding ->
-        Box(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            state.actionError?.let { error ->
+                DokusErrorBanner(
+                    exception = error,
+                    retryHandler = null,
+                    modifier = Modifier.padding(horizontal = Constraints.Spacing.large),
+                    onDismiss = { onIntent(CreateInvoiceIntent.DismissActionError) },
+                )
+            }
+
+            Box(modifier = Modifier.fillMaxSize()) {
             if (isLargeScreen) {
                 DesktopCreateInvoiceWorkspace(
                     state = state,
@@ -137,6 +144,7 @@ internal fun CreateInvoiceScreen(
                     state = state,
                     onDismiss = { onIntent(CreateInvoiceIntent.SetPreviewVisible(false)) }
                 )
+            }
             }
         }
     }
@@ -437,7 +445,6 @@ private fun CreateInvoiceDesktopBasePreview(
     TestWrapper(parameters) {
         CreateInvoiceScreen(
             state = createDesktopPreviewState(),
-            snackbarHostState = SnackbarHostState(),
             onIntent = {}
         )
     }
@@ -456,7 +463,6 @@ private fun CreateInvoiceDesktopLookupLocalPreview(
                 lookupExpanded = true,
                 suggestions = listOf(localSuggestion)
             ),
-            snackbarHostState = SnackbarHostState(),
             onIntent = {}
         )
     }
@@ -484,7 +490,6 @@ private fun CreateInvoiceDesktopLookupMixedPreview(
                 lookupExpanded = true,
                 suggestions = listOf(localSuggestion, externalSuggestion, manualSuggestion)
             ),
-            snackbarHostState = SnackbarHostState(),
             onIntent = {}
         )
     }
@@ -504,7 +509,6 @@ private fun CreateInvoiceDesktopDeliveryFallbackPreview(
                     reason = "Client is not PEPPOL-eligible."
                 )
             ),
-            snackbarHostState = SnackbarHostState(),
             onIntent = {}
         )
     }
@@ -521,7 +525,6 @@ private fun CreateInvoiceDesktopPdfPrimaryPreview(
                 selectedDelivery = InvoiceDeliveryMethod.PdfExport,
                 resolvedAction = DeliveryResolution(action = InvoiceResolvedAction.PdfExport)
             ),
-            snackbarHostState = SnackbarHostState(),
             onIntent = {}
         )
     }
@@ -541,7 +544,6 @@ private fun CreateInvoiceDesktopSelectedClientPreview(
                     refreshed = false
                 )
             ),
-            snackbarHostState = SnackbarHostState(),
             onIntent = {}
         )
     }
@@ -560,7 +562,6 @@ private fun CreateInvoiceDesktopSelectedClientNoPeppolPreview(
                     refreshed = false
                 )
             ),
-            snackbarHostState = SnackbarHostState(),
             onIntent = {}
         )
     }
@@ -574,7 +575,6 @@ private fun CreateInvoiceDesktopPreviewDialogPreview(
     TestWrapper(parameters) {
         CreateInvoiceScreen(
             state = createDesktopPreviewState(previewVisible = true),
-            snackbarHostState = SnackbarHostState(),
             onIntent = {}
         )
     }
@@ -591,7 +591,6 @@ private fun CreateInvoiceDesktopPreviewDialogNoClientPreview(
                 previewVisible = true,
                 clearSelectedClient = true
             ),
-            snackbarHostState = SnackbarHostState(),
             onIntent = {}
         )
     }

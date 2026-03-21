@@ -2,8 +2,6 @@ package tech.dokus.features.cashflow.presentation.detail.route
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -15,20 +13,17 @@ import androidx.compose.ui.Modifier
 import org.koin.core.parameter.parametersOf
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
-import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.features.cashflow.presentation.detail.DocumentDetailAction
 import tech.dokus.features.cashflow.presentation.detail.DocumentDetailContainer
 import tech.dokus.features.cashflow.presentation.detail.DocumentDetailIntent
-import tech.dokus.features.cashflow.presentation.detail.DocumentDetailState
 import tech.dokus.features.cashflow.presentation.detail.mvi.preview.DocumentPreviewIntent
 import tech.dokus.features.cashflow.presentation.detail.components.mobile.MobileSourceViewerScreen
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.app.state.isError
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.DokusLoader
-import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.navigation.destinations.CashFlowDestination
 import tech.dokus.navigation.local.LocalNavController
 
@@ -44,23 +39,14 @@ internal fun DocumentSourceViewerRoute(
 ) {
     val navController = LocalNavController.current
     val sourceId = remember(route.sourceId) { DocumentSourceId.parse(route.sourceId) }
-    val snackbarHostState = remember { SnackbarHostState() }
-    var pendingError by remember { mutableStateOf<DokusException?>(null) }
     var hasOpenedSource by remember(route.documentId, route.sourceId) { mutableStateOf(false) }
-    val errorMessage = pendingError?.localized
 
     val state by container.store.subscribe(DefaultLifecycle) { action ->
         when (action) {
             is DocumentDetailAction.NavigateBack -> navController.popBackStack()
-            is DocumentDetailAction.ShowError -> pendingError = action.error
-            else -> Unit
+            is DocumentDetailAction.NavigateToEntity -> Unit
+            is DocumentDetailAction.NavigateToCashflowEntry -> Unit
         }
-    }
-
-    LaunchedEffect(errorMessage) {
-        val message = errorMessage ?: return@LaunchedEffect
-        snackbarHostState.showSnackbar(message)
-        pendingError = null
     }
 
     LaunchedEffect(state, hasOpenedSource) {
@@ -122,10 +108,5 @@ internal fun DocumentSourceViewerRoute(
                 }
             }
         }
-
-        SnackbarHost(
-            hostState = snackbarHostState,
-            modifier = Modifier.align(Alignment.BottomCenter),
-        )
     }
 }

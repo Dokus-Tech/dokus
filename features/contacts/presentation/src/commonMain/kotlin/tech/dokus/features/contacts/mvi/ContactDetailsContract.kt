@@ -60,6 +60,8 @@ data class ContactDetailsState(
     // Inline edit
     val editFormData: ContactFormData? = null,
     val isSavingEdit: Boolean = false,
+    // Action error (inline banner)
+    val actionError: DokusException? = null,
 ) : MVIState
 
 // ============================================================================
@@ -114,6 +116,9 @@ sealed interface ContactDetailsIntent : MVIIntent {
 
     /** Update form data during inline edit */
     data class UpdateEditFormData(val formData: ContactFormData) : ContactDetailsIntent
+
+    /** Dismiss action error banner */
+    data object DismissActionError : ContactDetailsIntent
 }
 
 // ============================================================================
@@ -128,21 +133,6 @@ sealed interface ContactDetailsAction : MVIAction {
 
     /** Navigate to merged contact after merge completion */
     data class NavigateToMergedContact(val contactId: ContactId) : ContactDetailsAction
-
-    /** Show error message as snackbar/toast */
-    data class ShowError(val error: DokusException) : ContactDetailsAction
-
-    /** Show success message as snackbar/toast */
-    data class ShowSuccess(val success: ContactDetailsSuccess) : ContactDetailsAction
-}
-
-@Immutable
-sealed interface ContactDetailsSuccess {
-    data object NoteAdded : ContactDetailsSuccess
-    data object NoteUpdated : ContactDetailsSuccess
-    data object NoteDeleted : ContactDetailsSuccess
-    data class EnrichmentApplied(val count: Int) : ContactDetailsSuccess
-    data object ContactUpdated : ContactDetailsSuccess
 }
 
 // ============================================================================

@@ -15,8 +15,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -87,6 +85,7 @@ import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.components.badges.SourceBadge
+import tech.dokus.foundation.aura.components.common.DokusErrorBanner
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.PSearchFieldCompact
 import tech.dokus.foundation.aura.components.dialog.DokusDialog
@@ -158,52 +157,61 @@ private val DetailStatusColumnSpec = DokusTableColumnSpec(weight = 1f)
 @Composable
 internal fun ConsoleClientsScreen(
     state: ConsoleClientsState,
-    snackbarHostState: SnackbarHostState,
     onIntent: (ConsoleClientsIntent) -> Unit,
     onAddClientClick: () -> Unit = {},
     initialShowAddClientDialog: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         modifier = modifier,
     ) { contentPadding ->
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(contentPadding)
                 .padding(horizontal = Constraints.Spacing.medium)
                 .padding(top = Constraints.Spacing.medium)
         ) {
+            if (state.actionError != null) {
+                DokusErrorBanner(
+                    exception = state.actionError,
+                    retryHandler = null,
+                    modifier = Modifier.padding(horizontal = Constraints.Spacing.large),
+                    onDismiss = { onIntent(ConsoleClientsIntent.DismissActionError) },
+                )
+            }
+
             val clientsState = state.clients
-            when {
-                clientsState.isLoading() -> {
-                    ConsoleClientsSkeleton(modifier = Modifier.fillMaxSize())
-                }
+            Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                when {
+                    clientsState.isLoading() -> {
+                        ConsoleClientsSkeleton(modifier = Modifier.fillMaxSize())
+                    }
 
-                clientsState.isError() -> {
-                    DokusErrorContent(
-                        exception = clientsState.exception,
-                        retryHandler = clientsState.retryHandler,
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                }
+                    clientsState.isError() -> {
+                        DokusErrorContent(
+                            exception = clientsState.exception,
+                            retryHandler = clientsState.retryHandler,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
 
-                clientsState.isSuccess() -> {
-                    if (state.selectedClientTenantId == null) {
-                        ClientsListContent(
-                            state = state,
-                            clients = clientsState.data,
-                            onIntent = onIntent,
-                            onAddClientClick = onAddClientClick,
-                            initialShowAddClientDialog = initialShowAddClientDialog,
-                        )
-                    } else {
-                        ClientDetailContent(
-                            state = state,
-                            clients = clientsState.data,
-                            onIntent = onIntent,
-                        )
+                    clientsState.isSuccess() -> {
+                        if (state.selectedClientTenantId == null) {
+                            ClientsListContent(
+                                state = state,
+                                clients = clientsState.data,
+                                onIntent = onIntent,
+                                onAddClientClick = onAddClientClick,
+                                initialShowAddClientDialog = initialShowAddClientDialog,
+                            )
+                        } else {
+                            ClientDetailContent(
+                                state = state,
+                                clients = clientsState.data,
+                                onIntent = onIntent,
+                            )
+                        }
                     }
                 }
             }
@@ -1033,7 +1041,6 @@ private fun ConsoleClientsScreenLoadingPreview(
     TestWrapper(parameters) {
         ConsoleClientsScreen(
             state = ConsoleClientsState(),
-            snackbarHostState = SnackbarHostState(),
             onIntent = {},
         )
     }
@@ -1051,7 +1058,6 @@ private fun ConsoleClientsScreenDesktopContentPreview(
                 firmName = "Kantoor Boonen",
                 clients = DokusState.success(previewClients()),
             ),
-            snackbarHostState = SnackbarHostState(),
             onIntent = {},
         )
     }
@@ -1071,7 +1077,6 @@ private fun ConsoleClientDetailDesktopPreview(
                 selectedClientTenantId = TenantId("00000000-0000-0000-0000-000000000001"),
                 documentsState = DokusState.success(previewDocumentRecords()),
             ),
-            snackbarHostState = SnackbarHostState(),
             onIntent = {},
         )
     }
@@ -1090,7 +1095,6 @@ private fun ConsoleClientsScreenErrorPreview(
                     retryHandler = {},
                 ),
             ),
-            snackbarHostState = SnackbarHostState(),
             onIntent = {},
         )
     }

@@ -101,7 +101,7 @@ internal class DocumentDetailFeedbackActions(
                                 copy(feedbackDialogState = feedbackDialogState?.copy(isSubmitting = false))
                             }
                         }
-                        action(DocumentDetailAction.ShowError(error.asDokusException))
+                        updateState { copy(actionError = error.asDokusException) }
                     }
                 )
             }
@@ -122,7 +122,7 @@ internal class DocumentDetailFeedbackActions(
                         },
                         onFailure = { error ->
                             logger.e(error) { "Failed to reprocess document: $activeDocumentId" }
-                            action(DocumentDetailAction.ShowError(error.asDokusException))
+                            updateState { copy(actionError = error.asDokusException) }
                         }
                     )
             }
@@ -176,7 +176,7 @@ internal class DocumentDetailFeedbackActions(
                         withState {
                             updateState { copy(isResolvingMatchReview = false) }
                         }
-                        action(DocumentDetailAction.ShowError(error.asDokusException))
+                        updateState { copy(actionError = error.asDokusException) }
                     }
                 )
             }

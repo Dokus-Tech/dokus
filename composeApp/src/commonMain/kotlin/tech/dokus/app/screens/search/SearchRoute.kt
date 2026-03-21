@@ -1,6 +1,5 @@
 package tech.dokus.app.screens.search
 
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -22,7 +21,6 @@ internal fun SearchRoute(
     container: SearchContainer = container(),
 ) {
     val navController = LocalNavController.current
-    val snackbarHostState = remember { SnackbarHostState() }
     val focusRequestId by SearchFocusRequestBus.focusRequestId.collectAsState()
     var lastSeenFocusId by remember { mutableLongStateOf(focusRequestId) }
 
@@ -63,7 +61,6 @@ internal fun SearchRoute(
 
     SearchScreen(
         state = state,
-        snackbarHostState = snackbarHostState,
         onQueryChange = { container.store.intent(SearchIntent.QueryChanged(it)) },
         onScopeSelected = { container.store.intent(SearchIntent.ScopeChanged(it)) },
         onSuggestionClick = { container.store.intent(SearchIntent.SuggestionSelected(it)) },

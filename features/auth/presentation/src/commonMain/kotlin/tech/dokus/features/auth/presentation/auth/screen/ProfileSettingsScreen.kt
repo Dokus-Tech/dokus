@@ -15,8 +15,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -43,8 +41,10 @@ import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.app.state.isError
 import tech.dokus.foundation.app.state.isLoading
 import tech.dokus.foundation.app.state.isSuccess
+import tech.dokus.foundation.aura.components.common.DokusErrorBanner
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.PTopAppBar
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
@@ -75,7 +75,8 @@ fun ProfileSettingsScreen(
     state: ProfileSettingsState,
     currentServer: ServerConfig,
     isLoggingOut: Boolean,
-    snackbarHostState: SnackbarHostState,
+    resetToCloudError: DokusException? = null,
+    onDismissResetToCloudError: () -> Unit = {},
     onIntent: (ProfileSettingsIntent) -> Unit,
     onResendVerification: () -> Unit,
     onChangePassword: () -> Unit,
@@ -87,12 +88,12 @@ fun ProfileSettingsScreen(
     modifier: Modifier = Modifier
 ) {
     val isLargeScreen = LocalScreenSize.current.isLarge
+    val errorToShow = state.actionError ?: resetToCloudError
 
     Scaffold(
         topBar = {
             if (!isLargeScreen) PTopAppBar(Res.string.profile_settings_title)
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { contentPadding ->
         val contentModifier = modifier.padding(contentPadding)
         if (isLargeScreen && detailPaneContent != null) {
@@ -103,6 +104,11 @@ fun ProfileSettingsScreen(
                     state = state,
                     currentServer = currentServer,
                     isLoggingOut = isLoggingOut,
+                    actionError = errorToShow,
+                    onDismissError = {
+                        onIntent(ProfileSettingsIntent.DismissActionError)
+                        onDismissResetToCloudError()
+                    },
                     onIntent = onIntent,
                     onResendVerification = onResendVerification,
                     onChangePassword = onChangePassword,
@@ -133,6 +139,11 @@ fun ProfileSettingsScreen(
                 state = state,
                 currentServer = currentServer,
                 isLoggingOut = isLoggingOut,
+                actionError = errorToShow,
+                onDismissError = {
+                    onIntent(ProfileSettingsIntent.DismissActionError)
+                    onDismissResetToCloudError()
+                },
                 onIntent = onIntent,
                 onResendVerification = onResendVerification,
                 onChangePassword = onChangePassword,
@@ -163,6 +174,8 @@ fun ProfileSettingsContent(
     onResetToCloud: () -> Unit,
     onLogout: () -> Unit,
     modifier: Modifier = Modifier,
+    actionError: DokusException? = null,
+    onDismissError: () -> Unit = {},
     contentHorizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
 ) {
     val avatarPicker = rememberImagePicker { pickedImage ->
@@ -182,6 +195,14 @@ fun ProfileSettingsContent(
                 .padding(top = 8.dp),
             verticalArrangement = Arrangement.spacedBy(SectionSpacing),
         ) {
+            actionError?.let { error ->
+                DokusErrorBanner(
+                    exception = error,
+                    retryHandler = null,
+                    onDismiss = onDismissError,
+                )
+            }
+
             // User data section: loading / error / editing / saving / viewing
             when {
                 state.user.isLoading() -> {
@@ -327,7 +348,6 @@ private fun ProfileSettingsDesktopIdlePreview(
             ),
             currentServer = ServerConfig.Cloud,
             isLoggingOut = false,
-            snackbarHostState = remember { SnackbarHostState() },
             onIntent = {},
             onResendVerification = {},
             onChangePassword = {},
@@ -371,7 +391,6 @@ private fun ProfileSettingsDesktopSplitPreview(
             ),
             currentServer = ServerConfig.Cloud,
             isLoggingOut = false,
-            snackbarHostState = remember { SnackbarHostState() },
             onIntent = {},
             onResendVerification = {},
             onChangePassword = {},

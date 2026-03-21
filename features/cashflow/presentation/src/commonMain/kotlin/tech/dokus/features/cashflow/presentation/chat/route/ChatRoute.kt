@@ -1,21 +1,15 @@
 package tech.dokus.features.cashflow.presentation.chat.route
 
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
-import kotlinx.coroutines.launch
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import androidx.compose.ui.platform.LocalUriHandler
 import org.koin.compose.koinInject
 import tech.dokus.domain.config.DynamicDokusEndpointProvider
-import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.features.cashflow.presentation.cashflow.components.rememberDocumentFilePicker
 import tech.dokus.features.cashflow.presentation.chat.ChatAction
@@ -23,7 +17,6 @@ import tech.dokus.features.cashflow.presentation.chat.ChatContainer
 import tech.dokus.features.cashflow.presentation.chat.ChatIntent
 import tech.dokus.features.cashflow.presentation.chat.screen.IntelligenceScreen
 import tech.dokus.foundation.app.mvi.container
-import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.navigation.destinations.CashFlowDestination
 import tech.dokus.navigation.local.LocalNavController
 import tech.dokus.navigation.navigateTo
@@ -38,24 +31,13 @@ internal fun ChatRoute(
     val uriHandler = LocalUriHandler.current
     val endpoint = endpointProvider.currentEndpointSnapshot()
     val apiBaseUrl = "${endpoint.protocol}://${endpoint.host}:${endpoint.port}"
-    val snackbarHostState = remember { SnackbarHostState() }
 
     val filePickerLauncher = rememberDocumentFilePicker { files ->
         files.forEach { file ->
             container.store.intent(ChatIntent.AttachFile(filename = file.name, bytes = file.bytes))
         }
     }
-    var pendingError by remember { mutableStateOf<DokusException?>(null) }
-    val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
-    val errorMessage = pendingError?.localized
-
-    LaunchedEffect(errorMessage) {
-        if (errorMessage != null) {
-            snackbarHostState.showSnackbar(errorMessage)
-            pendingError = null
-        }
-    }
 
     val state by container.store.subscribe(DefaultLifecycle) { action ->
         when (action) {
@@ -78,13 +60,6 @@ internal fun ChatRoute(
                     val baseUrl = "${endpoint.protocol}://${endpoint.host}:${endpoint.port}"
                     uriHandler.openUri("$baseUrl/api/v1/documents/$docId/content")
                 }
-            }
-            is ChatAction.ShowError -> pendingError = action.error
-            is ChatAction.ShowSuccess -> {
-                scope.launch { snackbarHostState.showSnackbar(action.message) }
-            }
-            is ChatAction.ShowInfo -> {
-                scope.launch { snackbarHostState.showSnackbar(action.message) }
             }
             is ChatAction.ScrollToBottom -> {
                 // Scroll is handled by message count effects in the screen.
@@ -111,16 +86,12 @@ internal fun ChatRoute(
     IntelligenceScreen(
         state = state,
         listState = listState,
-        snackbarHostState = snackbarHostState,
         onIntent = { container.store.intent(it) },
         onDownloadDocument = { docId ->
             val baseUrl = "${endpoint.protocol}://${endpoint.host}:${endpoint.port}"
             uriHandler.openUri("$baseUrl/api/v1/documents/$docId/content")
         },
         onDownloadZip = { docIds ->
-            // Backend ZIP endpoint: POST /api/v1/documents/download-zip
-            // UriHandler can only do GET — download individually for now
-            // TODO: Use platform-specific POST download (form submission on web)
             docIds.forEach { docId ->
                 uriHandler.openUri("$apiBaseUrl/api/v1/documents/$docId/content")
             }

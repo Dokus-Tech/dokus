@@ -14,6 +14,7 @@ import tech.dokus.domain.model.CashflowEntryDto
 import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.foundation.app.state.DokusState
 
+
 /**
  * View mode for cashflow ledger.
  * - Upcoming: Money expected in next 30 days (Open + Overdue entries)
@@ -90,6 +91,7 @@ data class CashFlowOverviewState(
     val balance: BalanceState? = null,
     val highlightedEntryId: CashflowEntryId? = null,
     val actionsEntryId: CashflowEntryId? = null,
+    val actionError: DokusException? = null,
 ) : MVIState {
     companion object {
         val initial by lazy {
@@ -121,6 +123,8 @@ sealed interface CashFlowOverviewIntent : MVIIntent {
     data class RecordPaymentFor(val entryId: CashflowEntryId) : CashFlowOverviewIntent
     data class MarkAsPaidQuick(val entryId: CashflowEntryId) : CashFlowOverviewIntent
     data class ViewDocumentFor(val entry: CashflowEntryDto) : CashFlowOverviewIntent
+
+    data object DismissActionError : CashFlowOverviewIntent
 }
 
 /**
@@ -130,7 +134,4 @@ sealed interface CashFlowOverviewIntent : MVIIntent {
 sealed interface CashFlowOverviewAction : MVIAction {
     data class NavigateToDocumentDetail(val documentId: DocumentId) : CashFlowOverviewAction
     data class NavigateToEntity(val sourceType: CashflowSourceType, val sourceId: String) : CashFlowOverviewAction
-    data class ShowError(val error: DokusException) : CashFlowOverviewAction
-    data class ShowPaymentSuccess(val entry: CashflowEntryDto) : CashFlowOverviewAction
-    data class ShowPaymentError(val error: DokusException) : CashFlowOverviewAction
 }

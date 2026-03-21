@@ -13,6 +13,7 @@ import tech.dokus.foundation.app.state.DokusState
 data class MySessionsState(
     val sessions: DokusState<List<SessionDto>> = DokusState.loading(),
     val isRevokingOthers: Boolean = false,
+    val actionError: DokusException? = null,
 ) : MVIState {
     companion object {
         val initial by lazy { MySessionsState() }
@@ -24,13 +25,11 @@ sealed interface MySessionsIntent : MVIIntent {
     data object Load : MySessionsIntent
     data class RevokeSession(val sessionId: SessionId) : MySessionsIntent
     data object RevokeOthers : MySessionsIntent
+    data object DismissActionError : MySessionsIntent
     data object BackClicked : MySessionsIntent
 }
 
 @Immutable
 sealed interface MySessionsAction : MVIAction {
     data object NavigateBack : MySessionsAction
-    data object ShowSessionRevoked : MySessionsAction
-    data object ShowRevokeOthersSuccess : MySessionsAction
-    data class ShowError(val error: DokusException) : MySessionsAction
 }

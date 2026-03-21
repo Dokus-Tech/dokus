@@ -11,10 +11,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -30,8 +27,10 @@ import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.app.state.isError
 import tech.dokus.foundation.app.state.isLoading
 import tech.dokus.foundation.app.state.isSuccess
+import tech.dokus.foundation.aura.components.common.DokusErrorBanner
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.PTopAppBar
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
@@ -42,20 +41,27 @@ private const val PaneAnimationDurationMs = 220
 @Composable
 internal fun MySessionsScreen(
     state: MySessionsState,
-    snackbarHostState: SnackbarHostState,
     onIntent: (MySessionsIntent) -> Unit,
     nowEpochSeconds: Long = Clock.System.now().epochSeconds,
 ) {
     Scaffold(
         topBar = { PTopAppBar(Res.string.profile_sessions_title) },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
-        MySessionsContent(
-            state = state,
-            onIntent = onIntent,
-            contentPadding = padding,
-            nowEpochSeconds = nowEpochSeconds,
-        )
+        Column(modifier = Modifier.padding(padding)) {
+            state.actionError?.let { error ->
+                DokusErrorBanner(
+                    exception = error,
+                    retryHandler = null,
+                    onDismiss = { onIntent(MySessionsIntent.DismissActionError) },
+                    modifier = Modifier.padding(horizontal = Constraints.Spacing.large),
+                )
+            }
+            MySessionsContent(
+                state = state,
+                onIntent = onIntent,
+                nowEpochSeconds = nowEpochSeconds,
+            )
+        }
     }
 }
 
@@ -115,7 +121,6 @@ private fun MySessionsScreenPreview(
     TestWrapper(parameters) {
         MySessionsScreen(
             state = MySessionsState(sessions = DokusState.success(previewSessions())),
-            snackbarHostState = remember { SnackbarHostState() },
             onIntent = {},
             nowEpochSeconds = SessionsPreviewNowEpochSeconds,
         )

@@ -45,6 +45,7 @@ data class PeppolRegistrationState(
     val isWorking: Boolean = false,
     val isRetrying: Boolean = false,
     val failureMessage: String? = null,
+    val actionError: DokusException? = null,
 ) : MVIState {
     companion object {
         val initial by lazy { PeppolRegistrationState() }
@@ -69,6 +70,8 @@ sealed interface PeppolRegistrationIntent : MVIIntent {
     data object Continue : PeppolRegistrationIntent
 
     data object Retry : PeppolRegistrationIntent
+
+    data object DismissActionError : PeppolRegistrationIntent
 }
 
 // ============================================================================
@@ -77,6 +80,5 @@ sealed interface PeppolRegistrationIntent : MVIIntent {
 
 @Immutable
 sealed interface PeppolRegistrationAction : MVIAction {
-    data class ShowError(val error: DokusException) : PeppolRegistrationAction
     data object NavigateToHome : PeppolRegistrationAction
 }

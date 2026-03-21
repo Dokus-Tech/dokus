@@ -2,7 +2,6 @@ package tech.dokus.features.banking.presentation.balances.mvi
 
 import androidx.compose.runtime.Immutable
 import org.jetbrains.compose.resources.StringResource
-import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.aura.resources.Res
@@ -34,6 +33,7 @@ data class BalancesState(
     val transactionSummary: DokusState<BankTransactionSummaryDto>,
     val balanceHistory: DokusState<BalanceHistoryResponse>,
     val timeRange: BalanceTimeRange = BalanceTimeRange.ThirtyDays,
+    val actionError: DokusException? = null,
 ) : MVIState {
     companion object {
         val initial = BalancesState(
@@ -51,9 +51,5 @@ sealed interface BalancesIntent : MVIIntent {
     data class SetTimeRange(val range: BalanceTimeRange) : BalancesIntent
     data object UploadStatement : BalancesIntent
     data object ConnectAccount : BalancesIntent
-}
-
-@Immutable
-sealed interface BalancesAction : MVIAction {
-    data class ShowError(val error: DokusException) : BalancesAction
+    data object DismissActionError : BalancesIntent
 }

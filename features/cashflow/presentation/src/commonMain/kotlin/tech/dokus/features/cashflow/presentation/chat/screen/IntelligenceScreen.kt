@@ -19,8 +19,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -41,6 +39,7 @@ import tech.dokus.foundation.app.state.isSuccess
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.chat_loading
+import tech.dokus.foundation.aura.components.common.DokusErrorBanner
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.chat.ChatAttachedFileChips
 import tech.dokus.foundation.aura.components.chat.ChatGridBackground
@@ -64,7 +63,6 @@ import tech.dokus.foundation.aura.tooling.TestWrapper
 internal fun IntelligenceScreen(
     state: ChatState,
     listState: LazyListState,
-    snackbarHostState: SnackbarHostState,
     onIntent: (ChatIntent) -> Unit,
     onDownloadDocument: (String) -> Unit = {},
     onDownloadZip: (List<String>) -> Unit = {},
@@ -211,11 +209,17 @@ internal fun IntelligenceScreen(
                     }
                 }
 
-                // Snackbar
-                SnackbarHost(
-                    hostState = snackbarHostState,
-                    modifier = Modifier.align(Alignment.BottomCenter),
-                )
+                // Action error banner
+                state.actionError?.let { error ->
+                    DokusErrorBanner(
+                        exception = error,
+                        retryHandler = null,
+                        onDismiss = { onIntent(ChatIntent.DismissActionError) },
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .padding(horizontal = Constraints.Spacing.large),
+                    )
+                }
             }
         }
     }
@@ -230,7 +234,6 @@ private fun IntelligenceScreenPreview(
         IntelligenceScreen(
             state = ChatState(),
             listState = rememberLazyListState(),
-            snackbarHostState = remember { SnackbarHostState() },
             onIntent = {},
         )
     }

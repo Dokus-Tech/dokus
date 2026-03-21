@@ -14,8 +14,6 @@ import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Plus
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
@@ -78,7 +76,6 @@ private val BottomPadding = 16.dp
 @Composable
 internal fun ContactsScreen(
     state: ContactsState,
-    snackbarHostState: SnackbarHostState,
     onIntent: (ContactsIntent) -> Unit,
     onSelectContact: (ContactDto) -> Unit,
     onOpenContact: (ContactDto) -> Unit,
@@ -120,7 +117,6 @@ internal fun ContactsScreen(
                 }
             }
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background
     ) { contentPadding ->
         if (isLargeScreen) {
@@ -264,7 +260,6 @@ private fun ContactsDesktopMasterDetailPreview(
                         ),
                         selectedContactId = contactId
                     ),
-                    snackbarHostState = remember { SnackbarHostState() },
                     onIntent = {},
                     onSelectContact = {},
                     onOpenContact = {},
@@ -295,7 +290,6 @@ private fun ContactsDesktopMasterDetailPreview(
                             ),
                             showBackButton = false,
                             isOnline = true,
-                            snackbarHostState = remember { SnackbarHostState() },
                             onIntent = {},
                             onBackClick = {},
                             onDocumentClick = {}
@@ -339,7 +333,6 @@ private fun ContactsMobileListPreview(
                         )
                     )
                 ),
-                snackbarHostState = remember { SnackbarHostState() },
                 onIntent = {},
                 onSelectContact = {},
                 onOpenContact = {},

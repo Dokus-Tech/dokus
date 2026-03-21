@@ -92,7 +92,7 @@ internal class DocumentDetailContactBinder(
                         } else {
                             exception
                         }
-                        action(DocumentDetailAction.ShowError(displayException))
+                        updateState { copy(actionError = displayException) }
                     }
                 )
         }
@@ -132,7 +132,7 @@ internal class DocumentDetailContactBinder(
                         } else {
                             exception
                         }
-                        action(DocumentDetailAction.ShowError(displayException))
+                        updateState { copy(actionError = displayException) }
                     }
                 )
         }
@@ -203,7 +203,7 @@ internal class DocumentDetailContactBinder(
                     } else {
                         exception
                     }
-                    action(DocumentDetailAction.ShowError(bindException))
+                    updateState { copy(actionError = bindException) }
                 }
             )
     }

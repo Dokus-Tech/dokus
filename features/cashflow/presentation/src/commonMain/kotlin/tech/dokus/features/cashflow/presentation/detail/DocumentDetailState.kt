@@ -165,6 +165,9 @@ data class DocumentDetailState(
     val contactSheetSearchQuery: String = "",
     val contactSheetContacts: DokusState<List<ContactDto>> = DokusState.idle(),
 
+    // === Action error ===
+    val actionError: DokusException? = null,
+
     // === Queue state ===
     val queueState: DocumentDetailQueueState? = null,
     val selectedQueueDocumentId: DocumentId? = null,

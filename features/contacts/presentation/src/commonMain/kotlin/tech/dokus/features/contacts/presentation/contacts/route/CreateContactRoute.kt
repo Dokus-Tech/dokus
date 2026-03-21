@@ -1,20 +1,14 @@
 package tech.dokus.features.contacts.presentation.contacts.route
 
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
-import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.features.contacts.mvi.CreateContactAction
 import tech.dokus.features.contacts.mvi.CreateContactContainer
 import tech.dokus.features.contacts.presentation.contacts.screen.CreateContactScreen
 import tech.dokus.foundation.app.mvi.container
-import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.navigation.destinations.ContactCreateOrigin
 import tech.dokus.navigation.destinations.ContactsDestination
 import tech.dokus.navigation.local.LocalNavController
@@ -30,18 +24,7 @@ internal fun CreateContactRoute(
 ) {
     val navController = LocalNavController.current
     val parsedOrigin = remember(origin) { ContactCreateOrigin.fromString(origin) }
-    val snackbarHostState = remember { SnackbarHostState() }
-    var pendingError by remember { mutableStateOf<DokusException?>(null) }
     val resultKey = remember { "documentReview_contactId" }
-
-    val errorMessage = pendingError?.localized
-
-    LaunchedEffect(errorMessage) {
-        if (errorMessage != null) {
-            snackbarHostState.showSnackbar(errorMessage)
-            pendingError = null
-        }
-    }
 
     val onExistingContactSelected: (String) -> Unit = { contactId ->
         if (parsedOrigin == ContactCreateOrigin.DocumentDetail) {
@@ -66,9 +49,6 @@ internal fun CreateContactRoute(
                 }
                 navController.popBackStack()
             }
-            is CreateContactAction.ShowError -> {
-                pendingError = action.error
-            }
         }
     }
 
@@ -78,7 +58,6 @@ internal fun CreateContactRoute(
         prefillVat = prefillVat,
         prefillAddress = prefillAddress,
         origin = parsedOrigin,
-        snackbarHostState = snackbarHostState,
         onIntent = { container.store.intent(it) },
         onExistingContactSelected = onExistingContactSelected
     )

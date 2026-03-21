@@ -1,13 +1,13 @@
 package tech.dokus.features.contacts.presentation.contacts.screen
 
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
@@ -29,6 +29,8 @@ import tech.dokus.features.contacts.presentation.contacts.components.EnrichmentS
 import tech.dokus.features.contacts.presentation.contacts.components.NotesBottomSheet
 import tech.dokus.features.contacts.presentation.contacts.components.shouldShowNoteComposer
 import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.aura.components.common.DokusErrorBanner
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
@@ -39,7 +41,6 @@ internal fun ContactDetailsScreen(
     state: ContactDetailsState,
     showBackButton: Boolean,
     isOnline: Boolean,
-    snackbarHostState: SnackbarHostState,
     onIntent: (ContactDetailsIntent) -> Unit,
     onBackClick: () -> Unit,
     onDocumentClick: (DocumentId) -> Unit,
@@ -52,7 +53,6 @@ internal fun ContactDetailsScreen(
             showBackButton = showBackButton,
             isDesktop = isDesktop,
             isOnline = isOnline,
-            snackbarHostState = snackbarHostState,
             onIntent = onIntent,
             onBackClick = onBackClick,
             onDocumentClick = onDocumentClick,
@@ -71,7 +71,6 @@ private fun ContactDetailsScreenContent(
     showBackButton: Boolean,
     isDesktop: Boolean,
     isOnline: Boolean,
-    snackbarHostState: SnackbarHostState,
     onIntent: (ContactDetailsIntent) -> Unit,
     onBackClick: () -> Unit,
     onDocumentClick: (DocumentId) -> Unit,
@@ -124,9 +123,17 @@ private fun ContactDetailsScreenContent(
                 )
             }
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background
     ) { contentPadding ->
+        state.actionError?.let { error ->
+            DokusErrorBanner(
+                exception = error,
+                retryHandler = null,
+                modifier = Modifier.padding(horizontal = Constraints.Spacing.large),
+                onDismiss = { onIntent(ContactDetailsIntent.DismissActionError) },
+            )
+        }
+
         ContactDetailsContent(
             contactState = contactState,
             invoiceSnapshotState = invoiceSnapshotState,
@@ -265,7 +272,6 @@ private fun ContactDetailsScreenPreview(
             ),
             showBackButton = true,
             isOnline = true,
-            snackbarHostState = remember { SnackbarHostState() },
             onIntent = {},
             onBackClick = {},
             onDocumentClick = {}

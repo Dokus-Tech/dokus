@@ -5,7 +5,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import pro.respawn.flowmvi.dsl.withState
 import tech.dokus.domain.enums.DocumentRejectReason
-import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.model.contact.ResolvedContact
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
@@ -111,7 +110,7 @@ internal class DocumentDetailActions(
                             )
                         }
                     }
-                    action(DocumentDetailAction.ShowError(error.asDokusException))
+                    updateState { copy(actionError = error.asDokusException) }
                 }
             )
         }
@@ -120,18 +119,14 @@ internal class DocumentDetailActions(
     suspend fun DocumentDetailCtx.handleConfirm() {
         withState {
             if (!canConfirm) {
-                action(
-                    DocumentDetailAction.ShowError(
-                        DokusException.Validation.DocumentMissingFields
-                    )
-                )
+                updateState { copy(actionError = DokusException.Validation.DocumentMissingFields) }
                 return@withState
             }
 
             val activeDocumentId = documentId ?: return@withState
             val updatedData = draftData
             if (updatedData == null) {
-                action(DocumentDetailAction.ShowError(DokusException.Validation.DocumentMissingFields))
+                updateState { copy(actionError = DokusException.Validation.DocumentMissingFields) }
                 return@withState
             }
 
@@ -156,8 +151,7 @@ internal class DocumentDetailActions(
                         if (bindResult.isFailure) {
                             val error = bindResult.exceptionOrNull()!!
                             logger.e(error) { "Failed to auto-bind contact before confirm: $activeDocumentId" }
-                            updateState { copy(isBindingContact = false, isConfirming = false) }
-                            action(DocumentDetailAction.ShowError(error.asDokusException))
+                            updateState { copy(isBindingContact = false, isConfirming = false, actionError = error.asDokusException) }
                             return@launch
                         }
                         updateState {
@@ -186,9 +180,8 @@ internal class DocumentDetailActions(
                     if (updateFailure != null) {
                         logger.e(updateFailure) { "Failed to save draft before confirm: $activeDocumentId" }
                         withState {
-                            updateState { copy(isConfirming = false) }
+                            updateState { copy(isConfirming = false, actionError = updateFailure.asDokusException) }
                         }
-                        action(DocumentDetailAction.ShowError(updateFailure.asDokusException))
                         return@launch
                     }
                     val savedContent = DocDto.from(updateResult.getOrThrow().extractedData)
@@ -232,14 +225,13 @@ internal class DocumentDetailActions(
                         if (cashflowEntryId != null) {
                             intent(DocumentDetailIntent.Payment(DocumentPaymentIntent.LoadCashflowEntry))
                         }
-                        action(DocumentDetailAction.ShowSuccess(DocumentDetailSuccess.DocumentConfirmed))
+                        updateState { copy(actionError = null) }
                     },
                     onFailure = { error ->
                         logger.e(error) { "Failed to confirm document: $activeDocumentId" }
                         withState {
-                            updateState { copy(isConfirming = false) }
+                            updateState { copy(isConfirming = false, actionError = error.asDokusException) }
                         }
-                        action(DocumentDetailAction.ShowError(error.asDokusException))
                     }
                 )
             }
@@ -280,9 +272,8 @@ internal class DocumentDetailActions(
             onFailure = { error ->
                 logger.e(error) { "Failed to unconfirm document: $docId" }
                 withState {
-                    updateState { copy(isConfirming = false) }
+                    updateState { copy(isConfirming = false, actionError = error.asDokusException) }
                 }
-                action(DocumentDetailAction.ShowError(error.asDokusException))
             }
         )
     }
@@ -361,11 +352,11 @@ internal class DocumentDetailActions(
                                 updateState {
                                     copy(
                                         isRejecting = false,
-                                        rejectDialogState = rejectDialogState?.copy(isConfirming = false)
+                                        rejectDialogState = rejectDialogState?.copy(isConfirming = false),
+                                        actionError = error.asDokusException,
                                     )
                                 }
                             }
-                            action(DocumentDetailAction.ShowError(error.asDokusException))
                         }
                     )
             }

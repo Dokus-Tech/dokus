@@ -64,6 +64,7 @@ internal class TodayContainer(
                     is TodayIntent.RefreshUnreadNotifications -> handleRefreshUnreadNotifications()
                     is TodayIntent.OpenNotification -> handleOpenNotification(intent.notification)
                     is TodayIntent.MarkAllNotificationsRead -> handleMarkAllNotificationsRead()
+                    is TodayIntent.DismissActionError -> updateState { copy(actionError = null) }
                 }
             }
         }
@@ -275,12 +276,14 @@ internal class TodayContainer(
         notificationRemoteDataSource.markAllRead()
             .onFailure { error ->
                 logger.e(error) { "Failed to mark all notifications as read" }
-                action(
-                    TodayAction.ShowError(
-                        error as? DokusException
-                            ?: DokusException.InternalError("Failed to mark all as read")
-                    )
-                )
+                withState<TodayState, _> {
+                    updateState {
+                        copy(
+                            actionError = error as? DokusException
+                                ?: DokusException.InternalError("Failed to mark all as read")
+                        )
+                    }
+                }
             }
 
         intent(TodayIntent.RefreshUnreadNotifications)

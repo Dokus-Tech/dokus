@@ -18,8 +18,6 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -94,7 +92,6 @@ private val SearchInputUnderlineThickness = 2.dp
 @Composable
 internal fun SearchScreen(
     state: SearchState,
-    snackbarHostState: SnackbarHostState,
     onQueryChange: (String) -> Unit,
     onScopeSelected: (UnifiedSearchScope) -> Unit,
     onSuggestionClick: (SearchSuggestionDto) -> Unit,
@@ -137,7 +134,6 @@ internal fun SearchScreen(
 
     Scaffold(
         modifier = modifier,
-        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) {
         Column(
             modifier = Modifier
@@ -699,7 +695,6 @@ private fun SearchScreenMobileSuggestionsPreview(
                 suggestions = previewResponse("", UnifiedSearchScope.All).suggestions,
                 hasInitialized = true,
             ),
-            snackbarHostState = remember { SnackbarHostState() },
             onQueryChange = {},
             onScopeSelected = {},
             onSuggestionClick = {},
@@ -724,7 +719,6 @@ private fun SearchScreenDesktopAllPreview(
                 response = previewResponse("kbc", UnifiedSearchScope.All),
                 hasInitialized = true,
             ),
-            snackbarHostState = remember { SnackbarHostState() },
             onQueryChange = {},
             onScopeSelected = {},
             onSuggestionClick = {},
@@ -749,7 +743,6 @@ private fun SearchScreenDesktopDocumentsPreview(
                 response = previewResponse("january", UnifiedSearchScope.Documents),
                 hasInitialized = true,
             ),
-            snackbarHostState = remember { SnackbarHostState() },
             onQueryChange = {},
             onScopeSelected = {},
             onSuggestionClick = {},
@@ -774,7 +767,6 @@ private fun SearchScreenDesktopContactsPreview(
                 response = previewResponse("tax", UnifiedSearchScope.Contacts),
                 hasInitialized = true,
             ),
-            snackbarHostState = remember { SnackbarHostState() },
             onQueryChange = {},
             onScopeSelected = {},
             onSuggestionClick = {},
@@ -799,7 +791,6 @@ private fun SearchScreenDesktopTransactionsPreview(
                 response = previewResponse("kbc", UnifiedSearchScope.Transactions),
                 hasInitialized = true,
             ),
-            snackbarHostState = remember { SnackbarHostState() },
             onQueryChange = {},
             onScopeSelected = {},
             onSuggestionClick = {},
@@ -824,7 +815,6 @@ private fun SearchScreenMobileResultsPreview(
                 response = previewResponse("kbc", UnifiedSearchScope.All),
                 hasInitialized = true,
             ),
-            snackbarHostState = remember { SnackbarHostState() },
             onQueryChange = {},
             onScopeSelected = {},
             onSuggestionClick = {},
@@ -853,7 +843,6 @@ private fun SearchScreenDesktopNoResultsPreview(
                 ),
                 hasInitialized = true,
             ),
-            snackbarHostState = remember { SnackbarHostState() },
             onQueryChange = {},
             onScopeSelected = {},
             onSuggestionClick = {},
@@ -882,7 +871,6 @@ private fun SearchScreenMobileNoResultsPreview(
                 ),
                 hasInitialized = true,
             ),
-            snackbarHostState = remember { SnackbarHostState() },
             onQueryChange = {},
             onScopeSelected = {},
             onSuggestionClick = {},

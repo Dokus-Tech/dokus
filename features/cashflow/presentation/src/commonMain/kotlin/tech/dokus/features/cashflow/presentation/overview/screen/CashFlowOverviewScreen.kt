@@ -18,9 +18,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -72,6 +69,7 @@ import tech.dokus.foundation.aura.components.common.DokusErrorBanner
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import tech.dokus.foundation.aura.components.common.MonthSeparatorRow
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
@@ -88,21 +86,12 @@ internal fun CashFlowOverviewScreen(
     state: CashFlowOverviewState,
     onIntent: (CashFlowOverviewIntent) -> Unit,
     onCreateInvoiceClick: (() -> Unit)? = null,
-    modifier: Modifier = Modifier
 ) {
-    val isLargeScreen = LocalScreenSize.current.isLarge
-    val snackbarHostState = remember { SnackbarHostState() }
-
-    Scaffold(
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-        modifier = modifier
-    ) {
-        CashFlowOverviewContent(
-            state = state,
-            onIntent = onIntent,
-            onCreateInvoiceClick = onCreateInvoiceClick
-        )
-    }
+    CashFlowOverviewContent(
+        state = state,
+        onIntent = onIntent,
+        onCreateInvoiceClick = onCreateInvoiceClick,
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -170,6 +159,15 @@ private fun CashFlowOverviewContent(
                 .padding(start = 16.dp, end = 16.dp, top = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
+            state.actionError?.let { error ->
+                DokusErrorBanner(
+                    exception = error,
+                    retryHandler = null,
+                    modifier = Modifier.padding(horizontal = Constraints.Spacing.large),
+                    onDismiss = { onIntent(CashFlowOverviewIntent.DismissActionError) },
+                )
+            }
+
             // Summary hero card
             CashflowSummarySection(
                 summary = state.summary,

@@ -13,6 +13,7 @@ import tech.dokus.foundation.app.state.DokusState
 data class NotificationPreferencesState(
     val preferences: DokusState<Map<NotificationType, NotificationPreferenceDto>> = DokusState.loading(),
     val updatingTypes: Set<NotificationType> = emptySet(),
+    val actionError: DokusException? = null,
 ) : MVIState {
     fun preferenceFor(type: NotificationType): NotificationPreferenceDto {
         val prefsMap = (preferences as? DokusState.Success)?.data ?: emptyMap()
@@ -32,10 +33,9 @@ data class NotificationPreferencesState(
 sealed interface NotificationPreferencesIntent : MVIIntent {
     data object Load : NotificationPreferencesIntent
     data class ToggleEmail(val type: NotificationType, val enabled: Boolean) : NotificationPreferencesIntent
+    data object DismissActionError : NotificationPreferencesIntent
 }
 
 @Immutable
-sealed interface NotificationPreferencesAction : MVIAction {
-    data class ShowError(val error: DokusException) : NotificationPreferencesAction
-}
+sealed interface NotificationPreferencesAction : MVIAction
 

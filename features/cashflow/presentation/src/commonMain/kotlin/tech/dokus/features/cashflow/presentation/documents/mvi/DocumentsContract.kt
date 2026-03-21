@@ -4,7 +4,6 @@ import androidx.compose.runtime.Immutable
 import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
-import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.DocumentListItemDto
 import tech.dokus.domain.model.common.PaginationState
@@ -119,7 +118,4 @@ sealed interface DocumentsAction : MVIAction {
         val documentId: DocumentId,
         val queueSource: CashFlowDestination.DocumentDetailQueueContext,
     ) : DocumentsAction
-
-    /** Show error message */
-    data class ShowError(val error: DokusException) : DocumentsAction
 }

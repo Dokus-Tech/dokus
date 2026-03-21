@@ -17,13 +17,12 @@ import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.app.state.isError
 import tech.dokus.foundation.app.state.isLoading
 import tech.dokus.foundation.app.state.isSuccess
+import tech.dokus.foundation.aura.components.common.DokusErrorBanner
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.app.screens.settings.components.SettingsSkeleton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -77,7 +76,6 @@ private val MaxContentWidth = 820.dp
 @Composable
 internal fun NotificationPreferencesScreen(
     state: NotificationPreferencesState,
-    snackbarHostState: SnackbarHostState,
     onIntent: (NotificationPreferencesIntent) -> Unit
 ) {
     val isLargeScreen = LocalScreenSize.current.isLarge
@@ -88,13 +86,22 @@ internal fun NotificationPreferencesScreen(
                 PTopAppBar(Res.string.settings_notifications)
             }
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { contentPadding ->
-        NotificationPreferencesContent(
-            state = state,
-            onIntent = onIntent,
-            modifier = Modifier.padding(contentPadding)
-        )
+        Column(modifier = Modifier.padding(contentPadding)) {
+            if (state.actionError != null) {
+                DokusErrorBanner(
+                    exception = state.actionError,
+                    retryHandler = null,
+                    modifier = Modifier.padding(horizontal = Constraints.Spacing.large),
+                    onDismiss = { onIntent(NotificationPreferencesIntent.DismissActionError) },
+                )
+            }
+
+            NotificationPreferencesContent(
+                state = state,
+                onIntent = onIntent,
+            )
+        }
     }
 }
 

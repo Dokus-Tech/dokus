@@ -17,7 +17,6 @@ import tech.dokus.aura.resources.contacts_sort_created_oldest
 import tech.dokus.aura.resources.contacts_sort_default
 import tech.dokus.aura.resources.contacts_sort_name_asc
 import tech.dokus.aura.resources.contacts_sort_name_desc
-import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.domain.model.contact.ContactDto
@@ -141,16 +140,4 @@ sealed interface ContactsAction : MVIAction {
 
     /** Navigate to edit contact screen */
     data class NavigateToEditContact(val contactId: ContactId) : ContactsAction
-
-    /** Show error message as snackbar/toast */
-    data class ShowError(val error: DokusException) : ContactsAction
-
-    /** Show success message as snackbar/toast */
-    data class ShowSuccess(val success: ContactsSuccess) : ContactsAction
-}
-
-enum class ContactsSuccess {
-    Created,
-    Updated,
-    Deleted,
 }

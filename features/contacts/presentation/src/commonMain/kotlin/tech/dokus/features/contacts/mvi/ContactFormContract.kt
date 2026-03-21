@@ -163,6 +163,7 @@ data class ContactFormState(
     val isDuplicateCheckInProgress: Boolean = false,
     val isSaving: Boolean = false,
     val isDeleting: Boolean = false,
+    val actionError: DokusException? = null,
 ) : MVIState {
     /**
      * Whether the form is in edit mode (vs create mode).
@@ -315,6 +316,9 @@ sealed interface ContactFormIntent : MVIIntent {
 
     /** Cancel and go back */
     data object Cancel : ContactFormIntent
+
+    /** Dismiss action error banner */
+    data object DismissActionError : ContactFormIntent
 }
 
 // ============================================================================
@@ -329,19 +333,4 @@ sealed interface ContactFormAction : MVIAction {
 
     /** Navigate to the saved contact's details screen */
     data class NavigateToContact(val contactId: ContactId) : ContactFormAction
-
-    /** Show error message as snackbar/toast */
-    data class ShowError(val error: DokusException) : ContactFormAction
-
-    /** Show success message as snackbar/toast */
-    data class ShowSuccess(val success: ContactFormSuccess) : ContactFormAction
-
-    /** Show validation error for a specific field */
-    data class ShowFieldError(val field: String, val error: DokusException) : ContactFormAction
-}
-
-enum class ContactFormSuccess {
-    Created,
-    Updated,
-    Deleted,
 }

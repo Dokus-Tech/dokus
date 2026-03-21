@@ -96,7 +96,7 @@ internal class DocumentDetailContainer(
                     is DocumentPaymentAction.PaymentRecorded -> intent(DocumentDetailIntent.Refresh)
                     is DocumentPaymentAction.AutoPaymentUndone -> intent(DocumentDetailIntent.Refresh)
                     is DocumentPaymentAction.ShowError ->
-                        action(DocumentDetailAction.ShowError(paymentAction.error))
+                        updateState { copy(actionError = paymentAction.error) }
 
                     is DocumentPaymentAction.NavigateToCashflowEntry ->
                         action(DocumentDetailAction.NavigateToCashflowEntry(paymentAction.entryId))
@@ -106,7 +106,7 @@ internal class DocumentDetailContainer(
             val previewState by delegate(previewContainer.store) { previewAction ->
                 when (previewAction) {
                     is DocumentPreviewAction.ShowError ->
-                        action(DocumentDetailAction.ShowError(previewAction.error))
+                        updateState { copy(actionError = previewAction.error) }
                 }
             }
 
@@ -162,6 +162,10 @@ internal class DocumentDetailContainer(
 
                     DocumentDetailIntent.HandleRemoteDeletion -> {
                         action(DocumentDetailAction.NavigateBack)
+                    }
+
+                    DocumentDetailIntent.DismissActionError -> {
+                        updateState { copy(actionError = null) }
                     }
 
                     else -> {
@@ -259,7 +263,8 @@ internal class DocumentDetailContainer(
                     is DocumentDetailIntent.SelectQueueDocument,
                     DocumentDetailIntent.LoadMoreQueue,
                     DocumentDetailIntent.RefreshQueue,
-                    DocumentDetailIntent.HandleRemoteDeletion -> Unit
+                    DocumentDetailIntent.HandleRemoteDeletion,
+                    DocumentDetailIntent.DismissActionError -> Unit
                 }
             }
         }

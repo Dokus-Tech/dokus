@@ -119,6 +119,7 @@ internal class ChatContainer(
                     is ChatIntent.HideSessionPicker -> handleHideSessionPicker()
                     is ChatIntent.StartNewConversation -> handleStartNewConversation()
                     is ChatIntent.LoadRecentSessions -> handleLoadRecentSessions()
+                    is ChatIntent.DismissActionError -> updateState { copy(actionError = null) }
 
                     // === Navigation ===
                     is ChatIntent.ViewCitationSource -> handleViewCitationSource(
@@ -232,7 +233,7 @@ internal class ChatContainer(
                     logger.e(error) { "Failed to load session: $sessionId" }
                     updateState { copy(isSending = false) }
                     val reason = error.message?.takeIf { it.isNotBlank() }
-                    action(ChatAction.ShowError(DokusException.ChatLoadConversationFailed(reason)))
+                    updateState { copy(actionError = DokusException.ChatLoadConversationFailed(reason)) }
                 }
             )
         }
@@ -292,7 +293,7 @@ internal class ChatContainer(
             sendMessageJob = launch {
                 val docId = if (data.scope == ChatScope.SingleDoc) data.documentId else null
                 if (data.scope == ChatScope.SingleDoc && docId == null) {
-                    action(ChatAction.ShowError(DokusException.ChatNoDocumentSelected))
+                    updateState { copy(actionError = DokusException.ChatNoDocumentSelected) }
                     withState {
                         val currentData = (session as? DokusState.Success)?.data ?: return@withState
                         updateState {
@@ -370,7 +371,7 @@ internal class ChatContainer(
                         )
                     }
                     val reason = error.message?.takeIf { it.isNotBlank() }
-                    action(ChatAction.ShowError(DokusException.ChatSendMessageFailed(reason)))
+                    updateState { copy(actionError = DokusException.ChatSendMessageFailed(reason)) }
                 }
             }
         )
@@ -530,7 +531,7 @@ internal class ChatContainer(
             DocumentId.parse(documentIdStr)
         } catch (e: Exception) {
             logger.e(e) { "Invalid document ID: $documentIdStr" }
-            action(ChatAction.ShowError(DokusException.ChatInvalidDocumentReference))
+            updateState { copy(actionError = DokusException.ChatInvalidDocumentReference) }
             return
         }
 

@@ -1,7 +1,6 @@
 package tech.dokus.features.banking.presentation.payments.mvi
 
 import androidx.compose.runtime.Immutable
-import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.domain.enums.BankTransactionStatus
@@ -61,6 +60,7 @@ data class PaymentsState(
     val selectedTransactionId: BankTransactionId? = null,
     val ignoreDialogState: IgnoreDialogState? = null,
     val transferDialogState: TransferDialogState? = null,
+    val actionError: DokusException? = null,
 ) : MVIState {
     companion object {
         val initial by lazy {
@@ -94,12 +94,5 @@ sealed interface PaymentsIntent : MVIIntent {
     data object ConfirmTransfer : PaymentsIntent
     data object DismissTransferDialog : PaymentsIntent
     data class UndoTransfer(val transactionId: BankTransactionId) : PaymentsIntent
-}
-
-/**
- * Actions for PaymentsScreen.
- */
-@Immutable
-sealed interface PaymentsAction : MVIAction {
-    data class ShowError(val error: DokusException) : PaymentsAction
+    data object DismissActionError : PaymentsIntent
 }

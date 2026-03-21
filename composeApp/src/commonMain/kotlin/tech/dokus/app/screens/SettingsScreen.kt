@@ -24,8 +24,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,6 +32,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
@@ -88,26 +87,11 @@ internal fun SettingsRoute(
     container: SettingsContainer = container()
 ) {
     val navController = LocalNavController.current
-    val snackbarHostState = remember { SnackbarHostState() }
-    var pendingError by remember { mutableStateOf<DokusException?>(null) }
-
-    val errorMessage = pendingError?.localized
-
-    LaunchedEffect(errorMessage) {
-        if (errorMessage != null) {
-            snackbarHostState.showSnackbar(errorMessage)
-            pendingError = null
-        }
-    }
 
     val state by container.store.subscribe(DefaultLifecycle) { action ->
         when (action) {
             SettingsAction.NavigateToWorkspaceSelect -> {
                 navController.navigateTo(AuthDestination.WorkspaceSelect)
-            }
-
-            is SettingsAction.ShowError -> {
-                pendingError = action.error
             }
         }
     }
@@ -118,7 +102,6 @@ internal fun SettingsRoute(
 
     SettingsScreen(
         state = state,
-        snackbarHostState = snackbarHostState,
         onWorkspaceSelectClick = { navController.navigateTo(AuthDestination.WorkspaceSelect) },
         onSectionClick = { section -> navController.navigateTo(section.destination) },
     )
@@ -127,7 +110,6 @@ internal fun SettingsRoute(
 @Composable
 internal fun SettingsScreen(
     state: SettingsState,
-    snackbarHostState: SnackbarHostState,
     onWorkspaceSelectClick: () -> Unit,
     onSectionClick: (ModuleSettingsSection) -> Unit,
 ) {
@@ -136,7 +118,6 @@ internal fun SettingsScreen(
     if (screenSize.isLarge) {
         SettingsSplitPaneLayout(
             state = state,
-            snackbarHostState = snackbarHostState,
             onWorkspaceSelectClick = onWorkspaceSelectClick,
         )
     } else {
@@ -151,7 +132,6 @@ internal fun SettingsScreen(
 @Composable
 private fun SettingsSplitPaneLayout(
     state: SettingsState,
-    snackbarHostState: SnackbarHostState,
     onWorkspaceSelectClick: () -> Unit,
 ) {
     val spacing = MaterialTheme.dokusSpacing
@@ -165,9 +145,7 @@ private fun SettingsSplitPaneLayout(
 
     var selectedSection by remember { mutableStateOf(allSections.firstOrNull()) }
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { contentPadding ->
+    Scaffold { contentPadding ->
         Surface {
             Row(
                 modifier = Modifier
@@ -484,7 +462,6 @@ private fun SettingsScreenPreview(
     TestWrapper(parameters) {
         SettingsScreen(
             state = SettingsState(),
-            snackbarHostState = remember { SnackbarHostState() },
             onWorkspaceSelectClick = {},
             onSectionClick = {},
         )

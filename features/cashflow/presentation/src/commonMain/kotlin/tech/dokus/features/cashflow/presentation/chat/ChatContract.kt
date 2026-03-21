@@ -142,6 +142,7 @@ data class ChatState(
     val showSessionPicker: Boolean = false,
     val isSessionsPanelOpen: Boolean = true,
     val attachedFiles: List<ChatAttachedFile> = emptyList(),
+    val actionError: DokusException? = null,
 ) : MVIState {
 
     companion object {
@@ -257,6 +258,9 @@ sealed interface ChatIntent : MVIIntent {
     /** Load recent sessions for the picker */
     data object LoadRecentSessions : ChatIntent
 
+    /** Dismiss inline action error */
+    data object DismissActionError : ChatIntent
+
     // === Navigation ===
 
     /**
@@ -297,26 +301,6 @@ sealed interface ChatAction : MVIAction {
         val documentId: DocumentId,
         val pageNumber: Int? = null,
     ) : ChatAction
-
-    // === Feedback ===
-
-    /**
-     * Show error message.
-     * @param message Error message to display
-     */
-    data class ShowError(val error: DokusException) : ChatAction
-
-    /**
-     * Show success message.
-     * @param message Success message to display
-     */
-    data class ShowSuccess(val message: String) : ChatAction
-
-    /**
-     * Show info message.
-     * @param message Info message to display
-     */
-    data class ShowInfo(val message: String) : ChatAction
 
     // === UI Effects ===
 

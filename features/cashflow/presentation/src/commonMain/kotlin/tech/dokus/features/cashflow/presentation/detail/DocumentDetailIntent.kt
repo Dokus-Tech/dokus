@@ -78,4 +78,7 @@ sealed interface DocumentDetailIntent : MVIIntent {
 
     // Unconfirm — revert confirmed document to draft for editing
     data object RequestUnconfirm : DocumentDetailIntent
+
+    // Dismiss action error banner
+    data object DismissActionError : DocumentDetailIntent
 }

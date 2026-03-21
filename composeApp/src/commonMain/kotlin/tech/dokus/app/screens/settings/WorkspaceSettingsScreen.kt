@@ -11,8 +11,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -41,6 +39,7 @@ import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.app.state.isError
 import tech.dokus.foundation.app.state.isLoading
 import tech.dokus.foundation.app.state.isSuccess
+import tech.dokus.foundation.aura.components.common.DokusErrorBanner
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.constrains.Constraints
@@ -61,7 +60,6 @@ private val ContentPaddingH = 16.dp
 @Composable
 internal fun WorkspaceSettingsScreen(
     state: WorkspaceSettingsState,
-    snackbarHostState: SnackbarHostState,
     onIntent: (WorkspaceSettingsIntent) -> Unit,
     onNavigateToPeppol: () -> Unit = {},
 ) {
@@ -70,14 +68,23 @@ internal fun WorkspaceSettingsScreen(
         topBar = {
             if (!isLargeScreen) PTopAppBar(Res.string.workspace_settings_title)
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { contentPadding ->
-        WorkspaceSettingsContent(
-            state = state,
-            onIntent = onIntent,
-            onNavigateToPeppol = onNavigateToPeppol,
-            modifier = Modifier.padding(contentPadding),
-        )
+        Column(modifier = Modifier.padding(contentPadding)) {
+            if (state.actionError != null) {
+                DokusErrorBanner(
+                    exception = state.actionError,
+                    retryHandler = null,
+                    modifier = Modifier.padding(horizontal = Constraints.Spacing.large),
+                    onDismiss = { onIntent(WorkspaceSettingsIntent.DismissActionError) },
+                )
+            }
+
+            WorkspaceSettingsContent(
+                state = state,
+                onIntent = onIntent,
+                onNavigateToPeppol = onNavigateToPeppol,
+            )
+        }
     }
 }
 

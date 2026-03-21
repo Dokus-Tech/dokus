@@ -1,11 +1,10 @@
 package tech.dokus.features.cashflow.presentation.detail.screen
 
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
@@ -21,6 +20,8 @@ import tech.dokus.features.cashflow.presentation.detail.components.previewReview
 import tech.dokus.features.cashflow.presentation.detail.components.previewSourceEvidenceViewerState
 import tech.dokus.domain.model.contact.ResolvedContact
 import tech.dokus.foundation.app.shell.LocalIsInDocDetailMode
+import tech.dokus.foundation.aura.components.common.DokusErrorBanner
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
@@ -36,7 +37,6 @@ internal fun DocumentDetailScreen(
     onOpenSource: (DocumentSourceId) -> Unit,
     onCorrectContact: (ResolvedContact) -> Unit,
     onCreateContact: (ResolvedContact) -> Unit,
-    snackbarHostState: SnackbarHostState,
 ) {
     val isInDetailMode = LocalIsInDocDetailMode.current
 
@@ -51,7 +51,6 @@ internal fun DocumentDetailScreen(
                 )
             }
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         // In detail mode, use transparent so the glass content Surface shows through
         containerColor = if (isInDetailMode) {
             Color.Transparent
@@ -60,17 +59,28 @@ internal fun DocumentDetailScreen(
         },
         modifier = Modifier,
     ) { contentPadding ->
-        ReviewContent(
-            state = state,
-            isLargeScreen = isLargeScreen,
-            isAccountantReadOnly = isAccountantReadOnly,
-            contentPadding = contentPadding,
-            onIntent = onIntent,
-            onCorrectContact = onCorrectContact,
-            onCreateContact = onCreateContact,
-            onBackClick = onBackClick,
-            onOpenSource = onOpenSource,
-        )
+        Column {
+            state.actionError?.let { error ->
+                DokusErrorBanner(
+                    exception = error,
+                    retryHandler = null,
+                    modifier = Modifier.padding(horizontal = Constraints.Spacing.large),
+                    onDismiss = { onIntent(DocumentDetailIntent.DismissActionError) },
+                )
+            }
+
+            ReviewContent(
+                state = state,
+                isLargeScreen = isLargeScreen,
+                isAccountantReadOnly = isAccountantReadOnly,
+                contentPadding = contentPadding,
+                onIntent = onIntent,
+                onCorrectContact = onCorrectContact,
+                onCreateContact = onCreateContact,
+                onBackClick = onBackClick,
+                onOpenSource = onOpenSource,
+            )
+        }
     }
 }
 
@@ -89,7 +99,6 @@ private fun DocumentDetailScreenLoadingPreview(
             onOpenSource = {},
             onCorrectContact = {},
             onCreateContact = {},
-            snackbarHostState = remember { SnackbarHostState() },
         )
     }
 }
@@ -109,7 +118,6 @@ private fun DocumentDetailScreenDesktopOpenPreview(
             onOpenSource = {},
             onCorrectContact = {},
             onCreateContact = {},
-            snackbarHostState = remember { SnackbarHostState() },
         )
     }
 }
@@ -138,7 +146,6 @@ private fun DocumentDetailScreenDesktopSourcePreview(
             onOpenSource = {},
             onCorrectContact = {},
             onCreateContact = {},
-            snackbarHostState = remember { SnackbarHostState() },
         )
     }
 }
@@ -158,7 +165,6 @@ private fun DocumentDetailScreenDesktopPaidPreview(
             onOpenSource = {},
             onCorrectContact = {},
             onCreateContact = {},
-            snackbarHostState = remember { SnackbarHostState() },
         )
     }
 }

@@ -76,6 +76,7 @@ internal class CashFlowOverviewContainer(
                     is CashFlowOverviewIntent.RecordPaymentFor -> handleRecordPaymentFor(intent.entryId)
                     is CashFlowOverviewIntent.MarkAsPaidQuick -> handleMarkAsPaidQuick(intent.entryId)
                     is CashFlowOverviewIntent.ViewDocumentFor -> handleViewDocumentFor(intent.entry)
+                    is CashFlowOverviewIntent.DismissActionError -> handleDismissActionError()
                 }
             }
         }
@@ -138,6 +139,10 @@ internal class CashFlowOverviewContainer(
         updateState { copy(actionsEntryId = null) }
     }
 
+    private suspend fun CashFlowOverviewCtx.handleDismissActionError() {
+        updateState { copy(actionError = null) }
+    }
+
     private suspend fun CashFlowOverviewCtx.handleRecordPaymentFor(entryId: CashflowEntryId) {
         withState {
             val entry = entries.lastData?.data?.find { it.id == entryId } ?: return@withState
@@ -171,12 +176,14 @@ internal class CashFlowOverviewContainer(
                         if (it.id == updatedEntry.id) updatedEntry else it
                     }
                     updateState {
-                        copy(entries = DokusState.success(currentPagination.copy(data = updatedList)))
+                        copy(
+                            entries = DokusState.success(currentPagination.copy(data = updatedList)),
+                            actionError = null,
+                        )
                     }
-                    action(CashFlowOverviewAction.ShowPaymentSuccess(updatedEntry))
                 },
                 onFailure = { error ->
-                    action(CashFlowOverviewAction.ShowPaymentError(error.asDokusException))
+                    updateState { copy(actionError = error.asDokusException) }
                 }
             )
         }
@@ -293,12 +300,9 @@ internal class CashFlowOverviewContainer(
                                     exception = dokusError,
                                     retryHandler = { intent(CashFlowOverviewIntent.Refresh) },
                                     lastData = entries.lastData
-                                )
+                                ),
+                                actionError = if (hadData) dokusError else null,
                             )
-                        }
-
-                        if (hadData) {
-                            action(CashFlowOverviewAction.ShowError(dokusError))
                         }
                     }
                 }
@@ -339,10 +343,10 @@ internal class CashFlowOverviewContainer(
                                         exception = error.asDokusException,
                                         retryHandler = { intent(CashFlowOverviewIntent.Refresh) },
                                         lastData = entries.lastData
-                                    )
+                                    ),
+                                    actionError = error.asDokusException,
                                 )
                             }
-                            action(CashFlowOverviewAction.ShowError(error.asDokusException))
                         }
                     )
                 }

@@ -7,6 +7,7 @@ import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.domain.enums.InvoiceDeliveryMethod
 import tech.dokus.domain.enums.InvoiceDueDateMode
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.features.cashflow.mvi.clientlookup.ClientLookupIntent
 import tech.dokus.features.cashflow.mvi.model.CreateInvoiceFormState
 import tech.dokus.features.cashflow.mvi.model.CreateInvoiceUiState
@@ -17,6 +18,7 @@ data class CreateInvoiceState(
     val formState: CreateInvoiceFormState,
     val uiState: CreateInvoiceUiState,
     val invoiceNumberPreview: String? = null,
+    val actionError: DokusException? = null,
 ) : MVIState
 
 @Immutable
@@ -66,6 +68,7 @@ sealed interface CreateInvoiceIntent : MVIIntent {
     data object BackClicked : CreateInvoiceIntent
     data object ResetForm : CreateInvoiceIntent
     data object LoadDefaults : CreateInvoiceIntent
+    data object DismissActionError : CreateInvoiceIntent
 }
 
 @Immutable
@@ -77,8 +80,5 @@ sealed interface CreateInvoiceAction : MVIAction {
         val prefillAddress: String? = null,
         val origin: String? = null
     ) : CreateInvoiceAction
-    data class ShowError(val message: String) : CreateInvoiceAction
-    data class ShowValidationError(val message: String) : CreateInvoiceAction
     data class OpenExternalUrl(val url: String) : CreateInvoiceAction
-    data class ShowSuccess(val message: String) : CreateInvoiceAction
 }

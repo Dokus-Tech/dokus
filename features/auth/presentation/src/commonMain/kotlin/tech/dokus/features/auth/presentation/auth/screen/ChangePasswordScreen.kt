@@ -11,8 +11,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -41,12 +39,10 @@ import tech.dokus.foundation.aura.extensions.dismissKeyboardOnTapOutside
 @Composable
 internal fun ChangePasswordScreen(
     state: ChangePasswordState,
-    snackbarHostState: SnackbarHostState,
     onIntent: (ChangePasswordIntent) -> Unit
 ) {
     Scaffold(
         topBar = { PTopAppBar(Res.string.profile_change_password_title) },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         TwoPaneContainer(
             left = {
@@ -163,7 +159,6 @@ private fun ChangePasswordScreenPreview(
     tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
         ChangePasswordScreen(
             state = ChangePasswordState.initial,
-            snackbarHostState = androidx.compose.runtime.remember { SnackbarHostState() },
             onIntent = {},
         )
     }

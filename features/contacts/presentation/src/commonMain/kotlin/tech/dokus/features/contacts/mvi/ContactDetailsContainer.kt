@@ -83,13 +83,13 @@ internal class ContactDetailsContainer(
             val notesState by delegate(notesContainer.store) { notesAction ->
                 when (notesAction) {
                     is ContactNotesAction.NoteAdded ->
-                        action(ContactDetailsAction.ShowSuccess(ContactDetailsSuccess.NoteAdded))
+                        updateState { copy(actionError = null) }
                     is ContactNotesAction.NoteUpdated ->
-                        action(ContactDetailsAction.ShowSuccess(ContactDetailsSuccess.NoteUpdated))
+                        updateState { copy(actionError = null) }
                     is ContactNotesAction.NoteDeleted ->
-                        action(ContactDetailsAction.ShowSuccess(ContactDetailsSuccess.NoteDeleted))
+                        updateState { copy(actionError = null) }
                     is ContactNotesAction.ShowError ->
-                        action(ContactDetailsAction.ShowError(notesAction.error))
+                        updateState { copy(actionError = notesAction.error) }
                 }
             }
 
@@ -150,6 +150,9 @@ internal class ContactDetailsContainer(
                     is ContactDetailsIntent.SaveEdit -> handleSaveEdit()
                     is ContactDetailsIntent.UpdateEditFormData ->
                         handleUpdateEditFormData(intent.formData)
+
+                    is ContactDetailsIntent.DismissActionError ->
+                        updateState { copy(actionError = null) }
                 }
             }
         }
@@ -374,15 +377,10 @@ internal class ContactDetailsContainer(
             val remainingSuggestions = enrichmentSuggestions.filterNot { it in suggestions }
             copy(
                 enrichmentSuggestions = remainingSuggestions,
-                uiState = uiState.copy(showEnrichmentPanel = false)
+                uiState = uiState.copy(showEnrichmentPanel = false),
+                actionError = null,
             )
         }
-
-        action(
-            ContactDetailsAction.ShowSuccess(
-                ContactDetailsSuccess.EnrichmentApplied(suggestions.size)
-            )
-        )
     }
 
     // ========================================================================
@@ -440,15 +438,14 @@ internal class ContactDetailsContainer(
                         contact = DokusState.success(updatedContact),
                         editFormData = null,
                         isSavingEdit = false,
+                        actionError = null,
                     )
                 }
                 cacheContact(updatedContact)
-                action(ContactDetailsAction.ShowSuccess(ContactDetailsSuccess.ContactUpdated))
             },
             onFailure = { error ->
                 logger.e(error) { "Failed to update contact: $editContactId" }
-                updateState { copy(isSavingEdit = false) }
-                action(ContactDetailsAction.ShowError(error.asDokusException))
+                updateState { copy(isSavingEdit = false, actionError = error.asDokusException) }
             }
         )
     }

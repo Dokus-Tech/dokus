@@ -53,6 +53,7 @@ data class TeamSettingsState(
     val bookkeeperSearchLoading: Boolean = false,
     val selectedBookkeeperFirmId: FirmId? = null,
     val actionState: TeamSettingsActionState = TeamSettingsActionState.Idle,
+    val actionError: DokusException? = null,
 ) : MVIState {
     companion object {
         val initial by lazy { TeamSettingsState() }
@@ -67,7 +68,6 @@ sealed interface TeamSettingsActionState {
     data object Idle : TeamSettingsActionState
     data object Processing : TeamSettingsActionState
     data object Inviting : TeamSettingsActionState
-    data class Success(val success: TeamSettingsSuccess) : TeamSettingsActionState
     data class Error(val error: DokusException) : TeamSettingsActionState
 }
 
@@ -128,6 +128,9 @@ sealed interface TeamSettingsIntent : MVIIntent {
 
     /** Reset action state to idle */
     data object ResetActionState : TeamSettingsIntent
+
+    /** Dismiss the action error banner */
+    data object DismissActionError : TeamSettingsIntent
 }
 
 // ============================================================================
@@ -137,25 +140,9 @@ sealed interface TeamSettingsIntent : MVIIntent {
 @Immutable
 sealed interface TeamSettingsAction : MVIAction {
 
-    /** Show a success message */
-    data class ShowSuccess(val success: TeamSettingsSuccess) : TeamSettingsAction
-
-    /** Show an error message */
-    data class ShowError(val error: DokusException) : TeamSettingsAction
-
     /** Dismiss the invite dialog */
     data object DismissInviteDialog : TeamSettingsAction
 
     /** Dismiss the grant-bookkeeper dialog */
     data object DismissBookkeeperDialog : TeamSettingsAction
-}
-
-enum class TeamSettingsSuccess {
-    InviteSent,
-    InviteCancelled,
-    RoleUpdated,
-    MemberRemoved,
-    OwnershipTransferred,
-    BookkeeperAccessGranted,
-    BookkeeperAccessRevoked,
 }

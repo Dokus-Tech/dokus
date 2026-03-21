@@ -16,8 +16,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -58,6 +56,7 @@ import tech.dokus.foundation.app.state.isLoading
 import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.common.DokusEmptyState
+import tech.dokus.foundation.aura.components.common.DokusErrorBanner
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.common.DokusLoaderSize
@@ -83,7 +82,6 @@ private val DetailPaneWidth = 280.dp
 internal fun PaymentsScreen(
     state: PaymentsState,
     onIntent: (PaymentsIntent) -> Unit,
-    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     modifier: Modifier = Modifier,
 ) {
     state.ignoreDialogState?.let { dialogState ->
@@ -111,7 +109,6 @@ internal fun PaymentsScreen(
         topBar = {
             if (!isLargeScreen) PTopAppBar(Res.string.banking_payments_title)
         },
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         modifier = modifier,
     ) { contentPadding ->
         PaymentsContent(
@@ -178,6 +175,15 @@ private fun PaymentsContent(
             ),
         verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.large),
     ) {
+        // Action error banner
+        state.actionError?.let { error ->
+            DokusErrorBanner(
+                exception = error,
+                retryHandler = null,
+                onDismiss = { onIntent(PaymentsIntent.DismissActionError) },
+            )
+        }
+
         // Unresolved callout (only when summary loaded)
         if (state.summary.isSuccess()) {
             val summary = state.summary.data

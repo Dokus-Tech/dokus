@@ -58,6 +58,7 @@ data class WorkspaceSettingsState(
     val editingSection: EditingSection? = null,
     val processingHealth: DokusState<ProcessingHealthRecommendation> = DokusState.loading(),
     val bulkReprocessState: BulkReprocessState = BulkReprocessState.Idle,
+    val actionError: DokusException? = null,
 ) : MVIState {
 
     /**
@@ -231,6 +232,9 @@ sealed interface WorkspaceSettingsIntent : MVIIntent {
 
     /** Execute bulk reprocess of eligible documents */
     data object ExecuteBulkReprocess : WorkspaceSettingsIntent
+
+    /** Dismiss the action error banner */
+    data object DismissActionError : WorkspaceSettingsIntent
 }
 
 // ============================================================================
@@ -238,15 +242,4 @@ sealed interface WorkspaceSettingsIntent : MVIIntent {
 // ============================================================================
 
 @Immutable
-sealed interface WorkspaceSettingsAction : MVIAction {
-
-    /** Show a success message */
-    data class ShowSuccess(val success: WorkspaceSettingsSuccess) : WorkspaceSettingsAction
-
-    /** Show an error message */
-    data class ShowError(val error: DokusException) : WorkspaceSettingsAction
-}
-
-enum class WorkspaceSettingsSuccess {
-    SettingsSaved,
-}
+sealed interface WorkspaceSettingsAction : MVIAction

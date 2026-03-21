@@ -17,6 +17,7 @@ import pro.respawn.flowmvi.plugins.reduce
 import pro.respawn.flowmvi.plugins.whileSubscribed
 import tech.dokus.domain.enums.InvoiceDeliveryMethod
 import tech.dokus.domain.enums.InvoiceDueDateMode
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.features.auth.usecases.GetCurrentTenantUseCase
 import tech.dokus.features.auth.usecases.GetInvoiceNumberPreviewUseCase
 import tech.dokus.features.auth.usecases.GetTenantSettingsUseCase
@@ -249,6 +250,9 @@ internal class CreateInvoiceContainer(
                         )
                     }
                     is CreateInvoiceIntent.LoadDefaults -> loadDefaults()
+                    is CreateInvoiceIntent.DismissActionError -> updateInvoice {
+                        it.copy(actionError = null)
+                    }
                 }
             }
         }
@@ -414,11 +418,11 @@ internal class CreateInvoiceContainer(
                     )
                 )
             }
-            action(
-                CreateInvoiceAction.ShowValidationError(
+            updateInvoice {
+                it.copy(actionError = DokusException.InternalError(
                     firstError?.value?.message ?: "Invoice is missing required fields."
-                )
-            )
+                ))
+            }
             return
         }
 
@@ -430,32 +434,33 @@ internal class CreateInvoiceContainer(
         val request = current.formState.toCreateInvoiceRequest(persistedPreference)
         submitInvoiceWithDelivery(request, deliveryMethod).fold(
             onSuccess = { result ->
-                updateInvoice { it.copy(formState = it.formState.copy(isSaving = false)) }
+                updateInvoice { it.copy(formState = it.formState.copy(isSaving = false), actionError = null) }
                 when (result) {
                     is SubmitInvoiceWithDeliveryResult.DraftSaved -> {
-                        action(CreateInvoiceAction.ShowSuccess("Draft saved."))
                         action(CreateInvoiceAction.NavigateBack)
                     }
                     is SubmitInvoiceWithDeliveryResult.PeppolQueued -> {
-                        action(CreateInvoiceAction.ShowSuccess("Invoice queued for PEPPOL."))
                         action(CreateInvoiceAction.NavigateBack)
                     }
                     is SubmitInvoiceWithDeliveryResult.PdfReady -> {
                         action(CreateInvoiceAction.OpenExternalUrl(result.downloadUrl))
-                        action(CreateInvoiceAction.ShowSuccess("Invoice PDF is ready."))
                         action(CreateInvoiceAction.NavigateBack)
                     }
                     is SubmitInvoiceWithDeliveryResult.DeliveryFailed -> {
-                        action(CreateInvoiceAction.ShowError("Invoice saved but delivery failed: ${result.error}"))
+                        updateInvoice {
+                            it.copy(actionError = DokusException.InternalError("Invoice saved but delivery failed: ${result.error}"))
+                        }
                         action(CreateInvoiceAction.NavigateBack)
                     }
                 }
             },
             onFailure = { error ->
                 updateInvoice {
-                    it.copy(formState = it.formState.copy(isSaving = false))
+                    it.copy(
+                        formState = it.formState.copy(isSaving = false),
+                        actionError = DokusException.InternalError(error.message ?: "Failed to submit invoice."),
+                    )
                 }
-                action(CreateInvoiceAction.ShowError(error.message ?: "Failed to submit invoice."))
             }
         )
     }

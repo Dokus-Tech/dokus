@@ -2,7 +2,6 @@ package tech.dokus.features.cashflow.presentation.detail.route
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -18,14 +17,13 @@ import org.koin.core.parameter.parametersOf
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.aura.resources.Res
-import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.aura.resources.action_cancel
 import tech.dokus.aura.resources.action_confirm
 import tech.dokus.aura.resources.cashflow_discard_changes_message
 import tech.dokus.aura.resources.cashflow_discard_changes_title
-import tech.dokus.aura.resources.cashflow_document_confirmed
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
+import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.DocumentRecordStreamEvent
 import tech.dokus.domain.model.contact.ContactDto
@@ -36,7 +34,6 @@ import tech.dokus.features.cashflow.presentation.detail.DocumentDetailContainer
 import tech.dokus.features.cashflow.presentation.detail.DocumentDetailIntent
 import tech.dokus.features.cashflow.presentation.detail.DocumentDetailQueueState
 import tech.dokus.features.cashflow.presentation.detail.DocumentDetailState
-import tech.dokus.features.cashflow.presentation.detail.DocumentDetailSuccess
 import tech.dokus.features.cashflow.presentation.detail.components.ContactEditSheet
 import tech.dokus.features.cashflow.presentation.detail.components.DocumentDetailDesktopSplit
 import tech.dokus.features.cashflow.presentation.detail.components.FeedbackDialog
@@ -105,33 +102,8 @@ internal fun DocumentDetailRoute(
         }
     }
 
-    val snackbarHostState = remember { SnackbarHostState() }
-    var pendingSuccess by remember { mutableStateOf<DocumentDetailSuccess?>(null) }
-    var pendingError by remember { mutableStateOf<DokusException?>(null) }
     var showDiscardDialog by remember { mutableStateOf(false) }
     var contactsState by remember { mutableStateOf<DokusState<List<ContactDto>>>(DokusState.idle()) }
-
-    val successMessage = pendingSuccess?.let { success ->
-        when (success) {
-            DocumentDetailSuccess.DocumentConfirmed ->
-                stringResource(Res.string.cashflow_document_confirmed)
-        }
-    }
-    val errorMessage = pendingError?.localized
-
-    LaunchedEffect(successMessage) {
-        if (successMessage != null) {
-            snackbarHostState.showSnackbar(successMessage)
-            pendingSuccess = null
-        }
-    }
-
-    LaunchedEffect(errorMessage) {
-        if (errorMessage != null) {
-            snackbarHostState.showSnackbar(errorMessage)
-            pendingError = null
-        }
-    }
 
     val state by container.store.subscribe(DefaultLifecycle) { action ->
         when (action) {
@@ -147,11 +119,6 @@ internal fun DocumentDetailRoute(
                 navController.navigateTo(
                     CashFlowDestination.CashFlowOverview(action.entryId.toString())
                 )
-            }
-            is DocumentDetailAction.ShowError -> pendingError = action.error
-            is DocumentDetailAction.ShowSuccess -> {
-                pendingSuccess = action.success
-                markDocumentsRefreshRequired()
             }
         }
     }
@@ -249,8 +216,14 @@ internal fun DocumentDetailRoute(
                     )
                 )
             },
-            snackbarHostState = snackbarHostState,
         )
+    }
+
+    // Mark documents list as needing refresh when confirm succeeds
+    LaunchedEffect(state.documentStatus) {
+        if (state.isDocumentConfirmed) {
+            markDocumentsRefreshRequired()
+        }
     }
 
     val queueState = state.queueStateOrNull()

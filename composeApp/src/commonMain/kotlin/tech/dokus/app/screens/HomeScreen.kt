@@ -13,17 +13,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.Key
@@ -48,10 +44,8 @@ import tech.dokus.app.screens.home.DesktopSidebarBottomControls
 import tech.dokus.app.screens.home.HomeShellProfileData
 import tech.dokus.app.screens.home.HomeSurfaceShell
 import tech.dokus.app.screens.home.MobileShellTopBar
-import tech.dokus.app.viewmodel.HomeAction
 import tech.dokus.app.viewmodel.HomeContainer
 import tech.dokus.app.viewmodel.HomeIntent
-import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.User
 import tech.dokus.domain.model.auth.FirmWorkspaceSummary
@@ -100,23 +94,9 @@ internal fun HomeRoute(
     val navController = LocalNavController.current
     val pendingHomeCommand by HomeNavigationCommandBus.pendingCommand.collectAsState()
     val workspaceContext by WorkspaceContextStore.state.collectAsState()
-    val snackbarHostState = remember { SnackbarHostState() }
-    var pendingError by remember { mutableStateOf<DokusException?>(null) }
-    val errorMessage = pendingError?.localized
     val isLargeScreen = LocalScreenSize.current.isLarge
 
-    LaunchedEffect(errorMessage) {
-        if (errorMessage != null) {
-            snackbarHostState.showSnackbar(errorMessage)
-            pendingError = null
-        }
-    }
-
-    val state by container.store.subscribe(DefaultLifecycle) { action ->
-        when (action) {
-            is HomeAction.ShowError -> pendingError = action.error
-        }
-    }
+    val state by container.store.subscribe(DefaultLifecycle) { _ -> }
 
     LaunchedEffect(Unit) {
         container.store.intent(HomeIntent.ScreenAppeared)
@@ -174,7 +154,6 @@ internal fun HomeRoute(
             profileData = profileData,
             pendingHomeCommand = pendingHomeCommand,
             onConsumeHomeCommand = onConsumeHomeCommand,
-            snackbarHostState = snackbarHostState,
         )
 
         if (workspaceContext.isTransitionPending) {
@@ -254,7 +233,6 @@ internal fun HomeScreen(
     tenantState: DokusState<Tenant>,
     selectedFirm: FirmWorkspaceSummary?,
     profileData: HomeShellProfileData?,
-    snackbarHostState: SnackbarHostState,
     onWorkspaceClick: () -> Unit,
     onProfileClick: () -> Unit,
     onAppearanceClick: () -> Unit,
@@ -307,10 +285,6 @@ internal fun HomeScreen(
                 )
             }
 
-            SnackbarHost(
-                hostState = snackbarHostState,
-                modifier = Modifier.align(Alignment.BottomCenter)
-            )
         }
     }
 }
@@ -570,7 +544,6 @@ private fun HomeScreenPreview(
             tenantState = DokusState.loading(),
             selectedFirm = null,
             profileData = null,
-            snackbarHostState = remember { SnackbarHostState() },
             onWorkspaceClick = {},
             onProfileClick = {},
             onAppearanceClick = {},

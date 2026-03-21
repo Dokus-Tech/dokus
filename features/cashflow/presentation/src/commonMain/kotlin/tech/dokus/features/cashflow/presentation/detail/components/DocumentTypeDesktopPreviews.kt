@@ -2,9 +2,7 @@
 
 package tech.dokus.features.cashflow.presentation.detail.components
 
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.domain.enums.DocumentType
@@ -24,7 +22,6 @@ private fun DesktopPreviewContent(type: DocumentType) {
         onOpenSource = {},
         onCorrectContact = {},
         onCreateContact = {},
-        snackbarHostState = remember { SnackbarHostState() },
     )
 }
 

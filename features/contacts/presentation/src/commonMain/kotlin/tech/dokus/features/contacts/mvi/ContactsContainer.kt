@@ -226,7 +226,6 @@ internal class ContactsContainer(
                                 )
                             )
                         }
-                        action(ContactsAction.ShowError(error.asDokusException))
                     }
                 }
             )

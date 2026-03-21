@@ -12,12 +12,9 @@ import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Plus
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -41,6 +38,7 @@ import tech.dokus.features.banking.presentation.balances.components.MobileAccoun
 import tech.dokus.features.banking.presentation.balances.mvi.BalancesIntent
 import tech.dokus.features.banking.presentation.balances.mvi.BalancesState
 import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.aura.components.common.DokusErrorBanner
 import tech.dokus.foundation.app.state.isError
 import tech.dokus.foundation.app.state.isLoading
 import tech.dokus.foundation.app.state.isSuccess
@@ -67,7 +65,6 @@ import tech.dokus.foundation.aura.tooling.TestWrapper
 internal fun BalancesScreen(
     state: BalancesState,
     onIntent: (BalancesIntent) -> Unit,
-    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     modifier: Modifier = Modifier,
 ) {
     val isLargeScreen = LocalScreenSize.current.isLarge
@@ -75,7 +72,6 @@ internal fun BalancesScreen(
         topBar = {
             if (!isLargeScreen) PTopAppBar(Res.string.banking_balances_title)
         },
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         modifier = modifier,
     ) { contentPadding ->
         BalancesContent(
@@ -105,6 +101,17 @@ private fun BalancesContent(
         verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.large),
         contentPadding = PaddingValues(bottom = Constraints.Spacing.large),
     ) {
+        // Action error banner
+        state.actionError?.let { error ->
+            item {
+                DokusErrorBanner(
+                    exception = error,
+                    retryHandler = null,
+                    onDismiss = { onIntent(BalancesIntent.DismissActionError) },
+                )
+            }
+        }
+
         // Stats row
         if (state.summary.isSuccess()) {
             item {

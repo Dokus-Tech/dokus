@@ -39,6 +39,7 @@ data class TodayState(
     val notificationsState: DokusState<List<NotificationDto>> = DokusState.idle(),
     val unreadNotificationCount: Int = 0,
     val notificationFilter: NotificationFilterTab = NotificationFilterTab.All,
+    val actionError: DokusException? = null,
 ) : MVIState {
     companion object {
         const val PENDING_PAGE_SIZE = 5
@@ -73,6 +74,9 @@ sealed interface TodayIntent : MVIIntent {
 
     /** Mark all notifications as read */
     data object MarkAllNotificationsRead : TodayIntent
+
+    /** Dismiss the action error banner */
+    data object DismissActionError : TodayIntent
 }
 
 // ============================================================================
@@ -90,9 +94,6 @@ sealed interface TodayAction : MVIAction {
 
     /** Navigate to workspace selection */
     data object NavigateToWorkspaceSelect : TodayAction
-
-    /** Show error message */
-    data class ShowError(val error: DokusException) : TodayAction
 }
 
 @Immutable

@@ -1,12 +1,8 @@
 package tech.dokus.app.screens.accountant
 
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import org.jetbrains.compose.resources.stringResource
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
@@ -16,7 +12,6 @@ import tech.dokus.aura.resources.console_clients_overview_title
 import tech.dokus.aura.resources.console_requests_period_label
 import tech.dokus.app.screens.console.canRenderConsoleContent
 import tech.dokus.app.screens.console.isConsoleAccessDenied
-import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.foundation.app.shell.HomeShellTopBarAction
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.foundation.app.shell.HomeShellTopBarConfig
@@ -24,7 +19,6 @@ import tech.dokus.foundation.app.shell.HomeShellTopBarMode
 import tech.dokus.foundation.app.shell.LocalUserAccessContext
 import tech.dokus.foundation.app.shell.RegisterHomeShellTopBar
 import tech.dokus.foundation.app.state.isSuccess
-import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.navigation.destinations.HomeDestination
 import tech.dokus.navigation.destinations.route
 import tech.dokus.navigation.local.LocalNavController
@@ -51,25 +45,8 @@ internal fun ConsoleClientsRoute(
         ConsoleClientsIntent,
         ConsoleClientsAction
         >()
-    val snackbarHostState = remember { SnackbarHostState() }
-    var pendingError by remember { mutableStateOf<DokusException?>(null) }
 
-    val errorMessage = pendingError?.localized
-
-    LaunchedEffect(errorMessage) {
-        if (errorMessage != null) {
-            snackbarHostState.showSnackbar(errorMessage)
-            pendingError = null
-        }
-    }
-
-    val state by container.store.subscribe(DefaultLifecycle) { action ->
-        when (action) {
-            is ConsoleClientsAction.ShowError -> {
-                pendingError = action.error
-            }
-        }
-    }
+    val state by container.store.subscribe(DefaultLifecycle) { _ -> }
 
     val defaultTitle = stringResource(Res.string.console_clients_overview_title)
     val periodLabel = stringResource(Res.string.console_requests_period_label)
@@ -108,7 +85,6 @@ internal fun ConsoleClientsRoute(
 
     ConsoleClientsScreen(
         state = state,
-        snackbarHostState = snackbarHostState,
         onIntent = { container.store.intent(it) },
     )
 }

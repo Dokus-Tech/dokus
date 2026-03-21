@@ -20,8 +20,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -105,7 +103,9 @@ import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.MonogramAvatar
 import tech.dokus.foundation.aura.components.UserAvatarImage
 import tech.dokus.foundation.aura.components.badges.TierBadge
+import tech.dokus.foundation.aura.components.common.DokusErrorBanner
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.common.DokusSelectableRowGroup
 import tech.dokus.foundation.aura.components.common.PTopAppBar
@@ -134,7 +134,6 @@ private val SectionSpacing = 14.dp
 @Composable
 internal fun TeamSettingsScreen(
     state: TeamSettingsState,
-    snackbarHostState: SnackbarHostState,
     showInviteDialog: Boolean,
     onShowInviteDialog: (Boolean) -> Unit,
     showBookkeeperDialog: Boolean,
@@ -146,17 +145,26 @@ internal fun TeamSettingsScreen(
         topBar = {
             if (!isLargeScreen) PTopAppBar(Res.string.team_settings_title)
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { contentPadding ->
-        TeamSettingsContent(
-            state = state,
-            showInviteDialog = showInviteDialog,
-            onShowInviteDialog = onShowInviteDialog,
-            showBookkeeperDialog = showBookkeeperDialog,
-            onShowBookkeeperDialog = onShowBookkeeperDialog,
-            onIntent = onIntent,
-            modifier = Modifier.padding(contentPadding)
-        )
+        Column(modifier = Modifier.padding(contentPadding)) {
+            if (state.actionError != null) {
+                DokusErrorBanner(
+                    exception = state.actionError,
+                    retryHandler = null,
+                    modifier = Modifier.padding(horizontal = Constraints.Spacing.large),
+                    onDismiss = { onIntent(TeamSettingsIntent.DismissActionError) },
+                )
+            }
+
+            TeamSettingsContent(
+                state = state,
+                showInviteDialog = showInviteDialog,
+                onShowInviteDialog = onShowInviteDialog,
+                showBookkeeperDialog = showBookkeeperDialog,
+                onShowBookkeeperDialog = onShowBookkeeperDialog,
+                onIntent = onIntent,
+            )
+        }
     }
 }
 
