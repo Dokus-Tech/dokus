@@ -28,6 +28,7 @@ import tech.dokus.aura.resources.vat_predicted_net_amount
 import tech.dokus.aura.resources.vat_quarter_sublabel
 import tech.dokus.aura.resources.vat_summary_title
 import tech.dokus.domain.Money
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.app.state.isError
@@ -338,6 +339,18 @@ private fun VatSummaryCardLoadingPreview(
     TestWrapper(parameters) {
         VatSummaryCard(
             state = DokusState.loading()
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun VatSummaryCardErrorPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        VatSummaryCard(
+            state = DokusState.error(exception = DokusException.ConnectionError(), retryHandler = {})
         )
     }
 }

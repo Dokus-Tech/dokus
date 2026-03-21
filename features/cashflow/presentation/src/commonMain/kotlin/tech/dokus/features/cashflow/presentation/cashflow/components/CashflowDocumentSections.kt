@@ -19,6 +19,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_no_documents
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.DocDto
 import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.foundation.app.state.DokusState
@@ -281,5 +282,19 @@ private fun LoadingMoreIndicatorPreview(
 ) {
     TestWrapper(parameters) {
         LoadingMoreIndicator()
+    }
+}
+
+@Preview
+@Composable
+private fun CashflowDocumentsTableSectionErrorPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        CashflowDocumentsTableSection(
+            state = DokusState.error(exception = DokusException.ConnectionError(), retryHandler = {}),
+            onDocumentClick = {},
+            onMoreClick = {},
+        )
     }
 }

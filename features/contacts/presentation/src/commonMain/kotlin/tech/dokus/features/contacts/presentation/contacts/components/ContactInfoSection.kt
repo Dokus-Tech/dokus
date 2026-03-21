@@ -13,6 +13,7 @@ import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.contacts_contact_info
 import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.app.state.isError
 import tech.dokus.foundation.app.state.isSuccess
@@ -90,6 +91,23 @@ private fun ContactInfoSectionPreview(
                     createdAt = now,
                     updatedAt = now
                 )
+            )
+        )
+    }
+}
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun ContactInfoSectionErrorPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        PreviewParametersProvider::class
+    ) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        ContactInfoSection(
+            state = DokusState.error(
+                exception = DokusException.ConnectionError(),
+                retryHandler = {},
             )
         )
     }

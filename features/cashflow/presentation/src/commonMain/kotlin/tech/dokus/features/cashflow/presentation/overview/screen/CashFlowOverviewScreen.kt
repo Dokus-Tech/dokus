@@ -49,6 +49,8 @@ import tech.dokus.aura.resources.cashflow_empty_upcoming
 import tech.dokus.aura.resources.cashflow_empty_upcoming_hint
 import tech.dokus.aura.resources.cashflow_empty_upcoming_in
 import tech.dokus.aura.resources.cashflow_empty_upcoming_out
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.domain.model.CashflowEntryDto
 import tech.dokus.features.cashflow.presentation.common.components.pagination.rememberLoadMoreTrigger
 import tech.dokus.features.cashflow.presentation.common.components.table.DokusTableDivider
@@ -424,6 +426,21 @@ private fun CashFlowOverviewScreenPreview(
     TestWrapper(parameters) {
         CashFlowOverviewScreen(
             state = CashFlowOverviewState.initial,
+            onIntent = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun CashFlowOverviewScreenErrorPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        CashFlowOverviewScreen(
+            state = CashFlowOverviewState.initial.copy(
+                entries = DokusState.error(exception = DokusException.ConnectionError(), retryHandler = {}),
+            ),
             onIntent = {},
         )
     }

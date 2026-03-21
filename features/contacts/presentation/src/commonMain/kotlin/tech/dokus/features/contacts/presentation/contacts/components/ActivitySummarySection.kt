@@ -32,6 +32,7 @@ import tech.dokus.aura.resources.contacts_last_activity_value
 import tech.dokus.aura.resources.contacts_pending_approval_plural
 import tech.dokus.aura.resources.contacts_pending_approval_single
 import tech.dokus.domain.model.contact.ContactActivitySummary
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.app.state.isError
 import tech.dokus.foundation.app.state.isSuccess
@@ -281,6 +282,23 @@ private fun ActivitySummarySectionPreview(
                     expenseTotal = "1,050.00",
                     pendingApprovalCount = 2
                 )
+            )
+        )
+    }
+}
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun ActivitySummarySectionErrorPreview(
+    @androidx.compose.ui.tooling.preview.PreviewParameter(
+        PreviewParametersProvider::class
+    ) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        ActivitySummarySection(
+            state = DokusState.error(
+                exception = DokusException.ConnectionError(),
+                retryHandler = {},
             )
         )
     }

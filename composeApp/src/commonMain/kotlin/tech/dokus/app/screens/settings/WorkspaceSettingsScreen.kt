@@ -36,6 +36,7 @@ import tech.dokus.aura.resources.workspace_settings_title
 import tech.dokus.app.screens.settings.components.SettingsSkeleton
 import kotlinx.datetime.LocalDateTime
 import tech.dokus.domain.DisplayName
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.LegalName
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
@@ -333,6 +334,21 @@ private fun WorkspaceSettingsContentLoadingPreview(
     TestWrapper(parameters) {
         WorkspaceSettingsContent(
             state = WorkspaceSettingsState(),
+            onIntent = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun WorkspaceSettingsContentErrorPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        WorkspaceSettingsContent(
+            state = WorkspaceSettingsState(
+                workspaceData = DokusState.error(exception = DokusException.ConnectionError(), retryHandler = {}),
+            ),
             onIntent = {},
         )
     }

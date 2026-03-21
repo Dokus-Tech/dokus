@@ -27,6 +27,7 @@ import tech.dokus.aura.resources.banking_balances_no_chart_data
 import tech.dokus.aura.resources.banking_balances_timeline_subtitle
 import tech.dokus.aura.resources.banking_balances_timeline_title
 import tech.dokus.domain.Money
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.BankAccountId
 import tech.dokus.domain.model.AccountBalanceSeriesDto
 import tech.dokus.domain.model.BalanceHistoryPointDto
@@ -342,6 +343,21 @@ private fun BalanceTimelineCardPreview(
         BalanceTimelineCard(
             summary = DokusState.success(PreviewSummary),
             balanceHistory = DokusState.success(PreviewBalanceHistory),
+            timeRange = BalanceTimeRange.ThirtyDays,
+            onTimeRangeChange = {},
+        )
+    }
+}
+
+@Preview(name = "Balance Timeline Card — Error", widthDp = 800)
+@Composable
+private fun BalanceTimelineCardErrorPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        BalanceTimelineCard(
+            summary = DokusState.error(exception = DokusException.ConnectionError(), retryHandler = {}),
+            balanceHistory = DokusState.error(exception = DokusException.ConnectionError(), retryHandler = {}),
             timeRange = BalanceTimeRange.ThirtyDays,
             onTimeRangeChange = {},
         )

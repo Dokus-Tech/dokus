@@ -35,6 +35,7 @@ import tech.dokus.aura.resources.contacts_edit_note
 import tech.dokus.aura.resources.contacts_no_notes
 import tech.dokus.aura.resources.contacts_note_by
 import tech.dokus.aura.resources.contacts_notes
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.ContactNoteId
 import tech.dokus.domain.ids.TenantId
@@ -317,6 +318,21 @@ private fun NotesSectionPreview(
             onAddNote = {},
             onEditNote = {},
             onDeleteNote = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun NotesSectionErrorPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        NotesSection(
+            state = DokusState.error(exception = DokusException.ConnectionError(), retryHandler = {}),
+            onAddNote = {},
+            onEditNote = {},
+            onDeleteNote = {},
         )
     }
 }
