@@ -1,61 +1,50 @@
 package tech.dokus.features.cashflow.presentation.review.route
 
 import tech.dokus.domain.enums.DocumentListFilter
-import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentFilter
 import tech.dokus.navigation.destinations.CashFlowDestination
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 
 class DocumentReviewRouteMappingsTest {
 
     @Test
-    fun `documents filter maps to review route filter`() {
-        assertEquals(
-            CashFlowDestination.DocumentReviewSourceFilter.All,
-            DocumentFilter.All.toRouteFilter(),
-        )
-        assertEquals(
-            CashFlowDestination.DocumentReviewSourceFilter.NeedsAttention,
-            DocumentFilter.NeedsAttention.toRouteFilter(),
-        )
-        assertEquals(
-            CashFlowDestination.DocumentReviewSourceFilter.Confirmed,
-            DocumentFilter.Confirmed.toRouteFilter(),
-        )
-    }
-
-    @Test
-    fun `review route filter maps to list filter`() {
-        assertEquals(DocumentListFilter.All, CashFlowDestination.DocumentReviewSourceFilter.All.toListFilter())
-        assertEquals(
-            DocumentListFilter.NeedsAttention,
-            CashFlowDestination.DocumentReviewSourceFilter.NeedsAttention.toListFilter(),
-        )
-        assertEquals(
-            DocumentListFilter.Confirmed,
-            CashFlowDestination.DocumentReviewSourceFilter.Confirmed.toListFilter(),
-        )
-    }
-
-    @Test
-    fun `route context is absent when source filter is missing`() {
+    fun `route with default source maps to Recent context`() {
         val route = CashFlowDestination.DocumentReview(documentId = "doc-1")
+        val context = route.toQueueContext()
 
-        kotlin.test.assertNull(route.toRouteContextOrNull())
+        assertIs<CashFlowDestination.DocumentReviewQueueSource.Recent>(context.source)
     }
 
     @Test
-    fun `route context keeps filter and sort`() {
+    fun `route with document list source preserves filter`() {
         val route = CashFlowDestination.DocumentReview(
             documentId = "doc-1",
-            sourceFilter = CashFlowDestination.DocumentReviewSourceFilter.All.token,
-            sourceSort = CashFlowDestination.DocumentReviewSourceSort.NewestFirst.token,
+            queueSource = CashFlowDestination.DocumentReviewQueueSource.DocumentList(
+                filter = DocumentListFilter.NeedsAttention,
+            ),
         )
 
-        val context = route.toRouteContextOrNull()
+        val context = route.toQueueContext()
 
-        requireNotNull(context)
-        assertEquals(CashFlowDestination.DocumentReviewSourceFilter.All, context.filter)
-        assertEquals(CashFlowDestination.DocumentReviewSourceSort.NewestFirst, context.sort)
+        val source = assertIs<CashFlowDestination.DocumentReviewQueueSource.DocumentList>(context.source)
+        assertEquals(DocumentListFilter.NeedsAttention, source.filter)
+    }
+
+    @Test
+    fun `route with contact source preserves contact info`() {
+        val route = CashFlowDestination.DocumentReview(
+            documentId = "doc-1",
+            queueSource = CashFlowDestination.DocumentReviewQueueSource.Contact(
+                contactId = "contact-42",
+                contactName = "Acme Corp",
+            ),
+        )
+
+        val context = route.toQueueContext()
+
+        val source = assertIs<CashFlowDestination.DocumentReviewQueueSource.Contact>(context.source)
+        assertEquals("contact-42", source.contactId)
+        assertEquals("Acme Corp", source.contactName)
     }
 }

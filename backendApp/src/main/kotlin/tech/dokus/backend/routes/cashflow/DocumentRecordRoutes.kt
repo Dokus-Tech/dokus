@@ -109,6 +109,7 @@ internal fun Route.documentRecordRoutes() {
             val result = listingService.listDocuments(
                 tenantId = tenantId,
                 filter = filter,
+                contactId = route.contactId,
                 documentStatus = route.documentStatus,
                 documentType = route.documentType,
                 ingestionStatus = route.ingestionStatus,

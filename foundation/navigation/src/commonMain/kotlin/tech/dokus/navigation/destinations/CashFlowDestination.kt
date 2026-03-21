@@ -2,38 +2,39 @@ package tech.dokus.navigation.destinations
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import tech.dokus.domain.enums.DocumentListFilter
 
 sealed interface CashFlowDestination : NavigationDestination {
+
+    /**
+     * Describes which documents to show in the review screen's contextual queue panel.
+     */
     @Serializable
-    enum class DocumentReviewSourceFilter {
-        All,
-        NeedsAttention,
-        Confirmed;
+    sealed interface DocumentReviewQueueSource {
+        /** Documents matching a list filter (from documents overview or cashflow ledger). */
+        @Serializable
+        @SerialName("list")
+        data class DocumentList(
+            val filter: DocumentListFilter = DocumentListFilter.All,
+        ) : DocumentReviewQueueSource
 
-        val token: String
-            get() = name
+        /** Documents belonging to a specific contact. */
+        @Serializable
+        @SerialName("contact")
+        data class Contact(
+            val contactId: String,
+            val contactName: String,
+        ) : DocumentReviewQueueSource
 
-        companion object {
-            fun fromToken(token: String?): DocumentReviewSourceFilter? {
-                if (token.isNullOrBlank()) return null
-                return entries.firstOrNull { it.name.equals(token, ignoreCase = true) }
-            }
-        }
-    }
+        /** Documents matching a search query. */
+        @Serializable
+        @SerialName("search")
+        data class Search(val query: String) : DocumentReviewQueueSource
 
-    @Serializable
-    enum class DocumentReviewSourceSort {
-        NewestFirst;
-
-        val token: String
-            get() = name
-
-        companion object {
-            fun fromToken(token: String?): DocumentReviewSourceSort {
-                if (token.isNullOrBlank()) return NewestFirst
-                return entries.firstOrNull { it.name.equals(token, ignoreCase = true) } ?: NewestFirst
-            }
-        }
+        /** Most recent documents (fallback when no context available). */
+        @Serializable
+        @SerialName("recent")
+        data object Recent : DocumentReviewQueueSource
     }
 
     @Serializable
@@ -47,19 +48,17 @@ sealed interface CashFlowDestination : NavigationDestination {
     /**
      * Document review screen for reviewing and editing AI-extracted data.
      * @param documentId The document ID (UUID string)
+     * @param queueSource Controls which documents appear in the contextual queue panel
      */
     @Serializable
     @SerialName("cashflow/document_review")
     data class DocumentReview(
         val documentId: String,
-        val sourceFilter: String? = null,
-        val sourceSort: String = DocumentReviewSourceSort.NewestFirst.token,
+        val queueSource: DocumentReviewQueueSource = DocumentReviewQueueSource.Recent,
     ) : CashFlowDestination
 
     /**
      * Source evidence viewer screen for a specific document source.
-     * @param documentId The parent document ID (UUID string)
-     * @param sourceId The source ID (UUID string)
      */
     @Serializable
     @SerialName("cashflow/document_source_viewer")
@@ -70,7 +69,6 @@ sealed interface CashFlowDestination : NavigationDestination {
 
     /**
      * Single-document chat screen for RAG-powered Q&A about a specific document.
-     * @param documentId The document ID (UUID string)
      */
     @Serializable
     @SerialName("cashflow/document_chat")
@@ -78,8 +76,6 @@ sealed interface CashFlowDestination : NavigationDestination {
 
     /**
      * Cashflow ledger screen with optional entry highlighting.
-     * Used for deep linking to a specific cashflow entry.
-     * @param highlightEntryId The cashflow entry ID to highlight (UUID string), or null
      */
     @Serializable
     @SerialName("cashflow/ledger")

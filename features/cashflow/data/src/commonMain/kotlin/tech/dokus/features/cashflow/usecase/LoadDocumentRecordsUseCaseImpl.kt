@@ -22,6 +22,7 @@ internal class LoadDocumentRecordsUseCaseImpl(
         documentStatus: DocumentStatus?,
         ingestionStatus: IngestionStatus?,
         sortBy: String?,
+        contactId: String?,
     ): Result<PaginatedResponse<DocumentListItemDto>> {
         require(page >= 0) { "Page must be non-negative" }
         require(pageSize > 0) { "Page size must be positive" }
@@ -31,6 +32,7 @@ internal class LoadDocumentRecordsUseCaseImpl(
             documentStatus = documentStatus,
             ingestionStatus = ingestionStatus,
             sortBy = sortBy,
+            contactId = contactId,
             page = page,
             limit = pageSize
         )

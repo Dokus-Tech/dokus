@@ -113,7 +113,16 @@ internal fun ContactDetailsRoute(
         onIntent = { container.store.intent(it) },
         onBackClick = { navController.popBackStack() },
         onDocumentClick = { documentId ->
-            navController.navigateTo(CashFlowDestination.DocumentReview(documentId.toString()))
+            val contactName = (state.contact as? DokusState.Success)?.data?.name?.value.orEmpty()
+            navController.navigateTo(
+                CashFlowDestination.DocumentReview(
+                    documentId = documentId.toString(),
+                    queueSource = CashFlowDestination.DocumentReviewQueueSource.Contact(
+                        contactId = contactId,
+                        contactName = contactName,
+                    ),
+                )
+            )
         },
     )
 

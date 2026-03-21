@@ -56,6 +56,7 @@ class Documents {
         val documentType: DocumentType? = null,
         val ingestionStatus: IngestionStatus? = null,
         val sortBy: String? = null,
+        val contactId: String? = null,
         val page: Int = 0,
         val limit: Int = 20
     )

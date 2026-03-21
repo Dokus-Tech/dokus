@@ -45,6 +45,7 @@ class DocumentListingService(
     suspend fun listDocuments(
         tenantId: TenantId,
         filter: DocumentListFilter?,
+        contactId: String? = null,
         documentStatus: DocumentStatus?,
         documentType: DocumentType?,
         ingestionStatus: IngestionStatus?,
@@ -55,6 +56,7 @@ class DocumentListingService(
         val (documentsWithInfo, total) = documentRepository.listWithDraftsAndIngestion(
             tenantId = tenantId,
             filter = filter,
+            contactId = contactId,
             documentStatus = documentStatus,
             documentType = documentType,
             ingestionStatus = ingestionStatus,

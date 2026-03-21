@@ -31,7 +31,7 @@ import tech.dokus.features.cashflow.presentation.peppol.mvi.PeppolRegistrationSt
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewAction
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewContainer
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
-import tech.dokus.features.cashflow.presentation.review.DocumentReviewRouteContext
+import tech.dokus.features.cashflow.presentation.review.DocumentReviewQueueContext
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.mvi.clientlookup.ClientLookupContainer
 import tech.dokus.features.cashflow.presentation.review.mvi.payment.DocumentPaymentContainer
@@ -67,7 +67,7 @@ val cashflowViewModelModule = module {
             clientLookupContainer = get(),
         )
     }
-    container<DocumentReviewContainer, DocumentReviewState, DocumentReviewIntent, DocumentReviewAction> { (initialDocumentId: DocumentId, routeContext: DocumentReviewRouteContext?) ->
+    container<DocumentReviewContainer, DocumentReviewState, DocumentReviewIntent, DocumentReviewAction> { (initialDocumentId: DocumentId, queueContext: DocumentReviewQueueContext) ->
         DocumentReviewContainer(
             getDocumentRecord = get(),
             updateDocumentDraft = get(),
@@ -82,7 +82,7 @@ val cashflowViewModelModule = module {
             paymentContainer = get(),
             previewContainer = get(),
             initialDocumentId = initialDocumentId,
-            routeContext = routeContext,
+            queueContext = queueContext,
         )
     }
     container<ChatContainer, ChatState, ChatIntent, ChatAction> {

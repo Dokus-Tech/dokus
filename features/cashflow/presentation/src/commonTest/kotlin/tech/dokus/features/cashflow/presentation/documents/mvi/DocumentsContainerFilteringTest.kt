@@ -150,6 +150,7 @@ private class FakeLoadDocumentRecordsUseCase : LoadDocumentRecordsUseCase {
         documentStatus: DocumentStatus?,
         ingestionStatus: IngestionStatus?,
         sortBy: String?,
+        contactId: String?,
     ): Result<PaginatedResponse<DocumentListItemDto>> {
         val effectiveFilter = filter ?: DocumentListFilter.All
         val queue = requireNotNull(pageResults[effectiveFilter]) {

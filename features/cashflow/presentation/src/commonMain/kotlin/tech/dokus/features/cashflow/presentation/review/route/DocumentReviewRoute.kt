@@ -34,7 +34,7 @@ import tech.dokus.features.cashflow.presentation.review.DocumentReviewContainer
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
 import tech.dokus.features.cashflow.presentation.review.mvi.payment.DocumentPaymentIntent
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewQueueState
-import tech.dokus.features.cashflow.presentation.review.DocumentReviewRouteContext
+import tech.dokus.features.cashflow.presentation.review.DocumentReviewQueueContext
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewSuccess
 import tech.dokus.features.cashflow.presentation.review.components.ContactEditSheet
@@ -65,11 +65,11 @@ private const val CONTACT_RESULT_KEY = "documentReview_contactId"
 @Composable
 internal fun DocumentReviewRoute(
     route: CashFlowDestination.DocumentReview,
-    routeContext: DocumentReviewRouteContext? = route.toRouteContextOrNull(),
+    queueContext: DocumentReviewQueueContext = route.toQueueContext(),
     container: DocumentReviewContainer = container {
         parametersOf(
             DocumentId.parse(route.documentId),
-            routeContext,
+            queueContext,
         )
     },
     listContacts: ListContactsUseCase = org.koin.compose.koinInject(),
@@ -171,8 +171,7 @@ internal fun DocumentReviewRoute(
         }
     }
 
-    LaunchedEffect(routeContext) {
-        if (routeContext == null) return@LaunchedEffect
+    LaunchedEffect(queueContext) {
         observeDocumentCollectionChanges().collect {
             dispatchIntent(DocumentReviewIntent.RefreshQueue)
         }

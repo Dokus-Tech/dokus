@@ -473,6 +473,7 @@ interface CashflowRemoteDataSource {
         documentType: DocumentType? = null,
         ingestionStatus: IngestionStatus? = null,
         sortBy: String? = null,
+        contactId: String? = null,
         page: Int = 0,
         limit: Int = 20
     ): Result<PaginatedResponse<DocumentListItemDto>>

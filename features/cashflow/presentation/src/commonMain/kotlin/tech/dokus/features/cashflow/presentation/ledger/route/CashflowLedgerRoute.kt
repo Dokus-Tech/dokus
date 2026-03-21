@@ -66,7 +66,12 @@ internal fun CashflowLedgerRoute(
     val state by container.store.subscribe(DefaultLifecycle) { action ->
         when (action) {
             is CashflowLedgerAction.NavigateToDocumentReview -> {
-                navController.navigateTo(CashFlowDestination.DocumentReview(action.documentId))
+                navController.navigateTo(
+                    CashFlowDestination.DocumentReview(
+                        documentId = action.documentId,
+                        queueSource = CashFlowDestination.DocumentReviewQueueSource.DocumentList(),
+                    )
+                )
             }
             is CashflowLedgerAction.NavigateToEntity -> {
                 // TODO: Navigate to entity detail screen when available

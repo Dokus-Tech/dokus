@@ -13,6 +13,7 @@ import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.features.cashflow.usecases.GetDocumentCountsUseCase
 import tech.dokus.features.cashflow.usecases.LoadDocumentRecordsUseCase
+import tech.dokus.navigation.destinations.CashFlowDestination
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.platform.Logger
@@ -220,7 +221,10 @@ internal class DocumentsContainer(
 
     private suspend fun DocumentsCtx.handleOpenDocument(documentId: DocumentId) {
         withState {
-            action(DocumentsAction.NavigateToDocumentReview(documentId, filter))
+            val queueSource = CashFlowDestination.DocumentReviewQueueSource.DocumentList(
+                filter = filter.toListFilter(),
+            )
+            action(DocumentsAction.NavigateToDocumentReview(documentId, queueSource))
         }
     }
 

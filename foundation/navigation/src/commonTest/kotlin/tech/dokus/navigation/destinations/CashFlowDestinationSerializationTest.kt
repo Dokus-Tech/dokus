@@ -1,20 +1,22 @@
 package tech.dokus.navigation.destinations
 
 import kotlinx.serialization.json.Json
+import tech.dokus.domain.enums.DocumentListFilter
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNull
+import kotlin.test.assertIs
 
 class CashFlowDestinationSerializationTest {
 
     private val json = Json
 
     @Test
-    fun `document review destination serializes route context`() {
+    fun `document review destination serializes queue source`() {
         val destination = CashFlowDestination.DocumentReview(
             documentId = "doc-101",
-            sourceFilter = CashFlowDestination.DocumentReviewSourceFilter.NeedsAttention.token,
-            sourceSort = CashFlowDestination.DocumentReviewSourceSort.NewestFirst.token,
+            queueSource = CashFlowDestination.DocumentReviewQueueSource.DocumentList(
+                filter = DocumentListFilter.NeedsAttention,
+            ),
         )
 
         val encoded = json.encodeToString(
@@ -30,14 +32,32 @@ class CashFlowDestinationSerializationTest {
     }
 
     @Test
-    fun `document review destination keeps backward compatible defaults`() {
+    fun `document review destination defaults to Recent queue source`() {
         val destination = CashFlowDestination.DocumentReview(documentId = "doc-102")
 
-        assertNull(destination.sourceFilter)
-        assertEquals(
-            CashFlowDestination.DocumentReviewSourceSort.NewestFirst.token,
-            destination.sourceSort,
+        assertIs<CashFlowDestination.DocumentReviewQueueSource.Recent>(destination.queueSource)
+    }
+
+    @Test
+    fun `document review destination with contact source serializes`() {
+        val destination = CashFlowDestination.DocumentReview(
+            documentId = "doc-103",
+            queueSource = CashFlowDestination.DocumentReviewQueueSource.Contact(
+                contactId = "contact-1",
+                contactName = "Acme Corp",
+            ),
         )
+
+        val encoded = json.encodeToString(
+            CashFlowDestination.DocumentReview.serializer(),
+            destination,
+        )
+        val decoded = json.decodeFromString(
+            CashFlowDestination.DocumentReview.serializer(),
+            encoded,
+        )
+
+        assertEquals(destination, decoded)
     }
 
     @Test

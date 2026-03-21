@@ -17,5 +17,6 @@ interface LoadDocumentRecordsUseCase {
         documentStatus: DocumentStatus? = null,
         ingestionStatus: IngestionStatus? = null,
         sortBy: String? = null,
+        contactId: String? = null,
     ): Result<PaginatedResponse<DocumentListItemDto>>
 }

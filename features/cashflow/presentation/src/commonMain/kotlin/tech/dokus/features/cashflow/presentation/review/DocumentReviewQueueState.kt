@@ -5,14 +5,13 @@ import tech.dokus.foundation.app.shell.DocQueueItem
 import tech.dokus.navigation.destinations.CashFlowDestination
 
 @Immutable
-data class DocumentReviewRouteContext(
-    val filter: CashFlowDestination.DocumentReviewSourceFilter,
-    val sort: CashFlowDestination.DocumentReviewSourceSort,
+data class DocumentReviewQueueContext(
+    val source: CashFlowDestination.DocumentReviewQueueSource,
 )
 
 @Immutable
 data class DocumentReviewQueueState(
-    val context: DocumentReviewRouteContext,
+    val context: DocumentReviewQueueContext,
     val items: List<DocQueueItem> = emptyList(),
     val currentPage: Int = -1,
     val hasMore: Boolean = true,

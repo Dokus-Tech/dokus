@@ -35,7 +35,6 @@ import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsContaine
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsIntent
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsState
 import tech.dokus.features.cashflow.presentation.documents.screen.DocumentsScreen
-import tech.dokus.features.cashflow.presentation.review.route.toRouteFilterToken
 import tech.dokus.features.cashflow.usecases.GetDocumentRecordUseCase
 import tech.dokus.features.cashflow.usecases.ObserveDocumentCollectionChangesUseCase
 import tech.dokus.foundation.app.mvi.container
@@ -279,7 +278,6 @@ internal fun toDocumentReviewDestination(
 ): CashFlowDestination.DocumentReview {
     return CashFlowDestination.DocumentReview(
         documentId = action.documentId.toString(),
-        sourceFilter = action.sourceFilter.toRouteFilterToken(),
-        sourceSort = action.sourceSort.token,
+        queueSource = action.queueSource,
     )
 }
