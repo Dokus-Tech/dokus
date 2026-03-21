@@ -98,7 +98,7 @@ internal fun TodayRoute(
     val state by container.store.subscribe { action ->
         when (action) {
             is TodayAction.NavigateToDocument -> {
-                navController.navigateTo(CashFlowDestination.DocumentReview(action.documentId))
+                navController.navigateTo(CashFlowDestination.DocumentDetail(action.documentId))
             }
 
             TodayAction.NavigateToCashflow -> {
@@ -126,12 +126,12 @@ internal fun TodayRoute(
         snackbarHostState = snackbarHostState,
         onReviewClick = { doc ->
             navController.navigateTo(
-                CashFlowDestination.DocumentReview(doc.documentId.toString())
+                CashFlowDestination.DocumentDetail(doc.documentId.toString())
             )
         },
         onDocumentClick = { doc ->
             navController.navigateTo(
-                CashFlowDestination.DocumentReview(doc.documentId.toString())
+                CashFlowDestination.DocumentDetail(doc.documentId.toString())
             )
         },
         onViewAllClick = {

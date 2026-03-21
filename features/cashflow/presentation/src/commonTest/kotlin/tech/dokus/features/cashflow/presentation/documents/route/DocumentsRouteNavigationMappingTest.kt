@@ -14,22 +14,22 @@ class DocumentsRouteNavigationMappingTest {
 
     @Test
     fun `documents action maps to document review route with filter`() {
-        val queueSource = CashFlowDestination.DocumentReviewQueueContext.DocumentList(
+        val queueSource = CashFlowDestination.DocumentDetailQueueContext.DocumentList(
             filter = DocumentListFilter.NeedsAttention,
         )
-        val action = DocumentsAction.NavigateToDocumentReview(
+        val action = DocumentsAction.NavigateToDocumentDetail(
             documentId = DocumentId.parse("00000000-0000-0000-0000-000000000111"),
             queueSource = queueSource,
         )
 
-        val destination = CashFlowDestination.DocumentReview.from(
+        val destination = CashFlowDestination.DocumentDetail.from(
             action.documentId,
             action.queueSource,
         )
 
         assertEquals(action.documentId.toString(), destination.documentId)
         assertEquals(DocumentListFilter.NeedsAttention.name, destination.filter)
-        val source = assertIs<CashFlowDestination.DocumentReviewQueueContext.DocumentList>(destination.queueSource)
+        val source = assertIs<CashFlowDestination.DocumentDetailQueueContext.DocumentList>(destination.queueSource)
         assertEquals(DocumentListFilter.NeedsAttention, source.filter)
     }
 }

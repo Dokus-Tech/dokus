@@ -188,7 +188,7 @@ class SearchContainerTest {
             emit(SearchIntent.QueryChanged("kbc"))
             advanceUntilIdle()
 
-            SearchIntent.OpenDocument(documentId) resultsIn SearchAction.NavigateToDocumentReview(documentId)
+            SearchIntent.OpenDocument(documentId) resultsIn SearchAction.NavigateToDocumentDetail(documentId)
             SearchIntent.OpenContact(contactId) resultsIn SearchAction.NavigateToContactDetails(contactId)
             SearchIntent.OpenTransaction(entryId) resultsIn SearchAction.NavigateToCashflowEntry(entryId)
             advanceUntilIdle()

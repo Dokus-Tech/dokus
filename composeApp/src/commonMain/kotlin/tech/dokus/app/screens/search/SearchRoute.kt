@@ -35,9 +35,9 @@ internal fun SearchRoute(
 
     val state by container.store.subscribe(DefaultLifecycle) { action ->
         when (action) {
-            is SearchAction.NavigateToDocumentReview -> {
+            is SearchAction.NavigateToDocumentDetail -> {
                 navController.navigateTo(
-                    CashFlowDestination.DocumentReview(
+                    CashFlowDestination.DocumentDetail(
                         documentId = action.documentId.toString()
                     )
                 )
@@ -53,7 +53,7 @@ internal fun SearchRoute(
 
             is SearchAction.NavigateToCashflowEntry -> {
                 navController.navigateTo(
-                    CashFlowDestination.CashflowLedger(
+                    CashFlowDestination.CashFlowOverview(
                         highlightEntryId = action.entryId.toString()
                     )
                 )

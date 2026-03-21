@@ -348,7 +348,7 @@ internal class PeppolPollingWorker(
                             title = title,
                             referenceType = NotificationReferenceType.Document,
                             referenceId = processed.documentId.toString(),
-                            openPath = "/cashflow/document_review/${processed.documentId}",
+                            openPath = "/cashflow/document_detail/${processed.documentId}",
                             emailDetails = listOf(
                                 "A new document was received via PEPPOL.",
                                 "Sender: ${processed.senderPeppolId.value}"

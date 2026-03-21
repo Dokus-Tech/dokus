@@ -44,7 +44,7 @@ internal fun CreateContactRoute(
     }
 
     val onExistingContactSelected: (String) -> Unit = { contactId ->
-        if (parsedOrigin == ContactCreateOrigin.DocumentReview) {
+        if (parsedOrigin == ContactCreateOrigin.DocumentDetail) {
             navController.previousBackStackEntry
                 ?.savedStateHandle
                 ?.set(resultKey, contactId)
@@ -59,7 +59,7 @@ internal fun CreateContactRoute(
                 navController.navigateTo(ContactsDestination.ContactDetails(action.contactId.toString()))
             }
             is CreateContactAction.ContactCreated -> {
-                if (parsedOrigin == ContactCreateOrigin.DocumentReview) {
+                if (parsedOrigin == ContactCreateOrigin.DocumentDetail) {
                     navController.previousBackStackEntry
                         ?.savedStateHandle
                         ?.set(resultKey, action.contactId.toString())

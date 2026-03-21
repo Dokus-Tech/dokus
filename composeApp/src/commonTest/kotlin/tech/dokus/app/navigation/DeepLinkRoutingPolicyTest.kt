@@ -60,6 +60,6 @@ class DeepLinkRoutingPolicyTest {
 
         assertEquals(DeepLinkTargetOwner.Home, target.owner)
         val homeTarget = assertIs<DeepLinkNavigationTarget.HomeCommand>(target)
-        assertEquals(HomeNavigationCommand.OpenDocumentReview("doc-9"), homeTarget.command)
+        assertEquals(HomeNavigationCommand.OpenDocumentDetail("doc-9"), homeTarget.command)
     }
 }

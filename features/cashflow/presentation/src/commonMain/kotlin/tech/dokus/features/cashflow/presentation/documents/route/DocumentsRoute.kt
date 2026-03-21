@@ -84,9 +84,9 @@ internal fun DocumentsRoute(
 
     val state by documentsContainer.store.subscribe(DefaultLifecycle) { action ->
         when (action) {
-            is DocumentsAction.NavigateToDocumentReview -> {
+            is DocumentsAction.NavigateToDocumentDetail -> {
                 navController.navigateTo(
-                    CashFlowDestination.DocumentReview.from(
+                    CashFlowDestination.DocumentDetail.from(
                         action.documentId,
                         action.queueSource
                     )

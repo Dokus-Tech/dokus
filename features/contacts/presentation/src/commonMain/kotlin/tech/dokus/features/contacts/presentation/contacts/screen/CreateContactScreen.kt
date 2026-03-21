@@ -181,7 +181,7 @@ private fun CreateContactContent(
     onExistingContactSelected: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val isResolveFlow = origin == ContactCreateOrigin.DocumentReview
+    val isResolveFlow = origin == ContactCreateOrigin.DocumentDetail
     val headerTitle = stringResource(
         if (isResolveFlow) Res.string.contacts_resolve_counterparty else Res.string.contacts_create_contact
     )
@@ -190,7 +190,7 @@ private fun CreateContactContent(
     }
 
     LaunchedEffect(state, prefillCompanyName, prefillVat, origin) {
-        if (origin != ContactCreateOrigin.DocumentReview) return@LaunchedEffect
+        if (origin != ContactCreateOrigin.DocumentDetail) return@LaunchedEffect
         if (manualPrefillApplied) return@LaunchedEffect
         if (state.step != CreateContactStep.Manual) return@LaunchedEffect
 

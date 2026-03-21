@@ -221,10 +221,10 @@ internal class DocumentsContainer(
 
     private suspend fun DocumentsCtx.handleOpenDocument(documentId: DocumentId) {
         withState {
-            val queueSource = CashFlowDestination.DocumentReviewQueueContext.DocumentList(
+            val queueSource = CashFlowDestination.DocumentDetailQueueContext.DocumentList(
                 filter = filter.toListFilter(),
             )
-            action(DocumentsAction.NavigateToDocumentReview(documentId, queueSource))
+            action(DocumentsAction.NavigateToDocumentDetail(documentId, queueSource))
         }
     }
 

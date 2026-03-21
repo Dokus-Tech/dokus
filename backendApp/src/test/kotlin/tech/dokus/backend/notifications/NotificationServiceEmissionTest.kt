@@ -96,7 +96,7 @@ class NotificationServiceEmissionTest {
                 title = "PEPPOL send failed - Inv #42",
                 referenceType = NotificationReferenceType.Invoice,
                 referenceId = "inv-42",
-                openPath = "/cashflow/document_review/doc-42",
+                openPath = "/cashflow/document_detail/doc-42",
                 emailDetails = listOf("Reason: Recipient not found")
             )
         ).getOrThrow()
@@ -130,7 +130,7 @@ class NotificationServiceEmissionTest {
                 title = "PEPPOL send failed - Inv #100",
                 referenceType = NotificationReferenceType.Invoice,
                 referenceId = "inv-100",
-                openPath = "/cashflow/document_review/doc-100"
+                openPath = "/cashflow/document_detail/doc-100"
             )
         ).getOrThrow()
 
@@ -153,7 +153,7 @@ class NotificationServiceEmissionTest {
                 title = "New PEPPOL document received",
                 referenceType = NotificationReferenceType.Document,
                 referenceId = "doc-88",
-                openPath = "/cashflow/document_review/doc-88"
+                openPath = "/cashflow/document_detail/doc-88"
             )
         ).getOrThrow()
 
@@ -219,7 +219,7 @@ class NotificationServiceEmissionTest {
                         title = "PEPPOL send failed - Inv #race",
                         referenceType = NotificationReferenceType.Invoice,
                         referenceId = "inv-race",
-                        openPath = "/cashflow/document_review/doc-race"
+                        openPath = "/cashflow/document_detail/doc-race"
                     )
                 ).getOrThrow()
             }
@@ -231,7 +231,7 @@ class NotificationServiceEmissionTest {
                         title = "PEPPOL send failed - Inv #race",
                         referenceType = NotificationReferenceType.Invoice,
                         referenceId = "inv-race",
-                        openPath = "/cashflow/document_review/doc-race"
+                        openPath = "/cashflow/document_detail/doc-race"
                     )
                 ).getOrThrow()
             }

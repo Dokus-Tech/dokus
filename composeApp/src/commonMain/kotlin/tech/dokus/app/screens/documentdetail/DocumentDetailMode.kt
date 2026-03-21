@@ -131,7 +131,7 @@ internal fun DocumentDetailMode(
                             ?: DocQueueStatus.Review.localized,
                     )
 
-                    // Content (NavHost rendering DocumentReviewRoute)
+                    // Content (NavHost rendering DocumentDetailRoute)
                     CompositionLocalProvider(LocalIsInDocDetailMode provides true) {
                         Box(modifier = Modifier.fillMaxSize()) {
                             content()

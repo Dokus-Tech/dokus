@@ -154,7 +154,7 @@ internal class SearchContainer(
                 entityType = SearchResultEntityType.Document,
             )
         }
-        action(SearchAction.NavigateToDocumentReview(intent.documentId))
+        action(SearchAction.NavigateToDocumentDetail(intent.documentId))
     }
 
     private suspend fun SearchCtx.handleOpenContact(

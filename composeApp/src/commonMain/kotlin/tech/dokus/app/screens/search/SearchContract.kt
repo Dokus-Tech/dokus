@@ -54,7 +54,7 @@ sealed interface SearchIntent : MVIIntent {
 
 @Immutable
 sealed interface SearchAction : MVIAction {
-    data class NavigateToDocumentReview(val documentId: DocumentId) : SearchAction
+    data class NavigateToDocumentDetail(val documentId: DocumentId) : SearchAction
     data class NavigateToContactDetails(val contactId: ContactId) : SearchAction
     data class NavigateToCashflowEntry(val entryId: CashflowEntryId) : SearchAction
 }

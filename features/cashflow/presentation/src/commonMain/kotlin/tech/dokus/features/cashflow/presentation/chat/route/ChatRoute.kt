@@ -60,14 +60,14 @@ internal fun ChatRoute(
     val state by container.store.subscribe(DefaultLifecycle) { action ->
         when (action) {
             is ChatAction.NavigateBack -> navController.popBackStack()
-            is ChatAction.NavigateToDocumentReview -> {
+            is ChatAction.NavigateToDocumentDetail -> {
                 navController.navigateTo(
-                    CashFlowDestination.DocumentReview(documentId = action.documentId.toString())
+                    CashFlowDestination.DocumentDetail(documentId = action.documentId.toString())
                 )
             }
             is ChatAction.NavigateToDocumentPreview -> {
                 navController.navigateTo(
-                    CashFlowDestination.DocumentReview(documentId = action.documentId.toString())
+                    CashFlowDestination.DocumentDetail(documentId = action.documentId.toString())
                 )
             }
             is ChatAction.DownloadDocument -> {
@@ -127,7 +127,7 @@ internal fun ChatRoute(
         },
         onNavigateToDocument = { docId ->
             navController.navigateTo(
-                CashFlowDestination.DocumentReview(documentId = docId)
+                CashFlowDestination.DocumentDetail(documentId = docId)
             )
         },
         onUploadClick = { filePickerLauncher.launch() },

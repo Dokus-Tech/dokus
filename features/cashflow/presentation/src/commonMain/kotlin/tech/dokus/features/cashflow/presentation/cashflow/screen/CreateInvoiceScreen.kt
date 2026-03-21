@@ -55,9 +55,9 @@ import tech.dokus.features.cashflow.presentation.cashflow.components.invoice.cre
 import tech.dokus.features.cashflow.presentation.cashflow.components.invoice.create.desktop.InvoiceClientLookup
 import tech.dokus.features.cashflow.presentation.cashflow.components.invoice.create.desktop.formatDate
 import tech.dokus.features.cashflow.presentation.cashflow.components.invoice.create.desktop.localized
-import tech.dokus.features.cashflow.presentation.review.components.CanonicalInvoiceDocumentCard
-import tech.dokus.features.cashflow.presentation.review.models.DocumentUiData
-import tech.dokus.features.cashflow.presentation.review.models.toUiData
+import tech.dokus.features.cashflow.presentation.detail.components.CanonicalInvoiceDocumentCard
+import tech.dokus.features.cashflow.presentation.detail.models.DocumentUiData
+import tech.dokus.features.cashflow.presentation.detail.models.toUiData
 import tech.dokus.foundation.aura.components.DokusCard
 import tech.dokus.foundation.aura.components.DokusCardPadding
 import tech.dokus.foundation.aura.components.DokusCardSurface

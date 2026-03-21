@@ -286,7 +286,7 @@ sealed interface ChatAction : MVIAction {
      * Navigate to document review screen.
      * @param documentId Document to view
      */
-    data class NavigateToDocumentReview(val documentId: DocumentId) : ChatAction
+    data class NavigateToDocumentDetail(val documentId: DocumentId) : ChatAction
 
     /**
      * Navigate to document preview at a specific page.

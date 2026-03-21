@@ -221,7 +221,7 @@ private fun resolveSurfaceForCommand(
             currentSurface
         }
 
-        is HomeNavigationCommand.OpenDocumentReview -> {
+        is HomeNavigationCommand.OpenDocumentDetail -> {
             if (currentSurface == HomeSurfaceMode.BookkeeperConsole && canBCAccess) {
                 HomeSurfaceMode.BookkeeperConsole
             } else {

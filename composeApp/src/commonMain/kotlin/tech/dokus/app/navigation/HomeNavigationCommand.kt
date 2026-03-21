@@ -10,7 +10,7 @@ import tech.dokus.navigation.navigateToTopLevelTab
 internal sealed interface HomeNavigationCommand {
     data object OpenConsoleClients : HomeNavigationCommand
     data object OpenDocuments : HomeNavigationCommand
-    data class OpenDocumentReview(val documentId: String) : HomeNavigationCommand
+    data class OpenDocumentDetail(val documentId: String) : HomeNavigationCommand
 }
 
 internal sealed interface HomeNavigationStep {
@@ -31,9 +31,9 @@ internal fun resolveHomeNavigationSteps(
         HomeNavigationCommand.OpenDocuments -> listOf(
             HomeNavigationStep.TopLevelTab(HomeDestination.Documents)
         )
-        is HomeNavigationCommand.OpenDocumentReview -> listOf(
+        is HomeNavigationCommand.OpenDocumentDetail -> listOf(
             HomeNavigationStep.TopLevelTab(HomeDestination.Documents),
-            HomeNavigationStep.Push(CashFlowDestination.DocumentReview(command.documentId))
+            HomeNavigationStep.Push(CashFlowDestination.DocumentDetail(command.documentId))
         )
     }
 }

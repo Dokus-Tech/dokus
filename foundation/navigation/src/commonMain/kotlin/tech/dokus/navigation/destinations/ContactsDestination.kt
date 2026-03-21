@@ -27,7 +27,7 @@ sealed interface ContactsDestination : NavigationDestination {
 
 @Serializable
 enum class ContactCreateOrigin {
-    DocumentReview;
+    DocumentDetail;
 
     companion object {
         fun fromString(value: String?): ContactCreateOrigin? {

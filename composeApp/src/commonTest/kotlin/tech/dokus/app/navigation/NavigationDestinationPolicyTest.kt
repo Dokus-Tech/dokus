@@ -57,7 +57,7 @@ class NavigationDestinationPolicyTest {
 
     @Test
     fun `CashFlowDestination data class members are parameterized`() {
-        val review = CashFlowDestination.DocumentReview(documentId = "test")
+        val review = CashFlowDestination.DocumentDetail(documentId = "test")
         assertIs<CashFlowDestination>(review)
         val sourceViewer = CashFlowDestination.DocumentSourceViewer(
             documentId = "test",

@@ -113,7 +113,7 @@ internal fun ContactDetailsRoute(
         onBackClick = { navController.popBackStack() },
         onDocumentClick = { documentId ->
             navController.navigateTo(
-                CashFlowDestination.DocumentReview(
+                CashFlowDestination.DocumentDetail(
                     documentId = documentId.toString(),
                     contactId = contactId,
                 )

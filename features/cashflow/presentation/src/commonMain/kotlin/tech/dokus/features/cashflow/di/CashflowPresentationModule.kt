@@ -21,20 +21,20 @@ import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsAction
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsContainer
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsIntent
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsState
-import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowLedgerAction
-import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowLedgerContainer
-import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowLedgerIntent
-import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowLedgerState
+import tech.dokus.features.cashflow.presentation.overview.mvi.CashFlowOverviewAction
+import tech.dokus.features.cashflow.presentation.overview.mvi.CashFlowOverviewContainer
+import tech.dokus.features.cashflow.presentation.overview.mvi.CashFlowOverviewIntent
+import tech.dokus.features.cashflow.presentation.overview.mvi.CashFlowOverviewState
 import tech.dokus.features.cashflow.presentation.peppol.mvi.PeppolRegistrationAction
 import tech.dokus.features.cashflow.presentation.peppol.mvi.PeppolRegistrationContainer
 import tech.dokus.features.cashflow.presentation.peppol.mvi.PeppolRegistrationIntent
 import tech.dokus.features.cashflow.presentation.peppol.mvi.PeppolRegistrationState
-import tech.dokus.features.cashflow.presentation.review.DocumentReviewAction
-import tech.dokus.features.cashflow.presentation.review.DocumentReviewContainer
-import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
-import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
-import tech.dokus.features.cashflow.presentation.review.mvi.payment.DocumentPaymentContainer
-import tech.dokus.features.cashflow.presentation.review.mvi.preview.DocumentPreviewContainer
+import tech.dokus.features.cashflow.presentation.detail.DocumentDetailAction
+import tech.dokus.features.cashflow.presentation.detail.DocumentDetailContainer
+import tech.dokus.features.cashflow.presentation.detail.DocumentDetailIntent
+import tech.dokus.features.cashflow.presentation.detail.DocumentDetailState
+import tech.dokus.features.cashflow.presentation.detail.mvi.payment.DocumentPaymentContainer
+import tech.dokus.features.cashflow.presentation.detail.mvi.preview.DocumentPreviewContainer
 import tech.dokus.foundation.app.mvi.container
 import tech.dokus.navigation.destinations.CashFlowDestination
 
@@ -67,8 +67,8 @@ val cashflowViewModelModule = module {
             clientLookupContainer = get(),
         )
     }
-    container<DocumentReviewContainer, DocumentReviewState, DocumentReviewIntent, DocumentReviewAction> { (initialDocumentId: DocumentId, queueContext: CashFlowDestination.DocumentReviewQueueContext) ->
-        DocumentReviewContainer(
+    container<DocumentDetailContainer, DocumentDetailState, DocumentDetailIntent, DocumentDetailAction> { (initialDocumentId: DocumentId, queueContext: CashFlowDestination.DocumentDetailQueueContext) ->
+        DocumentDetailContainer(
             getDocumentRecord = get(),
             updateDocumentDraft = get(),
             updateDocumentDraftContact = get(),
@@ -99,8 +99,8 @@ val cashflowViewModelModule = module {
             getDocumentCounts = get()
         )
     }
-    container<CashflowLedgerContainer, CashflowLedgerState, CashflowLedgerIntent, CashflowLedgerAction> { (highlightEntryId: tech.dokus.domain.ids.CashflowEntryId?) ->
-        CashflowLedgerContainer(
+    container<CashFlowOverviewContainer, CashFlowOverviewState, CashFlowOverviewIntent, CashFlowOverviewAction> { (highlightEntryId: tech.dokus.domain.ids.CashflowEntryId?) ->
+        CashFlowOverviewContainer(
             loadCashflowEntries = get(),
             getCashflowOverview = get(),
             recordPayment = get(),

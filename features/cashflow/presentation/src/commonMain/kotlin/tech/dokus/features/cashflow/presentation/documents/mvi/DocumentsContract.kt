@@ -115,9 +115,9 @@ sealed interface DocumentsIntent : MVIIntent {
 sealed interface DocumentsAction : MVIAction {
 
     /** Navigate to document review screen */
-    data class NavigateToDocumentReview(
+    data class NavigateToDocumentDetail(
         val documentId: DocumentId,
-        val queueSource: CashFlowDestination.DocumentReviewQueueContext,
+        val queueSource: CashFlowDestination.DocumentDetailQueueContext,
     ) : DocumentsAction
 
     /** Show error message */
