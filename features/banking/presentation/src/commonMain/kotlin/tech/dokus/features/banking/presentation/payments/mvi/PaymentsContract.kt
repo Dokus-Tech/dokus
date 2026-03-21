@@ -27,15 +27,6 @@ enum class PaymentFilterTab {
 }
 
 /**
- * Dialog state for ignore-with-reason flow.
- */
-@Immutable
-data class IgnoreDialogState(
-    val transactionId: BankTransactionId,
-    val selectedReason: IgnoredReason? = null,
-)
-
-/**
  * Dialog state for mark-as-transfer flow.
  */
 @Immutable
@@ -58,7 +49,6 @@ data class PaymentsState(
     val filterTab: PaymentFilterTab = PaymentFilterTab.All,
     val selectedAccountId: BankAccountId? = null,
     val selectedTransactionId: BankTransactionId? = null,
-    val ignoreDialogState: IgnoreDialogState? = null,
     val transferDialogState: TransferDialogState? = null,
     val actionError: DokusException? = null,
 ) : MVIState {
@@ -84,9 +74,7 @@ sealed interface PaymentsIntent : MVIIntent {
     data class SelectTransaction(val transactionId: BankTransactionId?) : PaymentsIntent
     data class LinkDocument(val transactionId: BankTransactionId) : PaymentsIntent
     data class IgnoreTransaction(val transactionId: BankTransactionId) : PaymentsIntent
-    data class SelectIgnoreReason(val reason: IgnoredReason) : PaymentsIntent
-    data object ConfirmIgnore : PaymentsIntent
-    data object DismissIgnoreDialog : PaymentsIntent
+    data class ConfirmIgnoreWithResult(val transactionId: String, val reason: IgnoredReason) : PaymentsIntent
     data class ConfirmMatch(val transactionId: BankTransactionId) : PaymentsIntent
     data class CreateExpense(val transactionId: BankTransactionId) : PaymentsIntent
     data class MarkTransfer(val transactionId: BankTransactionId) : PaymentsIntent

@@ -59,10 +59,8 @@ internal class PaymentsContainer(
                     is PaymentsIntent.SetAccountFilter -> handleSetAccountFilter(intent.accountId)
                     is PaymentsIntent.SelectTransaction -> handleSelectTransaction(intent.transactionId)
                     is PaymentsIntent.LinkDocument -> { /* TODO: Navigate to link flow */ }
-                    is PaymentsIntent.IgnoreTransaction -> handleOpenIgnoreDialog(intent.transactionId)
-                    is PaymentsIntent.SelectIgnoreReason -> handleSelectIgnoreReason(intent.reason)
-                    is PaymentsIntent.ConfirmIgnore -> handleConfirmIgnore()
-                    is PaymentsIntent.DismissIgnoreDialog -> handleDismissIgnoreDialog()
+                    is PaymentsIntent.IgnoreTransaction -> { /* Handled by route navigation */ }
+                    is PaymentsIntent.ConfirmIgnoreWithResult -> handleConfirmIgnoreWithResult(intent.transactionId, intent.reason)
                     is PaymentsIntent.ConfirmMatch -> handleConfirmMatch(intent.transactionId)
                     is PaymentsIntent.CreateExpense -> handleCreateExpense(intent.transactionId)
                     is PaymentsIntent.MarkTransfer -> handleOpenTransferDialog(intent.transactionId)
@@ -114,36 +112,21 @@ internal class PaymentsContainer(
         updateState { copy(selectedTransactionId = transactionId) }
     }
 
-    private suspend fun PaymentsCtx.handleOpenIgnoreDialog(transactionId: BankTransactionId) {
-        updateState { copy(ignoreDialogState = IgnoreDialogState(transactionId = transactionId)) }
-    }
-
-    private suspend fun PaymentsCtx.handleSelectIgnoreReason(reason: IgnoredReason) {
-        updateState { copy(ignoreDialogState = ignoreDialogState?.copy(selectedReason = reason)) }
-    }
-
-    private suspend fun PaymentsCtx.handleDismissIgnoreDialog() {
-        updateState { copy(ignoreDialogState = null) }
-    }
-
-    private suspend fun PaymentsCtx.handleConfirmIgnore() {
-        withState {
-            val dialog = ignoreDialogState ?: return@withState
-            val reason = dialog.selectedReason ?: return@withState
-
-            updateState { copy(ignoreDialogState = null) }
-
-            ignoreTransaction(dialog.transactionId, reason).fold(
-                onSuccess = { updatedTx ->
-                    updateState { copy(actionError = null) }
-                    updateTransactionInList(updatedTx.id) { updatedTx }
-                    refreshSummary()
-                },
-                onFailure = { error ->
-                    updateState { copy(actionError = error.asDokusException) }
-                }
-            )
-        }
+    private suspend fun PaymentsCtx.handleConfirmIgnoreWithResult(
+        transactionId: String,
+        reason: IgnoredReason,
+    ) {
+        val txId = BankTransactionId.parse(transactionId)
+        ignoreTransaction(txId, reason).fold(
+            onSuccess = { updatedTx ->
+                updateState { copy(actionError = null) }
+                updateTransactionInList(updatedTx.id) { updatedTx }
+                refreshSummary()
+            },
+            onFailure = { error ->
+                updateState { copy(actionError = error.asDokusException) }
+            }
+        )
     }
 
     private suspend fun PaymentsCtx.handleConfirmMatch(transactionId: BankTransactionId) {

@@ -119,4 +119,11 @@ sealed interface CashFlowDestination : NavigationDestination {
     @Serializable
     @SerialName("cashflow/overview")
     data class CashFlowOverview(val highlightEntryId: String? = null) : CashFlowDestination
+
+    /**
+     * Dialog showing a QR code for downloading the mobile application.
+     */
+    @Serializable
+    @SerialName("cashflow/dialog/app_download_qr")
+    data object AppDownloadQrDialog : CashFlowDestination
 }

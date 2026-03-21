@@ -9,9 +9,12 @@ import androidx.compose.animation.fadeOut
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.dialog
 import androidx.navigation.toRoute
+import tech.dokus.features.cashflow.presentation.cashflow.components.AppDownloadQrDialogContent
 import tech.dokus.features.cashflow.presentation.cashflow.route.AddDocumentRoute
 import tech.dokus.features.cashflow.presentation.cashflow.route.CreateInvoiceRoute
+import tech.dokus.navigation.local.LocalNavController
 import tech.dokus.features.cashflow.presentation.chat.route.ChatRoute
 import tech.dokus.features.cashflow.presentation.overview.route.CashFlowOverviewRoute
 import tech.dokus.features.cashflow.presentation.peppol.route.PeppolRegistrationRoute
@@ -50,6 +53,12 @@ internal object CashflowNavigationProvider : NavigationProvider {
         }
         composable<SettingsDestination.PeppolRegistration> {
             PeppolRegistrationRoute()
+        }
+        dialog<CashFlowDestination.AppDownloadQrDialog> {
+            val navController = LocalNavController.current
+            AppDownloadQrDialogContent(
+                onDismiss = { navController.popBackStack() }
+            )
         }
     }
 }

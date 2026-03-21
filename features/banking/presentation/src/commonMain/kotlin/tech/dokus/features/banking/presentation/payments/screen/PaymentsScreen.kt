@@ -39,7 +39,6 @@ import tech.dokus.domain.ids.BankAccountId
 import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.features.banking.presentation.payments.components.AccountFilterDropdown
-import tech.dokus.features.banking.presentation.payments.components.IgnoreReasonDialog
 import tech.dokus.features.banking.presentation.payments.components.PaymentFilterTabs
 import tech.dokus.features.banking.presentation.payments.components.PaymentsSkeleton
 import tech.dokus.features.banking.presentation.payments.components.TransactionCard
@@ -84,15 +83,6 @@ internal fun PaymentsScreen(
     onIntent: (PaymentsIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    state.ignoreDialogState?.let { dialogState ->
-        IgnoreReasonDialog(
-            selectedReason = dialogState.selectedReason,
-            onReasonSelected = { onIntent(PaymentsIntent.SelectIgnoreReason(it)) },
-            onConfirm = { onIntent(PaymentsIntent.ConfirmIgnore) },
-            onDismiss = { onIntent(PaymentsIntent.DismissIgnoreDialog) },
-        )
-    }
-
     state.transferDialogState?.let { dialogState ->
         TransferDialog(
             availableAccounts = dialogState.availableAccounts,

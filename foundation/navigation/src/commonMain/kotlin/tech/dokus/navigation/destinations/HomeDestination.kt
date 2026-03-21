@@ -148,6 +148,7 @@ val NavigationDestination.route: String get() = when (this) {
         is CashFlowDestination.DocumentSourceViewer -> "cashflow/document_source_viewer"
         is CashFlowDestination.DocumentChat -> "cashflow/document_chat"
         is CashFlowDestination.CashFlowOverview -> "cashflow/overview"
+        CashFlowDestination.AppDownloadQrDialog -> "cashflow/dialog/app_download_qr"
     }
     is ContactsDestination -> when (this) {
         is ContactsDestination.CreateContact -> "contacts/create"
@@ -162,6 +163,7 @@ val NavigationDestination.route: String get() = when (this) {
     is BankingDestination -> when (this) {
         BankingDestination.Balances -> "root/banking/balances"
         BankingDestination.Payments -> "root/banking/payments"
+        is BankingDestination.IgnoreReasonDialog -> "banking/dialog/ignore_reason"
     }
     is AppDestination -> when (this) {
         AppDestination.Notifications -> "notifications"

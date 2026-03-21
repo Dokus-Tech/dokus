@@ -22,22 +22,27 @@ import tech.dokus.aura.resources.banking_ignore_dialog_confirm
 import tech.dokus.aura.resources.banking_ignore_dialog_prompt
 import tech.dokus.aura.resources.banking_ignore_dialog_title
 import tech.dokus.domain.enums.IgnoredReason
-import tech.dokus.foundation.aura.components.dialog.DokusDialog
 import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
+import tech.dokus.foundation.aura.components.dialog.DokusDialogSurface
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
 
+/**
+ * Dialog content for selecting a reason to ignore a bank transaction.
+ * Uses [DokusDialogSurface] without a [Dialog] wrapper, suitable for
+ * Navigation Compose `dialog<>` routes.
+ */
 @Composable
-internal fun IgnoreReasonDialog(
+internal fun IgnoreReasonDialogContent(
     selectedReason: IgnoredReason?,
     onReasonSelected: (IgnoredReason) -> Unit,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    DokusDialog(
+    DokusDialogSurface(
         onDismissRequest = onDismiss,
         title = stringResource(Res.string.banking_ignore_dialog_title),
         content = {
@@ -87,7 +92,7 @@ private fun IgnoreReasonDialogPreview(
     @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
 ) {
     TestWrapper(parameters) {
-        IgnoreReasonDialog(
+        IgnoreReasonDialogContent(
             selectedReason = IgnoredReason.BankFee,
             onReasonSelected = {},
             onConfirm = {},
