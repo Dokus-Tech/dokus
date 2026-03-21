@@ -77,6 +77,10 @@ internal fun BalanceTimelineCard(
         }
     }
 
+    ErrorOverlay(
+        exception = if (balanceHistory is DokusState.Error) balanceHistory.exception else null,
+        retryHandler = if (balanceHistory is DokusState.Error) balanceHistory.retryHandler else null,
+    ) {
     DokusCardSurface(modifier = modifier.fillMaxWidth(), accent = true) {
         Column(
             modifier = Modifier.padding(Constraints.Spacing.large),
@@ -146,50 +150,38 @@ internal fun BalanceTimelineCard(
             }
 
             // Chart area
-            ErrorOverlay(
-                exception = if (balanceHistory is DokusState.Error) balanceHistory.exception else null,
-                retryHandler = if (balanceHistory is DokusState.Error) balanceHistory.retryHandler else null,
-            ) {
-                when {
-                    balanceHistory.isSuccess() -> {
-                        val chartData = buildChartSeries(balanceHistory.data)
-                        if (chartData.isEmpty()) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(ChartHeight),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Text(
-                                    text = stringResource(Res.string.banking_balances_no_chart_data),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.textMuted,
-                                )
-                            }
-                        } else {
-                            DokusLineChart(
-                                series = chartData,
-                                xLabels = buildXLabels(balanceHistory.data),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(ChartHeight),
-                            )
-                        }
-                    }
-                    balanceHistory is DokusState.Error -> {
+            when {
+                balanceHistory.isSuccess() -> {
+                    val chartData = buildChartSeries(balanceHistory.data)
+                    if (chartData.isEmpty()) {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(ChartHeight),
-                        )
-                    }
-                    else -> {
-                        ShimmerBox(
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = stringResource(Res.string.banking_balances_no_chart_data),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.textMuted,
+                            )
+                        }
+                    } else {
+                        DokusLineChart(
+                            series = chartData,
+                            xLabels = buildXLabels(balanceHistory.data),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(ChartHeight),
                         )
                     }
+                }
+                else -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(ChartHeight),
+                    )
                 }
             }
 
@@ -213,6 +205,7 @@ internal fun BalanceTimelineCard(
                 }
             }
         }
+    }
     }
 }
 

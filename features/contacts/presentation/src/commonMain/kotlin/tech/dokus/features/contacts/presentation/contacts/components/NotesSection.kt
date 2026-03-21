@@ -18,6 +18,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Pencil
@@ -282,12 +284,10 @@ private fun NotesSkeleton() {
 // PREVIEWS
 // ============================================================================
 
-@androidx.compose.ui.tooling.preview.Preview
+@Preview
 @Composable
 private fun NotesSectionPreview(
-    @androidx.compose.ui.tooling.preview.PreviewParameter(
-        PreviewParametersProvider::class
-    ) parameters: PreviewParameters
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
 ) {
     val now = LocalDateTime(2026, 1, 15, 10, 0)
     TestWrapper(parameters) {
