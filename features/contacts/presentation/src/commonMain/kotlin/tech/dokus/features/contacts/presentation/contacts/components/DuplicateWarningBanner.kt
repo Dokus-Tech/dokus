@@ -10,8 +10,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.TriangleAlert
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -21,12 +19,22 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.TriangleAlert
+import kotlinx.datetime.LocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_cancel
 import tech.dokus.aura.resources.contacts_continue_anyway
 import tech.dokus.aura.resources.contacts_duplicate_warning
 import tech.dokus.aura.resources.contacts_merge
+import tech.dokus.domain.Email
+import tech.dokus.domain.Name
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.features.contacts.mvi.DuplicateReason
 import tech.dokus.features.contacts.mvi.PotentialDuplicate
 import tech.dokus.foundation.aura.components.DokusCardSurface
@@ -36,12 +44,6 @@ import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
-import tech.dokus.domain.model.contact.ContactDto
-import tech.dokus.domain.ids.ContactId
-import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.Name
-import tech.dokus.domain.Email
-import kotlinx.datetime.LocalDateTime
 
 /**
  * A warning banner displayed when potential duplicate contacts are detected
@@ -198,9 +200,11 @@ private fun DuplicateReasonBadge(
         DuplicateReason.VatNumber -> {
             MaterialTheme.colorScheme.error.copy(alpha = 0.1f) to MaterialTheme.colorScheme.error
         }
+
         DuplicateReason.Email -> {
             MaterialTheme.colorScheme.primary.copy(alpha = 0.1f) to MaterialTheme.colorScheme.primary
         }
+
         DuplicateReason.NameAndCountry -> {
             MaterialTheme.colorScheme.tertiary.copy(alpha = 0.1f) to MaterialTheme.colorScheme.tertiary
         }
@@ -256,12 +260,10 @@ private fun DuplicateWarningActions(
 // PREVIEWS
 // ============================================================================
 
-@androidx.compose.ui.tooling.preview.Preview
+@Preview
 @Composable
 private fun DuplicateWarningBannerPreview(
-    @androidx.compose.ui.tooling.preview.PreviewParameter(
-        PreviewParametersProvider::class
-    ) parameters: PreviewParameters
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
 ) {
     val now = LocalDateTime(2026, 1, 15, 10, 0)
     TestWrapper(parameters) {

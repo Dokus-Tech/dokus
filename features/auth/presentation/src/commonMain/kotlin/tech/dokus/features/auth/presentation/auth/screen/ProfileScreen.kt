@@ -7,11 +7,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.profile_settings_title
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
@@ -31,9 +31,7 @@ fun ProfileScreen() {
 @Preview
 @Composable
 private fun ProfileScreenPreview(
-    @PreviewParameter(
-        PreviewParametersProvider::class
-    ) parameters: PreviewParameters
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
 ) {
     TestWrapper(parameters) {
         ProfileScreen()

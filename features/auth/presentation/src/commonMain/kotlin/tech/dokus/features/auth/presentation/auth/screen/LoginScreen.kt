@@ -19,6 +19,8 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_or
@@ -47,6 +49,9 @@ import tech.dokus.foundation.aura.components.fields.PTextFieldPasswordDefaults
 import tech.dokus.foundation.aura.components.text.DokusLogo
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.extensions.dismissKeyboardOnTapOutside
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Composable
 internal fun LoginScreen(
@@ -211,14 +216,12 @@ internal fun LoginScreen(
     }
 }
 
-@androidx.compose.ui.tooling.preview.Preview
+@Preview
 @Composable
 private fun LoginScreenPreview(
-    @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class,
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters,
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
 ) {
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    TestWrapper(parameters) {
         LoginScreen(
             state = LoginState.initial,
             onIntent = {},

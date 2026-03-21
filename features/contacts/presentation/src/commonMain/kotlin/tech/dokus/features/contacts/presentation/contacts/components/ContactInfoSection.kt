@@ -8,52 +8,52 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import kotlinx.datetime.LocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.contacts_contact_info
-import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.domain.Email
+import tech.dokus.domain.Name
+import tech.dokus.domain.PhoneNumber
 import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.foundation.app.state.DokusState
-import tech.dokus.foundation.app.state.isError
-import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.aura.components.DokusCard
 import tech.dokus.foundation.aura.components.DokusCardPadding
 import tech.dokus.foundation.aura.components.common.ErrorOverlay
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
-import tech.dokus.domain.ids.ContactId
-import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.ids.VatNumber
-import tech.dokus.domain.Name
-import tech.dokus.domain.Email
-import tech.dokus.domain.PhoneNumber
-import kotlinx.datetime.LocalDateTime
 
 @Composable
 internal fun ContactInfoSection(
     state: DokusState<ContactDto>,
     modifier: Modifier = Modifier
 ) {
-    DokusCard(
-        modifier = modifier.fillMaxWidth(),
-        padding = DokusCardPadding.Default,
+    ErrorOverlay(
+        exception = if (state is DokusState.Error) state.exception else null,
+        retryHandler = if (state is DokusState.Error) state.retryHandler else null,
     ) {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+        DokusCard(
+            modifier = modifier.fillMaxWidth(),
+            padding = DokusCardPadding.Default,
         ) {
-            Text(
-                text = stringResource(Res.string.contacts_contact_info),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
-
-            ErrorOverlay(
-                exception = if (state is DokusState.Error) state.exception else null,
-                retryHandler = if (state is DokusState.Error) state.retryHandler else null,
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                Text(
+                    text = stringResource(Res.string.contacts_contact_info),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+
                 when (state) {
                     is DokusState.Loading, is DokusState.Idle -> ContactInfoSkeleton()
                     is DokusState.Success -> ContactInfoContent(contact = state.data)
@@ -68,12 +68,10 @@ internal fun ContactInfoSection(
 // PREVIEWS
 // ============================================================================
 
-@androidx.compose.ui.tooling.preview.Preview
+@Preview
 @Composable
 private fun ContactInfoSectionPreview(
-    @androidx.compose.ui.tooling.preview.PreviewParameter(
-        PreviewParametersProvider::class
-    ) parameters: PreviewParameters
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
 ) {
     val now = LocalDateTime(2026, 1, 15, 10, 0)
     TestWrapper(parameters) {
@@ -96,12 +94,10 @@ private fun ContactInfoSectionPreview(
     }
 }
 
-@androidx.compose.ui.tooling.preview.Preview
+@Preview
 @Composable
 private fun ContactInfoSectionErrorPreview(
-    @androidx.compose.ui.tooling.preview.PreviewParameter(
-        PreviewParametersProvider::class
-    ) parameters: PreviewParameters
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
 ) {
     TestWrapper(parameters) {
         ContactInfoSection(

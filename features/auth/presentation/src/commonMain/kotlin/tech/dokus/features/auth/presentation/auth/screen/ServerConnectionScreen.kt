@@ -12,11 +12,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.auth_checking_server
 import tech.dokus.aura.resources.auth_connecting
 import tech.dokus.aura.resources.auth_host_label
+import tech.dokus.aura.resources.auth_login_link
 import tech.dokus.aura.resources.auth_onboarding_connect_server_subtitle
 import tech.dokus.aura.resources.auth_onboarding_connect_server_title
 import tech.dokus.aura.resources.auth_onboarding_use_cloud_instead
@@ -24,7 +27,6 @@ import tech.dokus.aura.resources.auth_port_label
 import tech.dokus.aura.resources.auth_protocol_label
 import tech.dokus.aura.resources.auth_validate_connection
 import tech.dokus.aura.resources.auth_validating
-import tech.dokus.aura.resources.auth_login_link
 import tech.dokus.domain.config.ServerConfig
 import tech.dokus.features.auth.mvi.ServerConnectionIntent
 import tech.dokus.features.auth.mvi.ServerConnectionState
@@ -41,6 +43,9 @@ import tech.dokus.foundation.aura.components.fields.PTextFieldStandard
 import tech.dokus.foundation.aura.components.text.SectionTitle
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.extensions.dismissKeyboardOnTapOutside
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Suppress("UNUSED_PARAMETER")
 @Composable
@@ -182,14 +187,12 @@ internal fun ServerConnectionScreen(
     }
 }
 
-@androidx.compose.ui.tooling.preview.Preview
+@Preview
 @Composable
 private fun ServerConnectionScreenPreview(
-    @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class,
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters,
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
 ) {
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    TestWrapper(parameters) {
         ServerConnectionScreen(
             state = ServerConnectionState.initial,
             currentServer = ServerConfig.Cloud,

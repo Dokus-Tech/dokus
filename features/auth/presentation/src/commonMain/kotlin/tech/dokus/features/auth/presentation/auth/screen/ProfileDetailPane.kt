@@ -24,11 +24,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import tech.dokus.features.auth.mvi.MySessionsIntent
 import tech.dokus.features.auth.mvi.MySessionsState
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
@@ -194,9 +194,7 @@ private fun IdlePlaceholderBackdrop(
 @Preview(name = "Detail Pane Idle", widthDp = 520, heightDp = 760)
 @Composable
 private fun ProfileDetailPaneIdlePreview(
-    @PreviewParameter(
-        PreviewParametersProvider::class
-    ) parameters: PreviewParameters
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
 ) {
     TestWrapper(parameters) {
         ProfileDetailPaneHost(
@@ -210,14 +208,16 @@ private fun ProfileDetailPaneIdlePreview(
 @Preview(name = "Detail Pane Sessions", widthDp = 520, heightDp = 760)
 @Composable
 private fun ProfileDetailPaneSessionsPreview(
-    @PreviewParameter(
-        PreviewParametersProvider::class
-    ) parameters: PreviewParameters
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
 ) {
     TestWrapper(parameters) {
         ProfileDetailPaneHost(
             selection = ProfileDetailSelection.Sessions,
-            sessionsState = MySessionsState(sessions = tech.dokus.foundation.app.state.DokusState.success(previewSessions())),
+            sessionsState = MySessionsState(
+                sessions = tech.dokus.foundation.app.state.DokusState.success(
+                    previewSessions()
+                )
+            ),
             onSessionsIntent = {},
             nowEpochSeconds = SessionsPreviewNowEpochSeconds,
         )

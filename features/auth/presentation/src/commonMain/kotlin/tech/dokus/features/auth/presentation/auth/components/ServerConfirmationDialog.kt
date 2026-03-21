@@ -9,17 +9,20 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import com.composables.icons.lucide.CircleCheck
-import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.TriangleAlert
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import com.composables.icons.lucide.CircleCheck
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.TriangleAlert
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_cancel
@@ -35,11 +38,15 @@ import tech.dokus.aura.resources.auth_server_url
 import tech.dokus.aura.resources.auth_server_version
 import tech.dokus.domain.config.ServerConfig
 import tech.dokus.domain.config.ServerInfo
+import tech.dokus.domain.config.ServerStatus
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.DokusCardVariant
 import tech.dokus.foundation.aura.components.dialog.DokusDialog
 import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
  * Confirmation dialog shown after server validation.
@@ -54,7 +61,7 @@ import tech.dokus.foundation.aura.constrains.Constraints
  * @param onConfirm Called when user confirms connection
  * @param onDismiss Called when dialog is dismissed
  */
-@androidx.compose.runtime.Composable
+@Composable
 fun ServerConfirmationDialog(
     config: ServerConfig,
     serverInfo: ServerInfo,
@@ -148,7 +155,7 @@ fun ServerConfirmationDialog(
     )
 }
 
-@androidx.compose.runtime.Composable
+@Composable
 private fun ServerInfoRow(
     label: String,
     value: String
@@ -171,14 +178,12 @@ private fun ServerInfoRow(
     }
 }
 
-@androidx.compose.ui.tooling.preview.Preview
-@androidx.compose.runtime.Composable
+@Preview
+@Composable
 private fun ServerConfirmationDialogPreview(
-    @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
 ) {
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    TestWrapper(parameters) {
         ServerConfirmationDialog(
             config = ServerConfig(
                 host = "192.168.1.100",
@@ -191,7 +196,7 @@ private fun ServerConfirmationDialogPreview(
                 name = "My Dokus Server",
                 version = "1.0.0",
                 environment = "production",
-                status = tech.dokus.domain.config.ServerStatus.UP,
+                status = ServerStatus.UP,
                 features = listOf("invoicing", "expenses"),
             ),
             onConfirm = {},

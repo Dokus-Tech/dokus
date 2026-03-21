@@ -10,6 +10,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.auth_password_label
@@ -28,6 +30,9 @@ import tech.dokus.foundation.aura.components.fields.PTextFieldPasswordDefaults
 import tech.dokus.foundation.aura.components.text.SectionTitle
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.extensions.dismissKeyboardOnTapOutside
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Composable
 internal fun NewPasswordScreen(
@@ -95,14 +100,12 @@ internal fun NewPasswordScreen(
     }
 }
 
-@androidx.compose.ui.tooling.preview.Preview
+@Preview
 @Composable
 private fun NewPasswordScreenPreview(
-    @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class,
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters,
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
 ) {
-    tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
+    TestWrapper(parameters) {
         NewPasswordScreen(
             state = NewPasswordState.initial,
             onIntent = {},
