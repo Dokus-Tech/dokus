@@ -48,15 +48,17 @@ import tech.dokus.foundation.aura.tooling.TestWrapper
 @Composable
 fun DocQueueHeader(
     positionText: String,
+    backLabel: String = "",
     onExit: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(
         modifier = modifier.fillMaxWidth()
     ) {
+        val fallback = stringResource(Res.string.document_queue_all_docs)
         val backDescription = stringResource(Res.string.a11y_back_to_all_documents)
         PLeftPaneHeader(
-            backLabel = stringResource(Res.string.document_queue_all_docs),
+            backLabel = backLabel.ifEmpty { fallback },
             onBackClick = onExit,
             backContentDescription = backDescription,
             trailing = {

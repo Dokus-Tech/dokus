@@ -1,7 +1,6 @@
 package tech.dokus.features.cashflow.presentation.review.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -47,6 +46,7 @@ private val StatusDotSize = 6.dp
 internal fun ReviewTopBar(
     state: DocumentReviewState,
     onBackClick: () -> Unit,
+    backLabel: String = "",
 ) {
     Column {
         TopAppBar(
@@ -81,7 +81,7 @@ internal fun ReviewTopBar(
                 }
             },
             navigationIcon = {
-                PBackButton(onBackPress = onBackClick)
+                PBackButton(label = backLabel.ifEmpty { null }, onBackPress = onBackClick)
             },
             actions = {},
             colors = TopAppBarDefaults.topAppBarColors(

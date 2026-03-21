@@ -82,6 +82,7 @@ internal fun DocumentReviewDesktopSplit(
     onSelectDocument: (DocumentId) -> Unit,
     onLoadMore: () -> Unit,
     onExit: () -> Unit,
+    backLabel: String = "",
     content: @Composable () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -118,6 +119,7 @@ internal fun DocumentReviewDesktopSplit(
                     onSelectDocument = onSelectDocument,
                     onLoadMore = onLoadMore,
                     onExit = onExit,
+                    backLabel = backLabel,
                 )
             }
 
@@ -216,6 +218,7 @@ private fun DocumentReviewQueuePane(
     onSelectDocument: (DocumentId) -> Unit,
     onLoadMore: () -> Unit,
     onExit: () -> Unit,
+    backLabel: String = "",
 ) {
     val listState = rememberLazyListState()
     val selectedIndex = documents.indexOfFirst { it.id == selectedDocumentId }
@@ -259,6 +262,7 @@ private fun DocumentReviewQueuePane(
     ) {
         DocQueueHeader(
             positionText = positionText,
+            backLabel = backLabel,
             onExit = onExit,
         )
 

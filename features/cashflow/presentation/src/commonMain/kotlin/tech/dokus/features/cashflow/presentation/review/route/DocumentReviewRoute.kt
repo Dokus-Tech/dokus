@@ -18,6 +18,7 @@ import org.koin.core.parameter.parametersOf
 import pro.respawn.flowmvi.compose.dsl.DefaultLifecycle
 import pro.respawn.flowmvi.compose.dsl.subscribe
 import tech.dokus.aura.resources.Res
+import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.aura.resources.action_cancel
 import tech.dokus.aura.resources.action_confirm
 import tech.dokus.aura.resources.cashflow_discard_changes_message
@@ -41,6 +42,7 @@ import tech.dokus.features.cashflow.presentation.review.components.DocumentRevie
 import tech.dokus.features.cashflow.presentation.review.components.FeedbackDialog
 import tech.dokus.features.cashflow.presentation.review.components.RecordPaymentDialog
 import tech.dokus.features.cashflow.presentation.review.components.RejectDocumentDialog
+import tech.dokus.features.cashflow.presentation.review.models.DocumentUiData
 import tech.dokus.features.cashflow.presentation.review.mvi.payment.DocumentPaymentIntent
 import tech.dokus.features.cashflow.presentation.review.screen.DocumentReviewScreen
 import tech.dokus.features.cashflow.usecases.ObserveDocumentCollectionChangesUseCase
@@ -51,7 +53,6 @@ import tech.dokus.foundation.app.shell.LocalUserAccessContext
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.dialog.DokusDialog
 import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
-import tech.dokus.foundation.aura.extensions.localized
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.local.isLarge
 import tech.dokus.navigation.destinations.CashFlowDestination
@@ -80,6 +81,7 @@ internal fun DocumentReviewRoute(
     val navController = LocalNavController.current
     val backStackEntry by navController.currentBackStackEntryAsState()
     val initialDocumentId = remember(route.documentId) { DocumentId.parse(route.documentId) }
+    val backLabel = route.queueSource.localized
 
     fun markDocumentsRefreshRequired() {
         navController.previousBackStackEntry
@@ -214,6 +216,7 @@ internal fun DocumentReviewRoute(
             isAccountantReadOnly = isAccountantReadOnly,
             onIntent = { dispatchIntent(it) },
             onBackClick = requestBackNavigation,
+            backLabel = backLabel,
             onOpenSource = { sourceId ->
                 val activeDocumentId = state.documentId?.toString()
                     ?: route.documentId
@@ -274,6 +277,7 @@ internal fun DocumentReviewRoute(
                     dispatchIntent(DocumentReviewIntent.LoadMoreQueue)
                 },
                 onExit = requestBackNavigation,
+                backLabel = backLabel,
                 content = reviewContent,
             )
         } else {
@@ -392,9 +396,9 @@ internal fun DocumentReviewRoute(
     state.paymentSheetState?.let { paymentState ->
         if (isAccountantReadOnly) return@let
         val currencySign = when (val uiData = state.uiData) {
-            is tech.dokus.features.cashflow.presentation.review.models.DocumentUiData.Invoice -> uiData.currencySign
-            is tech.dokus.features.cashflow.presentation.review.models.DocumentUiData.CreditNote -> uiData.currencySign
-            is tech.dokus.features.cashflow.presentation.review.models.DocumentUiData.Receipt -> uiData.currencySign
+            is DocumentUiData.Invoice -> uiData.currencySign
+            is DocumentUiData.CreditNote -> uiData.currencySign
+            is DocumentUiData.Receipt -> uiData.currencySign
             else -> "\u20AC"
         }
         RecordPaymentDialog(
@@ -462,3 +466,4 @@ private fun DocumentReviewState.queueStateOrNull(): DocumentReviewQueueState? = 
 
 private fun DocumentReviewState.selectedQueueDocumentIdOrDefault(defaultDocumentId: DocumentId): DocumentId =
     selectedQueueDocumentId ?: documentId ?: defaultDocumentId
+

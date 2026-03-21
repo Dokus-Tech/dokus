@@ -32,6 +32,7 @@ internal fun DocumentReviewScreen(
     isAccountantReadOnly: Boolean,
     onIntent: (DocumentReviewIntent) -> Unit,
     onBackClick: () -> Unit,
+    backLabel: String = "",
     onOpenSource: (DocumentSourceId) -> Unit,
     onCorrectContact: (ResolvedContact) -> Unit,
     onCreateContact: (ResolvedContact) -> Unit,
@@ -46,6 +47,7 @@ internal fun DocumentReviewScreen(
                 ReviewTopBar(
                     state = state,
                     onBackClick = onBackClick,
+                    backLabel = backLabel,
                 )
             }
         },
