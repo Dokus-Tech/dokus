@@ -25,8 +25,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.common_notes
 import tech.dokus.aura.resources.document_source_received_on
 import tech.dokus.aura.resources.document_source_technical_details
+import tech.dokus.aura.resources.document_type_credit_note
+import tech.dokus.aura.resources.review_label_credit_note
+import tech.dokus.aura.resources.review_label_issue
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.features.cashflow.presentation.review.components.bankstatement.CanonicalBankStatementView
@@ -191,7 +195,7 @@ internal fun CanonicalCenterPane(
                         }
                     }
                     Text(
-                        text = "CREDIT NOTE",
+                        text = stringResource(Res.string.document_type_credit_note).uppercase(),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.textMuted,
                         maxLines = 1,
@@ -222,8 +226,8 @@ internal fun CanonicalCenterPane(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.large),
                 ) {
-                    CanonicalMetaCell("Issue", creditNote.issueDate ?: "\u2014")
-                    CanonicalMetaCell("Credit note", documentNumber)
+                    CanonicalMetaCell(stringResource(Res.string.review_label_issue), creditNote.issueDate ?: "\u2014")
+                    CanonicalMetaCell(stringResource(Res.string.review_label_credit_note), documentNumber)
                 }
 
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -246,7 +250,7 @@ internal fun CanonicalCenterPane(
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(
-                            text = "Notes",
+                            text = stringResource(Res.string.common_notes),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.textMuted,
                         )

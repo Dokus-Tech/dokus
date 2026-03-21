@@ -21,7 +21,9 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.cashflow_action_record_payment
 import tech.dokus.aura.resources.document_detail_confirmed
+import tech.dokus.aura.resources.mobile_confirm_document
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
@@ -378,14 +380,14 @@ private fun InspectorHeader(
             state.financialStatus == ReviewFinancialStatus.Review
         ) {
             PButton(
-                text = "Confirm document",
+                text = stringResource(Res.string.mobile_confirm_document),
                 isEnabled = state.canConfirm,
                 modifier = Modifier.fillMaxWidth(),
                 onClick = { onIntent(DocumentReviewIntent.Confirm) },
             )
         } else if (supportsManualConfirm && !isAccountantReadOnly && state.canRecordPayment) {
             PButton(
-                text = "Record payment",
+                text = stringResource(Res.string.cashflow_action_record_payment),
                 variant = PButtonVariant.Outline,
                 modifier = Modifier.fillMaxWidth(),
                 onClick = { onIntent(DocumentReviewIntent.Payment(DocumentPaymentIntent.OpenPaymentSheet)) },

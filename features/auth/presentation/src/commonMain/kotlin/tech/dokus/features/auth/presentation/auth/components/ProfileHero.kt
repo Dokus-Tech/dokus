@@ -28,6 +28,8 @@ import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_change
 import tech.dokus.aura.resources.action_upload
+import tech.dokus.aura.resources.auth_tier_core
+import tech.dokus.aura.resources.auth_tier_owner
 import tech.dokus.aura.resources.state_uploading
 import tech.dokus.aura.resources.user_avatar_content_description
 import tech.dokus.domain.Email
@@ -109,8 +111,8 @@ internal fun ProfileHero(
         )
         Spacer(Modifier.height(10.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            TierBadge(label = "Core")
-            TierBadge(label = "Owner")
+            TierBadge(label = stringResource(Res.string.auth_tier_core))
+            TierBadge(label = stringResource(Res.string.auth_tier_owner))
         }
         ProfileAvatarStateIndicator(
             avatarState = avatarState,

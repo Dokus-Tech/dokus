@@ -19,8 +19,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.banking_detail_counterparty
 import tech.dokus.aura.resources.cashflow_no_preview
+import tech.dokus.aura.resources.common_date
 import tech.dokus.aura.resources.document_source_technical_details
+import tech.dokus.aura.resources.documents_table_counterparty
+import tech.dokus.aura.resources.inspector_label_total
+import tech.dokus.aura.resources.invoice_line_items
+import tech.dokus.aura.resources.mobile_label_due
+import tech.dokus.aura.resources.review_label_credit_note
+import tech.dokus.aura.resources.review_label_invoice
 import tech.dokus.aura.resources.upload_action_retry
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.model.DocDto
@@ -147,16 +155,16 @@ private fun SourceStructuredEvidence(
 
         when (draft) {
             is DocDto.Invoice -> {
-                StructuredValue("Vendor", vendorName ?: "\u2014")
-                StructuredValue("Invoice", draft.invoiceNumber ?: "\u2014")
-                StructuredValue("Date", draft.issueDate?.let { formatShortDate(it) } ?: "\u2014")
-                StructuredValue("Due", draft.dueDate?.let { formatShortDate(it) } ?: "\u2014")
-                StructuredValue("Total", draft.totalAmount?.toDisplayString() ?: "\u2014", emphasized = true)
+                StructuredValue(stringResource(Res.string.documents_table_counterparty), vendorName ?: "\u2014")
+                StructuredValue(stringResource(Res.string.review_label_invoice), draft.invoiceNumber ?: "\u2014")
+                StructuredValue(stringResource(Res.string.common_date), draft.issueDate?.let { formatShortDate(it) } ?: "\u2014")
+                StructuredValue(stringResource(Res.string.mobile_label_due), draft.dueDate?.let { formatShortDate(it) } ?: "\u2014")
+                StructuredValue(stringResource(Res.string.inspector_label_total), draft.totalAmount?.toDisplayString() ?: "\u2014", emphasized = true)
 
                 if (draft.lineItems.isNotEmpty()) {
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                     Text(
-                        text = "LINE ITEMS",
+                        text = stringResource(Res.string.invoice_line_items).uppercase(),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.textMuted,
                     )
@@ -170,10 +178,10 @@ private fun SourceStructuredEvidence(
             }
 
             is DocDto.CreditNote -> {
-                StructuredValue("Counterparty", vendorName ?: "\u2014")
-                StructuredValue("Credit note", draft.creditNoteNumber ?: "\u2014")
-                StructuredValue("Date", draft.issueDate?.let { formatShortDate(it) } ?: "\u2014")
-                StructuredValue("Total", draft.totalAmount?.toDisplayString() ?: "\u2014", emphasized = true)
+                StructuredValue(stringResource(Res.string.banking_detail_counterparty), vendorName ?: "\u2014")
+                StructuredValue(stringResource(Res.string.review_label_credit_note), draft.creditNoteNumber ?: "\u2014")
+                StructuredValue(stringResource(Res.string.common_date), draft.issueDate?.let { formatShortDate(it) } ?: "\u2014")
+                StructuredValue(stringResource(Res.string.inspector_label_total), draft.totalAmount?.toDisplayString() ?: "\u2014", emphasized = true)
             }
 
             is DocDto.Receipt,

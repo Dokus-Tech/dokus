@@ -745,4 +745,29 @@
     <string name="payment_method_cash">Cash</string>
     <string name="payment_method_check">Check</string>
     <string name="payment_method_other">Other</string>
+
+    <!-- Cashflow Summary -->
+    <string name="cashflow_summary_cash_position">Cash position</string>
+    <string name="cashflow_summary_period_weeks">%1$d weeks</string>
+
+    <!-- Invoice Editor -->
+    <string name="cashflow_invoice_new_title">New Invoice</string>
+    <string name="cashflow_invoice_editor_subtitle">Invoice Editor</string>
+    <string name="cashflow_invoice_draft_label">Draft</string>
+
+    <!-- Invoice Assistant -->
+    <string name="cashflow_assistant_intro">I can help draft or adjust this invoice while you edit the form.</string>
+    <string name="cashflow_assistant_try_example">Try: \"Add a line item for consulting: 2h at EUR 95, VAT 21%.\"</string>
+    <string name="cashflow_assistant_prompt_label">Prompt</string>
+    <string name="cashflow_assistant_received">Received. I will map this request to invoice changes.</string>
+    <string name="cashflow_assistant_placeholder">Ask about this invoice or describe a change\u2026</string>
+
+    <!-- Review Labels -->
+    <string name="review_label_issue">Issue</string>
+    <string name="review_label_credit_note">Credit note</string>
+    <string name="review_label_invoice">Invoice</string>
+    <string name="review_source_file_fallback">Source file</string>
+    <string name="review_source_corrective_suffix"> \u00B7 corrective</string>
+    <string name="review_possible_match">Possible match</string>
+    <string name="review_bank_statement_amounts_info">Amounts are available per transaction in bank statements.</string>
 </resources>

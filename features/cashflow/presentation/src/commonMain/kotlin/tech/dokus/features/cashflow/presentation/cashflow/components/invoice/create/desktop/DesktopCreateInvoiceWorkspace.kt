@@ -29,6 +29,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.cashflow_assistant_intro
+import tech.dokus.aura.resources.cashflow_assistant_placeholder
+import tech.dokus.aura.resources.cashflow_assistant_prompt_label
+import tech.dokus.aura.resources.cashflow_assistant_received
+import tech.dokus.aura.resources.cashflow_assistant_try_example
+import tech.dokus.aura.resources.cashflow_invoice_draft_label
+import tech.dokus.aura.resources.cashflow_invoice_editor_subtitle
+import tech.dokus.aura.resources.cashflow_invoice_new_title
+import tech.dokus.aura.resources.cashflow_title
 import tech.dokus.features.cashflow.mvi.CreateInvoiceIntent
 import tech.dokus.features.cashflow.mvi.CreateInvoiceState
 import tech.dokus.foundation.aura.components.background.AmbientBackground
@@ -106,9 +117,9 @@ internal fun DesktopCreateInvoiceWorkspace(
             ) {
                 Column(modifier = Modifier.fillMaxSize()) {
                     DesktopPaneTitleBar(
-                        title = state.invoiceNumberPreview ?: "New Invoice",
-                        subtitle = "Invoice Editor",
-                        trailing = "Draft"
+                        title = state.invoiceNumberPreview ?: stringResource(Res.string.cashflow_invoice_new_title),
+                        subtitle = stringResource(Res.string.cashflow_invoice_editor_subtitle),
+                        trailing = stringResource(Res.string.cashflow_invoice_draft_label),
                     )
                     Box(modifier = Modifier.fillMaxSize()) {
                         DesktopCreateInvoiceContent(
@@ -132,7 +143,7 @@ private fun AssistantPaneTopBar(
 
     Column {
         PLeftPaneHeader(
-            backLabel = "Cashflow",
+            backLabel = stringResource(Res.string.cashflow_title),
             onBackClick = onBackClick,
             trailing = {
                 Text(
@@ -199,16 +210,13 @@ private fun DesktopPaneTitleBar(
 
 @Composable
 private fun AssistantPaneContent() {
+    val introText = stringResource(Res.string.cashflow_assistant_intro)
+    val exampleText = stringResource(Res.string.cashflow_assistant_try_example)
+    val receivedText = stringResource(Res.string.cashflow_assistant_received)
     val messages = remember {
         mutableStateListOf(
-            AssistantMessage(
-                role = AssistantRole.Assistant,
-                text = "I can help draft or adjust this invoice while you edit the form."
-            ),
-            AssistantMessage(
-                role = AssistantRole.Assistant,
-                text = "Try: \"Add a line item for consulting: 2h at EUR 95, VAT 21%.\""
-            )
+            AssistantMessage(role = AssistantRole.Assistant, text = introText),
+            AssistantMessage(role = AssistantRole.Assistant, text = exampleText),
         )
     }
     var input by remember { mutableStateOf("") }
@@ -247,7 +255,7 @@ private fun AssistantPaneContent() {
             verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall)
         ) {
             Text(
-                text = "Prompt",
+                text = stringResource(Res.string.cashflow_assistant_prompt_label),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.textMuted
             )
@@ -260,11 +268,11 @@ private fun AssistantPaneContent() {
                     messages += AssistantMessage(role = AssistantRole.User, text = prompt)
                     messages += AssistantMessage(
                         role = AssistantRole.Assistant,
-                        text = "Received. I will map this request to invoice changes."
+                        text = receivedText,
                     )
                     input = ""
                 },
-                placeholder = "Ask about this invoice or describe a change..."
+                placeholder = stringResource(Res.string.cashflow_assistant_placeholder),
             )
         }
     }

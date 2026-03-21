@@ -20,12 +20,14 @@ import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.cashflow_summary_cash_position
 import tech.dokus.aura.resources.cashflow_summary_in
 import tech.dokus.aura.resources.cashflow_summary_last_30_days
 import tech.dokus.aura.resources.cashflow_summary_next_30_days
 import tech.dokus.aura.resources.cashflow_summary_out
 import tech.dokus.aura.resources.cashflow_summary_overdue
 import tech.dokus.aura.resources.cashflow_summary_paid
+import tech.dokus.aura.resources.cashflow_summary_period_weeks
 import tech.dokus.aura.resources.cashflow_summary_received
 import tech.dokus.aura.resources.currency_symbol_eur
 import tech.dokus.domain.Money
@@ -82,7 +84,7 @@ internal fun CashflowSummarySection(
             // Left: Cash position
             Column(modifier = Modifier.weight(1f)) {
                 DokusLabel(
-                    text = "Cash position",
+                    text = stringResource(Res.string.cashflow_summary_cash_position),
                     color = MaterialTheme.colorScheme.textMuted,
                 )
                 Spacer(Modifier.height(10.dp))
@@ -111,7 +113,7 @@ internal fun CashflowSummarySection(
                     horizontalAlignment = Alignment.End,
                     verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
-                    DokusLabel(text = "8 weeks")
+                    DokusLabel(text = stringResource(Res.string.cashflow_summary_period_weeks, 8))
                     SparkBars(
                         data = sparkData,
                         height = 44.dp,

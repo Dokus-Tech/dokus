@@ -31,6 +31,7 @@ import tech.dokus.aura.resources.banking_action_add_expense
 import tech.dokus.aura.resources.banking_action_confirm_match
 import tech.dokus.aura.resources.banking_action_ignore
 import tech.dokus.aura.resources.banking_action_link
+import tech.dokus.aura.resources.action_close
 import tech.dokus.aura.resources.banking_detail_counterparty
 import tech.dokus.aura.resources.banking_detail_description
 import tech.dokus.aura.resources.banking_detail_evidence
@@ -41,6 +42,8 @@ import tech.dokus.aura.resources.banking_detail_reference
 import tech.dokus.aura.resources.banking_detail_resolution
 import tech.dokus.aura.resources.banking_detail_title
 import tech.dokus.aura.resources.banking_detail_trust
+import tech.dokus.aura.resources.banking_transfer_title
+import tech.dokus.aura.resources.banking_transfer_undo
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.BankTransactionSource
 import tech.dokus.domain.enums.BankTransactionStatus
@@ -94,7 +97,7 @@ internal fun TransactionDetailPane(
             IconButton(onClick = onClose) {
                 Icon(
                     imageVector = Lucide.X,
-                    contentDescription = "Close",
+                    contentDescription = stringResource(Res.string.action_close),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -233,7 +236,7 @@ internal fun TransactionDetailPane(
                 )
                 Spacer(Modifier.height(Constraints.Spacing.small))
                 PButton(
-                    text = "Mark as transfer",
+                    text = stringResource(Res.string.banking_transfer_title),
                     variant = PButtonVariant.Outline,
                     modifier = Modifier.fillMaxWidth(),
                     onClick = onMarkTransfer,
@@ -270,7 +273,7 @@ internal fun TransactionDetailPane(
                 )
                 Spacer(Modifier.height(Constraints.Spacing.small))
                 PButton(
-                    text = "Mark as transfer",
+                    text = stringResource(Res.string.banking_transfer_title),
                     variant = PButtonVariant.Outline,
                     modifier = Modifier.fillMaxWidth(),
                     onClick = onMarkTransfer,
@@ -295,7 +298,7 @@ internal fun TransactionDetailPane(
             BankTransactionStatus.Matched -> {
                 if (transaction.resolutionType == ResolutionType.Transfer) {
                     PButton(
-                        text = "Undo transfer",
+                        text = stringResource(Res.string.banking_transfer_undo),
                         variant = PButtonVariant.OutlineMuted,
                         modifier = Modifier.fillMaxWidth(),
                         onClick = onUndoTransfer,

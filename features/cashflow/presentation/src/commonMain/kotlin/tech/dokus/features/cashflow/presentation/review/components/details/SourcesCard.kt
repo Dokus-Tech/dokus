@@ -13,6 +13,12 @@ import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_match_review_different_document
 import tech.dokus.aura.resources.cashflow_match_review_same_document
+import tech.dokus.aura.resources.inspector_conflict_confirmation
+import tech.dokus.aura.resources.inspector_fuzzy_match
+import tech.dokus.aura.resources.inspector_section_sources
+import tech.dokus.aura.resources.review_possible_match
+import tech.dokus.aura.resources.review_source_corrective_suffix
+import tech.dokus.aura.resources.review_source_file_fallback
 import tech.dokus.domain.enums.ReviewReason
 import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
 import tech.dokus.foundation.aura.extensions.localized
@@ -29,16 +35,18 @@ internal fun SourcesCard(
     if (sources.size <= 1 && pendingReview == null) return
 
     Column(modifier = modifier.fillMaxWidth()) {
-        MicroLabel(text = "Sources")
+        MicroLabel(text = stringResource(Res.string.inspector_section_sources))
 
         sources.forEach { source ->
             val sourceTitle = source.sourceChannel.localized
+            val fallbackName = stringResource(Res.string.review_source_file_fallback)
+            val correctiveSuffix = stringResource(Res.string.review_source_corrective_suffix)
             val sourceValue = buildString {
-                append(source.filename ?: "Source file")
-                append(" · ")
+                append(source.filename ?: fallbackName)
+                append(" \u00B7 ")
                 append(source.arrivalAt.toString())
                 if (source.isCorrective) {
-                    append(" · corrective")
+                    append(correctiveSuffix)
                 }
             }
             FactField(
@@ -49,13 +57,13 @@ internal fun SourcesCard(
 
         pendingReview?.let { review ->
             FactField(
-                label = "Possible match",
+                label = stringResource(Res.string.review_possible_match),
                 value = when (review.reasonType) {
                     ReviewReason.MaterialConflict ->
-                        "Conflicting financial facts require confirmation."
+                        stringResource(Res.string.inspector_conflict_confirmation)
 
                     ReviewReason.FuzzyCandidate ->
-                        "Potential same document found with fuzzy identity match."
+                        stringResource(Res.string.inspector_fuzzy_match)
                 }
             )
 

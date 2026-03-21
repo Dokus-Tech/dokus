@@ -121,4 +121,11 @@
     <string name="banking_balances_time_minutes_ago">%1$dm ago</string>
     <string name="banking_balances_time_hours_ago">%1$dh ago</string>
     <string name="banking_balances_time_days_ago">%1$dd ago</string>
+
+    <!-- Transfer -->
+    <string name="banking_transfer_title">Mark as transfer</string>
+    <string name="banking_transfer_description">Select the destination account for this internal transfer:</string>
+    <string name="banking_transfer_empty">No other accounts available. Upload a bank statement first to create accounts.</string>
+    <string name="banking_transfer_confirm">Confirm transfer</string>
+    <string name="banking_transfer_undo">Undo transfer</string>
 </resources>

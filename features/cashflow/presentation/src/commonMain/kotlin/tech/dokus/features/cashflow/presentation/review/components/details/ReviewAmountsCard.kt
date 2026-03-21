@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_processing_calculating_totals
+import tech.dokus.aura.resources.review_bank_statement_amounts_info
 import tech.dokus.aura.resources.cashflow_section_amounts
 import tech.dokus.aura.resources.cashflow_select_document_type
 import tech.dokus.aura.resources.cashflow_vat_amount
@@ -44,7 +45,7 @@ internal fun AmountsCard(
                 vat = uiData.vatAmount?.toString(),
             )
             is DocumentUiData.BankStatement -> Text(
-                text = "Amounts are available per transaction in bank statements.",
+                text = stringResource(Res.string.review_bank_statement_amounts_info),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

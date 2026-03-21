@@ -124,4 +124,8 @@
     <string name="auth_onboarding_alt_headline_line_2">meets intelligence.</string>
     <string name="auth_onboarding_alt_subline_1">Crafted for those who build tomorrow.</string>
     <string name="auth_onboarding_alt_subline_2">Trusted by those who own today.</string>
+
+    <!-- Tier badges -->
+    <string name="auth_tier_core">Core</string>
+    <string name="auth_tier_owner">Owner</string>
 </resources>
