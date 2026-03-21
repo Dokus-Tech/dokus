@@ -1,10 +1,6 @@
 package tech.dokus.foundation.aura.components.common
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -68,23 +64,17 @@ fun ErrorOverlay(
             content()
         }
 
-        AnimatedVisibility(
-            visible = exception != null,
-            enter = fadeIn(),
-            exit = fadeOut(),
-        ) {
+        if (exception != null) {
             Box(
                 modifier = Modifier
-                    .fillMaxSize()
+                    .matchParentSize()
                     .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)),
                 contentAlignment = Alignment.Center,
             ) {
-                if (exception != null) {
-                    ErrorOverlayContent(
-                        exception = exception,
-                        retryHandler = retryHandler,
-                    )
-                }
+                ErrorOverlayContent(
+                    exception = exception,
+                    retryHandler = retryHandler,
+                )
             }
         }
     }
