@@ -1,5 +1,6 @@
 package tech.dokus.features.contacts.di
 
+import org.koin.core.parameter.parametersOf
 import org.koin.dsl.module
 import tech.dokus.features.contacts.mvi.ContactDetailsAction
 import tech.dokus.features.contacts.mvi.ContactDetailsContainer
@@ -25,6 +26,11 @@ import tech.dokus.features.contacts.mvi.notes.ContactNotesContainer
 import tech.dokus.foundation.app.mvi.container
 
 val contactsPresentationModule = module {
+    // FlowMVI Child Containers (factory — new instance per parent)
+    factory { (contactId: tech.dokus.domain.ids.ContactId) ->
+        ContactNotesContainer(contactId, get(), get(), get(), get())
+    }
+
     // FlowMVI Containers
     container<ContactsContainer, ContactsState, ContactsIntent, ContactsAction> {
         ContactsContainer(
@@ -49,13 +55,7 @@ val contactsPresentationModule = module {
             getCurrentTenantId = get(),
             observeContactChanges = get(),
             updateContact = get(),
-            notesContainer = ContactNotesContainer(
-                contactId = params.contactId,
-                listContactNotes = get(),
-                createContactNote = get(),
-                updateContactNote = get(),
-                deleteContactNote = get(),
-            ),
+            notesContainer = get { parametersOf(params.contactId) },
         )
     }
     container<ContactFormContainer, ContactFormState, ContactFormIntent, ContactFormAction> {

@@ -48,6 +48,11 @@ val cashflowViewModelModule = module {
 
     factory { ValidateInvoiceUseCase() }
 
+    // FlowMVI Child Containers (factory — new instance per parent)
+    factory { ClientLookupContainer(get(), get(), get(), get(), get()) }
+    factory { DocumentPaymentContainer(get(), get(), get(), get(), get()) }
+    factory { DocumentPreviewContainer(get(), get(), get()) }
+
     // FlowMVI Containers
     container<AddDocumentContainer, AddDocumentState, AddDocumentIntent, AddDocumentAction> {
         AddDocumentContainer(uploadManager = get())
@@ -59,13 +64,7 @@ val cashflowViewModelModule = module {
             getCurrentTenant = get(),
             validateInvoice = get(),
             submitInvoiceWithDelivery = get(),
-            clientLookupContainer = ClientLookupContainer(
-                listContacts = get(),
-                lookupContacts = get(),
-                searchCompanyUseCase = get(),
-                getContactPeppolStatus = get(),
-                getLatestInvoiceForContact = get(),
-            ),
+            clientLookupContainer = get(),
         )
     }
     container<DocumentReviewContainer, DocumentReviewState, DocumentReviewIntent, DocumentReviewAction> { (initialDocumentId: DocumentId, routeContext: DocumentReviewRouteContext?) ->
@@ -80,18 +79,8 @@ val cashflowViewModelModule = module {
             resolveDocumentMatchReview = get(),
             getContact = get(),
             loadDocumentRecords = get(),
-            paymentContainer = DocumentPaymentContainer(
-                getCashflowEntry = get(),
-                getCashflowPaymentCandidates = get(),
-                getAutoPaymentStatus = get(),
-                recordCashflowPayment = get(),
-                undoAutoPayment = get(),
-            ),
-            previewContainer = DocumentPreviewContainer(
-                getDocumentPages = get(),
-                getDocumentSourcePages = get(),
-                getDocumentSourceContent = get(),
-            ),
+            paymentContainer = get(),
+            previewContainer = get(),
             initialDocumentId = initialDocumentId,
             routeContext = routeContext,
         )
