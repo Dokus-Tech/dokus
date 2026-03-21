@@ -120,6 +120,10 @@ fun WorkspaceSettingsContent(
                     modifier = modifier,
                 )
             }
+            workspaceData is DokusState.Error -> {
+                // Static empty layout behind blur — no shimmer
+                Spacer(modifier = modifier.fillMaxSize())
+            }
             else -> {
                 SettingsSkeleton(
                     sectionCount = 5,

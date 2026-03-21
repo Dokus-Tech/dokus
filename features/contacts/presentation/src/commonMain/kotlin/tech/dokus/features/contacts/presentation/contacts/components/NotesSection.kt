@@ -9,11 +9,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.Pencil
-import com.composables.icons.lucide.Plus
-import com.composables.icons.lucide.StickyNote
-import com.composables.icons.lucide.Trash2
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -24,6 +19,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Pencil
+import com.composables.icons.lucide.Plus
+import com.composables.icons.lucide.StickyNote
+import com.composables.icons.lucide.Trash2
+import kotlinx.datetime.LocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.contacts_add_note
@@ -32,10 +33,11 @@ import tech.dokus.aura.resources.contacts_edit_note
 import tech.dokus.aura.resources.contacts_no_notes
 import tech.dokus.aura.resources.contacts_note_by
 import tech.dokus.aura.resources.contacts_notes
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.ContactNoteId
+import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.contact.ContactNoteDto
 import tech.dokus.foundation.app.state.DokusState
-import tech.dokus.foundation.app.state.isError
-import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.aura.components.DokusCard
 import tech.dokus.foundation.aura.components.DokusCardPadding
 import tech.dokus.foundation.aura.components.DokusCardSurface
@@ -45,10 +47,6 @@ import tech.dokus.foundation.aura.components.common.ShimmerLine
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
-import tech.dokus.domain.ids.ContactId
-import tech.dokus.domain.ids.ContactNoteId
-import tech.dokus.domain.ids.TenantId
-import kotlinx.datetime.LocalDateTime
 
 // UI dimension constants
 private val SpacingSmall = 4.dp
@@ -78,40 +76,40 @@ internal fun NotesSection(
     onDeleteNote: (ContactNoteDto) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    DokusCard(
-        modifier = modifier.fillMaxWidth(),
-        padding = DokusCardPadding.Default,
+    ErrorOverlay(
+        exception = if (state is DokusState.Error) state.exception else null,
+        retryHandler = if (state is DokusState.Error) state.retryHandler else null,
     ) {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(SpacingMedium)
+        DokusCard(
+            modifier = modifier.fillMaxWidth(),
+            padding = DokusCardPadding.Default,
         ) {
-            Row(
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalArrangement = Arrangement.spacedBy(SpacingMedium)
             ) {
-                Text(
-                    text = stringResource(Res.string.contacts_notes),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-
-                TextButton(onClick = onAddNote) {
-                    Icon(
-                        imageVector = Lucide.Plus,
-                        contentDescription = null,
-                        modifier = Modifier.size(IconSizeMedium)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(Res.string.contacts_notes),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
                     )
-                    Spacer(modifier = Modifier.width(SpacingSmall))
-                    Text(stringResource(Res.string.contacts_add_note))
-                }
-            }
 
-            ErrorOverlay(
-                exception = if (state is DokusState.Error) state.exception else null,
-                retryHandler = if (state is DokusState.Error) state.retryHandler else null,
-            ) {
+                    TextButton(onClick = onAddNote) {
+                        Icon(
+                            imageVector = Lucide.Plus,
+                            contentDescription = null,
+                            modifier = Modifier.size(IconSizeMedium)
+                        )
+                        Spacer(modifier = Modifier.width(SpacingSmall))
+                        Text(stringResource(Res.string.contacts_add_note))
+                    }
+                }
+
                 when (state) {
                     is DokusState.Loading, is DokusState.Idle -> NotesSkeleton()
                     is DokusState.Success -> {
@@ -125,6 +123,7 @@ internal fun NotesSection(
                             )
                         }
                     }
+
                     is DokusState.Error -> NotesEmptyState()
                 }
             }
@@ -262,11 +261,17 @@ private fun NotesSkeleton() {
                         horizontalArrangement = Arrangement.SpaceBetween,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        ShimmerLine(modifier = Modifier.width(ShimmerWidthMedium), height = CardPadding)
+                        ShimmerLine(
+                            modifier = Modifier.width(ShimmerWidthMedium),
+                            height = CardPadding
+                        )
                         ShimmerLine(modifier = Modifier.size(IconSizeSmall), height = IconSizeSmall)
                     }
                     ShimmerLine(modifier = Modifier.fillMaxWidth(), height = IconSizeSmall)
-                    ShimmerLine(modifier = Modifier.fillMaxWidth(ShimmerFillFraction), height = IconSizeSmall)
+                    ShimmerLine(
+                        modifier = Modifier.fillMaxWidth(ShimmerFillFraction),
+                        height = IconSizeSmall
+                    )
                 }
             }
         }

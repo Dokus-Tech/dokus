@@ -102,18 +102,12 @@ internal fun ContactDetailsContent(
             onDocumentClick = onDocumentClick,
         )
 
-        ErrorOverlay(isOffline = !isOnline) {
-            NotesSection(
-                state = if (!isOnline && notesState is DokusState.Error) {
-                    DokusState.loading()
-                } else {
-                    notesState
-                },
-                onAddNote = onAddNote,
-                onEditNote = onEditNote,
-                onDeleteNote = onDeleteNote
-            )
-        }
+        NotesSection(
+            state = notesState,
+            onAddNote = onAddNote,
+            onEditNote = onEditNote,
+            onDeleteNote = onDeleteNote,
+        )
 
         Spacer(modifier = Modifier.height(8.dp))
     }

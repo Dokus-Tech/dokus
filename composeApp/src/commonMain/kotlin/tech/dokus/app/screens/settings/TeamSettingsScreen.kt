@@ -375,6 +375,10 @@ fun TeamSettingsContent(
                     )
                 }
 
+                state.teamData is DokusState.Error -> {
+                    // Static empty layout behind blur — no shimmer
+                    Spacer(modifier = Modifier.fillMaxSize())
+                }
                 else -> SettingsSkeleton(sectionCount = 2)
             }
 
