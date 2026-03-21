@@ -56,6 +56,7 @@ internal object DocumentListingQuery {
     private fun buildBaseQuery(
         tenantId: TenantId,
         filter: DocumentListFilter?,
+        contactId: String? = null,
         documentStatus: DocumentStatus?,
         documentType: DocumentType?,
         ingestionStatus: IngestionStatus?
@@ -267,6 +268,10 @@ internal object DocumentListingQuery {
 
         var whereOp = DocumentsTable.tenantId eq tenantIdUuid
 
+        if (contactId != null) {
+            whereOp = whereOp and (DocumentsTable.linkedContactId eq UUID.fromString(contactId))
+        }
+
         val requiresDraft = effectiveDocumentStatus != null || documentType != null
         if (requiresDraft) {
             whereOp = whereOp and DocumentsTable.documentStatus.isNotNull()
@@ -356,6 +361,7 @@ internal object DocumentListingQuery {
     suspend fun listWithDraftsAndIngestion(
         tenantId: TenantId,
         filter: DocumentListFilter?,
+        contactId: String? = null,
         documentStatus: DocumentStatus?,
         documentType: DocumentType?,
         ingestionStatus: IngestionStatus?,
@@ -366,6 +372,7 @@ internal object DocumentListingQuery {
         val baseQuery = buildBaseQuery(
             tenantId = tenantId,
             filter = filter,
+            contactId = contactId,
             documentStatus = documentStatus,
             documentType = documentType,
             ingestionStatus = ingestionStatus

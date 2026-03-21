@@ -43,6 +43,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(projects.features.contacts.domain)
+            implementation(projects.features.cashflow.domain)
 
             implementation(projects.foundation.appCommon)
             implementation(projects.foundation.domain)
