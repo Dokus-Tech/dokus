@@ -376,8 +376,25 @@ fun TeamSettingsContent(
                 }
 
                 state.teamData is DokusState.Error -> {
-                    // Static empty layout behind blur — no shimmer
-                    Spacer(modifier = Modifier.fillMaxSize())
+                    // Empty team layout behind blur
+                    val emptyTeam = TeamData()
+                    DokusCardSurface(modifier = Modifier.fillMaxWidth()) {
+                        Column {
+                            InviteRow(
+                                availableSeats = emptyTeam.availableSeats,
+                                onClick = {},
+                            )
+                        }
+                    }
+                    DokusCardSurface(modifier = Modifier.fillMaxWidth()) {
+                        BookkeeperAccessSection(
+                            access = emptyTeam.bookkeeperAccess,
+                            isLoading = false,
+                            isOwner = false,
+                            onGrantClick = {},
+                            onRevokeClick = {},
+                        )
+                    }
                 }
                 else -> SettingsSkeleton(sectionCount = 2)
             }

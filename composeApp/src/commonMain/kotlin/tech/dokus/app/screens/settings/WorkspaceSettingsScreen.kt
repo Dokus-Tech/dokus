@@ -1,5 +1,6 @@
 package tech.dokus.app.screens.settings
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -33,6 +34,17 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.settings_saved_successfully
 import tech.dokus.aura.resources.workspace_settings_title
 import tech.dokus.app.screens.settings.components.SettingsSkeleton
+import kotlinx.datetime.LocalDateTime
+import tech.dokus.domain.DisplayName
+import tech.dokus.domain.LegalName
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.enums.Language
+import tech.dokus.domain.enums.SubscriptionTier
+import tech.dokus.domain.enums.TenantStatus
+import tech.dokus.domain.enums.TenantType
+import tech.dokus.domain.model.Tenant
+import tech.dokus.domain.model.TenantSettings
 import tech.dokus.foundation.app.picker.FilePickerLauncher
 import tech.dokus.foundation.app.picker.rememberImagePicker
 import tech.dokus.foundation.app.state.DokusState
@@ -121,8 +133,35 @@ fun WorkspaceSettingsContent(
                 )
             }
             workspaceData is DokusState.Error -> {
-                // Static empty layout behind blur — no shimmer
-                Spacer(modifier = modifier.fillMaxSize())
+                val tenantId = TenantId.generate()
+                val now = LocalDateTime(2026, 1, 1, 0, 0)
+                val emptyData = WorkspaceSettingsState.WorkspaceData(
+                    tenant = Tenant(
+                        id = tenantId,
+                        type = TenantType.Freelancer,
+                        legalName = LegalName(""),
+                        displayName = DisplayName(""),
+                        subscription = SubscriptionTier.Core,
+                        status = TenantStatus.Active,
+                        language = Language.En,
+                        vatNumber = VatNumber(""),
+                        createdAt = now,
+                        updatedAt = now,
+                    ),
+                    settings = TenantSettings(
+                        tenantId = tenantId,
+                        createdAt = now,
+                        updatedAt = now,
+                    ),
+                )
+                WorkspaceSettingsContentScreen(
+                    state = state,
+                    data = emptyData,
+                    onIntent = onIntent,
+                    onNavigateToPeppol = onNavigateToPeppol,
+                    avatarPicker = avatarPicker,
+                    modifier = modifier,
+                )
             }
             else -> {
                 SettingsSkeleton(
