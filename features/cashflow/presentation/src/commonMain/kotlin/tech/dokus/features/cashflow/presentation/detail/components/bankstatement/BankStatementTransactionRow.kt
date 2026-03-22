@@ -19,6 +19,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import tech.dokus.features.cashflow.presentation.detail.models.BankStatementTransactionUiRow
 import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.style.positionNegative
+import tech.dokus.foundation.aura.style.positionPositive
 
 @Composable
 internal fun BankStatementTransactionRow(
@@ -63,7 +65,7 @@ internal fun BankStatementTransactionRow(
 
         // Description + duplicate badge
         Row(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(BankStatementColumnWeights.Description),
             horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -80,6 +82,17 @@ internal fun BankStatementTransactionRow(
             }
         }
 
+        // Counterparty
+        Text(
+            text = row.counterpartyIban.orEmpty(),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(BankStatementColumnWeights.Counterparty),
+            textDecoration = textDecoration,
+        )
+
         // Communication
         Text(
             text = row.communication.orEmpty(),
@@ -87,7 +100,7 @@ internal fun BankStatementTransactionRow(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.width(BankStatementColumnWidths.Communication),
+            modifier = Modifier.weight(BankStatementColumnWeights.Communication),
             textDecoration = textDecoration,
         )
 
@@ -95,7 +108,7 @@ internal fun BankStatementTransactionRow(
         Text(
             text = row.displayAmount,
             style = MaterialTheme.typography.bodySmall,
-            color = if (row.amountMinor > 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+            color = if (row.amountMinor > 0) MaterialTheme.colorScheme.positionPositive else MaterialTheme.colorScheme.positionNegative,
             modifier = Modifier.width(BankStatementColumnWidths.Amount),
             textDecoration = textDecoration,
             textAlign = androidx.compose.ui.text.style.TextAlign.End,
@@ -105,7 +118,12 @@ internal fun BankStatementTransactionRow(
 
 internal object BankStatementColumnWidths {
     val Date = 64.dp
-    val Communication = 160.dp
-    val Amount = 100.dp
+    val Amount = 80.dp
     val Checkbox = 48.dp
+}
+
+internal object BankStatementColumnWeights {
+    const val Description = 2f
+    const val Counterparty = 1.5f
+    const val Communication = 1.5f
 }

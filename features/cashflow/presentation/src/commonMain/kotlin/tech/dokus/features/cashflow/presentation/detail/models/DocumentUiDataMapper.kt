@@ -324,9 +324,10 @@ private fun BankStatementTransactionDraftRowDto.toUiRow(index: Int): BankStateme
     }
     return BankStatementTransactionUiRow(
         index = index,
-        date = transactionDate?.toString().orEmpty(),
+        date = transactionDate?.toShortDisplay().orEmpty(),
         description = descriptionRaw ?: counterparty.name.orEmpty(),
         counterpartyName = counterparty.name,
+        counterpartyIban = counterparty.iban?.value,
         communication = communicationText,
         displayAmount = amount?.toDisplayString().orEmpty(),
         amountMinor = amount?.minor ?: 0L,
@@ -334,3 +335,11 @@ private fun BankStatementTransactionDraftRowDto.toUiRow(index: Int): BankStateme
         isDuplicate = potentialDuplicate,
     )
 }
+
+private val SHORT_MONTHS = arrayOf(
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+)
+
+private fun kotlinx.datetime.LocalDate.toShortDisplay(): String =
+    "${SHORT_MONTHS[monthNumber - 1]} $dayOfMonth"
