@@ -74,6 +74,7 @@ internal fun BankStatementTransactionRow(
             Text(
                 text = row.counterpartyName ?: row.description,
                 style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
+                color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 textDecoration = textDecoration,
