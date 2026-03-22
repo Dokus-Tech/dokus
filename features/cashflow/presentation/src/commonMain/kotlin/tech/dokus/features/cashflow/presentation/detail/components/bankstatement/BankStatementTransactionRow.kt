@@ -5,15 +5,19 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
@@ -47,13 +51,18 @@ internal fun BankStatementTransactionRow(
         horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
     ) {
         if (!isReadOnly) {
-            Checkbox(
-                checked = !row.isExcluded,
-                onCheckedChange = { onToggle() },
-                colors = CheckboxDefaults.colors(
-                    checkedColor = MaterialTheme.colorScheme.primary,
-                ),
-            )
+            CompositionLocalProvider(
+                LocalMinimumInteractiveComponentSize provides Dp.Unspecified,
+            ) {
+                Checkbox(
+                    checked = !row.isExcluded,
+                    onCheckedChange = { onToggle() },
+                    colors = CheckboxDefaults.colors(
+                        checkedColor = MaterialTheme.colorScheme.primary,
+                    ),
+                    modifier = Modifier.size(Constraints.IconSize.medium),
+                )
+            }
         }
 
         // Date
@@ -122,7 +131,7 @@ internal fun BankStatementTransactionRow(
 internal object BankStatementColumnWidths {
     val Date = 64.dp
     val Amount = 80.dp
-    val Checkbox = 48.dp
+    val Checkbox = 24.dp
 }
 
 internal object BankStatementColumnWeights {
