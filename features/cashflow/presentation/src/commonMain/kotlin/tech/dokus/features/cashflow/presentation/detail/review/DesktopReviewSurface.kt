@@ -8,11 +8,13 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -42,7 +44,6 @@ import tech.dokus.features.cashflow.presentation.detail.mvi.preview.DocumentPrev
 import tech.dokus.foundation.aura.components.badges.SourceBadge
 import tech.dokus.foundation.aura.components.badges.toUiSource
 import tech.dokus.foundation.aura.constrains.Constraints
-import tech.dokus.foundation.aura.extensions.localizedUppercase
 import tech.dokus.foundation.aura.style.textMuted
 
 /**
@@ -145,7 +146,8 @@ internal fun DesktopReviewSurface(
                     Spacer(modifier = Modifier.height(Constraints.Spacing.small))
 
                     // Action footer
-                    val hasContactIssue = issues.getOrNull(activeIssueIndex) is ReviewIssue.ContactIssue
+                    val hasContactIssue =
+                        issues.getOrNull(activeIssueIndex) is ReviewIssue.ContactIssue
                     if (!isAccountantReadOnly) {
                         ReviewActionFooter(
                             actionType = actionType,
@@ -163,7 +165,9 @@ internal fun DesktopReviewSurface(
                                 onIntent(DocumentDetailIntent.OpenContactSheet)
                             },
                             onReviewLater = {
-                                val nextId = state.queueState?.nextDocumentId(state.selectedQueueDocumentId ?: state.documentId)
+                                val nextId = state.queueState?.nextDocumentId(
+                                    state.selectedQueueDocumentId ?: state.documentId
+                                )
                                 if (nextId != null) {
                                     onIntent(DocumentDetailIntent.SelectQueueDocument(nextId))
                                 }
@@ -173,21 +177,8 @@ internal fun DesktopReviewSurface(
                 }
             }
 
-            // Bottom: keyboard hints
-            ReviewKeyboardHints(
-                canConfirm = state.canConfirm || issues.isEmpty(),
-                modifier = Modifier.align(Alignment.CenterHorizontally),
-            )
-
-            // Bottom: "View full detail →"
-            Text(
-                text = stringResource(Res.string.review_surface_view_full_detail) + " \u2192",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.textMuted,
-                modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .clickable(onClick = onSwitchToDetail),
-            )
+            // Bottom bar: keyboard hints + divider + "View full detail →"
+            BottomBar(state, issues, onSwitchToDetail)
         }
 
         // PDF zoom overlay
@@ -198,6 +189,35 @@ internal fun DesktopReviewSurface(
             onLoadMore = { maxPages ->
                 onIntent(DocumentDetailIntent.Preview(DocumentPreviewIntent.LoadMorePages(maxPages)))
             },
+        )
+    }
+}
+
+@Composable
+private fun BottomBar(
+    state: DocumentDetailState,
+    issues: List<ReviewIssue>,
+    onSwitchToDetail: () -> Unit,
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
+    ) {
+        ReviewKeyboardHints(
+            canConfirm = state.canConfirm || issues.isEmpty(),
+        )
+
+        HorizontalDivider(
+            color = MaterialTheme.colorScheme.outlineVariant,
+            thickness = Constraints.Stroke.thin,
+        )
+
+        Text(
+            text = stringResource(Res.string.review_surface_view_full_detail) + " \u2192",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.textMuted,
+            modifier = Modifier.clickable(onClick = onSwitchToDetail)
         )
     }
 }
@@ -232,15 +252,6 @@ private fun ReviewSourceBadges(
 }
 
 /**
- * Resolve a short source label for the document card (e.g., "PDF" or "PEPPOL").
- */
-@Composable
-private fun resolveSourceLabel(state: DocumentDetailState): String {
-    val source = state.documentRecord?.sources?.firstOrNull()?.sourceChannel ?: return "PDF"
-    return source.localizedUppercase
-}
-
-/**
  * Handle primary action button click.
  */
 private fun handlePrimaryAction(
@@ -260,6 +271,7 @@ private fun handlePrimaryAction(
             // Accept suggested contact, then confirm will follow from state recomposition
             onIntent(DocumentDetailIntent.AcceptSuggestedContact)
         }
+
         is ReviewIssue.DirectionIssue,
         is ReviewIssue.AmountIssue,
         is ReviewIssue.DateIssue -> {
@@ -293,14 +305,17 @@ private fun handleKeyEvent(
             }
             return false
         }
+
         Key.Z -> {
             onToggleZoom()
             return true
         }
+
         Key.D -> {
             onSwitchToDetail()
             return true
         }
+
         Key.Enter -> {
             if (state.canConfirm || issues.isEmpty()) {
                 handlePrimaryAction(issues, 0, onIntent)
@@ -308,22 +323,28 @@ private fun handleKeyEvent(
             }
             return false
         }
+
         Key.DirectionUp, Key.K -> {
-            val prevId = state.queueState?.previousDocumentId(state.selectedQueueDocumentId ?: state.documentId)
+            val prevId = state.queueState?.previousDocumentId(
+                state.selectedQueueDocumentId ?: state.documentId
+            )
             if (prevId != null) {
                 onIntent(DocumentDetailIntent.SelectQueueDocument(prevId))
                 return true
             }
             return false
         }
+
         Key.DirectionDown, Key.J -> {
-            val nextId = state.queueState?.nextDocumentId(state.selectedQueueDocumentId ?: state.documentId)
+            val nextId =
+                state.queueState?.nextDocumentId(state.selectedQueueDocumentId ?: state.documentId)
             if (nextId != null) {
                 onIntent(DocumentDetailIntent.SelectQueueDocument(nextId))
                 return true
             }
             return false
         }
+
         else -> return false
     }
 }

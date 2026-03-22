@@ -18,8 +18,6 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.review_surface_looks_good
-import tech.dokus.aura.resources.review_surface_looks_good_subtitle
-import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.model.contact.ResolvedContact
 import tech.dokus.features.cashflow.presentation.detail.DocumentDetailIntent
 import tech.dokus.features.cashflow.presentation.detail.DocumentDetailState
@@ -109,8 +107,7 @@ private fun CleanDocumentState(
         }
 
         // Contact info card (if contact is resolved)
-        val contact = state.effectiveContact
-        when (contact) {
+        when (val contact = state.effectiveContact) {
             is ResolvedContact.Linked -> {
                 CleanContactRow(
                     name = contact.name,
