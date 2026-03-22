@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -59,6 +60,7 @@ internal fun BankStatementTransactionRow(
         Text(
             text = row.date,
             style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.width(BankStatementColumnWidths.Date),
             textDecoration = textDecoration,
         )
@@ -71,7 +73,7 @@ internal fun BankStatementTransactionRow(
         ) {
             Text(
                 text = row.counterpartyName ?: row.description,
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 textDecoration = textDecoration,
@@ -107,7 +109,7 @@ internal fun BankStatementTransactionRow(
         // Amount
         Text(
             text = row.displayAmount,
-            style = MaterialTheme.typography.bodySmall,
+            style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
             color = if (row.amountMinor > 0) MaterialTheme.colorScheme.positionPositive else MaterialTheme.colorScheme.positionNegative,
             modifier = Modifier.width(BankStatementColumnWidths.Amount),
             textDecoration = textDecoration,
