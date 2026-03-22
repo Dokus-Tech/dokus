@@ -17,11 +17,8 @@ import tech.dokus.foundation.aura.components.common.DokusLoader
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -44,6 +41,7 @@ import tech.dokus.features.contacts.presentation.contacts.components.ContactForm
 import tech.dokus.features.contacts.presentation.contacts.components.ContactFormFields
 import tech.dokus.features.contacts.presentation.contacts.components.DuplicateWarningBanner
 import tech.dokus.foundation.app.state.isLoading
+import tech.dokus.foundation.aura.components.common.DokusErrorBanner
 import tech.dokus.foundation.aura.components.dialog.DokusDialog
 import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
 import tech.dokus.foundation.aura.components.text.SectionTitle
@@ -71,13 +69,11 @@ import tech.dokus.foundation.aura.tooling.TestWrapper
 @Composable
 internal fun ContactFormScreen(
     state: ContactFormState,
-    snackbarHostState: SnackbarHostState,
     onIntent: (ContactFormIntent) -> Unit,
     onNavigateToDuplicate: (ContactId) -> Unit
 ) {
     val isLargeScreen = LocalScreenSize.current.isLarge
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background
     ) { contentPadding ->
         Box(modifier = Modifier.fillMaxSize()) {
@@ -92,6 +88,14 @@ internal fun ContactFormScreen(
                     DokusLoader()
                 }
             } else {
+                state.actionError?.let { error ->
+                    DokusErrorBanner(
+                        exception = error,
+                        retryHandler = null,
+                        modifier = Modifier.padding(horizontal = Constraints.Spacing.large),
+                        onDismiss = { onIntent(ContactFormIntent.DismissActionError) },
+                    )
+                }
                 if (state.ui.showDeleteConfirmation) {
                     DeleteContactConfirmationDialog(
                         contactName = state.formData.name.value,
@@ -339,7 +343,6 @@ private fun ContactFormScreenPreview(
     TestWrapper(parameters) {
         ContactFormScreen(
             state = ContactFormState(),
-            snackbarHostState = remember { SnackbarHostState() },
             onIntent = {},
             onNavigateToDuplicate = {}
         )

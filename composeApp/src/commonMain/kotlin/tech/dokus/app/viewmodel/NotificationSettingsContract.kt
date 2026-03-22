@@ -13,6 +13,7 @@ import tech.dokus.foundation.app.state.DokusState
 data class NotificationSettingsState(
     val preferences: DokusState<List<NotificationPreferenceDto>> = DokusState.loading(),
     val updatingTypes: Set<NotificationType> = emptySet(),
+    val actionError: DokusException? = null,
 ) : MVIState {
     companion object {
         val initial by lazy { NotificationSettingsState() }
@@ -24,9 +25,10 @@ sealed interface NotificationSettingsIntent : MVIIntent {
     data object Load : NotificationSettingsIntent
     data object Refresh : NotificationSettingsIntent
     data class ToggleEmail(val type: NotificationType, val emailEnabled: Boolean) : NotificationSettingsIntent
+
+    /** Dismiss the action error banner */
+    data object DismissActionError : NotificationSettingsIntent
 }
 
 @Immutable
-sealed interface NotificationSettingsAction : MVIAction {
-    data class ShowError(val error: DokusException) : NotificationSettingsAction
-}
+sealed interface NotificationSettingsAction : MVIAction

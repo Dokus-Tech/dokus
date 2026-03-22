@@ -49,7 +49,7 @@ import tech.dokus.domain.model.SocialFundDraftData
 import tech.dokus.domain.model.StatementOfAccountDraftData
 import tech.dokus.domain.model.SubsidyDraftData
 import tech.dokus.domain.model.TaxAssessmentDraftData
-import tech.dokus.domain.model.TransactionCommunication
+import tech.dokus.domain.model.TransactionCommunicationDto
 import tech.dokus.domain.model.VapzDraftData
 import tech.dokus.domain.model.VatAssessmentDraftData
 import tech.dokus.domain.model.VatListingDraftData
@@ -194,8 +194,8 @@ private fun DocumentDraftData.toPeppolExtractionResult(): FinancialExtractionRes
                     signedAmount = row.signedAmount,
                     counterpartyName = row.counterparty.name,
                     counterpartyIban = row.counterparty.iban,
-                    structuredCommunicationRaw = (row.communication as? TransactionCommunication.Structured)?.raw,
-                    freeCommunication = (row.communication as? TransactionCommunication.FreeForm)?.text,
+                    structuredCommunicationRaw = (row.communication as? TransactionCommunicationDto.Structured)?.raw,
+                    freeCommunication = (row.communication as? TransactionCommunicationDto.FreeForm)?.text,
                     descriptionRaw = row.descriptionRaw,
                     rowConfidence = row.rowConfidence.coerceIn(0.0, 1.0),
                 )

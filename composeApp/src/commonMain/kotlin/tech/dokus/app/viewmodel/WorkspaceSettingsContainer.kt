@@ -88,6 +88,7 @@ internal class WorkspaceSettingsContainer(
                     is WorkspaceSettingsIntent.ResetAvatarState -> handleResetAvatarState()
                     is WorkspaceSettingsIntent.LoadProcessingHealth -> handleLoadProcessingHealth()
                     is WorkspaceSettingsIntent.ExecuteBulkReprocess -> handleExecuteBulkReprocess()
+                    is WorkspaceSettingsIntent.DismissActionError -> updateState { copy(actionError = null) }
                 }
             }
         }
@@ -295,10 +296,10 @@ internal class WorkspaceSettingsContainer(
                 updateState {
                     copy(
                         workspaceData = DokusState.success(data.copy(settings = updatedSettings)),
-                        saveState = WorkspaceSettingsState.SaveState.Success
+                        saveState = WorkspaceSettingsState.SaveState.Success,
+                        actionError = null,
                     )
                 }
-                action(WorkspaceSettingsAction.ShowSuccess(WorkspaceSettingsSuccess.SettingsSaved))
             },
             onFailure = { error ->
                 logger.e(error) { "Failed to save workspace settings" }
@@ -309,9 +310,11 @@ internal class WorkspaceSettingsContainer(
                     exception
                 }
                 updateState {
-                    copy(saveState = WorkspaceSettingsState.SaveState.Error(displayException))
+                    copy(
+                        saveState = WorkspaceSettingsState.SaveState.Error(displayException),
+                        actionError = displayException,
+                    )
                 }
-                action(WorkspaceSettingsAction.ShowError(displayException))
             }
         )
     }
@@ -364,9 +367,11 @@ internal class WorkspaceSettingsContainer(
                     exception
                 }
                 updateState {
-                    copy(avatarState = WorkspaceSettingsState.AvatarState.Error(displayException))
+                    copy(
+                        avatarState = WorkspaceSettingsState.AvatarState.Error(displayException),
+                        actionError = displayException,
+                    )
                 }
-                action(WorkspaceSettingsAction.ShowError(displayException))
             }
         )
     }
@@ -402,9 +407,11 @@ internal class WorkspaceSettingsContainer(
                     exception
                 }
                 updateState {
-                    copy(avatarState = WorkspaceSettingsState.AvatarState.Error(displayException))
+                    copy(
+                        avatarState = WorkspaceSettingsState.AvatarState.Error(displayException),
+                        actionError = displayException,
+                    )
                 }
-                action(WorkspaceSettingsAction.ShowError(displayException))
             }
         )
     }

@@ -15,6 +15,7 @@ import tech.dokus.backend.services.auth.EmailVerificationService
 import tech.dokus.backend.services.auth.PasswordResetService
 import tech.dokus.backend.services.auth.RateLimitServiceInterface
 import tech.dokus.backend.services.auth.WelcomeEmailService
+import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.auth.FirmRepository
 import tech.dokus.database.repository.auth.RefreshTokenRepository
 import tech.dokus.database.repository.auth.RevokedSessionInfo
@@ -46,9 +47,12 @@ class AuthServiceSessionManagementTest {
     private val passwordResetService = mockk<PasswordResetService>()
     private val tokenBlacklistService = mockk<TokenBlacklistService>()
 
+    private val tenantRepository = mockk<TenantRepository>(relaxed = true)
+
     private val authService = AuthService(
         userRepository = userRepository,
         firmRepository = firmRepository,
+        tenantRepository = tenantRepository,
         jwtGenerator = jwtGenerator,
         refreshTokenRepository = refreshTokenRepository,
         rateLimitService = rateLimitService,

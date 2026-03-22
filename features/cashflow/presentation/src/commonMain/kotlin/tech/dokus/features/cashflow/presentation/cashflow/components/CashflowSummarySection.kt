@@ -14,7 +14,7 @@ import androidx.compose.ui.unit.dp
 import tech.dokus.domain.model.DocumentListItemDto
 import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.foundation.app.state.DokusState
-import tech.dokus.foundation.aura.components.common.OfflineOverlay
+import tech.dokus.foundation.aura.components.common.ErrorOverlay
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
@@ -60,7 +60,7 @@ fun CashflowSummarySection(
     ) {
         // Left column: VAT Summary (requires network connection)
         // When offline with error, show loading skeleton behind overlay instead of error
-        OfflineOverlay(
+        ErrorOverlay(
             isOffline = !isOnline,
             modifier = Modifier
                 .weight(LeftColumnWeight)
@@ -78,7 +78,7 @@ fun CashflowSummarySection(
 
         // Right side: Pending Documents Card (requires network connection)
         // When offline with error, show loading skeleton behind overlay instead of error
-        OfflineOverlay(
+        ErrorOverlay(
             isOffline = !isOnline,
             modifier = Modifier
                 .weight(RightColumnWeight)

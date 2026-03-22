@@ -21,13 +21,13 @@ sealed interface ChatContentBlock {
     /** Summary table with key-value rows (totals, counts, comparisons). */
     @Serializable
     @SerialName("summary")
-    data class Summary(val rows: List<SummaryRow>) : ChatContentBlock
+    data class Summary(val rows: List<SummaryRowDto>) : ChatContentBlock
 
     /** List of referenced documents with optional bulk download. */
     @Serializable
     @SerialName("documents")
     data class Documents(
-        val items: List<DocumentReference>,
+        val items: List<DocumentReferenceDto>,
         val showDownloadAll: Boolean = false,
     ) : ChatContentBlock
 
@@ -38,7 +38,7 @@ sealed interface ChatContentBlock {
         val name: String,
         val ref: String,
         val date: String,
-        val lines: List<InvoiceLine>,
+        val lines: List<InvoiceLineDto>,
         val total: String,
         val documentId: String? = null,
     ) : ChatContentBlock
@@ -46,11 +46,11 @@ sealed interface ChatContentBlock {
     /** List of referenced bank transactions. */
     @Serializable
     @SerialName("transactions")
-    data class Transactions(val items: List<TransactionReference>) : ChatContentBlock
+    data class Transactions(val items: List<TransactionReferenceDto>) : ChatContentBlock
 }
 
 @Serializable
-data class SummaryRow(
+data class SummaryRowDto(
     val label: String,
     val value: String,
 )
@@ -64,7 +64,7 @@ enum class DocumentReferenceType {
 }
 
 @Serializable
-data class DocumentReference(
+data class DocumentReferenceDto(
     val documentId: String? = null,
     val name: String,
     val ref: String? = null,
@@ -74,7 +74,7 @@ data class DocumentReference(
 )
 
 @Serializable
-data class InvoiceLine(
+data class InvoiceLineDto(
     val description: String,
     val price: String,
     val vatRate: String? = null,
@@ -88,7 +88,7 @@ enum class TransactionStatus {
 }
 
 @Serializable
-data class TransactionReference(
+data class TransactionReferenceDto(
     val description: String,
     val amount: String,
     val date: String? = null,

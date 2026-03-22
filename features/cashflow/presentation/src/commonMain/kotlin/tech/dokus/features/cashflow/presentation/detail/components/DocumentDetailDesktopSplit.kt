@@ -1,0 +1,365 @@
+package tech.dokus.features.cashflow.presentation.detail.components
+
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+import kotlinx.datetime.LocalDate
+import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_download_pdf
+import tech.dokus.aura.resources.document_detail_locked
+import tech.dokus.aura.resources.document_detail_vendor_fallback
+import tech.dokus.domain.DisplayName
+import tech.dokus.features.cashflow.presentation.detail.DownloadState
+import tech.dokus.domain.Money
+import tech.dokus.domain.enums.Currency
+import tech.dokus.domain.ids.DocumentId
+import tech.dokus.foundation.app.shell.DocQueueItem
+import tech.dokus.foundation.app.shell.DocQueueStatus
+import tech.dokus.foundation.app.shell.LocalIsInDocDetailMode
+import tech.dokus.foundation.app.shell.amountLocalized
+import tech.dokus.foundation.app.shell.colorized
+import tech.dokus.foundation.app.shell.dateLocalized
+import tech.dokus.foundation.app.shell.dotType
+import tech.dokus.foundation.app.shell.statusLocalized
+import tech.dokus.foundation.aura.components.PButton
+import tech.dokus.foundation.aura.components.PButtonVariant
+import tech.dokus.foundation.aura.components.background.AmbientBackground
+import tech.dokus.foundation.aura.components.common.KeyboardNavigationHint
+import tech.dokus.foundation.aura.extensions.arrowKeyNavigation
+import tech.dokus.foundation.aura.components.icons.LockIcon
+import tech.dokus.foundation.aura.components.queue.DocQueueHeader
+import tech.dokus.foundation.aura.components.queue.DocQueueItemRow
+import tech.dokus.foundation.aura.components.status.StatusDot
+import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.style.dokusEffects
+import tech.dokus.foundation.aura.style.dokusSpacing
+import tech.dokus.foundation.aura.style.glass
+import tech.dokus.foundation.aura.style.glassBorder
+import tech.dokus.foundation.aura.style.glassContent
+import tech.dokus.foundation.aura.style.glassHeader
+import tech.dokus.foundation.aura.style.textMuted
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.tooling.TestWrapper
+
+// Same height as DesktopShellTopBarFrame in HomeShellChrome.kt.
+private val TitleBarHeight = Constraints.Height.button + Constraints.Spacing.medium
+
+@Composable
+internal fun DocumentDetailDesktopSplit(
+    documents: List<DocQueueItem>,
+    selectedDocumentId: DocumentId,
+    selectedDoc: DocQueueItem?,
+    hasMore: Boolean,
+    isLoadingMore: Boolean,
+    onSelectDocument: (DocumentId) -> Unit,
+    onLoadMore: () -> Unit,
+    onExit: () -> Unit,
+    onDownloadPdf: () -> Unit,
+    downloadState: DownloadState,
+    hasContent: Boolean,
+    backLabel: String = "",
+    content: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colorScheme = MaterialTheme.colorScheme
+
+    Box(
+        modifier
+            .fillMaxSize()
+            .background(colorScheme.background)
+    ) {
+        AmbientBackground()
+
+        Row(
+            Modifier
+                .fillMaxSize()
+                .padding(Constraints.Shell.padding)
+        ) {
+            // Queue panel — matches home sidebar styling
+            Surface(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .width(Constraints.DocumentDetail.queueWidth),
+                shape = MaterialTheme.shapes.large,
+                color = colorScheme.glass,
+                border = BorderStroke(1.dp, colorScheme.glassBorder),
+                tonalElevation = 0.dp,
+                shadowElevation = 8.dp,
+            ) {
+                DocumentDetailQueuePane(
+                    documents = documents,
+                    selectedDocumentId = selectedDocumentId,
+                    hasMore = hasMore,
+                    isLoadingMore = isLoadingMore,
+                    onSelectDocument = onSelectDocument,
+                    onLoadMore = onLoadMore,
+                    onExit = onExit,
+                    backLabel = backLabel,
+                )
+            }
+
+            // Content panel — matches home content area styling
+            Surface(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(start = Constraints.Shell.gap),
+                color = colorScheme.glassContent,
+                shape = MaterialTheme.shapes.large,
+                border = BorderStroke(1.dp, colorScheme.glassBorder),
+                tonalElevation = 0.dp,
+                shadowElevation = 8.dp,
+            ) {
+                Column(modifier = Modifier.fillMaxSize()) {
+                    DetailTitleBar(
+                        vendorName = selectedDoc?.vendorName?.value
+                            ?: stringResource(Res.string.document_detail_vendor_fallback),
+                        onDownloadPdf = onDownloadPdf,
+                        downloadState = downloadState,
+                        hasContent = hasContent,
+                    )
+
+                    CompositionLocalProvider(LocalIsInDocDetailMode provides true) {
+                        Box(modifier = Modifier.fillMaxSize()) {
+                            content()
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Title bar
+// ---------------------------------------------------------------------------
+
+@Composable
+private fun DetailTitleBar(
+    vendorName: String,
+    onDownloadPdf: () -> Unit,
+    downloadState: DownloadState,
+    hasContent: Boolean,
+) {
+    val colorScheme = MaterialTheme.colorScheme
+    val spacing = MaterialTheme.dokusSpacing
+    val effects = MaterialTheme.dokusEffects
+
+    Column {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(TitleBarHeight)
+                .background(colorScheme.glassHeader)
+                .padding(horizontal = spacing.xLarge),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(spacing.small),
+            ) {
+                Text(
+                    text = vendorName,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(spacing.small),
+            ) {
+                if (hasContent) {
+                    DownloadPdfButton(
+                        downloadState = downloadState,
+                        onClick = onDownloadPdf,
+                    )
+                }
+                LockIcon(modifier = Modifier.size(12.dp))
+                Text(
+                    text = stringResource(Res.string.document_detail_locked),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = colorScheme.textMuted,
+                )
+            }
+        }
+
+        HorizontalDivider(color = effects.railTrackLine)
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Queue pane
+// ---------------------------------------------------------------------------
+
+@Composable
+private fun DocumentDetailQueuePane(
+    documents: List<DocQueueItem>,
+    selectedDocumentId: DocumentId,
+    hasMore: Boolean,
+    isLoadingMore: Boolean,
+    onSelectDocument: (DocumentId) -> Unit,
+    onLoadMore: () -> Unit,
+    onExit: () -> Unit,
+    backLabel: String = "",
+) {
+    val listState = rememberLazyListState()
+    val selectedIndex = documents.indexOfFirst { it.id == selectedDocumentId }
+    val positionText = if (selectedIndex >= 0) "${selectedIndex + 1}/${documents.size}" else ""
+    val effects = MaterialTheme.dokusEffects
+
+    // Auto-scroll to keep selected item visible (keyboard navigation or external selection)
+    LaunchedEffect(selectedDocumentId) {
+        if (selectedIndex >= 0) {
+            listState.animateScrollToItem(selectedIndex)
+        }
+    }
+
+    // Pagination: load more when scrolled near the end
+    LaunchedEffect(documents.size, hasMore, isLoadingMore) {
+        if (documents.isEmpty()) return@LaunchedEffect
+        snapshotFlow {
+            val lastVisibleIndex = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1
+            hasMore && !isLoadingMore && lastVisibleIndex >= (documents.lastIndex - 2)
+        }
+            .distinctUntilChanged()
+            .filter { it }
+            .collect { onLoadMore() }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxHeight()
+            .arrowKeyNavigation(
+                onUp = {
+                    val i = documents.indexOfFirst { it.id == selectedDocumentId }
+                    val prev = (i - 1).coerceAtLeast(0)
+                    if (prev != i && i >= 0) onSelectDocument(documents[prev].id)
+                },
+                onDown = {
+                    val i = documents.indexOfFirst { it.id == selectedDocumentId }
+                    val next = (i + 1).coerceAtMost(documents.lastIndex)
+                    if (next != i && i >= 0) onSelectDocument(documents[next].id)
+                },
+            ),
+    ) {
+        DocQueueHeader(
+            positionText = positionText,
+            backLabel = backLabel,
+            onExit = onExit,
+        )
+
+        HorizontalDivider(color = effects.railTrackLine)
+
+        LazyColumn(
+            state = listState,
+            modifier = Modifier.weight(1f).fillMaxWidth(),
+        ) {
+            items(items = documents, key = { it.id.toString() }) { item ->
+                DocQueueItemRow(
+                    vendorName = item.vendorName.value,
+                    date = item.dateLocalized,
+                    amount = item.amountLocalized,
+                    statusDotType = item.status.dotType,
+                    statusTextColor = item.status.colorized,
+                    statusDetail = item.statusLocalized,
+                    isSelected = item.id == selectedDocumentId,
+                    onClick = { onSelectDocument(item.id) },
+                )
+            }
+        }
+
+        HorizontalDivider(color = effects.railTrackLine)
+        KeyboardNavigationHint()
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Previews
+// ---------------------------------------------------------------------------
+
+@Preview
+@Composable
+private fun DocumentDetailDesktopSplitPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    val mockId = DocumentId.generate()
+    val mockDoc = DocQueueItem(
+        id = mockId,
+        vendorName = DisplayName("Acme Corp"),
+        date = LocalDate(2026, 2, 15),
+        amount = Money.from("1234.56")!!,
+        currency = Currency.Eur,
+        status = DocQueueStatus.Review,
+    )
+    val mockDocuments = listOf(
+        mockDoc,
+        DocQueueItem(
+            id = DocumentId.generate(),
+            vendorName = DisplayName("Tech Solutions"),
+            date = LocalDate(2026, 2, 14),
+            amount = Money.from("890.50")!!,
+            currency = Currency.Eur,
+            status = DocQueueStatus.Paid,
+        ),
+    )
+    TestWrapper(parameters) {
+        DocumentDetailDesktopSplit(
+            documents = mockDocuments,
+            selectedDocumentId = mockId,
+            selectedDoc = mockDoc,
+            hasMore = false,
+            isLoadingMore = false,
+            onSelectDocument = {},
+            onLoadMore = {},
+            onExit = {},
+            onDownloadPdf = {},
+            downloadState = DownloadState.Idle,
+            hasContent = true,
+            content = {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("Document content area")
+                }
+            },
+        )
+    }
+}

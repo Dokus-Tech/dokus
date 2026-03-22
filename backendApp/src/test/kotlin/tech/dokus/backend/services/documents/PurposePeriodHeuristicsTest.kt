@@ -4,7 +4,7 @@ import kotlinx.datetime.LocalDate
 import org.junit.jupiter.api.Test
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.model.CreditNoteDraftData
-import tech.dokus.domain.model.FinancialLineItem
+import tech.dokus.domain.model.FinancialLineItemDto
 import tech.dokus.domain.model.InvoiceDraftData
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -39,7 +39,7 @@ class PurposePeriodHeuristicsTest {
     fun `parses mm slash yyyy from line item`() {
         val draft = CreditNoteDraftData(
             direction = DocumentDirection.Inbound,
-            lineItems = listOf(FinancialLineItem(description = "ChatGPT subscription 02/2026"))
+            lineItems = listOf(FinancialLineItemDto(description = "ChatGPT subscription 02/2026"))
         )
 
         val result = PurposePeriodHeuristics.detectServicePeriodStart(draft)

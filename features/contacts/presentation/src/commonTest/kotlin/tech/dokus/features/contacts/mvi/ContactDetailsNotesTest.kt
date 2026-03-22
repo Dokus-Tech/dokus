@@ -13,6 +13,8 @@ import tech.dokus.domain.ids.ContactNoteId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.ContactNoteDto
+import tech.dokus.features.contacts.mvi.notes.ContactNotesContainer
+import tech.dokus.features.contacts.mvi.notes.ContactNotesIntent
 import tech.dokus.foundation.app.state.isSuccess
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -45,6 +47,9 @@ class ContactDetailsNotesTest {
         updatedAt = now
     )
 
+    private fun noteIntent(intent: ContactNotesIntent): ContactDetailsIntent =
+        ContactDetailsIntent.Notes(intent)
+
     private fun createContainer(
         listNotesResult: Result<List<ContactNoteDto>> = Result.success(listOf(testNote)),
         createNoteResult: Result<ContactNoteDto> = Result.success(testNote),
@@ -57,15 +62,18 @@ class ContactDetailsNotesTest {
             getContactActivity = StubGetContactActivityUseCase(),
             getContactInvoiceSnapshot = StubGetContactInvoiceSnapshotUseCase(),
             getContactPeppolStatus = StubGetContactPeppolStatusUseCase(),
-            listContactNotes = StubListContactNotesUseCase(listNotesResult),
-            createContactNote = StubCreateContactNoteUseCase(createNoteResult),
-            updateContactNote = StubUpdateContactNoteUseCase(updateNoteResult),
-            deleteContactNote = StubDeleteContactNoteUseCase(deleteNoteResult),
             getCachedContacts = StubGetCachedContactsUseCase(),
             cacheContacts = StubCacheContactsUseCase(),
             getCurrentTenantId = StubGetCurrentTenantIdUseCase(tenantId),
             observeContactChanges = StubObserveContactChangesUseCase(),
             updateContact = StubUpdateContactUseCase(),
+            notesContainer = ContactNotesContainer(
+                contactId = contactId,
+                listContactNotes = StubListContactNotesUseCase(listNotesResult),
+                createContactNote = StubCreateContactNoteUseCase(createNoteResult),
+                updateContactNote = StubUpdateContactNoteUseCase(updateNoteResult),
+                deleteContactNote = StubDeleteContactNoteUseCase(deleteNoteResult),
+            ),
         )
     }
 
@@ -76,10 +84,10 @@ class ContactDetailsNotesTest {
             intent(ContactDetailsIntent.LoadContact(contactId))
             advanceUntilIdle()
 
-            intent(ContactDetailsIntent.ShowEditNoteDialog(testNote))
+            intent(noteIntent(ContactNotesIntent.ShowEditNoteDialog(testNote)))
             advanceUntilIdle()
 
-            intent(ContactDetailsIntent.ShowAddNoteDialog)
+            intent(noteIntent(ContactNotesIntent.ShowAddNoteDialog))
             advanceUntilIdle()
 
             val uiState = states.value.uiState
@@ -99,7 +107,7 @@ class ContactDetailsNotesTest {
             intent(ContactDetailsIntent.LoadContact(contactId))
             advanceUntilIdle()
 
-            intent(ContactDetailsIntent.ShowEditNoteDialog(testNote))
+            intent(noteIntent(ContactNotesIntent.ShowEditNoteDialog(testNote)))
             advanceUntilIdle()
 
             val uiState = states.value.uiState
@@ -119,12 +127,12 @@ class ContactDetailsNotesTest {
             intent(ContactDetailsIntent.LoadContact(contactId))
             advanceUntilIdle()
 
-            intent(ContactDetailsIntent.ShowNotesSidePanel)
-            intent(ContactDetailsIntent.ShowAddNoteDialog)
-            intent(ContactDetailsIntent.UpdateNoteContent("draft text"))
+            intent(noteIntent(ContactNotesIntent.ShowNotesSidePanel))
+            intent(noteIntent(ContactNotesIntent.ShowAddNoteDialog))
+            intent(noteIntent(ContactNotesIntent.UpdateNoteContent("draft text")))
             advanceUntilIdle()
 
-            intent(ContactDetailsIntent.HideNotesSidePanel)
+            intent(noteIntent(ContactNotesIntent.HideNotesSidePanel))
             advanceUntilIdle()
 
             val uiState = states.value.uiState
@@ -145,11 +153,11 @@ class ContactDetailsNotesTest {
             intent(ContactDetailsIntent.LoadContact(contactId))
             advanceUntilIdle()
 
-            intent(ContactDetailsIntent.ShowNotesBottomSheet)
-            intent(ContactDetailsIntent.ShowEditNoteDialog(testNote))
+            intent(noteIntent(ContactNotesIntent.ShowNotesBottomSheet))
+            intent(noteIntent(ContactNotesIntent.ShowEditNoteDialog(testNote)))
             advanceUntilIdle()
 
-            intent(ContactDetailsIntent.HideNotesBottomSheet)
+            intent(noteIntent(ContactNotesIntent.HideNotesBottomSheet))
             advanceUntilIdle()
 
             val uiState = states.value.uiState
@@ -170,11 +178,11 @@ class ContactDetailsNotesTest {
             intent(ContactDetailsIntent.LoadContact(contactId))
             advanceUntilIdle()
 
-            intent(ContactDetailsIntent.ShowAddNoteDialog)
-            intent(ContactDetailsIntent.UpdateNoteContent("New note"))
+            intent(noteIntent(ContactNotesIntent.ShowAddNoteDialog))
+            intent(noteIntent(ContactNotesIntent.UpdateNoteContent("New note")))
             advanceUntilIdle()
 
-            intent(ContactDetailsIntent.AddNote)
+            intent(noteIntent(ContactNotesIntent.AddNote))
             advanceUntilIdle()
 
             val state = states.value
@@ -195,11 +203,11 @@ class ContactDetailsNotesTest {
             intent(ContactDetailsIntent.LoadContact(contactId))
             advanceUntilIdle()
 
-            intent(ContactDetailsIntent.ShowEditNoteDialog(testNote))
-            intent(ContactDetailsIntent.UpdateNoteContent("Updated content"))
+            intent(noteIntent(ContactNotesIntent.ShowEditNoteDialog(testNote)))
+            intent(noteIntent(ContactNotesIntent.UpdateNoteContent("Updated content")))
             advanceUntilIdle()
 
-            intent(ContactDetailsIntent.UpdateNote)
+            intent(noteIntent(ContactNotesIntent.UpdateNote))
             advanceUntilIdle()
 
             val state = states.value
@@ -219,12 +227,12 @@ class ContactDetailsNotesTest {
             intent(ContactDetailsIntent.LoadContact(contactId))
             advanceUntilIdle()
 
-            intent(ContactDetailsIntent.ShowDeleteNoteConfirmation(testNote))
+            intent(noteIntent(ContactNotesIntent.ShowDeleteNoteConfirmation(testNote)))
             advanceUntilIdle()
             assertTrue(states.value.uiState.showDeleteNoteConfirmation)
             assertEquals(testNote, states.value.uiState.deletingNote)
 
-            intent(ContactDetailsIntent.DeleteNote)
+            intent(noteIntent(ContactNotesIntent.DeleteNote))
             advanceUntilIdle()
 
             val state = states.value
@@ -244,26 +252,29 @@ class ContactDetailsNotesTest {
             getContactActivity = StubGetContactActivityUseCase(),
             getContactInvoiceSnapshot = StubGetContactInvoiceSnapshotUseCase(),
             getContactPeppolStatus = StubGetContactPeppolStatusUseCase(),
-            listContactNotes = StubListContactNotesUseCase(Result.success(emptyList())),
-            createContactNote = createNote,
-            updateContactNote = StubUpdateContactNoteUseCase(Result.success(testNote)),
-            deleteContactNote = StubDeleteContactNoteUseCase(Result.success(Unit)),
             getCachedContacts = StubGetCachedContactsUseCase(),
             cacheContacts = StubCacheContactsUseCase(),
             getCurrentTenantId = StubGetCurrentTenantIdUseCase(tenantId),
             observeContactChanges = StubObserveContactChangesUseCase(),
             updateContact = StubUpdateContactUseCase(),
+            notesContainer = ContactNotesContainer(
+                contactId = contactId,
+                listContactNotes = StubListContactNotesUseCase(Result.success(emptyList())),
+                createContactNote = createNote,
+                updateContactNote = StubUpdateContactNoteUseCase(Result.success(testNote)),
+                deleteContactNote = StubDeleteContactNoteUseCase(Result.success(Unit)),
+            ),
         )
 
         container.store.subscribeAndTest {
             intent(ContactDetailsIntent.LoadContact(contactId))
             advanceUntilIdle()
 
-            intent(ContactDetailsIntent.ShowAddNoteDialog)
-            intent(ContactDetailsIntent.UpdateNoteContent("   "))
+            intent(noteIntent(ContactNotesIntent.ShowAddNoteDialog))
+            intent(noteIntent(ContactNotesIntent.UpdateNoteContent("   ")))
             advanceUntilIdle()
 
-            intent(ContactDetailsIntent.AddNote)
+            intent(noteIntent(ContactNotesIntent.AddNote))
             advanceUntilIdle()
 
             assertEquals(0, createNote.calls)

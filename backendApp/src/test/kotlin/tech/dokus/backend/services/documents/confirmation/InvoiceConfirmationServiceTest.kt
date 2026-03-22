@@ -8,7 +8,7 @@ import kotlinx.datetime.LocalDateTime
 import org.junit.jupiter.api.Test
 import tech.dokus.backend.services.cashflow.CashflowEntriesService
 import tech.dokus.database.repository.cashflow.DocumentRepository
-import tech.dokus.database.repository.cashflow.DraftSummary
+import tech.dokus.database.entity.DraftSummaryEntity
 import tech.dokus.database.repository.cashflow.InvoiceRepository
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentStatus
@@ -58,9 +58,9 @@ class InvoiceConfirmationServiceTest {
         }
     }
 
-    private fun needsReviewDraft(documentId: DocumentId, tenantId: TenantId): DraftSummary {
+    private fun needsReviewDraft(documentId: DocumentId, tenantId: TenantId): DraftSummaryEntity {
         val now = LocalDateTime(2026, 2, 11, 0, 0, 0)
-        return DraftSummary(
+        return DraftSummaryEntity(
             documentId = documentId,
             tenantId = tenantId,
             documentStatus = DocumentStatus.NeedsReview,

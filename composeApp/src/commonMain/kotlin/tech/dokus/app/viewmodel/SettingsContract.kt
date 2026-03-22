@@ -44,7 +44,4 @@ sealed interface SettingsAction : MVIAction {
 
     /** Navigate to workspace selection */
     data object NavigateToWorkspaceSelect : SettingsAction
-
-    /** Show error message */
-    data class ShowError(val error: DokusException) : SettingsAction
 }

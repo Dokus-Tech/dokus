@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.chat_citation_document_fallback
-import tech.dokus.domain.model.ai.ChatCitation
+import tech.dokus.domain.model.ai.ChatCitationDto
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.textMuted
 import androidx.compose.ui.tooling.preview.Preview
@@ -36,8 +36,8 @@ private val ChipShape = RoundedCornerShape(4.dp)
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ChatCitationChips(
-    citations: List<ChatCitation>,
-    onCitationClick: (ChatCitation) -> Unit,
+    citations: List<ChatCitationDto>,
+    onCitationClick: (ChatCitationDto) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     if (citations.isEmpty()) return
@@ -90,7 +90,7 @@ private fun ChatCitationChipsPreview(
     TestWrapper(parameters) {
         ChatCitationChips(
             citations = listOf(
-                ChatCitation(
+                ChatCitationDto(
                     chunkId = "1",
                     documentId = "doc-1",
                     documentName = "SRL Accounting & Tax",
@@ -98,7 +98,7 @@ private fun ChatCitationChipsPreview(
                     excerpt = "Comptabilit\u00e9 & prestations",
                     relevanceScore = 0.95f,
                 ),
-                ChatCitation(
+                ChatCitationDto(
                     chunkId = "2",
                     documentId = "doc-2",
                     documentName = "Tesla Belgium BVBA",

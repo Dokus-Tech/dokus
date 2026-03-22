@@ -15,9 +15,9 @@ import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.VatNumber
-import tech.dokus.domain.model.CanonicalPayment
-import tech.dokus.domain.model.FinancialLineItem
-import tech.dokus.domain.model.VatBreakdownEntry
+import tech.dokus.domain.model.CanonicalPaymentDto
+import tech.dokus.domain.model.FinancialLineItemDto
+import tech.dokus.domain.model.VatBreakdownEntryDto
 import tech.dokus.features.ai.config.asVisionModel
 import tech.dokus.features.ai.config.finishToolOnly
 import tech.dokus.features.ai.config.finishToolVisionAssistantResponseRepeatMax
@@ -49,8 +49,8 @@ data class InvoiceExtractionResult(
     val totalAmount: Money?,
 
     // Line items & VAT breakdown
-    val lineItems: List<FinancialLineItem> = emptyList(),
-    val vatBreakdown: List<VatBreakdownEntry> = emptyList(),
+    val lineItems: List<FinancialLineItemDto> = emptyList(),
+    val vatBreakdown: List<VatBreakdownEntryDto> = emptyList(),
 
     // Parties (facts only, neutral roles)
     val sellerName: String?,
@@ -73,7 +73,7 @@ data class InvoiceExtractionResult(
 
     // Payment hints
     val iban: Iban? = null,
-    val payment: CanonicalPayment? = null,
+    val payment: CanonicalPaymentDto? = null,
 
     // Optional hint used only as tie-breaker after deterministic matching.
     val directionHint: DocumentDirection = DocumentDirection.Unknown,
@@ -211,7 +211,7 @@ private class InvoiceExtractionFinishTool : Tool<InvoiceExtractionToolInput, Fin
                 buyerCountry = args.buyerCountry,
                 counterparty = args.toCounterpartyExtraction(),
                 iban = Iban.from(args.iban),
-                payment = CanonicalPayment.from(args.paymentReference),
+                payment = CanonicalPaymentDto.from(args.paymentReference),
                 directionHint = args.directionHint,
                 directionHintConfidence = args.directionHintConfidence,
                 confidence = args.confidence,

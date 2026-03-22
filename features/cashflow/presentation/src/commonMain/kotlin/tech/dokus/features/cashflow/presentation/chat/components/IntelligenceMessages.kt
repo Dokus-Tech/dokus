@@ -21,10 +21,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import kotlinx.datetime.LocalDateTime
-import tech.dokus.domain.model.ai.ChatCitation
+import tech.dokus.domain.model.ai.ChatCitationDto
 import tech.dokus.domain.model.ai.ChatContentBlock
 import tech.dokus.domain.model.ai.ChatMessageDto
-import tech.dokus.domain.model.ai.DocumentReference
+import tech.dokus.domain.model.ai.DocumentReferenceDto
 import tech.dokus.domain.model.ai.DocumentReferenceType
 import tech.dokus.domain.model.ai.MessageRole
 import tech.dokus.foundation.aura.components.chat.ChatAssistantMessage
@@ -54,10 +54,10 @@ import tech.dokus.domain.model.ai.ChatSessionId
 internal fun IntelligenceMessages(
     messages: List<ChatMessageDto>,
     listState: LazyListState,
-    onDocumentDownload: (DocumentReference) -> Unit,
-    onDocumentClick: (DocumentReference) -> Unit,
-    onDownloadAllZip: (List<DocumentReference>) -> Unit,
-    onCitationClick: (ChatCitation) -> Unit,
+    onDocumentDownload: (DocumentReferenceDto) -> Unit,
+    onDocumentClick: (DocumentReferenceDto) -> Unit,
+    onDownloadAllZip: (List<DocumentReferenceDto>) -> Unit,
+    onCitationClick: (ChatCitationDto) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -97,10 +97,10 @@ internal fun IntelligenceMessages(
 @Composable
 private fun AssistantMessageWithBlocks(
     message: ChatMessageDto,
-    onDocumentDownload: (DocumentReference) -> Unit,
-    onDocumentClick: (DocumentReference) -> Unit,
-    onDownloadAllZip: (List<DocumentReference>) -> Unit,
-    onCitationClick: (ChatCitation) -> Unit,
+    onDocumentDownload: (DocumentReferenceDto) -> Unit,
+    onDocumentClick: (DocumentReferenceDto) -> Unit,
+    onDownloadAllZip: (List<DocumentReferenceDto>) -> Unit,
+    onCitationClick: (ChatCitationDto) -> Unit,
 ) {
     ChatAssistantMessage {
         val blocks = message.contentBlocks
@@ -129,7 +129,7 @@ private fun AssistantMessageWithBlocks(
                                 onDownload = {
                                     block.documentId?.let { id ->
                                         onDocumentDownload(
-                                            DocumentReference(
+                                            DocumentReferenceDto(
                                                 documentId = id,
                                                 name = block.name,
                                                 ref = block.ref,

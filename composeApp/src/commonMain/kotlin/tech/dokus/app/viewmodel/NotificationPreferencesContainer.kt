@@ -37,6 +37,7 @@ internal class NotificationPreferencesContainer(
                     is NotificationPreferencesIntent.ToggleEmail -> {
                         handleToggleEmail(intent.type, intent.enabled)
                     }
+                    is NotificationPreferencesIntent.DismissActionError -> updateState { copy(actionError = null) }
                 }
             }
         }
@@ -102,11 +103,9 @@ internal class NotificationPreferencesContainer(
                         )
                     }
                 }
-                action(
-                    NotificationPreferencesAction.ShowError(
-                        error.toDokusException("Failed to update notification preference")
-                    )
-                )
+                updateState {
+                    copy(actionError = error.toDokusException("Failed to update notification preference"))
+                }
             }
         )
     }

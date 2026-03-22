@@ -1,9 +1,7 @@
 package tech.dokus.features.cashflow.presentation.documents.screen
 
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -24,7 +22,6 @@ private fun DocumentsDesktopUploadHeaderPreview(
     TestWrapper(parameters) {
         DocumentsScreen(
             state = previewContentState(),
-            snackbarHostState = remember { SnackbarHostState() },
             localUploadRows = previewLocalRows(),
             isDesktopDropTargetActive = false,
             desktopDropScrollToken = 0,
@@ -46,7 +43,6 @@ private fun DocumentsDesktopDropOverlayPreview(
     TestWrapper(parameters) {
         DocumentsScreen(
             state = previewContentState(),
-            snackbarHostState = remember { SnackbarHostState() },
             localUploadRows = previewLocalRows(),
             isDesktopDropTargetActive = true,
             desktopDropScrollToken = 0,
@@ -68,7 +64,6 @@ private fun DocumentsMobileFabPreview(
     TestWrapper(parameters) {
         DocumentsScreen(
             state = previewContentState(),
-            snackbarHostState = remember { SnackbarHostState() },
             localUploadRows = previewLocalRows(),
             isDesktopDropTargetActive = false,
             desktopDropScrollToken = 0,

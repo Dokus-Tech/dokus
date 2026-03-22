@@ -15,7 +15,7 @@ import tech.dokus.backend.services.auth.EmailService
 import tech.dokus.backend.services.auth.EmailTemplateRenderer
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.auth.UserRepository
-import tech.dokus.database.repository.auth.WelcomeEmailJob
+import tech.dokus.database.entity.WelcomeEmailJobEntity
 import tech.dokus.database.repository.auth.WelcomeEmailJobRepository
 import tech.dokus.database.repository.peppol.PeppolSettingsRepository
 import tech.dokus.foundation.backend.config.EmailConfig
@@ -108,7 +108,7 @@ class WelcomeEmailWorker(
         }
     }
 
-    private suspend fun processJob(job: WelcomeEmailJob) {
+    private suspend fun processJob(job: WelcomeEmailJobEntity) {
         try {
             val user = userRepository.findById(job.userId)
             if (user == null) {
@@ -169,7 +169,7 @@ class WelcomeEmailWorker(
     }
 
     private suspend fun markSentWithoutDelivery(
-        job: WelcomeEmailJob,
+        job: WelcomeEmailJobEntity,
         reason: String
     ) {
         val sentAt = Clock.System.now().toLocalDateTime(TimeZone.UTC)
@@ -186,7 +186,7 @@ class WelcomeEmailWorker(
             }
     }
 
-    private suspend fun persistSentState(job: WelcomeEmailJob) {
+    private suspend fun persistSentState(job: WelcomeEmailJobEntity) {
         val sentAtInstant = Clock.System.now()
         val sentAt = sentAtInstant.toLocalDateTime(TimeZone.UTC)
 
@@ -217,7 +217,7 @@ class WelcomeEmailWorker(
     }
 
     private suspend fun scheduleRetry(
-        job: WelcomeEmailJob,
+        job: WelcomeEmailJobEntity,
         error: Throwable
     ) {
         val nextAttemptCount = job.attemptCount + 1

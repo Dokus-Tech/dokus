@@ -7,17 +7,17 @@ import tech.dokus.domain.enums.IgnoredReason
 import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.model.BalanceHistoryResponse
-import tech.dokus.domain.model.BankAccountSummary
+import tech.dokus.domain.model.BankAccountSummaryDto
 import tech.dokus.domain.model.BankAccountDto
 import tech.dokus.domain.model.BankTransactionDto
-import tech.dokus.domain.model.BankTransactionSummary
+import tech.dokus.domain.model.BankTransactionSummaryDto
 import tech.dokus.domain.model.common.PaginatedResponse
 
 interface BankingRemoteDataSource {
 
     suspend fun listAccounts(): Result<List<BankAccountDto>>
 
-    suspend fun getAccountSummary(): Result<BankAccountSummary>
+    suspend fun getAccountSummary(): Result<BankAccountSummaryDto>
 
     suspend fun listTransactions(
         status: BankTransactionStatus? = null,
@@ -28,7 +28,7 @@ interface BankingRemoteDataSource {
         offset: Int = 0
     ): Result<PaginatedResponse<BankTransactionDto>>
 
-    suspend fun getTransactionSummary(): Result<BankTransactionSummary>
+    suspend fun getTransactionSummary(): Result<BankTransactionSummaryDto>
 
     suspend fun getTransaction(transactionId: BankTransactionId): Result<BankTransactionDto>
 

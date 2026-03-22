@@ -36,8 +36,8 @@ data class InvoiceFieldProvenance(
     val iban: FieldProvenance? = null,
     val payment: FieldProvenance? = null,
     val notes: FieldProvenance? = null,
-    val seller: PartyFieldProvenance = PartyFieldProvenance(),
-    val buyer: PartyFieldProvenance = PartyFieldProvenance(),
+    val seller: PartyFieldProvenanceDto = PartyFieldProvenanceDto(),
+    val buyer: PartyFieldProvenanceDto = PartyFieldProvenanceDto(),
 ) : DocumentFieldProvenance {
     override fun withDirectionConfidence(confidence: Double) =
         copy(direction = direction?.copy(extractionConfidence = confidence))
@@ -61,8 +61,8 @@ data class CreditNoteFieldProvenance(
     val originalInvoiceNumber: FieldProvenance? = null,
     val reason: FieldProvenance? = null,
     val notes: FieldProvenance? = null,
-    val seller: PartyFieldProvenance = PartyFieldProvenance(),
-    val buyer: PartyFieldProvenance = PartyFieldProvenance(),
+    val seller: PartyFieldProvenanceDto = PartyFieldProvenanceDto(),
+    val buyer: PartyFieldProvenanceDto = PartyFieldProvenanceDto(),
 ) : DocumentFieldProvenance {
     override fun withDirectionConfidence(confidence: Double) =
         copy(direction = direction?.copy(extractionConfidence = confidence))
@@ -126,7 +126,7 @@ data class DirectionOnlyFieldProvenance(
  * Provenance for party (seller/buyer) sub-fields.
  */
 @Serializable
-data class PartyFieldProvenance(
+data class PartyFieldProvenanceDto(
     val name: FieldProvenance? = null,
     val vat: FieldProvenance? = null,
     val email: FieldProvenance? = null,

@@ -16,7 +16,8 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.CreateInvitationRequest
 import tech.dokus.domain.model.TeamMember
-import tech.dokus.domain.model.TenantInvitation
+import tech.dokus.database.mapper.from
+import tech.dokus.domain.model.TenantInvitationDto
 import tech.dokus.domain.model.auth.BookkeeperFirmSearchItem
 import tech.dokus.domain.model.auth.TenantBookkeeperAccessItem
 import tech.dokus.foundation.backend.utils.loggerFor
@@ -82,7 +83,7 @@ class TeamService(
         tenantId: TenantId,
         invitedBy: UserId,
         request: CreateInvitationRequest
-    ): Result<TenantInvitation> = runCatching {
+    ): Result<TenantInvitationDto> = runCatching {
         logger.debug("Creating invitation for {} to tenant {}", request.email, tenantId)
 
         // Validate role - cannot invite as Owner
@@ -111,7 +112,7 @@ class TeamService(
             logger.info("Added existing user ${existingUser.id} to tenant $tenantId with role ${request.role}")
 
             // Return a pseudo-invitation marked as accepted
-            return@runCatching TenantInvitation(
+            return@runCatching TenantInvitationDto(
                 id = InvitationId.generate(),
                 tenantId = tenantId,
                 email = request.email,
@@ -136,15 +137,17 @@ class TeamService(
         logger.info("Created invitation $invitationId for ${request.email} to tenant $tenantId")
 
         // Fetch and return the created invitation
-        invitationRepository.findByIdAndTenant(invitationId, tenantId)
+        val entity = invitationRepository.findByIdAndTenant(invitationId, tenantId)
             ?: throw IllegalStateException("Failed to retrieve created invitation")
+        TenantInvitationDto.from(entity)
     }
 
     /**
      * List pending invitations for a tenant.
      */
-    suspend fun listPendingInvitations(tenantId: TenantId): List<TenantInvitation> {
+    suspend fun listPendingInvitations(tenantId: TenantId): List<TenantInvitationDto> {
         return invitationRepository.listByTenant(tenantId, InvitationStatus.Pending)
+            .map { TenantInvitationDto.from(it) }
     }
 
     suspend fun searchBookkeeperFirms(

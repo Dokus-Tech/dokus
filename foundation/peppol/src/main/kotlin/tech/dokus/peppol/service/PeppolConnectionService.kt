@@ -1,9 +1,11 @@
 package tech.dokus.peppol.service
 
+import tech.dokus.database.mapper.from
 import tech.dokus.database.repository.peppol.PeppolSettingsRepository
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.Address
 import tech.dokus.domain.model.PeppolConnectResponse
+import tech.dokus.domain.model.PeppolSettingsDto
 import tech.dokus.domain.model.PeppolConnectStatus
 import tech.dokus.domain.model.RecommandCompanySummary
 import tech.dokus.domain.model.Tenant
@@ -90,7 +92,7 @@ class PeppolConnectionService(
             peppolId = peppolId,
             isEnabled = true,
             testMode = testMode
-        ).getOrThrow()
+        ).map { PeppolSettingsDto.from(it) }.getOrThrow()
 
         webhookSyncService.ensureSingleWebhookForSettings(savedSettings).getOrThrow()
 

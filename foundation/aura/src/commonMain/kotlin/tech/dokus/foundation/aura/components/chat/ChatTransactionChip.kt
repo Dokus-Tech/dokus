@@ -17,7 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import tech.dokus.domain.model.ai.TransactionReference
+import tech.dokus.domain.model.ai.TransactionReferenceDto
 import tech.dokus.domain.model.ai.TransactionStatus
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.statusConfirmed
@@ -38,7 +38,7 @@ private val StatusDotSize = 5.dp
  */
 @Composable
 fun ChatTransactionChip(
-    tx: TransactionReference,
+    tx: TransactionReferenceDto,
     modifier: Modifier = Modifier,
 ) {
     val statusColor = when (tx.status) {
@@ -116,7 +116,7 @@ private fun ChatTransactionChipPreview(
 ) {
     TestWrapper(parameters) {
         ChatTransactionChip(
-            tx = TransactionReference(
+            tx = TransactionReferenceDto(
                 description = "Adobe Creative Cloud",
                 amount = "\u2212\u20ac59.99",
                 status = TransactionStatus.Unmatched,

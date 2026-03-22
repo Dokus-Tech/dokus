@@ -5,6 +5,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import tech.dokus.backend.util.isUniqueViolation
+import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.CashflowDirection
@@ -17,7 +18,9 @@ import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.CashflowEntry
+import tech.dokus.database.entity.CashflowEntryEntity
+import tech.dokus.database.mapper.from
+import tech.dokus.domain.model.CashflowEntryDto
 import tech.dokus.foundation.backend.utils.loggerFor
 import java.util.UUID
 
@@ -31,7 +34,8 @@ import java.util.UUID
  */
 @Suppress("LongParameterList")
 class CashflowEntriesService(
-    private val cashflowEntriesRepository: CashflowEntriesRepository
+    private val cashflowEntriesRepository: CashflowEntriesRepository,
+    private val tenantRepository: TenantRepository,
 ) {
     private val logger = loggerFor()
 
@@ -39,7 +43,7 @@ class CashflowEntriesService(
         tenantId: TenantId,
         sourceType: CashflowSourceType,
         sourceId: UUID
-    ): CashflowEntry? = cashflowEntriesRepository.getBySource(tenantId, sourceType, sourceId).getOrThrow()
+    ): CashflowEntryEntity? = cashflowEntriesRepository.getBySource(tenantId, sourceType, sourceId).getOrThrow()
 
     /**
      * Create a cashflow entry for an invoice.
@@ -53,7 +57,7 @@ class CashflowEntriesService(
         amountVat: Money,
         direction: DocumentDirection,
         contactId: ContactId?
-    ): Result<CashflowEntry> {
+    ): Result<CashflowEntryEntity> {
         logger.info("Creating cashflow entry for invoice: $invoiceId, tenant: $tenantId")
         return runCatching {
             val existing = getBySourceOrNull(tenantId, CashflowSourceType.Invoice, invoiceId)
@@ -99,7 +103,7 @@ class CashflowEntriesService(
         amountVat: Money,
         direction: DocumentDirection,
         contactId: ContactId?
-    ): Result<CashflowEntry> = runCatching {
+    ): Result<CashflowEntryEntity> = runCatching {
         val existing = getBySourceOrNull(tenantId, CashflowSourceType.Invoice, invoiceId)
             ?: return@runCatching createFromInvoice(
                 tenantId = tenantId,
@@ -143,7 +147,7 @@ class CashflowEntriesService(
         amountGross: Money,
         amountVat: Money,
         contactId: ContactId?
-    ): Result<CashflowEntry> {
+    ): Result<CashflowEntryEntity> {
         logger.info("Creating cashflow entry for expense: $expenseId, tenant: $tenantId")
         return runCatching {
             val existing = getBySourceOrNull(tenantId, CashflowSourceType.Expense, expenseId)
@@ -188,7 +192,7 @@ class CashflowEntriesService(
         amountGross: Money,
         amountVat: Money,
         contactId: ContactId?
-    ): Result<CashflowEntry> = runCatching {
+    ): Result<CashflowEntryEntity> = runCatching {
         val existing = getBySourceOrNull(tenantId, CashflowSourceType.Expense, expenseId)
             ?: return@runCatching createFromExpense(
                 tenantId = tenantId,
@@ -236,7 +240,7 @@ class CashflowEntriesService(
         amountVat: Money,
         direction: CashflowDirection,
         contactId: ContactId?
-    ): Result<CashflowEntry> {
+    ): Result<CashflowEntryEntity> {
         logger.info("Creating cashflow entry for refund: creditNote=$creditNoteId, direction=$direction")
         return runCatching {
             val existing = getBySourceOrNull(tenantId, CashflowSourceType.Refund, creditNoteId)
@@ -272,9 +276,10 @@ class CashflowEntriesService(
     suspend fun getEntry(
         entryId: CashflowEntryId,
         tenantId: TenantId
-    ): Result<CashflowEntry?> {
+    ): Result<CashflowEntryDto?> {
         logger.debug("Fetching cashflow entry: {} for tenant: {}", entryId, tenantId)
         return cashflowEntriesRepository.getEntry(entryId, tenantId)
+            .map { it?.let { entity -> CashflowEntryDto.from(entity) } }
             .onFailure { logger.error("Failed to fetch cashflow entry: $entryId", it) }
     }
 
@@ -285,7 +290,7 @@ class CashflowEntriesService(
         tenantId: TenantId,
         sourceType: CashflowSourceType,
         sourceId: UUID
-    ): Result<CashflowEntry?> {
+    ): Result<CashflowEntryEntity?> {
         logger.debug("Fetching cashflow entry for source: {} {}", sourceType, sourceId)
         return cashflowEntriesRepository.getBySource(tenantId, sourceType, sourceId)
             .onFailure { logger.error("Failed to fetch cashflow entry for source: $sourceType $sourceId", it) }
@@ -306,7 +311,7 @@ class CashflowEntriesService(
         toDate: LocalDate? = null,
         direction: CashflowDirection? = null,
         statuses: List<CashflowEntryStatus>? = null
-    ): Result<List<CashflowEntry>> {
+    ): Result<List<CashflowEntryDto>> {
         logger.debug(
             "Listing cashflow entries for tenant: {} (viewMode={}, from={}, to={}, direction={}, statuses={})",
             tenantId,
@@ -316,7 +321,9 @@ class CashflowEntriesService(
             direction,
             statuses
         )
-        return cashflowEntriesRepository.listEntries(tenantId, viewMode, fromDate, toDate, direction, statuses)
+        val startDate = tenantRepository.getCashflowTrackingStartDate(tenantId)
+        return cashflowEntriesRepository.listEntries(tenantId, viewMode, fromDate, toDate, direction, statuses, startDate)
+            .map { entries -> entries.map { CashflowEntryDto.from(it) } }
             .onSuccess { logger.debug("Retrieved ${it.size} cashflow entries") }
             .onFailure { logger.error("Failed to list cashflow entries for tenant: $tenantId", it) }
     }

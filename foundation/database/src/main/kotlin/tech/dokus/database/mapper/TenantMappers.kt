@@ -57,6 +57,7 @@ fun TenantSettings.Companion.from(row: ResultRow): TenantSettings = TenantSettin
     enableBankSync = row[TenantSettingsTable.enableBankSync],
     enablePeppol = row[TenantSettingsTable.enablePeppol],
     paymentTermsText = row[TenantSettingsTable.paymentTermsText],
+    cashflowTrackingStartDate = row[TenantSettingsTable.cashflowTrackingStartDate],
     createdAt = row[TenantSettingsTable.createdAt],
     updatedAt = row[TenantSettingsTable.updatedAt]
 )

@@ -13,6 +13,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_cancel
+import tech.dokus.aura.resources.banking_transfer_confirm
+import tech.dokus.aura.resources.banking_transfer_description
+import tech.dokus.aura.resources.banking_transfer_empty
+import tech.dokus.aura.resources.banking_transfer_title
 import tech.dokus.domain.ids.BankAccountId
 import tech.dokus.domain.model.BankAccountDto
 import tech.dokus.foundation.aura.components.dialog.DokusDialog
@@ -35,11 +42,11 @@ internal fun TransferDialog(
 ) {
     DokusDialog(
         onDismissRequest = { if (!isSubmitting) onDismiss() },
-        title = "Mark as transfer",
+        title = stringResource(Res.string.banking_transfer_title),
         content = {
             Column {
                 Text(
-                    text = "Select the destination account for this internal transfer:",
+                    text = stringResource(Res.string.banking_transfer_description),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -47,7 +54,7 @@ internal fun TransferDialog(
 
                 if (availableAccounts.isEmpty()) {
                     Text(
-                        text = "No other accounts available. Upload a bank statement first to create accounts.",
+                        text = stringResource(Res.string.banking_transfer_empty),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.textMuted,
                     )
@@ -84,13 +91,13 @@ internal fun TransferDialog(
             }
         },
         primaryAction = DokusDialogAction(
-            text = "Confirm transfer",
+            text = stringResource(Res.string.banking_transfer_confirm),
             onClick = onConfirm,
             enabled = selectedAccountId != null && !isSubmitting,
             isLoading = isSubmitting,
         ),
         secondaryAction = DokusDialogAction(
-            text = "Cancel",
+            text = stringResource(Res.string.action_cancel),
             onClick = onDismiss,
         ),
         dismissOnBackPress = !isSubmitting,

@@ -19,7 +19,6 @@ import tech.dokus.backend.services.contacts.ContactService
 import tech.dokus.backend.services.contacts.sse.ContactEventHub
 import tech.dokus.backend.services.contacts.sse.ContactSsePublisher
 import tech.dokus.backend.services.peppol.PeppolRecipientResolver
-import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.domain.enums.BusinessProfileSubjectType
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
@@ -62,7 +61,6 @@ fun Route.contactRoutes() {
     val logger = loggerFor("ContactRoutes")
     val contactService by inject<ContactService>()
     val contactNoteService by inject<ContactNoteService>()
-    val contactRepository by inject<ContactRepository>()
     val peppolResolver by inject<PeppolRecipientResolver>()
     val businessProfileService by inject<BusinessProfileService>()
     val avatarStorageService by inject<AvatarStorageService>()
@@ -368,7 +366,7 @@ fun Route.contactRoutes() {
             val tenantId = requireTenantId()
             val contactId = ContactId.parse(route.parent.id)
 
-            val activity = contactRepository.getContactActivitySummary(contactId, tenantId)
+            val activity = contactService.getContactActivitySummary(contactId, tenantId)
                 .getOrElse { throw DokusException.InternalError("Failed to get contact activity: ${it.message}") }
 
             call.respond(HttpStatusCode.OK, activity)
@@ -402,7 +400,7 @@ fun Route.contactRoutes() {
                 throw DokusException.BadRequest("Cannot merge a contact into itself")
             }
 
-            val result = contactRepository.mergeContacts(
+            val result = contactService.mergeContacts(
                 sourceContactId = sourceContactId,
                 targetContactId = targetContactId,
                 tenantId = tenantId,

@@ -21,4 +21,6 @@ data class DocumentDto(
     val uploadedAt: LocalDateTime,
     val sortDate: LocalDate,
     val downloadUrl: String? = null
-)
+) {
+    companion object
+}

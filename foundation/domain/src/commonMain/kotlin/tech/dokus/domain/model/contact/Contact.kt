@@ -85,6 +85,8 @@ data class ContactDto(
 
     /** First address country ISO-2 code (backward-compatible) */
     val country: String? get() = addresses.firstOrNull()?.address?.country
+
+    companion object
 }
 
 /**
@@ -101,7 +103,9 @@ data class ContactNoteDto(
     val authorName: String? = null,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime
-)
+) {
+    companion object
+}
 
 // ============================================================================
 // ADDRESS DTOs

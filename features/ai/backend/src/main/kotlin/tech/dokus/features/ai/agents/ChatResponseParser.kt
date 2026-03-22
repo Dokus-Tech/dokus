@@ -3,10 +3,10 @@ package tech.dokus.features.ai.agents
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
 import tech.dokus.domain.model.ai.ChatContentBlock
-import tech.dokus.domain.model.ai.DocumentReference
-import tech.dokus.domain.model.ai.InvoiceLine
-import tech.dokus.domain.model.ai.SummaryRow
-import tech.dokus.domain.model.ai.TransactionReference
+import tech.dokus.domain.model.ai.DocumentReferenceDto
+import tech.dokus.domain.model.ai.InvoiceLineDto
+import tech.dokus.domain.model.ai.SummaryRowDto
+import tech.dokus.domain.model.ai.TransactionReferenceDto
 
 /**
  * Parses LLM text output into structured [ChatContentBlock] list.
@@ -67,18 +67,18 @@ object ChatResponseParser {
         return try {
             when (tagName) {
                 "summary" -> {
-                    val rows = json.decodeFromString<List<SummaryRow>>(content)
+                    val rows = json.decodeFromString<List<SummaryRowDto>>(content)
                     ChatContentBlock.Summary(rows)
                 }
                 "documents" -> {
-                    val items = json.decodeFromString<List<DocumentReference>>(content)
+                    val items = json.decodeFromString<List<DocumentReferenceDto>>(content)
                     ChatContentBlock.Documents(items, showDownloadAll = items.size > 1)
                 }
                 "invoice" -> {
                     json.decodeFromString<ChatContentBlock.InvoiceDetail>(content)
                 }
                 "transactions" -> {
-                    val items = json.decodeFromString<List<TransactionReference>>(content)
+                    val items = json.decodeFromString<List<TransactionReferenceDto>>(content)
                     ChatContentBlock.Transactions(items)
                 }
                 else -> null

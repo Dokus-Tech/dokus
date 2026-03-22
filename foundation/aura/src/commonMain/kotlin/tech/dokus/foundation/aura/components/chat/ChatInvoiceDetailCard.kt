@@ -22,7 +22,7 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.chat_download_pdf
 import tech.dokus.aura.resources.chat_invoice_total
 import tech.dokus.domain.model.ai.ChatContentBlock
-import tech.dokus.domain.model.ai.InvoiceLine
+import tech.dokus.domain.model.ai.InvoiceLineDto
 import tech.dokus.foundation.aura.components.PButton
 import tech.dokus.foundation.aura.components.PButtonVariant
 import tech.dokus.foundation.aura.constrains.Constraints
@@ -120,7 +120,7 @@ fun ChatInvoiceDetailCard(
 }
 
 @Composable
-private fun InvoiceLineRow(line: InvoiceLine) {
+private fun InvoiceLineRow(line: InvoiceLineDto) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -162,8 +162,8 @@ private fun ChatInvoiceDetailCardPreview(
                 ref = "20260050",
                 date = "2026-01-02",
                 lines = listOf(
-                    InvoiceLine("Comptabilit\u00e9 & prestations \u2014 Q4 2025", "\u20ac600.00", "21%"),
-                    InvoiceLine("Gestion salaire dirigeant", "\u20ac60.00", "21%"),
+                    InvoiceLineDto("Comptabilit\u00e9 & prestations \u2014 Q4 2025", "\u20ac600.00", "21%"),
+                    InvoiceLineDto("Gestion salaire dirigeant", "\u20ac60.00", "21%"),
                 ),
                 total = "\u20ac798.60",
             ),

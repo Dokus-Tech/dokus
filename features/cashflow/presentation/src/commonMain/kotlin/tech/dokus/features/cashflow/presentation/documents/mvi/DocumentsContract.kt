@@ -4,7 +4,6 @@ import androidx.compose.runtime.Immutable
 import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
-import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.DocumentListItemDto
 import tech.dokus.domain.model.common.PaginationState
@@ -115,13 +114,8 @@ sealed interface DocumentsIntent : MVIIntent {
 sealed interface DocumentsAction : MVIAction {
 
     /** Navigate to document review screen */
-    data class NavigateToDocumentReview(
+    data class NavigateToDocumentDetail(
         val documentId: DocumentId,
-        val sourceFilter: DocumentFilter,
-        val sourceSort: CashFlowDestination.DocumentReviewSourceSort =
-            CashFlowDestination.DocumentReviewSourceSort.NewestFirst,
+        val queueSource: CashFlowDestination.DocumentDetailQueueContext,
     ) : DocumentsAction
-
-    /** Show error message */
-    data class ShowError(val error: DokusException) : DocumentsAction
 }

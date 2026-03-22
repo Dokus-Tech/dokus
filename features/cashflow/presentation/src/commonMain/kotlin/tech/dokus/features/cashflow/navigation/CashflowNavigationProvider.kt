@@ -9,14 +9,17 @@ import androidx.compose.animation.fadeOut
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.dialog
 import androidx.navigation.toRoute
+import tech.dokus.features.cashflow.presentation.cashflow.components.AppDownloadQrDialogContent
 import tech.dokus.features.cashflow.presentation.cashflow.route.AddDocumentRoute
 import tech.dokus.features.cashflow.presentation.cashflow.route.CreateInvoiceRoute
+import tech.dokus.navigation.local.LocalNavController
 import tech.dokus.features.cashflow.presentation.chat.route.ChatRoute
-import tech.dokus.features.cashflow.presentation.ledger.route.CashflowLedgerRoute
+import tech.dokus.features.cashflow.presentation.overview.route.CashFlowOverviewRoute
 import tech.dokus.features.cashflow.presentation.peppol.route.PeppolRegistrationRoute
-import tech.dokus.features.cashflow.presentation.review.route.DocumentReviewRoute
-import tech.dokus.features.cashflow.presentation.review.route.DocumentSourceViewerRoute
+import tech.dokus.features.cashflow.presentation.detail.route.DocumentDetailRoute
+import tech.dokus.features.cashflow.presentation.detail.route.DocumentSourceViewerRoute
 import tech.dokus.navigation.NavigationProvider
 import tech.dokus.navigation.destinations.CashFlowDestination
 import tech.dokus.navigation.destinations.SettingsDestination
@@ -29,9 +32,9 @@ internal object CashflowNavigationProvider : NavigationProvider {
         composable<CashFlowDestination.CreateInvoice> {
             CreateInvoiceRoute()
         }
-        composable<CashFlowDestination.DocumentReview> { backStackEntry ->
-            val route = backStackEntry.toRoute<CashFlowDestination.DocumentReview>()
-            DocumentReviewRoute(route = route)
+        composable<CashFlowDestination.DocumentDetail> { backStackEntry ->
+            val route = backStackEntry.toRoute<CashFlowDestination.DocumentDetail>()
+            DocumentDetailRoute(route = route)
         }
         composable<CashFlowDestination.DocumentSourceViewer>(
             enterTransition = { sourceViewerEnterTransition() },
@@ -44,12 +47,18 @@ internal object CashflowNavigationProvider : NavigationProvider {
             val route = backStackEntry.toRoute<CashFlowDestination.DocumentChat>()
             ChatRoute(documentId = route.documentId)
         }
-        composable<CashFlowDestination.CashflowLedger> { backStackEntry ->
-            val route = backStackEntry.toRoute<CashFlowDestination.CashflowLedger>()
-            CashflowLedgerRoute(highlightEntryId = route.highlightEntryId)
+        composable<CashFlowDestination.CashFlowOverview> { backStackEntry ->
+            val route = backStackEntry.toRoute<CashFlowDestination.CashFlowOverview>()
+            CashFlowOverviewRoute(highlightEntryId = route.highlightEntryId)
         }
         composable<SettingsDestination.PeppolRegistration> {
             PeppolRegistrationRoute()
+        }
+        dialog<CashFlowDestination.AppDownloadQrDialog> {
+            val navController = LocalNavController.current
+            AppDownloadQrDialogContent(
+                onDismiss = { navController.popBackStack() }
+            )
         }
     }
 }

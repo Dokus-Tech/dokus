@@ -104,7 +104,7 @@ val contactsDomainModule = module {
 
     // Activity use cases
     single<GetContactActivityUseCase> { GetContactActivityUseCaseImpl(get()) }
-    single<GetContactInvoiceSnapshotUseCase> { GetContactInvoiceSnapshotUseCaseImpl(get()) }
+    single<GetContactInvoiceSnapshotUseCase> { GetContactInvoiceSnapshotUseCaseImpl(get(), get()) }
     single<GetContactPeppolStatusUseCase> { GetContactPeppolStatusUseCaseImpl(get()) }
     single<MergeContactsUseCase> { MergeContactsUseCaseImpl(get()) }
 

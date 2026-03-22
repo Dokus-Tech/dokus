@@ -50,7 +50,6 @@ import tech.dokus.backend.services.cashflow.InvoiceBankAutomationService
 import tech.dokus.backend.services.cashflow.matching.MatchFeedbackStore
 import tech.dokus.backend.services.cashflow.matching.MatchScorer
 import tech.dokus.backend.services.cashflow.matching.MatchingEngine
-import tech.dokus.backend.services.cashflow.matching.MatchingRepository
 import tech.dokus.backend.services.cashflow.matching.TransferDetector
 import tech.dokus.backend.services.cashflow.InvoiceService
 import tech.dokus.backend.services.contacts.ContactNoteService
@@ -58,6 +57,9 @@ import tech.dokus.backend.services.contacts.ContactService
 import tech.dokus.backend.services.contacts.sse.ContactEventHub
 import tech.dokus.backend.services.contacts.sse.ContactSsePublisher
 import tech.dokus.backend.services.documents.AutoConfirmPolicy
+import tech.dokus.backend.services.documents.AttachmentService
+import tech.dokus.backend.services.documents.DocumentLifecycleService
+import tech.dokus.backend.services.documents.DocumentListingService
 import tech.dokus.backend.services.documents.postextraction.AutoConfirmDocumentUseCase
 import tech.dokus.backend.services.documents.postextraction.EnrichDocumentPurposeUseCase
 import tech.dokus.backend.services.documents.postextraction.PostExtractionOrchestrator
@@ -312,6 +314,7 @@ private fun authModule() = module {
         AuthService(
             userRepository = get(),
             firmRepository = get(),
+            tenantRepository = get(),
             jwtGenerator = get(),
             refreshTokenRepository = get(),
             rateLimitService = get(),
@@ -336,19 +339,18 @@ private fun cashflowModule() = module {
     single { InvoiceService(get(), get()) }
     single { ExpenseService(get()) }
     single { CreditNoteService(get(), get(), get()) }
-    single { CashflowEntriesService(get()) }
+    single { CashflowEntriesService(get(), get()) }
     singleOf(::CashflowPaymentService)
     singleOf(::AutoPaymentService)
 
-    // Matching engine
-    singleOf(::MatchingRepository)
+    // Matching engine (MatchingRepository is in RepositoryModules)
     singleOf(::MatchScorer)
     singleOf(::MatchFeedbackStore)
     singleOf(::TransferDetector)
     singleOf(::MatchingEngine)
     singleOf(::InvoiceBankAutomationService)
     single { CashflowProjectionReconciliationService(get(), get()) }
-    single { CashflowOverviewService(get(), get(), get()) }
+    single { CashflowOverviewService(get(), get(), get(), get()) }
     single { InvoiceConfirmationService(get(), get(), get()) }
     single { ReceiptConfirmationService(get(), get(), get()) }
     single { CreditNoteConfirmationService(get(), get(), get(), get()) }
@@ -361,8 +363,11 @@ private fun cashflowModule() = module {
         )
     }
     singleOf(::RAGIndexingService)
-    single { DocumentConfirmationDispatcher(get(), get(), get(), get(), get()) }
+    single { DocumentConfirmationDispatcher(get(), get(), get(), get(), get(), get(), get(), get()) }
     singleOf(::DocumentTruthService)
+    singleOf(::AttachmentService)
+    singleOf(::DocumentListingService)
+    singleOf(::DocumentLifecycleService)
     singleOf(::ProcessingHealthService)
     singleOf(::DocumentCollectionEventHub)
     singleOf(::DocumentSnapshotEventHub)

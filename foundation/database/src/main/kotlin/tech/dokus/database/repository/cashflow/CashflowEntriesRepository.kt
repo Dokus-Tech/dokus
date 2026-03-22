@@ -8,7 +8,6 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.v1.core.JoinType
-import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
@@ -23,6 +22,8 @@ import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.update
+import tech.dokus.database.mapper.from
+import tech.dokus.database.entity.CashflowEntryEntity
 import tech.dokus.database.tables.cashflow.CashflowEntriesTable
 import tech.dokus.database.tables.contacts.ContactsTable
 import tech.dokus.domain.Money
@@ -35,8 +36,6 @@ import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.CashflowContactRef
-import tech.dokus.domain.model.CashflowEntry
 import tech.dokus.domain.toDbDecimal
 import tech.dokus.foundation.backend.database.dbQuery
 import tech.dokus.foundation.backend.utils.runSuspendCatching
@@ -72,7 +71,7 @@ class CashflowEntriesRepository {
         amountGross: Money,
         amountVat: Money,
         contactId: ContactId?
-    ): Result<CashflowEntry> = runSuspendCatching {
+    ): Result<CashflowEntryEntity> = runSuspendCatching {
         dbQuery {
             val entryId = CashflowEntriesTable.insertAndGetId {
                 it[CashflowEntriesTable.tenantId] = UUID.fromString(tenantId.toString())
@@ -88,12 +87,10 @@ class CashflowEntriesRepository {
                 it[CashflowEntriesTable.counterpartyId] = contactId?.let { id -> UUID.fromString(id.toString()) }
             }
 
-            mapRowToEntry(
-                CashflowEntriesTable.selectAll().where {
+            CashflowEntriesTable.selectAll().where {
                     (CashflowEntriesTable.id eq entryId.value) and
                         (CashflowEntriesTable.tenantId eq UUID.fromString(tenantId.toString()))
-                }.single()
-            )
+                }.single().let { CashflowEntryEntity.from(it) }
         }
     }
 
@@ -104,12 +101,12 @@ class CashflowEntriesRepository {
     suspend fun getEntry(
         entryId: CashflowEntryId,
         tenantId: TenantId
-    ): Result<CashflowEntry?> = runSuspendCatching {
+    ): Result<CashflowEntryEntity?> = runSuspendCatching {
         dbQuery {
             CashflowEntriesTable.selectAll().where {
                 (CashflowEntriesTable.id eq UUID.fromString(entryId.toString())) and
                     (CashflowEntriesTable.tenantId eq UUID.fromString(tenantId.toString()))
-            }.singleOrNull()?.let { mapRowToEntry(it) }
+            }.singleOrNull()?.let { it.let { CashflowEntryEntity.from(it) } }
         }
     }
 
@@ -121,46 +118,24 @@ class CashflowEntriesRepository {
         tenantId: TenantId,
         sourceType: CashflowSourceType,
         sourceId: UUID
-    ): Result<CashflowEntry?> = runSuspendCatching {
+    ): Result<CashflowEntryEntity?> = runSuspendCatching {
         dbQuery {
             CashflowEntriesTable.selectAll().where {
                 (CashflowEntriesTable.tenantId eq UUID.fromString(tenantId.toString())) and
                     (CashflowEntriesTable.sourceType eq sourceType) and
                     (CashflowEntriesTable.sourceId eq sourceId)
-            }.singleOrNull()?.let { mapRowToEntry(it) }
-        }
-    }
-
-    @OptIn(ExperimentalUuidApi::class)
-    suspend fun listOpenInvoiceEntries(
-        tenantId: TenantId
-    ): Result<List<CashflowEntry>> = runSuspendCatching {
-        dbQuery {
-            CashflowEntriesTable
-                .join(
-                    ContactsTable,
-                    JoinType.LEFT,
-                    onColumn = CashflowEntriesTable.counterpartyId,
-                    otherColumn = ContactsTable.id
-                )
-                .selectAll()
-                .where {
-                    (CashflowEntriesTable.tenantId eq tenantId.value.toJavaUuid()) and
-                        (CashflowEntriesTable.sourceType eq CashflowSourceType.Invoice) and
-                        (CashflowEntriesTable.status inList listOf(CashflowEntryStatus.Open, CashflowEntryStatus.Overdue)) and
-                        (CashflowEntriesTable.remainingAmount neq BigDecimal.ZERO)
-                }
-                .map { row -> mapRowToEntry(row, row.getOrNull(ContactsTable.name)) }
+            }.singleOrNull()?.let { it.let { CashflowEntryEntity.from(it) } }
         }
     }
 
     @OptIn(ExperimentalUuidApi::class)
     suspend fun listOpenInvoiceEntriesByContact(
         tenantId: TenantId,
-        contactId: ContactId
-    ): Result<List<CashflowEntry>> = runSuspendCatching {
+        contactId: ContactId,
+        cashflowStartDate: LocalDate? = null,
+    ): Result<List<CashflowEntryEntity>> = runSuspendCatching {
         dbQuery {
-            CashflowEntriesTable
+            var query = CashflowEntriesTable
                 .join(
                     ContactsTable,
                     JoinType.LEFT,
@@ -175,7 +150,12 @@ class CashflowEntriesRepository {
                         (CashflowEntriesTable.status inList listOf(CashflowEntryStatus.Open, CashflowEntryStatus.Overdue)) and
                         (CashflowEntriesTable.remainingAmount neq BigDecimal.ZERO)
                 }
-                .map { row -> mapRowToEntry(row, row.getOrNull(ContactsTable.name)) }
+
+            if (cashflowStartDate != null) {
+                query = query.andWhere { CashflowEntriesTable.eventDate greaterEq cashflowStartDate }
+            }
+
+            query.map { row -> CashflowEntryEntity.from(row, row.getOrNull(ContactsTable.name)) }
         }
     }
 
@@ -231,12 +211,12 @@ class CashflowEntriesRepository {
     suspend fun getByDocumentId(
         tenantId: TenantId,
         documentId: DocumentId
-    ): Result<CashflowEntry?> = runSuspendCatching {
+    ): Result<CashflowEntryEntity?> = runSuspendCatching {
         dbQuery {
             CashflowEntriesTable.selectAll().where {
                 (CashflowEntriesTable.tenantId eq UUID.fromString(tenantId.toString())) and
                     (CashflowEntriesTable.documentId eq UUID.fromString(documentId.toString()))
-            }.singleOrNull()?.let { mapRowToEntry(it) }
+            }.singleOrNull()?.let { it.let { CashflowEntryEntity.from(it) } }
         }
     }
 
@@ -287,8 +267,9 @@ class CashflowEntriesRepository {
         fromDate: LocalDate? = null,
         toDate: LocalDate? = null,
         direction: CashflowDirection? = null,
-        statuses: List<CashflowEntryStatus>? = null
-    ): Result<List<CashflowEntry>> = runSuspendCatching {
+        statuses: List<CashflowEntryStatus>? = null,
+        cashflowStartDate: LocalDate? = null,
+    ): Result<List<CashflowEntryEntity>> = runSuspendCatching {
         dbQuery {
             val effectiveStatuses = if (!statuses.isNullOrEmpty()) {
                 statuses
@@ -316,6 +297,13 @@ class CashflowEntriesRepository {
             // Exclude Cancelled by default (unless explicitly included in statuses)
             if (effectiveStatuses == null || CashflowEntryStatus.Cancelled !in effectiveStatuses) {
                 query = query.andWhere { CashflowEntriesTable.status neq CashflowEntryStatus.Cancelled }
+            }
+
+            // Cashflow is only tracked from the start date onward.
+            // Older documents remain accessible via documents and detail views,
+            // but are excluded from all cashflow views.
+            if (cashflowStartDate != null) {
+                query = query.andWhere { CashflowEntriesTable.eventDate greaterEq cashflowStartDate }
             }
 
             // Date filtering based on viewMode
@@ -374,31 +362,10 @@ class CashflowEntriesRepository {
 
             query.orderBy(sortOrder)
                 .map { row ->
-                    mapRowToEntry(
-                        row = row,
+                    CashflowEntryEntity.from(row, 
                         contactName = row.getOrNull(ContactsTable.name)
                     )
                 }
-        }
-    }
-
-    /**
-     * Update remaining amount after payment.
-     * CRITICAL: MUST filter by tenant_id.
-     */
-    suspend fun updateRemainingAmount(
-        entryId: CashflowEntryId,
-        tenantId: TenantId,
-        newRemainingAmount: Money
-    ): Result<Boolean> = runSuspendCatching {
-        dbQuery {
-            val updated = CashflowEntriesTable.update({
-                (CashflowEntriesTable.id eq UUID.fromString(entryId.toString())) and
-                    (CashflowEntriesTable.tenantId eq UUID.fromString(tenantId.toString()))
-            }) {
-                it[remainingAmount] = newRemainingAmount.toDbDecimal()
-            }
-            updated > 0
         }
     }
 
@@ -458,36 +425,6 @@ class CashflowEntriesRepository {
             }
             updated > 0
         }
-    }
-
-    private fun mapRowToEntry(
-        row: ResultRow,
-        contactName: String? = null
-    ): CashflowEntry {
-        return CashflowEntry(
-            id = CashflowEntryId.parse(row[CashflowEntriesTable.id].value.toString()),
-            tenantId = TenantId.parse(row[CashflowEntriesTable.tenantId].toString()),
-            sourceType = row[CashflowEntriesTable.sourceType],
-            sourceId = row[CashflowEntriesTable.sourceId].toString(),
-            documentId = row[CashflowEntriesTable.documentId]?.let { DocumentId.parse(it.toString()) },
-            direction = row[CashflowEntriesTable.direction],
-            eventDate = row[CashflowEntriesTable.eventDate],
-            amountGross = Money.fromDbDecimal(row[CashflowEntriesTable.amountGross]),
-            amountVat = Money.fromDbDecimal(row[CashflowEntriesTable.amountVat]),
-            remainingAmount = Money.fromDbDecimal(row[CashflowEntriesTable.remainingAmount]),
-            currency = row[CashflowEntriesTable.currency],
-            status = row[CashflowEntriesTable.status],
-            paidAt = row[CashflowEntriesTable.paidAt],
-            contact = row[CashflowEntriesTable.counterpartyId]?.let { counterpartyId ->
-                CashflowContactRef(
-                    id = ContactId.parse(counterpartyId.toString()),
-                    name = contactName,
-                )
-            },
-            description = null, // Will be AI-generated in future
-            createdAt = row[CashflowEntriesTable.createdAt],
-            updatedAt = row[CashflowEntriesTable.updatedAt]
-        )
     }
 
     suspend fun deleteBySource(

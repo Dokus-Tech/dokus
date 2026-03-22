@@ -9,8 +9,8 @@ import kotlinx.datetime.LocalDateTime
 import org.junit.jupiter.api.Test
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.DocumentPurposeTemplateRepository
-import tech.dokus.database.repository.cashflow.DocumentPurposeTemplateSummary
-import tech.dokus.database.repository.cashflow.DraftSummary
+import tech.dokus.database.entity.DocumentPurposeTemplateEntity
+import tech.dokus.database.entity.DraftSummaryEntity
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.ContactLinkSource
 import tech.dokus.domain.enums.DocumentDirection
@@ -24,7 +24,7 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.contact.CounterpartyInfo
-import tech.dokus.domain.model.PartyDraft
+import tech.dokus.domain.model.PartyDraftDto
 import tech.dokus.features.ai.agents.DocumentProcessingAgent
 import tech.dokus.features.ai.models.PurposeEnrichmentResult
 
@@ -77,7 +77,7 @@ class DocumentPurposeServiceTest {
                 counterpartyKey = "contact:$contactId",
                 documentType = DocumentType.Invoice
             )
-        } returns DocumentPurposeTemplateSummary(
+        } returns DocumentPurposeTemplateEntity(
             tenantId = tenantId,
             counterpartyKey = "contact:$contactId",
             documentType = DocumentType.Invoice,
@@ -244,8 +244,8 @@ class DocumentPurposeServiceTest {
         return InvoiceDraftData(
             direction = DocumentDirection.Inbound,
             issueDate = LocalDate(2026, 2, 15),
-            seller = PartyDraft(name = supplierName, vat = supplierVat),
-            buyer = PartyDraft(name = "Dokus"),
+            seller = PartyDraftDto(name = supplierName, vat = supplierVat),
+            buyer = PartyDraftDto(name = "Dokus"),
             totalAmount = Money.from("100.00"),
             notes = notes
         )
@@ -257,9 +257,9 @@ class DocumentPurposeServiceTest {
         purposeBase: String? = null,
         counterpartyKey: String? = null,
         merchantToken: String? = "kbc"
-    ): DraftSummary {
+    ): DraftSummaryEntity {
         val now = LocalDateTime(2026, 2, 1, 0, 0, 0)
-        return DraftSummary(
+        return DraftSummaryEntity(
             documentId = documentId,
             tenantId = tenantId,
             documentStatus = documentStatus,

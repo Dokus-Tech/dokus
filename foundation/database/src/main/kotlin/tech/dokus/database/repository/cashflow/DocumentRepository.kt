@@ -1,7 +1,6 @@
 package tech.dokus.database.repository.cashflow
 
 import kotlinx.datetime.Clock
-import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.toStdlibInstant
@@ -22,11 +21,12 @@ import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.v1.jdbc.update
-import tech.dokus.database.mapper.toDocumentDto
+import tech.dokus.database.entity.DraftSummaryEntity
+import tech.dokus.database.entity.IngestionRunSummaryEntity
+import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.contacts.ContactsTable
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
 import tech.dokus.database.tables.documents.DocumentsTable
-import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentListFilter
 import tech.dokus.domain.enums.DocumentPurposeSource
 import tech.dokus.domain.enums.DocumentRejectReason
@@ -44,10 +44,9 @@ import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentFieldProvenance
 import tech.dokus.domain.model.contact.CounterpartyInfo
-import tech.dokus.domain.model.contact.CounterpartySnapshot
-import tech.dokus.domain.model.contact.MatchEvidence
-import tech.dokus.domain.model.contact.SuggestedContact
-import tech.dokus.domain.model.contact.isUnresolved
+import tech.dokus.domain.model.contact.CounterpartySnapshotDto
+import tech.dokus.domain.model.contact.MatchEvidenceDto
+import tech.dokus.domain.model.contact.SuggestedContactDto
 import tech.dokus.domain.model.toDirection
 import tech.dokus.domain.model.toDocumentType
 import tech.dokus.domain.model.toSortDate
@@ -63,8 +62,8 @@ import kotlin.uuid.toKotlinUuid
  */
 data class DocumentWithDraftAndIngestion(
     val document: DocumentDto,
-    val draft: DraftSummary?,
-    val latestIngestion: IngestionRunSummary?
+    val draft: DraftSummaryEntity?,
+    val latestIngestion: IngestionRunSummaryEntity?
 )
 
 /**
@@ -86,44 +85,15 @@ data class DocumentCreatePayload(
 )
 
 /**
- * Data class for draft summary.
- */
-data class DraftSummary(
-    val documentId: DocumentId,
-    val tenantId: TenantId,
-    val documentStatus: DocumentStatus,
-    val documentType: DocumentType?,
-    val direction: DocumentDirection = DocumentDirection.Unknown,
-    val aiKeywords: List<String> = emptyList(),
-    val purposeBase: String? = null,
-    val purposePeriodYear: Int? = null,
-    val purposePeriodMonth: Int? = null,
-    val purposeRendered: String? = null,
-    val purposeSource: DocumentPurposeSource? = null,
-    val purposeLocked: Boolean = false,
-    val purposePeriodMode: PurposePeriodMode = PurposePeriodMode.IssueMonth,
-    val counterpartyKey: String? = null,
-    val merchantToken: String? = null,
-    val aiDraftSourceRunId: IngestionRunId?,
-    val draftVersion: Int,
-    val draftEditedAt: LocalDateTime?,
-    val draftEditedBy: UserId?,
-    val counterparty: CounterpartyInfo? = null,
-    val counterpartyDisplayName: String? = null,
-    val rejectReason: DocumentRejectReason?,
-    val lastSuccessfulRunId: IngestionRunId?,
-    val createdAt: LocalDateTime,
-    val updatedAt: LocalDateTime
-)
-
-/**
  * Unified repository for document CRUD and draft operations.
  * CRITICAL: All queries filter by tenantId for security.
  *
  * Implements DocumentStatusChecker for chat confirmation checks.
  */
 @OptIn(ExperimentalUuidApi::class)
-class DocumentRepository : DocumentStatusChecker {
+class DocumentRepository(
+    private val ingestionRunRepository: DocumentIngestionRunRepository,
+) : DocumentStatusChecker {
 
     // =========================================================================
     // Document CRUD
@@ -158,22 +128,7 @@ class DocumentRepository : DocumentStatusChecker {
                     (DocumentsTable.id eq UUID.fromString(documentId.toString())) and
                         (DocumentsTable.tenantId eq UUID.fromString(tenantId.toString()))
                 }
-                .map { it.toDocumentDto() }
-                .singleOrNull()
-        }
-
-    /**
-     * Get a document by identity key hash.
-     * CRITICAL: Must filter by tenantId.
-     */
-    suspend fun getByIdentityKeyHash(tenantId: TenantId, identityKeyHash: String): DocumentDto? =
-        newSuspendedTransaction {
-            DocumentsTable.selectAll()
-                .where {
-                    (DocumentsTable.canonicalIdentityKey eq identityKeyHash) and
-                        (DocumentsTable.tenantId eq UUID.fromString(tenantId.toString()))
-                }
-                .map { it.toDocumentDto() }
+                .map { DocumentDto.from(it) }
                 .singleOrNull()
         }
 
@@ -210,7 +165,7 @@ class DocumentRepository : DocumentStatusChecker {
             .orderBy(DocumentsTable.uploadedAt, SortOrder.DESC)
             .limit(limit)
             .offset((page * limit).toLong())
-            .map { it.toDocumentDto() }
+            .map { DocumentDto.from(it) }
 
         DocumentListPage(documents, total)
     }
@@ -224,6 +179,7 @@ class DocumentRepository : DocumentStatusChecker {
     suspend fun listWithDraftsAndIngestion(
         tenantId: TenantId,
         filter: DocumentListFilter? = null,
+        contactId: ContactId? = null,
         documentStatus: DocumentStatus? = null,
         documentType: DocumentType? = null,
         ingestionStatus: IngestionStatus? = null,
@@ -231,10 +187,11 @@ class DocumentRepository : DocumentStatusChecker {
         page: Int = 0,
         limit: Int = 20
     ): DocumentListPage<DocumentWithDraftAndIngestion> {
-        DocumentIngestionRunRepository().recoverStaleProcessingRunsForTenant(tenantId)
+        ingestionRunRepository.recoverStaleProcessingRunsForTenant(tenantId)
         return DocumentListingQuery.listWithDraftsAndIngestion(
             tenantId = tenantId,
             filter = filter,
+            contactId = contactId,
             documentStatus = documentStatus,
             documentType = documentType,
             ingestionStatus = ingestionStatus,
@@ -247,7 +204,7 @@ class DocumentRepository : DocumentStatusChecker {
     suspend fun getOperationalCounts(
         tenantId: TenantId
     ): DocumentOperationalCounts {
-        DocumentIngestionRunRepository().recoverStaleProcessingRunsForTenant(tenantId)
+        ingestionRunRepository.recoverStaleProcessingRunsForTenant(tenantId)
         return DocumentOperationalCounts(
             total = DocumentListingQuery.countWithDraftsAndIngestion(
                 tenantId = tenantId,
@@ -532,7 +489,7 @@ class DocumentRepository : DocumentStatusChecker {
     suspend fun getDraftByDocumentId(
         documentId: DocumentId,
         tenantId: TenantId
-    ): DraftSummary? = newSuspendedTransaction {
+    ): DraftSummaryEntity? = newSuspendedTransaction {
         DocumentsTable
             .join(ContactsTable, JoinType.LEFT, DocumentsTable.linkedContactId, ContactsTable.id) {
                 ContactsTable.tenantId eq DocumentsTable.tenantId
@@ -542,7 +499,7 @@ class DocumentRepository : DocumentStatusChecker {
                 (DocumentsTable.id eq UUID.fromString(documentId.toString())) and
                     (DocumentsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }
-            .map { it.toDraftSummary(contactName = it.getOrNull(ContactsTable.name)) }
+            .map { DraftSummaryEntity.from(it, contactName = it.getOrNull(ContactsTable.name)) }
             .singleOrNull()
     }
 
@@ -713,42 +670,6 @@ class DocumentRepository : DocumentStatusChecker {
         } > 0
     }
 
-    /**
-     * List drafts by status with optional document type filter.
-     * CRITICAL: Must filter by tenantId.
-     *
-     */
-    suspend fun listByStatus(
-        tenantId: TenantId,
-        statuses: List<DocumentStatus>,
-        documentType: DocumentType? = null,
-        page: Int = 0,
-        limit: Int = 20
-    ): DocumentListPage<DraftSummary> = newSuspendedTransaction {
-        val tenantIdUuid = UUID.fromString(tenantId.toString())
-
-        val baseQuery = DocumentsTable.selectAll()
-            .where {
-                val conditions = (DocumentsTable.tenantId eq tenantIdUuid) and
-                    (DocumentsTable.documentStatus inList statuses)
-                if (documentType != null) {
-                    conditions and (DocumentsTable.documentType eq documentType)
-                } else {
-                    conditions
-                }
-            }
-
-        val total = baseQuery.count()
-
-        val drafts = baseQuery
-            .orderBy(DocumentsTable.updatedAt, SortOrder.DESC)
-            .limit(limit)
-            .offset((page * limit).toLong())
-            .map { it.toDraftSummary() }
-
-        DocumentListPage(drafts, total)
-    }
-
     // =========================================================================
     // Contact Resolution
     // =========================================================================
@@ -760,7 +681,7 @@ class DocumentRepository : DocumentStatusChecker {
     suspend fun updateContactResolution(
         documentId: DocumentId,
         tenantId: TenantId,
-        counterpartySnapshot: CounterpartySnapshot? = null,
+        counterpartySnapshot: CounterpartySnapshotDto? = null,
         counterparty: CounterpartyInfo
     ): Boolean = newSuspendedTransaction {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
@@ -904,51 +825,13 @@ class DocumentRepository : DocumentStatusChecker {
         draft?.get(DocumentsTable.documentStatus) == DocumentStatus.Confirmed
     }
 
-    // =========================================================================
-    // Mappers
-    // =========================================================================
-
-    private fun ResultRow.toDraftSummary(contactName: String? = null): DraftSummary {
-        val counterpartyInfo = buildCounterpartyInfo(this)
-        return DraftSummary(
-            documentId = DocumentId.parse(this[DocumentsTable.id].toString()),
-            tenantId = TenantId(this[DocumentsTable.tenantId].toKotlinUuid()),
-            documentStatus = this[DocumentsTable.documentStatus] ?: DocumentStatus.NeedsReview,
-            documentType = this[DocumentsTable.documentType],
-            direction = this[DocumentsTable.direction] ?: DocumentDirection.Unknown,
-            aiKeywords = this[DocumentsTable.aiKeywords]?.let { json.decodeFromString(it) } ?: emptyList(),
-            purposeBase = this[DocumentsTable.purposeBase],
-            purposePeriodYear = this[DocumentsTable.purposePeriodYear],
-            purposePeriodMonth = this[DocumentsTable.purposePeriodMonth],
-            purposeRendered = this[DocumentsTable.purposeRendered],
-            purposeSource = this[DocumentsTable.purposeSource],
-            purposeLocked = this[DocumentsTable.purposeLocked],
-            purposePeriodMode = this[DocumentsTable.purposePeriodMode],
-            counterpartyKey = this[DocumentsTable.counterpartyKey],
-            merchantToken = this[DocumentsTable.merchantToken],
-            aiDraftSourceRunId = this[DocumentsTable.aiDraftSourceRunId]
-                ?.let { IngestionRunId.parse(it.toString()) },
-            draftVersion = this[DocumentsTable.draftVersion],
-            draftEditedAt = this[DocumentsTable.draftEditedAt],
-            draftEditedBy = this[DocumentsTable.draftEditedBy]?.let { UserId(it.toKotlinUuid()) },
-            counterparty = counterpartyInfo,
-            counterpartyDisplayName = contactName
-                ?: if (counterpartyInfo.isUnresolved()) counterpartyInfo.snapshot?.name else null,
-            rejectReason = this[DocumentsTable.rejectReason],
-            lastSuccessfulRunId = this[DocumentsTable.lastSuccessfulRunId]
-                ?.let { IngestionRunId.parse(it.toString()) },
-            createdAt = this[DocumentsTable.uploadedAt],
-            updatedAt = this[DocumentsTable.updatedAt]
-        )
-    }
-
     companion object {
         internal fun buildCounterpartyInfo(row: ResultRow): CounterpartyInfo? {
             val linkedContactId = row[DocumentsTable.linkedContactId]
                 ?.let { ContactId(it.toKotlinUuid()) }
             val linkedContactSource = row[DocumentsTable.linkedContactSource]
             val matchEvidence = row[DocumentsTable.matchEvidence]
-                ?.let { json.decodeFromString<MatchEvidence>(it) }
+                ?.let { json.decodeFromString<MatchEvidenceDto>(it) }
 
             if (linkedContactId != null && linkedContactSource != null) {
                 return CounterpartyInfo.Linked(
@@ -959,9 +842,9 @@ class DocumentRepository : DocumentStatusChecker {
             }
 
             val snapshot = row[DocumentsTable.counterpartySnapshot]
-                ?.let { json.decodeFromString<CounterpartySnapshot>(it) }
+                ?.let { json.decodeFromString<CounterpartySnapshotDto>(it) }
             val suggestions = row[DocumentsTable.contactSuggestions]
-                ?.let { json.decodeFromString<List<SuggestedContact>>(it) }
+                ?.let { json.decodeFromString<List<SuggestedContactDto>>(it) }
                 ?: emptyList()
             val pendingCreation = row[DocumentsTable.pendingCreation]
 

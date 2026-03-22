@@ -123,8 +123,32 @@ data class BankStatementDraftEntity(
     val periodStart: LocalDate? = null,
     val periodEnd: LocalDate? = null,
     val notes: String? = null,
+    val transactions: List<BankStatementDraftTransactionEntity> = emptyList(),
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime,
+) {
+    companion object
+}
+
+data class BankStatementDraftTransactionEntity(
+    val id: kotlin.uuid.Uuid,
+    val draftId: kotlin.uuid.Uuid,
+    val transactionDate: LocalDate? = null,
+    val signedAmount: Money? = null,
+    val counterpartyName: String? = null,
+    val counterpartyVat: VatNumber? = null,
+    val counterpartyIban: Iban? = null,
+    val counterpartyBic: String? = null,
+    val counterpartyEmail: String? = null,
+    val counterpartyCompanyNumber: String? = null,
+    val structuredCommunicationRaw: String? = null,
+    val freeCommunication: String? = null,
+    val descriptionRaw: String? = null,
+    val rowConfidence: Double = 0.0,
+    val largeAmountFlag: Boolean = false,
+    val excluded: Boolean = false,
+    val potentialDuplicate: Boolean = false,
+    val sortOrder: Int = 0,
 ) {
     companion object
 }

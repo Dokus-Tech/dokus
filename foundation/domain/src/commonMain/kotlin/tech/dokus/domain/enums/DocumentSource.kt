@@ -9,22 +9,22 @@ import tech.dokus.domain.database.DbEnum
  * Used to determine auto-confirmation policy and tracking origin.
  */
 @Serializable
-enum class DocumentSource(override val dbValue: String) : DbEnum {
+enum class DocumentSource(override val dbValue: String, val trustPriority: Int) : DbEnum {
     /** Document uploaded manually by user */
     @SerialName("UPLOAD")
-    Upload("UPLOAD"),
+    Upload("UPLOAD", 4),
 
     /** Document received via email */
     @SerialName("EMAIL")
-    Email("EMAIL"),
+    Email("EMAIL", 3),
 
     /** Document received via PEPPOL network (auto-confirmed) */
     @SerialName("PEPPOL")
-    Peppol("PEPPOL"),
+    Peppol("PEPPOL", 4),
 
     /** Document created manually (e.g., user entered data directly) */
     @SerialName("MANUAL")
-    Manual("MANUAL");
+    Manual("MANUAL", 1);
 
     companion object {
         fun fromDbValue(value: String): DocumentSource = entries.find { it.dbValue == value }!!

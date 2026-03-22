@@ -77,7 +77,7 @@ data class DokusSizing(
 data class DokusRadii(
     val badge: Dp = 4.dp,
     val input: Dp = 6.dp,
-    val button: Dp = 7.dp,
+    val button: Dp = 8.dp,
     val card: Dp = 10.dp,
     val window: Dp = 16.dp,
 )
@@ -88,6 +88,7 @@ data class DokusEffects(
     val ambientOrbNeutral: Color,
     val ambientParticleGold: Color,
     val ambientParticleNeutral: Color,
+    val brightParticle: Color,
     val ambientSweepAlpha: Float,
     val ambientSweepColor: Color,
     val loaderPrimary: Color,
@@ -128,6 +129,7 @@ internal fun createDokusEffects(colorScheme: ColorScheme): DokusEffects = if (co
         ambientOrbNeutral = Color(0xFF3D3832),
         ambientParticleGold = Color(0xFFB8860B),
         ambientParticleNeutral = Color(0xFF9C8C7C),
+        brightParticle = Color.White,
         ambientSweepAlpha = 0.03f,
         ambientSweepColor = Color(0xFFD4A017),
         loaderPrimary = Color(0xFFfbbf24),
@@ -163,6 +165,7 @@ internal fun createDokusEffects(colorScheme: ColorScheme): DokusEffects = if (co
         ambientOrbNeutral = Color(0xFF9C958C),
         ambientParticleGold = Color(0xFFB8860B),
         ambientParticleNeutral = Color(0xFF9C8C7C),
+        brightParticle = Color(0xFF1F1F1F),
         ambientSweepAlpha = 0.06f,
         ambientSweepColor = Color.White,
         loaderPrimary = Color(0xFF78350f),

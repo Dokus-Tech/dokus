@@ -22,7 +22,7 @@ import tech.dokus.domain.model.contact.ContactNoteDto
 import tech.dokus.features.contacts.usecases.ContactInvoiceSnapshot
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.common.DokusErrorBanner
-import tech.dokus.foundation.aura.components.common.OfflineOverlay
+import tech.dokus.foundation.aura.components.common.ErrorOverlay
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
@@ -102,18 +102,12 @@ internal fun ContactDetailsContent(
             onDocumentClick = onDocumentClick,
         )
 
-        OfflineOverlay(isOffline = !isOnline) {
-            NotesSection(
-                state = if (!isOnline && notesState is DokusState.Error) {
-                    DokusState.loading()
-                } else {
-                    notesState
-                },
-                onAddNote = onAddNote,
-                onEditNote = onEditNote,
-                onDeleteNote = onDeleteNote
-            )
-        }
+        NotesSection(
+            state = notesState,
+            onAddNote = onAddNote,
+            onEditNote = onEditNote,
+            onDeleteNote = onDeleteNote,
+        )
 
         Spacer(modifier = Modifier.height(8.dp))
     }

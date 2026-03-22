@@ -98,6 +98,10 @@ internal class CreateContactContainer(
                             intent.contactId
                         )
                     )
+
+                    // Error dismissal
+                    is CreateContactIntent.DismissActionError ->
+                        updateState { copy(actionError = null) }
                 }
             }
         }
@@ -310,18 +314,18 @@ internal class CreateContactContainer(
         createContact(request).fold(
             onSuccess = { contact ->
                 logger.i { "Contact created from lookup: ${contact.id}" }
+                updateState { copy(actionError = null) }
                 action(CreateContactAction.ContactCreated(contact.id, contact.name.value))
             },
             onFailure = { error ->
                 logger.e(error) { "Failed to create contact" }
-                updateState { copy(isSubmitting = false) }
                 val exception = error.asDokusException
                 val displayException = if (exception is DokusException.Unknown) {
                     DokusException.ContactCreateFailed
                 } else {
                     exception
                 }
-                action(CreateContactAction.ShowError(displayException))
+                updateState { copy(isSubmitting = false, actionError = displayException) }
             }
         )
     }
@@ -465,18 +469,18 @@ internal class CreateContactContainer(
         createContact(request).fold(
             onSuccess = { contact ->
                 logger.i { "Contact created manually: ${contact.id}" }
+                updateState { copy(actionError = null) }
                 action(CreateContactAction.ContactCreated(contact.id, contact.name.value))
             },
             onFailure = { error ->
                 logger.e(error) { "Failed to create contact" }
-                updateState { copy(isSubmitting = false) }
                 val exception = error.asDokusException
                 val displayException = if (exception is DokusException.Unknown) {
                     DokusException.ContactCreateFailed
                 } else {
                     exception
                 }
-                action(CreateContactAction.ShowError(displayException))
+                updateState { copy(isSubmitting = false, actionError = displayException) }
             }
         )
     }

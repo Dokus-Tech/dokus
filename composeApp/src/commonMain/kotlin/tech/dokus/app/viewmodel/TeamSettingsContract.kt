@@ -10,7 +10,7 @@ import tech.dokus.domain.ids.FirmId
 import tech.dokus.domain.ids.InvitationId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.TeamMember
-import tech.dokus.domain.model.TenantInvitation
+import tech.dokus.domain.model.TenantInvitationDto
 import tech.dokus.domain.model.auth.BookkeeperFirmSearchItem
 import tech.dokus.domain.model.auth.TenantBookkeeperAccessItem
 import tech.dokus.foundation.app.state.DokusState
@@ -34,7 +34,7 @@ import tech.dokus.foundation.app.state.DokusState
 @Immutable
 data class TeamData(
     val members: List<TeamMember> = emptyList(),
-    val invitations: List<TenantInvitation> = emptyList(),
+    val invitations: List<TenantInvitationDto> = emptyList(),
     val bookkeeperAccess: List<TenantBookkeeperAccessItem> = emptyList(),
     val isCurrentUserOwner: Boolean = false,
     val currentUserId: UserId? = null,
@@ -53,6 +53,7 @@ data class TeamSettingsState(
     val bookkeeperSearchLoading: Boolean = false,
     val selectedBookkeeperFirmId: FirmId? = null,
     val actionState: TeamSettingsActionState = TeamSettingsActionState.Idle,
+    val actionError: DokusException? = null,
 ) : MVIState {
     companion object {
         val initial by lazy { TeamSettingsState() }
@@ -67,7 +68,6 @@ sealed interface TeamSettingsActionState {
     data object Idle : TeamSettingsActionState
     data object Processing : TeamSettingsActionState
     data object Inviting : TeamSettingsActionState
-    data class Success(val success: TeamSettingsSuccess) : TeamSettingsActionState
     data class Error(val error: DokusException) : TeamSettingsActionState
 }
 
@@ -128,6 +128,9 @@ sealed interface TeamSettingsIntent : MVIIntent {
 
     /** Reset action state to idle */
     data object ResetActionState : TeamSettingsIntent
+
+    /** Dismiss the action error banner */
+    data object DismissActionError : TeamSettingsIntent
 }
 
 // ============================================================================
@@ -137,25 +140,9 @@ sealed interface TeamSettingsIntent : MVIIntent {
 @Immutable
 sealed interface TeamSettingsAction : MVIAction {
 
-    /** Show a success message */
-    data class ShowSuccess(val success: TeamSettingsSuccess) : TeamSettingsAction
-
-    /** Show an error message */
-    data class ShowError(val error: DokusException) : TeamSettingsAction
-
     /** Dismiss the invite dialog */
     data object DismissInviteDialog : TeamSettingsAction
 
     /** Dismiss the grant-bookkeeper dialog */
     data object DismissBookkeeperDialog : TeamSettingsAction
-}
-
-enum class TeamSettingsSuccess {
-    InviteSent,
-    InviteCancelled,
-    RoleUpdated,
-    MemberRemoved,
-    OwnershipTransferred,
-    BookkeeperAccessGranted,
-    BookkeeperAccessRevoked,
 }

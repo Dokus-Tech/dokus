@@ -98,8 +98,8 @@ private inline fun <T> pickValue(
     }
 }
 
-private fun pickParty(existing: PartyFieldProvenance, incoming: PartyFieldProvenance) =
-    PartyFieldProvenance(
+private fun pickParty(existing: PartyFieldProvenanceDto, incoming: PartyFieldProvenanceDto) =
+    PartyFieldProvenanceDto(
         name = pick(existing.name, incoming.name),
         vat = pick(existing.vat, incoming.vat),
         email = pick(existing.email, incoming.email),
@@ -112,11 +112,11 @@ private fun pickParty(existing: PartyFieldProvenance, incoming: PartyFieldProven
     )
 
 private fun pickPartyValue(
-    existing: PartyDraft,
-    incoming: PartyDraft,
-    existingProv: PartyFieldProvenance,
-    incomingProv: PartyFieldProvenance,
-) = PartyDraft(
+    existing: PartyDraftDto,
+    incoming: PartyDraftDto,
+    existingProv: PartyFieldProvenanceDto,
+    incomingProv: PartyFieldProvenanceDto,
+) = PartyDraftDto(
     name = pickValue(existing.name, incoming.name, existingProv.name, incomingProv.name),
     vat = pickValue(existing.vat, incoming.vat, existingProv.vat, incomingProv.vat),
     email = pickValue(existing.email, incoming.email, existingProv.email, incomingProv.email),
@@ -471,12 +471,12 @@ private fun lockField(
 }
 
 private fun lockParty(
-    prov: PartyFieldProvenance,
-    old: PartyDraft,
-    new: PartyDraft,
+    prov: PartyFieldProvenanceDto,
+    old: PartyDraftDto,
+    new: PartyDraftDto,
     lockedAt: LocalDateTime,
     lockedBy: UserId,
-) = PartyFieldProvenance(
+) = PartyFieldProvenanceDto(
     name = lockField(old.name, new.name, prov.name, lockedAt, lockedBy),
     vat = lockField(old.vat, new.vat, prov.vat, lockedAt, lockedBy),
     email = lockField(old.email, new.email, prov.email, lockedAt, lockedBy),

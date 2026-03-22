@@ -7,7 +7,7 @@ import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.ai.ChatAttachedFile
-import tech.dokus.domain.model.ai.ChatCitation
+import tech.dokus.domain.model.ai.ChatCitationDto
 import tech.dokus.domain.model.ai.ChatConfiguration
 import tech.dokus.domain.model.ai.ChatMessageDto
 import tech.dokus.domain.model.ai.ChatScope
@@ -110,7 +110,7 @@ data class ChatSessionData(
     /**
      * All citations from assistant messages.
      */
-    val allCitations: List<ChatCitation>
+    val allCitations: List<ChatCitationDto>
         get() = messages
             .filter { it.role == MessageRole.Assistant }
             .flatMap { it.citations ?: emptyList() }
@@ -142,6 +142,7 @@ data class ChatState(
     val showSessionPicker: Boolean = false,
     val isSessionsPanelOpen: Boolean = true,
     val attachedFiles: List<ChatAttachedFile> = emptyList(),
+    val actionError: DokusException? = null,
 ) : MVIState {
 
     companion object {
@@ -257,6 +258,9 @@ sealed interface ChatIntent : MVIIntent {
     /** Load recent sessions for the picker */
     data object LoadRecentSessions : ChatIntent
 
+    /** Dismiss inline action error */
+    data object DismissActionError : ChatIntent
+
     // === Navigation ===
 
     /**
@@ -286,7 +290,7 @@ sealed interface ChatAction : MVIAction {
      * Navigate to document review screen.
      * @param documentId Document to view
      */
-    data class NavigateToDocumentReview(val documentId: DocumentId) : ChatAction
+    data class NavigateToDocumentDetail(val documentId: DocumentId) : ChatAction
 
     /**
      * Navigate to document preview at a specific page.
@@ -297,26 +301,6 @@ sealed interface ChatAction : MVIAction {
         val documentId: DocumentId,
         val pageNumber: Int? = null,
     ) : ChatAction
-
-    // === Feedback ===
-
-    /**
-     * Show error message.
-     * @param message Error message to display
-     */
-    data class ShowError(val error: DokusException) : ChatAction
-
-    /**
-     * Show success message.
-     * @param message Success message to display
-     */
-    data class ShowSuccess(val message: String) : ChatAction
-
-    /**
-     * Show info message.
-     * @param message Info message to display
-     */
-    data class ShowInfo(val message: String) : ChatAction
 
     // === UI Effects ===
 

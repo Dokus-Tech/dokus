@@ -1,7 +1,6 @@
 package tech.dokus.database.repository.ai
 
 import kotlinx.serialization.builtins.ListSerializer
-import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
@@ -11,12 +10,14 @@ import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
+import tech.dokus.database.entity.ChatMessageEntity
+import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.ai.ChatMessagesTable
 import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
-import tech.dokus.domain.model.ai.ChatCitation
+import tech.dokus.domain.model.ai.ChatCitationDto
 import tech.dokus.domain.model.ai.ChatContentBlock
 import tech.dokus.domain.model.ai.ChatMessageDto
 import tech.dokus.domain.model.ai.ChatMessageId
@@ -66,7 +67,7 @@ class ChatRepositoryImpl : ChatRepository {
 
             // Serialize citations as JSON array
             val citationsJson = message.citations?.takeIf { it.isNotEmpty() }?.let { cites ->
-                json.encodeToString(ListSerializer(ChatCitation.serializer()), cites)
+                json.encodeToString(ListSerializer(ChatCitationDto.serializer()), cites)
             }
 
             // Serialize content blocks as JSON array
@@ -115,7 +116,7 @@ class ChatRepositoryImpl : ChatRepository {
                     (ChatMessagesTable.tenantId eq tenantUuid)
             }
             .singleOrNull()
-            ?.toMessageDto()
+            ?.let { ChatMessageDto.from(ChatMessageEntity.from(it)) }
     }
 
     override suspend fun getSessionMessages(
@@ -142,7 +143,7 @@ class ChatRepositoryImpl : ChatRepository {
             .orderBy(ChatMessagesTable.sequenceNumber to sortOrder)
             .limit(limit)
             .offset(offset.toLong())
-            .map { it.toMessageDto() }
+            .map { ChatMessageDto.from(ChatMessageEntity.from(it)) }
 
         ChatPage(messages, total)
     }
@@ -169,7 +170,7 @@ class ChatRepositoryImpl : ChatRepository {
             .orderBy(ChatMessagesTable.createdAt to SortOrder.DESC)
             .limit(limit)
             .offset(offset.toLong())
-            .map { it.toMessageDto() }
+            .map { ChatMessageDto.from(ChatMessageEntity.from(it)) }
 
         ChatPage(messages, total)
     }
@@ -402,52 +403,4 @@ class ChatRepositoryImpl : ChatRepository {
             }
     }
 
-    // =========================================================================
-    // Private Helpers
-    // =========================================================================
-
-    private fun ResultRow.toMessageDto(): ChatMessageDto {
-        val citationsJson = this[ChatMessagesTable.citations]
-        val citations = citationsJson?.let {
-            try {
-                json.decodeFromString<List<ChatCitation>>(it)
-            } catch (e: Exception) {
-                logger.warn("Failed to parse citations JSON: ${e.message}")
-                null
-            }
-        }
-
-        val contentBlocksJson = this[ChatMessagesTable.contentBlocks]
-        val contentBlocks = contentBlocksJson?.let {
-            try {
-                json.decodeFromString<List<ChatContentBlock>>(it)
-            } catch (e: Exception) {
-                logger.warn("Failed to parse content blocks JSON: ${e.message}")
-                null
-            }
-        }
-
-        return ChatMessageDto(
-            id = ChatMessageId.parse(this[ChatMessagesTable.id].value.toString()),
-            tenantId = TenantId.parse(this[ChatMessagesTable.tenantId].toString()),
-            userId = UserId(this[ChatMessagesTable.userId].toString()),
-            sessionId = ChatSessionId.parse(this[ChatMessagesTable.sessionId].toString()),
-            role = MessageRole.fromDbValue(this[ChatMessagesTable.role]),
-            content = this[ChatMessagesTable.content],
-            scope = ChatScope.fromDbValue(this[ChatMessagesTable.scope]),
-            documentId = this[ChatMessagesTable.documentId]?.let {
-                DocumentId.parse(it.toString())
-            },
-            citations = citations,
-            contentBlocks = contentBlocks,
-            chunksRetrieved = this[ChatMessagesTable.chunksRetrieved],
-            aiModel = this[ChatMessagesTable.aiModel],
-            aiProvider = this[ChatMessagesTable.aiProvider],
-            generationTimeMs = this[ChatMessagesTable.generationTimeMs],
-            promptTokens = this[ChatMessagesTable.promptTokens],
-            completionTokens = this[ChatMessagesTable.completionTokens],
-            sequenceNumber = this[ChatMessagesTable.sequenceNumber],
-            createdAt = this[ChatMessagesTable.createdAt]
-        )
-    }
 }

@@ -1,7 +1,7 @@
 package tech.dokus.features.ai.validation
 
 import tech.dokus.domain.Money
-import tech.dokus.domain.model.FinancialLineItem
+import tech.dokus.domain.model.FinancialLineItemDto
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
@@ -23,7 +23,7 @@ class LineItemsValidatorTest {
     @Test
     fun `line items sum matches subtotal passes`() {
         val items = listOf(
-            FinancialLineItem(
+            FinancialLineItemDto(
                 description = "Service",
                 netAmount = 10000
             )
@@ -42,7 +42,7 @@ class LineItemsValidatorTest {
     @Test
     fun `line items missing net amounts yields warning`() {
         val items = listOf(
-            FinancialLineItem(description = "Service")
+            FinancialLineItemDto(description = "Service")
         )
         val checks = LineItemsValidator.verify(
             lineItems = items,

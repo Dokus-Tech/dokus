@@ -1,10 +1,6 @@
 package tech.dokus.database.repository.cashflow
 
-import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
-import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
@@ -16,13 +12,16 @@ import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.v1.jdbc.update
+import tech.dokus.database.entity.DocumentSourceEntity
+import tech.dokus.domain.model.DocumentSourceDto
+import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.documents.DocumentBlobsTable
 import tech.dokus.database.tables.documents.DocumentSourcesTable
 import tech.dokus.domain.enums.DocumentDirection
-import tech.dokus.domain.enums.SourceMatchKind
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentSourceStatus
 import tech.dokus.domain.enums.DocumentType
+import tech.dokus.domain.enums.SourceMatchKind
 import tech.dokus.domain.ids.DocumentBlobId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentSourceId
@@ -31,34 +30,6 @@ import java.util.UUID
 import kotlin.math.min
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toKotlinUuid
-
-data class DocumentSourceSummary(
-    val id: DocumentSourceId,
-    val tenantId: TenantId,
-    val documentId: DocumentId,
-    val blobId: DocumentBlobId,
-    val peppolRawUblBlobId: DocumentBlobId? = null,
-    val sourceChannel: DocumentSource,
-    val arrivalAt: LocalDateTime,
-    val contentHash: String?,
-    val identityKeyHash: String?,
-    val status: DocumentSourceStatus,
-    val matchType: SourceMatchKind?,
-    val isCorrective: Boolean,
-    val extractedSnapshotJson: String?,
-    val peppolStructuredSnapshotJson: String? = null,
-    val peppolSnapshotVersion: Int? = null,
-    val detachedAt: LocalDateTime?,
-    val normalizedSupplierVat: String?,
-    val normalizedDocumentNumber: String?,
-    val documentType: DocumentType?,
-    val direction: DocumentDirection?,
-    val filename: String?,
-    val inputHash: String,
-    val storageKey: String,
-    val contentType: String,
-    val sizeBytes: Long
-)
 
 data class DocumentSourceCreatePayload(
     val documentId: DocumentId,
@@ -120,15 +91,20 @@ class DocumentSourceRepository {
         sourceId
     }
 
-    suspend fun getById(tenantId: TenantId, sourceId: DocumentSourceId): DocumentSourceSummary? =
+    suspend fun getById(tenantId: TenantId, sourceId: DocumentSourceId): DocumentSourceEntity? =
         newSuspendedTransaction {
-            DocumentSourcesTable.join(DocumentBlobsTable, JoinType.INNER, DocumentSourcesTable.blobId, DocumentBlobsTable.id)
+            DocumentSourcesTable.join(
+                DocumentBlobsTable,
+                JoinType.INNER,
+                DocumentSourcesTable.blobId,
+                DocumentBlobsTable.id
+            )
                 .selectAll()
                 .where {
                     (DocumentSourcesTable.id eq UUID.fromString(sourceId.toString())) and
-                        (DocumentSourcesTable.tenantId eq UUID.fromString(tenantId.toString()))
+                            (DocumentSourcesTable.tenantId eq UUID.fromString(tenantId.toString()))
                 }
-                .map { it.toSourceSummary() }
+                .map { DocumentSourceEntity.from(it) }
                 .singleOrNull()
         }
 
@@ -136,32 +112,38 @@ class DocumentSourceRepository {
         tenantId: TenantId,
         documentId: DocumentId,
         includeDetached: Boolean = false
-    ): List<DocumentSourceSummary> = newSuspendedTransaction {
+    ): List<DocumentSourceEntity> = newSuspendedTransaction {
         val tenantUuid = UUID.fromString(tenantId.toString())
         val docUuid = UUID.fromString(documentId.toString())
-        val rows = DocumentSourcesTable.join(DocumentBlobsTable, JoinType.INNER, DocumentSourcesTable.blobId, DocumentBlobsTable.id)
+        val rows = DocumentSourcesTable.join(
+            DocumentBlobsTable,
+            JoinType.INNER,
+            DocumentSourcesTable.blobId,
+            DocumentBlobsTable.id
+        )
             .selectAll()
             .where {
                 (DocumentSourcesTable.tenantId eq tenantUuid) and
-                    (DocumentSourcesTable.documentId eq docUuid)
+                        (DocumentSourcesTable.documentId eq docUuid)
             }
             .orderBy(DocumentSourcesTable.arrivalAt, SortOrder.DESC)
-            .map { it.toSourceSummary() }
+            .map { DocumentSourceEntity.from(it) }
 
         if (includeDetached) rows else rows.filter { it.status != DocumentSourceStatus.Detached }
     }
 
-    suspend fun countLinkedSources(tenantId: TenantId, documentId: DocumentId): Int = newSuspendedTransaction {
-        DocumentSourcesTable
-            .selectAll()
-            .where {
-                (DocumentSourcesTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                    (DocumentSourcesTable.documentId eq UUID.fromString(documentId.toString())) and
-                    (DocumentSourcesTable.status eq DocumentSourceStatus.Linked)
-            }
-            .count()
-            .toInt()
-    }
+    suspend fun countLinkedSources(tenantId: TenantId, documentId: DocumentId): Int =
+        newSuspendedTransaction {
+            DocumentSourcesTable
+                .selectAll()
+                .where {
+                    (DocumentSourcesTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                            (DocumentSourcesTable.documentId eq UUID.fromString(documentId.toString())) and
+                            (DocumentSourcesTable.status eq DocumentSourceStatus.Linked)
+                }
+                .count()
+                .toInt()
+        }
 
     suspend fun countSources(
         tenantId: TenantId,
@@ -171,10 +153,12 @@ class DocumentSourceRepository {
         DocumentSourcesTable
             .selectAll()
             .where {
-                var where = (DocumentSourcesTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                    (DocumentSourcesTable.documentId eq UUID.fromString(documentId.toString()))
+                var where =
+                    (DocumentSourcesTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                            (DocumentSourcesTable.documentId eq UUID.fromString(documentId.toString()))
                 if (!includeDetached) {
-                    where = where and (DocumentSourcesTable.status neq DocumentSourceStatus.Detached)
+                    where =
+                        where and (DocumentSourcesTable.status neq DocumentSourceStatus.Detached)
                 }
                 where
             }
@@ -182,35 +166,26 @@ class DocumentSourceRepository {
             .toInt()
     }
 
-    suspend fun findLinkedDocumentByInputHash(
-        tenantId: TenantId,
-        inputHash: String
-    ): DocumentId? = newSuspendedTransaction {
-        DocumentSourcesTable.join(DocumentBlobsTable, JoinType.INNER, DocumentSourcesTable.blobId, DocumentBlobsTable.id)
-            .selectAll()
-            .where {
-                (DocumentSourcesTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                    (DocumentBlobsTable.inputHash eq inputHash) and
-                    (DocumentSourcesTable.status eq DocumentSourceStatus.Linked)
-            }
-            .orderBy(DocumentSourcesTable.arrivalAt, SortOrder.DESC)
-            .firstOrNull()
-            ?.let { DocumentId.parse(it[DocumentSourcesTable.documentId].toString()) }
-    }
-
     suspend fun findLinkedDocumentByContentHash(
         tenantId: TenantId,
         contentHash: String,
         excludeSourceId: DocumentSourceId? = null
     ): DocumentId? = newSuspendedTransaction {
-        DocumentSourcesTable.join(DocumentBlobsTable, JoinType.INNER, DocumentSourcesTable.blobId, DocumentBlobsTable.id)
+        DocumentSourcesTable.join(
+            DocumentBlobsTable,
+            JoinType.INNER,
+            DocumentSourcesTable.blobId,
+            DocumentBlobsTable.id
+        )
             .selectAll()
             .where {
-                var where = (DocumentSourcesTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                    (DocumentSourcesTable.contentHash eq contentHash) and
-                    (DocumentSourcesTable.status eq DocumentSourceStatus.Linked)
+                var where =
+                    (DocumentSourcesTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                            (DocumentSourcesTable.contentHash eq contentHash) and
+                            (DocumentSourcesTable.status eq DocumentSourceStatus.Linked)
                 if (excludeSourceId != null) {
-                    where = where and (DocumentSourcesTable.id neq UUID.fromString(excludeSourceId.toString()))
+                    where =
+                        where and (DocumentSourcesTable.id neq UUID.fromString(excludeSourceId.toString()))
                 }
                 where
             }
@@ -224,14 +199,22 @@ class DocumentSourceRepository {
         identityKeyHash: String,
         excludeDocumentId: DocumentId? = null
     ): DocumentId? = newSuspendedTransaction {
-        DocumentSourcesTable.join(DocumentBlobsTable, JoinType.INNER, DocumentSourcesTable.blobId, DocumentBlobsTable.id)
+        DocumentSourcesTable.join(
+            DocumentBlobsTable,
+            JoinType.INNER,
+            DocumentSourcesTable.blobId,
+            DocumentBlobsTable.id
+        )
             .selectAll()
             .where {
-                var where = (DocumentSourcesTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                    (DocumentSourcesTable.identityKeyHash eq identityKeyHash) and
-                    (DocumentSourcesTable.status eq DocumentSourceStatus.Linked)
+                var where =
+                    (DocumentSourcesTable.tenantId eq UUID.fromString(tenantId.toString())) and
+                            (DocumentSourcesTable.identityKeyHash eq identityKeyHash) and
+                            (DocumentSourcesTable.status eq DocumentSourceStatus.Linked)
                 if (excludeDocumentId != null) {
-                    where = where and (DocumentSourcesTable.documentId neq UUID.fromString(excludeDocumentId.toString()))
+                    where = where and (DocumentSourcesTable.documentId neq UUID.fromString(
+                        excludeDocumentId.toString()
+                    ))
                 }
                 where
             }
@@ -250,21 +233,29 @@ class DocumentSourceRepository {
         maxDistance: Int = 2
     ): List<FuzzySourceCandidate> = newSuspendedTransaction {
         val tenantUuid = UUID.fromString(tenantId.toString())
-        val candidates = DocumentSourcesTable.join(DocumentBlobsTable, JoinType.INNER, DocumentSourcesTable.blobId, DocumentBlobsTable.id)
+        val candidates = DocumentSourcesTable.join(
+            DocumentBlobsTable,
+            JoinType.INNER,
+            DocumentSourcesTable.blobId,
+            DocumentBlobsTable.id
+        )
             .selectAll()
             .where {
                 var where = (DocumentSourcesTable.tenantId eq tenantUuid) and
-                    (DocumentSourcesTable.status eq DocumentSourceStatus.Linked) and
-                    (DocumentSourcesTable.normalizedSupplierVat eq normalizedSupplierVat) and
-                    (DocumentSourcesTable.documentType eq documentType) and
-                    (DocumentSourcesTable.direction eq direction)
+                        (DocumentSourcesTable.status eq DocumentSourceStatus.Linked) and
+                        (DocumentSourcesTable.normalizedSupplierVat eq normalizedSupplierVat) and
+                        (DocumentSourcesTable.documentType eq documentType) and
+                        (DocumentSourcesTable.direction eq direction)
                 if (excludeDocumentId != null) {
-                    where = where and (DocumentSourcesTable.documentId neq UUID.fromString(excludeDocumentId.toString()))
+                    where = where and (DocumentSourcesTable.documentId neq UUID.fromString(
+                        excludeDocumentId.toString()
+                    ))
                 }
                 where
             }
             .mapNotNull { row ->
-                val candidateNumber = row[DocumentSourcesTable.normalizedDocumentNumber] ?: return@mapNotNull null
+                val candidateNumber =
+                    row[DocumentSourcesTable.normalizedDocumentNumber] ?: return@mapNotNull null
                 val distance = levenshtein(normalizedDocumentNumber, candidateNumber)
                 if (distance > maxDistance) return@mapNotNull null
                 FuzzySourceCandidate(
@@ -292,7 +283,7 @@ class DocumentSourceRepository {
     ): Boolean = newSuspendedTransaction {
         DocumentSourcesTable.update({
             (DocumentSourcesTable.id eq UUID.fromString(sourceId.toString())) and
-                (DocumentSourcesTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (DocumentSourcesTable.tenantId eq UUID.fromString(tenantId.toString()))
         }) {
             it[DocumentSourcesTable.contentHash] = contentHash
             it[DocumentSourcesTable.identityKeyHash] = identityKeyHash
@@ -316,7 +307,7 @@ class DocumentSourceRepository {
     ): Boolean = newSuspendedTransaction {
         DocumentSourcesTable.update({
             (DocumentSourcesTable.id eq UUID.fromString(sourceId.toString())) and
-                (DocumentSourcesTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (DocumentSourcesTable.tenantId eq UUID.fromString(tenantId.toString()))
         }) {
             it[DocumentSourcesTable.peppolRawUblBlobId] = peppolRawUblBlobId
                 ?.let { value -> UUID.fromString(value.toString()) }
@@ -337,26 +328,12 @@ class DocumentSourceRepository {
     ): Boolean = newSuspendedTransaction {
         DocumentSourcesTable.update({
             (DocumentSourcesTable.id eq UUID.fromString(sourceId.toString())) and
-                (DocumentSourcesTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (DocumentSourcesTable.tenantId eq UUID.fromString(tenantId.toString()))
         }) {
             it[DocumentSourcesTable.documentId] = UUID.fromString(documentId.toString())
             it[DocumentSourcesTable.status] = status
             it[DocumentSourcesTable.matchType] = matchType
             it[detachedAt] = null
-        } > 0
-    }
-
-    suspend fun markDetached(
-        tenantId: TenantId,
-        sourceId: DocumentSourceId
-    ): Boolean = newSuspendedTransaction {
-        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-        DocumentSourcesTable.update({
-            (DocumentSourcesTable.id eq UUID.fromString(sourceId.toString())) and
-                (DocumentSourcesTable.tenantId eq UUID.fromString(tenantId.toString()))
-        }) {
-            it[status] = DocumentSourceStatus.Detached
-            it[detachedAt] = now
         } > 0
     }
 
@@ -366,14 +343,14 @@ class DocumentSourceRepository {
     ): Boolean = newSuspendedTransaction {
         DocumentSourcesTable.deleteWhere {
             (DocumentSourcesTable.id eq UUID.fromString(sourceId.toString())) and
-                (DocumentSourcesTable.tenantId eq UUID.fromString(tenantId.toString()))
+                    (DocumentSourcesTable.tenantId eq UUID.fromString(tenantId.toString()))
         } > 0
     }
 
     suspend fun selectPreferredSource(
         tenantId: TenantId,
         documentId: DocumentId
-    ): DocumentSourceSummary? {
+    ): DocumentSourceEntity? {
         val sources = listByDocument(tenantId, documentId, includeDetached = false)
         return selectPreferredSource(sources)
     }
@@ -385,20 +362,25 @@ class DocumentSourceRepository {
     suspend fun selectPreferredSourcesByDocumentIds(
         tenantId: TenantId,
         documentIds: List<DocumentId>
-    ): Map<DocumentId, DocumentSourceSummary> {
+    ): Map<DocumentId, DocumentSourceEntity> {
         if (documentIds.isEmpty()) return emptyMap()
         return newSuspendedTransaction {
             val tenantUuid = UUID.fromString(tenantId.toString())
             val docUuids = documentIds.map { UUID.fromString(it.toString()) }
             val allSources = DocumentSourcesTable
-                .join(DocumentBlobsTable, JoinType.INNER, DocumentSourcesTable.blobId, DocumentBlobsTable.id)
+                .join(
+                    DocumentBlobsTable,
+                    JoinType.INNER,
+                    DocumentSourcesTable.blobId,
+                    DocumentBlobsTable.id
+                )
                 .selectAll()
                 .where {
                     (DocumentSourcesTable.tenantId eq tenantUuid) and
-                        (DocumentSourcesTable.documentId inList docUuids) and
-                        (DocumentSourcesTable.status eq DocumentSourceStatus.Linked)
+                            (DocumentSourcesTable.documentId inList docUuids) and
+                            (DocumentSourcesTable.status eq DocumentSourceStatus.Linked)
                 }
-                .map { it.toSourceSummary() }
+                .map { DocumentSourceEntity.from(it) }
 
             allSources.groupBy { it.documentId }
                 .mapNotNull { (docId, sources) ->
@@ -406,36 +388,6 @@ class DocumentSourceRepository {
                 }
                 .toMap()
         }
-    }
-
-    private fun ResultRow.toSourceSummary(): DocumentSourceSummary {
-        return DocumentSourceSummary(
-            id = DocumentSourceId(this[DocumentSourcesTable.id].value.toKotlinUuid()),
-            tenantId = TenantId(this[DocumentSourcesTable.tenantId].toKotlinUuid()),
-            documentId = DocumentId.parse(this[DocumentSourcesTable.documentId].toString()),
-            blobId = DocumentBlobId(this[DocumentSourcesTable.blobId].toKotlinUuid()),
-            peppolRawUblBlobId = this[DocumentSourcesTable.peppolRawUblBlobId]?.let { DocumentBlobId(it.toKotlinUuid()) },
-            sourceChannel = this[DocumentSourcesTable.sourceChannel],
-            arrivalAt = this[DocumentSourcesTable.arrivalAt],
-            contentHash = this[DocumentSourcesTable.contentHash],
-            identityKeyHash = this[DocumentSourcesTable.identityKeyHash],
-            status = this[DocumentSourcesTable.status],
-            matchType = this[DocumentSourcesTable.matchType],
-            isCorrective = this[DocumentSourcesTable.isCorrective],
-            extractedSnapshotJson = this[DocumentSourcesTable.extractedSnapshotJson],
-            peppolStructuredSnapshotJson = this[DocumentSourcesTable.peppolStructuredSnapshotJson],
-            peppolSnapshotVersion = this[DocumentSourcesTable.peppolSnapshotVersion],
-            detachedAt = this[DocumentSourcesTable.detachedAt],
-            normalizedSupplierVat = this[DocumentSourcesTable.normalizedSupplierVat],
-            normalizedDocumentNumber = this[DocumentSourcesTable.normalizedDocumentNumber],
-            documentType = this[DocumentSourcesTable.documentType],
-            direction = this[DocumentSourcesTable.direction],
-            filename = this[DocumentSourcesTable.filename],
-            inputHash = this[DocumentBlobsTable.inputHash],
-            storageKey = this[DocumentBlobsTable.storageKey],
-            contentType = this[DocumentBlobsTable.contentType],
-            sizeBytes = this[DocumentBlobsTable.sizeBytes]
-        )
     }
 
     private fun levenshtein(left: String, right: String): Int {
@@ -464,18 +416,20 @@ class DocumentSourceRepository {
     }
 }
 
-private val SOURCE_TRUST_PRIORITY = mapOf(
-    DocumentSource.Peppol to 4,
-    DocumentSource.Email to 3,
-    DocumentSource.Upload to 2,
-    DocumentSource.Manual to 1
-)
-
-fun selectPreferredSource(sources: List<DocumentSourceSummary>): DocumentSourceSummary? {
+fun selectPreferredSource(sources: List<DocumentSourceEntity>): DocumentSourceEntity? {
     return sources
         .filter { it.status == DocumentSourceStatus.Linked }
         .maxWithOrNull(
-            compareBy<DocumentSourceSummary> { SOURCE_TRUST_PRIORITY[it.sourceChannel] ?: 0 }
+            compareBy<DocumentSourceEntity> { it.sourceChannel.trustPriority }
+                .thenBy { it.arrivalAt }
+        )
+}
+
+fun selectPreferredSourceDto(sources: List<DocumentSourceDto>): DocumentSourceDto? {
+    return sources
+        .filter { it.status == DocumentSourceStatus.Linked }
+        .maxWithOrNull(
+            compareBy<DocumentSourceDto> { it.sourceChannel.trustPriority }
                 .thenBy { it.arrivalAt }
         )
 }

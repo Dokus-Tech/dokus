@@ -50,7 +50,7 @@ class DocumentProcessingWorkerConcurrencyTest {
             tenantId = TenantId.generate(),
         )
 
-        coEvery { ingestionRepository.recoverStaleRunsDetailed() } returns emptyList()
+        coEvery { ingestionRepository.recoverStaleRunsDetailed(any()) } returns emptyList()
         coEvery { ingestionRepository.findPendingForProcessing(10) } returns listOf(run)
         coEvery { ingestionRepository.markAsProcessing(run.runId.toString(), "koog-graph") } returns false
         coEvery { ingestionRepository.markAsFailed(any(), any()) } returns true
@@ -98,7 +98,7 @@ class DocumentProcessingWorkerConcurrencyTest {
             sourceChannel = null,
         )
 
-        coEvery { ingestionRepository.recoverStaleRunsDetailed() } returns emptyList()
+        coEvery { ingestionRepository.recoverStaleRunsDetailed(any()) } returns emptyList()
         coEvery { ingestionRepository.findPendingForProcessing(10) } returns listOf(run)
         coEvery { ingestionRepository.markAsProcessing(run.runId.toString(), "koog-graph") } returns true
         coEvery { ingestionRepository.markAsFailed(any(), any()) } returns true

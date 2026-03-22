@@ -45,7 +45,7 @@ class HomeDeepLinkCommandExecutionTest {
     @Test
     fun `open document review command resolves to documents tab then review route`() {
         val steps = resolveHomeNavigationSteps(
-            HomeNavigationCommand.OpenDocumentReview(documentId = "doc-42")
+            HomeNavigationCommand.OpenDocumentDetail(documentId = "doc-42")
         )
 
         assertEquals(2, steps.size)
@@ -54,6 +54,6 @@ class HomeDeepLinkCommandExecutionTest {
         assertEquals(HomeDestination.Documents, tabStep.destination)
 
         val pushStep = assertIs<HomeNavigationStep.Push>(steps[1])
-        assertEquals(CashFlowDestination.DocumentReview("doc-42"), pushStep.destination)
+        assertEquals(CashFlowDestination.DocumentDetail("doc-42"), pushStep.destination)
     }
 }

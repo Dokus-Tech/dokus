@@ -253,12 +253,10 @@
     <string name="share_import_workspace_switch_hint">Switch workspace in the app and try again.</string>
 
     <!-- Upload Item Actions -->
-    <string name="upload_action_cancel">Cancel</string>
     <string name="upload_action_retry">Retry</string>
     <string name="upload_action_remove">Remove</string>
     <string name="upload_action_delete">Delete</string>
     <string name="upload_action_undo">Undo delete</string>
-    <string name="upload_action_close">Close</string>
     <string name="upload_status_failed">Failed</string>
     <string name="upload_status_uploaded">Uploaded</string>
     <string name="upload_status_linked_to">Linked to %1$s</string>
@@ -702,6 +700,33 @@
     <string name="inspector_label_transactions">Transactions</string>
     <string name="cashflow_bank_statement_details_section">Bank Statement Details</string>
 
+    <!-- Bank Statement Canonical View -->
+    <string name="bank_statement_duplicate_banner_title">%1$d of %2$d transactions already imported</string>
+    <string name="bank_statement_duplicate_banner_subtitle">Duplicates are excluded by default. Review and confirm to import %1$d new transactions.</string>
+    <string name="bank_statement_to_import">%1$d to import</string>
+    <string name="bank_statement_excluded">%1$d excluded</string>
+    <string name="bank_statement_opening_balance">Opening balance</string>
+    <string name="bank_statement_closing_balance">Closing balance</string>
+    <string name="bank_statement_movement">Movement</string>
+    <string name="bank_statement_col_date">Date</string>
+    <string name="bank_statement_col_description">Description</string>
+    <string name="bank_statement_col_communication">Communication</string>
+    <string name="bank_statement_col_amount">Amount</string>
+    <string name="bank_statement_duplicate_badge">Duplicate</string>
+    <string name="bank_statement_importing_summary">Importing %1$d transactions · net %2$s</string>
+    <string name="bank_statement_reject">Reject statement</string>
+    <string name="bank_statement_confirm_import">Confirm import · %1$d transactions</string>
+    <string name="bank_statement_account">Account</string>
+
+    <!-- Source Comparison -->
+    <string name="comparison_title">Source comparison</string>
+    <string name="comparison_existing_label">Existing</string>
+    <string name="comparison_incoming_label">Incoming</string>
+    <string name="comparison_different_document">Different document</string>
+    <string name="comparison_same_document">Same document</string>
+    <string name="comparison_reason_material_conflict">Amount changed</string>
+    <string name="comparison_reason_fuzzy_candidate">Possible duplicate detected</string>
+
     <!-- Mobile Canonical -->
     <string name="mobile_unknown_vendor">Unknown vendor</string>
     <string name="mobile_label_issued">Issued</string>
@@ -718,4 +743,106 @@
     <string name="payment_method_cash">Cash</string>
     <string name="payment_method_check">Check</string>
     <string name="payment_method_other">Other</string>
+
+    <!-- Cashflow Summary -->
+    <string name="cashflow_summary_cash_position">Cash position</string>
+    <string name="cashflow_summary_period_weeks">%1$d weeks</string>
+
+    <!-- Invoice Editor -->
+    <string name="cashflow_invoice_new_title">New Invoice</string>
+    <string name="cashflow_invoice_editor_subtitle">Invoice Editor</string>
+    <string name="cashflow_invoice_draft_label">Draft</string>
+
+    <!-- Invoice Assistant -->
+    <string name="cashflow_assistant_intro">I can help draft or adjust this invoice while you edit the form.</string>
+    <string name="cashflow_assistant_try_example">Try: \"Add a line item for consulting: 2h at EUR 95, VAT 21%.\"</string>
+    <string name="cashflow_assistant_prompt_label">Prompt</string>
+    <string name="cashflow_assistant_received">Received. I will map this request to invoice changes.</string>
+    <string name="cashflow_assistant_placeholder">Ask about this invoice or describe a change\u2026</string>
+
+    <!-- Review Labels -->
+    <string name="review_label_issue">Issue</string>
+    <string name="review_label_credit_note">Credit note</string>
+    <string name="review_label_invoice">Invoice</string>
+    <string name="review_source_file_fallback">Source file</string>
+    <string name="review_source_corrective_suffix"> \u00B7 corrective</string>
+    <string name="review_possible_match">Possible match</string>
+    <string name="review_bank_statement_amounts_info">Amounts are available per transaction in bank statements.</string>
+
+    <!-- Document Review (moved from strings.xml) -->
+    <string name="cashflow_review_status_processing">Processing\u2026</string>
+    <string name="cashflow_review_status_ready">Ready</string>
+    <string name="cashflow_review_back_to_documents">Back to documents</string>
+    <string name="cashflow_review_back_to_contact">Back to contact</string>
+    <string name="cashflow_review_back_to_search">Back to search</string>
+    <string name="cashflow_review_back">Back</string>
+
+    <!-- Review Decision Surface -->
+    <string name="review_surface_needs_review">Needs review</string>
+    <string name="review_surface_view_full_detail">View full detail</string>
+    <string name="review_surface_looks_good">Looks good</string>
+    <string name="review_surface_looks_good_subtitle">All required fields are present</string>
+    <string name="review_surface_confirm">Confirm</string>
+    <string name="review_surface_accept_and_confirm">Accept &amp; confirm</string>
+    <string name="review_surface_accept_and_continue">Accept &amp; continue</string>
+    <string name="review_surface_save_and_confirm">Save &amp; confirm</string>
+    <string name="review_surface_save_and_continue">Save &amp; continue</string>
+    <string name="review_surface_choose_different">Choose different</string>
+    <string name="review_surface_search_contacts">Search contacts</string>
+
+    <!-- Review Surface: Issue Titles -->
+    <string name="review_issue_contact_title">SELECT SUPPLIER</string>
+    <string name="review_issue_contact_suggested">We think this is:</string>
+    <string name="review_issue_contact_unknown">We couldn\'t match this vendor automatically.</string>
+    <string name="review_issue_contact_match">%1$d%% match \u00B7 %2$s</string>
+    <string name="review_issue_amount_title">VERIFY TOTAL AMOUNT</string>
+    <string name="review_issue_amount_missing_total">Total amount is required</string>
+    <string name="review_issue_amount_missing_vat">VAT amount is required</string>
+    <string name="review_issue_amount_missing_subtotal">Subtotal is required</string>
+    <string name="review_issue_date_title">DUE DATE SEEMS WRONG</string>
+    <string name="review_issue_date_confirm_title">CONFIRM DUE DATE</string>
+    <string name="review_issue_date_missing_issue">Issue date is required</string>
+    <string name="review_issue_date_missing_due">Due date is missing</string>
+    <string name="review_issue_date_due_before_issue">Due date is before issue date</string>
+    <string name="review_issue_date_far_out">Due date is more than 1 year after issue date</string>
+    <string name="review_issue_date_correct_due_date">CORRECT DUE DATE</string>
+    <string name="review_issue_date_keep_as">Keep as %1$s</string>
+    <string name="review_issue_date_label_issue">ISSUE</string>
+    <string name="review_issue_date_label_due">DUE</string>
+    <string name="review_issue_direction_title">DOCUMENT DIRECTION UNKNOWN</string>
+    <string name="review_issue_direction_subtitle">Is this incoming or outgoing?</string>
+
+    <!-- Review Surface: Progress -->
+    <string name="review_surface_step_of">Step %1$d of %2$d</string>
+    <string name="review_surface_next_issue">Next: %1$s</string>
+
+    <!-- Review Surface: Thumbnail -->
+    <string name="review_surface_click_to_zoom">Click or Z to zoom</string>
+
+    <!-- Review Surface: Keyboard Hints -->
+    <string name="review_keyboard_navigate">navigate</string>
+    <string name="review_keyboard_confirm">confirm</string>
+    <string name="review_keyboard_zoom">zoom</string>
+    <string name="review_keyboard_detail">detail</string>
+
+    <!-- Duplicate Comparison Surface -->
+    <string name="review_duplicate_possible_duplicate">Possible duplicate</string>
+    <string name="review_duplicate_same_document">Same document</string>
+    <string name="review_duplicate_different_document">Different document</string>
+    <string name="review_duplicate_review_later">Review later</string>
+    <string name="review_duplicate_existing">EXISTING</string>
+    <string name="review_duplicate_incoming">INCOMING</string>
+    <string name="review_duplicate_same_opinion">These appear to be the same document</string>
+    <string name="review_duplicate_same_opinion_detail">Same vendor, invoice number, amounts, and dates</string>
+    <string name="review_duplicate_diff_opinion">Some values differ between sources</string>
+    <string name="review_duplicate_diff_amounts">Amounts differ.</string>
+    <string name="review_duplicate_diff_invoice">Invoice numbers differ.</string>
+    <string name="review_duplicate_diff_dates">Dates differ.</string>
+    <string name="review_duplicate_diff_confirm">Confirm if this is the same document.</string>
+    <string name="review_duplicate_impact_update">If confirmed, the amount will update from %1$s to %2$s</string>
+    <string name="review_duplicate_label_total">Total</string>
+    <string name="review_duplicate_label_invoice">Invoice</string>
+    <string name="review_duplicate_label_issue_date">Issue date</string>
+    <string name="review_keyboard_same">same</string>
+    <string name="review_keyboard_different">different</string>
 </resources>

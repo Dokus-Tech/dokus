@@ -11,10 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.text.font.FontFamily
 import tech.dokus.foundation.aura.local.LocalThemeManager
-import tech.dokus.foundation.platform.activePlatform
-import tech.dokus.foundation.platform.isWeb
 
 // Dokus Shape System — sourced from DefaultDokusRadii to avoid value drift
 private val dokusShapes = Shapes(
@@ -61,12 +58,7 @@ fun Themed(
     val dokusEffects = createDokusEffects(colorScheme)
 
     val fontFamily = createFontFamily()
-    val typography = if (activePlatform.isWeb) {
-        // Web rendering for custom fonts is unstable; use platform monospace to preserve character.
-        createDokusTypography(FontFamily.Monospace)
-    } else {
-        createDokusTypography(fontFamily)
-    }
+    val typography = createDokusTypography(fontFamily)
     // Calm ripple configuration: neutral color with low alpha (≤ 0.12) for subtle feedback
     val calmRippleAlpha = RippleAlpha(
         pressedAlpha = 0.10f,

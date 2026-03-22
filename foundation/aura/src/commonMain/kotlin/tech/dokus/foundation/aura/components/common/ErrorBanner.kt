@@ -9,7 +9,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import com.composables.icons.lucide.CircleAlert
 import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.X
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -43,6 +45,7 @@ fun DokusErrorBanner(
     exception: DokusException,
     retryHandler: RetryHandler?,
     modifier: Modifier = Modifier,
+    onDismiss: (() -> Unit)? = null,
 ) {
     DokusCardSurface(modifier = modifier.fillMaxWidth()) {
         Row(
@@ -72,6 +75,16 @@ fun DokusErrorBanner(
                     text = stringResource(Res.string.state_retry),
                     onClick = { retryHandler.retry() },
                 )
+            }
+            if (onDismiss != null) {
+                IconButton(onClick = onDismiss) {
+                    Icon(
+                        imageVector = Lucide.X,
+                        contentDescription = null,
+                        modifier = Modifier.size(Constraints.IconSize.small),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         }
     }

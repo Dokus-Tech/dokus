@@ -8,7 +8,6 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.v1.core.JoinType
-import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
@@ -21,6 +20,9 @@ import org.jetbrains.exposed.v1.jdbc.andWhere
 import org.jetbrains.exposed.v1.jdbc.Query
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
+import tech.dokus.database.mapper.from
+import tech.dokus.database.entity.SearchTransactionHitEntity
+import tech.dokus.domain.model.SearchTransactionHitDto
 import tech.dokus.database.tables.cashflow.CashflowEntriesTable
 import tech.dokus.database.tables.cashflow.ExpensesTable
 import tech.dokus.database.tables.cashflow.InvoicesTable
@@ -32,11 +34,9 @@ import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.fromDbDecimal
-import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.SearchAggregates
+import tech.dokus.domain.model.SearchAggregatesDto
 import tech.dokus.domain.model.SearchPreset
-import tech.dokus.domain.model.SearchTransactionHit
 import tech.dokus.foundation.backend.database.dbQuery
 import java.util.UUID
 
@@ -51,9 +51,9 @@ private val PresetStatuses = listOf(
 )
 
 data class PresetSearchResult(
-    val transactions: List<SearchTransactionHit>,
+    val transactions: List<SearchTransactionHitDto>,
     val count: Long,
-    val aggregates: SearchAggregates,
+    val aggregates: SearchAggregatesDto,
 )
 
 data class TenantEntitySample(
@@ -96,17 +96,17 @@ class SearchPersonalizationQueries {
         tenantId: TenantId,
         preset: SearchPreset,
         limit: Int,
-    ): List<SearchTransactionHit> = dbQuery {
+    ): List<SearchTransactionHitDto> = dbQuery {
         presetTransactionQuery(tenantId, preset)
             .orderBy(CashflowEntriesTable.eventDate to SortOrder.DESC)
             .limit(limit)
-            .map(::mapTransactionHit)
+            .map { SearchTransactionHitDto.from(SearchTransactionHitEntity.from(it)) }
     }
 
     private suspend fun presetAggregates(
         tenantId: TenantId,
         preset: SearchPreset,
-    ): SearchAggregates = dbQuery {
+    ): SearchAggregatesDto = dbQuery {
         val amountSum = CashflowEntriesTable.amountGross.sum()
 
         fun sumForDirection(direction: CashflowDirection?): Money {
@@ -124,7 +124,7 @@ class SearchPersonalizationQueries {
         val incoming = sumForDirection(CashflowDirection.In)
         val outgoing = sumForDirection(CashflowDirection.Out)
 
-        SearchAggregates(
+        SearchAggregatesDto(
             transactionTotal = total,
             incomingTotal = incoming,
             outgoingTotal = outgoing,
@@ -269,34 +269,6 @@ class SearchPersonalizationQueries {
                     TenantEntitySample(label = label, seenAt = row[ContactsTable.updatedAt])
                 }
             }
-    }
-
-    private fun mapTransactionHit(row: ResultRow): SearchTransactionHit {
-        val direction = row[CashflowEntriesTable.direction]
-        val absoluteAmount = Money.fromDbDecimal(row[CashflowEntriesTable.amountGross])
-        val signedAmount = if (direction == CashflowDirection.Out) -absoluteAmount else absoluteAmount
-        val contactName = row.getOrNull(ContactsTable.name)
-        val filename = row.getOrNull(DocumentsTable.purposeRendered)
-        val expenseDescription = row.getOrNull(ExpensesTable.description)
-        val invoiceNumber = row.getOrNull(InvoicesTable.invoiceNumber)
-        val displayText = when {
-            !filename.isNullOrBlank() -> filename
-            !expenseDescription.isNullOrBlank() -> expenseDescription
-            !invoiceNumber.isNullOrBlank() -> invoiceNumber
-            !contactName.isNullOrBlank() -> contactName
-            else -> row[CashflowEntriesTable.sourceType].name
-        }
-
-        return SearchTransactionHit(
-            entryId = CashflowEntryId.parse(row[CashflowEntriesTable.id].value.toString()),
-            displayText = displayText,
-            status = row[CashflowEntriesTable.status],
-            date = row[CashflowEntriesTable.eventDate],
-            amount = signedAmount,
-            direction = direction,
-            contactName = contactName,
-            documentFilename = filename,
-        )
     }
 
     private fun utcToday(): LocalDate =

@@ -10,15 +10,15 @@ import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.isNull
-import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insertAndGetId
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.v1.jdbc.update
+import tech.dokus.database.repository.cashflow.AutoPaymentAuditRepository
+import tech.dokus.database.repository.cashflow.AutoPaymentRepository
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.database.tables.cashflow.CashflowEntriesTable
 import tech.dokus.database.tables.cashflow.InvoicesTable
-import tech.dokus.database.tables.documents.AutoPaymentAuditEventsTable
 import tech.dokus.database.tables.banking.BankTransactionsTable
 import tech.dokus.database.tables.documents.TransactionMatchLinksTable
 import tech.dokus.database.tables.payment.PaymentsTable
@@ -41,8 +41,10 @@ import tech.dokus.domain.ids.PaymentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.AutoPaymentStatus
-import tech.dokus.domain.model.CashflowEntry
+import tech.dokus.database.entity.CashflowEntryEntity
 import tech.dokus.database.entity.BankTransactionEntity
+import tech.dokus.database.mapper.from
+import tech.dokus.domain.model.CashflowEntryDto
 import tech.dokus.domain.toDbDecimal
 import tech.dokus.foundation.backend.utils.runSuspendCatching
 import java.util.UUID
@@ -56,11 +58,13 @@ private data class AutoPayApplyResult(
 
 @OptIn(ExperimentalUuidApi::class)
 class AutoPaymentService(
-    private val cashflowEntriesRepository: CashflowEntriesRepository
+    private val cashflowEntriesRepository: CashflowEntriesRepository,
+    private val auditRepository: AutoPaymentAuditRepository,
+    private val autoPaymentRepository: AutoPaymentRepository
 ) {
     suspend fun applyAutoPayment(
         tenantId: TenantId,
-        entry: CashflowEntry,
+        entry: CashflowEntryEntity,
         transaction: BankTransactionEntity,
         confidenceScore: Double,
         scoreMargin: Double,
@@ -150,7 +154,7 @@ class AutoPaymentService(
         entryId: CashflowEntryId,
         actorUserId: UserId?,
         reason: String?
-    ): Result<CashflowEntry> = runSuspendCatching {
+    ): Result<CashflowEntryDto> = runSuspendCatching {
         val tenantUuid = tenantId.value.toJavaUuid()
         val entryUuid = entryId.value.toJavaUuid()
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
@@ -182,7 +186,7 @@ class AutoPaymentService(
                     (PaymentsTable.reversedAt.isNull())
             }.count()
             if (nonReversedCount != 1L) {
-                appendAudit(
+                auditRepository.appendAudit(
                     tenantUuid = tenantUuid,
                     triggerSource = AutoPaymentTriggerSource.UndoRequest,
                     decision = AutoPaymentDecision.UndoRejected,
@@ -257,7 +261,7 @@ class AutoPaymentService(
                 it[updatedAt] = now
             }
 
-            appendAudit(
+            auditRepository.appendAudit(
                 tenantUuid = tenantUuid,
                 triggerSource = AutoPaymentTriggerSource.UndoRequest,
                 decision = AutoPaymentDecision.UndoApplied,
@@ -272,13 +276,14 @@ class AutoPaymentService(
             )
         }
 
-        cashflowEntriesRepository.getEntry(entryId, tenantId).getOrNull()
+        val entity = cashflowEntriesRepository.getEntry(entryId, tenantId).getOrNull()
             ?: throw DokusException.NotFound("Cashflow entry not found after undo")
+        CashflowEntryDto.from(entity)
     }
 
     private suspend fun applyAutoPaymentInTransaction(
         tenantId: TenantId,
-        entry: CashflowEntry,
+        entry: CashflowEntryEntity,
         transaction: BankTransactionEntity,
         confidenceScore: Double,
         scoreMargin: Double,
@@ -298,7 +303,7 @@ class AutoPaymentService(
         }.singleOrNull() ?: throw DokusException.NotFound("Invoice not found")
 
         if (invoiceRow[InvoicesTable.status] in listOf(InvoiceStatus.Paid, InvoiceStatus.Cancelled, InvoiceStatus.Refunded)) {
-            appendAudit(
+            auditRepository.appendAudit(
                 tenantUuid = tenantUuid,
                 triggerSource = triggerSource,
                 decision = AutoPaymentDecision.Skipped,
@@ -316,7 +321,7 @@ class AutoPaymentService(
 
         val currentPaid = Money.fromDbDecimal(invoiceRow[InvoicesTable.paidAmount])
         if (!currentPaid.isZero) {
-            appendAudit(
+            auditRepository.appendAudit(
                 tenantUuid = tenantUuid,
                 triggerSource = triggerSource,
                 decision = AutoPaymentDecision.NeedsReviewOnly,
@@ -334,7 +339,7 @@ class AutoPaymentService(
 
         val absoluteAmount = transaction.signedAmount.absolute()
         if (absoluteAmount != entry.remainingAmount) {
-            appendAudit(
+            auditRepository.appendAudit(
                 tenantUuid = tenantUuid,
                 triggerSource = triggerSource,
                 decision = AutoPaymentDecision.NeedsReviewOnly,
@@ -376,7 +381,7 @@ class AutoPaymentService(
             )
         }
 
-        val linkId = upsertMatchLink(
+        val linkId = autoPaymentRepository.upsertMatchLink(
             tenantUuid = tenantUuid,
             invoiceUuid = invoiceUuid,
             entryUuid = entryUuid,
@@ -460,7 +465,7 @@ class AutoPaymentService(
             it[updatedAt] = now
         }
 
-        appendAudit(
+        auditRepository.appendAudit(
             tenantUuid = tenantUuid,
             triggerSource = triggerSource,
             decision = AutoPaymentDecision.AutoPaid,
@@ -475,90 +480,6 @@ class AutoPaymentService(
         )
 
         AutoPayApplyResult(applied = true, paymentId = PaymentId.parse(paymentId.value.toString()))
-    }
-
-    private fun upsertMatchLink(
-        tenantUuid: UUID,
-        invoiceUuid: UUID,
-        entryUuid: UUID,
-        txUuid: UUID,
-        confidenceScore: Double,
-        scoreMargin: Double,
-        reasonsJson: String,
-        rulesJson: String,
-        now: LocalDateTime,
-        status: AutoMatchStatus
-    ): UUID {
-        val existing = TransactionMatchLinksTable.selectAll().where {
-            (TransactionMatchLinksTable.tenantId eq tenantUuid) and
-                (TransactionMatchLinksTable.documentId eq invoiceUuid) and
-                (TransactionMatchLinksTable.importedBankTransactionId eq txUuid)
-        }.singleOrNull()
-
-        return if (existing == null) {
-            val id = UUID.randomUUID()
-            TransactionMatchLinksTable.insertAndGetId {
-                it[TransactionMatchLinksTable.id] = id
-                it[tenantId] = tenantUuid
-                it[documentId] = invoiceUuid
-                it[cashflowEntryId] = entryUuid
-                it[importedBankTransactionId] = txUuid
-                it[TransactionMatchLinksTable.status] = status
-                it[createdBy] = PaymentCreatedBy.Auto
-                it[TransactionMatchLinksTable.confidenceScore] = confidenceScore.toBigDecimal()
-                it[TransactionMatchLinksTable.scoreMargin] = scoreMargin.toBigDecimal()
-                it[TransactionMatchLinksTable.reasonsJson] = reasonsJson
-                it[TransactionMatchLinksTable.rulesJson] = rulesJson
-                it[matchedAt] = now
-                it[createdAt] = now
-                it[updatedAt] = now
-            }.value
-        } else {
-            val existingId = existing[TransactionMatchLinksTable.id].value
-            TransactionMatchLinksTable.update({ TransactionMatchLinksTable.id eq existingId }) {
-                it[cashflowEntryId] = entryUuid
-                it[TransactionMatchLinksTable.status] = status
-                it[TransactionMatchLinksTable.confidenceScore] = confidenceScore.toBigDecimal()
-                it[TransactionMatchLinksTable.scoreMargin] = scoreMargin.toBigDecimal()
-                it[TransactionMatchLinksTable.reasonsJson] = reasonsJson
-                it[TransactionMatchLinksTable.rulesJson] = rulesJson
-                it[matchedAt] = now
-                it[reversedAt] = null
-                it[reversedByUserId] = null
-                it[reversalReason] = null
-                it[updatedAt] = now
-            }
-            existingId
-        }
-    }
-
-    private fun appendAudit(
-        tenantUuid: UUID,
-        triggerSource: AutoPaymentTriggerSource,
-        decision: AutoPaymentDecision,
-        invoiceId: UUID?,
-        entryId: UUID?,
-        txId: UUID?,
-        score: Double?,
-        margin: Double?,
-        reasonsJson: String?,
-        rulesJson: String?,
-        actorUserId: UserId?
-    ) {
-        AutoPaymentAuditEventsTable.insertAndGetId {
-            it[id] = UUID.randomUUID()
-            it[tenantId] = tenantUuid
-            it[AutoPaymentAuditEventsTable.triggerSource] = triggerSource
-            it[AutoPaymentAuditEventsTable.decision] = decision
-            it[AutoPaymentAuditEventsTable.invoiceId] = invoiceId
-            it[cashflowEntryId] = entryId
-            it[importedBankTransactionId] = txId
-            it[AutoPaymentAuditEventsTable.score] = score?.toBigDecimal()
-            it[AutoPaymentAuditEventsTable.margin] = margin?.toBigDecimal()
-            it[AutoPaymentAuditEventsTable.reasonsJson] = reasonsJson
-            it[AutoPaymentAuditEventsTable.rulesJson] = rulesJson
-            it[AutoPaymentAuditEventsTable.actorUserId] = actorUserId?.value?.toJavaUuid()
-        }
     }
 
     private fun parseJsonArray(raw: String?): List<String> {

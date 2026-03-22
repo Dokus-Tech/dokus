@@ -60,6 +60,7 @@ class ProfileSettingsContainer(
                     is ProfileSettingsIntent.UploadAvatar -> handleUploadAvatar(intent.imageBytes, intent.filename)
                     is ProfileSettingsIntent.ResetAvatarState -> handleResetAvatarState()
                     is ProfileSettingsIntent.ResendVerificationClicked -> handleResendVerification()
+                    is ProfileSettingsIntent.DismissActionError -> updateState { copy(actionError = null) }
                     is ProfileSettingsIntent.ChangePasswordClicked -> handleChangePassword()
                     is ProfileSettingsIntent.MySessionsClicked -> handleMySessions()
                     is ProfileSettingsIntent.BackClicked -> handleBack()
@@ -152,20 +153,19 @@ class ProfileSettingsContainer(
                             isSaving = false,
                             editFirstName = Name.Empty,
                             editLastName = Name.Empty,
+                            actionError = null,
                         )
                     }
-                    action(ProfileSettingsAction.ShowSaveSuccess)
                 },
                 onFailure = { error ->
                     logger.e(error) { "Failed to save profile" }
-                    updateState { copy(isSaving = false) }
                     val exception = error.asDokusException
                     val displayException = if (exception is DokusException.Unknown) {
                         DokusException.ProfileSaveFailed
                     } else {
                         exception
                     }
-                    action(ProfileSettingsAction.ShowSaveError(displayException))
+                    updateState { copy(isSaving = false, actionError = displayException) }
                 }
             )
         }
@@ -180,12 +180,10 @@ class ProfileSettingsContainer(
             updateState { copy(isResendingVerification = true) }
             resendVerificationEmailUseCase().fold(
                 onSuccess = {
-                    updateState { copy(isResendingVerification = false) }
-                    action(ProfileSettingsAction.ShowVerificationEmailSent)
+                    updateState { copy(isResendingVerification = false, actionError = null) }
                 },
                 onFailure = { error ->
-                    updateState { copy(isResendingVerification = false) }
-                    action(ProfileSettingsAction.ShowVerificationEmailError(error.asDokusException))
+                    updateState { copy(isResendingVerification = false, actionError = error.asDokusException) }
                 }
             )
         }
@@ -227,7 +225,6 @@ class ProfileSettingsContainer(
                     updateState {
                         copy(avatarState = AvatarState.Error(displayException))
                     }
-                    action(ProfileSettingsAction.ShowAvatarError(displayException))
                 }
             )
         }

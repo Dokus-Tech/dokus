@@ -17,12 +17,12 @@ import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.backend.mappers.from
-import tech.dokus.domain.model.AccountBalanceSeries
+import tech.dokus.domain.model.AccountBalanceSeriesDto
 import tech.dokus.domain.model.BankAccountDto
-import tech.dokus.domain.model.BankAccountSummary
+import tech.dokus.domain.model.BankAccountSummaryDto
 import tech.dokus.domain.model.BankTransactionDto
-import tech.dokus.domain.model.BankTransactionSummary
-import tech.dokus.domain.model.BalanceHistoryPoint
+import tech.dokus.domain.model.BankTransactionSummaryDto
+import tech.dokus.domain.model.BalanceHistoryPointDto
 import tech.dokus.domain.model.BalanceHistoryResponse
 import tech.dokus.domain.model.CreateExpenseRequest
 import tech.dokus.foundation.backend.utils.loggerFor
@@ -50,7 +50,7 @@ class BankingService(
         bankAccountRepository.listAccounts(tenantId).map { BankAccountDto.from(it) }
     }
 
-    suspend fun getAccountSummary(tenantId: TenantId): Result<BankAccountSummary> = runSuspendCatching {
+    suspend fun getAccountSummary(tenantId: TenantId): Result<BankAccountSummaryDto> = runSuspendCatching {
         val accounts = bankAccountRepository.listAccounts(tenantId)
         val counts = getStatusCounts(tenantId)
         val unresolvedMinor = bankTransactionRepository.sumUnresolved(tenantId)
@@ -58,7 +58,7 @@ class BankingService(
         val totalBalanceMinor = accounts.mapNotNull { it.balance?.minor }.sum()
         val lastSynced = accounts.mapNotNull { it.balanceUpdatedAt }.maxOrNull()
 
-        BankAccountSummary(
+        BankAccountSummaryDto(
             totalBalance = Money(totalBalanceMinor),
             accountCount = accounts.size,
             unmatchedCount = counts.unmatched + counts.needsReview,
@@ -101,11 +101,11 @@ class BankingService(
         TransactionPage(items = items.map { BankTransactionDto.from(it) }, total = total)
     }
 
-    suspend fun getTransactionSummary(tenantId: TenantId): Result<BankTransactionSummary> = runSuspendCatching {
+    suspend fun getTransactionSummary(tenantId: TenantId): Result<BankTransactionSummaryDto> = runSuspendCatching {
         val counts = getStatusCounts(tenantId)
         val unresolvedMinor = bankTransactionRepository.sumUnresolved(tenantId)
 
-        BankTransactionSummary(
+        BankTransactionSummaryDto(
             unmatchedCount = counts.unmatched,
             needsReviewCount = counts.needsReview,
             matchedCount = counts.matched,
@@ -379,10 +379,10 @@ class BankingService(
             val points = dates.map { date ->
                 val dayAmount = dailyAmounts[date] ?: 0L
                 runningBalance += dayAmount
-                BalanceHistoryPoint(date = date, balance = Money(runningBalance))
+                BalanceHistoryPointDto(date = date, balance = Money(runningBalance))
             }
 
-            AccountBalanceSeries(
+            AccountBalanceSeriesDto(
                 accountId = account.id,
                 accountName = account.name,
                 points = points,
@@ -395,7 +395,7 @@ class BankingService(
             val totalMinor = accountSeries.sumOf { series ->
                 series.points.getOrNull(index)?.balance?.minor ?: 0L
             }
-            BalanceHistoryPoint(date = date, balance = Money(totalMinor))
+            BalanceHistoryPointDto(date = date, balance = Money(totalMinor))
         }
 
         BalanceHistoryResponse(series = accountSeries, totalSeries = totalSeries)

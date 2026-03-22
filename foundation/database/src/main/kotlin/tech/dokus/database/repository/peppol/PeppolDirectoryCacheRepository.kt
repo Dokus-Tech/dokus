@@ -6,21 +6,19 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
-import org.jetbrains.exposed.v1.core.isNotNull
-import org.jetbrains.exposed.v1.core.less
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
+import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.peppol.PeppolDirectoryCacheTable
 import tech.dokus.domain.enums.PeppolLookupSource
 import tech.dokus.domain.enums.PeppolLookupStatus
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.PeppolResolution
+import tech.dokus.database.entity.PeppolResolutionEntity
 import tech.dokus.foundation.backend.database.dbQuery
 import tech.dokus.foundation.backend.utils.loggerFor
 import java.util.UUID
@@ -54,14 +52,14 @@ class PeppolDirectoryCacheRepository {
      * Get cache entry for a contact.
      * Returns null if no entry exists.
      */
-    suspend fun getByContactId(tenantId: TenantId, contactId: ContactId): Result<PeppolResolution?> = runSuspendCatching {
+    suspend fun getByContactId(tenantId: TenantId, contactId: ContactId): Result<PeppolResolutionEntity?> = runSuspendCatching {
         dbQuery {
             PeppolDirectoryCacheTable.selectAll()
                 .where {
                     (PeppolDirectoryCacheTable.tenantId eq UUID.fromString(tenantId.toString())) and
                         (PeppolDirectoryCacheTable.contactId eq UUID.fromString(contactId.toString()))
                 }
-                .map { it.toResolution() }
+                .map { PeppolResolutionEntity.from(it) }
                 .singleOrNull()
         }
     }
@@ -80,7 +78,7 @@ class PeppolDirectoryCacheRepository {
         vatNumberSnapshot: String?,
         companyNumberSnapshot: String?,
         errorMessage: String?
-    ): Result<PeppolResolution> = runSuspendCatching {
+    ): Result<PeppolResolutionEntity> = runSuspendCatching {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         val tenantUuid = UUID.fromString(tenantId.toString())
         val contactUuid = UUID.fromString(contactId.toString())
@@ -147,7 +145,7 @@ class PeppolDirectoryCacheRepository {
                     (PeppolDirectoryCacheTable.tenantId eq tenantUuid) and
                         (PeppolDirectoryCacheTable.contactId eq contactUuid)
                 }
-                .map { it.toResolution() }
+                .map { PeppolResolutionEntity.from(it) }
                 .single()
         }
     }
@@ -169,7 +167,7 @@ class PeppolDirectoryCacheRepository {
      * Check if cache entry is stale (expired or identifiers changed).
      */
     fun isStale(
-        resolution: PeppolResolution,
+        resolution: PeppolResolutionEntity,
         currentVatNumber: String?,
         currentCompanyNumber: String?
     ): Boolean {
@@ -183,44 +181,6 @@ class PeppolDirectoryCacheRepository {
         val companyChanged = resolution.companyNumberSnapshot != currentCompanyNumber
 
         return expired || vatChanged || companyChanged
-    }
-
-    /**
-     * Delete all expired entries for a tenant.
-     * Returns number of deleted rows.
-     */
-    suspend fun deleteExpired(tenantId: TenantId): Result<Int> = runSuspendCatching {
-        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-        dbQuery {
-            PeppolDirectoryCacheTable.deleteWhere {
-                (PeppolDirectoryCacheTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                    (PeppolDirectoryCacheTable.expiresAt.isNotNull()) and
-                    (PeppolDirectoryCacheTable.expiresAt less now)
-            }
-        }
-    }
-
-    private fun ResultRow.toResolution(): PeppolResolution {
-        val docTypesJson = this[PeppolDirectoryCacheTable.supportedDocTypes]
-        val supportedDocTypes = if (docTypesJson.isNullOrBlank()) {
-            emptyList()
-        } else {
-            runCatching { Json.decodeFromString<List<String>>(docTypesJson) }.getOrElse { emptyList() }
-        }
-
-        return PeppolResolution(
-            contactId = ContactId.parse(this[PeppolDirectoryCacheTable.contactId].toString()),
-            status = this[PeppolDirectoryCacheTable.status],
-            participantId = this[PeppolDirectoryCacheTable.participantId],
-            scheme = this[PeppolDirectoryCacheTable.scheme],
-            supportedDocTypes = supportedDocTypes,
-            source = this[PeppolDirectoryCacheTable.lookupSource],
-            vatNumberSnapshot = this[PeppolDirectoryCacheTable.vatNumberSnapshot],
-            companyNumberSnapshot = this[PeppolDirectoryCacheTable.companyNumberSnapshot],
-            lastCheckedAt = this[PeppolDirectoryCacheTable.lastCheckedAt],
-            expiresAt = this[PeppolDirectoryCacheTable.expiresAt],
-            errorMessage = this[PeppolDirectoryCacheTable.errorMessage]
-        )
     }
 
     private fun LocalDateTime.plusDuration(duration: Duration): LocalDateTime {

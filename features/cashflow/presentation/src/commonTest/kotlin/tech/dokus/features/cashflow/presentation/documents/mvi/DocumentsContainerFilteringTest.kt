@@ -8,6 +8,7 @@ import kotlinx.coroutines.test.runTest
 import pro.respawn.flowmvi.test.subscribeAndTest
 import tech.dokus.domain.enums.DocumentListFilter
 import tech.dokus.domain.enums.DocumentSource
+import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.IngestionStatus
@@ -150,6 +151,7 @@ private class FakeLoadDocumentRecordsUseCase : LoadDocumentRecordsUseCase {
         documentStatus: DocumentStatus?,
         ingestionStatus: IngestionStatus?,
         sortBy: String?,
+        contactId: ContactId?,
     ): Result<PaginatedResponse<DocumentListItemDto>> {
         val effectiveFilter = filter ?: DocumentListFilter.All
         val queue = requireNotNull(pageResults[effectiveFilter]) {

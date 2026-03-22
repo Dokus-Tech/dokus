@@ -8,8 +8,8 @@ import tech.dokus.features.cashflow.datasource.CashflowRemoteDataSource
 import tech.dokus.features.cashflow.datasource.CashflowRemoteDataSourceImpl
 import tech.dokus.features.cashflow.datasource.ChatRemoteDataSource
 import tech.dokus.features.cashflow.datasource.ChatRemoteDataSourceImpl
-import tech.dokus.features.cashflow.gateway.DocumentReviewGateway
-import tech.dokus.features.cashflow.gateway.DocumentReviewGatewayImpl
+import tech.dokus.features.cashflow.gateway.DocumentDetailGateway
+import tech.dokus.features.cashflow.gateway.DocumentDetailGatewayImpl
 import tech.dokus.features.cashflow.gateway.ProcessingHealthGateway
 import tech.dokus.features.cashflow.gateway.ProcessingHealthGatewayImpl
 import tech.dokus.features.cashflow.gateway.DocumentUploadGateway
@@ -42,6 +42,7 @@ import tech.dokus.features.cashflow.usecase.GetChatSessionHistoryUseCaseImpl
 import tech.dokus.features.cashflow.usecase.GetDocumentCountsUseCaseImpl
 import tech.dokus.features.cashflow.usecase.GetDocumentPagesUseCaseImpl
 import tech.dokus.features.cashflow.usecase.GetDocumentRecordUseCaseImpl
+import tech.dokus.features.cashflow.usecase.DownloadDocumentUseCaseImpl
 import tech.dokus.features.cashflow.usecase.GetDocumentSourceContentUseCaseImpl
 import tech.dokus.features.cashflow.usecase.GetDocumentSourcePagesUseCaseImpl
 import tech.dokus.features.cashflow.usecase.ObserveDocumentCollectionChangesUseCaseImpl
@@ -88,6 +89,7 @@ import tech.dokus.features.cashflow.usecases.RecordCashflowPaymentUseCase
 import tech.dokus.features.cashflow.usecases.UndoAutoPaymentUseCase
 import tech.dokus.features.cashflow.usecases.ConnectPeppolUseCase
 import tech.dokus.features.cashflow.usecases.DeleteDocumentUseCase
+import tech.dokus.features.cashflow.usecases.DownloadDocumentUseCase
 import tech.dokus.features.cashflow.usecases.GetChatConfigurationUseCase
 import tech.dokus.features.cashflow.usecases.GetChatSessionHistoryUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentCountsUseCase
@@ -165,7 +167,7 @@ val cashflowNetworkModule = module {
     singleOf(::PeppolInvoiceGatewayImpl) bind PeppolInvoiceGateway::class
     singleOf(::PeppolInboxGatewayImpl) bind PeppolInboxGateway::class
     singleOf(::PeppolTransmissionsGatewayImpl) bind PeppolTransmissionsGateway::class
-    singleOf(::DocumentReviewGatewayImpl) bind DocumentReviewGateway::class
+    singleOf(::DocumentDetailGatewayImpl) bind DocumentDetailGateway::class
     singleOf(::DocumentUploadGatewayImpl) bind DocumentUploadGateway::class
     singleOf(::ProcessingHealthGatewayImpl) bind ProcessingHealthGateway::class
 
@@ -192,6 +194,7 @@ val cashflowNetworkModule = module {
     singleOf(::GetDocumentPagesUseCaseImpl) bind GetDocumentPagesUseCase::class
     singleOf(::GetDocumentSourcePagesUseCaseImpl) bind GetDocumentSourcePagesUseCase::class
     singleOf(::GetDocumentSourceContentUseCaseImpl) bind GetDocumentSourceContentUseCase::class
+    singleOf(::DownloadDocumentUseCaseImpl) bind DownloadDocumentUseCase::class
     singleOf(::ReprocessDocumentUseCaseImpl) bind ReprocessDocumentUseCase::class
     singleOf(::ResolveDocumentMatchReviewUseCaseImpl) bind ResolveDocumentMatchReviewUseCase::class
     singleOf(::GetProcessingHealthUseCaseImpl) bind GetProcessingHealthUseCase::class
@@ -232,7 +235,7 @@ val cashflowNetworkModule = module {
     factory<GetDocumentCountsUseCase> { GetDocumentCountsUseCaseImpl(get()) }
     factory<LoadDocumentRecordsUseCase> { LoadDocumentRecordsUseCaseImpl(get()) }
 
-    // Cashflow entries (for CashflowLedgerScreen)
+    // Cashflow entries (for CashFlowOverviewScreen)
     factory<GetCashflowOverviewUseCase> { GetCashflowOverviewUseCaseImpl(get()) }
     factory<LoadCashflowEntriesUseCase> { LoadCashflowEntriesUseCaseImpl(get()) }
     factory<GetCashflowEntryUseCase> { GetCashflowEntryUseCaseImpl(get()) }

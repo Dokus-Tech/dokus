@@ -8,9 +8,9 @@ import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.model.BalanceHistoryResponse
 import tech.dokus.domain.model.BankAccountDto
-import tech.dokus.domain.model.BankAccountSummary
+import tech.dokus.domain.model.BankAccountSummaryDto
 import tech.dokus.domain.model.BankTransactionDto
-import tech.dokus.domain.model.BankTransactionSummary
+import tech.dokus.domain.model.BankTransactionSummaryDto
 import tech.dokus.domain.model.common.PaginatedResponse
 import kotlin.time.Duration
 
@@ -32,11 +32,11 @@ interface GetBankTransactionUseCase {
 }
 
 interface GetTransactionSummaryUseCase {
-    suspend operator fun invoke(): Result<BankTransactionSummary>
+    suspend operator fun invoke(): Result<BankTransactionSummaryDto>
 }
 
 interface GetAccountSummaryUseCase {
-    suspend operator fun invoke(): Result<BankAccountSummary>
+    suspend operator fun invoke(): Result<BankAccountSummaryDto>
 }
 
 interface ListBankAccountsUseCase {

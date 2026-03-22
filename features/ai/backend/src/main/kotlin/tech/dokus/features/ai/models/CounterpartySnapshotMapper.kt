@@ -3,24 +3,24 @@ package tech.dokus.features.ai.models
 import tech.dokus.domain.Email
 import tech.dokus.domain.enums.Country
 import tech.dokus.domain.ids.VatNumber
-import tech.dokus.domain.model.contact.CounterpartySnapshot
-import tech.dokus.domain.model.contact.PostalAddress
+import tech.dokus.domain.model.contact.CounterpartySnapshotDto
+import tech.dokus.domain.model.contact.PostalAddressDto
 
-fun FinancialExtractionResult.toAuthoritativeCounterpartySnapshot(): CounterpartySnapshot? = when (this) {
+fun FinancialExtractionResult.toAuthoritativeCounterpartySnapshot(): CounterpartySnapshotDto? = when (this) {
     is FinancialExtractionResult.Invoice -> data.counterparty.toSnapshot()
     is FinancialExtractionResult.CreditNote -> data.counterparty.toSnapshot()
     is FinancialExtractionResult.Receipt -> data.counterparty.toSnapshot()
     is FinancialExtractionResult.BankStatement -> data.institutionName
         ?.trim()
         ?.takeIf { it.isNotEmpty() }
-        ?.let { CounterpartySnapshot(name = it) }
+        ?.let { CounterpartySnapshotDto(name = it) }
     is FinancialExtractionResult.Quote,
     is FinancialExtractionResult.ProForma,
     is FinancialExtractionResult.PurchaseOrder,
     is FinancialExtractionResult.Unsupported -> null
 }
 
-private fun CounterpartyExtraction?.toSnapshot(): CounterpartySnapshot? {
+private fun CounterpartyExtraction?.toSnapshot(): CounterpartySnapshotDto? {
     if (this == null) return null
 
     val cleanedName = name.cleanText()
@@ -31,13 +31,13 @@ private fun CounterpartyExtraction?.toSnapshot(): CounterpartySnapshot? {
     val cleanedCity = city.cleanText()
     val cleanedCountry = country.toCountryOrNull()
 
-    val snapshot = CounterpartySnapshot(
+    val snapshot = CounterpartySnapshotDto(
         name = cleanedName,
         vatNumber = cleanedVat,
         iban = null,
         email = cleanedEmail,
         companyNumber = null,
-        address = PostalAddress(
+        address = PostalAddressDto(
             streetLine1 = cleanedStreet,
             postalCode = cleanedPostal,
             city = cleanedCity,

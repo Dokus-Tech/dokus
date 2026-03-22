@@ -14,20 +14,12 @@ import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
 import tech.dokus.backend.services.auth.AuthService
 import tech.dokus.backend.services.auth.SessionContext
-import tech.dokus.backend.services.auth.SurfaceResolver
-import tech.dokus.backend.services.avatar.projectUserAvatar
-import tech.dokus.database.repository.auth.FirmRepository
-import tech.dokus.database.repository.auth.TenantRepository
-import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.domain.DeviceType
 import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.domain.model.auth.AccountMeResponse
 import tech.dokus.domain.model.auth.ChangePasswordRequest
 import tech.dokus.domain.model.auth.DeactivateUserRequest
-import tech.dokus.domain.model.auth.FirmWorkspaceSummary
 import tech.dokus.domain.model.auth.LogoutRequest
 import tech.dokus.domain.model.auth.SelectTenantRequest
-import tech.dokus.domain.model.auth.TenantWorkspaceSummary
 import tech.dokus.domain.model.auth.UpdateProfileRequest
 import tech.dokus.domain.routes.Account
 import tech.dokus.foundation.backend.security.authenticateJwt
@@ -44,9 +36,6 @@ import tech.dokus.foundation.backend.utils.extractClientIpAddress
  */
 internal fun Route.accountRoutes() {
     val authService by inject<AuthService>()
-    val userRepository by inject<UserRepository>()
-    val tenantRepository by inject<TenantRepository>()
-    val firmRepository by inject<FirmRepository>()
 
     authenticateJwt {
         /**
@@ -55,65 +44,8 @@ internal fun Route.accountRoutes() {
          */
         get<Account.Me> {
             val principal = dokusPrincipal
-            val user = userRepository.findById(principal.userId)
-                ?: throw DokusException.NotAuthenticated("User not found")
-            val projectedUser = userRepository.projectUserAvatar(user)
-            val tenantMemberships = userRepository.getUserTenants(principal.userId)
-                .filter { it.isActive }
-            val firmsMemberships = firmRepository.listUserMemberships(principal.userId)
-                .filter { it.isActive }
-            val surface = SurfaceResolver.resolve(
-                tenantMemberships = tenantMemberships,
-                firmMemberships = firmsMemberships
-            )
-
-            val tenantsById = tenantRepository.findByIds(tenantMemberships.map { it.tenantId })
-                .associateBy { it.id }
-            val tenantSummaries = buildList {
-                for (membership in tenantMemberships) {
-                    val tenant = tenantsById[membership.tenantId] ?: continue
-                    add(
-                        TenantWorkspaceSummary(
-                            id = tenant.id,
-                            name = tenant.displayName,
-                            vatNumber = tenant.vatNumber,
-                            role = membership.role,
-                            type = tenant.type,
-                            avatar = tenantRepository.getAvatarStorageKey(tenant.id)
-                                ?.takeIf { it.isNotBlank() }
-                                ?.let { storageKey ->
-                                    buildWorkspaceAvatarThumbnail(tenant.id, storageKey)
-                                }
-                        )
-                    )
-                }
-            }
-
-            val firmsById = firmRepository.listFirmsByIds(firmsMemberships.map { it.firmId })
-                .associateBy { it.id }
-            val clientCountByFirmId = firmRepository.countActiveClientsByFirmIds(
-                firmsMemberships.map { it.firmId }
-            )
-            val firmSummaries = firmsMemberships.mapNotNull { membership ->
-                val firm = firmsById[membership.firmId] ?: return@mapNotNull null
-                FirmWorkspaceSummary(
-                    id = firm.id,
-                    name = firm.name,
-                    vatNumber = firm.vatNumber,
-                    role = membership.role,
-                    clientCount = clientCountByFirmId[membership.firmId] ?: 0
-                )
-            }
-
-            call.respond(
-                HttpStatusCode.OK,
-                AccountMeResponse(
-                    user = projectedUser,
-                    surface = surface,
-                    tenants = tenantSummaries,
-                    firms = firmSummaries
-                )
-            )
+            val response = authService.getAccountMe(principal.userId)
+            call.respond(HttpStatusCode.OK, response)
         }
 
         /**
@@ -243,11 +175,3 @@ internal fun Route.accountRoutes() {
         }
     }
 }
-
-private fun buildWorkspaceAvatarThumbnail(
-    tenantId: tech.dokus.domain.ids.TenantId,
-    storageKey: String
-) = tech.dokus.backend.services.avatar.buildVersionedAvatarThumbnail(
-    basePath = "/api/v1/tenants/$tenantId/avatar",
-    storageKey = storageKey
-)

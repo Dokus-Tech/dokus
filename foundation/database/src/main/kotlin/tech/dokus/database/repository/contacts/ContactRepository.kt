@@ -5,7 +5,6 @@ package tech.dokus.database.repository.contacts
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.LowerCase
 import org.jetbrains.exposed.v1.core.and
@@ -22,19 +21,14 @@ import tech.dokus.database.tables.cashflow.ExpensesTable
 import tech.dokus.database.tables.cashflow.InvoicesTable
 import tech.dokus.database.tables.contacts.ContactNotesTable
 import tech.dokus.database.tables.contacts.ContactsTable
-import tech.dokus.domain.Email
-import tech.dokus.domain.Name
-import tech.dokus.domain.PhoneNumber
-import tech.dokus.domain.VatRate
-import tech.dokus.domain.fromDbDecimal
 import tech.dokus.domain.ids.ContactId
-import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.model.contact.ContactActivitySummary
-import tech.dokus.domain.model.contact.ContactDto
+import tech.dokus.database.entity.ContactEntity
+import tech.dokus.database.mapper.from
 import tech.dokus.domain.model.contact.ContactMergeResult
 import tech.dokus.domain.model.contact.ContactStats
 import tech.dokus.domain.model.contact.CreateContactRequest
@@ -63,7 +57,7 @@ class ContactRepository {
     suspend fun createContact(
         tenantId: TenantId,
         request: CreateContactRequest
-    ): Result<ContactDto> = runSuspendCatching {
+    ): Result<ContactEntity> = runSuspendCatching {
         dbQuery {
             val contactId = ContactsTable.insertAndGetId {
                 it[ContactsTable.tenantId] = UUID.fromString(tenantId.toString())
@@ -88,7 +82,7 @@ class ContactRepository {
                 (ContactsTable.id eq contactId.value) and
                     (ContactsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.single().let { row ->
-                mapRowToContactDto(row)
+                ContactEntity.from(row)
             }
         }
     }
@@ -100,13 +94,13 @@ class ContactRepository {
     suspend fun getContact(
         contactId: ContactId,
         tenantId: TenantId
-    ): Result<ContactDto?> = runSuspendCatching {
+    ): Result<ContactEntity?> = runSuspendCatching {
         dbQuery {
             ContactsTable.selectAll().where {
                 (ContactsTable.id eq UUID.fromString(contactId.toString())) and
                     (ContactsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.singleOrNull()?.let { row ->
-                mapRowToContactDto(row)
+                ContactEntity.from(row)
             }
         }
     }
@@ -121,7 +115,7 @@ class ContactRepository {
         isActive: Boolean? = null,
         limit: Int = 50,
         offset: Int = 0
-    ): Result<PaginatedResponse<ContactDto>> = runSuspendCatching {
+    ): Result<PaginatedResponse<ContactEntity>> = runSuspendCatching {
         dbQuery {
             var query = ContactsTable.selectAll().where {
                 ContactsTable.tenantId eq UUID.fromString(tenantId.toString())
@@ -136,7 +130,7 @@ class ContactRepository {
 
             val items = query.orderBy(ContactsTable.name to SortOrder.ASC)
                 .limit(limit + offset)
-                .map { row -> mapRowToContactDto(row) }
+                .map { ContactEntity.from(it) }
                 .drop(offset)
 
             PaginatedResponse(
@@ -154,7 +148,7 @@ class ContactRepository {
         isActive: Boolean? = null,
         limit: Int = 50,
         offset: Int = 0
-    ): Result<PaginatedResponse<ContactDto>> = runSuspendCatching {
+    ): Result<PaginatedResponse<ContactEntity>> = runSuspendCatching {
         val normalizedQuery = query.trim().lowercase()
             .replace("\\", "\\\\")
             .replace("%", "\\%")
@@ -184,7 +178,7 @@ class ContactRepository {
                 .orderBy(ContactsTable.name to SortOrder.ASC)
                 .limit(limit)
                 .offset(offset.toLong())
-                .map { row -> mapRowToContactDto(row) }
+                .map { ContactEntity.from(it) }
 
             PaginatedResponse(
                 items = items,
@@ -206,7 +200,7 @@ class ContactRepository {
         isActive: Boolean? = true,
         limit: Int = 50,
         offset: Int = 0
-    ): Result<PaginatedResponse<ContactDto>> = runSuspendCatching {
+    ): Result<PaginatedResponse<ContactEntity>> = runSuspendCatching {
         // TODO: Proper implementation requires JOIN with InvoicesTable to find contacts with invoices
         // For now, delegate to listContacts
         listContacts(tenantId, isActive, limit, offset).getOrThrow()
@@ -223,7 +217,7 @@ class ContactRepository {
         isActive: Boolean? = true,
         limit: Int = 50,
         offset: Int = 0
-    ): Result<PaginatedResponse<ContactDto>> = runSuspendCatching {
+    ): Result<PaginatedResponse<ContactEntity>> = runSuspendCatching {
         // TODO: Proper implementation requires JOIN with InvoicesTable/ExpensesTable
         // For now, delegate to listContacts
         listContacts(tenantId, isActive, limit, offset).getOrThrow()
@@ -238,7 +232,7 @@ class ContactRepository {
         contactId: ContactId,
         tenantId: TenantId,
         request: UpdateContactRequest
-    ): Result<ContactDto> = runSuspendCatching {
+    ): Result<ContactEntity> = runSuspendCatching {
         dbQuery {
             // Verify contact exists and belongs to tenant
             val exists = ContactsTable.selectAll().where {
@@ -277,7 +271,7 @@ class ContactRepository {
                 (ContactsTable.id eq UUID.fromString(contactId.toString())) and
                     (ContactsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.single().let { row ->
-                mapRowToContactDto(row)
+                ContactEntity.from(row)
             }
         }
     }
@@ -400,7 +394,7 @@ class ContactRepository {
     suspend fun findByVatNumber(
         tenantId: TenantId,
         vatNumber: String
-    ): Result<ContactDto?> = runSuspendCatching {
+    ): Result<ContactEntity?> = runSuspendCatching {
         dbQuery {
             val normalized = VatNumber.normalize(vatNumber)
             // Search for both normalized and original format
@@ -412,31 +406,12 @@ class ContactRepository {
                 val storedVat = row[ContactsTable.vatNumber]?.let { VatNumber.normalize(it) }
                 storedVat == normalized
             }.firstOrNull()?.let { row ->
-                mapRowToContactDto(row)
+                ContactEntity.from(row)
             }
         }
     }
 
     // NOTE: findByPeppolId() removed - PEPPOL participant ID is now in PeppolDirectoryCacheTable
-
-    /**
-     * Find a contact by company number (exact match)
-     * Returns the first active match.
-     */
-    suspend fun findByCompanyNumber(
-        tenantId: TenantId,
-        companyNumber: String
-    ): Result<ContactDto?> = runSuspendCatching {
-        dbQuery {
-            ContactsTable.selectAll().where {
-                (ContactsTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                    (ContactsTable.companyNumber eq companyNumber) and
-                    (ContactsTable.isActive eq true)
-            }.singleOrNull()?.let { row ->
-                mapRowToContactDto(row)
-            }
-        }
-    }
 
     /**
      * Find contacts by IBAN (exact match, normalized).
@@ -445,14 +420,14 @@ class ContactRepository {
     suspend fun findByIban(
         tenantId: TenantId,
         iban: Iban
-    ): Result<List<ContactDto>> = runSuspendCatching {
+    ): Result<List<ContactEntity>> = runSuspendCatching {
         dbQuery {
             val normalized = Iban.from(iban.value)?.value ?: return@dbQuery emptyList()
             ContactsTable.selectAll().where {
                 (ContactsTable.tenantId eq UUID.fromString(tenantId.toString())) and
                     (ContactsTable.isActive eq true) and
                     (ContactsTable.iban eq normalized)
-            }.map { row -> mapRowToContactDto(row) }
+            }.map { ContactEntity.from(it) }
         }
     }
 
@@ -467,7 +442,7 @@ class ContactRepository {
         tenantId: TenantId,
         name: String,
         limit: Int = 5
-    ): Result<List<ContactDto>> = runSuspendCatching {
+    ): Result<List<ContactEntity>> = runSuspendCatching {
         dbQuery {
             val searchTerm = name.lowercase()
             val query = ContactsTable.selectAll().where {
@@ -481,39 +456,7 @@ class ContactRepository {
                     row[ContactsTable.name].lowercase().contains(searchTerm)
                 }
                 .take(limit)
-                .map { row -> mapRowToContactDto(row) }
-        }
-    }
-
-    /**
-     * Get or create the "Unknown Contact" system placeholder for a tenant.
-     * This contact is used when no match is found and user assigns to unknown.
-     */
-    suspend fun getOrCreateUnknownContact(tenantId: TenantId): Result<ContactDto> = runSuspendCatching {
-        dbQuery {
-            // Check if system contact already exists
-            val existing = ContactsTable.selectAll().where {
-                (ContactsTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                    (ContactsTable.isSystemContact eq true)
-            }.singleOrNull()
-
-            if (existing != null) {
-                mapRowToContactDto(existing)
-            } else {
-                // Create the Unknown Contact placeholder
-                val contactId = ContactsTable.insertAndGetId {
-                    it[ContactsTable.tenantId] = UUID.fromString(tenantId.toString())
-                    it[ContactsTable.name] = "Unknown / Unassigned"
-                    it[ContactsTable.isSystemContact] = true
-                    it[ContactsTable.isActive] = true
-                }
-
-                ContactsTable.selectAll().where {
-                    ContactsTable.id eq contactId.value
-                }.single().let { row ->
-                    mapRowToContactDto(row)
-                }
-            }
+                .map { ContactEntity.from(it) }
         }
     }
 
@@ -722,41 +665,4 @@ class ContactRepository {
         }
     }
 
-    // =========================================================================
-    // MAPPING
-    // =========================================================================
-
-    /**
-     * Map a database row to ContactDto.
-     * Note: addresses list is empty - caller should populate via ContactAddressRepository.
-     */
-    private fun mapRowToContactDto(row: ResultRow): ContactDto {
-        return ContactDto(
-            id = ContactId.parse(row[ContactsTable.id].value.toString()),
-            tenantId = TenantId.parse(row[ContactsTable.tenantId].toString()),
-            name = Name(row[ContactsTable.name]),
-            email = row[ContactsTable.email]?.let { Email(it) },
-            iban = row[ContactsTable.iban]?.let { Iban(it) },
-            vatNumber = row[ContactsTable.vatNumber]?.let { VatNumber(it) },
-            businessType = row[ContactsTable.businessType],
-            // Addresses are now in ContactAddressesTable, populated by caller
-            contactPerson = row[ContactsTable.contactPerson],
-            phone = row[ContactsTable.phone]?.let { PhoneNumber(it) },
-            companyNumber = row[ContactsTable.companyNumber],
-            defaultPaymentTerms = row[ContactsTable.defaultPaymentTerms],
-            defaultVatRate = row[ContactsTable.defaultVatRate]?.let { VatRate.fromDbDecimal(it) },
-            // NOTE: peppolId/peppolEnabled removed - PEPPOL status is now in PeppolDirectoryCacheTable
-            tags = row[ContactsTable.tags],
-            isActive = row[ContactsTable.isActive],
-            createdAt = row[ContactsTable.createdAt],
-            updatedAt = row[ContactsTable.updatedAt],
-            // UI Contract fields
-            isSystemContact = row[ContactsTable.isSystemContact],
-            createdFromDocumentId = row[ContactsTable.createdFromDocumentId]?.let {
-                DocumentId.parse(it.toString())
-            },
-            source = row[ContactsTable.contactSource]
-            // addresses, derivedRoles and activitySummary are populated by service layer on demand
-        )
-    }
 }

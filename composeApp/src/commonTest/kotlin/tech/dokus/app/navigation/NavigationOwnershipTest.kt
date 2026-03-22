@@ -27,7 +27,7 @@ class NavigationOwnershipTest {
     fun `owner mapping routes root families to root host`() {
         assertEquals(
             NavHostOwner.Root,
-            NavigationOwnershipPolicy.ownerFor(CashFlowDestination.DocumentReview("doc-1"))
+            NavigationOwnershipPolicy.ownerFor(CashFlowDestination.DocumentDetail("doc-1"))
         )
         assertEquals(
             NavHostOwner.Root,

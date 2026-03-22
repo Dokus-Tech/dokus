@@ -16,18 +16,18 @@ import tech.dokus.features.banking.usecases.ListBankAccountsUseCase
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.platform.Logger
 
-internal typealias BalancesCtx = PipelineContext<BalancesState, BalancesIntent, BalancesAction>
+internal typealias BalancesCtx = PipelineContext<BalancesState, BalancesIntent, Nothing>
 
 internal class BalancesContainer(
     private val listAccounts: ListBankAccountsUseCase,
     private val getAccountSummary: GetAccountSummaryUseCase,
     private val getTransactionSummary: GetTransactionSummaryUseCase,
     private val getBalanceHistory: GetBalanceHistoryUseCase,
-) : Container<BalancesState, BalancesIntent, BalancesAction> {
+) : Container<BalancesState, BalancesIntent, Nothing> {
 
     private val logger = Logger.forClass<BalancesContainer>()
 
-    override val store: Store<BalancesState, BalancesIntent, BalancesAction> =
+    override val store: Store<BalancesState, BalancesIntent, Nothing> =
         store(BalancesState.initial) {
             init {
                 handleRefresh()
@@ -39,6 +39,7 @@ internal class BalancesContainer(
                     is BalancesIntent.SetTimeRange -> handleSetTimeRange(intent.range)
                     is BalancesIntent.UploadStatement -> logger.i { "Upload statement (not yet implemented)" }
                     is BalancesIntent.ConnectAccount -> logger.i { "Connect account (not yet implemented)" }
+                    is BalancesIntent.DismissActionError -> updateState { copy(actionError = null) }
                 }
             }
         }

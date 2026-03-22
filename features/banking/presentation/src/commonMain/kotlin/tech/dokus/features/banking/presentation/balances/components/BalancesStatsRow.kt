@@ -27,8 +27,8 @@ import tech.dokus.aura.resources.banking_balances_stats_missing
 import tech.dokus.aura.resources.banking_balances_time_days_ago
 import tech.dokus.aura.resources.banking_balances_time_hours_ago
 import tech.dokus.aura.resources.banking_balances_time_minutes_ago
-import tech.dokus.domain.model.BankAccountSummary
-import tech.dokus.domain.model.BankTransactionSummary
+import tech.dokus.domain.model.BankAccountSummaryDto
+import tech.dokus.domain.model.BankTransactionSummaryDto
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.textMuted
 import tech.dokus.foundation.aura.tooling.PreviewParameters
@@ -39,8 +39,8 @@ private const val Separator = " \u00B7 "
 
 @Composable
 internal fun BalancesStatsRow(
-    summary: BankAccountSummary,
-    transactionSummary: BankTransactionSummary?,
+    summary: BankAccountSummaryDto,
+    transactionSummary: BankTransactionSummaryDto?,
     modifier: Modifier = Modifier,
 ) {
     val accountsText = stringResource(Res.string.banking_balances_stats_accounts, summary.accountCount)
@@ -115,7 +115,7 @@ private fun BalancesStatsRowPreview(
 ) {
     TestWrapper(parameters) {
         BalancesStatsRow(
-            summary = BankAccountSummary(
+            summary = BankAccountSummaryDto(
                 totalBalance = Money(1778042),
                 accountCount = 2,
                 unmatchedCount = 3,

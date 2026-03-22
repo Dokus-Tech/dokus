@@ -26,11 +26,9 @@ import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.InvoiceNumber
 import tech.dokus.domain.ids.PeppolId
 import tech.dokus.domain.ids.StructuredCommunication
-import kotlinx.serialization.Serializable
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 
-@Serializable
 data class InvoiceEntity(
     val id: InvoiceId,
     val tenantId: TenantId,
@@ -70,7 +68,6 @@ data class InvoiceEntity(
     companion object
 }
 
-@Serializable
 data class InvoiceItemEntity(
     val id: String? = null,
     val invoiceId: InvoiceId? = null,
@@ -85,7 +82,6 @@ data class InvoiceItemEntity(
     companion object
 }
 
-@Serializable
 data class ExpenseEntity(
     val id: ExpenseId,
     val tenantId: TenantId,
@@ -111,7 +107,6 @@ data class ExpenseEntity(
     companion object
 }
 
-@Serializable
 data class CreditNoteEntity(
     val id: CreditNoteId,
     val tenantId: TenantId,

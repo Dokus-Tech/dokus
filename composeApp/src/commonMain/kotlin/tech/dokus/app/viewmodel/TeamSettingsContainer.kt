@@ -8,23 +8,23 @@ import pro.respawn.flowmvi.dsl.withState
 import pro.respawn.flowmvi.plugins.reduce
 import tech.dokus.domain.Email
 import tech.dokus.domain.enums.UserRole
+import tech.dokus.domain.enums.maxSeats
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.FirmId
 import tech.dokus.domain.ids.InvitationId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.CreateInvitationRequest
-import tech.dokus.domain.enums.maxSeats
 import tech.dokus.features.auth.usecases.CancelInvitationUseCase
 import tech.dokus.features.auth.usecases.CreateInvitationUseCase
-import tech.dokus.features.auth.usecases.GrantBookkeeperAccessUseCase
 import tech.dokus.features.auth.usecases.GetCurrentTenantUseCase
 import tech.dokus.features.auth.usecases.GetCurrentUserUseCase
+import tech.dokus.features.auth.usecases.GrantBookkeeperAccessUseCase
 import tech.dokus.features.auth.usecases.ListBookkeeperAccessUseCase
 import tech.dokus.features.auth.usecases.ListPendingInvitationsUseCase
 import tech.dokus.features.auth.usecases.ListTeamMembersUseCase
-import tech.dokus.features.auth.usecases.RevokeBookkeeperAccessUseCase
 import tech.dokus.features.auth.usecases.RemoveTeamMemberUseCase
+import tech.dokus.features.auth.usecases.RevokeBookkeeperAccessUseCase
 import tech.dokus.features.auth.usecases.SearchBookkeeperFirmsUseCase
 import tech.dokus.features.auth.usecases.TransferWorkspaceOwnershipUseCase
 import tech.dokus.features.auth.usecases.UpdateTeamMemberRoleUseCase
@@ -84,23 +84,20 @@ internal class TeamSettingsContainer(
                     is TeamSettingsIntent.RevokeBookkeeperAccess -> handleRevokeBookkeeperAccess(intent.firmId)
                     TeamSettingsIntent.ResetBookkeeperAccessForm -> handleResetBookkeeperAccessForm()
                     is TeamSettingsIntent.ResetActionState -> handleResetActionState()
+                    is TeamSettingsIntent.DismissActionError -> updateState { copy(actionError = null) }
                 }
             }
         }
 
     private suspend fun TeamSettingsCtx.handleLoad() {
         logger.d { "Loading team data" }
-
         updateState { copy(teamData = DokusState.loading()) }
-
         loadTeamData()
     }
 
     private suspend fun TeamSettingsCtx.handleRefresh() {
         logger.d { "Refreshing team data" }
-
         updateState { copy(teamData = teamData.asLoading) }
-
         loadTeamData()
     }
 
@@ -153,10 +150,10 @@ internal class TeamSettingsContainer(
                                                 bookkeeperAccess = emptyList(),
                                                 isCurrentUserOwner = isCurrentUserOwner,
                                             )
-                                        )
+                                        ),
+                                        actionError = error.asDokusException,
                                     )
                                 }
-                                action(TeamSettingsAction.ShowError(error.asDokusException))
                             }
                         )
                     },
@@ -220,16 +217,14 @@ internal class TeamSettingsContainer(
         // Validate email
         if (inviteEmail.isBlank()) {
             val exception = DokusException.Validation.EmailRequired
-            updateState { copy(actionState = TeamSettingsActionState.Error(exception)) }
-            action(TeamSettingsAction.ShowError(exception))
+            updateState { copy(actionState = TeamSettingsActionState.Error(exception), actionError = exception) }
             return
         }
 
         // Basic email validation
         if (!inviteEmail.contains("@") || !inviteEmail.contains(".")) {
             val exception = DokusException.Validation.InvalidEmail
-            updateState { copy(actionState = TeamSettingsActionState.Error(exception)) }
-            action(TeamSettingsAction.ShowError(exception))
+            updateState { copy(actionState = TeamSettingsActionState.Error(exception), actionError = exception) }
             return
         }
 
@@ -250,10 +245,11 @@ internal class TeamSettingsContainer(
                     copy(
                         inviteEmail = "",
                         inviteRole = UserRole.Editor,
-                        actionState = TeamSettingsActionState.Success(TeamSettingsSuccess.InviteSent)
+                        actionState = TeamSettingsActionState.Idle,
+                        actionError = null,
                     )
                 }
-                action(TeamSettingsAction.ShowSuccess(TeamSettingsSuccess.InviteSent))
+
                 action(TeamSettingsAction.DismissInviteDialog)
 
                 // Refresh invitations
@@ -267,8 +263,7 @@ internal class TeamSettingsContainer(
                 } else {
                     exception
                 }
-                updateState { copy(actionState = TeamSettingsActionState.Error(displayException)) }
-                action(TeamSettingsAction.ShowError(displayException))
+                updateState { copy(actionState = TeamSettingsActionState.Error(displayException), actionError = displayException) }
             }
         )
     }
@@ -329,9 +324,9 @@ internal class TeamSettingsContainer(
                         bookkeeperSearchResults = emptyList(),
                         bookkeeperSearchLoading = false,
                         selectedBookkeeperFirmId = null,
+                        actionError = error.asDokusException,
                     )
                 }
-                action(TeamSettingsAction.ShowError(error.asDokusException))
             }
         )
     }
@@ -351,15 +346,14 @@ internal class TeamSettingsContainer(
         }
 
         if (!isOwner) {
-            action(TeamSettingsAction.ShowError(DokusException.NotAuthorized()))
+            updateState { copy(actionError = DokusException.NotAuthorized()) }
             return
         }
 
         val selectedFirmId = capturedFirmId
         if (selectedFirmId == null) {
             val exception = DokusException.BadRequest("Select a bookkeeper firm first")
-            updateState { copy(actionState = TeamSettingsActionState.Error(exception)) }
-            action(TeamSettingsAction.ShowError(exception))
+            updateState { copy(actionState = TeamSettingsActionState.Error(exception), actionError = exception) }
             return
         }
 
@@ -369,22 +363,20 @@ internal class TeamSettingsContainer(
             onSuccess = {
                 updateState {
                     copy(
-                        actionState = TeamSettingsActionState.Success(
-                            TeamSettingsSuccess.BookkeeperAccessGranted
-                        ),
+                        actionState = TeamSettingsActionState.Idle,
+                        actionError = null,
                         bookkeeperSearchQuery = "",
                         bookkeeperSearchResults = emptyList(),
                         selectedBookkeeperFirmId = null,
                     )
                 }
-                action(TeamSettingsAction.ShowSuccess(TeamSettingsSuccess.BookkeeperAccessGranted))
+
                 action(TeamSettingsAction.DismissBookkeeperDialog)
                 refreshBookkeeperAccess()
             },
             onFailure = { error ->
                 val exception = error.asDokusException
-                updateState { copy(actionState = TeamSettingsActionState.Error(exception)) }
-                action(TeamSettingsAction.ShowError(exception))
+                updateState { copy(actionState = TeamSettingsActionState.Error(exception), actionError = exception) }
             }
         )
     }
@@ -398,7 +390,7 @@ internal class TeamSettingsContainer(
         }
 
         if (!isOwner) {
-            action(TeamSettingsAction.ShowError(DokusException.NotAuthorized()))
+            updateState { copy(actionError = DokusException.NotAuthorized()) }
             return
         }
 
@@ -408,18 +400,15 @@ internal class TeamSettingsContainer(
             onSuccess = {
                 updateState {
                     copy(
-                        actionState = TeamSettingsActionState.Success(
-                            TeamSettingsSuccess.BookkeeperAccessRevoked
-                        ),
+                        actionState = TeamSettingsActionState.Idle,
+                        actionError = null,
                     )
                 }
-                action(TeamSettingsAction.ShowSuccess(TeamSettingsSuccess.BookkeeperAccessRevoked))
                 refreshBookkeeperAccess()
             },
             onFailure = { error ->
                 val exception = error.asDokusException
-                updateState { copy(actionState = TeamSettingsActionState.Error(exception)) }
-                action(TeamSettingsAction.ShowError(exception))
+                updateState { copy(actionState = TeamSettingsActionState.Error(exception), actionError = exception) }
             }
         )
     }
@@ -448,12 +437,10 @@ internal class TeamSettingsContainer(
                 logger.i { "Invitation cancelled: $invitationId" }
                 updateState {
                     copy(
-                        actionState = TeamSettingsActionState.Success(
-                            TeamSettingsSuccess.InviteCancelled
-                        )
+                        actionState = TeamSettingsActionState.Idle,
+                        actionError = null,
                     )
                 }
-                action(TeamSettingsAction.ShowSuccess(TeamSettingsSuccess.InviteCancelled))
 
                 // Refresh invitations
                 refreshInvitations()
@@ -466,8 +453,7 @@ internal class TeamSettingsContainer(
                 } else {
                     exception
                 }
-                updateState { copy(actionState = TeamSettingsActionState.Error(displayException)) }
-                action(TeamSettingsAction.ShowError(displayException))
+                updateState { copy(actionState = TeamSettingsActionState.Error(displayException), actionError = displayException) }
             }
         )
     }
@@ -484,9 +470,11 @@ internal class TeamSettingsContainer(
             onSuccess = {
                 logger.i { "Role updated for $userId to $newRole" }
                 updateState {
-                    copy(actionState = TeamSettingsActionState.Success(TeamSettingsSuccess.RoleUpdated))
+                    copy(
+                        actionState = TeamSettingsActionState.Idle,
+                        actionError = null,
+                    )
                 }
-                action(TeamSettingsAction.ShowSuccess(TeamSettingsSuccess.RoleUpdated))
 
                 // Refresh members
                 refreshMembers()
@@ -499,8 +487,7 @@ internal class TeamSettingsContainer(
                 } else {
                     exception
                 }
-                updateState { copy(actionState = TeamSettingsActionState.Error(displayException)) }
-                action(TeamSettingsAction.ShowError(displayException))
+                updateState { copy(actionState = TeamSettingsActionState.Error(displayException), actionError = displayException) }
             }
         )
     }
@@ -518,12 +505,10 @@ internal class TeamSettingsContainer(
                 logger.i { "Member removed: $userId" }
                 updateState {
                     copy(
-                        actionState = TeamSettingsActionState.Success(
-                            TeamSettingsSuccess.MemberRemoved
-                        )
+                        actionState = TeamSettingsActionState.Idle,
+                        actionError = null,
                     )
                 }
-                action(TeamSettingsAction.ShowSuccess(TeamSettingsSuccess.MemberRemoved))
 
                 // Refresh members
                 refreshMembers()
@@ -536,8 +521,7 @@ internal class TeamSettingsContainer(
                 } else {
                     exception
                 }
-                updateState { copy(actionState = TeamSettingsActionState.Error(displayException)) }
-                action(TeamSettingsAction.ShowError(displayException))
+                updateState { copy(actionState = TeamSettingsActionState.Error(displayException), actionError = displayException) }
             }
         )
     }
@@ -555,12 +539,10 @@ internal class TeamSettingsContainer(
                 logger.i { "Ownership transferred to $newOwnerId" }
                 updateState {
                     copy(
-                        actionState = TeamSettingsActionState.Success(
-                            TeamSettingsSuccess.OwnershipTransferred
-                        )
+                        actionState = TeamSettingsActionState.Idle,
+                        actionError = null,
                     )
                 }
-                action(TeamSettingsAction.ShowSuccess(TeamSettingsSuccess.OwnershipTransferred))
 
                 // Refresh members
                 refreshMembers()
@@ -573,8 +555,7 @@ internal class TeamSettingsContainer(
                 } else {
                     exception
                 }
-                updateState { copy(actionState = TeamSettingsActionState.Error(displayException)) }
-                action(TeamSettingsAction.ShowError(displayException))
+                updateState { copy(actionState = TeamSettingsActionState.Error(displayException), actionError = displayException) }
             }
         )
     }
@@ -639,7 +620,7 @@ internal class TeamSettingsContainer(
             },
             onFailure = { error ->
                 logger.e(error) { "Failed to refresh connected bookkeeper firms" }
-                action(TeamSettingsAction.ShowError(error.asDokusException))
+                updateState { copy(actionError = error.asDokusException) }
             }
         )
     }

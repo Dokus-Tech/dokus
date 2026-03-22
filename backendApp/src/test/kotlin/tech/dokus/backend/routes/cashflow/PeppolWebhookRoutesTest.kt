@@ -27,7 +27,7 @@ import tech.dokus.database.repository.peppol.PeppolSettingsRepository
 import tech.dokus.domain.ids.PeppolId
 import tech.dokus.domain.ids.PeppolSettingsId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.PeppolSettingsDto
+import tech.dokus.database.entity.PeppolSettingsEntity
 import tech.dokus.domain.utils.json
 import tech.dokus.peppol.config.InboxConfig
 import tech.dokus.peppol.config.MasterCredentialsConfig
@@ -189,9 +189,9 @@ class PeppolWebhookRoutesTest {
         )
     )
 
-    private fun testSettings(): PeppolSettingsDto {
+    private fun testSettings(): PeppolSettingsEntity {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-        return PeppolSettingsDto(
+        return PeppolSettingsEntity(
             id = PeppolSettingsId.generate(),
             tenantId = TenantId.generate(),
             companyId = "company-1",

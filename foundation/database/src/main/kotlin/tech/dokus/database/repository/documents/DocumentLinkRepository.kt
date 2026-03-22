@@ -31,7 +31,9 @@ data class DocumentLinkDto(
     val externalReference: String?,
     val linkType: DocumentLinkType,
     val createdAt: LocalDateTime
-)
+) {
+    companion object
+}
 
 /**
  * Payload for creating a document link.
@@ -169,40 +171,8 @@ class DocumentLinkRepository {
                 (DocumentLinksTable.tenantId eq UUID.fromString(tenantId.toString())) and
                     (DocumentLinksTable.id eq UUID.fromString(linkId.toString()))
             }
-            .map { it.toDto() }
+            .map { DocumentLinkDto.from(it) }
             .singleOrNull()
-    }
-
-    /**
-     * Get all links from a source document.
-     * CRITICAL: Must filter by tenantId.
-     */
-    suspend fun getBySourceDocumentId(
-        tenantId: TenantId,
-        sourceDocumentId: DocumentId
-    ): List<DocumentLinkDto> = newSuspendedTransaction {
-        DocumentLinksTable.selectAll()
-            .where {
-                (DocumentLinksTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                    (DocumentLinksTable.sourceDocumentId eq UUID.fromString(sourceDocumentId.toString()))
-            }
-            .map { it.toDto() }
-    }
-
-    /**
-     * Get all links to a target document.
-     * CRITICAL: Must filter by tenantId.
-     */
-    suspend fun getByTargetDocumentId(
-        tenantId: TenantId,
-        targetDocumentId: DocumentId
-    ): List<DocumentLinkDto> = newSuspendedTransaction {
-        DocumentLinksTable.selectAll()
-            .where {
-                (DocumentLinksTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                    (DocumentLinksTable.targetDocumentId eq UUID.fromString(targetDocumentId.toString()))
-            }
-            .map { it.toDto() }
     }
 
     /**
@@ -220,25 +190,7 @@ class DocumentLinkRepository {
                     (DocumentLinksTable.sourceDocumentId eq UUID.fromString(sourceDocumentId.toString())) and
                     (DocumentLinksTable.linkType eq linkType)
             }
-            .map { it.toDto() }
-    }
-
-    /**
-     * Check if a ConvertedTo link exists from a document.
-     * Use this to check if a ProForma has already been converted to an Invoice.
-     * CRITICAL: Must filter by tenantId.
-     */
-    suspend fun hasConversionLink(
-        tenantId: TenantId,
-        sourceDocumentId: DocumentId
-    ): Boolean = newSuspendedTransaction {
-        DocumentLinksTable.selectAll()
-            .where {
-                (DocumentLinksTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                    (DocumentLinksTable.sourceDocumentId eq UUID.fromString(sourceDocumentId.toString())) and
-                    (DocumentLinksTable.linkType eq DocumentLinkType.ConvertedTo)
-            }
-            .count() > 0
+            .map { DocumentLinkDto.from(it) }
     }
 
     /**
@@ -255,33 +207,17 @@ class DocumentLinkRepository {
         } > 0
     }
 
-    /**
-     * Delete all links from a source document.
-     * CRITICAL: Must filter by tenantId.
-     *
-     * @return Number of deleted links
-     */
-    suspend fun deleteBySourceDocumentId(
-        tenantId: TenantId,
-        sourceDocumentId: DocumentId
-    ): Int = newSuspendedTransaction {
-        DocumentLinksTable.deleteWhere {
-            (DocumentLinksTable.tenantId eq UUID.fromString(tenantId.toString())) and
-                (DocumentLinksTable.sourceDocumentId eq UUID.fromString(sourceDocumentId.toString()))
-        }
-    }
-
-    private fun ResultRow.toDto(): DocumentLinkDto {
+    private fun DocumentLinkDto.Companion.from(row: ResultRow): DocumentLinkDto {
         return DocumentLinkDto(
-            id = DocumentLinkId.parse(this[DocumentLinksTable.id].toString()),
-            tenantId = TenantId(this[DocumentLinksTable.tenantId].toKotlinUuid()),
-            sourceDocumentId = DocumentId.parse(this[DocumentLinksTable.sourceDocumentId].toString()),
-            targetDocumentId = this[DocumentLinksTable.targetDocumentId]?.let {
+            id = DocumentLinkId.parse(row[DocumentLinksTable.id].toString()),
+            tenantId = TenantId(row[DocumentLinksTable.tenantId].toKotlinUuid()),
+            sourceDocumentId = DocumentId.parse(row[DocumentLinksTable.sourceDocumentId].toString()),
+            targetDocumentId = row[DocumentLinksTable.targetDocumentId]?.let {
                 DocumentId.parse(it.toString())
             },
-            externalReference = this[DocumentLinksTable.externalReference],
-            linkType = this[DocumentLinksTable.linkType],
-            createdAt = this[DocumentLinksTable.createdAt]
+            externalReference = row[DocumentLinksTable.externalReference],
+            linkType = row[DocumentLinksTable.linkType],
+            createdAt = row[DocumentLinksTable.createdAt]
         )
     }
 }

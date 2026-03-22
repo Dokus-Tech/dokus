@@ -4,7 +4,6 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
@@ -13,6 +12,8 @@ import org.jetbrains.exposed.v1.core.lessEq
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
 import org.jetbrains.exposed.v1.jdbc.upsert
+import tech.dokus.database.entity.WelcomeEmailJobEntity
+import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.auth.WelcomeEmailJobsTable
 import tech.dokus.database.tables.auth.WelcomeEmailJobsTable.JobStatus
 import tech.dokus.domain.ids.TenantId
@@ -22,20 +23,6 @@ import java.util.UUID
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toKotlinUuid
 import tech.dokus.foundation.backend.utils.runSuspendCatching
-
-data class WelcomeEmailJob(
-    val id: UUID,
-    val userId: UserId,
-    val tenantId: TenantId,
-    val status: JobStatus,
-    val scheduledAt: LocalDateTime,
-    val nextAttemptAt: LocalDateTime,
-    val attemptCount: Int,
-    val lastError: String?,
-    val sentAt: LocalDateTime?,
-    val createdAt: LocalDateTime,
-    val updatedAt: LocalDateTime
-)
 
 @OptIn(ExperimentalUuidApi::class)
 class WelcomeEmailJobRepository {
@@ -71,20 +58,20 @@ class WelcomeEmailJobRepository {
         }
     }
 
-    suspend fun findByUserId(userId: UserId): Result<WelcomeEmailJob?> = runSuspendCatching {
+    suspend fun findByUserId(userId: UserId): Result<WelcomeEmailJobEntity?> = runSuspendCatching {
         val userUuid = UUID.fromString(userId.toString())
         dbQuery {
             WelcomeEmailJobsTable.selectAll()
                 .where { WelcomeEmailJobsTable.userId eq userUuid }
                 .singleOrNull()
-                ?.toModel()
+                ?.let { WelcomeEmailJobEntity.from(it) }
         }
     }
 
     suspend fun claimDue(
         now: LocalDateTime,
         limit: Int
-    ): Result<List<WelcomeEmailJob>> = runSuspendCatching {
+    ): Result<List<WelcomeEmailJobEntity>> = runSuspendCatching {
         dbQuery {
             val candidates = WelcomeEmailJobsTable.selectAll()
                 .where {
@@ -93,9 +80,9 @@ class WelcomeEmailJobRepository {
                 }
                 .orderBy(WelcomeEmailJobsTable.nextAttemptAt to SortOrder.ASC)
                 .limit(limit)
-                .map { it.toModel() }
+                .map { WelcomeEmailJobEntity.from(it) }
 
-            val claimed = mutableListOf<WelcomeEmailJob>()
+            val claimed = mutableListOf<WelcomeEmailJobEntity>()
             for (candidate in candidates) {
                 val updated = WelcomeEmailJobsTable.update({
                     (WelcomeEmailJobsTable.id eq candidate.id) and
@@ -173,17 +160,4 @@ class WelcomeEmailJobRepository {
         }
     }
 
-    private fun ResultRow.toModel(): WelcomeEmailJob = WelcomeEmailJob(
-        id = this[WelcomeEmailJobsTable.id].value,
-        userId = UserId(this[WelcomeEmailJobsTable.userId].toKotlinUuid()),
-        tenantId = TenantId(this[WelcomeEmailJobsTable.tenantId].toKotlinUuid()),
-        status = this[WelcomeEmailJobsTable.status],
-        scheduledAt = this[WelcomeEmailJobsTable.scheduledAt],
-        nextAttemptAt = this[WelcomeEmailJobsTable.nextAttemptAt],
-        attemptCount = this[WelcomeEmailJobsTable.attemptCount],
-        lastError = this[WelcomeEmailJobsTable.lastError],
-        sentAt = this[WelcomeEmailJobsTable.sentAt],
-        createdAt = this[WelcomeEmailJobsTable.createdAt],
-        updatedAt = this[WelcomeEmailJobsTable.updatedAt]
-    )
 }

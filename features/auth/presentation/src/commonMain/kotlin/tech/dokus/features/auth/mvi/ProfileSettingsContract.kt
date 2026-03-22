@@ -22,6 +22,7 @@ data class ProfileSettingsState(
     val isSaving: Boolean = false,
     val isResendingVerification: Boolean = false,
     val avatarState: AvatarState = AvatarState.Idle,
+    val actionError: DokusException? = null,
 ) : MVIState {
 
     val hasChanges: Boolean
@@ -88,6 +89,9 @@ sealed interface ProfileSettingsIntent : MVIIntent {
     /** User wants to open sessions management screen */
     data object MySessionsClicked : ProfileSettingsIntent
 
+    /** User dismissed inline error banner */
+    data object DismissActionError : ProfileSettingsIntent
+
     /** User clicked back button */
     data object BackClicked : ProfileSettingsIntent
 }
@@ -98,21 +102,6 @@ sealed interface ProfileSettingsIntent : MVIIntent {
 
 @Immutable
 sealed interface ProfileSettingsAction : MVIAction {
-    /** Profile saved successfully */
-    data object ShowSaveSuccess : ProfileSettingsAction
-
-    /** Profile save failed */
-    data class ShowSaveError(val error: DokusException) : ProfileSettingsAction
-
-    /** Verification email resent successfully */
-    data object ShowVerificationEmailSent : ProfileSettingsAction
-
-    /** Verification email resend failed */
-    data class ShowVerificationEmailError(val error: DokusException) : ProfileSettingsAction
-
-    /** Avatar mutation failed */
-    data class ShowAvatarError(val error: DokusException) : ProfileSettingsAction
-
     /** Navigate to change-password screen */
     data object NavigateToChangePassword : ProfileSettingsAction
 

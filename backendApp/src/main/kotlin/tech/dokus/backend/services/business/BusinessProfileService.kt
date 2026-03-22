@@ -8,7 +8,7 @@ import kotlinx.datetime.toLocalDateTime
 import tech.dokus.backend.services.avatar.buildVersionedAvatarThumbnail
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.business.BusinessProfileEnrichmentJobRepository
-import tech.dokus.database.repository.business.BusinessProfileRecord
+import tech.dokus.database.entity.BusinessProfileEntity
 import tech.dokus.database.repository.business.BusinessProfileRepository
 import tech.dokus.domain.enums.BusinessProfileSubjectType
 import tech.dokus.domain.enums.BusinessProfileVerificationState
@@ -126,7 +126,7 @@ class BusinessProfileService(
         tenantId: TenantId,
         subjectType: BusinessProfileSubjectType,
         subjectId: Uuid,
-    ): BusinessProfileRecord? {
+    ): BusinessProfileEntity? {
         return profileRepository.getBySubject(tenantId, subjectType, subjectId)
     }
 
@@ -271,7 +271,7 @@ class BusinessProfileService(
         logoStorageKey: String?,
         lastErrorCode: String?,
         lastErrorMessage: String?,
-    ): BusinessProfileRecord {
+    ): BusinessProfileEntity {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         val existing = profileRepository.getBySubject(tenantId, subjectType, subjectId)
             ?: defaultRecord(tenantId, subjectType, subjectId)
@@ -411,13 +411,13 @@ class BusinessProfileService(
         tenantId: TenantId,
         subjectType: BusinessProfileSubjectType,
         subjectId: Uuid,
-    ): BusinessProfileRecord = BusinessProfileRecord(
+    ): BusinessProfileEntity = BusinessProfileEntity(
         tenantId = tenantId,
         subjectType = subjectType,
         subjectId = subjectId
     )
 
-    private fun BusinessProfileRecord.toResponse(): BusinessProfileUpdateResponse = BusinessProfileUpdateResponse(
+    private fun BusinessProfileEntity.toResponse(): BusinessProfileUpdateResponse = BusinessProfileUpdateResponse(
         subjectType = subjectType,
         subjectId = subjectId.toString(),
         websitePinned = websitePinned,

@@ -27,11 +27,12 @@ import tech.dokus.aura.resources.banking_balances_no_chart_data
 import tech.dokus.aura.resources.banking_balances_timeline_subtitle
 import tech.dokus.aura.resources.banking_balances_timeline_title
 import tech.dokus.domain.Money
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.BankAccountId
-import tech.dokus.domain.model.AccountBalanceSeries
-import tech.dokus.domain.model.BalanceHistoryPoint
+import tech.dokus.domain.model.AccountBalanceSeriesDto
+import tech.dokus.domain.model.BalanceHistoryPointDto
 import tech.dokus.domain.model.BalanceHistoryResponse
-import tech.dokus.domain.model.BankAccountSummary
+import tech.dokus.domain.model.BankAccountSummaryDto
 import tech.dokus.features.banking.presentation.balances.mvi.BalanceTimeRange
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.app.state.isError
@@ -40,7 +41,7 @@ import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.charts.DokusLineChart
 import tech.dokus.foundation.aura.components.charts.LineChartSeries
-import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.aura.components.common.ErrorOverlay
 import tech.dokus.foundation.aura.components.common.ShimmerBox
 import tech.dokus.foundation.aura.components.tabs.DokusTab
 import tech.dokus.foundation.aura.components.tabs.DokusTabs
@@ -65,7 +66,7 @@ private val AccountColors = listOf(
 
 @Composable
 internal fun BalanceTimelineCard(
-    summary: DokusState<BankAccountSummary>,
+    summary: DokusState<BankAccountSummaryDto>,
     balanceHistory: DokusState<BalanceHistoryResponse>,
     timeRange: BalanceTimeRange,
     onTimeRangeChange: (BalanceTimeRange) -> Unit,
@@ -77,6 +78,10 @@ internal fun BalanceTimelineCard(
         }
     }
 
+    ErrorOverlay(
+        exception = if (balanceHistory is DokusState.Error) balanceHistory.exception else null,
+        retryHandler = if (balanceHistory is DokusState.Error) balanceHistory.retryHandler else null,
+    ) {
     DokusCardSurface(modifier = modifier.fillMaxWidth(), accent = true) {
         Column(
             modifier = Modifier.padding(Constraints.Spacing.large),
@@ -147,28 +152,8 @@ internal fun BalanceTimelineCard(
 
             // Chart area
             when {
-                balanceHistory.isLoading() -> {
-                    ShimmerBox(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(ChartHeight),
-                    )
-                }
-
-                balanceHistory.isError() -> {
-                    DokusErrorContent(
-                        exception = balanceHistory.exception,
-                        retryHandler = balanceHistory.retryHandler,
-                        compact = true,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(ChartHeight),
-                    )
-                }
-
                 balanceHistory.isSuccess() -> {
                     val chartData = buildChartSeries(balanceHistory.data)
-
                     if (chartData.isEmpty()) {
                         Box(
                             modifier = Modifier
@@ -192,6 +177,13 @@ internal fun BalanceTimelineCard(
                         )
                     }
                 }
+                else -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(ChartHeight),
+                    )
+                }
             }
 
             // Legend row
@@ -214,6 +206,7 @@ internal fun BalanceTimelineCard(
                 }
             }
         }
+    }
     }
 }
 
@@ -309,7 +302,7 @@ private fun buildChartSeries(response: BalanceHistoryResponse): List<LineChartSe
 // Previews
 // =============================================================================
 
-private val PreviewSummary = BankAccountSummary(
+private val PreviewSummary = BankAccountSummaryDto(
     totalBalance = Money(1778042),
     accountCount = 2,
     unmatchedCount = 3,
@@ -320,24 +313,24 @@ private val PreviewSummary = BankAccountSummary(
 
 private val PreviewBalanceHistory = BalanceHistoryResponse(
     series = listOf(
-        AccountBalanceSeries(
+        AccountBalanceSeriesDto(
             accountId = BankAccountId.generate(),
             accountName = "KBC Business",
             points = listOf(
-                BalanceHistoryPoint(LocalDate(2026, 2, 7), Money(1200000)),
-                BalanceHistoryPoint(LocalDate(2026, 2, 15), Money(1180000)),
-                BalanceHistoryPoint(LocalDate(2026, 2, 23), Money(1320000)),
-                BalanceHistoryPoint(LocalDate(2026, 3, 3), Money(1350000)),
-                BalanceHistoryPoint(LocalDate(2026, 3, 7), Money(1438042)),
+                BalanceHistoryPointDto(LocalDate(2026, 2, 7), Money(1200000)),
+                BalanceHistoryPointDto(LocalDate(2026, 2, 15), Money(1180000)),
+                BalanceHistoryPointDto(LocalDate(2026, 2, 23), Money(1320000)),
+                BalanceHistoryPointDto(LocalDate(2026, 3, 3), Money(1350000)),
+                BalanceHistoryPointDto(LocalDate(2026, 3, 7), Money(1438042)),
             ),
         ),
     ),
     totalSeries = listOf(
-        BalanceHistoryPoint(LocalDate(2026, 2, 7), Money(1540000)),
-        BalanceHistoryPoint(LocalDate(2026, 2, 15), Money(1520000)),
-        BalanceHistoryPoint(LocalDate(2026, 2, 23), Money(1660000)),
-        BalanceHistoryPoint(LocalDate(2026, 3, 3), Money(1690000)),
-        BalanceHistoryPoint(LocalDate(2026, 3, 7), Money(1778042)),
+        BalanceHistoryPointDto(LocalDate(2026, 2, 7), Money(1540000)),
+        BalanceHistoryPointDto(LocalDate(2026, 2, 15), Money(1520000)),
+        BalanceHistoryPointDto(LocalDate(2026, 2, 23), Money(1660000)),
+        BalanceHistoryPointDto(LocalDate(2026, 3, 3), Money(1690000)),
+        BalanceHistoryPointDto(LocalDate(2026, 3, 7), Money(1778042)),
     ),
 )
 
@@ -350,6 +343,21 @@ private fun BalanceTimelineCardPreview(
         BalanceTimelineCard(
             summary = DokusState.success(PreviewSummary),
             balanceHistory = DokusState.success(PreviewBalanceHistory),
+            timeRange = BalanceTimeRange.ThirtyDays,
+            onTimeRangeChange = {},
+        )
+    }
+}
+
+@Preview(name = "Balance Timeline Card — Error", widthDp = 800)
+@Composable
+private fun BalanceTimelineCardErrorPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        BalanceTimelineCard(
+            summary = DokusState.error(exception = DokusException.ConnectionError(), retryHandler = {}),
+            balanceHistory = DokusState.error(exception = DokusException.ConnectionError(), retryHandler = {}),
             timeRange = BalanceTimeRange.ThirtyDays,
             onTimeRangeChange = {},
         )

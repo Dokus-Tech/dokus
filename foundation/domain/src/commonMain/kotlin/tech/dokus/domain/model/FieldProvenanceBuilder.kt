@@ -139,7 +139,7 @@ private fun BankStatementDraftData.buildBankStatementProvenance(base: FieldProve
     notes = if (notes != null) base else null,
 )
 
-private fun PartyDraft.buildPartyProvenance(base: FieldProvenance) = PartyFieldProvenance(
+private fun PartyDraftDto.buildPartyProvenance(base: FieldProvenance) = PartyFieldProvenanceDto(
     name = if (name != null) base else null,
     vat = if (vat != null) base else null,
     email = if (email != null) base else null,

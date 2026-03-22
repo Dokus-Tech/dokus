@@ -132,45 +132,6 @@ class InvoiceNumberRepository {
     }
 
     /**
-     * Initialize a sequence for a tenant/year if it doesn't exist.
-     *
-     * This is useful for pre-creating sequences (e.g., at start of year)
-     * without consuming a number.
-     *
-     * CRITICAL: MUST filter by tenant_id for multi-tenancy security
-     *
-     * @param tenantId The tenant to initialize
-     * @param year The year for the invoice number
-     * @param startingNumber The starting number (default 0, first invoice will be 1)
-     * @return Result indicating success or failure
-     */
-    suspend fun initializeSequence(
-        tenantId: TenantId,
-        year: Int,
-        startingNumber: Int = 0
-    ): Result<Unit> = runSuspendCatching {
-        dbQuery {
-            val tenantUuid = UUID.fromString(tenantId.toString())
-
-            // Check if row already exists
-            val exists = InvoiceNumberSequencesTable.selectAll()
-                .where {
-                    (InvoiceNumberSequencesTable.tenantId eq tenantUuid) and
-                        (InvoiceNumberSequencesTable.year eq year)
-                }
-                .count() > 0
-
-            if (!exists) {
-                InvoiceNumberSequencesTable.insert {
-                    it[InvoiceNumberSequencesTable.tenantId] = tenantUuid
-                    it[InvoiceNumberSequencesTable.year] = year
-                    it[currentNumber] = startingNumber
-                }
-            }
-        }
-    }
-
-    /**
      * Retry logic with exponential backoff for handling database deadlocks.
      *
      * When multiple concurrent requests try to acquire the same row lock,

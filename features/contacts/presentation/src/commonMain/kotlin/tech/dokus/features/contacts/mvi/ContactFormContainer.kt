@@ -145,6 +145,10 @@ internal class ContactFormContainer(
                     is ContactFormIntent.Save -> handleSave()
                     is ContactFormIntent.Delete -> handleDelete()
                     is ContactFormIntent.Cancel -> action(ContactFormAction.NavigateBack)
+
+                    // Error dismissal
+                    is ContactFormIntent.DismissActionError ->
+                        updateState { copy(actionError = null) }
                 }
             }
         }
@@ -484,10 +488,11 @@ internal class ContactFormContainer(
 
             if (errors.isNotEmpty()) {
                 logger.w { "Form validation failed: $errors" }
-                updateState { copy(formData = formData.copy(errors = errors)) }
-                // Show first error to user
-                errors.values.firstOrNull()?.let { error ->
-                    action(ContactFormAction.ShowError(error))
+                updateState {
+                    copy(
+                        formData = formData.copy(errors = errors),
+                        actionError = errors.values.firstOrNull(),
+                    )
                 }
                 return@withState
             }
@@ -512,14 +517,12 @@ internal class ContactFormContainer(
         createContact(request).fold(
             onSuccess = { contact ->
                 logger.i { "Contact created: ${contact.id}" }
-                updateState { copy(isSaving = false) }
-                action(ContactFormAction.ShowSuccess(ContactFormSuccess.Created))
+                updateState { copy(isSaving = false, actionError = null) }
                 action(ContactFormAction.NavigateToContact(contact.id))
             },
             onFailure = { error ->
                 logger.e(error) { "Failed to create contact" }
-                updateState { copy(isSaving = false) }
-                action(ContactFormAction.ShowError(error.asDokusException))
+                updateState { copy(isSaving = false, actionError = error.asDokusException) }
             }
         )
     }
@@ -535,14 +538,12 @@ internal class ContactFormContainer(
         updateContact(contactId, request).fold(
             onSuccess = { contact ->
                 logger.i { "Contact updated: ${contact.id}" }
-                updateState { copy(isSaving = false) }
-                action(ContactFormAction.ShowSuccess(ContactFormSuccess.Updated))
+                updateState { copy(isSaving = false, actionError = null) }
                 action(ContactFormAction.NavigateToContact(contact.id))
             },
             onFailure = { error ->
                 logger.e(error) { "Failed to update contact: $contactId" }
-                updateState { copy(isSaving = false) }
-                action(ContactFormAction.ShowError(error.asDokusException))
+                updateState { copy(isSaving = false, actionError = error.asDokusException) }
             }
         )
     }
@@ -567,20 +568,18 @@ internal class ContactFormContainer(
             deleteContact(id).fold(
                 onSuccess = {
                     logger.i { "Contact deleted: $id" }
-                    updateState { copy(isDeleting = false) }
-                    action(ContactFormAction.ShowSuccess(ContactFormSuccess.Deleted))
+                    updateState { copy(isDeleting = false, actionError = null) }
                     action(ContactFormAction.NavigateBack)
                 },
                 onFailure = { error ->
                     logger.e(error) { "Failed to delete contact: $id" }
-                    updateState { copy(isDeleting = false) }
                     val exception = error.asDokusException
                     val displayException = if (exception is DokusException.Unknown) {
                         DokusException.ContactDeleteFailed
                     } else {
                         exception
                     }
-                    action(ContactFormAction.ShowError(displayException))
+                    updateState { copy(isDeleting = false, actionError = displayException) }
                 }
             )
         }

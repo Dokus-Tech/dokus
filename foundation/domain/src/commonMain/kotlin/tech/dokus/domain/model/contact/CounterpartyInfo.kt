@@ -12,8 +12,8 @@ sealed interface CounterpartyInfo {
     @Serializable
     @SerialName("CounterpartyInfo.Unresolved")
     data class Unresolved(
-        val snapshot: CounterpartySnapshot? = null,
-        val suggestions: List<SuggestedContact> = emptyList(),
+        val snapshot: CounterpartySnapshotDto? = null,
+        val suggestions: List<SuggestedContactDto> = emptyList(),
         val pendingCreation: Boolean = false,
     ) : CounterpartyInfo
 
@@ -22,7 +22,7 @@ sealed interface CounterpartyInfo {
     data class Linked(
         val contactId: ContactId,
         val source: ContactLinkSource,
-        val evidence: MatchEvidence? = null,
+        val evidence: MatchEvidenceDto? = null,
     ) : CounterpartyInfo
 }
 

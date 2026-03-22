@@ -28,7 +28,7 @@ import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.platform.Logger
 
-internal typealias PaymentsCtx = PipelineContext<PaymentsState, PaymentsIntent, PaymentsAction>
+internal typealias PaymentsCtx = PipelineContext<PaymentsState, PaymentsIntent, Nothing>
 
 private const val PAGE_SIZE = 50
 
@@ -41,11 +41,11 @@ internal class PaymentsContainer(
     private val createExpenseFromTransaction: CreateExpenseFromTransactionUseCase,
     private val markTransferTransaction: MarkTransferTransactionUseCase,
     private val undoTransferTransaction: UndoTransferTransactionUseCase,
-) : Container<PaymentsState, PaymentsIntent, PaymentsAction> {
+) : Container<PaymentsState, PaymentsIntent, Nothing> {
 
     private val logger = Logger.forClass<PaymentsContainer>()
 
-    override val store: Store<PaymentsState, PaymentsIntent, PaymentsAction> =
+    override val store: Store<PaymentsState, PaymentsIntent, Nothing> =
         store(PaymentsState.initial) {
             init {
                 handleRefresh()
@@ -59,10 +59,8 @@ internal class PaymentsContainer(
                     is PaymentsIntent.SetAccountFilter -> handleSetAccountFilter(intent.accountId)
                     is PaymentsIntent.SelectTransaction -> handleSelectTransaction(intent.transactionId)
                     is PaymentsIntent.LinkDocument -> { /* TODO: Navigate to link flow */ }
-                    is PaymentsIntent.IgnoreTransaction -> handleOpenIgnoreDialog(intent.transactionId)
-                    is PaymentsIntent.SelectIgnoreReason -> handleSelectIgnoreReason(intent.reason)
-                    is PaymentsIntent.ConfirmIgnore -> handleConfirmIgnore()
-                    is PaymentsIntent.DismissIgnoreDialog -> handleDismissIgnoreDialog()
+                    is PaymentsIntent.IgnoreTransaction -> { /* Handled by route navigation */ }
+                    is PaymentsIntent.ConfirmIgnoreWithResult -> handleConfirmIgnoreWithResult(intent.transactionId, intent.reason)
                     is PaymentsIntent.ConfirmMatch -> handleConfirmMatch(intent.transactionId)
                     is PaymentsIntent.CreateExpense -> handleCreateExpense(intent.transactionId)
                     is PaymentsIntent.MarkTransfer -> handleOpenTransferDialog(intent.transactionId)
@@ -70,6 +68,7 @@ internal class PaymentsContainer(
                     is PaymentsIntent.ConfirmTransfer -> handleConfirmTransfer()
                     is PaymentsIntent.DismissTransferDialog -> handleDismissTransferDialog()
                     is PaymentsIntent.UndoTransfer -> handleUndoTransfer(intent.transactionId)
+                    is PaymentsIntent.DismissActionError -> updateState { copy(actionError = null) }
                 }
             }
         }
@@ -113,45 +112,32 @@ internal class PaymentsContainer(
         updateState { copy(selectedTransactionId = transactionId) }
     }
 
-    private suspend fun PaymentsCtx.handleOpenIgnoreDialog(transactionId: BankTransactionId) {
-        updateState { copy(ignoreDialogState = IgnoreDialogState(transactionId = transactionId)) }
-    }
-
-    private suspend fun PaymentsCtx.handleSelectIgnoreReason(reason: IgnoredReason) {
-        updateState { copy(ignoreDialogState = ignoreDialogState?.copy(selectedReason = reason)) }
-    }
-
-    private suspend fun PaymentsCtx.handleDismissIgnoreDialog() {
-        updateState { copy(ignoreDialogState = null) }
-    }
-
-    private suspend fun PaymentsCtx.handleConfirmIgnore() {
-        withState {
-            val dialog = ignoreDialogState ?: return@withState
-            val reason = dialog.selectedReason ?: return@withState
-
-            updateState { copy(ignoreDialogState = null) }
-
-            ignoreTransaction(dialog.transactionId, reason).fold(
-                onSuccess = { updatedTx ->
-                    updateTransactionInList(updatedTx.id) { updatedTx }
-                    refreshSummary()
-                },
-                onFailure = { error ->
-                    action(PaymentsAction.ShowError(error.asDokusException))
-                }
-            )
-        }
+    private suspend fun PaymentsCtx.handleConfirmIgnoreWithResult(
+        transactionId: String,
+        reason: IgnoredReason,
+    ) {
+        val txId = BankTransactionId.parse(transactionId)
+        ignoreTransaction(txId, reason).fold(
+            onSuccess = { updatedTx ->
+                updateState { copy(actionError = null) }
+                updateTransactionInList(updatedTx.id) { updatedTx }
+                refreshSummary()
+            },
+            onFailure = { error ->
+                updateState { copy(actionError = error.asDokusException) }
+            }
+        )
     }
 
     private suspend fun PaymentsCtx.handleConfirmMatch(transactionId: BankTransactionId) {
         confirmTransaction(transactionId).fold(
             onSuccess = { updatedTx ->
+                updateState { copy(actionError = null) }
                 updateTransactionInList(updatedTx.id) { updatedTx }
                 refreshSummary()
             },
             onFailure = { error ->
-                action(PaymentsAction.ShowError(error.asDokusException))
+                updateState { copy(actionError = error.asDokusException) }
             }
         )
     }
@@ -159,11 +145,12 @@ internal class PaymentsContainer(
     private suspend fun PaymentsCtx.handleCreateExpense(transactionId: BankTransactionId) {
         createExpenseFromTransaction(transactionId).fold(
             onSuccess = { updatedTx ->
+                updateState { copy(actionError = null) }
                 updateTransactionInList(updatedTx.id) { updatedTx }
                 refreshSummary()
             },
             onFailure = { error ->
-                action(PaymentsAction.ShowError(error.asDokusException))
+                updateState { copy(actionError = error.asDokusException) }
             }
         )
     }
@@ -210,13 +197,17 @@ internal class PaymentsContainer(
                 destinationAccountId = destinationId,
             ).fold(
                 onSuccess = { updatedTx ->
-                    updateState { copy(transferDialogState = null) }
+                    updateState { copy(transferDialogState = null, actionError = null) }
                     updateTransactionInList(updatedTx.id) { updatedTx }
                     refreshSummary()
                 },
                 onFailure = { error ->
-                    updateState { copy(transferDialogState = transferDialogState?.copy(isSubmitting = false)) }
-                    action(PaymentsAction.ShowError(error.asDokusException))
+                    updateState {
+                        copy(
+                            transferDialogState = transferDialogState?.copy(isSubmitting = false),
+                            actionError = error.asDokusException,
+                        )
+                    }
                 }
             )
         }
@@ -225,11 +216,12 @@ internal class PaymentsContainer(
     private suspend fun PaymentsCtx.handleUndoTransfer(transactionId: BankTransactionId) {
         undoTransferTransaction(transactionId).fold(
             onSuccess = { updatedTx ->
+                updateState { copy(actionError = null) }
                 updateTransactionInList(updatedTx.id) { updatedTx }
                 refreshSummary()
             },
             onFailure = { error ->
-                action(PaymentsAction.ShowError(error.asDokusException))
+                updateState { copy(actionError = error.asDokusException) }
             }
         )
     }
@@ -289,11 +281,9 @@ internal class PaymentsContainer(
                                         exception = dokusError,
                                         retryHandler = { intent(PaymentsIntent.Refresh) },
                                         lastData = transactions.lastData,
-                                    )
+                                    ),
+                                    actionError = if (hadData) dokusError else null,
                                 )
-                            }
-                            if (hadData) {
-                                action(PaymentsAction.ShowError(dokusError))
                             }
                         }
                     )
@@ -347,10 +337,10 @@ internal class PaymentsContainer(
                                     exception = error.asDokusException,
                                     retryHandler = { intent(PaymentsIntent.Refresh) },
                                     lastData = transactions.lastData,
-                                )
+                                ),
+                                actionError = error.asDokusException,
                             )
                         }
-                        action(PaymentsAction.ShowError(error.asDokusException))
                     }
                 )
             }

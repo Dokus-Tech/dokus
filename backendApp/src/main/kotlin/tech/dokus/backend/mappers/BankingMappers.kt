@@ -4,10 +4,10 @@ import tech.dokus.database.entity.BankAccountEntity
 import tech.dokus.database.entity.BankTransactionEntity
 import tech.dokus.domain.model.BankAccountDto
 import tech.dokus.domain.model.BankTransactionDto
-import tech.dokus.domain.model.TransactionIgnoreInfo
-import tech.dokus.domain.model.TransactionMatchInfo
-import tech.dokus.domain.model.TransactionCommunication
-import tech.dokus.domain.model.contact.CounterpartySnapshot
+import tech.dokus.domain.model.TransactionIgnoreInfoDto
+import tech.dokus.domain.model.TransactionMatchInfoDto
+import tech.dokus.domain.model.TransactionCommunicationDto
+import tech.dokus.domain.model.contact.CounterpartySnapshotDto
 
 fun BankAccountDto.Companion.from(entity: BankAccountEntity) = BankAccountDto(
     id = entity.id,
@@ -37,12 +37,12 @@ fun BankTransactionDto.Companion.from(entity: BankTransactionEntity) = BankTrans
     valueDate = entity.valueDate,
     signedAmount = entity.signedAmount,
     currency = entity.currency,
-    counterparty = CounterpartySnapshot(
+    counterparty = CounterpartySnapshotDto(
         name = entity.counterpartyName,
         iban = entity.counterpartyIban,
         bic = entity.counterpartyBic,
     ),
-    communication = TransactionCommunication.from(
+    communication = TransactionCommunicationDto.from(
         structuredCommunicationRaw = entity.structuredCommunicationRaw,
         freeCommunication = entity.freeCommunication,
     ),
@@ -50,7 +50,7 @@ fun BankTransactionDto.Companion.from(entity: BankTransactionEntity) = BankTrans
     status = entity.status,
     resolutionType = entity.resolutionType,
     matchInfo = entity.matchedCashflowId?.let { cashflowId ->
-        TransactionMatchInfo(
+        TransactionMatchInfoDto(
             cashflowEntryId = cashflowId,
             documentId = entity.matchedDocumentId,
             score = entity.matchScore ?: 0.0,
@@ -60,7 +60,7 @@ fun BankTransactionDto.Companion.from(entity: BankTransactionEntity) = BankTrans
         )
     },
     ignoreInfo = entity.ignoredReason?.let { reason ->
-        TransactionIgnoreInfo(
+        TransactionIgnoreInfoDto(
             reason = reason,
             ignoredAt = entity.ignoredAt ?: return@let null,
             ignoredBy = entity.ignoredBy,

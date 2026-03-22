@@ -19,6 +19,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import tech.dokus.navigation.destinations.CashFlowDestination
+import tech.dokus.navigation.local.LocalNavController
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -35,7 +37,6 @@ import tech.dokus.aura.resources.upload_with_camera
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.features.cashflow.mvi.AddDocumentIntent
 import tech.dokus.features.cashflow.mvi.AddDocumentState
-import tech.dokus.features.cashflow.presentation.cashflow.components.AppDownloadQrDialog
 import tech.dokus.features.cashflow.presentation.cashflow.components.DocumentUploadList
 import tech.dokus.features.cashflow.presentation.cashflow.components.DocumentUploadZone
 import tech.dokus.features.cashflow.presentation.cashflow.components.UploadIcon
@@ -76,8 +77,7 @@ internal fun AddDocumentScreen(
 ) {
     val layoutDirection = LocalLayoutDirection.current
     val isLarge = LocalScreenSize.current.isLarge
-
-    var isQrDialogOpen by remember { mutableStateOf(false) }
+    val navController = LocalNavController.current
 
     val isUploading = state.isUploading
 
@@ -91,7 +91,7 @@ internal fun AddDocumentScreen(
                     uploadedDocuments = uploadedDocuments,
                     deletionHandles = deletionHandles,
                     uploadManager = uploadManager,
-                    onShowQrCode = { isQrDialogOpen = true },
+                    onShowQrCode = { navController.navigate(CashFlowDestination.AppDownloadQrDialog) },
                     onIntent = onIntent
                 )
             } else {
@@ -108,11 +108,6 @@ internal fun AddDocumentScreen(
                 )
             }
 
-            // QR code dialog
-            AppDownloadQrDialog(
-                isVisible = isQrDialogOpen,
-                onDismiss = { isQrDialogOpen = false }
-            )
         }
     }
 }

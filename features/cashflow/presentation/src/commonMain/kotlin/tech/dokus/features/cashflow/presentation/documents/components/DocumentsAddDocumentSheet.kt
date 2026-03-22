@@ -43,7 +43,7 @@ import tech.dokus.aura.resources.documents_add_sheet_scan_title
 import tech.dokus.aura.resources.documents_add_sheet_title
 import tech.dokus.aura.resources.documents_add_sheet_upload_subtitle
 import tech.dokus.aura.resources.documents_add_sheet_upload_title
-import tech.dokus.aura.resources.upload_action_cancel
+import tech.dokus.aura.resources.action_cancel
 
 private val DragHandleWidth = 42.dp
 private val DragHandleHeight = 4.dp
@@ -128,7 +128,7 @@ internal fun DocumentsAddDocumentSheet(
                 onClick = onDismiss,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(text = stringResource(Res.string.upload_action_cancel))
+                Text(text = stringResource(Res.string.action_cancel))
             }
         }
     }

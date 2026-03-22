@@ -1,6 +1,5 @@
 package tech.dokus.app.screens.home
 
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -56,7 +55,6 @@ internal fun HomeSurfaceShell(
     profileData: HomeShellProfileData?,
     pendingHomeCommand: HomeNavigationEnvelope?,
     onConsumeHomeCommand: (Long) -> Unit,
-    snackbarHostState: SnackbarHostState,
 ) {
     // --- Nav providers & controller ---
     val homeNavProviders = remember(appModules) { appModules.homeNavigationProviders }
@@ -218,7 +216,6 @@ internal fun HomeSurfaceShell(
         tenantState = shellState.tenantState,
         selectedFirm = selectedFirm,
         profileData = profileData,
-        snackbarHostState = snackbarHostState,
         onWorkspaceClick = remember(rootNavController) {
             { rootNavController.navigateTo(AuthDestination.WorkspaceSelect) }
         },

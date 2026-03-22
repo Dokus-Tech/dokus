@@ -25,9 +25,9 @@ import tech.dokus.backend.services.business.WebsiteRankingResult
 import tech.dokus.backend.services.business.WebsiteSearchResult
 import tech.dokus.database.repository.auth.AddressRepository
 import tech.dokus.database.repository.auth.TenantRepository
-import tech.dokus.database.repository.business.BusinessProfileEnrichmentJob
+import tech.dokus.database.entity.BusinessProfileEnrichmentJobEntity
 import tech.dokus.database.repository.business.BusinessProfileEnrichmentJobRepository
-import tech.dokus.database.repository.business.BusinessProfileRecord
+import tech.dokus.database.entity.BusinessProfileEntity
 import tech.dokus.database.repository.business.BusinessProfileRepository
 import tech.dokus.database.repository.contacts.ContactAddressRepository
 import tech.dokus.database.repository.contacts.ContactRepository
@@ -134,7 +134,7 @@ class BusinessProfileEnrichmentWorkerTest {
                 lastErrorCode = any(),
                 lastErrorMessage = any()
             )
-        } returns BusinessProfileRecord(
+        } returns BusinessProfileEntity(
             tenantId = job.tenantId,
             subjectType = job.subjectType,
             subjectId = job.subjectId
@@ -205,7 +205,7 @@ class BusinessProfileEnrichmentWorkerTest {
             activities = listOf("AP automation", "Invoice ingestion"),
             confidence = 0.92
         )
-        coEvery { profileRepository.getBySubject(job.tenantId, job.subjectType, job.subjectId) } returns BusinessProfileRecord(
+        coEvery { profileRepository.getBySubject(job.tenantId, job.subjectType, job.subjectId) } returns BusinessProfileEntity(
             tenantId = job.tenantId,
             subjectType = job.subjectType,
             subjectId = job.subjectId,
@@ -227,7 +227,7 @@ class BusinessProfileEnrichmentWorkerTest {
                 lastErrorCode = any(),
                 lastErrorMessage = any()
             )
-        } returns BusinessProfileRecord(
+        } returns BusinessProfileEntity(
             tenantId = job.tenantId,
             subjectType = job.subjectType,
             subjectId = job.subjectId
@@ -320,7 +320,7 @@ class BusinessProfileEnrichmentWorkerTest {
                 lastErrorCode = any(),
                 lastErrorMessage = any()
             )
-        } returns BusinessProfileRecord(
+        } returns BusinessProfileEntity(
             tenantId = job.tenantId,
             subjectType = job.subjectType,
             subjectId = job.subjectId
@@ -432,7 +432,7 @@ class BusinessProfileEnrichmentWorkerTest {
                 lastErrorCode = any(),
                 lastErrorMessage = any()
             )
-        } returns BusinessProfileRecord(
+        } returns BusinessProfileEntity(
             tenantId = job.tenantId,
             subjectType = job.subjectType,
             subjectId = job.subjectId
@@ -658,10 +658,10 @@ class BusinessProfileEnrichmentWorkerTest {
         )
     }
 
-    private fun sampleJob(subjectType: BusinessProfileSubjectType, attemptCount: Int): BusinessProfileEnrichmentJob {
+    private fun sampleJob(subjectType: BusinessProfileSubjectType, attemptCount: Int): BusinessProfileEnrichmentJobEntity {
         val tenantId = tech.dokus.domain.ids.TenantId.generate()
         val now = LocalDateTime(2026, 1, 1, 10, 0)
-        return BusinessProfileEnrichmentJob(
+        return BusinessProfileEnrichmentJobEntity(
             id = Uuid.random(),
             tenantId = tenantId,
             subjectType = subjectType,

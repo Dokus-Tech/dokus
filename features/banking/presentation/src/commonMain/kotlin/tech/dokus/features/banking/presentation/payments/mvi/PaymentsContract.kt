@@ -1,7 +1,6 @@
 package tech.dokus.features.banking.presentation.payments.mvi
 
 import androidx.compose.runtime.Immutable
-import pro.respawn.flowmvi.api.MVIAction
 import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.domain.enums.BankTransactionStatus
@@ -11,7 +10,7 @@ import tech.dokus.domain.ids.BankAccountId
 import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.model.BankAccountDto
 import tech.dokus.domain.model.BankTransactionDto
-import tech.dokus.domain.model.BankTransactionSummary
+import tech.dokus.domain.model.BankTransactionSummaryDto
 import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.foundation.app.state.DokusState
 
@@ -26,15 +25,6 @@ enum class PaymentFilterTab {
     Matched,
     Ignored,
 }
-
-/**
- * Dialog state for ignore-with-reason flow.
- */
-@Immutable
-data class IgnoreDialogState(
-    val transactionId: BankTransactionId,
-    val selectedReason: IgnoredReason? = null,
-)
 
 /**
  * Dialog state for mark-as-transfer flow.
@@ -54,13 +44,13 @@ data class TransferDialogState(
 @Immutable
 data class PaymentsState(
     val transactions: DokusState<PaginationState<BankTransactionDto>>,
-    val summary: DokusState<BankTransactionSummary>,
+    val summary: DokusState<BankTransactionSummaryDto>,
     val accountNames: Map<BankAccountId, String> = emptyMap(),
     val filterTab: PaymentFilterTab = PaymentFilterTab.All,
     val selectedAccountId: BankAccountId? = null,
     val selectedTransactionId: BankTransactionId? = null,
-    val ignoreDialogState: IgnoreDialogState? = null,
     val transferDialogState: TransferDialogState? = null,
+    val actionError: DokusException? = null,
 ) : MVIState {
     companion object {
         val initial by lazy {
@@ -84,9 +74,7 @@ sealed interface PaymentsIntent : MVIIntent {
     data class SelectTransaction(val transactionId: BankTransactionId?) : PaymentsIntent
     data class LinkDocument(val transactionId: BankTransactionId) : PaymentsIntent
     data class IgnoreTransaction(val transactionId: BankTransactionId) : PaymentsIntent
-    data class SelectIgnoreReason(val reason: IgnoredReason) : PaymentsIntent
-    data object ConfirmIgnore : PaymentsIntent
-    data object DismissIgnoreDialog : PaymentsIntent
+    data class ConfirmIgnoreWithResult(val transactionId: String, val reason: IgnoredReason) : PaymentsIntent
     data class ConfirmMatch(val transactionId: BankTransactionId) : PaymentsIntent
     data class CreateExpense(val transactionId: BankTransactionId) : PaymentsIntent
     data class MarkTransfer(val transactionId: BankTransactionId) : PaymentsIntent
@@ -94,12 +82,5 @@ sealed interface PaymentsIntent : MVIIntent {
     data object ConfirmTransfer : PaymentsIntent
     data object DismissTransferDialog : PaymentsIntent
     data class UndoTransfer(val transactionId: BankTransactionId) : PaymentsIntent
-}
-
-/**
- * Actions for PaymentsScreen.
- */
-@Immutable
-sealed interface PaymentsAction : MVIAction {
-    data class ShowError(val error: DokusException) : PaymentsAction
+    data object DismissActionError : PaymentsIntent
 }

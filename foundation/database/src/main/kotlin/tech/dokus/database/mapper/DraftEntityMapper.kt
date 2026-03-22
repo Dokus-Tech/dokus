@@ -4,12 +4,14 @@ package tech.dokus.database.mapper
 
 import org.jetbrains.exposed.v1.core.ResultRow
 import tech.dokus.database.entity.BankStatementDraftEntity
+import tech.dokus.database.entity.BankStatementDraftTransactionEntity
 import tech.dokus.database.entity.CreditNoteDraftEntity
 import tech.dokus.database.entity.CreditNoteDraftItemEntity
 import tech.dokus.database.entity.InvoiceDraftEntity
 import tech.dokus.database.entity.InvoiceDraftItemEntity
 import tech.dokus.database.entity.ReceiptDraftEntity
 import tech.dokus.database.tables.drafts.BankStatementDraftsTable
+import tech.dokus.database.tables.drafts.BankStatementDraftTransactionsTable
 import tech.dokus.database.tables.drafts.CreditNoteDraftsTable
 import tech.dokus.database.tables.drafts.CreditNoteDraftItemsTable
 import tech.dokus.database.tables.drafts.InvoiceDraftsTable
@@ -130,7 +132,10 @@ fun ReceiptDraftEntity.Companion.from(row: ResultRow): ReceiptDraftEntity = Rece
 // BankStatement draft
 // =============================================================================
 
-fun BankStatementDraftEntity.Companion.from(row: ResultRow): BankStatementDraftEntity = BankStatementDraftEntity(
+fun BankStatementDraftEntity.Companion.from(
+    row: ResultRow,
+    transactions: List<BankStatementDraftTransactionEntity>,
+): BankStatementDraftEntity = BankStatementDraftEntity(
     id = row[BankStatementDraftsTable.id].value.toKotlinUuid(),
     tenantId = TenantId(row[BankStatementDraftsTable.tenantId].toKotlinUuid()),
     documentId = DocumentId(row[BankStatementDraftsTable.documentId].toKotlinUuid()),
@@ -141,9 +146,32 @@ fun BankStatementDraftEntity.Companion.from(row: ResultRow): BankStatementDraftE
     periodStart = row[BankStatementDraftsTable.periodStart],
     periodEnd = row[BankStatementDraftsTable.periodEnd],
     notes = row[BankStatementDraftsTable.notes],
+    transactions = transactions,
     createdAt = row[BankStatementDraftsTable.createdAt],
     updatedAt = row[BankStatementDraftsTable.updatedAt],
 )
+
+fun BankStatementDraftTransactionEntity.Companion.from(row: ResultRow): BankStatementDraftTransactionEntity =
+    BankStatementDraftTransactionEntity(
+        id = row[BankStatementDraftTransactionsTable.id].value.toKotlinUuid(),
+        draftId = row[BankStatementDraftTransactionsTable.draftId].toKotlinUuid(),
+        transactionDate = row[BankStatementDraftTransactionsTable.transactionDate],
+        signedAmount = row[BankStatementDraftTransactionsTable.signedAmount]?.let { Money.fromDbDecimal(it) },
+        counterpartyName = row[BankStatementDraftTransactionsTable.counterpartyName],
+        counterpartyVat = row[BankStatementDraftTransactionsTable.counterpartyVat]?.let { VatNumber(it) },
+        counterpartyIban = row[BankStatementDraftTransactionsTable.counterpartyIban]?.let { Iban(it) },
+        counterpartyBic = row[BankStatementDraftTransactionsTable.counterpartyBic],
+        counterpartyEmail = row[BankStatementDraftTransactionsTable.counterpartyEmail],
+        counterpartyCompanyNumber = row[BankStatementDraftTransactionsTable.counterpartyCompanyNumber],
+        structuredCommunicationRaw = row[BankStatementDraftTransactionsTable.structuredCommunicationRaw],
+        freeCommunication = row[BankStatementDraftTransactionsTable.freeCommunication],
+        descriptionRaw = row[BankStatementDraftTransactionsTable.descriptionRaw],
+        rowConfidence = row[BankStatementDraftTransactionsTable.rowConfidence],
+        largeAmountFlag = row[BankStatementDraftTransactionsTable.largeAmountFlag],
+        excluded = row[BankStatementDraftTransactionsTable.excluded],
+        potentialDuplicate = row[BankStatementDraftTransactionsTable.potentialDuplicate],
+        sortOrder = row[BankStatementDraftTransactionsTable.sortOrder],
+    )
 
 // =============================================================================
 // Classified entity mappers are in ClassifiedEntityMappers.kt

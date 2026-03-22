@@ -1,38 +1,25 @@
 package tech.dokus.features.cashflow.presentation.cashflow.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
-import com.composables.icons.lucide.ChevronRight
-import com.composables.icons.lucide.EllipsisVertical
-import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.User
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontWeight
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_amount_with_currency
 import tech.dokus.aura.resources.cashflow_document_number_expense
-import tech.dokus.aura.resources.common_unknown
 import tech.dokus.aura.resources.date_format_long
 import tech.dokus.aura.resources.date_month_long_april
 import tech.dokus.aura.resources.date_month_long_august
@@ -50,8 +37,6 @@ import tech.dokus.aura.resources.document_table_amount
 import tech.dokus.aura.resources.document_table_contact
 import tech.dokus.aura.resources.document_table_date
 import tech.dokus.aura.resources.document_table_invoice
-import tech.dokus.aura.resources.document_table_more_options
-import tech.dokus.aura.resources.document_table_view_details
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.ids.DocumentId
@@ -60,10 +45,11 @@ import tech.dokus.domain.model.currency
 import tech.dokus.domain.model.sortDate
 import tech.dokus.domain.model.totalAmount
 import tech.dokus.foundation.aura.components.CashflowType
-import tech.dokus.foundation.aura.components.CashflowTypeBadge
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.style.dokusSizing
 import tech.dokus.foundation.aura.style.dokusSpacing
+
+internal val AmountGroupingRegex = Regex("(\\d)(?=(\\d{3})+$)")
 
 /**
  * Data class representing a financial document table row.
@@ -142,7 +128,7 @@ fun DocDto.toTableRow(): FinancialDocumentRow {
         runCatching {
             val amountValue = amount.toDouble()
             val intAmount = amountValue.toInt()
-            intAmount.toString().replace(Regex("(\\d)(?=(\\d{3})+$)"), "$1,")
+            intAmount.toString().replace(AmountGroupingRegex, "$1,")
         }.getOrNull()
     }
 
@@ -176,7 +162,7 @@ fun DocDto.toTableRow(): FinancialDocumentRow {
 /**
  * Returns a stable key for a DocDto, used for Compose `key` blocks.
  */
-private fun DocDto.stableKey(): Any = when (this) {
+internal fun DocDto.stableKey(): Any = when (this) {
     is DocDto.Invoice.Confirmed -> id
     is DocDto.Receipt.Confirmed -> id
     is DocDto.CreditNote.Confirmed -> id
@@ -316,265 +302,3 @@ private fun FinancialDocumentTableHeader(
         Spacer(modifier = Modifier.width(spacing.large * 4.5f))
     }
 }
-
-/**
- * Data row for the financial document table.
- */
-@Composable
-private fun FinancialDocumentTableRow(
-    row: FinancialDocumentRow,
-    onClick: () -> Unit,
-    onMoreClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val spacing = MaterialTheme.dokusSpacing
-    val sizing = MaterialTheme.dokusSizing
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .background(MaterialTheme.colorScheme.surface)
-            .padding(horizontal = spacing.xLarge, vertical = spacing.xLarge),
-        horizontalArrangement = Arrangement.spacedBy(spacing.xLarge),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // Invoice column with alert indicator
-        Row(
-            modifier = Modifier.width(spacing.large * 8.75f),
-            horizontalArrangement = Arrangement.spacedBy(spacing.small),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Alert dot if needed
-            if (row.hasAlert) {
-                Box(
-                    modifier = Modifier
-                        .size(sizing.strokeCropGuide * 2f)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.error) // Red alert indicator
-                )
-            }
-
-            Text(
-                text = row.invoiceNumber,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        }
-
-        // Contact column with avatar and info
-        Row(
-            modifier = Modifier.weight(1f),
-            horizontalArrangement = Arrangement.spacedBy(spacing.medium),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Avatar
-            Box(
-                modifier = Modifier
-                    .size(sizing.buttonHeight)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.secondaryContainer), // Light background
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Lucide.User,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSecondaryContainer, // Icon color
-                    modifier = Modifier.size(sizing.buttonLoadingIcon)
-                )
-            }
-
-            // Name and email
-            Column(
-                verticalArrangement = Arrangement.spacedBy(spacing.xxSmall)
-            ) {
-                Text(
-                    text = row.contactName.ifBlank {
-                        stringResource(Res.string.common_unknown)
-                    },
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = FontWeight.Medium
-                    ),
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                if (row.contactEmail.isNotEmpty()) {
-                    Text(
-                        text = row.contactEmail,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        }
-
-        // Amount column
-        Text(
-            text = row.amount,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.width(spacing.large * 6.25f)
-        )
-
-        // Date column
-        Column(
-            modifier = Modifier.width(spacing.large * 7.5f),
-            verticalArrangement = Arrangement.spacedBy(spacing.xSmall)
-        ) {
-            Text(
-                text = row.date,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        }
-
-        // Type badge
-        Box(
-            modifier = Modifier.width(spacing.large * 6.25f),
-            contentAlignment = Alignment.CenterStart
-        ) {
-            CashflowTypeBadge(type = row.cashflowType)
-        }
-
-        // Actions column
-        Row(
-            modifier = Modifier.width(spacing.large * 4.5f),
-            horizontalArrangement = Arrangement.spacedBy(spacing.small),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // More menu button
-            IconButton(
-                onClick = onMoreClick,
-                modifier = Modifier.size(sizing.iconMedium)
-            ) {
-                Icon(
-                    imageVector = Lucide.EllipsisVertical,
-                    contentDescription = stringResource(Res.string.document_table_more_options),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            // Chevron right button
-            IconButton(
-                onClick = onClick,
-                modifier = Modifier.size(sizing.iconMedium)
-            ) {
-                Icon(
-                    imageVector = Lucide.ChevronRight,
-                    contentDescription = stringResource(Res.string.document_table_view_details),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-    }
-}
-
-/**
- * Mobile-friendly list component for displaying financial documents.
- * Shows simplified rows with Invoice #, Amount, and Type.
- *
- * @param documents List of financial documents to display
- * @param onDocumentClick Callback when a document row is clicked
- * @param modifier Optional modifier for the list
- */
-@Composable
-fun FinancialDocumentList(
-    documents: List<DocDto>,
-    onDocumentClick: (DocDto) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val sizing = MaterialTheme.dokusSizing
-    DokusCardSurface(modifier = modifier) {
-        Column(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            documents.forEachIndexed { index, document ->
-                key(document.stableKey()) {
-                    FinancialDocumentListItem(
-                        row = document.toTableRow(),
-                        onClick = { onDocumentClick(document) }
-                    )
-
-                    if (index < documents.size - 1) {
-                        HorizontalDivider(
-                            color = MaterialTheme.colorScheme.outlineVariant,
-                            thickness = sizing.strokeThin
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-/**
- * Mobile-friendly list item showing simplified document info.
- * Displays: Invoice # | Amount | Type badge
- */
-@Composable
-private fun FinancialDocumentListItem(
-    row: FinancialDocumentRow,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val spacing = MaterialTheme.dokusSpacing
-    val sizing = MaterialTheme.dokusSizing
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .background(MaterialTheme.colorScheme.surface)
-            .padding(horizontal = spacing.large, vertical = spacing.medium),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // Left side: Invoice number with optional alert
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(spacing.small),
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.weight(1f)
-        ) {
-            if (row.hasAlert) {
-                Box(
-                    modifier = Modifier
-                        .size(sizing.strokeCropGuide * 2f)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.error)
-                )
-            }
-
-            Text(
-                text = row.invoiceNumber,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontWeight = FontWeight.Medium
-                ),
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        }
-
-        Spacer(modifier = Modifier.width(spacing.medium))
-
-        // Amount
-        Text(
-            text = row.amount,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-
-        Spacer(modifier = Modifier.width(spacing.medium))
-
-        // Type badge
-        CashflowTypeBadge(type = row.cashflowType)
-
-        Spacer(modifier = Modifier.width(spacing.small))
-
-        // Chevron
-        Icon(
-            imageVector = Lucide.ChevronRight,
-            contentDescription = stringResource(Res.string.document_table_view_details),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(sizing.buttonLoadingIcon)
-        )
-    }
-}
-
-// Preview skipped: Flaky IllegalStateException in parallel Roborazzi runs
-// FinancialDocumentTable already has a preview in FinancialDocumentTablePreview.kt

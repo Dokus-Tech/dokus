@@ -17,7 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
-import tech.dokus.domain.model.ai.SummaryRow
+import tech.dokus.domain.model.ai.SummaryRowDto
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.textMuted
 import tech.dokus.foundation.aura.tooling.PreviewParameters
@@ -32,7 +32,7 @@ private val CardShape = RoundedCornerShape(7.dp)
  */
 @Composable
 fun ChatSummaryCard(
-    rows: List<SummaryRow>,
+    rows: List<SummaryRowDto>,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -79,9 +79,9 @@ private fun ChatSummaryCardPreview(
     TestWrapper(parameters) {
         ChatSummaryCard(
             rows = listOf(
-                SummaryRow("Total expenses (Q4 - Q1)", "\u20ac8,247.15"),
-                SummaryRow("Largest single", "\u20ac798.60"),
-                SummaryRow("Vendors", "6"),
+                SummaryRowDto("Total expenses (Q4 - Q1)", "\u20ac8,247.15"),
+                SummaryRowDto("Largest single", "\u20ac798.60"),
+                SummaryRowDto("Vendors", "6"),
             )
         )
     }

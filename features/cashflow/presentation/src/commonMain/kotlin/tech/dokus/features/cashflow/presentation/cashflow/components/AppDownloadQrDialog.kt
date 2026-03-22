@@ -29,27 +29,25 @@ import tech.dokus.aura.resources.app_download_description
 import tech.dokus.aura.resources.app_download_platforms
 import tech.dokus.aura.resources.app_download_qr_code
 import tech.dokus.aura.resources.app_download_title
-import tech.dokus.foundation.aura.components.dialog.DokusDialog
 import tech.dokus.foundation.aura.components.dialog.DokusDialogAction
+import tech.dokus.foundation.aura.components.dialog.DokusDialogSurface
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
 
 /**
- * Dialog showing a QR code for downloading the mobile application.
+ * Dialog content for the app download QR code, without a [Dialog] wrapper.
+ * Used inside Navigation Compose `dialog<>` routes where the framework provides
+ * the dialog overlay.
  *
- * @param isVisible Whether the dialog is visible
  * @param onDismiss Called when the dialog should be closed
  */
 @Composable
-fun AppDownloadQrDialog(
-    isVisible: Boolean,
+fun AppDownloadQrDialogContent(
     onDismiss: () -> Unit
 ) {
-    if (!isVisible) return
-
-    DokusDialog(
+    DokusDialogSurface(
         onDismissRequest = onDismiss,
         title = stringResource(Res.string.app_download_title),
         content = {
@@ -93,8 +91,7 @@ private fun AppDownloadQrDialogPreview(
     @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
 ) {
     TestWrapper(parameters) {
-        AppDownloadQrDialog(
-            isVisible = true,
+        AppDownloadQrDialogContent(
             onDismiss = {}
         )
     }

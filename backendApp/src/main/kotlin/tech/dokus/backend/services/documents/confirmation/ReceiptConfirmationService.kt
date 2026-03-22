@@ -21,7 +21,7 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid
 
 /**
- * Confirms Receipt documents: creates Expense entity + CashflowEntry (Direction.Out).
+ * Confirms Receipt documents: creates Expense entity + CashflowEntryEntity (Direction.Out).
  *
  * Uses repositories for all persistence — no direct table access.
  */

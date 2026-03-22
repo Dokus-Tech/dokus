@@ -1,11 +1,12 @@
 package tech.dokus.database.repository.cashflow
 
-import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
+import tech.dokus.database.entity.DocumentBlobEntity
+import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.documents.DocumentBlobsTable
 import tech.dokus.domain.ids.DocumentBlobId
 import tech.dokus.domain.ids.TenantId
@@ -17,15 +18,6 @@ import kotlin.uuid.toKotlinUuid
 /** PostgreSQL SQL state for unique_violation. */
 private const val UNIQUE_VIOLATION_STATE = "23505"
 
-data class DocumentBlobSummary(
-    val id: DocumentBlobId,
-    val tenantId: TenantId,
-    val inputHash: String,
-    val storageKey: String,
-    val contentType: String,
-    val sizeBytes: Long
-)
-
 data class DocumentBlobCreatePayload(
     val inputHash: String,
     val storageKey: String,
@@ -36,21 +28,21 @@ data class DocumentBlobCreatePayload(
 @OptIn(ExperimentalUuidApi::class)
 class DocumentBlobRepository {
 
-    suspend fun getByInputHash(tenantId: TenantId, inputHash: String): DocumentBlobSummary? =
+    suspend fun getByInputHash(tenantId: TenantId, inputHash: String): DocumentBlobEntity? =
         newSuspendedTransaction {
             DocumentBlobsTable.selectAll()
                 .where {
                     (DocumentBlobsTable.tenantId eq UUID.fromString(tenantId.toString())) and
                         (DocumentBlobsTable.inputHash eq inputHash)
                 }
-                .map { it.toBlobSummary() }
+                .map { DocumentBlobEntity.from(it) }
                 .singleOrNull()
         }
 
     suspend fun createIfAbsent(
         tenantId: TenantId,
         payload: DocumentBlobCreatePayload
-    ): DocumentBlobSummary = newSuspendedTransaction {
+    ): DocumentBlobEntity = newSuspendedTransaction {
         val tenantUuid = UUID.fromString(tenantId.toString())
         val existing = DocumentBlobsTable.selectAll()
             .where {
@@ -58,7 +50,7 @@ class DocumentBlobRepository {
                     (DocumentBlobsTable.inputHash eq payload.inputHash)
             }
             .singleOrNull()
-            ?.toBlobSummary()
+            ?.let { DocumentBlobEntity.from(it) }
         if (existing != null) return@newSuspendedTransaction existing
 
         val newId = DocumentBlobId.generate()
@@ -82,12 +74,12 @@ class DocumentBlobRepository {
                         (DocumentBlobsTable.inputHash eq payload.inputHash)
                 }
                 .singleOrNull()
-                ?.toBlobSummary()
+                ?.let { DocumentBlobEntity.from(it) }
             if (raced != null) return@newSuspendedTransaction raced
             throw e
         }
 
-        DocumentBlobSummary(
+        DocumentBlobEntity(
             id = newId,
             tenantId = tenantId,
             inputHash = payload.inputHash,
@@ -97,14 +89,4 @@ class DocumentBlobRepository {
         )
     }
 
-    private fun ResultRow.toBlobSummary(): DocumentBlobSummary {
-        return DocumentBlobSummary(
-            id = DocumentBlobId(this[DocumentBlobsTable.id].value.toKotlinUuid()),
-            tenantId = TenantId(this[DocumentBlobsTable.tenantId].toKotlinUuid()),
-            inputHash = this[DocumentBlobsTable.inputHash],
-            storageKey = this[DocumentBlobsTable.storageKey],
-            contentType = this[DocumentBlobsTable.contentType],
-            sizeBytes = this[DocumentBlobsTable.sizeBytes]
-        )
-    }
 }

@@ -6,23 +6,25 @@ import io.ktor.server.resources.get
 import io.ktor.server.resources.post
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
-import kotlinx.serialization.Serializable
 import org.koin.ktor.ext.inject
 import tech.dokus.backend.security.requirePermission
 import tech.dokus.backend.security.requireTenantId
+import tech.dokus.backend.services.admin.TenantManagementService
 import tech.dokus.backend.services.cashflow.InvoiceService
+import tech.dokus.backend.services.contacts.ContactService
+import tech.dokus.backend.services.documents.DocumentTruthService
 import tech.dokus.backend.services.peppol.PeppolRecipientResolver
 import tech.dokus.backend.worker.PeppolPollingWorker
-import tech.dokus.database.repository.auth.AddressRepository
-import tech.dokus.database.repository.auth.TenantRepository
-import tech.dokus.database.repository.cashflow.DocumentRepository
-import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.model.PeppolInboxPollResponse
+import tech.dokus.domain.model.ProvidersResponse
+import tech.dokus.domain.model.SendInvoiceResponse
+import tech.dokus.domain.model.TestConnectionResponse
+import tech.dokus.domain.model.VerifyPeppolIdRequest
+import tech.dokus.domain.model.VerifyRecipientRequest
 import tech.dokus.domain.enums.Permission
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.InvoiceId
-import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.PeppolConnectStatus
 import tech.dokus.domain.routes.Peppol
 import tech.dokus.foundation.backend.security.authenticateJwt
@@ -61,10 +63,9 @@ internal fun Route.peppolRoutes() {
     val peppolRegistrationService by inject<PeppolRegistrationService>()
     val peppolVerificationService by inject<PeppolVerificationService>()
     val invoiceService by inject<InvoiceService>()
-    val contactRepository by inject<ContactRepository>()
-    val tenantRepository by inject<TenantRepository>()
-    val addressRepository by inject<AddressRepository>()
-    val documentRepository by inject<DocumentRepository>()
+    val contactService by inject<ContactService>()
+    val tenantManagementService by inject<TenantManagementService>()
+    val truthService by inject<DocumentTruthService>()
     val peppolPollingWorker by inject<PeppolPollingWorker>()
 
     authenticateJwt {
@@ -122,9 +123,9 @@ internal fun Route.peppolRoutes() {
          */
         post<Peppol.Settings.Connect> {
             val tenantId = requireTenantId()
-            val tenant = tenantRepository.findById(tenantId)
+            val tenant = tenantManagementService.findTenantById(tenantId)
                 ?: throw DokusException.NotFound("Tenant not found")
-            val companyAddress = addressRepository.getCompanyAddress(tenantId)
+            val companyAddress = tenantManagementService.getCompanyAddress(tenantId)
 
             val result = peppolConnectionService.connect(tenant, companyAddress)
                 .getOrElse { throw DokusException.InternalError("Failed to connect Peppol: ${it.message}") }
@@ -173,21 +174,20 @@ internal fun Route.peppolRoutes() {
             val invoiceId = InvoiceId(Uuid.parse(invoiceIdStr))
 
             // Fetch invoice
-            val invoice = invoiceService.getInvoice(invoiceId, tenantId)
+            val invoice = invoiceService.getInvoiceEntity(invoiceId, tenantId)
                 .getOrElse { throw DokusException.InternalError("Failed to fetch invoice: ${it.message}") }
                 ?: throw DokusException.NotFound("Invoice not found")
 
             // Get tenant
-            val tenant = tenantRepository.findById(tenantId)
+            val tenant = tenantManagementService.findTenantById(tenantId)
                 ?: throw DokusException.InternalError("Tenant not found")
-            val companyAddress = addressRepository.getCompanyAddress(tenantId)
+            val companyAddress = tenantManagementService.getCompanyAddress(tenantId)
 
             // Get tenant settings
-            val tenantSettings = tenantRepository.getSettings(tenantId)
-                ?: throw DokusException.InternalError("Tenant settings not found")
+            val tenantSettings = tenantManagementService.getSettings(tenantId)
 
             // Get contact (customer)
-            val contact = contactRepository.getContact(invoice.contactId, tenantId)
+            val contact = contactService.getContact(invoice.contactId, tenantId)
                 .getOrElse { throw DokusException.InternalError("Failed to fetch contact: ${it.message}") }
                 ?: throw DokusException.NotFound("Contact not found for invoice")
 
@@ -205,11 +205,7 @@ internal fun Route.peppolRoutes() {
 
             val sourceDocumentId = invoice.documentId
             if (sourceDocumentId != null) {
-                val isConfirmed = documentRepository.isConfirmed(
-                    tenantId = tenantId,
-                    documentId = sourceDocumentId
-                )
-                if (!isConfirmed) {
+                if (!truthService.isDocumentConfirmed(tenantId, sourceDocumentId)) {
                     throw DokusException.PeppolSendRequiresConfirmedDocument
                 }
             } else if (invoice.status == InvoiceStatus.Draft) {
@@ -257,21 +253,20 @@ internal fun Route.peppolRoutes() {
             val invoiceId = InvoiceId(Uuid.parse(invoiceIdStr))
 
             // Fetch invoice
-            val invoice = invoiceService.getInvoice(invoiceId, tenantId)
+            val invoice = invoiceService.getInvoiceEntity(invoiceId, tenantId)
                 .getOrElse { throw DokusException.InternalError("Failed to fetch invoice: ${it.message}") }
                 ?: throw DokusException.NotFound("Invoice not found")
 
             // Get tenant
-            val tenant = tenantRepository.findById(tenantId)
+            val tenant = tenantManagementService.findTenantById(tenantId)
                 ?: throw DokusException.InternalError("Tenant not found")
-            val companyAddress = addressRepository.getCompanyAddress(tenantId)
+            val companyAddress = tenantManagementService.getCompanyAddress(tenantId)
 
             // Get tenant settings
-            val tenantSettings = tenantRepository.getSettings(tenantId)
-                ?: throw DokusException.InternalError("Tenant settings not found")
+            val tenantSettings = tenantManagementService.getSettings(tenantId)
 
             // Get contact (customer)
-            val contact = contactRepository.getContact(invoice.contactId, tenantId)
+            val contact = contactService.getContact(invoice.contactId, tenantId)
                 .getOrElse { throw DokusException.InternalError("Failed to fetch contact: ${it.message}") }
                 ?: throw DokusException.NotFound("Contact not found for invoice")
 
@@ -480,26 +475,3 @@ internal fun Route.peppolRoutes() {
         }
     }
 }
-
-// Request/Response DTOs
-
-@Serializable
-private data class ProvidersResponse(val providers: List<String>)
-
-@Serializable
-private data class VerifyRecipientRequest(val peppolId: String)
-
-@Serializable
-private data class VerifyPeppolIdRequest(val vatNumber: VatNumber)
-
-@Serializable
-private data class TestConnectionResponse(val success: Boolean)
-
-@Serializable
-private data class SendInvoiceResponse(
-    val success: Boolean,
-    val transmissionId: String,
-    val status: String,
-    val externalDocumentId: String? = null,
-    val errorMessage: String? = null
-)

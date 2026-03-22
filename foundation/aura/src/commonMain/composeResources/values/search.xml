@@ -10,7 +10,6 @@
     <string name="search_section_transactions">Transactions</string>
     <string name="search_suggestions_label">Suggestions</string>
     <string name="search_no_results">No results found</string>
-    <string name="search_results_count">%1$d results</string>
     <string name="search_documents_count">%1$d documents</string>
     <string name="search_contacts_count">%1$d contacts</string>
     <string name="search_transactions_count">%1$d transactions</string>

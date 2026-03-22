@@ -3,35 +3,26 @@ package tech.dokus.database.repository.cashflow
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.v1.jdbc.update
+import tech.dokus.database.entity.DocumentPurposeTemplateEntity
+import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.documents.DocumentPurposeTemplatesTable
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.PurposePeriodMode
 import tech.dokus.domain.ids.TenantId
 import java.util.UUID
 
-data class DocumentPurposeTemplateSummary(
-    val tenantId: TenantId,
-    val counterpartyKey: String,
-    val documentType: DocumentType,
-    val purposeBase: String,
-    val periodMode: PurposePeriodMode,
-    val confidence: Double,
-    val usageCount: Int
-)
-
 class DocumentPurposeTemplateRepository {
     suspend fun findByCounterparty(
         tenantId: TenantId,
         counterpartyKey: String,
         documentType: DocumentType
-    ): DocumentPurposeTemplateSummary? = newSuspendedTransaction {
+    ): DocumentPurposeTemplateEntity? = newSuspendedTransaction {
         DocumentPurposeTemplatesTable.selectAll()
             .where {
                 (DocumentPurposeTemplatesTable.tenantId eq UUID.fromString(tenantId.toString())) and
@@ -39,7 +30,7 @@ class DocumentPurposeTemplateRepository {
                     (DocumentPurposeTemplatesTable.documentType eq documentType)
             }
             .singleOrNull()
-            ?.toTemplateSummary()
+            ?.let { DocumentPurposeTemplateEntity.from(it) }
     }
 
     suspend fun upsert(
@@ -87,15 +78,4 @@ class DocumentPurposeTemplateRepository {
         }
     }
 
-    private fun ResultRow.toTemplateSummary(): DocumentPurposeTemplateSummary {
-        return DocumentPurposeTemplateSummary(
-            tenantId = TenantId.parse(this[DocumentPurposeTemplatesTable.tenantId].toString()),
-            counterpartyKey = this[DocumentPurposeTemplatesTable.counterpartyKey],
-            documentType = this[DocumentPurposeTemplatesTable.documentType],
-            purposeBase = this[DocumentPurposeTemplatesTable.purposeBase],
-            periodMode = this[DocumentPurposeTemplatesTable.periodMode],
-            confidence = this[DocumentPurposeTemplatesTable.confidence].toDouble(),
-            usageCount = this[DocumentPurposeTemplatesTable.usageCount]
-        )
-    }
 }

@@ -31,6 +31,7 @@ import tech.dokus.aura.resources.banking_action_add_expense
 import tech.dokus.aura.resources.banking_action_confirm_match
 import tech.dokus.aura.resources.banking_action_ignore
 import tech.dokus.aura.resources.banking_action_link
+import tech.dokus.aura.resources.action_close
 import tech.dokus.aura.resources.banking_detail_counterparty
 import tech.dokus.aura.resources.banking_detail_description
 import tech.dokus.aura.resources.banking_detail_evidence
@@ -41,6 +42,8 @@ import tech.dokus.aura.resources.banking_detail_reference
 import tech.dokus.aura.resources.banking_detail_resolution
 import tech.dokus.aura.resources.banking_detail_title
 import tech.dokus.aura.resources.banking_detail_trust
+import tech.dokus.aura.resources.banking_transfer_title
+import tech.dokus.aura.resources.banking_transfer_undo
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.BankTransactionSource
 import tech.dokus.domain.enums.BankTransactionStatus
@@ -55,9 +58,9 @@ import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.StructuredCommunication
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.BankTransactionDto
-import tech.dokus.domain.model.TransactionCommunication
-import tech.dokus.domain.model.TransactionMatchInfo
-import tech.dokus.domain.model.contact.CounterpartySnapshot
+import tech.dokus.domain.model.TransactionCommunicationDto
+import tech.dokus.domain.model.TransactionMatchInfoDto
+import tech.dokus.domain.model.contact.CounterpartySnapshotDto
 import tech.dokus.foundation.aura.components.PButton
 import tech.dokus.foundation.aura.components.PButtonVariant
 import tech.dokus.foundation.aura.components.text.Amt
@@ -94,7 +97,7 @@ internal fun TransactionDetailPane(
             IconButton(onClick = onClose) {
                 Icon(
                     imageVector = Lucide.X,
-                    contentDescription = "Close",
+                    contentDescription = stringResource(Res.string.action_close),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -139,8 +142,8 @@ internal fun TransactionDetailPane(
             )
         }
         val referenceText = when (val comm = transaction.communication) {
-            is TransactionCommunication.Structured -> comm.raw
-            is TransactionCommunication.FreeForm -> comm.text
+            is TransactionCommunicationDto.Structured -> comm.raw
+            is TransactionCommunicationDto.FreeForm -> comm.text
             null -> null
         }
         referenceText?.let {
@@ -233,7 +236,7 @@ internal fun TransactionDetailPane(
                 )
                 Spacer(Modifier.height(Constraints.Spacing.small))
                 PButton(
-                    text = "Mark as transfer",
+                    text = stringResource(Res.string.banking_transfer_title),
                     variant = PButtonVariant.Outline,
                     modifier = Modifier.fillMaxWidth(),
                     onClick = onMarkTransfer,
@@ -270,7 +273,7 @@ internal fun TransactionDetailPane(
                 )
                 Spacer(Modifier.height(Constraints.Spacing.small))
                 PButton(
-                    text = "Mark as transfer",
+                    text = stringResource(Res.string.banking_transfer_title),
                     variant = PButtonVariant.Outline,
                     modifier = Modifier.fillMaxWidth(),
                     onClick = onMarkTransfer,
@@ -295,7 +298,7 @@ internal fun TransactionDetailPane(
             BankTransactionStatus.Matched -> {
                 if (transaction.resolutionType == ResolutionType.Transfer) {
                     PButton(
-                        text = "Undo transfer",
+                        text = stringResource(Res.string.banking_transfer_undo),
                         variant = PButtonVariant.OutlineMuted,
                         modifier = Modifier.fillMaxWidth(),
                         onClick = onUndoTransfer,
@@ -347,11 +350,11 @@ private val PreviewUnmatchedTx = BankTransactionDto(
     source = BankTransactionSource.PdfStatement,
     transactionDate = LocalDate(2026, 2, 14),
     signedAmount = Money.parseOrThrow("-1250.00"),
-    counterparty = CounterpartySnapshot(
+    counterparty = CounterpartySnapshotDto(
         name = "Coolblue Belgi\u00EB NV",
         iban = Iban("BE68539007547034"),
     ),
-    communication = TransactionCommunication.Structured(
+    communication = TransactionCommunicationDto.Structured(
         raw = "+++090/9337/55493+++",
         normalized = StructuredCommunication("+++090/9337/55493+++"),
     ),
@@ -368,14 +371,14 @@ private val PreviewMatchedTx = BankTransactionDto(
     source = BankTransactionSource.PdfStatement,
     transactionDate = LocalDate(2026, 2, 12),
     signedAmount = Money.parseOrThrow("-89.99"),
-    counterparty = CounterpartySnapshot(
+    counterparty = CounterpartySnapshotDto(
         name = "DigitalOcean",
         iban = Iban("BE71096123456769"),
     ),
-    communication = TransactionCommunication.FreeForm(text = "DO Invoice #12345"),
+    communication = TransactionCommunicationDto.FreeForm(text = "DO Invoice #12345"),
     status = BankTransactionStatus.Matched,
     resolutionType = ResolutionType.Document,
-    matchInfo = TransactionMatchInfo(
+    matchInfo = TransactionMatchInfoDto(
         cashflowEntryId = CashflowEntryId.generate(),
         matchedBy = MatchedBy.Auto,
         score = 1.0,

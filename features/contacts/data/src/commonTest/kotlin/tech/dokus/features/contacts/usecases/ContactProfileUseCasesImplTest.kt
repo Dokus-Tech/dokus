@@ -5,34 +5,26 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.DocumentDirection
+import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.InvoiceStatus
-import tech.dokus.domain.enums.ContactLinkSource
 import tech.dokus.domain.ids.ContactId
-import tech.dokus.domain.ids.ContactNoteId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.DocumentDraftDto
-import tech.dokus.domain.model.contact.CounterpartyInfo
 import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentDetailDto
+import tech.dokus.domain.model.DocumentListItemDto
 import tech.dokus.domain.model.DocDto
 import tech.dokus.domain.model.DocLineItem
-import tech.dokus.domain.model.contact.ResolvedContact
-import tech.dokus.domain.model.PeppolStatusResponse
 import tech.dokus.domain.model.common.PaginatedResponse
-import tech.dokus.domain.model.contact.ContactActivitySummary
-import tech.dokus.domain.model.contact.ContactDto
-import tech.dokus.domain.model.contact.ContactMergeResult
-import tech.dokus.domain.model.contact.ContactNoteDto
-import tech.dokus.domain.model.contact.ContactStats
-import tech.dokus.domain.model.contact.CreateContactNoteRequest
-import tech.dokus.domain.model.contact.CreateContactRequest
-import tech.dokus.domain.model.contact.UpdateContactNoteRequest
-import tech.dokus.domain.model.contact.UpdateContactRequest
-import tech.dokus.features.contacts.repository.ContactRemoteDataSource
+import tech.dokus.domain.model.contact.ResolvedContact
+import tech.dokus.features.cashflow.usecases.GetDocumentRecordUseCase
+import tech.dokus.features.cashflow.usecases.LoadDocumentRecordsUseCase
+import tech.dokus.domain.enums.DocumentListFilter
+import tech.dokus.domain.enums.IngestionStatus
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -41,17 +33,14 @@ class ContactProfileUseCasesImplTest {
 
     @Test
     fun `recent documents prefer purpose rendered summary`() = runBlocking {
-        val remoteDataSource = FakeContactRemoteDataSource()
         val documentId = DocumentId.parse("00000000-0000-0000-0000-000000000101")
-        remoteDataSource.outboundInvoices = listOf(
-            invoice(
-                invoiceId = "00000000-0000-0000-0000-000000000201",
-                invoiceNumber = "INV-001",
-                documentId = documentId,
-                notes = "Fallback invoice notes"
-            )
+        val fakeLoadDocs = FakeLoadDocumentRecordsUseCase()
+        val fakeGetDoc = FakeGetDocumentRecordUseCase()
+
+        fakeLoadDocs.items = listOf(
+            listItem(documentId = documentId)
         )
-        remoteDataSource.documentRecords[documentId] = documentRecord(
+        fakeGetDoc.records[documentId] = documentRecord(
             documentId = documentId,
             filename = "invoice-001.pdf",
             purposeRendered = "Google - Cloud credits February 2026",
@@ -64,7 +53,7 @@ class ContactProfileUseCasesImplTest {
             )
         )
 
-        val snapshot = GetContactInvoiceSnapshotUseCaseImpl(remoteDataSource)
+        val snapshot = GetContactInvoiceSnapshotUseCaseImpl(fakeLoadDocs, fakeGetDoc)
             .invoke(contactId = contactId)
             .getOrThrow()
 
@@ -77,17 +66,14 @@ class ContactProfileUseCasesImplTest {
 
     @Test
     fun `recent documents fall back to confirmed entity summary`() = runBlocking {
-        val remoteDataSource = FakeContactRemoteDataSource()
         val documentId = DocumentId.parse("00000000-0000-0000-0000-000000000102")
-        remoteDataSource.outboundInvoices = listOf(
-            invoice(
-                invoiceId = "00000000-0000-0000-0000-000000000202",
-                invoiceNumber = "INV-002",
-                documentId = documentId,
-                notes = "Invoice note fallback"
-            )
+        val fakeLoadDocs = FakeLoadDocumentRecordsUseCase()
+        val fakeGetDoc = FakeGetDocumentRecordUseCase()
+
+        fakeLoadDocs.items = listOf(
+            listItem(documentId = documentId)
         )
-        remoteDataSource.documentRecords[documentId] = documentRecord(
+        fakeGetDoc.records[documentId] = documentRecord(
             documentId = documentId,
             filename = "invoice-002.pdf",
             confirmedEntity = confirmedInvoice(
@@ -98,7 +84,7 @@ class ContactProfileUseCasesImplTest {
             )
         )
 
-        val snapshot = GetContactInvoiceSnapshotUseCaseImpl(remoteDataSource)
+        val snapshot = GetContactInvoiceSnapshotUseCaseImpl(fakeLoadDocs, fakeGetDoc)
             .invoke(contactId = contactId)
             .getOrThrow()
 
@@ -107,44 +93,46 @@ class ContactProfileUseCasesImplTest {
     }
 
     @Test
-    fun `recent documents fall back to invoice notes and reference when document metadata is missing`() = runBlocking {
-        val remoteDataSource = FakeContactRemoteDataSource()
-        remoteDataSource.outboundInvoices = listOf(
-            invoice(
-                invoiceId = "00000000-0000-0000-0000-000000000203",
-                invoiceNumber = "INV-003",
-                documentId = null,
-                notes = "Ad campaign management"
+    fun `recent documents fall back to counterparty name when document metadata is missing`() = runBlocking {
+        val documentId = DocumentId.parse("00000000-0000-0000-0000-000000000103")
+        val fakeLoadDocs = FakeLoadDocumentRecordsUseCase()
+        val fakeGetDoc = FakeGetDocumentRecordUseCase()
+
+        fakeLoadDocs.items = listOf(
+            listItem(
+                documentId = documentId,
+                counterpartyDisplayName = "Acme Corp"
             )
         )
+        // No document record available — getDocumentRecord returns failure
+        // so reference should fall back to counterpartyDisplayName
 
-        val snapshot = GetContactInvoiceSnapshotUseCaseImpl(remoteDataSource)
+        val snapshot = GetContactInvoiceSnapshotUseCaseImpl(fakeLoadDocs, fakeGetDoc)
             .invoke(contactId = contactId)
             .getOrThrow()
 
-        assertEquals("Ad campaign management", snapshot.recentDocuments.single().summary)
-        assertEquals("INV-003", snapshot.recentDocuments.single().reference)
+        assertEquals("Acme Corp", snapshot.recentDocuments.single().reference)
     }
 
     @Test
     fun `recent documents only enrich newest five document ids`() = runBlocking {
-        val remoteDataSource = FakeContactRemoteDataSource()
-        val invoices = (1..6).map { index ->
+        val fakeLoadDocs = FakeLoadDocumentRecordsUseCase()
+        val fakeGetDoc = FakeGetDocumentRecordUseCase()
+
+        val items = (1..6).map { index ->
             val documentId = DocumentId.parse("00000000-0000-0000-0000-00000000010$index")
-            remoteDataSource.documentRecords[documentId] = documentRecord(
+            fakeGetDoc.records[documentId] = documentRecord(
                 documentId = documentId,
                 filename = "invoice-$index.pdf"
             )
-            invoice(
-                invoiceId = "00000000-0000-0000-0000-00000000020$index",
-                invoiceNumber = "INV-00$index",
+            listItem(
                 documentId = documentId,
-                issueDate = LocalDate(2026, 2, index)
+                sortDate = LocalDate(2026, 2, index),
             )
         }
-        remoteDataSource.outboundInvoices = invoices
+        fakeLoadDocs.items = items
 
-        val snapshot = GetContactInvoiceSnapshotUseCaseImpl(remoteDataSource)
+        val snapshot = GetContactInvoiceSnapshotUseCaseImpl(fakeLoadDocs, fakeGetDoc)
             .invoke(contactId = contactId)
             .getOrThrow()
 
@@ -158,131 +146,48 @@ class ContactProfileUseCasesImplTest {
                 "00000000-0000-0000-0000-000000000103",
                 "00000000-0000-0000-0000-000000000102",
             ),
-            remoteDataSource.requestedDocumentIds.map { it.toString() }.toSet()
+            fakeGetDoc.requestedDocumentIds.map { it.toString() }.toSet()
         )
     }
 
     @Test
     fun `summary resolver returns null when no summary source exists`() {
-        val invoice = invoice(
-            invoiceId = "00000000-0000-0000-0000-000000000204",
-            invoiceNumber = "INV-004",
-            documentId = null,
-            notes = null
-        )
-
-        assertNull(resolveRecentDocumentSummary(invoice, documentRecord = null))
-        assertEquals("INV-004", resolveRecentDocumentReference(invoice, documentRecord = null))
+        assertNull(resolveRecentDocumentSummary(documentRecord = null))
     }
 
-    private class FakeContactRemoteDataSource : ContactRemoteDataSource {
-        var outboundInvoices: List<DocDto.Invoice.Confirmed> = emptyList()
-        var inboundInvoices: List<DocDto.Invoice.Confirmed> = emptyList()
-        val documentRecords = mutableMapOf<DocumentId, DocumentDetailDto>()
-        val requestedDocumentIds = mutableListOf<DocumentId>()
+    private class FakeLoadDocumentRecordsUseCase : LoadDocumentRecordsUseCase {
+        var items: List<DocumentListItemDto> = emptyList()
 
-        override suspend fun listContacts(
-            isActive: Boolean?,
-            limit: Int,
-            offset: Int
-        ): Result<List<ContactDto>> = error("unused")
-
-        override suspend fun lookupContacts(
-            query: String,
-            isActive: Boolean?,
-            limit: Int,
-            offset: Int
-        ): Result<List<ContactDto>> = error("unused")
-
-        override suspend fun listCustomers(
-            isActive: Boolean,
-            limit: Int,
-            offset: Int
-        ): Result<List<ContactDto>> = error("unused")
-
-        override suspend fun listVendors(
-            isActive: Boolean,
-            limit: Int,
-            offset: Int
-        ): Result<List<ContactDto>> = error("unused")
-
-        override suspend fun getContact(contactId: ContactId): Result<ContactDto> = error("unused")
-
-        override suspend fun createContact(request: CreateContactRequest): Result<ContactDto> = error("unused")
-
-        override suspend fun updateContact(
-            contactId: ContactId,
-            request: UpdateContactRequest
-        ): Result<ContactDto> = error("unused")
-
-        override suspend fun deleteContact(contactId: ContactId): Result<Unit> = error("unused")
-
-        override suspend fun getContactPeppolStatus(
-            contactId: ContactId,
-            refresh: Boolean
-        ): Result<PeppolStatusResponse> = error("unused")
-
-        override suspend fun listInvoicesByContact(
-            contactId: ContactId,
-            direction: DocumentDirection?,
-            limit: Int,
-            offset: Int
-        ): Result<PaginatedResponse<DocDto.Invoice.Confirmed>> {
-            val source = when (direction) {
-                DocumentDirection.Outbound -> outboundInvoices
-                DocumentDirection.Inbound -> inboundInvoices
-                else -> outboundInvoices + inboundInvoices
-            }
-            val items = source.drop(offset).take(limit)
+        override suspend fun invoke(
+            page: Int,
+            pageSize: Int,
+            filter: DocumentListFilter?,
+            documentStatus: DocumentStatus?,
+            ingestionStatus: IngestionStatus?,
+            sortBy: String?,
+            contactId: String?,
+        ): Result<PaginatedResponse<DocumentListItemDto>> {
             return Result.success(
                 PaginatedResponse(
                     items = items,
-                    total = source.size.toLong(),
-                    limit = limit,
-                    offset = offset
+                    total = items.size.toLong(),
+                    limit = pageSize,
+                    offset = page * pageSize,
                 )
             )
         }
+    }
 
-        override suspend fun getDocumentRecord(documentId: DocumentId): Result<DocumentDetailDto> {
+    private class FakeGetDocumentRecordUseCase : GetDocumentRecordUseCase {
+        val records = mutableMapOf<DocumentId, DocumentDetailDto>()
+        val requestedDocumentIds = mutableListOf<DocumentId>()
+
+        override suspend fun invoke(documentId: DocumentId): Result<DocumentDetailDto> {
             requestedDocumentIds += documentId
-            return documentRecords[documentId]
+            return records[documentId]
                 ?.let { Result.success(it) }
                 ?: Result.failure(IllegalStateException("Missing document record for $documentId"))
         }
-
-        override suspend fun getContactActivity(contactId: ContactId): Result<ContactActivitySummary> = error("unused")
-
-        override suspend fun getContactStats(): Result<ContactStats> = error("unused")
-
-        override suspend fun mergeContacts(
-            sourceContactId: ContactId,
-            targetContactId: ContactId
-        ): Result<ContactMergeResult> = error("unused")
-
-        override suspend fun listNotes(
-            contactId: ContactId,
-            limit: Int,
-            offset: Int
-        ): Result<List<ContactNoteDto>> = error("unused")
-
-        override suspend fun createNote(
-            contactId: ContactId,
-            request: CreateContactNoteRequest
-        ): Result<ContactNoteDto> = error("unused")
-
-        override suspend fun updateNote(
-            contactId: ContactId,
-            noteId: ContactNoteId,
-            request: UpdateContactNoteRequest
-        ): Result<ContactNoteDto> = error("unused")
-
-        override suspend fun deleteNote(
-            contactId: ContactId,
-            noteId: ContactNoteId
-        ): Result<Unit> = error("unused")
-
-        override fun observeContactChanges(contactId: ContactId) = error("unused")
     }
 }
 
@@ -290,30 +195,26 @@ private val tenantId = TenantId.parse("00000000-0000-0000-0000-000000000001")
 private val contactId = ContactId.parse("00000000-0000-0000-0000-000000000002")
 private val now = LocalDateTime(2026, 2, 1, 10, 0)
 
-private fun invoice(
-    invoiceId: String,
-    invoiceNumber: String,
-    documentId: DocumentId?,
-    notes: String? = null,
-    issueDate: LocalDate = LocalDate(2026, 2, 1),
-): DocDto.Invoice.Confirmed {
-    return DocDto.Invoice.Confirmed(
-        id = InvoiceId.parse(invoiceId),
-        tenantId = tenantId,
-        direction = DocumentDirection.Inbound,
-        contactId = contactId,
-        invoiceNumber = invoiceNumber,
-        issueDate = issueDate,
-        dueDate = issueDate,
-        subtotalAmount = Money(10000),
-        vatAmount = Money(2100),
-        totalAmount = Money(12100),
-        paidAmount = Money.ZERO,
-        status = InvoiceStatus.Draft,
-        notes = notes,
+private fun listItem(
+    documentId: DocumentId,
+    sortDate: LocalDate = LocalDate(2026, 2, 1),
+    counterpartyDisplayName: String? = null,
+): DocumentListItemDto {
+    return DocumentListItemDto(
         documentId = documentId,
-        createdAt = now,
-        updatedAt = now
+        tenantId = tenantId,
+        filename = "document.pdf",
+        documentType = DocumentType.Invoice,
+        direction = DocumentDirection.Inbound,
+        documentStatus = DocumentStatus.Confirmed,
+        ingestionStatus = null,
+        effectiveOrigin = DocumentSource.Upload,
+        uploadedAt = now,
+        counterpartyDisplayName = counterpartyDisplayName,
+        purposeRendered = null,
+        totalAmount = Money(12100),
+        currency = null,
+        sortDate = sortDate,
     )
 }
 
@@ -380,11 +281,13 @@ private fun documentRecord(
             content = content,
             purposeBase = purposeBase,
             purposeRendered = purposeRendered,
-            resolvedContact = if (contactId != null) {
-                ResolvedContact.Linked(contactId = contactId, name = "", vatNumber = null, email = null, avatarPath = null)
-            } else {
-                ResolvedContact.Unknown
-            },
+            resolvedContact = ResolvedContact.Linked(
+                contactId = contactId,
+                name = "",
+                vatNumber = null,
+                email = null,
+                avatarPath = null
+            ),
             aiDraftSourceRunId = null,
             draftVersion = 0,
             draftEditedAt = null,
@@ -395,8 +298,4 @@ private fun documentRecord(
         ),
         latestIngestion = null,
     )
-}
-
-private fun confirmedEntityReference(confirmedEntity: DocDto?): String? {
-    return (confirmedEntity as? DocDto.Invoice.Confirmed)?.invoiceNumber
 }

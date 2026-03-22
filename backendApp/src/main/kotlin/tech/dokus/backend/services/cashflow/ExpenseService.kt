@@ -1,12 +1,13 @@
 package tech.dokus.backend.services.cashflow
 
 import kotlinx.datetime.LocalDate
-import tech.dokus.database.entity.ExpenseEntity
+import tech.dokus.backend.mappers.from
 import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.domain.enums.ExpenseCategory
 import tech.dokus.domain.ids.ExpenseId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.CreateExpenseRequest
+import tech.dokus.domain.model.DocDto
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.foundation.backend.utils.loggerFor
 
@@ -28,9 +29,10 @@ class ExpenseService(
     suspend fun createExpense(
         tenantId: TenantId,
         request: CreateExpenseRequest
-    ): Result<ExpenseEntity> {
+    ): Result<DocDto.Receipt.Confirmed> {
         logger.info("Creating expense for tenant: $tenantId, merchant: ${request.merchant}")
         return expenseRepository.createExpense(tenantId, request)
+            .map { DocDto.Receipt.Confirmed.from(it) }
             .onSuccess { logger.info("Expense created: ${it.id}") }
             .onFailure { logger.error("Failed to create expense for tenant: $tenantId", it) }
     }
@@ -41,9 +43,10 @@ class ExpenseService(
     suspend fun getExpense(
         expenseId: ExpenseId,
         tenantId: TenantId
-    ): Result<ExpenseEntity?> {
+    ): Result<DocDto.Receipt.Confirmed?> {
         logger.debug("Fetching expense: {} for tenant: {}", expenseId, tenantId)
         return expenseRepository.getExpense(expenseId, tenantId)
+            .map { it?.let { entity -> DocDto.Receipt.Confirmed.from(entity) } }
             .onFailure { logger.error("Failed to fetch expense: $expenseId", it) }
     }
 
@@ -57,7 +60,7 @@ class ExpenseService(
         toDate: LocalDate? = null,
         limit: Int = 50,
         offset: Int = 0
-    ): Result<PaginatedResponse<ExpenseEntity>> {
+    ): Result<PaginatedResponse<DocDto.Receipt.Confirmed>> {
         logger.debug(
             "Listing expenses for tenant: {} (category={}, limit={}, offset={})",
             tenantId,
@@ -66,6 +69,14 @@ class ExpenseService(
             offset
         )
         return expenseRepository.listExpenses(tenantId, category, fromDate, toDate, limit, offset)
+            .map { paginated ->
+                PaginatedResponse(
+                    items = paginated.items.map { DocDto.Receipt.Confirmed.from(it) },
+                    total = paginated.total,
+                    limit = paginated.limit,
+                    offset = paginated.offset
+                )
+            }
             .onSuccess { logger.debug("Retrieved ${it.items.size} expenses (total=${it.total})") }
             .onFailure { logger.error("Failed to list expenses for tenant: $tenantId", it) }
     }
@@ -77,9 +88,10 @@ class ExpenseService(
         expenseId: ExpenseId,
         tenantId: TenantId,
         request: CreateExpenseRequest
-    ): Result<ExpenseEntity> {
+    ): Result<DocDto.Receipt.Confirmed> {
         logger.info("Updating expense: $expenseId for tenant: $tenantId")
         return expenseRepository.updateExpense(expenseId, tenantId, request)
+            .map { DocDto.Receipt.Confirmed.from(it) }
             .onSuccess { logger.info("Expense updated: $expenseId") }
             .onFailure { logger.error("Failed to update expense: $expenseId", it) }
     }

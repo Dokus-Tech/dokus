@@ -95,7 +95,7 @@ object DocumentsTable : UUIDTable("documents") {
     // Counterparty Resolution
     // ============================================
 
-    // Contact suggestions (JSON array of SuggestedContact)
+    // Contact suggestions (JSON array of SuggestedContactDto)
     val contactSuggestions = text("contact_suggestions").nullable()
 
     // Counterparty snapshot used for matching (JSON)
@@ -107,7 +107,7 @@ object DocumentsTable : UUIDTable("documents") {
         .nullable()
     val linkedContactSource = dbEnumeration<ContactLinkSource>("linked_contact_source").nullable()
 
-    // Evidence JSON for contact decision (MatchEvidence)
+    // Evidence JSON for contact decision (MatchEvidenceDto)
     val matchEvidence = text("match_evidence").nullable()
 
     // Whether a new contact should be created from the counterparty snapshot

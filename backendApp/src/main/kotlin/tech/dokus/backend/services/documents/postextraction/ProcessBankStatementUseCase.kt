@@ -2,18 +2,27 @@ package tech.dokus.backend.services.documents.postextraction
 
 import tech.dokus.backend.services.banking.BankStatementProcessingService
 import tech.dokus.backend.services.banking.StatementDedupService.StatementDedupOutcome
-import tech.dokus.backend.services.cashflow.matching.MatchingEngine
 import tech.dokus.database.repository.cashflow.DocumentRepository
-import tech.dokus.domain.enums.BankTransactionSource
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.model.BankStatementDraftData
 import tech.dokus.features.ai.models.toAuthoritativeCounterpartySnapshot
 import tech.dokus.foundation.backend.utils.loggerFor
 import tech.dokus.foundation.backend.utils.runSuspendCatching
 
+/**
+ * Processes a bank statement after AI extraction.
+ *
+ * Flow:
+ * 1. Validate rows, resolve account, calculate trust, detect duplicates
+ * 2. Store annotated draft (transactions with duplicate flags)
+ * 3. Resolve bank institution contact
+ * 4. Auto-confirm if policy passes (confirmation dispatcher persists transactions)
+ *
+ * Transaction persistence is always deferred to confirmation —
+ * same pattern as invoices/receipts/credit notes.
+ */
 internal class ProcessBankStatementUseCase(
     private val bankStatementProcessingService: BankStatementProcessingService,
-    private val matchingEngine: MatchingEngine,
     private val documentRepository: DocumentRepository,
     private val resolveContact: ResolveDocumentContactUseCase,
     private val autoConfirm: AutoConfirmDocumentUseCase,
@@ -26,39 +35,25 @@ internal class ProcessBankStatementUseCase(
     suspend operator fun invoke(context: PostExtractionContext): PostExtractionOutcome? {
         val draftData = context.draftData as BankStatementDraftData
 
-        val bankProcessing = bankStatementProcessingService.process(
+        val prepareResult = bankStatementProcessingService.prepare(
             tenantId = context.tenantId,
             documentId = context.documentId,
             sourceId = context.sourceId,
             draftData = draftData,
-            source = context.bankTransactionSource ?: BankTransactionSource.PdfStatement,
         )
-        if (bankProcessing.dedupOutcome is StatementDedupOutcome.Skip) {
+
+        if (prepareResult.dedupOutcome is StatementDedupOutcome.Skip) {
             logger.info("Bank statement {} skipped (duplicate)", context.documentId)
             return null
         }
 
+        // Store annotated draft with validated transactions and duplicate flags
         documentRepository.updateExtractedDataAndStatus(
             documentId = context.documentId,
             tenantId = context.tenantId,
-            extractedData = bankProcessing.sanitizedDraft,
+            extractedData = prepareResult.sanitizedDraft,
             status = DocumentStatus.NeedsReview,
         )
-
-        if (bankProcessing.validRows > 0) {
-            runSuspendCatching {
-                matchingEngine.matchBankStatement(
-                    tenantId = context.tenantId,
-                    documentId = context.documentId,
-                )
-            }.onFailure {
-                logger.warn(
-                    "Bank statement matching failed for {}: {}",
-                    context.documentId,
-                    it.message,
-                )
-            }
-        }
 
         // Contact resolution for bank institution
         var linkedContactId: tech.dokus.domain.ids.ContactId? = null
@@ -68,7 +63,7 @@ internal class ProcessBankStatementUseCase(
                 resolveContact(
                     tenantId = context.tenantId,
                     documentId = context.documentId,
-                    draftData = bankProcessing.sanitizedDraft,
+                    draftData = prepareResult.sanitizedDraft,
                     authoritativeSnapshot = authoritativeSnapshot,
                     tenantVat = context.tenantVat,
                 )
@@ -83,16 +78,19 @@ internal class ProcessBankStatementUseCase(
             }
         }
 
-        // Auto-confirm (same logic as standard documents)
-        autoConfirm(context, linkedContactId)
+        // Auto-confirm (policy + confirmation dispatcher handle persistence + matching)
+        if (!prepareResult.hasDuplicates) {
+            autoConfirm(context, linkedContactId)
+        }
 
         logger.info(
-            "Processed bank statement {}: validRows={}, discardedRows={}, trust={}, dedup={}",
+            "Processed bank statement {}: validRows={}, discardedRows={}, trust={}, dedup={}, duplicates={}",
             context.documentId,
-            bankProcessing.validRows,
-            bankProcessing.discardedRows.size,
-            bankProcessing.statementTrust,
-            bankProcessing.dedupOutcome,
+            prepareResult.validRows,
+            prepareResult.discardedRows.size,
+            prepareResult.statementTrust,
+            prepareResult.dedupOutcome,
+            prepareResult.hasDuplicates,
         )
         return PostExtractionOutcome.BankStatementProcessed
     }

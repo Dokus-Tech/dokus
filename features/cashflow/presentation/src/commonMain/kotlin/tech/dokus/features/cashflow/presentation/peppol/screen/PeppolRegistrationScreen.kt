@@ -2,6 +2,7 @@ package tech.dokus.features.cashflow.presentation.peppol.screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -10,8 +11,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -72,6 +71,7 @@ import tech.dokus.foundation.app.state.isLoading
 import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.aura.components.POutlinedButton
 import tech.dokus.foundation.aura.components.common.AnimatedCheck
+import tech.dokus.foundation.aura.components.common.DokusErrorBanner
 import tech.dokus.foundation.aura.components.common.DokusErrorContent
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.common.PCopyRow
@@ -88,78 +88,90 @@ import tech.dokus.foundation.aura.tooling.TestWrapper
 @Composable
 internal fun PeppolRegistrationScreen(
     state: PeppolRegistrationState,
-    snackbarHostState: SnackbarHostState,
     onIntent: (PeppolRegistrationIntent) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         modifier = modifier
     ) { innerPadding ->
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
-                .limitWidthCenteredContent(),
-            contentAlignment = Alignment.Center,
+                .padding(innerPadding),
         ) {
-            when {
-                state.setupContext.isLoading() -> LoadingContent()
+            state.actionError?.let { error ->
+                DokusErrorBanner(
+                    exception = error,
+                    retryHandler = null,
+                    modifier = Modifier.padding(horizontal = Constraints.Spacing.large),
+                    onDismiss = { onIntent(PeppolRegistrationIntent.DismissActionError) },
+                )
+            }
 
-                state.setupContext.isError() -> {
-                    val error = state.setupContext.exception
-                    if (isPeppolSetupFlowError(error)) {
-                        SetupErrorContent(
-                            exception = error,
-                            retryHandler = state.setupContext.retryHandler,
-                            onIntent = onIntent,
-                        )
-                    } else {
-                        DokusErrorContent(
-                            exception = error,
-                            retryHandler = state.setupContext.retryHandler,
-                            modifier = Modifier.fillMaxSize(),
-                        )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .limitWidthCenteredContent(),
+                contentAlignment = Alignment.Center,
+            ) {
+                when {
+                    state.setupContext.isLoading() -> LoadingContent()
+
+                    state.setupContext.isError() -> {
+                        val error = state.setupContext.exception
+                        if (isPeppolSetupFlowError(error)) {
+                            SetupErrorContent(
+                                exception = error,
+                                retryHandler = state.setupContext.retryHandler,
+                                onIntent = onIntent,
+                            )
+                        } else {
+                            DokusErrorContent(
+                                exception = error,
+                                retryHandler = state.setupContext.retryHandler,
+                                modifier = Modifier.fillMaxSize(),
+                            )
+                        }
                     }
-                }
 
-                state.setupContext.isSuccess() -> {
-                    val context = state.setupContext.data
-                    when (state.phase) {
-                        PeppolRegistrationPhase.Fresh -> FreshContent(
-                            isEnabling = state.isWorking,
-                            onIntent = onIntent,
-                        )
+                    state.setupContext.isSuccess() -> {
+                        val context = state.setupContext.data
+                        when (state.phase) {
+                            PeppolRegistrationPhase.Fresh -> FreshContent(
+                                isEnabling = state.isWorking,
+                                onIntent = onIntent,
+                            )
 
-                        PeppolRegistrationPhase.Activating -> ActivatingContent(onIntent)
+                            PeppolRegistrationPhase.Activating -> ActivatingContent(onIntent)
 
-                        PeppolRegistrationPhase.Active -> ActiveContent(
-                            context = context,
-                            onIntent = onIntent,
-                        )
+                            PeppolRegistrationPhase.Active -> ActiveContent(
+                                context = context,
+                                onIntent = onIntent,
+                            )
 
-                        PeppolRegistrationPhase.Blocked -> BlockedContent(
-                            context = context,
-                            isWorking = state.isWorking,
-                            onIntent = onIntent,
-                        )
+                            PeppolRegistrationPhase.Blocked -> BlockedContent(
+                                context = context,
+                                isWorking = state.isWorking,
+                                onIntent = onIntent,
+                            )
 
-                        PeppolRegistrationPhase.WaitingTransfer -> WaitingTransferContent(
-                            context = context,
-                            onIntent = onIntent,
-                        )
+                            PeppolRegistrationPhase.WaitingTransfer -> WaitingTransferContent(
+                                context = context,
+                                onIntent = onIntent,
+                            )
 
-                        PeppolRegistrationPhase.SendingOnly -> SendingOnlyContent(
-                            context = context,
-                            onIntent = onIntent,
-                        )
+                            PeppolRegistrationPhase.SendingOnly -> SendingOnlyContent(
+                                context = context,
+                                onIntent = onIntent,
+                            )
 
-                        PeppolRegistrationPhase.External -> ExternalContent(onIntent)
+                            PeppolRegistrationPhase.External -> ExternalContent(onIntent)
 
-                        PeppolRegistrationPhase.Failed -> FailedContent(
-                            isRetrying = state.isRetrying,
-                            onIntent = onIntent,
-                        )
+                            PeppolRegistrationPhase.Failed -> FailedContent(
+                                isRetrying = state.isRetrying,
+                                onIntent = onIntent,
+                            )
+                        }
                     }
                 }
             }
@@ -523,7 +535,6 @@ private fun PeppolRegistrationScreenPreview(
     TestWrapper(parameters) {
         PeppolRegistrationScreen(
             state = PeppolRegistrationState(),
-            snackbarHostState = remember { SnackbarHostState() },
             onIntent = {},
         )
     }

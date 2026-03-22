@@ -2,9 +2,8 @@
 
 package tech.dokus.database.repository.cashflow
 
-import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.Expression
-import org.jetbrains.exposed.v1.core.ResultRow
+import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.alias
 import org.jetbrains.exposed.v1.core.and
@@ -15,14 +14,16 @@ import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.isNotNull
 import org.jetbrains.exposed.v1.core.isNull
 import org.jetbrains.exposed.v1.core.max
-import org.jetbrains.exposed.v1.core.not
 import org.jetbrains.exposed.v1.core.neq
+import org.jetbrains.exposed.v1.core.not
 import org.jetbrains.exposed.v1.core.or
+import org.jetbrains.exposed.v1.jdbc.Query
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
-import org.jetbrains.exposed.v1.jdbc.Query
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
-import tech.dokus.database.mapper.toDocumentDto
+import tech.dokus.database.entity.DraftSummaryEntity
+import tech.dokus.database.entity.IngestionRunSummaryEntity
+import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.cashflow.CreditNotesTable
 import tech.dokus.database.tables.cashflow.ExpensesTable
 import tech.dokus.database.tables.cashflow.InvoicesTable
@@ -30,21 +31,18 @@ import tech.dokus.database.tables.contacts.ContactsTable
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
 import tech.dokus.database.tables.documents.DocumentMatchReviewsTable
 import tech.dokus.database.tables.documents.DocumentsTable
-import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentListFilter
 import tech.dokus.domain.enums.DocumentMatchReviewStatus
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.IngestionStatus
+import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.IngestionRunId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.DocumentDto
-import tech.dokus.domain.model.contact.isUnresolved
-import tech.dokus.domain.utils.json
 import java.util.UUID
-import kotlin.uuid.toKotlinUuid
+import kotlin.uuid.toJavaUuid
 
 internal object DocumentListingQuery {
 
@@ -60,6 +58,7 @@ internal object DocumentListingQuery {
     private fun buildBaseQuery(
         tenantId: TenantId,
         filter: DocumentListFilter?,
+        contactId: ContactId? = null,
         documentStatus: DocumentStatus?,
         documentType: DocumentType?,
         ingestionStatus: IngestionStatus?
@@ -271,6 +270,10 @@ internal object DocumentListingQuery {
 
         var whereOp = DocumentsTable.tenantId eq tenantIdUuid
 
+        if (contactId != null) {
+            whereOp = whereOp and (DocumentsTable.linkedContactId eq contactId.value.toJavaUuid())
+        }
+
         val requiresDraft = effectiveDocumentStatus != null || documentType != null
         if (requiresDraft) {
             whereOp = whereOp and DocumentsTable.documentStatus.isNotNull()
@@ -360,6 +363,7 @@ internal object DocumentListingQuery {
     suspend fun listWithDraftsAndIngestion(
         tenantId: TenantId,
         filter: DocumentListFilter?,
+        contactId: ContactId? = null,
         documentStatus: DocumentStatus?,
         documentType: DocumentType?,
         ingestionStatus: IngestionStatus?,
@@ -370,6 +374,7 @@ internal object DocumentListingQuery {
         val baseQuery = buildBaseQuery(
             tenantId = tenantId,
             filter = filter,
+            contactId = contactId,
             documentStatus = documentStatus,
             documentType = documentType,
             ingestionStatus = ingestionStatus
@@ -406,7 +411,7 @@ internal object DocumentListingQuery {
         val tenantIdUuid = baseQuery.tenantIdUuid
 
         // Documents and drafts are on the same table — single query with contact join
-        data class DocumentAndDraft(val document: DocumentDto, val draft: DraftSummary?)
+        data class DocumentAndDraft(val document: DocumentDto, val draft: DraftSummaryEntity?)
         val documentsById = DocumentsTable
             .join(ContactsTable, JoinType.LEFT, DocumentsTable.linkedContactId, ContactsTable.id) {
                 ContactsTable.tenantId eq DocumentsTable.tenantId
@@ -420,8 +425,8 @@ internal object DocumentListingQuery {
                 val docId = DocumentId.parse(row[DocumentsTable.id].toString())
                 val hasDraft = row[DocumentsTable.documentStatus] != null
                 docId to DocumentAndDraft(
-                    document = row.toDocumentDto(),
-                    draft = if (hasDraft) row.toDraftSummary(contactName = row.getOrNull(ContactsTable.name)) else null,
+                    document = DocumentDto.from(row),
+                    draft = if (hasDraft) DraftSummaryEntity.from(row, contactName = row.getOrNull(ContactsTable.name)) else null,
                 )
             }
 
@@ -434,7 +439,7 @@ internal object DocumentListingQuery {
                         (DocumentIngestionRunsTable.id inList latestRunIds)
                 }
                 .associate { row ->
-                    IngestionRunId.parse(row[DocumentIngestionRunsTable.id].toString()) to row.toIngestionRunSummary()
+                    IngestionRunId.parse(row[DocumentIngestionRunsTable.id].toString()) to IngestionRunSummaryEntity.from(row)
                 }
         }
 
@@ -449,54 +454,4 @@ internal object DocumentListingQuery {
 
         DocumentListPage(results, total)
     }
-}
-
-private fun ResultRow.toIngestionRunSummary(): IngestionRunSummary {
-    return IngestionRunSummary(
-        id = IngestionRunId.parse(this[DocumentIngestionRunsTable.id].toString()),
-        documentId = DocumentId.parse(this[DocumentIngestionRunsTable.documentId].toString()),
-        tenantId = TenantId(this[DocumentIngestionRunsTable.tenantId].toKotlinUuid()),
-        status = this[DocumentIngestionRunsTable.status],
-        provider = this[DocumentIngestionRunsTable.provider],
-        queuedAt = this[DocumentIngestionRunsTable.queuedAt],
-        startedAt = this[DocumentIngestionRunsTable.startedAt],
-        finishedAt = this[DocumentIngestionRunsTable.finishedAt],
-        errorMessage = this[DocumentIngestionRunsTable.errorMessage],
-        confidence = this[DocumentIngestionRunsTable.confidence]?.toDouble(),
-        processingOutcome = this[DocumentIngestionRunsTable.processingOutcome],
-        rawExtractionJson = this[DocumentIngestionRunsTable.rawExtractionJson],
-        processingTrace = this[DocumentIngestionRunsTable.processingTrace]
-    )
-}
-
-private fun ResultRow.toDraftSummary(contactName: String? = null): DraftSummary {
-    val counterparty = DocumentRepository.buildCounterpartyInfo(this)
-    return DraftSummary(
-        documentId = DocumentId.parse(this[DocumentsTable.id].toString()),
-        tenantId = TenantId(this[DocumentsTable.tenantId].toKotlinUuid()),
-        documentStatus = this[DocumentsTable.documentStatus] ?: DocumentStatus.NeedsReview,
-        documentType = this[DocumentsTable.documentType],
-        direction = this[DocumentsTable.direction] ?: DocumentDirection.Unknown,
-        aiKeywords = this[DocumentsTable.aiKeywords]?.let { json.decodeFromString(it) } ?: emptyList(),
-        purposeBase = this[DocumentsTable.purposeBase],
-        purposePeriodYear = this[DocumentsTable.purposePeriodYear],
-        purposePeriodMonth = this[DocumentsTable.purposePeriodMonth],
-        purposeRendered = this[DocumentsTable.purposeRendered],
-        purposeSource = this[DocumentsTable.purposeSource],
-        purposeLocked = this[DocumentsTable.purposeLocked],
-        purposePeriodMode = this[DocumentsTable.purposePeriodMode],
-        counterpartyKey = this[DocumentsTable.counterpartyKey],
-        merchantToken = this[DocumentsTable.merchantToken],
-        aiDraftSourceRunId = this[DocumentsTable.aiDraftSourceRunId]?.let { IngestionRunId.parse(it.toString()) },
-        draftVersion = this[DocumentsTable.draftVersion],
-        draftEditedAt = this[DocumentsTable.draftEditedAt],
-        draftEditedBy = this[DocumentsTable.draftEditedBy]?.let { UserId(it.toKotlinUuid()) },
-        counterparty = counterparty,
-        counterpartyDisplayName = contactName
-            ?: if (counterparty.isUnresolved()) counterparty.snapshot?.name else null,
-        rejectReason = this[DocumentsTable.rejectReason],
-        lastSuccessfulRunId = this[DocumentsTable.lastSuccessfulRunId]?.let { IngestionRunId.parse(it.toString()) },
-        createdAt = this[DocumentsTable.uploadedAt],
-        updatedAt = this[DocumentsTable.updatedAt]
-    )
 }

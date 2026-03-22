@@ -12,13 +12,14 @@ import tech.dokus.database.repository.cashflow.DocumentBlobRepository
 import tech.dokus.database.repository.cashflow.FuzzySourceCandidate
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentMatchReviewRepository
-import tech.dokus.database.repository.cashflow.DocumentMatchReviewSummary
+import tech.dokus.database.entity.DocumentMatchReviewEntity
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.DocumentSourceRepository
-import tech.dokus.database.repository.cashflow.DocumentSourceSummary
-import tech.dokus.database.repository.cashflow.DraftSummary
+import tech.dokus.database.entity.DocumentSourceEntity
+import tech.dokus.database.entity.DraftSummaryEntity
 import tech.dokus.database.repository.drafts.DraftRepository
-import tech.dokus.domain.model.toDocDto
+import tech.dokus.domain.model.DocDto
+import tech.dokus.domain.model.from
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.ReviewReason
@@ -37,7 +38,7 @@ import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.DocumentMatchResolutionDecision
 import tech.dokus.domain.model.InvoiceDraftData
-import tech.dokus.domain.model.PartyDraft
+import tech.dokus.domain.model.PartyDraftDto
 import tech.dokus.foundation.backend.storage.DocumentStorageService
 import tech.dokus.domain.enums.SourceMatchKind
 import kotlin.test.assertEquals
@@ -206,7 +207,7 @@ class DocumentTruthServiceTest {
         } returns draftSummary()
         coEvery {
             draftRepository.getDraftAsDocDto(tenantId, docId2, DocumentType.Invoice)
-        } returns existingDraft.toDocDto()
+        } returns existingDraft.let { DocDto.from(it) }
         coEvery {
             matchReviewRepository.createPending(tenantId, docId2, sourceId1, any(), any(), any())
         } returns reviewId1
@@ -242,7 +243,7 @@ class DocumentTruthServiceTest {
         } returns draftSummary()
         coEvery {
             draftRepository.getDraftAsDocDto(tenantId, docId2, DocumentType.Invoice)
-        } returns sharedDraft.toDocDto()
+        } returns sharedDraft.let { DocDto.from(it) }
         coEvery { sourceRepository.countLinkedSources(tenantId, docId2) } returns 2
         coEvery { sourceRepository.countSources(tenantId, docId1, includeDetached = true) } returns 0
 
@@ -315,7 +316,7 @@ class DocumentTruthServiceTest {
         coEvery { documentRepository.getDraftByDocumentId(docId2, tenantId) } returns draftSummary()
         coEvery {
             draftRepository.getDraftAsDocDto(tenantId, docId2, DocumentType.Invoice)
-        } returns simpleInvoiceDraft(invoiceNumber = "INV-2026-002").toDocDto()
+        } returns simpleInvoiceDraft(invoiceNumber = "INV-2026-002").let { DocDto.from(it) }
         coEvery {
             matchReviewRepository.createPending(tenantId, docId2, sourceId1, any(), any(), any())
         } returns reviewId1
@@ -384,7 +385,7 @@ class DocumentTruthServiceTest {
         extractedSnapshotJson: String? = null,
         identityKeyHash: String? = null,
         contentHash: String? = null
-    ) = DocumentSourceSummary(
+    ) = DocumentSourceEntity(
         id = id,
         tenantId = tenantId,
         documentId = documentId,
@@ -412,11 +413,12 @@ class DocumentTruthServiceTest {
     private fun reviewSummary(
         documentId: DocumentId = docId2,
         incomingSourceId: DocumentSourceId = sourceId1
-    ) = DocumentMatchReviewSummary(
+    ) = DocumentMatchReviewEntity(
         id = reviewId1,
         tenantId = tenantId,
         documentId = documentId,
         incomingSourceId = incomingSourceId,
+        incomingDocumentId = null,
         reasonType = ReviewReason.MaterialConflict,
         aiSummary = "Test conflict",
         aiConfidence = 0.8,
@@ -429,7 +431,7 @@ class DocumentTruthServiceTest {
 
     private fun draftSummary(
         documentStatus: DocumentStatus = DocumentStatus.NeedsReview
-    ) = DraftSummary(
+    ) = DraftSummaryEntity(
         documentId = docId2,
         tenantId = tenantId,
         documentStatus = documentStatus,
@@ -453,11 +455,11 @@ class DocumentTruthServiceTest {
         direction = DocumentDirection.Inbound,
         invoiceNumber = invoiceNumber,
         totalAmount = Money(totalMinor),
-        seller = PartyDraft(
+        seller = PartyDraftDto(
             name = "Supplier Inc",
             vat = VatNumber.from("BE0777887045")
         ),
-        buyer = PartyDraft(
+        buyer = PartyDraftDto(
             name = "Buyer Corp",
             vat = VatNumber.from("IE9700053D")
         )

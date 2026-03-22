@@ -1,18 +1,12 @@
 package tech.dokus.features.contacts.presentation.contacts.components
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import com.composables.icons.lucide.Clock
-import com.composables.icons.lucide.FileText
-import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.Receipt
-import com.composables.icons.lucide.ShoppingCart
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -23,28 +17,36 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import com.composables.icons.lucide.Clock
+import com.composables.icons.lucide.FileText
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Receipt
+import com.composables.icons.lucide.ShoppingCart
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.contacts_activity_summary
-import tech.dokus.aura.resources.contacts_inbound_invoices
 import tech.dokus.aura.resources.contacts_expenses
+import tech.dokus.aura.resources.contacts_inbound_invoices
 import tech.dokus.aura.resources.contacts_invoices
 import tech.dokus.aura.resources.contacts_last_activity_value
 import tech.dokus.aura.resources.contacts_pending_approval_plural
 import tech.dokus.aura.resources.contacts_pending_approval_single
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.model.contact.ContactActivitySummary
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.DokusCard
 import tech.dokus.foundation.aura.components.DokusCardPadding
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.DokusCardVariant
-import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.aura.components.common.ErrorOverlay
 import tech.dokus.foundation.aura.components.common.ShimmerLine
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
-import tech.dokus.domain.ids.ContactId
 
 // UI dimension constants
 private val SectionSpacing = Constraints.Spacing.large
@@ -62,7 +64,6 @@ private val SkeletonLabelWidth =
 private val SkeletonLabelHeight = Constraints.Spacing.medium
 private val SkeletonTotalWidth = Constraints.IconSize.xxLarge - Constraints.Spacing.xSmall
 private val SkeletonTotalHeight = Constraints.Spacing.medium
-private val ErrorPaddingVertical = Constraints.Spacing.xxLarge
 private const val SkeletonRepeatCount = 3
 
 @Composable
@@ -70,38 +71,29 @@ internal fun ActivitySummarySection(
     state: DokusState<ContactActivitySummary>,
     modifier: Modifier = Modifier
 ) {
-    DokusCard(
-        modifier = modifier.fillMaxWidth(),
-        padding = DokusCardPadding.Default,
+    ErrorOverlay(
+        exception = if (state is DokusState.Error) state.exception else null,
+        retryHandler = if (state is DokusState.Error) state.retryHandler else null,
     ) {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(SectionSpacing)
+        DokusCard(
+            modifier = modifier.fillMaxWidth(),
+            padding = DokusCardPadding.Default,
         ) {
-            Text(
-                text = stringResource(Res.string.contacts_activity_summary),
-                style = MaterialTheme.typography.headlineMedium,
-            )
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(SectionSpacing)
+            ) {
+                Text(
+                    text = stringResource(Res.string.contacts_activity_summary),
+                    style = MaterialTheme.typography.headlineMedium,
+                )
 
-            when (state) {
-                is DokusState.Loading, is DokusState.Idle -> {
-                    ActivitySummarySkeleton()
-                }
-                is DokusState.Success -> {
-                    ActivitySummaryContent(activity = state.data)
-                }
-                is DokusState.Error -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = ErrorPaddingVertical),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        DokusErrorContent(
-                            exception = state.exception,
-                            retryHandler = state.retryHandler
-                        )
-                    }
+                when (state) {
+                    is DokusState.Loading, is DokusState.Idle -> ActivitySummarySkeleton()
+                    is DokusState.Success -> ActivitySummaryContent(activity = state.data)
+                    is DokusState.Error -> ActivitySummaryContent(
+                        activity = ContactActivitySummary(contactId = ContactId.generate()),
+                    )
                 }
             }
         }
@@ -162,7 +154,10 @@ private fun ActivitySummaryContent(
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = stringResource(Res.string.contacts_last_activity_value, formatDateTime(lastActivity)),
+                    text = stringResource(
+                        Res.string.contacts_last_activity_value,
+                        formatDateTime(lastActivity)
+                    ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -256,10 +251,22 @@ private fun ActivitySummarySkeleton() {
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(StatCardSpacing)
                 ) {
-                    ShimmerLine(modifier = Modifier.size(SkeletonIconSize), height = SkeletonIconSize)
-                    ShimmerLine(modifier = Modifier.width(SkeletonCountWidth), height = SkeletonCountHeight)
-                    ShimmerLine(modifier = Modifier.width(SkeletonLabelWidth), height = SkeletonLabelHeight)
-                    ShimmerLine(modifier = Modifier.width(SkeletonTotalWidth), height = SkeletonTotalHeight)
+                    ShimmerLine(
+                        modifier = Modifier.size(SkeletonIconSize),
+                        height = SkeletonIconSize
+                    )
+                    ShimmerLine(
+                        modifier = Modifier.width(SkeletonCountWidth),
+                        height = SkeletonCountHeight
+                    )
+                    ShimmerLine(
+                        modifier = Modifier.width(SkeletonLabelWidth),
+                        height = SkeletonLabelHeight
+                    )
+                    ShimmerLine(
+                        modifier = Modifier.width(SkeletonTotalWidth),
+                        height = SkeletonTotalHeight
+                    )
                 }
             }
         }
@@ -270,12 +277,10 @@ private fun ActivitySummarySkeleton() {
 // PREVIEWS
 // ============================================================================
 
-@androidx.compose.ui.tooling.preview.Preview
+@Preview
 @Composable
 private fun ActivitySummarySectionPreview(
-    @androidx.compose.ui.tooling.preview.PreviewParameter(
-        PreviewParametersProvider::class
-    ) parameters: PreviewParameters
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
 ) {
     TestWrapper(parameters) {
         ActivitySummarySection(
@@ -290,6 +295,21 @@ private fun ActivitySummarySectionPreview(
                     expenseTotal = "1,050.00",
                     pendingApprovalCount = 2
                 )
+            )
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun ActivitySummarySectionErrorPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        ActivitySummarySection(
+            state = DokusState.error(
+                exception = DokusException.ConnectionError(),
+                retryHandler = {},
             )
         )
     }

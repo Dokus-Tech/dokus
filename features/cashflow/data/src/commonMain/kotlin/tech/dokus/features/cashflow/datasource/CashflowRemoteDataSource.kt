@@ -38,11 +38,12 @@ import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.domain.model.BulkReprocessRequest
 import tech.dokus.domain.model.BulkReprocessResponse
 import tech.dokus.domain.model.CancelEntryRequest
-import tech.dokus.domain.model.CashflowEntry
+import tech.dokus.domain.model.CashflowEntryDto
 import tech.dokus.domain.model.CashflowOverview
 import tech.dokus.domain.model.CashflowPaymentRequest
 import tech.dokus.domain.model.CreateExpenseRequest
 import tech.dokus.domain.model.CreateInvoiceRequest
+import tech.dokus.domain.model.DocDto
 import tech.dokus.domain.model.DocumentCountsResponse
 import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.DocumentDraftDto
@@ -54,7 +55,6 @@ import tech.dokus.domain.model.DocumentPagesResponse
 import tech.dokus.domain.model.DocumentRecordStreamEvent
 import tech.dokus.domain.model.DocumentSourceDto
 import tech.dokus.domain.model.Dpi
-import tech.dokus.domain.model.DocDto
 import tech.dokus.domain.model.PeppolConnectRequest
 import tech.dokus.domain.model.PeppolConnectResponse
 import tech.dokus.domain.model.PeppolIdVerificationResult
@@ -400,13 +400,13 @@ interface CashflowRemoteDataSource {
         entryId: CashflowEntryId? = null,
         limit: Int = 50,
         offset: Int = 0
-    ): Result<PaginatedResponse<CashflowEntry>>
+    ): Result<PaginatedResponse<CashflowEntryDto>>
 
     /**
      * Get a single cashflow entry by ID.
      * GET /api/v1/cashflow/entries/{id}
      */
-    suspend fun getCashflowEntry(entryId: CashflowEntryId): Result<CashflowEntry>
+    suspend fun getCashflowEntry(entryId: CashflowEntryId): Result<CashflowEntryDto>
 
     /**
      * Get imported transaction candidates for recording payment.
@@ -431,7 +431,7 @@ interface CashflowRemoteDataSource {
     suspend fun recordCashflowPayment(
         entryId: CashflowEntryId,
         request: CashflowPaymentRequest
-    ): Result<CashflowEntry>
+    ): Result<CashflowEntryDto>
 
     /**
      * Cancel a cashflow entry.
@@ -440,7 +440,7 @@ interface CashflowRemoteDataSource {
     suspend fun cancelCashflowEntry(
         entryId: CashflowEntryId,
         request: CancelEntryRequest? = null
-    ): Result<CashflowEntry>
+    ): Result<CashflowEntryDto>
 
     /**
      * Undo active auto payment for an entry.
@@ -449,7 +449,7 @@ interface CashflowRemoteDataSource {
     suspend fun undoAutoPayment(
         entryId: CashflowEntryId,
         request: UndoAutoPaymentRequest = UndoAutoPaymentRequest()
-    ): Result<CashflowEntry>
+    ): Result<CashflowEntryDto>
 
     // ============================================================================
     // DOCUMENT MANAGEMENT (AI Extraction Pipeline)
@@ -473,6 +473,7 @@ interface CashflowRemoteDataSource {
         documentType: DocumentType? = null,
         ingestionStatus: IngestionStatus? = null,
         sortBy: String? = null,
+        contactId: ContactId? = null,
         page: Int = 0,
         limit: Int = 20
     ): Result<PaginatedResponse<DocumentListItemDto>>
@@ -596,6 +597,12 @@ interface CashflowRemoteDataSource {
         dpi: Dpi,
         maxPages: Int = 10
     ): Result<DocumentPagesResponse>
+
+    /**
+     * Download raw document bytes.
+     * GET /api/v1/documents/{id}/content
+     */
+    suspend fun getDocumentContent(documentId: DocumentId): Result<ByteArray>
 
     /**
      * Download source bytes for a specific evidence source.

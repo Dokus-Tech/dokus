@@ -16,8 +16,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -41,7 +39,6 @@ import tech.dokus.domain.ids.BankAccountId
 import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.features.banking.presentation.payments.components.AccountFilterDropdown
-import tech.dokus.features.banking.presentation.payments.components.IgnoreReasonDialog
 import tech.dokus.features.banking.presentation.payments.components.PaymentFilterTabs
 import tech.dokus.features.banking.presentation.payments.components.PaymentsSkeleton
 import tech.dokus.features.banking.presentation.payments.components.TransactionCard
@@ -58,7 +55,8 @@ import tech.dokus.foundation.app.state.isLoading
 import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.common.DokusEmptyState
-import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.aura.components.common.DokusErrorBanner
+import tech.dokus.foundation.aura.components.common.ErrorOverlay
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.common.DokusLoaderSize
 import tech.dokus.foundation.aura.components.common.MonthSeparatorRow
@@ -83,18 +81,8 @@ private val DetailPaneWidth = 280.dp
 internal fun PaymentsScreen(
     state: PaymentsState,
     onIntent: (PaymentsIntent) -> Unit,
-    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     modifier: Modifier = Modifier,
 ) {
-    state.ignoreDialogState?.let { dialogState ->
-        IgnoreReasonDialog(
-            selectedReason = dialogState.selectedReason,
-            onReasonSelected = { onIntent(PaymentsIntent.SelectIgnoreReason(it)) },
-            onConfirm = { onIntent(PaymentsIntent.ConfirmIgnore) },
-            onDismiss = { onIntent(PaymentsIntent.DismissIgnoreDialog) },
-        )
-    }
-
     state.transferDialogState?.let { dialogState ->
         TransferDialog(
             availableAccounts = dialogState.availableAccounts,
@@ -111,7 +99,6 @@ internal fun PaymentsScreen(
         topBar = {
             if (!isLargeScreen) PTopAppBar(Res.string.banking_payments_title)
         },
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         modifier = modifier,
     ) { contentPadding ->
         PaymentsContent(
@@ -178,6 +165,15 @@ private fun PaymentsContent(
             ),
         verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.large),
     ) {
+        // Action error banner
+        state.actionError?.let { error ->
+            DokusErrorBanner(
+                exception = error,
+                retryHandler = null,
+                onDismiss = { onIntent(PaymentsIntent.DismissActionError) },
+            )
+        }
+
         // Unresolved callout (only when summary loaded)
         if (state.summary.isSuccess()) {
             val summary = state.summary.data
@@ -216,49 +212,45 @@ private fun PaymentsContent(
                     .weight(1f)
                     .fillMaxHeight(),
             ) {
-                when {
-                    txData.isEmpty() && isRefreshing -> {
-                        PaymentsSkeleton()
-                    }
-                    state.transactions.isError() -> {
-                        DokusErrorContent(
-                            exception = state.transactions.exception,
-                            retryHandler = state.transactions.retryHandler,
-                            modifier = Modifier.fillMaxSize(),
-                        )
-                    }
-                    txData.isEmpty() && state.transactions.isSuccess() -> {
-                        DokusEmptyState(
-                            title = stringResource(Res.string.banking_empty_title),
-                            subtitle = stringResource(Res.string.banking_empty_subtitle),
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(Constraints.Spacing.xxLarge),
-                        )
-                    }
-                    else -> {
-                        if (isLargeScreen) {
-                            DesktopTransactionTable(
-                                displayRows = displayRows,
-                                selectedTransactionId = state.selectedTransactionId,
-                                accountNames = state.accountNames,
-                                isRefreshing = isRefreshing,
-                                listState = listState,
-                                onSelectTransaction = { id ->
-                                    onIntent(PaymentsIntent.SelectTransaction(id))
-                                },
-                            )
-                        } else {
-                            MobileTransactionList(
-                                displayRows = displayRows,
-                                selectedTransactionId = state.selectedTransactionId,
-                                isRefreshing = isRefreshing,
-                                listState = listState,
-                                onSelectTransaction = { id ->
-                                    onIntent(PaymentsIntent.SelectTransaction(id))
-                                },
+                ErrorOverlay(
+                    exception = if (state.transactions is DokusState.Error) state.transactions.exception else null,
+                    retryHandler = if (state.transactions is DokusState.Error) state.transactions.retryHandler else null,
+                ) {
+                    when {
+                        state.transactions.isSuccess() && txData.isEmpty() -> {
+                            DokusEmptyState(
+                                title = stringResource(Res.string.banking_empty_title),
+                                subtitle = stringResource(Res.string.banking_empty_subtitle),
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(Constraints.Spacing.xxLarge),
                             )
                         }
+                        txData.isNotEmpty() -> {
+                            if (isLargeScreen) {
+                                DesktopTransactionTable(
+                                    displayRows = displayRows,
+                                    selectedTransactionId = state.selectedTransactionId,
+                                    accountNames = state.accountNames,
+                                    isRefreshing = isRefreshing,
+                                    listState = listState,
+                                    onSelectTransaction = { id ->
+                                        onIntent(PaymentsIntent.SelectTransaction(id))
+                                    },
+                                )
+                            } else {
+                                MobileTransactionList(
+                                    displayRows = displayRows,
+                                    selectedTransactionId = state.selectedTransactionId,
+                                    isRefreshing = isRefreshing,
+                                    listState = listState,
+                                    onSelectTransaction = { id ->
+                                        onIntent(PaymentsIntent.SelectTransaction(id))
+                                    },
+                                )
+                            }
+                        }
+                        else -> PaymentsSkeleton()
                     }
                 }
             }

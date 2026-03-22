@@ -1,8 +1,10 @@
 package tech.dokus.backend.services.contacts
 
+import tech.dokus.database.mapper.from
 import tech.dokus.backend.services.business.BusinessProfileService
 import tech.dokus.backend.services.business.EnrichmentTrigger
 import tech.dokus.backend.services.cashflow.InvoiceBankAutomationService
+import tech.dokus.database.entity.ContactEntity
 import tech.dokus.database.repository.contacts.ContactAddressRepository
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.database.repository.peppol.PeppolDirectoryCacheRepository
@@ -49,12 +51,13 @@ class ContactService(
             val existing = contactRepository.findByVatNumber(tenantId, vatNumber.value).getOrNull()
             if (existing != null) {
                 logger.info("Contact with VAT ${vatNumber.value} already exists: ${existing.id}, skipping creation")
-                return Result.success(existing)
+                return Result.success(ContactDto.from(existing))
             }
         }
 
         return runCatching {
             val created = contactRepository.createContact(tenantId, request).getOrThrow()
+            val dto = ContactDto.from(created)
             var allAddressesPersisted = true
             for (addressInput in request.addresses) {
                 contactAddressRepository.addAddress(
@@ -81,7 +84,7 @@ class ContactService(
                 )
             }
 
-            hydrateSingle(tenantId, created) ?: created
+            hydrateSingle(tenantId, dto) ?: dto
         }.onSuccess { logger.info("Contact created: ${it.id}") }
             .onFailure { logger.error("Failed to create contact for tenant: $tenantId", it) }
     }
@@ -96,7 +99,7 @@ class ContactService(
         logger.debug("Fetching contact: $contactId for tenant: $tenantId")
         return runCatching {
             val raw = contactRepository.getContact(contactId, tenantId).getOrThrow()
-            raw?.let { hydrateSingle(tenantId, it) }
+            raw?.let { hydrateSingle(tenantId, ContactDto.from(it)) }
         }
             .onFailure { logger.error("Failed to fetch contact: $contactId", it) }
     }
@@ -122,7 +125,13 @@ class ContactService(
             offset
         )
             .map { page ->
-                page.copy(items = hydrateContacts(tenantId, page.items))
+                val dtos = page.items.map { ContactDto.from(it) }
+                PaginatedResponse(
+                    items = hydrateContacts(tenantId, dtos),
+                    total = page.total,
+                    limit = page.limit,
+                    offset = page.offset
+                )
             }
             .onSuccess { logger.debug("Retrieved ${it.items.size} contacts (total=${it.total})") }
             .onFailure { logger.error("Failed to list contacts for tenant: $tenantId", it) }
@@ -147,7 +156,13 @@ class ContactService(
             offset = offset
         )
             .map { page ->
-                page.copy(items = hydrateContacts(tenantId, page.items))
+                val dtos = page.items.map { ContactDto.from(it) }
+                PaginatedResponse(
+                    items = hydrateContacts(tenantId, dtos),
+                    total = page.total,
+                    limit = page.limit,
+                    offset = page.offset
+                )
             }
             .onSuccess { logger.debug("Lookup returned ${it.items.size} contacts (total=${it.total})") }
             .onFailure { logger.error("Failed contact lookup for tenant: $tenantId", it) }
@@ -165,7 +180,13 @@ class ContactService(
         logger.debug("Listing customers for tenant: $tenantId")
         return contactRepository.listCustomers(tenantId, isActive, limit, offset)
             .map { page ->
-                page.copy(items = hydrateContacts(tenantId, page.items))
+                val dtos = page.items.map { ContactDto.from(it) }
+                PaginatedResponse(
+                    items = hydrateContacts(tenantId, dtos),
+                    total = page.total,
+                    limit = page.limit,
+                    offset = page.offset
+                )
             }
             .onSuccess { logger.debug("Retrieved ${it.items.size} customers (total=${it.total})") }
             .onFailure { logger.error("Failed to list customers for tenant: $tenantId", it) }
@@ -183,7 +204,13 @@ class ContactService(
         logger.debug("Listing vendors for tenant: $tenantId")
         return contactRepository.listVendors(tenantId, isActive, limit, offset)
             .map { page ->
-                page.copy(items = hydrateContacts(tenantId, page.items))
+                val dtos = page.items.map { ContactDto.from(it) }
+                PaginatedResponse(
+                    items = hydrateContacts(tenantId, dtos),
+                    total = page.total,
+                    limit = page.limit,
+                    offset = page.offset
+                )
             }
             .onSuccess { logger.debug("Retrieved ${it.items.size} vendors (total=${it.total})") }
             .onFailure { logger.error("Failed to list vendors for tenant: $tenantId", it) }
@@ -201,6 +228,7 @@ class ContactService(
         logger.info("Updating contact: $contactId for tenant: $tenantId")
 
         val before = contactRepository.getContact(contactId, tenantId).getOrNull()
+            ?.let { ContactDto.from(it) }
 
         // Invalidate PEPPOL cache if VAT or company number is being updated
         // (cache staleness is detected by snapshot comparison, but proactive invalidation is cleaner)
@@ -223,7 +251,8 @@ class ContactService(
         }
 
         return contactRepository.updateContact(contactId, tenantId, request)
-            .map { updated ->
+            .map { entity ->
+                val updated = ContactDto.from(entity)
                 val matchingRelevantChange = before?.let {
                     it.name != updated.name ||
                         it.iban?.value != updated.iban?.value ||
@@ -347,5 +376,15 @@ class ContactService(
         return businessProfileService.projectContacts(tenantId, withAddresses)
     }
 
-    // NOTE: listPeppolEnabledContacts() removed - PEPPOL status is now in PeppolDirectoryCacheTable
+    suspend fun getContactActivitySummary(
+        contactId: ContactId,
+        tenantId: TenantId
+    ) = contactRepository.getContactActivitySummary(contactId, tenantId)
+
+    suspend fun mergeContacts(
+        sourceContactId: ContactId,
+        targetContactId: ContactId,
+        tenantId: TenantId,
+        mergedByEmail: String
+    ) = contactRepository.mergeContacts(sourceContactId, targetContactId, tenantId, mergedByEmail)
 }

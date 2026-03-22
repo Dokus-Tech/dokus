@@ -4,7 +4,6 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
@@ -16,6 +15,8 @@ import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.v1.jdbc.update
+import tech.dokus.database.entity.IngestionRunSummaryEntity
+import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
 import tech.dokus.domain.enums.IngestionStatus
 import tech.dokus.domain.enums.ProcessingOutcome
@@ -29,25 +30,6 @@ import java.util.UUID
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid
 import kotlin.uuid.toKotlinUuid
-
-/**
- * Data class for ingestion run summary.
- */
-data class IngestionRunSummary(
-    val id: IngestionRunId,
-    val documentId: DocumentId,
-    val tenantId: TenantId,
-    val status: IngestionStatus,
-    val provider: String?,
-    val queuedAt: LocalDateTime,
-    val startedAt: LocalDateTime?,
-    val finishedAt: LocalDateTime?,
-    val errorMessage: String?,
-    val confidence: Double?,
-    val processingOutcome: ProcessingOutcome?,
-    val rawExtractionJson: String? = null,
-    val processingTrace: String? = null
-)
 
 /**
  * Repository for document ingestion run operations.
@@ -95,13 +77,13 @@ class DocumentIngestionRunRepository {
     suspend fun getById(
         runId: IngestionRunId,
         tenantId: TenantId
-    ): IngestionRunSummary? = newSuspendedTransaction {
+    ): IngestionRunSummaryEntity? = newSuspendedTransaction {
         DocumentIngestionRunsTable.selectAll()
             .where {
                 (DocumentIngestionRunsTable.id eq UUID.fromString(runId.toString())) and
                         (DocumentIngestionRunsTable.tenantId eq UUID.fromString(tenantId.toString()))
             }
-            .map { it.toIngestionRunSummary() }
+            .map { IngestionRunSummaryEntity.from(it) }
             .singleOrNull()
     }
 
@@ -112,7 +94,7 @@ class DocumentIngestionRunRepository {
     suspend fun listByDocument(
         documentId: DocumentId,
         tenantId: TenantId
-    ): List<IngestionRunSummary> = newSuspendedTransaction {
+    ): List<IngestionRunSummaryEntity> = newSuspendedTransaction {
         val tenantIdUuid = UUID.fromString(tenantId.toString())
         recoverStaleProcessingRunsInternal(tenantIdUuid)
 
@@ -122,7 +104,7 @@ class DocumentIngestionRunRepository {
                         (DocumentIngestionRunsTable.tenantId eq tenantIdUuid)
             }
             .orderBy(DocumentIngestionRunsTable.queuedAt, SortOrder.DESC)
-            .map { it.toIngestionRunSummary() }
+            .map { IngestionRunSummaryEntity.from(it) }
     }
 
     /**
@@ -133,7 +115,7 @@ class DocumentIngestionRunRepository {
     suspend fun getLatestForDocument(
         documentId: DocumentId,
         tenantId: TenantId
-    ): IngestionRunSummary? = newSuspendedTransaction {
+    ): IngestionRunSummaryEntity? = newSuspendedTransaction {
         val docIdUuid = UUID.fromString(documentId.toString())
         val tenantIdUuid = UUID.fromString(tenantId.toString())
         recoverStaleProcessingRunsInternal(tenantIdUuid)
@@ -149,7 +131,7 @@ class DocumentIngestionRunRepository {
                 DocumentIngestionRunsTable.startedAt to SortOrder.DESC_NULLS_LAST,
                 DocumentIngestionRunsTable.id to SortOrder.DESC
             )
-            .map { it.toIngestionRunSummary() }
+            .map { IngestionRunSummaryEntity.from(it) }
             .firstOrNull()
 
         if (processing != null) return@newSuspendedTransaction processing
@@ -168,7 +150,7 @@ class DocumentIngestionRunRepository {
                 DocumentIngestionRunsTable.finishedAt to SortOrder.DESC_NULLS_LAST,
                 DocumentIngestionRunsTable.id to SortOrder.DESC
             )
-            .map { it.toIngestionRunSummary() }
+            .map { IngestionRunSummaryEntity.from(it) }
             .firstOrNull()
 
         if (finished != null) return@newSuspendedTransaction finished
@@ -184,7 +166,7 @@ class DocumentIngestionRunRepository {
                 DocumentIngestionRunsTable.queuedAt to SortOrder.DESC,
                 DocumentIngestionRunsTable.id to SortOrder.DESC
             )
-            .map { it.toIngestionRunSummary() }
+            .map { IngestionRunSummaryEntity.from(it) }
             .firstOrNull()
     }
 
@@ -196,7 +178,7 @@ class DocumentIngestionRunRepository {
     suspend fun findActiveRun(
         documentId: DocumentId,
         tenantId: TenantId
-    ): IngestionRunSummary? = newSuspendedTransaction {
+    ): IngestionRunSummaryEntity? = newSuspendedTransaction {
         val tenantIdUuid = UUID.fromString(tenantId.toString())
         recoverStaleProcessingRunsInternal(tenantIdUuid)
 
@@ -208,7 +190,7 @@ class DocumentIngestionRunRepository {
                         (DocumentIngestionRunsTable.status inList pendingStatuses)
             }
             .orderBy(DocumentIngestionRunsTable.queuedAt, SortOrder.DESC)
-            .map { it.toIngestionRunSummary() }
+            .map { IngestionRunSummaryEntity.from(it) }
             .firstOrNull()
     }
 
@@ -245,24 +227,6 @@ class DocumentIngestionRunRepository {
 
     suspend fun recoverStaleProcessingRunsForTenant(tenantId: TenantId): Int = newSuspendedTransaction {
         recoverStaleProcessingRunsInternal(UUID.fromString(tenantId.toString()))
-    }
-
-    private fun ResultRow.toIngestionRunSummary(): IngestionRunSummary {
-        return IngestionRunSummary(
-            id = IngestionRunId.parse(this[DocumentIngestionRunsTable.id].toString()),
-            documentId = DocumentId.parse(this[DocumentIngestionRunsTable.documentId].toString()),
-            tenantId = TenantId(this[DocumentIngestionRunsTable.tenantId].toKotlinUuid()),
-            status = this[DocumentIngestionRunsTable.status],
-            provider = this[DocumentIngestionRunsTable.provider],
-            queuedAt = this[DocumentIngestionRunsTable.queuedAt],
-            startedAt = this[DocumentIngestionRunsTable.startedAt],
-            finishedAt = this[DocumentIngestionRunsTable.finishedAt],
-            errorMessage = this[DocumentIngestionRunsTable.errorMessage],
-            confidence = this[DocumentIngestionRunsTable.confidence]?.toDouble(),
-            processingOutcome = this[DocumentIngestionRunsTable.processingOutcome],
-            rawExtractionJson = this[DocumentIngestionRunsTable.rawExtractionJson],
-            processingTrace = this[DocumentIngestionRunsTable.processingTrace]
-        )
     }
 
     private fun recoverStaleProcessingRunsInternal(tenantId: UUID?): Int {

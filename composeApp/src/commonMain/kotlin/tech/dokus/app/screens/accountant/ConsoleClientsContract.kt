@@ -23,6 +23,7 @@ data class ConsoleClientsState(
     val documentsState: DokusState<List<DocumentListItemDto>> = DokusState.idle(),
     val selectedDocument: DocumentDetailDto? = null,
     val loadingDocumentId: String? = null,
+    val actionError: DokusException? = null,
 ) : MVIState {
     val filteredClients: List<ConsoleClientSummary>
         get() {
@@ -48,9 +49,10 @@ sealed interface ConsoleClientsIntent : MVIIntent {
     data class SelectClient(val tenantId: TenantId) : ConsoleClientsIntent
     data object BackToClients : ConsoleClientsIntent
     data class OpenDocument(val documentId: String) : ConsoleClientsIntent
+
+    /** Dismiss the action error banner */
+    data object DismissActionError : ConsoleClientsIntent
 }
 
 @Immutable
-sealed interface ConsoleClientsAction : MVIAction {
-    data class ShowError(val error: DokusException) : ConsoleClientsAction
-}
+sealed interface ConsoleClientsAction : MVIAction

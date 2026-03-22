@@ -51,6 +51,7 @@ internal class PeppolRegistrationContainer(
                     PeppolRegistrationIntent.NotNow -> handleNotNow()
                     PeppolRegistrationIntent.Continue -> action(PeppolRegistrationAction.NavigateToHome)
                     PeppolRegistrationIntent.Retry -> handleRetry()
+                    PeppolRegistrationIntent.DismissActionError -> updateState { copy(actionError = null) }
                 }
             }
         }
@@ -251,7 +252,7 @@ internal class PeppolRegistrationContainer(
                 onFailure = { error ->
                     logger.e(error) { "Failed to enable sending-only" }
                     updateState { copy(isWorking = false) }
-                    action(PeppolRegistrationAction.ShowError(error.asDokusException))
+                    updateState { copy(actionError = error.asDokusException) }
                 }
             )
         }
@@ -277,7 +278,7 @@ internal class PeppolRegistrationContainer(
                 onFailure = { error ->
                     logger.e(error) { "Failed to start waiting for transfer" }
                     updateState { copy(isWorking = false) }
-                    action(PeppolRegistrationAction.ShowError(error.asDokusException))
+                    updateState { copy(actionError = error.asDokusException) }
                 }
             )
         }
@@ -310,7 +311,7 @@ internal class PeppolRegistrationContainer(
                 },
                 onFailure = { error ->
                     logger.e(error) { "Failed to poll transfer status" }
-                    action(PeppolRegistrationAction.ShowError(error.asDokusException))
+                    updateState { copy(actionError = error.asDokusException) }
                 }
             )
         }

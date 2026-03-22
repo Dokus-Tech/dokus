@@ -1,0 +1,255 @@
+package tech.dokus.features.cashflow.presentation.detail.review
+
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.review_surface_looks_good
+import tech.dokus.domain.model.contact.ResolvedContact
+import tech.dokus.features.cashflow.presentation.detail.DocumentDetailIntent
+import tech.dokus.features.cashflow.presentation.detail.DocumentDetailState
+import tech.dokus.features.cashflow.presentation.detail.EditableField
+import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.status.StatusDot
+import tech.dokus.foundation.aura.components.status.StatusDotType
+import tech.dokus.foundation.aura.constrains.Constraints
+import tech.dokus.foundation.aura.style.textMuted
+
+/**
+ * The decision stream — the heart of the review surface.
+ *
+ * Renders either:
+ * - Clean state (no issues): green "Looks good" with contact card
+ * - Issue state: active issue card + dimmed upcoming issues + progress bar
+ */
+@Composable
+internal fun ReviewDecisionStream(
+    state: DocumentDetailState,
+    issues: List<ReviewIssue>,
+    activeIssueIndex: Int,
+    onIntent: (DocumentDetailIntent) -> Unit,
+    onChooseDifferent: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.large),
+    ) {
+        if (issues.isEmpty()) {
+            CleanDocumentState(state = state, onChooseDifferent = onChooseDifferent)
+        } else {
+            // Progress bar (only for multi-issue)
+            if (issues.size > 1) {
+                val nextTitle = issues.getOrNull(activeIssueIndex + 1)?.let {
+                    @Composable { it.issueTitle() }
+                }
+                ReviewProgressBar(
+                    currentStep = activeIssueIndex,
+                    totalSteps = issues.size,
+                    nextIssueTitle = nextTitle?.invoke(),
+                )
+            }
+
+            // Active issue card
+            val activeIssue = issues.getOrNull(activeIssueIndex)
+            if (activeIssue != null) {
+                ActiveIssueCard(
+                    issue = activeIssue,
+                    onIntent = onIntent,
+                    onChooseDifferent = onChooseDifferent,
+                )
+            }
+
+            // Dimmed upcoming issues
+            issues.forEachIndexed { index, issue ->
+                if (index > activeIssueIndex) {
+                    DimmedIssuePreview(title = issue.issueTitle())
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CleanDocumentState(
+    state: DocumentDetailState,
+    onChooseDifferent: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium),
+    ) {
+        // Green "Looks good" indicator
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
+        ) {
+            StatusDot(type = StatusDotType.Confirmed, size = 8.dp)
+            Text(
+                text = stringResource(Res.string.review_surface_looks_good),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+        }
+
+        // Contact info card (clickable to change supplier)
+        when (val contact = state.effectiveContact) {
+            is ResolvedContact.Linked -> {
+                CleanContactRow(
+                    name = contact.name,
+                    vatNumber = contact.vatNumber,
+                    onClick = onChooseDifferent,
+                )
+            }
+
+            is ResolvedContact.Suggested -> {
+                CleanContactRow(
+                    name = contact.name,
+                    vatNumber = contact.vatNumber,
+                    onClick = onChooseDifferent,
+                )
+            }
+
+            is ResolvedContact.Detected -> {
+                CleanContactRow(
+                    name = contact.name,
+                    vatNumber = contact.vatNumber,
+                    onClick = onChooseDifferent,
+                )
+            }
+
+            is ResolvedContact.Unknown -> {
+                // No contact to display — still clean (contact not required)
+            }
+        }
+    }
+}
+
+@Composable
+private fun CleanContactRow(
+    name: String,
+    vatNumber: String?,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val greenColor = MaterialTheme.colorScheme.tertiary
+
+    DokusCardSurface(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .drawBehind {
+                    drawLine(
+                        color = greenColor,
+                        start = Offset(0f, 0f),
+                        end = Offset(0f, size.height),
+                        strokeWidth = 2.dp.toPx(),
+                    )
+                }
+                .padding(Constraints.Spacing.medium),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xxSmall),
+            ) {
+                Text(
+                    text = name,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                if (!vatNumber.isNullOrBlank()) {
+                    Text(
+                        text = vatNumber,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.textMuted,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ActiveIssueCard(
+    issue: ReviewIssue,
+    onIntent: (DocumentDetailIntent) -> Unit,
+    onChooseDifferent: () -> Unit,
+) {
+    when (issue) {
+        is ReviewIssue.ContactIssue -> ContactIssueCard(
+            issue = issue,
+            onAcceptSuggestion = { onIntent(DocumentDetailIntent.AcceptSuggestedContact) },
+            onChooseDifferent = onChooseDifferent,
+        )
+
+        is ReviewIssue.DirectionIssue -> DirectionIssueCard(
+            issue = issue,
+            onSelectDirection = { onIntent(DocumentDetailIntent.SelectDirection(it)) },
+        )
+
+        is ReviewIssue.AmountIssue -> AmountIssueCard(
+            issue = issue,
+            totalValue = "",
+            subtotalValue = "",
+            vatValue = "",
+            onUpdateTotal = {
+                onIntent(
+                    DocumentDetailIntent.UpdateField(
+                        EditableField.TotalAmount,
+                        it
+                    )
+                )
+            },
+            onUpdateSubtotal = {
+                onIntent(
+                    DocumentDetailIntent.UpdateField(
+                        EditableField.SubtotalAmount,
+                        it
+                    )
+                )
+            },
+            onUpdateVat = {
+                onIntent(
+                    DocumentDetailIntent.UpdateField(
+                        EditableField.VatAmount,
+                        it
+                    )
+                )
+            },
+        )
+
+        is ReviewIssue.DateIssue -> DateIssueCard(
+            issue = issue,
+            onUpdateDueDate = {
+                onIntent(
+                    DocumentDetailIntent.UpdateField(
+                        EditableField.DueDate,
+                        it
+                    )
+                )
+            },
+            onKeepOriginal = { /* Accept as-is, trigger confirm */ onIntent(DocumentDetailIntent.Confirm) },
+        )
+    }
+}

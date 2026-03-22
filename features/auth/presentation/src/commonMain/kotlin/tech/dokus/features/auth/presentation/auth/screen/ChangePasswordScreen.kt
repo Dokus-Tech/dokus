@@ -2,21 +2,21 @@ package tech.dokus.features.auth.presentation.auth.screen
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
@@ -37,16 +37,16 @@ import tech.dokus.foundation.aura.components.layout.TwoPaneContainer
 import tech.dokus.foundation.aura.constrains.limitWidthCenteredContent
 import tech.dokus.foundation.aura.constrains.withContentPadding
 import tech.dokus.foundation.aura.extensions.dismissKeyboardOnTapOutside
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 
 @Composable
 internal fun ChangePasswordScreen(
     state: ChangePasswordState,
-    snackbarHostState: SnackbarHostState,
     onIntent: (ChangePasswordIntent) -> Unit
 ) {
     Scaffold(
         topBar = { PTopAppBar(Res.string.profile_change_password_title) },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         TwoPaneContainer(
             left = {
@@ -153,17 +153,14 @@ private fun ChangePasswordContent(
     }
 }
 
-@androidx.compose.ui.tooling.preview.Preview
+@Preview
 @Composable
 private fun ChangePasswordScreenPreview(
-    @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
 ) {
     tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
         ChangePasswordScreen(
             state = ChangePasswordState.initial,
-            snackbarHostState = androidx.compose.runtime.remember { SnackbarHostState() },
             onIntent = {},
         )
     }

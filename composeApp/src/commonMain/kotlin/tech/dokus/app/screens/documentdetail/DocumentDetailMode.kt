@@ -20,6 +20,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import tech.dokus.foundation.aura.style.divider
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -131,7 +132,7 @@ internal fun DocumentDetailMode(
                             ?: DocQueueStatus.Review.localized,
                     )
 
-                    // Content (NavHost rendering DocumentReviewRoute)
+                    // Content (NavHost rendering DocumentDetailRoute)
                     CompositionLocalProvider(LocalIsInDocDetailMode provides true) {
                         Box(modifier = Modifier.fillMaxSize()) {
                             content()
@@ -207,7 +208,7 @@ private fun DetailModeTitleBar(
     }
 
     // JSX: borderBottom "1px solid rgba(0,0,0,0.05)"
-    HorizontalDivider(color = Color.Black.copy(alpha = 0.05f))
+    HorizontalDivider(color = MaterialTheme.colorScheme.divider)
 }
 
 // =============================================================================

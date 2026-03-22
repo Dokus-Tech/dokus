@@ -12,13 +12,13 @@ import tech.dokus.domain.model.CreditNoteDraftData
 import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.database.entity.InvoiceEntity
 import tech.dokus.database.entity.InvoiceItemEntity
-import tech.dokus.domain.model.FinancialLineItem
+import tech.dokus.domain.model.FinancialLineItemDto
 import tech.dokus.domain.model.InvoiceDraftData
-import tech.dokus.domain.model.PartyDraft
+import tech.dokus.domain.model.PartyDraftDto
 import tech.dokus.domain.model.PeppolSettingsDto
 import tech.dokus.domain.model.Tenant
 import tech.dokus.domain.model.TenantSettings
-import tech.dokus.domain.model.VatBreakdownEntry
+import tech.dokus.domain.model.VatBreakdownEntryDto
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.foundation.backend.utils.loggerFor
 import tech.dokus.peppol.model.PeppolInvoiceData
@@ -190,7 +190,7 @@ class PeppolMapper {
             val netAmount = line.lineTotal?.let { Money.fromDouble(it).minor }
             val vatRate = line.taxPercent?.let { (it * 100).roundToInt() }
 
-            FinancialLineItem(
+            FinancialLineItemDto(
                 description = description,
                 quantity = quantity,
                 unitPrice = unitPrice,
@@ -203,7 +203,7 @@ class PeppolMapper {
             val rate = subtotal.taxPercent?.let { (it * 100).roundToInt() } ?: return@mapNotNull null
             val base = subtotal.taxableAmount?.let { Money.fromDouble(it).minor } ?: return@mapNotNull null
             val amount = subtotal.taxAmount?.let { Money.fromDouble(it).minor } ?: return@mapNotNull null
-            VatBreakdownEntry(
+            VatBreakdownEntryDto(
                 rate = rate,
                 base = base,
                 amount = amount
@@ -227,11 +227,11 @@ class PeppolMapper {
                 originalInvoiceNumber = null,
                 reason = document.note,
                 notes = notes,
-                seller = PartyDraft(
+                seller = PartyDraftDto(
                     name = seller?.name,
                     vat = VatNumber.from(seller?.vatNumber),
                 ),
-                buyer = PartyDraft(
+                buyer = PartyDraftDto(
                     name = buyer?.name,
                     vat = VatNumber.from(buyer?.vatNumber),
                 )
@@ -249,11 +249,11 @@ class PeppolMapper {
                 lineItems = lineItems,
                 vatBreakdown = vatBreakdown,
                 notes = notes,
-                seller = PartyDraft(
+                seller = PartyDraftDto(
                     name = seller?.name,
                     vat = VatNumber.from(seller?.vatNumber),
                 ),
-                buyer = PartyDraft(
+                buyer = PartyDraftDto(
                     name = buyer?.name,
                     vat = VatNumber.from(buyer?.vatNumber),
                 )
@@ -272,11 +272,11 @@ class PeppolMapper {
                 originalInvoiceNumber = null,
                 reason = document.note,
                 notes = notes,
-                seller = PartyDraft(
+                seller = PartyDraftDto(
                     name = seller?.name,
                     vat = VatNumber.from(seller?.vatNumber),
                 ),
-                buyer = PartyDraft(
+                buyer = PartyDraftDto(
                     name = buyer?.name,
                     vat = VatNumber.from(buyer?.vatNumber),
                 )
@@ -297,11 +297,11 @@ class PeppolMapper {
                 iban = null,
                 payment = null,
                 notes = notes,
-                seller = PartyDraft(
+                seller = PartyDraftDto(
                     name = seller?.name,
                     vat = VatNumber.from(seller?.vatNumber),
                 ),
-                buyer = PartyDraft(
+                buyer = PartyDraftDto(
                     name = buyer?.name,
                     vat = VatNumber.from(buyer?.vatNumber),
                 )

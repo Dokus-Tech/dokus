@@ -3,7 +3,6 @@ package tech.dokus.database.repository.ai
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
@@ -12,6 +11,8 @@ import org.jetbrains.exposed.v1.jdbc.batchInsert
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
+import tech.dokus.database.entity.DocumentChunkEntity
+import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.ai.DocumentChunksTable
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
@@ -248,7 +249,7 @@ class DocumentChunksRepository : ChunkRepository {
                     (DocumentChunksTable.documentId eq documentUuid)
             }
             .orderBy(DocumentChunksTable.chunkIndex to SortOrder.ASC)
-            .map { it.toChunkDto() }
+            .map { DocumentChunkDto.from(DocumentChunkEntity.from(it)) }
     }
 
     /**
@@ -268,7 +269,7 @@ class DocumentChunksRepository : ChunkRepository {
                     (DocumentChunksTable.tenantId eq tenantUuid)
             }
             .singleOrNull()
-            ?.toChunkDto()
+            ?.let { DocumentChunkDto.from(DocumentChunkEntity.from(it)) }
     }
 
     /**
@@ -312,37 +313,4 @@ class DocumentChunksRepository : ChunkRepository {
             .count()
     }
 
-    // =========================================================================
-    // Private Helpers
-    // =========================================================================
-
-    private fun ResultRow.toChunkDto(): DocumentChunkDto {
-        val metadataJson = this[DocumentChunksTable.metadata]
-        val metadata = metadataJson?.let {
-            try {
-                json.decodeFromString<ChunkMetadata>(it)
-            } catch (e: Exception) {
-                logger.warn("Failed to parse chunk metadata: ${e.message}")
-                null
-            }
-        }
-
-        return DocumentChunkDto(
-            id = DocumentChunkId.parse(this[DocumentChunksTable.id].value.toString()),
-            documentId = DocumentId.parse(
-                this[DocumentChunksTable.documentId].toString()
-            ),
-            tenantId = TenantId.parse(this[DocumentChunksTable.tenantId].toString()),
-            content = this[DocumentChunksTable.content],
-            chunkIndex = this[DocumentChunksTable.chunkIndex],
-            totalChunks = this[DocumentChunksTable.totalChunks],
-            startOffset = this[DocumentChunksTable.startOffset],
-            endOffset = this[DocumentChunksTable.endOffset],
-            pageNumber = this[DocumentChunksTable.pageNumber],
-            embeddingModel = this[DocumentChunksTable.embeddingModel],
-            tokenCount = this[DocumentChunksTable.tokenCount],
-            metadata = metadata,
-            createdAt = this[DocumentChunksTable.createdAt]
-        )
-    }
 }

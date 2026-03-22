@@ -5,8 +5,10 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.DocumentDirection
+import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.model.AnnualAccountsDraftData
 import tech.dokus.domain.model.BankFeeDraftData
 import tech.dokus.domain.model.BankStatementDraftData
@@ -22,9 +24,10 @@ import tech.dokus.domain.model.DeliveryNoteDraftData
 import tech.dokus.domain.model.DepreciationScheduleDraftData
 import tech.dokus.domain.model.DimonaDraftData
 import tech.dokus.domain.model.DividendDraftData
-import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.DocDto
 import tech.dokus.domain.model.DocumentDetailDto
+import tech.dokus.domain.model.DocumentDraftData
+import tech.dokus.domain.model.DocumentListItemDto
 import tech.dokus.domain.model.EmploymentContractDraftData
 import tech.dokus.domain.model.ExpenseClaimDraftData
 import tech.dokus.domain.model.FineDraftData
@@ -62,9 +65,11 @@ import tech.dokus.domain.model.VatAssessmentDraftData
 import tech.dokus.domain.model.VatListingDraftData
 import tech.dokus.domain.model.VatReturnDraftData
 import tech.dokus.domain.model.WithholdingTaxDraftData
+import tech.dokus.features.cashflow.usecases.GetDocumentRecordUseCase
+import tech.dokus.features.cashflow.usecases.LoadDocumentRecordsUseCase
 import tech.dokus.features.contacts.repository.ContactRemoteDataSource
 
-private const val InvoicePageSize = 100
+private const val DocumentPageSize = 100
 private const val RecentDocumentsLimit = 5
 private val WhitespaceRegex = Regex("\\s+")
 
@@ -86,72 +91,67 @@ internal class GetContactPeppolStatusUseCaseImpl(
 }
 
 internal class GetContactInvoiceSnapshotUseCaseImpl(
-    private val remoteDataSource: ContactRemoteDataSource
+    private val loadDocumentRecords: LoadDocumentRecordsUseCase,
+    private val getDocumentRecord: GetDocumentRecordUseCase,
 ) : GetContactInvoiceSnapshotUseCase {
 
     override suspend fun invoke(contactId: ContactId): Result<ContactInvoiceSnapshot> {
         return runCatching {
-            val outbound = fetchAllInvoices(contactId, DocumentDirection.Outbound)
-            val inbound = fetchAllInvoices(contactId, DocumentDirection.Inbound)
-            val invoices = (outbound + inbound).distinctBy { it.id }
-            buildSnapshot(invoices)
-        }
-    }
-
-    private suspend fun fetchAllInvoices(
-        contactId: ContactId,
-        direction: DocumentDirection
-    ): List<DocDto.Invoice.Confirmed> {
-        val invoices = mutableListOf<DocDto.Invoice.Confirmed>()
-        var offset = 0
-
-        while (true) {
-            val page = remoteDataSource.listInvoicesByContact(
+            val page = loadDocumentRecords(
+                page = 0,
+                pageSize = DocumentPageSize,
                 contactId = contactId,
-                direction = direction,
-                limit = InvoicePageSize,
-                offset = offset
             ).getOrElse { throw it }
 
-            if (page.items.isEmpty()) break
-
-            invoices += page.items
-            if (!page.hasMore) break
-            offset += page.items.size
+            buildSnapshot(page.items)
         }
-
-        return invoices
     }
 
-    private suspend fun buildSnapshot(invoices: List<DocDto.Invoice.Confirmed>): ContactInvoiceSnapshot = coroutineScope {
-        val totalVolume = invoices.fold(Money.ZERO) { sum, invoice ->
-            sum + (invoice.totalAmount ?: Money.ZERO)
+    private suspend fun buildSnapshot(documents: List<DocumentListItemDto>): ContactInvoiceSnapshot = coroutineScope {
+        val totalVolume = documents.fold(Money.ZERO) { sum, doc ->
+            sum + (doc.totalAmount ?: Money.ZERO)
         }
-        val outstanding = invoices.fold(Money.ZERO) { sum, invoice ->
-            sum + invoiceOutstandingAmount(invoice)
-        }
-        val recentDocuments = invoices
-            .sortedWith(
-                compareByDescending<DocDto.Invoice.Confirmed> { it.issueDate }
-                    .thenByDescending { it.updatedAt }
-            )
+
+        val confirmedDocs = documents.filter { it.documentStatus == DocumentStatus.Confirmed }
+
+        val recentDocuments = confirmedDocs
+            .sortedByDescending { it.sortDate }
             .take(RecentDocumentsLimit)
-            .map { invoice ->
+            .map { doc ->
                 async {
-                    val documentRecord = invoice.documentId
-                        ?.let { documentId -> remoteDataSource.getDocumentRecord(documentId).getOrNull() }
-                    invoice.toRecentDocument(documentRecord)
+                    val detail = getDocumentRecord(doc.documentId).getOrNull()
+                    doc.toRecentDocument(detail)
                 }
             }
             .awaitAll()
 
         ContactInvoiceSnapshot(
-            documentsCount = invoices.size,
+            documentsCount = documents.size,
             totalVolume = totalVolume,
-            outstanding = outstanding,
+            outstanding = Money.ZERO,
             recentDocuments = recentDocuments
         )
     }
+}
+
+private fun DocumentListItemDto.toRecentDocument(
+    detail: DocumentDetailDto?,
+): ContactRecentInvoice {
+    val invoiceContent = detail?.draft?.content as? DocDto.Invoice.Confirmed
+    val outstanding = if (invoiceContent != null) invoiceOutstandingAmount(invoiceContent) else Money.ZERO
+
+    return ContactRecentInvoice(
+        invoiceId = invoiceContent?.id ?: InvoiceId.parse("00000000-0000-0000-0000-000000000000"),
+        documentId = documentId,
+        issueDate = sortDate,
+        updatedAt = uploadedAt,
+        direction = direction ?: DocumentDirection.Unknown,
+        status = invoiceContent?.status ?: InvoiceStatus.Draft,
+        totalAmount = totalAmount ?: Money.ZERO,
+        outstandingAmount = outstanding,
+        summary = resolveRecentDocumentSummary(detail),
+        reference = resolveRecentDocumentReference(detail, this),
+    )
 }
 
 private fun invoiceOutstandingAmount(
@@ -163,39 +163,20 @@ private fun invoiceOutstandingAmount(
     return if (remainder.isNegative) Money.ZERO else remainder
 }
 
-private fun DocDto.Invoice.Confirmed.toRecentDocument(
-    documentRecord: DocumentDetailDto?
-): ContactRecentInvoice {
-    return ContactRecentInvoice(
-        invoiceId = id,
-        documentId = documentId,
-        issueDate = requireNotNull(issueDate) { "Confirmed invoice must have issueDate" },
-        updatedAt = updatedAt,
-        direction = direction,
-        status = status,
-        totalAmount = totalAmount ?: Money.ZERO,
-        outstandingAmount = invoiceOutstandingAmount(this),
-        summary = resolveRecentDocumentSummary(this, documentRecord),
-        reference = resolveRecentDocumentReference(this, documentRecord)
-    )
-}
-
 internal fun resolveRecentDocumentSummary(
-    invoice: DocDto.Invoice.Confirmed,
     documentRecord: DocumentDetailDto?
 ): String? {
     return documentRecord?.draft?.purposeRendered.normalizeRecentDocumentText()
         ?: documentRecord?.draft?.purposeBase.normalizeRecentDocumentText()
         ?: documentRecord?.draft?.content?.recentDocumentSummary()
-        ?: invoice.notes.normalizeRecentDocumentText()
 }
 
 internal fun resolveRecentDocumentReference(
-    invoice: DocDto.Invoice.Confirmed,
-    documentRecord: DocumentDetailDto?
+    documentRecord: DocumentDetailDto?,
+    listItem: DocumentListItemDto? = null,
 ): String? {
     return documentRecord?.draft?.content?.recentDocumentReference()
-        ?: invoice.invoiceNumber.toString().normalizeRecentDocumentText()
+        ?: listItem?.counterpartyDisplayName.normalizeRecentDocumentText()
         ?: documentRecord?.document?.filename.normalizeRecentDocumentText()
 }
 

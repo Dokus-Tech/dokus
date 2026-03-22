@@ -1,5 +1,6 @@
 package tech.dokus.backend.services.cashflow.matching
 
+import tech.dokus.database.repository.cashflow.matching.MatchingRepository
 import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId

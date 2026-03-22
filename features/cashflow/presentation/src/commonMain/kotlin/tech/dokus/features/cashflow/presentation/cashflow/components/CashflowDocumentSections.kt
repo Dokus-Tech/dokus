@@ -19,10 +19,13 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_no_documents
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.DocDto
 import tech.dokus.domain.model.common.PaginationState
 import tech.dokus.foundation.app.state.DokusState
-import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.app.state.isError
+import tech.dokus.foundation.app.state.isSuccess
+import tech.dokus.foundation.aura.components.common.ErrorOverlay
 import tech.dokus.foundation.aura.components.common.ShimmerLine
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.tooling.PreviewParameters
@@ -31,8 +34,6 @@ import tech.dokus.foundation.aura.tooling.TestWrapper
 
 // Section layout dimensions
 private val SectionItemSpacing = Constraints.Spacing.large
-private val DesktopErrorVerticalPadding = Constraints.Spacing.xxxLarge
-private val MobileErrorVerticalPadding = Constraints.Spacing.xxLarge
 
 // Table skeleton dimensions
 private val SkeletonRowSpacing = Constraints.Spacing.small
@@ -77,37 +78,25 @@ fun CashflowDocumentsTableSection(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(SectionItemSpacing)
     ) {
-        when (state) {
-            is DokusState.Loading, is DokusState.Idle -> {
-                DocumentsTableSkeleton()
-            }
-
-            is DokusState.Success -> {
-                val paginationState = state.data
-                if (paginationState.data.isEmpty()) {
-                    EmptyDocumentsState()
-                } else {
-                    FinancialDocumentTable(
-                        documents = paginationState.data,
-                        onDocumentClick = onDocumentClick,
-                        onMoreClick = onMoreClick,
-                        modifier = Modifier.fillMaxWidth()
-                    )
+        ErrorOverlay(
+            exception = if (state is DokusState.Error) state.exception else null,
+            retryHandler = if (state is DokusState.Error) state.retryHandler else null,
+        ) {
+            when (state) {
+                is DokusState.Loading, is DokusState.Idle -> DocumentsTableSkeleton()
+                is DokusState.Success -> {
+                    if (state.data.data.isEmpty()) {
+                        EmptyDocumentsState()
+                    } else {
+                        FinancialDocumentTable(
+                            documents = state.data.data,
+                            onDocumentClick = onDocumentClick,
+                            onMoreClick = onMoreClick,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
                 }
-            }
-
-            is DokusState.Error -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = DesktopErrorVerticalPadding),
-                    contentAlignment = Alignment.Center
-                ) {
-                    DokusErrorContent(
-                        exception = state.exception,
-                        retryHandler = state.retryHandler
-                    )
-                }
+                is DokusState.Error -> EmptyDocumentsState()
             }
         }
     }
@@ -131,36 +120,24 @@ fun CashflowMobileDocumentsSection(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(SectionItemSpacing)
     ) {
-        when (state) {
-            is DokusState.Loading, is DokusState.Idle -> {
-                MobileDocumentsListSkeleton()
-            }
-
-            is DokusState.Success -> {
-                val paginationState = state.data
-                if (paginationState.data.isEmpty()) {
-                    EmptyDocumentsState()
-                } else {
-                    FinancialDocumentList(
-                        documents = paginationState.data,
-                        onDocumentClick = onDocumentClick,
-                        modifier = Modifier.fillMaxWidth()
-                    )
+        ErrorOverlay(
+            exception = if (state is DokusState.Error) state.exception else null,
+            retryHandler = if (state is DokusState.Error) state.retryHandler else null,
+        ) {
+            when (state) {
+                is DokusState.Loading, is DokusState.Idle -> MobileDocumentsListSkeleton()
+                is DokusState.Success -> {
+                    if (state.data.data.isEmpty()) {
+                        EmptyDocumentsState()
+                    } else {
+                        FinancialDocumentList(
+                            documents = state.data.data,
+                            onDocumentClick = onDocumentClick,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
                 }
-            }
-
-            is DokusState.Error -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = MobileErrorVerticalPadding),
-                    contentAlignment = Alignment.Center
-                ) {
-                    DokusErrorContent(
-                        exception = state.exception,
-                        retryHandler = state.retryHandler
-                    )
-                }
+                is DokusState.Error -> EmptyDocumentsState()
             }
         }
     }
@@ -305,5 +282,19 @@ private fun LoadingMoreIndicatorPreview(
 ) {
     TestWrapper(parameters) {
         LoadingMoreIndicator()
+    }
+}
+
+@Preview
+@Composable
+private fun CashflowDocumentsTableSectionErrorPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        CashflowDocumentsTableSection(
+            state = DokusState.error(exception = DokusException.ConnectionError(), retryHandler = {}),
+            onDocumentClick = {},
+            onMoreClick = {},
+        )
     }
 }

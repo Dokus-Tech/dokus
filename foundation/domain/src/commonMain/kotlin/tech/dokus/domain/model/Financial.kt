@@ -117,6 +117,7 @@ data class TenantSettings(
     val enableBankSync: Boolean = false,
     val enablePeppol: Boolean = false,
     val paymentTermsText: String? = null,
+    val cashflowTrackingStartDate: LocalDate? = null,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime
 ) {
@@ -199,7 +200,7 @@ data class TeamMember(
  * Invitation to join a tenant workspace.
  */
 @Serializable
-data class TenantInvitation(
+data class TenantInvitationDto(
     val id: InvitationId,
     val tenantId: TenantId,
     val email: Email,
@@ -208,7 +209,9 @@ data class TenantInvitation(
     val status: InvitationStatus,
     val expiresAt: LocalDateTime,
     val createdAt: LocalDateTime
-)
+) {
+    companion object
+}
 
 /**
  * Request DTO for creating a team invitation.
@@ -262,7 +265,9 @@ data class PaymentDto(
     val reversedByUserId: UserId? = null,
     val reversalReason: String? = null,
     val createdAt: LocalDateTime
-)
+) {
+    companion object
+}
 
 // ============================================================================
 // BANKING
@@ -290,7 +295,7 @@ data class BankAccountDto(
 }
 
 @Serializable
-data class BankAccountSummary(
+data class BankAccountSummaryDto(
     val totalBalance: Money,
     val accountCount: Int,
     val unmatchedCount: Int,
@@ -300,7 +305,7 @@ data class BankAccountSummary(
 )
 
 @Serializable
-data class BankTransactionSummary(
+data class BankTransactionSummaryDto(
     val unmatchedCount: Int,
     val needsReviewCount: Int,
     val matchedCount: Int,
@@ -336,19 +341,19 @@ data class MarkTransferRequest(
 
 @Serializable
 data class BalanceHistoryResponse(
-    val series: List<AccountBalanceSeries>,
-    val totalSeries: List<BalanceHistoryPoint>,
+    val series: List<AccountBalanceSeriesDto>,
+    val totalSeries: List<BalanceHistoryPointDto>,
 )
 
 @Serializable
-data class AccountBalanceSeries(
+data class AccountBalanceSeriesDto(
     val accountId: BankAccountId,
     val accountName: String,
-    val points: List<BalanceHistoryPoint>,
+    val points: List<BalanceHistoryPointDto>,
 )
 
 @Serializable
-data class BalanceHistoryPoint(
+data class BalanceHistoryPointDto(
     val date: LocalDate,
     val balance: Money,
 )
@@ -369,7 +374,19 @@ data class AttachmentDto(
     val s3Key: String,
     val s3Bucket: String,
     val uploadedAt: LocalDateTime
-)
+) {
+    companion object
+}
+
+// ============================================================================
+// ATTACHMENT REQUEST/RESPONSE MODELS
+// ============================================================================
+
+@Serializable
+data class UploadAttachmentResponse(val attachmentId: AttachmentId)
+
+@Serializable
+data class DownloadUrlResponse(val downloadUrl: String)
 
 // ============================================================================
 // REQUEST/RESPONSE MODELS
@@ -416,6 +433,12 @@ data class UpdateInvoiceStatusRequest(
     val status: InvoiceStatus
 )
 
+/**
+ * Request body for PATCH /invoices/{id}/status endpoint.
+ */
+@Serializable
+data class InvoiceStatusRequest(val status: InvoiceStatus)
+
 @Serializable
 data class RecordPaymentRequest(
     val invoiceId: InvoiceId,
@@ -448,6 +471,17 @@ data class CreateExpenseRequest(
     val isRecurring: Boolean? = null,
     val paymentMethod: PaymentMethod? = null,
     val notes: String? = null
+)
+
+@Serializable
+data class CategorizeExpenseRequest(
+    val merchant: String,
+    val description: String? = null
+)
+
+@Serializable
+data class CategorizeExpenseResponse(
+    val category: ExpenseCategory
 )
 
 @Serializable

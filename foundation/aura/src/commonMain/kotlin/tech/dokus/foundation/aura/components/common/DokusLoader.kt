@@ -176,7 +176,7 @@ fun DokusLoader(
             val color = when (p.tone) {
                 ParticleTone.Neutral -> colorNeutral
                 ParticleTone.Gold -> colorGold
-                ParticleTone.Bright -> if (isDark) Color.White else Color(0xFF1F1F1F)
+                ParticleTone.Bright -> effects.brightParticle
             }
 
             val depthAlpha = DepthAlphaMin + depth * DepthAlphaRange

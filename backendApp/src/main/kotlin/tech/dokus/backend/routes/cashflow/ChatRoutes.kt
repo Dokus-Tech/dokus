@@ -12,12 +12,12 @@ import kotlinx.datetime.toLocalDateTime
 import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
 import tech.dokus.backend.security.requireTenantId
-import tech.dokus.database.repository.cashflow.DocumentRepository
+import tech.dokus.backend.services.documents.DocumentTruthService
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
-import tech.dokus.domain.model.ai.ChatCitation
+import tech.dokus.domain.model.ai.ChatCitationDto
 import tech.dokus.domain.model.ai.ChatConfiguration
 import tech.dokus.domain.model.ai.ChatHistoryResponse
 import tech.dokus.domain.model.ai.ChatMessageDto
@@ -59,7 +59,7 @@ import tech.dokus.features.ai.agents.MessageRole as AgentMessageRole
  */
 internal fun Route.chatRoutes() {
     val chatRepository by inject<ChatRepository>()
-    val documentRepository by inject<DocumentRepository>()
+    val truthService by inject<DocumentTruthService>()
     val models by inject<ModelSet>()
     val chatAgent by inject<ChatAgent>()
     val llmQueue by inject<LlmQueue>()
@@ -140,11 +140,7 @@ internal fun Route.chatRoutes() {
             logger.info("Single-doc chat request: tenant=$tenantId, document=$documentId")
 
             // Verify document exists and belongs to tenant
-            val document = documentRepository.getById(
-                tenantId = tenantId,
-                documentId = documentId
-            )
-            if (document == null) {
+            if (!truthService.documentExists(tenantId, documentId)) {
                 throw DokusException.NotFound("Document not found")
             }
 
@@ -411,7 +407,7 @@ private suspend fun processChat(
     // Map citations to domain model
     val citations = if (request.includeCitations && chatResult.citations.isNotEmpty()) {
         chatResult.citations.map { citation ->
-            ChatCitation(
+            ChatCitationDto(
                 chunkId = citation.chunkId,
                 documentId = citation.documentId,
                 documentName = citation.documentName,

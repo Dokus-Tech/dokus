@@ -1,9 +1,11 @@
 package tech.dokus.backend.services.documents.resolution
 
+import tech.dokus.database.mapper.from
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.ContactResolution
-import tech.dokus.domain.model.contact.MatchEvidence
+import tech.dokus.domain.model.contact.MatchEvidenceDto
 import tech.dokus.domain.model.entity.EntityStatus
 import tech.dokus.foundation.backend.lookup.CbeApiClient
 
@@ -17,6 +19,7 @@ class VatMatchResolver(
         val name = input.snapshot.name
 
         val vatMatch = contactRepository.findByVatNumber(input.tenantId, vat.value).getOrNull()
+            ?.let { ContactDto.from(it) }
             ?: return ResolverOutcome.Partial()
 
         val cbeStatus = resolveCbeStatus(vat)
@@ -29,7 +32,7 @@ class VatMatchResolver(
                 authoritativeName = name
             )
             val nameSimilarity = name?.let { matchingUtils.similarity(it, healedContact.name.value) }
-            val evidence = MatchEvidence(
+            val evidence = MatchEvidenceDto(
                 vatMatch = true,
                 ibanMatch = false,
                 nameSimilarity = nameSimilarity,

@@ -13,18 +13,18 @@ import tech.dokus.domain.ids.StructuredCommunication
  * A transaction has at most one communication type.
  */
 @Serializable
-sealed interface TransactionCommunication {
+sealed interface TransactionCommunicationDto {
 
     /** Belgian structured communication (OGM). */
     @Serializable
     data class Structured(
         val raw: String,
         val normalized: StructuredCommunication,
-    ) : TransactionCommunication
+    ) : TransactionCommunicationDto
 
     /** Free-form payment reference (e.g. invoice number, reference code). */
     @Serializable
-    data class FreeForm(val text: String) : TransactionCommunication
+    data class FreeForm(val text: String) : TransactionCommunicationDto
 
     companion object {
         /**
@@ -33,7 +33,7 @@ sealed interface TransactionCommunication {
         fun from(
             structuredCommunicationRaw: String?,
             freeCommunication: String?,
-        ): TransactionCommunication? {
+        ): TransactionCommunicationDto? {
             if (!structuredCommunicationRaw.isNullOrBlank()) {
                 val normalized = StructuredCommunication.from(structuredCommunicationRaw)
                 if (normalized != null) {

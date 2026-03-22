@@ -16,4 +16,11 @@ sealed interface BankingDestination : NavigationDestination {
     @Serializable
     @SerialName("root/banking/payments")
     data object Payments : BankingDestination
+
+    /**
+     * Dialog for selecting a reason when ignoring a bank transaction.
+     */
+    @Serializable
+    @SerialName("banking/dialog/ignore_reason")
+    data class IgnoreReasonDialog(val transactionId: String) : BankingDestination
 }

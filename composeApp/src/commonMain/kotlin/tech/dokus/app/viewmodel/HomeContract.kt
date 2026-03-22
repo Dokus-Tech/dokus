@@ -33,6 +33,7 @@ data class HomeState(
     val surfaceAvailability: SurfaceAvailability? = null,
     val firms: List<FirmWorkspaceSummary> = emptyList(),
     val isLoggingOut: Boolean = false,
+    val actionError: DokusException? = null,
 ) : MVIState {
     companion object {
         val initial by lazy { HomeState() }
@@ -54,6 +55,9 @@ sealed interface HomeIntent : MVIIntent {
 
     /** Logout from the shell profile controls. */
     data object Logout : HomeIntent
+
+    /** Dismiss the action error banner */
+    data object DismissActionError : HomeIntent
 }
 
 // ============================================================================
@@ -61,8 +65,4 @@ sealed interface HomeIntent : MVIIntent {
 // ============================================================================
 
 @Immutable
-sealed interface HomeAction : MVIAction {
-
-    /** Show a shell-level error message. */
-    data class ShowError(val error: DokusException) : HomeAction
-}
+sealed interface HomeAction : MVIAction

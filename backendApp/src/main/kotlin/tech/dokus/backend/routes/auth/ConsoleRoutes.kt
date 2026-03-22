@@ -11,7 +11,9 @@ import kotlinx.datetime.toLocalDateTime
 import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
 import tech.dokus.backend.routes.cashflow.documents.addDownloadUrl
-import tech.dokus.backend.routes.cashflow.documents.toDto
+import tech.dokus.backend.mappers.from
+import tech.dokus.domain.model.DocumentDraftDto
+import tech.dokus.domain.model.DocumentIngestionDto
 import tech.dokus.backend.security.requireAnyRole
 import tech.dokus.backend.security.requireFirmAccess
 import tech.dokus.backend.security.requireFirmClientAccess
@@ -81,8 +83,8 @@ internal fun Route.consoleRoutes() {
 
                 DocumentDetailDto(
                     document = documentWithUrl,
-                    draft = docInfo.draft?.toDto(),
-                    latestIngestion = docInfo.latestIngestion?.toDto(),
+                    draft = docInfo.draft?.let { DocumentDraftDto.from(it) },
+                    latestIngestion = docInfo.latestIngestion?.let { DocumentIngestionDto.from(it) },
                                     )
             }
 
@@ -119,11 +121,14 @@ internal fun Route.consoleRoutes() {
                 HttpStatusCode.OK,
                 DocumentDetailDto(
                     document = documentWithUrl,
-                    draft = draft?.toDto(),
-                    latestIngestion = latestIngestion?.toDto(
-                        includeRawExtraction = true,
-                        includeTrace = true
-                    ),
+                    draft = draft?.let { DocumentDraftDto.from(it) },
+                    latestIngestion = latestIngestion?.let {
+                        DocumentIngestionDto.from(
+                            it,
+                            includeRawExtraction = true,
+                            includeTrace = true
+                        )
+                    },
                                     )
             )
         }

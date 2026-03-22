@@ -140,6 +140,7 @@ data class CreateContactState(
     // Shared
     val isSubmitting: Boolean = false,
     val emailError: DokusException? = null,
+    val actionError: DokusException? = null,
 ) : MVIState {
     companion object {
         val initial by lazy { CreateContactState() }
@@ -224,6 +225,9 @@ sealed interface CreateContactIntent : MVIIntent {
 
     /** User wants to view existing contact (from duplicate warning) */
     data class ViewExistingContact(val contactId: ContactId) : CreateContactIntent
+
+    /** Dismiss action error banner */
+    data object DismissActionError : CreateContactIntent
 }
 
 // ============================================================================
@@ -244,7 +248,4 @@ sealed interface CreateContactAction : MVIAction {
         val contactId: ContactId,
         val displayName: String
     ) : CreateContactAction
-
-    /** Show error message */
-    data class ShowError(val error: DokusException) : CreateContactAction
 }

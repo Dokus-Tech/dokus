@@ -1,8 +1,12 @@
 package tech.dokus.database.repository.auth
 
+import kotlinx.datetime.DatePeriod
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.minus
+import kotlinx.datetime.todayIn
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.inList
-import org.jetbrains.exposed.v1.core.plus
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.insertAndGetId
 import org.jetbrains.exposed.v1.jdbc.selectAll
@@ -17,7 +21,6 @@ import tech.dokus.domain.enums.Language
 import tech.dokus.domain.enums.SubscriptionTier
 import tech.dokus.domain.enums.TenantStatus
 import tech.dokus.domain.enums.TenantType
-import tech.dokus.domain.ids.InvoiceNumber
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.Tenant
@@ -26,24 +29,10 @@ import tech.dokus.domain.model.UpsertTenantAddressRequest
 import tech.dokus.domain.toDbDecimal
 import tech.dokus.foundation.backend.database.dbQuery
 import tech.dokus.foundation.backend.utils.loggerFor
+import kotlinx.datetime.Clock
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid
 import kotlin.uuid.toKotlinUuid
-import tech.dokus.foundation.backend.utils.runSuspendCatching
-
-/**
- * Configuration for invoice number generation.
- *
- * This data class holds all tenant-specific settings for generating
- * invoice numbers in the required format for Belgian tax compliance.
- */
-data class TenantInvoiceConfig(
-    val prefix: String,
-    val yearlyReset: Boolean,
-    val padding: Int,
-    val includeYear: Boolean,
-    val timezone: String
-)
 
 @OptIn(ExperimentalUuidApi::class)
 class TenantRepository {
@@ -88,6 +77,8 @@ class TenantRepository {
         // Create default settings for the tenant
         TenantSettingsTable.insert {
             it[TenantSettingsTable.tenantId] = tenantId
+            it[TenantSettingsTable.cashflowTrackingStartDate] =
+                computeCashflowStartDate(Clock.System.todayIn(TimeZone.UTC))
         }
 
         logger.info("Created new tenant: $tenantId with address")
@@ -148,24 +139,6 @@ class TenantRepository {
         }
     }
 
-    suspend fun getNextInvoiceNumber(tenantId: TenantId): InvoiceNumber = dbQuery {
-        val javaUuid = tenantId.value.toJavaUuid()
-        val settings = TenantSettingsTable
-            .selectAll()
-            .where { TenantSettingsTable.tenantId eq javaUuid }
-            .single()
-
-        val prefix = settings[TenantSettingsTable.invoicePrefix]
-        val number = settings[TenantSettingsTable.nextInvoiceNumber]
-
-        // Increment the counter
-        TenantSettingsTable.update({ TenantSettingsTable.tenantId eq javaUuid }) {
-            it[nextInvoiceNumber] = nextInvoiceNumber + 1
-        }
-
-        InvoiceNumber("$prefix-${number.toString().padStart(4, '0')}")
-    }
-
     suspend fun listActiveTenants(): List<Tenant> = dbQuery {
         TenantTable
             .selectAll()
@@ -208,31 +181,41 @@ class TenantRepository {
     }
 
     /**
-     * Fetch invoice numbering configuration for a tenant.
+     * Returns the effective cashflow tracking start date for a tenant.
+     * If stored, returns the stored value. Otherwise computes from tenant creation date.
      *
-     * This method retrieves all the settings needed for generating
-     * invoice numbers according to Belgian tax compliance requirements.
-     *
-     * @param tenantId The tenant to fetch configuration for
-     * @return Result containing the invoice config, or failure if not found
+     * All services must call this single method — no duplicate fallback logic.
      */
-    suspend fun getInvoiceConfig(tenantId: TenantId): Result<TenantInvoiceConfig> = runSuspendCatching {
-        dbQuery {
-            val javaUuid = tenantId.value.toJavaUuid()
+    suspend fun getCashflowTrackingStartDate(tenantId: TenantId): LocalDate = dbQuery {
+        val javaUuid = tenantId.value.toJavaUuid()
+        val stored = TenantSettingsTable
+            .selectAll()
+            .where { TenantSettingsTable.tenantId eq javaUuid }
+            .singleOrNull()
+            ?.get(TenantSettingsTable.cashflowTrackingStartDate)
 
-            val row = TenantSettingsTable
+        stored ?: run {
+            val tenantCreatedAt = TenantTable
                 .selectAll()
-                .where { TenantSettingsTable.tenantId eq javaUuid }
-                .singleOrNull()
-                ?: throw IllegalArgumentException("No settings found for tenant: $tenantId")
-
-            TenantInvoiceConfig(
-                prefix = row[TenantSettingsTable.invoicePrefix],
-                yearlyReset = row[TenantSettingsTable.invoiceYearlyReset],
-                padding = row[TenantSettingsTable.invoicePadding],
-                includeYear = row[TenantSettingsTable.invoiceIncludeYear],
-                timezone = row[TenantSettingsTable.invoiceTimezone]
-            )
+                .where { TenantTable.id eq javaUuid }
+                .single()[TenantTable.createdAt]
+            computeCashflowStartDate(tenantCreatedAt.date)
         }
     }
+
+}
+
+/**
+ * Defines the start of the tenant's active cashflow tracking window.
+ * We include a 3-month backfill so matching and cashflow provide value immediately,
+ * without requiring full historical reconciliation.
+ *
+ * This is not historical truth. This is a seeded tracking window to provide immediate value.
+ *
+ * @param creationDate The date the workspace was created
+ * @return First day of the month, 3 months before creation
+ */
+fun computeCashflowStartDate(creationDate: LocalDate): LocalDate {
+    val threeMonthsAgo = creationDate.minus(DatePeriod(months = 3))
+    return LocalDate(threeMonthsAgo.year, threeMonthsAgo.month, 1)
 }

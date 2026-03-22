@@ -12,6 +12,7 @@ import org.jetbrains.exposed.v1.jdbc.SchemaUtils
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
+import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -56,7 +57,8 @@ import kotlin.uuid.toKotlinUuid
 class DocumentListingFiltersTest {
 
     private lateinit var database: Database
-    private val documentRepository = DocumentRepository()
+    private val ingestionRunRepository = DocumentIngestionRunRepository()
+    private val documentRepository = DocumentRepository(ingestionRunRepository)
 
     private lateinit var tenantUuid: UUID
     private lateinit var contactUuid: UUID

@@ -36,7 +36,9 @@ data class PeppolRegistrationDto(
     val errorMessage: String?,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime
-)
+) {
+    companion object
+}
 
 /**
  * Result of verifying a PEPPOL ID before registration.

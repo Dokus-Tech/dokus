@@ -45,6 +45,7 @@ internal class ConsoleClientsContainer(
                     is ConsoleClientsIntent.SelectClient -> handleSelectClient(intent.tenantId)
                     ConsoleClientsIntent.BackToClients -> handleBackToClients()
                     is ConsoleClientsIntent.OpenDocument -> handleOpenDocument(intent.documentId)
+                    is ConsoleClientsIntent.DismissActionError -> updateState { copy(actionError = null) }
                 }
             }
         }
@@ -158,9 +159,9 @@ internal class ConsoleClientsContainer(
                         ),
                         selectedDocument = null,
                         loadingDocumentId = null,
+                        actionError = exception,
                     )
                 }
-                action(ConsoleClientsAction.ShowError(exception))
             }
         )
     }
@@ -192,8 +193,7 @@ internal class ConsoleClientsContainer(
             },
             onFailure = { error ->
                 logger.e(error) { "Failed to load console document detail" }
-                updateState { copy(loadingDocumentId = null) }
-                action(ConsoleClientsAction.ShowError(error.asDokusException))
+                updateState { copy(loadingDocumentId = null, actionError = error.asDokusException) }
             }
         )
     }

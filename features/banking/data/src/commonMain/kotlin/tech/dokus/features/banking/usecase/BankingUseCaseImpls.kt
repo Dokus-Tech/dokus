@@ -8,9 +8,9 @@ import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.model.BalanceHistoryResponse
 import tech.dokus.domain.model.BankAccountDto
-import tech.dokus.domain.model.BankAccountSummary
+import tech.dokus.domain.model.BankAccountSummaryDto
 import tech.dokus.domain.model.BankTransactionDto
-import tech.dokus.domain.model.BankTransactionSummary
+import tech.dokus.domain.model.BankTransactionSummaryDto
 import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.features.banking.datasource.BankingRemoteDataSource
 import tech.dokus.features.banking.usecases.ConfirmTransactionUseCase
@@ -63,7 +63,7 @@ internal class GetBankTransactionUseCaseImpl(
 internal class GetTransactionSummaryUseCaseImpl(
     private val dataSource: BankingRemoteDataSource
 ) : GetTransactionSummaryUseCase {
-    override suspend fun invoke(): Result<BankTransactionSummary> {
+    override suspend fun invoke(): Result<BankTransactionSummaryDto> {
         return dataSource.getTransactionSummary()
     }
 }
@@ -71,7 +71,7 @@ internal class GetTransactionSummaryUseCaseImpl(
 internal class GetAccountSummaryUseCaseImpl(
     private val dataSource: BankingRemoteDataSource
 ) : GetAccountSummaryUseCase {
-    override suspend fun invoke(): Result<BankAccountSummary> {
+    override suspend fun invoke(): Result<BankAccountSummaryDto> {
         return dataSource.getAccountSummary()
     }
 }

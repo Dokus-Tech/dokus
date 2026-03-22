@@ -2,6 +2,8 @@ package tech.dokus.features.auth.presentation.auth.screen
 
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.domain.DisplayName
 import tech.dokus.domain.enums.FirmRole
 import tech.dokus.domain.enums.TenantType
@@ -14,9 +16,11 @@ import tech.dokus.domain.model.auth.TenantWorkspaceSummary
 import tech.dokus.features.auth.mvi.WorkspaceSelectData
 import tech.dokus.features.auth.mvi.WorkspaceSelectIntent
 import tech.dokus.features.auth.mvi.WorkspaceSelectState
-import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.features.auth.presentation.auth.components.WorkspaceSelectionBody
 import tech.dokus.features.auth.presentation.auth.components.onboarding.OnboardingCenteredShell
+import tech.dokus.foundation.app.state.DokusState
+import tech.dokus.foundation.aura.tooling.PreviewParameters
+import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 
 @Composable
 internal fun WorkspaceSelectScreen(
@@ -62,12 +66,10 @@ private fun previewFirm(
     clientCount = count,
 )
 
-@androidx.compose.ui.tooling.preview.Preview
+@Preview
 @Composable
 private fun WorkspaceSelectScreenPreview(
-    @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class,
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters,
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
 ) {
     tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
         WorkspaceSelectScreen(
@@ -88,12 +90,10 @@ private fun WorkspaceSelectScreenPreview(
     }
 }
 
-@androidx.compose.ui.tooling.preview.Preview(name = "Workspace Select Desktop", widthDp = 1366, heightDp = 900)
+@Preview(name = "Workspace Select Desktop", widthDp = 1366, heightDp = 900)
 @Composable
 private fun WorkspaceSelectScreenDesktopPreview(
-    @androidx.compose.ui.tooling.preview.PreviewParameter(
-        tech.dokus.foundation.aura.tooling.PreviewParametersProvider::class,
-    ) parameters: tech.dokus.foundation.aura.tooling.PreviewParameters,
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
 ) {
     tech.dokus.foundation.aura.tooling.TestWrapper(parameters) {
         WorkspaceSelectScreen(

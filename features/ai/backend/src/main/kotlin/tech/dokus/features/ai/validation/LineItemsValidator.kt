@@ -1,12 +1,12 @@
 package tech.dokus.features.ai.validation
 
 import tech.dokus.domain.Money
-import tech.dokus.domain.model.FinancialLineItem
+import tech.dokus.domain.model.FinancialLineItemDto
 
 object LineItemsValidator {
 
     fun verify(
-        lineItems: List<FinancialLineItem>,
+        lineItems: List<FinancialLineItemDto>,
         subtotal: Money?,
         required: Boolean
     ): List<AuditCheck> = buildList {

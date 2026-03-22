@@ -103,7 +103,7 @@ enum class ChatScope(override val dbValue: String) : DbEnum {
  * Links a response to the document chunk it was derived from.
  */
 @Serializable
-data class ChatCitation(
+data class ChatCitationDto(
     /** ID of the document chunk this citation references */
     val chunkId: String,
 
@@ -121,7 +121,9 @@ data class ChatCitation(
 
     /** Confidence/relevance score for this citation (0.0 - 1.0) */
     val relevanceScore: Float? = null
-)
+) {
+    companion object
+}
 
 // =============================================================================
 // Chat message DTOs
@@ -162,7 +164,7 @@ data class ChatMessageDto(
     val documentId: DocumentId? = null,
 
     /** Source citations for ASSISTANT messages */
-    val citations: List<ChatCitation>? = null,
+    val citations: List<ChatCitationDto>? = null,
 
     /** Structured content blocks for rich rendering (null = plain text fallback) */
     val contentBlocks: List<ChatContentBlock>? = null,
@@ -190,7 +192,9 @@ data class ChatMessageDto(
 
     /** When the message was created */
     val createdAt: LocalDateTime
-)
+) {
+    companion object
+}
 
 /**
  * Summary view for chat message lists.

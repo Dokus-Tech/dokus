@@ -68,7 +68,7 @@ private val DividerHeight = 1.dp
 
 /**
  * Data class representing a source citation for display.
- * Maps to the ChatCitation domain model.
+ * Maps to the ChatCitationDto domain model.
  */
 data class CitationDisplayData(
     /** ID of the document chunk this citation references */

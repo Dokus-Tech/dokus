@@ -15,8 +15,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -31,9 +29,9 @@ import tech.dokus.domain.Money
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.InvoiceDeliveryMethod
 import tech.dokus.domain.enums.InvoiceDueDateMode
-import tech.dokus.domain.model.FinancialLineItem
+import tech.dokus.domain.model.FinancialLineItemDto
 import tech.dokus.domain.model.InvoiceDraftData
-import tech.dokus.domain.model.PartyDraft
+import tech.dokus.domain.model.PartyDraftDto
 import tech.dokus.domain.model.PeppolStatusResponse
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.ids.VatNumber
@@ -55,9 +53,10 @@ import tech.dokus.features.cashflow.presentation.cashflow.components.invoice.cre
 import tech.dokus.features.cashflow.presentation.cashflow.components.invoice.create.desktop.InvoiceClientLookup
 import tech.dokus.features.cashflow.presentation.cashflow.components.invoice.create.desktop.formatDate
 import tech.dokus.features.cashflow.presentation.cashflow.components.invoice.create.desktop.localized
-import tech.dokus.features.cashflow.presentation.review.components.CanonicalInvoiceDocumentCard
-import tech.dokus.features.cashflow.presentation.review.models.DocumentUiData
-import tech.dokus.features.cashflow.presentation.review.models.toUiData
+import tech.dokus.features.cashflow.presentation.detail.components.CanonicalInvoiceDocumentCard
+import tech.dokus.features.cashflow.presentation.detail.models.DocumentUiData
+import tech.dokus.features.cashflow.presentation.detail.models.toUiData
+import tech.dokus.foundation.aura.components.common.DokusErrorBanner
 import tech.dokus.foundation.aura.components.DokusCard
 import tech.dokus.foundation.aura.components.DokusCardPadding
 import tech.dokus.foundation.aura.components.DokusCardSurface
@@ -80,14 +79,12 @@ private const val A4WidthToHeightRatio = 210f / 297f
 @Composable
 internal fun CreateInvoiceScreen(
     state: CreateInvoiceState,
-    snackbarHostState: SnackbarHostState,
     onIntent: (CreateInvoiceIntent) -> Unit
 ) {
     val isLargeScreen = LocalScreenSize.current.isLarge
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
             if (!isLargeScreen) {
                 MobileCommandFooter(
@@ -99,7 +96,17 @@ internal fun CreateInvoiceScreen(
             }
         }
     ) { contentPadding ->
-        Box(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            state.actionError?.let { error ->
+                DokusErrorBanner(
+                    exception = error,
+                    retryHandler = null,
+                    modifier = Modifier.padding(horizontal = Constraints.Spacing.large),
+                    onDismiss = { onIntent(CreateInvoiceIntent.DismissActionError) },
+                )
+            }
+
+            Box(modifier = Modifier.fillMaxSize()) {
             if (isLargeScreen) {
                 DesktopCreateInvoiceWorkspace(
                     state = state,
@@ -137,6 +144,7 @@ internal fun CreateInvoiceScreen(
                     state = state,
                     onDismiss = { onIntent(CreateInvoiceIntent.SetPreviewVisible(false)) }
                 )
+            }
             }
         }
     }
@@ -437,7 +445,6 @@ private fun CreateInvoiceDesktopBasePreview(
     TestWrapper(parameters) {
         CreateInvoiceScreen(
             state = createDesktopPreviewState(),
-            snackbarHostState = SnackbarHostState(),
             onIntent = {}
         )
     }
@@ -456,7 +463,6 @@ private fun CreateInvoiceDesktopLookupLocalPreview(
                 lookupExpanded = true,
                 suggestions = listOf(localSuggestion)
             ),
-            snackbarHostState = SnackbarHostState(),
             onIntent = {}
         )
     }
@@ -484,7 +490,6 @@ private fun CreateInvoiceDesktopLookupMixedPreview(
                 lookupExpanded = true,
                 suggestions = listOf(localSuggestion, externalSuggestion, manualSuggestion)
             ),
-            snackbarHostState = SnackbarHostState(),
             onIntent = {}
         )
     }
@@ -504,7 +509,6 @@ private fun CreateInvoiceDesktopDeliveryFallbackPreview(
                     reason = "Client is not PEPPOL-eligible."
                 )
             ),
-            snackbarHostState = SnackbarHostState(),
             onIntent = {}
         )
     }
@@ -521,7 +525,6 @@ private fun CreateInvoiceDesktopPdfPrimaryPreview(
                 selectedDelivery = InvoiceDeliveryMethod.PdfExport,
                 resolvedAction = DeliveryResolution(action = InvoiceResolvedAction.PdfExport)
             ),
-            snackbarHostState = SnackbarHostState(),
             onIntent = {}
         )
     }
@@ -541,7 +544,6 @@ private fun CreateInvoiceDesktopSelectedClientPreview(
                     refreshed = false
                 )
             ),
-            snackbarHostState = SnackbarHostState(),
             onIntent = {}
         )
     }
@@ -560,7 +562,6 @@ private fun CreateInvoiceDesktopSelectedClientNoPeppolPreview(
                     refreshed = false
                 )
             ),
-            snackbarHostState = SnackbarHostState(),
             onIntent = {}
         )
     }
@@ -574,7 +575,6 @@ private fun CreateInvoiceDesktopPreviewDialogPreview(
     TestWrapper(parameters) {
         CreateInvoiceScreen(
             state = createDesktopPreviewState(previewVisible = true),
-            snackbarHostState = SnackbarHostState(),
             onIntent = {}
         )
     }
@@ -591,7 +591,6 @@ private fun CreateInvoiceDesktopPreviewDialogNoClientPreview(
                 previewVisible = true,
                 clearSelectedClient = true
             ),
-            snackbarHostState = SnackbarHostState(),
             onIntent = {}
         )
     }
@@ -638,7 +637,7 @@ private fun CreateInvoiceState.toInvoicePreviewDraft(): InvoiceDraftData {
     val lines = formState.items
         .filterNot { it.isEmpty }
         .map { line ->
-            FinancialLineItem(
+            FinancialLineItemDto(
                 description = line.description,
                 quantity = line.quantity.toLong().takeIf { it > 0L },
                 unitPrice = line.unitPriceMoney.minor.takeIf { it > 0L },
@@ -663,16 +662,16 @@ private fun CreateInvoiceState.toInvoicePreviewDraft(): InvoiceDraftData {
         lineItems = lines,
         iban = Iban.from(formState.senderIban),
         notes = formState.notes.takeIf { it.isNotBlank() },
-        seller = PartyDraft(
+        seller = PartyDraftDto(
             name = uiState.senderCompanyName.takeIf { it.isNotBlank() },
             vat = sellerVat
         ),
-        buyer = selectedClient?.toPartyDraft() ?: PartyDraft()
+        buyer = selectedClient?.toPartyDraft() ?: PartyDraftDto()
     )
 }
 
-private fun ContactDto.toPartyDraft(): PartyDraft {
-    return PartyDraft(
+private fun ContactDto.toPartyDraft(): PartyDraftDto {
+    return PartyDraftDto(
         name = name.value,
         vat = vatNumber,
         email = email,

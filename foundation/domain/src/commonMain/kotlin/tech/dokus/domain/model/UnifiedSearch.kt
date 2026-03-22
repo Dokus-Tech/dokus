@@ -40,7 +40,7 @@ enum class SearchResultEntityType {
 }
 
 @Serializable
-data class SearchCounts(
+data class SearchCountsDto(
     val all: Long = 0,
     val documents: Long = 0,
     val contacts: Long = 0,
@@ -48,7 +48,7 @@ data class SearchCounts(
 )
 
 @Serializable
-data class SearchDocumentHit(
+data class SearchDocumentHitDto(
     val documentId: DocumentId,
     val filename: String,
     val documentType: DocumentType? = null,
@@ -56,20 +56,24 @@ data class SearchDocumentHit(
     val counterpartyName: String? = null,
     val counterpartyVat: String? = null,
     val amount: Money? = null,
-)
+) {
+    companion object
+}
 
 @Serializable
-data class SearchContactHit(
+data class SearchContactHitDto(
     val contactId: ContactId,
     val name: String,
     val email: String? = null,
     val vatNumber: String? = null,
     val companyNumber: String? = null,
     val isActive: Boolean = true,
-)
+) {
+    companion object
+}
 
 @Serializable
-data class SearchTransactionHit(
+data class SearchTransactionHitDto(
     val entryId: CashflowEntryId,
     val displayText: String,
     val status: CashflowEntryStatus,
@@ -79,10 +83,12 @@ data class SearchTransactionHit(
     val contactName: String? = null,
     val documentFilename: String? = null,
     val documentId: DocumentId? = null,
-)
+) {
+    companion object
+}
 
 @Serializable
-data class SearchSuggestion(
+data class SearchSuggestionDto(
     val label: String,
     val countHint: Long = 0,
     val actionQuery: String? = null,
@@ -91,7 +97,7 @@ data class SearchSuggestion(
 )
 
 @Serializable
-data class SearchAggregates(
+data class SearchAggregatesDto(
     val transactionTotal: Money = Money.ZERO,
     val incomingTotal: Money = Money.ZERO,
     val outgoingTotal: Money = Money.ZERO,
@@ -101,12 +107,12 @@ data class SearchAggregates(
 data class UnifiedSearchResponse(
     val query: String,
     val scope: UnifiedSearchScope,
-    val counts: SearchCounts = SearchCounts(),
-    val documents: List<SearchDocumentHit> = emptyList(),
-    val contacts: List<SearchContactHit> = emptyList(),
-    val transactions: List<SearchTransactionHit> = emptyList(),
-    val suggestions: List<SearchSuggestion> = emptyList(),
-    val aggregates: SearchAggregates = SearchAggregates(),
+    val counts: SearchCountsDto = SearchCountsDto(),
+    val documents: List<SearchDocumentHitDto> = emptyList(),
+    val contacts: List<SearchContactHitDto> = emptyList(),
+    val transactions: List<SearchTransactionHitDto> = emptyList(),
+    val suggestions: List<SearchSuggestionDto> = emptyList(),
+    val aggregates: SearchAggregatesDto = SearchAggregatesDto(),
 )
 
 @Serializable

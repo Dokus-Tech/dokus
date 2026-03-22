@@ -16,9 +16,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -74,7 +71,6 @@ private sealed interface DocumentsDisplayRow {
 @Composable
 internal fun DocumentsScreen(
     state: DocumentsState,
-    snackbarHostState: SnackbarHostState,
     localUploadRows: List<DocumentsLocalUploadRow>,
     isDesktopDropTargetActive: Boolean,
     desktopDropScrollToken: Int,
@@ -128,12 +124,7 @@ internal fun DocumentsScreen(
         }
     }
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        modifier = modifier
-    ) {
-
-        Box(modifier = modifier.fillMaxSize()) {
+    Box(modifier = modifier.fillMaxSize()) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -227,7 +218,6 @@ internal fun DocumentsScreen(
             }
         }
     }
-}
 
 @Composable
 private fun DocumentsToolbar(

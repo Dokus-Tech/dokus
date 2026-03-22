@@ -20,8 +20,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -54,7 +52,7 @@ import tech.dokus.app.viewmodel.TeamSettingsState
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_confirm
 import tech.dokus.aura.resources.action_save
-import tech.dokus.aura.resources.cancel
+import tech.dokus.aura.resources.action_cancel
 import tech.dokus.aura.resources.state_sending
 import tech.dokus.aura.resources.team_bookkeeper_access_connected_label
 import tech.dokus.aura.resources.team_bookkeeper_access_dialog_title
@@ -92,7 +90,7 @@ import tech.dokus.domain.ids.FirmId
 import tech.dokus.domain.ids.InvitationId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.TeamMember
-import tech.dokus.domain.model.TenantInvitation
+import tech.dokus.domain.model.TenantInvitationDto
 import tech.dokus.domain.model.auth.BookkeeperFirmSearchItem
 import tech.dokus.domain.model.auth.TenantBookkeeperAccessItem
 import tech.dokus.foundation.app.network.rememberAuthenticatedImageLoader
@@ -105,7 +103,9 @@ import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.MonogramAvatar
 import tech.dokus.foundation.aura.components.UserAvatarImage
 import tech.dokus.foundation.aura.components.badges.TierBadge
-import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.aura.components.common.DokusErrorBanner
+import tech.dokus.foundation.aura.components.common.ErrorOverlay
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.components.common.DokusLoader
 import tech.dokus.foundation.aura.components.common.DokusSelectableRowGroup
 import tech.dokus.foundation.aura.components.common.PTopAppBar
@@ -134,7 +134,6 @@ private val SectionSpacing = 14.dp
 @Composable
 internal fun TeamSettingsScreen(
     state: TeamSettingsState,
-    snackbarHostState: SnackbarHostState,
     showInviteDialog: Boolean,
     onShowInviteDialog: (Boolean) -> Unit,
     showBookkeeperDialog: Boolean,
@@ -146,17 +145,26 @@ internal fun TeamSettingsScreen(
         topBar = {
             if (!isLargeScreen) PTopAppBar(Res.string.team_settings_title)
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { contentPadding ->
-        TeamSettingsContent(
-            state = state,
-            showInviteDialog = showInviteDialog,
-            onShowInviteDialog = onShowInviteDialog,
-            showBookkeeperDialog = showBookkeeperDialog,
-            onShowBookkeeperDialog = onShowBookkeeperDialog,
-            onIntent = onIntent,
-            modifier = Modifier.padding(contentPadding)
-        )
+        Column(modifier = Modifier.padding(contentPadding)) {
+            if (state.actionError != null) {
+                DokusErrorBanner(
+                    exception = state.actionError,
+                    retryHandler = null,
+                    modifier = Modifier.padding(horizontal = Constraints.Spacing.large),
+                    onDismiss = { onIntent(TeamSettingsIntent.DismissActionError) },
+                )
+            }
+
+            TeamSettingsContent(
+                state = state,
+                showInviteDialog = showInviteDialog,
+                onShowInviteDialog = onShowInviteDialog,
+                showBookkeeperDialog = showBookkeeperDialog,
+                onShowBookkeeperDialog = onShowBookkeeperDialog,
+                onIntent = onIntent,
+            )
+        }
     }
 }
 
@@ -271,15 +279,10 @@ fun TeamSettingsContent(
         )
     }
 
-    if (state.teamData.isError()) {
-        DokusErrorContent(
-            exception = state.teamData.exception,
-            retryHandler = state.teamData.retryHandler,
-            modifier = Modifier.fillMaxSize(),
-        )
-        return
-    }
-
+    ErrorOverlay(
+        exception = if (state.teamData is DokusState.Error) state.teamData.exception else null,
+        retryHandler = if (state.teamData is DokusState.Error) state.teamData.retryHandler else null,
+    ) {
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -294,10 +297,6 @@ fun TeamSettingsContent(
             verticalArrangement = Arrangement.spacedBy(SectionSpacing),
         ) {
             when {
-                state.teamData.isLoading() -> {
-                    SettingsSkeleton(sectionCount = 2)
-                }
-
                 state.teamData.isSuccess() -> {
                     val teamData = state.teamData.data
                     val members = teamData.members
@@ -375,10 +374,34 @@ fun TeamSettingsContent(
                         color = MaterialTheme.colorScheme.textFaint,
                     )
                 }
+
+                state.teamData is DokusState.Error -> {
+                    // Empty team layout behind blur
+                    val emptyTeam = TeamData()
+                    DokusCardSurface(modifier = Modifier.fillMaxWidth()) {
+                        Column {
+                            InviteRow(
+                                availableSeats = emptyTeam.availableSeats,
+                                onClick = {},
+                            )
+                        }
+                    }
+                    DokusCardSurface(modifier = Modifier.fillMaxWidth()) {
+                        BookkeeperAccessSection(
+                            access = emptyTeam.bookkeeperAccess,
+                            isLoading = false,
+                            isOwner = false,
+                            onGrantClick = {},
+                            onRevokeClick = {},
+                        )
+                    }
+                }
+                else -> SettingsSkeleton(sectionCount = 2)
             }
 
             Spacer(Modifier.height(8.dp))
         }
+    }
     }
 }
 
@@ -505,7 +528,7 @@ private fun MemberRow(
 
 @Composable
 private fun InvitationRow(
-    invitation: TenantInvitation,
+    invitation: TenantInvitationDto,
     showDivider: Boolean,
     onCancel: () -> Unit,
 ) {
@@ -803,7 +826,7 @@ private fun GrantBookkeeperAccessDialog(
             enabled = selectedFirmId != null && !loading,
         ),
         secondaryAction = DokusDialogAction(
-            text = stringResource(Res.string.cancel),
+            text = stringResource(Res.string.action_cancel),
             onClick = onDismiss,
             enabled = !loading,
         ),
@@ -864,7 +887,7 @@ private fun InviteDialog(
             enabled = !isInviting && email.isNotBlank()
         ),
         secondaryAction = DokusDialogAction(
-            text = stringResource(Res.string.cancel),
+            text = stringResource(Res.string.action_cancel),
             onClick = onDismiss,
             enabled = !isInviting
         ),
@@ -898,7 +921,7 @@ private fun ChangeRoleDialog(
             enabled = selectedRole != currentRole
         ),
         secondaryAction = DokusDialogAction(
-            text = stringResource(Res.string.cancel),
+            text = stringResource(Res.string.action_cancel),
             onClick = onDismiss
         )
     )
@@ -927,7 +950,7 @@ private fun ConfirmationDialog(
             isDestructive = true
         ),
         secondaryAction = DokusDialogAction(
-            text = stringResource(Res.string.cancel),
+            text = stringResource(Res.string.action_cancel),
             onClick = onDismiss
         )
     )

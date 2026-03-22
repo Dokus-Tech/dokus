@@ -1,0 +1,105 @@
+package tech.dokus.features.cashflow.gateway
+
+import kotlinx.coroutines.flow.Flow
+import tech.dokus.domain.ids.ContactId
+import tech.dokus.domain.ids.DocumentId
+import tech.dokus.domain.ids.DocumentMatchReviewId
+import tech.dokus.domain.ids.DocumentSourceId
+import tech.dokus.domain.model.Dpi
+import tech.dokus.domain.model.DocumentMatchResolutionDecision
+import tech.dokus.domain.model.DocumentRecordStreamEvent
+import tech.dokus.domain.model.RejectDocumentRequest
+import tech.dokus.domain.model.ReprocessRequest
+import tech.dokus.domain.model.ResolveDocumentMatchReviewRequest
+import tech.dokus.domain.model.UpdateDraftRequest
+import tech.dokus.features.cashflow.datasource.CashflowRemoteDataSource
+
+internal class DocumentDetailGatewayImpl(
+    private val cashflowRemoteDataSource: CashflowRemoteDataSource
+) : DocumentDetailGateway {
+    override suspend fun getDocumentRecord(documentId: DocumentId) =
+        cashflowRemoteDataSource.getDocumentRecord(documentId)
+
+    override fun observeDocumentRecordEvents(documentId: DocumentId): Flow<DocumentRecordStreamEvent> =
+        cashflowRemoteDataSource.observeDocumentRecordEvents(documentId)
+
+    override suspend fun updateDocumentDraft(
+        documentId: DocumentId,
+        request: UpdateDraftRequest
+    ) = cashflowRemoteDataSource.updateDocumentDraft(documentId, request)
+
+    override suspend fun updateDocumentDraftContact(
+        documentId: DocumentId,
+        contactId: ContactId?,
+        pendingCreation: Boolean
+    ): Result<Unit> {
+        return cashflowRemoteDataSource.updateDocumentDraftContact(
+            documentId = documentId,
+            contactId = contactId,
+            pendingCreation = pendingCreation
+        )
+    }
+
+    override suspend fun confirmDocument(
+        documentId: DocumentId
+    ) = cashflowRemoteDataSource.confirmDocument(documentId)
+
+    override suspend fun unconfirmDocument(
+        documentId: DocumentId
+    ) = cashflowRemoteDataSource.unconfirmDocument(documentId)
+
+    override suspend fun rejectDocument(
+        documentId: DocumentId,
+        request: RejectDocumentRequest
+    ) = cashflowRemoteDataSource.rejectDocument(documentId, request)
+
+    override suspend fun getDocumentPages(
+        documentId: DocumentId,
+        dpi: Dpi,
+        maxPages: Int
+    ) = cashflowRemoteDataSource.getDocumentPages(
+        documentId = documentId,
+        dpi = dpi,
+        maxPages = maxPages
+    )
+
+    override suspend fun getDocumentSourcePages(
+        documentId: DocumentId,
+        sourceId: DocumentSourceId,
+        dpi: Dpi,
+        maxPages: Int
+    ) = cashflowRemoteDataSource.getDocumentSourcePages(
+        documentId = documentId,
+        sourceId = sourceId,
+        dpi = dpi,
+        maxPages = maxPages
+    )
+
+    override suspend fun getDocumentContent(
+        documentId: DocumentId
+    ) = cashflowRemoteDataSource.getDocumentContent(documentId)
+
+    override suspend fun getDocumentSourceContent(
+        documentId: DocumentId,
+        sourceId: DocumentSourceId
+    ) = cashflowRemoteDataSource.getDocumentSourceContent(
+        documentId = documentId,
+        sourceId = sourceId
+    )
+
+    override suspend fun reprocessDocument(
+        documentId: DocumentId,
+        request: ReprocessRequest
+    ) = cashflowRemoteDataSource.reprocessDocument(
+        documentId = documentId,
+        request = request
+    )
+
+    override suspend fun resolveDocumentMatchReview(
+        reviewId: DocumentMatchReviewId,
+        decision: DocumentMatchResolutionDecision
+    ) = cashflowRemoteDataSource.resolveDocumentMatchReview(
+        reviewId = reviewId,
+        request = ResolveDocumentMatchReviewRequest(decision = decision)
+    )
+}

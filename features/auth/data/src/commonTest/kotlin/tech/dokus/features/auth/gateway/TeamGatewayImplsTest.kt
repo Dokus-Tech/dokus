@@ -10,7 +10,7 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.CreateInvitationRequest
 import tech.dokus.domain.model.TeamMember
-import tech.dokus.domain.model.TenantInvitation
+import tech.dokus.domain.model.TenantInvitationDto
 import tech.dokus.domain.model.auth.BookkeeperFirmSearchItem
 import tech.dokus.domain.model.auth.GrantBookkeeperAccessResponse
 import tech.dokus.domain.model.auth.TenantBookkeeperAccessItem
@@ -138,8 +138,8 @@ class TeamGatewayImplsTest {
         )
     }
 
-    private fun sampleInvitation(): TenantInvitation {
-        return TenantInvitation(
+    private fun sampleInvitation(): TenantInvitationDto {
+        return TenantInvitationDto(
             id = InvitationId.parse("00000000-0000-0000-0000-000000000002"),
             tenantId = TenantId("00000000-0000-0000-0000-000000000003"),
             email = Email("invite@dokus.test"),
@@ -161,10 +161,10 @@ class TeamGatewayImplsTest {
         var listTeamMembersResult: Result<List<TeamMember>> = Result.success(emptyList())
 
         var lastInvitationRequest: CreateInvitationRequest? = null
-        var createInvitationResult: Result<TenantInvitation> = Result.failure(IllegalStateException("missing"))
+        var createInvitationResult: Result<TenantInvitationDto> = Result.failure(IllegalStateException("missing"))
 
         var listInvitationsCalled = false
-        var listInvitationsResult: Result<List<TenantInvitation>> = Result.success(emptyList())
+        var listInvitationsResult: Result<List<TenantInvitationDto>> = Result.success(emptyList())
 
         var lastCancelledInvitationId: InvitationId? = null
         var cancelInvitationResult: Result<Unit> = Result.success(Unit)
@@ -198,12 +198,12 @@ class TeamGatewayImplsTest {
 
         override suspend fun createInvitation(
             request: CreateInvitationRequest
-        ): Result<TenantInvitation> {
+        ): Result<TenantInvitationDto> {
             lastInvitationRequest = request
             return createInvitationResult
         }
 
-        override suspend fun listPendingInvitations(): Result<List<TenantInvitation>> {
+        override suspend fun listPendingInvitations(): Result<List<TenantInvitationDto>> {
             listInvitationsCalled = true
             return listInvitationsResult
         }

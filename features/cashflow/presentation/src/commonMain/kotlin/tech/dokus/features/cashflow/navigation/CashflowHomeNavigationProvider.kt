@@ -12,9 +12,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import tech.dokus.features.cashflow.presentation.chat.route.ChatRoute
 import tech.dokus.features.cashflow.presentation.documents.route.DocumentsRoute
-import tech.dokus.features.cashflow.presentation.ledger.route.CashflowLedgerRoute
-import tech.dokus.features.cashflow.presentation.review.route.DocumentReviewRoute
-import tech.dokus.features.cashflow.presentation.review.route.DocumentSourceViewerRoute
+import tech.dokus.features.cashflow.presentation.overview.route.CashFlowOverviewRoute
+import tech.dokus.features.cashflow.presentation.detail.route.DocumentDetailRoute
+import tech.dokus.features.cashflow.presentation.detail.route.DocumentSourceViewerRoute
 import tech.dokus.navigation.NavigationProvider
 import tech.dokus.navigation.destinations.CashFlowDestination
 import tech.dokus.navigation.destinations.HomeDestination
@@ -25,14 +25,14 @@ internal object CashflowHomeNavigationProvider : NavigationProvider {
             DocumentsRoute()
         }
         composable<HomeDestination.Cashflow> {
-            CashflowLedgerRoute()
+            CashFlowOverviewRoute()
         }
         composable<HomeDestination.AiChat> {
             ChatRoute(documentId = null)
         }
-        composable<CashFlowDestination.DocumentReview> { backStackEntry ->
-            val route = backStackEntry.toRoute<CashFlowDestination.DocumentReview>()
-            DocumentReviewRoute(route = route)
+        composable<CashFlowDestination.DocumentDetail> { backStackEntry ->
+            val route = backStackEntry.toRoute<CashFlowDestination.DocumentDetail>()
+            DocumentDetailRoute(route = route)
         }
         composable<CashFlowDestination.DocumentSourceViewer>(
             enterTransition = { sourceViewerEnterTransition() },

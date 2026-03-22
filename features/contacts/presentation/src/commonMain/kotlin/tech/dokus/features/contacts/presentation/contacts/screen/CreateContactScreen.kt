@@ -9,8 +9,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -33,6 +31,8 @@ import tech.dokus.features.contacts.presentation.contacts.components.create.Conf
 import tech.dokus.features.contacts.presentation.contacts.components.create.LookupStepContent
 import tech.dokus.features.contacts.presentation.contacts.components.create.ManualStepContent
 import tech.dokus.foundation.aura.components.DokusCardSurface
+import tech.dokus.foundation.aura.components.common.DokusErrorBanner
+import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.extensions.dismissKeyboardOnTapOutside
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.tooling.PreviewParameters
@@ -55,15 +55,22 @@ internal fun CreateContactScreen(
     prefillAddress: String? = null,
     origin: ContactCreateOrigin? = null,
     state: CreateContactState,
-    snackbarHostState: SnackbarHostState,
     onIntent: (CreateContactIntent) -> Unit,
     onExistingContactSelected: (String) -> Unit,
 ) {
     val isLargeScreen = LocalScreenSize.current.isLarge
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background
     ) { contentPadding ->
+        state.actionError?.let { error ->
+            DokusErrorBanner(
+                exception = error,
+                retryHandler = null,
+                modifier = Modifier.padding(horizontal = Constraints.Spacing.large),
+                onDismiss = { onIntent(CreateContactIntent.DismissActionError) },
+            )
+        }
+
         if (isLargeScreen) {
             CreateContactPage(
                 state = state,
@@ -181,7 +188,7 @@ private fun CreateContactContent(
     onExistingContactSelected: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val isResolveFlow = origin == ContactCreateOrigin.DocumentReview
+    val isResolveFlow = origin == ContactCreateOrigin.DocumentDetail
     val headerTitle = stringResource(
         if (isResolveFlow) Res.string.contacts_resolve_counterparty else Res.string.contacts_create_contact
     )
@@ -190,7 +197,7 @@ private fun CreateContactContent(
     }
 
     LaunchedEffect(state, prefillCompanyName, prefillVat, origin) {
-        if (origin != ContactCreateOrigin.DocumentReview) return@LaunchedEffect
+        if (origin != ContactCreateOrigin.DocumentDetail) return@LaunchedEffect
         if (manualPrefillApplied) return@LaunchedEffect
         if (state.step != CreateContactStep.Manual) return@LaunchedEffect
 

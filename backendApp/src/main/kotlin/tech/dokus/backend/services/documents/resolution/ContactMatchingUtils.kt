@@ -1,12 +1,13 @@
 package tech.dokus.backend.services.documents.resolution
 
+import tech.dokus.database.mapper.from
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.domain.Name
 import tech.dokus.domain.enums.ContactSource
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.contact.ContactDto
-import tech.dokus.domain.model.contact.ContactMatchScore
-import tech.dokus.domain.model.contact.SuggestedContact
+import tech.dokus.domain.model.contact.ContactMatchScoreDto
+import tech.dokus.domain.model.contact.SuggestedContactDto
 import tech.dokus.domain.model.contact.UpdateContactRequest
 import tech.dokus.domain.util.JaroWinkler
 import tech.dokus.foundation.backend.utils.loggerFor
@@ -28,15 +29,15 @@ class ContactMatchingUtils(
         nameSimilarity: Double?,
         ambiguityCount: Int,
         reason: String
-    ): SuggestedContact {
-        val score = ContactMatchScore(
+    ): SuggestedContactDto {
+        val score = ContactMatchScoreDto(
             vatMatch = vatMatch,
             ibanMatch = ibanMatch,
             nameSimilarity = nameSimilarity ?: 0.0,
             ambiguityCount = ambiguityCount,
             cbeResult = null
         )
-        return SuggestedContact(
+        return SuggestedContactDto(
             contactId = id,
             name = name.value,
             vatNumber = vatNumber,
@@ -70,7 +71,7 @@ class ContactMatchingUtils(
             contactId = matchedContact.id,
             tenantId = tenantId,
             request = UpdateContactRequest(name = candidateName)
-        )
+        ).map { ContactDto.from(it) }
         return result.getOrElse { e ->
             logger.warn("Failed to heal payment alias for contact {}: {}", matchedContact.id, e.message)
             matchedContact

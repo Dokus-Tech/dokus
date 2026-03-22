@@ -22,7 +22,7 @@ import tech.dokus.domain.enums.TenantType
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.model.contact.CounterpartyInfo
-import tech.dokus.domain.model.contact.MatchEvidence
+import tech.dokus.domain.model.contact.MatchEvidenceDto
 import tech.dokus.domain.utils.json
 import java.util.UUID
 import kotlin.test.AfterTest
@@ -99,7 +99,7 @@ class DocumentDraftRepositoryTest {
                 it[linkedContactId] = contactUuid
                 it[linkedContactSource] = ContactLinkSource.AI
                 it[matchEvidence] = json.encodeToString(
-                    MatchEvidence(
+                    MatchEvidenceDto(
                         vatMatch = true,
                         ibanMatch = false,
                         ambiguityCount = 1

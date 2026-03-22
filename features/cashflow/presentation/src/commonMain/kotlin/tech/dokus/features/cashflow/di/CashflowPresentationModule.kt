@@ -10,6 +10,7 @@ import tech.dokus.features.cashflow.mvi.CreateInvoiceAction
 import tech.dokus.features.cashflow.mvi.CreateInvoiceContainer
 import tech.dokus.features.cashflow.mvi.CreateInvoiceIntent
 import tech.dokus.features.cashflow.mvi.CreateInvoiceState
+import tech.dokus.features.cashflow.mvi.clientlookup.ClientLookupContainer
 import tech.dokus.features.cashflow.presentation.cashflow.model.manager.DocumentUploadManager
 import tech.dokus.features.cashflow.presentation.cashflow.model.usecase.ValidateInvoiceUseCase
 import tech.dokus.features.cashflow.presentation.chat.ChatAction
@@ -20,20 +21,28 @@ import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsAction
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsContainer
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsIntent
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsState
-import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowLedgerAction
-import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowLedgerContainer
-import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowLedgerIntent
-import tech.dokus.features.cashflow.presentation.ledger.mvi.CashflowLedgerState
+import tech.dokus.features.cashflow.presentation.overview.mvi.CashFlowOverviewAction
+import tech.dokus.features.cashflow.presentation.overview.mvi.CashFlowOverviewContainer
+import tech.dokus.features.cashflow.presentation.overview.mvi.CashFlowOverviewIntent
+import tech.dokus.features.cashflow.presentation.overview.mvi.CashFlowOverviewState
 import tech.dokus.features.cashflow.presentation.peppol.mvi.PeppolRegistrationAction
 import tech.dokus.features.cashflow.presentation.peppol.mvi.PeppolRegistrationContainer
 import tech.dokus.features.cashflow.presentation.peppol.mvi.PeppolRegistrationIntent
 import tech.dokus.features.cashflow.presentation.peppol.mvi.PeppolRegistrationState
-import tech.dokus.features.cashflow.presentation.review.DocumentReviewAction
-import tech.dokus.features.cashflow.presentation.review.DocumentReviewContainer
-import tech.dokus.features.cashflow.presentation.review.DocumentReviewIntent
-import tech.dokus.features.cashflow.presentation.review.DocumentReviewRouteContext
-import tech.dokus.features.cashflow.presentation.review.DocumentReviewState
+import tech.dokus.features.cashflow.presentation.detail.DocumentDetailAction
+import tech.dokus.features.cashflow.presentation.detail.DocumentDetailContainer
+import tech.dokus.features.cashflow.presentation.detail.DocumentDetailIntent
+import tech.dokus.features.cashflow.presentation.detail.DocumentDetailState
+import tech.dokus.features.cashflow.presentation.detail.DuplicateReviewAction
+import tech.dokus.features.cashflow.presentation.detail.DuplicateReviewContainer
+import tech.dokus.features.cashflow.presentation.detail.DuplicateReviewIntent
+import tech.dokus.features.cashflow.presentation.detail.DuplicateReviewState
+import tech.dokus.domain.enums.ReviewReason
+import tech.dokus.domain.ids.DocumentMatchReviewId
+import tech.dokus.features.cashflow.presentation.detail.mvi.payment.DocumentPaymentContainer
+import tech.dokus.features.cashflow.presentation.detail.mvi.preview.DocumentPreviewContainer
 import tech.dokus.foundation.app.mvi.container
+import tech.dokus.navigation.destinations.CashFlowDestination
 
 val cashflowViewModelModule = module {
     single {
@@ -44,6 +53,11 @@ val cashflowViewModelModule = module {
     }
 
     factory { ValidateInvoiceUseCase() }
+
+    // FlowMVI Child Containers (factory — new instance per parent)
+    factory { ClientLookupContainer(get(), get(), get(), get(), get()) }
+    factory { DocumentPaymentContainer(get(), get(), get(), get(), get()) }
+    factory { DocumentPreviewContainer(get(), get(), get()) }
 
     // FlowMVI Containers
     container<AddDocumentContainer, AddDocumentState, AddDocumentIntent, AddDocumentAction> {
@@ -56,15 +70,11 @@ val cashflowViewModelModule = module {
             getCurrentTenant = get(),
             validateInvoice = get(),
             submitInvoiceWithDelivery = get(),
-            getContactPeppolStatus = get(),
-            getLatestInvoiceForContact = get(),
-            listContacts = get(),
-            lookupContacts = get(),
-            searchCompanyUseCase = get()
+            clientLookupContainer = get(),
         )
     }
-    container<DocumentReviewContainer, DocumentReviewState, DocumentReviewIntent, DocumentReviewAction> { (initialDocumentId: DocumentId, routeContext: DocumentReviewRouteContext?) ->
-        DocumentReviewContainer(
+    container<DocumentDetailContainer, DocumentDetailState, DocumentDetailIntent, DocumentDetailAction> { (initialDocumentId: DocumentId, queueContext: CashFlowDestination.DocumentDetailQueueContext) ->
+        DocumentDetailContainer(
             getDocumentRecord = get(),
             updateDocumentDraft = get(),
             updateDocumentDraftContact = get(),
@@ -73,18 +83,25 @@ val cashflowViewModelModule = module {
             rejectDocument = get(),
             reprocessDocument = get(),
             resolveDocumentMatchReview = get(),
-            getDocumentPages = get(),
-            getDocumentSourcePages = get(),
-            getDocumentSourceContent = get(),
-            getCashflowEntry = get(),
-            getCashflowPaymentCandidates = get(),
-            getAutoPaymentStatus = get(),
-            recordCashflowPayment = get(),
-            undoAutoPayment = get(),
             getContact = get(),
             loadDocumentRecords = get(),
+            downloadDocument = get(),
+            paymentContainer = get(),
+            previewContainer = get(),
             initialDocumentId = initialDocumentId,
-            routeContext = routeContext,
+            queueContext = queueContext,
+        )
+    }
+    container<DuplicateReviewContainer, DuplicateReviewState, DuplicateReviewIntent, DuplicateReviewAction> {
+            (existingDocumentId: DocumentId, incomingDocumentId: DocumentId, reviewId: DocumentMatchReviewId, reasonType: ReviewReason) ->
+        DuplicateReviewContainer(
+            existingDocumentId = existingDocumentId,
+            incomingDocumentId = incomingDocumentId,
+            reviewId = reviewId,
+            reasonType = reasonType,
+            getDocumentRecord = get(),
+            getDocumentPages = get(),
+            resolveMatchReview = get(),
         )
     }
     container<ChatContainer, ChatState, ChatIntent, ChatAction> {
@@ -101,8 +118,8 @@ val cashflowViewModelModule = module {
             getDocumentCounts = get()
         )
     }
-    container<CashflowLedgerContainer, CashflowLedgerState, CashflowLedgerIntent, CashflowLedgerAction> { (highlightEntryId: tech.dokus.domain.ids.CashflowEntryId?) ->
-        CashflowLedgerContainer(
+    container<CashFlowOverviewContainer, CashFlowOverviewState, CashFlowOverviewIntent, CashFlowOverviewAction> { (highlightEntryId: tech.dokus.domain.ids.CashflowEntryId?) ->
+        CashFlowOverviewContainer(
             loadCashflowEntries = get(),
             getCashflowOverview = get(),
             recordPayment = get(),

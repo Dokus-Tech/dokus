@@ -9,7 +9,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.business.BusinessProfileEnrichmentJobRepository
-import tech.dokus.database.repository.business.BusinessProfileRecord
+import tech.dokus.database.entity.BusinessProfileEntity
 import tech.dokus.database.repository.business.BusinessProfileRepository
 import tech.dokus.domain.DisplayName
 import tech.dokus.domain.LegalName
@@ -55,7 +55,7 @@ class BusinessProfileServiceProjectionTest {
             createdAt = LocalDateTime.parse("2026-01-01T00:00:00"),
             updatedAt = LocalDateTime.parse("2026-01-01T00:00:00")
         )
-        val profile = BusinessProfileRecord(
+        val profile = BusinessProfileEntity(
             tenantId = tenantId,
             subjectType = BusinessProfileSubjectType.Tenant,
             subjectId = tenantId.value,
@@ -88,7 +88,7 @@ class BusinessProfileServiceProjectionTest {
             updatedAt = now
         )
 
-        val profile = BusinessProfileRecord(
+        val profile = BusinessProfileEntity(
             tenantId = tenantId,
             subjectType = BusinessProfileSubjectType.Contact,
             subjectId = contactId.value,

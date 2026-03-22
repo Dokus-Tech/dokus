@@ -18,6 +18,8 @@ import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
+import tech.dokus.database.entity.ActiveTokenEntity
+import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.auth.RefreshTokensTable
 import tech.dokus.database.utils.toKotlinxInstant
 import tech.dokus.domain.DeviceType
@@ -78,11 +80,6 @@ sealed class SessionRevocationResult {
     data class Revoked(val sessions: List<RevokedSessionInfo>) : SessionRevocationResult()
     data object NotFound : SessionRevocationResult()
 }
-
-private data class ActiveTokenRow(
-    val rowId: JavaUuid,
-    val token: RefreshTokenInfo,
-)
 
 /**
  * Repository for managing JWT refresh tokens with persistence, rotation, and revocation.
@@ -276,7 +273,7 @@ class RefreshTokenRepository {
         sessionId: SessionId
     ): SessionRevocationResult = try {
         dbQuery {
-            val activeRows = getActiveTokenRowsInTx(userId)
+            val activeRows = getActiveTokenEntitysInTx(userId)
             val toRevoke = activeRows.filter { matchesDisplayedSessionId(it.token, sessionId) }
             if (toRevoke.isEmpty()) {
                 SessionRevocationResult.NotFound
@@ -302,7 +299,7 @@ class RefreshTokenRepository {
         currentSessionId: SessionId
     ): SessionRevocationResult = try {
         dbQuery {
-            val activeRows = getActiveTokenRowsInTx(userId)
+            val activeRows = getActiveTokenEntitysInTx(userId)
             val hasCurrentSessionRecord = activeRows.any {
                 matchesCurrentSessionIdentity(it.token, currentSessionId)
             }
@@ -342,7 +339,7 @@ class RefreshTokenRepository {
         currentSessionId: SessionId
     ): SessionRevocationResult = try {
         dbQuery {
-            val activeRows = getActiveTokenRowsInTx(userId)
+            val activeRows = getActiveTokenEntitysInTx(userId)
             val toRevoke = activeRows.filter {
                 matchesCurrentSessionIdentity(it.token, currentSessionId)
             }
@@ -404,7 +401,7 @@ class RefreshTokenRepository {
                     return@dbQuery
                 }
 
-            val activeRows = getActiveTokenRowsInTx(userId)
+            val activeRows = getActiveTokenEntitysInTx(userId)
             val revoked = revokeRows(
                 activeRows.filter { matchesDisplayedSessionId(it.token, oldestSession.sessionId) }
             )
@@ -463,7 +460,7 @@ class RefreshTokenRepository {
      */
     suspend fun getUserActiveTokens(userId: UserId): List<RefreshTokenInfo> = try {
         dbQuery {
-            getActiveTokenRowsInTx(userId).map { it.token }
+            getActiveTokenEntitysInTx(userId).map { it.token }
         }
     } catch (error: Exception) {
         logger.error("Failed to get active tokens for user: ${userId.value}", error)
@@ -471,54 +468,30 @@ class RefreshTokenRepository {
     }
 
     private fun getDistinctActiveSessionsInTx(userId: UserId): List<RefreshTokenInfo> {
-        return getActiveTokenRowsInTx(userId)
+        return getActiveTokenEntitysInTx(userId)
             .map { it.token }
             .groupBy { sessionIdentityKey(it) }
             .values
             .map { rows -> rows.maxBy { it.createdAt } }
     }
 
-    private fun getActiveTokenRowsInTx(userId: UserId): List<ActiveTokenRow> {
+    private fun getActiveTokenEntitysInTx(userId: UserId): List<ActiveTokenEntity> {
         val userUuid = userId.uuid.toJavaUuid()
         val currentTimeLocal = now().toLocalDateTime(TimeZone.UTC)
         return RefreshTokensTable
             .selectAll()
             .where { activeRowsFilter(userUuid, currentTimeLocal) }
             .orderBy(RefreshTokensTable.createdAt, SortOrder.DESC)
-            .map(::toActiveTokenRow)
+            .map { ActiveTokenEntity.from(it) }
     }
 
-    private fun revokeRows(rows: List<ActiveTokenRow>): List<RevokedSessionInfo> {
+    private fun revokeRows(rows: List<ActiveTokenEntity>): List<RevokedSessionInfo> {
         if (rows.isEmpty()) return emptyList()
         val rowIds = rows.map { it.rowId }
         RefreshTokensTable.update({ RefreshTokensTable.id inList rowIds }) {
             it[RefreshTokensTable.isRevoked] = true
         }
         return rows.map { it.token.toRevokedSessionInfo() }
-    }
-
-    private fun toActiveTokenRow(row: ResultRow): ActiveTokenRow {
-        val rowId = row[RefreshTokensTable.id].value
-        val tokenId = rowId.toString()
-        val storedSessionId = SessionId(row[RefreshTokensTable.sessionId].toString())
-        val accessTokenJti = row[RefreshTokensTable.accessTokenJti]
-
-        return ActiveTokenRow(
-            rowId = rowId,
-            token = RefreshTokenInfo(
-                tokenId = tokenId,
-                storedSessionId = storedSessionId,
-                sessionId = storedSessionId,
-                createdAt = row[RefreshTokensTable.createdAt].toKotlinxInstant(),
-                expiresAt = row[RefreshTokensTable.expiresAt].toKotlinxInstant(),
-                isRevoked = row[RefreshTokensTable.isRevoked],
-                accessTokenJti = accessTokenJti,
-                accessTokenExpiresAt = row[RefreshTokensTable.accessTokenExpiresAt]?.toKotlinxInstant(),
-                deviceType = row[RefreshTokensTable.deviceType],
-                ipAddress = row[RefreshTokensTable.ipAddress],
-                userAgent = row[RefreshTokensTable.userAgent],
-            )
-        )
     }
 
     private fun activeRowsFilter(userUuid: JavaUuid, currentTimeLocal: LocalDateTime) =

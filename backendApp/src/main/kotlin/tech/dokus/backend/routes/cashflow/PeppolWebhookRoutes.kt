@@ -11,7 +11,6 @@ import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.Serializable
 import org.koin.ktor.ext.inject
 import tech.dokus.backend.worker.PeppolPollingWorker
-import tech.dokus.database.repository.peppol.PeppolSettingsRepository
 import tech.dokus.domain.utils.json
 import tech.dokus.foundation.backend.utils.loggerFor
 import tech.dokus.peppol.config.PeppolModuleConfig
@@ -30,7 +29,6 @@ private val logger = loggerFor("PeppolWebhook")
  * Extraction, contact resolution, purpose enrichment, and confirmation run asynchronously in the shared worker.
  */
 internal fun Route.peppolWebhookRoutes() {
-    val peppolSettingsRepository by inject<PeppolSettingsRepository>()
     val peppolPollingWorker by inject<PeppolPollingWorker>()
     val peppolService by inject<PeppolService>()
     val peppolModuleConfig by inject<PeppolModuleConfig>()
@@ -67,7 +65,7 @@ internal fun Route.peppolWebhookRoutes() {
             return@post
         }
 
-        val settings = peppolSettingsRepository.getEnabledSettingsByCompanyId(companyId)
+        val settings = peppolService.getEnabledSettingsByCompanyId(companyId)
             .getOrElse {
                 logger.error("Failed to resolve tenant by companyId {}", companyId, it)
                 call.respond(
@@ -113,7 +111,7 @@ internal fun Route.peppolWebhookRoutes() {
 
         logger.info("Webhook received for tenant {}, event: {}", settings.tenantId, payload.eventType ?: "unknown")
 
-        val debounceGranted = peppolSettingsRepository.tryAcquireWebhookPollSlot(
+        val debounceGranted = peppolService.tryAcquireWebhookPollSlot(
             tenantId = settings.tenantId,
             now = Clock.System.now().toLocalDateTime(TimeZone.UTC),
             debounceSeconds = peppolModuleConfig.webhook.pollDebounceSeconds

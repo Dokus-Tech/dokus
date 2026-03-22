@@ -1,6 +1,10 @@
 package tech.dokus.database.repository.search
 
 import java.math.BigDecimal
+import tech.dokus.database.entity.SearchContactHitEntity
+import tech.dokus.database.mapper.from
+import tech.dokus.database.entity.SearchDocumentHitEntity
+import tech.dokus.database.entity.SearchTransactionHitEntity
 import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.LowerCase
 import org.jetbrains.exposed.v1.core.ResultRow
@@ -33,15 +37,15 @@ import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
-import tech.dokus.domain.model.SearchAggregates
-import tech.dokus.domain.model.SearchContactHit
-import tech.dokus.domain.model.SearchCounts
-import tech.dokus.domain.model.SearchDocumentHit
+import tech.dokus.domain.model.SearchAggregatesDto
+import tech.dokus.domain.model.SearchContactHitDto
+import tech.dokus.domain.model.SearchCountsDto
+import tech.dokus.domain.model.SearchDocumentHitDto
 import tech.dokus.domain.model.SearchPreset
-import tech.dokus.domain.model.SearchTransactionHit
+import tech.dokus.domain.model.SearchTransactionHitDto
 import tech.dokus.domain.model.UnifiedSearchResponse
 import tech.dokus.domain.model.UnifiedSearchScope
-import tech.dokus.domain.model.contact.CounterpartySnapshot
+import tech.dokus.domain.model.contact.CounterpartySnapshotDto
 import tech.dokus.domain.utils.json
 import kotlinx.serialization.json.Json
 import tech.dokus.foundation.backend.database.dbQuery
@@ -74,7 +78,7 @@ class SearchRepository(
             return@runSuspendCatching UnifiedSearchResponse(
                 query = normalizedQuery,
                 scope = UnifiedSearchScope.Transactions,
-                counts = SearchCounts(
+                counts = SearchCountsDto(
                     all = presetResult.count,
                     documents = 0,
                     contacts = 0,
@@ -134,7 +138,7 @@ class SearchRepository(
         UnifiedSearchResponse(
             query = normalizedQuery,
             scope = scope,
-            counts = SearchCounts(
+            counts = SearchCountsDto(
                 all = documentCount + contactCount + transactionCount,
                 documents = documentCount,
                 contacts = contactCount,
@@ -175,22 +179,22 @@ class SearchRepository(
         pattern: String,
         amountDecimal: BigDecimal?,
         limit: Int,
-    ): List<SearchDocumentHit> = dbQuery {
+    ): List<SearchDocumentHitDto> = dbQuery {
         documentQuery(tenantId, pattern, amountDecimal)
             .orderBy(DocumentsTable.uploadedAt to SortOrder.DESC)
             .limit(limit)
-            .map(::mapDocumentHit)
+            .map { SearchDocumentHitDto.from(SearchDocumentHitEntity.from(it)) }
     }
 
     private suspend fun searchContacts(
         tenantId: TenantId,
         pattern: String,
         limit: Int
-    ): List<SearchContactHit> = dbQuery {
+    ): List<SearchContactHitDto> = dbQuery {
         contactQuery(tenantId, pattern)
             .orderBy(ContactsTable.name to SortOrder.ASC)
             .limit(limit)
-            .map(::mapContactHit)
+            .map { SearchContactHitDto.from(SearchContactHitEntity.from(it)) }
     }
 
     private suspend fun searchTransactions(
@@ -198,22 +202,22 @@ class SearchRepository(
         pattern: String,
         amountDecimal: BigDecimal?,
         limit: Int,
-    ): List<SearchTransactionHit> = dbQuery {
+    ): List<SearchTransactionHitDto> = dbQuery {
         transactionQuery(tenantId, pattern, amountDecimal)
             .orderBy(CashflowEntriesTable.eventDate to SortOrder.DESC)
             .limit(limit)
-            .map(::mapTransactionHit)
+            .map { SearchTransactionHitDto.from(SearchTransactionHitEntity.from(it)) }
     }
 
     private suspend fun transactionAggregates(
         tenantId: TenantId,
         pattern: String,
         amountDecimal: BigDecimal?,
-    ): SearchAggregates = dbQuery {
+    ): SearchAggregatesDto = dbQuery {
         val total = sumTransactionAmount(tenantId, pattern, amountDecimal, direction = null)
         val incoming = sumTransactionAmount(tenantId, pattern, amountDecimal, direction = CashflowDirection.In)
         val outgoing = sumTransactionAmount(tenantId, pattern, amountDecimal, direction = CashflowDirection.Out)
-        SearchAggregates(
+        SearchAggregatesDto(
             transactionTotal = total,
             incomingTotal = incoming,
             outgoingTotal = outgoing,
@@ -398,62 +402,6 @@ class SearchRepository(
         return query
     }
 
-    private fun mapDocumentHit(row: ResultRow): SearchDocumentHit {
-        val contactName = row.getOrNull(ContactsTable.name)
-        val contactVat = row.getOrNull(ContactsTable.vatNumber)
-        val snapshot = if (contactName == null || contactVat == null) {
-            row.getOrNull(DocumentsTable.counterpartySnapshot)
-                ?.let { json.decodeFromStringOrNull<CounterpartySnapshot>(it) }
-        } else null
-
-        return SearchDocumentHit(
-            documentId = DocumentId.parse(row[DocumentsTable.id].value.toString()),
-            filename = row[DocumentsTable.purposeRendered] ?: "",
-            documentType = row[DocumentsTable.documentType],
-            status = row[DocumentsTable.documentStatus],
-            counterpartyName = contactName ?: snapshot?.name,
-            counterpartyVat = contactVat ?: snapshot?.vatNumber?.value,
-        )
-    }
-
-    private fun mapContactHit(row: ResultRow): SearchContactHit = SearchContactHit(
-        contactId = ContactId.parse(row[ContactsTable.id].value.toString()),
-        name = row[ContactsTable.name],
-        email = row[ContactsTable.email],
-        vatNumber = row[ContactsTable.vatNumber],
-        companyNumber = row[ContactsTable.companyNumber],
-        isActive = row[ContactsTable.isActive],
-    )
-
-    private fun mapTransactionHit(row: ResultRow): SearchTransactionHit {
-        val direction = row[CashflowEntriesTable.direction]
-        val absoluteAmount = Money.fromDbDecimal(row[CashflowEntriesTable.amountGross])
-        val signedAmount = if (direction == CashflowDirection.Out) -absoluteAmount else absoluteAmount
-        val contactName = row.getOrNull(ContactsTable.name)
-        val filename = row.getOrNull(DocumentsTable.purposeRendered)
-        val expenseDescription = row.getOrNull(ExpensesTable.description)
-        val invoiceNumber = row.getOrNull(InvoicesTable.invoiceNumber)
-        val displayText = when {
-            !filename.isNullOrBlank() -> filename
-            !expenseDescription.isNullOrBlank() -> expenseDescription
-            !invoiceNumber.isNullOrBlank() -> invoiceNumber
-            !contactName.isNullOrBlank() -> contactName
-            else -> row[CashflowEntriesTable.sourceType].name
-        }
-
-        return SearchTransactionHit(
-            entryId = CashflowEntryId.parse(row[CashflowEntriesTable.id].value.toString()),
-            displayText = displayText,
-            status = row[CashflowEntriesTable.status],
-            date = row[CashflowEntriesTable.eventDate],
-            amount = signedAmount,
-            direction = direction,
-            contactName = contactName,
-            documentFilename = filename,
-            documentId = row.getOrNull(DocumentsTable.id)?.let { DocumentId.parse(it.value.toString()) },
-        )
-    }
-
     /**
      * Escapes LIKE wildcards using backslash as the escape character.
      * Note: Relies on PostgreSQL's default `standard_conforming_strings = on` behavior
@@ -489,6 +437,3 @@ private val SearchStatuses = listOf(
     CashflowEntryStatus.Overdue,
     CashflowEntryStatus.Paid,
 )
-
-private inline fun <reified T> Json.decodeFromStringOrNull(value: String): T? =
-    runCatching { decodeFromString<T>(value) }.getOrNull()

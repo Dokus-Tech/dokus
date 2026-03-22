@@ -19,6 +19,7 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import tech.dokus.foundation.aura.style.divider
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -48,15 +49,17 @@ import tech.dokus.foundation.aura.tooling.TestWrapper
 @Composable
 fun DocQueueHeader(
     positionText: String,
+    backLabel: String = "",
     onExit: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(
         modifier = modifier.fillMaxWidth()
     ) {
+        val fallback = stringResource(Res.string.document_queue_all_docs)
         val backDescription = stringResource(Res.string.a11y_back_to_all_documents)
         PLeftPaneHeader(
-            backLabel = stringResource(Res.string.document_queue_all_docs),
+            backLabel = backLabel.ifEmpty { fallback },
             onBackClick = onExit,
             backContentDescription = backDescription,
             trailing = {
@@ -160,7 +163,7 @@ fun DocQueueItemRow(
         )
     }
 
-    HorizontalDivider(color = Color.Black.copy(alpha = 0.03f))
+    HorizontalDivider(color = MaterialTheme.colorScheme.divider)
 }
 
 // ---------------------------------------------------------------------------

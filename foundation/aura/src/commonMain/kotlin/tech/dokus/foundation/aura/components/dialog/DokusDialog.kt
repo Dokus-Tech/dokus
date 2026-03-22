@@ -114,128 +114,169 @@ fun DokusDialog(
             usePlatformDefaultWidth = false,
         )
     ) {
-        DokusGlassSurface(
-            modifier = modifier
-                .widthIn(max = Constraints.DialogSize.maxWidth)
-                .padding(horizontal = Constraints.Spacing.large)
-                .focusRequester(focusRequester)
-                .focusable()
-                .onKeyEvent { event ->
-                    if (event.type == KeyEventType.KeyDown) {
-                        when (event.key) {
-                            Key.Escape -> {
-                                if (dismissOnBackPress) {
-                                    onDismissRequest()
-                                    true
-                                } else {
-                                    false
-                                }
-                            }
-                            Key.Enter -> {
-                                if (primaryAction.enabled && !primaryAction.isLoading) {
-                                    primaryAction.onClick()
-                                    true
-                                } else {
-                                    false
-                                }
-                            }
-                            else -> false
-                        }
-                    } else {
-                        false
-                    }
-                }
-        ) {
-            Column(
-                modifier = Modifier
-                    .padding(Constraints.Spacing.xLarge),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                // Icon (optional)
-                if (icon != null) {
-                    icon()
-                    Spacer(modifier = Modifier.height(Constraints.Spacing.medium))
-                }
+        DokusDialogSurface(
+            onDismissRequest = onDismissRequest,
+            title = title,
+            modifier = modifier,
+            icon = icon,
+            content = content,
+            primaryAction = primaryAction,
+            secondaryAction = secondaryAction,
+            dismissOnBackPress = dismissOnBackPress,
+            scrollableContent = scrollableContent,
+        )
+    }
+}
 
-                // Title
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+/**
+ * The inner surface content of a DokusDialog, without the [Dialog] wrapper.
+ *
+ * Use this directly inside Navigation Compose `dialog<>` routes, where the
+ * navigation framework already provides the dialog overlay. Using [DokusDialog]
+ * in that context would create a double overlay.
+ *
+ * For regular (non-navigation) dialogs, prefer [DokusDialog] which wraps this
+ * in a [Dialog] automatically.
+ */
+@Composable
+fun DokusDialogSurface(
+    onDismissRequest: () -> Unit,
+    title: String,
+    modifier: Modifier = Modifier,
+    icon: (@Composable () -> Unit)? = null,
+    content: @Composable () -> Unit,
+    primaryAction: DokusDialogAction,
+    secondaryAction: DokusDialogAction? = null,
+    dismissOnBackPress: Boolean = true,
+    scrollableContent: Boolean = true,
+) {
+    val focusRequester = remember { FocusRequester() }
 
-                Spacer(modifier = Modifier.height(Constraints.Spacing.large))
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+    }
 
-                // Content (optionally scrollable)
-                Box(
-                    modifier = Modifier
-                        .weight(weight = 1f, fill = false)
-                        .then(
-                            if (scrollableContent) {
-                                Modifier.verticalScroll(rememberScrollState())
+    DokusGlassSurface(
+        modifier = modifier
+            .widthIn(max = Constraints.DialogSize.maxWidth)
+            .padding(horizontal = Constraints.Spacing.large)
+            .focusRequester(focusRequester)
+            .focusable()
+            .onKeyEvent { event ->
+                if (event.type == KeyEventType.KeyDown) {
+                    when (event.key) {
+                        Key.Escape -> {
+                            if (dismissOnBackPress) {
+                                onDismissRequest()
+                                true
                             } else {
-                                Modifier
+                                false
                             }
+                        }
+                        Key.Enter -> {
+                            if (primaryAction.enabled && !primaryAction.isLoading) {
+                                primaryAction.onClick()
+                                true
+                            } else {
+                                false
+                            }
+                        }
+                        else -> false
+                    }
+                } else {
+                    false
+                }
+            }
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(Constraints.Spacing.xLarge),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Icon (optional)
+            if (icon != null) {
+                icon()
+                Spacer(modifier = Modifier.height(Constraints.Spacing.medium))
+            }
+
+            // Title
+            Text(
+                text = title,
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            Spacer(modifier = Modifier.height(Constraints.Spacing.large))
+
+            // Content (optionally scrollable)
+            Box(
+                modifier = Modifier
+                    .weight(weight = 1f, fill = false)
+                    .then(
+                        if (scrollableContent) {
+                            Modifier.verticalScroll(rememberScrollState())
+                        } else {
+                            Modifier
+                        }
+                    )
+            ) {
+                content()
+            }
+
+            Spacer(modifier = Modifier.height(Constraints.Spacing.xLarge))
+
+            // Actions
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Secondary action (optional)
+                secondaryAction?.let { action ->
+                    TextButton(
+                        onClick = action.onClick,
+                        enabled = action.enabled && !action.isLoading
+                    ) {
+                        Text(
+                            text = action.text,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                ) {
-                    content()
+                    }
                 }
 
-                Spacer(modifier = Modifier.height(Constraints.Spacing.xLarge))
-
-                // Actions
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Secondary action (optional)
-                    secondaryAction?.let { action ->
-                        TextButton(
-                            onClick = action.onClick,
-                            enabled = action.enabled && !action.isLoading
-                        ) {
-                            Text(
-                                text = action.text,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                // Primary action
+                TextButton(
+                    onClick = primaryAction.onClick,
+                    enabled = primaryAction.enabled && !primaryAction.isLoading,
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = if (primaryAction.isDestructive) {
+                            MaterialTheme.colorScheme.error
+                        } else {
+                            MaterialTheme.colorScheme.primary
                         }
-                    }
-
-                    // Primary action
-                    TextButton(
-                        onClick = primaryAction.onClick,
-                        enabled = primaryAction.enabled && !primaryAction.isLoading,
-                        colors = ButtonDefaults.textButtonColors(
-                            contentColor = if (primaryAction.isDestructive) {
+                    )
+                ) {
+                    AnimatedVisibility(
+                        visible = primaryAction.isLoading,
+                        enter = fadeIn(),
+                        exit = fadeOut()
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier
+                                .size(Constraints.IconSize.buttonLoading)
+                                .padding(end = Constraints.Spacing.small),
+                            strokeWidth = 2.dp,
+                            color = if (primaryAction.isDestructive) {
                                 MaterialTheme.colorScheme.error
                             } else {
                                 MaterialTheme.colorScheme.primary
                             }
                         )
-                    ) {
-                        AnimatedVisibility(
-                            visible = primaryAction.isLoading,
-                            enter = fadeIn(),
-                            exit = fadeOut()
-                        ) {
-                            CircularProgressIndicator(
-                                modifier = Modifier
-                                    .size(Constraints.IconSize.buttonLoading)
-                                    .padding(end = Constraints.Spacing.small),
-                                strokeWidth = 2.dp,
-                                color = if (primaryAction.isDestructive) {
-                                    MaterialTheme.colorScheme.error
-                                } else {
-                                    MaterialTheme.colorScheme.primary
-                                }
-                            )
-                        }
-                        Text(
-                            text = primaryAction.text,
-                            fontWeight = FontWeight.Medium
-                        )
                     }
+                    Text(
+                        text = primaryAction.text,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
             }
         }

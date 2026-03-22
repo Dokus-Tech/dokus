@@ -50,7 +50,7 @@ import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.AttachmentDto
 import tech.dokus.domain.model.CancelEntryRequest
 import tech.dokus.domain.model.AutoPaymentStatus
-import tech.dokus.domain.model.CashflowEntry
+import tech.dokus.domain.model.CashflowEntryDto
 import tech.dokus.domain.model.CashflowOverview
 import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.domain.model.CashflowPaymentRequest
@@ -518,7 +518,7 @@ internal class CashflowRemoteDataSourceImpl(
         entryId: CashflowEntryId?,
         limit: Int,
         offset: Int
-    ): Result<PaginatedResponse<CashflowEntry>> {
+    ): Result<PaginatedResponse<CashflowEntryDto>> {
         return runCatching {
             httpClient.get(
                 Cashflow.Entries(
@@ -536,7 +536,7 @@ internal class CashflowRemoteDataSourceImpl(
         }
     }
 
-    override suspend fun getCashflowEntry(entryId: CashflowEntryId): Result<CashflowEntry> {
+    override suspend fun getCashflowEntry(entryId: CashflowEntryId): Result<CashflowEntryDto> {
         return runCatching {
             val entriesRoute = Cashflow.Entries()
             httpClient.get(Cashflow.Entries.Id(parent = entriesRoute, id = entryId.toString())).body()
@@ -566,7 +566,7 @@ internal class CashflowRemoteDataSourceImpl(
     override suspend fun recordCashflowPayment(
         entryId: CashflowEntryId,
         request: CashflowPaymentRequest
-    ): Result<CashflowEntry> {
+    ): Result<CashflowEntryDto> {
         return runCatching {
             val entriesRoute = Cashflow.Entries()
             val idRoute = Cashflow.Entries.Id(parent = entriesRoute, id = entryId.toString())
@@ -580,7 +580,7 @@ internal class CashflowRemoteDataSourceImpl(
     override suspend fun cancelCashflowEntry(
         entryId: CashflowEntryId,
         request: CancelEntryRequest?
-    ): Result<CashflowEntry> {
+    ): Result<CashflowEntryDto> {
         return runCatching {
             val entriesRoute = Cashflow.Entries()
             val idRoute = Cashflow.Entries.Id(parent = entriesRoute, id = entryId.toString())
@@ -594,7 +594,7 @@ internal class CashflowRemoteDataSourceImpl(
     override suspend fun undoAutoPayment(
         entryId: CashflowEntryId,
         request: UndoAutoPaymentRequest
-    ): Result<CashflowEntry> {
+    ): Result<CashflowEntryDto> {
         return runCatching {
             val entriesRoute = Cashflow.Entries()
             val idRoute = Cashflow.Entries.Id(parent = entriesRoute, id = entryId.toString())
@@ -615,6 +615,7 @@ internal class CashflowRemoteDataSourceImpl(
         documentType: DocumentType?,
         ingestionStatus: IngestionStatus?,
         sortBy: String?,
+        contactId: ContactId?,
         page: Int,
         limit: Int
     ): Result<PaginatedResponse<DocumentListItemDto>> {
@@ -626,6 +627,7 @@ internal class CashflowRemoteDataSourceImpl(
                     documentType = documentType,
                     ingestionStatus = ingestionStatus,
                     sortBy = sortBy,
+                    contactId = contactId,
                     page = page,
                     limit = limit
                 )
@@ -807,6 +809,13 @@ internal class CashflowRemoteDataSourceImpl(
             ).body()
 
             withAbsolutePageUrls(response)
+        }
+    }
+
+    override suspend fun getDocumentContent(documentId: DocumentId): Result<ByteArray> {
+        return runCatching {
+            val docIdRoute = Documents.Id(id = documentId.toString())
+            httpClient.get(Documents.Id.Content(parent = docIdRoute)).body()
         }
     }
 

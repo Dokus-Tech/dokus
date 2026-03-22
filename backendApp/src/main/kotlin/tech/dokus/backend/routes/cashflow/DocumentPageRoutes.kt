@@ -9,16 +9,11 @@ import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
 import tech.dokus.backend.security.requireTenantId
+import tech.dokus.backend.services.documents.DocumentTruthService
 import tech.dokus.backend.services.pdf.PdfPreviewService
-import tech.dokus.database.repository.cashflow.DocumentRepository
-import tech.dokus.database.repository.cashflow.DocumentSourceRepository
-import tech.dokus.database.repository.cashflow.DocumentSourceSummary
-import tech.dokus.database.repository.cashflow.selectPreferredSource
-import tech.dokus.domain.enums.DocumentSourceStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentSourceId
-import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.routes.Documents
 import tech.dokus.foundation.backend.security.authenticateJwt
 
@@ -34,8 +29,7 @@ import tech.dokus.foundation.backend.security.authenticateJwt
  * - Tenant isolation enforced: document must belong to authenticated tenant
  */
 internal fun Route.documentPageRoutes() {
-    val documentRepository by inject<DocumentRepository>()
-    val documentSourceRepository by inject<DocumentSourceRepository>()
+    val truthService by inject<DocumentTruthService>()
     val pdfPreviewService by inject<PdfPreviewService>()
     val logger = LoggerFactory.getLogger("DocumentPageRoutes")
 
@@ -43,22 +37,13 @@ internal fun Route.documentPageRoutes() {
         /**
          * GET /api/v1/documents/{id}/pages
          * List available PDF pages for preview.
-         *
-         * Query params:
-         * - dpi: Resolution for rendered pages (72-300, default 150)
-         * - maxPages: Maximum pages to return (1-50, default 10)
          */
         get<Documents.Id.Pages> { route ->
             val tenantId = requireTenantId()
             val documentId = DocumentId.parse(route.parent.id)
 
             logger.debug("Listing pages for document {} (tenant: {})", documentId, tenantId)
-            val resolved = resolveDefaultSourceForPreview(
-                tenantId = tenantId,
-                documentId = documentId,
-                documentRepository = documentRepository,
-                sourceRepository = documentSourceRepository
-            )
+            val resolved = truthService.resolvePreviewSource(tenantId, documentId)
             ensurePdfContentType(resolved.contentType)
 
             try {
@@ -83,12 +68,6 @@ internal fun Route.documentPageRoutes() {
         /**
          * GET /api/v1/documents/{id}/pages/{page}.png
          * Get a rendered PDF page as PNG image.
-         *
-         * Path params:
-         * - page: 1-based page number
-         *
-         * Query params:
-         * - dpi: Resolution for rendered page (72-300, default 150)
          */
         get<Documents.Id.PageImage> { route ->
             val tenantId = requireTenantId()
@@ -97,12 +76,7 @@ internal fun Route.documentPageRoutes() {
 
             logger.debug("Getting page {} for document {} (tenant: {})", page, documentId, tenantId)
             validatePageNumber(page)
-            val resolved = resolveDefaultSourceForPreview(
-                tenantId = tenantId,
-                documentId = documentId,
-                documentRepository = documentRepository,
-                sourceRepository = documentSourceRepository
-            )
+            val resolved = truthService.resolvePreviewSource(tenantId, documentId)
             ensurePdfContentType(resolved.contentType)
 
             try {
@@ -143,13 +117,7 @@ internal fun Route.documentPageRoutes() {
                 documentId,
                 tenantId
             )
-            val resolved = resolveExplicitSourceForPreview(
-                tenantId = tenantId,
-                documentId = documentId,
-                sourceId = sourceId,
-                documentRepository = documentRepository,
-                sourceRepository = documentSourceRepository
-            )
+            val resolved = truthService.resolvePreviewSource(tenantId, documentId, sourceId)
             ensurePdfContentType(resolved.contentType)
 
             try {
@@ -194,13 +162,7 @@ internal fun Route.documentPageRoutes() {
                 tenantId
             )
             validatePageNumber(page)
-            val resolved = resolveExplicitSourceForPreview(
-                tenantId = tenantId,
-                documentId = documentId,
-                sourceId = sourceId,
-                documentRepository = documentRepository,
-                sourceRepository = documentSourceRepository
-            )
+            val resolved = truthService.resolvePreviewSource(tenantId, documentId, sourceId)
             ensurePdfContentType(resolved.contentType)
 
             try {
@@ -232,53 +194,6 @@ internal fun Route.documentPageRoutes() {
             }
         }
     }
-}
-
-private data class PreviewSourceSelection(
-    val storageKey: String,
-    val contentType: String,
-    val cacheScope: String
-)
-
-private suspend fun resolveDefaultSourceForPreview(
-    tenantId: TenantId,
-    documentId: DocumentId,
-    documentRepository: DocumentRepository,
-    sourceRepository: DocumentSourceRepository
-): PreviewSourceSelection {
-    if (!documentRepository.exists(tenantId, documentId)) {
-        throw DokusException.NotFound("Document not found: $documentId")
-    }
-    val sources = sourceRepository.listByDocument(tenantId, documentId)
-    val preferredSource = selectPreferredSource(sources)
-        ?: throw DokusException.NotFound("No source available for document: $documentId")
-    return preferredSource.toPreviewSelection()
-}
-
-private suspend fun resolveExplicitSourceForPreview(
-    tenantId: TenantId,
-    documentId: DocumentId,
-    sourceId: DocumentSourceId,
-    documentRepository: DocumentRepository,
-    sourceRepository: DocumentSourceRepository
-): PreviewSourceSelection {
-    if (!documentRepository.exists(tenantId, documentId)) {
-        throw DokusException.NotFound("Document not found: $documentId")
-    }
-    val source = sourceRepository.getById(tenantId, sourceId)
-        ?: throw DokusException.NotFound("Source not found: $sourceId")
-    if (source.documentId != documentId || source.status != DocumentSourceStatus.Linked) {
-        throw DokusException.NotFound("Source not found: $sourceId")
-    }
-    return source.toPreviewSelection()
-}
-
-private fun DocumentSourceSummary.toPreviewSelection(): PreviewSourceSelection {
-    return PreviewSourceSelection(
-        storageKey = storageKey,
-        contentType = contentType,
-        cacheScope = "source-$id"
-    )
 }
 
 private fun ensurePdfContentType(contentType: String) {

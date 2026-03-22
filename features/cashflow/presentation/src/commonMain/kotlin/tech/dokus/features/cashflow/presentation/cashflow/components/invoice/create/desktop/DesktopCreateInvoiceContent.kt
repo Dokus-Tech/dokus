@@ -9,10 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import com.composables.icons.lucide.Calendar
-import com.composables.icons.lucide.ChevronDown
-import com.composables.icons.lucide.ChevronUp
-import com.composables.icons.lucide.Lucide
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -27,8 +23,26 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import kotlinx.datetime.LocalDate
+import com.composables.icons.lucide.Calendar
+import com.composables.icons.lucide.ChevronDown
+import com.composables.icons.lucide.ChevronUp
+import com.composables.icons.lucide.Lucide
 import kotlinx.datetime.number
+import org.jetbrains.compose.resources.stringResource
+import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.button_dismiss
+import tech.dokus.aura.resources.invoice_due_label
+import tech.dokus.aura.resources.invoice_from_label
+import tech.dokus.aura.resources.invoice_issued_label
+import tech.dokus.aura.resources.invoice_last_invoice_date
+import tech.dokus.aura.resources.invoice_net_days
+import tech.dokus.aura.resources.invoice_new_title
+import tech.dokus.aura.resources.invoice_payment_terms
+import tech.dokus.aura.resources.invoice_preview
+import tech.dokus.aura.resources.invoice_reuse_lines
+import tech.dokus.aura.resources.invoice_save_as_draft
+import tech.dokus.aura.resources.invoice_select_date
+import tech.dokus.aura.resources.invoice_terms_label
 import tech.dokus.features.cashflow.mvi.CreateInvoiceIntent
 import tech.dokus.features.cashflow.mvi.CreateInvoiceState
 import tech.dokus.foundation.aura.components.PButton
@@ -37,9 +51,6 @@ import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.constrains.limitWidthOperatorForm
 import tech.dokus.foundation.aura.style.textFaint
 import tech.dokus.foundation.aura.style.textMuted
-import org.jetbrains.compose.resources.stringResource
-import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.*
 
 private val SectionSpacing = 26.dp
 private val TopSpacing = 34.dp
@@ -99,10 +110,38 @@ internal fun DesktopCreateInvoiceContent(
                 total = formState.total,
                 onAddItem = { onIntent(CreateInvoiceIntent.AddLineItem) },
                 onRemoveItem = { onIntent(CreateInvoiceIntent.RemoveLineItem(it)) },
-                onDescription = { id, value -> onIntent(CreateInvoiceIntent.UpdateItemDescription(id, value)) },
-                onQuantity = { id, value -> onIntent(CreateInvoiceIntent.UpdateItemQuantity(id, value)) },
-                onUnitPrice = { id, value -> onIntent(CreateInvoiceIntent.UpdateItemUnitPrice(id, value)) },
-                onVatRate = { id, value -> onIntent(CreateInvoiceIntent.UpdateItemVatRate(id, value)) }
+                onDescription = { id, value ->
+                    onIntent(
+                        CreateInvoiceIntent.UpdateItemDescription(
+                            id,
+                            value
+                        )
+                    )
+                },
+                onQuantity = { id, value ->
+                    onIntent(
+                        CreateInvoiceIntent.UpdateItemQuantity(
+                            id,
+                            value
+                        )
+                    )
+                },
+                onUnitPrice = { id, value ->
+                    onIntent(
+                        CreateInvoiceIntent.UpdateItemUnitPrice(
+                            id,
+                            value
+                        )
+                    )
+                },
+                onVatRate = { id, value ->
+                    onIntent(
+                        CreateInvoiceIntent.UpdateItemVatRate(
+                            id,
+                            value
+                        )
+                    )
+                }
             )
 
             PaymentSection(

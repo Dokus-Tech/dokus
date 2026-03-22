@@ -50,9 +50,9 @@ internal fun resolveDeepLinkNavigationTarget(deepLink: DeepLink): DeepLinkNaviga
         return DeepLinkNavigationTarget.RootDestination(AuthDestination.ServerConnection())
     }
 
-    DeepLinks.extractDocumentReviewId(deepLink)?.let { documentId ->
+    DeepLinks.extractDocumentDetailId(deepLink)?.let { documentId ->
         return DeepLinkNavigationTarget.HomeCommand(
-            HomeNavigationCommand.OpenDocumentReview(documentId)
+            HomeNavigationCommand.OpenDocumentDetail(documentId)
         )
     }
 

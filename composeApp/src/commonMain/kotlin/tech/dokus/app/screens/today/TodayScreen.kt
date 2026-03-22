@@ -15,15 +15,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -57,6 +53,7 @@ import tech.dokus.foundation.aura.components.badges.SourceBadge
 import tech.dokus.foundation.aura.components.badges.toUiSource
 import tech.dokus.foundation.aura.components.common.CalloutTrailing
 import tech.dokus.foundation.aura.components.common.DokusCalloutBanner
+import tech.dokus.foundation.aura.components.common.DokusErrorBanner
 import tech.dokus.foundation.aura.components.status.StatusDot
 import tech.dokus.foundation.aura.components.status.StatusDotType
 import tech.dokus.foundation.aura.components.text.Amt
@@ -83,22 +80,11 @@ internal fun TodayRoute(
     val navController = LocalNavController.current
     val homeNavController = LocalHomeNavController.current
     val rootNavController = LocalRootNavController.current
-    val snackbarHostState = remember { SnackbarHostState() }
-    var pendingError by remember { mutableStateOf<DokusException?>(null) }
-
-    val errorMessage = pendingError?.localized
-
-    LaunchedEffect(errorMessage) {
-        if (errorMessage != null) {
-            snackbarHostState.showSnackbar(errorMessage)
-            pendingError = null
-        }
-    }
 
     val state by container.store.subscribe { action ->
         when (action) {
             is TodayAction.NavigateToDocument -> {
-                navController.navigateTo(CashFlowDestination.DocumentReview(action.documentId))
+                navController.navigateTo(CashFlowDestination.DocumentDetail(action.documentId))
             }
 
             TodayAction.NavigateToCashflow -> {
@@ -107,10 +93,6 @@ internal fun TodayRoute(
 
             TodayAction.NavigateToWorkspaceSelect -> {
                 rootNavController.navigateTo(AuthDestination.WorkspaceSelect)
-            }
-
-            is TodayAction.ShowError -> {
-                pendingError = action.error
             }
         }
     }
@@ -123,15 +105,16 @@ internal fun TodayRoute(
 
     TodayScreen(
         documents = documents,
-        snackbarHostState = snackbarHostState,
+        actionError = state.actionError,
+        onDismissActionError = { container.store.intent(TodayIntent.DismissActionError) },
         onReviewClick = { doc ->
             navController.navigateTo(
-                CashFlowDestination.DocumentReview(doc.documentId.toString())
+                CashFlowDestination.DocumentDetail(doc.documentId.toString())
             )
         },
         onDocumentClick = { doc ->
             navController.navigateTo(
-                CashFlowDestination.DocumentReview(doc.documentId.toString())
+                CashFlowDestination.DocumentDetail(doc.documentId.toString())
             )
         },
         onViewAllClick = {
@@ -143,7 +126,8 @@ internal fun TodayRoute(
 @Composable
 internal fun TodayScreen(
     documents: List<DocumentListItemDto>,
-    snackbarHostState: SnackbarHostState,
+    actionError: DokusException?,
+    onDismissActionError: () -> Unit,
     onReviewClick: (DocumentListItemDto) -> Unit,
     onDocumentClick: (DocumentListItemDto) -> Unit,
     onViewAllClick: () -> Unit,
@@ -151,9 +135,7 @@ internal fun TodayScreen(
     val isLargeScreen = LocalScreenSize.current.isLarge
     val spacing = if (isLargeScreen) Constraints.Spacing.xLarge else Constraints.Spacing.large
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) {
+    Scaffold {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -161,6 +143,15 @@ internal fun TodayScreen(
                 .padding(spacing),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
+            if (actionError != null) {
+                DokusErrorBanner(
+                    exception = actionError,
+                    retryHandler = null,
+                    modifier = Modifier.padding(horizontal = Constraints.Spacing.large),
+                    onDismiss = onDismissActionError,
+                )
+            }
+
             TodayStatCards(documents = documents)
 
             val attentionDoc = documents.firstOrNull()
@@ -414,7 +405,8 @@ private fun TodayScreenPreview(
     TestWrapper(parameters) {
         TodayScreen(
             documents = emptyList(),
-            snackbarHostState = remember { SnackbarHostState() },
+            actionError = null,
+            onDismissActionError = {},
             onReviewClick = {},
             onDocumentClick = {},
             onViewAllClick = {},

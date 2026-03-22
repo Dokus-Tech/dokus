@@ -7,25 +7,25 @@ import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentType
 
 // =============================================================================
-// FinancialLineItem → DocLineItem
+// FinancialLineItemDto → DocLineItem
 // =============================================================================
 
-fun FinancialLineItem.toDocLineItem(): DocLineItem = DocLineItem(
-    description = description,
-    quantity = quantity?.let { Quantity(it.toDouble()) },
-    unitPrice = unitPrice?.let { Money(it) },
-    vatRate = vatRate?.let { tech.dokus.domain.VatRate(it) },
-    netAmount = netAmount?.let { Money(it) },
+fun DocLineItem.Companion.from(dto: FinancialLineItemDto): DocLineItem = DocLineItem(
+    description = dto.description,
+    quantity = dto.quantity?.let { Quantity(it.toDouble()) },
+    unitPrice = dto.unitPrice?.let { Money(it) },
+    vatRate = dto.vatRate?.let { tech.dokus.domain.VatRate(it) },
+    netAmount = dto.netAmount?.let { Money(it) },
 )
 
-fun InvoiceItemDto.toDocLineItem(): DocLineItem = DocLineItem(
-    description = description,
-    quantity = Quantity(quantity),
-    unitPrice = unitPrice,
-    vatRate = vatRate,
-    netAmount = lineTotal,
-    vatAmount = vatAmount,
-    sortOrder = sortOrder,
+fun DocLineItem.Companion.from(dto: InvoiceItemDto): DocLineItem = DocLineItem(
+    description = dto.description,
+    quantity = Quantity(dto.quantity),
+    unitPrice = dto.unitPrice,
+    vatRate = dto.vatRate,
+    netAmount = dto.lineTotal,
+    vatAmount = dto.vatAmount,
+    sortOrder = dto.sortOrder,
 )
 
 // =============================================================================
@@ -40,9 +40,9 @@ fun InvoiceItemDto.toDocLineItem(): DocLineItem = DocLineItem(
  */
 private fun resolveCounterparty(
     direction: DocumentDirection,
-    seller: PartyDraft,
-    buyer: PartyDraft,
-): PartyDraft = when (direction) {
+    seller: PartyDraftDto,
+    buyer: PartyDraftDto,
+): PartyDraftDto = when (direction) {
     DocumentDirection.Inbound -> seller
     DocumentDirection.Outbound -> buyer
     DocumentDirection.Unknown, DocumentDirection.Neutral -> {
@@ -56,127 +56,127 @@ private fun resolveCounterparty(
  */
 private fun splitCounterparty(
     direction: DocumentDirection,
-    counterparty: PartyDraft,
-): kotlin.Pair<PartyDraft, PartyDraft> = when (direction) {
-    DocumentDirection.Inbound -> counterparty to PartyDraft()
-    DocumentDirection.Outbound -> PartyDraft() to counterparty
-    DocumentDirection.Unknown, DocumentDirection.Neutral -> counterparty to PartyDraft()
+    counterparty: PartyDraftDto,
+): kotlin.Pair<PartyDraftDto, PartyDraftDto> = when (direction) {
+    DocumentDirection.Inbound -> counterparty to PartyDraftDto()
+    DocumentDirection.Outbound -> PartyDraftDto() to counterparty
+    DocumentDirection.Unknown, DocumentDirection.Neutral -> counterparty to PartyDraftDto()
 }
 
 // =============================================================================
 // DocumentDraftData → DocDto (Draft variants)
 // =============================================================================
 
-fun DocumentDraftData.toDocDto(): DocDto = when (this) {
+fun DocDto.Companion.from(data: DocumentDraftData): DocDto = when (data) {
     is InvoiceDraftData -> DocDto.Invoice.Draft(
-        direction = direction,
-        invoiceNumber = invoiceNumber,
-        issueDate = issueDate,
-        dueDate = dueDate,
-        currency = currency,
-        subtotalAmount = subtotalAmount,
-        vatAmount = vatAmount,
-        totalAmount = totalAmount,
-        lineItems = lineItems.map { it.toDocLineItem() },
-        iban = iban,
-        notes = notes,
-        vatBreakdown = vatBreakdown,
-        payment = payment,
-        counterparty = resolveCounterparty(direction, seller, buyer),
+        direction = data.direction,
+        invoiceNumber = data.invoiceNumber,
+        issueDate = data.issueDate,
+        dueDate = data.dueDate,
+        currency = data.currency,
+        subtotalAmount = data.subtotalAmount,
+        vatAmount = data.vatAmount,
+        totalAmount = data.totalAmount,
+        lineItems = data.lineItems.map { DocLineItem.from(it) },
+        iban = data.iban,
+        notes = data.notes,
+        vatBreakdown = data.vatBreakdown,
+        payment = data.payment,
+        counterparty = resolveCounterparty(data.direction, data.seller, data.buyer),
     )
 
     is CreditNoteDraftData -> DocDto.CreditNote.Draft(
-        direction = direction,
-        creditNoteNumber = creditNoteNumber,
-        issueDate = issueDate,
-        currency = currency,
-        subtotalAmount = subtotalAmount,
-        vatAmount = vatAmount,
-        totalAmount = totalAmount,
-        lineItems = lineItems.map { it.toDocLineItem() },
-        reason = reason,
-        notes = notes,
-        vatBreakdown = vatBreakdown,
-        originalInvoiceNumber = originalInvoiceNumber,
-        counterparty = resolveCounterparty(direction, seller, buyer),
+        direction = data.direction,
+        creditNoteNumber = data.creditNoteNumber,
+        issueDate = data.issueDate,
+        currency = data.currency,
+        subtotalAmount = data.subtotalAmount,
+        vatAmount = data.vatAmount,
+        totalAmount = data.totalAmount,
+        lineItems = data.lineItems.map { DocLineItem.from(it) },
+        reason = data.reason,
+        notes = data.notes,
+        vatBreakdown = data.vatBreakdown,
+        originalInvoiceNumber = data.originalInvoiceNumber,
+        counterparty = resolveCounterparty(data.direction, data.seller, data.buyer),
     )
 
     is ReceiptDraftData -> DocDto.Receipt.Draft(
-        direction = direction,
-        merchantName = merchantName,
-        merchantVat = merchantVat,
-        date = date,
-        currency = currency,
-        totalAmount = totalAmount,
-        vatAmount = vatAmount,
-        lineItems = lineItems.map { it.toDocLineItem() },
-        receiptNumber = receiptNumber,
-        notes = notes,
-        vatBreakdown = vatBreakdown,
-        paymentMethod = paymentMethod,
+        direction = data.direction,
+        merchantName = data.merchantName,
+        merchantVat = data.merchantVat,
+        date = data.date,
+        currency = data.currency,
+        totalAmount = data.totalAmount,
+        vatAmount = data.vatAmount,
+        lineItems = data.lineItems.map { DocLineItem.from(it) },
+        receiptNumber = data.receiptNumber,
+        notes = data.notes,
+        vatBreakdown = data.vatBreakdown,
+        paymentMethod = data.paymentMethod,
     )
 
     is BankStatementDraftData -> DocDto.BankStatement.Draft(
-        direction = direction,
-        accountIban = accountIban,
-        openingBalance = openingBalance,
-        closingBalance = closingBalance,
-        periodStart = periodStart,
-        periodEnd = periodEnd,
-        notes = notes,
-        transactions = transactions,
-        institution = institution,
+        direction = data.direction,
+        accountIban = data.accountIban,
+        openingBalance = data.openingBalance,
+        closingBalance = data.closingBalance,
+        periodStart = data.periodStart,
+        periodEnd = data.periodEnd,
+        notes = data.notes,
+        transactions = data.transactions,
+        institution = data.institution,
     )
 
     // Classified-only types
-    is ProFormaDraftData -> DocDto.ProForma.Draft(direction)
-    is QuoteDraftData -> DocDto.Quote.Draft(direction)
-    is OrderConfirmationDraftData -> DocDto.OrderConfirmation.Draft(direction)
-    is DeliveryNoteDraftData -> DocDto.DeliveryNote.Draft(direction)
-    is ReminderDraftData -> DocDto.Reminder.Draft(direction)
-    is StatementOfAccountDraftData -> DocDto.StatementOfAccount.Draft(direction)
-    is PurchaseOrderDraftData -> DocDto.PurchaseOrder.Draft(direction)
-    is ExpenseClaimDraftData -> DocDto.ExpenseClaim.Draft(direction)
-    is BankFeeDraftData -> DocDto.BankFee.Draft(direction)
-    is InterestStatementDraftData -> DocDto.InterestStatement.Draft(direction)
-    is PaymentConfirmationDraftData -> DocDto.PaymentConfirmation.Draft(direction)
-    is VatReturnDraftData -> DocDto.VatReturn.Draft(direction)
-    is VatListingDraftData -> DocDto.VatListing.Draft(direction)
-    is VatAssessmentDraftData -> DocDto.VatAssessment.Draft(direction)
-    is IcListingDraftData -> DocDto.IcListing.Draft(direction)
-    is OssReturnDraftData -> DocDto.OssReturn.Draft(direction)
-    is CorporateTaxDraftData -> DocDto.CorporateTax.Draft(direction)
-    is CorporateTaxAdvanceDraftData -> DocDto.CorporateTaxAdvance.Draft(direction)
-    is TaxAssessmentDraftData -> DocDto.TaxAssessment.Draft(direction)
-    is PersonalTaxDraftData -> DocDto.PersonalTax.Draft(direction)
-    is WithholdingTaxDraftData -> DocDto.WithholdingTax.Draft(direction)
-    is SocialContributionDraftData -> DocDto.SocialContribution.Draft(direction)
-    is SocialFundDraftData -> DocDto.SocialFund.Draft(direction)
-    is SelfEmployedContributionDraftData -> DocDto.SelfEmployedContribution.Draft(direction)
-    is VapzDraftData -> DocDto.Vapz.Draft(direction)
-    is SalarySlipDraftData -> DocDto.SalarySlip.Draft(direction)
-    is PayrollSummaryDraftData -> DocDto.PayrollSummary.Draft(direction)
-    is EmploymentContractDraftData -> DocDto.EmploymentContract.Draft(direction)
-    is DimonaDraftData -> DocDto.Dimona.Draft(direction)
-    is C4DraftData -> DocDto.C4.Draft(direction)
-    is HolidayPayDraftData -> DocDto.HolidayPay.Draft(direction)
-    is ContractDraftData -> DocDto.Contract.Draft(direction)
-    is LeaseDraftData -> DocDto.Lease.Draft(direction)
-    is LoanDraftData -> DocDto.Loan.Draft(direction)
-    is InsuranceDraftData -> DocDto.Insurance.Draft(direction)
-    is DividendDraftData -> DocDto.Dividend.Draft(direction)
-    is ShareholderRegisterDraftData -> DocDto.ShareholderRegister.Draft(direction)
-    is CompanyExtractDraftData -> DocDto.CompanyExtract.Draft(direction)
-    is AnnualAccountsDraftData -> DocDto.AnnualAccounts.Draft(direction)
-    is BoardMinutesDraftData -> DocDto.BoardMinutes.Draft(direction)
-    is SubsidyDraftData -> DocDto.Subsidy.Draft(direction)
-    is FineDraftData -> DocDto.Fine.Draft(direction)
-    is PermitDraftData -> DocDto.Permit.Draft(direction)
-    is CustomsDeclarationDraftData -> DocDto.CustomsDeclaration.Draft(direction)
-    is IntrastatDraftData -> DocDto.Intrastat.Draft(direction)
-    is DepreciationScheduleDraftData -> DocDto.DepreciationSchedule.Draft(direction)
-    is InventoryDraftData -> DocDto.Inventory.Draft(direction)
-    is OtherDraftData -> DocDto.Other.Draft(direction)
+    is ProFormaDraftData -> DocDto.ProForma.Draft(data.direction)
+    is QuoteDraftData -> DocDto.Quote.Draft(data.direction)
+    is OrderConfirmationDraftData -> DocDto.OrderConfirmation.Draft(data.direction)
+    is DeliveryNoteDraftData -> DocDto.DeliveryNote.Draft(data.direction)
+    is ReminderDraftData -> DocDto.Reminder.Draft(data.direction)
+    is StatementOfAccountDraftData -> DocDto.StatementOfAccount.Draft(data.direction)
+    is PurchaseOrderDraftData -> DocDto.PurchaseOrder.Draft(data.direction)
+    is ExpenseClaimDraftData -> DocDto.ExpenseClaim.Draft(data.direction)
+    is BankFeeDraftData -> DocDto.BankFee.Draft(data.direction)
+    is InterestStatementDraftData -> DocDto.InterestStatement.Draft(data.direction)
+    is PaymentConfirmationDraftData -> DocDto.PaymentConfirmation.Draft(data.direction)
+    is VatReturnDraftData -> DocDto.VatReturn.Draft(data.direction)
+    is VatListingDraftData -> DocDto.VatListing.Draft(data.direction)
+    is VatAssessmentDraftData -> DocDto.VatAssessment.Draft(data.direction)
+    is IcListingDraftData -> DocDto.IcListing.Draft(data.direction)
+    is OssReturnDraftData -> DocDto.OssReturn.Draft(data.direction)
+    is CorporateTaxDraftData -> DocDto.CorporateTax.Draft(data.direction)
+    is CorporateTaxAdvanceDraftData -> DocDto.CorporateTaxAdvance.Draft(data.direction)
+    is TaxAssessmentDraftData -> DocDto.TaxAssessment.Draft(data.direction)
+    is PersonalTaxDraftData -> DocDto.PersonalTax.Draft(data.direction)
+    is WithholdingTaxDraftData -> DocDto.WithholdingTax.Draft(data.direction)
+    is SocialContributionDraftData -> DocDto.SocialContribution.Draft(data.direction)
+    is SocialFundDraftData -> DocDto.SocialFund.Draft(data.direction)
+    is SelfEmployedContributionDraftData -> DocDto.SelfEmployedContribution.Draft(data.direction)
+    is VapzDraftData -> DocDto.Vapz.Draft(data.direction)
+    is SalarySlipDraftData -> DocDto.SalarySlip.Draft(data.direction)
+    is PayrollSummaryDraftData -> DocDto.PayrollSummary.Draft(data.direction)
+    is EmploymentContractDraftData -> DocDto.EmploymentContract.Draft(data.direction)
+    is DimonaDraftData -> DocDto.Dimona.Draft(data.direction)
+    is C4DraftData -> DocDto.C4.Draft(data.direction)
+    is HolidayPayDraftData -> DocDto.HolidayPay.Draft(data.direction)
+    is ContractDraftData -> DocDto.Contract.Draft(data.direction)
+    is LeaseDraftData -> DocDto.Lease.Draft(data.direction)
+    is LoanDraftData -> DocDto.Loan.Draft(data.direction)
+    is InsuranceDraftData -> DocDto.Insurance.Draft(data.direction)
+    is DividendDraftData -> DocDto.Dividend.Draft(data.direction)
+    is ShareholderRegisterDraftData -> DocDto.ShareholderRegister.Draft(data.direction)
+    is CompanyExtractDraftData -> DocDto.CompanyExtract.Draft(data.direction)
+    is AnnualAccountsDraftData -> DocDto.AnnualAccounts.Draft(data.direction)
+    is BoardMinutesDraftData -> DocDto.BoardMinutes.Draft(data.direction)
+    is SubsidyDraftData -> DocDto.Subsidy.Draft(data.direction)
+    is FineDraftData -> DocDto.Fine.Draft(data.direction)
+    is PermitDraftData -> DocDto.Permit.Draft(data.direction)
+    is CustomsDeclarationDraftData -> DocDto.CustomsDeclaration.Draft(data.direction)
+    is IntrastatDraftData -> DocDto.Intrastat.Draft(data.direction)
+    is DepreciationScheduleDraftData -> DocDto.DepreciationSchedule.Draft(data.direction)
+    is InventoryDraftData -> DocDto.Inventory.Draft(data.direction)
+    is OtherDraftData -> DocDto.Other.Draft(data.direction)
 }
 
 // =============================================================================
@@ -346,179 +346,188 @@ val DocDto?.displayContextDescription: String?
     }
 
 // =============================================================================
-// DocLineItem → FinancialLineItem (reverse)
+// DocLineItem → FinancialLineItemDto (reverse)
 // =============================================================================
 
-fun DocLineItem.toFinancialLineItem(): FinancialLineItem = FinancialLineItem(
-    description = description,
-    quantity = quantity?.value?.toLong(),
-    unitPrice = unitPrice?.minor,
-    vatRate = vatRate?.basisPoints,
-    netAmount = netAmount?.minor,
-)
+fun FinancialLineItemDto.Companion.from(item: DocLineItem): FinancialLineItemDto =
+    FinancialLineItemDto(
+        description = item.description,
+        quantity = item.quantity?.value?.toLong(),
+        unitPrice = item.unitPrice?.minor,
+        vatRate = item.vatRate?.basisPoints,
+        netAmount = item.netAmount?.minor,
+    )
 
 // =============================================================================
 // DocDto → DocumentDraftData (Draft variants only)
 // =============================================================================
 
 @Suppress("CyclomaticComplexMethod")
-fun DocDto.toDraftData(): DocumentDraftData = when (this) {
+fun DocumentDraftData.Companion.from(dto: DocDto): DocumentDraftData = when (dto) {
     is DocDto.Invoice.Draft -> {
-        val (seller, buyer) = splitCounterparty(direction, counterparty)
+        val (seller, buyer) = splitCounterparty(dto.direction, dto.counterparty)
         InvoiceDraftData(
-            direction = direction,
-            invoiceNumber = invoiceNumber,
-            issueDate = issueDate,
-            dueDate = dueDate,
-            currency = currency,
-            subtotalAmount = subtotalAmount,
-            vatAmount = vatAmount,
-            totalAmount = totalAmount,
-            lineItems = lineItems.map { it.toFinancialLineItem() },
-            iban = iban,
-            notes = notes,
-            vatBreakdown = vatBreakdown,
-            payment = payment,
+            direction = dto.direction,
+            invoiceNumber = dto.invoiceNumber,
+            issueDate = dto.issueDate,
+            dueDate = dto.dueDate,
+            currency = dto.currency,
+            subtotalAmount = dto.subtotalAmount,
+            vatAmount = dto.vatAmount,
+            totalAmount = dto.totalAmount,
+            lineItems = dto.lineItems.map { FinancialLineItemDto.from(it) },
+            iban = dto.iban,
+            notes = dto.notes,
+            vatBreakdown = dto.vatBreakdown,
+            payment = dto.payment,
             seller = seller,
             buyer = buyer,
         )
     }
+
     is DocDto.Invoice.Confirmed -> InvoiceDraftData(
-        direction = direction,
-        invoiceNumber = invoiceNumber,
-        issueDate = issueDate,
-        dueDate = dueDate,
-        currency = currency,
-        subtotalAmount = subtotalAmount,
-        vatAmount = vatAmount,
-        totalAmount = totalAmount,
-        lineItems = lineItems.map { it.toFinancialLineItem() },
-        iban = iban,
-        notes = notes,
+        direction = dto.direction,
+        invoiceNumber = dto.invoiceNumber,
+        issueDate = dto.issueDate,
+        dueDate = dto.dueDate,
+        currency = dto.currency,
+        subtotalAmount = dto.subtotalAmount,
+        vatAmount = dto.vatAmount,
+        totalAmount = dto.totalAmount,
+        lineItems = dto.lineItems.map { FinancialLineItemDto.from(it) },
+        iban = dto.iban,
+        notes = dto.notes,
     )
+
     is DocDto.CreditNote.Draft -> {
-        val (seller, buyer) = splitCounterparty(direction, counterparty)
+        val (seller, buyer) = splitCounterparty(dto.direction, dto.counterparty)
         CreditNoteDraftData(
-            direction = direction,
-            creditNoteNumber = creditNoteNumber,
-            issueDate = issueDate,
-            currency = currency,
-            subtotalAmount = subtotalAmount,
-            vatAmount = vatAmount,
-            totalAmount = totalAmount,
-            lineItems = lineItems.map { it.toFinancialLineItem() },
-            reason = reason,
-            notes = notes,
-            vatBreakdown = vatBreakdown,
-            originalInvoiceNumber = originalInvoiceNumber,
+            direction = dto.direction,
+            creditNoteNumber = dto.creditNoteNumber,
+            issueDate = dto.issueDate,
+            currency = dto.currency,
+            subtotalAmount = dto.subtotalAmount,
+            vatAmount = dto.vatAmount,
+            totalAmount = dto.totalAmount,
+            lineItems = dto.lineItems.map { FinancialLineItemDto.from(it) },
+            reason = dto.reason,
+            notes = dto.notes,
+            vatBreakdown = dto.vatBreakdown,
+            originalInvoiceNumber = dto.originalInvoiceNumber,
             seller = seller,
             buyer = buyer,
         )
     }
+
     is DocDto.CreditNote.Confirmed -> CreditNoteDraftData(
-        direction = direction,
-        creditNoteNumber = creditNoteNumber,
-        issueDate = issueDate,
-        currency = currency,
-        subtotalAmount = subtotalAmount,
-        vatAmount = vatAmount,
-        totalAmount = totalAmount,
-        lineItems = lineItems.map { it.toFinancialLineItem() },
-        reason = reason,
-        notes = notes,
+        direction = dto.direction,
+        creditNoteNumber = dto.creditNoteNumber,
+        issueDate = dto.issueDate,
+        currency = dto.currency,
+        subtotalAmount = dto.subtotalAmount,
+        vatAmount = dto.vatAmount,
+        totalAmount = dto.totalAmount,
+        lineItems = dto.lineItems.map { FinancialLineItemDto.from(it) },
+        reason = dto.reason,
+        notes = dto.notes,
     )
+
     is DocDto.Receipt.Draft -> ReceiptDraftData(
-        direction = direction,
-        merchantName = merchantName,
-        merchantVat = merchantVat,
-        date = date,
-        currency = currency,
-        totalAmount = totalAmount,
-        vatAmount = vatAmount,
-        lineItems = lineItems.map { it.toFinancialLineItem() },
-        receiptNumber = receiptNumber,
-        notes = notes,
-        vatBreakdown = vatBreakdown,
-        paymentMethod = paymentMethod,
+        direction = dto.direction,
+        merchantName = dto.merchantName,
+        merchantVat = dto.merchantVat,
+        date = dto.date,
+        currency = dto.currency,
+        totalAmount = dto.totalAmount,
+        vatAmount = dto.vatAmount,
+        lineItems = dto.lineItems.map { FinancialLineItemDto.from(it) },
+        receiptNumber = dto.receiptNumber,
+        notes = dto.notes,
+        vatBreakdown = dto.vatBreakdown,
+        paymentMethod = dto.paymentMethod,
     )
+
     is DocDto.Receipt.Confirmed -> ReceiptDraftData(
-        direction = direction,
-        merchantName = merchantName,
-        merchantVat = merchantVat,
-        date = date,
-        currency = currency,
-        totalAmount = totalAmount,
-        vatAmount = vatAmount,
-        lineItems = lineItems.map { it.toFinancialLineItem() },
-        receiptNumber = receiptNumber,
-        notes = notes,
+        direction = dto.direction,
+        merchantName = dto.merchantName,
+        merchantVat = dto.merchantVat,
+        date = dto.date,
+        currency = dto.currency,
+        totalAmount = dto.totalAmount,
+        vatAmount = dto.vatAmount,
+        lineItems = dto.lineItems.map { FinancialLineItemDto.from(it) },
+        receiptNumber = dto.receiptNumber,
+        notes = dto.notes,
     )
+
     is DocDto.BankStatement.Draft -> BankStatementDraftData(
-        direction = direction,
-        accountIban = accountIban,
-        openingBalance = openingBalance,
-        closingBalance = closingBalance,
-        periodStart = periodStart,
-        periodEnd = periodEnd,
-        notes = notes,
-        transactions = transactions,
-        institution = institution,
+        direction = dto.direction,
+        accountIban = dto.accountIban,
+        openingBalance = dto.openingBalance,
+        closingBalance = dto.closingBalance,
+        periodStart = dto.periodStart,
+        periodEnd = dto.periodEnd,
+        notes = dto.notes,
+        transactions = dto.transactions,
+        institution = dto.institution,
     )
+
     is DocDto.BankStatement.Confirmed -> BankStatementDraftData(
-        direction = direction,
-        accountIban = accountIban,
-        openingBalance = openingBalance,
-        closingBalance = closingBalance,
-        periodStart = periodStart,
-        periodEnd = periodEnd,
-        notes = notes,
+        direction = dto.direction,
+        accountIban = dto.accountIban,
+        openingBalance = dto.openingBalance,
+        closingBalance = dto.closingBalance,
+        periodStart = dto.periodStart,
+        periodEnd = dto.periodEnd,
+        notes = dto.notes,
     )
-    is DocDto.ProForma -> ProFormaDraftData(direction)
-    is DocDto.Quote -> QuoteDraftData(direction)
-    is DocDto.OrderConfirmation -> OrderConfirmationDraftData(direction)
-    is DocDto.DeliveryNote -> DeliveryNoteDraftData(direction)
-    is DocDto.Reminder -> ReminderDraftData(direction)
-    is DocDto.StatementOfAccount -> StatementOfAccountDraftData(direction)
-    is DocDto.PurchaseOrder -> PurchaseOrderDraftData(direction)
-    is DocDto.ExpenseClaim -> ExpenseClaimDraftData(direction)
-    is DocDto.BankFee -> BankFeeDraftData(direction)
-    is DocDto.InterestStatement -> InterestStatementDraftData(direction)
-    is DocDto.PaymentConfirmation -> PaymentConfirmationDraftData(direction)
-    is DocDto.VatReturn -> VatReturnDraftData(direction)
-    is DocDto.VatListing -> VatListingDraftData(direction)
-    is DocDto.VatAssessment -> VatAssessmentDraftData(direction)
-    is DocDto.IcListing -> IcListingDraftData(direction)
-    is DocDto.OssReturn -> OssReturnDraftData(direction)
-    is DocDto.CorporateTax -> CorporateTaxDraftData(direction)
-    is DocDto.CorporateTaxAdvance -> CorporateTaxAdvanceDraftData(direction)
-    is DocDto.TaxAssessment -> TaxAssessmentDraftData(direction)
-    is DocDto.PersonalTax -> PersonalTaxDraftData(direction)
-    is DocDto.WithholdingTax -> WithholdingTaxDraftData(direction)
-    is DocDto.SocialContribution -> SocialContributionDraftData(direction)
-    is DocDto.SocialFund -> SocialFundDraftData(direction)
-    is DocDto.SelfEmployedContribution -> SelfEmployedContributionDraftData(direction)
-    is DocDto.Vapz -> VapzDraftData(direction)
-    is DocDto.SalarySlip -> SalarySlipDraftData(direction)
-    is DocDto.PayrollSummary -> PayrollSummaryDraftData(direction)
-    is DocDto.EmploymentContract -> EmploymentContractDraftData(direction)
-    is DocDto.Dimona -> DimonaDraftData(direction)
-    is DocDto.C4 -> C4DraftData(direction)
-    is DocDto.HolidayPay -> HolidayPayDraftData(direction)
-    is DocDto.Contract -> ContractDraftData(direction)
-    is DocDto.Lease -> LeaseDraftData(direction)
-    is DocDto.Loan -> LoanDraftData(direction)
-    is DocDto.Insurance -> InsuranceDraftData(direction)
-    is DocDto.Dividend -> DividendDraftData(direction)
-    is DocDto.ShareholderRegister -> ShareholderRegisterDraftData(direction)
-    is DocDto.CompanyExtract -> CompanyExtractDraftData(direction)
-    is DocDto.AnnualAccounts -> AnnualAccountsDraftData(direction)
-    is DocDto.BoardMinutes -> BoardMinutesDraftData(direction)
-    is DocDto.Subsidy -> SubsidyDraftData(direction)
-    is DocDto.Fine -> FineDraftData(direction)
-    is DocDto.Permit -> PermitDraftData(direction)
-    is DocDto.CustomsDeclaration -> CustomsDeclarationDraftData(direction)
-    is DocDto.Intrastat -> IntrastatDraftData(direction)
-    is DocDto.DepreciationSchedule -> DepreciationScheduleDraftData(direction)
-    is DocDto.Inventory -> InventoryDraftData(direction)
-    is DocDto.Other -> OtherDraftData(direction)
+
+    is DocDto.ProForma -> ProFormaDraftData(dto.direction)
+    is DocDto.Quote -> QuoteDraftData(dto.direction)
+    is DocDto.OrderConfirmation -> OrderConfirmationDraftData(dto.direction)
+    is DocDto.DeliveryNote -> DeliveryNoteDraftData(dto.direction)
+    is DocDto.Reminder -> ReminderDraftData(dto.direction)
+    is DocDto.StatementOfAccount -> StatementOfAccountDraftData(dto.direction)
+    is DocDto.PurchaseOrder -> PurchaseOrderDraftData(dto.direction)
+    is DocDto.ExpenseClaim -> ExpenseClaimDraftData(dto.direction)
+    is DocDto.BankFee -> BankFeeDraftData(dto.direction)
+    is DocDto.InterestStatement -> InterestStatementDraftData(dto.direction)
+    is DocDto.PaymentConfirmation -> PaymentConfirmationDraftData(dto.direction)
+    is DocDto.VatReturn -> VatReturnDraftData(dto.direction)
+    is DocDto.VatListing -> VatListingDraftData(dto.direction)
+    is DocDto.VatAssessment -> VatAssessmentDraftData(dto.direction)
+    is DocDto.IcListing -> IcListingDraftData(dto.direction)
+    is DocDto.OssReturn -> OssReturnDraftData(dto.direction)
+    is DocDto.CorporateTax -> CorporateTaxDraftData(dto.direction)
+    is DocDto.CorporateTaxAdvance -> CorporateTaxAdvanceDraftData(dto.direction)
+    is DocDto.TaxAssessment -> TaxAssessmentDraftData(dto.direction)
+    is DocDto.PersonalTax -> PersonalTaxDraftData(dto.direction)
+    is DocDto.WithholdingTax -> WithholdingTaxDraftData(dto.direction)
+    is DocDto.SocialContribution -> SocialContributionDraftData(dto.direction)
+    is DocDto.SocialFund -> SocialFundDraftData(dto.direction)
+    is DocDto.SelfEmployedContribution -> SelfEmployedContributionDraftData(dto.direction)
+    is DocDto.Vapz -> VapzDraftData(dto.direction)
+    is DocDto.SalarySlip -> SalarySlipDraftData(dto.direction)
+    is DocDto.PayrollSummary -> PayrollSummaryDraftData(dto.direction)
+    is DocDto.EmploymentContract -> EmploymentContractDraftData(dto.direction)
+    is DocDto.Dimona -> DimonaDraftData(dto.direction)
+    is DocDto.C4 -> C4DraftData(dto.direction)
+    is DocDto.HolidayPay -> HolidayPayDraftData(dto.direction)
+    is DocDto.Contract -> ContractDraftData(dto.direction)
+    is DocDto.Lease -> LeaseDraftData(dto.direction)
+    is DocDto.Loan -> LoanDraftData(dto.direction)
+    is DocDto.Insurance -> InsuranceDraftData(dto.direction)
+    is DocDto.Dividend -> DividendDraftData(dto.direction)
+    is DocDto.ShareholderRegister -> ShareholderRegisterDraftData(dto.direction)
+    is DocDto.CompanyExtract -> CompanyExtractDraftData(dto.direction)
+    is DocDto.AnnualAccounts -> AnnualAccountsDraftData(dto.direction)
+    is DocDto.BoardMinutes -> BoardMinutesDraftData(dto.direction)
+    is DocDto.Subsidy -> SubsidyDraftData(dto.direction)
+    is DocDto.Fine -> FineDraftData(dto.direction)
+    is DocDto.Permit -> PermitDraftData(dto.direction)
+    is DocDto.CustomsDeclaration -> CustomsDeclarationDraftData(dto.direction)
+    is DocDto.Intrastat -> IntrastatDraftData(dto.direction)
+    is DocDto.DepreciationSchedule -> DepreciationScheduleDraftData(dto.direction)
+    is DocDto.Inventory -> InventoryDraftData(dto.direction)
+    is DocDto.Other -> OtherDraftData(dto.direction)
 }

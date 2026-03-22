@@ -12,10 +12,8 @@
     <string name="today_notifications_filter_compliance">Compliance</string>
 
     <!-- Today stat cards -->
-    <string name="today_needs_review">Needs review</string>
     <string name="today_overdue">Overdue</string>
     <string name="today_due_this_week">Due this week</string>
-    <string name="today_documents">Documents</string>
     <string name="today_awaiting_processing">awaiting processing</string>
     <string name="today_invoice_pending">invoice pending</string>
     <string name="today_invoices_pending">invoices pending</string>

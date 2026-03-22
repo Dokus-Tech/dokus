@@ -87,3 +87,11 @@ data class ChangePasswordRequest(
     val currentPassword: Password,
     val newPassword: Password
 )
+
+/**
+ * Request to initiate a password reset by email.
+ */
+@Serializable
+data class PasswordResetRequest(
+    val email: Email
+)

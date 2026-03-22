@@ -170,7 +170,7 @@ class ConsoleClientsContainerTest {
     }
 
     @Test
-    fun `select client failure keeps context and emits error action`() = runTest {
+    fun `select client failure keeps context and sets actionError`() = runTest {
         val firmId = FirmId("00000000-0000-0000-0000-000000000904")
         val tenantId = TenantId("00000000-0000-0000-0000-000000000666")
         val expectedError = DokusException.NotAuthorized("denied")
@@ -188,12 +188,14 @@ class ConsoleClientsContainerTest {
 
         container.store.subscribeAndTest {
             advanceUntilIdle()
-            ConsoleClientsIntent.SelectClient(tenantId) resultsIn ConsoleClientsAction.ShowError(expectedError)
+            emit(ConsoleClientsIntent.SelectClient(tenantId))
+            advanceUntilIdle()
 
             val loaded = states.value
             assertEquals(tenantId, loaded.selectedClientTenantId)
             val docsError = assertIs<DokusState.Error<List<DocumentListItemDto>>>(loaded.documentsState)
             assertEquals(expectedError, docsError.exception)
+            assertEquals(expectedError, loaded.actionError)
             assertNull(loaded.selectedDocument)
             assertEquals(listOf(tenantId), documentsUseCase.receivedTenantIds)
         }

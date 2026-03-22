@@ -1,7 +1,6 @@
 package tech.dokus.backend.routes.cashflow
 
 import io.ktor.http.HttpStatusCode
-import kotlinx.serialization.Serializable
 import io.ktor.server.request.receive
 import io.ktor.server.request.receiveNullable
 import io.ktor.server.resources.delete
@@ -15,15 +14,16 @@ import org.koin.ktor.ext.inject
 import tech.dokus.backend.security.requireTenantId
 import tech.dokus.backend.services.cashflow.InvoiceService
 import tech.dokus.backend.services.pdf.InvoicePdfService
-import tech.dokus.database.repository.contacts.ContactRepository
+import tech.dokus.backend.services.contacts.ContactService
 import tech.dokus.domain.enums.DocumentDirection
-import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.InvoiceId
 import tech.dokus.domain.model.CreateInvoiceRequest
 import tech.dokus.domain.model.InvoicePdfResponse
+import tech.dokus.domain.model.InvoiceStatusRequest
 import tech.dokus.domain.model.RecordPaymentRequest
+import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.routes.Invoices
 import tech.dokus.foundation.backend.security.authenticateJwt
 import kotlin.uuid.ExperimentalUuidApi
@@ -39,7 +39,7 @@ import kotlin.uuid.Uuid
 internal fun Route.invoiceRoutes() {
     val invoiceService by inject<InvoiceService>()
     val invoicePdfService by inject<InvoicePdfService>()
-    val contactRepository by inject<ContactRepository>()
+    val contactService by inject<ContactService>()
 
     authenticateJwt {
         // GET /api/v1/invoices - List invoices with query params
@@ -169,7 +169,7 @@ internal fun Route.invoiceRoutes() {
                 .getOrElse { throw DokusException.InternalError("Failed to fetch invoice") }
                 ?: throw DokusException.NotFound("Invoice not found")
 
-            val contactName = contactRepository.getContact(invoice.contactId, tenantId)
+            val contactName = contactService.getContact(invoice.contactId, tenantId)
                 .getOrElse { throw DokusException.InternalError("Failed to load client details for PDF generation") }
                 ?.name
                 ?.value
@@ -192,7 +192,3 @@ internal fun Route.invoiceRoutes() {
         }
     }
 }
-
-// Request DTOs
-@Serializable
-private data class InvoiceStatusRequest(val status: InvoiceStatus)

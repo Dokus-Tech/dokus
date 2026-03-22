@@ -81,11 +81,14 @@ class HomeContainerTest {
         )
 
         container.store.subscribeAndTest {
-            HomeIntent.ScreenAppeared resultsIn HomeAction.ShowError(DokusException.WorkspaceContextUnavailable)
+            emit(HomeIntent.ScreenAppeared)
+            advanceUntilIdle()
+
             val ready = assertIs<HomeState>(states.value)
             val tenantState = assertIs<DokusState.Error<Tenant>>(ready.tenantState)
             val userState = assertIs<DokusState.Success<User>>(ready.userState)
             assertEquals(DokusException.WorkspaceContextUnavailable, tenantState.exception)
+            assertEquals(DokusException.WorkspaceContextUnavailable, ready.actionError)
             assertEquals(user, userState.data)
         }
     }
@@ -150,9 +153,12 @@ class HomeContainerTest {
         )
 
         container.store.subscribeAndTest {
-            HomeIntent.Logout resultsIn HomeAction.ShowError(expectedError)
+            emit(HomeIntent.Logout)
+            advanceUntilIdle()
+
             val ready = assertIs<HomeState>(states.value)
             assertFalse(ready.isLoggingOut)
+            assertEquals(expectedError, ready.actionError)
             assertEquals(1, logoutUseCase.invocations)
         }
     }

@@ -3,9 +3,9 @@ package tech.dokus.backend.services.documents
 import kotlinx.datetime.LocalDate
 import tech.dokus.database.repository.cashflow.DocumentPurposeTemplateRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
-import tech.dokus.database.repository.cashflow.DraftSummary
+import tech.dokus.database.entity.DraftSummaryEntity
 import tech.dokus.database.repository.drafts.DraftRepository
-import tech.dokus.domain.model.toDraftData
+import tech.dokus.domain.model.from
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentPurposeSource
 import tech.dokus.domain.enums.DocumentStatus
@@ -95,7 +95,7 @@ class DocumentPurposeService(
         documentType: DocumentType,
         draftData: DocumentDraftData,
         linkedContactId: ContactId?,
-        currentDraft: DraftSummary
+        currentDraft: DraftSummaryEntity
     ) {
         val supplierName = resolveSupplierName(draftData)
         val supplierDisplayName = normalizeSupplierDisplayName(supplierName)
@@ -210,12 +210,12 @@ class DocumentPurposeService(
     suspend fun applyUserPurposeEdit(
         tenantId: TenantId,
         documentId: DocumentId,
-        draft: DraftSummary,
+        draft: DraftSummaryEntity,
         purpose: String,
         purposePeriodMode: PurposePeriodMode?
     ) {
         val docDto = draftRepository.getDraftAsDocDto(tenantId, documentId, draft.documentType)
-        val draftData = docDto?.toDraftData() ?: return
+        val draftData = docDto?.let { DocumentDraftData.from(it) } ?: return
         val base = purpose.trim().replace(Regex("\\s+"), " ").take(PurposeBaseMaxLength)
         if (base.isBlank()) return
 

@@ -128,42 +128,6 @@ class ProcessorIngestionRepository {
         }
 
     /**
-     * Find the latest processing run ID for a document.
-     *
-     * Used as a fallback when a tool call doesn't include runId.
-     * Returns the most recent run in Processing status for the given document and tenant.
-     */
-    suspend fun findProcessingRunId(
-        tenantId: String,
-        documentId: String
-    ): String? = newSuspendedTransaction {
-        DocumentIngestionRunsTable
-            .selectAll()
-            .where {
-                (DocumentIngestionRunsTable.tenantId eq UUID.fromString(tenantId)) and
-                        (DocumentIngestionRunsTable.documentId eq UUID.fromString(documentId)) and
-                        (DocumentIngestionRunsTable.status eq IngestionStatus.Processing)
-            }
-            .orderBy(DocumentIngestionRunsTable.startedAt to SortOrder.DESC)
-            .limit(1)
-            .singleOrNull()
-            ?.get(DocumentIngestionRunsTable.id)
-            ?.value
-            ?.toString()
-    }
-
-    /**
-     * Get the current ingestion status for a run ID.
-     */
-    suspend fun getRunStatus(runId: String): IngestionStatus? = newSuspendedTransaction {
-        DocumentIngestionRunsTable
-            .selectAll()
-            .where { DocumentIngestionRunsTable.id eq UUID.fromString(runId) }
-            .singleOrNull()
-            ?.get(DocumentIngestionRunsTable.status)
-    }
-
-    /**
      * Mark an ingestion run as successfully completed.
      *
      * This also creates or updates the document draft with normalized draft data.

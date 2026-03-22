@@ -1,35 +1,20 @@
 package tech.dokus.database.repository.payment
 
 import kotlinx.datetime.LocalDate
-import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
-import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.greaterEq
 import org.jetbrains.exposed.v1.core.lessEq
 import org.jetbrains.exposed.v1.jdbc.andWhere
-import org.jetbrains.exposed.v1.jdbc.deleteWhere
-import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
-import org.jetbrains.exposed.v1.jdbc.update
+import tech.dokus.database.entity.PaymentEntity
+import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.payment.PaymentsTable
-import tech.dokus.domain.Money
-import tech.dokus.domain.enums.PaymentCreatedBy
 import tech.dokus.domain.enums.PaymentMethod
-import tech.dokus.domain.enums.PaymentSource
-import tech.dokus.domain.fromDbDecimal
-import tech.dokus.domain.ids.BankTransactionId
-import tech.dokus.domain.ids.InvoiceId
-import tech.dokus.domain.ids.PaymentId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.ids.TransactionId
-import tech.dokus.domain.model.PaymentDto
-import tech.dokus.domain.toDbDecimal
 import tech.dokus.foundation.backend.database.dbQuery
 import tech.dokus.foundation.backend.utils.runSuspendCatching
 import java.util.UUID
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.toJavaUuid
 
 /**
  * Repository for managing payment records.
@@ -38,74 +23,7 @@ import kotlin.uuid.toJavaUuid
  * 1. ALWAYS filter by tenant_id in every query
  * 2. Use NUMERIC for money to avoid rounding errors
  */
-@OptIn(ExperimentalUuidApi::class)
 class PaymentRepository {
-
-    /**
-     * Record a payment for an invoice.
-     * CRITICAL: MUST include tenant_id for multi-tenancy security
-     */
-    suspend fun createPayment(
-        tenantId: TenantId,
-        invoiceId: InvoiceId,
-        amount: Money,
-        paymentDate: LocalDate,
-        paymentMethod: PaymentMethod,
-        transactionId: TransactionId?,
-        bankTransactionId: BankTransactionId? = null,
-        source: PaymentSource = PaymentSource.Manual,
-        createdBy: PaymentCreatedBy = PaymentCreatedBy.User,
-        notes: String?
-    ): Result<PaymentDto> = runSuspendCatching {
-        dbQuery {
-            val id = PaymentsTable.insert {
-                it[PaymentsTable.tenantId] = UUID.fromString(tenantId.toString())
-                it[PaymentsTable.invoiceId] = UUID.fromString(invoiceId.toString())
-                it[PaymentsTable.amount] = amount.toDbDecimal()
-                it[PaymentsTable.paymentDate] = paymentDate
-                it[PaymentsTable.paymentMethod] = paymentMethod
-                it[PaymentsTable.transactionId] = transactionId?.value
-                it[PaymentsTable.bankTransactionId] = bankTransactionId?.value?.toJavaUuid()
-                it[PaymentsTable.paymentSource] = source
-                it[PaymentsTable.createdBy] = createdBy
-                it[PaymentsTable.notes] = notes
-            } get PaymentsTable.id
-
-            PaymentsTable.selectAll().where {
-                (PaymentsTable.id eq id.value) and
-                    (PaymentsTable.tenantId eq UUID.fromString(tenantId.toString()))
-            }.single().toPaymentDto()
-        }
-    }
-
-    /**
-     * Get a payment by ID.
-     * CRITICAL: MUST filter by tenant_id
-     */
-    suspend fun getPayment(
-        paymentId: PaymentId,
-        tenantId: TenantId
-    ): Result<PaymentDto?> = runSuspendCatching {
-        dbQuery {
-            PaymentsTable.selectAll().where {
-                (PaymentsTable.id eq UUID.fromString(paymentId.toString())) and
-                    (PaymentsTable.tenantId eq UUID.fromString(tenantId.toString()))
-            }.singleOrNull()?.toPaymentDto()
-        }
-    }
-
-    /**
-     * List payments for an invoice.
-     */
-    suspend fun listByInvoice(invoiceId: InvoiceId, tenantId: TenantId): Result<List<PaymentDto>> = runSuspendCatching {
-        dbQuery {
-            PaymentsTable.selectAll().where {
-                (PaymentsTable.invoiceId eq UUID.fromString(invoiceId.toString())) and
-                    (PaymentsTable.tenantId eq UUID.fromString(tenantId.toString()))
-            }.orderBy(PaymentsTable.paymentDate, SortOrder.DESC)
-                .map { it.toPaymentDto() }
-        }
-    }
 
     /**
      * List payments for a tenant with filters.
@@ -118,7 +36,7 @@ class PaymentRepository {
         paymentMethod: PaymentMethod? = null,
         limit: Int = 50,
         offset: Int = 0
-    ): Result<List<PaymentDto>> = runSuspendCatching {
+    ): Result<List<PaymentEntity>> = runSuspendCatching {
         dbQuery {
             var query = PaymentsTable.selectAll().where {
                 PaymentsTable.tenantId eq UUID.fromString(tenantId.toString())
@@ -137,74 +55,8 @@ class PaymentRepository {
             query.orderBy(PaymentsTable.paymentDate, SortOrder.DESC)
                 .limit(limit)
                 .offset(offset.toLong())
-                .map { it.toPaymentDto() }
+                .map { it.let { PaymentEntity.from(it) } }
         }
     }
 
-    /**
-     * Get total amount paid for an invoice.
-     */
-    suspend fun getTotalPaid(invoiceId: InvoiceId, tenantId: TenantId): Result<Money> = runSuspendCatching {
-        dbQuery {
-            val total = PaymentsTable.selectAll().where {
-                (PaymentsTable.invoiceId eq UUID.fromString(invoiceId.toString())) and
-                    (PaymentsTable.tenantId eq UUID.fromString(tenantId.toString()))
-            }.sumOf { it[PaymentsTable.amount] }
-            Money.fromDbDecimal(total)
-        }
-    }
-
-    /**
-     * Delete a payment.
-     * CRITICAL: MUST filter by tenant_id
-     */
-    suspend fun deletePayment(
-        paymentId: PaymentId,
-        tenantId: TenantId
-    ): Result<Boolean> = runSuspendCatching {
-        dbQuery {
-            PaymentsTable.deleteWhere {
-                (PaymentsTable.id eq UUID.fromString(paymentId.toString())) and
-                    (PaymentsTable.tenantId eq UUID.fromString(tenantId.toString()))
-            } > 0
-        }
-    }
-
-    /**
-     * Reconcile a payment with a bank transaction.
-     */
-    suspend fun reconcile(
-        paymentId: PaymentId,
-        tenantId: TenantId,
-        transactionId: TransactionId
-    ): Result<Boolean> = runSuspendCatching {
-        dbQuery {
-            PaymentsTable.update({
-                (PaymentsTable.id eq UUID.fromString(paymentId.toString())) and
-                    (PaymentsTable.tenantId eq UUID.fromString(tenantId.toString()))
-            }) {
-                it[PaymentsTable.transactionId] = transactionId.value
-            } > 0
-        }
-    }
-
-    private fun ResultRow.toPaymentDto(): PaymentDto {
-        return PaymentDto(
-            id = PaymentId.parse(this[PaymentsTable.id].value.toString()),
-            tenantId = TenantId.parse(this[PaymentsTable.tenantId].toString()),
-            invoiceId = InvoiceId.parse(this[PaymentsTable.invoiceId].toString()),
-            amount = Money.fromDbDecimal(this[PaymentsTable.amount]),
-            paymentDate = this[PaymentsTable.paymentDate],
-            paymentMethod = this[PaymentsTable.paymentMethod],
-            transactionId = this[PaymentsTable.transactionId]?.let { TransactionId(it) },
-            bankTransactionId = this[PaymentsTable.bankTransactionId]?.let { BankTransactionId.parse(it.toString()) },
-            source = this[PaymentsTable.paymentSource],
-            createdBy = this[PaymentsTable.createdBy],
-            notes = this[PaymentsTable.notes],
-            reversedAt = this[PaymentsTable.reversedAt],
-            reversedByUserId = this[PaymentsTable.reversedByUserId]?.let { tech.dokus.domain.ids.UserId(it.toString()) },
-            reversalReason = this[PaymentsTable.reversalReason],
-            createdAt = this[PaymentsTable.createdAt]
-        )
-    }
 }

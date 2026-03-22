@@ -6,7 +6,6 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
@@ -15,6 +14,8 @@ import org.jetbrains.exposed.v1.core.lessEq
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
 import org.jetbrains.exposed.v1.jdbc.upsert
+import tech.dokus.database.entity.BusinessProfileEnrichmentJobEntity
+import tech.dokus.database.mapper.from
 import tech.dokus.database.tables.business.BusinessProfileEnrichmentJobsTable
 import tech.dokus.domain.enums.BusinessProfileEnrichmentJobStatus
 import tech.dokus.domain.enums.BusinessProfileSubjectType
@@ -26,22 +27,6 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 import kotlin.uuid.toJavaUuid
 import kotlin.uuid.toKotlinUuid
-
-data class BusinessProfileEnrichmentJob(
-    val id: Uuid,
-    val tenantId: TenantId,
-    val subjectType: BusinessProfileSubjectType,
-    val subjectId: Uuid,
-    val status: BusinessProfileEnrichmentJobStatus,
-    val triggerReason: String,
-    val scheduledAt: LocalDateTime,
-    val nextAttemptAt: LocalDateTime,
-    val attemptCount: Int,
-    val lastError: String?,
-    val processingStartedAt: LocalDateTime?,
-    val createdAt: LocalDateTime,
-    val updatedAt: LocalDateTime,
-)
 
 class BusinessProfileEnrichmentJobRepository {
     private val claimableStatuses = listOf(
@@ -89,7 +74,7 @@ class BusinessProfileEnrichmentJobRepository {
         }
     }
 
-    suspend fun claimDue(now: LocalDateTime, limit: Int): Result<List<BusinessProfileEnrichmentJob>> = runSuspendCatching {
+    suspend fun claimDue(now: LocalDateTime, limit: Int): Result<List<BusinessProfileEnrichmentJobEntity>> = runSuspendCatching {
         dbQuery {
             val candidates = BusinessProfileEnrichmentJobsTable
                 .selectAll()
@@ -99,9 +84,9 @@ class BusinessProfileEnrichmentJobRepository {
                 }
                 .orderBy(BusinessProfileEnrichmentJobsTable.nextAttemptAt to SortOrder.ASC)
                 .limit(limit)
-                .map { it.toModel() }
+                .map { BusinessProfileEnrichmentJobEntity.from(it) }
 
-            val claimed = mutableListOf<BusinessProfileEnrichmentJob>()
+            val claimed = mutableListOf<BusinessProfileEnrichmentJobEntity>()
             for (candidate in candidates) {
                 val updated = BusinessProfileEnrichmentJobsTable.update({
                     (BusinessProfileEnrichmentJobsTable.id eq candidate.id.toJavaUuid()) and
@@ -193,19 +178,4 @@ class BusinessProfileEnrichmentJobRepository {
         }
     }
 
-    private fun ResultRow.toModel(): BusinessProfileEnrichmentJob = BusinessProfileEnrichmentJob(
-        id = this[BusinessProfileEnrichmentJobsTable.id].value.toKotlinUuid(),
-        tenantId = TenantId(this[BusinessProfileEnrichmentJobsTable.tenantId].toKotlinUuid()),
-        subjectType = this[BusinessProfileEnrichmentJobsTable.subjectType],
-        subjectId = this[BusinessProfileEnrichmentJobsTable.subjectId].toKotlinUuid(),
-        status = this[BusinessProfileEnrichmentJobsTable.status],
-        triggerReason = this[BusinessProfileEnrichmentJobsTable.triggerReason],
-        scheduledAt = this[BusinessProfileEnrichmentJobsTable.scheduledAt],
-        nextAttemptAt = this[BusinessProfileEnrichmentJobsTable.nextAttemptAt],
-        attemptCount = this[BusinessProfileEnrichmentJobsTable.attemptCount],
-        lastError = this[BusinessProfileEnrichmentJobsTable.lastError],
-        processingStartedAt = this[BusinessProfileEnrichmentJobsTable.processingStartedAt],
-        createdAt = this[BusinessProfileEnrichmentJobsTable.createdAt],
-        updatedAt = this[BusinessProfileEnrichmentJobsTable.updatedAt],
-    )
 }

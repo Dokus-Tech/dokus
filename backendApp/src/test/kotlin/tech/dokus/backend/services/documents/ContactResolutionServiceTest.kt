@@ -15,6 +15,7 @@ import tech.dokus.backend.services.documents.resolution.ContactMatchingUtils
 import tech.dokus.backend.services.documents.resolution.IbanNameResolver
 import tech.dokus.backend.services.documents.resolution.NameSuggestionResolver
 import tech.dokus.backend.services.documents.resolution.VatMatchResolver
+import tech.dokus.database.entity.ContactEntity
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.domain.Name
 import tech.dokus.domain.enums.ClientType
@@ -27,7 +28,7 @@ import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.ContactResolution
-import tech.dokus.domain.model.contact.CounterpartySnapshot
+import tech.dokus.domain.model.contact.CounterpartySnapshotDto
 import tech.dokus.foundation.backend.lookup.CbeApiClient
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -70,7 +71,7 @@ class ContactResolutionServiceTest {
         val result = service.resolve(
             tenantId = tenantId,
             draftData = InvoiceDraftData(direction = DocumentDirection.Inbound),
-            authoritativeSnapshot = CounterpartySnapshot(),
+            authoritativeSnapshot = CounterpartySnapshotDto(),
             tenantVat = tenantVat
         )
 
@@ -87,7 +88,7 @@ class ContactResolutionServiceTest {
             tenantId = tenantId,
             tenantVat = tenantVat,
             draftData = InvoiceDraftData(direction = DocumentDirection.Unknown),
-            authoritativeSnapshot = CounterpartySnapshot(
+            authoritativeSnapshot = CounterpartySnapshotDto(
                 name = "INVOID VISION BV",
                 vatNumber = VatNumber.from("BE0777887045")
             )
@@ -107,7 +108,7 @@ class ContactResolutionServiceTest {
             tenantId = tenantId,
             tenantVat = tenantVat,
             draftData = ReceiptDraftData(direction = DocumentDirection.Inbound),
-            authoritativeSnapshot = CounterpartySnapshot(
+            authoritativeSnapshot = CounterpartySnapshotDto(
                 name = "SSD ASBL",
                 vatNumber = VatNumber.from("BE0777887045")
             )
@@ -134,7 +135,7 @@ class ContactResolutionServiceTest {
             tenantId = tenantId,
             tenantVat = tenantVat,
             draftData = InvoiceDraftData(direction = DocumentDirection.Inbound),
-            authoritativeSnapshot = CounterpartySnapshot(
+            authoritativeSnapshot = CounterpartySnapshotDto(
                 name = "Apple Account",
                 vatNumber = VatNumber.from("IE9700053D")
             )
@@ -170,7 +171,7 @@ class ContactResolutionServiceTest {
             tenantId = tenantId,
             tenantVat = tenantVat,
             draftData = InvoiceDraftData(direction = DocumentDirection.Inbound),
-            authoritativeSnapshot = CounterpartySnapshot(
+            authoritativeSnapshot = CounterpartySnapshotDto(
                 name = "Apple Account",
                 vatNumber = VatNumber.from("IE9700053D")
             )
@@ -212,7 +213,7 @@ class ContactResolutionServiceTest {
             tenantId = tenantId,
             tenantVat = tenantVat,
             draftData = InvoiceDraftData(direction = DocumentDirection.Inbound),
-            authoritativeSnapshot = CounterpartySnapshot(
+            authoritativeSnapshot = CounterpartySnapshotDto(
                 name = "Apple Account",
                 vatNumber = VatNumber.from("IE9700053D")
             )
@@ -221,7 +222,7 @@ class ContactResolutionServiceTest {
             tenantId = tenantId,
             tenantVat = tenantVat,
             draftData = InvoiceDraftData(direction = DocumentDirection.Inbound),
-            authoritativeSnapshot = CounterpartySnapshot(
+            authoritativeSnapshot = CounterpartySnapshotDto(
                 name = "Visa Europe",
                 vatNumber = VatNumber.from("IE9700053D")
             )
@@ -244,7 +245,7 @@ class ContactResolutionServiceTest {
             tenantId = tenantId,
             tenantVat = tenantVat,
             draftData = InvoiceDraftData(direction = DocumentDirection.Inbound),
-            authoritativeSnapshot = CounterpartySnapshot(name = "Google Cloud EMEA Limited")
+            authoritativeSnapshot = CounterpartySnapshotDto(name = "Google Cloud EMEA Limited")
         )
 
         val resolution = assertIs<ContactResolution.Matched>(result.resolution)
@@ -266,7 +267,7 @@ class ContactResolutionServiceTest {
             tenantId = tenantId,
             tenantVat = tenantVat,
             draftData = InvoiceDraftData(direction = DocumentDirection.Unknown),
-            authoritativeSnapshot = CounterpartySnapshot(name = "Google Cloud EMEA Limited")
+            authoritativeSnapshot = CounterpartySnapshotDto(name = "Google Cloud EMEA Limited")
         )
 
         assertIs<ContactResolution.Suggested>(result.resolution)
@@ -277,8 +278,8 @@ class ContactResolutionServiceTest {
         name: String,
         vat: String,
         source: ContactSource
-    ): ContactDto {
-        return ContactDto(
+    ): ContactEntity {
+        return ContactEntity(
             id = ContactId.parse(id),
             tenantId = tenantId,
             name = Name(name),

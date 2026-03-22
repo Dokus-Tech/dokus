@@ -1,6 +1,7 @@
 package tech.dokus.backend.services.cashflow.matching
 
-import kotlinx.serialization.encodeToString
+import tech.dokus.database.repository.auth.TenantRepository
+import tech.dokus.database.repository.cashflow.matching.MatchingRepository
 import kotlinx.serialization.json.Json
 import tech.dokus.database.repository.banking.BankTransactionRepository
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
@@ -15,9 +16,10 @@ import tech.dokus.domain.enums.ResolutionType
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.backend.mappers.from
+import tech.dokus.database.mapper.from
 import tech.dokus.database.entity.BankTransactionEntity
 import tech.dokus.domain.model.BankTransactionDto
-import tech.dokus.domain.model.CashflowEntry
+import tech.dokus.database.entity.CashflowEntryEntity
 import tech.dokus.backend.services.banking.sse.BankingSsePublisher
 import tech.dokus.backend.services.cashflow.AutoPaymentService
 import tech.dokus.foundation.backend.utils.loggerFor
@@ -44,6 +46,7 @@ class MatchingEngine(
     private val bankingSsePublisher: BankingSsePublisher,
     private val transferDetector: TransferDetector,
     private val cashflowEntriesRepository: CashflowEntriesRepository,
+    private val tenantRepository: TenantRepository,
 ) {
     private val logger = loggerFor()
 
@@ -97,13 +100,16 @@ class MatchingEngine(
     ) {
         if (transactions.isEmpty()) return
 
+        val cashflowStartDate = tenantRepository.getCashflowTrackingStartDate(tenantId)
+
         // Load contact cache (shared across all transaction scoring)
         val contactCache = mutableMapOf<String, tech.dokus.domain.model.contact.ContactDto?>()
-        suspend fun resolveContact(entry: CashflowEntry): tech.dokus.domain.model.contact.ContactDto? {
+        suspend fun resolveContact(entry: CashflowEntryEntity): tech.dokus.domain.model.contact.ContactDto? {
             val contactId = entry.contact?.id ?: return null
             val key = contactId.toString()
             if (contactCache.containsKey(key)) return contactCache[key]
             val resolved = contactRepository.getContact(contactId, tenantId).getOrNull()
+                ?.let { tech.dokus.domain.model.contact.ContactDto.from(it) }
             contactCache[key] = resolved
             return resolved
         }
@@ -134,7 +140,7 @@ class MatchingEngine(
             val direction = MatchCandidateBlocker.inferDirection(tx.signedAmount)
             if (direction == tech.dokus.domain.enums.CashflowDirection.Neutral) continue
 
-            val allEntries = matchingRepository.loadCandidateEntries(tenantId, direction)
+            val allEntries = matchingRepository.loadCandidateEntries(tenantId, direction, cashflowStartDate)
             if (allEntries.isEmpty()) continue
 
             // Step 2b: Filter by amount range

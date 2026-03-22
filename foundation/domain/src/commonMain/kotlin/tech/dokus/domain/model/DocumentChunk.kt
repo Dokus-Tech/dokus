@@ -161,7 +161,9 @@ data class DocumentChunkDto(
 
     /** Source document filename for display */
     val documentName: String? = null
-)
+) {
+    companion object
+}
 
 /**
  * Summary view for chunk lists and search results.

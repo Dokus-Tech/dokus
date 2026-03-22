@@ -23,7 +23,7 @@ import tech.dokus.backend.services.business.BusinessWebsiteRanker
 import tech.dokus.backend.services.business.LogoPipelineTotalBudgetMs
 import tech.dokus.database.repository.auth.AddressRepository
 import tech.dokus.database.repository.auth.TenantRepository
-import tech.dokus.database.repository.business.BusinessProfileEnrichmentJob
+import tech.dokus.database.entity.BusinessProfileEnrichmentJobEntity
 import tech.dokus.database.repository.business.BusinessProfileEnrichmentJobRepository
 import tech.dokus.database.repository.business.BusinessProfileRepository
 import tech.dokus.database.repository.contacts.ContactAddressRepository
@@ -173,7 +173,7 @@ class BusinessProfileEnrichmentWorker(
         }
     }
 
-    private suspend fun processSingleJob(job: BusinessProfileEnrichmentJob) {
+    private suspend fun processSingleJob(job: BusinessProfileEnrichmentJobEntity) {
         runSuspendCatching {
             jobProcessor.process(job)
         }.onFailure { error ->
@@ -188,7 +188,7 @@ class BusinessProfileEnrichmentWorker(
         }
     }
 
-    private suspend fun scheduleRetry(job: BusinessProfileEnrichmentJob, error: Throwable) {
+    private suspend fun scheduleRetry(job: BusinessProfileEnrichmentJobEntity, error: Throwable) {
         val nextAttemptCount = job.attemptCount + 1
         if (nextAttemptCount >= config.maxAttempts) {
             jobRepository.markCompletedWithError(

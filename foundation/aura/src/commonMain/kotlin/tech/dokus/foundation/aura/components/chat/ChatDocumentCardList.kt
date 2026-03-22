@@ -16,7 +16,7 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.chat_download_all_zip
 import tech.dokus.aura.resources.chat_n_documents
 import tech.dokus.domain.model.ai.ChatContentBlock
-import tech.dokus.domain.model.ai.DocumentReference
+import tech.dokus.domain.model.ai.DocumentReferenceDto
 import tech.dokus.domain.model.ai.DocumentReferenceType
 import tech.dokus.foundation.aura.components.PPrimaryButton
 import tech.dokus.foundation.aura.constrains.Constraints
@@ -33,9 +33,9 @@ import tech.dokus.foundation.aura.tooling.TestWrapper
 @Composable
 fun ChatDocumentCardList(
     block: ChatContentBlock.Documents,
-    onDownloadSingle: (DocumentReference) -> Unit,
+    onDownloadSingle: (DocumentReferenceDto) -> Unit,
     onDownloadAll: () -> Unit,
-    onDocumentClick: (DocumentReference) -> Unit,
+    onDocumentClick: (DocumentReferenceDto) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -86,8 +86,8 @@ private fun ChatDocumentCardListPreview(
         ChatDocumentCardList(
             block = ChatContentBlock.Documents(
                 items = listOf(
-                    DocumentReference(name = "SRL Accounting & Tax", ref = "20260050", type = DocumentReferenceType.Invoice, amount = "\u20ac798.60"),
-                    DocumentReference(name = "Tesla Belgium BVBA", ref = "peppol-71b40a13", type = DocumentReferenceType.Invoice, amount = "\u20ac346.97"),
+                    DocumentReferenceDto(name = "SRL Accounting & Tax", ref = "20260050", type = DocumentReferenceType.Invoice, amount = "\u20ac798.60"),
+                    DocumentReferenceDto(name = "Tesla Belgium BVBA", ref = "peppol-71b40a13", type = DocumentReferenceType.Invoice, amount = "\u20ac346.97"),
                 ),
                 showDownloadAll = true,
             ),

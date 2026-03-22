@@ -255,7 +255,9 @@ private fun UnifiedResultsList(
     modifier: Modifier = Modifier,
 ) {
     val queryVat = VatNumber(query).takeIf { it.isValid }
-    val unifiedItems = buildUnifiedItems(existingContacts, lookupState, queryVat, query)
+    val unifiedItems = remember(existingContacts, lookupState, queryVat, query) {
+        buildUnifiedItems(existingContacts, lookupState, queryVat, query)
+    }
     val hasResults = unifiedItems.isNotEmpty()
     val isLoading = isExistingLoading || lookupState is LookupUiState.Loading
     LazyColumn(

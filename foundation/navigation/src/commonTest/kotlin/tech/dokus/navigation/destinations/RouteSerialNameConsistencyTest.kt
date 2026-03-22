@@ -63,10 +63,10 @@ class RouteSerialNameConsistencyTest {
         // CashFlow
         CashFlowDestination.AddDocument,
         CashFlowDestination.CreateInvoice,
-        CashFlowDestination.DocumentReview(documentId = "test"),
+        CashFlowDestination.DocumentDetail(documentId = "test"),
         CashFlowDestination.DocumentSourceViewer(documentId = "test", sourceId = "source"),
         CashFlowDestination.DocumentChat(documentId = "test"),
-        CashFlowDestination.CashflowLedger(),
+        CashFlowDestination.CashFlowOverview(),
         // Contacts
         ContactsDestination.CreateContact(),
         ContactsDestination.EditContact(contactId = "test"),

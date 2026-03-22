@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test
 import tech.dokus.backend.services.cashflow.CashflowEntriesService
 import tech.dokus.backend.services.cashflow.CreditNoteService
 import tech.dokus.backend.services.documents.confirmation.CreditNoteConfirmationService
+import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.database.repository.cashflow.DocumentCreatePayload
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
@@ -73,14 +74,15 @@ class CreditNoteConfirmationInvariantTest {
     private val tenantId: TenantId get() = TenantId(tenantUuid.toKotlinUuid())
     private val contactId: ContactId get() = ContactId.parse(contactUuid.toString())
 
-    private val documentRepository = DocumentRepository()
     private val ingestionRunRepository = DocumentIngestionRunRepository()
+    private val documentRepository = DocumentRepository(ingestionRunRepository)
     private val cashflowEntriesRepository = CashflowEntriesRepository()
+    private val tenantRepository = TenantRepository()
     private val documentLinkRepository = DocumentLinkRepository()
     private val invoiceRepository = InvoiceRepository(InvoiceNumberGenerator(InvoiceNumberRepository()))
     private val creditNoteRepository = CreditNoteRepository()
     private val refundClaimRepository = RefundClaimRepository()
-    private val cashflowEntriesService = CashflowEntriesService(cashflowEntriesRepository)
+    private val cashflowEntriesService = CashflowEntriesService(cashflowEntriesRepository, tenantRepository)
     private val creditNoteService = CreditNoteService(
         creditNoteRepository = creditNoteRepository,
         refundClaimRepository = refundClaimRepository,

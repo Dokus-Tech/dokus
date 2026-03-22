@@ -55,6 +55,7 @@ internal class HomeContainer(
                     is HomeIntent.ScreenAppeared -> handleScreenAppeared()
                     is HomeIntent.RefreshShellData -> handleRefreshShellData()
                     is HomeIntent.Logout -> handleLogout()
+                    is HomeIntent.DismissActionError -> updateState { copy(actionError = null) }
                 }
             }
         }
@@ -99,11 +100,11 @@ internal class HomeContainer(
                                         tenantState = DokusState.error(
                                             exception = error,
                                             retryHandler = { intent(HomeIntent.RefreshShellData) },
-                                        )
+                                        ),
+                                        actionError = error,
                                     )
                                 }
                             }
-                            action(HomeAction.ShowError(error))
                         } else {
                             withState<HomeState, _> {
                                 updateState { copy(tenantState = DokusState.success(tenant)) }
@@ -126,11 +127,11 @@ internal class HomeContainer(
                                     tenantState = DokusState.error(
                                         exception = error,
                                         retryHandler = { intent(HomeIntent.RefreshShellData) },
-                                    )
+                                    ),
+                                    actionError = error,
                                 )
                             }
                         }
-                        action(HomeAction.ShowError(error))
                     }
                 )
             }
@@ -162,11 +163,11 @@ internal class HomeContainer(
                                     userState = DokusState.error(
                                         exception = error,
                                         retryHandler = { intent(HomeIntent.RefreshShellData) },
-                                    )
+                                    ),
+                                    actionError = error,
                                 )
                             }
                         }
-                        action(HomeAction.ShowError(error))
                     }
                 )
             }
@@ -187,8 +188,7 @@ internal class HomeContainer(
                 },
                 onFailure = { error ->
                     logger.e(error) { "Logout failed from home shell" }
-                    updateState { copy(isLoggingOut = false) }
-                    action(HomeAction.ShowError(error.asDokusException))
+                    updateState { copy(isLoggingOut = false, actionError = error.asDokusException) }
                 }
             )
         }

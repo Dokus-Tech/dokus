@@ -36,6 +36,7 @@ internal class MySessionsContainer(
                     MySessionsIntent.Load -> load()
                     is MySessionsIntent.RevokeSession -> revokeSession(intent)
                     MySessionsIntent.RevokeOthers -> revokeOthers()
+                    MySessionsIntent.DismissActionError -> updateState { copy(actionError = null) }
                     MySessionsIntent.BackClicked -> action(MySessionsAction.NavigateBack)
                 }
             }
@@ -63,7 +64,7 @@ internal class MySessionsContainer(
     private suspend fun MySessionsCtx.revokeSession(intent: MySessionsIntent.RevokeSession) {
         revokeSessionUseCase(intent.sessionId).fold(
             onSuccess = {
-                action(MySessionsAction.ShowSessionRevoked)
+                updateState { copy(actionError = null) }
                 this.intent(MySessionsIntent.Load)
             },
             onFailure = { error ->
@@ -71,7 +72,7 @@ internal class MySessionsContainer(
                 logger.e(error) { "Failed to revoke session: ${intent.sessionId}" }
                 withState {
                     if (sessions.isSuccess()) {
-                        action(MySessionsAction.ShowError(dokusError))
+                        updateState { copy(actionError = dokusError) }
                     } else {
                         updateState {
                             copy(sessions = DokusState.error(
@@ -90,7 +91,7 @@ internal class MySessionsContainer(
 
         revokeOtherSessionsUseCase().fold(
             onSuccess = {
-                action(MySessionsAction.ShowRevokeOthersSuccess)
+                updateState { copy(actionError = null) }
                 intent(MySessionsIntent.Load)
             },
             onFailure = { error ->
@@ -99,7 +100,7 @@ internal class MySessionsContainer(
                 updateState { copy(isRevokingOthers = false) }
                 withState {
                     if (sessions.isSuccess()) {
-                        action(MySessionsAction.ShowError(dokusError))
+                        updateState { copy(actionError = dokusError) }
                     } else {
                         updateState {
                             copy(sessions = DokusState.error(

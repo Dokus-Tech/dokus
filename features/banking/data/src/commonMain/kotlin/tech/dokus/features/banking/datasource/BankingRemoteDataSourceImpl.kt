@@ -16,10 +16,10 @@ import tech.dokus.domain.enums.IgnoredReason
 import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.model.BalanceHistoryResponse
-import tech.dokus.domain.model.BankAccountSummary
+import tech.dokus.domain.model.BankAccountSummaryDto
 import tech.dokus.domain.model.BankAccountDto
 import tech.dokus.domain.model.BankTransactionDto
-import tech.dokus.domain.model.BankTransactionSummary
+import tech.dokus.domain.model.BankTransactionSummaryDto
 import tech.dokus.domain.model.IgnoreTransactionRequest
 import tech.dokus.domain.model.LinkTransactionRequest
 import tech.dokus.domain.model.MarkTransferRequest
@@ -35,7 +35,7 @@ internal class BankingRemoteDataSourceImpl(
         httpClient.get(Banking.Accounts()).body()
     }
 
-    override suspend fun getAccountSummary(): Result<BankAccountSummary> = runCatching {
+    override suspend fun getAccountSummary(): Result<BankAccountSummaryDto> = runCatching {
         httpClient.get(Banking.AccountsSummary()).body()
     }
 
@@ -59,7 +59,7 @@ internal class BankingRemoteDataSourceImpl(
         ).body()
     }
 
-    override suspend fun getTransactionSummary(): Result<BankTransactionSummary> = runCatching {
+    override suspend fun getTransactionSummary(): Result<BankTransactionSummaryDto> = runCatching {
         httpClient.get(Banking.Transactions.Summary()).body()
     }
 

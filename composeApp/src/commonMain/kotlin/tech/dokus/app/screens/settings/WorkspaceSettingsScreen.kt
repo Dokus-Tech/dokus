@@ -1,5 +1,6 @@
 package tech.dokus.app.screens.settings
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,8 +12,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -23,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.app.screens.settings.sections.CashflowTrackingSection
 import tech.dokus.app.screens.settings.sections.BankingDetailsSection
 import tech.dokus.app.screens.settings.sections.InvoiceFormatSection
 import tech.dokus.app.screens.settings.sections.CompanyHeroSection
@@ -35,13 +35,26 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.settings_saved_successfully
 import tech.dokus.aura.resources.workspace_settings_title
 import tech.dokus.app.screens.settings.components.SettingsSkeleton
+import kotlinx.datetime.LocalDateTime
+import tech.dokus.domain.DisplayName
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.LegalName
+import tech.dokus.domain.ids.TenantId
+import tech.dokus.domain.ids.VatNumber
+import tech.dokus.domain.enums.Language
+import tech.dokus.domain.enums.SubscriptionTier
+import tech.dokus.domain.enums.TenantStatus
+import tech.dokus.domain.enums.TenantType
+import tech.dokus.domain.model.Tenant
+import tech.dokus.domain.model.TenantSettings
 import tech.dokus.foundation.app.picker.FilePickerLauncher
 import tech.dokus.foundation.app.picker.rememberImagePicker
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.app.state.isError
 import tech.dokus.foundation.app.state.isLoading
 import tech.dokus.foundation.app.state.isSuccess
-import tech.dokus.foundation.aura.components.common.DokusErrorContent
+import tech.dokus.foundation.aura.components.common.DokusErrorBanner
+import tech.dokus.foundation.aura.components.common.ErrorOverlay
 import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.extensions.localized
@@ -61,7 +74,6 @@ private val ContentPaddingH = 16.dp
 @Composable
 internal fun WorkspaceSettingsScreen(
     state: WorkspaceSettingsState,
-    snackbarHostState: SnackbarHostState,
     onIntent: (WorkspaceSettingsIntent) -> Unit,
     onNavigateToPeppol: () -> Unit = {},
 ) {
@@ -70,14 +82,23 @@ internal fun WorkspaceSettingsScreen(
         topBar = {
             if (!isLargeScreen) PTopAppBar(Res.string.workspace_settings_title)
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { contentPadding ->
-        WorkspaceSettingsContent(
-            state = state,
-            onIntent = onIntent,
-            onNavigateToPeppol = onNavigateToPeppol,
-            modifier = Modifier.padding(contentPadding),
-        )
+        Column(modifier = Modifier.padding(contentPadding)) {
+            if (state.actionError != null) {
+                DokusErrorBanner(
+                    exception = state.actionError,
+                    retryHandler = null,
+                    modifier = Modifier.padding(horizontal = Constraints.Spacing.large),
+                    onDismiss = { onIntent(WorkspaceSettingsIntent.DismissActionError) },
+                )
+            }
+
+            WorkspaceSettingsContent(
+                state = state,
+                onIntent = onIntent,
+                onNavigateToPeppol = onNavigateToPeppol,
+            )
+        }
     }
 }
 
@@ -98,31 +119,58 @@ fun WorkspaceSettingsContent(
 
     val workspaceData = state.workspaceData
 
-    when {
-        workspaceData.isLoading() -> {
-            SettingsSkeleton(
-                sectionCount = 5,
-                modifier = modifier,
-            )
-        }
-
-        workspaceData.isError() -> {
-            DokusErrorContent(
-                exception = workspaceData.exception,
-                retryHandler = workspaceData.retryHandler,
-                modifier = Modifier.fillMaxSize(),
-            )
-        }
-
-        workspaceData.isSuccess() -> {
-            WorkspaceSettingsContentScreen(
-                state = state,
-                data = workspaceData.data,
-                onIntent = onIntent,
-                onNavigateToPeppol = onNavigateToPeppol,
-                avatarPicker = avatarPicker,
-                modifier = modifier,
-            )
+    ErrorOverlay(
+        exception = if (workspaceData is DokusState.Error) workspaceData.exception else null,
+        retryHandler = if (workspaceData is DokusState.Error) workspaceData.retryHandler else null,
+    ) {
+        when {
+            workspaceData.isSuccess() -> {
+                WorkspaceSettingsContentScreen(
+                    state = state,
+                    data = workspaceData.data,
+                    onIntent = onIntent,
+                    onNavigateToPeppol = onNavigateToPeppol,
+                    avatarPicker = avatarPicker,
+                    modifier = modifier,
+                )
+            }
+            workspaceData is DokusState.Error -> {
+                val tenantId = TenantId.generate()
+                val now = LocalDateTime(2026, 1, 1, 0, 0)
+                val emptyData = WorkspaceSettingsState.WorkspaceData(
+                    tenant = Tenant(
+                        id = tenantId,
+                        type = TenantType.Freelancer,
+                        legalName = LegalName(""),
+                        displayName = DisplayName(""),
+                        subscription = SubscriptionTier.Core,
+                        status = TenantStatus.Active,
+                        language = Language.En,
+                        vatNumber = VatNumber(""),
+                        createdAt = now,
+                        updatedAt = now,
+                    ),
+                    settings = TenantSettings(
+                        tenantId = tenantId,
+                        createdAt = now,
+                        updatedAt = now,
+                    ),
+                )
+                WorkspaceSettingsContentScreen(
+                    state = state,
+                    data = emptyData,
+                    onIntent = onIntent,
+                    onNavigateToPeppol = onNavigateToPeppol,
+                    avatarPicker = avatarPicker,
+                    modifier = modifier,
+                )
+            }
+            else -> {
+                SettingsSkeleton(
+                    sectionCount = 5,
+                    modifier = modifier,
+                )
+            }
         }
     }
 }
@@ -151,6 +199,7 @@ private fun WorkspaceSettingsContentScreen(
     var invoiceFormatExpanded by remember { mutableStateOf(false) }
     var paymentTermsExpanded by remember { mutableStateOf(false) }
     var processingHealthExpanded by remember { mutableStateOf(false) }
+    var cashflowTrackingExpanded by remember { mutableStateOf(false) }
 
     Column(
         modifier = modifier
@@ -264,6 +313,13 @@ private fun WorkspaceSettingsContentScreen(
                 onReprocess = { onIntent(WorkspaceSettingsIntent.ExecuteBulkReprocess) },
             )
 
+            // 7. Cashflow Tracking -- read-only display
+            CashflowTrackingSection(
+                trackingFrom = data.settings.cashflowTrackingStartDate?.toString() ?: "—",
+                expanded = cashflowTrackingExpanded,
+                onToggle = { cashflowTrackingExpanded = !cashflowTrackingExpanded },
+            )
+
             // Save State Feedback
             SaveStateFeedback(
                 saveState = saveState,
@@ -287,6 +343,21 @@ private fun WorkspaceSettingsContentLoadingPreview(
     TestWrapper(parameters) {
         WorkspaceSettingsContent(
             state = WorkspaceSettingsState(),
+            onIntent = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun WorkspaceSettingsContentErrorPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters
+) {
+    TestWrapper(parameters) {
+        WorkspaceSettingsContent(
+            state = WorkspaceSettingsState(
+                workspaceData = DokusState.error(exception = DokusException.ConnectionError(), retryHandler = {}),
+            ),
             onIntent = {},
         )
     }
