@@ -117,6 +117,7 @@ data class TenantSettings(
     val enableBankSync: Boolean = false,
     val enablePeppol: Boolean = false,
     val paymentTermsText: String? = null,
+    val cashflowTrackingStartDate: LocalDate? = null,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime
 ) {

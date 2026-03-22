@@ -1,9 +1,11 @@
 package tech.dokus.database.repository.cashflow.matching
 
 import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.greaterEq
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.jdbc.select
@@ -58,17 +60,23 @@ class MatchingRepository {
     /**
      * Load candidate cashflow entries that could match a transaction.
      * Filters: open/overdue, non-zero remaining, direction-coherent with the signed amount.
+     * Entries before [cashflowStartDate] are excluded from matching.
      */
     suspend fun loadCandidateEntries(
         tenantId: TenantId,
         direction: CashflowDirection,
+        cashflowStartDate: LocalDate? = null,
     ): List<CashflowEntryEntity> = newSuspendedTransaction {
         val tenantUuid = tenantId.value.toJavaUuid()
-        CashflowEntriesTable.selectAll().where {
-            (CashflowEntriesTable.tenantId eq tenantUuid) and
-                (CashflowEntriesTable.status inList listOf(CashflowEntryStatus.Open, CashflowEntryStatus.Overdue)) and
-                (CashflowEntriesTable.direction eq direction)
-        }.map { row ->
+        var condition = (CashflowEntriesTable.tenantId eq tenantUuid) and
+            (CashflowEntriesTable.status inList listOf(CashflowEntryStatus.Open, CashflowEntryStatus.Overdue)) and
+            (CashflowEntriesTable.direction eq direction)
+
+        if (cashflowStartDate != null) {
+            condition = condition and (CashflowEntriesTable.eventDate greaterEq cashflowStartDate)
+        }
+
+        CashflowEntriesTable.selectAll().where { condition }.map { row ->
             CashflowEntryEntity(
                 id = tech.dokus.domain.ids.CashflowEntryId.parse(row[CashflowEntriesTable.id].value.toString()),
                 tenantId = tenantId,

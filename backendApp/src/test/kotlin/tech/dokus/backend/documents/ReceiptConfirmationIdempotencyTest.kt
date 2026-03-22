@@ -13,6 +13,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import tech.dokus.backend.services.cashflow.CashflowEntriesService
 import tech.dokus.backend.services.documents.confirmation.ReceiptConfirmationService
+import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
@@ -62,7 +63,8 @@ class ReceiptConfirmationIdempotencyTest {
     private val ingestionRepository = DocumentIngestionRunRepository()
     private val expenseRepository = ExpenseRepository()
     private val cashflowEntriesRepository = CashflowEntriesRepository()
-    private val cashflowEntriesService = CashflowEntriesService(cashflowEntriesRepository)
+    private val tenantRepository = TenantRepository()
+    private val cashflowEntriesService = CashflowEntriesService(cashflowEntriesRepository, tenantRepository)
     private val confirmationService = ReceiptConfirmationService(
         expenseRepository = expenseRepository,
         cashflowEntriesService = cashflowEntriesService,

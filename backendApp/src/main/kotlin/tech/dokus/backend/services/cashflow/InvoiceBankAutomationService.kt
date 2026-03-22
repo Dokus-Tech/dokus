@@ -6,6 +6,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
 import tech.dokus.backend.services.cashflow.matching.MatchingEngine
+import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.banking.BankTransactionRepository
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.domain.enums.AutoPaymentTriggerSource
@@ -29,6 +30,7 @@ class InvoiceBankAutomationService(
     private val importedBankTransactionRepository: BankTransactionRepository,
     private val cashflowEntriesRepository: CashflowEntriesRepository,
     private val matchingEngine: MatchingEngine,
+    private val tenantRepository: TenantRepository,
 ) {
     private val logger = loggerFor()
 
@@ -70,7 +72,8 @@ class InvoiceBankAutomationService(
         tenantId: TenantId,
         contactId: ContactId,
     ) {
-        val entries = cashflowEntriesRepository.listOpenInvoiceEntriesByContact(tenantId, contactId)
+        val cashflowStartDate = tenantRepository.getCashflowTrackingStartDate(tenantId)
+        val entries = cashflowEntriesRepository.listOpenInvoiceEntriesByContact(tenantId, contactId, cashflowStartDate)
             .getOrDefault(emptyList())
         if (entries.isEmpty()) return
 

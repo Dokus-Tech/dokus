@@ -1,5 +1,6 @@
 package tech.dokus.backend.services.cashflow.matching
 
+import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.cashflow.matching.MatchingRepository
 import kotlinx.serialization.json.Json
 import tech.dokus.database.repository.banking.BankTransactionRepository
@@ -45,6 +46,7 @@ class MatchingEngine(
     private val bankingSsePublisher: BankingSsePublisher,
     private val transferDetector: TransferDetector,
     private val cashflowEntriesRepository: CashflowEntriesRepository,
+    private val tenantRepository: TenantRepository,
 ) {
     private val logger = loggerFor()
 
@@ -98,6 +100,8 @@ class MatchingEngine(
     ) {
         if (transactions.isEmpty()) return
 
+        val cashflowStartDate = tenantRepository.getCashflowTrackingStartDate(tenantId)
+
         // Load contact cache (shared across all transaction scoring)
         val contactCache = mutableMapOf<String, tech.dokus.domain.model.contact.ContactDto?>()
         suspend fun resolveContact(entry: CashflowEntryEntity): tech.dokus.domain.model.contact.ContactDto? {
@@ -136,7 +140,7 @@ class MatchingEngine(
             val direction = MatchCandidateBlocker.inferDirection(tx.signedAmount)
             if (direction == tech.dokus.domain.enums.CashflowDirection.Neutral) continue
 
-            val allEntries = matchingRepository.loadCandidateEntries(tenantId, direction)
+            val allEntries = matchingRepository.loadCandidateEntries(tenantId, direction, cashflowStartDate)
             if (allEntries.isEmpty()) continue
 
             // Step 2b: Filter by amount range

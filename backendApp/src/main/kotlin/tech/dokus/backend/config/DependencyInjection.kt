@@ -339,7 +339,7 @@ private fun cashflowModule() = module {
     single { InvoiceService(get(), get()) }
     single { ExpenseService(get()) }
     single { CreditNoteService(get(), get(), get()) }
-    single { CashflowEntriesService(get()) }
+    single { CashflowEntriesService(get(), get()) }
     singleOf(::CashflowPaymentService)
     singleOf(::AutoPaymentService)
 
@@ -350,7 +350,7 @@ private fun cashflowModule() = module {
     singleOf(::MatchingEngine)
     singleOf(::InvoiceBankAutomationService)
     single { CashflowProjectionReconciliationService(get(), get()) }
-    single { CashflowOverviewService(get(), get(), get()) }
+    single { CashflowOverviewService(get(), get(), get(), get()) }
     single { InvoiceConfirmationService(get(), get(), get()) }
     single { ReceiptConfirmationService(get(), get(), get()) }
     single { CreditNoteConfirmationService(get(), get(), get(), get()) }

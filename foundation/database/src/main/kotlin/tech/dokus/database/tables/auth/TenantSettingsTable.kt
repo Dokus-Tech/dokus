@@ -3,6 +3,7 @@ package tech.dokus.database.tables.auth
 import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.dao.id.UUIDTable
 import org.jetbrains.exposed.v1.datetime.CurrentDateTime
+import org.jetbrains.exposed.v1.datetime.date
 import org.jetbrains.exposed.v1.datetime.datetime
 import java.math.BigDecimal
 
@@ -49,6 +50,11 @@ object TenantSettingsTable : UUIDTable("tenant_settings") {
 
     // Legal payment terms text (for invoices)
     val paymentTermsText = text("payment_terms_text").nullable()
+
+    // Cashflow tracking window — entries before this date are excluded from
+    // active cashflow views, matching, and unpaid/overdue calculations.
+    // Nullable for existing tenants; new tenants always set this on creation.
+    val cashflowTrackingStartDate = date("cashflow_tracking_start_date").nullable()
 
     val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)
     val updatedAt = datetime("updated_at").defaultExpression(CurrentDateTime)

@@ -188,4 +188,9 @@
     <string name="processing_health_recommendation_retry">This can retry recent documents using the current processing logic.</string>
     <string name="processing_health_reprocess_button">Reprocess documents</string>
     <string name="processing_health_reprocess_done">%1$d documents queued for reprocessing.</string>
+
+    <!-- Cashflow Tracking Section -->
+    <string name="workspace_cashflow_tracking_title">Cashflow tracking</string>
+    <string name="workspace_cashflow_tracking_subtitle">Active cashflow and matching window</string>
+    <string name="workspace_cashflow_tracking_from">Tracking from</string>
 </resources>

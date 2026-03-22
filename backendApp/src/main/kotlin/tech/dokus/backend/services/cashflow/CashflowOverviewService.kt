@@ -6,6 +6,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.todayIn
+import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
@@ -35,7 +36,8 @@ import tech.dokus.foundation.backend.utils.loggerFor
 class CashflowOverviewService(
     private val invoiceRepository: InvoiceRepository,
     private val expenseRepository: ExpenseRepository,
-    private val cashflowEntriesRepository: CashflowEntriesRepository
+    private val cashflowEntriesRepository: CashflowEntriesRepository,
+    private val tenantRepository: TenantRepository,
 ) {
     private val logger = loggerFor()
 
@@ -204,6 +206,8 @@ class CashflowOverviewService(
         direction: CashflowDirection?,
         statuses: List<CashflowEntryStatus>?
     ): CashflowOverview {
+        val cashflowStartDate = tenantRepository.getCashflowTrackingStartDate(tenantId)
+
         // Fetch entries matching the filters
         val entries = cashflowEntriesRepository.listEntries(
             tenantId = tenantId,
@@ -211,7 +215,8 @@ class CashflowOverviewService(
             fromDate = fromDate,
             toDate = toDate,
             direction = direction,
-            statuses = statuses
+            statuses = statuses,
+            cashflowStartDate = cashflowStartDate,
         ).getOrThrow()
 
         // Separate by direction

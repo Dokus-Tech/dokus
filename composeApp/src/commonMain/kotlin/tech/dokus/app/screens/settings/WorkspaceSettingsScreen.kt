@@ -22,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
+import tech.dokus.app.screens.settings.sections.CashflowTrackingSection
 import tech.dokus.app.screens.settings.sections.BankingDetailsSection
 import tech.dokus.app.screens.settings.sections.InvoiceFormatSection
 import tech.dokus.app.screens.settings.sections.CompanyHeroSection
@@ -198,6 +199,7 @@ private fun WorkspaceSettingsContentScreen(
     var invoiceFormatExpanded by remember { mutableStateOf(false) }
     var paymentTermsExpanded by remember { mutableStateOf(false) }
     var processingHealthExpanded by remember { mutableStateOf(false) }
+    var cashflowTrackingExpanded by remember { mutableStateOf(false) }
 
     Column(
         modifier = modifier
@@ -309,6 +311,13 @@ private fun WorkspaceSettingsContentScreen(
                 expanded = processingHealthExpanded,
                 onToggle = { processingHealthExpanded = !processingHealthExpanded },
                 onReprocess = { onIntent(WorkspaceSettingsIntent.ExecuteBulkReprocess) },
+            )
+
+            // 7. Cashflow Tracking -- read-only display
+            CashflowTrackingSection(
+                trackingFrom = data.settings.cashflowTrackingStartDate?.toString() ?: "—",
+                expanded = cashflowTrackingExpanded,
+                onToggle = { cashflowTrackingExpanded = !cashflowTrackingExpanded },
             )
 
             // Save State Feedback

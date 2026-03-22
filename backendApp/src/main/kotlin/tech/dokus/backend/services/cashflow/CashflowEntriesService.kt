@@ -5,6 +5,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import tech.dokus.backend.util.isUniqueViolation
+import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.CashflowDirection
@@ -33,7 +34,8 @@ import java.util.UUID
  */
 @Suppress("LongParameterList")
 class CashflowEntriesService(
-    private val cashflowEntriesRepository: CashflowEntriesRepository
+    private val cashflowEntriesRepository: CashflowEntriesRepository,
+    private val tenantRepository: TenantRepository,
 ) {
     private val logger = loggerFor()
 
@@ -319,7 +321,8 @@ class CashflowEntriesService(
             direction,
             statuses
         )
-        return cashflowEntriesRepository.listEntries(tenantId, viewMode, fromDate, toDate, direction, statuses)
+        val startDate = tenantRepository.getCashflowTrackingStartDate(tenantId)
+        return cashflowEntriesRepository.listEntries(tenantId, viewMode, fromDate, toDate, direction, statuses, startDate)
             .map { entries -> entries.map { CashflowEntryDto.from(it) } }
             .onSuccess { logger.debug("Retrieved ${it.size} cashflow entries") }
             .onFailure { logger.error("Failed to list cashflow entries for tenant: $tenantId", it) }

@@ -131,10 +131,11 @@ class CashflowEntriesRepository {
     @OptIn(ExperimentalUuidApi::class)
     suspend fun listOpenInvoiceEntriesByContact(
         tenantId: TenantId,
-        contactId: ContactId
+        contactId: ContactId,
+        cashflowStartDate: LocalDate? = null,
     ): Result<List<CashflowEntryEntity>> = runSuspendCatching {
         dbQuery {
-            CashflowEntriesTable
+            var query = CashflowEntriesTable
                 .join(
                     ContactsTable,
                     JoinType.LEFT,
@@ -149,7 +150,12 @@ class CashflowEntriesRepository {
                         (CashflowEntriesTable.status inList listOf(CashflowEntryStatus.Open, CashflowEntryStatus.Overdue)) and
                         (CashflowEntriesTable.remainingAmount neq BigDecimal.ZERO)
                 }
-                .map { row -> CashflowEntryEntity.from(row, row.getOrNull(ContactsTable.name)) }
+
+            if (cashflowStartDate != null) {
+                query = query.andWhere { CashflowEntriesTable.eventDate greaterEq cashflowStartDate }
+            }
+
+            query.map { row -> CashflowEntryEntity.from(row, row.getOrNull(ContactsTable.name)) }
         }
     }
 
@@ -261,7 +267,8 @@ class CashflowEntriesRepository {
         fromDate: LocalDate? = null,
         toDate: LocalDate? = null,
         direction: CashflowDirection? = null,
-        statuses: List<CashflowEntryStatus>? = null
+        statuses: List<CashflowEntryStatus>? = null,
+        cashflowStartDate: LocalDate? = null,
     ): Result<List<CashflowEntryEntity>> = runSuspendCatching {
         dbQuery {
             val effectiveStatuses = if (!statuses.isNullOrEmpty()) {
@@ -290,6 +297,13 @@ class CashflowEntriesRepository {
             // Exclude Cancelled by default (unless explicitly included in statuses)
             if (effectiveStatuses == null || CashflowEntryStatus.Cancelled !in effectiveStatuses) {
                 query = query.andWhere { CashflowEntriesTable.status neq CashflowEntryStatus.Cancelled }
+            }
+
+            // Cashflow is only tracked from the start date onward.
+            // Older documents remain accessible via documents and detail views,
+            // but are excluded from all cashflow views.
+            if (cashflowStartDate != null) {
+                query = query.andWhere { CashflowEntriesTable.eventDate greaterEq cashflowStartDate }
             }
 
             // Date filtering based on viewMode

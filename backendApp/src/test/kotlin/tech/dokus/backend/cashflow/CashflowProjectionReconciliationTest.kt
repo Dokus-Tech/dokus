@@ -80,7 +80,7 @@ class CashflowProjectionReconciliationTest {
     private val expenseRepository = ExpenseRepository()
     private val creditNoteRepository = CreditNoteRepository()
     private val cashflowEntriesRepository = CashflowEntriesRepository()
-    private val cashflowEntriesService = CashflowEntriesService(cashflowEntriesRepository)
+    private val cashflowEntriesService = CashflowEntriesService(cashflowEntriesRepository, tenantRepository)
     private val reconciliationService = CashflowProjectionReconciliationService(
         cashflowEntriesRepository = cashflowEntriesRepository,
         cashflowEntriesService = cashflowEntriesService

@@ -1,5 +1,10 @@
 package tech.dokus.database.repository.auth
 
+import kotlinx.datetime.DatePeriod
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.minus
+import kotlinx.datetime.todayIn
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.jdbc.insert
@@ -24,6 +29,7 @@ import tech.dokus.domain.model.UpsertTenantAddressRequest
 import tech.dokus.domain.toDbDecimal
 import tech.dokus.foundation.backend.database.dbQuery
 import tech.dokus.foundation.backend.utils.loggerFor
+import kotlinx.datetime.Clock
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid
 import kotlin.uuid.toKotlinUuid
@@ -71,6 +77,8 @@ class TenantRepository {
         // Create default settings for the tenant
         TenantSettingsTable.insert {
             it[TenantSettingsTable.tenantId] = tenantId
+            it[TenantSettingsTable.cashflowTrackingStartDate] =
+                computeCashflowStartDate(Clock.System.todayIn(TimeZone.UTC))
         }
 
         logger.info("Created new tenant: $tenantId with address")
@@ -172,4 +180,42 @@ class TenantRepository {
         }
     }
 
+    /**
+     * Returns the effective cashflow tracking start date for a tenant.
+     * If stored, returns the stored value. Otherwise computes from tenant creation date.
+     *
+     * All services must call this single method — no duplicate fallback logic.
+     */
+    suspend fun getCashflowTrackingStartDate(tenantId: TenantId): LocalDate = dbQuery {
+        val javaUuid = tenantId.value.toJavaUuid()
+        val stored = TenantSettingsTable
+            .selectAll()
+            .where { TenantSettingsTable.tenantId eq javaUuid }
+            .singleOrNull()
+            ?.get(TenantSettingsTable.cashflowTrackingStartDate)
+
+        stored ?: run {
+            val tenantCreatedAt = TenantTable
+                .selectAll()
+                .where { TenantTable.id eq javaUuid }
+                .single()[TenantTable.createdAt]
+            computeCashflowStartDate(tenantCreatedAt.date)
+        }
+    }
+
+}
+
+/**
+ * Defines the start of the tenant's active cashflow tracking window.
+ * We include a 3-month backfill so matching and cashflow provide value immediately,
+ * without requiring full historical reconciliation.
+ *
+ * This is not historical truth. This is a seeded tracking window to provide immediate value.
+ *
+ * @param creationDate The date the workspace was created
+ * @return First day of the month, 3 months before creation
+ */
+fun computeCashflowStartDate(creationDate: LocalDate): LocalDate {
+    val threeMonthsAgo = creationDate.minus(DatePeriod(months = 3))
+    return LocalDate(threeMonthsAgo.year, threeMonthsAgo.month, 1)
 }
