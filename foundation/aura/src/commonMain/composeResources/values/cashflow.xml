@@ -776,4 +776,53 @@
     <string name="cashflow_review_back_to_contact">Back to contact</string>
     <string name="cashflow_review_back_to_search">Back to search</string>
     <string name="cashflow_review_back">Back</string>
+
+    <!-- Review Decision Surface -->
+    <string name="review_surface_needs_review">Needs review</string>
+    <string name="review_surface_view_full_detail">View full detail</string>
+    <string name="review_surface_looks_good">Looks good</string>
+    <string name="review_surface_looks_good_subtitle">All required fields are present</string>
+    <string name="review_surface_confirm">Confirm</string>
+    <string name="review_surface_accept_and_confirm">Accept &amp; confirm</string>
+    <string name="review_surface_accept_and_continue">Accept &amp; continue</string>
+    <string name="review_surface_save_and_confirm">Save &amp; confirm</string>
+    <string name="review_surface_save_and_continue">Save &amp; continue</string>
+    <string name="review_surface_review_later">Review later</string>
+    <string name="review_surface_choose_different">Choose different</string>
+    <string name="review_surface_search_contacts">Search contacts</string>
+
+    <!-- Review Surface: Issue Titles -->
+    <string name="review_issue_contact_title">SELECT SUPPLIER</string>
+    <string name="review_issue_contact_suggested">We think this is:</string>
+    <string name="review_issue_contact_unknown">We couldn\'t match this vendor automatically.</string>
+    <string name="review_issue_contact_match">%1$d%% match \u00B7 %2$s</string>
+    <string name="review_issue_amount_title">VERIFY TOTAL AMOUNT</string>
+    <string name="review_issue_amount_missing_total">Total amount is required</string>
+    <string name="review_issue_amount_missing_vat">VAT amount is required</string>
+    <string name="review_issue_amount_missing_subtotal">Subtotal is required</string>
+    <string name="review_issue_date_title">DUE DATE SEEMS WRONG</string>
+    <string name="review_issue_date_confirm_title">CONFIRM DUE DATE</string>
+    <string name="review_issue_date_missing_issue">Issue date is required</string>
+    <string name="review_issue_date_missing_due">Due date is missing</string>
+    <string name="review_issue_date_due_before_issue">Due date is before issue date</string>
+    <string name="review_issue_date_far_out">Due date is more than 1 year after issue date</string>
+    <string name="review_issue_date_correct_due_date">CORRECT DUE DATE</string>
+    <string name="review_issue_date_keep_as">Keep as %1$s</string>
+    <string name="review_issue_date_label_issue">ISSUE</string>
+    <string name="review_issue_date_label_due">DUE</string>
+    <string name="review_issue_direction_title">DOCUMENT DIRECTION UNKNOWN</string>
+    <string name="review_issue_direction_subtitle">Is this incoming or outgoing?</string>
+
+    <!-- Review Surface: Progress -->
+    <string name="review_surface_step_of">Step %1$d of %2$d</string>
+    <string name="review_surface_next_issue">Next: %1$s</string>
+
+    <!-- Review Surface: Thumbnail -->
+    <string name="review_surface_click_to_zoom">Click or Z to zoom</string>
+
+    <!-- Review Surface: Keyboard Hints -->
+    <string name="review_keyboard_navigate">navigate</string>
+    <string name="review_keyboard_confirm">confirm</string>
+    <string name="review_keyboard_zoom">zoom</string>
+    <string name="review_keyboard_detail">detail</string>
 </resources>

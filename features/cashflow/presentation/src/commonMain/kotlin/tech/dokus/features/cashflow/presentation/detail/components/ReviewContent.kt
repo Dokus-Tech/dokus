@@ -24,6 +24,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.LayoutDirection
@@ -41,6 +45,8 @@ import tech.dokus.domain.model.DocumentSourceDto
 import tech.dokus.features.cashflow.presentation.detail.DocumentDetailIntent
 import tech.dokus.features.cashflow.presentation.detail.mvi.preview.DocumentPreviewIntent
 import tech.dokus.features.cashflow.presentation.detail.DocumentDetailState
+import tech.dokus.features.cashflow.presentation.detail.review.DesktopReviewSurface
+import tech.dokus.features.cashflow.presentation.detail.review.isReviewMode
 import tech.dokus.features.cashflow.presentation.detail.components.mobile.MobileCanonicalContent
 import tech.dokus.features.cashflow.presentation.detail.components.mobile.MobileCanonicalHeader
 import tech.dokus.features.cashflow.presentation.detail.components.mobile.MobileDocumentDetailTopBar
@@ -85,7 +91,7 @@ internal fun ReviewContent(
         )
         state.hasContent -> {
             if (isLargeScreen) {
-                DesktopReviewContent(
+                DesktopContentRouter(
                     state = state,
                     isAccountantReadOnly = isAccountantReadOnly,
                     contentPadding = contentPadding,
@@ -196,6 +202,47 @@ private fun AwaitingExtractionContent(
                 )
             }
         }
+    }
+}
+
+/**
+ * Routes between the new review surface (for NeedsReview documents)
+ * and the existing detail inspector (for Confirmed/Rejected/BankStatement).
+ *
+ * The user can toggle from review → detail via "View full detail" or D key.
+ * There is no way back from detail to review for the same document.
+ */
+@Composable
+private fun DesktopContentRouter(
+    state: DocumentDetailState,
+    isAccountantReadOnly: Boolean,
+    contentPadding: PaddingValues,
+    onIntent: (DocumentDetailIntent) -> Unit,
+    onCorrectContact: (ResolvedContact) -> Unit,
+    onCreateContact: (ResolvedContact) -> Unit,
+) {
+    // Track whether the user explicitly switched to detail mode
+    var isInDetailMode by remember(state.documentId) { mutableStateOf(false) }
+
+    if (state.isReviewMode && !isInDetailMode) {
+        DesktopReviewSurface(
+            state = state,
+            isAccountantReadOnly = isAccountantReadOnly,
+            contentPadding = contentPadding,
+            onIntent = onIntent,
+            onCorrectContact = onCorrectContact,
+            onCreateContact = onCreateContact,
+            onSwitchToDetail = { isInDetailMode = true },
+        )
+    } else {
+        DesktopReviewContent(
+            state = state,
+            isAccountantReadOnly = isAccountantReadOnly,
+            contentPadding = contentPadding,
+            onIntent = onIntent,
+            onCorrectContact = onCorrectContact,
+            onCreateContact = onCreateContact,
+        )
     }
 }
 
