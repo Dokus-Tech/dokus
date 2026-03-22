@@ -230,8 +230,6 @@ private fun DesktopContentRouter(
             isAccountantReadOnly = isAccountantReadOnly,
             contentPadding = contentPadding,
             onIntent = onIntent,
-            onCorrectContact = onCorrectContact,
-            onCreateContact = onCreateContact,
             onSwitchToDetail = { isInDetailMode = true },
         )
     } else {

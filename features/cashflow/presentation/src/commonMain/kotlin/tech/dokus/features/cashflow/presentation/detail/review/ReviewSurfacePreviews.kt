@@ -32,8 +32,6 @@ private fun ReviewSurfaceCleanPreview(
             isAccountantReadOnly = false,
             contentPadding = PaddingValues(0.dp),
             onIntent = {},
-            onCorrectContact = {},
-            onCreateContact = {},
             onSwitchToDetail = {},
             modifier = Modifier.fillMaxSize(),
         )
@@ -51,8 +49,6 @@ private fun ReviewSurfaceContactIssuePreview(
             isAccountantReadOnly = false,
             contentPadding = PaddingValues(0.dp),
             onIntent = {},
-            onCorrectContact = {},
-            onCreateContact = {},
             onSwitchToDetail = {},
             modifier = Modifier.fillMaxSize(),
         )
@@ -366,6 +362,27 @@ private fun ActionFooterLoadingPreview(
             isEnabled = true,
             isLoading = true,
             showChooseDifferent = false,
+            onPrimaryAction = {},
+            onChooseDifferent = {},
+            onReviewLater = {},
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(Constraints.Spacing.large),
+        )
+    }
+}
+
+@Preview(name = "Action Footer - Choose Different")
+@Composable
+private fun ActionFooterChooseDifferentPreview(
+    @PreviewParameter(PreviewParametersProvider::class) parameters: PreviewParameters,
+) {
+    TestWrapper(parameters) {
+        ReviewActionFooter(
+            actionType = ReviewActionType.AcceptAndConfirm,
+            isEnabled = true,
+            isLoading = false,
+            showChooseDifferent = true,
             onPrimaryAction = {},
             onChooseDifferent = {},
             onReviewLater = {},

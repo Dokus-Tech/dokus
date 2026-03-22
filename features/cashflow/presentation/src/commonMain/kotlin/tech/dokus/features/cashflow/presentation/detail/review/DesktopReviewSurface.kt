@@ -35,7 +35,6 @@ import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.review_surface_view_full_detail
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.domain.model.contact.ResolvedContact
 import tech.dokus.domain.model.sortDate
 import tech.dokus.features.cashflow.presentation.detail.DocumentDetailIntent
 import tech.dokus.features.cashflow.presentation.detail.DocumentDetailQueueState
@@ -64,8 +63,6 @@ internal fun DesktopReviewSurface(
     isAccountantReadOnly: Boolean,
     contentPadding: PaddingValues,
     onIntent: (DocumentDetailIntent) -> Unit,
-    onCorrectContact: (ResolvedContact) -> Unit,
-    onCreateContact: (ResolvedContact) -> Unit,
     onSwitchToDetail: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
