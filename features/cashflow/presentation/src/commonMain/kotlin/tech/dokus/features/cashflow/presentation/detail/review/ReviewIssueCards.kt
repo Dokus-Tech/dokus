@@ -6,12 +6,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -23,13 +21,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import tech.dokus.foundation.aura.style.amberWhisper
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.review_issue_amount_missing_subtotal
@@ -50,11 +46,9 @@ import tech.dokus.aura.resources.review_issue_date_missing_issue
 import tech.dokus.aura.resources.review_issue_date_title
 import tech.dokus.aura.resources.review_issue_direction_subtitle
 import tech.dokus.aura.resources.review_issue_direction_title
-import tech.dokus.aura.resources.review_surface_choose_different
-import tech.dokus.aura.resources.review_surface_search_contacts
 import tech.dokus.domain.enums.DocumentDirection
-import tech.dokus.domain.model.contact.ContactSuggestionDto
 import tech.dokus.domain.model.contact.ResolvedContact
+import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.textMuted
 
@@ -130,47 +124,46 @@ private fun SuggestionRow(
 ) {
     val amberColor = MaterialTheme.colorScheme.primary
 
-    Row(
+    DokusCardSurface(
         modifier = modifier
             .fillMaxWidth()
-            .clip(SuggestionShape)
-            .background(MaterialTheme.colorScheme.amberWhisper)
-            .drawBehind {
-                // 2dp amber left border accent
-                drawLine(
-                    color = amberColor,
-                    start = Offset(0f, 0f),
-                    end = Offset(0f, size.height),
-                    strokeWidth = AccentBorderWidth.toPx(),
-                )
-            }
-            .clickable(onClick = onClick)
-            .padding(
-                start = Constraints.Spacing.medium,
-                end = Constraints.Spacing.medium,
-                top = Constraints.Spacing.medium,
-                bottom = Constraints.Spacing.medium,
-            ),
-        verticalAlignment = Alignment.CenterVertically,
+            .clickable(onClick = onClick),
+        accent = true,
     ) {
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xxSmall),
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .drawBehind {
+                    // 2dp amber left border accent
+                    drawLine(
+                        color = amberColor,
+                        start = Offset(0f, 0f),
+                        end = Offset(0f, size.height),
+                        strokeWidth = AccentBorderWidth.toPx(),
+                    )
+                }
+                .padding(Constraints.Spacing.medium),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = name,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            if (!vatNumber.isNullOrBlank()) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xxSmall),
+            ) {
                 Text(
-                    text = vatNumber,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.textMuted,
+                    text = name,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
+                if (!vatNumber.isNullOrBlank()) {
+                    Text(
+                        text = vatNumber,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.textMuted,
+                    )
+                }
             }
         }
     }

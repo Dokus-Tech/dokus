@@ -143,14 +143,15 @@ internal fun DesktopReviewSurface(
                     Spacer(modifier = Modifier.height(Constraints.Spacing.small))
 
                     // Action footer
-                    val hasContactIssue =
-                        issues.getOrNull(activeIssueIndex) is ReviewIssue.ContactIssue
+                    val showChooseDifferent =
+                        issues.getOrNull(activeIssueIndex) is ReviewIssue.ContactIssue ||
+                            (issues.isEmpty() && state.isContactRequired)
                     if (!isAccountantReadOnly) {
                         ReviewActionFooter(
                             actionType = actionType,
                             isEnabled = if (issues.isEmpty()) state.canConfirm else true,
                             isLoading = state.isConfirming,
-                            showChooseDifferent = hasContactIssue,
+                            showChooseDifferent = showChooseDifferent,
                             onPrimaryAction = {
                                 handlePrimaryAction(
                                     issues = issues,
