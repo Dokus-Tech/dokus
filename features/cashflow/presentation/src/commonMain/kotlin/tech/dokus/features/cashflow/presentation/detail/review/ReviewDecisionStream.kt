@@ -1,6 +1,7 @@
 package tech.dokus.features.cashflow.presentation.detail.review
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -48,7 +49,7 @@ internal fun ReviewDecisionStream(
         verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.large),
     ) {
         if (issues.isEmpty()) {
-            CleanDocumentState(state = state)
+            CleanDocumentState(state = state, onChooseDifferent = onChooseDifferent)
         } else {
             // Progress bar (only for multi-issue)
             if (issues.size > 1) {
@@ -86,6 +87,7 @@ internal fun ReviewDecisionStream(
 @Composable
 private fun CleanDocumentState(
     state: DocumentDetailState,
+    onChooseDifferent: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -106,24 +108,27 @@ private fun CleanDocumentState(
             )
         }
 
-        // Contact info card (if contact is resolved)
+        // Contact info card (clickable to change supplier)
         when (val contact = state.effectiveContact) {
             is ResolvedContact.Linked -> {
                 CleanContactRow(
                     name = contact.name,
                     vatNumber = contact.vatNumber,
+                    onClick = onChooseDifferent,
                 )
             }
             is ResolvedContact.Suggested -> {
                 CleanContactRow(
                     name = contact.name,
                     vatNumber = contact.vatNumber,
+                    onClick = onChooseDifferent,
                 )
             }
             is ResolvedContact.Detected -> {
                 CleanContactRow(
                     name = contact.name,
                     vatNumber = contact.vatNumber,
+                    onClick = onChooseDifferent,
                 )
             }
             is ResolvedContact.Unknown -> {
@@ -137,10 +142,12 @@ private fun CleanDocumentState(
 private fun CleanContactRow(
     name: String,
     vatNumber: String?,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(
         modifier = modifier
+            .clickable(onClick = onClick)
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
             .padding(start = 3.dp),
