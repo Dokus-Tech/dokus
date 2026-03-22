@@ -4,6 +4,35 @@ All notable changes to Dokus are documented in this file.
 
 The format follows Keep a Changelog principles with pragmatic release summaries.
 
+## [1.3.3] - 2026-03-22
+
+### Added
+- Dedicated duplicate document review flow with PDF thumbnails and side-by-side comparison (#250).
+- Desktop review surface for document validation with keyboard navigation and contextual review queues.
+- Cross-platform PDF download with state management, retry functionality, and platform-specific file saving.
+- Cashflow tracking start date window for controlling when tracking begins.
+- Bank statement draft transaction persistence and deduplication (#250).
+- Contact selection in clean document state and context-aware back navigation labels in Document Detail.
+- ErrorOverlay component replacing OfflineOverlay with versatile error state handling.
+
+### Changed
+- Document Review renamed to Document Detail; Cashflow Ledger renamed to CashFlow Overview.
+- Backend entities separated from domain models with unified DTO mapping layer and companion object factory methods.
+- MVI architecture modularized with child FlowMVI containers and extracted intent handlers.
+- Error handling standardized across the app — global snackbars removed in favor of inline error banners and overlays.
+- Dialogs refactored to use Navigation Compose `dialog` routes.
+- Typography standardized across platforms; design tokens and MaterialTheme color schemes replace hardcoded values.
+- All hardcoded UI strings externalized to string resources.
+- "Review later" functionality removed from document review surfaces.
+
+### Fixed
+- Error state UI improved for team and workspace settings screens.
+
+### Internal
+- Backend repositories refactored: auto-payment and audit logic extracted, matching logic reorganized, ResultRow mappers moved to dedicated files.
+- Contact and Cashflow MVI containers use Koin factories for child containers.
+- Android unit test snapshots updated.
+
 ## [1.3.2] - 2026-03-19
 
 ### Changed

@@ -39,7 +39,6 @@ object TestAiFixtures {
 
     val serverInfo = ServerInfoConfig(
         name = "test-server",
-        version = "test-version",
         environment = "test",
         bankingEnabled = true,
         paymentsEnabled = true,
