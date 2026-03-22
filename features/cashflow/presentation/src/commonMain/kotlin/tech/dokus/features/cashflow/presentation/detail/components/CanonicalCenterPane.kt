@@ -92,21 +92,8 @@ internal fun CanonicalCenterPane(
     val contactAddress = (contact as? ResolvedContact.Detected)?.address
     val uiData = state.uiData
 
-    // Side-by-side PDF comparison when pending match review exists
-    val pendingReview = state.documentRecord?.pendingMatchReview
-    if (state.shouldShowPendingMatchComparison && pendingReview != null) {
-        DocumentComparisonPane(
-            existingPreviewState = state.previewState,
-            incomingPreviewState = state.incomingPreviewState,
-            reasonType = pendingReview.reasonType,
-            onSameDocument = { onIntent(DocumentDetailIntent.ResolvePossibleMatchSame) },
-            onDifferentDocument = { onIntent(DocumentDetailIntent.ResolvePossibleMatchDifferent) },
-            isResolving = state.isResolvingMatchReview,
-            onLoadMore = { maxPages -> onIntent(DocumentDetailIntent.Preview(DocumentPreviewIntent.LoadMorePages(maxPages))) },
-            modifier = modifier,
-        )
-        return
-    }
+    // Note: Pending match comparison is now handled by DesktopDuplicateReviewSurface
+    // in the DesktopContentRouter, not here.
 
     if (uiData is DocumentUiData.Invoice) {
         Box(

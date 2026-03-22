@@ -44,9 +44,10 @@ data class DocumentSourceDto(
 data class DocumentMatchReviewSummaryDto(
     val reviewId: DocumentMatchReviewId,
     val incomingSourceId: DocumentSourceId,
+    val incomingDocumentId: DocumentId? = null,
     val reasonType: ReviewReason,
     val status: DocumentMatchReviewStatus,
-    val createdAt: LocalDateTime
+    val createdAt: LocalDateTime,
 ) {
     companion object
 }

@@ -45,6 +45,7 @@ import tech.dokus.domain.model.DocumentSourceDto
 import tech.dokus.features.cashflow.presentation.detail.DocumentDetailIntent
 import tech.dokus.features.cashflow.presentation.detail.mvi.preview.DocumentPreviewIntent
 import tech.dokus.features.cashflow.presentation.detail.DocumentDetailState
+import tech.dokus.features.cashflow.presentation.detail.review.DesktopDuplicateReviewSurface
 import tech.dokus.features.cashflow.presentation.detail.review.DesktopReviewSurface
 import tech.dokus.features.cashflow.presentation.detail.review.isReviewMode
 import tech.dokus.features.cashflow.presentation.detail.components.mobile.MobileCanonicalContent
@@ -225,15 +226,11 @@ private fun DesktopContentRouter(
     var isInDetailMode by remember(state.documentId) { mutableStateOf(false) }
 
     if (state.shouldShowPendingMatchComparison && !isInDetailMode) {
-        // TODO: Wire DuplicateReviewRoute once backend provides incomingDocumentId
-        // For now, fall through to the existing detail view which has the old comparison pane
-        DesktopReviewContent(
+        DesktopDuplicateReviewSurface(
             state = state,
-            isAccountantReadOnly = isAccountantReadOnly,
             contentPadding = contentPadding,
             onIntent = onIntent,
-            onCorrectContact = onCorrectContact,
-            onCreateContact = onCreateContact,
+            onSwitchToDetail = { isInDetailMode = true },
         )
     } else if (state.isReviewMode && !isInDetailMode) {
         DesktopReviewSurface(
