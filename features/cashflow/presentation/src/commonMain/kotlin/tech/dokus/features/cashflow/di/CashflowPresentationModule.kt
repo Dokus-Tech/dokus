@@ -33,6 +33,12 @@ import tech.dokus.features.cashflow.presentation.detail.DocumentDetailAction
 import tech.dokus.features.cashflow.presentation.detail.DocumentDetailContainer
 import tech.dokus.features.cashflow.presentation.detail.DocumentDetailIntent
 import tech.dokus.features.cashflow.presentation.detail.DocumentDetailState
+import tech.dokus.features.cashflow.presentation.detail.DuplicateReviewAction
+import tech.dokus.features.cashflow.presentation.detail.DuplicateReviewContainer
+import tech.dokus.features.cashflow.presentation.detail.DuplicateReviewIntent
+import tech.dokus.features.cashflow.presentation.detail.DuplicateReviewState
+import tech.dokus.domain.enums.ReviewReason
+import tech.dokus.domain.ids.DocumentMatchReviewId
 import tech.dokus.features.cashflow.presentation.detail.mvi.payment.DocumentPaymentContainer
 import tech.dokus.features.cashflow.presentation.detail.mvi.preview.DocumentPreviewContainer
 import tech.dokus.foundation.app.mvi.container
@@ -83,6 +89,18 @@ val cashflowViewModelModule = module {
             previewContainer = get(),
             initialDocumentId = initialDocumentId,
             queueContext = queueContext,
+        )
+    }
+    container<DuplicateReviewContainer, DuplicateReviewState, DuplicateReviewIntent, DuplicateReviewAction> {
+            (existingDocumentId: DocumentId, incomingDocumentId: DocumentId, reviewId: DocumentMatchReviewId, reasonType: ReviewReason) ->
+        DuplicateReviewContainer(
+            existingDocumentId = existingDocumentId,
+            incomingDocumentId = incomingDocumentId,
+            reviewId = reviewId,
+            reasonType = reasonType,
+            getDocumentRecord = get(),
+            getDocumentPages = get(),
+            resolveMatchReview = get(),
         )
     }
     container<ChatContainer, ChatState, ChatIntent, ChatAction> {

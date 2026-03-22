@@ -8,8 +8,8 @@ import tech.dokus.domain.enums.ReviewReason
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentMatchReviewId
-import tech.dokus.domain.model.DocDto
 import tech.dokus.domain.model.DocumentDetailDto
+import tech.dokus.features.cashflow.presentation.detail.models.DocumentUiData
 import tech.dokus.foundation.app.state.DokusState
 
 /**
@@ -32,8 +32,8 @@ data class DuplicateReviewState(
     val incomingDoc: DokusState<DocumentDetailDto> = DokusState.idle(),
     val existingPreview: DocumentPreviewState = DocumentPreviewState.Loading,
     val incomingPreview: DocumentPreviewState = DocumentPreviewState.Loading,
-    val existingDraft: DocDto? = null,
-    val incomingDraft: DocDto? = null,
+    val existingUiData: DocumentUiData? = null,
+    val incomingUiData: DocumentUiData? = null,
     val reviewId: DocumentMatchReviewId? = null,
     val reasonType: ReviewReason? = null,
     val diffs: List<DuplicateDiff> = emptyList(),
@@ -42,7 +42,7 @@ data class DuplicateReviewState(
 ) : MVIState {
 
     val isLoaded: Boolean
-        get() = existingDraft != null && incomingDraft != null
+        get() = existingUiData != null && incomingUiData != null
 
     val hasDiffs: Boolean
         get() = diffs.isNotEmpty()

@@ -271,7 +271,8 @@ fun DocumentMatchReviewSummaryDto.Companion.from(entity: DocumentMatchReviewEnti
     DocumentMatchReviewSummaryDto(
         reviewId = entity.id,
         incomingSourceId = entity.incomingSourceId,
+        incomingDocumentId = entity.incomingDocumentId,
         reasonType = entity.reasonType,
         status = entity.status,
-        createdAt = entity.createdAt
+        createdAt = entity.createdAt,
     )

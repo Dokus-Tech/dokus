@@ -11,10 +11,12 @@ import tech.dokus.domain.exceptions.asDokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentMatchReviewId
 import tech.dokus.domain.model.DocDto
+import tech.dokus.domain.model.DocumentDetailDto
 import tech.dokus.domain.model.DocumentMatchResolutionDecision
 import tech.dokus.domain.model.Dpi
 import tech.dokus.domain.model.sortDate
 import tech.dokus.domain.model.totalAmount
+import tech.dokus.features.cashflow.presentation.detail.models.toUiData
 import tech.dokus.features.cashflow.usecases.GetDocumentPagesUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentRecordUseCase
 import tech.dokus.features.cashflow.usecases.ResolveDocumentMatchReviewUseCase
@@ -70,11 +72,11 @@ internal class DuplicateReviewContainer(
         // Load existing document
         getDocumentRecord(existingDocumentId).fold(
             onSuccess = { record ->
-                val draft = record.draft?.content
+                val uiData = record.draft?.content?.toUiData()
                 updateState {
                     copy(
                         existingDoc = DokusState.success(record),
-                        existingDraft = draft,
+                        existingUiData = uiData,
                     )
                 }
                 // Load existing PDF preview
@@ -95,19 +97,22 @@ internal class DuplicateReviewContainer(
         getDocumentRecord(incomingDocumentId).fold(
             onSuccess = { record ->
                 val draft = record.draft?.content
+                val uiData = draft?.toUiData()
                 updateState {
                     copy(
                         incomingDoc = DokusState.success(record),
-                        incomingDraft = draft,
+                        incomingUiData = uiData,
                     )
                 }
                 // Load incoming PDF preview
                 loadPreview(incomingDocumentId, isExisting = false)
 
-                // Compute diffs now that we have both
+                // Compute diffs now that we have both — uses raw DocDto for field comparison
                 withState {
-                    if (existingDraft != null && incomingDraft != null) {
-                        val diffs = computeDiffs(existingDraft, incomingDraft)
+                    val existingRecord = (existingDoc as? DokusState.Success<DocumentDetailDto>)?.data
+                    val existingDraft = existingRecord?.draft?.content
+                    if (existingDraft != null && draft != null) {
+                        val diffs = computeDiffs(existingDraft, draft)
                         updateState { copy(diffs = diffs) }
                     }
                 }

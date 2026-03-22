@@ -69,6 +69,7 @@ data class DocumentMatchReviewEntity(
     val tenantId: TenantId,
     val documentId: DocumentId,
     val incomingSourceId: DocumentSourceId,
+    val incomingDocumentId: DocumentId?,
     val reasonType: ReviewReason,
     val aiSummary: String?,
     val aiConfidence: Double?,

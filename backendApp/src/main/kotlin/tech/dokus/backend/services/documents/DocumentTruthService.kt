@@ -840,9 +840,10 @@ class DocumentTruthService(
             tenantId = tenantId,
             documentId = targetDocumentId,
             sourceId = sourceId,
+            incomingDocumentId = sourceDocumentId,
             reasonType = reason,
             aiSummary = summary,
-            aiConfidence = aiConfidence
+            aiConfidence = aiConfidence,
         )
         val orphanDeleted = deleteOrphanIfSafe(tenantId, sourceDocumentId)
         val sourceCount = sourceRepository.countLinkedSources(tenantId, targetDocumentId)

@@ -45,8 +45,8 @@ import tech.dokus.domain.model.DocumentSourceDto
 import tech.dokus.features.cashflow.presentation.detail.DocumentDetailIntent
 import tech.dokus.features.cashflow.presentation.detail.mvi.preview.DocumentPreviewIntent
 import tech.dokus.features.cashflow.presentation.detail.DocumentDetailState
-import tech.dokus.features.cashflow.presentation.detail.review.DesktopDuplicateReviewSurface
 import tech.dokus.features.cashflow.presentation.detail.review.DesktopReviewSurface
+import tech.dokus.features.cashflow.presentation.detail.review.DuplicateReviewRoute
 import tech.dokus.features.cashflow.presentation.detail.review.isReviewMode
 import tech.dokus.features.cashflow.presentation.detail.components.mobile.MobileCanonicalContent
 import tech.dokus.features.cashflow.presentation.detail.components.mobile.MobileCanonicalHeader
@@ -225,12 +225,28 @@ private fun DesktopContentRouter(
     // Track whether the user explicitly switched to detail mode
     var isInDetailMode by remember(state.documentId) { mutableStateOf(false) }
 
-    if (state.shouldShowPendingMatchComparison && !isInDetailMode) {
-        DesktopDuplicateReviewSurface(
+    val pendingReview = state.documentRecord?.pendingMatchReview
+    val incomingDocId = pendingReview?.incomingDocumentId
+
+    if (state.shouldShowPendingMatchComparison && !isInDetailMode && pendingReview != null && incomingDocId != null) {
+        DuplicateReviewRoute(
+            existingDocumentId = state.documentId!!,
+            incomingDocumentId = incomingDocId,
+            reviewId = pendingReview.reviewId,
+            reasonType = pendingReview.reasonType,
+            contentPadding = contentPadding,
+            onResolved = { onIntent(DocumentDetailIntent.Refresh) },
+            onSwitchToDetail = { isInDetailMode = true },
+        )
+    } else if (state.shouldShowPendingMatchComparison && !isInDetailMode) {
+        // Fallback: backend hasn't returned incomingDocumentId yet — show detail view
+        DesktopReviewContent(
             state = state,
+            isAccountantReadOnly = isAccountantReadOnly,
             contentPadding = contentPadding,
             onIntent = onIntent,
-            onSwitchToDetail = { isInDetailMode = true },
+            onCorrectContact = onCorrectContact,
+            onCreateContact = onCreateContact,
         )
     } else if (state.isReviewMode && !isInDetailMode) {
         DesktopReviewSurface(

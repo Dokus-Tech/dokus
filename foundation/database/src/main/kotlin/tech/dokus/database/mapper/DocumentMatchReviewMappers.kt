@@ -18,6 +18,7 @@ internal fun DocumentMatchReviewEntity.Companion.from(row: ResultRow): DocumentM
         tenantId = TenantId(row[DocumentMatchReviewsTable.tenantId].toKotlinUuid()),
         documentId = DocumentId.parse(row[DocumentMatchReviewsTable.documentId].toString()),
         incomingSourceId = DocumentSourceId(row[DocumentMatchReviewsTable.incomingSourceId].toKotlinUuid()),
+        incomingDocumentId = row[DocumentMatchReviewsTable.incomingDocumentId]?.toKotlinUuid()?.let { DocumentId(it) },
         reasonType = row[DocumentMatchReviewsTable.reasonType],
         aiSummary = row[DocumentMatchReviewsTable.aiSummary],
         aiConfidence = row[DocumentMatchReviewsTable.aiConfidence]?.toDouble(),

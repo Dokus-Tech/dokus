@@ -31,9 +31,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.review_duplicate_diff_confirm
@@ -45,19 +42,17 @@ import tech.dokus.aura.resources.review_duplicate_incoming
 import tech.dokus.aura.resources.review_duplicate_label_invoice
 import tech.dokus.aura.resources.review_duplicate_label_issue_date
 import tech.dokus.aura.resources.review_duplicate_label_total
+import tech.dokus.aura.resources.review_duplicate_possible_duplicate
+import tech.dokus.aura.resources.review_duplicate_review_later
 import tech.dokus.aura.resources.review_duplicate_same_document
 import tech.dokus.aura.resources.review_duplicate_same_opinion
 import tech.dokus.aura.resources.review_duplicate_same_opinion_detail
 import tech.dokus.aura.resources.review_surface_view_full_detail
 import tech.dokus.domain.enums.ReviewReason
-import tech.dokus.domain.model.DocDto
-import tech.dokus.domain.model.DocumentSourceDto
-import tech.dokus.domain.model.sortDate
-import tech.dokus.domain.model.totalAmount
-import tech.dokus.features.cashflow.presentation.detail.DocumentDetailIntent
-import tech.dokus.features.cashflow.presentation.detail.DocumentDetailState
 import tech.dokus.features.cashflow.presentation.detail.DocumentPreviewState
 import tech.dokus.features.cashflow.presentation.detail.DuplicateDiff
+import tech.dokus.features.cashflow.presentation.detail.DuplicateReviewState
+import tech.dokus.features.cashflow.presentation.detail.models.DocumentUiData
 import tech.dokus.foundation.app.network.rememberAuthenticatedImageLoader
 import tech.dokus.foundation.aura.components.PButton
 import tech.dokus.foundation.aura.components.PButtonVariant
@@ -74,78 +69,69 @@ private const val A4_ASPECT_RATIO = 0.75f
 /**
  * Desktop duplicate comparison surface.
  *
- * Shows when a document has a pending match review. Renders two document
- * identity cards side by side with inline diffs and "Same / Different" buttons.
- *
- * Uses [DocumentDetailState] directly — derives incoming data from
- * the source's `extractedSnapshotJson`.
+ * Shows two document identity cards side by side with inline diffs
+ * and "Same / Different" action buttons. Uses typed [DuplicateReviewState]
+ * with two [DocDto] objects — no JSON parsing.
  */
 @Composable
 internal fun DesktopDuplicateReviewSurface(
-    state: DocumentDetailState,
+    state: DuplicateReviewState,
     contentPadding: PaddingValues,
-    onIntent: (DocumentDetailIntent) -> Unit,
+    onResolveSame: () -> Unit,
+    onResolveDifferent: () -> Unit,
     onSwitchToDetail: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val pendingReview = state.documentRecord?.pendingMatchReview ?: return
-    val incomingSource = state.documentRecord?.sources?.firstOrNull { it.id == pendingReview.incomingSourceId }
-
-    // Derive incoming DocDto fields from source snapshot
-    val incomingVendor = incomingSource?.extractJsonString("seller", "name") ?: ""
-    val incomingInvoiceNo = incomingSource?.extractJsonString("invoiceNumber") ?: ""
-    val incomingTotal = incomingSource?.extractJsonLong("totalAmount")
-    val incomingTotalDisplay = incomingTotal?.let { "\u20AC${tech.dokus.domain.Money(it).toDisplayString()}" } ?: ""
-    val incomingDate = incomingSource?.extractJsonString("issueDate") ?: ""
-
-    // Compute diffs
-    val existingDraft = state.draftData
-    val diffs = computeDiffsFromState(existingDraft, incomingSource)
+    if (!state.isLoaded) {
+        Box(modifier = modifier.fillMaxSize().padding(contentPadding), contentAlignment = Alignment.Center) {
+            DokusLoader()
+        }
+        return
+    }
 
     Box(modifier = modifier.fillMaxSize().padding(contentPadding)) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(Constraints.Spacing.large),
+            modifier = Modifier.fillMaxSize().padding(Constraints.Spacing.large),
             verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
         ) {
+            // Header
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)) {
+                    StatusDot(type = StatusDotType.Warning, size = 8.dp)
+                    Text(stringResource(Res.string.review_duplicate_possible_duplicate), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
+                }
+                Text(stringResource(Res.string.review_surface_view_full_detail) + " \u2192", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.textMuted, modifier = Modifier.clickable(onClick = onSwitchToDetail))
+            }
+
+            // Scrollable content
             Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .widthIn(max = 700.dp)
-                    .align(Alignment.CenterHorizontally)
-                    .verticalScroll(rememberScrollState()),
+                modifier = Modifier.weight(1f).widthIn(max = 700.dp).align(Alignment.CenterHorizontally).verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.large),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                // Two document cards side by side
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.large),
-                ) {
-                    // Existing
+                // Two document cards
+                Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(Constraints.Spacing.large)) {
                     DocumentIdentityCard(
                         label = stringResource(Res.string.review_duplicate_existing),
                         labelColor = MaterialTheme.colorScheme.tertiary,
                         borderColor = MaterialTheme.colorScheme.tertiary,
-                        vendorName = resolveVendorName(state),
-                        invoiceNumber = resolveInvoiceNumber(existingDraft),
-                        totalAmount = resolveDisplayAmount(state),
-                        dateDisplay = existingDraft?.sortDate?.toString() ?: "",
-                        previewState = state.previewState,
+                        uiData = state.existingUiData,
+                        previewState = state.existingPreview,
+                        statusLabel = "Confirmed",
                         statusColor = MaterialTheme.colorScheme.tertiary,
                         modifier = Modifier.weight(1f),
                     )
-                    // Incoming
                     DocumentIdentityCard(
                         label = stringResource(Res.string.review_duplicate_incoming),
                         labelColor = MaterialTheme.colorScheme.primary,
                         borderColor = MaterialTheme.colorScheme.primary,
-                        vendorName = incomingVendor,
-                        invoiceNumber = incomingInvoiceNo,
-                        totalAmount = incomingTotalDisplay,
-                        dateDisplay = incomingDate,
-                        previewState = state.incomingPreviewState ?: DocumentPreviewState.NoPreview,
+                        uiData = state.incomingUiData,
+                        previewState = state.incomingPreview,
+                        statusLabel = "Processing",
                         statusColor = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.weight(1f),
                     )
@@ -153,29 +139,28 @@ internal fun DesktopDuplicateReviewSurface(
 
                 // Diff section
                 DuplicateDiffSection(
-                    reasonType = pendingReview.reasonType,
-                    diffs = diffs,
+                    reasonType = state.reasonType ?: ReviewReason.MaterialConflict,
+                    diffs = state.diffs,
                 )
 
-                // Action buttons
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium),
-                ) {
+                // Actions
+                Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(Constraints.Spacing.medium)) {
                     PButton(
                         text = stringResource(Res.string.review_duplicate_different_document),
                         variant = PButtonVariant.OutlineMuted,
-                        isEnabled = !state.isResolvingMatchReview,
-                        onClick = { onIntent(DocumentDetailIntent.ResolvePossibleMatchDifferent) },
+                        isEnabled = !state.isResolving,
+                        onClick = onResolveDifferent,
                     )
                     PButton(
                         text = stringResource(Res.string.review_duplicate_same_document),
-                        isEnabled = !state.isResolvingMatchReview,
-                        isLoading = state.isResolvingMatchReview,
+                        isEnabled = !state.isResolving,
+                        isLoading = state.isResolving,
                         modifier = Modifier.weight(1f),
-                        onClick = { onIntent(DocumentDetailIntent.ResolvePossibleMatchSame) },
+                        onClick = onResolveSame,
                     )
                 }
+
+                Text(stringResource(Res.string.review_duplicate_review_later), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.textMuted, modifier = Modifier.clickable { })
             }
 
             // Bottom bar
@@ -186,19 +171,10 @@ internal fun DesktopDuplicateReviewSurface(
 
 @Composable
 private fun BottomBar(onSwitchToDetail: () -> Unit, modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
-    ) {
+    Column(modifier = modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)) {
         ReviewKeyboardHints(canConfirm = true)
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = Constraints.Stroke.thin)
-        Text(
-            text = stringResource(Res.string.review_surface_view_full_detail) + " \u2192",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.textMuted,
-            modifier = Modifier.clickable(onClick = onSwitchToDetail).padding(vertical = Constraints.Spacing.small),
-        )
+        Text(stringResource(Res.string.review_surface_view_full_detail) + " \u2192", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.textMuted, modifier = Modifier.clickable(onClick = onSwitchToDetail).padding(vertical = Constraints.Spacing.small))
     }
 }
 
@@ -211,37 +187,53 @@ private fun DocumentIdentityCard(
     label: String,
     labelColor: Color,
     borderColor: Color,
-    vendorName: String,
-    invoiceNumber: String,
-    totalAmount: String,
-    dateDisplay: String,
+    uiData: DocumentUiData?,
     previewState: DocumentPreviewState,
+    statusLabel: String,
     statusColor: Color,
     modifier: Modifier = Modifier,
 ) {
     val imageLoader = rememberAuthenticatedImageLoader()
+    val vendorName = when (uiData) {
+        is DocumentUiData.Invoice -> uiData.primaryDescription
+        is DocumentUiData.CreditNote -> uiData.primaryDescription
+        is DocumentUiData.Receipt -> uiData.primaryDescription
+        else -> ""
+    }
+    val invoiceNumber = when (uiData) {
+        is DocumentUiData.Invoice -> uiData.invoiceNumber ?: ""
+        is DocumentUiData.CreditNote -> uiData.creditNoteNumber ?: ""
+        else -> ""
+    }
+    val totalAmount = when (uiData) {
+        is DocumentUiData.Invoice -> uiData.totalAmount?.let { "${uiData.currencySign}${it.toDisplayString()}" } ?: ""
+        is DocumentUiData.CreditNote -> uiData.totalAmount?.let { "${uiData.currencySign}${it.toDisplayString()}" } ?: ""
+        is DocumentUiData.Receipt -> uiData.totalAmount?.let { "${uiData.currencySign}${it.toDisplayString()}" } ?: ""
+        else -> ""
+    }
+    val dateDisplay = when (uiData) {
+        is DocumentUiData.Invoice -> uiData.issueDate ?: ""
+        is DocumentUiData.CreditNote -> uiData.issueDate ?: ""
+        is DocumentUiData.Receipt -> uiData.date ?: ""
+        else -> ""
+    }
 
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)) {
-        Text(text = label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = labelColor)
+        Text(label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = labelColor)
 
         Surface(
             modifier = Modifier.fillMaxWidth().aspectRatio(A4_ASPECT_RATIO),
-            shape = ThumbnailShape,
-            shadowElevation = 4.dp,
-            tonalElevation = 0.dp,
+            shape = ThumbnailShape, shadowElevation = 4.dp, tonalElevation = 0.dp,
             border = BorderStroke(2.dp, borderColor.copy(alpha = 0.2f)),
         ) {
             when (previewState) {
                 is DocumentPreviewState.Ready -> {
                     val url = previewState.pages.firstOrNull()?.imageUrl
                     if (url != null) {
-                        SubcomposeAsyncImage(
-                            model = url, contentDescription = null, imageLoader = imageLoader,
+                        SubcomposeAsyncImage(model = url, contentDescription = null, imageLoader = imageLoader,
                             loading = { FallbackCard(vendorName, invoiceNumber, totalAmount, dateDisplay) },
                             error = { FallbackCard(vendorName, invoiceNumber, totalAmount, dateDisplay) },
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize(),
-                        )
+                            contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
                     } else FallbackCard(vendorName, invoiceNumber, totalAmount, dateDisplay)
                 }
                 is DocumentPreviewState.Loading -> Box(Modifier.fillMaxSize(), Alignment.Center) { DokusLoader(size = DokusLoaderSize.Small) }
@@ -249,6 +241,8 @@ private fun DocumentIdentityCard(
                     FallbackCard(vendorName, invoiceNumber, totalAmount, dateDisplay)
             }
         }
+
+        Text(statusLabel, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = statusColor, modifier = Modifier.align(Alignment.CenterHorizontally))
     }
 }
 
@@ -256,10 +250,10 @@ private fun DocumentIdentityCard(
 private fun FallbackCard(vendorName: String, invoiceNumber: String, totalAmount: String, dateDisplay: String) {
     Box(Modifier.fillMaxSize().background(Color(0xFFF5F0E8)), Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall)) {
-            Text(text = vendorName, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = Color(0xFF111111))
-            if (invoiceNumber.isNotBlank()) Text(text = "#$invoiceNumber", style = MaterialTheme.typography.bodySmall, color = Color(0xFF666666))
-            Text(text = totalAmount, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace, color = Color(0xFF111111))
-            Text(text = dateDisplay, style = MaterialTheme.typography.bodySmall, color = Color(0xFF888888))
+            Text(vendorName, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = Color(0xFF111111))
+            if (invoiceNumber.isNotBlank()) Text("#$invoiceNumber", style = MaterialTheme.typography.bodySmall, color = Color(0xFF666666))
+            Text(totalAmount, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace, color = Color(0xFF111111))
+            Text(dateDisplay, style = MaterialTheme.typography.bodySmall, color = Color(0xFF888888))
         }
     }
 }
@@ -269,11 +263,7 @@ private fun FallbackCard(vendorName: String, invoiceNumber: String, totalAmount:
 // =============================
 
 @Composable
-private fun DuplicateDiffSection(
-    reasonType: ReviewReason,
-    diffs: List<DuplicateDiff>,
-    modifier: Modifier = Modifier,
-) {
+private fun DuplicateDiffSection(reasonType: ReviewReason, diffs: List<DuplicateDiff>, modifier: Modifier = Modifier) {
     val reasonTitle = when (reasonType) {
         ReviewReason.MaterialConflict -> "AMOUNT CHANGED"
         ReviewReason.FuzzyCandidate -> "POSSIBLE MATCH"
@@ -285,29 +275,21 @@ private fun DuplicateDiffSection(
         Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)) {
             StatusDot(type = if (diffs.isEmpty()) StatusDotType.Confirmed else StatusDotType.Warning, size = 6.dp)
             Column(verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xxSmall)) {
-                Text(
-                    text = if (diffs.isEmpty()) stringResource(Res.string.review_duplicate_same_opinion) else stringResource(Res.string.review_duplicate_diff_opinion),
-                    style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface,
-                )
-                Text(
-                    text = if (diffs.isEmpty()) stringResource(Res.string.review_duplicate_same_opinion_detail) else stringResource(Res.string.review_duplicate_diff_confirm),
-                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.textMuted,
-                )
+                Text(if (diffs.isEmpty()) stringResource(Res.string.review_duplicate_same_opinion) else stringResource(Res.string.review_duplicate_diff_opinion),
+                    style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+                Text(if (diffs.isEmpty()) stringResource(Res.string.review_duplicate_same_opinion_detail) else stringResource(Res.string.review_duplicate_diff_confirm),
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.textMuted)
             }
         }
 
         if (diffs.isNotEmpty()) {
             val amberColor = MaterialTheme.colorScheme.primary
-            Column(
-                modifier = Modifier.fillMaxWidth().drawBehind { drawLine(amberColor, Offset(0f, 0f), Offset(0f, size.height), 2.dp.toPx()) }.padding(start = Constraints.Spacing.medium),
-                verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xxSmall),
-            ) {
+            Column(Modifier.fillMaxWidth().drawBehind { drawLine(amberColor, Offset(0f, 0f), Offset(0f, size.height), 2.dp.toPx()) }.padding(start = Constraints.Spacing.medium),
+                verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xxSmall)) {
                 diffs.forEach { diff ->
                     Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
-                        Text(
-                            text = when (diff.field) { "total" -> stringResource(Res.string.review_duplicate_label_total); "invoiceNo" -> stringResource(Res.string.review_duplicate_label_invoice); "issueDate" -> stringResource(Res.string.review_duplicate_label_issue_date); else -> diff.field },
-                            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.textMuted,
-                        )
+                        Text(when (diff.field) { "total" -> stringResource(Res.string.review_duplicate_label_total); "invoiceNo" -> stringResource(Res.string.review_duplicate_label_invoice); "issueDate" -> stringResource(Res.string.review_duplicate_label_issue_date); else -> diff.field },
+                            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.textMuted)
                         Row(horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall)) {
                             Text(diff.existingValue, style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace, color = MaterialTheme.colorScheme.textMuted)
                             Text("\u2192", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.textMuted)
@@ -324,60 +306,4 @@ private fun DuplicateDiffSection(
     }
 }
 
-// =============================
-// Helpers
-// =============================
-
-private fun resolveInvoiceNumber(draft: DocDto?): String = when (draft) {
-    is DocDto.Invoice -> draft.invoiceNumber ?: ""
-    is DocDto.CreditNote -> draft.creditNoteNumber ?: ""
-    else -> ""
-}
-
-private fun resolveStatusLabel(state: DocumentDetailState): String = when (state.documentStatus) {
-    tech.dokus.domain.enums.DocumentStatus.Confirmed -> "Confirmed"
-    tech.dokus.domain.enums.DocumentStatus.NeedsReview -> "Needs review"
-    tech.dokus.domain.enums.DocumentStatus.Rejected -> "Rejected"
-    tech.dokus.domain.enums.DocumentStatus.Unsupported -> "Unsupported"
-    null -> ""
-}
-
-private fun computeDiffsFromState(existingDraft: DocDto?, incomingSource: DocumentSourceDto?): List<DuplicateDiff> {
-    if (existingDraft == null || incomingSource == null) return emptyList()
-    return buildList {
-        val existingInvoiceNo = (existingDraft as? DocDto.Invoice)?.invoiceNumber
-        val incomingInvoiceNo = incomingSource.extractJsonString("invoiceNumber")
-        if (!existingInvoiceNo.isNullOrBlank() && incomingInvoiceNo.isNotBlank() && existingInvoiceNo != incomingInvoiceNo) {
-            add(DuplicateDiff("invoiceNo", existingInvoiceNo, incomingInvoiceNo))
-        }
-        val existingTotal = existingDraft.totalAmount
-        val incomingTotal = incomingSource.extractJsonLong("totalAmount")
-        if (existingTotal != null && incomingTotal != null && existingTotal.minor != incomingTotal) {
-            add(DuplicateDiff("total", "\u20AC${existingTotal.toDisplayString()}", "\u20AC${tech.dokus.domain.Money(incomingTotal).toDisplayString()}"))
-        }
-        val existingDate = existingDraft.sortDate?.toString()
-        val incomingDate = incomingSource.extractJsonString("issueDate")
-        if (!existingDate.isNullOrBlank() && incomingDate.isNotBlank() && existingDate != incomingDate) {
-            add(DuplicateDiff("issueDate", existingDate, incomingDate))
-        }
-    }
-}
-
-private fun DocumentSourceDto.extractJsonString(vararg path: String): String {
-    val json = extractedSnapshotJson ?: return ""
-    return try {
-        var element: kotlinx.serialization.json.JsonElement = Json.parseToJsonElement(json)
-        for (key in path) {
-            element = (element as? JsonObject)?.get(key) ?: return ""
-        }
-        (element as? JsonPrimitive)?.content ?: ""
-    } catch (_: Exception) { "" }
-}
-
-private fun DocumentSourceDto.extractJsonLong(key: String): Long? {
-    val json = extractedSnapshotJson ?: return null
-    return try {
-        val obj = Json.parseToJsonElement(json) as? JsonObject ?: return null
-        (obj[key] as? JsonPrimitive)?.content?.toLongOrNull()
-    } catch (_: Exception) { null }
-}
+// DocumentUiData.primaryDescription gives vendor/merchant name for display

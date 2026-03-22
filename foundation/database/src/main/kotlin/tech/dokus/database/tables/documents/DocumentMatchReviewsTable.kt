@@ -29,6 +29,11 @@ object DocumentMatchReviewsTable : UUIDTable("document_match_reviews") {
         onDelete = ReferenceOption.CASCADE
     )
 
+    val incomingDocumentId = uuid("incoming_document_id").references(
+        DocumentsTable.id,
+        onDelete = ReferenceOption.SET_NULL
+    ).nullable()
+
     val reasonType = dbEnumeration<ReviewReason>("reason_type")
     val aiSummary = text("ai_summary").nullable()
     val aiConfidence = decimal("ai_confidence", 5, 4).nullable()

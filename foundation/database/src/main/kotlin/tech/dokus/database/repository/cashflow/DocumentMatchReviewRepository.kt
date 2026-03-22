@@ -32,9 +32,10 @@ class DocumentMatchReviewRepository {
         tenantId: TenantId,
         documentId: DocumentId,
         sourceId: DocumentSourceId,
+        incomingDocumentId: DocumentId? = null,
         reasonType: ReviewReason,
         aiSummary: String? = null,
-        aiConfidence: Double? = null
+        aiConfidence: Double? = null,
     ): DocumentMatchReviewId = newSuspendedTransaction {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         val id = DocumentMatchReviewId.generate()
@@ -42,7 +43,8 @@ class DocumentMatchReviewRepository {
             it[DocumentMatchReviewsTable.id] = UUID.fromString(id.toString())
             it[DocumentMatchReviewsTable.tenantId] = UUID.fromString(tenantId.toString())
             it[DocumentMatchReviewsTable.documentId] = UUID.fromString(documentId.toString())
-            it[incomingSourceId] = UUID.fromString(sourceId.toString())
+            it[DocumentMatchReviewsTable.incomingSourceId] = UUID.fromString(sourceId.toString())
+            it[DocumentMatchReviewsTable.incomingDocumentId] = incomingDocumentId?.let { UUID.fromString(it.toString()) }
             it[DocumentMatchReviewsTable.reasonType] = reasonType
             it[DocumentMatchReviewsTable.aiSummary] = aiSummary
             it[DocumentMatchReviewsTable.aiConfidence] = aiConfidence?.toBigDecimal()
