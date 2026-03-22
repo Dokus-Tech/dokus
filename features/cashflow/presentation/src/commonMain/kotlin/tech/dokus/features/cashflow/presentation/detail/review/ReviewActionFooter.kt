@@ -27,12 +27,16 @@ import tech.dokus.foundation.aura.style.textMuted
 internal enum class ReviewActionType {
     /** No issues — plain Confirm */
     Confirm,
+
     /** Contact/amount accepted — Accept & confirm (last issue) */
     AcceptAndConfirm,
+
     /** Contact/amount accepted — Accept & continue (more issues) */
     AcceptAndContinue,
+
     /** Date edited — Save & confirm (last issue) */
     SaveAndConfirm,
+
     /** Date edited — Save & continue (more issues) */
     SaveAndContinue,
 }

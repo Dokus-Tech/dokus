@@ -83,7 +83,10 @@ internal fun DesktopDuplicateReviewSurface(
     modifier: Modifier = Modifier,
 ) {
     if (!state.isLoaded) {
-        Box(modifier = modifier.fillMaxSize().padding(contentPadding), contentAlignment = Alignment.Center) {
+        Box(
+            modifier = modifier.fillMaxSize().padding(contentPadding),
+            contentAlignment = Alignment.Center
+        ) {
             DokusLoader()
         }
         return
@@ -100,16 +103,30 @@ internal fun DesktopDuplicateReviewSurface(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
+                ) {
                     StatusDot(type = StatusDotType.Warning, size = 8.dp)
-                    Text(stringResource(Res.string.review_duplicate_possible_duplicate), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
+                    Text(
+                        stringResource(Res.string.review_duplicate_possible_duplicate),
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
                 }
-                Text(stringResource(Res.string.review_surface_view_full_detail) + " \u2192", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.textMuted, modifier = Modifier.clickable(onClick = onSwitchToDetail))
+                Text(
+                    stringResource(Res.string.review_surface_view_full_detail) + " \u2192",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.textMuted,
+                    modifier = Modifier.clickable(onClick = onSwitchToDetail)
+                )
             }
 
             // Scrollable content
             Column(
-                modifier = Modifier.weight(1f).widthIn(max = 700.dp).align(Alignment.CenterHorizontally).verticalScroll(rememberScrollState()),
+                modifier = Modifier.weight(1f).widthIn(max = 700.dp)
+                    .align(Alignment.CenterHorizontally).verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.large),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
@@ -160,7 +177,11 @@ internal fun DesktopDuplicateReviewSurface(
                     )
                 }
 
-                Text(stringResource(Res.string.review_duplicate_review_later), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.textMuted, modifier = Modifier.clickable { })
+                Text(
+                    stringResource(Res.string.review_duplicate_review_later),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.textMuted,
+                    modifier = Modifier.clickable { })
             }
 
             // Bottom bar
@@ -171,10 +192,23 @@ internal fun DesktopDuplicateReviewSurface(
 
 @Composable
 private fun BottomBar(onSwitchToDetail: () -> Unit, modifier: Modifier = Modifier) {
-    Column(modifier = modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
+    ) {
         ReviewKeyboardHints(canConfirm = true)
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = Constraints.Stroke.thin)
-        Text(stringResource(Res.string.review_surface_view_full_detail) + " \u2192", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.textMuted, modifier = Modifier.clickable(onClick = onSwitchToDetail).padding(vertical = Constraints.Spacing.small))
+        HorizontalDivider(
+            color = MaterialTheme.colorScheme.outlineVariant,
+            thickness = Constraints.Stroke.thin
+        )
+        Text(
+            stringResource(Res.string.review_surface_view_full_detail) + " \u2192",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.textMuted,
+            modifier = Modifier.clickable(onClick = onSwitchToDetail)
+                .padding(vertical = Constraints.Spacing.small)
+        )
     }
 }
 
@@ -206,9 +240,15 @@ private fun DocumentIdentityCard(
         else -> ""
     }
     val totalAmount = when (uiData) {
-        is DocumentUiData.Invoice -> uiData.totalAmount?.let { "${uiData.currencySign}${it.toDisplayString()}" } ?: ""
-        is DocumentUiData.CreditNote -> uiData.totalAmount?.let { "${uiData.currencySign}${it.toDisplayString()}" } ?: ""
-        is DocumentUiData.Receipt -> uiData.totalAmount?.let { "${uiData.currencySign}${it.toDisplayString()}" } ?: ""
+        is DocumentUiData.Invoice -> uiData.totalAmount?.let { "${uiData.currencySign}${it.toDisplayString()}" }
+            ?: ""
+
+        is DocumentUiData.CreditNote -> uiData.totalAmount?.let { "${uiData.currencySign}${it.toDisplayString()}" }
+            ?: ""
+
+        is DocumentUiData.Receipt -> uiData.totalAmount?.let { "${uiData.currencySign}${it.toDisplayString()}" }
+            ?: ""
+
         else -> ""
     }
     val dateDisplay = when (uiData) {
@@ -218,8 +258,16 @@ private fun DocumentIdentityCard(
         else -> ""
     }
 
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)) {
-        Text(label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = labelColor)
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
+    ) {
+        Text(
+            label,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = labelColor
+        )
 
         Surface(
             modifier = Modifier.fillMaxWidth().aspectRatio(A4_ASPECT_RATIO),
@@ -230,29 +278,79 @@ private fun DocumentIdentityCard(
                 is DocumentPreviewState.Ready -> {
                     val url = previewState.pages.firstOrNull()?.imageUrl
                     if (url != null) {
-                        SubcomposeAsyncImage(model = url, contentDescription = null, imageLoader = imageLoader,
-                            loading = { FallbackCard(vendorName, invoiceNumber, totalAmount, dateDisplay) },
-                            error = { FallbackCard(vendorName, invoiceNumber, totalAmount, dateDisplay) },
-                            contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+                        SubcomposeAsyncImage(
+                            model = url, contentDescription = null, imageLoader = imageLoader,
+                            loading = {
+                                FallbackCard(
+                                    vendorName,
+                                    invoiceNumber,
+                                    totalAmount,
+                                    dateDisplay
+                                )
+                            },
+                            error = {
+                                FallbackCard(
+                                    vendorName,
+                                    invoiceNumber,
+                                    totalAmount,
+                                    dateDisplay
+                                )
+                            },
+                            contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize()
+                        )
                     } else FallbackCard(vendorName, invoiceNumber, totalAmount, dateDisplay)
                 }
-                is DocumentPreviewState.Loading -> Box(Modifier.fillMaxSize(), Alignment.Center) { DokusLoader(size = DokusLoaderSize.Small) }
+
+                is DocumentPreviewState.Loading -> Box(
+                    Modifier.fillMaxSize(),
+                    Alignment.Center
+                ) { DokusLoader(size = DokusLoaderSize.Small) }
+
                 is DocumentPreviewState.Error, is DocumentPreviewState.NotPdf, is DocumentPreviewState.NoPreview ->
                     FallbackCard(vendorName, invoiceNumber, totalAmount, dateDisplay)
             }
         }
 
-        Text(statusLabel, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = statusColor, modifier = Modifier.align(Alignment.CenterHorizontally))
+        Text(
+            statusLabel,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = statusColor,
+            modifier = Modifier.align(Alignment.CenterHorizontally)
+        )
     }
 }
 
 @Composable
-private fun FallbackCard(vendorName: String, invoiceNumber: String, totalAmount: String, dateDisplay: String) {
+private fun FallbackCard(
+    vendorName: String,
+    invoiceNumber: String,
+    totalAmount: String,
+    dateDisplay: String
+) {
     Box(Modifier.fillMaxSize().background(Color(0xFFF5F0E8)), Alignment.Center) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall)) {
-            Text(vendorName, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = Color(0xFF111111))
-            if (invoiceNumber.isNotBlank()) Text("#$invoiceNumber", style = MaterialTheme.typography.bodySmall, color = Color(0xFF666666))
-            Text(totalAmount, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace, color = Color(0xFF111111))
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall)
+        ) {
+            Text(
+                vendorName,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF111111)
+            )
+            if (invoiceNumber.isNotBlank()) Text(
+                "#$invoiceNumber",
+                style = MaterialTheme.typography.bodySmall,
+                color = Color(0xFF666666)
+            )
+            Text(
+                totalAmount,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                fontFamily = FontFamily.Monospace,
+                color = Color(0xFF111111)
+            )
             Text(dateDisplay, style = MaterialTheme.typography.bodySmall, color = Color(0xFF888888))
         }
     }
@@ -263,44 +361,107 @@ private fun FallbackCard(vendorName: String, invoiceNumber: String, totalAmount:
 // =============================
 
 @Composable
-private fun DuplicateDiffSection(reasonType: ReviewReason, diffs: List<DuplicateDiff>, modifier: Modifier = Modifier) {
+private fun DuplicateDiffSection(
+    reasonType: ReviewReason,
+    diffs: List<DuplicateDiff>,
+    modifier: Modifier = Modifier
+) {
     val reasonTitle = when (reasonType) {
         ReviewReason.MaterialConflict -> "AMOUNT CHANGED"
         ReviewReason.FuzzyCandidate -> "POSSIBLE MATCH"
     }
 
-    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium)) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium)
+    ) {
         IssueTitleLabel(text = reasonTitle)
 
-        Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)) {
-            StatusDot(type = if (diffs.isEmpty()) StatusDotType.Confirmed else StatusDotType.Warning, size = 6.dp)
+        Row(
+            verticalAlignment = Alignment.Top,
+            horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small)
+        ) {
+            StatusDot(
+                type = if (diffs.isEmpty()) StatusDotType.Confirmed else StatusDotType.Warning,
+                size = 6.dp
+            )
             Column(verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xxSmall)) {
-                Text(if (diffs.isEmpty()) stringResource(Res.string.review_duplicate_same_opinion) else stringResource(Res.string.review_duplicate_diff_opinion),
-                    style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
-                Text(if (diffs.isEmpty()) stringResource(Res.string.review_duplicate_same_opinion_detail) else stringResource(Res.string.review_duplicate_diff_confirm),
-                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.textMuted)
+                Text(
+                    if (diffs.isEmpty()) stringResource(Res.string.review_duplicate_same_opinion) else stringResource(
+                        Res.string.review_duplicate_diff_opinion
+                    ),
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    if (diffs.isEmpty()) stringResource(Res.string.review_duplicate_same_opinion_detail) else stringResource(
+                        Res.string.review_duplicate_diff_confirm
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.textMuted
+                )
             }
         }
 
         if (diffs.isNotEmpty()) {
             val amberColor = MaterialTheme.colorScheme.primary
-            Column(Modifier.fillMaxWidth().drawBehind { drawLine(amberColor, Offset(0f, 0f), Offset(0f, size.height), 2.dp.toPx()) }.padding(start = Constraints.Spacing.medium),
-                verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xxSmall)) {
+            Column(
+                Modifier.fillMaxWidth().drawBehind {
+                    drawLine(
+                        amberColor,
+                        Offset(0f, 0f),
+                        Offset(0f, size.height),
+                        2.dp.toPx()
+                    )
+                }.padding(start = Constraints.Spacing.medium),
+                verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xxSmall)
+            ) {
                 diffs.forEach { diff ->
                     Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
-                        Text(when (diff.field) { "total" -> stringResource(Res.string.review_duplicate_label_total); "invoiceNo" -> stringResource(Res.string.review_duplicate_label_invoice); "issueDate" -> stringResource(Res.string.review_duplicate_label_issue_date); else -> diff.field },
-                            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.textMuted)
+                        Text(
+                            when (diff.field) {
+                                "total" -> stringResource(Res.string.review_duplicate_label_total); "invoiceNo" -> stringResource(
+                                Res.string.review_duplicate_label_invoice
+                            ); "issueDate" -> stringResource(Res.string.review_duplicate_label_issue_date); else -> diff.field
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.textMuted
+                        )
                         Row(horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.xSmall)) {
-                            Text(diff.existingValue, style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace, color = MaterialTheme.colorScheme.textMuted)
-                            Text("\u2192", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.textMuted)
-                            Text(diff.incomingValue, style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+                            Text(
+                                diff.existingValue,
+                                style = MaterialTheme.typography.bodySmall,
+                                fontFamily = FontFamily.Monospace,
+                                color = MaterialTheme.colorScheme.textMuted
+                            )
+                            Text(
+                                "\u2192",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.textMuted
+                            )
+                            Text(
+                                diff.incomingValue,
+                                style = MaterialTheme.typography.bodySmall,
+                                fontFamily = FontFamily.Monospace,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
                         }
                     }
                 }
             }
             val totalDiff = diffs.firstOrNull { it.field == "total" }
             if (totalDiff != null) {
-                Text(stringResource(Res.string.review_duplicate_impact_update, totalDiff.existingValue, totalDiff.incomingValue), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.textMuted)
+                Text(
+                    stringResource(
+                        Res.string.review_duplicate_impact_update,
+                        totalDiff.existingValue,
+                        totalDiff.incomingValue
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.textMuted
+                )
             }
         }
     }

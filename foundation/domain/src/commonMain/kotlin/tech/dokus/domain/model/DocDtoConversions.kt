@@ -349,13 +349,14 @@ val DocDto?.displayContextDescription: String?
 // DocLineItem → FinancialLineItemDto (reverse)
 // =============================================================================
 
-fun FinancialLineItemDto.Companion.from(item: DocLineItem): FinancialLineItemDto = FinancialLineItemDto(
-    description = item.description,
-    quantity = item.quantity?.value?.toLong(),
-    unitPrice = item.unitPrice?.minor,
-    vatRate = item.vatRate?.basisPoints,
-    netAmount = item.netAmount?.minor,
-)
+fun FinancialLineItemDto.Companion.from(item: DocLineItem): FinancialLineItemDto =
+    FinancialLineItemDto(
+        description = item.description,
+        quantity = item.quantity?.value?.toLong(),
+        unitPrice = item.unitPrice?.minor,
+        vatRate = item.vatRate?.basisPoints,
+        netAmount = item.netAmount?.minor,
+    )
 
 // =============================================================================
 // DocDto → DocumentDraftData (Draft variants only)
@@ -383,6 +384,7 @@ fun DocumentDraftData.Companion.from(dto: DocDto): DocumentDraftData = when (dto
             buyer = buyer,
         )
     }
+
     is DocDto.Invoice.Confirmed -> InvoiceDraftData(
         direction = dto.direction,
         invoiceNumber = dto.invoiceNumber,
@@ -396,6 +398,7 @@ fun DocumentDraftData.Companion.from(dto: DocDto): DocumentDraftData = when (dto
         iban = dto.iban,
         notes = dto.notes,
     )
+
     is DocDto.CreditNote.Draft -> {
         val (seller, buyer) = splitCounterparty(dto.direction, dto.counterparty)
         CreditNoteDraftData(
@@ -415,6 +418,7 @@ fun DocumentDraftData.Companion.from(dto: DocDto): DocumentDraftData = when (dto
             buyer = buyer,
         )
     }
+
     is DocDto.CreditNote.Confirmed -> CreditNoteDraftData(
         direction = dto.direction,
         creditNoteNumber = dto.creditNoteNumber,
@@ -427,6 +431,7 @@ fun DocumentDraftData.Companion.from(dto: DocDto): DocumentDraftData = when (dto
         reason = dto.reason,
         notes = dto.notes,
     )
+
     is DocDto.Receipt.Draft -> ReceiptDraftData(
         direction = dto.direction,
         merchantName = dto.merchantName,
@@ -441,6 +446,7 @@ fun DocumentDraftData.Companion.from(dto: DocDto): DocumentDraftData = when (dto
         vatBreakdown = dto.vatBreakdown,
         paymentMethod = dto.paymentMethod,
     )
+
     is DocDto.Receipt.Confirmed -> ReceiptDraftData(
         direction = dto.direction,
         merchantName = dto.merchantName,
@@ -453,6 +459,7 @@ fun DocumentDraftData.Companion.from(dto: DocDto): DocumentDraftData = when (dto
         receiptNumber = dto.receiptNumber,
         notes = dto.notes,
     )
+
     is DocDto.BankStatement.Draft -> BankStatementDraftData(
         direction = dto.direction,
         accountIban = dto.accountIban,
@@ -464,6 +471,7 @@ fun DocumentDraftData.Companion.from(dto: DocDto): DocumentDraftData = when (dto
         transactions = dto.transactions,
         institution = dto.institution,
     )
+
     is DocDto.BankStatement.Confirmed -> BankStatementDraftData(
         direction = dto.direction,
         accountIban = dto.accountIban,
@@ -473,6 +481,7 @@ fun DocumentDraftData.Companion.from(dto: DocDto): DocumentDraftData = when (dto
         periodEnd = dto.periodEnd,
         notes = dto.notes,
     )
+
     is DocDto.ProForma -> ProFormaDraftData(dto.direction)
     is DocDto.Quote -> QuoteDraftData(dto.direction)
     is DocDto.OrderConfirmation -> OrderConfirmationDraftData(dto.direction)

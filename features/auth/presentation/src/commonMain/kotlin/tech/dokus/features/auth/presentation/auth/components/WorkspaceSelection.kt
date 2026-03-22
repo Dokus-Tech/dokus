@@ -16,7 +16,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import coil3.ImageLoader
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.console_clients_count
@@ -33,6 +36,8 @@ import tech.dokus.domain.model.auth.FirmWorkspaceSummary
 import tech.dokus.domain.model.auth.TenantWorkspaceSummary
 import tech.dokus.features.auth.mvi.WorkspaceSelectData
 import tech.dokus.features.auth.mvi.WorkspaceSelectState
+import tech.dokus.foundation.app.network.rememberAuthenticatedImageLoader
+import tech.dokus.foundation.app.network.rememberResolvedApiUrl
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.app.state.isError
 import tech.dokus.foundation.app.state.isSuccess
@@ -42,14 +47,9 @@ import tech.dokus.foundation.aura.components.tiles.AddCompanyTile
 import tech.dokus.foundation.aura.components.tiles.CompanyTile
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.extensions.localized
-import coil3.ImageLoader
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
-import tech.dokus.foundation.app.network.rememberAuthenticatedImageLoader
-import tech.dokus.foundation.app.network.rememberResolvedApiUrl
 
 @Stable
 @Composable
@@ -95,8 +95,10 @@ private fun StateDrivenContent(
             retryHandler = workspaces.retryHandler,
             modifier = Modifier.fillMaxSize(),
         )
+
         workspaces.isSuccess() -> {
-            val sortedWorkspaceEntries = remember(workspaces.data) { buildWorkspaceEntries(workspaces.data) }
+            val sortedWorkspaceEntries =
+                remember(workspaces.data) { buildWorkspaceEntries(workspaces.data) }
             val imageLoader = rememberAuthenticatedImageLoader()
 
             WorkspaceSection(
@@ -118,6 +120,7 @@ private fun StateDrivenContent(
                 },
             )
         }
+
         else -> DokusLoader()
     }
 }

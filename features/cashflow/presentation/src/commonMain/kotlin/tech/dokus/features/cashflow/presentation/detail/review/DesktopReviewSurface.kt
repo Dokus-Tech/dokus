@@ -145,7 +145,7 @@ internal fun DesktopReviewSurface(
                     // Action footer
                     val showChooseDifferent =
                         issues.getOrNull(activeIssueIndex) is ReviewIssue.ContactIssue ||
-                            (issues.isEmpty() && state.isContactRequired)
+                                (issues.isEmpty() && state.isContactRequired)
                     if (!isAccountantReadOnly) {
                         ReviewActionFooter(
                             actionType = actionType,

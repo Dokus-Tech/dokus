@@ -68,7 +68,6 @@ internal fun ReviewDecisionStream(
             if (activeIssue != null) {
                 ActiveIssueCard(
                     issue = activeIssue,
-                    state = state,
                     onIntent = onIntent,
                     onChooseDifferent = onChooseDifferent,
                 )
@@ -117,6 +116,7 @@ private fun CleanDocumentState(
                     onClick = onChooseDifferent,
                 )
             }
+
             is ResolvedContact.Suggested -> {
                 CleanContactRow(
                     name = contact.name,
@@ -124,6 +124,7 @@ private fun CleanDocumentState(
                     onClick = onChooseDifferent,
                 )
             }
+
             is ResolvedContact.Detected -> {
                 CleanContactRow(
                     name = contact.name,
@@ -131,6 +132,7 @@ private fun CleanDocumentState(
                     onClick = onChooseDifferent,
                 )
             }
+
             is ResolvedContact.Unknown -> {
                 // No contact to display — still clean (contact not required)
             }
@@ -191,7 +193,6 @@ private fun CleanContactRow(
 @Composable
 private fun ActiveIssueCard(
     issue: ReviewIssue,
-    state: DocumentDetailState,
     onIntent: (DocumentDetailIntent) -> Unit,
     onChooseDifferent: () -> Unit,
 ) {
@@ -201,22 +202,53 @@ private fun ActiveIssueCard(
             onAcceptSuggestion = { onIntent(DocumentDetailIntent.AcceptSuggestedContact) },
             onChooseDifferent = onChooseDifferent,
         )
+
         is ReviewIssue.DirectionIssue -> DirectionIssueCard(
             issue = issue,
             onSelectDirection = { onIntent(DocumentDetailIntent.SelectDirection(it)) },
         )
+
         is ReviewIssue.AmountIssue -> AmountIssueCard(
             issue = issue,
             totalValue = "",
             subtotalValue = "",
             vatValue = "",
-            onUpdateTotal = { onIntent(DocumentDetailIntent.UpdateField(EditableField.TotalAmount, it)) },
-            onUpdateSubtotal = { onIntent(DocumentDetailIntent.UpdateField(EditableField.SubtotalAmount, it)) },
-            onUpdateVat = { onIntent(DocumentDetailIntent.UpdateField(EditableField.VatAmount, it)) },
+            onUpdateTotal = {
+                onIntent(
+                    DocumentDetailIntent.UpdateField(
+                        EditableField.TotalAmount,
+                        it
+                    )
+                )
+            },
+            onUpdateSubtotal = {
+                onIntent(
+                    DocumentDetailIntent.UpdateField(
+                        EditableField.SubtotalAmount,
+                        it
+                    )
+                )
+            },
+            onUpdateVat = {
+                onIntent(
+                    DocumentDetailIntent.UpdateField(
+                        EditableField.VatAmount,
+                        it
+                    )
+                )
+            },
         )
+
         is ReviewIssue.DateIssue -> DateIssueCard(
             issue = issue,
-            onUpdateDueDate = { onIntent(DocumentDetailIntent.UpdateField(EditableField.DueDate, it)) },
+            onUpdateDueDate = {
+                onIntent(
+                    DocumentDetailIntent.UpdateField(
+                        EditableField.DueDate,
+                        it
+                    )
+                )
+            },
             onKeepOriginal = { /* Accept as-is, trigger confirm */ onIntent(DocumentDetailIntent.Confirm) },
         )
     }
