@@ -224,7 +224,18 @@ private fun DesktopContentRouter(
     // Track whether the user explicitly switched to detail mode
     var isInDetailMode by remember(state.documentId) { mutableStateOf(false) }
 
-    if (state.isReviewMode && !isInDetailMode) {
+    if (state.shouldShowPendingMatchComparison && !isInDetailMode) {
+        // TODO: Wire DuplicateReviewRoute once backend provides incomingDocumentId
+        // For now, fall through to the existing detail view which has the old comparison pane
+        DesktopReviewContent(
+            state = state,
+            isAccountantReadOnly = isAccountantReadOnly,
+            contentPadding = contentPadding,
+            onIntent = onIntent,
+            onCorrectContact = onCorrectContact,
+            onCreateContact = onCreateContact,
+        )
+    } else if (state.isReviewMode && !isInDetailMode) {
         DesktopReviewSurface(
             state = state,
             isAccountantReadOnly = isAccountantReadOnly,

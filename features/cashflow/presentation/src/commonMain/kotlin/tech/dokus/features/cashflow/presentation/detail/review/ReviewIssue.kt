@@ -176,11 +176,13 @@ private fun deriveDateIssue(content: DocDto): ReviewIssue.DateIssue? {
 /**
  * Whether the document is in review mode (should show ReviewSurface instead of inspector).
  *
- * True when: NeedsReview status, not a bank statement (bank statements have their own flow).
+ * True when: NeedsReview status, not a bank statement, and no pending match review.
+ * Documents with pending match review show the comparison surface instead.
  */
 val DocumentDetailState.isReviewMode: Boolean
     get() = documentStatus == DocumentStatus.NeedsReview &&
         !isDocumentConfirmed &&
         !isDocumentRejected &&
         !isDocumentUnsupported &&
+        !shouldShowPendingMatchComparison &&
         draftData !is DocDto.BankStatement

@@ -286,19 +286,11 @@ internal class DocumentPreviewContainer(
                 },
                 onFailure = { error ->
                     logger.e(error) { "Failed to load incoming preview pages for source=$sourceId" }
-                    val exception = error.asDokusException
-                    val displayException = if (exception is DokusException.Unknown) {
-                        DokusException.DocumentPreviewLoadFailed
-                    } else {
-                        exception
-                    }
+                    // For incoming previews (match review context), gracefully fall back
+                    // to NoPreview instead of showing an error. The source may belong to
+                    // a different document context (PENDING_REVIEW status), causing 404s.
                     updateState {
-                        copy(
-                            incomingPreviewState = DocumentPreviewState.Error(
-                                exception = displayException,
-                                retry = { intent(DocumentPreviewIntent.RetryLoad) }
-                            ),
-                        )
+                        copy(incomingPreviewState = DocumentPreviewState.NoPreview)
                     }
                 }
             )
